@@ -41,7 +41,7 @@ FORMULA_CATALOG = [{
         },
         {
             "number": 2,
-            "subtitle": "Pérdida de transmisión, placas simples y dobles, ventanas, Rw, C, Ctr y cálculo integrador",
+            "subtitle": "Pérdida de transmisión, placas simples y dobles, ventanas, Rw, C y Ctr",
             "topics": [
                 ("1. Pérdida de transmisión", [
                     ("Coeficiente de transmisión", "τ = W<sub>t</sub>/W<sub>i</sub>", [("τ","fracción transmitida","—"),("W<sub>t</sub>","potencia transmitida","W"),("W<sub>i</sub>","potencia incidente","W")], "Punto de partida físico del Laboratorio 2."),
@@ -66,12 +66,6 @@ FORMULA_CATALOG = [{
                     ("Adaptación C", "X<sub>1</sub> = −10·log<sub>10</sub>[Σ10<sup>(L<sub>1,i</sub>−R<sub>i</sub>)/10</sup>]<br>C = X<sub>1</sub>−R<sub>w</sub>", [("L<sub>1,i</sub>","espectro normalizado 1","dB"),("R<sub>i</sub>","reducción por banda","dB"),("C","adaptación espectral","dB")], "Adapta Rw al espectro normalizado 1."),
                     ("Adaptación Ctr", "X<sub>2</sub> = −10·log<sub>10</sub>[Σ10<sup>(L<sub>2,i</sub>−R<sub>i</sub>)/10</sup>]<br>C<sub>tr</sub> = X<sub>2</sub>−R<sub>w</sub>", [("L<sub>2,i</sub>","espectro normalizado 2","dB"),("C<sub>tr</sub>","adaptación para tránsito","dB")], "Adapta Rw a fuentes con mayor contenido grave."),
                     ("Forma de informar", "R<sub>w</sub>(C;C<sub>tr</sub>)", [("R<sub>w</sub>","índice ponderado","dB"),("C,C<sub>tr</sub>","términos de adaptación","dB")], "Los términos se aplican por separado según la fuente."),
-                ]),
-                ("6. Diseño integrador del paramento", [
-                    ("Transmisión de cada componente", "τ<sub>i,f</sub> = 10<sup>−R<sub>i,f</sub>/10</sup>", [("τ<sub>i,f</sub>","coeficiente de transmisión del componente i en la banda f","—"),("R<sub>i,f</sub>","TL o reducción sonora del componente i en la banda f","dB")], "Convierte por banda las curvas del muro, la ventana y la puerta a magnitudes energéticas."),
-                    ("Paramento compuesto por banda", "τ<sub>T,f</sub> = [19,71·τ<sub>m,f</sub> + 2,40·τ<sub>v,f</sub> + 1,89·τ<sub>p,f</sub>]/24,00", [("τ<sub>T,f</sub>","transmisión total en la banda f","—"),("τ<sub>m,f</sub>","transmisión del muro o tabique","—"),("τ<sub>v,f</sub>","transmisión de la ventana","—"),("τ<sub>p,f</sub>","transmisión de la puerta","—")], "Aplica las superficies fijas del ejercicio sala–pasillo; no promedia valores en dB."),
-                    ("Curva combinada", "R<sub>T,f</sub> = −10·log<sub>10</sub>(τ<sub>T,f</sub>)", [("R<sub>T,f</sub>","aislamiento combinado del paramento en la banda f","dB"),("τ<sub>T,f</sub>","coeficiente de transmisión total por banda","—")], "Construye la curva combinada que luego se utiliza para calcular Rw, C y Ctr."),
-                    ("Criterio del ejercicio", "R<sub>w,total</sub> ≥ 40 dB", [("R<sub>w,total</sub>","índice ponderado del paramento completo","dB")], "Verifica el cumplimiento del paramento de 24,00 m² entre la sala de clases y el pasillo."),
                 ]),
             ],
         },
@@ -150,17 +144,9 @@ def build_formulary_html(visible_labs):
             if (course_index, lab["number"]) not in visible_labs:
                 continue
 
-            # El formulario incluye únicamente ecuaciones técnicas desarrolladas
-            # en la clase. Se excluyen bloques creados para resolver casos o
-            # ejercicios con dimensiones, superficies y criterios particulares.
-            technical_topics = [
-                (title, items)
-                for title, items in lab["topics"]
-                if title != "6. Diseño integrador del paramento"
-            ]
             topics = "".join(
                 f"<div class='topic'><h3>{title}</h3>{_cards(items)}</div>"
-                for title, items in technical_topics
+                for title, items in lab["topics"]
             )
             labs += f"<details open><summary>Laboratorio {lab['number']} · {lab['subtitle']}</summary>{topics}</details>"
         if labs:
