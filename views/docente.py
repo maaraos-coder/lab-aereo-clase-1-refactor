@@ -301,9 +301,14 @@ def _teacher_stage9_results_impl(compact=False):
         "Observación general para el alumno",value=row.get("teacher_note") or "",
         key=f"stage9_note_{row['id']}_{'c' if compact else 'f'}",
     )
-    c1,c2=st.columns(2)
-    c1.metric("Puntaje automático",f"{sum(automatic):g}/40")
-    c2.metric("Puntaje ajustado",f"{total:g}/40")
+    automatic_total=float(sum(automatic))
+    automatic_grade=_grade_from_percent(automatic_total/40*100)
+    adjusted_grade=_grade_from_percent(total/40*100)
+    c1,c2,c3,c4=st.columns(4)
+    c1.metric("Puntaje automático",f"{automatic_total:g}/40")
+    c2.metric("Nota automática",f"{automatic_grade:.1f}")
+    c3.metric("Puntaje ajustado",f"{total:g}/40")
+    c4.metric("Nota ajustada",f"{adjusted_grade:.1f}")
     if st.button("Guardar rúbrica docente",type="primary",use_container_width=True,
                  key=f"stage9_save_rubric_{row['id']}_{'c' if compact else 'f'}"):
         updated_payload=dict(payload)
@@ -324,7 +329,9 @@ def _teacher_stage9_results_impl(compact=False):
         summary.append({
             "Alumno":student_name(result),"Respondidas":f"{answered}/10",
             "Puntaje automático":float(result.get("auto_score") or 0),
+            "Nota automática":round(_grade_from_percent(float(result.get("auto_score") or 0)/40*100),1),
             "Puntaje docente":result.get("teacher_score"),
+            "Nota final":round(_grade_from_percent(float(result.get("teacher_score") if result.get("teacher_score") is not None else result.get("auto_score") or 0)/40*100),1),
             "Estado":"Revisada" if result.get("teacher_score") is not None else "Corrección automática",
         })
     frame=pd.DataFrame(summary)
@@ -383,10 +390,15 @@ def _teacher_lab1_final_results_impl(compact=False):
     case_score=float(payload.get("puntaje_caso",0) or 0) if isinstance(payload,dict) else 0
     auto_score=float(row.get("auto_score") or 0)
     st.caption(f"Envío: {str(row.get('updated_at') or '').replace('T',' ')[:19]} · Laboratorio 1 · Etapa 10")
-    c1,c2,c3=st.columns(3)
+    automatic_grade=_grade_from_percent(auto_score)
+    effective_score=float(row.get("teacher_score") if row.get("teacher_score") is not None else auto_score)
+    effective_grade=_grade_from_percent(effective_score)
+    c1,c2,c3,c4,c5=st.columns(5)
     c1.metric("Aciertos teóricos",f"{theory_hits}/29")
     c2.metric("Caso integrador",f"{case_score:g}/20")
     c3.metric("Puntaje automático",f"{auto_score:.1f}/100")
+    c4.metric("Nota automática",f"{automatic_grade:.1f}")
+    c5.metric("Nota vigente",f"{effective_grade:.1f}")
 
     with st.expander("Respuestas 1 a 29",expanded=not compact):
         for i,(question,options,correct_index) in enumerate(LAB1_QUESTIONS):
@@ -419,6 +431,8 @@ def _teacher_lab1_final_results_impl(compact=False):
         float(row.get("teacher_score") if row.get("teacher_score") is not None else auto_score),0.5,
         key=f"teacher_lab1_final_score_{row['id']}_{'c' if compact else 'f'}",
     )
+    adjusted_grade=_grade_from_percent(adjusted)
+    st.info(f"Nota calculada con el puntaje ajustado: **{adjusted_grade:.1f}** · Exigencia de aprobación: 60 % (nota 4,0).")
     note=st.text_area("Observación docente",value=row.get("teacher_note") or "",
                       key=f"teacher_lab1_final_note_{row['id']}_{'c' if compact else 'f'}")
     if st.button("Guardar revisión del Laboratorio 1",type="primary",use_container_width=True,
@@ -433,8 +447,11 @@ def _teacher_course_results_impl(compact=False):
     """Centro docente general de evaluaciones de todos los laboratorios del Curso 1."""
     if st.session_state.get("role")!="Docente":
         return
-    st.markdown("### Centro de resultados · Curso 1")
-    st.caption("Consulta separadamente cada evaluación. Las respuestas y puntajes de un laboratorio no sobrescriben los de otro.")
+    st.markdown("### Evaluaciones entregadas por los alumnos")
+    st.caption(
+        "Revisa cada entrega, consulta la corrección automática y ajusta el puntaje cuando sea necesario. "
+        "La nota se calcula automáticamente en escala 1,0–7,0, con 60 % de exigencia para la nota 4,0."
+    )
     client=_supabase()
     if client is not None:
         try:
@@ -447,18 +464,35 @@ def _teacher_course_results_impl(compact=False):
                 key=row.get("user_key") or user.get("email") or str(row.get("id"))
                 item=consolidated.setdefault(key,{
                     "Alumno":user.get("display_name") or user.get("email") or key,
-                    "Lab. 1 · Etapa 10":"Pendiente","Lab. 2 · Etapa 9":"Pendiente","Lab. 2 · Etapa 10":"Pendiente",
-                    "Total registrado":"Pendiente",
+                    "Lab. 1 · Etapa 10":"Pendiente",
+                    "Lab. 2 · Etapa 9":"Pendiente",
+                    "Lab. 2 · Etapa 10":"Pendiente",
+                    "Promedio registrado":"Pendiente",
+                    "Estado general":"Corrección automática",
+                    "_reviewed":False,
                 })
                 score=row.get("teacher_score") if row.get("teacher_score") is not None else row.get("auto_score")
-                if row.get("question_key")=="final_exam": item["Lab. 1 · Etapa 10"]=f"{float(score or 0):.1f}/100"
-                if row.get("question_key")=="final_comprehension": item["Lab. 2 · Etapa 9"]=f"{float(score or 0):.1f}/40"
-                if row.get("question_key")=="final_integrated_design": item["Lab. 2 · Etapa 10"]=f"{float(score or 0):.1f}/60"
+                if row.get("teacher_score") is not None or row.get("status")=="reviewed":
+                    item["_reviewed"]=True
+                if row.get("question_key")=="final_exam":
+                    item["Lab. 1 · Etapa 10"]=f"{float(score or 0):.1f}/100"
+                elif row.get("question_key")=="final_comprehension":
+                    item["Lab. 2 · Etapa 9"]=f"{float(score or 0):.1f}/40"
+                elif row.get("question_key")=="final_integrated_design":
+                    item["Lab. 2 · Etapa 10"]=f"{float(score or 0):.1f}/60"
             for item in consolidated.values():
                 values=[]
                 for field,maximum in (("Lab. 1 · Etapa 10",100),("Lab. 2 · Etapa 9",40),("Lab. 2 · Etapa 10",60)):
-                    if item[field]!="Pendiente": values.append(float(item[field].split("/")[0])/maximum*100)
-                item["Total registrado"]=f"{sum(values)/len(values):.1f}%" if values else "Pendiente"
+                    if item[field]!="Pendiente":
+                        values.append(float(item[field].split("/")[0])/maximum*100)
+                if values:
+                    average=sum(values)/len(values)
+                    item["Promedio registrado"]=f"{average:.1f}% · Nota {_grade_from_percent(average):.1f}"
+                    item["Estado general"]="Con revisión docente" if item.pop("_reviewed",False) else "Corrección automática"
+                else:
+                    item.pop("_reviewed",None)
+                    item["Promedio registrado"]="Pendiente"
+                    item["Estado general"]="Sin entregas"
             if consolidated:
                 with st.expander("Resumen acumulado de todos los alumnos"):
                     summary_frame=pd.DataFrame(consolidated.values())
@@ -511,8 +545,14 @@ def _teacher_lab2_integrated_results_impl(compact=False):
     for label,key in (("Muro/tabique","wall"),("Ventana","window"),("Puerta","door")):
         data=payload.get(key,{}) if isinstance(payload,dict) else {}; st.write(f"**{label}:** {data.get('description','Sin información')} · Rw {data.get('rw','—')} dB")
     st.write(f"Puntaje de diseño: {payload.get('design_score',0):g}/40 · Comprensión: {payload.get('comprehension_score',0):g}/20")
-    current=row.get("teacher_score") if row.get("teacher_score") is not None else row.get("auto_score") or 0
+    auto_score=float(row.get("auto_score") or 0)
+    current=row.get("teacher_score") if row.get("teacher_score") is not None else auto_score
+    c1,c2,c3=st.columns(3)
+    c1.metric("Puntaje automático",f"{auto_score:g}/60")
+    c2.metric("Nota automática",f"{_grade_from_percent(auto_score/60*100):.1f}")
+    c3.metric("Estado","Revisada" if row.get("teacher_score") is not None else "Corrección automática")
     adjusted=st.number_input("Puntaje docente",0.,60.,float(current),1.,key=f"teacher_l2s10_score_{row.get('id')}_{compact}")
+    st.info(f"Nota calculada con el puntaje ajustado: **{_grade_from_percent(adjusted/60*100):.1f}** · Exigencia 60 %.")
     note=st.text_area("Observación docente",value=row.get("teacher_note") or "",key=f"teacher_l2s10_note_{row.get('id')}_{compact}")
     if st.button("Guardar revisión del diseño integrador",type="primary",key=f"teacher_l2s10_save_{row.get('id')}_{compact}"):
         client.table("responses").update({"teacher_score":adjusted,"teacher_note":note,"teacher_level":"Correcta" if adjusted>=36 else "Parcialmente correcta","status":"reviewed","updated_at":_now()}).eq("id",row["id"]).execute(); st.success("Revisión guardada.")

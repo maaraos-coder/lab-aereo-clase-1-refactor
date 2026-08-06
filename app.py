@@ -1517,9 +1517,14 @@ with st.sidebar:
     )
     st.caption("DIPLOMADO EN ACÚSTICA EN LA EDIFICACIÓN")
     st.markdown(f"**{st.session_state.name}**  \n{st.session_state.role}")
+    results_view_label=(
+        "📝 Evaluaciones entregadas"
+        if st.session_state.get("role")=="Docente"
+        else "📊 Mis resultados"
+    )
     view_options=[
         "🏠 Mis clases",
-        "📊 Mis resultados",
+        results_view_label,
         f"📚 Laboratorio {ACTIVE_LAB} y actividades",
     ]
     if st.session_state.get("main_view") not in view_options:
@@ -1568,8 +1573,7 @@ with st.sidebar:
             teacher_student_management()
         with st.expander("🔒 Publicación de laboratorios"):
             teacher_publication_management()
-        with st.expander("📊 Centro de resultados · Curso 1"):
-            teacher_course_results(compact=True)
+        st.caption("Las evaluaciones de los alumnos se revisan en la vista “Evaluaciones entregadas”.")
     active_titles=LAB_STAGE_TITLES[ACTIVE_LAB]
     active_minutes=STAGE_MINUTES if ACTIVE_LAB==1 else dict(enumerate(LAB2_MINUTES))
     labels=[
@@ -1591,8 +1595,11 @@ with st.sidebar:
 
 if view=="🏠 Mis clases":
     course_dashboard()
-elif view=="📊 Mis resultados":
-    results_view(_supabase(), _results_catalog(), st.session_state.get("user_key", ""))
+elif view==results_view_label:
+    if st.session_state.get("role")=="Docente":
+        teacher_course_results(compact=False)
+    else:
+        results_view(_supabase(), _results_catalog(), st.session_state.get("user_key", ""))
 elif view==view_options[2]:
     lab_stages=LABORATORIES[ACTIVE_LAB]["stages"]
     if selected not in labels:
