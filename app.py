@@ -1440,14 +1440,16 @@ if st.query_params.get("projection")=="1":
     projection_view()
     st.stop()
 
+# El formulario es una herramienta de consulta independiente y puede abrirse
+# en otra pestaña sin crear una segunda sesión de alumno o docente.
+if st.query_params.get("formulas")=="1":
+    formula_reference()
+    st.stop()
+
 st.session_state.pop("projection_mode",None)
 
 if not st.session_state.get("access"):
     login();st.stop()
-
-if st.query_params.get("formulas")=="1":
-    formula_reference()
-    st.stop()
 
 # Laboratories 3–10 use their own renderer and class identifier.
 future_lab_id=st.session_state.get("future_lab_id")
