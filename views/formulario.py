@@ -68,50 +68,156 @@ def _formula_reference_impl():
 
 
 def _formula_popup_button_impl():
-    """Abre el formulario en un diálogo nativo de Streamlit.
+    """Open the cumulative Diploma reference without creating a second login session."""
+    # El formulario describe el material académico actualmente cargado, no el
+    # calendario de publicación. Alumno y docente deben consultar exactamente
+    # los mismos dos laboratorios reales del Curso 1.
+    visible_labs={(1,1),(1,2)}
+    popup=build_formulary_html(visible_labs)
+    popup_json=json.dumps(popup,ensure_ascii=False)
+    components.html(f"""
+    <button id="open-formulas">📐 Formulario</button>
+    <style>body{{margin:0}}button{{width:100%;height:42px;background:#0b4f83;color:white;
+    border:1px solid #59d4ef;border-radius:8px;font-weight:700;font-size:13px;cursor:pointer}}
+    button:hover{{background:#0878bd;border-color:#8ee9ff}}</style>
+    <script>document.getElementById('open-formulas').onclick=()=>{{
+      const win=window.open('','formulario_diplomado_app123','popup=yes,width=820,height=880,resizable=yes,scrollbars=yes');
+      win.document.open();win.document.write({popup_json});win.document.close();
+    }};</script>""",height=48,scrolling=False)
+    return
+    lab1_formulae=[
+        ("Absorción equivalente","A = Σ α<sub>i</sub> · S<sub>i</sub>",[
+            ("A","área de absorción acústica equivalente","m² sabin"),
+            ("α<sub>i</sub>","coeficiente de absorción de la superficie i","adimensional"),
+            ("S<sub>i</sub>","área de la superficie i","m²")]),
+        ("Tiempo de reverberación de Sabine","T<sub>60</sub> = 0,161 · V / A",[
+            ("T<sub>60</sub>","tiempo para que el nivel sonoro decaiga 60 dB","s"),
+            ("V","volumen del recinto","m³"),
+            ("A","área de absorción acústica equivalente","m² sabin")]),
+        ("Coeficiente de transmisión","τ = 10<sup>−R/10</sup>",[
+            ("τ","relación entre potencia sonora transmitida e incidente","adimensional"),
+            ("R","índice de reducción sonora del elemento","dB")]),
+        ("Elemento compuesto","τ<sub>t</sub> = Σ(S<sub>i</sub>·τ<sub>i</sub>) / ΣS<sub>i</sub><br>R<sub>t</sub> = −10·log<sub>10</sub>(τ<sub>t</sub>)",[
+            ("τ<sub>t</sub>","coeficiente de transmisión total del cerramiento","adimensional"),
+            ("S<sub>i</sub>","área de cada elemento (muro, puerta o ventana)","m²"),
+            ("τ<sub>i</sub>","coeficiente de transmisión de cada elemento","adimensional"),
+            ("R<sub>t</sub>","índice de reducción sonora del elemento compuesto","dB")]),
+        ("Diferencia de nivel estandarizada","D<sub>nT</sub> = L<sub>1</sub> − L<sub>2</sub> + 10·log<sub>10</sub>(T/T<sub>0</sub>)",[
+            ("D<sub>nT</sub>","diferencia de nivel estandarizada entre recintos","dB"),
+            ("L<sub>1</sub>","nivel promedio en el recinto emisor","dB"),
+            ("L<sub>2</sub>","nivel promedio en el recinto receptor","dB"),
+            ("T","tiempo de reverberación medido en el receptor","s"),
+            ("T<sub>0</sub>","tiempo de reverberación de referencia; usualmente 0,5 s","s")]),
+        ("Ley de masa (aproximación)","R ≈ 20·log<sub>10</sub>(m′·f) − 47",[
+            ("R","índice de reducción sonora aproximado","dB"),
+            ("m′","masa superficial de la placa","kg/m²"),
+            ("f","frecuencia","Hz")]),
+        ("Rigidez flexional","D = E·h<sup>3</sup> / [12·(1−ν<sup>2</sup>)]",[
+            ("D","rigidez flexional por unidad de ancho","N·m"),
+            ("E","módulo de Young del material","Pa"),
+            ("h","espesor de la placa","m"),
+            ("ν","coeficiente de Poisson","adimensional")]),
+        ("Frecuencia crítica","f<sub>c</sub> = c<sup>2</sup>/(2π) · √(m′/D)",[
+            ("f<sub>c</sub>","frecuencia crítica o de coincidencia","Hz"),
+            ("c","velocidad del sonido en el aire","m/s"),
+            ("m′","masa superficial de la placa","kg/m²"),
+            ("D","rigidez flexional de la placa","N·m")]),
+        ("Resonancia masa–aire–masa","f<sub>0</sub> ≈ 60·√[(1/d)·(1/m′<sub>1</sub>+1/m′<sub>2</sub>)]",[
+            ("f<sub>0</sub>","frecuencia de resonancia del sistema doble","Hz"),
+            ("d","profundidad de la cámara de aire","m"),
+            ("m′<sub>1</sub>, m′<sub>2</sub>","masas superficiales de las dos hojas","kg/m²")]),
+        ("Periodo de recuperación","Payback = I<sub>0</sub> / F<sub>neto</sub>",[
+            ("I<sub>0</sub>","inversión inicial","$"),
+            ("F<sub>neto</sub>","flujo neto anual atribuible a la solución","$/año"),
+            ("Payback","tiempo necesario para recuperar la inversión","años")]),
+        ("Retorno sobre la inversión","ROI = (B<sub>total</sub> − I<sub>0</sub>) / I<sub>0</sub> · 100",[
+            ("B<sub>total</sub>","beneficio económico acumulado en el periodo analizado","$"),
+            ("I<sub>0</sub>","inversión inicial","$"),
+            ("ROI","retorno sobre la inversión","%")]),
+    ]
+    lab2_formulae=[
+        ("Adaptaciones espectrales ISO","R<sub>w</sub> + C &nbsp;&nbsp;·&nbsp;&nbsp; R<sub>w</sub> + C<sub>tr</sub>",[
+            ("R<sub>w</sub>","índice ponderado de reducción sonora del elemento ensayado","dB"),
+            ("C","término de adaptación para espectros predominantemente medios y altos","dB"),
+            ("C<sub>tr</sub>","término de adaptación para tránsito y espectros con contenido grave","dB")]),
+        ("Diferencia de nivel estandarizada","D<sub>nT</sub> = L<sub>1</sub> − L<sub>2</sub> + 10·log<sub>10</sub>(T/T<sub>0</sub>)",[
+            ("D<sub>nT</sub>","diferencia de nivel estandarizada entre recintos","dB"),
+            ("L<sub>1</sub>","nivel promedio en el recinto emisor","dB"),
+            ("L<sub>2</sub>","nivel promedio en el recinto receptor","dB"),
+            ("T","tiempo de reverberación medido en el recinto receptor","s"),
+            ("T<sub>0</sub>","tiempo de reverberación de referencia; usualmente 0,5 s en viviendas","s")]),
+        ("Descriptor adaptado del caso","D<sub>nT,A</sub> = D<sub>nT,w</sub> + C",[
+            ("D<sub>nT,A</sub>","diferencia de nivel estandarizada ponderada A para el espectro considerado","dB"),
+            ("D<sub>nT,w</sub>","valor único ponderado de la diferencia de nivel estandarizada","dB"),
+            ("C","término de adaptación espectral correspondiente","dB")]),
+        ("Paso simplificado de elemento a edificio","D<sub>nT,A</sub> ≈ R<sub>comp,A</sub> + 10·log<sub>10</sub>(0,32·V/S) − L<sub>obra</sub>",[
+            ("D<sub>nT,A</sub>","diferencia de nivel estandarizada adaptada estimada","dB"),
+            ("R<sub>comp,A</sub>","reducción sonora adaptada del elemento compuesto","dB"),
+            ("V","volumen del recinto receptor","m³"),
+            ("S","área del elemento separador","m²"),
+            ("L<sub>obra</sub>","pérdida estimada por montaje, encuentros y ejecución","dB")]),
+        ("Aislamiento del cerramiento compuesto","τ<sub>comp</sub> = Σ(S<sub>i</sub>·10<sup>−R<sub>i</sub>/10</sup>)/ΣS<sub>i</sub><br>R<sub>comp</sub> = −10·log<sub>10</sub>(τ<sub>comp</sub>)",[
+            ("τ<sub>comp</sub>","coeficiente de transmisión del cerramiento completo","adimensional"),
+            ("S<sub>i</sub>","área de cada componente, por ejemplo muro o puerta","m²"),
+            ("R<sub>i</sub>","índice de reducción sonora de cada componente","dB"),
+            ("R<sub>comp</sub>","índice de reducción sonora del conjunto","dB")]),
+    ]
 
-    Se evita ``window.open`` porque los navegadores pueden bloquear ventanas
-    emergentes creadas desde un iframe de ``components.html``.
-    """
-    visible_labs = {(1, 1), (1, 2)}
-    popup_html = build_formulary_html(visible_labs)
+    def build_cards(formulae):
+        cards=""
+        for name,equation,variables in formulae:
+            rows="".join(
+                f"<tr><th>{symbol}</th><td>{meaning}</td><td>{unit}</td></tr>"
+                for symbol,meaning,unit in variables)
+            cards+=(
+                f"<article><h3>{name}</h3><div class='eq'>{equation}</div>"
+                f"<table><thead><tr><th>Símbolo</th><th>Corresponde a</th><th>Unidad</th></tr></thead>"
+                f"<tbody>{rows}</tbody></table></article>")
+        return cards
 
-    if st.button(
-        "📐 Abrir Formulario LaTeX · Lab. 1 y 2 · v3",
-        key="open_diploma_formulary",
-        width="stretch",
-    ):
-        st.session_state["show_diploma_formulary"] = True
-
-    if not st.session_state.get("show_diploma_formulary", False):
-        return
-
-    @st.dialog("📐 Formulario · Curso 1", width="large")
-    def _show_formulary_dialog():
-        components.html(
-            popup_html,
-            height=720,
-            scrolling=True,
+    cards=(
+        "<section><div class='lab-title'><b>Laboratorio 1</b>"
+        "<span>Fundamentos, recintos, transmisión, placas y evaluación económica</span></div>"
+        + build_cards(lab1_formulae) + "</section>"
+    )
+    show_lab2=st.session_state.get("role")=="Docente" or ACTIVE_LAB==2
+    if show_lab2:
+        cards+=(
+            "<section><div class='lab-title lab2'><b>Laboratorio 2</b>"
+            "<span>CES–MINVU, descriptores de edificio, ISO 12354 y casos profesionales</span></div>"
+            + build_cards(lab2_formulae) + "</section>"
         )
-        if st.button(
-            "Cerrar formulario",
-            key="close_diploma_formulary",
-            width="stretch",
-        ):
-            st.session_state["show_diploma_formulary"] = False
-            st.rerun()
+    popup=f"""<!doctype html><html><head><meta charset='utf-8'><title>{title}</title>
+    <style>body{{font-family:Arial,sans-serif;background:#f4f8fc;color:#102b49;margin:0;padding:18px}}
+    header{{position:sticky;top:0;background:linear-gradient(135deg,#07172b,#0878bd);color:white;
+    border-radius:14px;padding:16px 18px;box-shadow:0 8px 22px #07172b33}}header b{{font-size:20px}}
+    .lab-title{{display:flex;flex-direction:column;gap:3px;background:#e8f5fd;border:1px solid #b9def3;
+    border-radius:12px;padding:12px 14px;margin:16px 0 10px;color:#084f83}}.lab-title b{{font-size:17px}}
+    .lab-title span{{font-size:12px;color:#536b82}}.lab-title.lab2{{background:#eef8f2;border-color:#bfe3cf;color:#08724e}}
+    article{{background:white;border:1px solid #d8e6f3;border-left:5px solid #0a75bd;
+    border-radius:12px;padding:12px 14px;margin:10px 0}}h3{{font-size:14px;margin:0 0 8px;color:#0a4f86}}
+    .eq{{font-size:20px;font-weight:800;line-height:1.55;margin-bottom:10px}}
+    table{{width:100%;border-collapse:collapse;font-size:13px}}th,td{{padding:6px 7px;border-top:1px solid #e1eaf2;text-align:left;vertical-align:top}}
+    thead th{{color:#53657a;font-size:11px;text-transform:uppercase}}tbody th{{color:#083f6b;white-space:nowrap}}
+    small{{display:block;margin-top:7px;color:#60718a}}</style>
+    </head><body><header><b>📐 {title}</b><br><small style='color:#d9f5ff'>Formulario acumulativo del curso, organizado por laboratorio</small></header>{cards}</body></html>"""
+    popup_json=json.dumps(popup,ensure_ascii=False)
+    components.html(f"""
+    <button id="open-formulas">📐 Abrir fórmulas</button>
+    <style>body{{margin:0}}button{{width:100%;height:42px;background:#0b4f83;color:white;
+    border:1px solid #59d4ef;border-radius:8px;font-weight:700;font-size:14px;cursor:pointer}}
+    button:hover{{background:#0878bd;border-color:#8ee9ff}}</style>
+    <script>document.getElementById('open-formulas').onclick=()=>{{
+      const win=window.open('','formulario_laboratorio','popup=yes,width=720,height=840,resizable=yes,scrollbars=yes');
+      win.document.open();win.document.write({popup_json});win.document.close();
+    }};</script>""",height=48,scrolling=False)
 
-    _show_formulary_dialog()
 
-
-FORMULARIO_MODULE_VERSION = "3.0.0"
-
+_VIEWS = {
+    "formula_reference": _formula_reference_impl,
+    "formula_popup_button": _formula_popup_button_impl,
+}
 
 def run_view(name, runtime, *args, **kwargs):
-    """Ejecuta las vistas del formulario sin depender de un registro global."""
     _bind_runtime(runtime)
-    if name == "formula_reference":
-        return _formula_reference_impl(*args, **kwargs)
-    if name == "formula_popup_button":
-        return _formula_popup_button_impl(*args, **kwargs)
-    raise KeyError(f"Vista de formulario desconocida: {name}")
+    return _VIEWS[name](*args, **kwargs)
