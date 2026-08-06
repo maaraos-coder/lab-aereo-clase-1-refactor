@@ -477,11 +477,11 @@ def _teacher_course_results_impl(compact=False):
                        key=f"course_results_evaluation_{'compact' if compact else 'full'}")
     kind,_=evaluations[label]
     if kind=="lab1":
-        _teacher_lab1_final_results(compact=compact)
+        _teacher_lab1_final_results_impl(compact=compact)
     elif kind=="lab2":
-        teacher_stage9_results(compact=compact)
+        _teacher_stage9_results_impl(compact=compact)
     else:
-        _teacher_lab2_integrated_results(compact=compact)
+        _teacher_lab2_integrated_results_impl(compact=compact)
 
 def _teacher_lab2_integrated_results_impl(compact=False):
     client=_supabase()
@@ -531,7 +531,7 @@ def _teacher_lab2_stage10_answer_key_impl():
         "en cada tercio de octava; con la curva combinada construir Rw y calcular C y Ctr. "
         "El diseño cumple cuando Rw ≥ 40 dB. El valor numérico depende de la solución seleccionada por cada alumno."
     )
-    _lab2_s10_teacher_solved_examples()
+    _lab2_s10_teacher_solved_examples_impl()
     st.markdown("### Pauta · Preguntas de comprensión")
     for i,(question,options,correct) in enumerate(LAB2_S10_QUESTIONS):
         with st.expander(f"Pregunta {i+1}",expanded=i==0):
