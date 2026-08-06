@@ -68,12 +68,9 @@ def _formula_reference_impl():
 
 
 def _formula_popup_button_impl():
-    """Abre el formulario en una pestaña o ventana independiente del navegador."""
+    """Abre el formulario técnico en una pestaña independiente."""
     import base64
 
-    # El formulario se genera como un documento HTML autónomo. De esta forma
-    # no depende de pop-ups ejecutados dentro de un iframe, que los navegadores
-    # suelen bloquear.
     visible_labs = {(1, 1), (1, 2)}
     popup_html = build_formulary_html(visible_labs)
     encoded = base64.b64encode(popup_html.encode("utf-8")).decode("ascii")
@@ -82,47 +79,55 @@ def _formula_popup_button_impl():
     st.markdown(
         f"""
         <style>
-        #formulario-diplomado-link,
-        #formulario-diplomado-link:link,
-        #formulario-diplomado-link:visited,
-        #formulario-diplomado-link:hover,
-        #formulario-diplomado-link:active {{
-            display: flex !important;
-            align-items: center !important;
-            justify-content: center !important;
-            width: 100% !important;
-            min-height: 42px !important;
-            box-sizing: border-box !important;
-            background: #0b5f96 !important;
-            color: #ffffff !important;
-            -webkit-text-fill-color: #ffffff !important;
-            text-decoration: none !important;
-            border: 1px solid #59d4ef !important;
-            border-radius: 8px !important;
-            font-weight: 700 !important;
-            font-size: 14px !important;
-            line-height: 1.2 !important;
-            padding: 9px 12px !important;
-            text-align: center !important;
-            opacity: 1 !important;
+        a#formulario-tecnico-btn,
+        a#formulario-tecnico-btn:link,
+        a#formulario-tecnico-btn:visited,
+        a#formulario-tecnico-btn:hover,
+        a#formulario-tecnico-btn:active,
+        a#formulario-tecnico-btn:focus {{
+            display:flex !important;
+            align-items:center !important;
+            justify-content:center !important;
+            width:100% !important;
+            min-height:42px !important;
+            padding:9px 12px !important;
+            box-sizing:border-box !important;
+            border:1px solid #65d9f3 !important;
+            border-radius:8px !important;
+            background:#0b659c !important;
+            color:#ffffff !important;
+            -webkit-text-fill-color:#ffffff !important;
+            text-decoration:none !important;
+            font-weight:700 !important;
+            font-size:14px !important;
+            line-height:1.2 !important;
+            opacity:1 !important;
+            text-shadow:none !important;
         }}
-        #formulario-diplomado-link:hover {{
-            background: #0878bd !important;
-            border-color: #9cecff !important;
-            box-shadow: 0 0 0 2px rgba(89, 212, 239, 0.20) !important;
+        a#formulario-tecnico-btn:hover,
+        a#formulario-tecnico-btn:focus {{
+            background:#087dbd !important;
+            border-color:#a7efff !important;
+            color:#ffffff !important;
+            -webkit-text-fill-color:#ffffff !important;
         }}
-        #formulario-diplomado-link span {{
-            color: #ffffff !important;
-            -webkit-text-fill-color: #ffffff !important;
-            opacity: 1 !important;
+        a#formulario-tecnico-btn > span,
+        a#formulario-tecnico-btn:visited > span,
+        a#formulario-tecnico-btn:hover > span,
+        a#formulario-tecnico-btn:active > span,
+        a#formulario-tecnico-btn:focus > span {{
+            color:#ffffff !important;
+            -webkit-text-fill-color:#ffffff !important;
+            font-weight:700 !important;
+            opacity:1 !important;
         }}
         </style>
-        <a id="formulario-diplomado-link"
+        <a id="formulario-tecnico-btn"
            href="{data_url}"
            target="_blank"
            rel="noopener noreferrer"
-           title="Abrir el formulario en una ventana independiente">
-            <span>📐 Formulario</span>
+           title="Abrir formulario en una pestaña independiente">
+            <span style="color:#ffffff !important;-webkit-text-fill-color:#ffffff !important;">📐&nbsp; Formulario</span>
         </a>
         """,
         unsafe_allow_html=True,
