@@ -78,24 +78,115 @@ FORMULA_CATALOG = [{
     ],
 }]
 
+
+LATEX_EQUATIONS = {
+    "A = Σ(α<sub>i</sub>·S<sub>i</sub>)": r"A=\sum_{i=1}^{n}\alpha_i S_i",
+    "T<sub>60</sub> = 0,161·V/A": r"T_{60}=0.161\,\frac{V}{A}",
+    "τ = W<sub>t</sub>/W<sub>i</sub> = 10<sup>−R/10</sup>": r"\tau=\frac{W_t}{W_i}=10^{-R/10}",
+    "R = 10·log<sub>10</sub>(1/τ)": r"R=10\log_{10}\!\left(\frac{1}{\tau}\right)=-10\log_{10}(\tau)",
+    "τ<sub>t</sub> = Σ(S<sub>i</sub>τ<sub>i</sub>)/ΣS<sub>i</sub><br>R<sub>t</sub> = −10·log<sub>10</sub>(τ<sub>t</sub>)": r"\tau_T=\frac{\sum_{i=1}^{n}S_i\tau_i}{\sum_{i=1}^{n}S_i}\qquad R_T=-10\log_{10}(\tau_T)",
+    "m′ = ρ·h": r"m'=\rho h",
+    "R ≈ 20·log<sub>10</sub>(m′·f) − 47": r"R\approx20\log_{10}(m'f)-47",
+    "D = E·h<sup>3</sup>/[12(1−ν<sup>2</sup>)]": r"D=\frac{Eh^3}{12\left(1-\nu^2\right)}",
+    "f<sub>c</sub> = c<sup>2</sup>/(2π)·√(m′/D)": r"f_c=\frac{c^2}{2\pi}\sqrt{\frac{m'}{D}}",
+    "F<sub>neto</sub> = B<sub>bruto</sub> − C<sub>recurrente</sub>": r"F_{\mathrm{neto}}=B_{\mathrm{bruto}}-C_{\mathrm{recurrente}}",
+    "Payback = I<sub>0</sub>/F<sub>neto</sub>": r"\mathrm{Payback}=\frac{I_0}{F_{\mathrm{neto}}}",
+    "ROI = (B<sub>acumulado</sub>−C<sub>total</sub>)/C<sub>total</sub>·100": r"ROI=\frac{B_{\mathrm{acumulado}}-C_{\mathrm{total}}}{C_{\mathrm{total}}}\,100",
+    "τ = W<sub>t</sub>/W<sub>i</sub>": r"\tau=\frac{W_t}{W_i}",
+    "TL = −10·log<sub>10</sub>(τ)<br>τ = 10<sup>−TL/10</sup>": r"TL=-10\log_{10}(\tau)\qquad \tau=10^{-TL/10}",
+    "τ(θ) = [1 + (ωm′cosθ/2ρ<sub>0</sub>c)<sup>2</sup>]<sup>−1</sup>": r"\tau(\theta)=\left[1+\left(\frac{\omega m'\cos\theta}{2\rho_0c}\right)^2\right]^{-1}",
+    "TL<sub>campo</sub> = −10·log<sub>10</sub>(τ̄)": r"TL_{\mathrm{campo}}=-10\log_{10}(\bar{\tau})",
+    "D = E·h<sup>3</sup>/[12(1−ν<sup>2</sup>)]<br>f<sub>c</sub> = c<sup>2</sup>/(2π)·√(m′/D)": r"D=\frac{Eh^3}{12\left(1-\nu^2\right)}\qquad f_c=\frac{c^2}{2\pi}\sqrt{\frac{m'}{D}}",
+    "f<sub>0</sub> ≈ 60·√[(1/d)(1/m′<sub>1</sub>+1/m′<sub>2</sub>)]": r"f_0\approx60\sqrt{\frac{1}{d}\left(\frac{1}{m'_1}+\frac{1}{m'_2}\right)}",
+    "f<sub>l</sub> = c/(2πd)": r"f_l=\frac{c}{2\pi d}",
+    "m′ = ρ<sub>vidrio</sub>·h": r"m'=\rho_{\mathrm{vidrio}}h",
+    "R<sub>w</sub> = valor de la referencia ajustada a 500 Hz": r"R_w=\text{valor de la curva de referencia desplazada a }500\,\mathrm{Hz}",
+    "X<sub>1</sub> = −10·log<sub>10</sub>[Σ10<sup>(L<sub>1,i</sub>−R<sub>i</sub>)/10</sup>]<br>C = X<sub>1</sub>−R<sub>w</sub>": r"X_1=-10\log_{10}\!\left[\sum_i10^{(L_{1,i}-R_i)/10}\right]\qquad C=X_1-R_w",
+    "X<sub>2</sub> = −10·log<sub>10</sub>[Σ10<sup>(L<sub>2,i</sub>−R<sub>i</sub>)/10</sup>]<br>C<sub>tr</sub> = X<sub>2</sub>−R<sub>w</sub>": r"X_2=-10\log_{10}\!\left[\sum_i10^{(L_{2,i}-R_i)/10}\right]\qquad C_{tr}=X_2-R_w",
+    "R<sub>w</sub>(C;C<sub>tr</sub>)": r"R_w\,(C;C_{tr})",
+    "τ<sub>i,f</sub> = 10<sup>−R<sub>i,f</sub>/10</sup>": r"\tau_{i,f}=10^{-R_{i,f}/10}",
+    "τ<sub>T,f</sub> = [19,71·τ<sub>m,f</sub> + 2,40·τ<sub>v,f</sub> + 1,89·τ<sub>p,f</sub>]/24,00": r"\tau_{T,f}=\frac{19.71\tau_{m,f}+2.40\tau_{v,f}+1.89\tau_{p,f}}{24.00}",
+    "R<sub>T,f</sub> = −10·log<sub>10</sub>(τ<sub>T,f</sub>)": r"R_{T,f}=-10\log_{10}(\tau_{T,f})",
+    "R<sub>w,total</sub> ≥ 40 dB": r"R_{w,\mathrm{total}}\geq40\,\mathrm{dB}",
+}
+
+SYMBOL_LATEX = {
+    "A": "A", "V": "V", "R": "R", "D": "D", "E": "E", "h": "h", "f": "f", "c": "c",
+    "τ": r"\tau", "τ̄": r"\bar{\tau}", "θ": r"\theta", "ω": r"\omega", "ρ": r"\rho", "ν": r"\nu",
+    "m′": "m'", "ROI": "ROI", "Payback": r"\mathrm{Payback}", "TL": "TL", "C": "C",
+    "C,C<sub>tr</sub>": r"C,C_{tr}",
+}
+
+
+def _symbol_latex(symbol):
+    if symbol in SYMBOL_LATEX:
+        return SYMBOL_LATEX[symbol]
+    converted = symbol
+    converted = converted.replace("<sub>", "_{").replace("</sub>", "}")
+    converted = converted.replace("<sup>", "^{").replace("</sup>", "}")
+    converted = converted.replace("τ", r"\tau").replace("ρ", r"\rho")
+    converted = converted.replace("ν", r"\nu").replace("θ", r"\theta")
+    converted = converted.replace("ω", r"\omega").replace("′", "'")
+    return converted
+
+
 def _cards(formulae):
-    html=""
-    for name,equation,variables,use in formulae:
-        rows="".join(f"<tr><th>{s}</th><td>{m}</td><td>{u}</td></tr>" for s,m,u in variables)
-        html+=(f"<article><h4>{name}</h4><div class='eq'>{equation}</div><table><thead><tr>"
-               f"<th>Símbolo</th><th>Corresponde a</th><th>Unidad</th></tr></thead><tbody>{rows}</tbody></table>"
-               f"<p class='use'><b>Uso:</b> {use}</p></article>")
+    html = ""
+    for name, equation, variables, use in formulae:
+        latex = LATEX_EQUATIONS.get(equation, equation)
+        rows = "".join(
+            f"<tr><th>\\({_symbol_latex(symbol)}\\)</th><td>{meaning}</td><td>{unit}</td></tr>"
+            for symbol, meaning, unit in variables
+        )
+        html += (
+            f"<article><h4>{name}</h4><div class='eq'>\\[{latex}\\]</div>"
+            f"<table><thead><tr><th>Símbolo</th><th>Corresponde a</th><th>Unidad</th></tr></thead>"
+            f"<tbody>{rows}</tbody></table><p class='use'><b>Uso:</b> {use}</p></article>"
+        )
     return html
 
+
 def build_formulary_html(visible_labs):
-    body=""
-    for course_index,course in enumerate(FORMULA_CATALOG,1):
-        labs=""
+    body = ""
+    for course_index, course in enumerate(FORMULA_CATALOG, 1):
+        labs = ""
         for lab in course["labs"]:
-            if (course_index,lab["number"]) not in visible_labs:
+            if (course_index, lab["number"]) not in visible_labs:
                 continue
-            topics="".join(f"<div class='topic'><h3>{title}</h3>{_cards(items)}</div>" for title,items in lab["topics"])
-            labs+=f"<details open><summary>Laboratorio {lab['number']} · {lab['subtitle']}</summary>{topics}</details>"
-        if labs: body+=f"<section><h2>Curso 1 · {course['course']}</h2>{labs}</section>"
-    return f'''<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Formulario Curso 1 · APP 123</title><style>
-    *{{box-sizing:border-box}}body{{font-family:Arial,sans-serif;background:#f3f7fb;color:#102b49;margin:0;padding:18px}}header{{position:sticky;top:0;z-index:5;background:linear-gradient(135deg,#07172b,#0878bd);color:white;border-radius:14px;padding:16px 18px}}header b{{font-size:21px}}header span{{display:block;color:#d9f5ff;font-size:12px;margin-top:5px}}.version{{display:inline-block;margin-top:8px;padding:3px 8px;border-radius:999px;background:#dff7ea;color:#08724e;font-size:11px;font-weight:800}}h2{{font-size:18px;color:#073f6b}}details{{background:white;border:1px solid #cfe1ef;border-radius:13px;margin:12px 0;overflow:hidden}}summary{{cursor:pointer;background:#e8f5fd;color:#084f83;font-weight:800;padding:13px 15px}}.topic{{padding:4px 13px 11px}}.topic h3{{font-size:14px;color:#08724e;border-bottom:2px solid #d8eee4;padding-bottom:6px}}article{{border:1px solid #d8e6f3;border-left:5px solid #0a75bd;border-radius:11px;padding:11px 13px;margin:10px 0}}h4{{font-size:14px;margin:0 0 7px;color:#0a4f86}}.eq{{font-size:20px;font-weight:800;line-height:1.55;margin:7px 0 10px}}table{{width:100%;border-collapse:collapse;font-size:13px}}th,td{{padding:6px 7px;border-top:1px solid #e1eaf2;text-align:left;vertical-align:top}}thead th{{color:#53657a;font-size:11px;text-transform:uppercase}}tbody th{{color:#083f6b;white-space:nowrap}}.use{{font-size:12px;color:#53657a}}</style></head><body><header><b>📐 Formulario · Curso 1</b><span>Fórmulas utilizadas en los Laboratorios 1 y 2, ordenadas según la secuencia real del curso</span><span class="version">FORMULARIO ACTUALIZADO · APP 123</span></header>{body}</body></html>'''
+            topics = "".join(
+                f"<div class='topic'><h3>{title}</h3>{_cards(items)}</div>"
+                for title, items in lab["topics"]
+            )
+            labs += f"<details open><summary>Laboratorio {lab['number']} · {lab['subtitle']}</summary>{topics}</details>"
+        if labs:
+            body += f"<section><h2>Curso 1 · {course['course']}</h2>{labs}</section>"
+
+    return f'''<!doctype html><html lang="es"><head><meta charset="utf-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <title>Formulario profesional · Curso 1</title>
+    <script>
+      window.MathJax = {{
+        tex: {{inlineMath: [['\\\\(','\\\\)']], displayMath: [['\\\\[','\\\\]']]}},
+        svg: {{fontCache: 'global'}}
+      }};
+    </script>
+    <script async id="MathJax-script" src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-svg.js"></script>
+    <style>
+    *{{box-sizing:border-box}}body{{font-family:Arial,sans-serif;background:#f3f7fb;color:#102b49;margin:0;padding:18px}}
+    header{{position:sticky;top:0;z-index:5;background:linear-gradient(135deg,#07172b,#0878bd);color:white;border-radius:14px;padding:16px 18px;box-shadow:0 8px 22px #07172b26}}
+    header b{{font-size:21px}}header span{{display:block;color:#d9f5ff;font-size:12px;margin-top:5px}}
+    .version{{display:inline-block;margin-top:8px;padding:3px 8px;border-radius:999px;background:#dff7ea;color:#08724e;font-size:11px;font-weight:800}}
+    h2{{font-size:18px;color:#073f6b}}details{{background:white;border:1px solid #cfe1ef;border-radius:13px;margin:12px 0;overflow:hidden}}
+    summary{{cursor:pointer;background:#e8f5fd;color:#084f83;font-weight:800;padding:13px 15px}}
+    .topic{{padding:4px 13px 11px}}.topic h3{{font-size:14px;color:#08724e;border-bottom:2px solid #d8eee4;padding-bottom:6px}}
+    article{{background:white;border:1px solid #d8e6f3;border-left:5px solid #0a75bd;border-radius:11px;padding:14px 16px;margin:12px 0}}
+    h4{{font-size:15px;margin:0 0 6px;color:#0a4f86}}
+    .eq{{font-size:22px;line-height:1.55;margin:10px 0 14px;padding:12px 10px;background:#f8fbfe;border-radius:8px;text-align:center;overflow-x:auto}}
+    .eq mjx-container{{margin:0!important}}table{{width:100%;border-collapse:collapse;font-size:13px}}
+    th,td{{padding:7px 8px;border-top:1px solid #e1eaf2;text-align:left;vertical-align:middle}}
+    thead th{{color:#53657a;font-size:11px;text-transform:uppercase}}tbody th{{color:#083f6b;white-space:nowrap;font-size:15px}}
+    .use{{font-size:12px;color:#53657a}}
+    @media(max-width:640px){{body{{padding:10px}}.eq{{font-size:18px}}th,td{{font-size:11px;padding:6px 5px}}}}
+    </style></head><body><header><b>📐 Formulario · Curso 1</b>
+    <span>Fórmulas utilizadas en los Laboratorios 1 y 2, con notación matemática profesional</span>
+    <span class="version">FORMULARIO LATEX · APP 123</span></header>{body}</body></html>'''
