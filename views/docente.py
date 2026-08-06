@@ -242,7 +242,7 @@ def _teacher_stage9_results_impl(compact=False):
         return
     try:
         raw=(client.table("responses").select("*,users(display_name,email)")
-             .eq("class_id",CLASS_ID).eq("stage",9)
+             .eq("class_id","clase-02-aislamiento-ruido-aereo-minvu").eq("stage",9)
              .eq("question_key","final_comprehension")
              .order("updated_at",desc=True).execute().data or [])
     except Exception as exc:
@@ -444,75 +444,123 @@ def _teacher_lab1_final_results_impl(compact=False):
         st.success("Puntaje y observación docente guardados.")
 
 def _teacher_course_results_impl(compact=False):
-    """Centro docente general de evaluaciones de todos los laboratorios del Curso 1."""
-    if st.session_state.get("role")!="Docente":
+    """Centro docente de las evaluaciones calificadas del curso.
+
+    La nota del curso se obtiene exclusivamente con las evaluaciones del
+    Laboratorio 2: Etapa 9 (40 puntos) y Etapa 10 (60 puntos).
+    """
+    if st.session_state.get("role") != "Docente":
         return
+
     st.markdown("### Evaluaciones entregadas por los alumnos")
     st.caption(
-        "Revisa cada entrega, consulta la corrección automática y ajusta el puntaje cuando sea necesario. "
-        "La nota se calcula automáticamente en escala 1,0–7,0, con 60 % de exigencia para la nota 4,0."
+        "La nota del curso se calcula únicamente con el Laboratorio 2: "
+        "Etapa 9 (40 puntos) y Etapa 10 (60 puntos). La nota final se publica "
+        "cuando ambas evaluaciones han sido entregadas."
     )
-    client=_supabase()
+
+    client = _supabase()
     if client is not None:
         try:
-            all_rows=(client.table("responses").select("*,users(display_name,email)")
-                      .in_("class_id",["clase-01-aislamiento-ruido-aereo","clase-02-aislamiento-ruido-aereo-minvu"]).in_("question_key",["final_exam","final_comprehension","final_integrated_design"])
-                      .execute().data or [])
-            consolidated={}
+            all_rows = (
+                client.table("responses")
+                .select("*,users(display_name,email)")
+                .eq("class_id", "clase-02-aislamiento-ruido-aereo-minvu")
+                .in_("question_key", ["final_comprehension", "final_integrated_design"])
+                .order("updated_at", desc=True)
+                .execute().data
+                or []
+            )
+
+            consolidated = {}
+            seen = set()
             for row in all_rows:
-                user=row.get("users") or {}
-                key=row.get("user_key") or user.get("email") or str(row.get("id"))
-                item=consolidated.setdefault(key,{
-                    "Alumno":user.get("display_name") or user.get("email") or key,
-                    "Lab. 1 · Etapa 10":"Pendiente",
-                    "Lab. 2 · Etapa 9":"Pendiente",
-                    "Lab. 2 · Etapa 10":"Pendiente",
-                    "Promedio registrado":"Pendiente",
-                    "Estado general":"Corrección automática",
-                    "_reviewed":False,
-                })
-                score=row.get("teacher_score") if row.get("teacher_score") is not None else row.get("auto_score")
-                if row.get("teacher_score") is not None or row.get("status")=="reviewed":
-                    item["_reviewed"]=True
-                if row.get("question_key")=="final_exam":
-                    item["Lab. 1 · Etapa 10"]=f"{float(score or 0):.1f}/100"
-                elif row.get("question_key")=="final_comprehension":
-                    item["Lab. 2 · Etapa 9"]=f"{float(score or 0):.1f}/40"
-                elif row.get("question_key")=="final_integrated_design":
-                    item["Lab. 2 · Etapa 10"]=f"{float(score or 0):.1f}/60"
+                user = row.get("users") or {}
+                user_key = row.get("user_key") or user.get("email") or str(row.get("id"))
+                question_key = row.get("question_key")
+
+                # La consulta viene ordenada desde la entrega más reciente. Si
+                # existieran duplicados, se utiliza solamente el último registro.
+                unique_key = (user_key, question_key)
+                if unique_key in seen:
+                    continue
+                seen.add(unique_key)
+
+                item = consolidated.setdefault(
+                    user_key,
+                    {
+                        "Alumno": user.get("display_name") or user.get("email") or user_key,
+                        "Lab. 2 · Etapa 9": "Pendiente",
+                        "Lab. 2 · Etapa 10": "Pendiente",
+                        "Avance": "0 de 2",
+                        "Nota final": "Pendiente",
+                        "Estado": "Sin entregas",
+                        "_stage9_score": None,
+                        "_stage10_score": None,
+                        "_reviewed": False,
+                    },
+                )
+
+                score = row.get("teacher_score") if row.get("teacher_score") is not None else row.get("auto_score")
+                score = float(score or 0)
+                if row.get("teacher_score") is not None or row.get("status") == "reviewed":
+                    item["_reviewed"] = True
+
+                if question_key == "final_comprehension":
+                    item["_stage9_score"] = score
+                    item["Lab. 2 · Etapa 9"] = f"{score:.1f}/40"
+                elif question_key == "final_integrated_design":
+                    item["_stage10_score"] = score
+                    item["Lab. 2 · Etapa 10"] = f"{score:.1f}/60"
+
             for item in consolidated.values():
-                values=[]
-                for field,maximum in (("Lab. 1 · Etapa 10",100),("Lab. 2 · Etapa 9",40),("Lab. 2 · Etapa 10",60)):
-                    if item[field]!="Pendiente":
-                        values.append(float(item[field].split("/")[0])/maximum*100)
-                if values:
-                    average=sum(values)/len(values)
-                    item["Promedio registrado"]=f"{average:.1f}% · Nota {_grade_from_percent(average):.1f}"
-                    item["Estado general"]="Con revisión docente" if item.pop("_reviewed",False) else "Corrección automática"
+                delivered = int(item["_stage9_score"] is not None) + int(item["_stage10_score"] is not None)
+                item["Avance"] = f"{delivered} de 2"
+
+                if delivered == 2:
+                    total = item["_stage9_score"] + item["_stage10_score"]
+                    item["Nota final"] = f"{total:.1f}% · Nota {_grade_from_percent(total):.1f}"
+                    item["Estado"] = "Con revisión docente" if item["_reviewed"] else "Corrección automática"
+                elif delivered == 1:
+                    partial = item["_stage9_score"] if item["_stage9_score"] is not None else item["_stage10_score"]
+                    maximum = 40 if item["_stage9_score"] is not None else 60
+                    item["Nota final"] = "Pendiente"
+                    item["Estado"] = f"Evaluación incompleta · {partial:.1f}/{maximum} puntos registrados"
                 else:
-                    item.pop("_reviewed",None)
-                    item["Promedio registrado"]="Pendiente"
-                    item["Estado general"]="Sin entregas"
+                    item["Nota final"] = "Pendiente"
+                    item["Estado"] = "Sin entregas"
+
+                item.pop("_stage9_score", None)
+                item.pop("_stage10_score", None)
+                item.pop("_reviewed", None)
+
             if consolidated:
                 with st.expander("Resumen acumulado de todos los alumnos"):
-                    summary_frame=pd.DataFrame(consolidated.values())
-                    st.dataframe(summary_frame,hide_index=True,use_container_width=True)
-                    st.download_button("Descargar consolidado CSV",summary_frame.to_csv(index=False).encode("utf-8-sig"),
-                                       "resultados_curso_1.csv","text/csv",
-                                       key=f"course_results_csv_{'compact' if compact else 'full'}")
+                    summary_frame = pd.DataFrame(consolidated.values())
+                    st.dataframe(summary_frame, hide_index=True, width="stretch")
+                    st.download_button(
+                        "Descargar consolidado CSV",
+                        summary_frame.to_csv(index=False).encode("utf-8-sig"),
+                        "resultados_curso_1.csv",
+                        "text/csv",
+                        key=f"course_results_csv_{'compact' if compact else 'full'}",
+                    )
+            else:
+                st.info("Todavía no hay evaluaciones calificadas del Laboratorio 2.")
         except Exception as exc:
             st.warning(f"No fue posible construir el resumen acumulado: {exc}")
-    evaluations={
-        "Laboratorio 1 · Etapa 10 · Evaluación final":("lab1",100),
-        "Laboratorio 2 · Etapa 9 · Comprensión":("lab2",40),
-        "Laboratorio 2 · Etapa 10 · Diseño integrador":("integrated",60),
+
+    evaluations = {
+        "Laboratorio 2 · Etapa 9 · Evaluación de comprensión": ("stage9", 40),
+        "Laboratorio 2 · Etapa 10 · Diseño integrador": ("stage10", 60),
     }
-    label=st.selectbox("Laboratorio y evaluación",list(evaluations),
-                       key=f"course_results_evaluation_{'compact' if compact else 'full'}")
-    kind,_=evaluations[label]
-    if kind=="lab1":
-        _teacher_lab1_final_results_impl(compact=compact)
-    elif kind=="lab2":
+    label = st.selectbox(
+        "Evaluación",
+        list(evaluations),
+        key=f"course_results_evaluation_{'compact' if compact else 'full'}",
+    )
+    kind, _ = evaluations[label]
+    if kind == "stage9":
         _teacher_stage9_results_impl(compact=compact)
     else:
         _teacher_lab2_integrated_results_impl(compact=compact)
