@@ -68,23 +68,16 @@ def _formula_reference_impl():
 
 
 def _formula_popup_button_impl():
-    """Abre el formulario técnico en una pestaña independiente."""
-    import base64
-
-    visible_labs = {(1, 1), (1, 2)}
-    popup_html = build_formulary_html(visible_labs)
-    encoded = base64.b64encode(popup_html.encode("utf-8")).decode("ascii")
-    data_url = f"data:text/html;charset=utf-8;base64,{encoded}"
-
+    """Abre el formulario en una pestaña independiente usando una ruta real."""
     st.markdown(
-        f"""
+        """
         <style>
         a#formulario-tecnico-btn,
         a#formulario-tecnico-btn:link,
         a#formulario-tecnico-btn:visited,
         a#formulario-tecnico-btn:hover,
         a#formulario-tecnico-btn:active,
-        a#formulario-tecnico-btn:focus {{
+        a#formulario-tecnico-btn:focus {
             display:flex !important;
             align-items:center !important;
             justify-content:center !important;
@@ -103,31 +96,24 @@ def _formula_popup_button_impl():
             line-height:1.2 !important;
             opacity:1 !important;
             text-shadow:none !important;
-        }}
+        }
         a#formulario-tecnico-btn:hover,
-        a#formulario-tecnico-btn:focus {{
+        a#formulario-tecnico-btn:focus {
             background:#087dbd !important;
             border-color:#a7efff !important;
+        }
+        a#formulario-tecnico-btn span {
             color:#ffffff !important;
             -webkit-text-fill-color:#ffffff !important;
-        }}
-        a#formulario-tecnico-btn > span,
-        a#formulario-tecnico-btn:visited > span,
-        a#formulario-tecnico-btn:hover > span,
-        a#formulario-tecnico-btn:active > span,
-        a#formulario-tecnico-btn:focus > span {{
-            color:#ffffff !important;
-            -webkit-text-fill-color:#ffffff !important;
-            font-weight:700 !important;
             opacity:1 !important;
-        }}
+        }
         </style>
         <a id="formulario-tecnico-btn"
-           href="{data_url}"
+           href="?formulas=1"
            target="_blank"
            rel="noopener noreferrer"
-           title="Abrir formulario en una pestaña independiente">
-            <span style="color:#ffffff !important;-webkit-text-fill-color:#ffffff !important;">📐&nbsp; Formulario</span>
+           title="Abrir el formulario en otra pestaña">
+            <span>📐&nbsp; Formulario</span>
         </a>
         """,
         unsafe_allow_html=True,
