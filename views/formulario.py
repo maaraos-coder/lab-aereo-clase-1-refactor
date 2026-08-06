@@ -77,9 +77,9 @@ def _formula_popup_button_impl():
     popup_html = build_formulary_html(visible_labs)
 
     if st.button(
-        "📐 Abrir Formulario actualizado · Lab. 1 y 2",
+        "📐 Abrir Formulario LaTeX · Lab. 1 y 2 · v3",
         key="open_diploma_formulary",
-        use_container_width=True,
+        width="stretch",
     ):
         st.session_state["show_diploma_formulary"] = True
 
@@ -96,7 +96,7 @@ def _formula_popup_button_impl():
         if st.button(
             "Cerrar formulario",
             key="close_diploma_formulary",
-            use_container_width=True,
+            width="stretch",
         ):
             st.session_state["show_diploma_formulary"] = False
             st.rerun()
@@ -104,6 +104,14 @@ def _formula_popup_button_impl():
     _show_formulary_dialog()
 
 
+FORMULARIO_MODULE_VERSION = "3.0.0"
+
+
 def run_view(name, runtime, *args, **kwargs):
+    """Ejecuta las vistas del formulario sin depender de un registro global."""
     _bind_runtime(runtime)
-    return _VIEWS[name](*args, **kwargs)
+    if name == "formula_reference":
+        return _formula_reference_impl(*args, **kwargs)
+    if name == "formula_popup_button":
+        return _formula_popup_button_impl(*args, **kwargs)
+    raise KeyError(f"Vista de formulario desconocida: {name}")
