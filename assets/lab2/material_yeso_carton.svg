@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 480">
+  <rect width="800" height="480" rx="24" fill="#eef7ff"/>
+  <polygon points="145,105 570,65 670,145 245,185" fill="#f6f2df" stroke="#796f55" stroke-width="5"/>
+  <polygon points="245,185 670,145 670,285 245,330" fill="#d8d0b5" stroke="#796f55" stroke-width="5"/>
+  <polygon points="145,105 245,185 245,330 145,250" fill="#c4b996" stroke="#796f55" stroke-width="5"/>
+  <text x="400" y="405" text-anchor="middle" fill="#173f63" font-family="Arial" font-size="34" font-weight="700">PLACA DE YESO-CARTÓN</text>
+</svg>

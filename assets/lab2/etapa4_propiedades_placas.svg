@@ -1,0 +1,27 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1400 620">
+  <defs><linearGradient id="b" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#f8fbff"/><stop offset="1" stop-color="#eaf4fb"/></linearGradient><linearGradient id="p" x1="0" y1="0" x2="1" y2="0"><stop stop-color="#244761"/><stop offset=".5" stop-color="#9eb5c7"/><stop offset="1" stop-color="#244761"/></linearGradient><marker id="a" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto"><path d="M0 0v6l9-3z" fill="#0877c9"/></marker></defs>
+  <rect width="1400" height="620" rx="32" fill="url(#b)"/>
+  <text x="700" y="65" text-anchor="middle" fill="#173f63" font-family="Arial" font-size="36" font-weight="700">PROPIEDADES DE CADA HOJA</text>
+  <text x="700" y="102" text-anchor="middle" fill="#557189" font-family="Arial" font-size="22">Masa superficial y rigidez se calculan por separado</text>
+  <g transform="translate(245 145)">
+    <rect x="0" y="0" width="85" height="330" rx="10" fill="url(#p)"/>
+    <path d="M-80 65H-10M-80 265H-10" stroke="#0877c9" stroke-width="5" marker-end="url(#a)"/>
+    <path d="M105 65h70M105 265h70" stroke="#0877c9" stroke-width="5" marker-end="url(#a)"/>
+    <text x="42" y="380" text-anchor="middle" fill="#173f63" font-family="Arial" font-size="27" font-weight="700">PLACA 1</text>
+    <text x="42" y="420" text-anchor="middle" fill="#0877c9" font-family="Arial" font-size="25">m′₁ = ρ₁h₁</text>
+    <text x="42" y="454" text-anchor="middle" fill="#557189" font-family="Arial" font-size="23">B₁ = E₁h₁³ / 12</text>
+  </g>
+  <g transform="translate(1065 145)">
+    <rect x="0" y="0" width="85" height="330" rx="10" fill="url(#p)"/>
+    <path d="M-90 65h70M-90 265h70" stroke="#15966d" stroke-width="5" marker-end="url(#a)"/>
+    <path d="M105 65h70M105 265h70" stroke="#15966d" stroke-width="5" marker-end="url(#a)"/>
+    <text x="42" y="380" text-anchor="middle" fill="#173f63" font-family="Arial" font-size="27" font-weight="700">PLACA 2</text>
+    <text x="42" y="420" text-anchor="middle" fill="#15966d" font-family="Arial" font-size="25">m′₂ = ρ₂h₂</text>
+    <text x="42" y="454" text-anchor="middle" fill="#557189" font-family="Arial" font-size="23">B₂ = E₂h₂³ / 12</text>
+  </g>
+  <rect x="510" y="185" width="380" height="230" rx="24" fill="#fff" stroke="#c8dbe8" stroke-width="3"/>
+  <text x="700" y="235" text-anchor="middle" fill="#173f63" font-family="Arial" font-size="25" font-weight="700">¿QUÉ CAMBIA AL AUMENTAR h?</text>
+  <text x="700" y="300" text-anchor="middle" fill="#0877c9" font-family="Arial" font-size="29" font-weight="700">Masa ∝ h</text>
+  <text x="700" y="350" text-anchor="middle" fill="#15966d" font-family="Arial" font-size="29" font-weight="700">Rigidez ∝ h³</text>
+  <text x="700" y="393" text-anchor="middle" fill="#557189" font-family="Arial" font-size="21">El espesor influye mucho más en la rigidez</text>
+</svg>

@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 480">
+  <defs>
+    <pattern id="grain" width="90" height="34" patternUnits="userSpaceOnUse">
+      <path d="M0 17 C22 2 48 31 90 12" fill="none" stroke="#8b572a" stroke-width="3" opacity=".42"/>
+      <path d="M0 28 C28 12 58 42 90 23" fill="none" stroke="#6f431f" stroke-width="2" opacity=".28"/>
+    </pattern>
+  </defs>
+  <rect width="800" height="480" rx="24" fill="#eef7ff"/>
+  <polygon points="160,100 570,65 660,140 250,180" fill="#e2b875" stroke="#71451f" stroke-width="5"/>
+  <polygon points="250,180 660,140 660,315 250,355" fill="#c98d48" stroke="#71451f" stroke-width="5"/>
+  <polygon points="250,180 660,140 660,315 250,355" fill="url(#grain)"/>
+  <polygon points="160,100 250,180 250,355 160,275" fill="#a96f37" stroke="#71451f" stroke-width="5"/>
+  <text x="400" y="425" text-anchor="middle" fill="#173f63" font-family="Arial" font-size="34" font-weight="700">PLACA DE MADERA</text>
+</svg>

@@ -1,0 +1,31 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1400 700">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#f8fbff"/><stop offset="1" stop-color="#e8f4fb"/></linearGradient>
+    <linearGradient id="plate" x1="0" y1="0" x2="1" y2="0"><stop stop-color="#284d70"/><stop offset=".48" stop-color="#91abc0"/><stop offset="1" stop-color="#244761"/></linearGradient>
+    <linearGradient id="air" x1="0" y1="0" x2="0" y2="1"><stop stop-color="#dff5ff" stop-opacity=".5"/><stop offset="1" stop-color="#9bd8ee" stop-opacity=".72"/></linearGradient>
+    <filter id="shadow"><feDropShadow dx="0" dy="10" stdDeviation="12" flood-color="#173f63" flood-opacity=".16"/></filter>
+    <marker id="arrowBlue" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto"><path d="M0,0 L0,6 L9,3 z" fill="#0877c9"/></marker>
+    <marker id="arrowGreen" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto"><path d="M0,0 L0,6 L9,3 z" fill="#15966d"/></marker>
+  </defs>
+  <rect width="1400" height="700" rx="34" fill="url(#bg)"/>
+  <text x="700" y="70" text-anchor="middle" fill="#173f63" font-family="Arial,sans-serif" font-size="38" font-weight="700">SISTEMA DOBLE · MASA–AIRE–MASA</text>
+  <text x="700" y="108" text-anchor="middle" fill="#557189" font-family="Arial,sans-serif" font-size="22">Dos hojas independientes acopladas por la elasticidad del aire</text>
+  <g filter="url(#shadow)">
+    <rect x="520" y="150" width="62" height="400" rx="9" fill="url(#plate)"/>
+    <rect x="818" y="150" width="62" height="400" rx="9" fill="url(#plate)"/>
+    <rect x="582" y="150" width="236" height="400" fill="url(#air)"/>
+  </g>
+  <g fill="none" stroke-linecap="round">
+    <path d="M100 350 C145 270 195 430 240 350 S335 270 380 350 S455 430 500 350" stroke="#0877c9" stroke-width="13" marker-end="url(#arrowBlue)"/>
+    <path d="M900 350 C945 305 990 395 1035 350 S1125 305 1170 350 S1260 395 1300 350" stroke="#15966d" stroke-width="8" marker-end="url(#arrowGreen)"/>
+    <path d="M610 350 C635 310 660 390 685 350 S735 310 760 350 S790 390 805 350" stroke="#35a9ce" stroke-width="6" stroke-dasharray="10 9"/>
+  </g>
+  <text x="260" y="244" text-anchor="middle" fill="#0877c9" font-family="Arial,sans-serif" font-size="25" font-weight="700">Energía incidente</text>
+  <text x="1140" y="280" text-anchor="middle" fill="#15966d" font-family="Arial,sans-serif" font-size="25" font-weight="700">Energía transmitida</text>
+  <text x="551" y="598" text-anchor="middle" fill="#173f63" font-family="Arial,sans-serif" font-size="25" font-weight="700">HOJA 1</text>
+  <text x="551" y="630" text-anchor="middle" fill="#557189" font-family="Arial,sans-serif" font-size="22">masa m′₁</text>
+  <text x="849" y="598" text-anchor="middle" fill="#173f63" font-family="Arial,sans-serif" font-size="25" font-weight="700">HOJA 2</text>
+  <text x="849" y="630" text-anchor="middle" fill="#557189" font-family="Arial,sans-serif" font-size="22">masa m′₂</text>
+  <path d="M600 520 v34 M600 537 H800 M800 520 v34" fill="none" stroke="#173f63" stroke-width="3"/>
+  <text x="700" y="505" text-anchor="middle" fill="#173f63" font-family="Arial,sans-serif" font-size="24" font-weight="700">CÁMARA DE AIRE · d</text>
+</svg>

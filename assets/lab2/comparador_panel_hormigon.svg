@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 480">
+  <rect width="800" height="480" rx="24" fill="#eef7ff"/>
+  <rect x="320" y="55" width="160" height="345" rx="8" fill="#9aa5ab" stroke="#42535f" stroke-width="8"/>
+  <circle cx="360" cy="110" r="8" fill="#697980"/><circle cx="430" cy="165" r="6" fill="#697980"/><circle cx="385" cy="250" r="9" fill="#697980"/><circle cx="445" cy="330" r="7" fill="#697980"/>
+  <text x="400" y="445" text-anchor="middle" fill="#173f63" font-family="Arial" font-size="32" font-weight="700">HORMIGÓN · UNA MASA</text>
+</svg>

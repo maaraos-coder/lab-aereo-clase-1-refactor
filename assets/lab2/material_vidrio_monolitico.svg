@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 480">
+  <defs><linearGradient id="g" x1="0" x2="1"><stop stop-color="#bce9f5" stop-opacity=".45"/><stop offset="1" stop-color="#5ab4d1" stop-opacity=".72"/></linearGradient></defs>
+  <rect width="800" height="480" rx="24" fill="#eef7ff"/>
+  <polygon points="180,85 610,65 650,320 220,345" fill="url(#g)" stroke="#277f9d" stroke-width="7"/>
+  <line x1="230" y1="115" x2="560" y2="100" stroke="#fff" stroke-opacity=".8" stroke-width="16"/>
+  <line x1="590" y1="125" x2="620" y2="285" stroke="#fff" stroke-opacity=".65" stroke-width="10"/>
+  <text x="400" y="420" text-anchor="middle" fill="#173f63" font-family="Arial" font-size="34" font-weight="700">VIDRIO MONOLÍTICO</text>
+</svg>

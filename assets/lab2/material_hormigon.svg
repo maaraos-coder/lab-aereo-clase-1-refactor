@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 480">
+  <filter id="n"><feTurbulence baseFrequency=".35" numOctaves="3" seed="4"/><feBlend mode="multiply" in2="SourceGraphic"/></filter>
+  <rect width="800" height="480" rx="24" fill="#eef7ff"/>
+  <polygon points="170,100 570,70 660,145 260,180" fill="#bfc6ca" stroke="#596a73" stroke-width="5"/>
+  <polygon points="260,180 660,145 660,315 260,350" fill="#99a5ab" stroke="#596a73" stroke-width="5" filter="url(#n)"/>
+  <polygon points="170,100 260,180 260,350 170,275" fill="#87949b" stroke="#596a73" stroke-width="5"/>
+  <text x="400" y="425" text-anchor="middle" fill="#173f63" font-family="Arial" font-size="34" font-weight="700">PANEL DE HORMIGÓN</text>
+</svg>

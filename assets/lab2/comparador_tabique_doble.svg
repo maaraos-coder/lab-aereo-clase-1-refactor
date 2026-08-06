@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 480">
+  <rect width="800" height="480" rx="24" fill="#eef7ff"/>
+  <rect x="165" y="55" width="42" height="345" fill="#d4b282" stroke="#735a39" stroke-width="5"/>
+  <rect x="593" y="55" width="42" height="345" fill="#d4b282" stroke="#735a39" stroke-width="5"/>
+  <path d="M280 65h72v325h-72v-28h42V93h-42z" fill="#9eb2c4" stroke="#35566f" stroke-width="5"/>
+  <path d="M448 65h72v325h-72v-28h42V93h-42z" fill="#9eb2c4" stroke="#35566f" stroke-width="5"/>
+  <line x1="400" y1="60" x2="400" y2="395" stroke="#17a779" stroke-width="5" stroke-dasharray="12 12"/>
+  <text x="400" y="445" text-anchor="middle" fill="#173f63" font-family="Arial" font-size="32" font-weight="700">DOBLE ESTRUCTURA</text>
+</svg>

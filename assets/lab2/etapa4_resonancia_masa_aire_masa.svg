@@ -1,0 +1,18 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1400 620">
+  <defs><linearGradient id="bg2" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#f8fbff"/><stop offset="1" stop-color="#edf7fb"/></linearGradient><linearGradient id="pl2" x1="0" y1="0" x2="1" y2="0"><stop stop-color="#244761"/><stop offset=".5" stop-color="#a6bac9"/><stop offset="1" stop-color="#244761"/></linearGradient><marker id="ar2" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto-start-reverse"><path d="M0 0v6l9-3z" fill="#e57632"/></marker></defs>
+  <rect width="1400" height="620" rx="32" fill="url(#bg2)"/>
+  <text x="700" y="66" text-anchor="middle" fill="#173f63" font-family="Arial" font-size="36" font-weight="700">RESONANCIA MASA–AIRE–MASA</text>
+  <text x="700" y="105" text-anchor="middle" fill="#557189" font-family="Arial" font-size="22">El aire de la cámara funciona como un resorte acústico</text>
+  <g transform="translate(0 12)">
+    <rect x="285" y="160" width="82" height="320" rx="10" fill="url(#pl2)"/>
+    <rect x="1033" y="160" width="82" height="320" rx="10" fill="url(#pl2)"/>
+    <path d="M367 320h75l35-65 70 130 70-130 70 130 70-130 70 130 70-130 35 65h81" fill="none" stroke="#e9a83c" stroke-width="14" stroke-linejoin="round"/>
+    <path d="M190 320h75M1210 320h-75" stroke="#e57632" stroke-width="8" marker-end="url(#ar2)"/>
+    <text x="326" y="525" text-anchor="middle" fill="#173f63" font-family="Arial" font-size="27" font-weight="700">MASA m′₁</text>
+    <text x="1074" y="525" text-anchor="middle" fill="#173f63" font-family="Arial" font-size="27" font-weight="700">MASA m′₂</text>
+    <text x="700" y="210" text-anchor="middle" fill="#b46c17" font-family="Arial" font-size="27" font-weight="700">RESORTE DE AIRE</text>
+    <text x="700" y="455" text-anchor="middle" fill="#557189" font-family="Arial" font-size="22">profundidad de cámara d</text>
+  </g>
+  <rect x="500" y="505" width="400" height="72" rx="18" fill="#fff1e6" stroke="#efb286" stroke-width="2"/>
+  <text x="700" y="551" text-anchor="middle" fill="#b65318" font-family="Arial" font-size="23" font-weight="700">CERCA DE f₀ EL AISLAMIENTO PUEDE DISMINUIR</text>
+</svg>

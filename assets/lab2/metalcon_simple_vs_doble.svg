@@ -1,0 +1,21 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 620">
+  <rect width="1200" height="620" rx="28" fill="#eef7ff"/>
+  <rect x="35" y="35" width="545" height="550" rx="22" fill="#f8fbfe" stroke="#9fc8e8" stroke-width="3"/>
+  <rect x="620" y="35" width="545" height="550" rx="22" fill="#f8fbfe" stroke="#9fc8e8" stroke-width="3"/>
+  <text x="307" y="85" text-anchor="middle" fill="#173f63" font-family="Arial" font-size="32" font-weight="700">METALCON SIMPLE</text>
+  <rect x="130" y="125" width="34" height="340" fill="#d4b282" stroke="#735a39" stroke-width="3"/>
+  <path d="M270 130h78v330h-78v-28h48V158h-48z" fill="#9eb2c4" stroke="#35566f" stroke-width="5"/>
+  <rect x="450" y="125" width="34" height="340" fill="#d4b282" stroke="#735a39" stroke-width="3"/>
+  <line x1="164" y1="220" x2="450" y2="220" stroke="#ef8b2c" stroke-width="8"/>
+  <line x1="164" y1="365" x2="450" y2="365" stroke="#ef8b2c" stroke-width="8"/>
+  <text x="307" y="515" text-anchor="middle" fill="#a45a17" font-family="Arial" font-size="24">Montante compartido</text>
+  <text x="307" y="548" text-anchor="middle" fill="#a45a17" font-family="Arial" font-size="22">conexión lineal rígida</text>
+  <text x="892" y="85" text-anchor="middle" fill="#173f63" font-family="Arial" font-size="32" font-weight="700">DOBLE ESTRUCTURA</text>
+  <rect x="675" y="125" width="34" height="340" fill="#d4b282" stroke="#735a39" stroke-width="3"/>
+  <path d="M770 130h68v330h-68v-28h38V158h-38z" fill="#9eb2c4" stroke="#35566f" stroke-width="5"/>
+  <path d="M945 130h68v330h-68v-28h38V158h-38z" fill="#9eb2c4" stroke="#35566f" stroke-width="5"/>
+  <rect x="1075" y="125" width="34" height="340" fill="#d4b282" stroke="#735a39" stroke-width="3"/>
+  <line x1="892" y1="125" x2="892" y2="465" stroke="#17a779" stroke-width="5" stroke-dasharray="12 12"/>
+  <text x="892" y="515" text-anchor="middle" fill="#087b59" font-family="Arial" font-size="24">Bastidores separados</text>
+  <text x="892" y="548" text-anchor="middle" fill="#087b59" font-family="Arial" font-size="22">sin conexión directa</text>
+</svg>

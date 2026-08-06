@@ -1,0 +1,21 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1400" height="620" viewBox="0 0 1400 620">
+<defs><linearGradient id="bg3" x2="1" y2="1"><stop stop-color="#07172b"/><stop offset="1" stop-color="#0b4775"/></linearGradient><marker id="a3" markerWidth="10" markerHeight="10" refX="9" refY="3" orient="auto"><path d="M0,0 L10,3 L0,6Z" fill="#ffb55c"/></marker></defs>
+<rect width="1400" height="620" rx="28" fill="url(#bg3)"/>
+<text x="70" y="72" fill="#65dcf3" font-family="Arial" font-size="26" font-weight="700">3 · RIGIDEZ DE FLEXIÓN</text>
+<text x="70" y="112" fill="#fff" font-family="Arial" font-size="20">La placa no solo se traslada: también se curva bajo la diferencia de presión.</text>
+<g transform="translate(70 165)">
+ <line x1="35" y1="35" x2="35" y2="325" stroke="#a9bdcc" stroke-width="18"/><line x1="575" y1="35" x2="575" y2="325" stroke="#a9bdcc" stroke-width="18"/>
+ <path d="M45 180 C180 80 440 280 565 180" fill="none" stroke="#65dcf3" stroke-width="16"/>
+ <line x1="305" y1="20" x2="305" y2="120" stroke="#ffb55c" stroke-width="7" marker-end="url(#a3)"/>
+ <text x="325" y="70" fill="#ffca78" font-family="Arial" font-size="24">Δp</text>
+ <text x="185" y="365" fill="#fff" font-family="Arial" font-size="22">deformación ξ(x,y)</text>
+</g>
+<g transform="translate(750 170)" font-family="Arial">
+ <rect width="550" height="270" rx="22" fill="#fff" fill-opacity=".08" stroke="#65dcf3" stroke-width="2"/>
+ <text x="52" y="88" fill="#65dcf3" font-size="39" font-weight="700">D = E h³ / 12(1−ν²)</text>
+ <text x="38" y="150" fill="#fff" font-size="21">E: módulo de Young  ·  ν: Poisson</text>
+ <text x="38" y="198" fill="#fff" font-size="21">h: espesor de la placa</text>
+ <text x="38" y="242" fill="#ffca78" font-size="22" font-weight="700">Duplicar h → D aumenta ≈ 8 veces</text>
+</g>
+<text x="750" y="515" fill="#d8e8f4" font-family="Arial" font-size="20">D y m′ gobiernan modos propios, ondas de flexión y frecuencia crítica.</text>
+</svg>
