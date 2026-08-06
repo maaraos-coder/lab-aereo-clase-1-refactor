@@ -15,9 +15,11 @@ def _bind_runtime(runtime):
 
 def _formula_reference_impl():
     """Fallback reference view; the sidebar button opens the complete floating formulary."""
-    header("FORMULARIO DEL DIPLOMADO","Compendio de los dos laboratorios disponibles",
-           "Incluye únicamente las fórmulas utilizadas actualmente en los Laboratorios 1 y 2 del Curso 1.")
-    st.info("Usa el botón «Abrir Formulario del Diplomado» de la barra lateral.")
+    header(
+        "FORMULARIO DEL DIPLOMADO",
+        "Formulario Técnico de Acústica",
+        "Herramienta de consulta con las ecuaciones y relaciones utilizadas durante el desarrollo del Diplomado en Acústica.",
+    )
     tab1,tab2,tab3,tab4=st.tabs([
         "Recintos y absorción","Transmisión y aislamiento",
         "Placas y sistemas dobles","Evaluación económica",
