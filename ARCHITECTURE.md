@@ -50,3 +50,10 @@
 3. Mantener sincronizadas las consultas con `supabase_schema.sql`.
 4. Ejecutar `python -m compileall -q .` antes de desplegar.
 5. Probar acceso de alumno, acceso docente, etapas 0–10, resultados, autosave y vista Zoom.
+
+## Regla de llamadas internas en módulos de vistas
+
+Las funciones públicas se exponen a `app.py` mediante `run_view()` y el diccionario `_VIEWS`.
+Dentro de un mismo módulo, las vistas deben llamar directamente a sus implementaciones locales
+(`*_impl`) y no a los wrappers públicos definidos en `app.py`. Esto evita `NameError` y dependencias
+circulares durante la ejecución en Streamlit Cloud.
