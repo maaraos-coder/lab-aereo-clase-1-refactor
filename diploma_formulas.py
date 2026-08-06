@@ -104,10 +104,6 @@ LATEX_EQUATIONS = {
     "X<sub>1</sub> = −10·log<sub>10</sub>[Σ10<sup>(L<sub>1,i</sub>−R<sub>i</sub>)/10</sup>]<br>C = X<sub>1</sub>−R<sub>w</sub>": r"X_1=-10\log_{10}\!\left[\sum_i10^{(L_{1,i}-R_i)/10}\right]\qquad C=X_1-R_w",
     "X<sub>2</sub> = −10·log<sub>10</sub>[Σ10<sup>(L<sub>2,i</sub>−R<sub>i</sub>)/10</sup>]<br>C<sub>tr</sub> = X<sub>2</sub>−R<sub>w</sub>": r"X_2=-10\log_{10}\!\left[\sum_i10^{(L_{2,i}-R_i)/10}\right]\qquad C_{tr}=X_2-R_w",
     "R<sub>w</sub>(C;C<sub>tr</sub>)": r"R_w\,(C;C_{tr})",
-    "τ<sub>i,f</sub> = 10<sup>−R<sub>i,f</sub>/10</sup>": r"\tau_{i,f}=10^{-R_{i,f}/10}",
-    "τ<sub>T,f</sub> = [19,71·τ<sub>m,f</sub> + 2,40·τ<sub>v,f</sub> + 1,89·τ<sub>p,f</sub>]/24,00": r"\tau_{T,f}=\frac{19.71\tau_{m,f}+2.40\tau_{v,f}+1.89\tau_{p,f}}{24.00}",
-    "R<sub>T,f</sub> = −10·log<sub>10</sub>(τ<sub>T,f</sub>)": r"R_{T,f}=-10\log_{10}(\tau_{T,f})",
-    "R<sub>w,total</sub> ≥ 40 dB": r"R_{w,\mathrm{total}}\geq40\,\mathrm{dB}",
 }
 
 SYMBOL_LATEX = {
@@ -153,9 +149,18 @@ def build_formulary_html(visible_labs):
         for lab in course["labs"]:
             if (course_index, lab["number"]) not in visible_labs:
                 continue
+
+            # El formulario incluye únicamente ecuaciones técnicas desarrolladas
+            # en la clase. Se excluyen bloques creados para resolver casos o
+            # ejercicios con dimensiones, superficies y criterios particulares.
+            technical_topics = [
+                (title, items)
+                for title, items in lab["topics"]
+                if title != "6. Diseño integrador del paramento"
+            ]
             topics = "".join(
                 f"<div class='topic'><h3>{title}</h3>{_cards(items)}</div>"
-                for title, items in lab["topics"]
+                for title, items in technical_topics
             )
             labs += f"<details open><summary>Laboratorio {lab['number']} · {lab['subtitle']}</summary>{topics}</details>"
         if labs:
