@@ -74,7 +74,7 @@ FORMULA_CATALOG: list[dict[str, Any]] = [
                         "title": "Cerramiento compuesto",
                         "latex": (
                             r"\tau_T=\frac{\sum_{i=1}^{n}S_i\tau_i}{\sum_{i=1}^{n}S_i}"
-                            r"\qquad"
+                            r"\qquad{}"
                             r"R_T=-10\log_{10}(\tau_T)"
                         ),
                         "variables": [
