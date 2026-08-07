@@ -1381,6 +1381,9 @@ def _results_catalog():
 def results_view(client, catalog, user_key):
     return _result_views.run_view("results_view", globals(), client, catalog, user_key)
 
+def student_sidebar_summary(client, user_key):
+    return _result_views.run_view("student_sidebar_summary", globals(), client, user_key)
+
 def course_dashboard():
     return _course_views.run_view("course_dashboard", globals())
 
@@ -1532,7 +1535,7 @@ with st.sidebar:
     results_view_label=(
         "📝 Evaluaciones entregadas"
         if st.session_state.get("role")=="Docente"
-        else "📊 Mis resultados"
+        else "🎓 Mi desempeño"
     )
     view_options=[
         "🏠 Mis clases",
@@ -1547,18 +1550,11 @@ with st.sidebar:
         key="main_view",
         help="Selecciona Mis clases o la ruta del laboratorio.",
     )
-    # El alumno ve la escala de la etapa abierta (por ejemplo, 100 puntos en
-    # la evaluación final), no una suma de escalas diferentes. El docente
-    # consulta puntajes exclusivamente en el Centro de resultados.
+    # Resumen académico del alumno: separa avance formativo de notas oficiales.
+    # Las únicas calificaciones del curso provienen del Laboratorio 2,
+    # etapas 9 y 10; el resto se muestra como progreso de aprendizaje.
     if st.session_state.role=="Alumno":
-        sidebar_stage=None
-        if view==view_options[2]:
-            saved_stage=st.session_state.get(f"selected_stage_lab_{ACTIVE_LAB}","")
-            for stage_number,(stage_prefix,stage_title) in enumerate(LAB_STAGE_TITLES[ACTIVE_LAB]):
-                if str(saved_stage).startswith(f"{stage_prefix} · {stage_title}"):
-                    sidebar_stage=stage_number
-                    break
-        score_counter(stage=sidebar_stage,compact=True)
+        student_sidebar_summary(_supabase(), st.session_state.get("user_key", ""))
     formula_popup_button()
     st.link_button(
         "📕 Generar apunte visual (PDF)",
