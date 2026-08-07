@@ -23,8 +23,10 @@ Versión V21 basada en la asesoría real del Edificio Institucional MINVU Magall
 
    `pip install -r requirements.txt`
 
-3. Configurar Supabase según `CONFIGURACION_SUPABASE.md`.
-4. Ejecutar:
+   
+
+4. Configurar Supabase según `CONFIGURACION_SUPABASE.md`.
+5. Ejecutar:
 
    `streamlit run app.py`
 
