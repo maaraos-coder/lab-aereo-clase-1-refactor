@@ -82,6 +82,37 @@ LAB_POINT_SCHEMAS = {
 
 LAB_ACTIVITY_STAGES = {1: [3, 5, 7, 9], 2: [6, 7, 8]}
 
+# Actividades formativas que cuentan para el porcentaje de avance del alumno.
+# Incluye preguntas de comprensión comprobables y ejercicios guardados, pero no
+# las evaluaciones oficiales del Laboratorio 2 (Etapas 9 y 10).
+FORMATIVE_PROGRESS_KEYS = {
+    1: {
+        1: ["e1"],
+        2: ["e2_sabine_check", "e2_lab_1", "e2_lab_2"],
+        3: ["s3q1", "s3q2", "s3q3", "s3q4", "s3q5"],
+        4: ["e4_flow", "e4_payback", "e4_roi", "e4_decision"],
+        5: ["e5", "s5q1", "s5q2", "s5q3"],
+        6: ["e6", "e6_tau_practical", "e6_comp_practical"],
+        7: [
+            "e7_guided_tau", "e7_guided_result", "s7q4_interpretation",
+            "minvu_guided", "s7q1", "s7q2", "s7q3", "s7q4", "s7q5",
+            "s7q6", "s7q7", "s7q8", "s7q9", "s7q10", "s7q11",
+        ],
+        8: ["e8"],
+        9: ["e9_pairs"],
+    },
+    2: {
+        1: [f"lab2_s1_q{i}" for i in range(1, 6)],
+        2: [f"lab2_s2_q{i}" for i in range(1, 6)],
+        3: [f"lab2_s3_compare_q{i}" for i in range(1, 6)],
+        4: [f"lab2_s4_q{i}" for i in range(1, 6)],
+        5: [f"lab2_s5_q{i}" for i in range(1, 6)],
+        6: ["direccion_guiada", *[f"lab2_s6_q{i}" for i in range(1, 6)]],
+        7: ["compare_solutions", *[f"lab2_s7_q{i}" for i in range(1, 6)]],
+        8: ["compound_door", *[f"lab2_s8_q{i}" for i in range(1, 6)]],
+    },
+}
+
 FINAL_EXAM_STAGE = 10
 
 STAGES = [
