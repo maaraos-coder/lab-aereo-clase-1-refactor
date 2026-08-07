@@ -447,6 +447,8 @@ _FUNCTIONS = {
     '_keyword_level': __keyword_level_impl,
     'formative_development': _formative_development_impl,
     'formative_numeric': _formative_numeric_impl,
+    '_saved_formative_response': __saved_formative_response_impl,
+    '_render_saved_activity_state': __render_saved_activity_state_impl,
     '_stage9_submission': __stage9_submission_impl,
     '_stage9_answer_payload': __stage9_answer_payload_impl,
     '_finish_stage9': __finish_stage9_impl,
