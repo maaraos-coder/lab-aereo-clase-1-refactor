@@ -1340,6 +1340,10 @@ def _stage3_impl():
     4. Explicar cualquier caída cercana a la coincidencia.
     5. Elegir entre yeso-cartón y madera bajo la restricción de bajo peso.
     """)
+    saved_decision=_saved_formative_response(3,"lab2_s3_design_decision")
+    saved_answer=(saved_decision or {}).get("answer") or {}
+    if "lab2_s3_design_decision" not in st.session_state and isinstance(saved_answer,dict) and saved_answer.get("value"):
+        st.session_state["lab2_s3_design_decision"]=str(saved_answer.get("value"))
     decision=st.text_area(
         "Conclusión técnica y alternativa seleccionada",
         key="lab2_s3_design_decision",height=160,
@@ -1347,15 +1351,19 @@ def _stage3_impl():
             "La alternativa con mayor m′ es... Entre 500 y 2.000 Hz se observa... "
             "Las frecuencias críticas son... Al excluir el hormigón, seleccionaría... porque..."
         ))
-    if st.button("Comprobar desarrollo",key="lab2_s3_check_decision"):
+    _render_saved_activity_state(saved_decision)
+    decision_label="Actualizar respuesta" if saved_decision else "Comprobar y guardar"
+    if st.button(decision_label,key="lab2_s3_check_decision"):
         if len(decision.strip()) < 140:
-            st.warning(
-                "La justificación aún es breve. Incluye valores de m′, fᶜ y TL en al "
-                "menos dos frecuencias, y explica la selección liviana.")
+            level="Parcialmente correcta"
+            feedback="La justificación aún es breve. Incluye valores de m′, fᶜ y TL en al menos dos frecuencias, y explica la selección liviana."
         else:
-            st.success(
-                "La extensión es suficiente. Verifica que tu elección se apoye en los "
-                "resultados calculados y no solamente en el nombre o espesor del material.")
+            level="Correcta"
+            feedback="La extensión es suficiente. Verifica que tu elección se apoye en los resultados calculados y no solamente en el nombre o espesor del material."
+        if _save_formative(3,"lab2_s3_design_decision","Conclusión técnica y alternativa seleccionada",decision,level,feedback,score=0,max_score=0):
+            st.rerun()
+        else:
+            st.error("No fue posible guardar el desarrollo. Intenta nuevamente.")
 
     st.markdown("### 5 · Comprobación conceptual")
     check(
@@ -1747,6 +1755,10 @@ def _stage4_impl():
        \(f_0\), \(f_1\) y el comportamiento entre 500 y 2.000 Hz.
     5. Recomienda una profundidad de cámara y justifica técnicamente tu decisión.
     """)
+    saved_analysis=_saved_formative_response(4,"lab2_s4_analysis")
+    saved_answer=(saved_analysis or {}).get("answer") or {}
+    if "lab2_s4_analysis" not in st.session_state and isinstance(saved_answer,dict) and saved_answer.get("value"):
+        st.session_state["lab2_s4_analysis"]=str(saved_answer.get("value"))
     analysis=st.text_area(
         "Conclusión técnica",
         key="lab2_s4_analysis",height=150,
@@ -1754,15 +1766,19 @@ def _stage4_impl():
             "Las masas superficiales son... La resonancia f₀ aparece en... "
             "Entre 500 y 2.000 Hz el sistema... Aumentaría/disminuiría la cámara porque..."
         ))
-    if st.button("Comprobar mi análisis",key="lab2_s4_check_analysis"):
+    _render_saved_activity_state(saved_analysis)
+    analysis_label="Actualizar respuesta" if saved_analysis else "Comprobar y guardar"
+    if st.button(analysis_label,key="lab2_s4_check_analysis"):
         if len(analysis.strip()) < 140:
-            st.warning(
-                "La conclusión aún es breve. Incluye m′₁, m′₂, f₀, f₁, al menos "
-                "dos valores de TL y una decisión sobre la cámara.")
+            level="Parcialmente correcta"
+            feedback="La conclusión aún es breve. Incluye m′₁, m′₂, f₀, f₁, al menos dos valores de TL y una decisión sobre la cámara."
         else:
-            st.success(
-                "La extensión es suficiente. Verifica que tu decisión se apoye en "
-                "los valores calculados y en la región activa del modelo.")
+            level="Correcta"
+            feedback="La extensión es suficiente. Verifica que tu decisión se apoye en los valores calculados y en la región activa del modelo."
+        if _save_formative(4,"lab2_s4_analysis","Conclusión técnica del panel doble",analysis,level,feedback,score=0,max_score=0):
+            st.rerun()
+        else:
+            st.error("No fue posible guardar el análisis. Intenta nuevamente.")
 
     st.markdown("### 6 · Comprobación conceptual")
     check(

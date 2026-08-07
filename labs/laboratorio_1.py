@@ -129,7 +129,6 @@ def _stage3_impl():
     for key, q, solution, groups, note in questions:
         formative_development(3, key, q, solution, groups, note)
         solutions[key] = solution
-    score_counter(3)
     teacher_group_review(3, solutions)
 
 def _stage4_impl():
@@ -165,19 +164,35 @@ def _stage5_impl():
     else:
         best = feasible.loc[feasible['Costo ciclo'].idxmin()]
         st.success(f"Entre las alternativas suficientes, {best['Solución']} tiene el menor costo del ciclo. La decisión final debe revisar además bandas críticas, montaje y riesgo.")
+    saved_decision = _saved_formative_response(5, 's5_decision_case')
+    saved_payload = (saved_decision or {}).get('answer') or {}
+    if not isinstance(saved_payload, dict):
+        saved_payload = {}
+    if 's5_table_recommendation' not in st.session_state and saved_payload.get('recommendation'):
+        st.session_state['s5_table_recommendation'] = saved_payload.get('recommendation')
+    if 's5_table_justification' not in st.session_state and saved_payload.get('justification'):
+        st.session_state['s5_table_justification'] = saved_payload.get('justification')
     recommendation = st.radio('Selecciona la solución que recomendarías', ['Solución A', 'Solución B', 'Solución C'], index=None, key='s5_table_recommendation', horizontal=True)
     justification = st.text_area('Justifica tu decisión utilizando cumplimiento acústico y costo del ciclo', key='s5_table_justification', placeholder='Ejemplo: descarto… porque no cumple; entre las que cumplen selecciono… porque…')
-    if st.button('Comprobar decisión', key='b_s5_table_decision'):
+    _render_saved_activity_state(saved_decision)
+    decision_button = 'Actualizar respuesta' if saved_decision else 'Comprobar y guardar'
+    if st.button(decision_button, key='b_s5_table_decision'):
         if recommendation is None:
             st.warning('Selecciona una solución antes de comprobar.')
-        elif feasible.empty:
-            st.error('Ninguna solución cumple la meta seleccionada. La decisión correcta es rediseñar las alternativas antes de recomendar una.')
-        elif recommendation != best['Solución']:
-            st.error(f"La recomendación no es la óptima con estos datos. Primero descarta las alternativas que no cumplen y, entre las suficientes, compara el costo del ciclo. La respuesta esperada es {best['Solución']}.")
-        elif len(justification.strip()) < 20:
-            st.warning(f"{best['Solución']} es la alternativa esperada, pero falta desarrollar la justificación técnica y económica.")
         else:
-            st.success(f"Correcto. {best['Solución']} cumple el objetivo y presenta el menor costo del ciclo entre las alternativas suficientes.")
+            if feasible.empty:
+                level='Incorrecta'; feedback='Ninguna solución cumple la meta. Corresponde rediseñar antes de comparar economía.'
+            elif recommendation != best['Solución']:
+                level='Incorrecta'; feedback=f"La respuesta esperada es {best['Solución']}: primero se descartan las alternativas que no cumplen y luego se compara el costo del ciclo."
+            elif len(justification.strip()) < 20:
+                level='Parcialmente correcta'; feedback=f"{best['Solución']} es la alternativa esperada, pero falta desarrollar la justificación técnica y económica."
+            else:
+                level='Correcta'; feedback=f"{best['Solución']} cumple el objetivo y presenta el menor costo del ciclo entre las alternativas suficientes."
+            payload=json.dumps({'recommendation':recommendation,'justification':justification},ensure_ascii=False)
+            if _save_formative(5,'s5_decision_case','Decisión técnico-económica del caso',payload,level,feedback,correct_answer=str(best['Solución']) if not feasible.empty else 'Rediseñar las alternativas'):
+                st.rerun()
+            else:
+                st.error('No fue posible guardar la decisión. Intenta nuevamente.')
     check('e5', 'Una alternativa tiene excelente ROI, pero no alcanza la meta acústica. ¿Qué corresponde?', ['Elegirla por su ROI', 'Descartarla o rediseñarla antes de comparar economía', 'Promediar ROI y dB'], 'Descartarla o rediseñarla antes de comparar economía', 'La suficiencia técnica precede a la optimización económica.')
     st.markdown('<div class="section-band"><span>🧮</span><h3>Aplicación técnico-económica · responde y comprueba</h3></div>', unsafe_allow_html=True)
     q1 = 'Un ingeniero propone aumentar el aislamiento de una oficina de 40 dB a 50 dB. ¿Qué elementos debería considerar para decidir si esto es una buena inversión?'
@@ -189,7 +204,6 @@ def _stage5_impl():
     q3 = 'Opción A: inversión $500.000, beneficio $700.000. Opción B: inversión $1.000.000, beneficio $950.000. Calcula el ROI de ambas e identifica la mejor.'
     s3 = 'ROI A = ($700.000−$500.000)/$500.000×100 = **40 %**. ROI B = ($950.000−$1.000.000)/$1.000.000×100 = **−5 %**. La opción A tiene el mejor retorno.'
     formative_numeric(5, 's5q3', q3, [('a', 'ROI A (%)', 0.0, 1.0), ('b', 'ROI B (%)', 0.0, 1.0)], lambda v: (abs(v['a'] - 40) <= 0.2 and abs(v['b'] + 5) <= 0.2, 'Se esperaba ROI A = 40 % y ROI B = −5 %. La alternativa A ofrece el mejor retorno.'), s3)
-    score_counter(5)
     teacher_group_review(5, {'s5q1': s1, 's5q2': s2, 's5q3': s3})
 
 def _stage6_impl():
@@ -327,7 +341,6 @@ def _stage7_impl():
     s = f'τtotal = [12·10^(−55/10)+2·10^(−25/10)]/14. Por tanto, **Rtotal ≈ {r_total:.1f} dB**. La puerta reduce drásticamente el desempeño del conjunto.'
     formative_numeric(7, 's7q11', q, [('r', 'R compuesto (dB)', 0.0, 0.1)], lambda v: (abs(v['r'] - r_total) <= 0.3, f'El resultado esperado es aproximadamente {r_total:.1f} dB; combina τ ponderados por superficie.'), s)
     solutions['s7q11'] = s
-    score_counter(7)
     teacher_group_review(7, solutions)
 
 def _stage8_impl():
@@ -352,6 +365,16 @@ def _stage9_impl():
     numbered_definitions = {number: definitions[source_index] for number, source_index in enumerate(mixed_order, 1)}
     correct_numbers = {term: next((number for number, definition in numbered_definitions.items() if definition == correct_definition)) for term, correct_definition in paired_terms.items()}
     placeholder = '—'
+    saved_pairs = _saved_formative_response(9, 'e9_pairs')
+    saved_pair_payload = (saved_pairs or {}).get('answer') or {}
+    if isinstance(saved_pair_payload, dict) and '_activity' in saved_pair_payload:
+        saved_pair_payload = {k:v for k,v in saved_pair_payload.items() if k != '_activity'}
+    if isinstance(saved_pair_payload, dict):
+        for idx, term in enumerate(paired_terms):
+            widget_key=f'e9_pair_number_{idx}'
+            if widget_key not in st.session_state and term in saved_pair_payload:
+                try: st.session_state[widget_key]=int(saved_pair_payload[term])
+                except (TypeError,ValueError): pass
     selections = {}
     left, right = st.columns([0.85, 2.15], gap='large')
     with left:
@@ -364,7 +387,9 @@ def _stage9_impl():
         st.markdown('#### Definiciones numeradas')
         for number, definition in numbered_definitions.items():
             st.markdown(f'<div class="card" style="margin:.28rem 0;padding:.72rem .9rem"><b style="color:#0871bd">{number}.</b> {definition}</div>', unsafe_allow_html=True)
-    if st.button('Comprobar términos pareados', key='e9_check_pairs', type='primary'):
+    _render_saved_activity_state(saved_pairs)
+    pair_button='Actualizar respuesta' if saved_pairs else 'Comprobar y guardar'
+    if st.button(pair_button, key='e9_check_pairs', type='primary'):
         unanswered = [term for term, value in selections.items() if value == placeholder]
         if unanswered:
             st.warning(f"Completa todas las relaciones. Faltan: {', '.join(unanswered)}.")
@@ -372,7 +397,10 @@ def _stage9_impl():
             correct_count = sum((selections[term] == correct_numbers[term] for term in paired_terms))
             pair_score = correct_count * 2
             level = 'Correcta' if correct_count == len(paired_terms) else 'Parcialmente correcta' if correct_count >= 4 else 'Incorrecta'
-            _save_formative(9, 'e9_pairs', 'Relaciona cada índice acústico con su definición.', json.dumps(selections, ensure_ascii=False), level, f'{correct_count} de {len(paired_terms)} relaciones correctas.', score=pair_score, max_score=20)
+            saved_ok=_save_formative(9, 'e9_pairs', 'Relaciona cada índice acústico con su definición.', json.dumps(selections, ensure_ascii=False), level, f'{correct_count} de {len(paired_terms)} relaciones correctas.', score=pair_score, max_score=20)
+            if not saved_ok:
+                st.error('No fue posible guardar la actividad. Intenta nuevamente.')
+                return
             if correct_count == len(paired_terms):
                 st.success('¡Correcto! Relacionaste adecuadamente los 10 términos acústicos.')
             else:
@@ -383,7 +411,7 @@ def _stage9_impl():
             repeated = {number for number in range(1, 11) if list(selections.values()).count(number) > 1}
             if repeated:
                 st.info(f"Revisa los números repetidos ({', '.join(map(str, sorted(repeated)))}): cada definición se utiliza una sola vez.")
-    score_counter(9)
+            st.rerun()
     if st.session_state.get('role') == 'Docente':
         with st.expander('👩\u200d🏫 Pauta docente · Términos pareados'):
             st.markdown('Proyecte primero las relaciones sin revelar la pauta. Pida que el curso justifique especialmente las diferencias entre laboratorio, obra, recintos y fachada.')
