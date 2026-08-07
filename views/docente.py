@@ -635,11 +635,49 @@ def _teacher_lab2_integrated_results_impl(compact=False):
         "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
         key=f"stage10_word_{row.get('id')}_{'c' if compact else 'f'}",
     )
-    adjusted=st.number_input("Puntaje docente",0.,60.,float(current),1.,key=f"teacher_l2s10_score_{row.get('id')}_{compact}")
-    st.info(f"Nota calculada con el puntaje ajustado: **{_grade_from_percent(adjusted/60*100):.1f}** · Exigencia 60 %.")
+    st.markdown("#### Rúbrica editable")
+    saved_rubric = payload.get("rubric_scores", {}) if isinstance(payload, dict) else {}
+    if not isinstance(saved_rubric, dict):
+        saved_rubric = {}
+    rubric_design = st.number_input(
+        "Diseño técnico del paramento",
+        min_value=0.0,
+        max_value=40.0,
+        value=float(saved_rubric.get("design", payload.get("design_score", 0) or 0)),
+        step=0.5,
+        help="Selección de componentes, cálculo de Rw, C y Ctr, e interpretación del cumplimiento.",
+        key=f"teacher_l2s10_design_{row.get('id')}_{compact}",
+    )
+    rubric_comprehension = st.number_input(
+        "Comprensión e interpretación",
+        min_value=0.0,
+        max_value=20.0,
+        value=float(saved_rubric.get("comprehension", payload.get("comprehension_score", 0) or 0)),
+        step=0.5,
+        help="Cinco preguntas conceptuales e interpretación técnica de la solución.",
+        key=f"teacher_l2s10_comprehension_{row.get('id')}_{compact}",
+    )
+    adjusted = float(rubric_design + rubric_comprehension)
+    st.info(
+        f"Puntaje ajustado: **{adjusted:g}/60** · "
+        f"Nota: **{_grade_from_percent(adjusted/60*100):.1f}** · Exigencia 60 %."
+    )
     note=st.text_area("Observación docente",value=row.get("teacher_note") or "",key=f"teacher_l2s10_note_{row.get('id')}_{compact}")
     if st.button("Guardar revisión del diseño integrador",type="primary",key=f"teacher_l2s10_save_{row.get('id')}_{compact}"):
-        client.table("responses").update({"teacher_score":adjusted,"teacher_note":note,"teacher_level":"Correcta" if adjusted>=36 else "Parcialmente correcta","status":"reviewed","updated_at":_now()}).eq("id",row["id"]).execute(); st.success("Revisión guardada.")
+        updated_payload = dict(payload) if isinstance(payload, dict) else {}
+        updated_payload["rubric_scores"] = {
+            "design": float(rubric_design),
+            "comprehension": float(rubric_comprehension),
+        }
+        client.table("responses").update({
+            "answer": updated_payload,
+            "teacher_score": adjusted,
+            "teacher_note": note,
+            "teacher_level": "Correcta" if adjusted >= 36 else "Parcialmente correcta",
+            "status": "reviewed",
+            "updated_at": _now(),
+        }).eq("id",row["id"]).execute()
+        st.success("Rúbrica, puntaje y observación guardados.")
 
 def _teacher_lab2_stage10_answer_key_impl():
     """Pauta docente de la Etapa 10, sin controles destinados al alumno."""
