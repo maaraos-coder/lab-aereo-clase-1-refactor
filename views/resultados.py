@@ -387,10 +387,13 @@ def _render_formative_progress(rows):
             with st.expander("Ver detalle por etapa"):
                 for item in definition["stage_rows"]:
                     stage_status = "✅" if item["expected"] and item["completed"] >= item["expected"] else ("🟡" if item["completed"] else "⚪")
-                    st.write(
-                        f"{stage_status} Etapa {item['stage']}: "
-                        f"{item['completed']} de {item['expected']} actividades"
+                    st.markdown(
+                        f"**{stage_status} Etapa {item['stage']}: "
+                        f"{item['completed']} de {item['expected']} actividades**"
                     )
+                    for activity in item.get("activity_details", []):
+                        mark = "✅" if activity.get("completed") else "○"
+                        st.caption(f"{mark} {activity.get('label')}")
 
 
 def student_sidebar_summary(client, user_key):
