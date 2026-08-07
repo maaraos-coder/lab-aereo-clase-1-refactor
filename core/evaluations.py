@@ -4,6 +4,8 @@ La aplicación inyecta en tiempo de ejecución las dependencias compartidas para
 conservar el estado, las consultas y las firmas públicas originales.
 """
 
+from core.activities import activity_metadata
+
 _PROTECTED = {
     '_FUNCTIONS',
     '_PROTECTED',
@@ -41,12 +43,27 @@ def __score_from_level_impl(level,max_score):
 
 
 def __save_formative_impl(stage,key,question,answer,level,feedback,score=None,max_score=None,correct_answer=""):
+    """Persist every activity through one common engine.
+
+    Returns ``True`` only when the response was stored. Existing callers remain
+    compatible because the public signature is unchanged.
+    """
     if st.session_state.get("projection_mode"):
-        return
+        return False
     student=st.session_state.get("name","Alumno")
     user_key=st.session_state.get("user_key") or _make_user_key("Alumno",student)
     max_score=_question_points(stage,key) if max_score is None else float(max_score)
     score=_score_from_level(level,max_score) if score is None else float(score)
+    metadata=activity_metadata(CLASS_ID,stage,key)
+
+    try:
+        answer_json=json.loads(str(answer))
+    except (json.JSONDecodeError,TypeError):
+        answer_json={"value":str(answer)}
+    if not isinstance(answer_json,dict):
+        answer_json={"value":answer_json}
+    answer_json.setdefault("_activity",metadata)
+
     client=_supabase()
     if client is not None:
         question_id=f"{CLASS_ID}-{key}-v1"
@@ -56,10 +73,6 @@ def __save_formative_impl(stage,key,question,answer,level,feedback,score=None,ma
             "correct_answer":correct_answer or feedback,"max_score":max_score,
             "content_version":1,"active":True,"updated_at":_now(),
         },on_conflict="id").execute()
-        try:
-            answer_json=json.loads(str(answer))
-        except (json.JSONDecodeError,TypeError):
-            answer_json={"value":str(answer)}
         client.table("responses").upsert({
             "course_id":COURSE_ID,"class_id":CLASS_ID,"user_key":user_key,
             "stage":stage,"question_key":key,"question_text":question,
@@ -68,18 +81,21 @@ def __save_formative_impl(stage,key,question,answer,level,feedback,score=None,ma
             "max_score":max_score,"status":"submitted",
             "updated_at":_now(),"submitted_at":_now(),
         },on_conflict="class_id,user_key,question_key").execute()
-    else:
-        with _activity_db() as con:
-            con.execute(
-            """INSERT INTO formative_responses
-            (created_at,student,stage,question_key,question,answer,auto_level,feedback,auto_score,max_score)
-            VALUES(?,?,?,?,?,?,?,?,?,?)
-            ON CONFLICT(student,stage,question_key) DO UPDATE SET
-            created_at=excluded.created_at,question=excluded.question,
-            answer=excluded.answer,auto_level=excluded.auto_level,feedback=excluded.feedback,
-            auto_score=excluded.auto_score,max_score=excluded.max_score""",
-            (dt.datetime.now().isoformat(timespec="seconds"),student,stage,key,question,str(answer),level,feedback,score,max_score),
-            )
+        return True
+
+    with _activity_db() as con:
+        con.execute(
+        """INSERT INTO formative_responses
+        (created_at,student,stage,question_key,question,answer,auto_level,feedback,auto_score,max_score)
+        VALUES(?,?,?,?,?,?,?,?,?,?)
+        ON CONFLICT(student,stage,question_key) DO UPDATE SET
+        created_at=excluded.created_at,question=excluded.question,
+        answer=excluded.answer,auto_level=excluded.auto_level,feedback=excluded.feedback,
+        auto_score=excluded.auto_score,max_score=excluded.max_score""",
+        (dt.datetime.now().isoformat(timespec="seconds"),student,stage,key,question,
+         json.dumps(answer_json,ensure_ascii=False),level,feedback,score,max_score),
+        )
+    return True
 
 
 def __student_scores_impl(student=None):
@@ -239,7 +255,7 @@ def _formative_development_impl(stage,key,question,solution,groups,error_note):
         f'<div class="question-text">{question}</div></div>',unsafe_allow_html=True)
     answer=st.text_area("Escribe y justifica tu respuesta",key=f"ans_{key}",
                         placeholder="Explica el fenómeno y propone una solución cuando corresponda…")
-    if st.button("Comprobar respuesta",key=f"submit_{key}",type="primary"):
+    if st.button("Comprobar y guardar",key=f"submit_{key}",type="primary"):
         if len(answer.strip())<20:
             st.warning("La respuesta es demasiado breve. Explica el fenómeno antes de comprobar.")
         else:
@@ -254,7 +270,9 @@ def _formative_development_impl(stage,key,question,solution,groups,error_note):
                 feedback=f"Hay una confusión conceptual. {error_note}"
                 st.error(f"Respuesta incorrecta. {feedback}")
             st.session_state[f"checked_{key}"]=(level,feedback)
-            _save_formative(stage,key,question,answer,level,feedback,correct_answer=solution)
+            saved=_save_formative(stage,key,question,answer,level,feedback,correct_answer=solution)
+            if saved:
+                st.caption("✅ Actividad guardada en tu progreso formativo.")
     if st.session_state.get(f"checked_{key}"):
         with st.expander("Ver solución desarrollada"):
             st.markdown(solution)
@@ -268,12 +286,14 @@ def _formative_numeric_impl(stage,key,question,inputs,checker,solution):
     cols=st.columns(min(len(inputs),3))
     for i,(name,label,default,step) in enumerate(inputs):
         values[name]=cols[i%len(cols)].number_input(label,value=default,step=step,key=f"{key}_{name}")
-    if st.button("Comprobar cálculo",key=f"submit_{key}",type="primary"):
+    if st.button("Comprobar y guardar",key=f"submit_{key}",type="primary"):
         ok,feedback=checker(values)
         level="Correcta" if ok else "Incorrecta"
         (st.success if ok else st.error)(("Correcto. " if ok else "Revisa el procedimiento. ")+feedback)
         st.session_state[f"checked_{key}"]=(level,feedback)
-        _save_formative(stage,key,question,json.dumps(values,ensure_ascii=False),level,feedback,correct_answer=solution)
+        saved=_save_formative(stage,key,question,json.dumps(values,ensure_ascii=False),level,feedback,correct_answer=solution)
+        if saved:
+            st.caption("✅ Cálculo guardado en tu progreso formativo.")
     if st.session_state.get(f"checked_{key}"):
         with st.expander("Ver desarrollo paso a paso"):
             st.markdown(solution)
