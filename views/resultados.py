@@ -8,6 +8,8 @@ Separa deliberadamente dos conceptos académicos:
 ``app.py`` inyecta las dependencias compartidas antes de ejecutar cada vista.
 """
 
+from core.activities import formative_progress_snapshot
+
 _LOCAL_NAMES = {
     "run_view", "_bind_runtime", "_VIEWS", "_LOCAL_NAMES",
     "_results_catalog", "_student_result_payload", "_result_date",
@@ -325,62 +327,24 @@ def _render_stage10_comparison(row, payload, allow_answers):
 
 
 def _formative_progress_data(rows):
-    """Resume respuestas formativas guardadas, incluidas las preguntas de comprensión."""
-    definitions = {
+    """Build the student progress from the unified activity catalog."""
+    snapshot = formative_progress_snapshot(rows, course_id=COURSE_ID)
+    labels = {
         1: {
             "title": "Laboratorio 1 · Fundamentos y aplicación",
-            "subtitle": "Preguntas, ejercicios y actividades de práctica",
-            "keys_by_stage": FORMATIVE_PROGRESS_KEYS[1],
+            "subtitle": "Preguntas, cálculos y actividades de práctica",
         },
         2: {
             "title": "Laboratorio 2 · Preparación para la evaluación",
-            "subtitle": "Preguntas de comprensión y actividades previas a las evaluaciones oficiales",
-            "keys_by_stage": FORMATIVE_PROGRESS_KEYS[2],
+            "subtitle": "Actividades previas a las evaluaciones oficiales",
         },
     }
-
-    result = {}
-    for lab_number, definition in definitions.items():
-        lab_id = LABORATORIES[lab_number]["id"]
-        keys_by_stage = definition["keys_by_stage"]
-        valid_pairs = {
-            (int(stage), str(key))
-            for stage, keys in keys_by_stage.items()
-            for key in keys
-        }
-        saved_pairs = {
-            (int(row.get("stage") or -1), str(row.get("question_key") or ""))
-            for row in rows
-            if row.get("class_id") == lab_id
-            and (int(row.get("stage") or -1), str(row.get("question_key") or "")) in valid_pairs
-        }
-        expected = len(valid_pairs)
-        completed = len(saved_pairs)
-        stage_rows = []
-        for stage, keys in sorted(keys_by_stage.items()):
-            expected_keys = {str(key) for key in keys}
-            completed_keys = {
-                key for saved_stage, key in saved_pairs
-                if saved_stage == int(stage) and key in expected_keys
-            }
-            stage_expected = len(expected_keys)
-            stage_completed = len(completed_keys)
-            stage_rows.append({
-                "stage": int(stage),
-                "completed": stage_completed,
-                "expected": stage_expected,
-                "percent": (100.0 * stage_completed / stage_expected) if stage_expected else 0.0,
-            })
-        result[lab_number] = {
-            "title": definition["title"],
-            "subtitle": definition["subtitle"],
-            "stages": sorted(keys_by_stage),
-            "expected": expected,
-            "completed": completed,
-            "percent": (100.0 * completed / expected) if expected else 0.0,
-            "stage_rows": stage_rows,
-        }
-    return result
+    for lab_number, item in snapshot.items():
+        item.update(labels.get(lab_number, {
+            "title": f"Laboratorio {lab_number}",
+            "subtitle": "Actividades formativas",
+        }))
+    return snapshot
 
 
 def _render_formative_progress(rows):
