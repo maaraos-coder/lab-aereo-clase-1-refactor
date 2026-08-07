@@ -231,10 +231,13 @@ def _check_impl(key,q,options,correct,explanation):
 
         # Guardado permanente en Supabase/SQLite. Estas preguntas son
         # formativas: cuentan como actividad realizada, pero no generan nota.
-        _save_formative(
+        saved = _save_formative(
             stage, key, q, choice, level, feedback,
             score=0, max_score=0, correct_answer=correct,
         )
+        if not saved:
+            st.error("No fue posible guardar la actividad. Intenta nuevamente.")
+            return
         st.session_state[f"checked_{key}"] = {
             "choice": choice,
             "correct": is_correct,
