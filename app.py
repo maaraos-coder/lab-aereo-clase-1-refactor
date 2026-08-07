@@ -50,6 +50,7 @@ from config.laboratorios import (
     LAB2_TOTAL_MINUTES,
     LABORATORIES,
     LAB_ACTIVITY_STAGES,
+    FORMATIVE_PROGRESS_KEYS,
     LAB_POINT_SCHEMAS,
     LAB_STAGE_TITLES,
     ROUTE_SUMMARIES,
@@ -1619,6 +1620,8 @@ elif view==view_options[2]:
     if selected not in labels:
         selected=labels[lab_stages[0]]
     idx=labels.index(selected)
+    st.session_state["_current_stage"] = idx
+    st.session_state["_current_lab"] = ACTIVE_LAB
     st.caption(f"Curso: Aislamiento a ruido aéreo · Laboratorio {ACTIVE_LAB} de 2")
     LAB_STAGE_FUNCTIONS[ACTIVE_LAB][idx]()
 
