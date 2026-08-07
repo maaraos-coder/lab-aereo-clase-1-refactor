@@ -6,6 +6,7 @@ from views import acceso as _access_views
 from views import cursos as _course_views
 from views import resultados as _result_views
 from views import formulario as _formula_views
+from views.impresion import render_print_view
 import base64
 import datetime as dt
 import io
@@ -89,7 +90,6 @@ import plotly.graph_objects as go
 import streamlit as st
 from core import acoustics as _acoustics
 from core import evaluations as _evaluations
-from core.pdf_export import build_laboratory_pdf
 from core.word_export import build_evaluation_docx, build_evaluation_zip, safe_filename
 import streamlit.components.v1 as components
 try:
@@ -110,9 +110,6 @@ else:
 st.set_page_config(page_title="Laboratorio | Aislamiento a Ruido Aéreo", page_icon="🔊", layout="wide")
 ROOT = Path(__file__).parent
 
-@st.cache_data(show_spinner=False)
-def _laboratory_pdf_bytes(lab_number):
-    return build_laboratory_pdf(ROOT, int(lab_number))
 FREQS = np.array([100,125,160,200,250,315,400,500,630,800,1000,1250,1600,2000,2500,3150])
 ACTIVITY_DB = ROOT / "formative_responses.sqlite3"
 SANTIAGO_TZ = ZoneInfo("America/Santiago")
@@ -1452,6 +1449,13 @@ if st.query_params.get("formulas")=="1":
     formula_reference()
     st.stop()
 
+# Vista visual de impresión del laboratorio completo. No usa el generador editorial
+# ni reconstruye el contenido: renderiza las etapas reales con estilos de impresión.
+if st.query_params.get("print_lab") in ("1", "2"):
+    print_lab_number = int(st.query_params["print_lab"])
+    render_print_view(globals(), print_lab_number)
+    st.stop()
+
 st.session_state.pop("projection_mode",None)
 
 if not st.session_state.get("access"):
@@ -1556,18 +1560,12 @@ with st.sidebar:
                     break
         score_counter(stage=sidebar_stage,compact=True)
     formula_popup_button()
-    try:
-        st.download_button(
-            "📕 Apunte del laboratorio (PDF)",
-            data=_laboratory_pdf_bytes(ACTIVE_LAB),
-            file_name=f"Curso_1_Laboratorio_{ACTIVE_LAB}.pdf",
-            mime="application/pdf",
-            width="stretch",
-            key=f"download_lab_pdf_{ACTIVE_LAB}",
-            help="Genera las etapas 0 a 10 en vista alumno, con ecuaciones matemáticas renderizadas.",
-        )
-    except Exception as exc:
-        st.caption(f"No fue posible preparar el apunte PDF: {exc}")
+    st.link_button(
+        "📕 Generar apunte visual (PDF)",
+        f"?print_lab={ACTIVE_LAB}",
+        width="stretch",
+        help="Abre una vista limpia del laboratorio para imprimirla o guardarla como PDF.",
+    )
     if st.session_state.role=="Docente":
         st.link_button(
             "🖥️ Abrir vista para Zoom",
