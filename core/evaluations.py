@@ -24,6 +24,8 @@ _PROTECTED = {
     '_bind_runtime',
     '_formative_development_impl',
     '_formative_numeric_impl',
+    '__saved_formative_response_impl',
+    '__render_saved_activity_state_impl',
     '_score_counter_impl',
     'run_evaluation',
 }
@@ -97,6 +99,59 @@ def __save_formative_impl(stage,key,question,answer,level,feedback,score=None,ma
         )
     return True
 
+
+def __saved_formative_response_impl(stage, key):
+    """Recover the last persisted response for one formative activity."""
+    user_key=st.session_state.get("user_key")
+    if not user_key:
+        return None
+    client=_supabase()
+    if client is not None:
+        rows=_remote_rows("responses",class_id=CLASS_ID,user_key=user_key) or []
+        row=next((r for r in rows if int(r.get("stage") or -1)==int(stage)
+                  and str(r.get("question_key") or "")==str(key)),None)
+        if row:
+            answer=row.get("answer") or {}
+            if isinstance(answer,str):
+                try: answer=json.loads(answer)
+                except Exception: answer={"value":answer}
+            row=dict(row); row["answer"]=answer
+        return row
+    student=st.session_state.get("name","Alumno")
+    with _activity_db() as con:
+        row=con.execute(
+            """SELECT answer,auto_level,feedback,auto_score,max_score,created_at
+               FROM formative_responses
+               WHERE student=? AND stage=? AND question_key=?""",
+            (student,int(stage),str(key)),
+        ).fetchone()
+    if not row:
+        return None
+    answer=row[0]
+    try: answer=json.loads(answer)
+    except Exception: answer={"value":answer}
+    return {"answer":answer,"auto_level":row[1],"feedback":row[2],
+            "auto_score":row[3],"max_score":row[4],"updated_at":row[5]}
+
+
+def __render_saved_activity_state_impl(saved, *, numeric=False):
+    if not saved:
+        return
+    level=str(saved.get("auto_level") or "Guardada")
+    score=float(saved.get("teacher_score") if saved.get("teacher_score") is not None else saved.get("auto_score") or 0)
+    maximum=float(saved.get("max_score") or 0)
+    icon="✅" if level=="Correcta" else "🟡" if level=="Parcialmente correcta" else "🔴"
+    title=f"{icon} Actividad guardada · {level}"
+    st.markdown(f"**{title}**")
+    answer=saved.get("answer") or {}
+    if numeric and isinstance(answer,dict):
+        values={k:v for k,v in answer.items() if k!="_activity"}
+        if values:
+            st.caption("Última respuesta guardada: " + " · ".join(f"{k} = {v}" for k,v in values.items()))
+    if maximum:
+        st.caption(f"Puntaje formativo: {score:g} de {maximum:g} puntos")
+    if saved.get("feedback"):
+        st.caption(str(saved.get("feedback")))
 
 def __student_scores_impl(student=None):
     student=student or st.session_state.get("name","Alumno")
@@ -174,20 +229,25 @@ def __result_summary_impl():
 def _score_counter_impl(stage=None,compact=False):
     if st.session_state.get("projection_mode"):
         return
-    rows=_student_scores()
+    all_rows=_student_scores()
     if stage is not None:
-        rows=[row for row in rows if row[0]==stage]
-        maximum=sum(LAB_POINT_SCHEMAS.get(ACTIVE_LAB,{}).get(stage,{}).values())
+        schema=LAB_POINT_SCHEMAS.get(ACTIVE_LAB,{}).get(stage,{})
+        allowed=set(schema)
+        rows=[row for row in all_rows if row[0]==stage and row[1] in allowed]
+        maximum=sum(schema.values())
         title=f"Puntaje de la Etapa {stage}"
+        expected=len(allowed)
     else:
         activity_stages=LAB_ACTIVITY_STAGES[ACTIVE_LAB]
-        rows=[row for row in rows if row[0] in activity_stages]
+        allowed_by_stage={s:set(LAB_POINT_SCHEMAS[ACTIVE_LAB][s]) for s in activity_stages}
+        rows=[row for row in all_rows if row[0] in allowed_by_stage and row[1] in allowed_by_stage[row[0]]]
         maximum=sum(sum(LAB_POINT_SCHEMAS[ACTIVE_LAB][s].values()) for s in activity_stages)
         title=f"Actividades formativas · Lab. {ACTIVE_LAB}"
-    earned=sum((row[4] if row[4] is not None else row[2]) or 0 for row in rows)
-    completed=len({row[1] for row in rows})
-    expected=(len(LAB_POINT_SCHEMAS.get(ACTIVE_LAB,{}).get(stage,{})) if stage is not None else
-              sum(len(LAB_POINT_SCHEMAS[ACTIVE_LAB][s]) for s in activity_stages))
+        expected=sum(len(keys) for keys in allowed_by_stage.values())
+    # Supabase upsert keeps one row per key; dict also protects local/legacy duplicates.
+    rows_by_key={(row[0],row[1]):row for row in rows}
+    earned=sum((row[4] if row[4] is not None else row[2]) or 0 for row in rows_by_key.values())
+    completed=len(rows_by_key)
 
     # La evaluación final del Laboratorio 1 se guarda como un único registro
     # definitivo. Antes del envío, la tarjeta lateral debe reflejar el avance
@@ -282,19 +342,41 @@ def _formative_numeric_impl(stage,key,question,inputs,checker,solution):
     st.markdown(
         f'<div class="question-box"><div class="question-label">EJERCICIO NUMÉRICO</div>'
         f'<div class="question-text">{question}</div></div>',unsafe_allow_html=True)
+
+    saved=__saved_formative_response_impl(stage,key)
+    saved_answer=(saved or {}).get("answer") or {}
+    if not isinstance(saved_answer,dict):
+        saved_answer={}
+
+    # Restore the persisted values only before Streamlit creates the widgets.
+    for name,_,default,_ in inputs:
+        widget_key=f"{key}_{name}"
+        if widget_key not in st.session_state and name in saved_answer:
+            try: st.session_state[widget_key]=float(saved_answer[name])
+            except (TypeError,ValueError): st.session_state[widget_key]=default
+
     values={}
     cols=st.columns(min(len(inputs),3))
     for i,(name,label,default,step) in enumerate(inputs):
         values[name]=cols[i%len(cols)].number_input(label,value=default,step=step,key=f"{key}_{name}")
-    if st.button("Comprobar y guardar",key=f"submit_{key}",type="primary"):
+
+    __render_saved_activity_state_impl(saved,numeric=True)
+
+    button_label="Actualizar respuesta" if saved else "Comprobar y guardar"
+    if st.button(button_label,key=f"submit_{key}",type="primary"):
         ok,feedback=checker(values)
         level="Correcta" if ok else "Incorrecta"
-        (st.success if ok else st.error)(("Correcto. " if ok else "Revisa el procedimiento. ")+feedback)
-        st.session_state[f"checked_{key}"]=(level,feedback)
-        saved=_save_formative(stage,key,question,json.dumps(values,ensure_ascii=False),level,feedback,correct_answer=solution)
-        if saved:
-            st.caption("✅ Cálculo guardado en tu progreso formativo.")
-    if st.session_state.get(f"checked_{key}"):
+        saved_ok=_save_formative(
+            stage,key,question,json.dumps(values,ensure_ascii=False),level,feedback,
+            correct_answer=solution,
+        )
+        if not saved_ok:
+            st.error("No fue posible guardar el cálculo. Intenta nuevamente.")
+        else:
+            st.session_state[f"checked_{key}"]=(level,feedback)
+            st.rerun()
+
+    if saved or st.session_state.get(f"checked_{key}"):
         with st.expander("Ver desarrollo paso a paso"):
             st.markdown(solution)
 

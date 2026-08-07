@@ -86,6 +86,30 @@ def activity_metadata(class_id: str, stage: int, key: str) -> dict[str, Any]:
     }
 
 
+def activity_label(laboratory: int, stage: int, key: str) -> str:
+    """Human-readable label used in the student progress detail."""
+    key = str(key)
+    special = {
+        "minvu_guided": "Caso profesional guiado",
+        "e7_guided_tau": "Caso guiado · coeficientes de transmisión",
+        "e7_guided_result": "Caso guiado · resultado y cumplimiento",
+        "s7q4_interpretation": "Interpretación de la frecuencia crítica",
+        "compare_solutions": "Comparación interactiva de soluciones",
+        "compound_door": "Caso de aislamiento compuesto",
+        "direccion_guiada": "Dirección guiada del modelo",
+        "e9_pairs": "Actividad de índices pareados",
+    }
+    if key in special:
+        return special[key]
+    import re
+    match = re.search(r"q(\d+)$", key)
+    if match:
+        return f"Ejercicio {int(match.group(1))}"
+    if key.startswith("e"):
+        return "Actividad de comprensión"
+    return key.replace("_", " ").strip().capitalize()
+
+
 def _row_pair(row: Mapping[str, Any]) -> tuple[int, str]:
     return int(row.get("stage") or -1), str(row.get("question_key") or "")
 
@@ -135,6 +159,14 @@ def formative_progress_snapshot(
                 "expected": expected,
                 "percent": (100.0 * completed / expected) if expected else 0.0,
                 "activities": [item.key for item in items],
+                "activity_details": [
+                    {
+                        "key": item.key,
+                        "label": activity_label(item.laboratory, item.stage, item.key),
+                        "completed": (item.stage, item.key) in completed_pairs,
+                    }
+                    for item in items
+                ],
             })
 
         expected = len(expected_pairs)
