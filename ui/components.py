@@ -210,12 +210,47 @@ def _formula_card_impl(title, latex, variables, use):
     c2.markdown(f'<div class="card"><div class="overview-title">CUÁNDO SE UTILIZA</div>{use}</div>',unsafe_allow_html=True)
 
 def _check_impl(key,q,options,correct,explanation):
-    st.markdown(f'<div class="question-box"><div class="question-label">PREGUNTA DE COMPRENSIÓN</div><div class="question-text">{q}</div></div>',unsafe_allow_html=True)
-    choice=st.radio("Selecciona tu respuesta",options,index=None,key=key,label_visibility="collapsed")
-    if st.button("Comprobar",key=f"b_{key}"):
-        if choice==correct: st.success(f"Correcto. {explanation}")
-        elif choice is None: st.warning("Selecciona una respuesta.")
-        else: st.error(f"No es correcto. {explanation}")
+    st.markdown(
+        f'<div class="question-box"><div class="question-label">PREGUNTA DE COMPRENSIÓN</div>'
+        f'<div class="question-text">{q}</div></div>',
+        unsafe_allow_html=True,
+    )
+    choice=st.radio(
+        "Selecciona tu respuesta", options, index=None, key=key,
+        label_visibility="collapsed",
+    )
+    if st.button("Comprobar y guardar",key=f"b_{key}"):
+        if choice is None:
+            st.warning("Selecciona una respuesta antes de comprobar.")
+            return
+
+        is_correct = choice == correct
+        level = "Correcta" if is_correct else "Incorrecta"
+        feedback = explanation
+        stage = int(st.session_state.get("_current_stage", 0) or 0)
+
+        # Guardado permanente en Supabase/SQLite. Estas preguntas son
+        # formativas: cuentan como actividad realizada, pero no generan nota.
+        _save_formative(
+            stage, key, q, choice, level, feedback,
+            score=0, max_score=0, correct_answer=correct,
+        )
+        st.session_state[f"checked_{key}"] = {
+            "choice": choice,
+            "correct": is_correct,
+            "feedback": feedback,
+        }
+        if is_correct:
+            st.success(f"Correcto. Respuesta guardada. {explanation}")
+        else:
+            st.error(f"No es correcto. Respuesta guardada. {explanation}")
+
+    saved = st.session_state.get(f"checked_{key}")
+    if saved and not st.session_state.get(f"b_{key}"):
+        if saved.get("correct"):
+            st.success(f"Respuesta guardada. {saved.get('feedback','')}")
+        else:
+            st.error(f"Respuesta guardada. {saved.get('feedback','')}")
 
 def _development_answer_impl(key,q,guide):
     """Visible written response with explicit submission and formative guidance."""
