@@ -14,7 +14,7 @@ _LOCAL_NAMES = {
     "_friendly_result_label", "_clean_result_rows", "_effective_row_score",
     "_grade", "_answer_release_allowed",
     "_render_stage9_comparison", "_render_stage10_comparison",
-    "_render_formative_progress", "_official_rows", "_official_summary",
+    "_formative_progress_data", "_render_formative_progress", "_official_rows", "_official_summary",
     "student_sidebar_summary", "results_view",
 }
 
@@ -324,43 +324,103 @@ def _render_stage10_comparison(row, payload, allow_answers):
                 st.write(LAB2_S10_EXPLANATIONS[i])
 
 
-def _render_formative_progress(rows):
-    st.markdown("## Progreso formativo")
-    st.caption(
-        "Estas actividades entregan puntaje y retroalimentación para practicar, pero no generan una nota oficial. "
-        "El porcentaje representa avance de actividades registradas."
-    )
-
-    formative_definitions = {
+def _formative_progress_data(rows):
+    """Resume actividades de práctica sin convertir sus puntajes en calificaciones."""
+    definitions = {
         1: {
             "title": "Laboratorio 1 · Fundamentos y aplicación",
-            "stages": set(LAB_POINT_SCHEMAS[1]),
+            "subtitle": "Actividades de práctica de las etapas formativas",
+            "stages": sorted(set(LAB_POINT_SCHEMAS[1])),
             "expected": sum(len(items) for items in LAB_POINT_SCHEMAS[1].values()),
         },
         2: {
-            "title": "Laboratorio 2 · Actividades preparatorias",
-            "stages": set(LAB_ACTIVITY_STAGES[2]),
+            "title": "Laboratorio 2 · Preparación para la evaluación",
+            "subtitle": "Actividades previas a las evaluaciones oficiales",
+            "stages": sorted(set(LAB_ACTIVITY_STAGES[2])),
             "expected": sum(len(LAB_POINT_SCHEMAS[2][stage]) for stage in LAB_ACTIVITY_STAGES[2]),
         },
     }
 
-    cols = st.columns(2)
-    for col, (lab_number, definition) in zip(cols, formative_definitions.items()):
+    result = {}
+    for lab_number, definition in definitions.items():
         lab_id = LABORATORIES[lab_number]["id"]
         lab_rows = [
             row for row in rows
-            if row.get("class_id") == lab_id and int(row.get("stage") or -1) in definition["stages"]
+            if row.get("class_id") == lab_id
+            and int(row.get("stage") or -1) in definition["stages"]
         ]
-        completed = len({row.get("question_key") for row in lab_rows})
+        unique_keys = {
+            (int(row.get("stage") or -1), str(row.get("question_key") or ""))
+            for row in lab_rows
+            if row.get("question_key")
+        }
+        completed = len(unique_keys)
         expected = int(definition["expected"] or 0)
-        progress = completed / expected if expected else 0
-        points = sum(_effective_row_score(row) for row in lab_rows)
-        maximum = sum(float(row.get("max_score") or 0) for row in lab_rows)
+        stage_rows = []
+        for stage in definition["stages"]:
+            stage_expected = len(LAB_POINT_SCHEMAS[lab_number].get(stage, []))
+            stage_completed = len({
+                key for saved_stage, key in unique_keys if saved_stage == stage
+            })
+            stage_rows.append({
+                "stage": stage,
+                "completed": stage_completed,
+                "expected": stage_expected,
+                "percent": (100.0 * stage_completed / stage_expected) if stage_expected else 0.0,
+            })
+        result[lab_number] = {
+            **definition,
+            "completed": completed,
+            "percent": (100.0 * completed / expected) if expected else 0.0,
+            "stage_rows": stage_rows,
+        }
+    return result
+
+
+def _render_formative_progress(rows):
+    progress_data = _formative_progress_data(rows)
+    total_completed = sum(item["completed"] for item in progress_data.values())
+    total_expected = sum(item["expected"] for item in progress_data.values())
+    total_percent = 100.0 * total_completed / total_expected if total_expected else 0.0
+
+    st.markdown("## Progreso del curso")
+    st.caption(
+        "Aquí se muestra cuánto has avanzado en las actividades de práctica. "
+        "Estas actividades entregan retroalimentación, pero no generan una nota oficial."
+    )
+
+    a, b, c = st.columns(3)
+    a.metric("Actividades completadas", f"{total_completed} de {total_expected}")
+    b.metric("Avance formativo", f"{total_percent:.0f} %")
+    completed_labs = sum(1 for item in progress_data.values() if item["expected"] and item["completed"] >= item["expected"])
+    c.metric("Laboratorios formativos completos", f"{completed_labs} de {len(progress_data)}")
+    st.progress(max(0.0, min(1.0, total_percent / 100.0)))
+
+    cols = st.columns(2)
+    for col, (lab_number, definition) in zip(cols, progress_data.items()):
+        completed = definition["completed"]
+        expected = definition["expected"]
+        percent = definition["percent"]
+        if expected and completed >= expected:
+            status = "✅ Completado"
+        elif completed:
+            status = "🟡 En desarrollo"
+        else:
+            status = "⚪ Sin iniciar"
+
         with col:
             st.markdown(f"### {definition['title']}")
-            st.metric("Avance", f"{completed} de {expected}", f"{progress * 100:.0f} %")
-            st.progress(max(0.0, min(1.0, progress)))
-            st.caption(f"Puntaje formativo registrado: {points:g}/{maximum:g}" if maximum else "Aún no hay puntajes registrados.")
+            st.caption(definition["subtitle"])
+            st.metric("Actividades realizadas", f"{completed} de {expected}")
+            st.progress(max(0.0, min(1.0, percent / 100.0)))
+            st.caption(f"{status} · {percent:.0f} % de avance")
+            with st.expander("Ver detalle por etapa"):
+                for item in definition["stage_rows"]:
+                    stage_status = "✅" if item["expected"] and item["completed"] >= item["expected"] else ("🟡" if item["completed"] else "⚪")
+                    st.write(
+                        f"{stage_status} Etapa {item['stage']}: "
+                        f"{item['completed']} de {item['expected']} actividades"
+                    )
 
 
 def student_sidebar_summary(client, user_key):
@@ -378,18 +438,9 @@ def student_sidebar_summary(client, user_key):
         return
 
     official = _official_summary(rows)
-    formative_rows = [
-        row for row in rows
-        if not (
-            row.get("class_id") == LABORATORIES[2]["id"]
-            and row.get("question_key") in {"final_comprehension", "final_integrated_design"}
-        )
-    ]
-    expected = (
-        sum(len(items) for items in LAB_POINT_SCHEMAS[1].values())
-        + sum(len(LAB_POINT_SCHEMAS[2][stage]) for stage in LAB_ACTIVITY_STAGES[2])
-    )
-    completed = len({(row.get("class_id"), row.get("question_key")) for row in formative_rows})
+    progress_data = _formative_progress_data(rows)
+    expected = sum(item["expected"] for item in progress_data.values())
+    completed = sum(item["completed"] for item in progress_data.values())
     formative_percent = 100.0 * completed / expected if expected else 0
     grade_text = f"{official['grade']:.1f}" if official["grade"] is not None else "—"
 
@@ -397,7 +448,7 @@ def student_sidebar_summary(client, user_key):
         f"""
         <div style="background:linear-gradient(145deg,#0b5b91,#0e91c7);border:1px solid #59d4ef;
                     border-radius:14px;padding:.85rem;margin:.8rem 0;color:white">
-          <div style="font-weight:800;font-size:.95rem;margin-bottom:.55rem">🎓 MI DESEMPEÑO</div>
+          <div style="font-weight:800;font-size:.95rem;margin-bottom:.55rem">📘 PROGRESO DEL CURSO</div>
           <div style="display:flex;justify-content:space-between;gap:.5rem;font-size:.82rem">
             <span>Evaluaciones oficiales</span><b>{official['completed']}/2</b>
           </div>
@@ -406,7 +457,7 @@ def student_sidebar_summary(client, user_key):
           </div>
           <hr style="border:0;border-top:1px solid rgba(255,255,255,.25);margin:.6rem 0">
           <div style="display:flex;justify-content:space-between;gap:.5rem;font-size:.82rem">
-            <span>Avance formativo</span><b>{formative_percent:.0f}%</b>
+            <span>Actividades formativas</span><b>{completed}/{expected}</b>
           </div>
           <div style="height:7px;background:rgba(255,255,255,.22);border-radius:99px;margin-top:.45rem;overflow:hidden">
             <div style="width:{min(100, formative_percent):.1f}%;height:100%;background:#8de7ff"></div>
