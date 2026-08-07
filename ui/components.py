@@ -215,65 +215,61 @@ def _check_impl(key,q,options,correct,explanation):
         f'<div class="question-text">{q}</div></div>',
         unsafe_allow_html=True,
     )
+    stage = int(st.session_state.get("_current_stage", 0) or 0)
+    saved = _saved_formative_response(stage, key)
+    saved_answer=(saved or {}).get("answer") or {}
+    saved_value=saved_answer.get("value") if isinstance(saved_answer,dict) else None
+    if key not in st.session_state and saved_value in options:
+        st.session_state[key]=saved_value
     choice=st.radio(
         "Selecciona tu respuesta", options, index=None, key=key,
         label_visibility="collapsed",
     )
-    if st.button("Comprobar y guardar",key=f"b_{key}"):
+    _render_saved_activity_state(saved)
+    label="Actualizar respuesta" if saved else "Comprobar y guardar"
+    if st.button(label,key=f"b_{key}"):
         if choice is None:
             st.warning("Selecciona una respuesta antes de comprobar.")
             return
-
         is_correct = choice == correct
         level = "Correcta" if is_correct else "Incorrecta"
-        feedback = explanation
-        stage = int(st.session_state.get("_current_stage", 0) or 0)
-
-        # Guardado permanente en Supabase/SQLite. Estas preguntas son
-        # formativas: cuentan como actividad realizada, pero no generan nota.
-        saved = _save_formative(
-            stage, key, q, choice, level, feedback,
+        if not _save_formative(
+            stage, key, q, choice, level, explanation,
             score=0, max_score=0, correct_answer=correct,
-        )
-        if not saved:
+        ):
             st.error("No fue posible guardar la actividad. Intenta nuevamente.")
             return
-        st.session_state[f"checked_{key}"] = {
-            "choice": choice,
-            "correct": is_correct,
-            "feedback": feedback,
-        }
-        if is_correct:
-            st.success(f"Correcto. Respuesta guardada. {explanation}")
-        else:
-            st.error(f"No es correcto. Respuesta guardada. {explanation}")
-
-    saved = st.session_state.get(f"checked_{key}")
-    if saved and not st.session_state.get(f"b_{key}"):
-        if saved.get("correct"):
-            st.success(f"Respuesta guardada. {saved.get('feedback','')}")
-        else:
-            st.error(f"Respuesta guardada. {saved.get('feedback','')}")
+        st.rerun()
 
 def _development_answer_impl(key,q,guide):
-    """Visible written response with explicit submission and formative guidance."""
+    """Visible written response with permanent formative storage."""
     st.markdown(
         f'<div class="question-box"><div class="question-label">EJERCICIO DE DESARROLLO</div>'
         f'<div class="question-text">{q}</div></div>',
         unsafe_allow_html=True,
     )
+    stage=int(st.session_state.get("_current_stage",0) or 0)
+    saved=_saved_formative_response(stage,key)
+    saved_answer=(saved or {}).get("answer") or {}
+    saved_value=saved_answer.get("value","") if isinstance(saved_answer,dict) else ""
+    if key not in st.session_state and saved_value:
+        st.session_state[key]=str(saved_value)
     answer=st.text_area(
         "Escribe tu respuesta y justificación",
         key=key,
         placeholder="Explica tu decisión utilizando los conceptos estudiados…",
     )
-    if st.button("Enviar desarrollo",key=f"b_{key}"):
+    _render_saved_activity_state(saved)
+    label="Actualizar respuesta" if saved else "Enviar y guardar desarrollo"
+    if st.button(label,key=f"b_{key}"):
         if len(answer.strip())<20:
             st.warning("Desarrolla un poco más tu respuesta antes de enviarla.")
         else:
-            st.session_state[f"sent_{key}"]=True
-            st.success("Respuesta enviada. Compárala con la pauta formativa.")
-    if st.session_state.get(f"sent_{key}"):
+            if _save_formative(stage,key,q,answer,"Completada","Desarrollo guardado para seguimiento formativo.",score=0,max_score=0,correct_answer=guide):
+                st.rerun()
+            else:
+                st.error("No fue posible guardar el desarrollo. Intenta nuevamente.")
+    if saved:
         st.markdown(
             f'<div class="good"><b>Pauta de comparación:</b> {guide}</div>',
             unsafe_allow_html=True,
