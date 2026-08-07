@@ -91,7 +91,7 @@ FORMATIVE_PROGRESS_KEYS = {
         2: ["e2_sabine_check", "e2_lab_1", "e2_lab_2"],
         3: ["s3q1", "s3q2", "s3q3", "s3q4", "s3q5"],
         4: ["e4_flow", "e4_payback", "e4_roi", "e4_decision"],
-        5: ["e5", "s5q1", "s5q2", "s5q3"],
+        5: ["s5_decision_case", "e5", "s5q1", "s5q2", "s5q3"],
         6: ["e6", "e6_tau_practical", "e6_comp_practical"],
         7: [
             "e7_guided_tau", "e7_guided_result", "s7q4_interpretation",
@@ -104,8 +104,8 @@ FORMATIVE_PROGRESS_KEYS = {
     2: {
         1: [f"lab2_s1_q{i}" for i in range(1, 6)],
         2: [f"lab2_s2_q{i}" for i in range(1, 6)],
-        3: [f"lab2_s3_compare_q{i}" for i in range(1, 6)],
-        4: [f"lab2_s4_q{i}" for i in range(1, 6)],
+        3: ["lab2_s3_design_decision", *[f"lab2_s3_compare_q{i}" for i in range(1, 6)]],
+        4: ["lab2_s4_analysis", *[f"lab2_s4_q{i}" for i in range(1, 6)]],
         5: [f"lab2_s5_q{i}" for i in range(1, 6)],
         6: ["direccion_guiada", *[f"lab2_s6_q{i}" for i in range(1, 6)]],
         7: ["compare_solutions", *[f"lab2_s7_q{i}" for i in range(1, 6)]],
