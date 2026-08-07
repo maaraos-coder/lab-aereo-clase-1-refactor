@@ -309,6 +309,13 @@ def _teacher_stage9_results_impl(compact=False):
     c2.metric("Nota automática",f"{automatic_grade:.1f}")
     c3.metric("Puntaje ajustado",f"{total:g}/40")
     c4.metric("Nota ajustada",f"{adjusted_grade:.1f}")
+    st.download_button(
+        "📄 Informe de esta evaluación (Word)",
+        build_evaluation_docx(student_name(row), row, None, STAGE9_QUESTIONS),
+        f"{safe_filename(student_name(row))}_Etapa_9.docx",
+        "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+        key=f"stage9_word_{row.get('id')}_{'c' if compact else 'f'}",
+    )
     if st.button("Guardar rúbrica docente",type="primary",use_container_width=True,
                  key=f"stage9_save_rubric_{row['id']}_{'c' if compact else 'f'}"):
         updated_payload=dict(payload)
@@ -545,6 +552,26 @@ def _teacher_course_results_impl(compact=False):
                         "text/csv",
                         key=f"course_results_csv_{'compact' if compact else 'full'}",
                     )
+                    grouped_reports = {}
+                    for report_row in all_rows:
+                        report_user = report_row.get("users") or {}
+                        report_key = report_row.get("user_key") or report_user.get("email") or str(report_row.get("id"))
+                        report_item = grouped_reports.setdefault(report_key, {
+                            "name": report_user.get("display_name") or report_user.get("email") or report_key,
+                            "stage9": None,
+                            "stage10": None,
+                        })
+                        if report_row.get("question_key") == "final_comprehension" and report_item["stage9"] is None:
+                            report_item["stage9"] = report_row
+                        elif report_row.get("question_key") == "final_integrated_design" and report_item["stage10"] is None:
+                            report_item["stage10"] = report_row
+                    st.download_button(
+                        "📦 Descargar informes Word de todos los alumnos",
+                        build_evaluation_zip(grouped_reports, STAGE9_QUESTIONS),
+                        "Curso_1_Informes_Evaluaciones.zip",
+                        "application/zip",
+                        key=f"course_results_word_zip_{'compact' if compact else 'full'}",
+                    )
             else:
                 st.info("Todavía no hay evaluaciones calificadas del Laboratorio 2.")
         except Exception as exc:
@@ -599,6 +626,15 @@ def _teacher_lab2_integrated_results_impl(compact=False):
     c1.metric("Puntaje automático",f"{auto_score:g}/60")
     c2.metric("Nota automática",f"{_grade_from_percent(auto_score/60*100):.1f}")
     c3.metric("Estado","Revisada" if row.get("teacher_score") is not None else "Corrección automática")
+    report_user = row.get("users") or {}
+    report_name = report_user.get("display_name") or report_user.get("email") or row.get("user_key") or "Alumno"
+    st.download_button(
+        "📄 Informe de esta evaluación (Word)",
+        build_evaluation_docx(report_name, None, row, STAGE9_QUESTIONS),
+        f"{safe_filename(report_name)}_Etapa_10.docx",
+        "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+        key=f"stage10_word_{row.get('id')}_{'c' if compact else 'f'}",
+    )
     adjusted=st.number_input("Puntaje docente",0.,60.,float(current),1.,key=f"teacher_l2s10_score_{row.get('id')}_{compact}")
     st.info(f"Nota calculada con el puntaje ajustado: **{_grade_from_percent(adjusted/60*100):.1f}** · Exigencia 60 %.")
     note=st.text_area("Observación docente",value=row.get("teacher_note") or "",key=f"teacher_l2s10_note_{row.get('id')}_{compact}")
