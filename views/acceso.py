@@ -14,7 +14,48 @@ def _bind_runtime(runtime):
 
 def _login_impl():
     institutional_header()
-    header("DIPLOMADO EN ACÚSTICA EN LA EDIFICACIÓN","Curso · Aislamiento a Ruido Aéreo","Laboratorios interactivos 1 y 2")
+    header(
+        "DIPLOMADO EN ACÚSTICA EN LA EDIFICACIÓN",
+        "Plataforma de Laboratorios Interactivos",
+        "Aprendizaje, experimentación, evaluación y seguimiento académico en acústica de la edificación.",
+    )
+
+    course_col, lab_col, eval_col = st.columns(3)
+    with course_col:
+        st.markdown(
+            """
+            <div style="padding:1rem 1.05rem;border:1px solid #d7e5f2;border-radius:14px;background:#ffffff;min-height:118px;">
+                <div style="font-size:1.35rem;">📘</div>
+                <div style="font-weight:800;color:#0b3f6c;margin-top:.2rem;">Cursos del diplomado</div>
+                <div style="font-size:.88rem;color:#5d6f7f;margin-top:.35rem;">Acceso progresivo a contenidos y actividades por curso.</div>
+            </div>
+            """,
+            unsafe_allow_html=True,
+        )
+    with lab_col:
+        st.markdown(
+            """
+            <div style="padding:1rem 1.05rem;border:1px solid #d7e5f2;border-radius:14px;background:#ffffff;min-height:118px;">
+                <div style="font-size:1.35rem;">🧪</div>
+                <div style="font-weight:800;color:#0b3f6c;margin-top:.2rem;">Laboratorios interactivos</div>
+                <div style="font-size:.88rem;color:#5d6f7f;margin-top:.35rem;">Exploración técnica, ejercicios, simulaciones y casos aplicados.</div>
+            </div>
+            """,
+            unsafe_allow_html=True,
+        )
+    with eval_col:
+        st.markdown(
+            """
+            <div style="padding:1rem 1.05rem;border:1px solid #d7e5f2;border-radius:14px;background:#ffffff;min-height:118px;">
+                <div style="font-size:1.35rem;">🎓</div>
+                <div style="font-weight:800;color:#0b3f6c;margin-top:.2rem;">Evaluación y desempeño</div>
+                <div style="font-size:.88rem;color:#5d6f7f;margin-top:.35rem;">Seguimiento formativo, calificaciones oficiales y retroalimentación.</div>
+            </div>
+            """,
+            unsafe_allow_html=True,
+        )
+
+    st.markdown("<div style='height:.55rem'></div>", unsafe_allow_html=True)
     role=st.radio("Perfil",["Alumno","Docente"],horizontal=True)
     name=st.text_input("Nombre completo")
     if role=="Alumno":
