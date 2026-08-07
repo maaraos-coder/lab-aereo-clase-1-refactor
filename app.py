@@ -108,7 +108,12 @@ if ENABLE_CAD_VIEWER:
 else:
     ezdxf = Frontend = RenderContext = MatplotlibBackend = plt = None
 
-st.set_page_config(page_title="Laboratorio | Aislamiento a Ruido Aéreo", page_icon="🔊", layout="wide")
+st.set_page_config(
+    page_title="Laboratorios | Diplomado en Acústica",
+    page_icon="🎓",
+    layout="wide",
+    initial_sidebar_state="expanded",
+)
 ROOT = Path(__file__).parent
 
 FREQS = np.array([100,125,160,200,250,315,400,500,630,800,1000,1250,1600,2000,2500,3150])
@@ -411,12 +416,6 @@ def formative_development(*args, **kwargs):
 
 def formative_numeric(*args, **kwargs):
     return _evaluations.run_evaluation('formative_numeric', globals(), *args, **kwargs)
-
-def _saved_formative_response(*args, **kwargs):
-    return _evaluations.run_evaluation('_saved_formative_response', globals(), *args, **kwargs)
-
-def _render_saved_activity_state(*args, **kwargs):
-    return _evaluations.run_evaluation('_render_saved_activity_state', globals(), *args, **kwargs)
 
 
 def teacher_group_review(stage,solutions):
