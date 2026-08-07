@@ -12,7 +12,7 @@ _LOCAL_NAMES = {
     "run_view", "_bind_runtime", "_VIEWS", "_LOCAL_NAMES",
     "_results_catalog", "_student_result_payload", "_result_date",
     "_friendly_result_label", "_clean_result_rows", "_effective_row_score",
-    "_grade", "_release_settings", "_answer_release_allowed",
+    "_grade", "_answer_release_allowed",
     "_render_stage9_comparison", "_render_stage10_comparison",
     "_render_formative_progress", "_official_rows", "_official_summary",
     "student_sidebar_summary", "results_view",
@@ -143,26 +143,11 @@ def _grade(score, maximum):
     return float(_grade_from_percent(100.0 * float(score) / float(maximum)))
 
 
-def _release_settings(client, class_id):
-    try:
-        rows = (
-            client.table("result_release_settings")
-            .select("*")
-            .eq("class_id", class_id)
-            .limit(1)
-            .execute().data or []
-        )
-        return rows[0] if rows else {}
-    except Exception:
-        return {}
-
-
-def _answer_release_allowed(row, setting):
-    """La comparación completa aparece tras revisión o liberación docente."""
+def _answer_release_allowed(row):
+    """La pauta, rúbrica y retroalimentación se muestran solo tras la revisión docente."""
     return bool(
         row.get("status") == "reviewed"
         or row.get("teacher_score") is not None
-        or setting.get("release_final_answers")
     )
 
 
@@ -186,7 +171,9 @@ def _official_summary(rows):
     )
     total = None
     grade = None
-    if stage9 is not None and stage10 is not None:
+    stage9_reviewed = bool(stage9 and _answer_release_allowed(stage9))
+    stage10_reviewed = bool(stage10 and _answer_release_allowed(stage10))
+    if stage9_reviewed and stage10_reviewed:
         total = _effective_row_score(stage9) + _effective_row_score(stage10)
         grade = _grade(total, 100)
     return {
@@ -210,10 +197,12 @@ def _render_stage9_comparison(row, payload, allow_answers):
         correct = item["options"][item["correct"]]
         is_correct = chosen == correct
         points = float(rubric[i]) if i < len(rubric) else (4.0 if is_correct else 0.0)
-        with st.expander(
-            f"{'✅' if is_correct else '❌'} Pregunta {i + 1} · {points:g}/4 puntos · {item['title']}",
-            expanded=(i == 0),
-        ):
+        header_text = (
+            f"{'✅' if is_correct else '❌'} Pregunta {i + 1} · {points:g}/4 puntos · {item['title']}"
+            if allow_answers
+            else f"🕒 Pregunta {i + 1} · {item['title']} · Pendiente de revisión"
+        )
+        with st.expander(header_text, expanded=(i == 0)):
             st.markdown(f"**Pregunta:** {item['question']}")
             left, right = st.columns(2)
             with left:
@@ -224,11 +213,15 @@ def _render_stage9_comparison(row, payload, allow_answers):
                 if allow_answers:
                     st.info(correct)
                 else:
-                    st.caption("La pauta estará disponible después de la revisión o liberación docente.")
-            st.markdown("**Criterio de la rúbrica**")
-            st.progress(max(0.0, min(1.0, points / 4.0)))
-            st.caption(f"Puntaje otorgado: {points:g} de 4 puntos")
+                    st.info(
+                        "⏳ Evaluación pendiente de revisión docente. "
+                        "La respuesta esperada, la rúbrica y la retroalimentación se mostrarán "
+                        "automáticamente cuando el docente finalice la corrección."
+                    )
             if allow_answers:
+                st.markdown("**Criterio de la rúbrica**")
+                st.progress(max(0.0, min(1.0, points / 4.0)))
+                st.caption(f"Puntaje otorgado: {points:g} de 4 puntos")
                 st.markdown("**Retroalimentación técnica**")
                 st.write(item["explanation"])
 
@@ -256,7 +249,11 @@ def _render_stage10_comparison(row, payload, allow_answers):
             f"({calculated.get('c', '—')}; {calculated.get('ctr', '—')}) dB."
         )
     else:
-        st.caption("El resultado verificado se mostrará después de la revisión o liberación docente.")
+        st.info(
+            "⏳ Evaluación pendiente de revisión docente. "
+            "El resultado verificado, la pauta y la rúbrica se mostrarán "
+            "automáticamente cuando el docente finalice la corrección."
+        )
 
     components = []
     for key, label in (("wall", "Muro o tabique"), ("window", "Ventana"), ("door", "Puerta")):
@@ -270,22 +267,23 @@ def _render_stage10_comparison(row, payload, allow_answers):
     if components:
         st.dataframe(pd.DataFrame(components), hide_index=True, width="stretch")
 
-    st.markdown("#### Rúbrica de la evaluación")
-    rubric_table = pd.DataFrame([
-        {
-            "Criterio": "Diseño técnico del paramento",
-            "Qué se evalúa": "Selección de muro, ventana y puerta; cálculo de Rw, C y Ctr; cumplimiento de la meta.",
-            "Puntaje": f"{design_points:g}/40",
-        },
-        {
-            "Criterio": "Comprensión e interpretación",
-            "Qué se evalúa": "Cinco preguntas sobre transmisión, elemento débil, adaptación espectral y decisiones de diseño.",
-            "Puntaje": f"{comprehension_points:g}/20",
-        },
-    ])
-    st.dataframe(rubric_table, hide_index=True, width="stretch")
+    if allow_answers:
+        st.markdown("#### Rúbrica de la evaluación")
+        rubric_table = pd.DataFrame([
+            {
+                "Criterio": "Diseño técnico del paramento",
+                "Qué se evalúa": "Selección de muro, ventana y puerta; cálculo de Rw, C y Ctr; cumplimiento de la meta.",
+                "Puntaje": f"{design_points:g}/40",
+            },
+            {
+                "Criterio": "Comprensión e interpretación",
+                "Qué se evalúa": "Cinco preguntas sobre transmisión, elemento débil, adaptación espectral y decisiones de diseño.",
+                "Puntaje": f"{comprehension_points:g}/20",
+            },
+        ])
+        st.dataframe(rubric_table, hide_index=True, width="stretch")
 
-    st.markdown("#### Comparación de las respuestas de comprensión")
+    st.markdown("#### Tus respuestas de comprensión" if not allow_answers else "#### Comparación de las respuestas de comprensión")
     for i, (question, options, correct_index) in enumerate(LAB2_S10_QUESTIONS):
         raw = answers.get(str(i), answers.get(i)) if isinstance(answers, dict) else None
         chosen_index = None
@@ -301,7 +299,12 @@ def _render_stage10_comparison(row, payload, allow_answers):
         chosen = options[chosen_index] if chosen_index is not None else "Sin respuesta"
         correct = options[correct_index]
         is_correct = chosen_index == correct_index
-        with st.expander(f"{'✅' if is_correct else '❌'} Pregunta {i + 1} · {question}"):
+        question_header = (
+            f"{'✅' if is_correct else '❌'} Pregunta {i + 1} · {question}"
+            if allow_answers
+            else f"🕒 Pregunta {i + 1} · {question} · Pendiente de revisión"
+        )
+        with st.expander(question_header):
             left, right = st.columns(2)
             with left:
                 st.markdown("**Tu respuesta**")
@@ -311,7 +314,11 @@ def _render_stage10_comparison(row, payload, allow_answers):
                 if allow_answers:
                     st.info(correct)
                 else:
-                    st.caption("La pauta estará disponible después de la revisión o liberación docente.")
+                    st.info(
+                        "⏳ Evaluación pendiente de revisión docente. "
+                        "La respuesta esperada, la rúbrica y la retroalimentación se mostrarán "
+                        "automáticamente cuando el docente finalice la corrección."
+                    )
             if allow_answers:
                 st.markdown("**Retroalimentación técnica**")
                 st.write(LAB2_S10_EXPLANATIONS[i])
@@ -411,7 +418,7 @@ def student_sidebar_summary(client, user_key):
 
 
 def results_view(client, catalog, user_key):
-    """Expediente del alumno con progreso, notas, respuestas, pauta y rúbrica."""
+    """Expediente del alumno con progreso y revisión publicada al finalizar la corrección docente."""
     header(
         "MI DESEMPEÑO",
         "Tu aprendizaje y calificaciones",
@@ -449,7 +456,6 @@ def results_view(client, catalog, user_key):
         "Etapa 9 (40 puntos) y Etapa 10 (60 puntos)."
     )
 
-    setting = _release_settings(client, LABORATORIES[2]["id"])
     evaluations = [
         ("stage9", "Etapa 9 · Evaluación de comprensión", official["stage9"], 40),
         ("stage10", "Etapa 10 · Aplicación integradora", official["stage10"], 60),
@@ -460,24 +466,33 @@ def results_view(client, catalog, user_key):
                 st.caption("Todavía no existe una entrega registrada para esta evaluación.")
             continue
 
-        score = _effective_row_score(row)
-        grade = _grade(score, maximum)
         reviewed = row.get("status") == "reviewed" or row.get("teacher_score") is not None
-        icon = "✅" if reviewed else "🟡"
-        with st.expander(
-            f"{icon} {title} · {score:g}/{maximum} puntos · Nota {grade:.1f}",
-            expanded=False,
-        ):
+        score = _effective_row_score(row) if reviewed else None
+        grade = _grade(score, maximum) if reviewed else None
+        icon = "✅" if reviewed else "🕒"
+        summary_text = (
+            f"{icon} {title} · {score:g}/{maximum} puntos · Nota {grade:.1f}"
+            if reviewed
+            else f"{icon} {title} · Entregada · Pendiente de revisión"
+        )
+        with st.expander(summary_text, expanded=False):
             a, b, c = st.columns(3)
-            a.metric("Puntaje vigente", f"{score:g}/{maximum}")
-            b.metric("Nota", f"{grade:.1f}")
-            c.metric("Estado", "Revisada" if reviewed else "Corrección automática")
+            a.metric("Puntaje oficial", f"{score:g}/{maximum}" if reviewed else "Pendiente")
+            b.metric("Nota", f"{grade:.1f}" if reviewed else "Pendiente")
+            c.metric("Estado", "Revisada" if reviewed else "Pendiente de revisión")
             st.caption(f"Entrega: {_result_date(row.get('submitted_at') or row.get('updated_at'))}")
+            if not reviewed:
+                st.info(
+                    "⏳ **Evaluación pendiente de revisión docente.**  "
+                    "Tu entrega está registrada. Cuando el docente finalice la corrección, "
+                    "se habilitarán automáticamente la pauta, la rúbrica, el puntaje por criterio "
+                    "y los comentarios."
+                )
 
             payload = _student_result_payload(row.get("answer"))
             if not isinstance(payload, dict):
                 payload = {}
-            allow_answers = _answer_release_allowed(row, setting)
+            allow_answers = _answer_release_allowed(row)
             response_tab, rubric_tab, feedback_tab = st.tabs([
                 "Tus respuestas y pauta", "Rúbrica", "Retroalimentación docente",
             ])
@@ -487,7 +502,12 @@ def results_view(client, catalog, user_key):
                 else:
                     _render_stage10_comparison(row, payload, allow_answers)
             with rubric_tab:
-                if kind == "stage9":
+                if not reviewed:
+                    st.info(
+                        "⏳ La rúbrica estará disponible cuando el docente finalice la revisión. "
+                        "Hasta entonces, tu entrega permanece registrada sin publicar criterios ni puntajes ajustados."
+                    )
+                elif kind == "stage9":
                     rubric = payload.get("rubric_scores", [])
                     answers = payload.get("answers", {})
                     rows_rubric = []
@@ -498,7 +518,7 @@ def results_view(client, catalog, user_key):
                         rows_rubric.append({
                             "Criterio": f"Pregunta {i + 1} · {item['title']}",
                             "Puntaje": f"{points:g}/4",
-                            "Resultado": "Logrado" if points >= 4 else ("En desarrollo" if points > 0 else "No logrado"),
+                            "Nivel alcanzado": "Logrado" if points >= 4 else ("En desarrollo" if points > 0 else "No logrado"),
                         })
                     st.dataframe(pd.DataFrame(rows_rubric), hide_index=True, width="stretch")
                 else:
@@ -522,8 +542,10 @@ def results_view(client, catalog, user_key):
                 elif reviewed:
                     st.caption("La evaluación fue revisada, pero el docente no dejó una observación general.")
                 else:
-                    st.caption("La observación docente aparecerá después de la revisión.")
-                if row.get("feedback"):
+                    st.info(
+                        "⏳ La retroalimentación docente estará disponible cuando la revisión haya finalizado."
+                    )
+                if reviewed and row.get("feedback"):
                     st.markdown("**Retroalimentación automática**")
                     st.write(row.get("feedback"))
 
