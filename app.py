@@ -412,6 +412,12 @@ def formative_development(*args, **kwargs):
 def formative_numeric(*args, **kwargs):
     return _evaluations.run_evaluation('formative_numeric', globals(), *args, **kwargs)
 
+def _saved_formative_response(*args, **kwargs):
+    return _evaluations.run_evaluation('_saved_formative_response', globals(), *args, **kwargs)
+
+def _render_saved_activity_state(*args, **kwargs):
+    return _evaluations.run_evaluation('_render_saved_activity_state', globals(), *args, **kwargs)
+
 
 def teacher_group_review(stage,solutions):
     return _teacher_views.run_view('teacher_group_review', globals(), stage, solutions)
