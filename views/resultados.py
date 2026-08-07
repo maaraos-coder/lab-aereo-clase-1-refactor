@@ -325,51 +325,57 @@ def _render_stage10_comparison(row, payload, allow_answers):
 
 
 def _formative_progress_data(rows):
-    """Resume actividades de práctica sin convertir sus puntajes en calificaciones."""
+    """Resume respuestas formativas guardadas, incluidas las preguntas de comprensión."""
     definitions = {
         1: {
             "title": "Laboratorio 1 · Fundamentos y aplicación",
-            "subtitle": "Actividades de práctica de las etapas formativas",
-            "stages": sorted(set(LAB_POINT_SCHEMAS[1])),
-            "expected": sum(len(items) for items in LAB_POINT_SCHEMAS[1].values()),
+            "subtitle": "Preguntas, ejercicios y actividades de práctica",
+            "keys_by_stage": FORMATIVE_PROGRESS_KEYS[1],
         },
         2: {
             "title": "Laboratorio 2 · Preparación para la evaluación",
-            "subtitle": "Actividades previas a las evaluaciones oficiales",
-            "stages": sorted(set(LAB_ACTIVITY_STAGES[2])),
-            "expected": sum(len(LAB_POINT_SCHEMAS[2][stage]) for stage in LAB_ACTIVITY_STAGES[2]),
+            "subtitle": "Preguntas de comprensión y actividades previas a las evaluaciones oficiales",
+            "keys_by_stage": FORMATIVE_PROGRESS_KEYS[2],
         },
     }
 
     result = {}
     for lab_number, definition in definitions.items():
         lab_id = LABORATORIES[lab_number]["id"]
-        lab_rows = [
-            row for row in rows
-            if row.get("class_id") == lab_id
-            and int(row.get("stage") or -1) in definition["stages"]
-        ]
-        unique_keys = {
-            (int(row.get("stage") or -1), str(row.get("question_key") or ""))
-            for row in lab_rows
-            if row.get("question_key")
+        keys_by_stage = definition["keys_by_stage"]
+        valid_pairs = {
+            (int(stage), str(key))
+            for stage, keys in keys_by_stage.items()
+            for key in keys
         }
-        completed = len(unique_keys)
-        expected = int(definition["expected"] or 0)
+        saved_pairs = {
+            (int(row.get("stage") or -1), str(row.get("question_key") or ""))
+            for row in rows
+            if row.get("class_id") == lab_id
+            and (int(row.get("stage") or -1), str(row.get("question_key") or "")) in valid_pairs
+        }
+        expected = len(valid_pairs)
+        completed = len(saved_pairs)
         stage_rows = []
-        for stage in definition["stages"]:
-            stage_expected = len(LAB_POINT_SCHEMAS[lab_number].get(stage, []))
-            stage_completed = len({
-                key for saved_stage, key in unique_keys if saved_stage == stage
-            })
+        for stage, keys in sorted(keys_by_stage.items()):
+            expected_keys = {str(key) for key in keys}
+            completed_keys = {
+                key for saved_stage, key in saved_pairs
+                if saved_stage == int(stage) and key in expected_keys
+            }
+            stage_expected = len(expected_keys)
+            stage_completed = len(completed_keys)
             stage_rows.append({
-                "stage": stage,
+                "stage": int(stage),
                 "completed": stage_completed,
                 "expected": stage_expected,
                 "percent": (100.0 * stage_completed / stage_expected) if stage_expected else 0.0,
             })
         result[lab_number] = {
-            **definition,
+            "title": definition["title"],
+            "subtitle": definition["subtitle"],
+            "stages": sorted(keys_by_stage),
+            "expected": expected,
             "completed": completed,
             "percent": (100.0 * completed / expected) if expected else 0.0,
             "stage_rows": stage_rows,
