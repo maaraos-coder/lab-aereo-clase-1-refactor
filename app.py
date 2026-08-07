@@ -89,6 +89,7 @@ import plotly.graph_objects as go
 import streamlit as st
 from core import acoustics as _acoustics
 from core import evaluations as _evaluations
+from core.word_export import build_laboratory_docx, build_evaluation_docx, build_evaluation_zip, safe_filename
 import streamlit.components.v1 as components
 try:
     from supabase import create_client
@@ -107,6 +108,10 @@ else:
 
 st.set_page_config(page_title="Laboratorio | Aislamiento a Ruido Aéreo", page_icon="🔊", layout="wide")
 ROOT = Path(__file__).parent
+
+@st.cache_data(show_spinner=False)
+def _laboratory_word_bytes(lab_number):
+    return build_laboratory_docx(ROOT, int(lab_number))
 FREQS = np.array([100,125,160,200,250,315,400,500,630,800,1000,1250,1600,2000,2500,3150])
 ACTIVITY_DB = ROOT / "formative_responses.sqlite3"
 SANTIAGO_TZ = ZoneInfo("America/Santiago")
@@ -1550,6 +1555,18 @@ with st.sidebar:
                     break
         score_counter(stage=sidebar_stage,compact=True)
     formula_popup_button()
+    try:
+        st.download_button(
+            "📄 Apunte del laboratorio (Word)",
+            data=_laboratory_word_bytes(ACTIVE_LAB),
+            file_name=f"Curso_1_Laboratorio_{ACTIVE_LAB}.docx",
+            mime="application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+            width="stretch",
+            key=f"download_lab_word_{ACTIVE_LAB}",
+            help="Genera las etapas 0 a 10 con el contenido de la vista alumno, sin controles docentes.",
+        )
+    except Exception as exc:
+        st.caption(f"No fue posible preparar el apunte Word: {exc}")
     if st.session_state.role=="Docente":
         st.link_button(
             "🖥️ Abrir vista para Zoom",
