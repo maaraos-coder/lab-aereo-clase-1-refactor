@@ -7,6 +7,7 @@ duplicar la infraestructura de Streamlit, persistencia y componentes UI.
 
 _RUNTIME_PROTECTED = {
     "run_stage", "_STAGES", "_RUNTIME_PROTECTED", "_lab2_heading",
+    "_saved_formative_response", "_render_saved_activity_state",
     *{f"_stage{i}_impl" for i in range(11)},
 }
 
@@ -16,6 +17,18 @@ def _bind_runtime(runtime):
     for name, value in runtime.items():
         if name not in _RUNTIME_PROTECTED and not name.startswith("lab2_stage"):
             module_globals[name] = value
+
+def _saved_formative_response(stage, key):
+    """Recupera respuestas formativas mediante el motor central."""
+    return _evaluations.run_evaluation(
+        "_saved_formative_response", globals(), stage, key
+    )
+
+def _render_saved_activity_state(saved):
+    """Muestra el estado persistente mediante el motor central."""
+    return _evaluations.run_evaluation(
+        "_render_saved_activity_state", globals(), saved
+    )
 
 def _lab2_heading(stage, title, purpose):
     header(f"ETAPA {stage} · LABORATORIO 2", title, purpose,

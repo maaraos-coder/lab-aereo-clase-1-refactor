@@ -7,7 +7,7 @@ duplicar infraestructura y manteniendo el estado de Streamlit existente.
 
 _RUNTIME_PROTECTED = {
     "run_stage", "run_helper", "_STAGES", "_HELPERS", "_RUNTIME_PROTECTED",
-    "_bind_runtime",
+    "_bind_runtime", "_saved_formative_response", "_render_saved_activity_state",
     *{f"_stage{i}_impl" for i in range(11)},
     "_lab1_final_submission_impl", "_lab1_case_score_impl", "_finish_lab1_final_impl",
 }
@@ -18,6 +18,18 @@ def _bind_runtime(runtime):
     for name, value in runtime.items():
         if name not in _RUNTIME_PROTECTED and not name.startswith("lab1_stage"):
             module_globals[name] = value
+
+def _saved_formative_response(stage, key):
+    """Recupera respuestas formativas mediante el motor central."""
+    return _evaluations.run_evaluation(
+        "_saved_formative_response", globals(), stage, key
+    )
+
+def _render_saved_activity_state(saved):
+    """Muestra el estado persistente mediante el motor central."""
+    return _evaluations.run_evaluation(
+        "_render_saved_activity_state", globals(), saved
+    )
 
 def _stage0_impl():
     header('ETAPA 0 · BIENVENIDA', 'Laboratorio del curso Aislamiento a Ruido Aéreo', 'Una experiencia visual para comprender el fenómeno, experimentar con variables y decidir con criterio técnico y económico.')
