@@ -16,6 +16,62 @@ def _bind_runtime(runtime):
         if name not in _RUNTIME_PROTECTED and name not in _VIEWS:
             module_globals[name] = value
 
+
+
+def _decode_answer_payload(raw):
+    """Normaliza payloads actuales y heredados guardados en Supabase.
+
+    Algunas versiones antiguas guardaron ``answer`` como diccionario, otras
+    como JSON serializado dentro de ``value`` y otras como texto JSON directo.
+    Esta función desempaqueta recursivamente esas variantes sin modificar el
+    registro original.
+    """
+    value = raw
+    for _ in range(4):
+        if isinstance(value, str):
+            try:
+                value = json.loads(value)
+                continue
+            except Exception:
+                return {"value": value}
+        if isinstance(value, dict) and set(value).issubset({"value", "_activity"}) and "value" in value:
+            nested = value.get("value")
+            if isinstance(nested, (str, dict, list)):
+                value = nested
+                continue
+        break
+    return value if isinstance(value, dict) else {"value": value}
+
+
+def _stage10_saved_answers(payload):
+    """Recupera las cinco respuestas desde registros nuevos y heredados."""
+    if not isinstance(payload, dict):
+        return {}
+    candidates = [
+        payload.get("answers"),
+        payload.get("comprehension_answers"),
+        payload.get("respuestas_comprension"),
+        payload.get("stage10_answers"),
+    ]
+    for candidate in candidates:
+        if isinstance(candidate, str):
+            try:
+                candidate = json.loads(candidate)
+            except Exception:
+                continue
+        if isinstance(candidate, list):
+            return {str(i): value for i, value in enumerate(candidate)}
+        if isinstance(candidate, dict):
+            normalized = {}
+            for i in range(5):
+                value = candidate.get(str(i), candidate.get(i))
+                if value is None:
+                    value = candidate.get(f"q{i}", candidate.get(f"question_{i+1}"))
+                normalized[str(i)] = value
+            if any(v not in (None, "") for v in normalized.values()):
+                return normalized
+    return {}
+
 def _teacher_group_review_impl(stage,solutions):
     if st.session_state.get("role")!="Docente":
         return
@@ -609,17 +665,57 @@ def _teacher_lab2_integrated_results_impl(compact=False):
     for row in rows:
         user=row.get("users") or {}; labels.append(f"{user.get('display_name') or user.get('email') or row.get('user_key')} · {str(row.get('updated_at') or '')[:16]}")
     idx=st.selectbox("Alumno",range(len(rows)),format_func=lambda i:labels[i],key=f"teacher_l2s10_student_{'c' if compact else 'f'}")
-    row=rows[idx]; payload=row.get("answer") or {}
-    if isinstance(payload,dict) and "value" in payload:
-        try: payload=json.loads(payload["value"])
-        except Exception: payload={}
+    row=rows[idx]
+    payload=_decode_answer_payload(row.get("answer") or {})
     result=payload.get("calculated_result",{}) if isinstance(payload,dict) else {}
     student=payload.get("student_result",{}) if isinstance(payload,dict) else {}
     st.markdown(f"**Resultado calculado:** Rw(C; Ctr) = {result.get('rw','—')} ({result.get('c','—')}; {result.get('ctr','—')}) dB")
     st.write(f"Respuesta ingresada por el alumno: Rw={student.get('rw','—')} dB · C={student.get('c','—')} dB · Ctr={student.get('ctr','—')} dB")
     for label,key in (("Muro/tabique","wall"),("Ventana","window"),("Puerta","door")):
         data=payload.get(key,{}) if isinstance(payload,dict) else {}; st.write(f"**{label}:** {data.get('description','Sin información')} · Rw {data.get('rw','—')} dB")
-    st.write(f"Puntaje de diseño: {payload.get('design_score',0):g}/40 · Comprensión: {payload.get('comprehension_score',0):g}/20")
+    design_points=float(payload.get("design_score",0) or 0)
+    comprehension_points=float(payload.get("comprehension_score",0) or 0)
+    st.write(f"Puntaje de diseño: {design_points:g}/40 · Comprensión: {comprehension_points:g}/20")
+
+    saved_answers=_stage10_saved_answers(payload)
+    st.markdown("#### Respuestas de comprensión del alumno")
+    if saved_answers:
+        correct_total=0
+        for i,(question,options,correct_index) in enumerate(LAB2_S10_QUESTIONS):
+            raw_answer=saved_answers.get(str(i))
+            if isinstance(raw_answer, dict):
+                raw_answer=(raw_answer.get("answer") or raw_answer.get("value") or
+                            raw_answer.get("selected") or raw_answer.get("option"))
+            if isinstance(raw_answer, int) and 0 <= raw_answer < len(options):
+                chosen=options[raw_answer]
+            else:
+                chosen=raw_answer
+            correct_answer=options[correct_index]
+            is_correct=str(chosen).strip()==str(correct_answer).strip() if chosen not in (None,"") else False
+            correct_total+=int(is_correct)
+            icon="✅" if is_correct else "❌"
+            with st.expander(f"{icon} Pregunta {i+1}", expanded=False):
+                st.markdown(f"**{question}**")
+                st.markdown(f"**Respuesta del alumno:** {chosen or 'Sin respuesta registrada'}")
+                st.markdown(f"**Respuesta correcta:** {correct_answer}")
+                st.caption(f"Puntaje automático de la pregunta: {4 if is_correct else 0}/4 puntos")
+        recovered_points=correct_total*4
+        st.info(
+            f"Resultado recuperado: **{correct_total} de 5 correctas · {recovered_points}/20 puntos**. "
+            "El valor de la rúbrica puede ajustarse manualmente si corresponde."
+        )
+        if abs(recovered_points-comprehension_points)>0.01:
+            st.warning(
+                f"El detalle recuperado suma {recovered_points}/20, pero el registro histórico contiene "
+                f"{comprehension_points:g}/20. Se conserva el puntaje histórico hasta que guardes una revisión."
+            )
+    else:
+        st.warning(
+            "Este registro conserva el puntaje de comprensión, pero no contiene el detalle de las cinco "
+            "respuestas. Esto puede ocurrir en entregas realizadas con una versión anterior de la aplicación. "
+            "No se modifica ni se pierde el puntaje ya asignado."
+        )
+
     auto_score=float(row.get("auto_score") or 0)
     current=row.get("teacher_score") if row.get("teacher_score") is not None else auto_score
     c1,c2,c3=st.columns(3)
