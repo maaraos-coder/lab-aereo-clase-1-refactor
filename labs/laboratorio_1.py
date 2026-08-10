@@ -539,7 +539,25 @@ def _stage10_impl():
                 st.markdown(f"**{'✅' if selected==correct else '❌'} {i+1}. {question}**")
                 st.write(f'Tu respuesta: {chosen}')
                 st.caption(f'Respuesta correcta: {options[correct]}')
-        st.info('Pauta del caso: T₆₀≈0,40 s; diferencia $300.000; incremento 16,7%; bandas 125, 250 y 500 Hz; Solución B.')
+        case=payload.get('caso_integrador',{}) if isinstance(payload,dict) else {}
+        with st.expander('Revisar Pregunta 30 · Caso profesional integrador'):
+            st.markdown('**¿Qué solución recomendarías para proteger un dormitorio contiguo a una sala de máquinas?**')
+            st.caption('La fuente domina en 125, 250 y 500 Hz. El caso exige calcular, comparar y justificar la decisión técnico-económica.')
+            if isinstance(case,dict) and case:
+                c1,c2=st.columns(2)
+                c1.metric('T₆₀ calculado', f"{float(case.get('t60',0) or 0):.2f} s")
+                c2.metric('Puntaje del caso', f"{practical:.0f}/20")
+                st.write(f"**Diferencia de costo:** ${float(case.get('diferencia_costo',0) or 0):,.0f}".replace(',', '.'))
+                st.write(f"**Incremento porcentual de B respecto de A:** {float(case.get('incremento_porcentual',0) or 0):.1f} %")
+                bands_saved=case.get('bandas_criticas',[]) or []
+                st.write('**Bandas críticas seleccionadas:** ' + (', '.join(f'{b} Hz' for b in bands_saved) if bands_saved else 'Sin respuesta'))
+                st.write(f"**Recomendación del alumno:** {case.get('recomendacion') or 'Sin respuesta'}")
+                st.markdown('**Justificación técnico-económica del alumno:**')
+                st.write(case.get('justificacion') or 'Sin respuesta')
+            else:
+                st.warning('Esta evaluación histórica conserva el puntaje del caso, pero no contiene el detalle de la Pregunta 30 en el registro guardado.')
+                st.write(f'**Puntaje histórico del caso:** {practical:.0f}/20')
+            st.info('Pauta esperada: T₆₀≈0,40 s; diferencia $300.000; incremento 16,7%; bandas 125, 250 y 500 Hz; recomendación: Solución B.')
         return
 
     tab1, tab2 = st.tabs(['Preguntas 1 a 29', 'Pregunta 30 · Caso práctico'])
