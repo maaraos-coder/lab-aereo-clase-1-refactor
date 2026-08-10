@@ -4,13 +4,25 @@ Las dependencias compartidas se inyectan desde ``app.py`` para conservar
 el comportamiento, el estado de Streamlit y las rutas existentes.
 """
 
-_PROTECTED = {'image_data_uri', '_institutional_header_impl', '_line_chart_impl', '_student_card_body', '_image_data_uri_impl', '_PROTECTED', 'student_lesson', '_visual_path', '_student_lesson_impl', 'run_component', 'development_answer', 'formula_card', 'header', 'check', '_development_answer_impl', '__student_card_body_impl', '_check_impl', '_full_matter_impl', '__visual_path_impl', '_COMPONENTS', 'line_chart', '__academic_blocks_impl', '_fallback_figure', '_stage_overview_impl', '_lesson_impl', '_bind_runtime', '_academic_blocks', '_formula_card_impl', '_header_impl', '__fallback_figure_impl', 'lesson', 'institutional_header', 'stage_overview', 'full_matter'}
+_PROTECTED = {'image_data_uri', '_institutional_header_impl', '_line_chart_impl', '_student_card_body', '_image_data_uri_impl', '_PROTECTED', 'student_lesson', '_visual_path', '_student_lesson_impl', 'run_component', 'development_answer', 'formula_card', 'header', 'check', '_development_answer_impl', '__student_card_body_impl', '_check_impl', '_full_matter_impl', '__visual_path_impl', '_COMPONENTS', 'line_chart', '__academic_blocks_impl', '_fallback_figure', '_stage_overview_impl', '_lesson_impl', '_bind_runtime', '_saved_formative_response', '_render_saved_activity_state', '_academic_blocks', '_formula_card_impl', '_header_impl', '__fallback_figure_impl', 'lesson', 'institutional_header', 'stage_overview', 'full_matter'}
 
 def _bind_runtime(runtime):
     module_globals = globals()
     for name, value in runtime.items():
         if name not in _PROTECTED and name not in _COMPONENTS:
             module_globals[name] = value
+
+def _saved_formative_response(stage, key):
+    """Puente local estable hacia el motor de evaluaciones formativas."""
+    return _evaluations.run_evaluation(
+        "_saved_formative_response", globals(), stage, key
+    )
+
+def _render_saved_activity_state(saved):
+    """Renderiza el estado persistente sin depender de wrappers de app.py."""
+    return _evaluations.run_evaluation(
+        "_render_saved_activity_state", globals(), saved
+    )
 
 def _stage_overview_impl(stage_number):
     items=STAGE_GUIDE[stage_number]
