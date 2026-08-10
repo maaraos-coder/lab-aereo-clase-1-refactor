@@ -66,23 +66,27 @@ def course_dashboard_impl():
             st.session_state["_open_lab_requested"]=True
             st.rerun()
 
-    lab2_released=class_by_number.get(2,{}).get("status") in ("published","archived")
-    st.markdown("#### Resultado del curso")
-    if st.session_state.get("role")=="Alumno" and not lab2_released:
-        st.info("El curso continúa en desarrollo. Tu avance del laboratorio publicado se conserva.")
-    elif not course_result["final_done"]:
-        st.warning(
-            f'**Evaluación final: Pendiente.** Puntaje acumulado actual: '
-            f'{course_result["earned"]:g}/{course_result["maximum"]:g} puntos. '
-            'La nota final se calculará cuando envíes la evaluación final del Laboratorio 2.'
-        )
-    else:
-        state="Aprobado" if course_result["grade"]>=4.0 else "Reprobado"
-        st.success(
-            f'**{state}.** Puntaje final: {course_result["earned"]:g}/'
-            f'{course_result["maximum"]:g} puntos ({course_result["percent"]:.1f}%). '
-            f'Nota final: **{course_result["grade"]:.1f}**.'
-        )
+    # El resumen de resultado del curso pertenece exclusivamente a la vista del alumno.
+    # En la vista docente, las calificaciones y revisiones se gestionan desde
+    # "Evaluaciones entregadas por alumnos" y no deben mezclarse con el dashboard de cursos.
+    if st.session_state.get("role") == "Alumno":
+        lab2_released=class_by_number.get(2,{}).get("status") in ("published","archived")
+        st.markdown("#### Resultado del curso")
+        if not lab2_released:
+            st.info("El curso continúa en desarrollo. Tu avance del laboratorio publicado se conserva.")
+        elif not course_result["final_done"]:
+            st.warning(
+                f'**Evaluación final: Pendiente.** Puntaje acumulado actual: '
+                f'{course_result["earned"]:g}/{course_result["maximum"]:g} puntos. '
+                'La nota final se calculará cuando envíes la evaluación final del Laboratorio 2.'
+            )
+        else:
+            state="Aprobado" if course_result["grade"]>=4.0 else "Reprobado"
+            st.success(
+                f'**{state}.** Puntaje final: {course_result["earned"]:g}/'
+                f'{course_result["maximum"]:g} puntos ({course_result["percent"]:.1f}%). '
+                f'Nota final: **{course_result["grade"]:.1f}**.'
+            )
 
     st.markdown("---")
     for course in COURSE_LABS:
