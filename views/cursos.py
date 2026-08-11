@@ -333,6 +333,27 @@ def _course2_lab1_stage0_energy_interactive(class_id, saved):
     else:
         st.info("En este render se analizan tres fuentes: pisada, bomba centrífuga y descarga sanitaria. Explora sus caminos para comprobar cómo pueden introducir energía mecánica en el edificio.")
 
+    # Permite repetir la observación sin borrar el progreso de exploración ni la nota
+    # (esta actividad es formativa). Es útil también para que el docente pueda
+    # volver a mostrar el descubrimiento inicial durante una clase.
+    if st.button(
+        "↺ Volver a identificar las fuentes",
+        key=f"{class_id}_stage0_reidentify",
+        width="stretch",
+        help="Reabre la actividad de observación inicial. No elimina las fuentes ya exploradas.",
+    ):
+        saved["stage0_source_identification_previous"] = saved.get("stage0_source_identification", [])
+        saved["stage0_source_identification"] = []
+        saved["stage0_source_identification_correct"] = False
+        saved["stage0_energy_unlocked"] = False
+        saved["stage0_source_identification_checked_at"] = None
+        saved["stage0_energy_source"] = None
+        st.session_state.pop(selected_key, None)
+        for i in range(6):
+            st.session_state.pop(f"{class_id}_stage0_identify_{i}", None)
+        _save_future_state_impl(class_id, saved)
+        st.rerun()
+
     st.markdown("#### Sigue la energía")
     st.write("Selecciona una fuente. **La imagen de arriba es la misma**: al elegir una opción se superpone su camino de propagación y su posible radiación acústica.")
 
@@ -682,6 +703,35 @@ def future_lab_view_impl(lab):
             help="La exportación visual de este nuevo laboratorio se habilitará cuando sus etapas estén completamente integradas.",
         )
 
+        # Mismos controles de proyección docente disponibles en el Curso 1.
+        if st.session_state.get("role")=="Docente":
+            st.link_button(
+                "🖥️ Abrir vista para Zoom",
+                f"?projection=1&future_lab={class_id}",
+                width="stretch",
+                help="Ábrela en otra ventana y comparte solo esa ventana en Zoom.",
+            )
+            future_projection_options = {
+                f"Etapa {i} · {lab['stages'][i][0]}": i
+                for i in range(len(lab["stages"]))
+            }
+            future_projection_label = st.selectbox(
+                "Contenido visible en Zoom",
+                list(future_projection_options),
+                key=f"future_projection_stage_selector_{class_id}",
+            )
+            future_projection_stage = future_projection_options[future_projection_label]
+            if st.button(
+                "Mostrar etapa en Zoom",
+                key=f"future_projection_show_{class_id}",
+                width="stretch",
+            ):
+                _set_projection(stage=future_projection_stage, class_id=class_id)
+                st.success(
+                    f"{future_projection_label} enviada a Zoom. "
+                    "Pulsa ‘Actualizar pantalla’ en la ventana de Zoom."
+                )
+
         selected=st.radio(
             "Ruta de aprendizaje",
             list(range(11)),
@@ -792,6 +842,45 @@ def future_lab_view_impl(lab):
             aritméticos de decibeles, símbolos intercambiados y conclusiones normativas sin fuente.
             """)
 
+def future_projection_stage_impl(lab, stage):
+    """Vista limpia de una etapa futura para la ventana compartida en Zoom."""
+    stage = int(stage or 0)
+    if stage < 0 or stage >= len(lab.get("stages", [])):
+        stage = 0
+
+    st.session_state["projection_mode"] = True
+    st.session_state["role"] = "Proyección"
+    st.session_state["name"] = "Pantalla de clase"
+
+    # La Etapa 0 integrada del Curso 2 se proyecta con el mismo contenido visible
+    # del alumno, pero sobre un estado efímero para no registrar respuestas de la
+    # pantalla de Zoom en la base de datos.
+    if lab.get("id") == "clase-03-impacto-instalaciones-lab-1" and stage == 0:
+        _render_course2_lab1_stage0(lab, {})
+        return
+
+    title, objective, concept, activity = lab["stages"][stage]
+    stage_minutes = 20 if stage not in (9, 10) else 35
+    header(f"ETAPA {stage} · LABORATORIO {lab['number']}", title, objective)
+    st.caption(f"{lab['course']} · Vista para alumnos")
+    st.markdown("### Desarrollo técnico")
+    st.markdown(concept)
+    if stage in (2, 3, 4, 5, 8):
+        st.markdown("#### Regla de trabajo")
+        if "ambiental" in lab["id"]:
+            st.latex(r"L_{eq}=10\log_{10}\left(\frac{1}{T}\sum_i t_i\,10^{L_i/10}\right)")
+        elif "construccion" in lab["id"]:
+            st.latex(r"L_p(r_2)=L_p(r_1)-20\log_{10}(r_2/r_1)")
+        elif "impacto" in lab["id"]:
+            st.latex(r"L'_{nT}=L_i-10\log_{10}(T/T_0)")
+        else:
+            st.latex(r"D_{nT}=L_1-L_2+10\log_{10}(T/T_0)")
+    st.info("Criterio profesional: registra dato, método, unidad, supuesto e interpretación.")
+    st.markdown("### Actividad interactiva")
+    st.write(activity)
+    st.caption(f"Tiempo de referencia de la etapa: {stage_minutes} min")
+
+
 # Enlaces internos para que la vista futura use las implementaciones locales.
 def _future_saved(class_id):
     return _future_saved_impl(class_id)
@@ -805,6 +894,7 @@ _VIEWS = {
     "_future_saved": _future_saved_impl,
     "_save_future_state": _save_future_state_impl,
     "future_lab_view": future_lab_view_impl,
+    "future_projection_stage": future_projection_stage_impl,
 }
 
 def run_view(name, runtime, *args, **kwargs):
