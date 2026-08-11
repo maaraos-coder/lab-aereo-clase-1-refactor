@@ -1,3 +1,5 @@
+import streamlit.components.v1 as components
+
 """Vistas de cursos, selección de laboratorios y laboratorios futuros.
 
 La lógica se conserva sin cambios. ``app.py`` inyecta las dependencias
@@ -276,6 +278,51 @@ def _course2_lab1_stage0_dynamic_image(filename, source=None, caption=None):
             st.caption(caption)
 
 
+def _course2_stage0_footstep_svg(stage=0):
+    stage=max(0,min(int(stage),4))
+    orange="#ff8a2a"; cyan="#38d7ff"; dim="#45627a"; bg="#07172a"
+    impact=orange
+    slab=orange if stage>=1 else dim
+    prop=orange if stage>=2 else dim
+    rad=cyan if stage>=3 else dim
+    rec=cyan if stage>=4 else dim
+    return f'''<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1100 390" width="100%">
+    <defs><filter id="g"><feGaussianBlur stdDeviation="4" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter></defs>
+    <rect width="1100" height="390" rx="18" fill="{bg}"/>
+    <rect x="80" y="138" width="940" height="78" rx="6" fill="#536273" stroke="#8093a7" stroke-width="3"/>
+    <path d="M130 168 H970" stroke="{prop}" stroke-width="8" stroke-linecap="round" opacity=".9"/>
+    <circle cx="310" cy="123" r="17" fill="{impact}" filter="url(#g)"/>
+    <path d="M280 70 q30 -28 60 0 l-9 54 h-42z" fill="#c8d2dc"/><path d="M294 42 q20 -14 39 5" stroke="#c8d2dc" stroke-width="17" fill="none" stroke-linecap="round"/>
+    <path d="M310 124 V168" stroke="{slab}" stroke-width="9" filter="url(#g)"/>
+    <g fill="none" stroke="{rad}" stroke-width="5" opacity="{1 if stage>=3 else .25}"><path d="M230 220 Q310 285 390 220"/><path d="M190 220 Q310 330 430 220"/><path d="M150 220 Q310 370 470 220"/></g>
+    <rect x="620" y="255" width="300" height="64" rx="12" fill="#172438" stroke="{rec}" stroke-width="4"/>
+    <rect x="665" y="233" width="210" height="45" rx="12" fill="#314154"/><circle cx="730" cy="252" r="15" fill="#d4b39c"/><circle cx="805" cy="252" r="15" fill="#d4b39c"/>
+    <text x="310" y="335" text-anchor="middle" fill="#eaf6ff" font-family="Arial" font-size="18">SUPERFICIE VIBRANTE</text>
+    <text x="770" y="350" text-anchor="middle" fill="{rec}" font-family="Arial" font-size="18" font-weight="700">RECEPTOR</text>
+    <text x="80" y="45" fill="#f3f8fc" font-family="Arial" font-size="24" font-weight="700">Pisada · estructura · aire · receptor</text>
+    </svg>'''
+
+
+def _course2_stage0_pump_paths_svg(active="base"):
+    colors={"base":"#ff8a2a","pipe":"#a46bff","air":"#38d7ff"}
+    bg="#07172a"; active=active if active in colors else "base"
+    def op(name): return "1" if name==active else ".18"
+    return f'''<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1100 420" width="100%">
+      <defs><filter id="g"><feGaussianBlur stdDeviation="4" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter></defs>
+      <rect width="1100" height="420" rx="18" fill="{bg}"/>
+      <text x="45" y="46" fill="#f3f8fc" font-family="Arial" font-size="24" font-weight="700">Una bomba · tres caminos simultáneos</text>
+      <g><rect x="110" y="168" width="230" height="90" rx="20" fill="#185b87" stroke="#7bdcff" stroke-width="4"/><circle cx="307" cy="213" r="38" fill="#0d405f" stroke="#7bdcff" stroke-width="4"/><text x="205" y="218" text-anchor="middle" fill="white" font-family="Arial" font-size="20" font-weight="700">BOMBA</text></g>
+      <rect x="130" y="282" width="250" height="36" rx="6" fill="#596879"/><rect x="60" y="335" width="970" height="42" rx="4" fill="#465568"/>
+      <g opacity="{op('base')}" filter="url(#g)" stroke="{colors['base']}" fill="none"><path d="M230 258 V335" stroke-width="9"/><path d="M160 353 H520" stroke-width="7"/></g>
+      <text x="365" y="395" fill="{colors['base']}" opacity="{op('base')}" font-family="Arial" font-size="17" font-weight="700">BASE → LOSA → ESTRUCTURA</text>
+      <g opacity="{op('pipe')}" filter="url(#g)" stroke="{colors['pipe']}" fill="none"><path d="M340 208 H710 V118 H900" stroke-width="11"/><circle cx="710" cy="208" r="22" stroke-width="5"/></g>
+      <rect x="880" y="90" width="120" height="72" rx="10" fill="#172438" stroke="{colors['pipe']}" stroke-width="3" opacity="{op('pipe')}"/><text x="940" y="132" text-anchor="middle" fill="{colors['pipe']}" opacity="{op('pipe')}" font-family="Arial" font-size="15" font-weight="700">SOPORTE</text>
+      <text x="625" y="92" fill="{colors['pipe']}" opacity="{op('pipe')}" font-family="Arial" font-size="17" font-weight="700">TUBERÍA → SOPORTES → ESTRUCTURA</text>
+      <g opacity="{op('air')}" filter="url(#g)" fill="none" stroke="{colors['air']}" stroke-width="5"><path d="M110 152 Q40 213 110 274"/><path d="M78 124 Q0 213 78 302"/><path d="M350 150 Q430 213 350 276"/></g>
+      <rect x="720" y="245" width="260" height="64" rx="12" fill="#172438" stroke="{colors['air']}" stroke-width="3" opacity="{op('air')}"/><text x="850" y="284" text-anchor="middle" fill="{colors['air']}" opacity="{op('air')}" font-family="Arial" font-size="17" font-weight="700">AIRE → RECEPTOR</text>
+    </svg>'''
+
+
 def _course2_lab1_stage0_pump_svg(encierro=False, absorbente=False, antivibratorios=False, flexible=False):
     """SVG técnico conceptual de una bomba y sus caminos de transmisión."""
     base_color = "#35d07f" if antivibratorios else "#ff8a3d"
@@ -465,7 +512,7 @@ def _course2_lab1_stage0_pump_lab(class_id, saved):
         saved["stage0_pump_lab_explored"]=True
         _save_future_state_impl(class_id,saved)
 
-    st.html(_course2_lab1_stage0_pump_svg(**config))
+    components.html(_course2_lab1_stage0_pump_svg(**config), height=650, scrolling=False)
 
     base_state="Reducido" if antivibratorios else "Activo"
     pipe_state="Reducido" if flexible else "Activo"
@@ -826,74 +873,51 @@ def _render_course2_lab1_stage0(lab, saved):
         "de la vibración, la superficie involucrada y el acoplamiento con el aire. Más adelante se introducirá la eficiencia de radiación σ."
     )
 
-    st.markdown("### 5 · Desafío · Reconstruye el camino de una pisada")
-    st.write("En vez de memorizar la cadena, constrúyela paso a paso. Selecciona el elemento que sigue a la **pisada**.")
-    step_key=f"{class_id}_stage0_footstep_step"
-    if step_key not in st.session_state:
-        st.session_state[step_key]=0
-    foot_steps=[
-        ("PIE", r"\text{PIE}"),
-        ("F(t)", r"F(t)"),
-        ("LOSA", r"\text{LOSA}"),
-        ("VIBRACIÓN", r"\text{VIBRACIÓN}"),
-        ("RADIACIÓN", r"\text{RADIACIÓN}"),
-        ("RECEPTOR", r"\text{RECEPTOR}"),
+    st.markdown("### 5 · Caso visual · De la pisada al receptor")
+    st.write("Recorre el fenómeno sin convertirlo en un cuestionario. Selecciona una etapa y observa cómo cambia el camino de la energía.")
+    foot_stage_key=f"{class_id}_stage0_foot_visual"
+    if foot_stage_key not in st.session_state:
+        st.session_state[foot_stage_key]=0
+    foot_labels=["Impacto", "Respuesta de la losa", "Propagación", "Radiación", "Receptor"]
+    foot_cols=st.columns(5)
+    for idx,(col,label) in enumerate(zip(foot_cols,foot_labels)):
+        with col:
+            if st.button(label,key=f"{foot_stage_key}_{idx}",type="primary" if st.session_state[foot_stage_key]==idx else "secondary",width="stretch"):
+                st.session_state[foot_stage_key]=idx
+                st.rerun()
+    components.html(_course2_stage0_footstep_svg(int(st.session_state[foot_stage_key])), height=430, scrolling=False)
+    foot_explain=[
+        (r"F(t)", "La pisada introduce una fuerza dinámica en la losa."),
+        (r"F(t)\rightarrow v(t)", "La estructura responde: la losa adquiere velocidad vibratoria."),
+        (r"F(t)\rightarrow v(t)\rightarrow v_n(t)", "La vibración se propaga y aparece movimiento normal en la superficie del cielo."),
+        (r"v_n(t)\rightarrow p(t)", "La superficie vibrante desplaza el aire y comienza la radiación acústica."),
+        (r"F(t)\rightarrow v(t)\rightarrow v_n(t)\rightarrow p(t)\rightarrow \text{RECEPTOR}", "La presión sonora se propaga por el recinto hasta el receptor."),
     ]
-    current=int(st.session_state[step_key])
-    shown=max(1,min(current+1,len(foot_steps)))
-    st.latex(r"\rightarrow".join(x[1] for x in foot_steps[:shown]))
-    if current < len(foot_steps)-1:
-        correct=foot_steps[current+1][0]
-        distractors={
-            0:["AIRE","F(t)","RECEPTOR"], 1:["LOSA","AIRE","MURO"],
-            2:["VIBRACIÓN","ABSORCIÓN","RECEPTOR"], 3:["RADIACIÓN","FUERZA","MASA"],
-            4:["RECEPTOR","LOSA","TUBERÍA"],
-        }[current]
-        cols=st.columns(3)
-        for col,opt in zip(cols,distractors):
-            with col:
-                if st.button(opt,key=f"{class_id}_foot_{current}_{opt}",width="stretch"):
-                    if opt==correct:
-                        st.session_state[step_key]=current+1
-                        st.rerun()
-                    else:
-                        st.session_state[f"{step_key}_feedback"]="Revisa dónde está la energía en este punto del fenómeno y vuelve a intentarlo."
-        if st.session_state.get(f"{step_key}_feedback"):
-            st.warning(st.session_state.pop(f"{step_key}_feedback"))
-    else:
-        st.success("Cadena completa. La energía entra como fuerza mecánica, se propaga como vibración estructural y finalmente una superficie puede radiarla al aire hacia el receptor.")
-        if st.button("↺ Repetir desafío de la pisada",key=f"{class_id}_foot_reset"):
-            st.session_state[step_key]=0
-            st.rerun()
+    latex,text=foot_explain[int(st.session_state[foot_stage_key])]
+    st.latex(latex)
+    st.caption(text)
 
-    st.markdown("### 6 · Explora · Una bomba, tres caminos")
-    st.write("Una misma bomba puede excitar varios caminos. Abre cada uno y compara **por dónde sale la energía**.")
-    pump_path_key=f"{class_id}_stage0_pump_path"
-    p1,p2,p3=st.columns(3)
-    if p1.button("Base → losa",key=f"{pump_path_key}_base",width="stretch"):
+    st.markdown("### 6 · Mapa de caminos · Una bomba, tres rutas")
+    st.write("Selecciona un camino en el esquema. La misma bomba puede excitar los tres simultáneamente.")
+    pump_path_key=f"{class_id}_stage0_pump_path_visual"
+    if pump_path_key not in st.session_state:
         st.session_state[pump_path_key]="base"
-    if p2.button("Tubería → estructura",key=f"{pump_path_key}_pipe",width="stretch"):
-        st.session_state[pump_path_key]="pipe"
-    if p3.button("Carcasa → aire",key=f"{pump_path_key}_air",width="stretch"):
-        st.session_state[pump_path_key]="air"
-    path=st.session_state.get(pump_path_key)
-    if path=="base":
-        with st.container(border=True):
-            st.markdown("#### Camino estructural por la base")
-            st.latex(r"\text{BOMBA}\rightarrow\text{BASE}\rightarrow\text{LOSA}\rightarrow\text{ESTRUCTURA}")
-            st.write("La fuerza dinámica de la máquina atraviesa sus apoyos y puede excitar directamente la losa.")
-    elif path=="pipe":
-        with st.container(border=True):
-            st.markdown("#### Camino estructural por la tubería")
-            st.latex(r"\text{BOMBA}\rightarrow\text{TUBERÍA}\rightarrow\text{SOPORTES}\rightarrow\text{ESTRUCTURA}")
-            st.write("La tubería puede actuar como un puente mecánico incluso cuando la base de la bomba está aislada.")
-    elif path=="air":
-        with st.container(border=True):
-            st.markdown("#### Camino aéreo directo")
-            st.latex(r"\text{CARCASA}\rightarrow\text{AIRE}\rightarrow\text{RECEPTOR}")
-            st.write("La carcasa también puede radiar sonido directamente al aire. Este camino requiere un tratamiento distinto de los caminos estructurales.")
-    else:
-        st.info("Selecciona uno de los tres caminos para investigarlo.")
+    p1,p2,p3=st.columns(3)
+    choices=[("base","Base → losa"),("pipe","Tubería → estructura"),("air","Carcasa → aire")]
+    for col,(value,label) in zip((p1,p2,p3),choices):
+        with col:
+            if st.button(label,key=f"{pump_path_key}_{value}",type="primary" if st.session_state[pump_path_key]==value else "secondary",width="stretch"):
+                st.session_state[pump_path_key]=value
+                st.rerun()
+    active_path=st.session_state[pump_path_key]
+    components.html(_course2_stage0_pump_paths_svg(active_path), height=460, scrolling=False)
+    path_info={
+        "base":(r"\text{BOMBA}\rightarrow\text{BASE}\rightarrow\text{LOSA}\rightarrow\text{ESTRUCTURA}","Camino estructural directo por los apoyos de la máquina."),
+        "pipe":(r"\text{BOMBA}\rightarrow\text{TUBERÍA}\rightarrow\text{SOPORTES}\rightarrow\text{ESTRUCTURA}","Camino estructural paralelo: una tubería rígida puede puentear el aislamiento de la base."),
+        "air":(r"\text{CARCASA}\rightarrow\text{AIRE}\rightarrow\text{RECEPTOR}","Camino aéreo directo: requiere medidas distintas de las que controlan transmisión estructural."),
+    }
+    st.latex(path_info[active_path][0])
+    st.caption(path_info[active_path][1])
 
     _course2_lab1_stage0_pump_lab(class_id, saved)
 
