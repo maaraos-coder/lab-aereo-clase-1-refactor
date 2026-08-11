@@ -329,10 +329,9 @@ def _render_course2_lab1_stage0(lab, saved):
         r"\rightarrow\text{PROPAGACIÓN}\rightarrow\text{RADIACIÓN}\rightarrow\text{RECEPTOR}"
     )
 
-    _course2_lab1_stage0_asset(
-        "curso2_lab1_etapa0_edificio_vibroacustico.webp",
-        "Edificio como sistema vibroacústico: fuentes, caminos estructurales y recintos receptores.",
-    )
+    # La imagen principal se renderiza dentro del interactivo para evitar duplicarla.
+    # Antes de elegir una fuente se muestra el render base; después, la misma zona
+    # visual cambia a la versión resaltada correspondiente.
 
     # El interactivo debe quedar inmediatamente asociado al render principal.
     # En móvil los botones son táctiles y se apilan automáticamente si falta ancho.
@@ -523,9 +522,16 @@ def _render_course2_lab1_stage0(lab, saved):
 
 
 def future_lab_view_impl(lab):
-    """Data-driven renderer for the eight laboratories developed from the source material."""
+    """Renderer de los laboratorios posteriores manteniendo la navegación institucional."""
     class_id=lab["id"]
     saved=_future_saved(class_id)
+    current_lab_label=f"📚 Laboratorio {lab['number']} y actividades"
+    results_view_label=(
+        "📝 Evaluaciones entregadas"
+        if st.session_state.get("role")=="Docente"
+        else "🎓 Mi desempeño"
+    )
+
     with st.sidebar:
         uc=ROOT/"assets/logos/logo_uc.png"; decon=ROOT/"assets/logos/logo_decon_uc.png"
         if uc.exists(): st.image(str(uc),width=75)
@@ -538,37 +544,70 @@ def future_lab_view_impl(lab):
             unsafe_allow_html=True)
         st.caption("DIPLOMADO EN ACÚSTICA EN LA EDIFICACIÓN")
         st.markdown(f"**{st.session_state.name}**  \n{st.session_state.role}")
+
+        # Misma navegación principal utilizada en los laboratorios del Curso 1.
+        future_view_key=f"future_main_view_{class_id}"
+        future_options=["🏠 Mis clases", results_view_label, current_lab_label]
+        if st.session_state.get(future_view_key) not in future_options:
+            st.session_state[future_view_key]=current_lab_label
+        future_view=st.radio(
+            "Vista",
+            future_options,
+            key=future_view_key,
+            help="Selecciona Mis clases, tu desempeño/evaluaciones o la ruta del laboratorio.",
+        )
+        if future_view != current_lab_label:
+            st.session_state.pop("future_lab_id",None)
+            st.session_state["main_view"]=future_view
+            st.rerun()
+
         answered=sum(1 for i in range(11) if saved.get(f"done_{i}"))
         st.progress(answered/11)
         st.caption(f"Avance: {answered}/11 etapas · {answered*10}/110 puntos formativos")
+
+        # Herramientas comunes del diplomado.
         formula_popup_button()
-        if st.session_state.get("role") == "Alumno" and st.button("📊 Mis resultados", use_container_width=True):
-            st.session_state.pop("future_lab_id", None)
-            st.session_state["main_view"] = "📊 Mis resultados"
-            st.rerun()
+        st.button(
+            "📕 Generar apunte visual (PDF)",
+            key=f"future_pdf_pending_{class_id}",
+            width="stretch",
+            disabled=True,
+            help="La exportación visual de este nuevo laboratorio se habilitará cuando sus etapas estén completamente integradas.",
+        )
+
         selected=st.radio(
             "Ruta de aprendizaje",
             list(range(11)),
             format_func=lambda i:f"Etapa {i} · {lab['stages'][i][0]}",
             key=f"future_stage_{class_id}",
         )
-        if st.button("← Volver a Mis clases",use_container_width=True):
-            st.session_state.pop("future_lab_id",None); st.rerun()
+
         if st.session_state.get("role")=="Docente":
-            client=_supabase()
-            if client is not None:
-                row=_class_row(class_id)
-                published=row.get("status")=="published"
-                st.caption("Publicado para alumnos" if published else "Borrador · oculto para alumnos")
-                if st.button("Ocultar laboratorio" if published else "Publicar laboratorio",
-                             key=f"future_publish_{class_id}",use_container_width=True):
-                    client.table("classes").update({
-                        "status":"draft" if published else "published","updated_at":_now()
-                    }).eq("id",class_id).execute()
-                    _clear_course_cache()
-                    st.rerun()
-        if st.button("Cerrar sesión",use_container_width=True):
+            # Mantiene los controles docentes con la misma organización visual del Curso 1.
+            if "teacher_student_management" in globals():
+                with st.expander("⚙️ Gestión de alumnos"):
+                    teacher_student_management()
+            with st.expander("🔒 Publicación de laboratorios"):
+                client=_supabase()
+                if client is not None:
+                    row=_class_row(class_id)
+                    published=row.get("status")=="published"
+                    st.caption("Publicado para alumnos" if published else "Borrador · oculto para alumnos")
+                    if st.button(
+                        "Ocultar laboratorio" if published else "Publicar laboratorio",
+                        key=f"future_publish_{class_id}",
+                        width="stretch",
+                    ):
+                        client.table("classes").update({
+                            "status":"draft" if published else "published","updated_at":_now()
+                        }).eq("id",class_id).execute()
+                        _clear_course_cache()
+                        st.rerun()
+            st.caption("Las evaluaciones de los alumnos se revisan en la vista ‘Evaluaciones entregadas’.")
+
+        if st.button("Cerrar sesión",width="stretch"):
             st.session_state.clear(); st.rerun()
+        st.caption("Docente: Marco Araos Barría")
 
     if class_id == "clase-03-impacto-instalaciones-lab-1" and selected == 0:
         _render_course2_lab1_stage0(lab, saved)
