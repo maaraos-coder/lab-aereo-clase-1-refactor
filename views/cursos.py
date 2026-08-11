@@ -66,27 +66,23 @@ def course_dashboard_impl():
             st.session_state["_open_lab_requested"]=True
             st.rerun()
 
-    # El resumen de resultado del curso pertenece exclusivamente a la vista del alumno.
-    # En la vista docente, las calificaciones y revisiones se gestionan desde
-    # "Evaluaciones entregadas por alumnos" y no deben mezclarse con el dashboard de cursos.
-    if st.session_state.get("role") == "Alumno":
-        lab2_released=class_by_number.get(2,{}).get("status") in ("published","archived")
-        st.markdown("#### Resultado del curso")
-        if not lab2_released:
-            st.info("El curso continúa en desarrollo. Tu avance del laboratorio publicado se conserva.")
-        elif not course_result["final_done"]:
-            st.warning(
-                f'**Evaluación final: Pendiente.** Puntaje acumulado actual: '
-                f'{course_result["earned"]:g}/{course_result["maximum"]:g} puntos. '
-                'La nota final se calculará cuando envíes la evaluación final del Laboratorio 2.'
-            )
-        else:
-            state="Aprobado" if course_result["grade"]>=4.0 else "Reprobado"
-            st.success(
-                f'**{state}.** Puntaje final: {course_result["earned"]:g}/'
-                f'{course_result["maximum"]:g} puntos ({course_result["percent"]:.1f}%). '
-                f'Nota final: **{course_result["grade"]:.1f}**.'
-            )
+    lab2_released=class_by_number.get(2,{}).get("status") in ("published","archived")
+    st.markdown("#### Resultado del curso")
+    if st.session_state.get("role")=="Alumno" and not lab2_released:
+        st.info("El curso continúa en desarrollo. Tu avance del laboratorio publicado se conserva.")
+    elif not course_result["final_done"]:
+        st.warning(
+            f'**Evaluación final: Pendiente.** Puntaje acumulado actual: '
+            f'{course_result["earned"]:g}/{course_result["maximum"]:g} puntos. '
+            'La nota final se calculará cuando envíes la evaluación final del Laboratorio 2.'
+        )
+    else:
+        state="Aprobado" if course_result["grade"]>=4.0 else "Reprobado"
+        st.success(
+            f'**{state}.** Puntaje final: {course_result["earned"]:g}/'
+            f'{course_result["maximum"]:g} puntos ({course_result["percent"]:.1f}%). '
+            f'Nota final: **{course_result["grade"]:.1f}**.'
+        )
 
     st.markdown("---")
     for course in COURSE_LABS:
@@ -145,6 +141,345 @@ def _save_future_state_impl(class_id,state):
         "state_json":state,"updated_at":_now(),
     },on_conflict="class_id,user_key").execute()
 
+def _course2_lab1_stage0_asset(filename, caption):
+    """Muestra el asset oficial si existe; de lo contrario deja su espacio identificado."""
+    path = ROOT / "assets" / filename
+    if path.exists():
+        st.image(str(path), width="stretch")
+        if caption:
+            st.caption(caption)
+    else:
+        st.info(
+            f"Asset pendiente: `{filename}`. "
+            "Sube el render definitivo a la carpeta `assets/` conservando exactamente este nombre."
+        )
+
+
+def _future_stage0_mcq(class_id, saved, key, question, options, correct, feedback):
+    """Pregunta formativa persistente para la Etapa 0; no asigna puntaje ni nota."""
+    state_key = f"{class_id}_{key}"
+    record = saved.get(key) if isinstance(saved.get(key), dict) else {}
+    previous = record.get("choice")
+    if state_key not in st.session_state and previous in options:
+        st.session_state[state_key] = previous
+
+    st.markdown(f"**{question}**")
+    choice = st.radio(
+        "Selecciona una respuesta",
+        options,
+        index=None,
+        key=state_key,
+        label_visibility="collapsed",
+    )
+
+    if record.get("completed"):
+        if record.get("correct"):
+            st.success(feedback)
+        else:
+            st.error("Respuesta incorrecta. Revisa el mecanismo de transmisión y vuelve a intentarlo si lo necesitas.")
+        st.caption(f"Respuesta guardada: {record.get('choice', '—')}")
+
+    label = "Actualizar respuesta" if record.get("completed") else "Comprobar y guardar"
+    if st.button(label, key=f"save_{state_key}"):
+        if choice is None:
+            st.warning("Selecciona una alternativa antes de comprobar.")
+        else:
+            is_correct = choice == correct
+            saved[key] = {
+                "choice": choice,
+                "correct": is_correct,
+                "completed": True,
+                "updated_at": _now(),
+            }
+            _save_future_state_impl(class_id, saved)
+            st.rerun()
+
+
+def _render_course2_lab1_stage0(lab, saved):
+    """Etapa 0 real del Curso 2 · Laboratorio 1, integrada al flujo futuro existente."""
+    class_id = lab["id"]
+    stage_selector_key = f"future_stage_{class_id}"
+
+    header(
+        "ETAPA 0 · LABORATORIO 1",
+        "El edificio como sistema vibroacústico",
+        "Reconocer cómo la energía puede ingresar al edificio, propagarse por su estructura y radiarse posteriormente como sonido.",
+        show_overview=False,
+        duration_minutes=20,
+    )
+    st.caption(f"{lab['course']} · Laboratorio 1")
+
+    st.markdown("### Objetivo de aprendizaje")
+    st.markdown(
+        """
+- Reconocer el edificio como medio de transmisión de energía vibratoria.
+- Diferenciar conceptualmente transmisión aérea y estructural.
+- Identificar fuente, excitación, propagación, radiación y receptor.
+- Reconocer que una misma fuente puede generar simultáneamente ruido aéreo y estructural.
+- Comprender que una superficie estructural vibrante puede radiar posteriormente sonido hacia el aire.
+        """
+    )
+
+    st.markdown("### Apertura")
+    st.info(
+        "En acústica de edificios no basta con identificar dónde se escucha el ruido. "
+        "Para controlarlo necesitamos descubrir dónde se genera la energía, cómo ingresa a la estructura, "
+        "por dónde se propaga y qué elemento termina radiándola hacia el receptor."
+    )
+    st.latex(
+        r"\text{FUENTE}\rightarrow\text{EXCITACIÓN}\rightarrow\text{RESPUESTA}"
+        r"\rightarrow\text{PROPAGACIÓN}\rightarrow\text{RADIACIÓN}\rightarrow\text{RECEPTOR}"
+    )
+
+    _course2_lab1_stage0_asset(
+        "curso2_lab1_etapa0_edificio_vibroacustico.webp",
+        "Edificio como sistema vibroacústico: fuentes, caminos estructurales y recintos receptores.",
+    )
+
+    st.markdown("### 1 · Situación inicial")
+    st.write("Observa un edificio residencial en el que pueden coexistir una pisada, una bomba centrífuga, una descarga sanitaria y un ventilador.")
+    _future_stage0_mcq(
+        class_id,
+        saved,
+        "stage0_q1",
+        "¿Cuál de estas fuentes puede producir ruido estructural?",
+        [
+            "A. Solo la pisada",
+            "B. La pisada y la bomba",
+            "C. Solo la bomba",
+            "D. Todas pueden hacerlo dependiendo de cómo estén conectadas al edificio",
+        ],
+        "D. Todas pueden hacerlo dependiendo de cómo estén conectadas al edificio",
+        "Todas pueden introducir energía mecánica en elementos constructivos. Esa energía puede propagarse por losas, muros, pilares, tuberías, soportes u otros elementos y posteriormente producir sonido en otro recinto.",
+    )
+
+    st.markdown("### 2 · Ruido aéreo y ruido estructural")
+    aerial, structural = st.columns(2)
+    with aerial:
+        with st.container(border=True):
+            st.markdown("#### Ruido aéreo")
+            st.latex(r"p\rightarrow v\rightarrow p")
+            st.write(
+                "La fuente genera primero fluctuaciones de presión en el aire. Esa presión puede hacer vibrar un cerramiento y éste radiar nuevamente al otro lado."
+            )
+            st.markdown("**Ruido aéreo: primero el aire.**")
+    with structural:
+        with st.container(border=True):
+            st.markdown("#### Ruido estructural")
+            st.latex(r"F\rightarrow v\rightarrow p")
+            st.write(
+                "La fuente introduce primero una fuerza mecánica en la estructura. La vibración se propaga por elementos sólidos y posteriormente una superficie puede radiar sonido al aire."
+            )
+            st.markdown("**Ruido estructural: primero la estructura.**")
+
+    st.markdown("### 3 · De la vibración al sonido")
+    st.latex(r"F(t)\rightarrow v(t)\rightarrow v_n(t)\rightarrow p(t)")
+    terms = [
+        ("F(t)", "fuerza dinámica"),
+        ("v(t)", "velocidad vibratoria"),
+        ("vₙ(t)", "componente normal de la vibración de la superficie radiante"),
+        ("p(t)", "presión sonora en el aire"),
+    ]
+    for symbol, meaning in terms:
+        st.markdown(f"- **{symbol}:** {meaning}.")
+    st.info(
+        "En palabras simples: una losa o muro no necesita moverse de manera visible para producir ruido. "
+        "Puede vibrar una cantidad extremadamente pequeña y aun así mover suficiente aire para generar sonido audible."
+    )
+
+    st.markdown("### 4 · Vibración no es igual a radiación")
+    st.latex(r"\text{VIBRACIÓN}\neq\text{RADIACIÓN ACÚSTICA}")
+    st.write(
+        "Una superficie puede presentar vibración medible y no ser necesariamente un radiador acústico eficiente. "
+        "La radiación depende de la frecuencia, la distribución de la vibración, la superficie involucrada y el acoplamiento con el aire. "
+        "Más adelante se introducirá la eficiencia de radiación σ."
+    )
+    _course2_lab1_stage0_asset(
+        "curso2_lab1_etapa0_vibracion_radiacion.webp",
+        "Relación conceptual entre vibración de una superficie y radiación acústica al aire.",
+    )
+
+    st.markdown("### 5 · Ejemplo: pisada")
+    st.latex(
+        r"\text{PIE}\rightarrow F(t)\rightarrow\text{LOSA}\rightarrow\text{VIBRACIÓN}"
+        r"\rightarrow\text{RADIACIÓN}\rightarrow\text{RECEPTOR}"
+    )
+
+    st.markdown("### 6 · Ejemplo: bomba")
+    st.write("Una bomba puede excitar varios caminos simultáneamente:")
+    st.latex(r"\text{BOMBA}\rightarrow\text{BASE}\rightarrow\text{LOSA}")
+    st.latex(r"\text{BOMBA}\rightarrow\text{TUBERÍA}\rightarrow\text{SOPORTE}\rightarrow\text{ESTRUCTURA}")
+    st.latex(r"\text{CARCASA}\rightarrow\text{AIRE}")
+    st.warning("Una misma fuente puede utilizar varios caminos simultáneamente.")
+
+    st.markdown("### 7 · Principio profesional")
+    st.latex(r"\text{CONTROL EFECTIVO}=\text{CONTROL DEL CAMINO RELEVANTE}")
+    with st.container(border=True):
+        st.markdown("**Ejemplo 1**")
+        st.write("Material absorbente en una sala no necesariamente controla vibración transmitida por una tubería.")
+        st.markdown("**Ejemplo 2**")
+        st.write("Un aislador bajo un ventilador no necesariamente controla el ruido que viaja por el ducto.")
+
+    st.markdown("### Interactivo principal · Sigue la energía")
+    st.write("Selecciona una fuente y luego inspecciona uno de sus caminos posibles. El control debe comenzar identificando cómo viaja la energía.")
+
+    energy_paths = {
+        "Pisada": {
+            "Pie → losa → propagación estructural → superficie radiante → receptor":
+                "La fuerza de impacto entra directamente a la losa. La vibración se propaga por la estructura y una superficie del recinto receptor puede radiar sonido.",
+        },
+        "Bomba": {
+            "Base → losa":
+                "La reacción dinámica de la bomba atraviesa sus apoyos y excita la losa cuando el desacoplamiento es insuficiente o existe un puente rígido.",
+            "Tubería → soporte → estructura":
+                "La tubería puede puentear los aisladores de la máquina. Las abrazaderas o soportes rígidos introducen vibración directamente en muros o losas.",
+            "Carcasa → aire":
+                "La carcasa puede radiar ruido directamente al aire. Este camino es aéreo y puede coexistir con los caminos estructurales.",
+        },
+        "Descarga sanitaria": {
+            "Flujo → tubería":
+                "El flujo turbulento y los cambios de dirección generan fuerzas fluctuantes que hacen vibrar la tubería.",
+            "Tubería → abrazaderas → estructura":
+                "Las fijaciones rígidas transmiten parte de la vibración de la tubería al edificio.",
+            "Shaft → radiación → dormitorio":
+                "La tubería y las superficies del shaft pueden radiar sonido al aire y éste alcanzar el dormitorio receptor.",
+        },
+        "Ventilador": {
+            "Soporte → estructura":
+                "El desequilibrio o las fuerzas periódicas pueden ingresar a la estructura a través de la base y los soportes.",
+            "Ventilador → ducto → terminal":
+                "La energía acústica y vibratoria puede viajar por el ducto y radiarse en rejillas o terminales.",
+            "Carcasa → aire":
+                "La carcasa del equipo también puede radiar directamente al aire del recinto técnico.",
+        },
+    }
+
+    source_state_key = f"{class_id}_stage0_energy_source"
+    saved_source = saved.get("stage0_energy_source")
+    if source_state_key not in st.session_state and saved_source in energy_paths:
+        st.session_state[source_state_key] = saved_source
+    source = st.radio(
+        "Fuente",
+        list(energy_paths),
+        index=None,
+        key=source_state_key,
+    )
+    if source:
+        st.markdown("**Caminos posibles de la fuente seleccionada:**")
+        for path_label in energy_paths[source]:
+            st.write(f"- {path_label}")
+        path_state_key = f"{class_id}_stage0_energy_path_{source}"
+        saved_path = saved.get("stage0_energy_path") if saved.get("stage0_energy_source") == source else None
+        if path_state_key not in st.session_state and saved_path in energy_paths[source]:
+            st.session_state[path_state_key] = saved_path
+        selected_path = st.radio(
+            "Selecciona un camino para analizarlo",
+            list(energy_paths[source]),
+            index=None,
+            key=path_state_key,
+        )
+        if selected_path:
+            st.info(energy_paths[source][selected_path])
+            if saved.get("stage0_energy_source") != source or saved.get("stage0_energy_path") != selected_path:
+                saved["stage0_energy_source"] = source
+                saved["stage0_energy_path"] = selected_path
+                saved["stage0_energy_updated_at"] = _now()
+                _save_future_state_impl(class_id, saved)
+
+    st.markdown("### Preguntas de comprensión")
+    _future_stage0_mcq(
+        class_id,
+        saved,
+        "stage0_q2",
+        "Una persona escucha una bomba ubicada dos pisos más abajo. ¿Podemos concluir que el sonido viajó solamente por el aire?",
+        [
+            "A. Sí",
+            "B. No, también puede existir transmisión estructural",
+            "C. Sí, porque las vibraciones no producen sonido",
+            "D. Solo si la bomba trabaja bajo 100 Hz",
+        ],
+        "B. No, también puede existir transmisión estructural",
+        "Correcto. La distancia vertical no permite concluir el camino de transmisión: pueden coexistir radiación aérea y propagación estructural por losas, muros, tuberías o soportes.",
+    )
+    _future_stage0_mcq(
+        class_id,
+        saved,
+        "stage0_q3",
+        "Una pared presenta vibración medible. ¿Podemos concluir que necesariamente es un radiador acústico eficiente?",
+        ["A. Sí", "B. No"],
+        "B. No",
+        "Correcto. Vibración medible no implica radiación acústica eficiente; la eficiencia depende de frecuencia, patrón vibratorio, superficie y acoplamiento con el aire.",
+    )
+    _future_stage0_mcq(
+        class_id,
+        saved,
+        "stage0_q4",
+        "¿Cuál secuencia representa mejor un fenómeno de ruido de origen estructural?",
+        ["A. p → p", "B. F → v → p", "C. v → F → p", "D. p → F"],
+        "B. F → v → p",
+        "Correcto. En el ruido de origen estructural una fuerza excita primero la estructura, ésta vibra y luego una superficie puede radiar presión sonora al aire.",
+    )
+
+    st.markdown("### Mini caso profesional")
+    st.write(
+        "Una bomba está instalada sobre aisladores, pero una tubería sale rígidamente desde la bomba y está fijada mediante abrazaderas metálicas directamente al muro."
+    )
+    _future_stage0_mcq(
+        class_id,
+        saved,
+        "stage0_case",
+        "¿Cuál es la hipótesis técnica más razonable?",
+        [
+            "A. Los aisladores necesariamente están defectuosos",
+            "B. Debe colocarse material absorbente en el dormitorio",
+            "C. Puede existir un camino estructural paralelo por tubería y soportes",
+            "D. El problema debe ser exclusivamente aéreo",
+        ],
+        "C. Puede existir un camino estructural paralelo por tubería y soportes",
+        "Un buen aislador bajo la máquina no garantiza el aislamiento del sistema completo si existe otra conexión rígida capaz de puentearlo.",
+    )
+
+    st.markdown("### Cierre")
+    st.latex(
+        r"\text{FUENTE}\rightarrow\text{EXCITACIÓN}\rightarrow\text{RESPUESTA ESTRUCTURAL}"
+        r"\rightarrow\text{PROPAGACIÓN}\rightarrow\text{RADIACIÓN}\rightarrow\text{RECEPTOR}"
+        r"\rightarrow\text{CONTROL}"
+    )
+    st.success(
+        "En las siguientes etapas aprenderemos a cuantificar cada parte de esta cadena. "
+        "La primera pregunta será: si dos estructuras reciben exactamente la misma fuerza, ¿vibran necesariamente igual?"
+    )
+
+    required = ["stage0_q1", "stage0_q2", "stage0_q3", "stage0_q4", "stage0_case"]
+    completed_questions = sum(
+        1 for key in required
+        if isinstance(saved.get(key), dict) and saved[key].get("completed")
+    )
+    st.caption(f"Respuestas formativas guardadas: {completed_questions} de {len(required)}")
+
+    if saved.get("done_0"):
+        st.success("Etapa 0 completada y guardada en tu progreso.")
+    else:
+        if st.button("Completar Etapa 0", type="primary", key=f"complete_stage0_{class_id}"):
+            if completed_questions < len(required):
+                st.warning("Guarda las cinco respuestas formativas antes de completar la etapa.")
+            elif not saved.get("stage0_energy_source") or not saved.get("stage0_energy_path"):
+                st.warning("Explora al menos una fuente y uno de sus caminos en ‘Sigue la energía’ antes de completar la etapa.")
+            else:
+                saved["done_0"] = True
+                saved["updated_0"] = _now()
+                _save_future_state_impl(class_id, saved)
+                st.rerun()
+
+    nav_left, nav_right = st.columns(2)
+    with nav_left:
+        st.button("← Anterior", disabled=True, key=f"stage0_prev_{class_id}", width="stretch")
+    with nav_right:
+        if st.button("Etapa 1 →", key=f"stage0_next_{class_id}", width="stretch"):
+            st.session_state[stage_selector_key] = 1
+            st.rerun()
+
+
 def future_lab_view_impl(lab):
     """Data-driven renderer for the eight laboratories developed from the source material."""
     class_id=lab["id"]
@@ -192,6 +527,10 @@ def future_lab_view_impl(lab):
                     st.rerun()
         if st.button("Cerrar sesión",use_container_width=True):
             st.session_state.clear(); st.rerun()
+
+    if class_id == "clase-03-impacto-instalaciones-lab-1" and selected == 0:
+        _render_course2_lab1_stage0(lab, saved)
+        return
 
     title,objective,concept,activity=lab["stages"][selected]
     stage_minutes=20 if selected not in (9,10) else 35
