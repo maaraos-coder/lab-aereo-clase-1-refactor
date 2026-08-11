@@ -155,38 +155,146 @@ def _course2_lab1_stage0_asset(filename, caption):
         )
 
 
+def _course2_lab1_stage0_dynamic_image(filename, source=None, caption=None):
+    """Renderiza UNA sola imagen y superpone el camino energético seleccionado.
+
+    No genera imágenes adicionales ni cambia el asset original. El resaltado se crea
+    en memoria sobre el mismo render para mantener la interfaz limpia en escritorio y móvil.
+    """
+    path = ROOT / "assets" / filename
+    if not path.exists():
+        st.info(
+            f"Asset pendiente: `{filename}`. "
+            "Sube el render definitivo a la carpeta `assets/` conservando exactamente este nombre."
+        )
+        return
+
+    if source not in {"Pisada", "Bomba", "Descarga sanitaria"}:
+        st.image(str(path), width="stretch")
+        if caption:
+            st.caption(caption)
+        return
+
+    try:
+        from PIL import Image, ImageDraw, ImageEnhance
+
+        base = Image.open(path).convert("RGBA")
+        w, h = base.size
+        # Oscurecimiento muy leve: mantiene legible el edificio, pero hace que el
+        # recorrido seleccionado tenga jerarquía visual sin cargar una segunda imagen.
+        rgb = base.convert("RGB")
+        rgb = ImageEnhance.Brightness(rgb).enhance(0.78)
+        img = rgb.convert("RGBA")
+        overlay = Image.new("RGBA", img.size, (0, 0, 0, 0))
+        draw = ImageDraw.Draw(overlay, "RGBA")
+
+        def P(x, y):
+            return (int(x * w), int(y * h))
+
+        def glow_line(points, color, width=9):
+            pts=[P(x,y) for x,y in points]
+            for extra, alpha in ((14, 35), (8, 70), (0, 230)):
+                draw.line(pts, fill=(*color, alpha), width=max(2,width+extra), joint="curve")
+            for x,y in pts:
+                r=max(5,width//2)
+                draw.ellipse((x-r,y-r,x+r,y+r), fill=(*color,220))
+
+        def support_mark(x, y, color):
+            cx,cy=P(x,y)
+            for rr,alpha in ((22,45),(14,90),(7,220)):
+                draw.ellipse((cx-rr,cy-rr,cx+rr,cy+rr), outline=(*color,alpha), width=max(2,rr//5))
+
+        def radiation(cx, cy, scale=1.0):
+            # Cian = energía ya radiada al aire. Los arcos se orientan hacia el recinto.
+            c=(44, 210, 255)
+            px,py=P(cx,cy)
+            for i in range(4):
+                rx=int(w*(0.035+0.018*i)*scale)
+                ry=int(h*(0.050+0.025*i)*scale)
+                box=(px-rx,py-ry,px+rx,py+ry)
+                draw.arc(box, start=205, end=335, fill=(*c,210-25*i), width=max(3,int(w*0.0025)))
+
+        if source == "Pisada":
+            orange=(255, 151, 25)
+            # Pie -> losa -> cielo del dormitorio receptor.
+            glow_line([(0.35,0.285),(0.35,0.315),(0.35,0.37),(0.35,0.43)], orange, width=max(7,int(w*0.005)))
+            # Propagación lateral por la losa inmediatamente bajo la pisada.
+            glow_line([(0.22,0.305),(0.35,0.305),(0.49,0.305)], orange, width=max(5,int(w*0.0035)))
+            support_mark(0.35,0.305,orange)
+            # Radiación desde el cielo vibrante hacia la pareja ubicada justo debajo.
+            radiation(0.35,0.43,1.45)
+
+        elif source == "Bomba":
+            blue=(38, 146, 255)
+            # Camino 1: bomba -> base -> losa del subterráneo.
+            glow_line([(0.23,0.88),(0.23,0.91)], blue, width=max(7,int(w*0.005)))
+            support_mark(0.23,0.91,blue)
+            # Camino 2: bomba -> impulsión -> montante -> ramales hacia cocinas.
+            glow_line([(0.24,0.87),(0.45,0.87),(0.68,0.87),(0.69,0.68),(0.69,0.47),(0.69,0.24)], blue, width=max(7,int(w*0.0045)))
+            for y in (0.68,0.47,0.24):
+                glow_line([(0.69,y),(0.61,y)], blue, width=max(5,int(w*0.003)))
+                support_mark(0.69,y,blue)
+            # Ejemplo de una superficie estructural excitada por soportes de la montante
+            # que posteriormente puede radiar hacia el recinto contiguo.
+            radiation(0.62,0.47,1.10)
+
+        elif source == "Descarga sanitaria":
+            purple=(177, 77, 255)
+            # WC -> ramal -> bajante común -> fijaciones -> estructura.
+            glow_line([(0.78,0.24),(0.83,0.24),(0.83,0.47),(0.83,0.70),(0.83,0.88)], purple, width=max(7,int(w*0.0045)))
+            glow_line([(0.78,0.47),(0.83,0.47)], purple, width=max(5,int(w*0.003)))
+            glow_line([(0.78,0.70),(0.83,0.70)], purple, width=max(5,int(w*0.003)))
+            for y in (0.30,0.50,0.70):
+                support_mark(0.83,y,purple)
+            # Radiación desde una superficie próxima a una fijación hacia recinto habitable.
+            radiation(0.75,0.50,1.05)
+
+        img = Image.alpha_composite(img, overlay)
+        st.image(img, width="stretch")
+        if caption:
+            st.caption(caption)
+    except Exception:
+        # Si Pillow fallara por cualquier motivo, nunca bloqueamos la etapa.
+        st.image(str(path), width="stretch")
+        if caption:
+            st.caption(caption)
+
+
 def _course2_lab1_stage0_energy_interactive(class_id, saved):
-    """Descubrimiento + interactivo táctil. Persistente, formativo y sin nota."""
+    """Descubrimiento + 'Sigue la energía', persistente, táctil y sin nota."""
     sources = {
         "Pisada": {
-            "asset": "curso2_lab1_etapa0_highlight_pisada.webp",
             "title": "Pisada · impacto directo sobre la estructura",
-            "chain": r"\text{PIE}\rightarrow F(t)\rightarrow\text{LOSA}\rightarrow\text{PROPAGACIÓN ESTRUCTURAL}\rightarrow\text{RADIACIÓN}\rightarrow\text{RECEPTOR}",
+            "chain": r"\text{PIE}\rightarrow F(t)\rightarrow\text{LOSA}\rightarrow\text{PROPAGACIÓN ESTRUCTURAL}\rightarrow\text{RADIACIÓN ACÚSTICA}\rightarrow\text{RECEPTOR}",
             "explanation": "La fuerza de impacto entra directamente a la losa. La vibración se propaga por el elemento estructural y el cielo del dormitorio inmediatamente inferior puede radiar sonido hacia la pareja receptora.",
-            "focus": "Primero la estructura: la excitación mecánica ocurre antes de que aparezca el sonido en el aire.",
+            "focus": "Naranja: propagación mecánica por la estructura. Cian: radiación acústica desde una superficie vibrante hacia el aire del recinto receptor.",
         },
         "Bomba": {
-            "asset": "curso2_lab1_etapa0_highlight_bomba.webp",
-            "title": "Bomba centrífuga · dos caminos estructurales simultáneos",
-            "chain": r"\text{BOMBA}\rightarrow\begin{cases}\text{BASE}\rightarrow\text{LOSA}\rightarrow\text{ESTRUCTURA}\\\text{TUBERÍA}\rightarrow\text{SOPORTES}\rightarrow\text{ESTRUCTURA}\end{cases}",
-            "explanation": "La bomba puede excitar la losa por su base y, al mismo tiempo, introducir vibración en la tubería de impulsión. La montante y sus soportes pueden transportar esa energía hacia otros pisos.",
-            "focus": "Aislar solo la base no garantiza controlar el sistema si la tubería crea un puente rígido.",
+            "title": "Bomba centrífuga · caminos por base y tuberías",
+            "chain": r"\text{BOMBA}\rightarrow\begin{cases}\text{BASE}\rightarrow\text{LOSA}\rightarrow\text{ESTRUCTURA}\rightarrow\text{RADIACIÓN}\\\text{TUBERÍA}\rightarrow\text{SOPORTES}\rightarrow\text{ESTRUCTURA}\rightarrow\text{RADIACIÓN}\end{cases}",
+            "explanation": "La bomba excita su base y también la tubería de impulsión. La montante y sus soportes transportan vibración hacia otros pisos; una pared, losa u otro elemento conectado puede vibrar y radiar posteriormente sonido al aire.",
+            "focus": "Azul: camino mecánico asociado a bomba y tuberías. Cian: ejemplo de radiación acústica desde una superficie estructural excitada.",
         },
         "Descarga sanitaria": {
-            "asset": "curso2_lab1_etapa0_highlight_sanitaria.webp",
-            "title": "Descarga sanitaria · tubería, fijaciones y estructura",
-            "chain": r"\text{DESCARGA}\rightarrow\text{RAMAL}\rightarrow\text{BAJANTE}\rightarrow\text{ABRAZADERAS}\rightarrow\text{ESTRUCTURA}\rightarrow\text{RADIACIÓN}",
-            "explanation": "El flujo y los cambios de dirección generan fuerzas fluctuantes en la tubería. Las abrazaderas transmiten parte de esa vibración a muros o losas y una superficie conectada puede radiar sonido.",
-            "focus": "La bajante sanitaria es un camino mecánico: el punto crítico puede estar en sus fijaciones.",
+            "title": "Descarga sanitaria · tubería, fijaciones y radiación",
+            "chain": r"\text{DESCARGA}\rightarrow\text{RAMAL}\rightarrow\text{BAJANTE}\rightarrow\text{ABRAZADERAS}\rightarrow\text{ESTRUCTURA}\rightarrow\text{RADIACIÓN ACÚSTICA}\rightarrow\text{RECEPTOR}",
+            "explanation": "El flujo y los cambios de dirección generan fuerzas fluctuantes en la bajante. Las abrazaderas transmiten vibración a la construcción y una superficie conectada puede convertirse en una fuente sonora secundaria.",
+            "focus": "Morado: camino mecánico por la instalación sanitaria. Cian: radiación acústica posterior hacia un recinto habitable.",
         },
     }
 
-    # Siempre se parte observando el render limpio. Los nombres de las fuentes se
-    # desbloquean únicamente después de comprobar la hipótesis inicial.
     unlocked = bool(saved.get("stage0_energy_unlocked", False))
-    _course2_lab1_stage0_asset(
+    selected_key=f"{class_id}_stage0_energy_source"
+    selected=st.session_state.get(selected_key)
+    if selected not in sources:
+        selected=saved.get("stage0_energy_source") if saved.get("stage0_energy_source") in sources else None
+
+    # UNA sola zona gráfica. Antes de explorar se ve limpia; después del clic se
+    # vuelve a dibujar en el MISMO lugar con el recorrido seleccionado encima.
+    _course2_lab1_stage0_dynamic_image(
         "curso2_lab1_etapa0_edificio_vibroacustico.webp",
-        "Observa primero el edificio e identifica posibles fuentes de excitación antes de seguir sus caminos.",
+        source=selected if unlocked else None,
+        caption="Observa el edificio. El color de la fuente sigue el camino mecánico; las ondas cian representan la radiación acústica hacia el aire.",
     )
 
     if not unlocked:
@@ -202,16 +310,16 @@ def _course2_lab1_stage0_energy_interactive(class_id, saved):
         ]
         previous = saved.get("stage0_source_identification", [])
         if not isinstance(previous, list): previous=[]
-        selected=[]
+        selected_choices=[]
         for i, option in enumerate(choices):
             k=f"{class_id}_stage0_identify_{i}"
             if k not in st.session_state:
                 st.session_state[k]=option in previous
-            if st.checkbox(option, key=k): selected.append(option)
+            if st.checkbox(option, key=k): selected_choices.append(option)
         if st.button("Comprobar identificación", type="primary", key=f"{class_id}_stage0_identify_check", width="stretch"):
-            saved["stage0_source_identification"] = selected
+            saved["stage0_source_identification"] = selected_choices
             expected={"Pisadas de una persona","Bomba centrífuga","Descarga sanitaria"}
-            chosen=set(selected)
+            chosen=set(selected_choices)
             saved["stage0_source_identification_correct"] = chosen == expected
             saved["stage0_energy_unlocked"] = True
             saved["stage0_source_identification_checked_at"] = _now()
@@ -221,17 +329,13 @@ def _course2_lab1_stage0_energy_interactive(class_id, saved):
         return 0, len(sources)
 
     if saved.get("stage0_source_identification_correct"):
-        st.success("Muy bien. Identificaste las tres fuentes representadas. Ahora investiguemos cómo puede viajar la energía desde cada una.")
+        st.success("Muy bien. Identificaste las tres fuentes representadas. Ahora sigue la energía desde cada fuente hasta la estructura, la radiación y el receptor.")
     else:
-        st.info("La imagen representa tres fuentes para este análisis: pisada, bomba centrífuga y descarga sanitaria. Ahora sigue sus caminos y revisa por qué pueden introducir energía mecánica en el edificio.")
+        st.info("En este render se analizan tres fuentes: pisada, bomba centrífuga y descarga sanitaria. Explora sus caminos para comprobar cómo pueden introducir energía mecánica en el edificio.")
 
     st.markdown("#### Sigue la energía")
-    st.write("Selecciona una fuente. La vista destacada aparecerá debajo y mostrará su recorrido principal.")
+    st.write("Selecciona una fuente. **La imagen de arriba es la misma**: al elegir una opción se superpone su camino de propagación y su posible radiación acústica.")
 
-    selected_key=f"{class_id}_stage0_energy_source"
-    selected=st.session_state.get(selected_key)
-    if selected not in sources:
-        selected=saved.get("stage0_energy_source") if saved.get("stage0_energy_source") in sources else None
     explored=saved.get("stage0_energy_explored", [])
     if not isinstance(explored,list): explored=[]
     explored=[x for x in explored if x in sources]
@@ -252,8 +356,6 @@ def _course2_lab1_stage0_energy_interactive(class_id, saved):
     selected=st.session_state.get(selected_key, selected)
     if selected in sources:
         data=sources[selected]
-        image_path=ROOT / "assets" / data["asset"]
-        if image_path.exists(): st.image(str(image_path),width="stretch")
         with st.container(border=True):
             st.markdown(f"#### {data['title']}")
             st.latex(data["chain"])
@@ -329,7 +431,7 @@ def _render_course2_lab1_stage0(lab, saved):
         """
     )
 
-    st.markdown("### Apertura")
+    st.markdown("### Antes de comenzar")
     st.info(
         "En acústica de edificios no basta con identificar dónde se escucha el ruido. "
         "Para controlarlo necesitamos descubrir dónde se genera la energía, cómo ingresa a la estructura, "
@@ -346,7 +448,6 @@ def _render_course2_lab1_stage0(lab, saved):
 
     # El interactivo debe quedar inmediatamente asociado al render principal.
     # En móvil los botones son táctiles y se apilan automáticamente si falta ancho.
-    st.markdown("### Sigue la energía")
     explored_count, explored_total = _course2_lab1_stage0_energy_interactive(class_id, saved)
 
     st.markdown("### 1 · Situación inicial")
