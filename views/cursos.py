@@ -334,6 +334,16 @@ def _render_course2_lab1_stage0(lab, saved):
         "Edificio como sistema vibroacústico: fuentes, caminos estructurales y recintos receptores.",
     )
 
+    # El interactivo debe quedar inmediatamente asociado al render principal.
+    # En móvil los botones son táctiles y se apilan automáticamente si falta ancho.
+    st.markdown("### Sigue la energía")
+    st.write(
+        "Selecciona una fuente para destacar su recorrido y revisar cómo la energía pasa "
+        "desde la fuente hacia la estructura y el receptor."
+    )
+    explored_count, explored_total = _course2_lab1_stage0_energy_interactive(class_id, saved)
+    st.caption(f"Fuentes exploradas: {explored_count} de {explored_total}.")
+
     st.markdown("### 1 · Situación inicial")
     st.write("Observa un edificio residencial en el que pueden coexistir una pisada, una bomba centrífuga, una descarga sanitaria y un ventilador.")
     _future_stage0_mcq(
@@ -417,17 +427,6 @@ def _render_course2_lab1_stage0(lab, saved):
         st.write("Material absorbente en una sala no necesariamente controla vibración transmitida por una tubería.")
         st.markdown("**Ejemplo 2**")
         st.write("Un aislador bajo un ventilador no necesariamente controla el ruido que viaja por el ducto.")
-
-    st.markdown("### Interactivo principal · Sigue la energía")
-    st.write(
-        "Selecciona una fuente sobre el render. La aplicación atenúa los demás sistemas, destaca el recorrido elegido "
-        "y explica cómo la energía pasa desde la fuente hasta la estructura y el receptor."
-    )
-    explored_count, explored_total = _course2_lab1_stage0_energy_interactive(class_id, saved)
-    st.caption(
-        "El ventilador se mantiene como ejemplo conceptual en esta etapa, pero no se incorpora a este render para evitar mezclar "
-        "el sistema sanitario con un sistema de extracción que requiere su propio esquema técnico."
-    )
 
     st.markdown("### Preguntas de comprensión")
     _future_stage0_mcq(
@@ -631,6 +630,9 @@ def future_lab_view_impl(lab):
             st.rerun()
 
     if st.session_state.get("role")=="Docente":
+        # Las etapas futuras no siempre incluyen un bloque editable/teacher_solution.
+        # No se debe abortar el render por una variable opcional inexistente.
+        editable = {}
         with st.expander("🔐 Orientación docente y respuesta esperada"):
             if editable.get("teacher_solution"):
                 st.markdown(editable["teacher_solution"])
