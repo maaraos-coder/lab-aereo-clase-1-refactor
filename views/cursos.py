@@ -156,102 +156,113 @@ def _course2_lab1_stage0_asset(filename, caption):
 
 
 def _course2_lab1_stage0_energy_interactive(class_id, saved):
-    """Interactivo táctil del render vibroacústico. No asigna puntaje ni nota."""
+    """Descubrimiento + interactivo táctil. Persistente, formativo y sin nota."""
     sources = {
         "Pisada": {
             "asset": "curso2_lab1_etapa0_highlight_pisada.webp",
             "title": "Pisada · impacto directo sobre la estructura",
             "chain": r"\text{PIE}\rightarrow F(t)\rightarrow\text{LOSA}\rightarrow\text{PROPAGACIÓN ESTRUCTURAL}\rightarrow\text{RADIACIÓN}\rightarrow\text{RECEPTOR}",
-            "explanation": (
-                "La fuerza de impacto entra directamente a la losa. La vibración se propaga por el elemento estructural "
-                "y el cielo del dormitorio inmediatamente inferior puede radiar sonido hacia la pareja receptora."
-            ),
+            "explanation": "La fuerza de impacto entra directamente a la losa. La vibración se propaga por el elemento estructural y el cielo del dormitorio inmediatamente inferior puede radiar sonido hacia la pareja receptora.",
             "focus": "Primero la estructura: la excitación mecánica ocurre antes de que aparezca el sonido en el aire.",
         },
         "Bomba": {
             "asset": "curso2_lab1_etapa0_highlight_bomba.webp",
             "title": "Bomba centrífuga · dos caminos estructurales simultáneos",
             "chain": r"\text{BOMBA}\rightarrow\begin{cases}\text{BASE}\rightarrow\text{LOSA}\rightarrow\text{ESTRUCTURA}\\\text{TUBERÍA}\rightarrow\text{SOPORTES}\rightarrow\text{ESTRUCTURA}\end{cases}",
-            "explanation": (
-                "La bomba puede excitar la losa por su base y, al mismo tiempo, introducir vibración en la tubería de impulsión. "
-                "La montante y sus soportes pueden transportar esa energía hacia otros pisos, aunque la máquina esté lejos del receptor."
-            ),
+            "explanation": "La bomba puede excitar la losa por su base y, al mismo tiempo, introducir vibración en la tubería de impulsión. La montante y sus soportes pueden transportar esa energía hacia otros pisos.",
             "focus": "Aislar solo la base no garantiza controlar el sistema si la tubería crea un puente rígido.",
         },
         "Descarga sanitaria": {
             "asset": "curso2_lab1_etapa0_highlight_sanitaria.webp",
             "title": "Descarga sanitaria · tubería, fijaciones y estructura",
             "chain": r"\text{DESCARGA}\rightarrow\text{RAMAL}\rightarrow\text{BAJANTE}\rightarrow\text{ABRAZADERAS}\rightarrow\text{ESTRUCTURA}\rightarrow\text{RADIACIÓN}",
-            "explanation": (
-                "El flujo y los cambios de dirección generan fuerzas fluctuantes en la tubería. Las abrazaderas transmiten parte de esa vibración "
-                "a muros o losas y, posteriormente, una superficie conectada puede radiar sonido hacia otro recinto."
-            ),
-            "focus": "La bajante sanitaria es un camino mecánico: el punto crítico puede estar en sus fijaciones y no en el recinto donde se escucha el ruido.",
+            "explanation": "El flujo y los cambios de dirección generan fuerzas fluctuantes en la tubería. Las abrazaderas transmiten parte de esa vibración a muros o losas y una superficie conectada puede radiar sonido.",
+            "focus": "La bajante sanitaria es un camino mecánico: el punto crítico puede estar en sus fijaciones.",
         },
     }
 
-    selected_key = f"{class_id}_stage0_energy_source"
-    selected = st.session_state.get(selected_key)
+    # Siempre se parte observando el render limpio. Los nombres de las fuentes se
+    # desbloquean únicamente después de comprobar la hipótesis inicial.
+    unlocked = bool(saved.get("stage0_energy_unlocked", False))
+    _course2_lab1_stage0_asset(
+        "curso2_lab1_etapa0_edificio_vibroacustico.webp",
+        "Observa primero el edificio e identifica posibles fuentes de excitación antes de seguir sus caminos.",
+    )
+
+    if not unlocked:
+        st.markdown("#### 🔎 Observa el edificio")
+        st.write("**¿Cuáles de los siguientes elementos identificarías inicialmente como fuentes relevantes para analizar transmisión estructural?**")
+        choices = [
+            "Pisadas de una persona",
+            "Bomba centrífuga",
+            "Descarga sanitaria",
+            "Conversación de la pareja",
+            "Refrigerador",
+            "Iluminación del departamento",
+        ]
+        previous = saved.get("stage0_source_identification", [])
+        if not isinstance(previous, list): previous=[]
+        selected=[]
+        for i, option in enumerate(choices):
+            k=f"{class_id}_stage0_identify_{i}"
+            if k not in st.session_state:
+                st.session_state[k]=option in previous
+            if st.checkbox(option, key=k): selected.append(option)
+        if st.button("Comprobar identificación", type="primary", key=f"{class_id}_stage0_identify_check", width="stretch"):
+            saved["stage0_source_identification"] = selected
+            expected={"Pisadas de una persona","Bomba centrífuga","Descarga sanitaria"}
+            chosen=set(selected)
+            saved["stage0_source_identification_correct"] = chosen == expected
+            saved["stage0_energy_unlocked"] = True
+            saved["stage0_source_identification_checked_at"] = _now()
+            _save_future_state_impl(class_id, saved)
+            st.rerun()
+        st.caption("Actividad de observación · sin puntaje. Al comprobar podrás explorar los caminos de energía.")
+        return 0, len(sources)
+
+    if saved.get("stage0_source_identification_correct"):
+        st.success("Muy bien. Identificaste las tres fuentes representadas. Ahora investiguemos cómo puede viajar la energía desde cada una.")
+    else:
+        st.info("La imagen representa tres fuentes para este análisis: pisada, bomba centrífuga y descarga sanitaria. Ahora sigue sus caminos y revisa por qué pueden introducir energía mecánica en el edificio.")
+
+    st.markdown("#### Sigue la energía")
+    st.write("Selecciona una fuente. La vista destacada aparecerá debajo y mostrará su recorrido principal.")
+
+    selected_key=f"{class_id}_stage0_energy_source"
+    selected=st.session_state.get(selected_key)
     if selected not in sources:
-        saved_source = saved.get("stage0_energy_source")
-        selected = saved_source if saved_source in sources else None
-        if selected:
-            st.session_state[selected_key] = selected
+        selected=saved.get("stage0_energy_source") if saved.get("stage0_energy_source") in sources else None
+    explored=saved.get("stage0_energy_explored", [])
+    if not isinstance(explored,list): explored=[]
+    explored=[x for x in explored if x in sources]
 
-    explored = saved.get("stage0_energy_explored", [])
-    if not isinstance(explored, list):
-        explored = []
-    explored = [item for item in explored if item in sources]
-    if saved.get("stage0_energy_source") in sources and saved.get("stage0_energy_source") not in explored:
-        explored.append(saved.get("stage0_energy_source"))
-
-    cols = st.columns(3)
+    cols=st.columns(3)
     for col, source in zip(cols, sources):
         with col:
-            active = selected == source
-            label = f"{'✓ ' if source in explored else ''}{source}"
-            if st.button(
-                label,
-                key=f"stage0_energy_btn_{class_id}_{source}",
-                type="primary" if active else "secondary",
-                width="stretch",
-            ):
-                st.session_state[selected_key] = source
-                saved["stage0_energy_source"] = source
-                if source not in explored:
-                    explored.append(source)
-                saved["stage0_energy_explored"] = explored
-                saved["stage0_energy_path"] = sources[source]["chain"]
-                saved["stage0_energy_updated_at"] = _now()
-                _save_future_state_impl(class_id, saved)
+            label=f"{'✓ ' if source in explored else ''}{source}"
+            if st.button(label,key=f"stage0_energy_btn_{class_id}_{source}",type="primary" if selected==source else "secondary",width="stretch"):
+                st.session_state[selected_key]=source
+                saved["stage0_energy_source"]=source
+                if source not in explored: explored.append(source)
+                saved["stage0_energy_explored"]=explored
+                saved["stage0_energy_updated_at"]=_now()
+                _save_future_state_impl(class_id,saved)
                 st.rerun()
 
-    if selected:
-        data = sources[selected]
-        image_path = ROOT / "assets" / data["asset"]
-        if image_path.exists():
-            st.image(str(image_path), width="stretch")
-        else:
-            _course2_lab1_stage0_asset(
-                "curso2_lab1_etapa0_edificio_vibroacustico.webp",
-                "Render base del edificio como sistema vibroacústico.",
-            )
+    selected=st.session_state.get(selected_key, selected)
+    if selected in sources:
+        data=sources[selected]
+        image_path=ROOT / "assets" / data["asset"]
+        if image_path.exists(): st.image(str(image_path),width="stretch")
         with st.container(border=True):
             st.markdown(f"#### {data['title']}")
             st.latex(data["chain"])
             st.write(data["explanation"])
             st.info(data["focus"])
-    else:
-        _course2_lab1_stage0_asset(
-            "curso2_lab1_etapa0_edificio_vibroacustico.webp",
-            "Selecciona una fuente para destacar su recorrido de energía en el edificio.",
-        )
-        st.caption("Toca una de las tres fuentes para comenzar. En móvil no se requiere hover.")
 
-    st.progress(len(explored) / len(sources))
-    st.caption(f"Fuentes exploradas: {len(explored)} de {len(sources)} · actividad formativa sin nota.")
-    return len(explored), len(sources)
-
+    st.progress(len(explored)/len(sources))
+    st.caption(f"Exploración: {len(explored)} de {len(sources)} fuentes · actividad formativa sin nota.")
+    return len(explored),len(sources)
 
 def _future_stage0_mcq(class_id, saved, key, question, options, correct, feedback):
     """Pregunta formativa persistente para la Etapa 0; no asigna puntaje ni nota."""
@@ -336,12 +347,7 @@ def _render_course2_lab1_stage0(lab, saved):
     # El interactivo debe quedar inmediatamente asociado al render principal.
     # En móvil los botones son táctiles y se apilan automáticamente si falta ancho.
     st.markdown("### Sigue la energía")
-    st.write(
-        "Selecciona una fuente para destacar su recorrido y revisar cómo la energía pasa "
-        "desde la fuente hacia la estructura y el receptor."
-    )
     explored_count, explored_total = _course2_lab1_stage0_energy_interactive(class_id, saved)
-    st.caption(f"Fuentes exploradas: {explored_count} de {explored_total}.")
 
     st.markdown("### 1 · Situación inicial")
     st.write("Observa un edificio residencial en el que pueden coexistir una pisada, una bomba centrífuga, una descarga sanitaria y un ventilador.")
