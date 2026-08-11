@@ -276,6 +276,243 @@ def _course2_lab1_stage0_dynamic_image(filename, source=None, caption=None):
             st.caption(caption)
 
 
+def _course2_lab1_stage0_pump_svg(encierro=False, absorbente=False, antivibratorios=False, flexible=False):
+    """SVG técnico conceptual de una bomba y sus caminos de transmisión."""
+    base_color = "#35d07f" if antivibratorios else "#ff8a3d"
+    pipe_color = "#35d07f" if flexible else "#ff8a3d"
+    air_reduction = encierro or absorbente
+    air_color = "#35d07f" if air_reduction else "#35c7ff"
+    air_opacity = "0.34" if air_reduction else "0.95"
+    base_opacity = "0.35" if antivibratorios else "0.95"
+    pipe_opacity = "0.35" if flexible else "0.95"
+
+    enclosure = ""
+    if encierro:
+        enclosure = """
+        <rect x="150" y="92" width="390" height="300" rx="18" fill="#0b1730" fill-opacity="0.72"
+              stroke="#72d7ff" stroke-width="4"/>
+        <rect x="168" y="110" width="354" height="264" rx="12" fill="none"
+              stroke="#72d7ff" stroke-opacity="0.35" stroke-width="2" stroke-dasharray="8 8"/>
+        <text x="345" y="126" text-anchor="middle" class="smallLabel">ENCIERRO ACÚSTICO</text>
+        """
+    absorbent_svg = ""
+    if absorbente:
+        absorbent_svg = """
+        <g fill="#8ed9ff" fill-opacity="0.34" stroke="#8ed9ff" stroke-opacity="0.55">
+          <path d="M185 150 l18 -14 l18 14 l18 -14 l18 14 l18 -14 l18 14" fill="none" stroke-width="5"/>
+          <path d="M185 174 l18 -14 l18 14 l18 -14 l18 14 l18 -14 l18 14" fill="none" stroke-width="5"/>
+          <path d="M185 198 l18 -14 l18 14 l18 -14 l18 14 l18 -14 l18 14" fill="none" stroke-width="5"/>
+        </g>
+        <text x="235" y="226" text-anchor="middle" class="mini">ABSORBENTE</text>
+        """
+    if antivibratorios:
+        isolators = """
+        <g stroke="#53e19f" stroke-width="6" fill="none" stroke-linecap="round">
+          <path d="M258 401 q12 -18 24 0 q12 18 24 0 q12 -18 24 0"/>
+          <path d="M372 401 q12 -18 24 0 q12 18 24 0 q12 -18 24 0"/>
+        </g>
+        <text x="345" y="430" text-anchor="middle" class="mini green">ANTIVIBRATORIOS</text>
+        """
+    else:
+        isolators = """
+        <rect x="270" y="388" width="52" height="18" rx="3" fill="#9099aa"/>
+        <rect x="385" y="388" width="52" height="18" rx="3" fill="#9099aa"/>
+        <text x="345" y="430" text-anchor="middle" class="mini">APOYO RÍGIDO</text>
+        """
+    if flexible:
+        flexible_piece = """
+        <g stroke="#53e19f" fill="none" stroke-width="7" stroke-linecap="round">
+          <path d="M575 276 q14 -16 28 0 q14 16 28 0 q14 -16 28 0 q14 16 28 0"/>
+        </g>
+        <text x="630" y="252" text-anchor="middle" class="mini green">CONEXIÓN FLEXIBLE</text>
+        """
+    else:
+        flexible_piece = """
+        <line x1="575" y1="276" x2="688" y2="276" stroke="#4aa8ff" stroke-width="14" stroke-linecap="round"/>
+        <text x="630" y="252" text-anchor="middle" class="mini">CONEXIÓN RÍGIDA</text>
+        """
+
+    base_status = "REDUCIDO" if antivibratorios else "ACTIVO"
+    pipe_status = "REDUCIDO" if flexible else "ACTIVO"
+    air_status = "REDUCIDO" if air_reduction else "ACTIVO"
+
+    return f'''<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1120 650" width="100%" role="img"
+        aria-label="Esquema técnico interactivo de control vibroacústico de una bomba centrífuga">
+      <defs>
+        <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+          <stop offset="0" stop-color="#071223"/><stop offset="1" stop-color="#0b2945"/>
+        </linearGradient>
+        <linearGradient id="slab" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0" stop-color="#68788b"/><stop offset="1" stop-color="#364354"/>
+        </linearGradient>
+        <filter id="glowOrange"><feGaussianBlur stdDeviation="5" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+        <filter id="glowCyan"><feGaussianBlur stdDeviation="4" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+        <style>
+          .title{{font:700 28px Arial,sans-serif;fill:#f5fbff}} .sub{{font:400 16px Arial,sans-serif;fill:#b9d4e8}}
+          .label{{font:700 16px Arial,sans-serif;fill:#f4f8fb}} .smallLabel{{font:700 14px Arial,sans-serif;fill:#a9e7ff;letter-spacing:1px}}
+          .mini{{font:700 12px Arial,sans-serif;fill:#b6c6d6;letter-spacing:.5px}} .green{{fill:#6df0b2}}
+          .status{{font:700 13px Arial,sans-serif}}
+        </style>
+      </defs>
+      <rect width="1120" height="650" rx="22" fill="url(#bg)"/>
+      <text x="45" y="52" class="title">Laboratorio conceptual · Controla la bomba</text>
+      <text x="45" y="80" class="sub">Observa qué camino modifica cada medida de control.</text>
+
+      <rect x="820" y="108" width="250" height="360" rx="14" fill="#102943" stroke="#345776" stroke-width="3"/>
+      <text x="945" y="140" text-anchor="middle" class="smallLabel">ESTRUCTURA / RECINTO</text>
+      <line x1="835" y1="334" x2="1055" y2="334" stroke="#566c80" stroke-width="7"/>
+      <rect x="900" y="350" width="108" height="52" rx="9" fill="#182335" stroke="#4e677f" stroke-width="2"/>
+      <text x="954" y="382" text-anchor="middle" class="mini">RECEPTOR</text>
+
+      <rect x="70" y="455" width="980" height="82" rx="8" fill="url(#slab)" stroke="#8aa0b2" stroke-width="2"/>
+      <g stroke="#91a2b1" stroke-opacity="0.25" stroke-width="2">
+        <path d="M100 480 H1020 M100 505 H1020"/><path d="M160 460 V532 M270 460 V532 M380 460 V532 M490 460 V532 M600 460 V532 M710 460 V532"/>
+      </g>
+      <text x="560" y="520" text-anchor="middle" class="smallLabel">LOSA DE HORMIGÓN</text>
+
+      {enclosure}
+      {absorbent_svg}
+
+      <g>
+        <rect x="245" y="344" width="220" height="44" rx="6" fill="#566474" stroke="#8495a6" stroke-width="3"/>
+        <rect x="278" y="282" width="110" height="64" rx="18" fill="#2476ac" stroke="#7ad4ff" stroke-width="3"/>
+        <circle cx="386" cy="314" r="39" fill="#175779" stroke="#7ad4ff" stroke-width="4"/>
+        <circle cx="386" cy="314" r="13" fill="#b8d5e6"/>
+        <rect x="210" y="295" width="80" height="40" rx="11" fill="#314861" stroke="#6e8398" stroke-width="3"/>
+        <g stroke="#73879a" stroke-width="4"><line x1="225" y1="301" x2="225" y2="328"/><line x1="242" y1="301" x2="242" y2="328"/><line x1="259" y1="301" x2="259" y2="328"/></g>
+        <text x="345" y="270" text-anchor="middle" class="label">BOMBA CENTRÍFUGA</text>
+      </g>
+      {isolators}
+
+      <line x1="425" y1="314" x2="575" y2="276" stroke="#4aa8ff" stroke-width="14" stroke-linecap="round"/>
+      {flexible_piece}
+      <line x1="688" y1="276" x2="842" y2="276" stroke="#4aa8ff" stroke-width="14" stroke-linecap="round"/>
+      <line x1="842" y1="276" x2="842" y2="210" stroke="#4aa8ff" stroke-width="14" stroke-linecap="round"/>
+      <path d="M812 276 h60" stroke="#a5b6c7" stroke-width="5"/>
+      <path d="M832 260 v32 M852 260 v32" stroke="#a5b6c7" stroke-width="5"/>
+      <text x="840" y="190" text-anchor="middle" class="mini">SOPORTE A ESTRUCTURA</text>
+
+      <g opacity="{base_opacity}" filter="url(#glowOrange)">
+        <path d="M345 406 C345 425 345 438 345 455" stroke="{base_color}" stroke-width="9" fill="none" stroke-linecap="round"/>
+        <path d="M240 485 C300 452 390 452 450 485" stroke="{base_color}" stroke-width="5" fill="none"/>
+        <path d="M205 505 C290 458 405 458 490 505" stroke="{base_color}" stroke-width="3" fill="none" opacity=".7"/>
+      </g>
+
+      <g opacity="{pipe_opacity}" filter="url(#glowOrange)">
+        <path d="M430 298 C555 240 700 238 826 266" stroke="{pipe_color}" stroke-width="6" fill="none" stroke-dasharray="10 7"/>
+        <circle cx="842" cy="276" r="22" fill="none" stroke="{pipe_color}" stroke-width="5"/>
+      </g>
+
+      <g opacity="{air_opacity}" filter="url(#glowCyan)" fill="none" stroke="{air_color}" stroke-linecap="round">
+        <path d="M168 250 Q95 314 168 377" stroke-width="6"/>
+        <path d="M138 220 Q35 314 138 408" stroke-width="4"/>
+        <path d="M490 226 Q565 314 490 400" stroke-width="5"/>
+      </g>
+
+      <g>
+        <rect x="74" y="565" width="300" height="58" rx="12" fill="#0d2138" stroke="{base_color}" stroke-width="2"/>
+        <text x="96" y="590" class="mini">CAMINO 1 · BASE → LOSA</text>
+        <text x="96" y="612" class="status" fill="{base_color}">{base_status}</text>
+
+        <rect x="410" y="565" width="300" height="58" rx="12" fill="#0d2138" stroke="{pipe_color}" stroke-width="2"/>
+        <text x="432" y="590" class="mini">CAMINO 2 · TUBERÍA → ESTRUCTURA</text>
+        <text x="432" y="612" class="status" fill="{pipe_color}">{pipe_status}</text>
+
+        <rect x="746" y="565" width="300" height="58" rx="12" fill="#0d2138" stroke="{air_color}" stroke-width="2"/>
+        <text x="768" y="590" class="mini">CAMINO 3 · RUIDO AÉREO</text>
+        <text x="768" y="612" class="status" fill="{air_color}">{air_status}</text>
+      </g>
+    </svg>'''
+
+
+def _course2_lab1_stage0_pump_lab(class_id, saved):
+    """Mini simulador SVG: permite intervenir distintos caminos de una bomba."""
+    st.markdown("### 7 · Laboratorio conceptual · Controla la bomba")
+    st.write(
+        "Activa medidas de control y observa **qué camino cambia realmente**. "
+        "Los estados son conceptuales: sirven para razonar sobre caminos de transmisión, no son una predicción numérica."
+    )
+
+    stored=saved.get("stage0_pump_lab", {}) if isinstance(saved.get("stage0_pump_lab"), dict) else {}
+    defaults={
+        "encierro": bool(stored.get("encierro", False)),
+        "absorbente": bool(stored.get("absorbente", False)),
+        "antivibratorios": bool(stored.get("antivibratorios", False)),
+        "flexible": bool(stored.get("flexible", False)),
+    }
+    keys={name:f"{class_id}_pump_{name}" for name in defaults}
+    for name,val in defaults.items():
+        if keys[name] not in st.session_state:
+            st.session_state[keys[name]]=val
+
+    c1,c2,c3,c4=st.columns(4)
+    with c1:
+        encierro=st.toggle("Encierro acústico", key=keys["encierro"], help="Actúa principalmente sobre el ruido aéreo radiado por la máquina.")
+    with c2:
+        absorbente=st.toggle("Absorbente interior", key=keys["absorbente"], help="Reduce reflexiones/campo reverberante, pero no desacopla por sí solo la estructura.")
+    with c3:
+        antivibratorios=st.toggle("Antivibratorios", key=keys["antivibratorios"], help="Intervienen el camino bomba → base → losa.")
+    with c4:
+        flexible=st.toggle("Conexión flexible", key=keys["flexible"], help="Interviene el camino bomba → tubería → soportes → estructura.")
+
+    config={
+        "encierro":bool(encierro), "absorbente":bool(absorbente),
+        "antivibratorios":bool(antivibratorios), "flexible":bool(flexible),
+    }
+    old_config={name:bool(stored.get(name, False)) for name in defaults}
+    if config != old_config:
+        saved["stage0_pump_lab"]={**config,"updated_at":_now()}
+        saved["stage0_pump_lab_explored"]=True
+        _save_future_state_impl(class_id,saved)
+
+    st.markdown(_course2_lab1_stage0_pump_svg(**config), unsafe_allow_html=True)
+
+    base_state="Reducido" if antivibratorios else "Activo"
+    pipe_state="Reducido" if flexible else "Activo"
+    air_state="Reducido" if (encierro or absorbente) else "Activo"
+    s1,s2,s3=st.columns(3)
+    with s1:
+        st.metric("Base → losa", base_state)
+    with s2:
+        st.metric("Tubería → estructura", pipe_state)
+    with s3:
+        st.metric("Ruido aéreo", air_state)
+
+    if antivibratorios and not flexible:
+        st.warning(
+            "Instalaste antivibratorios y redujiste el camino por la base, pero **la tubería rígida mantiene un camino estructural paralelo**."
+        )
+    elif flexible and not antivibratorios:
+        st.info(
+            "Desacoplaste la tubería, pero la bomba todavía puede introducir vibración directamente por su base hacia la losa."
+        )
+    elif antivibratorios and flexible:
+        st.success(
+            "Estás interviniendo los dos caminos estructurales representados: base–losa y tubería–soportes. "
+            "Aun así, el control del ruido aéreo debe evaluarse por separado."
+        )
+    else:
+        st.info(
+            "La instalación mantiene activos los dos caminos estructurales principales. Prueba distintas medidas y observa qué recorrido cambia."
+        )
+
+    if encierro or absorbente:
+        st.caption(
+            "El tratamiento acústico del recinto/encierro actúa principalmente sobre el campo sonoro aéreo; "
+            "no sustituye el desacoplamiento mecánico de base y tuberías."
+        )
+
+    if st.button("↺ Quitar todas las medidas", key=f"{class_id}_pump_reset", width="stretch"):
+        for key in keys.values():
+            st.session_state[key]=False
+        saved["stage0_pump_lab"]={"encierro":False,"absorbente":False,"antivibratorios":False,"flexible":False,"updated_at":_now()}
+        saved["stage0_pump_lab_explored"]=True
+        _save_future_state_impl(class_id,saved)
+        st.rerun()
+
+    st.latex(r"\boxed{\text{CONTROL EFECTIVO}=\text{CONTROL DEL CAMINO RELEVANTE}}")
+    st.caption("Laboratorio conceptual · actividad formativa sin puntaje.")
+
 def _course2_lab1_stage0_energy_interactive(class_id, saved):
     """Descubrimiento + 'Sigue la energía', persistente, táctil y sin nota."""
     sources = {
@@ -602,13 +839,7 @@ def _render_course2_lab1_stage0(lab, saved):
     st.latex(r"\text{CARCASA}\rightarrow\text{AIRE}")
     st.warning("Una misma fuente puede utilizar varios caminos simultáneamente.")
 
-    st.markdown("### 7 · Principio profesional")
-    st.latex(r"\text{CONTROL EFECTIVO}=\text{CONTROL DEL CAMINO RELEVANTE}")
-    with st.container(border=True):
-        st.markdown("**Ejemplo 1**")
-        st.write("Material absorbente en una sala no necesariamente controla vibración transmitida por una tubería.")
-        st.markdown("**Ejemplo 2**")
-        st.write("Un aislador bajo un ventilador no necesariamente controla el ruido que viaja por el ducto.")
+    _course2_lab1_stage0_pump_lab(class_id, saved)
 
     st.markdown("### Preguntas de comprensión")
     _future_stage0_mcq(
