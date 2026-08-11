@@ -465,7 +465,7 @@ def _course2_lab1_stage0_pump_lab(class_id, saved):
         saved["stage0_pump_lab_explored"]=True
         _save_future_state_impl(class_id,saved)
 
-    st.markdown(_course2_lab1_stage0_pump_svg(**config), unsafe_allow_html=True)
+    st.html(_course2_lab1_stage0_pump_svg(**config))
 
     base_state="Reducido" if antivibratorios else "Activo"
     pipe_state="Reducido" if flexible else "Activo"
@@ -826,18 +826,74 @@ def _render_course2_lab1_stage0(lab, saved):
         "de la vibración, la superficie involucrada y el acoplamiento con el aire. Más adelante se introducirá la eficiencia de radiación σ."
     )
 
-    st.markdown("### 5 · Ejemplo: pisada")
-    st.latex(
-        r"\text{PIE}\rightarrow F(t)\rightarrow\text{LOSA}\rightarrow\text{VIBRACIÓN}"
-        r"\rightarrow\text{RADIACIÓN}\rightarrow\text{RECEPTOR}"
-    )
+    st.markdown("### 5 · Desafío · Reconstruye el camino de una pisada")
+    st.write("En vez de memorizar la cadena, constrúyela paso a paso. Selecciona el elemento que sigue a la **pisada**.")
+    step_key=f"{class_id}_stage0_footstep_step"
+    if step_key not in st.session_state:
+        st.session_state[step_key]=0
+    foot_steps=[
+        ("PIE", r"\text{PIE}"),
+        ("F(t)", r"F(t)"),
+        ("LOSA", r"\text{LOSA}"),
+        ("VIBRACIÓN", r"\text{VIBRACIÓN}"),
+        ("RADIACIÓN", r"\text{RADIACIÓN}"),
+        ("RECEPTOR", r"\text{RECEPTOR}"),
+    ]
+    current=int(st.session_state[step_key])
+    shown=max(1,min(current+1,len(foot_steps)))
+    st.latex(r"\rightarrow".join(x[1] for x in foot_steps[:shown]))
+    if current < len(foot_steps)-1:
+        correct=foot_steps[current+1][0]
+        distractors={
+            0:["AIRE","F(t)","RECEPTOR"], 1:["LOSA","AIRE","MURO"],
+            2:["VIBRACIÓN","ABSORCIÓN","RECEPTOR"], 3:["RADIACIÓN","FUERZA","MASA"],
+            4:["RECEPTOR","LOSA","TUBERÍA"],
+        }[current]
+        cols=st.columns(3)
+        for col,opt in zip(cols,distractors):
+            with col:
+                if st.button(opt,key=f"{class_id}_foot_{current}_{opt}",width="stretch"):
+                    if opt==correct:
+                        st.session_state[step_key]=current+1
+                        st.rerun()
+                    else:
+                        st.session_state[f"{step_key}_feedback"]="Revisa dónde está la energía en este punto del fenómeno y vuelve a intentarlo."
+        if st.session_state.get(f"{step_key}_feedback"):
+            st.warning(st.session_state.pop(f"{step_key}_feedback"))
+    else:
+        st.success("Cadena completa. La energía entra como fuerza mecánica, se propaga como vibración estructural y finalmente una superficie puede radiarla al aire hacia el receptor.")
+        if st.button("↺ Repetir desafío de la pisada",key=f"{class_id}_foot_reset"):
+            st.session_state[step_key]=0
+            st.rerun()
 
-    st.markdown("### 6 · Ejemplo: bomba")
-    st.write("Una bomba puede excitar varios caminos simultáneamente:")
-    st.latex(r"\text{BOMBA}\rightarrow\text{BASE}\rightarrow\text{LOSA}")
-    st.latex(r"\text{BOMBA}\rightarrow\text{TUBERÍA}\rightarrow\text{SOPORTE}\rightarrow\text{ESTRUCTURA}")
-    st.latex(r"\text{CARCASA}\rightarrow\text{AIRE}")
-    st.warning("Una misma fuente puede utilizar varios caminos simultáneamente.")
+    st.markdown("### 6 · Explora · Una bomba, tres caminos")
+    st.write("Una misma bomba puede excitar varios caminos. Abre cada uno y compara **por dónde sale la energía**.")
+    pump_path_key=f"{class_id}_stage0_pump_path"
+    p1,p2,p3=st.columns(3)
+    if p1.button("Base → losa",key=f"{pump_path_key}_base",width="stretch"):
+        st.session_state[pump_path_key]="base"
+    if p2.button("Tubería → estructura",key=f"{pump_path_key}_pipe",width="stretch"):
+        st.session_state[pump_path_key]="pipe"
+    if p3.button("Carcasa → aire",key=f"{pump_path_key}_air",width="stretch"):
+        st.session_state[pump_path_key]="air"
+    path=st.session_state.get(pump_path_key)
+    if path=="base":
+        with st.container(border=True):
+            st.markdown("#### Camino estructural por la base")
+            st.latex(r"\text{BOMBA}\rightarrow\text{BASE}\rightarrow\text{LOSA}\rightarrow\text{ESTRUCTURA}")
+            st.write("La fuerza dinámica de la máquina atraviesa sus apoyos y puede excitar directamente la losa.")
+    elif path=="pipe":
+        with st.container(border=True):
+            st.markdown("#### Camino estructural por la tubería")
+            st.latex(r"\text{BOMBA}\rightarrow\text{TUBERÍA}\rightarrow\text{SOPORTES}\rightarrow\text{ESTRUCTURA}")
+            st.write("La tubería puede actuar como un puente mecánico incluso cuando la base de la bomba está aislada.")
+    elif path=="air":
+        with st.container(border=True):
+            st.markdown("#### Camino aéreo directo")
+            st.latex(r"\text{CARCASA}\rightarrow\text{AIRE}\rightarrow\text{RECEPTOR}")
+            st.write("La carcasa también puede radiar sonido directamente al aire. Este camino requiere un tratamiento distinto de los caminos estructurales.")
+    else:
+        st.info("Selecciona uno de los tres caminos para investigarlo.")
 
     _course2_lab1_stage0_pump_lab(class_id, saved)
 
