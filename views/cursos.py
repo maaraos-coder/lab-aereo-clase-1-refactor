@@ -204,15 +204,31 @@ def _course2_lab1_stage0_dynamic_image(filename, source=None, caption=None):
             for rr,alpha in ((22,45),(14,90),(7,220)):
                 draw.ellipse((cx-rr,cy-rr,cx+rr,cy+rr), outline=(*color,alpha), width=max(2,rr//5))
 
-        def radiation(cx, cy, scale=1.0):
-            # Cian = energía ya radiada al aire. Los arcos se orientan hacia el recinto.
+        def radiation_down(cx, cy, scale=1.0):
+            """Dibuja radiación acústica desde una superficie hacia el recinto inferior.
+
+            El punto (cx, cy) representa la superficie estructural radiante. Los arcos
+            cian nacen allí y se abren hacia ABAJO, de modo que la lectura visual sea
+            superficie vibrante -> aire del recinto -> receptor, y nunca al revés.
+            """
             c=(44, 210, 255)
             px,py=P(cx,cy)
+            stroke=max(3,int(w*0.0025))
             for i in range(4):
-                rx=int(w*(0.035+0.018*i)*scale)
-                ry=int(h*(0.050+0.025*i)*scale)
-                box=(px-rx,py-ry,px+rx,py+ry)
-                draw.arc(box, start=205, end=335, fill=(*c,210-25*i), width=max(3,int(w*0.0025)))
+                rx=int(w*(0.030+0.017*i)*scale)
+                ry=int(h*(0.045+0.022*i)*scale)
+                # PIL mide los ángulos desde las 3 en punto en sentido horario.
+                # 0..180 corresponde a la mitad INFERIOR de la elipse.
+                box=(px-rx, py-ry, px+rx, py+ry)
+                draw.arc(box, start=0, end=180, fill=(*c,220-30*i), width=stroke)
+
+            # Pequeña indicación de sentido descendente sin texto ni flechas invasivas.
+            # Se mantiene dentro de la misma imagen y ayuda a leer la dirección física.
+            y0=py+int(h*0.018*scale)
+            y1=py+int(h*0.070*scale)
+            draw.line((px,y0,px,y1), fill=(*c,205), width=max(3,int(w*0.002)))
+            ah=max(6,int(w*0.006))
+            draw.polygon([(px,y1+ah),(px-ah,y1-ah//2),(px+ah,y1-ah//2)], fill=(*c,215))
 
         if source == "Pisada":
             orange=(255, 151, 25)
@@ -222,7 +238,7 @@ def _course2_lab1_stage0_dynamic_image(filename, source=None, caption=None):
             glow_line([(0.22,0.305),(0.35,0.305),(0.49,0.305)], orange, width=max(5,int(w*0.0035)))
             support_mark(0.35,0.305,orange)
             # Radiación desde el cielo vibrante hacia la pareja ubicada justo debajo.
-            radiation(0.35,0.43,1.45)
+            radiation_down(0.35,0.335,1.45)
 
         elif source == "Bomba":
             blue=(38, 146, 255)
@@ -236,7 +252,7 @@ def _course2_lab1_stage0_dynamic_image(filename, source=None, caption=None):
                 support_mark(0.69,y,blue)
             # Ejemplo de una superficie estructural excitada por soportes de la montante
             # que posteriormente puede radiar hacia el recinto contiguo.
-            radiation(0.62,0.47,1.10)
+            radiation_down(0.62,0.455,1.10)
 
         elif source == "Descarga sanitaria":
             purple=(177, 77, 255)
@@ -247,7 +263,7 @@ def _course2_lab1_stage0_dynamic_image(filename, source=None, caption=None):
             for y in (0.30,0.50,0.70):
                 support_mark(0.83,y,purple)
             # Radiación desde una superficie próxima a una fijación hacia recinto habitable.
-            radiation(0.75,0.50,1.05)
+            radiation_down(0.75,0.485,1.05)
 
         img = Image.alpha_composite(img, overlay)
         st.image(img, width="stretch")
@@ -508,30 +524,69 @@ def _render_course2_lab1_stage0(lab, saved):
             st.markdown("**Ruido estructural: primero la estructura.**")
 
     st.markdown("### 3 · De la vibración al sonido")
+    st.write(
+        "Hasta ahora seguimos la energía a través del edificio. Ahora acerquémonos a una superficie estructural "
+        "para observar qué ocurre cuando su vibración termina produciendo sonido en el recinto receptor."
+    )
+    _course2_lab1_stage0_asset(
+        "curso2_lab1_etapa0_vibracion_radiacion.webp",
+        "Naranja: fuerza y vibración estructural. Cian: radiación acústica desde la cara inferior de la losa hacia el aire del recinto receptor.",
+    )
     st.latex(r"F(t)\rightarrow v(t)\rightarrow v_n(t)\rightarrow p(t)")
-    terms = [
-        ("F(t)", "fuerza dinámica"),
-        ("v(t)", "velocidad vibratoria"),
-        ("vₙ(t)", "componente normal de la vibración de la superficie radiante"),
-        ("p(t)", "presión sonora en el aire"),
-    ]
-    for symbol, meaning in terms:
-        st.markdown(f"- **{symbol}:** {meaning}.")
+
+    vib_steps = {
+        "F(t) · Fuerza": {
+            "title": "1 · Fuerza dinámica — F(t)",
+            "text": "La pisada introduce una fuerza que varía en el tiempo sobre la losa. Ese es el punto de entrada de energía mecánica al sistema estructural.",
+            "latex": r"F(t)\rightarrow \text{estructura}",
+        },
+        "v(t) · Vibración": {
+            "title": "2 · Velocidad vibratoria — v(t)",
+            "text": "La losa responde vibrando. Esa respuesta mecánica puede propagarse por el propio elemento y por otros componentes estructuralmente conectados.",
+            "latex": r"F(t)\rightarrow v(t)",
+        },
+        "vₙ(t) · Superficie": {
+            "title": "3 · Componente normal — v_n(t)",
+            "text": "De toda la vibración de la superficie, la componente perpendicular a ella es la que desplaza el aire adyacente y puede iniciar la radiación acústica.",
+            "latex": r"v(t)\rightarrow v_n(t)",
+        },
+        "p(t) · Sonido": {
+            "title": "4 · Presión sonora — p(t)",
+            "text": "El movimiento normal de la superficie produce fluctuaciones de presión en el aire. Esas fluctuaciones se propagan por el dormitorio y pueden ser percibidas por el receptor.",
+            "latex": r"v_n(t)\rightarrow p(t)",
+        },
+    }
+    vib_key = f"{class_id}_stage0_vib_step"
+    if vib_key not in st.session_state:
+        st.session_state[vib_key] = "F(t) · Fuerza"
+    vib_cols = st.columns(4)
+    for col, label in zip(vib_cols, vib_steps):
+        with col:
+            if st.button(
+                label,
+                key=f"{vib_key}_{label}",
+                type="primary" if st.session_state.get(vib_key) == label else "secondary",
+                width="stretch",
+            ):
+                st.session_state[vib_key] = label
+                st.rerun()
+    vib_data = vib_steps[st.session_state[vib_key]]
+    with st.container(border=True):
+        st.markdown(f"#### {vib_data['title']}")
+        st.latex(vib_data["latex"])
+        st.write(vib_data["text"])
+
     st.info(
-        "En palabras simples: una losa o muro no necesita moverse de manera visible para producir ruido. "
-        "Puede vibrar una cantidad extremadamente pequeña y aun así mover suficiente aire para generar sonido audible."
+        "**En palabras simples:** una losa o muro no necesita moverse de manera visible para producir ruido. "
+        "Movimientos extremadamente pequeños de su superficie pueden desplazar el aire y generar sonido audible."
     )
 
     st.markdown("### 4 · Vibración no es igual a radiación")
     st.latex(r"\text{VIBRACIÓN}\neq\text{RADIACIÓN ACÚSTICA}")
     st.write(
-        "Una superficie puede presentar vibración medible y no ser necesariamente un radiador acústico eficiente. "
-        "La radiación depende de la frecuencia, la distribución de la vibración, la superficie involucrada y el acoplamiento con el aire. "
-        "Más adelante se introducirá la eficiencia de radiación σ."
-    )
-    _course2_lab1_stage0_asset(
-        "curso2_lab1_etapa0_vibracion_radiacion.webp",
-        "Relación conceptual entre vibración de una superficie y radiación acústica al aire.",
+        "El render anterior muestra una superficie que sí está radiando, pero medir vibración no permite concluir por sí solo "
+        "que la superficie sea un radiador acústico eficiente. La radiación depende de la frecuencia, la distribución espacial "
+        "de la vibración, la superficie involucrada y el acoplamiento con el aire. Más adelante se introducirá la eficiencia de radiación σ."
     )
 
     st.markdown("### 5 · Ejemplo: pisada")
