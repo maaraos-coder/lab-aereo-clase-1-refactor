@@ -1,7 +1,9 @@
 import streamlit.components.v1 as components
 from pathlib import Path
 
-ASSET_DIR = Path(__file__).resolve().parents[1] / "assets"
+MODULE_DIR = Path(__file__).resolve().parent
+PROJECT_ROOT = MODULE_DIR.parent
+ASSET_DIR = PROJECT_ROOT / "assets"
 
 """Vistas de cursos, selección de laboratorios y laboratorios futuros.
 
@@ -781,76 +783,66 @@ def _render_course2_lab1_stage0(lab, saved):
             )
             st.markdown("**Ruido estructural: primero la estructura.**")
 
-    st.markdown("### 3 · De la vibración al sonido")
+    st.markdown("### 3 · De la excitación a la vibración")
     st.write(
-        "Hasta ahora seguimos la energía a través del edificio. Ahora acerquémonos a una superficie estructural "
-        "para observar qué ocurre cuando su vibración termina produciendo sonido en el recinto receptor."
+        "Antes de pensar en el sonido que finalmente escuchamos, distingamos las dos primeras partes del fenómeno: "
+        "la energía entra al edificio mediante una excitación y la estructura responde vibrando."
     )
-    _course2_lab1_stage0_asset(
-        "curso2_lab1_etapa0_vibracion_radiacion.webp",
-        "Naranja: fuerza y vibración estructural. Cian: radiación acústica desde la cara inferior de la losa hacia el aire del recinto receptor.",
-    )
-    st.latex(r"F(t)\rightarrow v(t)\rightarrow v_n(t)\rightarrow p(t)")
-
-    vib_steps = {
-        "F(t) · Fuerza": {
-            "title": "1 · Fuerza dinámica — F(t)",
-            "text": "La pisada introduce una fuerza que varía en el tiempo sobre la losa. Ese es el punto de entrada de energía mecánica al sistema estructural.",
-            "latex": r"F(t)\rightarrow \text{estructura}",
-        },
-        "v(t) · Vibración": {
-            "title": "2 · Velocidad vibratoria — v(t)",
-            "text": "La losa responde vibrando. Esa respuesta mecánica puede propagarse por el propio elemento y por otros componentes estructuralmente conectados.",
-            "latex": r"F(t)\rightarrow v(t)",
-        },
-        "vₙ(t) · Superficie": {
-            "title": "3 · Componente normal — v_n(t)",
-            "text": "De toda la vibración de la superficie, la componente perpendicular a ella es la que desplaza el aire adyacente y puede iniciar la radiación acústica.",
-            "latex": r"v(t)\rightarrow v_n(t)",
-        },
-        "p(t) · Sonido": {
-            "title": "4 · Presión sonora — p(t)",
-            "text": "El movimiento normal de la superficie produce fluctuaciones de presión en el aire. Esas fluctuaciones se propagan por el dormitorio y pueden ser percibidas por el receptor.",
-            "latex": r"v_n(t)\rightarrow p(t)",
-        },
-    }
-    vib_key = f"{class_id}_stage0_vib_step"
-    if vib_key not in st.session_state:
-        st.session_state[vib_key] = "F(t) · Fuerza"
-    vib_cols = st.columns(4)
-    for col, label in zip(vib_cols, vib_steps):
-        with col:
-            if st.button(
-                label,
-                key=f"{vib_key}_{label}",
-                type="primary" if st.session_state.get(vib_key) == label else "secondary",
-                width="stretch",
-            ):
-                st.session_state[vib_key] = label
-                st.rerun()
-    vib_data = vib_steps[st.session_state[vib_key]]
-    with st.container(border=True):
-        st.markdown(f"#### {vib_data['title']}")
-        st.latex(vib_data["latex"])
-        st.write(vib_data["text"])
-
+    st.latex(r"F(t)\rightarrow v(t)")
+    exc_col, resp_col = st.columns(2)
+    with exc_col:
+        with st.container(border=True):
+            st.markdown("#### 1 · Excitación mecánica")
+            st.latex(r"F(t)")
+            st.write(
+                "La pisada, una máquina o una tubería pueden aplicar una fuerza dinámica. "
+                "Ese es el punto de entrada de energía mecánica al sistema."
+            )
+    with resp_col:
+        with st.container(border=True):
+            st.markdown("#### 2 · Respuesta estructural")
+            st.latex(r"v(t)")
+            st.write(
+                "La estructura responde adquiriendo movimiento vibratorio. La amplitud depende de sus propiedades "
+                "mecánicas y de la frecuencia de excitación."
+            )
     st.info(
-        "**En palabras simples:** una losa o muro no necesita moverse de manera visible para producir ruido. "
-        "Movimientos extremadamente pequeños de su superficie pueden desplazar el aire y generar sonido audible."
+        "**Idea clave:** una superficie no necesita moverse de forma visible para vibrar. "
+        "Desplazamientos extremadamente pequeños pueden ser suficientes para participar en un fenómeno acústico."
     )
 
-    st.markdown("### 4 · Vibración no es igual a radiación")
-    st.latex(r"\text{VIBRACIÓN}\neq\text{RADIACIÓN ACÚSTICA}")
+    st.markdown("### 4 · De la vibración a la radiación")
+    st.latex(r"\text{VIBRACIÓN ESTRUCTURAL}\;\not\equiv\;\text{RADIACIÓN ACÚSTICA}")
     st.write(
-        "El render anterior muestra una superficie que sí está radiando, pero medir vibración no permite concluir por sí solo "
-        "que la superficie sea un radiador acústico eficiente. La radiación depende de la frecuencia, la distribución espacial "
-        "de la vibración, la superficie involucrada y el acoplamiento con el aire. Más adelante se introducirá la eficiencia de radiación σ."
+        "Que un elemento vibre no significa automáticamente que radie sonido con la misma eficiencia. "
+        "El cambio de medio ocurre cuando el movimiento normal de una superficie desplaza el aire adyacente."
+    )
+    struct_col, air_col = st.columns(2)
+    with struct_col:
+        with st.container(border=True):
+            st.markdown("#### 🟠 En la estructura")
+            st.latex(r"v(t)\rightarrow v_n(t)")
+            st.write(
+                "La energía sigue siendo principalmente mecánica. Interesan la distribución de la vibración, "
+                "la frecuencia y cuánto movimiento ocurre perpendicularmente a la superficie."
+            )
+    with air_col:
+        with st.container(border=True):
+            st.markdown("#### 🔵 En el aire")
+            st.latex(r"v_n(t)\rightarrow p(t)")
+            st.write(
+                "La superficie vibrante pone el aire en movimiento y aparecen fluctuaciones de presión que pueden "
+                "propagarse hasta un receptor."
+            )
+    st.caption(
+        "Más adelante se cuantificará esta capacidad mediante la eficiencia de radiación σ. "
+        "Por ahora basta distinguir vibración de radiación."
     )
 
-    st.markdown("### 5 · Ruta vibroacústica de una pisada")
+    st.markdown("### 5 · Sigue la energía · De la pisada al receptor")
     st.write(
-        "Selecciona una etapa para revelar progresivamente cómo una excitación mecánica termina convirtiéndose en sonido en el recinto inferior. "
-        "La escena y la cámara permanecen fijas; solo cambia el fenómeno que se destaca."
+        "Ahora integra todo lo anterior en una sola ruta. Selecciona cada etapa y observa cómo la energía cambia "
+        "de forma y de medio hasta alcanzar el dormitorio receptor. El render aparece una sola vez en esta sección."
     )
     foot_stage_key=f"{class_id}_stage0_foot_visual"
     if foot_stage_key not in st.session_state:
