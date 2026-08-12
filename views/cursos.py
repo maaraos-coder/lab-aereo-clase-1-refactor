@@ -844,28 +844,65 @@ def _render_course2_lab1_stage0(lab, saved):
     )
 
     st.markdown("### 5 · Ruta vibroacústica de una pisada")
-    st.write("Selecciona una etapa del fenómeno para observar cómo la energía cambia de forma y de medio hasta llegar al receptor.")
+    st.write(
+        "Selecciona una etapa para revelar progresivamente cómo una excitación mecánica termina convirtiéndose en sonido en el recinto inferior. "
+        "La escena y la cámara permanecen fijas; solo cambia el fenómeno que se destaca."
+    )
     foot_stage_key=f"{class_id}_stage0_foot_visual"
     if foot_stage_key not in st.session_state:
         st.session_state[foot_stage_key]=0
-    foot_labels=["1 · Impacto", "2 · Respuesta de la losa", "3 · Propagación", "4 · Radiación", "5 · Receptor"]
+
+    foot_labels=[
+        "1 · Impacto",
+        "2 · Respuesta de la losa",
+        "3 · Propagación",
+        "4 · Radiación",
+        "5 · Receptor",
+    ]
+    foot_assets=[
+        "curso2_lab1_etapa0_pisada_impacto.webp",
+        "curso2_lab1_etapa0_pisada_respuesta.webp",
+        "curso2_lab1_etapa0_pisada_propagacion.webp",
+        "curso2_lab1_etapa0_pisada_radiacion.webp",
+        "curso2_lab1_etapa0_pisada_receptor.webp",
+    ]
+    foot_explain=[
+        (r"F(t)", "**Impacto.** El contacto pie–piso introduce una fuerza dinámica variable en el tiempo sobre el sistema de piso."),
+        (r"F(t)\rightarrow v(t)", "**Respuesta estructural.** La losa responde a la excitación adquiriendo velocidad vibratoria; el movimiento puede ser imperceptible visualmente."),
+        (r"F(t)\rightarrow v(t)\rightarrow \text{propagación estructural}", "**Propagación.** La energía mecánica se distribuye por la losa y puede alcanzar zonas alejadas del punto de impacto."),
+        (r"v_n(t)\rightarrow p(t)", "**Radiación acústica.** La componente normal del movimiento de la cara inferior desplaza el aire y genera fluctuaciones de presión sonora."),
+        (r"F(t)\rightarrow v(t)\rightarrow v_n(t)\rightarrow p(t)\rightarrow \text{RECEPTOR}", "**Receptor.** El campo sonoro radiado por la superficie vibrante se propaga por el dormitorio y llega finalmente a sus ocupantes."),
+    ]
+
     foot_cols=st.columns(5)
     for idx,(col,label) in enumerate(zip(foot_cols,foot_labels)):
         with col:
-            if st.button(label,key=f"{foot_stage_key}_{idx}",type="primary" if st.session_state[foot_stage_key]==idx else "secondary",width="stretch"):
+            if st.button(
+                label,
+                key=f"{foot_stage_key}_{idx}",
+                type="primary" if st.session_state[foot_stage_key]==idx else "secondary",
+                width="stretch",
+            ):
                 st.session_state[foot_stage_key]=idx
                 st.rerun()
-    components.html(_course2_stage0_footstep_svg(int(st.session_state[foot_stage_key])), height=650, scrolling=False)
-    foot_explain=[
-        (r"F(t)", "La pisada introduce una fuerza dinámica en la losa."),
-        (r"F(t)\rightarrow v(t)", "La estructura responde: la losa adquiere velocidad vibratoria."),
-        (r"F(t)\rightarrow v(t)\rightarrow v_n(t)", "La vibración se propaga y aparece movimiento normal en la superficie del cielo."),
-        (r"v_n(t)\rightarrow p(t)", "La superficie vibrante desplaza el aire y comienza la radiación acústica."),
-        (r"F(t)\rightarrow v(t)\rightarrow v_n(t)\rightarrow p(t)\rightarrow \text{RECEPTOR}", "La presión sonora se propaga por el recinto hasta el receptor."),
-    ]
-    latex,text=foot_explain[int(st.session_state[foot_stage_key])]
-    st.latex(latex)
-    st.caption(text)
+
+    current_foot_stage=int(st.session_state[foot_stage_key])
+    foot_asset_path=ASSET_DIR / foot_assets[current_foot_stage]
+    if foot_asset_path.exists():
+        st.image(foot_asset_path, width="stretch")
+    else:
+        st.warning(f"Falta el asset `{foot_assets[current_foot_stage]}`.")
+
+    latex,text=foot_explain[current_foot_stage]
+    with st.container(border=True):
+        st.latex(latex)
+        st.markdown(text)
+        if current_foot_stage <= 2:
+            st.caption("Naranja: energía mecánica/estructural dentro del elemento sólido.")
+        elif current_foot_stage == 3:
+            st.caption("Cian: energía acústica radiada desde la superficie vibrante hacia el aire del recinto.")
+        else:
+            st.caption("La ruta completa enlaza excitación, respuesta estructural, propagación, radiación y receptor.")
 
     st.markdown("### 6 · Mapa de caminos · Una bomba, tres rutas")
     st.write("Selecciona un camino en el esquema. La misma bomba puede excitar los tres simultáneamente.")
