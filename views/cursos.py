@@ -747,21 +747,19 @@ def _render_course2_lab1_stage0(lab, saved):
     # En móvil los botones son táctiles y se apilan automáticamente si falta ancho.
     explored_count, explored_total = _course2_lab1_stage0_energy_interactive(class_id, saved)
 
-    st.markdown("### 1 · Situación inicial")
-    st.write("Observa un edificio residencial en el que pueden coexistir una pisada, una bomba centrífuga, una descarga sanitaria y un ventilador.")
-    _future_stage0_mcq(
-        class_id,
-        saved,
-        "stage0_q1",
-        "¿Cuál de estas fuentes puede producir ruido estructural?",
-        [
-            "A. Solo la pisada",
-            "B. La pisada y la bomba",
-            "C. Solo la bomba",
-            "D. Todas pueden hacerlo dependiendo de cómo estén conectadas al edificio",
-        ],
-        "D. Todas pueden hacerlo dependiendo de cómo estén conectadas al edificio",
-        "Todas pueden introducir energía mecánica en elementos constructivos. Esa energía puede propagarse por losas, muros, pilares, tuberías, soportes u otros elementos y posteriormente producir sonido en otro recinto.",
+    st.markdown("### 1 · De identificar la fuente a seguir la energía")
+    st.write(
+        "Ya identificaste las fuentes presentes en el edificio y exploraste sus posibles recorridos. "
+        "El siguiente paso del diagnóstico no es volver a preguntar qué fuente produce ruido, sino entender "
+        "**cómo la energía sale de la fuente, entra al edificio, se propaga y finalmente llega al receptor**."
+    )
+    st.latex(
+        r"\boxed{\text{FUENTE}\rightarrow\text{EXCITACIÓN}\rightarrow\text{RESPUESTA}"
+        r"\rightarrow\text{PROPAGACIÓN}\rightarrow\text{RADIACIÓN}\rightarrow\text{RECEPTOR}}"
+    )
+    st.info(
+        "Una misma fuente puede disponer de varios caminos simultáneos. El análisis vibroacústico consiste en "
+        "seguir esos caminos y determinar cuál o cuáles son relevantes en el receptor."
     )
 
     st.markdown("### 2 · Ruido aéreo y ruido estructural")
@@ -783,61 +781,83 @@ def _render_course2_lab1_stage0(lab, saved):
             )
             st.markdown("**Ruido estructural: primero la estructura.**")
 
-    st.markdown("### 3 · De la excitación a la vibración")
+    st.markdown("### 3 · De la vibración superficial al sonido")
     st.write(
-        "Antes de pensar en el sonido que finalmente escuchamos, distingamos las dos primeras partes del fenómeno: "
-        "la energía entra al edificio mediante una excitación y la estructura responde vibrando."
+        "Aquí no seguimos todavía una fuente concreta. El objetivo es aislar un solo mecanismo: "
+        "cómo el movimiento de una superficie estructural puede poner en movimiento el aire adyacente."
     )
-    st.latex(r"F(t)\rightarrow v(t)")
-    exc_col, resp_col = st.columns(2)
-    with exc_col:
-        with st.container(border=True):
-            st.markdown("#### 1 · Excitación mecánica")
-            st.latex(r"F(t)")
-            st.write(
-                "La pisada, una máquina o una tubería pueden aplicar una fuerza dinámica. "
-                "Ese es el punto de entrada de energía mecánica al sistema."
-            )
-    with resp_col:
-        with st.container(border=True):
-            st.markdown("#### 2 · Respuesta estructural")
-            st.latex(r"v(t)")
-            st.write(
-                "La estructura responde adquiriendo movimiento vibratorio. La amplitud depende de sus propiedades "
-                "mecánicas y de la frecuencia de excitación."
-            )
-    st.info(
-        "**Idea clave:** una superficie no necesita moverse de forma visible para vibrar. "
-        "Desplazamientos extremadamente pequeños pueden ser suficientes para participar en un fenómeno acústico."
+    st.latex(r"v_n(t)\rightarrow \text{movimiento del aire}\rightarrow p(t)")
+
+    motion_key=f"{class_id}_stage0_surface_motion_mode"
+    amp_key=f"{class_id}_stage0_surface_motion_level"
+    motion_mode=st.radio(
+        "¿Cómo se mueve la superficie?",
+        [
+            "Principalmente paralela a la superficie",
+            "Componente normal pequeña",
+            "Componente normal apreciable",
+        ],
+        horizontal=True,
+        key=motion_key,
+    )
+    relative_motion=st.slider(
+        "Movimiento normal relativo · exploración conceptual",
+        min_value=0,
+        max_value=100,
+        value=35,
+        step=5,
+        key=amp_key,
+        help="No representa una amplitud física en unidades reales; solo permite explorar el concepto de acoplamiento estructura–aire.",
     )
 
-    st.markdown("### 4 · De la vibración a la radiación")
-    st.latex(r"\text{VIBRACIÓN ESTRUCTURAL}\;\not\equiv\;\text{RADIACIÓN ACÚSTICA}")
+    mode_factor={
+        "Principalmente paralela a la superficie":0.20,
+        "Componente normal pequeña":0.55,
+        "Componente normal apreciable":1.00,
+    }[motion_mode]
+    coupling_score=relative_motion*mode_factor
+    if coupling_score < 20:
+        coupling_label="Bajo"
+        radiation_label="Limitada"
+    elif coupling_score < 55:
+        coupling_label="Intermedio"
+        radiation_label="Posible"
+    else:
+        coupling_label="Mayor"
+        radiation_label="Más favorable"
+
+    c1,c2,c3=st.columns(3)
+    c1.metric("Componente normal", f"{relative_motion}%")
+    c2.metric("Acoplamiento con el aire", coupling_label)
+    c3.metric("Radiación potencial", radiation_label)
+
+    if motion_mode=="Principalmente paralela a la superficie":
+        st.info(
+            "Aunque exista vibración medible, un movimiento principalmente paralelo a la superficie desplaza poco aire. "
+            "La componente normal es la que interesa directamente para la radiación."
+        )
+    else:
+        st.info(
+            "Al aumentar la componente normal, la superficie tiene mayor capacidad de desplazar el aire adyacente y generar fluctuaciones de presión. "
+            "Esto no equivale todavía a predecir un nivel sonoro."
+        )
+
+    st.markdown("### 4 · Vibrar no es radiar eficientemente")
+    st.latex(r"\text{VIBRACIÓN ESTRUCTURAL}\;\not\equiv\;\text{RADIACIÓN ACÚSTICA EFICIENTE}")
     st.write(
-        "Que un elemento vibre no significa automáticamente que radie sonido con la misma eficiencia. "
-        "El cambio de medio ocurre cuando el movimiento normal de una superficie desplaza el aire adyacente."
+        "Medir vibración en una losa, muro o tubería no basta para concluir que ese elemento domina el ruido del recinto. "
+        "La radiación depende de cómo vibra la superficie y de cómo se acopla con el aire."
     )
-    struct_col, air_col = st.columns(2)
-    with struct_col:
-        with st.container(border=True):
-            st.markdown("#### 🟠 En la estructura")
-            st.latex(r"v(t)\rightarrow v_n(t)")
-            st.write(
-                "La energía sigue siendo principalmente mecánica. Interesan la distribución de la vibración, "
-                "la frecuencia y cuánto movimiento ocurre perpendicularmente a la superficie."
-            )
-    with air_col:
-        with st.container(border=True):
-            st.markdown("#### 🔵 En el aire")
-            st.latex(r"v_n(t)\rightarrow p(t)")
-            st.write(
-                "La superficie vibrante pone el aire en movimiento y aparecen fluctuaciones de presión que pueden "
-                "propagarse hasta un receptor."
-            )
-    st.caption(
-        "Más adelante se cuantificará esta capacidad mediante la eficiencia de radiación σ. "
-        "Por ahora basta distinguir vibración de radiación."
-    )
+    with st.expander("¿De qué depende la capacidad de radiar?", expanded=False):
+        st.markdown(
+            "- **Frecuencia:** cambia la relación entre longitud de onda acústica y dimensiones de la superficie.\n"
+            "- **Distribución espacial de la vibración:** distintas zonas pueden contribuir de manera diferente.\n"
+            "- **Superficie efectiva:** no toda el área necesariamente participa de igual forma.\n"
+            "- **Acoplamiento estructura–aire:** determina cuánto movimiento estructural termina convirtiéndose en energía acústica."
+        )
+        st.write(
+            "Más adelante esta relación se describirá mediante la eficiencia de radiación σ. En esta etapa solo interesa reconocer que vibración y radiación no son sinónimos."
+        )
 
     st.markdown("### 5 · Sigue la energía · De la pisada al receptor")
     st.write(
@@ -988,7 +1008,7 @@ def _render_course2_lab1_stage0(lab, saved):
         "La primera pregunta será: si dos estructuras reciben exactamente la misma fuerza, ¿vibran necesariamente igual?"
     )
 
-    required = ["stage0_q1", "stage0_q2", "stage0_q3", "stage0_q4", "stage0_case"]
+    required = ["stage0_q2", "stage0_q3", "stage0_q4", "stage0_case"]
     completed_questions = sum(
         1 for key in required
         if isinstance(saved.get(key), dict) and saved[key].get("completed")
@@ -1000,7 +1020,7 @@ def _render_course2_lab1_stage0(lab, saved):
     else:
         if st.button("Completar Etapa 0", type="primary", key=f"complete_stage0_{class_id}"):
             if completed_questions < len(required):
-                st.warning("Guarda las cinco respuestas formativas antes de completar la etapa.")
+                st.warning("Guarda las cuatro respuestas formativas antes de completar la etapa.")
             elif explored_count < explored_total:
                 st.warning("Explora Pisada, Bomba y Descarga sanitaria en ‘Sigue la energía’ antes de completar la etapa.")
             else:
