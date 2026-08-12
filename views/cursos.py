@@ -279,196 +279,163 @@ def _course2_lab1_stage0_dynamic_image(filename, source=None, caption=None):
 
 
 def _course2_stage0_footstep_svg(stage=0):
+    """Figura SVG técnica del recorrido pisada → estructura → radiación → receptor."""
     stage=max(0,min(int(stage),4))
-    orange="#ff8a2a"; cyan="#38d7ff"; dim="#45627a"; bg="#07172a"
-    impact=orange
-    slab=orange if stage>=1 else dim
-    prop=orange if stage>=2 else dim
-    rad=cyan if stage>=3 else dim
-    rec=cyan if stage>=4 else dim
-    return f'''<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1100 390" width="100%">
-    <defs><filter id="g"><feGaussianBlur stdDeviation="4" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter></defs>
-    <rect width="1100" height="390" rx="18" fill="{bg}"/>
-    <rect x="80" y="138" width="940" height="78" rx="6" fill="#536273" stroke="#8093a7" stroke-width="3"/>
-    <path d="M130 168 H970" stroke="{prop}" stroke-width="8" stroke-linecap="round" opacity=".9"/>
-    <circle cx="310" cy="123" r="17" fill="{impact}" filter="url(#g)"/>
-    <path d="M280 70 q30 -28 60 0 l-9 54 h-42z" fill="#c8d2dc"/><path d="M294 42 q20 -14 39 5" stroke="#c8d2dc" stroke-width="17" fill="none" stroke-linecap="round"/>
-    <path d="M310 124 V168" stroke="{slab}" stroke-width="9" filter="url(#g)"/>
-    <g fill="none" stroke="{rad}" stroke-width="5" opacity="{1 if stage>=3 else .25}"><path d="M230 220 Q310 285 390 220"/><path d="M190 220 Q310 330 430 220"/><path d="M150 220 Q310 370 470 220"/></g>
-    <rect x="620" y="255" width="300" height="64" rx="12" fill="#172438" stroke="{rec}" stroke-width="4"/>
-    <rect x="665" y="233" width="210" height="45" rx="12" fill="#314154"/><circle cx="730" cy="252" r="15" fill="#d4b39c"/><circle cx="805" cy="252" r="15" fill="#d4b39c"/>
-    <text x="310" y="335" text-anchor="middle" fill="#eaf6ff" font-family="Arial" font-size="18">SUPERFICIE VIBRANTE</text>
-    <text x="770" y="350" text-anchor="middle" fill="{rec}" font-family="Arial" font-size="18" font-weight="700">RECEPTOR</text>
-    <text x="80" y="45" fill="#f3f8fc" font-family="Arial" font-size="24" font-weight="700">Pisada · estructura · aire · receptor</text>
+    orange="#ff8a2a"; cyan="#35d7ff"; panel="#0b2743"
+    active=[stage>=0,stage>=1,stage>=2,stage>=3,stage>=4]
+    def a(i): return "1" if active[i] else ".16"
+    return f'''<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1280 560" width="100%" role="img" aria-label="Sección técnica de propagación de una pisada hasta un recinto receptor">
+    <defs>
+      <linearGradient id="bgFoot" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#051426"/><stop offset="1" stop-color="#0b2a46"/></linearGradient>
+      <linearGradient id="concrete" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#777f86"/><stop offset=".45" stop-color="#4d565f"/><stop offset="1" stop-color="#2f3942"/></linearGradient>
+      <linearGradient id="room" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#1b2a38"/><stop offset="1" stop-color="#0c1722"/></linearGradient>
+      <filter id="go"><feGaussianBlur stdDeviation="5" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+      <filter id="gc"><feGaussianBlur stdDeviation="4" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+      <pattern id="agg" width="42" height="30" patternUnits="userSpaceOnUse"><circle cx="8" cy="9" r="2" fill="#8d969e" opacity=".35"/><circle cx="26" cy="20" r="3" fill="#222c35" opacity=".45"/><path d="M2 27 l11 -5 l8 5" fill="none" stroke="#9aa3aa" stroke-width="1" opacity=".2"/></pattern>
+      <style>.t{{font-family:Inter,Arial,sans-serif;fill:#eef8ff}} .muted{{fill:#93a9bc}} .small{{font-size:16px}} .label{{font-size:18px;font-weight:700}} .title{{font-size:25px;font-weight:800}}</style>
+    </defs>
+    <rect width="1280" height="560" rx="22" fill="url(#bgFoot)"/>
+    <text x="36" y="44" class="t title">De la pisada al receptor</text>
+    <text x="36" y="72" class="t muted small">Sección técnica · excitación mecánica, propagación estructural y radiación al aire</text>
+    <g opacity="{a(0)}">
+      <path d="M238 106 c18 -25 30 -48 38 -72 l43 4 c2 31 2 60 -5 84 l-11 32 -76 0 c-12 0 -18 -12 -11 -22 z" fill="#1d242c" stroke="#b9c5cf" stroke-width="3"/>
+      <path d="M214 151 c33 10 74 12 111 2 l16 20 -10 18 -107 0 c-31 0 -46 -27 -10 -40z" fill="#c9ced3" stroke="#e8ecef" stroke-width="3"/>
+      <path d="M223 185 h114" stroke="#7b8791" stroke-width="4"/>
+      <circle cx="278" cy="199" r="13" fill="{orange}" filter="url(#go)"/>
+    </g>
+    <rect x="70" y="200" width="865" height="18" rx="4" fill="#b6b0a6"/>
+    <rect x="70" y="218" width="865" height="150" rx="5" fill="url(#concrete)" stroke="#a9b3bc" stroke-width="3"/>
+    <rect x="70" y="218" width="865" height="150" fill="url(#agg)" opacity=".75"/>
+    <g stroke="#1c242c" stroke-width="7" opacity=".9"><line x1="95" y1="244" x2="910" y2="244"/><line x1="95" y1="344" x2="910" y2="344"/></g>
+    <g opacity="{a(1)}" filter="url(#go)"><path d="M278 201 V245" stroke="{orange}" stroke-width="8"/><path d="M278 245 v86" stroke="{orange}" stroke-width="5"/><path d="M265 315 l13 16 13 -16" fill="none" stroke="{orange}" stroke-width="5"/></g>
+    <g opacity="{a(2)}" fill="none" stroke="{orange}" filter="url(#go)" stroke-width="4">
+      <path d="M115 274 C180 250 210 300 275 275 S370 250 435 275 S530 300 595 275 S690 250 755 275 S850 300 915 275"/>
+      <path d="M115 310 C180 286 210 336 275 311 S370 286 435 311 S530 336 595 311 S690 286 755 311 S850 336 915 311" opacity=".72"/>
+    </g>
+    <rect x="248" y="284" width="218" height="54" rx="10" fill="#0a1c2d" stroke="{orange}" stroke-width="2" opacity="{a(2)}"/>
+    <text x="357" y="307" text-anchor="middle" class="t label" fill="{orange}" opacity="{a(2)}">VIBRACIÓN EN LA LOSA</text>
+    <text x="357" y="327" text-anchor="middle" class="t muted small" opacity="{a(2)}">energía mecánica en el sólido</text>
+    <rect x="70" y="368" width="865" height="154" fill="url(#room)" stroke="#34495a" stroke-width="2"/>
+    <rect x="126" y="449" width="370" height="48" rx="8" fill="#2b3d4d"/><rect x="157" y="429" width="310" height="44" rx="12" fill="#445669"/>
+    <circle cx="258" cy="445" r="16" fill="#d3b39f"/><circle cx="340" cy="445" r="16" fill="#d3b39f"/>
+    <rect x="126" y="497" width="370" height="9" fill="#101820"/>
+    <path d="M603 522 V399 h270 v123" fill="none" stroke="#526579" stroke-width="5"/><rect x="638" y="426" width="72" height="42" rx="5" fill="#18293a"/><circle cx="674" cy="447" r="13" fill="#c9a98f"/>
+    <g opacity="{a(3)}" fill="none" stroke="{cyan}" stroke-width="5" filter="url(#gc)">
+      <path d="M165 370 Q278 438 391 370"/><path d="M120 370 Q278 477 436 370"/><path d="M82 370 Q278 515 474 370"/>
+    </g>
+    <g opacity="{a(4)}"><circle cx="298" cy="452" r="64" fill="none" stroke="{cyan}" stroke-width="3" stroke-dasharray="8 8"/><text x="298" y="536" text-anchor="middle" class="t label" fill="{cyan}">RECEPTOR</text></g>
+    <rect x="972" y="102" width="270" height="335" rx="16" fill="{panel}" stroke="#244c6a" stroke-width="2"/>
+    <text x="1000" y="137" class="t label">Lectura del fenómeno</text>
+    <g class="t small">
+      <circle cx="1004" cy="177" r="14" fill="{orange}" opacity="{a(0)}"/><text x="1004" y="183" text-anchor="middle" font-weight="800">1</text><text x="1030" y="183">Impacto / F(t)</text>
+      <circle cx="1004" cy="224" r="14" fill="{orange}" opacity="{a(1)}"/><text x="1004" y="230" text-anchor="middle" font-weight="800">2</text><text x="1030" y="230">Respuesta de la losa</text>
+      <circle cx="1004" cy="271" r="14" fill="{orange}" opacity="{a(2)}"/><text x="1004" y="277" text-anchor="middle" font-weight="800">3</text><text x="1030" y="277">Propagación estructural</text>
+      <circle cx="1004" cy="318" r="14" fill="{cyan}" opacity="{a(3)}"/><text x="1004" y="324" text-anchor="middle" font-weight="800">4</text><text x="1030" y="324">Radiación acústica</text>
+      <circle cx="1004" cy="365" r="14" fill="{cyan}" opacity="{a(4)}"/><text x="1004" y="371" text-anchor="middle" font-weight="800">5</text><text x="1030" y="371">Receptor</text>
+    </g>
+    <text x="1000" y="407" class="t muted small">Naranja: energía en la estructura</text><text x="1000" y="431" class="t muted small">Cian: sonido propagándose en el aire</text>
     </svg>'''
 
 
 def _course2_stage0_pump_paths_svg(active="base"):
-    colors={"base":"#ff8a2a","pipe":"#a46bff","air":"#38d7ff"}
-    bg="#07172a"; active=active if active in colors else "base"
-    def op(name): return "1" if name==active else ".18"
-    return f'''<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1100 420" width="100%">
-      <defs><filter id="g"><feGaussianBlur stdDeviation="4" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter></defs>
-      <rect width="1100" height="420" rx="18" fill="{bg}"/>
-      <text x="45" y="46" fill="#f3f8fc" font-family="Arial" font-size="24" font-weight="700">Una bomba · tres caminos simultáneos</text>
-      <g><rect x="110" y="168" width="230" height="90" rx="20" fill="#185b87" stroke="#7bdcff" stroke-width="4"/><circle cx="307" cy="213" r="38" fill="#0d405f" stroke="#7bdcff" stroke-width="4"/><text x="205" y="218" text-anchor="middle" fill="white" font-family="Arial" font-size="20" font-weight="700">BOMBA</text></g>
-      <rect x="130" y="282" width="250" height="36" rx="6" fill="#596879"/><rect x="60" y="335" width="970" height="42" rx="4" fill="#465568"/>
-      <g opacity="{op('base')}" filter="url(#g)" stroke="{colors['base']}" fill="none"><path d="M230 258 V335" stroke-width="9"/><path d="M160 353 H520" stroke-width="7"/></g>
-      <text x="365" y="395" fill="{colors['base']}" opacity="{op('base')}" font-family="Arial" font-size="17" font-weight="700">BASE → LOSA → ESTRUCTURA</text>
-      <g opacity="{op('pipe')}" filter="url(#g)" stroke="{colors['pipe']}" fill="none"><path d="M340 208 H710 V118 H900" stroke-width="11"/><circle cx="710" cy="208" r="22" stroke-width="5"/></g>
-      <rect x="880" y="90" width="120" height="72" rx="10" fill="#172438" stroke="{colors['pipe']}" stroke-width="3" opacity="{op('pipe')}"/><text x="940" y="132" text-anchor="middle" fill="{colors['pipe']}" opacity="{op('pipe')}" font-family="Arial" font-size="15" font-weight="700">SOPORTE</text>
-      <text x="625" y="92" fill="{colors['pipe']}" opacity="{op('pipe')}" font-family="Arial" font-size="17" font-weight="700">TUBERÍA → SOPORTES → ESTRUCTURA</text>
-      <g opacity="{op('air')}" filter="url(#g)" fill="none" stroke="{colors['air']}" stroke-width="5"><path d="M110 152 Q40 213 110 274"/><path d="M78 124 Q0 213 78 302"/><path d="M350 150 Q430 213 350 276"/></g>
-      <rect x="720" y="245" width="260" height="64" rx="12" fill="#172438" stroke="{colors['air']}" stroke-width="3" opacity="{op('air')}"/><text x="850" y="284" text-anchor="middle" fill="{colors['air']}" opacity="{op('air')}" font-family="Arial" font-size="17" font-weight="700">AIRE → RECEPTOR</text>
+    """Mapa SVG profesional de tres caminos simultáneos de una bomba centrífuga."""
+    active=active if active in {"base","pipe","air"} else "base"
+    orange="#ff9a32"; cyan="#36d8ff"
+    def o(name): return "1" if name==active else ".22"
+    return f'''<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1280 560" width="100%" role="img" aria-label="Mapa de caminos de transmisión de una bomba centrífuga">
+      <defs>
+        <linearGradient id="bgPump" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#041426"/><stop offset="1" stop-color="#0a2b48"/></linearGradient>
+        <linearGradient id="motor" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#2a6f9d"/><stop offset="1" stop-color="#0e3450"/></linearGradient>
+        <linearGradient id="metal" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#aab5bd"/><stop offset=".5" stop-color="#53616c"/><stop offset="1" stop-color="#222d35"/></linearGradient>
+        <filter id="orangeGlow"><feGaussianBlur stdDeviation="5" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+        <filter id="cyanGlow"><feGaussianBlur stdDeviation="4" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+        <style>.t{{font-family:Inter,Arial,sans-serif;fill:#eef8ff}} .title{{font-size:24px;font-weight:800}} .label{{font-size:17px;font-weight:700}} .small{{font-size:15px;fill:#9db1c2}}</style>
+      </defs>
+      <rect width="1280" height="560" rx="22" fill="url(#bgPump)"/>
+      <text x="36" y="44" class="t title">Una bomba centrífuga · tres caminos simultáneos</text>
+      <text x="36" y="70" class="t small">La fuente es una sola; los mecanismos de transmisión no lo son.</text>
+      <rect x="42" y="416" width="860" height="82" rx="5" fill="#4b5660" stroke="#7f8d98" stroke-width="3"/><path d="M45 448 H898" stroke="#2d353d" stroke-width="5" opacity=".6"/>
+      <rect x="905" y="100" width="32" height="398" fill="#626e77" stroke="#92a0aa" stroke-width="2"/>
+      <rect x="938" y="170" width="292" height="328" fill="#111e29" stroke="#4d6170" stroke-width="3"/>
+      <rect x="986" y="360" width="190" height="58" rx="10" fill="#364756"/><rect x="1010" y="334" width="142" height="44" rx="9" fill="#536577"/><circle cx="1055" cy="352" r="14" fill="#d0b09c"/><circle cx="1110" cy="352" r="14" fill="#d0b09c"/>
+      <text x="1084" y="456" text-anchor="middle" class="t label">RECINTO RECEPTOR</text>
+      <g>
+        <rect x="160" y="300" width="355" height="47" rx="7" fill="#434f5a" stroke="#8c9aa5" stroke-width="3"/>
+        <rect x="180" y="215" width="205" height="88" rx="18" fill="url(#motor)" stroke="#64b8e8" stroke-width="3"/>
+        <g stroke="#7bc7ef" stroke-width="2" opacity=".55"><line x1="205" y1="226" x2="205" y2="292"/><line x1="225" y1="226" x2="225" y2="292"/><line x1="245" y1="226" x2="245" y2="292"/><line x1="265" y1="226" x2="265" y2="292"/><line x1="285" y1="226" x2="285" y2="292"/><line x1="305" y1="226" x2="305" y2="292"/></g>
+        <rect x="386" y="247" width="62" height="25" rx="8" fill="#65727c"/>
+        <path d="M447 195 C530 184 555 268 502 305 C470 328 428 309 423 272 C418 238 426 205 447 195z" fill="url(#metal)" stroke="#c4ccd2" stroke-width="3"/>
+        <circle cx="469" cy="254" r="32" fill="#18232b" stroke="#a7b1b9" stroke-width="4"/><circle cx="469" cy="254" r="9" fill="#d7dde1"/>
+        <path d="M483 198 V145 H705" fill="none" stroke="url(#metal)" stroke-width="24" stroke-linejoin="round"/><path d="M705 145 H892 V250" fill="none" stroke="url(#metal)" stroke-width="24"/>
+        <path d="M502 254 H735" fill="none" stroke="url(#metal)" stroke-width="26"/>
+        <rect x="726" y="232" width="50" height="45" rx="7" fill="#1d384a" stroke="#4ed3ff" stroke-width="2"/>
+      </g>
+      <g opacity="{o('base')}" filter="url(#orangeGlow)" stroke="{orange}" fill="none"><path d="M230 347 V416" stroke-width="7"/><path d="M430 347 V416" stroke-width="7"/><path d="M200 458 H520" stroke-width="5"/></g>
+      <text x="165" y="392" class="t label" fill="{orange}" opacity="{o('base')}">BASE → LOSA → ESTRUCTURA</text>
+      <g opacity="{o('pipe')}" filter="url(#cyanGlow)" fill="none" stroke="{cyan}" stroke-width="5" stroke-dasharray="10 7"><path d="M522 254 H738"/><path d="M752 254 H883 V315 H914"/></g>
+      <g opacity="{o('pipe')}" fill="none" stroke="{cyan}" stroke-width="4"><path d="M756 278 V416"/><path d="M861 278 V416"/></g>
+      <text x="575" y="300" class="t label" fill="{cyan}" opacity="{o('pipe')}">TUBERÍA → SOPORTES → ESTRUCTURA</text>
+      <g opacity="{o('air')}" filter="url(#orangeGlow)" fill="none" stroke="#ff5252" stroke-width="5"><path d="M530 205 Q590 252 530 298"/><path d="M560 184 Q645 252 560 320"/><path d="M935 244 Q1000 294 935 344"/><path d="M958 225 Q1045 294 958 363"/></g>
+      <text x="783" y="193" class="t label" fill="#ff6868" opacity="{o('air')}">CARCASA → AIRE → RECEPTOR</text>
+      <rect x="948" y="88" width="282" height="68" rx="12" fill="#0b2743" stroke="#244d6a"/><text x="970" y="116" class="t label">Camino seleccionado</text><text x="970" y="142" class="t small">Los otros permanecen posibles, pero atenuados.</text>
     </svg>'''
 
 
 def _course2_lab1_stage0_pump_svg(encierro=False, absorbente=False, antivibratorios=False, flexible=False):
-    """SVG técnico conceptual de una bomba y sus caminos de transmisión."""
-    base_color = "#35d07f" if antivibratorios else "#ff8a3d"
-    pipe_color = "#35d07f" if flexible else "#ff8a3d"
-    air_reduction = encierro or absorbente
-    air_color = "#35d07f" if air_reduction else "#35c7ff"
-    air_opacity = "0.34" if air_reduction else "0.95"
-    base_opacity = "0.35" if antivibratorios else "0.95"
-    pipe_opacity = "0.35" if flexible else "0.95"
-
-    enclosure = ""
+    """SVG técnico profesional de control vibroacústico de una bomba centrífuga."""
+    orange="#ff9a32"; cyan="#35d7ff"; green="#48d895"; red="#ff5b5b"
+    base_color=green if antivibratorios else orange
+    pipe_color=green if flexible else cyan
+    air_state="Parcial" if (encierro or absorbente) else "Activo"
+    air_color=green if (encierro and absorbente) else ("#e8b44a" if (encierro or absorbente) else red)
+    base_state="Reducido" if antivibratorios else "Activo"
+    pipe_state="Reducido" if flexible else "Activo"
+    enclosure=''
     if encierro:
-        enclosure = """
-        <rect x="150" y="92" width="390" height="300" rx="18" fill="#0b1730" fill-opacity="0.72"
-              stroke="#72d7ff" stroke-width="4"/>
-        <rect x="168" y="110" width="354" height="264" rx="12" fill="none"
-              stroke="#72d7ff" stroke-opacity="0.35" stroke-width="2" stroke-dasharray="8 8"/>
-        <text x="345" y="126" text-anchor="middle" class="smallLabel">ENCIERRO ACÚSTICO</text>
-        """
-    absorbent_svg = ""
+        enclosure='''<rect x="96" y="108" width="470" height="308" rx="12" fill="#0b1d2e" fill-opacity=".73" stroke="#7dd9ff" stroke-width="5"/><rect x="112" y="124" width="438" height="276" rx="8" fill="none" stroke="#7dd9ff" stroke-opacity=".35" stroke-width="2"/>'''
+    absorb=''
     if absorbente:
-        absorbent_svg = """
-        <g fill="#8ed9ff" fill-opacity="0.34" stroke="#8ed9ff" stroke-opacity="0.55">
-          <path d="M185 150 l18 -14 l18 14 l18 -14 l18 14 l18 -14 l18 14" fill="none" stroke-width="5"/>
-          <path d="M185 174 l18 -14 l18 14 l18 -14 l18 14 l18 -14 l18 14" fill="none" stroke-width="5"/>
-          <path d="M185 198 l18 -14 l18 14 l18 -14 l18 14 l18 -14 l18 14" fill="none" stroke-width="5"/>
-        </g>
-        <text x="235" y="226" text-anchor="middle" class="mini">ABSORBENTE</text>
-        """
+        absorb='''<g stroke="#8fdcff" stroke-width="5" fill="none" opacity=".65"><path d="M122 143 l18 -12 l18 12 l18 -12 l18 12 l18 -12 l18 12 l18 -12 l18 12"/><path d="M122 165 l18 -12 l18 12 l18 -12 l18 12 l18 -12 l18 12 l18 -12 l18 12"/></g>'''
     if antivibratorios:
-        isolators = """
-        <g stroke="#53e19f" stroke-width="6" fill="none" stroke-linecap="round">
-          <path d="M258 401 q12 -18 24 0 q12 18 24 0 q12 -18 24 0"/>
-          <path d="M372 401 q12 -18 24 0 q12 18 24 0 q12 -18 24 0"/>
-        </g>
-        <text x="345" y="430" text-anchor="middle" class="mini green">ANTIVIBRATORIOS</text>
-        """
+        isolators='''<g stroke="#48d895" stroke-width="6" fill="none" stroke-linecap="round"><path d="M218 412 q12 -20 24 0 q12 20 24 0 q12 -20 24 0"/><path d="M418 412 q12 -20 24 0 q12 20 24 0 q12 -20 24 0"/></g>'''
     else:
-        isolators = """
-        <rect x="270" y="388" width="52" height="18" rx="3" fill="#9099aa"/>
-        <rect x="385" y="388" width="52" height="18" rx="3" fill="#9099aa"/>
-        <text x="345" y="430" text-anchor="middle" class="mini">APOYO RÍGIDO</text>
-        """
+        isolators='''<rect x="218" y="400" width="74" height="24" rx="4" fill="#808c95"/><rect x="412" y="400" width="74" height="24" rx="4" fill="#808c95"/>'''
+    flex='''<line x1="655" y1="266" x2="740" y2="266" stroke="#62717c" stroke-width="24" stroke-linecap="round"/>'''
     if flexible:
-        flexible_piece = """
-        <g stroke="#53e19f" fill="none" stroke-width="7" stroke-linecap="round">
-          <path d="M575 276 q14 -16 28 0 q14 16 28 0 q14 -16 28 0 q14 16 28 0"/>
-        </g>
-        <text x="630" y="252" text-anchor="middle" class="mini green">CONEXIÓN FLEXIBLE</text>
-        """
-    else:
-        flexible_piece = """
-        <line x1="575" y1="276" x2="688" y2="276" stroke="#4aa8ff" stroke-width="14" stroke-linecap="round"/>
-        <text x="630" y="252" text-anchor="middle" class="mini">CONEXIÓN RÍGIDA</text>
-        """
-
-    base_status = "REDUCIDO" if antivibratorios else "ACTIVO"
-    pipe_status = "REDUCIDO" if flexible else "ACTIVO"
-    air_status = "REDUCIDO" if air_reduction else "ACTIVO"
-
-    return f'''<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1120 650" width="100%" role="img"
-        aria-label="Esquema técnico interactivo de control vibroacústico de una bomba centrífuga">
+        flex='''<g stroke="#48d895" stroke-width="8" fill="none"><path d="M655 266 q10 -18 20 0 q10 18 20 0 q10 -18 20 0 q10 18 20 0"/></g>'''
+    return f'''<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1280 650" width="100%" role="img" aria-label="Laboratorio conceptual de control vibroacústico de una bomba centrífuga">
       <defs>
-        <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
-          <stop offset="0" stop-color="#071223"/><stop offset="1" stop-color="#0b2945"/>
-        </linearGradient>
-        <linearGradient id="slab" x1="0" y1="0" x2="0" y2="1">
-          <stop offset="0" stop-color="#68788b"/><stop offset="1" stop-color="#364354"/>
-        </linearGradient>
-        <filter id="glowOrange"><feGaussianBlur stdDeviation="5" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
-        <filter id="glowCyan"><feGaussianBlur stdDeviation="4" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
-        <style>
-          .title{{font:700 28px Arial,sans-serif;fill:#f5fbff}} .sub{{font:400 16px Arial,sans-serif;fill:#b9d4e8}}
-          .label{{font:700 16px Arial,sans-serif;fill:#f4f8fb}} .smallLabel{{font:700 14px Arial,sans-serif;fill:#a9e7ff;letter-spacing:1px}}
-          .mini{{font:700 12px Arial,sans-serif;fill:#b6c6d6;letter-spacing:.5px}} .green{{fill:#6df0b2}}
-          .status{{font:700 13px Arial,sans-serif}}
-        </style>
+        <linearGradient id="labBg" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#041425"/><stop offset="1" stop-color="#0a2945"/></linearGradient>
+        <linearGradient id="labMotor" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#2b77a7"/><stop offset="1" stop-color="#0d3553"/></linearGradient>
+        <linearGradient id="labMetal" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#bac3ca"/><stop offset=".5" stop-color="#65727c"/><stop offset="1" stop-color="#29343c"/></linearGradient>
+        <filter id="lg"><feGaussianBlur stdDeviation="5" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+        <style>.t{{font-family:Inter,Arial,sans-serif;fill:#eef8ff}} .title{{font-size:24px;font-weight:800}} .label{{font-size:17px;font-weight:700}} .small{{font-size:14px;fill:#a5b8c8}}</style>
       </defs>
-      <rect width="1120" height="650" rx="22" fill="url(#bg)"/>
-      <text x="45" y="52" class="title">Laboratorio conceptual · Controla la bomba</text>
-      <text x="45" y="80" class="sub">Observa qué camino modifica cada medida de control.</text>
-
-      <rect x="820" y="108" width="250" height="360" rx="14" fill="#102943" stroke="#345776" stroke-width="3"/>
-      <text x="945" y="140" text-anchor="middle" class="smallLabel">ESTRUCTURA / RECINTO</text>
-      <line x1="835" y1="334" x2="1055" y2="334" stroke="#566c80" stroke-width="7"/>
-      <rect x="900" y="350" width="108" height="52" rx="9" fill="#182335" stroke="#4e677f" stroke-width="2"/>
-      <text x="954" y="382" text-anchor="middle" class="mini">RECEPTOR</text>
-
-      <rect x="70" y="455" width="980" height="82" rx="8" fill="url(#slab)" stroke="#8aa0b2" stroke-width="2"/>
-      <g stroke="#91a2b1" stroke-opacity="0.25" stroke-width="2">
-        <path d="M100 480 H1020 M100 505 H1020"/><path d="M160 460 V532 M270 460 V532 M380 460 V532 M490 460 V532 M600 460 V532 M710 460 V532"/>
-      </g>
-      <text x="560" y="520" text-anchor="middle" class="smallLabel">LOSA DE HORMIGÓN</text>
-
-      {enclosure}
-      {absorbent_svg}
-
-      <g>
-        <rect x="245" y="344" width="220" height="44" rx="6" fill="#566474" stroke="#8495a6" stroke-width="3"/>
-        <rect x="278" y="282" width="110" height="64" rx="18" fill="#2476ac" stroke="#7ad4ff" stroke-width="3"/>
-        <circle cx="386" cy="314" r="39" fill="#175779" stroke="#7ad4ff" stroke-width="4"/>
-        <circle cx="386" cy="314" r="13" fill="#b8d5e6"/>
-        <rect x="210" y="295" width="80" height="40" rx="11" fill="#314861" stroke="#6e8398" stroke-width="3"/>
-        <g stroke="#73879a" stroke-width="4"><line x1="225" y1="301" x2="225" y2="328"/><line x1="242" y1="301" x2="242" y2="328"/><line x1="259" y1="301" x2="259" y2="328"/></g>
-        <text x="345" y="270" text-anchor="middle" class="label">BOMBA CENTRÍFUGA</text>
-      </g>
+      <rect width="1280" height="650" rx="22" fill="url(#labBg)"/>
+      <text x="36" y="44" class="t title">Laboratorio conceptual · Controla la bomba</text>
+      <text x="36" y="69" class="t small">Activa medidas y observa qué camino físico se modifica realmente.</text>
+      {enclosure}{absorb}
+      <rect x="150" y="356" width="430" height="42" rx="7" fill="#414e58" stroke="#8b9aa6" stroke-width="3"/>
+      <rect x="175" y="230" width="222" height="102" rx="18" fill="url(#labMotor)" stroke="#65bce9" stroke-width="3"/>
+      <g stroke="#7bc8ef" stroke-width="2" opacity=".45"><line x1="200" y1="242" x2="200" y2="320"/><line x1="222" y1="242" x2="222" y2="320"/><line x1="244" y1="242" x2="244" y2="320"/><line x1="266" y1="242" x2="266" y2="320"/><line x1="288" y1="242" x2="288" y2="320"/><line x1="310" y1="242" x2="310" y2="320"/></g>
+      <rect x="397" y="266" width="65" height="28" rx="7" fill="#66737d"/>
+      <path d="M460 205 C555 196 579 292 518 332 C482 355 438 329 433 291 C428 251 438 216 460 205z" fill="url(#labMetal)" stroke="#c8d0d5" stroke-width="3"/>
+      <circle cx="485" cy="277" r="36" fill="#17242d" stroke="#aeb9c0" stroke-width="4"/><circle cx="485" cy="277" r="10" fill="#dde2e5"/>
+      <path d="M499 211 V158 H708" fill="none" stroke="url(#labMetal)" stroke-width="26" stroke-linejoin="round"/>
+      <path d="M521 277 H655" fill="none" stroke="url(#labMetal)" stroke-width="27"/>{flex}
+      <path d="M740 266 H925 V350 H1010" fill="none" stroke="url(#labMetal)" stroke-width="26"/>
+      <rect x="887" y="329" width="54" height="46" rx="6" fill="#1a3548" stroke="#56d2ff" stroke-width="2"/>
       {isolators}
-
-      <line x1="425" y1="314" x2="575" y2="276" stroke="#4aa8ff" stroke-width="14" stroke-linecap="round"/>
-      {flexible_piece}
-      <line x1="688" y1="276" x2="842" y2="276" stroke="#4aa8ff" stroke-width="14" stroke-linecap="round"/>
-      <line x1="842" y1="276" x2="842" y2="210" stroke="#4aa8ff" stroke-width="14" stroke-linecap="round"/>
-      <path d="M812 276 h60" stroke="#a5b6c7" stroke-width="5"/>
-      <path d="M832 260 v32 M852 260 v32" stroke="#a5b6c7" stroke-width="5"/>
-      <text x="840" y="190" text-anchor="middle" class="mini">SOPORTE A ESTRUCTURA</text>
-
-      <g opacity="{base_opacity}" filter="url(#glowOrange)">
-        <path d="M345 406 C345 425 345 438 345 455" stroke="{base_color}" stroke-width="9" fill="none" stroke-linecap="round"/>
-        <path d="M240 485 C300 452 390 452 450 485" stroke="{base_color}" stroke-width="5" fill="none"/>
-        <path d="M205 505 C290 458 405 458 490 505" stroke="{base_color}" stroke-width="3" fill="none" opacity=".7"/>
-      </g>
-
-      <g opacity="{pipe_opacity}" filter="url(#glowOrange)">
-        <path d="M430 298 C555 240 700 238 826 266" stroke="{pipe_color}" stroke-width="6" fill="none" stroke-dasharray="10 7"/>
-        <circle cx="842" cy="276" r="22" fill="none" stroke="{pipe_color}" stroke-width="5"/>
-      </g>
-
-      <g opacity="{air_opacity}" filter="url(#glowCyan)" fill="none" stroke="{air_color}" stroke-linecap="round">
-        <path d="M168 250 Q95 314 168 377" stroke-width="6"/>
-        <path d="M138 220 Q35 314 138 408" stroke-width="4"/>
-        <path d="M490 226 Q565 314 490 400" stroke-width="5"/>
-      </g>
-
-      <g>
-        <rect x="74" y="565" width="300" height="58" rx="12" fill="#0d2138" stroke="{base_color}" stroke-width="2"/>
-        <text x="96" y="590" class="mini">CAMINO 1 · BASE → LOSA</text>
-        <text x="96" y="612" class="status" fill="{base_color}">{base_status}</text>
-
-        <rect x="410" y="565" width="300" height="58" rx="12" fill="#0d2138" stroke="{pipe_color}" stroke-width="2"/>
-        <text x="432" y="590" class="mini">CAMINO 2 · TUBERÍA → ESTRUCTURA</text>
-        <text x="432" y="612" class="status" fill="{pipe_color}">{pipe_status}</text>
-
-        <rect x="746" y="565" width="300" height="58" rx="12" fill="#0d2138" stroke="{air_color}" stroke-width="2"/>
-        <text x="768" y="590" class="mini">CAMINO 3 · RUIDO AÉREO</text>
-        <text x="768" y="612" class="status" fill="{air_color}">{air_status}</text>
-      </g>
+      <rect x="80" y="432" width="970" height="80" rx="4" fill="#4a565f" stroke="#7c8993" stroke-width="3"/><path d="M110 470 H1018" stroke="#2e363d" stroke-width="5" opacity=".6"/>
+      <g opacity=".95" filter="url(#lg)" stroke="{base_color}" fill="none"><path d="M255 398 V432" stroke-width="7"/><path d="M452 398 V432" stroke-width="7"/></g>
+      <g opacity=".9" filter="url(#lg)" stroke="{pipe_color}" fill="none" stroke-dasharray="10 7"><path d="M742 266 H922 V350 H1008" stroke-width="5"/><path d="M905 376 V512" stroke-width="4"/></g>
+      <g opacity=".8" filter="url(#lg)" stroke="{air_color}" fill="none" stroke-width="5"><path d="M125 218 Q55 278 125 338"/><path d="M95 192 Q0 278 95 364"/><path d="M542 210 Q606 278 542 346"/></g>
+      <rect x="1048" y="145" width="205" height="367" fill="#111f2c" stroke="#526777" stroke-width="3"/>
+      <rect x="1082" y="355" width="130" height="46" rx="8" fill="#344657"/><rect x="1098" y="334" width="98" height="38" rx="8" fill="#526578"/><circle cx="1130" cy="349" r="13" fill="#d3b19d"/>
+      <text x="1150" y="448" text-anchor="middle" class="t label">RECINTO</text>
+      <rect x="80" y="540" width="342" height="82" rx="13" fill="#0b2743" stroke="{base_color}" stroke-width="2"/><text x="104" y="568" class="t small">BASE → LOSA</text><text x="104" y="600" class="t label" fill="{base_color}">{base_state}</text>
+      <rect x="469" y="540" width="342" height="82" rx="13" fill="#0b2743" stroke="{pipe_color}" stroke-width="2"/><text x="493" y="568" class="t small">TUBERÍA → ESTRUCTURA</text><text x="493" y="600" class="t label" fill="{pipe_color}">{pipe_state}</text>
+      <rect x="858" y="540" width="342" height="82" rx="13" fill="#0b2743" stroke="{air_color}" stroke-width="2"/><text x="882" y="568" class="t small">RUIDO AÉREO</text><text x="882" y="600" class="t label" fill="{air_color}">{air_state}</text>
     </svg>'''
 
 
@@ -512,18 +479,8 @@ def _course2_lab1_stage0_pump_lab(class_id, saved):
         saved["stage0_pump_lab_explored"]=True
         _save_future_state_impl(class_id,saved)
 
-    components.html(_course2_lab1_stage0_pump_svg(**config), height=650, scrolling=False)
+    components.html(_course2_lab1_stage0_pump_svg(**config), height=665, scrolling=False)
 
-    base_state="Reducido" if antivibratorios else "Activo"
-    pipe_state="Reducido" if flexible else "Activo"
-    air_state="Reducido" if (encierro or absorbente) else "Activo"
-    s1,s2,s3=st.columns(3)
-    with s1:
-        st.metric("Base → losa", base_state)
-    with s2:
-        st.metric("Tubería → estructura", pipe_state)
-    with s3:
-        st.metric("Ruido aéreo", air_state)
 
     if antivibratorios and not flexible:
         st.warning(
@@ -885,7 +842,7 @@ def _render_course2_lab1_stage0(lab, saved):
             if st.button(label,key=f"{foot_stage_key}_{idx}",type="primary" if st.session_state[foot_stage_key]==idx else "secondary",width="stretch"):
                 st.session_state[foot_stage_key]=idx
                 st.rerun()
-    components.html(_course2_stage0_footstep_svg(int(st.session_state[foot_stage_key])), height=430, scrolling=False)
+    components.html(_course2_stage0_footstep_svg(int(st.session_state[foot_stage_key])), height=570, scrolling=False)
     foot_explain=[
         (r"F(t)", "La pisada introduce una fuerza dinámica en la losa."),
         (r"F(t)\rightarrow v(t)", "La estructura responde: la losa adquiere velocidad vibratoria."),
@@ -910,7 +867,7 @@ def _render_course2_lab1_stage0(lab, saved):
                 st.session_state[pump_path_key]=value
                 st.rerun()
     active_path=st.session_state[pump_path_key]
-    components.html(_course2_stage0_pump_paths_svg(active_path), height=460, scrolling=False)
+    components.html(_course2_stage0_pump_paths_svg(active_path), height=570, scrolling=False)
     path_info={
         "base":(r"\text{BOMBA}\rightarrow\text{BASE}\rightarrow\text{LOSA}\rightarrow\text{ESTRUCTURA}","Camino estructural directo por los apoyos de la máquina."),
         "pipe":(r"\text{BOMBA}\rightarrow\text{TUBERÍA}\rightarrow\text{SOPORTES}\rightarrow\text{ESTRUCTURA}","Camino estructural paralelo: una tubería rígida puede puentear el aislamiento de la base."),
