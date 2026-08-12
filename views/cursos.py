@@ -783,89 +783,74 @@ def _render_course2_lab1_stage0(lab, saved):
 
     st.markdown("### 3 · De la vibración superficial al sonido")
     st.write(
-        "Antes de volver a una fuente concreta, aislemos un mecanismo clave: una superficie estructural puede vibrar "
-        "en distintas direcciones, pero es su componente normal la que desplaza directamente el aire adyacente."
+        "Una superficie estructural puede moverse en varias direcciones, pero para la radiación al aire interesa "
+        "especialmente la **componente normal**: el movimiento perpendicular a la superficie que empuja y atrae el aire adyacente."
     )
-    st.latex(r"v_n(t)\rightarrow \text{movimiento del aire}\rightarrow p(t)")
+    st.latex(r"v_n(t)\;\longrightarrow\;\text{movimiento del aire}\;\longrightarrow\;p(t)")
 
-    motion_key=f"{class_id}_stage0_surface_motion_mode"
-    motion_mode=st.radio(
-        "Explora tres formas de movimiento de la misma superficie:",
-        [
-            "Movimiento tangencial",
-            "Movimiento normal pequeño",
-            "Movimiento normal apreciable",
-        ],
-        horizontal=True,
-        key=motion_key,
-    )
+    vr_asset = ASSET_DIR / "curso2_lab1_etapa0_vibracion_radiacion.webp"
+    c1, cimg, c3 = st.columns([1.0, 3.2, 1.0])
+    with cimg:
+        if vr_asset.exists():
+            st.image(vr_asset, width="stretch")
+            st.caption("La cara inferior de la losa vibra y radia hacia el aire del recinto situado debajo.")
+        else:
+            st.warning("Falta el recurso visual de vibración y radiación.")
 
-    motion_cfg={
-        "Movimiento tangencial": {
-            "asset":"curso2_lab1_etapa0_movimiento_tangencial.webp",
-            "title":"Movimiento tangencial",
-            "text":(
-                "La superficie se desplaza principalmente paralela a su propio plano. Puede existir vibración medible, "
-                "pero el desplazamiento normal del aire es pequeño y la radiación acústica asociada puede ser reducida."
-            ),
-        },
-        "Movimiento normal pequeño": {
-            "asset":"curso2_lab1_etapa0_movimiento_normal_pequeno.webp",
-            "title":"Movimiento normal pequeño",
-            "text":(
-                "Aparece una componente perpendicular a la superficie. El aire adyacente comienza a ser desplazado y "
-                "pueden generarse fluctuaciones de presión acústica."
-            ),
-        },
-        "Movimiento normal apreciable": {
-            "asset":"curso2_lab1_etapa0_movimiento_normal_apreciable.webp",
-            "title":"Movimiento normal apreciable",
-            "text":(
-                "El movimiento perpendicular de la superficie es más evidente. La interacción estructura–aire se vuelve "
-                "más clara y la superficie tiene mayor capacidad potencial de poner el aire en movimiento."
-            ),
-        },
-    }[motion_mode]
-
-    motion_asset=ASSET_DIR / motion_cfg["asset"]
-    if motion_asset.exists():
-        st.image(motion_asset, width="stretch")
-    else:
-        st.warning(f"Falta el recurso visual: {motion_cfg['asset']}")
-
-    with st.container(border=True):
-        st.markdown(f"#### {motion_cfg['title']}")
-        st.write(motion_cfg["text"])
+    tang, normal = st.columns(2)
+    with tang:
+        with st.container(border=True):
+            st.markdown("#### Movimiento tangencial")
+            st.write(
+                "El desplazamiento es principalmente **paralelo** a la superficie. Puede existir vibración medible, "
+                "pero ese movimiento no desplaza directamente el aire en dirección normal."
+            )
+    with normal:
+        with st.container(border=True):
+            st.markdown("#### Movimiento normal")
+            st.write(
+                "Cuando la superficie se mueve **hacia y desde el aire**, aparece una velocidad normal $v_n(t)$. "
+                "Ese movimiento puede generar fluctuaciones de presión sonora $p(t)$."
+            )
 
     st.info(
-        "La figura es cualitativa: no representa una amplitud, velocidad ni nivel sonoro en unidades físicas. "
-        "Su objetivo es distinguir la dirección del movimiento y el paso desde la vibración estructural hacia el aire."
+        "La figura ilustra el cambio de medio: primero la energía está asociada al movimiento de la estructura; "
+        "cuando la superficie vibrante pone en movimiento el aire, aparece el campo acústico."
     )
-    st.latex(r"v_n(t)\neq 0\quad\Rightarrow\quad \text{la superficie puede acoplar energía al aire}")
 
-    st.markdown("### 4 · Vibrar no es radiar eficientemente")
-    st.latex(r"\text{VIBRACIÓN ESTRUCTURAL}\;\not\equiv\;\text{RADIACIÓN ACÚSTICA EFICIENTE}")
+    st.markdown("### 4 · Vibrar no significa radiar eficientemente")
+    st.latex(r"\text{VIBRACIÓN MEDIBLE}\;\not\Rightarrow\;\text{RADIACIÓN ACÚSTICA EFICIENTE}")
     st.write(
-        "Dos superficies pueden presentar vibración medible y, sin embargo, radiar cantidades de sonido muy diferentes. "
-        "No basta con saber cuánto vibra un elemento: importa cómo se distribuye ese movimiento y cómo se acopla con el aire."
+        "Detectar vibración en una losa, muro o tubería no permite concluir por sí solo que ese elemento domine el ruido del recinto. "
+        "La potencia que finalmente se radia depende del patrón espacial de la velocidad normal, la frecuencia y las dimensiones de la superficie respecto de la longitud de onda acústica."
     )
 
-    radiation_asset=ASSET_DIR / "curso2_lab1_etapa0_radiacion_eficiencia.webp"
-    if radiation_asset.exists():
-        st.image(radiation_asset, width="stretch")
-    else:
-        st.warning("Falta el recurso visual: curso2_lab1_etapa0_radiacion_eficiencia.webp")
+    low, high = st.columns(2)
+    with low:
+        with st.container(border=True):
+            st.markdown("#### Puede vibrar y radiar poco")
+            st.write(
+                "Zonas de la superficie pueden moverse con fases diferentes y producir **cancelación parcial** en el campo radiado. "
+                "También puede existir un acoplamiento estructura–aire poco favorable."
+            )
+    with high:
+        with st.container(border=True):
+            st.markdown("#### Puede radiar con mayor eficacia")
+            st.write(
+                "Cuando una región significativa de la superficie contribuye de manera más coherente al movimiento normal, "
+                "una mayor fracción de la energía vibratoria puede transformarse en energía acústica."
+            )
 
     with st.expander("¿De qué depende la capacidad de radiar?", expanded=False):
         st.markdown(
             "- **Frecuencia:** cambia la relación entre longitud de onda acústica y dimensiones de la superficie.\n"
-            "- **Distribución espacial de la vibración:** zonas distintas pueden contribuir o incluso cancelarse parcialmente.\n"
+            "- **Distribución espacial de la vibración:** distintas zonas pueden contribuir o cancelarse parcialmente.\n"
             "- **Superficie efectiva:** no toda el área necesariamente participa con la misma intensidad.\n"
-            "- **Acoplamiento estructura–aire:** determina cuánto movimiento estructural termina convirtiéndose en energía acústica."
+            "- **Acoplamiento estructura–aire:** determina cuánta energía vibratoria termina radiándose como sonido."
         )
         st.write(
-            "Más adelante esta relación se describirá mediante la eficiencia de radiación σ. En esta etapa interesa "
-            "comprender que detectar vibración no permite concluir, por sí solo, que la superficie sea un radiador acústico eficiente."
+            "Más adelante este comportamiento se describirá mediante la **eficiencia de radiación** $\sigma$. "
+            "En esta etapa basta con distinguir entre medir vibración y demostrar una radiación acústica eficiente."
         )
 
     st.markdown("### 5 · Sigue la energía · De la pisada al receptor")
