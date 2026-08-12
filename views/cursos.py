@@ -279,63 +279,76 @@ def _course2_lab1_stage0_dynamic_image(filename, source=None, caption=None):
 
 
 def _course2_stage0_footstep_svg(stage=0):
-    """Figura SVG técnica del recorrido pisada → estructura → radiación → receptor."""
+    """Lámina SVG profesional del recorrido vibroacústico de una pisada."""
     stage=max(0,min(int(stage),4))
-    orange="#ff8a2a"; cyan="#35d7ff"; panel="#0b2743"
-    active=[stage>=0,stage>=1,stage>=2,stage>=3,stage>=4]
-    def a(i): return "1" if active[i] else ".16"
-    return f'''<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1280 560" width="100%" role="img" aria-label="Sección técnica de propagación de una pisada hasta un recinto receptor">
+    orange="#ff8a2a"; cyan="#37d6ff"
+    active=[stage>=i for i in range(5)]
+    def op(i):
+        return "1" if active[i] else ".16"
+    return f'''<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1440 650" width="100%" role="img" aria-label="Ruta vibroacústica de una pisada desde el impacto hasta el receptor">
     <defs>
-      <linearGradient id="bgFoot" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#051426"/><stop offset="1" stop-color="#0b2a46"/></linearGradient>
-      <linearGradient id="concrete" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#777f86"/><stop offset=".45" stop-color="#4d565f"/><stop offset="1" stop-color="#2f3942"/></linearGradient>
-      <linearGradient id="room" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#1b2a38"/><stop offset="1" stop-color="#0c1722"/></linearGradient>
-      <filter id="go"><feGaussianBlur stdDeviation="5" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
-      <filter id="gc"><feGaussianBlur stdDeviation="4" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
-      <pattern id="agg" width="42" height="30" patternUnits="userSpaceOnUse"><circle cx="8" cy="9" r="2" fill="#8d969e" opacity=".35"/><circle cx="26" cy="20" r="3" fill="#222c35" opacity=".45"/><path d="M2 27 l11 -5 l8 5" fill="none" stroke="#9aa3aa" stroke-width="1" opacity=".2"/></pattern>
-      <style>.t{{font-family:Inter,Arial,sans-serif;fill:#eef8ff}} .muted{{fill:#93a9bc}} .small{{font-size:16px}} .label{{font-size:18px;font-weight:700}} .title{{font-size:25px;font-weight:800}}</style>
+      <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#061426"/><stop offset="1" stop-color="#0a2742"/></linearGradient>
+      <linearGradient id="concretePro" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#8c9296"/><stop offset=".18" stop-color="#666e73"/><stop offset="1" stop-color="#353d43"/></linearGradient>
+      <linearGradient id="roomPro" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#30363b"/><stop offset="1" stop-color="#171d22"/></linearGradient>
+      <linearGradient id="wood" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#7b5b3e"/><stop offset=".5" stop-color="#a57b54"/><stop offset="1" stop-color="#684a32"/></linearGradient>
+      <pattern id="aggregate" width="48" height="36" patternUnits="userSpaceOnUse"><circle cx="8" cy="8" r="2.2" fill="#c1c5c8" opacity=".28"/><circle cx="32" cy="18" r="3" fill="#20272d" opacity=".55"/><path d="M4 31 l12 -6 l10 5 l11 -4" fill="none" stroke="#b5bcc1" stroke-width="1" opacity=".22"/></pattern>
+      <pattern id="woodgrain" width="70" height="16" patternUnits="userSpaceOnUse"><path d="M0 4 C18 0 32 9 50 4 S68 8 70 4" fill="none" stroke="#d2aa83" stroke-width="1" opacity=".25"/></pattern>
+      <filter id="glowO"><feGaussianBlur stdDeviation="5" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+      <filter id="glowC"><feGaussianBlur stdDeviation="4" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+      <style>.t{{font-family:Inter,Arial,sans-serif;fill:#eef7ff}} .muted{{fill:#9fb0be}} .label{{font-size:17px;font-weight:700}} .tiny{{font-size:14px}} .title{{font-size:24px;font-weight:800}}</style>
     </defs>
-    <rect width="1280" height="560" rx="22" fill="url(#bgFoot)"/>
-    <text x="36" y="44" class="t title">De la pisada al receptor</text>
-    <text x="36" y="72" class="t muted small">Sección técnica · excitación mecánica, propagación estructural y radiación al aire</text>
-    <g opacity="{a(0)}">
-      <path d="M238 106 c18 -25 30 -48 38 -72 l43 4 c2 31 2 60 -5 84 l-11 32 -76 0 c-12 0 -18 -12 -11 -22 z" fill="#1d242c" stroke="#b9c5cf" stroke-width="3"/>
-      <path d="M214 151 c33 10 74 12 111 2 l16 20 -10 18 -107 0 c-31 0 -46 -27 -10 -40z" fill="#c9ced3" stroke="#e8ecef" stroke-width="3"/>
-      <path d="M223 185 h114" stroke="#7b8791" stroke-width="4"/>
-      <circle cx="278" cy="199" r="13" fill="{orange}" filter="url(#go)"/>
+    <rect width="1440" height="650" rx="22" fill="url(#bg)"/>
+    <g opacity="{op(0)}">
+      <path d="M292 42 c24 35 32 83 22 120 l-18 58 -70 0 c-17 0 -27 -19 -14 -32 25 -25 43 -51 52 -82 l7 -64z" fill="#20252a" stroke="#c8d0d5" stroke-width="3"/>
+      <path d="M216 212 c40 12 91 12 132 0 l24 20 -12 21 -128 0 c-38 0 -55 -32 -16 -41z" fill="#c9ced2" stroke="#eff3f5" stroke-width="3"/>
+      <path d="M228 244 h132" stroke="#79848c" stroke-width="4"/>
+      <circle cx="292" cy="264" r="12" fill="{orange}" filter="url(#glowO)"/>
+      <path d="M292 266 V320" stroke="{orange}" stroke-width="7" filter="url(#glowO)"/>
+      <path d="M281 307 l11 14 11 -14" fill="none" stroke="{orange}" stroke-width="5"/>
     </g>
-    <rect x="70" y="200" width="865" height="18" rx="4" fill="#b6b0a6"/>
-    <rect x="70" y="218" width="865" height="150" rx="5" fill="url(#concrete)" stroke="#a9b3bc" stroke-width="3"/>
-    <rect x="70" y="218" width="865" height="150" fill="url(#agg)" opacity=".75"/>
-    <g stroke="#1c242c" stroke-width="7" opacity=".9"><line x1="95" y1="244" x2="910" y2="244"/><line x1="95" y1="344" x2="910" y2="344"/></g>
-    <g opacity="{a(1)}" filter="url(#go)"><path d="M278 201 V245" stroke="{orange}" stroke-width="8"/><path d="M278 245 v86" stroke="{orange}" stroke-width="5"/><path d="M265 315 l13 16 13 -16" fill="none" stroke="{orange}" stroke-width="5"/></g>
-    <g opacity="{a(2)}" fill="none" stroke="{orange}" filter="url(#go)" stroke-width="4">
-      <path d="M115 274 C180 250 210 300 275 275 S370 250 435 275 S530 300 595 275 S690 250 755 275 S850 300 915 275"/>
-      <path d="M115 310 C180 286 210 336 275 311 S370 286 435 311 S530 336 595 311 S690 286 755 311 S850 336 915 311" opacity=".72"/>
+    <rect x="100" y="252" width="1070" height="28" rx="3" fill="url(#wood)" stroke="#c6a27f" stroke-width="2"/>
+    <rect x="100" y="252" width="1070" height="28" fill="url(#woodgrain)"/>
+    <rect x="100" y="280" width="1070" height="175" rx="4" fill="url(#concretePro)" stroke="#b9c2c8" stroke-width="3"/>
+    <rect x="100" y="280" width="1070" height="175" fill="url(#aggregate)" opacity=".85"/>
+    <g stroke="#151c22" stroke-width="8" opacity=".95"><line x1="125" y1="312" x2="1145" y2="312"/><line x1="125" y1="425" x2="1145" y2="425"/></g>
+    <g stroke="#6c7780" stroke-width="2" opacity=".75">
+      <line x1="155" y1="292" x2="155" y2="443"/><line x1="245" y1="292" x2="245" y2="443"/><line x1="335" y1="292" x2="335" y2="443"/><line x1="425" y1="292" x2="425" y2="443"/><line x1="515" y1="292" x2="515" y2="443"/><line x1="605" y1="292" x2="605" y2="443"/><line x1="695" y1="292" x2="695" y2="443"/><line x1="785" y1="292" x2="785" y2="443"/><line x1="875" y1="292" x2="875" y2="443"/><line x1="965" y1="292" x2="965" y2="443"/><line x1="1055" y1="292" x2="1055" y2="443"/>
     </g>
-    <rect x="248" y="284" width="218" height="54" rx="10" fill="#0a1c2d" stroke="{orange}" stroke-width="2" opacity="{a(2)}"/>
-    <text x="357" y="307" text-anchor="middle" class="t label" fill="{orange}" opacity="{a(2)}">VIBRACIÓN EN LA LOSA</text>
-    <text x="357" y="327" text-anchor="middle" class="t muted small" opacity="{a(2)}">energía mecánica en el sólido</text>
-    <rect x="70" y="368" width="865" height="154" fill="url(#room)" stroke="#34495a" stroke-width="2"/>
-    <rect x="126" y="449" width="370" height="48" rx="8" fill="#2b3d4d"/><rect x="157" y="429" width="310" height="44" rx="12" fill="#445669"/>
-    <circle cx="258" cy="445" r="16" fill="#d3b39f"/><circle cx="340" cy="445" r="16" fill="#d3b39f"/>
-    <rect x="126" y="497" width="370" height="9" fill="#101820"/>
-    <path d="M603 522 V399 h270 v123" fill="none" stroke="#526579" stroke-width="5"/><rect x="638" y="426" width="72" height="42" rx="5" fill="#18293a"/><circle cx="674" cy="447" r="13" fill="#c9a98f"/>
-    <g opacity="{a(3)}" fill="none" stroke="{cyan}" stroke-width="5" filter="url(#gc)">
-      <path d="M165 370 Q278 438 391 370"/><path d="M120 370 Q278 477 436 370"/><path d="M82 370 Q278 515 474 370"/>
+    <g opacity="{op(1)}" filter="url(#glowO)" fill="none" stroke="{orange}">
+      <path d="M245 302 Q292 276 339 302" stroke-width="5"/><path d="M225 321 Q292 282 359 321" stroke-width="4" opacity=".7"/>
     </g>
-    <g opacity="{a(4)}"><circle cx="298" cy="452" r="64" fill="none" stroke="{cyan}" stroke-width="3" stroke-dasharray="8 8"/><text x="298" y="536" text-anchor="middle" class="t label" fill="{cyan}">RECEPTOR</text></g>
-    <rect x="972" y="102" width="270" height="335" rx="16" fill="{panel}" stroke="#244c6a" stroke-width="2"/>
-    <text x="1000" y="137" class="t label">Lectura del fenómeno</text>
-    <g class="t small">
-      <circle cx="1004" cy="177" r="14" fill="{orange}" opacity="{a(0)}"/><text x="1004" y="183" text-anchor="middle" font-weight="800">1</text><text x="1030" y="183">Impacto / F(t)</text>
-      <circle cx="1004" cy="224" r="14" fill="{orange}" opacity="{a(1)}"/><text x="1004" y="230" text-anchor="middle" font-weight="800">2</text><text x="1030" y="230">Respuesta de la losa</text>
-      <circle cx="1004" cy="271" r="14" fill="{orange}" opacity="{a(2)}"/><text x="1004" y="277" text-anchor="middle" font-weight="800">3</text><text x="1030" y="277">Propagación estructural</text>
-      <circle cx="1004" cy="318" r="14" fill="{cyan}" opacity="{a(3)}"/><text x="1004" y="324" text-anchor="middle" font-weight="800">4</text><text x="1030" y="324">Radiación acústica</text>
-      <circle cx="1004" cy="365" r="14" fill="{cyan}" opacity="{a(4)}"/><text x="1004" y="371" text-anchor="middle" font-weight="800">5</text><text x="1030" y="371">Receptor</text>
+    <g opacity="{op(2)}" filter="url(#glowO)" fill="none" stroke="{orange}" stroke-width="4">
+      <path d="M165 345 C240 319 280 371 355 345 S470 319 545 345 S660 371 735 345 S850 319 925 345 S1040 371 1115 345"/>
+      <path d="M165 390 C240 364 280 416 355 390 S470 364 545 390 S660 416 735 390 S850 364 925 390 S1040 416 1115 390" opacity=".68"/>
+      <path d="M470 366 H655" stroke-width="3"/><path d="M646 358 l13 8 -13 8" fill="none"/>
+      <path d="M760 366 H945" stroke-width="3"/><path d="M936 358 l13 8 -13 8" fill="none"/>
     </g>
-    <text x="1000" y="407" class="t muted small">Naranja: energía en la estructura</text><text x="1000" y="431" class="t muted small">Cian: sonido propagándose en el aire</text>
+    <rect x="100" y="455" width="1070" height="20" fill="#1f262c" stroke="#7a858d" stroke-width="2"/>
+    <g stroke="#858f96" stroke-width="2"><line x1="245" y1="455" x2="245" y2="481"/><line x1="445" y1="455" x2="445" y2="481"/><line x1="645" y1="455" x2="645" y2="481"/><line x1="845" y1="455" x2="845" y2="481"/><line x1="1045" y1="455" x2="1045" y2="481"/></g>
+    <rect x="100" y="475" width="1070" height="155" fill="url(#roomPro)" stroke="#42515c" stroke-width="2"/>
+    <rect x="210" y="548" width="380" height="44" rx="8" fill="#56636d"/><rect x="245" y="520" width="310" height="46" rx="10" fill="#737f88"/>
+    <rect x="225" y="590" width="350" height="18" fill="#20282e"/><circle cx="350" cy="536" r="14" fill="#d3b09a"/><circle cx="430" cy="536" r="14" fill="#d3b09a"/>
+    <rect x="795" y="520" width="180" height="90" rx="5" fill="#222c34" stroke="#5d6d79" stroke-width="4"/><rect x="845" y="548" width="60" height="38" rx="5" fill="#536372"/><circle cx="875" cy="566" r="12" fill="#d0af96"/>
+    <path d="M100 475 H1170" stroke="{orange}" stroke-width="3" opacity="{op(2)}" filter="url(#glowO)"/>
+    <g opacity="{op(3)}" fill="none" stroke="{cyan}" stroke-width="5" filter="url(#glowC)">
+      <path d="M260 478 Q535 635 810 478"/><path d="M205 478 Q535 680 865 478"/><path d="M150 478 Q535 725 920 478"/>
+    </g>
+    <g opacity="{op(4)}"><circle cx="390" cy="548" r="70" fill="none" stroke="{cyan}" stroke-width="3" stroke-dasharray="9 8"/><text x="390" y="626" text-anchor="middle" class="t label" fill="{cyan}">RECEPTOR</text></g>
+    <g class="t tiny" opacity=".95">
+      <text x="1010" y="235">Acabado de piso</text><path d="M1000 230 H955 V252" fill="none" stroke="#c8d2d9" stroke-width="2" stroke-dasharray="6 5"/>
+      <text x="1010" y="300">Losa de hormigón armado</text><path d="M1000 295 H950 V315" fill="none" stroke="#c8d2d9" stroke-width="2" stroke-dasharray="6 5"/>
+      <text x="1010" y="454" fill="{cyan}">Superficie radiante</text><path d="M1000 448 H940" fill="none" stroke="{cyan}" stroke-width="2" stroke-dasharray="6 5" opacity="{op(3)}"/>
+    </g>
+    <rect x="1198" y="78" width="205" height="250" rx="16" fill="#0b2743" stroke="#27506d" stroke-width="2"/>
+    <text x="1220" y="112" class="t label">Ruta de la energía</text>
+    <g class="t tiny">
+      <circle cx="1224" cy="150" r="13" fill="{orange}" opacity="{op(0)}"/><text x="1224" y="155" text-anchor="middle" font-weight="800">1</text><text x="1250" y="155">Impacto</text>
+      <circle cx="1224" cy="190" r="13" fill="{orange}" opacity="{op(1)}"/><text x="1224" y="195" text-anchor="middle" font-weight="800">2</text><text x="1250" y="195">Respuesta de la losa</text>
+      <circle cx="1224" cy="230" r="13" fill="{orange}" opacity="{op(2)}"/><text x="1224" y="235" text-anchor="middle" font-weight="800">3</text><text x="1250" y="235">Propagación</text>
+      <circle cx="1224" cy="270" r="13" fill="{cyan}" opacity="{op(3)}"/><text x="1224" y="275" text-anchor="middle" font-weight="800">4</text><text x="1250" y="275">Radiación</text>
+      <circle cx="1224" cy="310" r="13" fill="{cyan}" opacity="{op(4)}"/><text x="1224" y="315" text-anchor="middle" font-weight="800">5</text><text x="1250" y="315">Receptor</text>
+    </g>
     </svg>'''
-
 
 def _course2_stage0_pump_paths_svg(active="base"):
     """Mapa SVG profesional de tres caminos simultáneos de una bomba centrífuga."""
@@ -830,19 +843,19 @@ def _render_course2_lab1_stage0(lab, saved):
         "de la vibración, la superficie involucrada y el acoplamiento con el aire. Más adelante se introducirá la eficiencia de radiación σ."
     )
 
-    st.markdown("### 5 · Caso visual · De la pisada al receptor")
-    st.write("Recorre el fenómeno sin convertirlo en un cuestionario. Selecciona una etapa y observa cómo cambia el camino de la energía.")
+    st.markdown("### 5 · Ruta vibroacústica de una pisada")
+    st.write("Selecciona una etapa del fenómeno para observar cómo la energía cambia de forma y de medio hasta llegar al receptor.")
     foot_stage_key=f"{class_id}_stage0_foot_visual"
     if foot_stage_key not in st.session_state:
         st.session_state[foot_stage_key]=0
-    foot_labels=["Impacto", "Respuesta de la losa", "Propagación", "Radiación", "Receptor"]
+    foot_labels=["1 · Impacto", "2 · Respuesta de la losa", "3 · Propagación", "4 · Radiación", "5 · Receptor"]
     foot_cols=st.columns(5)
     for idx,(col,label) in enumerate(zip(foot_cols,foot_labels)):
         with col:
             if st.button(label,key=f"{foot_stage_key}_{idx}",type="primary" if st.session_state[foot_stage_key]==idx else "secondary",width="stretch"):
                 st.session_state[foot_stage_key]=idx
                 st.rerun()
-    components.html(_course2_stage0_footstep_svg(int(st.session_state[foot_stage_key])), height=570, scrolling=False)
+    components.html(_course2_stage0_footstep_svg(int(st.session_state[foot_stage_key])), height=650, scrolling=False)
     foot_explain=[
         (r"F(t)", "La pisada introduce una fuerza dinámica en la losa."),
         (r"F(t)\rightarrow v(t)", "La estructura responde: la losa adquiere velocidad vibratoria."),
