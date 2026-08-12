@@ -931,27 +931,64 @@ def _render_course2_lab1_stage0(lab, saved):
         else:
             st.caption("La ruta completa enlaza excitación, respuesta estructural, propagación, radiación y receptor.")
 
-    st.markdown("### 6 · Mapa de caminos · Una bomba, tres rutas")
-    st.write("Selecciona un camino en el esquema. La misma bomba puede excitar los tres simultáneamente.")
+    st.markdown("### 6 · Una bomba, tres caminos simultáneos")
+    st.write("Una misma fuente puede transferir energía por varios caminos al mismo tiempo. Selecciona uno para seguirlo.")
     pump_path_key=f"{class_id}_stage0_pump_path_visual"
     if pump_path_key not in st.session_state:
         st.session_state[pump_path_key]="base"
+
     p1,p2,p3=st.columns(3)
-    choices=[("base","Base → losa"),("pipe","Tubería → estructura"),("air","Carcasa → aire")]
+    choices=[
+        ("base","Base → losa → estructura"),
+        ("pipe","Tubería → soportes → estructura"),
+        ("air","Carcasa → aire → receptor"),
+    ]
     for col,(value,label) in zip((p1,p2,p3),choices):
         with col:
-            if st.button(label,key=f"{pump_path_key}_{value}",type="primary" if st.session_state[pump_path_key]==value else "secondary",width="stretch"):
+            if st.button(
+                label,
+                key=f"{pump_path_key}_{value}",
+                type="primary" if st.session_state[pump_path_key]==value else "secondary",
+                width="stretch",
+            ):
                 st.session_state[pump_path_key]=value
                 st.rerun()
+
     active_path=st.session_state[pump_path_key]
-    components.html(_course2_stage0_pump_paths_svg(active_path), height=570, scrolling=False)
-    path_info={
-        "base":(r"\text{BOMBA}\rightarrow\text{BASE}\rightarrow\text{LOSA}\rightarrow\text{ESTRUCTURA}","Camino estructural directo por los apoyos de la máquina."),
-        "pipe":(r"\text{BOMBA}\rightarrow\text{TUBERÍA}\rightarrow\text{SOPORTES}\rightarrow\text{ESTRUCTURA}","Camino estructural paralelo: una tubería rígida puede puentear el aislamiento de la base."),
-        "air":(r"\text{CARCASA}\rightarrow\text{AIRE}\rightarrow\text{RECEPTOR}","Camino aéreo directo: requiere medidas distintas de las que controlan transmisión estructural."),
+    pump_assets={
+        "base":"curso2_lab1_etapa0_bomba_base.webp",
+        "pipe":"curso2_lab1_etapa0_bomba_pipe.webp",
+        "air":"curso2_lab1_etapa0_bomba_air.webp",
     }
-    st.latex(path_info[active_path][0])
-    st.caption(path_info[active_path][1])
+    pump_asset_path=ASSET_DIR / pump_assets[active_path]
+
+    # Mantener una única escena y cámara: solo cambia el camino resaltado.
+    if pump_asset_path.exists():
+        left,right=st.columns([0.08,0.84])
+        with right:
+            st.image(pump_asset_path, width="stretch")
+    else:
+        st.warning(f"Falta el asset `{pump_assets[active_path]}`.")
+
+    path_info={
+        "base":(
+            r"\text{BOMBA}\rightarrow\text{BASE}\rightarrow\text{LOSA}\rightarrow\text{ESTRUCTURA}",
+            "La vibración pasa por los apoyos de la máquina hacia la losa y desde allí puede propagarse por la estructura.",
+        ),
+        "pipe":(
+            r"\text{BOMBA}\rightarrow\text{TUBERÍA}\rightarrow\text{SOPORTES}\rightarrow\text{ESTRUCTURA}",
+            "La tubería constituye un camino estructural paralelo. Sus soportes pueden transferir vibración a muros o losas aunque la base de la bomba esté aislada.",
+        ),
+        "air":(
+            r"\text{CARCASA}\rightarrow\text{AIRE}\rightarrow\text{RECEPTOR}",
+            "La carcasa también puede radiar sonido directamente al aire. Este camino requiere medidas acústicas distintas del desacoplamiento estructural.",
+        ),
+    }
+    with st.container(border=True):
+        st.latex(path_info[active_path][0])
+        st.write(path_info[active_path][1])
+
+    st.info("Los tres caminos pueden coexistir. Controlar uno no garantiza que los otros hayan dejado de transmitir energía.")
 
     _course2_lab1_stage0_pump_lab(class_id, saved)
 
