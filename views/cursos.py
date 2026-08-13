@@ -472,40 +472,44 @@ def _course2_lab1_stage0_pump_lab(class_id, saved):
         "absorbente": bool(stored.get("absorbente", False)),
         "antivibratorios": bool(stored.get("antivibratorios", False)),
         "flexible": bool(stored.get("flexible", False)),
+        "soportes_resilientes": bool(stored.get("soportes_resilientes", False)),
     }
     keys = {name: f"{class_id}_pump_{name}" for name in defaults}
     for name, value in defaults.items():
         if keys[name] not in st.session_state:
             st.session_state[keys[name]] = value
 
-    c1, c2, c3, c4 = st.columns(4)
+    c1, c2, c3 = st.columns(3)
     with c1:
         encierro = st.toggle(
             "Encierro acústico",
             key=keys["encierro"],
             help="Interpone una envolvente entre la carcasa de la máquina y el recinto.",
         )
-    # El absorbente interior tiene sentido como tratamiento del interior del encierro.
-    if not encierro and st.session_state.get(keys["absorbente"], False):
-        st.session_state[keys["absorbente"]] = False
-    with c2:
+        if not encierro and st.session_state.get(keys["absorbente"], False):
+            st.session_state[keys["absorbente"]] = False
         absorbente = st.toggle(
             "Absorbente interior",
             key=keys["absorbente"],
             disabled=not encierro,
-            help="Reduce el campo reflejado dentro del encierro; no desacopla mecánicamente la bomba.",
+            help="Complementa el encierro reduciendo reflexiones internas; no desacopla mecánicamente la bomba.",
+        )
+    with c2:
+        antivibratorios = st.toggle(
+            "Aisladores bajo la bomba",
+            key=keys["antivibratorios"],
+            help="Intervienen el camino bomba → bancada → losa.",
+        )
+        flexible = st.toggle(
+            "Conexión flexible de tubería",
+            key=keys["flexible"],
+            help="Reduce la continuidad mecánica entre la bomba y la tubería rígida.",
         )
     with c3:
-        antivibratorios = st.toggle(
-            "Antivibratorios",
-            key=keys["antivibratorios"],
-            help="Intervienen el camino bomba → base → losa.",
-        )
-    with c4:
-        flexible = st.toggle(
-            "Conexión flexible",
-            key=keys["flexible"],
-            help="Reduce la transmisión mecánica entre la bomba y la tubería rígida.",
+        soportes_resilientes = st.toggle(
+            "Soportes resilientes de tubería",
+            key=keys["soportes_resilientes"],
+            help="Reducen la transmisión desde la tubería hacia la estructura en los puntos de fijación.",
         )
 
     config = {
@@ -513,6 +517,7 @@ def _course2_lab1_stage0_pump_lab(class_id, saved):
         "absorbente": bool(absorbente),
         "antivibratorios": bool(antivibratorios),
         "flexible": bool(flexible),
+        "soportes_resilientes": bool(soportes_resilientes),
     }
     old_config = {name: bool(stored.get(name, False)) for name in defaults}
     if config != old_config:
@@ -520,7 +525,6 @@ def _course2_lab1_stage0_pump_lab(class_id, saved):
         saved["stage0_pump_lab_explored"] = True
         _save_future_state_impl(class_id, saved)
 
-    # Imagen general deliberadamente limpia: sin estados ni texto incrustado.
     general = ASSET_DIR / "curso2_lab1_etapa0_control_bomba_general_clean.webp"
     if general.exists():
         st.image(general, width="stretch")
@@ -528,57 +532,29 @@ def _course2_lab1_stage0_pump_lab(class_id, saved):
     else:
         st.warning("Falta el render general del laboratorio conceptual.")
 
-    measures = [
-        (
-            "encierro", "Encierro acústico",
-            "curso2_lab1_etapa0_control_encierro_v2.webp",
-            "Interviene principalmente el camino aéreo desde la carcasa."
-        ),
-        (
-            "absorbente", "Absorbente interior",
-            "curso2_lab1_etapa0_control_absorbente_v2.webp",
-            "Complementa el encierro reduciendo reflexiones internas; no reemplaza el cerramiento."
-        ),
-        (
-            "antivibratorios", "Antivibratorios",
-            "curso2_lab1_etapa0_control_antivibratorios_v2.webp",
-            "Desacoplan mecánicamente la bancada respecto de la losa."
-        ),
-        (
-            "flexible", "Conexión flexible",
-            "curso2_lab1_etapa0_control_flexible_v2.webp",
-            "Interrumpe parcialmente la continuidad mecánica entre máquina y tubería rígida."
-        ),
-    ]
-    enabled = [m for m in measures if config[m[0]]]
-
-    if enabled:
-        st.markdown("#### Medidas activas")
-        # Cuadrícula compacta: una medida no se transforma en una imagen gigante.
-        rows = [enabled[i:i+2] for i in range(0, len(enabled), 2)]
-        for row in rows:
-            if len(row) == 1:
-                left, center, right = st.columns([0.22, 0.56, 0.22])
-                targets = [(center, row[0])]
-            else:
-                a, b = st.columns(2, gap="medium")
-                targets = [(a, row[0]), (b, row[1])]
-            for col, (_, label, filename, explanation) in targets:
-                with col:
-                    with st.container(border=True):
-                        p = ASSET_DIR / filename
-                        if p.exists():
-                            st.image(p, width="stretch")
-                        st.markdown(f"**{label}**")
-                        st.caption(explanation)
-    else:
-        st.info("Activa una medida para ver el componente físico que estás incorporando al sistema.")
+    st.markdown("#### ¿Qué estás interviniendo?")
+    i1, i2, i3 = st.columns(3)
+    with i1:
+        st.markdown("**Máquina → losa**")
+        st.caption("Aisladores bajo la bancada reducen la excitación directa de la losa.")
+    with i2:
+        st.markdown("**Máquina → tubería**")
+        st.caption("La conexión flexible reduce la transmisión mecánica hacia la tubería rígida.")
+    with i3:
+        st.markdown("**Tubería → estructura**")
+        st.caption("Los soportes resilientes reducen el puente vibratorio en abrazaderas y apoyos.")
 
     # Estados conceptuales de los tres caminos.
     base_state = "Reducido" if config["antivibratorios"] else "Activo"
-    pipe_state = "Reducido" if config["flexible"] else "Activo"
 
-    # El absorbente no se considera una barrera por sí solo.
+    # El camino por tubería depende de dos posibles puentes: la conexión con la bomba y los soportes.
+    if config["flexible"] and config["soportes_resilientes"]:
+        pipe_state = "Reducido"
+    elif config["flexible"] or config["soportes_resilientes"]:
+        pipe_state = "Parcial"
+    else:
+        pipe_state = "Activo"
+
     if config["encierro"] and config["absorbente"]:
         air_state = "Reducido"
     elif config["encierro"]:
@@ -591,17 +567,23 @@ def _course2_lab1_stage0_pump_lab(class_id, saved):
     s2.metric("Tubería → estructura", pipe_state)
     s3.metric("Carcasa → aire", air_state)
 
-    if config["antivibratorios"] and not config["flexible"]:
+    if config["antivibratorios"] and not (config["flexible"] or config["soportes_resilientes"]):
         st.warning(
-            "Reduciste el camino por la base, pero una **tubería rígida puede seguir puenteando el aislamiento**."
+            "Aislaste la bomba de la losa, pero la **tubería rígida y sus soportes todavía pueden puentear el desacoplamiento**."
         )
-    elif config["flexible"] and not config["antivibratorios"]:
+    elif (config["flexible"] or config["soportes_resilientes"]) and not config["antivibratorios"]:
         st.info(
-            "Reduciste el camino por tubería, pero la bomba todavía puede excitar directamente la losa por su bancada."
+            "Estás reduciendo el camino por tubería, pero la bomba todavía puede excitar directamente la losa por su bancada."
         )
-    elif config["antivibratorios"] and config["flexible"]:
+    elif config["antivibratorios"] and config["flexible"] and config["soportes_resilientes"]:
         st.success(
-            "Estás interviniendo los dos caminos estructurales representados: **base–losa** y **tubería–soportes**."
+            "Estás interviniendo los dos caminos estructurales principales representados: "
+            "**bomba–bancada–losa** y **bomba–tubería–soportes–estructura**."
+        )
+    elif config["antivibratorios"] and (config["flexible"] or config["soportes_resilientes"]):
+        st.success(
+            "Estás actuando sobre ambos caminos estructurales, pero el camino por tubería puede seguir siendo parcial "
+            "si queda algún punto rígido sin desacoplar."
         )
     elif config["encierro"]:
         st.info(
@@ -612,12 +594,11 @@ def _course2_lab1_stage0_pump_lab(class_id, saved):
         st.caption("Sin medidas activas, los tres caminos representados siguen potencialmente disponibles.")
 
     st.markdown("**Principio profesional**")
-    st.latex(r"\boxed{\text{CONTROL EFECTIVO}=\text{CONTROL DEL CAMINO RELEVANTE}}")
+    st.latex(r"\boxed{\text{UN SOLO PUENTE RÍGIDO PUEDE COMPROMETER EL DESACOPLAMIENTO}}")
     st.info(
-        "Una medida puede ser técnicamente correcta y aun así ser ineficaz si actúa "
-        "sobre un camino que no domina la transmisión hacia el receptor."
+        "En sistemas reales, no basta con aislar la máquina: también deben revisarse tuberías, ductos, soportes, "
+        "abrazaderas y cualquier conexión rígida que pueda volver a unir mecánicamente la fuente con la estructura."
     )
-    st.divider()
 
 def _course2_lab1_stage0_energy_interactive(class_id, saved):
     """Observación inicial y exploración visual de las fuentes de la Etapa 0."""
