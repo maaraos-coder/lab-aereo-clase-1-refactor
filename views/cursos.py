@@ -458,177 +458,12 @@ def _course2_lab1_stage0_pump_svg(encierro=False, absorbente=False, antivibrator
     </svg>'''
 
 
-def _compose_course2_pump_control_image(config):
-    """Compone sobre una única escena las medidas activas del laboratorio conceptual."""
-    from PIL import Image, ImageDraw, ImageFilter
-    from io import BytesIO
-    import math
-
-    base_path = ASSET_DIR / "curso2_lab1_etapa0_control_bomba_abierta.webp"
-    image = Image.open(base_path).convert("RGBA")
-    w, h = image.size
-
-    overlay = Image.new("RGBA", image.size, (0, 0, 0, 0))
-    d = ImageDraw.Draw(overlay, "RGBA")
-
-    # Coordenadas relativas a la escena maestra 1200 x 675.
-    sx = w / 1200.0
-    sy = h / 675.0
-
-    def X(v): return int(v * sx)
-    def Y(v): return int(v * sy)
-
-    # --- Encierro acústico -------------------------------------------------
-    # Cerramiento realista simplificado: bastidor metálico + paneles laterales,
-    # dejando una cara frontal parcialmente transparente para seguir viendo la máquina.
-    if config.get("encierro"):
-        # panel superior
-        d.rounded_rectangle(
-            (X(92), Y(70), X(525), Y(103)),
-            radius=max(4, X(6)),
-            fill=(58, 68, 76, 235),
-            outline=(165, 180, 190, 255),
-            width=max(2, X(3)),
-        )
-        # panel izquierdo
-        d.rounded_rectangle(
-            (X(84), Y(70), X(118), Y(430)),
-            radius=max(4, X(6)),
-            fill=(57, 67, 75, 235),
-            outline=(165, 180, 190, 255),
-            width=max(2, X(3)),
-        )
-        # panel derecho / paso de tubería
-        d.rounded_rectangle(
-            (X(495), Y(70), X(530), Y(430)),
-            radius=max(4, X(6)),
-            fill=(57, 67, 75, 220),
-            outline=(165, 180, 190, 255),
-            width=max(2, X(3)),
-        )
-        # panel posterior translúcido
-        d.rounded_rectangle(
-            (X(105), Y(88), X(510), Y(420)),
-            radius=max(5, X(8)),
-            fill=(30, 39, 47, 85),
-            outline=(100, 190, 220, 180),
-            width=max(2, X(2)),
-        )
-        # base / zócalo
-        d.rectangle((X(92), Y(405), X(525), Y(432)), fill=(64, 73, 80, 230))
-        # borde frontal técnico
-        d.line((X(105), Y(90), X(105), Y(415)), fill=(200, 215, 220, 235), width=max(2, X(3)))
-        d.line((X(105), Y(90), X(510), Y(90)), fill=(200, 215, 220, 235), width=max(2, X(3)))
-
-        # --- Absorbente interior ------------------------------------------
-        if config.get("absorbente"):
-            # material absorbente sobre cara interior posterior/superior
-            absorb = Image.new("RGBA", image.size, (0, 0, 0, 0))
-            ad = ImageDraw.Draw(absorb, "RGBA")
-            for yy in range(Y(115), Y(245), max(8, Y(14))):
-                for xx in range(X(135), X(480), max(10, X(18))):
-                    ad.polygon(
-                        [
-                            (xx, yy + Y(6)),
-                            (xx + X(8), yy),
-                            (xx + X(16), yy + Y(6)),
-                            (xx + X(8), yy + Y(12)),
-                        ],
-                        fill=(40, 47, 51, 210),
-                        outline=(125, 138, 145, 170),
-                    )
-            for xx in range(X(135), X(485), max(12, X(22))):
-                ad.line((xx, Y(105), xx + X(15), Y(124)), fill=(130, 145, 150, 180), width=max(1, X(2)))
-            overlay.alpha_composite(absorb)
-
-    # --- Aisladores bajo la bomba -----------------------------------------
-    if config.get("antivibratorios"):
-        spring_positions = [(X(172), Y(360)), (X(315), Y(360)), (X(450), Y(360))]
-        for cx, cy in spring_positions:
-            # platinas superior/inferior
-            d.rounded_rectangle(
-                (cx - X(17), cy - Y(7), cx + X(17), cy),
-                radius=max(2, X(3)),
-                fill=(90, 100, 108, 255),
-            )
-            d.rounded_rectangle(
-                (cx - X(18), cy + Y(28), cx + X(18), cy + Y(35)),
-                radius=max(2, X(3)),
-                fill=(90, 100, 108, 255),
-            )
-            # resorte helicoidal técnico
-            pts = []
-            turns = 5
-            for i in range(41):
-                t = i / 40
-                x = cx + math.sin(t * turns * 2 * math.pi) * X(12)
-                y = cy + Y(2) + t * Y(25)
-                pts.append((int(x), int(y)))
-            d.line(pts, fill=(236, 111, 53, 255), width=max(2, X(3)))
-            # núcleo resiliente
-            d.rectangle(
-                (cx - X(7), cy + Y(3), cx + X(7), cy + Y(26)),
-                fill=(185, 63, 43, 135),
-            )
-
-    # --- Conexión flexible --------------------------------------------------
-    if config.get("flexible"):
-        # tramo de tubería inmediatamente después de la bomba
-        x1, y1, x2, y2 = X(402), Y(213), X(493), Y(268)
-        d.rounded_rectangle(
-            (x1, y1, x2, y2),
-            radius=max(4, X(8)),
-            fill=(77, 95, 98, 240),
-            outline=(150, 205, 195, 255),
-            width=max(2, X(3)),
-        )
-        # malla trenzada
-        step = max(6, X(10))
-        for xx in range(x1 - Y(45), x2 + Y(45), step):
-            d.line((xx, y1, xx + Y(45), y2), fill=(176, 224, 210, 215), width=max(1, X(2)))
-            d.line((xx, y2, xx + Y(45), y1), fill=(117, 178, 166, 190), width=max(1, X(2)))
-        # bridas
-        d.rectangle((x1 - X(7), y1, x1 + X(5), y2), fill=(76, 84, 88, 255))
-        d.rectangle((x2 - X(5), y1, x2 + X(7), y2), fill=(76, 84, 88, 255))
-
-    # --- Soportes resilientes de tubería -----------------------------------
-    if config.get("soportes_resilientes"):
-        # Los dos soportes visibles de la montante horizontal.
-        for cx in (X(555), X(710)):
-            # elemento resiliente entre abrazadera y poste
-            d.rounded_rectangle(
-                (cx - X(15), Y(286), cx + X(15), Y(303)),
-                radius=max(2, X(4)),
-                fill=(210, 84, 49, 245),
-                outline=(255, 171, 120, 255),
-                width=max(1, X(2)),
-            )
-            d.rounded_rectangle(
-                (cx - X(10), Y(290), cx + X(10), Y(299)),
-                radius=max(2, X(3)),
-                fill=(48, 52, 56, 255),
-            )
-            # marcador técnico discreto de desacoplamiento
-            d.line(
-                (cx, Y(302), cx, Y(322)),
-                fill=(84, 224, 171, 230),
-                width=max(2, X(3)),
-            )
-
-    # Integrar overlays con ligero blur solo en los brillos, manteniendo bordes técnicos.
-    image = Image.alpha_composite(image, overlay)
-
-    out = BytesIO()
-    image.convert("RGB").save(out, format="WEBP", quality=91, method=6)
-    out.seek(0)
-    return out
-
 def _course2_lab1_stage0_pump_lab(class_id, saved):
-    """Laboratorio conceptual: una única instalación cambia según las medidas seleccionadas."""
+    """Laboratorio conceptual de control de caminos vibroacústicos de una bomba."""
     st.markdown("### 7 · Laboratorio conceptual · Controla la bomba")
     st.write(
-        "Modifica la **misma instalación** y observa qué camino físico interviene cada medida. "
-        "La actividad es cualitativa: relaciona medida y mecanismo; no predice dB."
+        "Activa medidas de control y relaciona cada una con el **camino físico que modifica**. "
+        "La actividad es cualitativa: no representa una predicción en dB."
     )
 
     stored = saved.get("stage0_pump_lab", {}) if isinstance(saved.get("stage0_pump_lab"), dict) else {}
@@ -644,12 +479,13 @@ def _course2_lab1_stage0_pump_lab(class_id, saved):
         if keys[name] not in st.session_state:
             st.session_state[keys[name]] = value
 
+    # Controles compactos.
     c1, c2, c3 = st.columns(3)
     with c1:
         encierro = st.toggle(
             "Encierro acústico",
             key=keys["encierro"],
-            help="Añade un cerramiento alrededor de la máquina para intervenir el camino aéreo.",
+            help="Interviene principalmente el camino aéreo desde la carcasa.",
         )
         if not encierro and st.session_state.get(keys["absorbente"], False):
             st.session_state[keys["absorbente"]] = False
@@ -657,26 +493,24 @@ def _course2_lab1_stage0_pump_lab(class_id, saved):
             "Absorbente interior",
             key=keys["absorbente"],
             disabled=not encierro,
-            help="Solo está disponible dentro del encierro; reduce reflexiones internas.",
+            help="Complementa el encierro reduciendo reflexiones internas.",
         )
-
     with c2:
         antivibratorios = st.toggle(
             "Aisladores bajo la bomba",
             key=keys["antivibratorios"],
-            help="Desacoplan la bancada respecto de la losa.",
+            help="Reducen el camino bomba → bancada → losa.",
         )
         flexible = st.toggle(
             "Conexión flexible de tubería",
             key=keys["flexible"],
-            help="Reduce la continuidad mecánica entre la bomba y la tubería rígida.",
+            help="Reduce la transmisión mecánica entre bomba y tubería rígida.",
         )
-
     with c3:
         soportes_resilientes = st.toggle(
             "Soportes resilientes de tubería",
             key=keys["soportes_resilientes"],
-            help="Reducen el puente vibratorio en apoyos y abrazaderas de la tubería.",
+            help="Reducen el puente vibratorio en soportes y abrazaderas.",
         )
 
     config = {
@@ -686,33 +520,39 @@ def _course2_lab1_stage0_pump_lab(class_id, saved):
         "flexible": bool(flexible),
         "soportes_resilientes": bool(soportes_resilientes),
     }
-
     old_config = {name: bool(stored.get(name, False)) for name in defaults}
     if config != old_config:
         saved["stage0_pump_lab"] = {**config, "updated_at": _now()}
         saved["stage0_pump_lab_explored"] = True
         _save_future_state_impl(class_id, saved)
 
-    # Una única cámara y geometría: Streamlit compone las medidas encima del mismo render base.
-    try:
-        composed = _compose_course2_pump_control_image(config)
-        st.image(composed, width="stretch")
-    except Exception as exc:
-        st.warning(f"No fue posible componer la vista del laboratorio: {exc}")
-
-    active_names = []
-    if config["encierro"]: active_names.append("encierro")
-    if config["absorbente"]: active_names.append("absorbente interior")
-    if config["antivibratorios"]: active_names.append("aisladores bajo la bomba")
-    if config["flexible"]: active_names.append("conexión flexible")
-    if config["soportes_resilientes"]: active_names.append("soportes resilientes")
-
-    if active_names:
-        st.caption("Medidas visibles en la instalación: " + " · ".join(active_names) + ".")
+    # Escena maestra: misma instalación, sin superponer dibujos geométricos que no calzan.
+    # La imagen es deliberadamente fija; los controles modifican la lectura técnica y los
+    # estados de camino, evitando "inventar" elementos visuales fuera de escala.
+    master = ASSET_DIR / "curso2_lab1_etapa0_control_bomba_master.webp"
+    if master.exists():
+        st.image(master, width="stretch")
     else:
-        st.caption("Estado inicial: instalación abierta, sin medidas de control añadidas.")
+        st.warning("Falta el render maestro del laboratorio conceptual.")
 
-    # Estados conceptuales.
+    # Resumen de medidas activas, compacto.
+    labels = []
+    if config["encierro"]:
+        labels.append("Encierro")
+    if config["absorbente"]:
+        labels.append("Absorbente interior")
+    if config["antivibratorios"]:
+        labels.append("Aisladores")
+    if config["flexible"]:
+        labels.append("Conexión flexible")
+    if config["soportes_resilientes"]:
+        labels.append("Soportes resilientes")
+    if labels:
+        st.caption("Medidas activas: " + " · ".join(labels) + ".")
+    else:
+        st.caption("Estado inicial: sin medidas activas.")
+
+    # Estados conceptuales de los caminos.
     base_state = "Reducido" if config["antivibratorios"] else "Activo"
 
     if config["flexible"] and config["soportes_resilientes"]:
@@ -729,35 +569,73 @@ def _course2_lab1_stage0_pump_lab(class_id, saved):
     else:
         air_state = "Activo"
 
+    st.markdown("#### ¿Qué camino estás interviniendo?")
     s1, s2, s3 = st.columns(3)
-    s1.metric("Base → losa", base_state)
-    s2.metric("Tubería → estructura", pipe_state)
-    s3.metric("Carcasa → aire", air_state)
+    with s1:
+        with st.container(border=True):
+            st.markdown("**Máquina → losa**")
+            st.metric("Base → losa", base_state)
+            st.caption(
+                "Los aisladores bajo la bancada reducen la excitación directa de la losa."
+            )
+    with s2:
+        with st.container(border=True):
+            st.markdown("**Tubería → estructura**")
+            st.metric("Tubería → estructura", pipe_state)
+            st.caption(
+                "La conexión flexible y los soportes resilientes actúan sobre este camino."
+            )
+    with s3:
+        with st.container(border=True):
+            st.markdown("**Carcasa → aire**")
+            st.metric("Carcasa → aire", air_state)
+            st.caption(
+                "El encierro y su tratamiento interior actúan principalmente sobre el ruido aéreo."
+            )
 
-    if config["antivibratorios"] and not (config["flexible"] or config["soportes_resilientes"]):
-        st.warning(
-            "Aislaste la máquina respecto de la losa, pero la **tubería y sus soportes pueden seguir formando un puente rígido**."
-        )
-    elif config["antivibratorios"] and config["flexible"] and config["soportes_resilientes"]:
+    # Retroalimentación según la combinación seleccionada.
+    structural_complete = (
+        config["antivibratorios"]
+        and config["flexible"]
+        and config["soportes_resilientes"]
+    )
+    airborne_complete = config["encierro"] and config["absorbente"]
+
+    if structural_complete and airborne_complete:
         st.success(
-            "Los dos caminos estructurales representados están intervenidos: **base–losa** y **tubería–soportes–estructura**."
+            "Has intervenido los caminos estructurales representados y el camino aéreo. "
+            "La combinación actual cubre las rutas principales consideradas en este modelo conceptual."
+        )
+    elif structural_complete:
+        st.success(
+            "Los caminos estructurales representados están intervenidos. "
+            "El ruido aéreo de la carcasa todavía debe evaluarse por separado."
+        )
+    elif config["antivibratorios"] and not (config["flexible"] or config["soportes_resilientes"]):
+        st.warning(
+            "Aislaste la bomba respecto de la losa, pero la tubería rígida y sus soportes "
+            "todavía pueden formar un puente vibratorio."
         )
     elif config["flexible"] or config["soportes_resilientes"]:
         st.info(
-            "El camino por tubería está intervenido solo parcialmente. Revisa tanto la conexión con la máquina como los puntos de soporte."
+            "El camino por tubería está intervenido parcialmente. "
+            "Revisa tanto la conexión con la máquina como los puntos de soporte."
         )
     elif config["encierro"]:
         st.info(
-            "El encierro actúa sobre el ruido aéreo. Los caminos estructurales siguen requiriendo medidas mecánicas específicas."
+            "El encierro actúa sobre el ruido aéreo de la máquina. "
+            "No sustituye el desacoplamiento mecánico de base y tuberías."
         )
     else:
-        st.caption("Sin medidas de control, los tres caminos permanecen potencialmente disponibles.")
+        st.caption(
+            "Sin medidas de control, los tres caminos permanecen potencialmente disponibles."
+        )
 
     st.markdown("**Principio profesional**")
     st.latex(r"\boxed{\text{UN SOLO PUENTE RÍGIDO PUEDE COMPROMETER EL DESACOPLAMIENTO}}")
     st.info(
-        "La medida debe actuar sobre el camino relevante. En equipos conectados a redes, revisa también tuberías, "
-        "ductos, soportes, abrazaderas y otras conexiones rígidas."
+        "No basta con aislar la máquina. También deben revisarse tuberías, ductos, soportes, "
+        "abrazaderas y cualquier otra conexión rígida capaz de transmitir vibración."
     )
 
 def _course2_lab1_stage0_energy_interactive(class_id, saved):
