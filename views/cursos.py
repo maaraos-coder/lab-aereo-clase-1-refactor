@@ -458,6 +458,91 @@ def _course2_lab1_stage0_pump_svg(encierro=False, absorbente=False, antivibrator
     </svg>'''
 
 
+def _compose_course2_pump_visual(config):
+    """Genera una vista dinámica sobre la misma escena base, con capas alineadas a cada medida."""
+    from PIL import Image, ImageDraw, ImageFilter
+    from io import BytesIO
+    import math
+
+    base_path = ASSET_DIR / "curso2_lab1_etapa0_control_bomba_estado_inicial_1280.webp"
+    image = Image.open(base_path).convert("RGBA")
+    w, h = image.size
+
+    # Separate glow and crisp layers so annotations look integrated instead of pasted.
+    glow = Image.new("RGBA", (w, h), (0, 0, 0, 0))
+    gd = ImageDraw.Draw(glow, "RGBA")
+    crisp = Image.new("RGBA", (w, h), (0, 0, 0, 0))
+    d = ImageDraw.Draw(crisp, "RGBA")
+
+    # Geometry calibrated to the 1280x720 base image.
+    # Pump roughly x=135..510, y=235..495
+    # Pipe x=455..1000, y=250..365
+    # Supports centers x~650 and 810
+    # Structure/wall at x~1000
+
+    # 1) Acoustic enclosure: technical outline around pump, without pretending it is a new photo-real panel.
+    if config.get("encierro"):
+        box = (105, 160, 555, 515)
+        gd.rounded_rectangle(box, radius=18, outline=(54, 210, 255, 125), width=18)
+        d.rounded_rectangle(box, radius=18, outline=(120, 225, 255, 240), width=4)
+        # top / side panel guides
+        d.line((120, 178, 540, 178), fill=(170, 235, 255, 220), width=3)
+        d.line((120, 178, 120, 500), fill=(170, 235, 255, 220), width=3)
+
+        if config.get("absorbente"):
+            # absorber pattern only inside the enclosure rear zone
+            for yy in range(200, 350, 20):
+                for xx in range(145, 500, 26):
+                    pts = [
+                        (xx, yy+9), (xx+10, yy), (xx+20, yy+9), (xx+10, yy+18)
+                    ]
+                    d.polygon(pts, fill=(74, 82, 86, 120), outline=(145, 155, 160, 145))
+
+    # 2) Isolators under pump: highlight actual support feet on base image.
+    if config.get("antivibratorios"):
+        for cx in (205, 365, 485):
+            cy = 485
+            gd.ellipse((cx-24, cy-14, cx+24, cy+26), fill=(255, 105, 40, 105))
+            d.rounded_rectangle((cx-17, cy-4, cx+17, cy+22), radius=6,
+                                outline=(255, 139, 76, 255), width=3)
+            # spring symbol
+            pts=[]
+            for i in range(31):
+                t=i/30
+                x=cx+math.sin(t*6*math.pi)*10
+                y=cy+2+t*17
+                pts.append((int(x),int(y)))
+            d.line(pts, fill=(255, 145, 77, 255), width=3)
+
+    # 3) Flexible connector: aligned on first straight pipe segment after pump.
+    if config.get("flexible"):
+        x1,y1,x2,y2 = 470, 268, 580, 330
+        gd.rounded_rectangle((x1-8,y1-8,x2+8,y2+8), radius=12,
+                             fill=(65, 215, 180, 60))
+        d.rounded_rectangle((x1,y1,x2,y2), radius=9,
+                            outline=(116, 232, 206, 255), width=3)
+        for xx in range(x1-30,x2+35,16):
+            d.line((xx,y1,xx+48,y2), fill=(157, 237, 220, 210), width=2)
+            d.line((xx,y2,xx+48,y1), fill=(101, 193, 177, 180), width=2)
+
+    # 4) Resilient pipe supports: highlight only the actual two support heads.
+    if config.get("soportes_resilientes"):
+        for cx in (650, 812):
+            cy = 374
+            gd.ellipse((cx-24,cy-18,cx+24,cy+18), fill=(57, 225, 160, 90))
+            d.rounded_rectangle((cx-18,cy-10,cx+18,cy+10), radius=5,
+                                outline=(89, 231, 174, 255), width=3)
+            d.line((cx,cy+10,cx,cy+37), fill=(89,231,174,230), width=3)
+
+    glow = glow.filter(ImageFilter.GaussianBlur(radius=12))
+    image = Image.alpha_composite(image, glow)
+    image = Image.alpha_composite(image, crisp)
+
+    out = BytesIO()
+    image.convert("RGB").save(out, format="WEBP", quality=92, method=6)
+    out.seek(0)
+    return out
+
 def _course2_lab1_stage0_pump_lab(class_id, saved):
     """Laboratorio conceptual: control de los caminos de transmisión de una bomba."""
     st.markdown("### 7 · Laboratorio conceptual · Controla la bomba")
@@ -525,13 +610,12 @@ def _course2_lab1_stage0_pump_lab(class_id, saved):
         saved["stage0_pump_lab_explored"] = True
         _save_future_state_impl(class_id, saved)
 
-    # La escena física corresponde al estado inicial real: sin encierro, sin aisladores,
-    # sin flexible y con soportes rígidos. No se muestran medidas que el alumno no ha activado.
-    initial = ASSET_DIR / "curso2_lab1_etapa0_control_bomba_estado_inicial.webp"
-    if initial.exists():
-        st.image(initial, width="stretch")
-    else:
-        st.warning("Falta el render del estado inicial del laboratorio.")
+    # La misma escena cambia visualmente según las medidas activas.
+    try:
+        dynamic_view = _compose_course2_pump_visual(config)
+        st.image(dynamic_view, width="stretch")
+    except Exception as exc:
+        st.warning(f"No fue posible actualizar la vista dinámica: {exc}")
 
     active = []
     if config["encierro"]:
@@ -546,10 +630,7 @@ def _course2_lab1_stage0_pump_lab(class_id, saved):
         active.append("Soportes resilientes")
 
     if active:
-        st.caption(
-            "Medidas seleccionadas para el análisis: " + " · ".join(active) + ". "
-            "Los efectos se reflejan en los estados de los caminos."
-        )
+        st.caption("Medidas visibles en la instalación: " + " · ".join(active) + ".")
     else:
         st.caption("Estado inicial: instalación sin medidas de control.")
 
