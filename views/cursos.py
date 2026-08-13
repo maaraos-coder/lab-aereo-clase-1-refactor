@@ -458,256 +458,188 @@ def _course2_lab1_stage0_pump_svg(encierro=False, absorbente=False, antivibrator
     </svg>'''
 
 
-def _compose_course2_pump_visual(config):
-    """Genera una vista dinámica sobre la misma escena base, con capas alineadas a cada medida."""
-    from PIL import Image, ImageDraw, ImageFilter
-    from io import BytesIO
-    import math
-
-    base_path = ASSET_DIR / "curso2_lab1_etapa0_control_bomba_estado_inicial_1280.webp"
-    image = Image.open(base_path).convert("RGBA")
-    w, h = image.size
-
-    # Separate glow and crisp layers so annotations look integrated instead of pasted.
-    glow = Image.new("RGBA", (w, h), (0, 0, 0, 0))
-    gd = ImageDraw.Draw(glow, "RGBA")
-    crisp = Image.new("RGBA", (w, h), (0, 0, 0, 0))
-    d = ImageDraw.Draw(crisp, "RGBA")
-
-    # Geometry calibrated to the 1280x720 base image.
-    # Pump roughly x=135..510, y=235..495
-    # Pipe x=455..1000, y=250..365
-    # Supports centers x~650 and 810
-    # Structure/wall at x~1000
-
-    # 1) Acoustic enclosure: technical outline around pump, without pretending it is a new photo-real panel.
-    if config.get("encierro"):
-        box = (105, 160, 555, 515)
-        gd.rounded_rectangle(box, radius=18, outline=(54, 210, 255, 125), width=18)
-        d.rounded_rectangle(box, radius=18, outline=(120, 225, 255, 240), width=4)
-        # top / side panel guides
-        d.line((120, 178, 540, 178), fill=(170, 235, 255, 220), width=3)
-        d.line((120, 178, 120, 500), fill=(170, 235, 255, 220), width=3)
-
-        if config.get("absorbente"):
-            # absorber pattern only inside the enclosure rear zone
-            for yy in range(200, 350, 20):
-                for xx in range(145, 500, 26):
-                    pts = [
-                        (xx, yy+9), (xx+10, yy), (xx+20, yy+9), (xx+10, yy+18)
-                    ]
-                    d.polygon(pts, fill=(74, 82, 86, 120), outline=(145, 155, 160, 145))
-
-    # 2) Isolators under pump: highlight actual support feet on base image.
-    if config.get("antivibratorios"):
-        for cx in (205, 365, 485):
-            cy = 485
-            gd.ellipse((cx-24, cy-14, cx+24, cy+26), fill=(255, 105, 40, 105))
-            d.rounded_rectangle((cx-17, cy-4, cx+17, cy+22), radius=6,
-                                outline=(255, 139, 76, 255), width=3)
-            # spring symbol
-            pts=[]
-            for i in range(31):
-                t=i/30
-                x=cx+math.sin(t*6*math.pi)*10
-                y=cy+2+t*17
-                pts.append((int(x),int(y)))
-            d.line(pts, fill=(255, 145, 77, 255), width=3)
-
-    # 3) Flexible connector: aligned on first straight pipe segment after pump.
-    if config.get("flexible"):
-        x1,y1,x2,y2 = 470, 268, 580, 330
-        gd.rounded_rectangle((x1-8,y1-8,x2+8,y2+8), radius=12,
-                             fill=(65, 215, 180, 60))
-        d.rounded_rectangle((x1,y1,x2,y2), radius=9,
-                            outline=(116, 232, 206, 255), width=3)
-        for xx in range(x1-30,x2+35,16):
-            d.line((xx,y1,xx+48,y2), fill=(157, 237, 220, 210), width=2)
-            d.line((xx,y2,xx+48,y1), fill=(101, 193, 177, 180), width=2)
-
-    # 4) Resilient pipe supports: highlight only the actual two support heads.
-    if config.get("soportes_resilientes"):
-        for cx in (650, 812):
-            cy = 374
-            gd.ellipse((cx-24,cy-18,cx+24,cy+18), fill=(57, 225, 160, 90))
-            d.rounded_rectangle((cx-18,cy-10,cx+18,cy+10), radius=5,
-                                outline=(89, 231, 174, 255), width=3)
-            d.line((cx,cy+10,cx,cy+37), fill=(89,231,174,230), width=3)
-
-    glow = glow.filter(ImageFilter.GaussianBlur(radius=12))
-    image = Image.alpha_composite(image, glow)
-    image = Image.alpha_composite(image, crisp)
-
-    out = BytesIO()
-    image.convert("RGB").save(out, format="WEBP", quality=92, method=6)
-    out.seek(0)
-    return out
-
 def _course2_lab1_stage0_pump_lab(class_id, saved):
-    """Laboratorio conceptual: control de los caminos de transmisión de una bomba."""
+    """Explorador visual de medidas de control sobre una instalación de bombeo."""
     st.markdown("### 7 · Laboratorio conceptual · Controla la bomba")
     st.write(
-        "Activa medidas de control y relaciona cada una con el **camino físico que modifica**. "
+        "Explora una medida a la vez y luego compara soluciones combinadas. "
+        "Observa **qué camino físico modifica cada intervención**. "
         "La actividad es cualitativa: no representa una predicción en dB."
     )
 
-    stored = saved.get("stage0_pump_lab", {}) if isinstance(saved.get("stage0_pump_lab"), dict) else {}
-    defaults = {
-        "encierro": bool(stored.get("encierro", False)),
-        "absorbente": bool(stored.get("absorbente", False)),
-        "antivibratorios": bool(stored.get("antivibratorios", False)),
-        "flexible": bool(stored.get("flexible", False)),
-        "soportes_resilientes": bool(stored.get("soportes_resilientes", False)),
+    state_key = f"{class_id}_pump_control_state"
+    stored = saved.get("stage0_pump_lab_state", "Estado inicial")
+    if state_key not in st.session_state:
+        st.session_state[state_key] = stored
+
+    states = {
+        "Estado inicial": {
+            "asset": "curso2_lab1_etapa0_ctrl_estado_inicial.webp",
+            "base": "Activo",
+            "pipe": "Activo",
+            "air": "Activo",
+            "note": "Instalación sin medidas de control.",
+        },
+        "Aisladores": {
+            "asset": "curso2_lab1_etapa0_ctrl_aisladores.webp",
+            "base": "Reducido",
+            "pipe": "Activo",
+            "air": "Activo",
+            "note": "Los aisladores intervienen el camino máquina → bancada → losa.",
+        },
+        "Conexión flexible": {
+            "asset": "curso2_lab1_etapa0_ctrl_flexible.webp",
+            "base": "Activo",
+            "pipe": "Parcial",
+            "air": "Activo",
+            "note": "La conexión flexible reduce la continuidad mecánica entre bomba y tubería rígida.",
+        },
+        "Soportes resilientes": {
+            "asset": "curso2_lab1_etapa0_ctrl_soportes.webp",
+            "base": "Activo",
+            "pipe": "Parcial",
+            "air": "Activo",
+            "note": "Los soportes resilientes reducen el puente vibratorio en apoyos y abrazaderas.",
+        },
+        "Encierro acústico": {
+            "asset": "curso2_lab1_etapa0_ctrl_encierro.webp",
+            "base": "Activo",
+            "pipe": "Activo",
+            "air": "Parcial",
+            "note": "El encierro actúa principalmente sobre el ruido aéreo radiado por la máquina.",
+        },
+        "Encierro + absorbente": {
+            "asset": "curso2_lab1_etapa0_ctrl_absorbente.webp",
+            "base": "Activo",
+            "pipe": "Activo",
+            "air": "Reducido",
+            "note": "El absorbente complementa el encierro reduciendo reflexiones internas.",
+        },
+        "Control estructural completo": {
+            "asset": "curso2_lab1_etapa0_ctrl_estructural_completo.webp",
+            "base": "Reducido",
+            "pipe": "Reducido",
+            "air": "Activo",
+            "note": "Aisladores + conexión flexible + soportes resilientes intervienen los caminos estructurales representados.",
+        },
+        "Control integral": {
+            "asset": "curso2_lab1_etapa0_ctrl_integral.webp",
+            "base": "Reducido",
+            "pipe": "Reducido",
+            "air": "Reducido",
+            "note": "Combina control estructural con encierro y tratamiento interior.",
+        },
     }
-    keys = {name: f"{class_id}_pump_{name}" for name in defaults}
-    for name, value in defaults.items():
-        if keys[name] not in st.session_state:
-            st.session_state[keys[name]] = value
 
-    c1, c2, c3 = st.columns(3)
-    with c1:
-        encierro = st.toggle(
-            "Encierro acústico",
-            key=keys["encierro"],
-            help="Interviene principalmente el camino aéreo desde la carcasa.",
-        )
-        if not encierro and st.session_state.get(keys["absorbente"], False):
-            st.session_state[keys["absorbente"]] = False
-        absorbente = st.toggle(
-            "Absorbente interior",
-            key=keys["absorbente"],
-            disabled=not encierro,
-            help="Complementa el encierro reduciendo reflexiones internas.",
-        )
-    with c2:
-        antivibratorios = st.toggle(
-            "Aisladores bajo la bomba",
-            key=keys["antivibratorios"],
-            help="Reducen la transmisión bomba → bancada → losa.",
-        )
-        flexible = st.toggle(
-            "Conexión flexible de tubería",
-            key=keys["flexible"],
-            help="Reduce la continuidad mecánica entre la bomba y la tubería rígida.",
-        )
-    with c3:
-        soportes_resilientes = st.toggle(
-            "Soportes resilientes de tubería",
-            key=keys["soportes_resilientes"],
-            help="Reducen el puente vibratorio en apoyos y abrazaderas.",
-        )
+    st.markdown("#### 1 · Explora una medida")
+    individual = [
+        "Estado inicial", "Aisladores", "Conexión flexible",
+        "Soportes resilientes", "Encierro acústico", "Encierro + absorbente"
+    ]
+    cols = st.columns(3)
+    for i, label in enumerate(individual):
+        with cols[i % 3]:
+            if st.button(
+                label,
+                key=f"{class_id}_pump_state_{i}",
+                use_container_width=True,
+                type="primary" if st.session_state[state_key] == label else "secondary",
+            ):
+                st.session_state[state_key] = label
+                saved["stage0_pump_lab_state"] = label
+                saved["stage0_pump_lab_explored"] = True
+                saved["stage0_pump_lab_updated_at"] = _now()
+                _save_future_state_impl(class_id, saved)
+                st.rerun()
 
-    config = {
-        "encierro": bool(encierro),
-        "absorbente": bool(absorbente),
-        "antivibratorios": bool(antivibratorios),
-        "flexible": bool(flexible),
-        "soportes_resilientes": bool(soportes_resilientes),
-    }
-    old_config = {name: bool(stored.get(name, False)) for name in defaults}
-    if config != old_config:
-        saved["stage0_pump_lab"] = {**config, "updated_at": _now()}
-        saved["stage0_pump_lab_explored"] = True
-        _save_future_state_impl(class_id, saved)
+    st.markdown("#### 2 · Compara soluciones")
+    c1, c2 = st.columns(2)
+    for col, label, idx in [
+        (c1, "Control estructural completo", 20),
+        (c2, "Control integral", 21),
+    ]:
+        with col:
+            if st.button(
+                label,
+                key=f"{class_id}_pump_state_{idx}",
+                use_container_width=True,
+                type="primary" if st.session_state[state_key] == label else "secondary",
+            ):
+                st.session_state[state_key] = label
+                saved["stage0_pump_lab_state"] = label
+                saved["stage0_pump_lab_explored"] = True
+                saved["stage0_pump_lab_updated_at"] = _now()
+                _save_future_state_impl(class_id, saved)
+                st.rerun()
 
-    # La misma escena cambia visualmente según las medidas activas.
-    try:
-        dynamic_view = _compose_course2_pump_visual(config)
-        st.image(dynamic_view, width="stretch")
-    except Exception as exc:
-        st.warning(f"No fue posible actualizar la vista dinámica: {exc}")
+    current = st.session_state[state_key]
+    if current not in states:
+        current = "Estado inicial"
+        st.session_state[state_key] = current
 
-    active = []
-    if config["encierro"]:
-        active.append("Encierro acústico")
-    if config["absorbente"]:
-        active.append("Absorbente interior")
-    if config["antivibratorios"]:
-        active.append("Aisladores bajo la bomba")
-    if config["flexible"]:
-        active.append("Conexión flexible")
-    if config["soportes_resilientes"]:
-        active.append("Soportes resilientes")
+    cfg = states[current]
+    asset = ASSET_DIR / cfg["asset"]
 
-    if active:
-        st.caption("Medidas visibles en la instalación: " + " · ".join(active) + ".")
+    st.markdown(f"#### {current}")
+    if asset.exists():
+        # Individual-state crops are intentionally a little narrower to avoid enlarging
+        # lower-resolution source detail; integrated renders use full width.
+        if current in {"Aisladores","Conexión flexible","Soportes resilientes","Encierro acústico","Encierro + absorbente"}:
+            left, center, right = st.columns([0.12, 0.76, 0.12])
+            with center:
+                st.image(asset, width="stretch")
+        else:
+            st.image(asset, width="stretch")
     else:
-        st.caption("Estado inicial: instalación sin medidas de control.")
+        st.warning(f"Falta el render `{cfg['asset']}`.")
 
-    base_state = "Reducido" if config["antivibratorios"] else "Activo"
-
-    if config["flexible"] and config["soportes_resilientes"]:
-        pipe_state = "Reducido"
-    elif config["flexible"] or config["soportes_resilientes"]:
-        pipe_state = "Parcial"
-    else:
-        pipe_state = "Activo"
-
-    if config["encierro"] and config["absorbente"]:
-        air_state = "Reducido"
-    elif config["encierro"]:
-        air_state = "Parcial"
-    else:
-        air_state = "Activo"
+    st.info(cfg["note"])
 
     st.markdown("#### ¿Qué camino estás interviniendo?")
     a, b, c = st.columns(3)
-
     with a:
         with st.container(border=True):
             st.markdown("**MÁQUINA → LOSA**")
-            st.metric(label="", value=base_state)
-            st.caption("Transmisión por los apoyos de la máquina hacia la losa.")
-
+            st.metric(label="", value=cfg["base"])
+            st.caption("Transmisión por apoyos de la máquina hacia la losa.")
     with b:
         with st.container(border=True):
             st.markdown("**TUBERÍA → ESTRUCTURA**")
-            st.metric(label="", value=pipe_state)
+            st.metric(label="", value=cfg["pipe"])
             st.caption("Transmisión por tubería, soportes y fijaciones hacia la estructura.")
-
     with c:
         with st.container(border=True):
             st.markdown("**CARCASA → AIRE**")
-            st.metric(label="", value=air_state)
+            st.metric(label="", value=cfg["air"])
             st.caption("Radiación directa de la máquina al recinto por el aire.")
 
-    structural_complete = (
-        config["antivibratorios"]
-        and config["flexible"]
-        and config["soportes_resilientes"]
-    )
-    airborne_complete = config["encierro"] and config["absorbente"]
-
-    if structural_complete and airborne_complete:
-        st.success(
-            "Has intervenido los caminos estructurales representados y el camino aéreo."
-        )
-    elif structural_complete:
-        st.success(
-            "Los caminos estructurales representados están intervenidos. "
-            "El ruido aéreo debe analizarse por separado."
-        )
-    elif config["antivibratorios"] and not (config["flexible"] or config["soportes_resilientes"]):
+    if current == "Aisladores":
         st.warning(
-            "La base está desacoplada, pero una tubería rígida o sus soportes todavía pueden formar un puente vibratorio."
+            "La base queda desacoplada, pero una tubería rígida y sus soportes todavía pueden puentear el aislamiento."
         )
-    elif config["flexible"] or config["soportes_resilientes"]:
+    elif current in {"Conexión flexible", "Soportes resilientes"}:
         st.info(
-            "El camino por tubería está intervenido parcialmente. "
-            "Revisa tanto la conexión con la máquina como los puntos de soporte."
+            "Has intervenido solo una parte del camino por tubería. "
+            "Para reducirlo de forma más completa deben revisarse conexión y soportes."
         )
-    elif config["encierro"]:
+    elif current == "Encierro acústico":
         st.info(
-            "El encierro actúa sobre el ruido aéreo; no sustituye el desacoplamiento mecánico."
+            "El encierro controla principalmente ruido aéreo; no sustituye el desacoplamiento mecánico."
         )
-    else:
-        st.caption("Sin medidas activas, los tres caminos permanecen disponibles.")
+    elif current == "Control estructural completo":
+        st.success(
+            "Los dos caminos estructurales representados están intervenidos. El camino aéreo permanece activo."
+        )
+    elif current == "Control integral":
+        st.success(
+            "La solución combina control estructural y aéreo sobre los tres caminos representados."
+        )
 
     st.markdown("**Principio profesional**")
     st.latex(r"\boxed{\text{UN SOLO PUENTE RÍGIDO PUEDE COMPROMETER EL DESACOPLAMIENTO}}")
     st.info(
-        "No basta con aislar la máquina: también deben revisarse tuberías, ductos, soportes, "
-        "abrazaderas y cualquier otra conexión rígida capaz de transmitir vibración."
+        "Cada camino necesita su propio control. La solución eficaz surge de identificar "
+        "qué rutas llevan energía hasta el receptor y combinar las medidas necesarias."
     )
 
 def _course2_lab1_stage0_energy_interactive(class_id, saved):
