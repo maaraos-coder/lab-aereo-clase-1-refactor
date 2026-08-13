@@ -459,7 +459,7 @@ def _course2_lab1_stage0_pump_svg(encierro=False, absorbente=False, antivibrator
 
 
 def _course2_lab1_stage0_pump_lab(class_id, saved):
-    """Laboratorio conceptual de control de caminos vibroacústicos de una bomba."""
+    """Laboratorio conceptual: control de los caminos de transmisión de una bomba."""
     st.markdown("### 7 · Laboratorio conceptual · Controla la bomba")
     st.write(
         "Activa medidas de control y relaciona cada una con el **camino físico que modifica**. "
@@ -479,7 +479,6 @@ def _course2_lab1_stage0_pump_lab(class_id, saved):
         if keys[name] not in st.session_state:
             st.session_state[keys[name]] = value
 
-    # Controles compactos.
     c1, c2, c3 = st.columns(3)
     with c1:
         encierro = st.toggle(
@@ -499,18 +498,18 @@ def _course2_lab1_stage0_pump_lab(class_id, saved):
         antivibratorios = st.toggle(
             "Aisladores bajo la bomba",
             key=keys["antivibratorios"],
-            help="Reducen el camino bomba → bancada → losa.",
+            help="Reducen la transmisión bomba → bancada → losa.",
         )
         flexible = st.toggle(
             "Conexión flexible de tubería",
             key=keys["flexible"],
-            help="Reduce la transmisión mecánica entre bomba y tubería rígida.",
+            help="Reduce la continuidad mecánica entre la bomba y la tubería rígida.",
         )
     with c3:
         soportes_resilientes = st.toggle(
             "Soportes resilientes de tubería",
             key=keys["soportes_resilientes"],
-            help="Reducen el puente vibratorio en soportes y abrazaderas.",
+            help="Reducen el puente vibratorio en apoyos y abrazaderas.",
         )
 
     config = {
@@ -526,33 +525,34 @@ def _course2_lab1_stage0_pump_lab(class_id, saved):
         saved["stage0_pump_lab_explored"] = True
         _save_future_state_impl(class_id, saved)
 
-    # Escena maestra: misma instalación, sin superponer dibujos geométricos que no calzan.
-    # La imagen es deliberadamente fija; los controles modifican la lectura técnica y los
-    # estados de camino, evitando "inventar" elementos visuales fuera de escala.
-    master = ASSET_DIR / "curso2_lab1_etapa0_control_bomba_master.webp"
-    if master.exists():
-        st.image(master, width="stretch")
+    # La escena física corresponde al estado inicial real: sin encierro, sin aisladores,
+    # sin flexible y con soportes rígidos. No se muestran medidas que el alumno no ha activado.
+    initial = ASSET_DIR / "curso2_lab1_etapa0_control_bomba_estado_inicial.webp"
+    if initial.exists():
+        st.image(initial, width="stretch")
     else:
-        st.warning("Falta el render maestro del laboratorio conceptual.")
+        st.warning("Falta el render del estado inicial del laboratorio.")
 
-    # Resumen de medidas activas, compacto.
-    labels = []
+    active = []
     if config["encierro"]:
-        labels.append("Encierro")
+        active.append("Encierro acústico")
     if config["absorbente"]:
-        labels.append("Absorbente interior")
+        active.append("Absorbente interior")
     if config["antivibratorios"]:
-        labels.append("Aisladores")
+        active.append("Aisladores bajo la bomba")
     if config["flexible"]:
-        labels.append("Conexión flexible")
+        active.append("Conexión flexible")
     if config["soportes_resilientes"]:
-        labels.append("Soportes resilientes")
-    if labels:
-        st.caption("Medidas activas: " + " · ".join(labels) + ".")
-    else:
-        st.caption("Estado inicial: sin medidas activas.")
+        active.append("Soportes resilientes")
 
-    # Estados conceptuales de los caminos.
+    if active:
+        st.caption(
+            "Medidas seleccionadas para el análisis: " + " · ".join(active) + ". "
+            "Los efectos se reflejan en los estados de los caminos."
+        )
+    else:
+        st.caption("Estado inicial: instalación sin medidas de control.")
+
     base_state = "Reducido" if config["antivibratorios"] else "Activo"
 
     if config["flexible"] and config["soportes_resilientes"]:
@@ -570,30 +570,26 @@ def _course2_lab1_stage0_pump_lab(class_id, saved):
         air_state = "Activo"
 
     st.markdown("#### ¿Qué camino estás interviniendo?")
-    s1, s2, s3 = st.columns(3)
-    with s1:
-        with st.container(border=True):
-            st.markdown("**Máquina → losa**")
-            st.metric("Base → losa", base_state)
-            st.caption(
-                "Los aisladores bajo la bancada reducen la excitación directa de la losa."
-            )
-    with s2:
-        with st.container(border=True):
-            st.markdown("**Tubería → estructura**")
-            st.metric("Tubería → estructura", pipe_state)
-            st.caption(
-                "La conexión flexible y los soportes resilientes actúan sobre este camino."
-            )
-    with s3:
-        with st.container(border=True):
-            st.markdown("**Carcasa → aire**")
-            st.metric("Carcasa → aire", air_state)
-            st.caption(
-                "El encierro y su tratamiento interior actúan principalmente sobre el ruido aéreo."
-            )
+    a, b, c = st.columns(3)
 
-    # Retroalimentación según la combinación seleccionada.
+    with a:
+        with st.container(border=True):
+            st.markdown("**MÁQUINA → LOSA**")
+            st.metric(label="", value=base_state)
+            st.caption("Transmisión por los apoyos de la máquina hacia la losa.")
+
+    with b:
+        with st.container(border=True):
+            st.markdown("**TUBERÍA → ESTRUCTURA**")
+            st.metric(label="", value=pipe_state)
+            st.caption("Transmisión por tubería, soportes y fijaciones hacia la estructura.")
+
+    with c:
+        with st.container(border=True):
+            st.markdown("**CARCASA → AIRE**")
+            st.metric(label="", value=air_state)
+            st.caption("Radiación directa de la máquina al recinto por el aire.")
+
     structural_complete = (
         config["antivibratorios"]
         and config["flexible"]
@@ -603,18 +599,16 @@ def _course2_lab1_stage0_pump_lab(class_id, saved):
 
     if structural_complete and airborne_complete:
         st.success(
-            "Has intervenido los caminos estructurales representados y el camino aéreo. "
-            "La combinación actual cubre las rutas principales consideradas en este modelo conceptual."
+            "Has intervenido los caminos estructurales representados y el camino aéreo."
         )
     elif structural_complete:
         st.success(
             "Los caminos estructurales representados están intervenidos. "
-            "El ruido aéreo de la carcasa todavía debe evaluarse por separado."
+            "El ruido aéreo debe analizarse por separado."
         )
     elif config["antivibratorios"] and not (config["flexible"] or config["soportes_resilientes"]):
         st.warning(
-            "Aislaste la bomba respecto de la losa, pero la tubería rígida y sus soportes "
-            "todavía pueden formar un puente vibratorio."
+            "La base está desacoplada, pero una tubería rígida o sus soportes todavía pueden formar un puente vibratorio."
         )
     elif config["flexible"] or config["soportes_resilientes"]:
         st.info(
@@ -623,18 +617,15 @@ def _course2_lab1_stage0_pump_lab(class_id, saved):
         )
     elif config["encierro"]:
         st.info(
-            "El encierro actúa sobre el ruido aéreo de la máquina. "
-            "No sustituye el desacoplamiento mecánico de base y tuberías."
+            "El encierro actúa sobre el ruido aéreo; no sustituye el desacoplamiento mecánico."
         )
     else:
-        st.caption(
-            "Sin medidas de control, los tres caminos permanecen potencialmente disponibles."
-        )
+        st.caption("Sin medidas activas, los tres caminos permanecen disponibles.")
 
     st.markdown("**Principio profesional**")
     st.latex(r"\boxed{\text{UN SOLO PUENTE RÍGIDO PUEDE COMPROMETER EL DESACOPLAMIENTO}}")
     st.info(
-        "No basta con aislar la máquina. También deben revisarse tuberías, ductos, soportes, "
+        "No basta con aislar la máquina: también deben revisarse tuberías, ductos, soportes, "
         "abrazaderas y cualquier otra conexión rígida capaz de transmitir vibración."
     )
 
