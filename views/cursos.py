@@ -492,7 +492,7 @@ def _course2_lab1_stage0_pump_lab(class_id, saved):
             "Absorbente interior",
             key=keys["absorbente"],
             disabled=not encierro,
-            help="Complementa el encierro reduciendo reflexiones internas; no desacopla mecánicamente la bomba.",
+            help="Solo existe dentro del encierro. Reduce reflexiones internas, pero no desacopla mecánicamente la bomba.",
         )
     with c2:
         antivibratorios = st.toggle(
@@ -525,12 +525,22 @@ def _course2_lab1_stage0_pump_lab(class_id, saved):
         saved["stage0_pump_lab_explored"] = True
         _save_future_state_impl(class_id, saved)
 
-    general = ASSET_DIR / "curso2_lab1_etapa0_control_bomba_general_clean.webp"
+    # La imagen general cambia con el estado del encierro.
+    # Sin encierro se muestra la instalación abierta; al activarlo aparece el cerramiento.
+    general_name = (
+        "curso2_lab1_etapa0_control_bomba_general_clean.webp"
+        if config["encierro"]
+        else "curso2_lab1_etapa0_control_bomba_abierta.webp"
+    )
+    general = ASSET_DIR / general_name
     if general.exists():
         st.image(general, width="stretch")
-        st.caption("Sistema de referencia: bomba, bancada, tubería, soportes y caminos potenciales de transmisión.")
+        if config["encierro"]:
+            st.caption("Encierro acústico activo: la máquina queda rodeada por un cerramiento destinado al control del ruido aéreo.")
+        else:
+            st.caption("Instalación abierta: bomba, bancada, tubería y soportes sin encierro acústico.")
     else:
-        st.warning("Falta el render general del laboratorio conceptual.")
+        st.warning(f"Falta el render `{general_name}` del laboratorio conceptual.")
 
     st.markdown("#### ¿Qué estás interviniendo?")
     i1, i2, i3 = st.columns(3)
