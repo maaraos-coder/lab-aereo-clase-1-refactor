@@ -611,17 +611,13 @@ def _course2_lab1_stage0_pump_lab(class_id, saved):
     else:
         st.caption("Sin medidas activas, los tres caminos representados siguen potencialmente disponibles.")
 
-    st.markdown(
-        r"""
-**Principio profesional**
-
-\[
-\boxed{\text{CONTROL EFECTIVO}=\text{CONTROL DEL CAMINO RELEVANTE}}
-\]
-
-Una medida solo es eficaz para el problema si actúa sobre el camino que realmente transporta energía hasta el receptor.
-"""
+    st.markdown("**Principio profesional**")
+    st.latex(r"\boxed{\text{CONTROL EFECTIVO}=\text{CONTROL DEL CAMINO RELEVANTE}}")
+    st.info(
+        "Una medida puede ser técnicamente correcta y aun así ser ineficaz si actúa "
+        "sobre un camino que no domina la transmisión hacia el receptor."
     )
+    st.divider()
 
 def _course2_lab1_stage0_energy_interactive(class_id, saved):
     """Observación inicial y exploración visual de las fuentes de la Etapa 0."""
