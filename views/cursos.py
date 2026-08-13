@@ -459,11 +459,11 @@ def _course2_lab1_stage0_pump_svg(encierro=False, absorbente=False, antivibrator
 
 
 def _course2_lab1_stage0_pump_lab(class_id, saved):
-    """Mini simulador SVG: permite intervenir distintos caminos de una bomba."""
+    """Laboratorio conceptual visual: intervención de caminos de una bomba."""
     st.markdown("### 7 · Laboratorio conceptual · Controla la bomba")
     st.write(
-        "Activa medidas de control y observa **qué camino cambia realmente**. "
-        "Los estados son conceptuales: sirven para razonar sobre caminos de transmisión, no son una predicción numérica."
+        "Activa medidas de control y observa **qué camino físico interviene cada una**. "
+        "Los estados son cualitativos y sirven para razonar sobre transmisión vibroacústica."
     )
 
     stored=saved.get("stage0_pump_lab", {}) if isinstance(saved.get("stage0_pump_lab"), dict) else {}
@@ -478,190 +478,91 @@ def _course2_lab1_stage0_pump_lab(class_id, saved):
         if keys[name] not in st.session_state:
             st.session_state[keys[name]]=val
 
-    c1,c2,c3,c4=st.columns(4)
-    with c1:
-        encierro=st.toggle("Encierro acústico", key=keys["encierro"], help="Actúa principalmente sobre el ruido aéreo radiado por la máquina.")
-    with c2:
-        absorbente=st.toggle("Absorbente interior", key=keys["absorbente"], help="Reduce reflexiones/campo reverberante, pero no desacopla por sí solo la estructura.")
-    with c3:
-        antivibratorios=st.toggle("Antivibratorios", key=keys["antivibratorios"], help="Intervienen el camino bomba → base → losa.")
-    with c4:
-        flexible=st.toggle("Conexión flexible", key=keys["flexible"], help="Interviene el camino bomba → tubería → soportes → estructura.")
+    cols=st.columns(4)
+    labels=[
+        ("encierro","Encierro acústico","Actúa principalmente sobre el ruido aéreo radiado por la máquina."),
+        ("absorbente","Absorbente interior","Reduce reflexiones dentro del encierro o recinto; no desacopla la estructura."),
+        ("antivibratorios","Antivibratorios","Intervienen el camino bomba → base → losa."),
+        ("flexible","Conexión flexible","Interviene el camino bomba → tubería → soportes → estructura."),
+    ]
+    values={}
+    for col,(name,label,help_text) in zip(cols,labels):
+        with col:
+            values[name]=st.toggle(label,key=keys[name],help=help_text)
 
-    config={
-        "encierro":bool(encierro), "absorbente":bool(absorbente),
-        "antivibratorios":bool(antivibratorios), "flexible":bool(flexible),
-    }
+    config={k:bool(v) for k,v in values.items()}
     old_config={name:bool(stored.get(name, False)) for name in defaults}
     if config != old_config:
         saved["stage0_pump_lab"]={**config,"updated_at":_now()}
         saved["stage0_pump_lab_explored"]=True
         _save_future_state_impl(class_id,saved)
 
-    components.html(_course2_lab1_stage0_pump_svg(**config), height=665, scrolling=False)
+    overview=ASSET_DIR / "curso2_lab1_etapa0_control_bomba_overview.webp"
+    if overview.exists():
+        st.image(overview, width="stretch")
+        st.caption("Esquema técnico de referencia. Las tarjetas siguientes indican qué camino modifica la configuración seleccionada.")
+    else:
+        st.warning("Falta el asset del laboratorio conceptual de la bomba.")
 
+    # Vista visual de las medidas activadas, usando detalles del mismo render técnico.
+    active_details=[
+        ("encierro","Encierro acústico","curso2_lab1_etapa0_control_encierro.webp"),
+        ("absorbente","Absorbente interior","curso2_lab1_etapa0_control_absorbente.webp"),
+        ("antivibratorios","Antivibratorios","curso2_lab1_etapa0_control_antivibratorios.webp"),
+        ("flexible","Conexión flexible","curso2_lab1_etapa0_control_flexible.webp"),
+    ]
+    enabled=[item for item in active_details if config[item[0]]]
+    if enabled:
+        st.markdown("#### Medidas activas")
+        detail_cols=st.columns(min(len(enabled),4))
+        for col,(_,label,filename) in zip(detail_cols,enabled):
+            with col:
+                p=ASSET_DIR / filename
+                if p.exists():
+                    st.image(p, width="stretch")
+                st.caption(label)
+    else:
+        st.info("Activa una medida para visualizar el elemento de control correspondiente.")
 
-    if antivibratorios and not flexible:
+    base_state="Reducido" if config["antivibratorios"] else "Activo"
+    pipe_state="Reducido" if config["flexible"] else "Activo"
+    if config["encierro"] and config["absorbente"]:
+        air_state="Reducido"
+    elif config["encierro"] or config["absorbente"]:
+        air_state="Parcial"
+    else:
+        air_state="Activo"
+
+    c1,c2,c3=st.columns(3)
+    c1.metric("Base → losa",base_state)
+    c2.metric("Tubería → estructura",pipe_state)
+    c3.metric("Carcasa → aire",air_state)
+
+    if config["antivibratorios"] and not config["flexible"]:
         st.warning(
-            "Instalaste antivibratorios y redujiste el camino por la base, pero **la tubería rígida mantiene un camino estructural paralelo**."
+            "Los antivibratorios reducen el camino por la base, pero la **tubería rígida todavía puede puentear el aislamiento**."
         )
-    elif flexible and not antivibratorios:
+    elif config["flexible"] and not config["antivibratorios"]:
         st.info(
-            "Desacoplaste la tubería, pero la bomba todavía puede introducir vibración directamente por su base hacia la losa."
+            "La conexión flexible reduce el camino por tubería, pero la bomba aún puede introducir vibración por su base."
         )
-    elif antivibratorios and flexible:
+    elif config["antivibratorios"] and config["flexible"]:
         st.success(
-            "Estás interviniendo los dos caminos estructurales representados: base–losa y tubería–soportes. "
-            "Aun así, el control del ruido aéreo debe evaluarse por separado."
+            "Estás interviniendo los dos caminos estructurales representados: base–losa y tubería–soportes."
         )
-    else:
+    elif config["encierro"] or config["absorbente"]:
         st.info(
-            "La instalación mantiene activos los dos caminos estructurales principales. Prueba distintas medidas y observa qué recorrido cambia."
+            "El tratamiento acústico actúa sobre el campo sonoro aéreo, pero **no sustituye el desacoplamiento mecánico**."
         )
-
-    if encierro or absorbente:
-        st.caption(
-            "El tratamiento acústico del recinto/encierro actúa principalmente sobre el campo sonoro aéreo; "
-            "no sustituye el desacoplamiento mecánico de base y tuberías."
-        )
-
-    if st.button("↺ Quitar todas las medidas", key=f"{class_id}_pump_reset", width="stretch"):
-        for key in keys.values():
-            st.session_state[key]=False
-        saved["stage0_pump_lab"]={"encierro":False,"absorbente":False,"antivibratorios":False,"flexible":False,"updated_at":_now()}
-        saved["stage0_pump_lab_explored"]=True
-        _save_future_state_impl(class_id,saved)
-        st.rerun()
-
-    st.latex(r"\boxed{\text{CONTROL EFECTIVO}=\text{CONTROL DEL CAMINO RELEVANTE}}")
-    st.caption("Laboratorio conceptual · actividad formativa sin puntaje.")
-
-def _course2_lab1_stage0_energy_interactive(class_id, saved):
-    """Descubrimiento + 'Sigue la energía', persistente, táctil y sin nota."""
-    sources = {
-        "Pisada": {
-            "title": "Pisada · impacto directo sobre la estructura",
-            "chain": r"\text{PIE}\rightarrow F(t)\rightarrow\text{LOSA}\rightarrow\text{PROPAGACIÓN ESTRUCTURAL}\rightarrow\text{RADIACIÓN ACÚSTICA}\rightarrow\text{RECEPTOR}",
-            "explanation": "La fuerza de impacto entra directamente a la losa. La vibración se propaga por el elemento estructural y el cielo del dormitorio inmediatamente inferior puede radiar sonido hacia la pareja receptora.",
-            "focus": "Naranja: propagación mecánica por la estructura. Cian: radiación acústica desde una superficie vibrante hacia el aire del recinto receptor.",
-        },
-        "Bomba": {
-            "title": "Bomba centrífuga · caminos por base y tuberías",
-            "chain": r"\text{BOMBA}\rightarrow\begin{cases}\text{BASE}\rightarrow\text{LOSA}\rightarrow\text{ESTRUCTURA}\rightarrow\text{RADIACIÓN}\\\text{TUBERÍA}\rightarrow\text{SOPORTES}\rightarrow\text{ESTRUCTURA}\rightarrow\text{RADIACIÓN}\end{cases}",
-            "explanation": "La bomba excita su base y también la tubería de impulsión. La montante y sus soportes transportan vibración hacia otros pisos; una pared, losa u otro elemento conectado puede vibrar y radiar posteriormente sonido al aire.",
-            "focus": "Azul: camino mecánico asociado a bomba y tuberías. Cian: ejemplo de radiación acústica desde una superficie estructural excitada.",
-        },
-        "Descarga sanitaria": {
-            "title": "Descarga sanitaria · tubería, fijaciones y radiación",
-            "chain": r"\text{DESCARGA}\rightarrow\text{RAMAL}\rightarrow\text{BAJANTE}\rightarrow\text{ABRAZADERAS}\rightarrow\text{ESTRUCTURA}\rightarrow\text{RADIACIÓN ACÚSTICA}\rightarrow\text{RECEPTOR}",
-            "explanation": "El flujo y los cambios de dirección generan fuerzas fluctuantes en la bajante. Las abrazaderas transmiten vibración a la construcción y una superficie conectada puede convertirse en una fuente sonora secundaria.",
-            "focus": "Morado: camino mecánico por la instalación sanitaria. Cian: radiación acústica posterior hacia un recinto habitable.",
-        },
-    }
-
-    unlocked = bool(saved.get("stage0_energy_unlocked", False))
-    selected_key=f"{class_id}_stage0_energy_source"
-    selected=st.session_state.get(selected_key)
-    if selected not in sources:
-        selected=saved.get("stage0_energy_source") if saved.get("stage0_energy_source") in sources else None
-
-    # UNA sola zona gráfica. Antes de explorar se ve limpia; después del clic se
-    # vuelve a dibujar en el MISMO lugar con el recorrido seleccionado encima.
-    _course2_lab1_stage0_dynamic_image(
-        "curso2_lab1_etapa0_edificio_vibroacustico.webp",
-        source=selected if unlocked else None,
-        caption="Observa el edificio. El color de la fuente sigue el camino mecánico; las ondas cian representan la radiación acústica hacia el aire.",
-    )
-
-    if not unlocked:
-        st.markdown("#### 🔎 Observa el edificio")
-        st.write("**¿Cuáles de los siguientes elementos identificarías inicialmente como fuentes relevantes para analizar transmisión estructural?**")
-        choices = [
-            "Pisadas de una persona",
-            "Bomba centrífuga",
-            "Descarga sanitaria",
-            "Conversación de la pareja",
-            "Refrigerador",
-            "Iluminación del departamento",
-        ]
-        previous = saved.get("stage0_source_identification", [])
-        if not isinstance(previous, list): previous=[]
-        selected_choices=[]
-        for i, option in enumerate(choices):
-            k=f"{class_id}_stage0_identify_{i}"
-            if k not in st.session_state:
-                st.session_state[k]=option in previous
-            if st.checkbox(option, key=k): selected_choices.append(option)
-        if st.button("Comprobar identificación", type="primary", key=f"{class_id}_stage0_identify_check", width="stretch"):
-            saved["stage0_source_identification"] = selected_choices
-            expected={"Pisadas de una persona","Bomba centrífuga","Descarga sanitaria"}
-            chosen=set(selected_choices)
-            saved["stage0_source_identification_correct"] = chosen == expected
-            saved["stage0_energy_unlocked"] = True
-            saved["stage0_source_identification_checked_at"] = _now()
-            _save_future_state_impl(class_id, saved)
-            st.rerun()
-        st.caption("Actividad de observación · sin puntaje. Al comprobar podrás explorar los caminos de energía.")
-        return 0, len(sources)
-
-    if saved.get("stage0_source_identification_correct"):
-        st.success("Muy bien. Identificaste las tres fuentes representadas. Ahora sigue la energía desde cada fuente hasta la estructura, la radiación y el receptor.")
     else:
-        st.info("En este render se analizan tres fuentes: pisada, bomba centrífuga y descarga sanitaria. Explora sus caminos para comprobar cómo pueden introducir energía mecánica en el edificio.")
+        st.caption("Sin medidas activas, los tres caminos representados permanecen potencialmente disponibles.")
 
-    # Permite repetir la observación sin borrar el progreso de exploración ni la nota
-    # (esta actividad es formativa). Es útil también para que el docente pueda
-    # volver a mostrar el descubrimiento inicial durante una clase.
-    if st.button(
-        "↺ Volver a identificar las fuentes",
-        key=f"{class_id}_stage0_reidentify",
-        width="stretch",
-        help="Reabre la actividad de observación inicial. No elimina las fuentes ya exploradas.",
-    ):
-        saved["stage0_source_identification_previous"] = saved.get("stage0_source_identification", [])
-        saved["stage0_source_identification"] = []
-        saved["stage0_source_identification_correct"] = False
-        saved["stage0_energy_unlocked"] = False
-        saved["stage0_source_identification_checked_at"] = None
-        saved["stage0_energy_source"] = None
-        st.session_state.pop(selected_key, None)
-        for i in range(6):
-            st.session_state.pop(f"{class_id}_stage0_identify_{i}", None)
-        _save_future_state_impl(class_id, saved)
-        st.rerun()
-
-    st.markdown("#### Sigue la energía")
-    st.write("Selecciona una fuente. **La imagen de arriba es la misma**: al elegir una opción se superpone su camino de propagación y su posible radiación acústica.")
-
-    explored=saved.get("stage0_energy_explored", [])
-    if not isinstance(explored,list): explored=[]
-    explored=[x for x in explored if x in sources]
-
-    cols=st.columns(3)
-    for col, source in zip(cols, sources):
-        with col:
-            label=f"{'✓ ' if source in explored else ''}{source}"
-            if st.button(label,key=f"stage0_energy_btn_{class_id}_{source}",type="primary" if selected==source else "secondary",width="stretch"):
-                st.session_state[selected_key]=source
-                saved["stage0_energy_source"]=source
-                if source not in explored: explored.append(source)
-                saved["stage0_energy_explored"]=explored
-                saved["stage0_energy_updated_at"]=_now()
-                _save_future_state_impl(class_id,saved)
-                st.rerun()
-
-    selected=st.session_state.get(selected_key, selected)
-    if selected in sources:
-        data=sources[selected]
-        with st.container(border=True):
-            st.markdown(f"#### {data['title']}")
-            st.latex(data["chain"])
-            st.write(data["explanation"])
-            st.info(data["focus"])
-
-    st.progress(len(explored)/len(sources))
-    st.caption(f"Exploración: {len(explored)} de {len(sources)} fuentes · actividad formativa sin nota.")
-    return len(explored),len(sources)
+    st.markdown(
+        r"""
+**Principio profesional:** una solución eficaz no consiste en agregar tratamientos indiscriminadamente,
+sino en intervenir el camino que realmente transporta energía hasta el receptor.
+"""
+    )
 
 def _future_stage0_mcq(class_id, saved, key, question, options, correct, feedback):
     """Pregunta formativa persistente para la Etapa 0; no asigna puntaje ni nota."""
@@ -956,17 +857,15 @@ def _render_course2_lab1_stage0(lab, saved):
 
     active_path=st.session_state[pump_path_key]
     pump_assets={
-        "base":"curso2_lab1_etapa0_bomba_base.webp",
-        "pipe":"curso2_lab1_etapa0_bomba_pipe.webp",
-        "air":"curso2_lab1_etapa0_bomba_air.webp",
+        "base":"curso2_lab1_etapa0_bomba_base_clean.webp",
+        "pipe":"curso2_lab1_etapa0_bomba_pipe_clean.webp",
+        "air":"curso2_lab1_etapa0_bomba_air_clean.webp",
     }
     pump_asset_path=ASSET_DIR / pump_assets[active_path]
 
-    # Mantener una única escena y cámara: solo cambia el camino resaltado.
+    # La escena ocupa el ancho útil del contenido y conserva la misma relación 16:9.
     if pump_asset_path.exists():
-        left,right=st.columns([0.08,0.84])
-        with right:
-            st.image(pump_asset_path, width="stretch")
+        st.image(pump_asset_path, width="stretch")
     else:
         st.warning(f"Falta el asset `{pump_assets[active_path]}`.")
 
