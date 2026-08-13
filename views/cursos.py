@@ -462,108 +462,166 @@ def _course2_lab1_stage0_pump_lab(class_id, saved):
     """Laboratorio conceptual visual: intervención de caminos de una bomba."""
     st.markdown("### 7 · Laboratorio conceptual · Controla la bomba")
     st.write(
-        "Activa medidas de control y observa **qué camino físico interviene cada una**. "
-        "Los estados son cualitativos y sirven para razonar sobre transmisión vibroacústica."
+        "Prueba medidas de control y observa **qué camino físico modifica cada una**. "
+        "La actividad es cualitativa: busca relacionar medida y mecanismo, no predecir dB."
     )
 
-    stored=saved.get("stage0_pump_lab", {}) if isinstance(saved.get("stage0_pump_lab"), dict) else {}
-    defaults={
+    stored = saved.get("stage0_pump_lab", {}) if isinstance(saved.get("stage0_pump_lab"), dict) else {}
+    defaults = {
         "encierro": bool(stored.get("encierro", False)),
         "absorbente": bool(stored.get("absorbente", False)),
         "antivibratorios": bool(stored.get("antivibratorios", False)),
         "flexible": bool(stored.get("flexible", False)),
     }
-    keys={name:f"{class_id}_pump_{name}" for name in defaults}
-    for name,val in defaults.items():
+    keys = {name: f"{class_id}_pump_{name}" for name in defaults}
+    for name, value in defaults.items():
         if keys[name] not in st.session_state:
-            st.session_state[keys[name]]=val
+            st.session_state[keys[name]] = value
 
-    cols=st.columns(4)
-    labels=[
-        ("encierro","Encierro acústico","Actúa principalmente sobre el ruido aéreo radiado por la máquina."),
-        ("absorbente","Absorbente interior","Reduce reflexiones dentro del encierro o recinto; no desacopla la estructura."),
-        ("antivibratorios","Antivibratorios","Intervienen el camino bomba → base → losa."),
-        ("flexible","Conexión flexible","Interviene el camino bomba → tubería → soportes → estructura."),
-    ]
-    values={}
-    for col,(name,label,help_text) in zip(cols,labels):
-        with col:
-            values[name]=st.toggle(label,key=keys[name],help=help_text)
+    c1, c2, c3, c4 = st.columns(4)
+    with c1:
+        encierro = st.toggle(
+            "Encierro acústico",
+            key=keys["encierro"],
+            help="Interpone una envolvente entre la carcasa de la máquina y el recinto.",
+        )
+    # El absorbente interior tiene sentido como tratamiento del interior del encierro.
+    if not encierro and st.session_state.get(keys["absorbente"], False):
+        st.session_state[keys["absorbente"]] = False
+    with c2:
+        absorbente = st.toggle(
+            "Absorbente interior",
+            key=keys["absorbente"],
+            disabled=not encierro,
+            help="Reduce el campo reflejado dentro del encierro; no desacopla mecánicamente la bomba.",
+        )
+    with c3:
+        antivibratorios = st.toggle(
+            "Antivibratorios",
+            key=keys["antivibratorios"],
+            help="Intervienen el camino bomba → base → losa.",
+        )
+    with c4:
+        flexible = st.toggle(
+            "Conexión flexible",
+            key=keys["flexible"],
+            help="Reduce la transmisión mecánica entre la bomba y la tubería rígida.",
+        )
 
-    config={k:bool(v) for k,v in values.items()}
-    old_config={name:bool(stored.get(name, False)) for name in defaults}
+    config = {
+        "encierro": bool(encierro),
+        "absorbente": bool(absorbente),
+        "antivibratorios": bool(antivibratorios),
+        "flexible": bool(flexible),
+    }
+    old_config = {name: bool(stored.get(name, False)) for name in defaults}
     if config != old_config:
-        saved["stage0_pump_lab"]={**config,"updated_at":_now()}
-        saved["stage0_pump_lab_explored"]=True
-        _save_future_state_impl(class_id,saved)
+        saved["stage0_pump_lab"] = {**config, "updated_at": _now()}
+        saved["stage0_pump_lab_explored"] = True
+        _save_future_state_impl(class_id, saved)
 
-    overview=ASSET_DIR / "curso2_lab1_etapa0_control_bomba_overview.webp"
-    if overview.exists():
-        st.image(overview, width="stretch")
-        st.caption("Esquema técnico de referencia. Las tarjetas siguientes indican qué camino modifica la configuración seleccionada.")
+    # Imagen general deliberadamente limpia: sin estados ni texto incrustado.
+    general = ASSET_DIR / "curso2_lab1_etapa0_control_bomba_general_clean.webp"
+    if general.exists():
+        st.image(general, width="stretch")
+        st.caption("Sistema de referencia: bomba, bancada, tubería, soportes y caminos potenciales de transmisión.")
     else:
-        st.warning("Falta el asset del laboratorio conceptual de la bomba.")
+        st.warning("Falta el render general del laboratorio conceptual.")
 
-    # Vista visual de las medidas activadas, usando detalles del mismo render técnico.
-    active_details=[
-        ("encierro","Encierro acústico","curso2_lab1_etapa0_control_encierro.webp"),
-        ("absorbente","Absorbente interior","curso2_lab1_etapa0_control_absorbente.webp"),
-        ("antivibratorios","Antivibratorios","curso2_lab1_etapa0_control_antivibratorios.webp"),
-        ("flexible","Conexión flexible","curso2_lab1_etapa0_control_flexible.webp"),
+    measures = [
+        (
+            "encierro", "Encierro acústico",
+            "curso2_lab1_etapa0_control_encierro_v2.webp",
+            "Interviene principalmente el camino aéreo desde la carcasa."
+        ),
+        (
+            "absorbente", "Absorbente interior",
+            "curso2_lab1_etapa0_control_absorbente_v2.webp",
+            "Complementa el encierro reduciendo reflexiones internas; no reemplaza el cerramiento."
+        ),
+        (
+            "antivibratorios", "Antivibratorios",
+            "curso2_lab1_etapa0_control_antivibratorios_v2.webp",
+            "Desacoplan mecánicamente la bancada respecto de la losa."
+        ),
+        (
+            "flexible", "Conexión flexible",
+            "curso2_lab1_etapa0_control_flexible_v2.webp",
+            "Interrumpe parcialmente la continuidad mecánica entre máquina y tubería rígida."
+        ),
     ]
-    enabled=[item for item in active_details if config[item[0]]]
+    enabled = [m for m in measures if config[m[0]]]
+
     if enabled:
         st.markdown("#### Medidas activas")
-        detail_cols=st.columns(min(len(enabled),4))
-        for col,(_,label,filename) in zip(detail_cols,enabled):
-            with col:
-                p=ASSET_DIR / filename
-                if p.exists():
-                    st.image(p, width="stretch")
-                st.caption(label)
+        # Cuadrícula compacta: una medida no se transforma en una imagen gigante.
+        rows = [enabled[i:i+2] for i in range(0, len(enabled), 2)]
+        for row in rows:
+            if len(row) == 1:
+                left, center, right = st.columns([0.22, 0.56, 0.22])
+                targets = [(center, row[0])]
+            else:
+                a, b = st.columns(2, gap="medium")
+                targets = [(a, row[0]), (b, row[1])]
+            for col, (_, label, filename, explanation) in targets:
+                with col:
+                    with st.container(border=True):
+                        p = ASSET_DIR / filename
+                        if p.exists():
+                            st.image(p, width="stretch")
+                        st.markdown(f"**{label}**")
+                        st.caption(explanation)
     else:
-        st.info("Activa una medida para visualizar el elemento de control correspondiente.")
+        st.info("Activa una medida para ver el componente físico que estás incorporando al sistema.")
 
-    base_state="Reducido" if config["antivibratorios"] else "Activo"
-    pipe_state="Reducido" if config["flexible"] else "Activo"
+    # Estados conceptuales de los tres caminos.
+    base_state = "Reducido" if config["antivibratorios"] else "Activo"
+    pipe_state = "Reducido" if config["flexible"] else "Activo"
+
+    # El absorbente no se considera una barrera por sí solo.
     if config["encierro"] and config["absorbente"]:
-        air_state="Reducido"
-    elif config["encierro"] or config["absorbente"]:
-        air_state="Parcial"
+        air_state = "Reducido"
+    elif config["encierro"]:
+        air_state = "Parcial"
     else:
-        air_state="Activo"
+        air_state = "Activo"
 
-    c1,c2,c3=st.columns(3)
-    c1.metric("Base → losa",base_state)
-    c2.metric("Tubería → estructura",pipe_state)
-    c3.metric("Carcasa → aire",air_state)
+    s1, s2, s3 = st.columns(3)
+    s1.metric("Base → losa", base_state)
+    s2.metric("Tubería → estructura", pipe_state)
+    s3.metric("Carcasa → aire", air_state)
 
     if config["antivibratorios"] and not config["flexible"]:
         st.warning(
-            "Los antivibratorios reducen el camino por la base, pero la **tubería rígida todavía puede puentear el aislamiento**."
+            "Reduciste el camino por la base, pero una **tubería rígida puede seguir puenteando el aislamiento**."
         )
     elif config["flexible"] and not config["antivibratorios"]:
         st.info(
-            "La conexión flexible reduce el camino por tubería, pero la bomba aún puede introducir vibración por su base."
+            "Reduciste el camino por tubería, pero la bomba todavía puede excitar directamente la losa por su bancada."
         )
     elif config["antivibratorios"] and config["flexible"]:
         st.success(
-            "Estás interviniendo los dos caminos estructurales representados: base–losa y tubería–soportes."
+            "Estás interviniendo los dos caminos estructurales representados: **base–losa** y **tubería–soportes**."
         )
-    elif config["encierro"] or config["absorbente"]:
+    elif config["encierro"]:
         st.info(
-            "El tratamiento acústico actúa sobre el campo sonoro aéreo, pero **no sustituye el desacoplamiento mecánico**."
+            "El encierro actúa sobre el ruido aéreo de la máquina. "
+            "Los caminos estructurales deben analizarse y controlarse por separado."
         )
     else:
-        st.caption("Sin medidas activas, los tres caminos representados permanecen potencialmente disponibles.")
+        st.caption("Sin medidas activas, los tres caminos representados siguen potencialmente disponibles.")
 
     st.markdown(
         r"""
-**Principio profesional:** una solución eficaz no consiste en agregar tratamientos indiscriminadamente,
-sino en intervenir el camino que realmente transporta energía hasta el receptor.
+**Principio profesional**
+
+\[
+\boxed{\text{CONTROL EFECTIVO}=\text{CONTROL DEL CAMINO RELEVANTE}}
+\]
+
+Una medida solo es eficaz para el problema si actúa sobre el camino que realmente transporta energía hasta el receptor.
 """
     )
-
 
 def _course2_lab1_stage0_energy_interactive(class_id, saved):
     """Observación inicial y exploración visual de las fuentes de la Etapa 0."""
