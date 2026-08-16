@@ -1371,13 +1371,10 @@ def _render_course2_lab1_stage1(lab, saved):
 
     st.latex(r"v_n(t)\neq 0 \quad \Rightarrow \quad \text{la superficie puede acoplar energía al aire}")
 
-    radiation_overview = ASSET_DIR / "curso2_lab1_etapa0_vibracion_radiacion.webp"
-    if radiation_overview.exists():
-        st.image(radiation_overview, width="stretch")
-
     st.markdown("#### Pero vibrar no significa radiar eficientemente")
     st.latex(r"\mathrm{VIBRACIÓN\ MEDIBLE \neq RADIACIÓN\ ACÚSTICA\ EFICIENTE}")
     st.write(
+        "Para analizar la radiación no necesitamos todavía una fuente concreta. "
         "Dos superficies pueden presentar niveles comparables de vibración y, aun así, radiar cantidades de sonido muy diferentes. "
         "Importan la distribución espacial y fase del movimiento, la frecuencia, las dimensiones y el acoplamiento estructura–aire."
     )
