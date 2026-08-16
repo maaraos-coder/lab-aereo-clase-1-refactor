@@ -767,17 +767,100 @@ def _future_stage0_mcq(class_id, saved, key, question, options, correct, feedbac
             st.rerun()
 
 
-def _render_course2_lab1_stage0(lab, saved):
-    """Etapa 0 real del Curso 2 · Laboratorio 1, integrada al flujo futuro existente."""
+
+def _render_course2_lab1_welcome(lab, saved):
+    """Etapa 0 · Bienvenida y ruta, con la misma lógica visual del Curso 1."""
     class_id = lab["id"]
     stage_selector_key = f"future_stage_{class_id}"
 
     header(
-        "ETAPA 0 · LABORATORIO 1",
+        "ETAPA 0 · BIENVENIDA",
+        "Laboratorio 1 · Control de ruido de impacto e instalaciones",
+        "Una experiencia visual y aplicada para comprender cómo se genera, transmite, mide y controla la energía vibroacústica en edificios.",
+        show_overview=False,
+        duration_minutes=10,
+    )
+
+    # 210 min de aprendizaje + 30 min de pausa = 4 h.
+    route_minutes = [35, 15, 15, 15, 15, 20, 20, 20, 25, 30]
+    break_after_stage = 5
+    break_minutes = 30
+    active_minutes = sum(route_minutes)
+    total_minutes = active_minutes + break_minutes
+
+    st.markdown(
+        f'<div class="class-clock"><div><strong>⏱️ Duración total del laboratorio: 4 horas</strong>'
+        f'<br><span>{active_minutes} min de aprendizaje y aplicación + {break_minutes} min de pausa</span>'
+        f'</div><div><strong>{total_minutes} min</strong></div></div>',
+        unsafe_allow_html=True,
+    )
+
+    st.markdown(
+        '<div class="section-band"><span>🗺️</span><h3>Tu ruta de aprendizaje</h3></div>',
+        unsafe_allow_html=True,
+    )
+
+    route_descriptions = [
+        "Reconoce el edificio como sistema vibroacústico y sigue la energía desde la fuente hasta el receptor.",
+        "Distingue fuente, camino de transmisión, estructura radiante y receptor.",
+        "Interpreta desplazamiento, velocidad y aceleración como magnitudes complementarias.",
+        "Comprende los descriptores utilizados para evaluar ruido de impacto.",
+        "Aplica conceptualmente la normalización por tiempo de reverberación.",
+        "Lee espectros y selecciona una cadena básica de instrumentación.",
+        "Relaciona piso flotante, resiliencia, desacoplamiento y puentes rígidos.",
+        "Aplica criterios de control a bombas, tuberías y otras instalaciones.",
+        "Comprueba tu comprensión mediante preguntas conceptuales y aplicadas.",
+        "Integra diagnóstico, evidencia y medidas de control en un caso profesional.",
+    ]
+
+    html = '<div class="route-grid">'
+    for stage in range(1, len(lab["stages"])):
+        title = lab["stages"][stage][0]
+        description = route_descriptions[stage - 1]
+        minutes = route_minutes[stage - 1]
+        html += (
+            f'<div class="route-card"><span class="step">{stage}</span><div>'
+            f'<b>{title}</b><p>{description}</p>'
+            f'<span class="route-time">⏱️ {minutes} min</span></div></div>'
+        )
+        if stage == break_after_stage:
+            html += (
+                f'<div class="break-card"><span class="step">☕</span><div>'
+                f'<b>Pausa pedagógica</b><p>Descanso antes de continuar con el bloque aplicado.</p>'
+                f'<span class="route-time">⏱️ {break_minutes} min</span></div></div>'
+            )
+    st.markdown(html + "</div>", unsafe_allow_html=True)
+
+    st.markdown(
+        '<div class="good" style="margin-top:1rem"><b>Así aprenderás:</b> '
+        'observación visual → mecanismo físico → magnitud → medición → diagnóstico → control → caso profesional.</div>',
+        unsafe_allow_html=True,
+    )
+
+    st.markdown(
+        '<div class="warn" style="margin-top:1rem"><b>Idea central del laboratorio:</b> '
+        'antes de seleccionar una solución debes reconocer por dónde entra, se propaga y se radia la energía.</div>',
+        unsafe_allow_html=True,
+    )
+
+    if st.button("Comenzar laboratorio →", type="primary", key=f"start_course2_lab1_{class_id}", width="stretch"):
+        saved["done_0"] = True
+        saved["updated_0"] = _now()
+        _save_future_state_impl(class_id, saved)
+        st.session_state[stage_selector_key] = 1
+        st.rerun()
+
+def _render_course2_lab1_stage1(lab, saved):
+    """Etapa 1 del Curso 2 · Laboratorio 1: edificio como sistema vibroacústico."""
+    class_id = lab["id"]
+    stage_selector_key = f"future_stage_{class_id}"
+
+    header(
+        "ETAPA 1 · LABORATORIO 1",
         "El edificio como sistema vibroacústico",
         "Reconocer cómo la energía puede ingresar al edificio, propagarse por su estructura y radiarse posteriormente como sonido.",
         show_overview=False,
-        duration_minutes=20,
+        duration_minutes=35,
     )
     st.caption(f"{lab['course']} · Laboratorio 1")
 
@@ -1125,26 +1208,28 @@ def _render_course2_lab1_stage0(lab, saved):
     )
     st.caption(f"Respuestas formativas guardadas: {completed_questions} de {len(required)}")
 
-    if saved.get("done_0"):
-        st.success("Etapa 0 completada y guardada en tu progreso.")
+    if saved.get("done_1"):
+        st.success("Etapa 1 completada y guardada en tu progreso.")
     else:
-        if st.button("Completar Etapa 0", type="primary", key=f"complete_stage0_{class_id}"):
+        if st.button("Completar Etapa 1", type="primary", key=f"complete_stage1_{class_id}"):
             if completed_questions < len(required):
                 st.warning("Guarda las cuatro respuestas formativas antes de completar la etapa.")
             elif explored_count < explored_total:
                 st.warning("Explora Pisada, Bomba y Descarga sanitaria en ‘Sigue la energía’ antes de completar la etapa.")
             else:
-                saved["done_0"] = True
-                saved["updated_0"] = _now()
+                saved["done_1"] = True
+                saved["updated_1"] = _now()
                 _save_future_state_impl(class_id, saved)
                 st.rerun()
 
     nav_left, nav_right = st.columns(2)
     with nav_left:
-        st.button("← Anterior", disabled=True, key=f"stage0_prev_{class_id}", width="stretch")
+        if st.button("← Etapa 0", key=f"stage1_prev_{class_id}", width="stretch"):
+            st.session_state[stage_selector_key] = 0
+            st.rerun()
     with nav_right:
-        if st.button("Etapa 1 →", key=f"stage0_next_{class_id}", width="stretch"):
-            st.session_state[stage_selector_key] = 1
+        if st.button("Etapa 2 →", key=f"stage1_next_{class_id}", width="stretch"):
+            st.session_state[stage_selector_key] = 2
             st.rerun()
 
 
@@ -1188,9 +1273,20 @@ def future_lab_view_impl(lab):
             st.session_state["main_view"]=future_view
             st.rerun()
 
-        answered=sum(1 for i in range(11) if saved.get(f"done_{i}"))
-        st.progress(answered/11)
-        st.caption(f"Avance: {answered}/11 etapas · {answered*10}/110 puntos formativos")
+        total_stages = len(lab["stages"])
+        answered = sum(1 for i in range(total_stages) if saved.get(f"done_{i}"))
+        st.progress(answered / total_stages if total_stages else 0)
+        if class_id == "clase-03-impacto-instalaciones-lab-1":
+            content_completed = sum(1 for i in range(1, total_stages) if saved.get(f"done_{i}"))
+            st.caption(
+                f"Avance: {answered}/{total_stages} etapas · "
+                f"{content_completed*10}/100 puntos formativos"
+            )
+        else:
+            st.caption(
+                f"Avance: {answered}/{total_stages} etapas · "
+                f"{answered*10}/{total_stages*10} puntos formativos"
+            )
 
         # Herramientas comunes del diplomado.
         formula_popup_button()
@@ -1233,7 +1329,7 @@ def future_lab_view_impl(lab):
 
         selected=st.radio(
             "Ruta de aprendizaje",
-            list(range(11)),
+            list(range(len(lab["stages"]))),
             format_func=lambda i:f"Etapa {i} · {lab['stages'][i][0]}",
             key=f"future_stage_{class_id}",
         )
@@ -1265,9 +1361,13 @@ def future_lab_view_impl(lab):
             st.session_state.clear(); st.rerun()
         st.caption("Docente: Marco Araos Barría")
 
-    if class_id == "clase-03-impacto-instalaciones-lab-1" and selected == 0:
-        _render_course2_lab1_stage0(lab, saved)
-        return
+    if class_id == "clase-03-impacto-instalaciones-lab-1":
+        if selected == 0:
+            _render_course2_lab1_welcome(lab, saved)
+            return
+        if selected == 1:
+            _render_course2_lab1_stage1(lab, saved)
+            return
 
     title,objective,concept,activity=lab["stages"][selected]
     stage_minutes=20 if selected not in (9,10) else 35
@@ -1351,12 +1451,15 @@ def future_projection_stage_impl(lab, stage):
     st.session_state["role"] = "Proyección"
     st.session_state["name"] = "Pantalla de clase"
 
-    # La Etapa 0 integrada del Curso 2 se proyecta con el mismo contenido visible
-    # del alumno, pero sobre un estado efímero para no registrar respuestas de la
-    # pantalla de Zoom en la base de datos.
-    if lab.get("id") == "clase-03-impacto-instalaciones-lab-1" and stage == 0:
-        _render_course2_lab1_stage0(lab, {})
-        return
+    # Curso 2 · Laboratorio 1: Etapa 0 de bienvenida y Etapa 1 vibroacústica.
+    # La proyección usa estado efímero para no registrar respuestas desde Zoom.
+    if lab.get("id") == "clase-03-impacto-instalaciones-lab-1":
+        if stage == 0:
+            _render_course2_lab1_welcome(lab, {})
+            return
+        if stage == 1:
+            _render_course2_lab1_stage1(lab, {})
+            return
 
     title, objective, concept, activity = lab["stages"][stage]
     stage_minutes = 20 if stage not in (9, 10) else 35
