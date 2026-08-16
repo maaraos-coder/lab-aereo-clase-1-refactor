@@ -618,19 +618,32 @@ def _course2_lab1_stage0_pump_lab(class_id, saved):
     elif current == "Control integral ventilado":
         st.success("La solución combina control estructural, control aéreo y ventilación acústicamente tratada.")
 
-    with st.expander("Conclusión del laboratorio"):
-        st.markdown(
-            """
-Una bomba puede transferir energía simultáneamente por **apoyos**, **tuberías**
-y **radiación aérea**. Por eso:
-
-- los aisladores no sustituyen el desacoplamiento de tuberías;
-- una conexión flexible no sustituye soportes adecuados;
-- un encierro no sustituye el control estructural;
-- un encierro real debe considerar **ventilación y refrigeración**;
-- las entradas y salidas de aire deben diseñarse para no convertirse en fugas acústicas.
-            """
-        )
+    st.markdown(
+        """
+        <div style="
+            border:1px solid #cfd8e3;
+            border-radius:12px;
+            padding:16px 18px;
+            margin:14px 0 18px 0;
+            background:#f8fbff;">
+            <div style="font-weight:700; font-size:1.02rem; margin-bottom:10px;">
+                🧭 Conclusión del laboratorio
+            </div>
+            <div style="line-height:1.6; margin-bottom:8px;">
+                Una bomba puede transferir energía simultáneamente por <b>apoyos</b>,
+                <b>tuberías</b> y <b>radiación aérea</b>. Por eso:
+            </div>
+            <ul style="margin:8px 0 0 20px; line-height:1.6;">
+                <li>los aisladores no sustituyen el desacoplamiento de tuberías;</li>
+                <li>una conexión flexible no sustituye soportes adecuados;</li>
+                <li>un encierro no sustituye el control estructural;</li>
+                <li>un encierro real debe considerar <b>ventilación y refrigeración</b>;</li>
+                <li>las entradas y salidas de aire deben diseñarse para no convertirse en fugas acústicas.</li>
+            </ul>
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
 
     st.markdown("**Principio profesional**")
     st.info(
@@ -1006,16 +1019,31 @@ def _render_course2_lab1_stage1(lab, saved):
             st.warning(f"Falta el recurso visual: {radiation_assets[radiation_mode]}")
     st.info(radiation_text[radiation_mode])
 
-    with st.expander("¿Qué representa la eficiencia de radiación σ?", expanded=False):
-        st.write(
-            "La eficiencia de radiación **σ** expresa cuán eficazmente el movimiento normal de una superficie se convierte "
-            "en potencia acústica radiada. En esta etapa basta con reconocer que **medir vibración no demuestra, por sí solo, "
-            "que una superficie sea un radiador acústico eficiente**."
-        )
-        st.markdown(
-            "Depende, entre otros factores, de la **frecuencia**, las **dimensiones de la superficie**, el **patrón espacial de vibración** "
-            "y el **acoplamiento estructura–aire**."
-        )
+    st.markdown(
+        """
+        <div style="
+            border:1px solid #cfd8e3;
+            border-radius:12px;
+            padding:16px 18px;
+            margin:10px 0 18px 0;
+            background:#f8fbff;">
+            <div style="font-weight:700; font-size:1.02rem; margin-bottom:8px;">
+                💡 ¿Qué representa la eficiencia de radiación σ?
+            </div>
+            <div style="line-height:1.55;">
+                La eficiencia de radiación <b>σ</b> expresa cuán eficazmente el movimiento normal
+                de una superficie se convierte en potencia acústica radiada.
+                <br><br>
+                En esta etapa basta con reconocer que <b>medir vibración no demuestra, por sí solo,
+                que una superficie sea un radiador acústico eficiente</b>.
+                <br><br>
+                Depende, entre otros factores, de la <b>frecuencia</b>, las <b>dimensiones de la superficie</b>,
+                el <b>patrón espacial de vibración</b> y el <b>acoplamiento estructura–aire</b>.
+            </div>
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
 
     st.markdown("### 5 · Sigue la energía · De la pisada al receptor")
     st.write(
