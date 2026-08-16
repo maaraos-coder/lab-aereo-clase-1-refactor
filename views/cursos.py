@@ -673,8 +673,21 @@ def _course2_lab1_stage0_pump_lab(class_id, saved):
     )
 
 def _course2_lab1_stage0_energy_interactive(class_id, saved):
-    """Observación inicial y exploración visual de las fuentes de la Etapa 0."""
-    state = saved.get("stage0_energy") if isinstance(saved.get("stage0_energy"), dict) else {}
+    """Observación inicial y exploración visual de las fuentes."""
+    projection_mode = (
+        st.session_state.get("projection_mode")
+        or st.session_state.get("role") == "Proyección"
+    )
+
+    projection_state_key = f"{class_id}_s0_projection_energy"
+
+    if projection_mode:
+        state = st.session_state.get(projection_state_key, {})
+        if not isinstance(state, dict):
+            state = {}
+    else:
+        state = saved.get("stage0_energy") if isinstance(saved.get("stage0_energy"), dict) else {}
+
     identified = bool(state.get("identified", False))
     explored = set(state.get("explored", []))
 
@@ -698,68 +711,164 @@ def _course2_lab1_stage0_energy_interactive(class_id, saved):
             st.warning("Falta la imagen base del edificio vibroacústico.")
 
         options = [
-            "Pisadas de una persona", "Bomba centrífuga", "Descarga sanitaria",
-            "Conversación de la pareja", "Refrigerador", "Iluminación del departamento",
+            "Pisadas de una persona",
+            "Bomba centrífuga",
+            "Descarga sanitaria",
+            "Conversación de la pareja",
+            "Refrigerador",
+            "Iluminación del departamento",
         ]
         correct = {"Pisadas de una persona", "Bomba centrífuga", "Descarga sanitaria"}
+
         selected = set()
-        for i,opt in enumerate(options):
+        for i, opt in enumerate(options):
             if st.checkbox(opt, key=f"{class_id}_s0_ident_{i}"):
                 selected.add(opt)
-        if st.button("Comprobar identificación", type="primary", use_container_width=True,
-                     key=f"{class_id}_s0_check_sources"):
-            if selected == correct:
-                saved["stage0_energy"]={"identified":True,"explored":list(explored),"updated_at":_now()}
-                _save_future_state_impl(class_id, saved)
+
+        c1, c2 = st.columns([0.78, 0.22])
+
+        with c1:
+            if st.button(
+                "Comprobar identificación",
+                type="primary",
+                use_container_width=True,
+                key=f"{class_id}_s0_check_sources",
+            ):
+                if selected == correct:
+                    new_state = {
+                        "identified": True,
+                        "explored": sorted(explored),
+                        "updated_at": _now(),
+                    }
+
+                    if projection_mode:
+                        st.session_state[projection_state_key] = new_state
+                    else:
+                        saved["stage0_energy"] = new_state
+                        _save_future_state_impl(class_id, saved)
+
+                    st.rerun()
+                else:
+                    st.session_state[f"{class_id}_s0_ident_feedback"] = True
+
+        with c2:
+            if projection_mode and st.button(
+                "Reiniciar",
+                use_container_width=True,
+                key=f"{class_id}_s0_reset_sources_projection",
+            ):
+                st.session_state.pop(projection_state_key, None)
+                st.session_state.pop(f"{class_id}_s0_ident_feedback", None)
+                for i in range(len(options)):
+                    st.session_state.pop(f"{class_id}_s0_ident_{i}", None)
                 st.rerun()
-            else:
-                st.warning("Revisa la escena: busca fuentes capaces de introducir energía mecánica en el edificio o sus instalaciones.")
+
+        if st.session_state.get(f"{class_id}_s0_ident_feedback"):
+            missed = correct - selected
+            extra = selected - correct
+
+            feedback = []
+            if missed:
+                feedback.append("Falta identificar: **" + ", ".join(sorted(missed)) + "**.")
+            if extra:
+                feedback.append(
+                    "Revisa: **" + ", ".join(sorted(extra)) +
+                    "**; no corresponde a las fuentes estructurales objetivo de esta observación."
+                )
+
+            st.warning(" ".join(feedback) if feedback else
+                       "Revisa la escena y vuelve a intentarlo.")
+
         st.caption("Actividad de observación · sin puntaje.")
         return len(explored), len(sources)
 
-    st.success("Muy bien. Identificaste las fuentes representadas. Ahora sigue la energía desde cada una.")
+    st.success(
+        "Muy bien. Identificaste las fuentes representadas. "
+        "Ahora sigue la energía desde cada una."
+    )
     st.markdown("#### Sigue la energía")
-    st.caption("Selecciona una fuente. La imagen base es la misma; solo cambia el camino destacado.")
+    st.caption(
+        "Selecciona una fuente. La imagen base es la misma; "
+        "solo cambia el camino destacado."
+    )
 
-    cols=st.columns(3)
-    active_key=f"{class_id}_s0_active_source"
+    cols = st.columns(3)
+    active_key = f"{class_id}_s0_active_source"
     if active_key not in st.session_state:
-        st.session_state[active_key]="Pisada"
-    for col,name in zip(cols,sources):
+        st.session_state[active_key] = "Pisada"
+
+    for col, name in zip(cols, sources):
         with col:
-            label=("✓ " if name in explored else "")+name
-            if st.button(label, use_container_width=True, type="primary" if st.session_state[active_key]==name else "secondary",
-                         key=f"{class_id}_s0_source_{name}"):
-                st.session_state[active_key]=name
+            label = ("✓ " if name in explored else "") + name
+            if st.button(
+                label,
+                use_container_width=True,
+                type="primary" if st.session_state[active_key] == name else "secondary",
+                key=f"{class_id}_s0_source_{name}",
+            ):
+                st.session_state[active_key] = name
                 explored.add(name)
-                saved["stage0_energy"]={"identified":True,"explored":sorted(explored),"updated_at":_now()}
-                _save_future_state_impl(class_id, saved)
+
+                new_state = {
+                    "identified": True,
+                    "explored": sorted(explored),
+                    "updated_at": _now(),
+                }
+
+                if projection_mode:
+                    st.session_state[projection_state_key] = new_state
+                else:
+                    saved["stage0_energy"] = new_state
+                    _save_future_state_impl(class_id, saved)
+
                 st.rerun()
 
-    active=st.session_state[active_key]
-    img=ASSET_DIR / sources[active]
+    active = st.session_state[active_key]
+    img = ASSET_DIR / sources[active]
     if img.exists():
         st.image(img, width="stretch")
     else:
         st.warning(f"Falta el asset `{sources[active]}`.")
 
-    explanations={
-        "Pisada": "El impacto excita directamente la losa. La vibración se propaga por la estructura y una superficie puede radiar sonido hacia el recinto receptor.",
-        "Bomba": "La bomba puede transferir energía por su base y por la tubería; además, su carcasa puede radiar directamente al aire.",
-        "Descarga sanitaria": "La excitación asociada al flujo puede transmitirse a la tubería y a sus fijaciones, propagarse por la estructura y radiarse posteriormente al aire.",
+    explanations = {
+        "Pisada": (
+            "El impacto excita directamente la losa. La vibración se propaga por la estructura "
+            "y una superficie puede radiar sonido hacia el recinto receptor."
+        ),
+        "Bomba": (
+            "La bomba puede transferir energía por su base y por la tubería; "
+            "además, su carcasa puede radiar directamente al aire."
+        ),
+        "Descarga sanitaria": (
+            "La excitación asociada al flujo puede transmitirse a la tubería y a sus fijaciones, "
+            "propagarse por la estructura y radiarse posteriormente al aire."
+        ),
     }
     st.info(explanations[active])
 
-    if st.button("↺ Volver a identificar las fuentes", use_container_width=True,
-                 key=f"{class_id}_s0_reset_ident"):
-        saved["stage0_energy"]={"identified":False,"explored":sorted(explored),"updated_at":_now()}
-        _save_future_state_impl(class_id, saved)
+    if st.button(
+        "↺ Volver a identificar las fuentes",
+        use_container_width=True,
+        key=f"{class_id}_s0_reset_ident",
+    ):
+        new_state = {
+            "identified": False,
+            "explored": sorted(explored),
+            "updated_at": _now(),
+        }
+
+        if projection_mode:
+            st.session_state[projection_state_key] = new_state
+        else:
+            saved["stage0_energy"] = new_state
+            _save_future_state_impl(class_id, saved)
+
+        st.session_state.pop(f"{class_id}_s0_ident_feedback", None)
         for i in range(6):
-            st.session_state.pop(f"{class_id}_s0_ident_{i}",None)
+            st.session_state.pop(f"{class_id}_s0_ident_{i}", None)
         st.rerun()
 
     return len(explored), len(sources)
-
 
 def _future_stage0_mcq(class_id, saved, key, question, options, correct, feedback):
     """Pregunta formativa persistente para la Etapa 0; no asigna puntaje ni nota."""
