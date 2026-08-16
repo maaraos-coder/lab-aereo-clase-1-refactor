@@ -459,178 +459,183 @@ def _course2_lab1_stage0_pump_svg(encierro=False, absorbente=False, antivibrator
 
 
 def _course2_lab1_stage0_pump_lab(class_id, saved):
-    """Punto 7 · Explorador visual de medidas de control de una bomba."""
+    """Punto 7 · Laboratorio conceptual de control vibroacústico de una bomba."""
     st.markdown("### 7 · Laboratorio conceptual · Controla la bomba")
     st.write(
         "Selecciona una medida y observa **qué cambia físicamente en la instalación** "
-        "y qué camino de transmisión resulta afectado. La actividad es conceptual y no predice dB."
+        "y qué camino de transmisión resulta afectado. "
+        "Los estados son conceptuales y no representan una predicción en dB."
     )
 
     states = {
         "Estado inicial": {
-            "asset": "curso2_lab1_etapa0_control_estado_inicial_v3.webp",
-            "base": ("ACTIVO", "Apoyos rígidos transmiten vibración hacia la losa."),
-            "pipe": ("ACTIVO", "Tubería y soportes mantienen continuidad con la estructura."),
-            "air": ("ACTIVO", "La carcasa puede radiar directamente al aire."),
+            "asset": "curso2_lab1_etapa0_p7_estado_inicial.webp",
+            "base": ("ACTIVO", "La bomba puede excitar directamente la losa mediante apoyos rígidos."),
+            "pipe": ("ACTIVO", "La tubería y sus apoyos mantienen continuidad mecánica con la estructura."),
+            "air": ("ACTIVO", "La máquina puede radiar ruido directamente al aire."),
             "note": "Instalación de referencia sin medidas de control.",
         },
         "Aisladores bajo la bomba": {
-            "asset": "curso2_lab1_etapa0_control_aisladores_v3.webp",
+            "asset": "curso2_lab1_etapa0_p7_aisladores.webp",
             "base": ("REDUCIDO", "Los aisladores desacoplan la bancada respecto de la losa."),
-            "pipe": ("ACTIVO", "La tubería todavía constituye un camino estructural."),
+            "pipe": ("ACTIVO", "La tubería todavía puede actuar como puente estructural."),
             "air": ("ACTIVO", "El ruido aéreo de la máquina no ha sido tratado."),
-            "note": "Observa los aisladores incorporados entre la bancada de la bomba y la estructura.",
+            "note": "Los aisladores actúan principalmente sobre el camino máquina → bancada → losa.",
         },
         "Conexión flexible": {
-            "asset": "curso2_lab1_etapa0_control_flexible_v3.webp",
-            "base": ("ACTIVO", "La bomba continúa conectada a la losa por sus apoyos."),
-            "pipe": ("PARCIAL", "El flexible reduce la transmisión hacia la tubería rígida."),
+            "asset": "curso2_lab1_etapa0_p7_conexion_flexible.webp",
+            "base": ("ACTIVO", "Los apoyos de la bomba siguen conectados a la losa."),
+            "pipe": ("PARCIAL", "El flexible reduce la transmisión desde la bomba hacia la tubería rígida."),
             "air": ("ACTIVO", "La radiación aérea no se modifica."),
-            "note": "Observa el elemento flexible incorporado próximo a la descarga de la bomba.",
+            "note": "La conexión flexible interviene la continuidad mecánica entre máquina y tubería.",
         },
         "Soportes resilientes": {
-            "asset": "curso2_lab1_etapa0_control_soportes_v3.webp",
+            "asset": "curso2_lab1_etapa0_p7_soportes_resilientes.webp",
             "base": ("ACTIVO", "La transmisión por los apoyos de la bomba no cambia."),
             "pipe": ("PARCIAL", "Los soportes resilientes reducen el puente tubería → estructura."),
             "air": ("ACTIVO", "La radiación aérea no se modifica."),
-            "note": "Observa los elementos resilientes incorporados en los puntos de apoyo de la tubería.",
+            "note": "Los soportes resilientes desacoplan la tubería de la estructura en sus apoyos.",
         },
-        "Encierro acústico": {
-            "asset": "curso2_lab1_etapa0_control_encierro_v3.webp",
-            "base": ("ACTIVO", "El encierro no desacopla la bomba de la estructura."),
-            "pipe": ("ACTIVO", "La tubería sigue siendo un camino estructural posible."),
-            "air": ("PARCIAL", "El cerramiento reduce la radiación directa hacia el recinto."),
-            "note": "Observa el cerramiento acústico alrededor de la bomba.",
+        "Encierro acústico ventilado": {
+            "asset": "curso2_lab1_etapa0_p7_encierro_ventilado.webp",
+            "base": ("ACTIVO", "El encierro no desacopla la bomba de la losa."),
+            "pipe": ("ACTIVO", "La tubería continúa siendo un camino estructural posible."),
+            "air": ("PARCIAL", "El cerramiento reduce la radiación directa y mantiene ventilación del equipo."),
+            "note": "Encerrar no significa sellar sin ventilación: la refrigeración del equipo debe mantenerse.",
         },
-        "Encierro + absorbente": {
-            "asset": "curso2_lab1_etapa0_control_absorbente_v3.webp",
-            "base": ("ACTIVO", "Los apoyos mecánicos no han sido tratados."),
-            "pipe": ("ACTIVO", "La tubería continúa transmitiendo vibración."),
-            "air": ("REDUCIDO", "El absorbente complementa el comportamiento acústico del encierro."),
-            "note": "Observa el revestimiento absorbente en el interior del cerramiento.",
+        "Silenciadores de ventilación": {
+            "asset": "curso2_lab1_etapa0_p7_silenciadores_ventilacion.webp",
+            "base": ("ACTIVO", "Esta medida no actúa sobre los apoyos de la máquina."),
+            "pipe": ("ACTIVO", "Esta medida no actúa sobre la transmisión por tuberías."),
+            "air": ("REDUCIDO", "Las entradas y salidas de aire se tratan para limitar la fuga acústica."),
+            "note": "Los silenciadores permiten ventilación sin dejar una abertura acústicamente libre.",
         },
         "Control estructural completo": {
-            "asset": "curso2_lab1_etapa0_control_estructural_v3.webp",
-            "base": ("REDUCIDO", "Aisladores reducen el camino máquina → losa."),
+            "asset": "curso2_lab1_etapa0_p7_control_estructural.webp",
+            "base": ("REDUCIDO", "Los aisladores reducen el camino máquina → losa."),
             "pipe": ("REDUCIDO", "Flexible y soportes resilientes reducen el camino por tuberías."),
-            "air": ("ACTIVO", "La radiación aérea permanece disponible."),
-            "note": "Control estructural: aisladores + conexión flexible + soportes resilientes.",
+            "air": ("ACTIVO", "La radiación aérea directa todavía debe tratarse."),
+            "note": "Aisladores + conexión flexible + soportes resilientes.",
         },
-        "Control integral": {
-            "asset": "curso2_lab1_etapa0_control_integral_v3.webp",
-            "base": ("REDUCIDO", "La base está desacoplada."),
-            "pipe": ("REDUCIDO", "La tubería está desacoplada en conexión y soportes."),
-            "air": ("REDUCIDO", "Encierro y tratamiento interior actúan sobre el camino aéreo."),
-            "note": "Control integral: combina medidas estructurales y acústicas.",
+        "Control integral ventilado": {
+            "asset": "curso2_lab1_etapa0_p7_control_integral_ventilado.webp",
+            "base": ("REDUCIDO", "La bancada está desacoplada de la losa."),
+            "pipe": ("REDUCIDO", "La tubería está desacoplada en conexión y apoyos."),
+            "air": ("REDUCIDO", "Encierro ventilado y silenciadores reducen el camino aéreo."),
+            "note": "Control estructural + encierro acústico ventilado + silenciadores de ventilación.",
         },
     }
 
     state_key = f"{class_id}_pump_control_state"
-    current_saved = saved.get("stage0_pump_lab_state", "Estado inicial")
-    aliases = {"Aisladores": "Aisladores bajo la bomba"}
-    current_saved = aliases.get(current_saved, current_saved)
-    if current_saved not in states:
-        current_saved = "Estado inicial"
+    stored = saved.get("stage0_pump_lab_state", "Estado inicial")
+    aliases = {
+        "Aisladores": "Aisladores bajo la bomba",
+        "Encierro acústico": "Encierro acústico ventilado",
+        "Encierro + absorbente": "Silenciadores de ventilación",
+        "Control integral": "Control integral ventilado",
+    }
+    stored = aliases.get(stored, stored)
+    if stored not in states:
+        stored = "Estado inicial"
     if state_key not in st.session_state:
-        st.session_state[state_key] = current_saved
+        st.session_state[state_key] = stored
+
+    def choose(label, suffix):
+        if st.button(
+            label,
+            key=f"{class_id}_pump_state_{suffix}",
+            use_container_width=True,
+            type="primary" if st.session_state[state_key] == label else "secondary",
+        ):
+            st.session_state[state_key] = label
+            saved["stage0_pump_lab_state"] = label
+            saved["stage0_pump_lab_explored"] = True
+            saved["stage0_pump_lab_updated_at"] = _now()
+            _save_future_state_impl(class_id, saved)
+            st.rerun()
 
     st.markdown("#### 1 · Explora una medida")
-    individual = [
+    r1, r2 = st.columns(3), st.columns(3)
+    labels = [
         "Estado inicial",
         "Aisladores bajo la bomba",
         "Conexión flexible",
         "Soportes resilientes",
-        "Encierro acústico",
-        "Encierro + absorbente",
+        "Encierro acústico ventilado",
+        "Silenciadores de ventilación",
     ]
-    r1=st.columns(3)
-    r2=st.columns(3)
-    for i,label in enumerate(individual):
-        col=r1[i] if i<3 else r2[i-3]
-        with col:
-            if st.button(
-                label,
-                key=f"{class_id}_pump_visual_{i}",
-                use_container_width=True,
-                type="primary" if st.session_state[state_key]==label else "secondary",
-            ):
-                st.session_state[state_key]=label
-                saved["stage0_pump_lab_state"]=label
-                saved["stage0_pump_lab_explored"]=True
-                saved["stage0_pump_lab_updated_at"]=_now()
-                _save_future_state_impl(class_id,saved)
-                st.rerun()
+    for i, label in enumerate(labels):
+        with (r1[i] if i < 3 else r2[i-3]):
+            choose(label, i)
 
     st.markdown("#### 2 · Compara soluciones")
-    c1,c2=st.columns(2)
-    for col,label,idx in (
-        (c1,"Control estructural completo",20),
-        (c2,"Control integral",21),
-    ):
-        with col:
-            if st.button(
-                label,
-                key=f"{class_id}_pump_visual_{idx}",
-                use_container_width=True,
-                type="primary" if st.session_state[state_key]==label else "secondary",
-            ):
-                st.session_state[state_key]=label
-                saved["stage0_pump_lab_state"]=label
-                saved["stage0_pump_lab_explored"]=True
-                saved["stage0_pump_lab_updated_at"]=_now()
-                _save_future_state_impl(class_id,saved)
-                st.rerun()
+    c1, c2 = st.columns(2)
+    with c1:
+        choose("Control estructural completo", 20)
+    with c2:
+        choose("Control integral ventilado", 21)
 
-    current=st.session_state[state_key]
+    current = st.session_state[state_key]
     if current not in states:
-        current="Estado inicial"
-        st.session_state[state_key]=current
-    cfg=states[current]
+        current = "Estado inicial"
+        st.session_state[state_key] = current
+    cfg = states[current]
 
-    # No title duplicated above the image: the selected button already identifies the state.
-    asset=ASSET_DIR/cfg["asset"]
-    if asset.exists():
-        st.image(str(asset), width="stretch")
+    path = ASSET_DIR / cfg["asset"]
+    if path.exists():
+        st.image(str(path), width="stretch")
     else:
-        st.error(f"Falta el render `{cfg['asset']}`.")
+        st.error(f"No se encontró el render `{cfg['asset']}`.")
 
     st.info(cfg["note"])
 
     st.markdown("#### ¿Qué camino estás interviniendo?")
-    cols=st.columns(3)
-    data=[
+    cols = st.columns(3)
+    cards = [
         ("MÁQUINA → LOSA", cfg["base"]),
         ("TUBERÍA → ESTRUCTURA", cfg["pipe"]),
         ("CARCASA → AIRE", cfg["air"]),
     ]
-    for col,(title,(status,description)) in zip(cols,data):
+    for col, (title, (status, desc)) in zip(cols, cards):
         with col:
             with st.container(border=True):
                 st.markdown(f"**{title}**")
                 st.markdown(f"### {status}")
-                st.caption(description)
+                st.caption(desc)
 
     if current == "Aisladores bajo la bomba":
         st.warning("Una tubería rígida puede seguir puenteando el aislamiento de la base.")
-    elif current in {"Conexión flexible","Soportes resilientes"}:
-        st.warning("Este camino queda tratado solo parcialmente si no se intervienen también los otros puntos rígidos de la tubería.")
-    elif current == "Encierro acústico":
-        st.info("El encierro actúa sobre ruido aéreo; no sustituye el desacoplamiento mecánico.")
+    elif current == "Conexión flexible":
+        st.warning("El flexible no sustituye el tratamiento de los soportes rígidos de la tubería.")
+    elif current == "Soportes resilientes":
+        st.warning("Los soportes resilientes no sustituyen una conexión flexible próxima a la máquina.")
+    elif current == "Encierro acústico ventilado":
+        st.info("El encierro debe considerar ventilación, disipación térmica, mantenimiento y posibles fugas acústicas.")
+    elif current == "Silenciadores de ventilación":
+        st.info("Una abertura de ventilación puede transformarse en una fuga acústica si no se trata.")
     elif current == "Control estructural completo":
         st.success("Los caminos estructurales representados están intervenidos; el camino aéreo permanece activo.")
-    elif current == "Control integral":
-        st.success("La combinación actúa sobre los tres caminos considerados en este modelo conceptual.")
+    elif current == "Control integral ventilado":
+        st.success("La solución combina control estructural, control aéreo y ventilación acústicamente tratada.")
 
     with st.expander("Conclusión del laboratorio"):
-        st.write(
-            "Una misma bomba puede transmitir energía simultáneamente por sus apoyos, por las tuberías "
-            "y directamente al aire. Por eso, una única medida rara vez controla todos los mecanismos."
+        st.markdown(
+            """
+Una bomba puede transferir energía simultáneamente por **apoyos**, **tuberías**
+y **radiación aérea**. Por eso:
+
+- los aisladores no sustituyen el desacoplamiento de tuberías;
+- una conexión flexible no sustituye soportes adecuados;
+- un encierro no sustituye el control estructural;
+- un encierro real debe considerar **ventilación y refrigeración**;
+- las entradas y salidas de aire deben diseñarse para no convertirse en fugas acústicas.
+            """
         )
 
     st.markdown("**Principio profesional**")
     st.info(
-        "Un solo puente rígido puede comprometer el desacoplamiento. "
-        "El control efectivo consiste en identificar y tratar los caminos relevantes hasta el receptor."
+        "El control efectivo consiste en identificar los caminos relevantes "
+        "y aplicar la medida adecuada en el punto físico correcto."
     )
 
 def _course2_lab1_stage0_energy_interactive(class_id, saved):
