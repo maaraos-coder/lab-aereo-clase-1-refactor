@@ -504,7 +504,7 @@ def _course2_lab1_stage0_pump_lab(class_id, saved):
             "note": "Encerrar no significa sellar sin ventilación: la refrigeración del equipo debe mantenerse.",
         },
         "Ventilación acústicamente tratada": {
-            "asset": "curso2_lab1_etapa0_p7_ventilacion_tratada_clara.webp",
+            "asset": "curso2_lab1_etapa0_p7_ventilacion_tratada_visible.webp",
             "base": ("ACTIVO", "Esta medida no actúa sobre los apoyos de la máquina."),
             "pipe": ("ACTIVO", "Esta medida no actúa sobre la transmisión por tuberías."),
             "air": ("REDUCIDO", "Las entradas y salidas de aire se tratan para limitar la fuga acústica."),
@@ -1131,9 +1131,9 @@ def _render_course2_lab1_stage1(lab, saved):
 
     active_path=st.session_state[pump_path_key]
     pump_assets={
-        "base":"curso2_lab1_etapa0_bomba_base_sin_cian.webp",
-        "pipe":"curso2_lab1_etapa0_bomba_pipe_sin_cian.webp",
-        "air":"curso2_lab1_etapa0_bomba_air_sin_cian.webp",
+        "base":"curso2_lab1_etapa0_p6_base_resaltada.webp",
+        "pipe":"curso2_lab1_etapa0_p6_tuberia_resaltada.webp",
+        "air":"curso2_lab1_etapa0_p6_aire_resaltado.webp",
     }
     pump_asset_path=ASSET_DIR / pump_assets[active_path]
 
