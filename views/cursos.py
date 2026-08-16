@@ -503,12 +503,12 @@ def _course2_lab1_stage0_pump_lab(class_id, saved):
             "air": ("PARCIAL", "El cerramiento reduce la radiación directa y mantiene ventilación del equipo."),
             "note": "Encerrar no significa sellar sin ventilación: la refrigeración del equipo debe mantenerse.",
         },
-        "Silenciadores de ventilación": {
-            "asset": "curso2_lab1_etapa0_p7_silenciadores_ventilacion.webp",
+        "Ventilación acústicamente tratada": {
+            "asset": "curso2_lab1_etapa0_p7_ventilacion_tratada_clara.webp",
             "base": ("ACTIVO", "Esta medida no actúa sobre los apoyos de la máquina."),
             "pipe": ("ACTIVO", "Esta medida no actúa sobre la transmisión por tuberías."),
             "air": ("REDUCIDO", "Las entradas y salidas de aire se tratan para limitar la fuga acústica."),
-            "note": "Los silenciadores permiten ventilación sin dejar una abertura acústicamente libre.",
+            "note": "La admisión y la extracción incorporan tratamiento acústico para permitir ventilación sin dejar una abertura acústicamente libre.",
         },
         "Control estructural completo": {
             "asset": "curso2_lab1_etapa0_p7_control_estructural.webp",
@@ -531,7 +531,7 @@ def _course2_lab1_stage0_pump_lab(class_id, saved):
     aliases = {
         "Aisladores": "Aisladores bajo la bomba",
         "Encierro acústico": "Encierro acústico ventilado",
-        "Encierro + absorbente": "Silenciadores de ventilación",
+        "Encierro + absorbente": "Ventilación acústicamente tratada",
         "Control integral": "Control integral ventilado",
     }
     stored = aliases.get(stored, stored)
@@ -562,7 +562,7 @@ def _course2_lab1_stage0_pump_lab(class_id, saved):
         "Conexión flexible",
         "Soportes resilientes",
         "Encierro acústico ventilado",
-        "Silenciadores de ventilación",
+        "Ventilación acústicamente tratada",
     ]
     for i, label in enumerate(labels):
         with (r1[i] if i < 3 else r2[i-3]):
@@ -611,7 +611,7 @@ def _course2_lab1_stage0_pump_lab(class_id, saved):
         st.warning("Los soportes resilientes no sustituyen una conexión flexible próxima a la máquina.")
     elif current == "Encierro acústico ventilado":
         st.info("El encierro debe considerar ventilación, disipación térmica, mantenimiento y posibles fugas acústicas.")
-    elif current == "Silenciadores de ventilación":
+    elif current == "Ventilación acústicamente tratada":
         st.info("Una abertura de ventilación puede transformarse en una fuga acústica si no se trata.")
     elif current == "Control estructural completo":
         st.success("Los caminos estructurales representados están intervenidos; el camino aéreo permanece activo.")
@@ -1103,9 +1103,9 @@ def _render_course2_lab1_stage1(lab, saved):
 
     active_path=st.session_state[pump_path_key]
     pump_assets={
-        "base":"curso2_lab1_etapa0_bomba_base_clean.webp",
-        "pipe":"curso2_lab1_etapa0_bomba_pipe_clean.webp",
-        "air":"curso2_lab1_etapa0_bomba_air_clean.webp",
+        "base":"curso2_lab1_etapa0_bomba_base_sin_cian.webp",
+        "pipe":"curso2_lab1_etapa0_bomba_pipe_sin_cian.webp",
+        "air":"curso2_lab1_etapa0_bomba_air_sin_cian.webp",
     }
     pump_asset_path=ASSET_DIR / pump_assets[active_path]
 
