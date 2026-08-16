@@ -1343,8 +1343,8 @@ def _render_course2_lab1_stage1(lab, saved):
     )
 
     # Reuse the pre-existing surface-motion interactive if present in this project.
-    tangential = ASSET_DIR / "curso2_lab1_etapa0_tangential.webp"
-    normal = ASSET_DIR / "curso2_lab1_etapa0_normal.webp"
+    tangential = ASSET_DIR / "curso2_lab1_etapa0_mov_tangencial.webp"
+    normal = ASSET_DIR / "curso2_lab1_etapa0_mov_normal_apreciable.webp"
 
     motion_key = f"{class_id}_stage1_motion"
     motion = st.radio(
@@ -1371,12 +1371,28 @@ def _render_course2_lab1_stage1(lab, saved):
 
     st.latex(r"v_n(t)\neq 0 \quad \Rightarrow \quad \text{la superficie puede acoplar energía al aire}")
 
+    radiation_overview = ASSET_DIR / "curso2_lab1_etapa0_vibracion_radiacion.webp"
+    if radiation_overview.exists():
+        st.image(radiation_overview, width="stretch")
+
     st.markdown("#### Pero vibrar no significa radiar eficientemente")
     st.latex(r"\mathrm{VIBRACIÓN\ MEDIBLE \neq RADIACIÓN\ ACÚSTICA\ EFICIENTE}")
     st.write(
         "Dos superficies pueden presentar niveles comparables de vibración y, aun así, radiar cantidades de sonido muy diferentes. "
         "Importan la distribución espacial y fase del movimiento, la frecuencia, las dimensiones y el acoplamiento estructura–aire."
     )
+
+    rad_cols = st.columns(2)
+    coherent_img = ASSET_DIR / "curso2_lab1_etapa0_radiacion_coherente.webp"
+    cancellation_img = ASSET_DIR / "curso2_lab1_etapa0_radiacion_cancelacion.webp"
+    with rad_cols[0]:
+        if coherent_img.exists():
+            st.image(coherent_img, width="stretch")
+            st.caption("Mayor contribución coherente: distintas regiones pueden reforzar la radiación neta.")
+    with rad_cols[1]:
+        if cancellation_img.exists():
+            st.image(cancellation_img, width="stretch")
+            st.caption("Mayor cancelación espacial: regiones fuera de fase pueden reducir la radiación neta.")
 
     st.markdown(
         """
@@ -1428,13 +1444,13 @@ def _render_course2_lab1_stage1(lab, saved):
 
     # Use existing footstep assets if available; otherwise fall back to the main footstep render.
     footstep_assets = [
-        "curso2_lab1_etapa0_footstep_impact.webp",
-        "curso2_lab1_etapa0_footstep_response.webp",
-        "curso2_lab1_etapa0_footstep_propagation.webp",
-        "curso2_lab1_etapa0_footstep_radiation.webp",
-        "curso2_lab1_etapa0_footstep_receiver.webp",
+        "curso2_lab1_etapa0_pisada_impacto.webp",
+        "curso2_lab1_etapa0_pisada_respuesta.webp",
+        "curso2_lab1_etapa0_pisada_propagacion.webp",
+        "curso2_lab1_etapa0_pisada_radiacion.webp",
+        "curso2_lab1_etapa0_pisada_receptor.webp",
     ]
-    fallback = ASSET_DIR / "curso2_lab1_etapa0_footstep.webp"
+    fallback = ASSET_DIR / "curso2_lab1_etapa0_pisada_impacto.webp"
     selected_idx = st.session_state[step_key]
     selected_asset = ASSET_DIR / footstep_assets[selected_idx]
     if selected_asset.exists():
