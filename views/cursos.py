@@ -137,17 +137,38 @@ def _future_saved_impl(class_id):
         return {}
 
 def _save_future_state_impl(class_id,state):
-    client=_supabase()
-    st.session_state[f"future_saved_{class_id}"]=state
+    """Guarda progreso solo para usuarios reales.
+
+    La vista de Proyección es interactiva durante la clase, pero su estado es
+    temporal: nunca debe escribir respuestas, avance ni puntaje en la base de datos.
+    """
+    st.session_state[f"future_saved_{class_id}"] = state
+
+    # Pantalla de Zoom / proyección: estado solo de sesión.
+    if (
+        st.session_state.get("projection_mode")
+        or st.session_state.get("role") == "Proyección"
+    ):
+        return
+
+    # Seguridad adicional: si no existe un usuario autenticado no se persiste.
+    user_key = st.session_state.get("user_key")
+    if not user_key:
+        return
+
+    client = _supabase()
     if client is None:
         return
+
     client.table("user_progress").upsert({
-        "course_id":COURSE_ID,"class_id":class_id,
-        "user_key":st.session_state.user_key,
-        "role":st.session_state.get("role","Alumno"),
-        "display_name":st.session_state.get("name",""),
-        "state_json":state,"updated_at":_now(),
-    },on_conflict="class_id,user_key").execute()
+        "course_id": COURSE_ID,
+        "class_id": class_id,
+        "user_key": user_key,
+        "role": st.session_state.get("role", "Alumno"),
+        "display_name": st.session_state.get("name", ""),
+        "state_json": state,
+        "updated_at": _now(),
+    }, on_conflict="class_id,user_key").execute()
 
 def _course2_lab1_stage0_asset(filename, caption):
     """Muestra el asset oficial si existe; de lo contrario deja su espacio identificado."""

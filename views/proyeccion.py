@@ -79,6 +79,5 @@ def projection_view_impl():
         if row[5] and row[3]:
             st.markdown("#### Solución revelada por el docente")
             st.success(row[3])
-    st.caption("Vista para alumnos: sin profundización docente, nombres, puntajes ni controles privados.")
-    if st.button("Actualizar pantalla",width="stretch"):
+    if st.button("Actualizar pantalla", width="stretch"):
         st.rerun()
