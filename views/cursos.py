@@ -496,19 +496,19 @@ def _course2_lab1_stage0_pump_lab(class_id, saved):
             "air": ("ACTIVO", "La radiación aérea no se modifica."),
             "note": "Los soportes resilientes desacoplan la tubería de la estructura en sus apoyos.",
         },
-        "Encierro acústico ventilado": {
-            "asset": "curso2_lab1_etapa0_p7_encierro_ventilado_v4.webp",
+        "Encierro acústico sin ventilación": {
+            "asset": "curso2_lab1_etapa0_p7_encierro_sin_ventilacion.webp",
             "base": ("ACTIVO", "El encierro no desacopla la bomba de la losa."),
             "pipe": ("ACTIVO", "La tubería continúa siendo un camino estructural posible."),
             "air": ("PARCIAL", "El cerramiento reduce la radiación directa y mantiene ventilación del equipo."),
-            "note": "El encierro incorpora aberturas para admisión y extracción de aire, de modo que el motor mantenga condiciones adecuadas de ventilación y disipación térmica.",
+            "note": "El cerramiento reduce la radiación aérea de la máquina, pero sin ventilación puede aumentar la temperatura del motor; se usa aquí como contraste conceptual, no como solución recomendada para operación continua.",
         },
-        "Ventilación acústicamente tratada": {
-            "asset": "curso2_lab1_etapa0_p7_ventilacion_tratada_v4.webp",
+        "Encierro acústico con ventilación": {
+            "asset": "curso2_lab1_etapa0_p7_encierro_con_ventilacion.webp",
             "base": ("ACTIVO", "Esta medida no actúa sobre los apoyos de la máquina."),
             "pipe": ("ACTIVO", "Esta medida no actúa sobre la transmisión por tuberías."),
             "air": ("REDUCIDO", "Las entradas y salidas de aire se tratan para limitar la fuga acústica."),
-            "note": "La admisión y la extracción incorporan elementos acústicos visibles para reducir la fuga de ruido a través de la ventilación.",
+            "note": "El encierro incorpora louvers para permitir el paso de aire y favorecer la disipación del calor del motor, evitando dejar una abertura completamente libre.",
         },
         "Control estructural completo": {
             "asset": "curso2_lab1_etapa0_p7_control_estructural.webp",
@@ -518,11 +518,11 @@ def _course2_lab1_stage0_pump_lab(class_id, saved):
             "note": "Aisladores + conexión flexible + soportes resilientes.",
         },
         "Control integral ventilado": {
-            "asset": "curso2_lab1_etapa0_p7_control_integral_ventilado.webp",
+            "asset": "curso2_lab1_etapa0_p7_control_integral_ventilado_v2.webp",
             "base": ("REDUCIDO", "La bancada está desacoplada de la losa."),
             "pipe": ("REDUCIDO", "La tubería está desacoplada en conexión y apoyos."),
             "air": ("REDUCIDO", "Encierro ventilado y silenciadores reducen el camino aéreo."),
-            "note": "Control estructural + encierro acústico ventilado + silenciadores de ventilación.",
+            "note": "Control integral: aisladores bajo la bomba + conexión flexible + soportes resilientes + encierro acústico opaco con louvers de ventilación.",
         },
     }
 
@@ -530,8 +530,8 @@ def _course2_lab1_stage0_pump_lab(class_id, saved):
     stored = saved.get("stage0_pump_lab_state", "Estado inicial")
     aliases = {
         "Aisladores": "Aisladores bajo la bomba",
-        "Encierro acústico": "Encierro acústico ventilado",
-        "Encierro + absorbente": "Ventilación acústicamente tratada",
+        "Encierro acústico": "Encierro acústico sin ventilación",
+        "Encierro + absorbente": "Encierro acústico con ventilación",
         "Control integral": "Control integral ventilado",
     }
     stored = aliases.get(stored, stored)
@@ -561,8 +561,8 @@ def _course2_lab1_stage0_pump_lab(class_id, saved):
         "Aisladores bajo la bomba",
         "Conexión flexible",
         "Soportes resilientes",
-        "Encierro acústico ventilado",
-        "Ventilación acústicamente tratada",
+        "Encierro acústico sin ventilación",
+        "Encierro acústico con ventilación",
     ]
     for i, label in enumerate(labels):
         with (r1[i] if i < 3 else r2[i-3]):
@@ -609,10 +609,10 @@ def _course2_lab1_stage0_pump_lab(class_id, saved):
         st.warning("El flexible no sustituye el tratamiento de los soportes rígidos de la tubería.")
     elif current == "Soportes resilientes":
         st.warning("Los soportes resilientes no sustituyen una conexión flexible próxima a la máquina.")
-    elif current == "Encierro acústico ventilado":
-        st.info("El encierro debe considerar la ventilación necesaria del motor, la disipación del calor, el mantenimiento y las posibles fugas acústicas.")
-    elif current == "Ventilación acústicamente tratada":
-        st.info("Una abertura de ventilación puede transformarse en una fuga acústica si no se trata.")
+    elif current == "Encierro acústico sin ventilación":
+        st.warning("Este estado muestra qué ocurre al encerrar la máquina sin prever ventilación: puede reducir ruido aéreo, pero no es una solución adecuada para operación continua si el motor acumula calor.")
+    elif current == "Encierro acústico con ventilación":
+        st.info("Los louvers permiten ventilación del encierro. Su diseño debe limitar la transmisión sonora y mantener el caudal de aire necesario para el motor.")
     elif current == "Control estructural completo":
         st.success("Los caminos estructurales representados están intervenidos; el camino aéreo permanece activo.")
     elif current == "Control integral ventilado":
@@ -638,7 +638,7 @@ def _course2_lab1_stage0_pump_lab(class_id, saved):
                 <li>una conexión flexible no sustituye soportes adecuados;</li>
                 <li>un encierro no sustituye el control estructural;</li>
                 <li>un encierro acústico debe permitir la <b>ventilación necesaria del motor y la disipación del calor</b>;</li>
-                <li>las entradas y salidas de aire deben diseñarse para no convertirse en fugas acústicas.</li>
+                <li>los louvers de ventilación deben seleccionarse y disponerse para permitir el flujo de aire sin crear una vía acústica dominante.</li>
             </ul>
         </div>
         """,
