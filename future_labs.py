@@ -23,9 +23,9 @@ COURSE_LABS = [
                      "Revisa la ruta y comienza el laboratorio."),
 
                     ("El edificio como sistema vibroacústico",
-                     "Reconocer el edificio como medio de transmisión de energía vibratoria y distinguir transmisión aérea y estructural.",
-                     "Una fuente puede transferir energía simultáneamente por varios caminos antes de que el fenómeno llegue al receptor.",
-                     "Explora el edificio, identifica fuentes y sigue sus caminos de energía."),
+                     "Reconocer el edificio como sistema de transmisión vibroacústica, seguir caminos de energía y seleccionar medidas de control coherentes.",
+                     "La etapa progresa desde observación y mecanismo físico hasta diagnóstico de caminos simultáneos y control de una instalación.",
+                     "Observa, sigue la energía, diagnostica una pisada y una bomba, y decide dónde intervenir."),
 
                     ("Fuente, estructura y receptor",
                      "Distinguir fuente, camino de transmisión, estructura radiante y receptor.",
