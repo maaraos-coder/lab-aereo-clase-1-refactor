@@ -1261,85 +1261,105 @@ def _render_course2_lab1_stage1(lab, saved):
         },
     ]
 
-    answer_key = "stage1_comprehension"
-    stored_answers = saved.get(answer_key, {})
-    if not isinstance(stored_answers, dict):
-        stored_answers = {}
+    role = st.session_state.get("role", "Alumno")
 
-    for idx, q in enumerate(questions, start=1):
-        st.markdown(f"#### {idx}. {q['question']}")
+    if role == "Docente":
+        st.info("Vista docente: pauta de consulta. El docente no responde estas preguntas ni genera puntaje o progreso personal.")
+        for idx, q in enumerate(questions, start=1):
+            with st.container(border=True):
+                st.markdown(f"#### {idx}. {q['question']}")
+                for option_idx, option in enumerate(q["options"]):
+                    marker = "✅" if option_idx == q["correct"] else "○"
+                    st.write(f"{marker} {chr(65 + option_idx)}. {option}")
+                st.caption("Respuesta esperada: " + q["options"][q["correct"]])
+                st.info(q["feedback"])
+    elif role == "Proyección":
+        st.caption("Vista de proyección · preguntas visibles sin controles de respuesta.")
+        for idx, q in enumerate(questions, start=1):
+            with st.container(border=True):
+                st.markdown(f"#### {idx}. {q['question']}")
+                for option_idx, option in enumerate(q["options"]):
+                    st.write(f"○ {chr(65 + option_idx)}. {option}")
+    else:
+        answer_key = "stage1_comprehension"
+        stored_answers = saved.get(answer_key, {})
+        if not isinstance(stored_answers, dict):
+            stored_answers = {}
 
-        previous = stored_answers.get(q["id"], {})
-        previous_idx = previous.get("selected") if isinstance(previous, dict) else None
-        default_idx = (
-            previous_idx
-            if isinstance(previous_idx, int) and 0 <= previous_idx < len(q["options"])
-            else None
+        for idx, q in enumerate(questions, start=1):
+            st.markdown(f"#### {idx}. {q['question']}")
+
+            previous = stored_answers.get(q["id"], {})
+            previous_idx = previous.get("selected") if isinstance(previous, dict) else None
+            default_idx = (
+                previous_idx
+                if isinstance(previous_idx, int) and 0 <= previous_idx < len(q["options"])
+                else None
+            )
+
+            choice = st.radio(
+                f"Pregunta {idx}",
+                q["options"],
+                index=default_idx,
+                key=f"{class_id}_stage1_{q['id']}",
+                label_visibility="collapsed",
+            )
+
+            if st.button(
+                "Comprobar y guardar",
+                key=f"{class_id}_stage1_check_{q['id']}",
+            ):
+                selected_idx = q["options"].index(choice)
+                is_correct = selected_idx == q["correct"]
+                stored_answers[q["id"]] = {
+                    "selected": selected_idx,
+                    "correct": is_correct,
+                    "updated_at": _now(),
+                }
+                saved[answer_key] = stored_answers
+                saved["updated_1"] = _now()
+                _save_future_state_impl(class_id, saved)
+                st.rerun()
+
+            result = stored_answers.get(q["id"])
+            if isinstance(result, dict) and "selected" in result:
+                if result.get("correct"):
+                    st.success("Correcto. " + q["feedback"])
+                else:
+                    st.error(
+                        "Aún no es correcto. Revisa el camino de transmisión y el mecanismo físico descrito, "
+                        "y vuelve a intentarlo."
+                    )
+
+            st.markdown("---")
+
+        answered_count = sum(
+            1
+            for q in questions
+            if isinstance(stored_answers.get(q["id"]), dict)
+            and "selected" in stored_answers[q["id"]]
+        )
+        correct_count = sum(
+            1
+            for q in questions
+            if isinstance(stored_answers.get(q["id"]), dict)
+            and stored_answers[q["id"]].get("correct") is True
         )
 
-        choice = st.radio(
-            f"Pregunta {idx}",
-            q["options"],
-            index=default_idx,
-            key=f"{class_id}_stage1_{q['id']}",
-            label_visibility="collapsed",
+        st.markdown(
+            f"""
+            <div style="
+                border:1px solid #cfd8e3;
+                border-radius:12px;
+                padding:14px 16px;
+                margin:8px 0 18px 0;
+                background:#f8fbff;">
+                <b>Progreso de comprensión</b><br>
+                Respondidas: <b>{answered_count}/5</b> · Correctas: <b>{correct_count}/5</b>
+            </div>
+            """,
+            unsafe_allow_html=True,
         )
-
-        if st.button(
-            "Comprobar y guardar",
-            key=f"{class_id}_stage1_check_{q['id']}",
-        ):
-            selected_idx = q["options"].index(choice)
-            is_correct = selected_idx == q["correct"]
-            stored_answers[q["id"]] = {
-                "selected": selected_idx,
-                "correct": is_correct,
-                "updated_at": _now(),
-            }
-            saved[answer_key] = stored_answers
-            saved["updated_1"] = _now()
-            _save_future_state_impl(class_id, saved)
-            st.rerun()
-
-        result = stored_answers.get(q["id"])
-        if isinstance(result, dict) and "selected" in result:
-            if result.get("correct"):
-                st.success("Correcto. " + q["feedback"])
-            else:
-                st.error(
-                    "Aún no es correcto. Revisa el camino de transmisión y el mecanismo físico descrito, "
-                    "y vuelve a intentarlo."
-                )
-
-        st.markdown("---")
-
-    answered_count = sum(
-        1
-        for q in questions
-        if isinstance(stored_answers.get(q["id"]), dict)
-        and "selected" in stored_answers[q["id"]]
-    )
-    correct_count = sum(
-        1
-        for q in questions
-        if isinstance(stored_answers.get(q["id"]), dict)
-        and stored_answers[q["id"]].get("correct") is True
-    )
-
-    st.markdown(
-        f"""
-        <div style="
-            border:1px solid #cfd8e3;
-            border-radius:12px;
-            padding:14px 16px;
-            margin:8px 0 18px 0;
-            background:#f8fbff;">
-            <b>Progreso de comprensión</b><br>
-            Respondidas: <b>{answered_count}/5</b> · Correctas: <b>{correct_count}/5</b>
-        </div>
-        """,
-        unsafe_allow_html=True,
-    )
 
     nav_left, nav_right = st.columns(2)
     with nav_left:
@@ -1392,19 +1412,22 @@ def future_lab_view_impl(lab):
             st.rerun()
 
         total_stages = len(lab["stages"])
-        answered = sum(1 for i in range(total_stages) if saved.get(f"done_{i}"))
-        st.progress(answered / total_stages if total_stages else 0)
-        if class_id == "clase-03-impacto-instalaciones-lab-1":
-            content_completed = sum(1 for i in range(1, total_stages) if saved.get(f"done_{i}"))
-            st.caption(
-                f"Avance: {answered}/{total_stages} etapas · "
-                f"{content_completed*10}/100 puntos formativos"
-            )
-        else:
-            st.caption(
-                f"Avance: {answered}/{total_stages} etapas · "
-                f"{answered*10}/{total_stages*10} puntos formativos"
-            )
+        if st.session_state.get("role") == "Alumno":
+            answered = sum(1 for i in range(total_stages) if saved.get(f"done_{i}"))
+            st.progress(answered / total_stages if total_stages else 0)
+            if class_id == "clase-03-impacto-instalaciones-lab-1":
+                content_completed = sum(1 for i in range(1, total_stages) if saved.get(f"done_{i}"))
+                st.caption(
+                    f"Avance: {answered}/{total_stages} etapas · "
+                    f"{content_completed*10}/100 puntos formativos"
+                )
+            else:
+                st.caption(
+                    f"Avance: {answered}/{total_stages} etapas · "
+                    f"{answered*10}/{total_stages*10} puntos formativos"
+                )
+        elif st.session_state.get("role") == "Docente":
+            st.caption("Vista docente · el avance y los resultados se revisan desde ‘Evaluaciones entregadas’.")
 
         # Herramientas comunes del diplomado.
         formula_popup_button()
@@ -1519,45 +1542,43 @@ def future_lab_view_impl(lab):
 
     st.markdown("### Actividad interactiva")
     st.write(activity)
-    answer=st.text_area(
-        "Desarrollo del alumno",
-        value=saved.get(f"answer_{selected}",""),
-        height=150,key=f"future_answer_{class_id}_{selected}",
-        placeholder="Describe datos, procedimiento, resultado e interpretación.",
-    )
-    c1,c2,c3=st.columns(3)
-    magnitude=c1.selectbox("Magnitud principal",["Seleccionar","Nivel por bandas","Índice único","Tiempo / duración","Vibración","Clase / cumplimiento"],key=f"mag_{class_id}_{selected}")
-    method=c2.selectbox("Tipo de evidencia",["Seleccionar","Cálculo","Medición","Modelación","Inspección","Combinación"],key=f"method_{class_id}_{selected}")
-    confidence=c3.slider("Confianza en la respuesta",1,5,3,key=f"conf_{class_id}_{selected}")
-    if st.button("Guardar y completar etapa",type="primary",key=f"complete_{class_id}_{selected}"):
-        if len(answer.strip())<40 or magnitude=="Seleccionar" or method=="Seleccionar":
-            st.warning("Completa un desarrollo de al menos 40 caracteres y selecciona magnitud y evidencia.")
-        else:
-            saved.update({
-                f"answer_{selected}":answer,f"magnitude_{selected}":magnitude,
-                f"method_{selected}":method,f"confidence_{selected}":confidence,
-                f"done_{selected}":True,f"updated_{selected}":_now(),
-            })
-            _save_future_state(class_id,saved)
-            st.success("Etapa guardada. El avance pertenece únicamente a este laboratorio.")
-            st.rerun()
 
-    if st.session_state.get("role")=="Docente":
-        # Las etapas futuras no siempre incluyen un bloque editable/teacher_solution.
-        # No se debe abortar el render por una variable opcional inexistente.
-        editable = {}
-        with st.expander("🔐 Orientación docente y respuesta esperada"):
-            if editable.get("teacher_solution"):
-                st.markdown(editable["teacher_solution"])
-            st.markdown(f"""
-            **Evidencia mínima:** identificación correcta del fenómeno; selección coherente
-            de magnitud y método; procedimiento trazable; resultado con unidad; decisión
-            vinculada al criterio; medida verificable.
-
-            **Retroalimentación sugerida:** revisar si la respuesta distingue propiedad de
-            elemento, desempeño en terreno, exposición y percepción. Penalizar promedios
-            aritméticos de decibeles, símbolos intercambiados y conclusiones normativas sin fuente.
-            """)
+    if st.session_state.get("role") == "Alumno":
+        answer=st.text_area(
+            "Desarrollo del alumno",
+            value=saved.get(f"answer_{selected}",""),
+            height=150,key=f"future_answer_{class_id}_{selected}",
+            placeholder="Describe datos, procedimiento, resultado e interpretación.",
+        )
+        c1,c2,c3=st.columns(3)
+        magnitude=c1.selectbox("Magnitud principal",["Seleccionar","Nivel por bandas","Índice único","Tiempo / duración","Vibración","Clase / cumplimiento"],key=f"mag_{class_id}_{selected}")
+        method=c2.selectbox("Tipo de evidencia",["Seleccionar","Cálculo","Medición","Modelación","Inspección","Combinación"],key=f"method_{class_id}_{selected}")
+        confidence=c3.slider("Confianza en la respuesta",1,5,3,key=f"conf_{class_id}_{selected}")
+        if st.button("Guardar y completar etapa",type="primary",key=f"complete_{class_id}_{selected}"):
+            if len(answer.strip())<40 or magnitude=="Seleccionar" or method=="Seleccionar":
+                st.warning("Completa un desarrollo de al menos 40 caracteres y selecciona magnitud y evidencia.")
+            else:
+                saved.update({
+                    f"answer_{selected}":answer,f"magnitude_{selected}":magnitude,
+                    f"method_{selected}":method,f"confidence_{selected}":confidence,
+                    f"done_{selected}":True,f"updated_{selected}":_now(),
+                })
+                _save_future_state(class_id,saved)
+                st.success("Etapa guardada. El avance pertenece únicamente a este laboratorio.")
+                st.rerun()
+    elif st.session_state.get("role") == "Docente":
+        st.info("Vista docente: la actividad se muestra como pauta de trabajo; no se registra una respuesta ni progreso del docente.")
+        with st.container(border=True):
+            st.markdown("#### Evidencia esperada del alumno")
+            st.markdown(
+                "Identificación correcta del fenómeno; selección coherente de magnitud y método; "
+                "procedimiento trazable; resultado con unidad; decisión vinculada al criterio y una medida verificable."
+            )
+            st.markdown("#### Orientación para retroalimentar")
+            st.markdown(
+                "Revisar si la respuesta distingue propiedad del elemento, desempeño en terreno, exposición y percepción. "
+                "Corregir promedios aritméticos de decibeles, símbolos intercambiados y conclusiones normativas sin fuente."
+            )
 
 def future_projection_stage_impl(lab, stage):
     """Vista limpia de una etapa futura para la ventana compartida en Zoom."""
