@@ -1264,7 +1264,6 @@ def _render_course2_lab1_stage1(lab, saved):
     role = st.session_state.get("role", "Alumno")
 
     if role == "Docente":
-        st.info("Vista docente: pauta de consulta. El docente no responde estas preguntas ni genera puntaje o progreso personal.")
         for idx, q in enumerate(questions, start=1):
             with st.container(border=True):
                 st.markdown(f"#### {idx}. {q['question']}")
@@ -1274,12 +1273,64 @@ def _render_course2_lab1_stage1(lab, saved):
                 st.caption("Respuesta esperada: " + q["options"][q["correct"]])
                 st.info(q["feedback"])
     elif role == "Proyección":
-        st.caption("Vista de proyección · preguntas visibles sin controles de respuesta.")
+        # La proyección es interactiva para la clase, pero no guarda respuestas
+        # ni genera avance/puntaje de ningún alumno.
+        projection_answers_key = f"{class_id}_stage1_projection_answers"
+        projection_answers = st.session_state.get(projection_answers_key, {})
+        if not isinstance(projection_answers, dict):
+            projection_answers = {}
+
         for idx, q in enumerate(questions, start=1):
-            with st.container(border=True):
-                st.markdown(f"#### {idx}. {q['question']}")
-                for option_idx, option in enumerate(q["options"]):
-                    st.write(f"○ {chr(65 + option_idx)}. {option}")
+            st.markdown(f"#### {idx}. {q['question']}")
+
+            selected = st.radio(
+                f"Pregunta proyectada {idx}",
+                q["options"],
+                index=None,
+                key=f"{class_id}_projection_{q['id']}",
+                label_visibility="collapsed",
+            )
+
+            c_check, c_reset = st.columns([0.76, 0.24])
+            with c_check:
+                if st.button(
+                    "Comprobar",
+                    key=f"{class_id}_projection_check_{q['id']}",
+                    use_container_width=True,
+                ):
+                    if selected is None:
+                        st.warning("Selecciona una alternativa antes de comprobar.")
+                    else:
+                        selected_idx = q["options"].index(selected)
+                        projection_answers[q["id"]] = {
+                            "selected": selected_idx,
+                            "correct": selected_idx == q["correct"],
+                        }
+                        st.session_state[projection_answers_key] = projection_answers
+                        st.rerun()
+
+            with c_reset:
+                if st.button(
+                    "Limpiar",
+                    key=f"{class_id}_projection_reset_{q['id']}",
+                    use_container_width=True,
+                ):
+                    projection_answers.pop(q["id"], None)
+                    st.session_state[projection_answers_key] = projection_answers
+                    st.session_state.pop(f"{class_id}_projection_{q['id']}", None)
+                    st.rerun()
+
+            result = projection_answers.get(q["id"])
+            if isinstance(result, dict):
+                if result.get("correct"):
+                    st.success("Correcto. " + q["feedback"])
+                else:
+                    st.error(
+                        "No es la alternativa correcta. Revisa el mecanismo físico descrito "
+                        "y vuelve a intentarlo con el curso."
+                    )
+
+            st.markdown("---")
     else:
         answer_key = "stage1_comprehension"
         stored_answers = saved.get(answer_key, {})
@@ -1567,7 +1618,6 @@ def future_lab_view_impl(lab):
                 st.success("Etapa guardada. El avance pertenece únicamente a este laboratorio.")
                 st.rerun()
     elif st.session_state.get("role") == "Docente":
-        st.info("Vista docente: la actividad se muestra como pauta de trabajo; no se registra una respuesta ni progreso del docente.")
         with st.container(border=True):
             st.markdown("#### Evidencia esperada del alumno")
             st.markdown(
@@ -1603,7 +1653,6 @@ def future_projection_stage_impl(lab, stage):
     title, objective, concept, activity = lab["stages"][stage]
     stage_minutes = 20 if stage not in (9, 10) else 35
     header(f"ETAPA {stage} · LABORATORIO {lab['number']}", title, objective)
-    st.caption(f"{lab['course']} · Vista para alumnos")
     st.markdown("### Desarrollo técnico")
     st.markdown(concept)
     if stage in (2, 3, 4, 5, 8):
@@ -1619,7 +1668,26 @@ def future_projection_stage_impl(lab, stage):
     st.info("Criterio profesional: registra dato, método, unidad, supuesto e interpretación.")
     st.markdown("### Actividad interactiva")
     st.write(activity)
-    st.caption(f"Tiempo de referencia de la etapa: {stage_minutes} min")
+
+    # Control temporal para conducción de la clase en la pantalla proyectada.
+    # No persiste en base de datos.
+    projection_state_key = f"projection_stage_{lab['id']}_{stage}_state"
+    projection_state = st.session_state.get(projection_state_key, "Explorar")
+    options = ["Explorar", "Revisar concepto", "Cerrar actividad"]
+    projection_state = st.segmented_control(
+        "Estado de la actividad",
+        options,
+        default=projection_state if projection_state in options else "Explorar",
+        key=f"{projection_state_key}_control",
+        label_visibility="collapsed",
+    )
+    if projection_state:
+        st.session_state[projection_state_key] = projection_state
+
+    if projection_state == "Revisar concepto":
+        st.info(concept)
+    elif projection_state == "Cerrar actividad":
+        st.success("Actividad revisada en clase. Continúa con la siguiente etapa cuando corresponda.")
 
 
 # Enlaces internos para que la vista futura use las implementaciones locales.
