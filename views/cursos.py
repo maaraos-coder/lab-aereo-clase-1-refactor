@@ -522,7 +522,7 @@ def _course2_lab1_stage0_pump_lab(class_id, saved):
             "base": ("REDUCIDO", "La bancada está desacoplada de la losa."),
             "pipe": ("REDUCIDO", "La tubería está desacoplada en conexión y apoyos."),
             "air": ("REDUCIDO", "Encierro ventilado y silenciadores reducen el camino aéreo."),
-            "note": "Control integral: aisladores bajo la bomba + conexión flexible + soportes resilientes + encierro acústico opaco con louvers integrados de ventilación.",
+            "note": "Control integral: aisladores bajo la bomba + conexión flexible + soportes resilientes + encierro acústico opaco con louvers de ventilación.",
         },
     }
 
@@ -1166,89 +1166,180 @@ def _render_course2_lab1_stage1(lab, saved):
     _course2_lab1_stage0_pump_lab(class_id, saved)
 
     st.markdown("### Preguntas de comprensión")
-    _future_stage0_mcq(
-        class_id,
-        saved,
-        "stage0_q2",
-        "Una persona escucha una bomba ubicada dos pisos más abajo. ¿Podemos concluir que el sonido viajó solamente por el aire?",
-        [
-            "A. Sí",
-            "B. No, también puede existir transmisión estructural",
-            "C. Sí, porque las vibraciones no producen sonido",
-            "D. Solo si la bomba trabaja bajo 100 Hz",
-        ],
-        "B. No, también puede existir transmisión estructural",
-        "Correcto. La distancia vertical no permite concluir el camino de transmisión: pueden coexistir radiación aérea y propagación estructural por losas, muros, tuberías o soportes.",
-    )
-    _future_stage0_mcq(
-        class_id,
-        saved,
-        "stage0_q3",
-        "Una pared presenta vibración medible. ¿Podemos concluir que necesariamente es un radiador acústico eficiente?",
-        ["A. Sí", "B. No"],
-        "B. No",
-        "Correcto. Vibración medible no implica radiación acústica eficiente; la eficiencia depende de frecuencia, patrón vibratorio, superficie y acoplamiento con el aire.",
-    )
-    _future_stage0_mcq(
-        class_id,
-        saved,
-        "stage0_q4",
-        "¿Cuál secuencia representa mejor un fenómeno de ruido de origen estructural?",
-        ["A. p → p", "B. F → v → p", "C. v → F → p", "D. p → F"],
-        "B. F → v → p",
-        "Correcto. En el ruido de origen estructural una fuerza excita primero la estructura, ésta vibra y luego una superficie puede radiar presión sonora al aire.",
+    st.caption(
+        "Responde las cinco preguntas. Cada respuesta se guarda al presionar "
+        "**Comprobar y guardar** y entrega retroalimentación inmediata."
     )
 
-    st.markdown("### Mini caso profesional")
-    st.write(
-        "Una bomba está instalada sobre aisladores, pero una tubería sale rígidamente desde la bomba y está fijada mediante abrazaderas metálicas directamente al muro."
-    )
-    _future_stage0_mcq(
-        class_id,
-        saved,
-        "stage0_case",
-        "¿Cuál es la hipótesis técnica más razonable?",
-        [
-            "A. Los aisladores necesariamente están defectuosos",
-            "B. Debe colocarse material absorbente en el dormitorio",
-            "C. Puede existir un camino estructural paralelo por tubería y soportes",
-            "D. El problema debe ser exclusivamente aéreo",
-        ],
-        "C. Puede existir un camino estructural paralelo por tubería y soportes",
-        "Un buen aislador bajo la máquina no garantiza el aislamiento del sistema completo si existe otra conexión rígida capaz de puentearlo.",
-    )
+    questions = [
+        {
+            "id": "q1",
+            "question": (
+                "Una bomba está ubicada dos pisos más abajo y una persona escucha ruido en un dormitorio. "
+                "¿Cuál es la interpretación más correcta?"
+            ),
+            "options": [
+                "El sonido necesariamente viajó solo por el aire.",
+                "Puede existir transmisión estructural, transmisión aérea o ambas simultáneamente.",
+                "Si la bomba está lejos, la transmisión estructural deja de ser relevante.",
+                "La distancia entre pisos permite descartar las tuberías como camino de transmisión.",
+            ],
+            "correct": 1,
+            "feedback": (
+                "Una misma fuente puede transferir energía por varios caminos al mismo tiempo. "
+                "La distancia no permite concluir que el fenómeno sea exclusivamente aéreo."
+            ),
+        },
+        {
+            "id": "q2",
+            "question": (
+                "Se mide vibración claramente en una losa. ¿Qué conclusión puede hacerse respecto de la radiación acústica?"
+            ),
+            "options": [
+                "Toda vibración medible implica radiación acústica eficiente.",
+                "La vibración demuestra que la losa es la fuente dominante de ruido.",
+                "La vibración puede permitir radiación, pero no demuestra por sí sola que ésta sea eficiente.",
+                "Si existe vibración, la frecuencia deja de ser relevante.",
+            ],
+            "correct": 2,
+            "feedback": (
+                "La eficiencia de radiación depende, entre otros factores, de la frecuencia, las dimensiones, "
+                "el patrón espacial de vibración y el acoplamiento estructura–aire."
+            ),
+        },
+        {
+            "id": "q3",
+            "question": (
+                "¿Cuál de las siguientes secuencias representa mejor un fenómeno de ruido de origen estructural?"
+            ),
+            "options": [
+                "Fuente → aire → receptor → vibración.",
+                "Fuente → excitación → respuesta estructural → propagación → radiación → receptor.",
+                "Fuente → receptor → estructura → aire.",
+                "Radiación → fuente → propagación → estructura.",
+            ],
+            "correct": 1,
+            "feedback": (
+                "La energía parte en la fuente, excita una estructura, se propaga mecánicamente, "
+                "puede radiarse al aire y finalmente alcanzar al receptor."
+            ),
+        },
+        {
+            "id": "q4",
+            "question": (
+                "Una bomba está montada sobre aisladores, pero una tubería rígida sale directamente de la bomba "
+                "y está fijada al edificio mediante soportes rígidos. ¿Qué problema puede permanecer?"
+            ),
+            "options": [
+                "Ninguno: los aisladores bajo la bomba eliminan todos los caminos estructurales.",
+                "La tubería puede puentear el aislamiento y transmitir vibración hacia la estructura.",
+                "Solo puede quedar ruido aéreo; la transmisión estructural queda descartada.",
+                "Los soportes rígidos reducen automáticamente la transmisión de vibración.",
+            ],
+            "correct": 1,
+            "feedback": (
+                "La tubería y sus soportes pueden constituir un puente mecánico. "
+                "El aislamiento de la base no controla automáticamente ese camino."
+            ),
+        },
+        {
+            "id": "q5",
+            "question": (
+                "¿Qué principio resume mejor el diagnóstico vibroacústico trabajado en esta etapa?"
+            ),
+            "options": [
+                "Identificar la fuente basta para seleccionar una única medida de control.",
+                "El camino dominante siempre es el que presenta mayor vibración local.",
+                "Antes de controlar, hay que identificar fuente, caminos de transmisión, radiación y receptor.",
+                "El control debe concentrarse únicamente en el recinto receptor.",
+            ],
+            "correct": 2,
+            "feedback": (
+                "El diagnóstico debe reconstruir la cadena completa del fenómeno. "
+                "Solo después tiene sentido seleccionar medidas de control coherentes con los caminos relevantes."
+            ),
+        },
+    ]
 
-    st.markdown("### Cierre")
-    st.latex(
-        r"\text{FUENTE}\rightarrow\text{EXCITACIÓN}\rightarrow\text{RESPUESTA ESTRUCTURAL}"
-        r"\rightarrow\text{PROPAGACIÓN}\rightarrow\text{RADIACIÓN}\rightarrow\text{RECEPTOR}"
-        r"\rightarrow\text{CONTROL}"
-    )
-    st.success(
-        "En las siguientes etapas aprenderemos a cuantificar cada parte de esta cadena. "
-        "La primera pregunta será: si dos estructuras reciben exactamente la misma fuerza, ¿vibran necesariamente igual?"
-    )
+    answer_key = "stage1_comprehension"
+    stored_answers = saved.get(answer_key, {})
+    if not isinstance(stored_answers, dict):
+        stored_answers = {}
 
-    required = ["stage0_q2", "stage0_q3", "stage0_q4", "stage0_case"]
-    completed_questions = sum(
-        1 for key in required
-        if isinstance(saved.get(key), dict) and saved[key].get("completed")
-    )
-    st.caption(f"Respuestas formativas guardadas: {completed_questions} de {len(required)}")
+    for idx, q in enumerate(questions, start=1):
+        st.markdown(f"#### {idx}. {q['question']}")
 
-    if saved.get("done_1"):
-        st.success("Etapa 1 completada y guardada en tu progreso.")
-    else:
-        if st.button("Completar Etapa 1", type="primary", key=f"complete_stage1_{class_id}"):
-            if completed_questions < len(required):
-                st.warning("Guarda las cuatro respuestas formativas antes de completar la etapa.")
-            elif explored_count < explored_total:
-                st.warning("Explora Pisada, Bomba y Descarga sanitaria en ‘Sigue la energía’ antes de completar la etapa.")
+        previous = stored_answers.get(q["id"], {})
+        previous_idx = previous.get("selected") if isinstance(previous, dict) else None
+        default_idx = (
+            previous_idx
+            if isinstance(previous_idx, int) and 0 <= previous_idx < len(q["options"])
+            else None
+        )
+
+        choice = st.radio(
+            f"Pregunta {idx}",
+            q["options"],
+            index=default_idx,
+            key=f"{class_id}_stage1_{q['id']}",
+            label_visibility="collapsed",
+        )
+
+        if st.button(
+            "Comprobar y guardar",
+            key=f"{class_id}_stage1_check_{q['id']}",
+        ):
+            selected_idx = q["options"].index(choice)
+            is_correct = selected_idx == q["correct"]
+            stored_answers[q["id"]] = {
+                "selected": selected_idx,
+                "correct": is_correct,
+                "updated_at": _now(),
+            }
+            saved[answer_key] = stored_answers
+            saved["updated_1"] = _now()
+            _save_future_state_impl(class_id, saved)
+            st.rerun()
+
+        result = stored_answers.get(q["id"])
+        if isinstance(result, dict) and "selected" in result:
+            if result.get("correct"):
+                st.success("Correcto. " + q["feedback"])
             else:
-                saved["done_1"] = True
-                saved["updated_1"] = _now()
-                _save_future_state_impl(class_id, saved)
-                st.rerun()
+                st.error(
+                    "Aún no es correcto. Revisa el camino de transmisión y el mecanismo físico descrito, "
+                    "y vuelve a intentarlo."
+                )
+
+        st.markdown("---")
+
+    answered_count = sum(
+        1
+        for q in questions
+        if isinstance(stored_answers.get(q["id"]), dict)
+        and "selected" in stored_answers[q["id"]]
+    )
+    correct_count = sum(
+        1
+        for q in questions
+        if isinstance(stored_answers.get(q["id"]), dict)
+        and stored_answers[q["id"]].get("correct") is True
+    )
+
+    st.markdown(
+        f"""
+        <div style="
+            border:1px solid #cfd8e3;
+            border-radius:12px;
+            padding:14px 16px;
+            margin:8px 0 18px 0;
+            background:#f8fbff;">
+            <b>Progreso de comprensión</b><br>
+            Respondidas: <b>{answered_count}/5</b> · Correctas: <b>{correct_count}/5</b>
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
 
     nav_left, nav_right = st.columns(2)
     with nav_left:
@@ -1259,7 +1350,6 @@ def _render_course2_lab1_stage1(lab, saved):
         if st.button("Etapa 2 →", key=f"stage1_next_{class_id}", width="stretch"):
             st.session_state[stage_selector_key] = 2
             st.rerun()
-
 
 def future_lab_view_impl(lab):
     """Renderer de los laboratorios posteriores manteniendo la navegación institucional."""
