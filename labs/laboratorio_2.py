@@ -2684,7 +2684,7 @@ def _stage6_impl():
         "<b>TLρs₁, TLρs₂</b>: TL individual de cada vidrio por banda<br>"
         "<b>α</b>: absorción a incidencia aleatoria del perímetro interior<br>"
         "<b>d</b>: profundidad de la cámara (m)<br>"
-        "<b>h, w</b>: alto y ancho interiores de la cavidad (m)",
+        "<b>h, w</b>: altura y ancho del panel (m)",
         "Para estimar el TL cuando la cavidad se considera un espacio reverberante.",
     )
     st.markdown("""
@@ -2734,8 +2734,8 @@ def _stage6_impl():
     g2 = b.slider("Espesor vidrio 2 (mm)", 3.0, 12.0, 6.0, 0.5, key="l2s6_g2")
     gap_mm = c.slider("Separación entre placas d (mm)", 6, 200, 40, 2, key="l2s6_gap")
     d1, d2, d3 = st.columns(3)
-    height = d1.slider("Altura de la cavidad h (m)", 0.5, 3.0, 1.5, 0.1, key="l2s6_h")
-    width = d2.slider("Ancho de la cavidad w (m)", 0.5, 3.0, 1.2, 0.1, key="l2s6_w")
+    height = d1.slider("Altura del panel h (m)", 0.5, 3.0, 1.5, 0.1, key="l2s6_h")
+    width = d2.slider("Ancho del panel w (m)", 0.5, 3.0, 1.2, 0.1, key="l2s6_w")
     alpha = d3.slider("Absorción perimetral α", 0.02, 0.30, 0.10, 0.01, key="l2s6_alpha")
 
     p1, p2 = st.columns(2)
