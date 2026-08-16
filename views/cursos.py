@@ -522,7 +522,7 @@ def _course2_lab1_stage0_pump_lab(class_id, saved):
             "base": ("REDUCIDO", "La bancada está desacoplada de la losa."),
             "pipe": ("REDUCIDO", "La tubería está desacoplada en conexión y apoyos."),
             "air": ("REDUCIDO", "Encierro ventilado y silenciadores reducen el camino aéreo."),
-            "note": "Control integral: aisladores bajo la bomba + conexión flexible + soportes resilientes + encierro acústico opaco con louvers de ventilación.",
+            "note": "Control integral: aisladores bajo la bomba + conexión flexible + soportes resilientes + encierro acústico opaco con louvers integrados de ventilación.",
         },
     }
 
