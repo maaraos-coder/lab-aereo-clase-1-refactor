@@ -17,17 +17,60 @@ COURSE_LABS = [
                 "source": "Clase 3",
                 "focus": "Transmisión estructural, descriptores y diagnóstico",
                 "stages": [
-                    ("El edificio como sistema vibroacústico", "Reconocer el edificio como medio de transmisión de energía vibratoria y distinguir transmisión aérea y estructural.", "La energía puede ingresar por el aire o directamente a la estructura, propagarse por elementos constructivos y radiarse posteriormente hacia un receptor.", "Sigue la energía desde la fuente hasta el receptor e identifica el camino relevante antes de proponer control."),
-                    ("Fuente, estructura y receptor", "Seguir la cadena completa de transmisión.", "La transmisión directa ocurre por el elemento excitado; el flanqueo utiliza muros, vigas, pilares o encuentros. Una solución eficaz debe interrumpir la trayectoria dominante.", "Marca fuente, camino directo, flancos y receptor en un caso de losa entre viviendas."),
-                    ("Magnitudes vibratorias", "Interpretar velocidad, aceleración y nivel vibratorio.", "La velocidad vibratoria describe el movimiento de la superficie; el nivel Lv se expresa respecto de una referencia. La aceleración es útil para caracterizar equipos y respuesta estructural.", "Calcula un nivel relativo a partir de una velocidad eficaz y explica qué significa."),
-                    ("Ruido de impacto normalizado", "Comprender Ln, LnT y L'nT.", "Los niveles de impacto se corrigen para reducir la influencia del recinto receptor. Ln usa absorción equivalente de referencia; LnT usa tiempo de reverberación de referencia. En terreno aparece la prima por transmisión aparente.", "Elige el descriptor correcto para laboratorio y para terreno."),
-                    ("Normalización por reverberación", "Aplicar la corrección sin invertir su sentido.", "Si el recinto receptor reverbera más, el nivel medido aumenta. La corrección normaliza el resultado a condiciones de referencia y debe aplicarse por bandas.", "Corrige tres bandas con T medido y T0, mostrando sustitución y unidad."),
-                    ("Lectura espectral", "Detectar bandas críticas y mecanismos.", "Un único número resume, pero la curva revela bajas frecuencias, resonancias y flancos. Dos pisos con igual índice ponderado pueden percibirse de forma distinta.", "Compara dos espectros y selecciona la solución más robusta."),
-                    ("Instrumentación", "Seleccionar cadena de medición y control de calidad.", "La cadena incluye máquina de impactos, sonómetro clase 1, calibrador, fuente para TR y, cuando corresponda, acelerómetro. Se documentan posiciones, fondo, calibración y geometría.", "Ordena el procedimiento de verificación antes, durante y después de medir."),
-                    ("Aplicación: piso flotante", "Relacionar mejora de impacto con desacoplamiento.", "Un piso flotante funciona por resiliencia y separación. Los puentes rígidos perimetrales pueden anular gran parte de la mejora.", "Diagnostica cuatro detalles constructivos y encuentra el puente acústico."),
-                    ("Aplicación: equipo mecánico", "Diseñar control de vibraciones en instalaciones.", "La selección de aisladores depende de masa, frecuencia de excitación y frecuencia natural. Un aislador mal seleccionado puede amplificar cerca de resonancia.", "Compara apoyos rígidos, neopreno y resortes para una bomba."),
-                    ("Caso profesional", "Integrar medición, diagnóstico y recomendación.", "El informe debe separar evidencia, incertidumbre, mecanismo dominante, criterio y medida verificable.", "Redacta una conclusión técnica para un reclamo por impactos y bomba de agua."),
-                    ("Evaluación individual", "Demostrar dominio conceptual y aplicado.", "Evaluación de 100 puntos con descriptores, cálculo por bandas, instrumentación, diagnóstico y control.", "Resuelve el caso individual y entrega desarrollo trazable."),
+                    ("Bienvenida y ruta del laboratorio",
+                     "Conocer la estructura, duración y secuencia de aprendizaje del laboratorio.",
+                     "La Etapa 0 presenta la ruta completa del laboratorio, sus bloques de aprendizaje, la pausa pedagógica y la forma de trabajo.",
+                     "Revisa la ruta y comienza el laboratorio."),
+
+                    ("El edificio como sistema vibroacústico",
+                     "Reconocer el edificio como medio de transmisión de energía vibratoria y distinguir transmisión aérea y estructural.",
+                     "Una fuente puede transferir energía simultáneamente por varios caminos antes de que el fenómeno llegue al receptor.",
+                     "Explora el edificio, identifica fuentes y sigue sus caminos de energía."),
+
+                    ("Fuente, estructura y receptor",
+                     "Distinguir fuente, camino de transmisión, estructura radiante y receptor.",
+                     "El diagnóstico vibroacústico exige separar dónde se genera la energía, cómo se transmite y dónde se observa su efecto.",
+                     "Clasifica los elementos del sistema y reconoce caminos directos y de flanqueo."),
+
+                    ("Magnitudes vibratorias",
+                     "Interpretar desplazamiento, velocidad y aceleración como magnitudes complementarias.",
+                     "La elección de la magnitud depende del fenómeno, la frecuencia y el objetivo de evaluación.",
+                     "Relaciona cada magnitud con su interpretación física y su uso en diagnóstico."),
+
+                    ("Ruido de impacto normalizado",
+                     "Comprender los principales descriptores utilizados para evaluar ruido de impacto.",
+                     "El nivel de impacto normalizado permite comparar situaciones reduciendo la influencia de las condiciones del recinto receptor.",
+                     "Interpreta descriptores y reconoce qué representa cada uno."),
+
+                    ("Normalización por reverberación",
+                     "Comprender por qué el tiempo de reverberación modifica el nivel medido y cómo se normaliza.",
+                     "La normalización corrige la influencia del campo reverberante del recinto receptor.",
+                     "Aplica conceptualmente la normalización y analiza el sentido de la corrección."),
+
+                    ("Lectura espectral e instrumentación",
+                     "Leer espectros de vibración/ruido y seleccionar una cadena básica de instrumentación.",
+                     "El espectro permite reconocer bandas dominantes, resonancias y mecanismos; la instrumentación debe ser coherente con la magnitud a medir.",
+                     "Analiza un espectro y selecciona sensores y condiciones básicas de medición."),
+
+                    ("Aplicación: piso flotante",
+                     "Relacionar resiliencia, desacoplamiento y puentes rígidos con el control de ruido de impacto.",
+                     "Un piso flotante funciona cuando la capa resiliente desacopla el acabado de la estructura sin puentes rígidos significativos.",
+                     "Explora decisiones de diseño y reconoce errores de ejecución."),
+
+                    ("Aplicación: equipo e instalaciones",
+                     "Aplicar criterios de control vibroacústico a bombas, tuberías y otras instalaciones.",
+                     "El control efectivo requiere actuar sobre apoyos, tuberías, soportes y radiación aérea según el camino relevante.",
+                     "Explora medidas de control en la bomba y compara estrategias estructurales y acústicas."),
+
+                    ("Preguntas de comprensión",
+                     "Comprobar la comprensión de los conceptos trabajados durante el laboratorio.",
+                     "Esta etapa integra preguntas conceptuales y aplicadas sobre transmisión, magnitudes, impacto, instalaciones y control.",
+                     "Responde las preguntas de comprensión y revisa la retroalimentación."),
+
+                    ("Ejercicio integrador",
+                     "Integrar diagnóstico, interpretación y selección de medidas de control en un caso completo.",
+                     "El ejercicio final exige identificar fuentes, caminos, evidencia, mecanismo dominante y una estrategia de control coherente.",
+                     "Resuelve el caso integrador justificando diagnóstico y medidas propuestas.")
                 ],
             },
             {
