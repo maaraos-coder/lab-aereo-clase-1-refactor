@@ -27,10 +27,10 @@ COURSE_LABS = [
                      "La etapa progresa desde observación y mecanismo físico hasta diagnóstico de caminos simultáneos y control de una instalación.",
                      "Observa, sigue la energía, diagnostica una pisada y una bomba, y decide dónde intervenir."),
 
-                    ("Fuente, estructura y receptor",
-                     "Distinguir fuente, camino de transmisión, estructura radiante y receptor.",
-                     "El diagnóstico vibroacústico exige separar dónde se genera la energía, cómo se transmite y dónde se observa su efecto.",
-                     "Clasifica los elementos del sistema y reconoce caminos directos y de flanqueo."),
+                    ("Excitación y respuesta estructural: impedancia, movilidad, resonancia, ondas de flexión y radiación",
+                     "Comprender que una misma fuerza dinámica puede producir respuestas vibratorias distintas según las propiedades dinámicas de la estructura.",
+                     "La etapa relaciona fuerza, impedancia, movilidad, resonancia, modos propios, ondas de flexión y eficiencia de radiación dentro de una cadena vibroacústica.",
+                     "Explora cinco interactivos para conectar fuerza, respuesta estructural, propagación y radiación acústica."),
 
                     ("Magnitudes vibratorias",
                      "Interpretar desplazamiento, velocidad y aceleración como magnitudes complementarias.",
