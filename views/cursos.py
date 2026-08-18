@@ -2024,6 +2024,368 @@ def _render_course2_lab1_stage2(lab, saved):
             st.session_state[stage_selector_key] = 3
             st.rerun()
 
+
+def _render_course2_lab1_stage3(lab, saved):
+    """Curso 2 · Lab 1 · Etapa 3: diagnóstico vibroacústico."""
+    class_id = lab["id"]
+    stage_selector_key = f"future_stage_{class_id}"
+    role = st.session_state.get("role", "Alumno")
+    projection_mode = bool(st.session_state.get("projection_mode") or role == "Proyección")
+    ns = f"{class_id}_s3"
+
+    import numpy as np
+    import matplotlib.pyplot as plt
+
+    def _asset(name, caption=None):
+        p = ASSET_DIR / name
+        if p.exists():
+            st.image(p, width="stretch")
+            if caption:
+                st.caption(caption)
+            return True
+        st.info("Render pendiente de incorporar en assets.")
+        return False
+
+    def _card(title, body, icon="💡"):
+        st.markdown(
+            f"""<div style="border:1px solid #cfd8e3;border-radius:12px;padding:16px 18px;
+            margin:10px 0 16px;background:#f8fbff">
+            <div style="font-weight:800;margin-bottom:7px">{icon} {title}</div>
+            <div style="line-height:1.55">{body}</div></div>""",
+            unsafe_allow_html=True,
+        )
+
+    def _mcq(key, question, options, correct, feedback, multi=False, correct_set=None):
+        st.markdown(f"#### {question}")
+        state_key = f"{ns}_{key}"
+        if multi:
+            selected = []
+            for i,opt in enumerate(options):
+                if st.checkbox(opt, key=f"{state_key}_{i}"):
+                    selected.append(i)
+            answer = set(selected)
+        else:
+            val = st.radio(question, options, index=None, key=state_key, label_visibility="collapsed")
+            answer = None if val is None else options.index(val)
+        if st.button("Comprobar", key=f"{state_key}_check"):
+            if (multi and not answer) or (not multi and answer is None):
+                st.warning("Selecciona una respuesta.")
+            else:
+                ok = answer == (set(correct_set) if multi else correct)
+                st.session_state[f"{state_key}_result"] = ok
+        result = st.session_state.get(f"{state_key}_result")
+        if result is True:
+            st.success("Correcto. " + feedback)
+        elif result is False:
+            st.warning("Revisa la hipótesis. " + feedback)
+
+    header(
+        "ETAPA 3 · LABORATORIO 1",
+        "Diagnóstico vibroacústico: de la molestia al camino de transmisión",
+        "Aplicación práctica: formular y comprobar hipótesis físicas antes de seleccionar una solución.",
+        show_overview=False,
+        duration_minutes=60,
+    )
+
+    st.markdown("### Objetivo de aprendizaje")
+    st.write(
+        "Analizar un problema real de ruido estructural distinguiendo reclamo, fuente, excitación, camino, "
+        "radiación, receptor y evidencia experimental."
+    )
+    st.latex(r"\boxed{\mathrm{RECLAMO}\rightarrow\mathrm{FUENTE}\rightarrow\mathrm{EXCITACIÓN}\rightarrow\mathrm{CAMINO}\rightarrow\mathrm{RADIACIÓN}\rightarrow\mathrm{RECEPTOR}}")
+
+    st.markdown("### 1 · Del reclamo al diagnóstico")
+    q1,q2,q3 = st.columns(3)
+    for col, quote in zip([q1,q2,q3], ["“Escucho pasos.”","“Hay un zumbido durante la noche.”","“Cada vez que descargan el WC se escucha en mi dormitorio.”"]):
+        with col:
+            with st.container(border=True):
+                st.markdown(f"### {quote}")
+    st.write("Estas frases describen una **molestia**, pero todavía no constituyen un diagnóstico acústico.")
+    st.latex(r"\boxed{\mathrm{MOLESTIA}\neq\mathrm{DIAGNÓSTICO}}")
+    _card("DIAGNOSTICAR", "Formular y comprobar una hipótesis física.", "🔎")
+
+    st.markdown("### 2 · Metodología de diagnóstico")
+    nodes = [
+        ("1 · RECLAMO","¿Qué percibe el usuario?"),
+        ("2 · FUENTE","¿Qué sistema podría generar la energía?"),
+        ("3 · EXCITACIÓN","¿Cómo ingresa la energía?"),
+        ("4 · CAMINO","¿Por dónde puede propagarse?"),
+        ("5 · RADIACIÓN","¿Qué superficie puede convertir vibración en sonido?"),
+        ("6 · EVIDENCIA","¿Qué observaríamos o mediríamos para comprobar la hipótesis?"),
+    ]
+    cols = st.columns(3)
+    for i,(title,body) in enumerate(nodes):
+        with cols[i%3]:
+            with st.container(border=True):
+                st.markdown(f"**{title}**")
+                st.write(body)
+    st.latex(r"\boxed{\mathrm{HIPÓTESIS}\rightarrow\mathrm{VERIFICACIÓN}\rightarrow\mathrm{CONTROL}}")
+    st.info("En esta etapa el control aparece después del diagnóstico, no antes.")
+
+    st.markdown("## 🔎 DIAGNOSTICA EL EDIFICIO")
+    _asset("curso2_lab1_etapa3_diagnostico_edificio.webp")
+    case = st.radio(
+        "Selecciona un reclamo para investigarlo:",
+        ["👣 CASO A — Pisadas","⚙️ CASO B — Zumbido de bomba","🚿 CASO C — Descarga sanitaria"],
+        horizontal=True, key=f"{ns}_case"
+    )
+
+    if case.startswith("👣"):
+        st.markdown("### CASO A · Pisadas")
+        st.info("“Escucho claramente los pasos del departamento superior, especialmente durante la noche.”")
+        st.write("El dormitorio está inmediatamente bajo otro departamento. El piso superior posee una losa estructural con acabado duro.")
+        _mcq(
+            "a1","A1 · ¿Cuál es la fuente inicial de energía?",
+            ["A. El aire del dormitorio superior.","B. El contacto pie–piso.","C. El cielo del dormitorio receptor.","D. El muro lateral."],
+            1,"La pisada aplica una fuerza dinámica F(t) directamente sobre el sistema de piso."
+        )
+        st.latex(r"F(t)")
+        st.markdown("#### A2 · Identifica el camino directo")
+        direct = ["PIE","PISO / LOSA","CARA INFERIOR DE LOSA","AIRE DEL DORMITORIO","RECEPTOR"]
+        chosen = st.multiselect("Selecciona los elementos que forman el camino directo:", direct, key=f"{ns}_a2")
+        if st.button("Comprobar camino directo", key=f"{ns}_a2_check"):
+            if set(chosen) == set(direct):
+                st.success("CAMINO DIRECTO identificado: PIE → PISO/LOSA → CARA INFERIOR → AIRE → RECEPTOR.")
+            else:
+                st.warning("Sigue la energía desde el contacto mecánico hasta la radiación hacia el dormitorio.")
+        st.markdown("#### A3 · Posibles flancos")
+        flanks = ["Muro lateral","Fachada","Pilar","Tabique conectado","Aire exterior"]
+        flank_sel = st.multiselect("¿Qué elementos podrían participar en una transmisión estructural indirecta?", flanks, key=f"{ns}_a3")
+        if st.button("Interpretar selección", key=f"{ns}_a3_check"):
+            structural = {"Muro lateral","Fachada","Pilar","Tabique conectado"}
+            good = set(flank_sel) <= structural and len(flank_sel)>0
+            if good:
+                st.success("Selección físicamente plausible. La existencia de estos caminos no implica que sean dominantes.")
+            else:
+                st.info("Los flancos estructurales requieren conexión mecánica con la losa. El aire exterior no es, por sí mismo, un flanco estructural.")
+        _mcq(
+            "a_interpret","Si medimos una vibración elevada en un muro lateral, ¿podemos concluir inmediatamente que ese muro es el camino dominante?",
+            ["A. Sí.","B. No."],1,
+            "Una vibración elevada es evidencia, pero debe relacionarse con la fuente, la propagación, la radiación del elemento y la respuesta en el receptor."
+        )
+
+    elif case.startswith("⚙️"):
+        st.markdown("### CASO B · Bomba centrífuga")
+        st.info("Durante la noche se percibe un zumbido en una vivienda ubicada sobre una sala técnica con una bomba centrífuga.")
+        _asset("curso2_lab1_etapa3_bomba_camino.webp")
+        st.markdown("#### Mini ejercicio · frecuencia de rotación")
+        rpm = st.number_input("Velocidad de giro n (rpm)", min_value=0.0, value=1500.0, step=50.0, key=f"{ns}_rpm")
+        fr_input = st.number_input("Calcula fᵣ = n/60 (Hz)", min_value=0.0, step=1.0, key=f"{ns}_fr")
+        if st.button("Comprobar cálculo", key=f"{ns}_fr_check"):
+            expected = rpm/60.0
+            if abs(fr_input-expected) <= 0.05:
+                st.success(f"Correcto: fᵣ = {expected:.1f} Hz.")
+            else:
+                st.warning(f"Revisa fᵣ=n/60. Para {rpm:.0f} rpm, fᵣ={expected:.1f} Hz.")
+        fr = rpm/60.0 if rpm else 0
+        st.latex(rf"f_r={fr:.1f}\ \mathrm{{Hz}},\qquad 2f_r={2*fr:.1f}\ \mathrm{{Hz}},\qquad 3f_r={3*fr:.1f}\ \mathrm{{Hz}}")
+        st.caption("Una máquina rotatoria puede presentar componentes relacionadas con su frecuencia de rotación y otros fenómenos periódicos. La presencia de armónicos depende de la fuente y del sistema.")
+
+        st.markdown("#### B1 · Espectro conceptual")
+        f = np.linspace(5,100,600)
+        def peak(fc,amp,w):
+            return amp*np.exp(-0.5*((f-fc)/w)**2)
+        spectrum = 28 + peak(25,22,2.2)+peak(50,17,2.8)+peak(75,9,3.2)
+        fig,ax = plt.subplots()
+        ax.plot(f,spectrum)
+        ax.set_xlabel("Frecuencia (Hz)"); ax.set_ylabel("Magnitud relativa (dB)")
+        ax.set_title("Ejemplo didáctico · respuesta espectral en la losa")
+        ax.grid(True,alpha=.2)
+        st.pyplot(fig,use_container_width=True); plt.close(fig)
+        _mcq(
+            "b1","El espectro medido en la losa presenta máximos cercanos a 25 y 50 Hz. ¿Qué podemos afirmar?",
+            ["A. La bomba es con certeza la única fuente.","B. Existe evidencia compatible con una excitación relacionada con la bomba, pero se necesita comprobar la relación causal.","C. El ruido es necesariamente aéreo.","D. El máximo de 50 Hz demuestra que existe resonancia."],
+            1,"La coincidencia espectral permite formular una hipótesis, pero no demuestra por sí sola causalidad."
+        )
+        st.latex(r"\boxed{\mathrm{COINCIDENCIA\ FRECUENCIAL}\neq\mathrm{PRUEBA\ DE\ CAUSALIDAD}}")
+
+        st.markdown("#### B2 · Identifica los caminos físicamente posibles")
+        routes = [
+            "BOMBA → BASE → LOSA  · estructural",
+            "BOMBA → TUBERÍA → SOPORTE → ESTRUCTURA  · estructural",
+            "CARCASA → AIRE → CERRAMIENTO  · aéreo",
+        ]
+        route_sel = st.multiselect("Selecciona las rutas posibles:", routes, key=f"{ns}_b2")
+        if st.button("Comprobar rutas", key=f"{ns}_b2_check"):
+            if set(route_sel)==set(routes):
+                st.success("Correcto: los tres caminos son físicamente posibles y pueden coexistir.")
+            else:
+                st.warning("No descartes un camino únicamente porque exista otro. La bomba puede excitar simultáneamente base, tubería y aire.")
+
+        st.markdown("#### 📍 B3 · Selecciona puntos de diagnóstico")
+        points = ["Carcasa de bomba","Bancada","Losa junto a la bomba","Tubería de impulsión","Soporte de tubería","Muro del dormitorio","Aire del dormitorio"]
+        point_sel = st.multiselect("Elige uno o varios puntos para investigar el problema:", points, key=f"{ns}_b3")
+        explanations = {
+            "Carcasa de bomba":"Caracteriza la respuesta de la fuente.",
+            "Bancada":"Permite observar la energía transmitida hacia el apoyo.",
+            "Losa junto a la bomba":"Permite analizar la entrada de vibración a la estructura.",
+            "Tubería de impulsión":"Permite investigar un camino estructural paralelo.",
+            "Soporte de tubería":"Permite verificar transferencia tubería–estructura.",
+            "Muro del dormitorio":"Permite comprobar si la vibración alcanza una superficie potencialmente radiante.",
+            "Aire del dormitorio":"Entrega el resultado acústico final.",
+        }
+        for p in point_sel:
+            _card(p, explanations[p], "📍")
+        st.info("Medir solamente el nivel acústico en el dormitorio cuantifica el resultado, pero no necesariamente identifica el camino dominante.")
+
+        st.markdown("#### B4 · Comparación espectral")
+        curve_names = ["Bomba","Losa","Tubería","Muro receptor","Lp dormitorio"]
+        curve_sel = st.multiselect("Activa o desactiva curvas:", curve_names, default=["Bomba","Losa","Tubería","Muro receptor"], key=f"{ns}_b4")
+        profiles = {
+            "Bomba": (38,24,17,8),
+            "Losa": (30,18,13,6),
+            "Tubería": (33,21,14,7),
+            "Muro receptor": (25,12,8,4),
+            "Lp dormitorio": (22,10,7,3),
+        }
+        fig,ax = plt.subplots()
+        for name in curve_sel:
+            base,p25,p50,p75 = profiles[name]
+            y=base+peak(25,p25,2.3)+peak(50,p50,3.0)+peak(75,p75,3.5)
+            ax.plot(f,y,label=name)
+        ax.set_xlabel("Frecuencia (Hz)"); ax.set_ylabel("Magnitud relativa (dB)")
+        ax.set_title("Comparación espectral didáctica")
+        ax.grid(True,alpha=.2)
+        if curve_sel: ax.legend()
+        st.pyplot(fig,use_container_width=True); plt.close(fig)
+        _mcq(
+            "b_final","Si el máximo de 25 Hz aparece en la bomba, tubería, losa y muro receptor, ¿la hipótesis de transmisión estructural se fortalece?",
+            ["A. Sí.","B. No."],0,
+            "La presencia coherente de una componente asociada a la fuente en varios puntos del camino constituye evidencia más sólida, aunque no es una prueba absoluta."
+        )
+
+    else:
+        st.markdown("### CASO C · Descarga sanitaria")
+        st.info("“Cuando descargan el WC del departamento superior escucho claramente el agua y también siento que el muro suena.”")
+        _asset("curso2_lab1_etapa3_shaft_sanitario.webp")
+        _mcq(
+            "c1","C1 · ¿Qué mecanismos son físicamente posibles?",
+            ["A. Radiación sonora directa de la tubería.","B. Transmisión por abrazaderas.","C. Contacto rígido en paso de losa.","D. Radiación del cerramiento del shaft.","E. Todos los anteriores."],
+            4,"Una descarga sanitaria es normalmente un problema mixto: flujo, vibración de tuberías, conexiones estructurales y radiación del cerramiento pueden participar simultáneamente."
+        )
+        st.markdown("#### C2 · Sigue dos caminos")
+        c_air = st.toggle("Activar camino aéreo", key=f"{ns}_c_air")
+        c_struct = st.toggle("Activar camino estructural", key=f"{ns}_c_struct")
+        ca,cs = st.columns(2)
+        with ca:
+            with st.container(border=True):
+                st.markdown("**CAMINO AÉREO**")
+                if c_air:
+                    st.write("TUBERÍA → AIRE DEL SHAFT → CERRAMIENTO → DORMITORIO")
+                else:
+                    st.caption("Actívalo para seguir la ruta.")
+        with cs:
+            with st.container(border=True):
+                st.markdown("**CAMINO ESTRUCTURAL**")
+                if c_struct:
+                    st.write("TUBERÍA → ABRAZADERA → MURO/LOSA → RADIACIÓN → DORMITORIO")
+                else:
+                    st.caption("Actívalo para seguir la ruta.")
+        st.markdown("#### C3 · Encuentra puntos críticos")
+        crit = ["Codo","Abrazadera","Penetración de losa","Contacto con tabique","Cierre del shaft"]
+        crit_sel = st.multiselect("Selecciona puntos para inspeccionar:", crit, key=f"{ns}_c3")
+        crit_text = {
+            "Codo":"Los cambios de dirección del flujo pueden incrementar fuerzas dinámicas sobre la tubería.",
+            "Abrazadera":"Una fijación rígida puede transferir vibración de la tubería hacia el elemento constructivo.",
+            "Penetración de losa":"Una conexión rígida en el paso puede crear un camino adicional de transmisión.",
+            "Contacto con tabique":"Un contacto no previsto puede puentear desacoples y excitar el cerramiento.",
+            "Cierre del shaft":"El cerramiento puede recibir energía y radiarla hacia el dormitorio.",
+        }
+        for p in crit_sel:
+            _card(p,crit_text[p],"📍")
+
+    st.markdown("---")
+    st.markdown("### 3 · Antes de controlar, diagnostica")
+    bad,good = st.columns(2)
+    with bad:
+        with st.container(border=True):
+            st.markdown("#### ❌ Procedimiento incorrecto")
+            st.write("“Hay ruido.”")
+            st.write("↓")
+            st.write("“Instalemos material acústico.”")
+    with good:
+        with st.container(border=True):
+            st.markdown("#### ✅ Procedimiento técnico")
+            st.write("Hay ruido → identificar fuente → identificar excitación → identificar caminos → obtener evidencia → priorizar camino dominante → seleccionar control.")
+    st.latex(r"\boxed{\mathrm{DIAGNÓSTICO}\rightarrow\mathrm{CONTROL}}")
+    st.latex(r"\boxed{\mathrm{MOLESTIA}\not\rightarrow\mathrm{PRODUCTO}}")
+
+    st.markdown("## 🧪 CONSTRUYE TU DIAGNÓSTICO")
+    scenarios = {
+        "Pasos del piso superior": {
+            "fuentes":["Pisada","Bomba","Descarga sanitaria"],
+            "fuente":"Pisada",
+            "exc":["Mecánica","Aérea","Hidráulica","Mixta"], "exc_ok":"Mecánica",
+            "caminos":["Losa / estructura","Base o tubería","Aéreo + estructural"], "camino":"Losa / estructura",
+            "verifs":["Respuesta vibratoria del piso y/o superficies receptoras","Bomba → base/tubería → estructura → receptor","Tubería, abrazaderas, shaft y muro receptor"],
+            "verif":"Respuesta vibratoria del piso y/o superficies receptoras",
+            "controls":["Intervención en contacto/piso/desacople","Aislamiento/desacople de camino","Desacople y tratamiento del sistema"],
+            "control":"Intervención en contacto/piso/desacople",
+        },
+        "Zumbido coincidente con bomba": {
+            "fuentes":["Pisada","Bomba","Descarga sanitaria"], "fuente":"Bomba",
+            "exc":["Mecánica","Aérea","Hidráulica","Mecánica + posible aérea"], "exc_ok":"Mecánica + posible aérea",
+            "caminos":["Losa / estructura","Base o tubería","Aéreo + estructural"], "camino":"Base o tubería",
+            "verifs":["Respuesta vibratoria del piso y/o superficies receptoras","Bomba → base/tubería → estructura → receptor","Tubería, abrazaderas, shaft y muro receptor"],
+            "verif":"Bomba → base/tubería → estructura → receptor",
+            "controls":["Intervención en contacto/piso/desacople","Aislamiento/desacople de camino","Desacople y tratamiento del sistema"],
+            "control":"Aislamiento/desacople de camino",
+        },
+        "Descarga sanitaria": {
+            "fuentes":["Pisada","Bomba","Flujo/tubería"], "fuente":"Flujo/tubería",
+            "exc":["Mecánica","Aérea","Hidráulica","Hidráulica/mecánica"], "exc_ok":"Hidráulica/mecánica",
+            "caminos":["Losa / estructura","Base o tubería","Aéreo + estructural"], "camino":"Aéreo + estructural",
+            "verifs":["Respuesta vibratoria del piso y/o superficies receptoras","Bomba → base/tubería → estructura → receptor","Tubería, abrazaderas, shaft y muro receptor"],
+            "verif":"Tubería, abrazaderas, shaft y muro receptor",
+            "controls":["Intervención en contacto/piso/desacople","Aislamiento/desacople de camino","Desacople y tratamiento del sistema"],
+            "control":"Desacople y tratamiento del sistema",
+        },
+    }
+    scenario = st.selectbox("Caso de diagnóstico", list(scenarios), key=f"{ns}_labcase")
+    sc = scenarios[scenario]
+    src_ans = st.selectbox("FUENTE", ["— Selecciona —"]+sc["fuentes"], key=f"{ns}_lab_src")
+    exc_ans = st.selectbox("EXCITACIÓN", ["— Selecciona —"]+sc["exc"], key=f"{ns}_lab_exc")
+    path_ans = st.selectbox("CAMINO PRINCIPAL HIPOTÉTICO", ["— Selecciona —"]+sc["caminos"], key=f"{ns}_lab_path")
+    verify_ans = st.selectbox("PUNTO / SECUENCIA DE VERIFICACIÓN", ["— Selecciona —"]+sc["verifs"], key=f"{ns}_lab_verify")
+    diagnostic_complete = all(x!="— Selecciona —" for x in [src_ans,exc_ans,path_ans,verify_ans])
+    if not diagnostic_complete:
+        st.info("Completa fuente, excitación, camino y verificación antes de seleccionar una familia de control.")
+        control_ans = None
+    else:
+        control_ans = st.selectbox("CONTROL PRELIMINAR", ["— Selecciona —"]+sc["controls"], key=f"{ns}_lab_control")
+        if st.button("Comprobar diagnóstico", key=f"{ns}_lab_check"):
+            ok = (
+                src_ans==sc["fuente"] and exc_ans==sc["exc_ok"] and path_ans==sc["camino"]
+                and verify_ans==sc["verif"] and control_ans==sc["control"]
+            )
+            if ok:
+                st.success("Hipótesis coherente. El control es preliminar y queda condicionado a la verificación experimental del camino.")
+            else:
+                st.warning("Revisa la secuencia física. No selecciones el control por la molestia: primero conecta fuente, excitación, camino y evidencia.")
+
+    st.markdown("### 4 · Preguntas de comprensión")
+    st.caption("Formativas y no calificadas.")
+    _mcq("q1","1. Una componente de 25 Hz aparece tanto en la bomba como en el dormitorio receptor. ¿Esto demuestra por sí solo que la bomba es la causa?",["A. Sí.","B. No."],1,"La coincidencia frecuencial es evidencia compatible, no prueba causal por sí sola.")
+    _mcq("q2","2. ¿Medir únicamente el nivel de presión sonora en el recinto receptor permite identificar siempre el camino dominante?",["A. Sí.","B. No."],1,"El nivel en el receptor cuantifica el resultado, pero normalmente se necesitan observaciones intermedias para investigar el camino.")
+    _mcq("q3","3. Una descarga sanitaria puede presentar simultáneamente caminos aéreos y estructurales.",["A. Verdadero.","B. Falso."],0,"El flujo puede excitar aire, tubería, fijaciones, estructura y cerramientos.")
+    _mcq("q4","4. Una superficie que vibra intensamente es necesariamente el camino dominante.",["A. Verdadero.","B. Falso."],1,"La vibración debe relacionarse con la fuente, la propagación y la capacidad de radiación del elemento.")
+
+    st.markdown("### Cierre")
+    st.latex(r"\boxed{\mathrm{RECLAMO}\rightarrow\mathrm{HIPÓTESIS}\rightarrow\mathrm{EVIDENCIA}\rightarrow\mathrm{DIAGNÓSTICO}}")
+    st.latex(r"\boxed{\mathrm{DIAGNÓSTICO}\rightarrow\mathrm{CONTROL}}")
+    st.write("Un problema acústico no se resuelve identificando únicamente dónde se escucha el ruido. Es necesario reconstruir el camino que siguió la energía desde la fuente hasta el receptor.")
+    st.success("En la siguiente etapa estudiaremos con mayor profundidad qué ocurre cuando la excitación es un impacto sobre un piso y por qué distintos sistemas constructivos producen respuestas tan diferentes.")
+
+    left,right = st.columns(2)
+    with left:
+        if st.button("← Etapa 2", key=f"s3_prev_{class_id}", use_container_width=True):
+            st.session_state[stage_selector_key] = 2
+            st.rerun()
+    with right:
+        if st.button("Etapa 4 →", key=f"s3_next_{class_id}", use_container_width=True):
+            st.session_state[stage_selector_key] = 4
+            st.rerun()
+
 def future_lab_view_impl(lab):
     """Renderer de los laboratorios posteriores manteniendo la navegación institucional."""
     class_id=lab["id"]
@@ -2165,6 +2527,9 @@ def future_lab_view_impl(lab):
         if selected == 2:
             _render_course2_lab1_stage2(lab, saved)
             return
+        if selected == 3:
+            _render_course2_lab1_stage3(lab, saved)
+            return
 
     title,objective,concept,activity=lab["stages"][selected]
     stage_minutes=20 if selected not in (9,10) else 35
@@ -2256,6 +2621,9 @@ def future_projection_stage_impl(lab, stage):
             return
         if stage == 2:
             _render_course2_lab1_stage2(lab, {})
+            return
+        if stage == 3:
+            _render_course2_lab1_stage3(lab, {})
             return
 
     title, objective, concept, activity = lab["stages"][stage]
