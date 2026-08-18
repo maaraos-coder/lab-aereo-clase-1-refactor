@@ -2561,7 +2561,7 @@ def _render_course2_lab1_stage4(lab, saved):
     t = np.linspace(-0.06, 0.06, 1600)
     sigma_t = max(dt / 2.355, 1e-5)
     force = np.exp(-0.5 * (t / sigma_t) ** 2)
-    force = force / max(np.trapz(force, t), 1e-12)  # impulso normalizado
+    force = force / max(np.trapezoid(force, t), 1e-12)  # impulso normalizado
 
     fig, ax = plt.subplots()
     ax.plot(t * 1000, force / force.max())
@@ -3006,7 +3006,6 @@ def _render_course2_lab1_stage4(lab, saved):
         if st.button("Etapa 5 →", key=f"s4_next_{class_id}", use_container_width=True):
             st.session_state[stage_selector_key] = 5
             st.rerun()
-
 
 def _render_course2_lab1_stage5(lab, saved):
     """Curso 2 · Lab 1 · Etapa 5: control constructivo del ruido de impacto."""
