@@ -2561,7 +2561,7 @@ def _render_course2_lab1_stage4(lab, saved):
     t = np.linspace(-0.06, 0.06, 1600)
     sigma_t = max(dt / 2.355, 1e-5)
     force = np.exp(-0.5 * (t / sigma_t) ** 2)
-    force = force / max(np.trapezoid(force, t), 1e-12)  # impulso normalizado
+    force = force / max(np.trapz(force, t), 1e-12)  # impulso normalizado
 
     fig, ax = plt.subplots()
     ax.plot(t * 1000, force / force.max())
@@ -3007,6 +3007,517 @@ def _render_course2_lab1_stage4(lab, saved):
             st.session_state[stage_selector_key] = 5
             st.rerun()
 
+
+def _render_course2_lab1_stage5(lab, saved):
+    """Curso 2 · Lab 1 · Etapa 5: control constructivo del ruido de impacto."""
+    class_id = lab["id"]
+    stage_selector_key = f"future_stage_{class_id}"
+    role = st.session_state.get("role", "Alumno")
+    projection_mode = bool(st.session_state.get("projection_mode") or role == "Proyección")
+    ns = f"{class_id}_s5"
+
+    def _asset(name, caption=None):
+        p = ASSET_DIR / name
+        if p.exists():
+            st.image(p, width="stretch")
+            if caption:
+                st.caption(caption)
+            return True
+        if st.session_state.get("dev_mode", False):
+            st.caption(f"[Render pendiente: {name}]")
+        return False
+
+    def _card(title, body, icon="💡"):
+        st.markdown(
+            f"""<div style="border:1px solid #cfd8e3;border-radius:12px;padding:16px 18px;
+            margin:10px 0 16px;background:#f8fbff">
+            <div style="font-weight:800;margin-bottom:7px">{icon} {title}</div>
+            <div style="line-height:1.55">{body}</div></div>""",
+            unsafe_allow_html=True,
+        )
+
+    def _mcq(key, question, options, correct, feedback, store=False):
+        st.markdown(f"#### {question}")
+
+        if role == "Docente" and not projection_mode:
+            with st.container(border=True):
+                for i, option in enumerate(options):
+                    st.write(("✅ " if i == correct else "○ ") + option)
+                st.caption("Explicación: " + feedback)
+            return
+
+        state_key = f"{ns}_{key}"
+        choice = st.radio(
+            question,
+            options,
+            index=None,
+            key=state_key,
+            label_visibility="collapsed",
+        )
+        label = "Comprobar y guardar" if store and role == "Alumno" and not projection_mode else "Comprobar"
+        if st.button(label, key=f"{state_key}_check"):
+            if choice is None:
+                st.warning("Selecciona una alternativa.")
+            else:
+                selected = options.index(choice)
+                ok = selected == correct
+                st.session_state[f"{state_key}_result"] = ok
+                if store and role == "Alumno" and not projection_mode:
+                    answers = saved.get("stage5_comprehension", {})
+                    if not isinstance(answers, dict):
+                        answers = {}
+                    answers[key] = {"selected": selected, "correct": ok, "updated_at": _now()}
+                    saved["stage5_comprehension"] = answers
+                    saved["updated_5"] = _now()
+                    _save_future_state_impl(class_id, saved)
+
+        result = st.session_state.get(f"{state_key}_result")
+        if result is True:
+            st.success("Correcto. " + feedback)
+        elif result is False:
+            st.warning("Revisa el mecanismo. " + feedback)
+
+    header(
+        "ETAPA 5 · LABORATORIO 1",
+        "Del modelo físico a la solución constructiva",
+        "Control del ruido de impacto mediante contacto, desacople, detalles de ejecución y radiación.",
+        show_overview=False,
+        duration_minutes=60,
+    )
+
+    st.markdown("### Objetivo de aprendizaje")
+    st.write(
+        "Aplicar la cadena física de la Etapa 4 para distinguir dónde actúan distintas soluciones constructivas, "
+        "reconocer puentes rígidos y analizar el piso como un sistema completo."
+    )
+    st.latex(
+        r"\boxed{F(t)\rightarrow F(f)\rightarrow Y(f)\rightarrow v(f)\rightarrow \mathrm{RADIACIÓN}}"
+    )
+    st.info(
+        "Esta etapa trabaja **mecanismos y decisiones constructivas**. "
+        "La rigidez dinámica, resonancia del piso flotante y modelos predictivos se desarrollarán después."
+    )
+
+    # 1 Apertura
+    st.markdown("### 1 · Misma fuente, distinto sistema")
+    _asset("curso2_lab1_etapa5_mapa_soluciones.webp")
+    st.write(
+        "**Sistema A:** terminación dura sobre losa · "
+        "**Sistema B:** revestimiento resiliente superficial · "
+        "**Sistema C:** sobrelosa desacoplada · "
+        "**Sistema D:** sobrelosa desacoplada con contacto rígido."
+    )
+    _mcq(
+        "opening",
+        "¿Los cuatro pisos reciben el mismo impacto de la misma manera?",
+        ["A. Sí.", "B. No."],
+        1,
+        "La fuente puede ser la misma, pero el sistema modifica la interacción, la transferencia y la respuesta.",
+    )
+    st.latex(
+        r"\boxed{\mathrm{MISMA\ FUENTE}+\mathrm{DISTINTO\ SISTEMA}\Rightarrow\mathrm{DISTINTA\ RESPUESTA}}"
+    )
+
+    # 2 Tres lugares para intervenir
+    st.markdown("### 2 · Tres lugares donde podemos intervenir")
+    st.latex(
+        r"\mathrm{IMPACTO}\rightarrow F(t)\rightarrow \mathrm{ESTRUCTURA}\rightarrow v(f)\rightarrow \mathrm{RADIACIÓN}"
+    )
+    c1,c2,c3 = st.columns(3)
+    with c1:
+        with st.container(border=True):
+            st.markdown("#### A · FUENTE / CONTACTO")
+            st.latex(r"F(t)")
+            st.write("Alfombra · caucho · revestimiento resiliente")
+    with c2:
+        with st.container(border=True):
+            st.markdown("#### B · TRANSMISIÓN ESTRUCTURAL")
+            st.write("Modificar la transferencia entre partes del sistema.")
+            st.write("Ejemplo: piso flotante.")
+    with c3:
+        with st.container(border=True):
+            st.markdown("#### C · RADIACIÓN")
+            st.write("Reducir el sonido radiado hacia el recinto.")
+            st.write("Ejemplo: cielo suspendido desacoplado.")
+    st.latex(r"\boxed{\mathrm{DISTINTAS\ SOLUCIONES}\rightarrow\mathrm{DISTINTOS\ MECANISMOS}}")
+
+    # Interactivo 5.1
+    st.markdown("### 🔬 3 · ¿Dónde estás actuando?")
+    st.caption("Identifica el mecanismo principal. En sistemas reales pueden existir efectos adicionales.")
+    solutions = {
+        "Alfombra": ("FUENTE / CONTACTO", "Modifica principalmente F(t) y F(f) al cambiar la interacción de contacto."),
+        "Capa de caucho": ("FUENTE / CONTACTO", "Aumenta la resiliencia del contacto y modifica la forma temporal de la excitación."),
+        "Piso flotante": ("TRANSMISIÓN ESTRUCTURAL", "Introduce desacople dinámico entre una masa superior y el piso base."),
+        "Cielo suspendido": ("RADIACIÓN / CAMINO INFERIOR", "Actúa sobre la radiación hacia el receptor y sobre el desacople del cerramiento inferior."),
+    }
+    sol = st.segmented_control(
+        "Selecciona una solución",
+        list(solutions),
+        default="Alfombra",
+        key=f"{ns}_where_solution",
+    )
+    mechanism, explanation = solutions[sol]
+    with st.container(border=True):
+        st.markdown(f"#### Mecanismo principal · {mechanism}")
+        st.write(explanation)
+
+    # Revestimiento resiliente
+    st.markdown("### 4 · Revestimiento resiliente: actuar sobre la excitación")
+    _asset("curso2_lab1_etapa5_duro_resiliente.webp")
+    st.write(
+        "Un revestimiento blando modifica principalmente la interacción entre el objeto impactante y la superficie."
+    )
+    st.latex(
+        r"\mathrm{contacto\ más\ resiliente}\rightarrow \Delta t\uparrow\rightarrow\mathrm{modificación\ de}\ F(f)"
+    )
+    _card(
+        "REVESTIMIENTO BLANDO",
+        "Actúa principalmente sobre <b>LA EXCITACIÓN</b>. "
+        "La explicación física no es simplemente que el material “absorba vibración”, sino que modifica la fuerza de contacto y la potencia mecánica introducida al piso.",
+        "🟦",
+    )
+
+    # Piso flotante
+    st.markdown("### 5 · Piso flotante: introducir desacople")
+    _asset("curso2_lab1_etapa5_piso_flotante_explotado.webp")
+    st.write(
+        "La estrategia ya no consiste solamente en suavizar el impacto. "
+        "Se incorpora una masa superior físicamente desacoplada de la base mediante una capa resiliente."
+    )
+    fc1,fc2,fc3 = st.columns(3)
+    for col,title in zip([fc1,fc2,fc3],["MASA SUPERIOR","CAPA RESILIENTE","PISO BASE"]):
+        with col:
+            with st.container(border=True):
+                st.markdown(f"**{title}**")
+    _card(
+        "EN PALABRAS SIMPLES",
+        "La capa superior no debería quedar rígidamente unida a la estructura base. "
+        "La capa resiliente limita la transmisión mecánica entre ambas.",
+    )
+    st.latex(r"\boxed{\mathrm{DESACOPLAR}\neq\mathrm{SEPARAR\ VISUALMENTE}}")
+
+    # Puentes
+    st.markdown("### 6 · El puente rígido")
+    _asset("curso2_lab1_etapa5_correcto_puente.webp")
+    st.latex(
+        r"\boxed{\mathrm{PISO\ FLOTANTE}+\mathrm{CONTACTO\ RÍGIDO}\Rightarrow\mathrm{PÉRDIDA\ DE\ DESACOPLE}}"
+    )
+    st.write(
+        "Mortero, sobrelosa tocando muro, rodapié, tornillos, tuberías, penetraciones, soportes o elementos metálicos "
+        "pueden crear conexiones mecánicas alternativas."
+    )
+    st.info(
+        "La energía busca caminos mecánicos. Una unión mucho más rígida que la capa resiliente puede puentear el camino diseñado."
+    )
+
+    # Interactivo 5.2
+    st.markdown("### 🔎 7 · Encuentra los puentes")
+    st.write("Explora los cinco puntos ocultos del detalle de obra. Los marcadores son táctiles y funcionan también en móvil.")
+    bridge_points = {
+        "P1 · Sobrelosa–muro": "Se creó una conexión mecánica adicional entre la masa flotante y el muro.",
+        "P2 · Rodapié rígido": "El rodapié puede puentear la banda perimetral y conectar acabado/sobrelosa con el cerramiento.",
+        "P3 · Tornillo": "El elemento atraviesa la capa resiliente y genera una unión rígida localizada.",
+        "P4 · Tubería": "Una penetración o fijación rígida puede transferir vibración a la estructura base.",
+        "P5 · Banda perimetral": "La pérdida de continuidad permite contacto lateral y reduce el desacople.",
+    }
+    found_key = f"{ns}_bridges_found"
+    found = set(st.session_state.get(found_key, []))
+    cols = st.columns(5)
+    for col,point in zip(cols,bridge_points):
+        with col:
+            if st.button(
+                "✓ " + point if point in found else point,
+                key=f"{ns}_bridge_{point}",
+                use_container_width=True,
+                type="primary" if point in found else "secondary",
+            ):
+                found.add(point)
+                st.session_state[found_key] = sorted(found)
+                st.rerun()
+    for point in found:
+        _card("¿Qué ocurrió? · " + point, bridge_points[point], "⚠️")
+    if found:
+        st.latex(r"\mathrm{ENERGÍA}\rightarrow\mathrm{PUENTE}\rightarrow\mathrm{ESTRUCTURA\ BASE}")
+    st.caption(f"Puentes identificados: {len(found)}/5")
+
+    # Cielo
+    st.markdown("### 8 · Cielo suspendido: intervenir la radiación inferior")
+    _asset("curso2_lab1_etapa5_cielo_suspendido.webp")
+    st.write(
+        "Un cielo desacoplado puede reducir la radiación acústica hacia el recinto receptor y modificar la respuesta del sistema inferior."
+    )
+    st.latex(r"\boxed{\mathrm{CIELO}\neq\mathrm{ELIMINACIÓN\ DE\ LA\ VIBRACIÓN\ DEL\ PISO}}")
+    _mcq(
+        "ceiling",
+        "Si colocamos un excelente cielo suspendido bajo una losa, ¿hemos eliminado el ruido estructural del edificio?",
+        ["A. Sí.", "B. No."],
+        1,
+        "El cielo puede reducir la energía radiada hacia ese recinto, pero la vibración puede seguir propagándose por la estructura.",
+    )
+
+    # Interactivo 5.3
+    st.markdown("### 🧪 9 · Construye el piso")
+    st.write("Activa componentes y observa qué cambia físicamente. La evaluación es cualitativa y no normativa.")
+    options = [
+        "Revestimiento resiliente",
+        "Capa pesada superior",
+        "Capa resiliente bajo sobrelosa",
+        "Cielo suspendido",
+        "Absorbente en cavidad",
+        "Banda perimetral",
+    ]
+    build = {}
+    for opt in options:
+        build[opt] = st.toggle(opt, key=f"{ns}_build_{opt}")
+
+    interpretations = []
+    if build["Revestimiento resiliente"]:
+        interpretations.append(("Revestimiento", "Modifica principalmente F(t) y F(f)."))
+    if build["Capa pesada superior"]:
+        interpretations.append(("Masa superior", "Introduce una masa adicional cuya respuesta debe considerarse como parte del sistema."))
+    if build["Capa resiliente bajo sobrelosa"]:
+        interpretations.append(("Desacople", "Introduce separación mecánica entre la masa superior y la losa base."))
+    if build["Cielo suspendido"]:
+        interpretations.append(("Cielo", "Modifica el camino de radiación inferior hacia el recinto receptor."))
+    if build["Absorbente en cavidad"]:
+        interpretations.append(("Cavidad", "Modifica el campo acústico dentro de la cavidad del cielo; no reemplaza el desacople mecánico."))
+    if build["Banda perimetral"]:
+        interpretations.append(("Banda perimetral", "Ayuda a evitar contactos rígidos laterales."))
+
+    if interpretations:
+        for title,body in interpretations:
+            _card(title, body, "🔧")
+    else:
+        st.info("Sistema inicial: losa base sin medidas adicionales.")
+
+    control_exc = "ALTO" if build["Revestimiento resiliente"] else "BAJO"
+    direct_risk = "BAJO" if build["Capa resiliente bajo sobrelosa"] and build["Banda perimetral"] else ("MEDIO" if build["Capa resiliente bajo sobrelosa"] else "ALTO")
+    bridge_risk = "BAJO" if build["Capa resiliente bajo sobrelosa"] and build["Banda perimetral"] else ("MEDIO" if build["Banda perimetral"] else "ALTO")
+    q1,q2,q3 = st.columns(3)
+    q1.metric("Control de excitación", control_exc)
+    q2.metric("Riesgo de transmisión directa", direct_risk)
+    q3.metric("Riesgo de puentes rígidos", bridge_risk)
+    st.caption("Evaluación didáctica cualitativa. No corresponde a una predicción normativa.")
+
+    # Caso profesional + inspección
+    st.markdown("### 10 · Caso profesional · Cuando una buena especificación falla")
+    st.write(
+        "**Proyecto:** edificio residencial con losa H.A., capa resiliente, sobrelosa, porcelanato y banda perimetral."
+    )
+    st.warning(
+        "Inspección: la sobrelosa toca el muro; una tubería atraviesa rígidamente el sistema; "
+        "el rodapié genera contacto y la capa resiliente presenta discontinuidad."
+    )
+    _mcq(
+        "professional",
+        "El fabricante declara un buen desempeño acústico para la capa resiliente. ¿Podemos concluir que el material seleccionado es defectuoso?",
+        [
+            "A. Sí.",
+            "B. No; primero deben investigarse los defectos de ejecución y la configuración completa.",
+        ],
+        1,
+        "La prestación del material no garantiza automáticamente la prestación de la obra completa.",
+    )
+    st.latex(r"\boxed{\mathrm{PRESTACIÓN\ DEL\ MATERIAL}\neq\mathrm{PRESTACIÓN\ AUTOMÁTICA\ DE\ LA\ OBRA}}")
+
+    # Interactivo 5.4
+    st.markdown("### 🔎 11 · Inspección de obra")
+    inspection_errors = {
+        "Contacto perimetral": (
+            "Puente estructural",
+            "Transferencia directa adicional",
+            "Recuperar continuidad del desacople",
+        ),
+        "Tubería rígida": (
+            "Conexión mecánica atravesando el sistema",
+            "Camino alternativo de vibración",
+            "Revisar el desacople de la penetración",
+        ),
+        "Rodapié en contacto": (
+            "Puente lateral",
+            "Conecta elementos que debían permanecer desacoplados",
+            "Restablecer separación mecánica",
+        ),
+        "Discontinuidad resiliente": (
+            "Pérdida local de desacople",
+            "Concentración de transferencia mecánica",
+            "Recuperar continuidad de la capa",
+        ),
+        "Tornillo atravesante": (
+            "Puente puntual",
+            "Transmisión directa localizada",
+            "Eliminar la conexión rígida innecesaria",
+        ),
+    }
+    selected_errors = st.multiselect(
+        "Identifica al menos cuatro errores del corte constructivo:",
+        list(inspection_errors),
+        key=f"{ns}_inspection",
+    )
+    if len(selected_errors) >= 4:
+        st.success("Has identificado suficientes puntos para estructurar una inspección técnica.")
+    for err in selected_errors:
+        mech,cons,corr = inspection_errors[err]
+        with st.container(border=True):
+            st.markdown(f"#### {err}")
+            st.write(f"**Mecanismo:** {mech}")
+            st.write(f"**Consecuencia:** {cons}")
+            st.write(f"**Corrección conceptual:** {corr}")
+
+    # Interactivo 5.5 comparador
+    st.markdown("### ⚖️ 12 · Comparador de soluciones")
+    _asset("curso2_lab1_etapa5_mapa_soluciones.webp")
+    systems = {
+        "A · Cerámica sobre losa": "Piso duro base",
+        "B · Revestimiento resiliente sobre losa": "Actúa principalmente en el contacto",
+        "C · Piso flotante correctamente desacoplado": "Actúa principalmente en la transmisión estructural",
+        "D · Piso flotante con puente rígido": "Riesgo de pérdida de desempeño por ejecución",
+    }
+    selected_system = st.segmented_control(
+        "Explora una solución",
+        list(systems),
+        default=list(systems)[0],
+        key=f"{ns}_compare_system",
+    )
+    _card(selected_system, systems[selected_system], "🏗️")
+    _mcq(
+        "compare_contact",
+        "¿Qué sistema presenta la mayor intervención directa sobre la fuerza de contacto?",
+        list(systems),
+        1,
+        "El revestimiento resiliente modifica principalmente la interacción de contacto.",
+    )
+    _mcq(
+        "compare_structure",
+        "¿Qué sistema introduce una masa superior desacoplada para intervenir la transmisión estructural?",
+        list(systems),
+        2,
+        "El piso flotante correctamente desacoplado introduce una masa superior separada mecánicamente de la base.",
+    )
+    _mcq(
+        "compare_execution",
+        "¿Qué sistema presenta el mayor riesgo de perder el desempeño diseñado debido a un puente rígido explícito?",
+        list(systems),
+        3,
+        "El puente rígido introduce un camino mecánico no deseado.",
+    )
+    st.info("No se ordenan las soluciones simplemente de “mejor a peor”: el resultado depende de la frecuencia y del sistema.")
+    st.latex(r"\boxed{\mathrm{MECANISMO}\ \mathrm{ANTES\ QUE}\ \mathrm{NÚMERO}}")
+
+    # Conexión etapa 6
+    st.markdown("### 13 · Conexión con la Etapa 6")
+    _mcq(
+        "next_stage",
+        "Si dos pisos flotantes tienen exactamente la misma geometría, pero utilizan capas resilientes con comportamientos mecánicos diferentes, ¿funcionarán igual?",
+        ["A. Sí.", "B. No necesariamente."],
+        1,
+        "La respuesta depende del comportamiento mecánico de la capa resiliente y del sistema completo.",
+    )
+    st.latex(r"\boxed{\mathrm{Necesitamos\ cuantificar\ la\ rigidez\ dinámica\ del\ sistema}}")
+    st.write(
+        "En la Etapa 6 convertiremos el sistema constructivo en un modelo dinámico y estudiaremos masa, rigidez, resonancia y modelos predictivos."
+    )
+
+    # Comprensión
+    st.markdown("### 14 · Preguntas de comprensión")
+    st.caption("Formativas y no calificadas.")
+    _mcq(
+        "q1",
+        "1. Un revestimiento blando controla principalmente:",
+        [
+            "A. El contacto y la excitación.",
+            "B. Exclusivamente la radiación inferior.",
+            "C. Únicamente el flanqueo.",
+            "D. La geometría de la losa.",
+        ],
+        0,
+        "El mecanismo principal es modificar la interacción de contacto y, por tanto, F(t) y F(f).",
+        store=True,
+    )
+    _mcq(
+        "q2",
+        "2. Un piso flotante correcto debe evitar conexiones rígidas innecesarias con la estructura base.",
+        ["A. Verdadero.", "B. Falso."],
+        0,
+        "El desacople requiere evitar caminos rígidos que puenteen la capa resiliente.",
+        store=True,
+    )
+    _mcq(
+        "q3",
+        "3. Un cielo suspendido elimina necesariamente toda la vibración estructural de la losa.",
+        ["A. Verdadero.", "B. Falso."],
+        1,
+        "Puede reducir radiación hacia un recinto, pero la vibración estructural puede continuar propagándose.",
+        store=True,
+    )
+    _mcq(
+        "q4",
+        "4. Un puente rígido puede crear un camino alternativo para la energía.",
+        ["A. Verdadero.", "B. Falso."],
+        0,
+        "Una unión rígida puede puentear el camino resiliente diseñado.",
+        store=True,
+    )
+    _mcq(
+        "q5",
+        "5. Una buena especificación de producto garantiza por sí sola el desempeño de la obra.",
+        ["A. Verdadero.", "B. Falso."],
+        1,
+        "Ejecución, encuentros, puentes, compatibilidades y modificaciones de obra condicionan el desempeño final.",
+        store=True,
+    )
+
+    # Ejercicio
+    st.markdown("### 15 · Ejercicio de la etapa")
+    st.write(
+        "**Solución A:** losa + revestimiento resiliente.  \n"
+        "**Solución B:** losa + capa resiliente + sobrelosa desacoplada."
+    )
+    _mcq(
+        "exercise1",
+        "¿Cuál modifica principalmente la fuerza de contacto?",
+        ["A. Solución A.", "B. Solución B."],
+        0,
+        "El revestimiento resiliente modifica principalmente la interacción de contacto.",
+    )
+    _mcq(
+        "exercise2",
+        "¿Cuál introduce una masa estructural desacoplada?",
+        ["A. Solución A.", "B. Solución B."],
+        1,
+        "La sobrelosa desacoplada introduce una masa superior separada mecánicamente de la base.",
+    )
+    _mcq(
+        "exercise3",
+        "¿Podemos afirmar todavía cuántos dB de diferencia habrá entre ambas?",
+        ["A. Sí.", "B. No."],
+        1,
+        "Faltan propiedades mecánicas del sistema y un modelo predictivo.",
+    )
+
+    # Cierre
+    st.markdown("### Cierre")
+    st.latex(
+        r"\boxed{\mathrm{CONTACTO}\rightarrow\mathrm{TRANSMISIÓN}\rightarrow\mathrm{RADIACIÓN}}"
+    )
+    st.write(
+        "Una solución de control de impacto no es una lista de materiales: es un sistema constructivo que debe actuar "
+        "sobre el mecanismo relevante y conservar en obra el desacople que fue diseñado."
+    )
+    st.success(
+        "La siguiente etapa cuantificará el comportamiento dinámico del piso flotante y permitirá pasar del mecanismo constructivo al modelo predictivo."
+    )
+
+    left,right = st.columns(2)
+    with left:
+        if st.button("← Etapa 4", key=f"s5_prev_{class_id}", use_container_width=True):
+            st.session_state[stage_selector_key] = 4
+            st.rerun()
+    with right:
+        if st.button("Etapa 6 →", key=f"s5_next_{class_id}", use_container_width=True):
+            st.session_state[stage_selector_key] = 6
+            st.rerun()
+
 def future_lab_view_impl(lab):
     """Renderer de los laboratorios posteriores manteniendo la navegación institucional."""
     class_id=lab["id"]
@@ -3154,6 +3665,9 @@ def future_lab_view_impl(lab):
         if selected == 4:
             _render_course2_lab1_stage4(lab, saved)
             return
+        if selected == 5:
+            _render_course2_lab1_stage5(lab, saved)
+            return
 
     title,objective,concept,activity=lab["stages"][selected]
     stage_minutes=20 if selected not in (9,10) else 35
@@ -3251,6 +3765,9 @@ def future_projection_stage_impl(lab, stage):
             return
         if stage == 4:
             _render_course2_lab1_stage4(lab, {})
+            return
+        if stage == 5:
+            _render_course2_lab1_stage5(lab, {})
             return
 
     title, objective, concept, activity = lab["stages"][stage]
