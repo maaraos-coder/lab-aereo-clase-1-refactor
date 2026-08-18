@@ -43,19 +43,19 @@ COURSE_LABS = [
                      "Explora cinco interactivos para estudiar duración de contacto, tipo de piso, posición, cadena predictiva y diferencia entre Ln(f) y ΔL(f)."),
 
                     ("Predicción del nivel de ruido de impacto de la losa base",
-                     "Estimar Lₙ,₀(f) de una losa desnuda y comprender la relación física entre R(f), radiación y ruido de impacto.",
-                     "Conecta la física del impacto con una predicción por bandas de la losa base, diferenciando claramente R y Lₙ.",
-                     "Explora el paso de R(f) a Lₙ,₀(f), frecuencia crítica, eficiencia de radiación y campo de validez."),
+                     "Estimar Lₙ,₀(f) para una losa desnuda a partir de R(f), eficiencia de radiación y régimen físico.",
+                     "La etapa cierra la brecha entre la física del impacto y la predicción cuantitativa del piso base por bandas.",
+                     "Explora R→Lₙ, eficiencia de radiación, regiones respecto de f_c, curva completa y selección analítico/FEM."),
 
                     ("Predicción de la mejora de un piso flotante: ΔLₙ(f)",
-                     "Modelar masa, rigidez, resonancia y tendencias Cremer/Vér para estimar la mejora espectral de un tratamiento.",
-                     "Separa transmisibilidad mecánica de mejora vibroacústica y analiza cuándo el sistema real deja de cumplir el modelo ideal.",
-                     "Construye masa, mueve la resonancia, compara tendencias de mejora y analiza puentes rígidos."),
+                     "Modelar la mejora espectral de un tratamiento mediante masa, rigidez, resonancia y modelos/tendencias Cremer y Vér.",
+                     "Distingue transmisibilidad mecánica de mejora vibroacústica y explicita el campo de validez del piso flotante ideal.",
+                     "Construye masa, mueve la resonancia, atraviesa la resonancia, compara Cremer/Vér, predice ΔLₙ y analiza puentes."),
 
                     ("Predicción completa del piso: de la losa base al sistema terminado",
                      "Combinar Lₙ,₀(f) y ΔLₙ(f) para obtener Lₙ,final(f), comparar alternativas y decidir bajo restricciones reales.",
-                     "Integra los resultados de Etapas 5 y 6, sensibilidad y constructibilidad sin introducir todavía números únicos.",
-                     "Construye la predicción completa, compara pisos, optimiza, analiza sensibilidad y contrasta modelo ideal con obra."),
+                     "Integra los resultados de Etapas 5 y 6, sensibilidad, constructibilidad y campo de validez sin introducir números únicos.",
+                     "Construye la predicción completa, compara tres pisos, optimiza, usa mapa de diseño, sensibilidad y modelo→obra."),
 
                     ("Aplicación: equipo e instalaciones",
                      "Aplicar criterios de control vibroacústico a bombas, tuberías y otras instalaciones.",
