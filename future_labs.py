@@ -42,10 +42,10 @@ COURSE_LABS = [
                      "La etapa desarrolla la cadena F(t) → F(f) → Y(f) → v(f) → Wrad(f) → Ln(f), diferenciando impacto duro/resiliente, posición de impacto, nivel absoluto y mejora.",
                      "Explora cinco interactivos para estudiar duración de contacto, tipo de piso, posición, cadena predictiva y diferencia entre Ln(f) y ΔL(f)."),
 
-                    ("Normalización por reverberación",
-                     "Comprender por qué el tiempo de reverberación modifica el nivel medido y cómo se normaliza.",
-                     "La normalización corrige la influencia del campo reverberante del recinto receptor.",
-                     "Aplica conceptualmente la normalización y analiza el sentido de la corrección."),
+                    ("Del modelo físico a la solución constructiva: control del ruido de impacto",
+                     "Distinguir cómo revestimientos resilientes, pisos flotantes, cielos suspendidos y detalles de ejecución actúan sobre diferentes mecanismos del ruido de impacto.",
+                     "La etapa aplica la cadena física previa al análisis constructivo, enfatizando contacto, desacople, radiación, puentes rígidos y calidad de ejecución.",
+                     "Explora cinco interactivos para identificar mecanismos, puentes rígidos, construir un sistema de piso, inspeccionar la obra y comparar soluciones."),
 
                     ("Lectura espectral e instrumentación",
                      "Leer espectros de vibración/ruido y seleccionar una cadena básica de instrumentación.",
