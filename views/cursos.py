@@ -2561,7 +2561,8 @@ def _render_course2_lab1_stage4(lab, saved):
     t = np.linspace(-0.06, 0.06, 1600)
     sigma_t = max(dt / 2.355, 1e-5)
     force = np.exp(-0.5 * (t / sigma_t) ** 2)
-    force = force / max(np.trapezoid(force, t), 1e-12)  # impulso normalizado
+    impulse_area = np.sum(0.5 * (force[:-1] + force[1:]) * np.diff(t))
+    force = force / max(float(impulse_area), 1e-12)  # impulso normalizado
 
     fig, ax = plt.subplots()
     ax.plot(t * 1000, force / force.max())
