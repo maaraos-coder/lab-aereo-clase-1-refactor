@@ -37,10 +37,10 @@ COURSE_LABS = [
                      "La elección de la magnitud depende del fenómeno, la frecuencia y el objetivo de evaluación.",
                      "Relaciona cada magnitud con su interpretación física y su uso en diagnóstico."),
 
-                    ("Ruido de impacto normalizado",
-                     "Comprender los principales descriptores utilizados para evaluar ruido de impacto.",
-                     "El nivel de impacto normalizado permite comparar situaciones reduciendo la influencia de las condiciones del recinto receptor.",
-                     "Interpreta descriptores y reconoce qué representa cada uno."),
+                    ("Física del ruido de impacto: de la fuerza de contacto a la respuesta del piso",
+                     "Comprender el impacto como fuerza variable en el tiempo y relacionar interacción fuente–piso, movilidad, respuesta vibratoria y radiación.",
+                     "La etapa desarrolla la cadena F(t) → F(f) → Y(f) → v(f) → Wrad(f) → Ln(f), diferenciando impacto duro/resiliente, posición de impacto, nivel absoluto y mejora.",
+                     "Explora cinco interactivos para estudiar duración de contacto, tipo de piso, posición, cadena predictiva y diferencia entre Ln(f) y ΔL(f)."),
 
                     ("Normalización por reverberación",
                      "Comprender por qué el tiempo de reverberación modifica el nivel medido y cómo se normaliza.",
