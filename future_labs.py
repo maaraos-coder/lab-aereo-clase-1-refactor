@@ -47,10 +47,10 @@ COURSE_LABS = [
                      "La etapa aplica la cadena física previa al análisis constructivo, enfatizando contacto, desacople, radiación, puentes rígidos y calidad de ejecución.",
                      "Explora cinco interactivos para identificar mecanismos, puentes rígidos, construir un sistema de piso, inspeccionar la obra y comparar soluciones."),
 
-                    ("Lectura espectral e instrumentación",
-                     "Leer espectros de vibración/ruido y seleccionar una cadena básica de instrumentación.",
-                     "El espectro permite reconocer bandas dominantes, resonancias y mecanismos; la instrumentación debe ser coherente con la magnitud a medir.",
-                     "Analiza un espectro y selecciona sensores y condiciones básicas de medición."),
+                    ("Piso flotante como sistema dinámico: rigidez, resonancia y modelos predictivos",
+                     "Representar el piso flotante como sistema masa–resorte–masa y relacionar masas superficiales, rigidez dinámica, masa reducida, resonancia y mejora de impacto.",
+                     "La etapa desarrolla m₁′, m₂′, s′, mᵣ′, f₀, relación de frecuencias, transmisibilidad y tendencias predictivas de Cremer y Vér, manteniéndolas separadas de la normativa.",
+                     "Explora seis interactivos para construir masa, mover la resonancia, atravesar la resonancia, comparar tendencias Cremer/Vér, romper el modelo ideal y diseñar un piso."),
 
                     ("Aplicación: piso flotante",
                      "Relacionar resiliencia, desacoplamiento y puentes rígidos con el control de ruido de impacto.",
