@@ -202,11 +202,25 @@ def __result_summary_impl():
     summaries={}
     for lab_number,rows in lab_rows.items():
         activity_stages=LAB_ACTIVITY_STAGES[lab_number]
-        activity_rows=[r for r in rows if r[0] in activity_stages]
-        activity_max=sum(sum(LAB_POINT_SCHEMAS[lab_number][s].values()) for s in activity_stages)
-        activity_earned=sum(_effective_score(r) for r in activity_rows)
-        answered=len({r[1] for r in activity_rows})
-        expected=sum(len(LAB_POINT_SCHEMAS[lab_number][s]) for s in activity_stages)
+        allowed_by_stage={
+            s:set(LAB_POINT_SCHEMAS[lab_number][s])
+            for s in activity_stages
+        }
+        # Contar solo actividades que siguen perteneciendo al esquema vigente.
+        # Esto evita que respuestas antiguas/obsoletas eleven el numerador
+        # por sobre el total visible, por ejemplo "5 de 3".
+        activity_rows=[
+            r for r in rows
+            if r[0] in allowed_by_stage and r[1] in allowed_by_stage[r[0]]
+        ]
+        rows_by_key={(r[0],r[1]):r for r in activity_rows}
+        activity_max=sum(
+            sum(LAB_POINT_SCHEMAS[lab_number][s].values())
+            for s in activity_stages
+        )
+        activity_earned=sum(_effective_score(r) for r in rows_by_key.values())
+        answered=len(rows_by_key)
+        expected=sum(len(keys) for keys in allowed_by_stage.values())
         summaries[lab_number]={
             "earned":activity_earned,"maximum":activity_max,
             "answered":answered,"expected":expected,
