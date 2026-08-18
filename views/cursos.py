@@ -3579,6 +3579,587 @@ def _render_course2_lab1_stage5(lab, saved):
             st.session_state[stage_selector_key] = 6
             st.rerun()
 
+def _render_course2_lab1_stage6(lab, saved):
+    """Curso 2 · Lab 1 · Etapa 6: piso flotante como sistema dinámico."""
+    class_id = lab["id"]
+    stage_selector_key = f"future_stage_{class_id}"
+    role = st.session_state.get("role", "Alumno")
+    projection_mode = bool(st.session_state.get("projection_mode") or role == "Proyección")
+    ns = f"{class_id}_s6"
+
+    import math
+    import numpy as np
+    import matplotlib.pyplot as plt
+
+    def _asset(name, caption=None):
+        p = ASSET_DIR / name
+        if p.exists():
+            st.image(p, width="stretch")
+            if caption:
+                st.caption(caption)
+            return True
+        if st.session_state.get("dev_mode", False):
+            st.caption(f"[Render pendiente: {name}]")
+        return False
+
+    def _card(title, body, icon="💡"):
+        st.markdown(
+            f"""<div style="border:1px solid #cfd8e3;border-radius:12px;padding:16px 18px;
+            margin:10px 0 16px;background:#f8fbff">
+            <div style="font-weight:800;margin-bottom:7px">{icon} {title}</div>
+            <div style="line-height:1.55">{body}</div></div>""",
+            unsafe_allow_html=True,
+        )
+
+    def _mr(m1, m2):
+        return (m1*m2)/(m1+m2)
+
+    def _f0(m1, m2, s_mn):
+        mr = _mr(m1, m2)
+        s = s_mn*1e6
+        return mr, (1/(2*math.pi))*math.sqrt(s/mr)
+
+    def _tf(r, zeta):
+        return math.sqrt(
+            (1 + (2*zeta*r)**2) /
+            ((1-r**2)**2 + (2*zeta*r)**2)
+        )
+
+    def _nearest_third_octave(f):
+        centers = np.array([
+            20,25,31.5,40,50,63,80,100,125,160,200,250,315,400,500
+        ], dtype=float)
+        return float(centers[np.argmin(np.abs(np.log(centers/f)))])
+
+    def _trend(f, f0, slope_db_oct):
+        f = np.asarray(f, dtype=float)
+        ratio = np.maximum(f/f0, 1.0)
+        return slope_db_oct*np.log2(ratio)
+
+    def _mcq(key, question, options, correct, feedback, store=False):
+        st.markdown(f"#### {question}")
+        if role == "Docente" and not projection_mode:
+            with st.container(border=True):
+                for i,opt in enumerate(options):
+                    st.write(("✅ " if i == correct else "○ ") + opt)
+                st.caption("Explicación: " + feedback)
+            return
+
+        state_key = f"{ns}_{key}"
+        choice = st.radio(
+            question,
+            options,
+            index=None,
+            key=state_key,
+            label_visibility="collapsed",
+        )
+        label = "Comprobar y guardar" if store and role == "Alumno" and not projection_mode else "Comprobar"
+        if st.button(label, key=f"{state_key}_check"):
+            if choice is None:
+                st.warning("Selecciona una alternativa.")
+            else:
+                selected = options.index(choice)
+                ok = selected == correct
+                st.session_state[f"{state_key}_result"] = ok
+                if store and role == "Alumno" and not projection_mode:
+                    answers = saved.get("stage6_comprehension", {})
+                    if not isinstance(answers, dict):
+                        answers = {}
+                    answers[key] = {"selected": selected, "correct": ok, "updated_at": _now()}
+                    saved["stage6_comprehension"] = answers
+                    saved["updated_6"] = _now()
+                    _save_future_state_impl(class_id, saved)
+
+        result = st.session_state.get(f"{state_key}_result")
+        if result is True:
+            st.success("Correcto. " + feedback)
+        elif result is False:
+            st.warning("Revisa el concepto. " + feedback)
+
+    header(
+        "ETAPA 6 · LABORATORIO 1",
+        "Piso flotante como sistema dinámico",
+        "Rigidez, resonancia y modelos predictivos.",
+        show_overview=False,
+        duration_minutes=75,
+    )
+
+    st.markdown("### Objetivo de aprendizaje")
+    st.write(
+        "Pasar desde un sistema constructivo real a un modelo dinámico distribuido, calcular masa reducida y frecuencia natural, "
+        "interpretar transmisibilidad y comparar tendencias predictivas de Cremer y Vér sin confundirlas con normativa."
+    )
+    st.latex(
+        r"\boxed{m_1',m_2',s'\rightarrow m_r'\rightarrow f_0\rightarrow "
+        r"\mathrm{RESPUESTA\ DINÁMICA}\rightarrow \Delta L_n(f)}"
+    )
+
+    # 1 Apertura
+    st.markdown("### 1 · Del piso real al sistema dinámico")
+    _asset("curso2_lab1_etapa6_modelo_masa_resorte_masa.webp")
+    _mcq(
+        "opening",
+        "¿Por qué dos pisos flotantes que visualmente parecen idénticos pueden comportarse acústicamente de forma muy diferente?",
+        [
+            "A. Porque uno puede tener distinta masa y distinta rigidez dinámica.",
+            "B. Porque todos los pisos flotantes funcionan igual.",
+            "C. Solamente depende del porcelanato.",
+            "D. Solamente depende del espesor de la losa base.",
+        ],
+        0,
+        "El comportamiento dinámico depende de las masas involucradas y de la rigidez de la capa que las desacopla.",
+    )
+
+    st.markdown("#### Sistema real → modelo")
+    real, model = st.columns(2)
+    with real:
+        with st.container(border=True):
+            st.markdown("**SISTEMA REAL**")
+            st.write("Acabado  \nSobrelosa  \nCapa resiliente  \nLosa estructural")
+    with model:
+        with st.container(border=True):
+            st.markdown("**MODELO DINÁMICO**")
+            st.latex(r"\boxed{m_1'\quad s'\quad m_2'}")
+            st.write("m₁′ = masa superficial flotante  \ns′ = rigidez dinámica superficial  \nm₂′ = masa superficial base")
+
+    # 2 Surface mass
+    st.markdown("### 2 · Masa superficial")
+    st.latex(r"\boxed{m'=\rho h}")
+    st.write("**ρ:** densidad [kg/m³] · **h:** espesor [m] · **m′:** masa superficial [kg/m²].")
+    st.write("Para el modelo distribuido interesa la masa por unidad de superficie, no solamente la masa total del recinto.")
+
+    st.markdown("#### Ejemplo")
+    st.latex(r"\rho=2100\ \mathrm{kg/m^3},\qquad h=0.05\ \mathrm{m}")
+    st.latex(r"m_1'=2100(0.05)=\boxed{105\ \mathrm{kg/m^2}}")
+
+    # Interactive 6.1
+    st.markdown("### 🔬 3 · Construye la masa")
+    rho = st.slider("Densidad ρ (kg/m³)", 1200, 2600, 2100, 50, key=f"{ns}_rho")
+    h_mm = st.slider("Espesor h (mm)", 20, 120, 50, 5, key=f"{ns}_h")
+    m_surface = rho*(h_mm/1000)
+    a,b = st.columns(2)
+    a.metric("Masa superficial m′", f"{m_surface:.1f} kg/m²")
+    b.metric("Espesor", f"{h_mm} mm")
+    st.caption("Material genérico configurable. Los valores no representan una ficha comercial específica.")
+    # Didactic thickness bar
+    st.markdown(
+        f"""<div style="height:{max(18,min(80,h_mm/2)):.0f}px;background:#a8adb4;border:1px solid #757b83;
+        border-radius:6px;margin:8px 0 14px;"></div>""",
+        unsafe_allow_html=True,
+    )
+    st.caption("Representación didáctica del espesor; no está a escala.")
+
+    # 4 Dynamic stiffness
+    st.markdown("### 4 · Rigidez dinámica superficial")
+    st.latex(r"\boxed{s'}")
+    st.latex(r"\boxed{\mathrm{N/m^3}}\qquad \text{o frecuentemente}\qquad \mathrm{MN/m^3}")
+    st.write(
+        "La rigidez dinámica superficial describe la relación dinámica entre una acción distribuida y la deformación "
+        "de la capa resiliente por unidad de superficie."
+    )
+    st.warning("No debe confundirse con módulo de Young, rigidez estática ni con la constante de un resorte puntual.")
+    _card(
+        "EN PALABRAS SIMPLES",
+        "Dos mantas pueden tener el mismo espesor y parecer iguales, pero una puede ser mucho más rígida dinámicamente que la otra. "
+        "Eso modifica la frecuencia de resonancia del piso flotante.",
+    )
+    _asset("curso2_lab1_etapa6_rigidez_dinamica.webp")
+
+    stat,dyn = st.columns(2)
+    with stat:
+        with st.container(border=True):
+            st.markdown("#### ESTÁTICA")
+            st.write("Respuesta lenta o cuasiestática.")
+    with dyn:
+        with st.container(border=True):
+            st.markdown("#### DINÁMICA")
+            st.write("Respuesta frente a una excitación variable.")
+    st.latex(r"\boxed{\mathrm{MISMO\ MATERIAL}\not\Rightarrow\mathrm{MISMA\ RESPUESTA\ ESTÁTICA\ Y\ DINÁMICA}}")
+
+    # 5 Reduced mass
+    st.markdown("### 5 · Masa reducida")
+    st.latex(r"\boxed{m_r'=\frac{m_1'm_2'}{m_1'+m_2'}}")
+    st.write(
+        "Ambas masas pueden moverse. La magnitud relevante para el movimiento relativo es una masa equivalente denominada masa reducida."
+    )
+    with st.expander("Ver derivación"):
+        st.latex(r"m_1\ddot{x}_1+k(x_1-x_2)=0")
+        st.latex(r"m_2\ddot{x}_2+k(x_2-x_1)=0")
+        st.latex(r"y=x_1-x_2")
+        st.latex(r"\ddot{y}+k\left(\frac{1}{m_1}+\frac{1}{m_2}\right)y=0")
+        st.latex(r"\frac{1}{m_r}=\frac{1}{m_1}+\frac{1}{m_2}")
+        st.latex(r"\boxed{m_r=\frac{m_1m_2}{m_1+m_2}}")
+        st.caption("La misma estructura se adapta posteriormente a masas superficiales.")
+
+    st.markdown("#### Caso límite · base pesada")
+    st.latex(r"m_2'\gg m_1'\Rightarrow m_r'\approx m_1'")
+    st.latex(r"f_0\approx\frac{1}{2\pi}\sqrt{\frac{s'}{m_1'}}")
+    st.info("No es una ecuación distinta: es una aproximación del modelo general cuando la masa base es mucho mayor.")
+
+    # 6 Natural frequency
+    st.markdown("### 6 · Frecuencia natural del piso flotante")
+    st.latex(r"\boxed{f_0=\frac{1}{2\pi}\sqrt{\frac{s'}{m_r'}}}")
+    st.latex(r"s'\uparrow\Rightarrow f_0\uparrow")
+    st.latex(r"m_r'\uparrow\Rightarrow f_0\downarrow")
+    st.write("Una capa más rígida desplaza la resonancia hacia arriba; una mayor masa efectiva tiende a desplazarla hacia abajo.")
+
+    # Interactive 6.2
+    st.markdown("### 🔬 7 · Mueve la resonancia")
+    c1,c2,c3 = st.columns(3)
+    with c1:
+        m1 = st.slider("m₁′ (kg/m²)", 50, 250, 105, 5, key=f"{ns}_m1")
+    with c2:
+        m2 = st.slider("m₂′ (kg/m²)", 150, 600, 384, 10, key=f"{ns}_m2")
+    with c3:
+        s_mn = st.slider("s′ (MN/m³)", 3.0, 50.0, 12.0, 0.5, key=f"{ns}_s")
+    mr, f0 = _f0(m1,m2,s_mn)
+    r1,r2,r3 = st.columns(3)
+    r1.metric("Masa reducida mᵣ′", f"{mr:.2f} kg/m²")
+    r2.metric("Frecuencia natural f₀", f"{f0:.1f} Hz")
+    nearest = _nearest_third_octave(max(20,min(500,f0)))
+    r3.metric("Tercio de octava cercano", f"{nearest:g} Hz")
+    f_axis = np.logspace(np.log10(20),np.log10(500),300)
+    fig,ax = plt.subplots()
+    ax.semilogx(f_axis,np.ones_like(f_axis))
+    ax.axvline(f0,linestyle="--")
+    ax.set_xlim(20,500); ax.set_yticks([])
+    ax.set_xlabel("Frecuencia (Hz)")
+    ax.set_title("RESONANCIA · posición de f₀")
+    ax.grid(True,which="both",alpha=.2)
+    st.pyplot(fig,use_container_width=True); plt.close(fig)
+    st.caption("Escala logarítmica 20–500 Hz.")
+
+    st.markdown("#### Ejemplo completo")
+    mr_ex, f_ex = _f0(105,384,12)
+    st.latex(r"m_1'=105,\quad m_2'=384,\quad s'=12\times10^6")
+    st.latex(rf"m_r'=\boxed{{{mr_ex:.2f}\ \mathrm{{kg/m^2}}}}")
+    st.latex(rf"f_0=\boxed{{{f_ex:.1f}\ \mathrm{{Hz}}}}")
+    _mcq(
+        "isolation_from_f0",
+        "¿Significa que el piso comienza a aislar perfectamente desde aproximadamente 61 Hz?",
+        ["A. Sí.","B. No."],
+        1,
+        "f₀ identifica la región resonante. La transición hacia aislamiento efectivo es progresiva y depende también del amortiguamiento y del modelo.",
+    )
+
+    # 8 Ratio and transmissibility
+    st.markdown("### 8 · Relación de frecuencias y transmisibilidad")
+    st.latex(r"\boxed{r=\frac{f}{f_0}}")
+    rr1,rr2,rr3 = st.columns(3)
+    rr1.write("**r < 1**  \nBajo resonancia")
+    rr2.write("**r ≈ 1**  \nResonancia")
+    rr3.write("**r > 1**  \nSobre resonancia")
+    st.latex(
+        r"\boxed{T_F=\sqrt{\frac{1+(2\zeta r)^2}{(1-r^2)^2+(2\zeta r)^2}}}"
+    )
+    st.write("ζ es la razón de amortiguamiento.")
+    st.latex(r"\boxed{T_F\neq\Delta L_n}")
+    st.warning(
+        "La transmisibilidad describe fuerza transmitida en un sistema idealizado. "
+        "ΔLₙ es una magnitud vibroacústica que además involucra respuesta y radiación de las placas."
+    )
+
+    # Interactive 6.3
+    st.markdown("### 🔬 9 · Atraviesa la resonancia")
+    cc1,cc2,cc3 = st.columns(3)
+    with cc1:
+        f0_tf = st.slider("f₀ (Hz)", 20.0, 200.0, 60.0, 1.0, key=f"{ns}_tf_f0")
+    with cc2:
+        f_eval = st.slider("Frecuencia f (Hz)", 10.0, 500.0, 90.0, 1.0, key=f"{ns}_tf_f")
+    with cc3:
+        zeta = st.slider("Amortiguamiento ζ", 0.01, 0.40, 0.10, 0.01, key=f"{ns}_tf_zeta")
+    ratio = f_eval/f0_tf
+    tf_val = _tf(ratio,zeta)
+    a,b = st.columns(2)
+    a.metric("Relación r=f/f₀", f"{ratio:.2f}")
+    b.metric("Transmisibilidad T_F", f"{tf_val:.2f}")
+    if tf_val > 1.05:
+        st.error("🔴 AMPLIFICACIÓN")
+    elif ratio < math.sqrt(2):
+        st.warning("🟠 TRANSICIÓN")
+    else:
+        st.success("🟢 AISLAMIENTO · dentro del modelo clásico ideal")
+
+    r_axis = np.linspace(.1,4,700)
+    tf_axis = np.sqrt((1+(2*zeta*r_axis)**2)/((1-r_axis**2)**2+(2*zeta*r_axis)**2))
+    fig,ax = plt.subplots()
+    ax.plot(r_axis,tf_axis)
+    ax.scatter([ratio],[tf_val])
+    ax.axvline(1,linestyle="--")
+    ax.axvline(math.sqrt(2),linestyle=":")
+    ax.axhline(1,linestyle=":")
+    ax.set_xlabel("r=f/f₀"); ax.set_ylabel("T_F")
+    ax.set_title("Transmisibilidad de fuerza · modelo clásico")
+    ax.set_ylim(0,min(8,max(2,float(np.nanmax(tf_axis[np.isfinite(tf_axis)])))))
+    ax.grid(True,alpha=.2)
+    st.pyplot(fig,use_container_width=True); plt.close(fig)
+
+    st.write("**Zona 1:** r<1 · acoplamiento fuerte.  \n**Zona 2:** r≈1 · posible amplificación.  \n**Zona 3:** r>√2 · T_F<1 en el modelo ideal clásico.")
+    _mcq(
+        "near_resonance",
+        "Si f=1,1 f₀, ¿podemos afirmar que el sistema ya está en una región segura de aislamiento?",
+        ["A. Sí.","B. No."],
+        1,
+        "Está todavía muy próximo a la resonancia.",
+    )
+
+    st.markdown("#### Efecto del amortiguamiento")
+    fig,ax = plt.subplots()
+    for z in [0.02,0.10,0.30]:
+        tfc = np.sqrt((1+(2*z*r_axis)**2)/((1-r_axis**2)**2+(2*z*r_axis)**2))
+        ax.plot(r_axis,tfc,label=f"ζ={z:.2f}")
+    ax.axvline(1,linestyle="--")
+    ax.set_xlabel("r=f/f₀"); ax.set_ylabel("T_F")
+    ax.set_title("Amortiguamiento y máximo resonante")
+    ax.set_ylim(0,8); ax.grid(True,alpha=.2); ax.legend()
+    st.pyplot(fig,use_container_width=True); plt.close(fig)
+    st.info("El amortiguamiento reduce el máximo resonante, pero también modifica la transmisibilidad fuera de resonancia. “Más amortiguamiento” no es una regla universal de mejor desempeño.")
+
+    _asset("curso2_lab1_etapa6_resonancia.webp")
+
+    # 10 Cremer and Ver
+    st.markdown("### 10 · Desde el sistema dinámico a la mejora de impacto")
+    st.markdown("#### Modelo de Cremer · introducción")
+    st.write(
+        "Cremer modela un piso flotante idealizado mediante dos placas acopladas por una capa elástica y excitadas por una fuerza puntual. "
+        "La predicción involucra transmisión forzada, resonante y condiciones de borde."
+    )
+    st.markdown("#### Aproximación localmente reactiva")
+    st.write("En una aproximación localmente reactiva, cada región de la capa resiliente responde principalmente a la carga local.")
+    st.latex(r"\boxed{12\ \mathrm{dB/octava}\approx40\ \mathrm{dB/década}}")
+    st.warning("La pendiente de 12 dB/octava es una tendencia asintótica de un modelo idealizado y de un determinado régimen; no es una ley universal.")
+
+    st.markdown("#### Modelo de Vér · piso resonantemente reactivo")
+    st.write(
+        "Vér considera sistemas donde la respuesta vibratoria de la capa flotante y los apoyos participa de forma más compleja "
+        "y la energía puede propagarse lateralmente."
+    )
+    st.latex(r"\boxed{9\ \mathrm{dB/octava}\approx30\ \mathrm{dB/década}}")
+    st.write("Bajo las hipótesis correspondientes, la tendencia asintótica puede diferir de la aproximación localmente reactiva.")
+    _mcq(
+        "slope_models",
+        "¿Entonces 9 dB/octava contradice 12 dB/octava?",
+        ["A. Sí.","B. No."],
+        1,
+        "Corresponden a modelos y regímenes físicos distintos.",
+    )
+    st.latex(r"\boxed{\mathrm{MODELO\ DIFERENTE}\Rightarrow\mathrm{TENDENCIA\ DIFERENTE}}")
+
+    # Interactive 6.4
+    st.markdown("### 🔬 11 · Cremer vs Vér")
+    f0_cv = st.slider("Desplaza f₀ (Hz)", 20.0, 120.0, 40.0, 1.0, key=f"{ns}_cv_f0")
+    fcv = np.logspace(np.log10(20),np.log10(1000),500)
+    cremer = _trend(fcv,f0_cv,12.0)
+    ver = _trend(fcv,f0_cv,9.0)
+    fig,ax = plt.subplots()
+    ax.semilogx(fcv,cremer,label="Tendencia A · 12 dB/oct")
+    ax.semilogx(fcv,ver,label="Tendencia B · 9 dB/oct")
+    ax.axvline(f0_cv,linestyle="--",label="f₀")
+    ax.set_xlabel("Frecuencia (Hz)")
+    ax.set_ylabel("Mejora relativa conceptual (dB)")
+    ax.set_title("Comparación didáctica de tendencias asintóticas")
+    ax.grid(True,which="both",alpha=.2); ax.legend()
+    st.pyplot(fig,use_container_width=True); plt.close(fig)
+    st.caption("Comparación didáctica de tendencias asintóticas. No corresponde a una herramienta normativa.")
+    _asset("curso2_lab1_etapa6_cremer_ver.webp")
+
+    st.markdown("#### Ejemplo descrito por Vigran")
+    st.write(
+        "Sobrelosa de hormigón 50 mm · lana mineral rígida 25 mm · losa base de hormigón 140 mm · "
+        "rigidez dinámica total s′=8,0 MPa/m."
+    )
+    st.latex(r"\boxed{f_0\approx40\ \mathrm{Hz}}")
+    st.write("Se presenta aquí solo la tendencia teórica de 9 dB/octava; no se inventan puntos experimentales.")
+    fcase = np.logspace(np.log10(20),np.log10(1000),400)
+    vtrend = _trend(fcase,40,9)
+    fig,ax = plt.subplots()
+    ax.semilogx(fcase,vtrend)
+    ax.axvline(40,linestyle="--")
+    ax.set_xlabel("Frecuencia (Hz)")
+    ax.set_ylabel("Tendencia relativa (dB)")
+    ax.set_title("Caso didáctico · f₀≈40 Hz · tendencia 9 dB/oct")
+    ax.grid(True,which="both",alpha=.2)
+    st.pyplot(fig,use_container_width=True); plt.close(fig)
+
+    # 12 Model validity
+    st.markdown("### 12 · Modelo y realidad")
+    st.latex(r"\boxed{\mathrm{MODELO}\neq\mathrm{OBRA\ REAL\ EXACTA}}")
+    st.write(
+        "Por bandas pueden existir diferencias importantes entre predicción y obra real. "
+        "Puentes rígidos, condiciones de borde, flanqueo, resonancias locales, propiedades viscoelásticas, "
+        "dependencia frecuencial de s′, geometría finita, ejecución, aire en cavidad y comportamiento tridimensional "
+        "pueden quedar fuera de modelos simplificados."
+    )
+
+    # Interactive 6.5
+    st.markdown("### 🔬 13 · Rompe el modelo")
+    breakers = [
+        "Puente rígido",
+        "Capa resiliente no uniforme",
+        "Sobrelosa demasiado liviana",
+        "Contacto perimetral",
+    ]
+    active_breakers = []
+    for item in breakers:
+        if st.toggle(item, key=f"{ns}_break_{item}"):
+            active_breakers.append(item)
+    if not active_breakers:
+        st.success("Sistema ideal conceptual: masa superior + capa resiliente uniforme + base, sin puentes explícitos.")
+    else:
+        for item in active_breakers:
+            _card(
+                item,
+                "Este fenómeno no está representado completamente por el modelo ideal de masa–resorte–masa.",
+                "⚠️",
+            )
+
+    # 14 Main exercise
+    st.markdown("### 14 · Ejercicio principal")
+    st.latex(r"m_1'=120,\qquad m_2'=400\ \mathrm{kg/m^2},\qquad s'=10\ \mathrm{MN/m^3}")
+    ex_mr = st.number_input("Paso 1 · mᵣ′ (kg/m²)", min_value=0.0, value=0.0, format="%.2f", key=f"{ns}_ex_mr")
+    ex_f0 = st.number_input("Paso 2 · f₀ (Hz)", min_value=0.0, value=0.0, format="%.1f", key=f"{ns}_ex_f0")
+    if st.button("Comprobar cálculo", key=f"{ns}_ex_check"):
+        if abs(ex_mr-92.3077) <= .15 and abs(ex_f0-52.3843) <= .2:
+            st.success("Correcto: mᵣ′≈92,3 kg/m² y f₀≈52,4 Hz.")
+        else:
+            st.warning("Revisa primero la masa reducida y luego f₀=(1/2π)√(s′/mᵣ′).")
+    _mcq(
+        "main_ex_interp",
+        "¿Qué significa físicamente f₀≈52 Hz?",
+        [
+            "A. El sistema presenta una resonancia relativa cercana a 52 Hz; no es el inicio automático del aislamiento.",
+            "B. Desde 52 Hz el aislamiento es perfecto.",
+            "C. La capa resiliente deja de deformarse.",
+        ],
+        0,
+        "f₀ identifica la región resonante del movimiento relativo del sistema.",
+    )
+
+    st.markdown("#### Cambio de rigidez")
+    st.latex(r"f_0\propto\sqrt{s'}")
+    st.write("Si s′ cambia de 10 a 5 MN/m³, con masas constantes:")
+    st.latex(r"f_{0,\mathrm{nuevo}}=f_{0,\mathrm{antiguo}}\sqrt{\frac{1}{2}}")
+    st.metric("f₀ aproximada", f"{52.3843*math.sqrt(.5):.1f} Hz")
+
+    st.markdown("#### Cambio de masa superior")
+    mr_180,f_180 = _f0(180,400,10)
+    st.write("Manteniendo s′=10 MN/m³ y aumentando m₁′ de 120 a 180 kg/m²:")
+    st.metric("mᵣ′", f"{mr_180:.1f} kg/m²")
+    st.metric("f₀", f"{f_180:.1f} Hz")
+    st.success("mᵣ′ aumenta y f₀ disminuye.")
+
+    _mcq(
+        "always_heavy_soft",
+        "¿Elegiríamos entonces siempre la sobrelosa más pesada y la capa más blanda disponible?",
+        ["A. Sí.","B. No."],
+        1,
+        "El diseño también debe considerar carga estructural, deformación estática, fluencia, estabilidad, espesor, durabilidad, ejecución y costo.",
+    )
+
+    # 15 Star lab 6.6
+    st.markdown("## 🧪 15 · Diseña el piso")
+    st.write("Laboratorio integrador de la etapa. Las salidas predictivas se mantienen separadas por significado físico.")
+    d1,d2,d3,d4 = st.columns(4)
+    with d1:
+        dm1 = st.slider("Sobrelosa m₁′", 50,250,120,5,key=f"{ns}_design_m1")
+    with d2:
+        dm2 = st.slider("Losa base m₂′",150,600,400,10,key=f"{ns}_design_m2")
+    with d3:
+        ds = st.slider("Rigidez dinámica s′",3.0,50.0,10.0,.5,key=f"{ns}_design_s")
+    with d4:
+        dz = st.slider("Amortiguamiento ζ",.01,.40,.10,.01,key=f"{ns}_design_z")
+
+    dmr, df0 = _f0(dm1,dm2,ds)
+    analysis_f = st.slider("Frecuencia de análisis f (Hz)",20.0,500.0,100.0,1.0,key=f"{ns}_design_f")
+    dr = analysis_f/df0
+    dtf = _tf(dr,dz)
+    o1,o2,o3,o4 = st.columns(4)
+    o1.metric("mᵣ′",f"{dmr:.1f} kg/m²")
+    o2.metric("f₀",f"{df0:.1f} Hz")
+    o3.metric("r=f/f₀",f"{dr:.2f}")
+    o4.metric("T_F",f"{dtf:.2f}")
+
+    tabs = st.tabs(["Transmisibilidad", "Tendencia Cremer", "Tendencia Vér"])
+    with tabs[0]:
+        rgrid = np.linspace(.1,4,700)
+        tfgrid = np.sqrt((1+(2*dz*rgrid)**2)/((1-rgrid**2)**2+(2*dz*rgrid)**2))
+        fig,ax = plt.subplots()
+        ax.plot(rgrid,tfgrid); ax.scatter([dr],[dtf])
+        ax.axvline(1,linestyle="--"); ax.axvline(math.sqrt(2),linestyle=":")
+        ax.set_xlabel("r=f/f₀"); ax.set_ylabel("T_F")
+        ax.set_title("Transmisibilidad · modelo dinámico clásico")
+        ax.set_ylim(0,8); ax.grid(True,alpha=.2)
+        st.pyplot(fig,use_container_width=True); plt.close(fig)
+        st.caption("T_F no es ΔLₙ.")
+    with tabs[1]:
+        fg = np.logspace(np.log10(20),np.log10(1000),400)
+        cr = _trend(fg,df0,12)
+        fig,ax = plt.subplots()
+        ax.semilogx(fg,cr); ax.axvline(df0,linestyle="--")
+        ax.set_xlabel("Frecuencia (Hz)"); ax.set_ylabel("Mejora relativa conceptual (dB)")
+        ax.set_title("Cremer/localmente reactivo · tendencia 12 dB/oct")
+        ax.grid(True,which="both",alpha=.2)
+        st.pyplot(fig,use_container_width=True); plt.close(fig)
+        st.caption("Tendencia asintótica conceptual; no normativa.")
+    with tabs[2]:
+        vg = _trend(fg,df0,9)
+        fig,ax = plt.subplots()
+        ax.semilogx(fg,vg); ax.axvline(df0,linestyle="--")
+        ax.set_xlabel("Frecuencia (Hz)"); ax.set_ylabel("Mejora relativa conceptual (dB)")
+        ax.set_title("Vér/resonantemente reactivo · tendencia 9 dB/oct")
+        ax.grid(True,which="both",alpha=.2)
+        st.pyplot(fig,use_container_width=True); plt.close(fig)
+        st.caption("Tendencia asintótica conceptual; no normativa.")
+
+    st.markdown("#### Representación didáctica del corte")
+    top_h = max(24,min(90,dm1/3))
+    resil_def = max(6,min(30,35-ds/2))
+    st.markdown(
+        f"""<div style="background:#111b25;border-radius:10px;padding:18px;margin:8px 0 12px">
+        <div style="height:{top_h:.0f}px;background:#9a9fa6;border-radius:4px 4px 0 0"></div>
+        <div style="height:{resil_def:.0f}px;background:#4fd1c5"></div>
+        <div style="height:70px;background:#747a82;border-radius:0 0 4px 4px"></div>
+        </div>""",
+        unsafe_allow_html=True,
+    )
+    st.caption("Representación didáctica: el espesor visual no equivale directamente a s′.")
+
+    # 16 comprehension
+    st.markdown("### 16 · Preguntas de comprensión")
+    st.caption("Formativas y no calificadas.")
+    _mcq("q1","1. Si aumenta s′ manteniendo las masas constantes:",["A. f₀ disminuye.","B. f₀ aumenta.","C. f₀ no cambia."],1,"f₀ es proporcional a √s′.",store=True)
+    _mcq("q2","2. Si aumenta la masa efectiva manteniendo s′, f₀ tiende a:",["A. Aumentar.","B. Disminuir.","C. No cambiar."],1,"f₀ disminuye al aumentar la masa reducida.",store=True)
+    _mcq("q3","3. ¿Puede existir amplificación cerca de la resonancia?",["A. Sí.","B. No."],0,"La transmisibilidad puede superar la unidad cerca de r≈1.",store=True)
+    _mcq("q4","4. ¿La condición f>f₀ garantiza inmediatamente aislamiento?",["A. Sí.","B. No."],1,"Estar apenas sobre f₀ todavía puede significar proximidad a la región resonante.",store=True)
+    _mcq("q5","5. La transmisibilidad de fuerza es exactamente equivalente a ΔLₙ.",["A. Verdadero.","B. Falso."],1,"T_F y ΔLₙ representan magnitudes físicas diferentes.",store=True)
+    _mcq("q6","6. Las pendientes de 9 y 12 dB/octava corresponden necesariamente a modelos contradictorios.",["A. Verdadero.","B. Falso."],1,"Son tendencias asociadas a modelos y regímenes físicos diferentes.",store=True)
+
+    # Close
+    st.markdown("### Cierre")
+    st.latex(
+        r"\boxed{m_1',m_2',s'\rightarrow m_r'\rightarrow f_0\rightarrow "
+        r"\mathrm{RESPUESTA\ DINÁMICA}\rightarrow\Delta L_n(f)}"
+    )
+    st.write(
+        "Un piso flotante no es simplemente una capa blanda bajo una terminación. "
+        "Es un sistema dinámico cuya masa, rigidez y amortiguamiento determinan una región resonante "
+        "y condicionan la mejora frente al ruido de impacto."
+    )
+    st.success(
+        "En la Etapa 7 utilizaremos estos modelos para comparar alternativas de piso y tomar una decisión de diseño "
+        "bajo restricciones reales de masa, espesor y desempeño."
+    )
+
+    left,right = st.columns(2)
+    with left:
+        if st.button("← Etapa 5", key=f"s6_prev_{class_id}", use_container_width=True):
+            st.session_state[stage_selector_key] = 5
+            st.rerun()
+    with right:
+        if st.button("Etapa 7 →", key=f"s6_next_{class_id}", use_container_width=True):
+            st.session_state[stage_selector_key] = 7
+            st.rerun()
+
 def future_lab_view_impl(lab):
     """Renderer de los laboratorios posteriores manteniendo la navegación institucional."""
     class_id=lab["id"]
@@ -3729,6 +4310,9 @@ def future_lab_view_impl(lab):
         if selected == 5:
             _render_course2_lab1_stage5(lab, saved)
             return
+        if selected == 6:
+            _render_course2_lab1_stage6(lab, saved)
+            return
 
     title,objective,concept,activity=lab["stages"][selected]
     stage_minutes=20 if selected not in (9,10) else 35
@@ -3829,6 +4413,9 @@ def future_projection_stage_impl(lab, stage):
             return
         if stage == 5:
             _render_course2_lab1_stage5(lab, {})
+            return
+        if stage == 6:
+            _render_course2_lab1_stage6(lab, {})
             return
 
     title, objective, concept, activity = lab["stages"][stage]
