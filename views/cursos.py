@@ -3366,20 +3366,78 @@ def _render_course2_lab1_stage5(lab, saved):
 
     # Interactivo 5.5 comparador
     st.markdown("### ⚖️ 12 · Comparador de soluciones")
-    _asset("curso2_lab1_etapa5_mapa_soluciones.webp")
+    st.write(
+        "Selecciona cada sistema y observa cómo cambia físicamente la estrategia de control. "
+        "La comparación identifica mecanismos; no establece un ranking universal en dB."
+    )
+
     systems = {
-        "A · Cerámica sobre losa": "Piso duro base",
-        "B · Revestimiento resiliente sobre losa": "Actúa principalmente en el contacto",
-        "C · Piso flotante correctamente desacoplado": "Actúa principalmente en la transmisión estructural",
-        "D · Piso flotante con puente rígido": "Riesgo de pérdida de desempeño por ejecución",
+        "A · Cerámica sobre losa": {
+            "asset": "curso2_lab1_etapa5_comparador_a_duro.webp",
+            "subtitle": "Piso duro base",
+            "mechanism": "Sin desacople específico",
+            "physical": "El impacto actúa directamente sobre una terminación rígida vinculada a la losa.",
+            "contact": "BAJO",
+            "structure": "BAJO",
+            "execution": "MEDIO",
+        },
+        "B · Revestimiento resiliente sobre losa": {
+            "asset": "curso2_lab1_etapa5_comparador_b_resiliente.webp",
+            "subtitle": "Control principal en el contacto",
+            "mechanism": "Modificación de F(t) y F(f)",
+            "physical": "La capa superficial resiliente modifica la interacción entre el impacto y el piso base.",
+            "contact": "ALTO",
+            "structure": "BAJO",
+            "execution": "MEDIO",
+        },
+        "C · Piso flotante correctamente desacoplado": {
+            "asset": "curso2_lab1_etapa5_comparador_c_flotante.webp",
+            "subtitle": "Control principal en la transmisión estructural",
+            "mechanism": "Desacople mecánico",
+            "physical": "Una masa superior queda separada mecánicamente de la losa mediante una capa resiliente continua.",
+            "contact": "MEDIO",
+            "structure": "ALTO",
+            "execution": "BAJO",
+        },
+        "D · Piso flotante con puente rígido": {
+            "asset": "curso2_lab1_etapa5_comparador_d_puente.webp",
+            "subtitle": "Desacople comprometido por ejecución",
+            "mechanism": "Camino estructural alternativo",
+            "physical": "Una conexión rígida puentea total o parcialmente la capa resiliente y permite transferencia adicional de vibración.",
+            "contact": "MEDIO",
+            "structure": "BAJO",
+            "execution": "ALTO",
+        },
     }
+
     selected_system = st.segmented_control(
         "Explora una solución",
         list(systems),
         default=list(systems)[0],
         key=f"{ns}_compare_system",
     )
-    _card(selected_system, systems[selected_system], "🏗️")
+
+    # Streamlit debe entregar siempre una opción; se protege por compatibilidad.
+    if selected_system not in systems:
+        selected_system = list(systems)[0]
+
+    data = systems[selected_system]
+
+    # La imagen ahora SÍ cambia con cada botón.
+    _asset(data["asset"])
+
+    with st.container(border=True):
+        st.markdown(f"#### 🏗️ {selected_system}")
+        st.write(f"**{data['subtitle']}**")
+        st.write(f"**Mecanismo principal:** {data['mechanism']}")
+        st.write(data["physical"])
+
+    m1, m2, m3 = st.columns(3)
+    m1.metric("Intervención sobre contacto", data["contact"])
+    m2.metric("Intervención estructural", data["structure"])
+    m3.metric("Riesgo por ejecución", data["execution"])
+    st.caption("Valoración didáctica cualitativa; no corresponde a una predicción normativa.")
+
     _mcq(
         "compare_contact",
         "¿Qué sistema presenta la mayor intervención directa sobre la fuerza de contacto?",
@@ -3401,7 +3459,10 @@ def _render_course2_lab1_stage5(lab, saved):
         3,
         "El puente rígido introduce un camino mecánico no deseado.",
     )
-    st.info("No se ordenan las soluciones simplemente de “mejor a peor”: el resultado depende de la frecuencia y del sistema.")
+    st.info(
+        "No se ordenan las soluciones simplemente de “mejor a peor”: "
+        "cada una interviene un mecanismo distinto y el resultado depende del sistema y de la frecuencia."
+    )
     st.latex(r"\boxed{\mathrm{MECANISMO}\ \mathrm{ANTES\ QUE}\ \mathrm{NÚMERO}}")
 
     # Conexión etapa 6
