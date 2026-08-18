@@ -52,10 +52,10 @@ COURSE_LABS = [
                      "La etapa desarrolla m₁′, m₂′, s′, mᵣ′, f₀, relación de frecuencias, transmisibilidad y tendencias predictivas de Cremer y Vér, manteniéndolas separadas de la normativa.",
                      "Explora seis interactivos para construir masa, mover la resonancia, atravesar la resonancia, comparar tendencias Cremer/Vér, romper el modelo ideal y diseñar un piso."),
 
-                    ("Aplicación: piso flotante",
-                     "Relacionar resiliencia, desacoplamiento y puentes rígidos con el control de ruido de impacto.",
-                     "Un piso flotante funciona cuando la capa resiliente desacopla el acabado de la estructura sin puentes rígidos significativos.",
-                     "Explora decisiones de diseño y reconoce errores de ejecución."),
+                    ("Diseño predictivo de un piso flotante: comparación, restricciones y decisión profesional",
+                     "Comparar alternativas reales de piso flotante, evaluar restricciones y justificar una decisión profesional.",
+                     "La etapa reutiliza masa reducida, frecuencia natural y las tendencias Cremer/Vér de la Etapa 6 para integrar acústica, estructura, arquitectura y constructibilidad.",
+                     "Compara A–B–C, optimiza el piso, explora el mapa masa–rigidez, analiza sensibilidad, defectos de obra, modelos y un caso profesional guiado."),
 
                     ("Aplicación: equipo e instalaciones",
                      "Aplicar criterios de control vibroacústico a bombas, tuberías y otras instalaciones.",
