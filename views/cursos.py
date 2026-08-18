@@ -37,7 +37,7 @@ def course_dashboard_impl():
     else:
         classes=_course_classes(client)
     class_by_number={item.get("class_number"):item for item in classes}
-    summaries,course_result=_result_summary()
+    summaries,_course_result=_result_summary()
     first_course=ACADEMIC_COURSES[0]
     st.markdown(f"### {first_course['title']}")
     for lab in first_course["labs"]:
@@ -73,25 +73,6 @@ def course_dashboard_impl():
             st.session_state.active_lab=number
             st.session_state["_open_lab_requested"]=True
             st.rerun()
-
-    lab2_released=class_by_number.get(2,{}).get("status") in ("published","archived")
-    if st.session_state.get("role")=="Alumno":
-        st.markdown("#### Resultado del curso")
-        if not lab2_released:
-            st.info("El curso continúa en desarrollo. Tu avance del laboratorio publicado se conserva.")
-        elif not course_result["final_done"]:
-            st.warning(
-                f'**Evaluación final: Pendiente.** Puntaje acumulado actual: '
-                f'{course_result["earned"]:g}/{course_result["maximum"]:g} puntos. '
-                'La nota final se calculará cuando envíes la evaluación final del Laboratorio 2.'
-            )
-        else:
-            state="Aprobado" if course_result["grade"]>=4.0 else "Reprobado"
-            st.success(
-                f'**{state}.** Puntaje final: {course_result["earned"]:g}/'
-                f'{course_result["maximum"]:g} puntos ({course_result["percent"]:.1f}%). '
-                f'Nota final: **{course_result["grade"]:.1f}**.'
-            )
 
     st.markdown("---")
     for course in COURSE_LABS:
@@ -4160,204 +4141,6 @@ def _render_course2_lab1_stage6(lab, saved):
             st.session_state[stage_selector_key] = 7
             st.rerun()
 
-def _render_course2_lab1_stage7(lab, saved):
-    """Curso 2 · Lab 1 · Etapa 7: diseño predictivo y decisión profesional."""
-    class_id = lab["id"]
-    stage_selector_key = f"future_stage_{class_id}"
-    role = st.session_state.get("role", "Alumno")
-    projection_mode = bool(st.session_state.get("projection_mode") or role == "Proyección")
-    ns = f"{class_id}_s7"
-
-    import math
-    import numpy as np
-    import matplotlib.pyplot as plt
-
-    def mr(m1, m2): return (m1*m2)/(m1+m2)
-    def f0calc(m1, m2, s_mn):
-        mred = mr(m1, m2)
-        return mred, (1/(2*math.pi))*math.sqrt((s_mn*1e6)/mred)
-    def trend(freq, f0, slope):
-        freq = np.asarray(freq, dtype=float)
-        return slope*np.log2(np.maximum(freq/f0, 1.0))
-    def asset(name, caption=None):
-        p = ASSET_DIR / name
-        if p.exists():
-            st.image(p, width="stretch")
-            if caption: st.caption(caption)
-            return True
-        if st.session_state.get("dev_mode", False): st.caption(f"[Render pendiente: {name}]")
-        return False
-    def card(title, body, icon="💡"):
-        st.markdown(f'''<div style="border:1px solid #cfd8e3;border-radius:12px;padding:16px 18px;margin:10px 0 16px;background:#f8fbff"><div style="font-weight:800;margin-bottom:7px">{icon} {title}</div><div style="line-height:1.55">{body}</div></div>''', unsafe_allow_html=True)
-    def mcq(key, question, options, correct, feedback):
-        st.markdown(f"#### {question}")
-        if role == "Docente" and not projection_mode:
-            with st.container(border=True):
-                for i,o in enumerate(options): st.write(("✅ " if i == correct else "○ ") + o)
-                st.caption(feedback)
-            return
-        ans = st.radio("Selecciona una alternativa", options, index=None, key=f"{ns}_{key}", label_visibility="collapsed")
-        if st.button("Comprobar", key=f"{ns}_{key}_check"):
-            if ans is None: st.warning("Selecciona una respuesta.")
-            elif options.index(ans) == correct: st.success("Correcto. " + feedback)
-            else: st.error("Revisa el mecanismo y vuelve a intentarlo.")
-
-    A = {"name":"A", "m1":70.0, "m2":380.0, "s":25.0, "h":45.0}
-    B = {"name":"B", "m1":110.0, "m2":380.0, "s":12.0, "h":65.0}
-    C = {"name":"C", "m1":150.0, "m2":380.0, "s":8.0, "h":90.0}
-    alts = [A,B,C]
-    for x in alts:
-        x["mr"], x["f0"] = f0calc(x["m1"], x["m2"], x["s"])
-        x["sqrt2"] = math.sqrt(2)*x["f0"]
-
-    header("ETAPA 7 · LABORATORIO 1", "Diseño predictivo de un piso flotante: comparación, restricciones y decisión profesional", "Comparar alternativas, incorporar restricciones reales y justificar una decisión profesional sin confundir el mejor resultado teórico con la mejor solución de proyecto.")
-    st.caption("Curso 2 · Control de ruido de impacto y ruido de instalaciones · Aplicación práctica avanzada")
-    asset("curso2_lab1_etapa7_tres_alternativas.webp")
-    st.markdown("## 1 · Tres soluciones, ¿cuál elegirías?")
-    st.write("Edificio residencial. Se diseña el piso de un dormitorio ubicado sobre otro dormitorio.")
-    st.latex(r"m'_2=380\ \mathrm{kg/m^2}")
-    cols = st.columns(3)
-    for col,x in zip(cols,alts):
-        with col:
-            with st.container(border=True):
-                st.markdown(f"### Alternativa {x['name']}")
-                st.latex(fr"m'_1={x['m1']:.0f}\ \mathrm{{kg/m^2}}")
-                st.latex(fr"s'={x['s']:.0f}\ \mathrm{{MN/m^3}}")
-                st.metric("Masa reducida", f"{x['mr']:.1f} kg/m²")
-                st.metric("Frecuencia natural", f"{x['f0']:.1f} Hz")
-    mcq("opening", "Si consideramos únicamente la frecuencia de resonancia, ¿qué alternativa parece inicialmente más favorable?", ["A. Solución A","B. Solución B","C. Solución C"], 2, "Entre estas alternativas, C desplaza la resonancia a la frecuencia más baja por la combinación de mayor masa flotante y menor rigidez dinámica.")
-    st.warning("**PERO EL DISEÑO TODAVÍA NO ESTÁ TERMINADO.**")
-
-    st.markdown("## 2 · Interactivo 7.1 — Comparador A–B–C")
-    table_cols = st.columns(3)
-    for col,x in zip(table_cols,alts):
-        with col:
-            st.metric(f"{x['name']} · f₀", f"{x['f0']:.1f} Hz", help="Frecuencia natural calculada")
-            st.metric("√2 f₀", f"{x['sqrt2']:.1f} Hz")
-    fig, ax = plt.subplots(figsize=(8,2.6))
-    for i,x in enumerate(alts):
-        ax.scatter(x["f0"], i, s=90); ax.plot([x["f0"],x["sqrt2"]],[i,i], linewidth=2); ax.scatter(x["sqrt2"],i,s=45,marker="x")
-        ax.text(x["f0"], i+0.12, f"{x['name']}  f₀={x['f0']:.1f}", fontsize=9)
-    ax.set_xscale("log"); ax.set_xlim(30,200); ax.set_yticks([]); ax.set_xlabel("Frecuencia (Hz)"); ax.grid(True, axis="x", alpha=.25)
-    st.pyplot(fig, width="stretch"); plt.close(fig)
-    st.caption("Referencia del modelo dinámico ideal. √2 f₀ no corresponde directamente a ΔLₙ.")
-
-    st.markdown("### Comparación espectral")
-    mode = st.segmented_control("Modelo / tendencia", ["Cremer","Vér","Comparar"], default="Comparar", key=f"{ns}_model")
-    freqs=np.geomspace(20,2000,240)
-    fig,ax=plt.subplots(figsize=(8,4))
-    for x in alts:
-        if mode in ("Cremer","Comparar"): ax.plot(freqs, trend(freqs,x["f0"],12), label=f"{x['name']} · Cremer")
-        if mode in ("Vér","Comparar"): ax.plot(freqs, trend(freqs,x["f0"],9), linestyle="--", label=f"{x['name']} · Vér")
-    ax.set_xscale("log"); ax.set_xlabel("Frecuencia (Hz)"); ax.set_ylabel("ΔLₙ conceptual (dB)"); ax.grid(True,alpha=.25); ax.legend(ncol=2,fontsize=8)
-    st.pyplot(fig,width="stretch"); plt.close(fig)
-    st.caption("Se reutilizan las mismas tendencias didácticas de la Etapa 6: 12 dB/oct para Cremer y 9 dB/oct para Vér. No son una predicción normativa.")
-    mcq("interp250", "A 250 Hz, ¿por qué una alternativa con menor f₀ puede presentar una mayor mejora teórica?", ["A. Porque siempre tiene mayor masa.","B. Porque aumenta la relación f/f₀ y se aleja de la región resonante.","C. Porque el espesor define por sí solo la rigidez.","D. Porque elimina toda vibración."],1,"Al disminuir f₀ para una misma frecuencia de análisis, aumenta f/f₀ y el sistema se encuentra más alejado de la región resonante.")
-
-    st.markdown("## 3 · Restricciones y decisión profesional")
-    c1,c2=st.columns(2)
-    with c1:
-        card("INFORMACIÓN DEL PROYECTO", "Carga adicional máxima permitida: <b>120 kg/m²</b>.", "⚠️")
-        mcq("load", "¿Qué alternativa debe descartarse por carga?", ["A","B","C"],2,"C tiene m₁′ = 150 kg/m² y supera la restricción del ejercicio.")
-    with c2:
-        card("RESTRICCIÓN DE ESPESOR", "Espesor disponible: <b>75 mm</b>. Datos del ejercicio: A = 45 mm; B = 65 mm; C = 90 mm.", "📐")
-        mcq("height", "¿Qué alternativas cumplen el espesor disponible?", ["Sólo A","A y B","B y C","A, B y C"],1,"A y B cumplen; C supera 75 mm.")
-    st.latex(r"\boxed{\text{MEJOR DESEMPEÑO TEÓRICO}\neq\text{MEJOR SOLUCIÓN DE PROYECTO}}")
-    card("DECISIÓN DEL EJERCICIO", "La alternativa <b>B</b> es la más adecuada dentro de estas restricciones: cumple carga y espesor y mantiene una frecuencia natural considerablemente menor que A. No es una afirmación universal.", "⚖️")
-
-    st.markdown("## 4 · Interactivo 7.2 — Optimiza el piso")
-    a,b,c=st.columns(3)
-    m1=a.slider("Masa de sobrelosa m₁′ (kg/m²)",50,200,110,5,key=f"{ns}_opt_m1")
-    s=b.slider("Rigidez dinámica s′ (MN/m³)",3.0,40.0,12.0,0.5,key=f"{ns}_opt_s")
-    m2=c.slider("Masa de losa base m₂′ (kg/m²)",200,600,380,10,key=f"{ns}_opt_m2")
-    d,e,f=st.columns(3)
-    thick=d.number_input("Espesor total del escenario (mm)",20.0,150.0,65.0,5.0,key=f"{ns}_opt_h")
-    maxload=e.number_input("Carga máxima admisible (kg/m²)",50.0,250.0,120.0,5.0,key=f"{ns}_opt_load")
-    maxh=f.number_input("Espesor disponible (mm)",30.0,150.0,75.0,5.0,key=f"{ns}_opt_maxh")
-    mred,fo=f0calc(m1,m2,s); ref=math.sqrt(2)*fo
-    r1,r2,r3=st.columns(3); r1.metric("mᵣ′",f"{mred:.1f} kg/m²"); r2.metric("f₀",f"{fo:.1f} Hz"); r3.metric("√2 f₀",f"{ref:.1f} Hz")
-    acoustic = "🟢" if fo < 60 else ("🟠" if fo < 90 else "🔴")
-    st.caption("Criterio acústico didáctico del interactivo: verde <60 Hz; naranja 60–90 Hz; rojo >90 Hz. No es un criterio normativo.")
-    q1,q2,q3=st.columns(3); q1.metric("Acústica",acoustic); q2.metric("Carga","🟢 Cumple" if m1<=maxload else "🔴 No cumple"); q3.metric("Espesor","🟢 Cumple" if thick<=maxh else "🔴 No cumple")
-    if s <= 5: st.warning("Rigidez dinámica muy baja en el escenario: revisar deformación, fluencia, estabilidad y datos reales del producto; aquí no se calculan.")
-
-    st.markdown("## 5 · Interactivo 7.3 — Mapa de diseño")
-    map_s=st.slider("s′ para explorar el mapa (MN/m³)",3.0,40.0,12.0,0.5,key=f"{ns}_map_s")
-    map_m=st.slider("m₁′ para explorar el mapa (kg/m²)",50,200,110,5,key=f"{ns}_map_m")
-    sg=np.linspace(3,40,80); mg=np.linspace(50,200,80); S,M=np.meshgrid(sg,mg)
-    MR=(M*380)/(M+380); F0=(1/(2*np.pi))*np.sqrt((S*1e6)/MR)
-    fig,ax=plt.subplots(figsize=(7.5,4.6)); cs=ax.contourf(S,M,F0,levels=14); fig.colorbar(cs,ax=ax,label="f₀ (Hz)"); ax.axhline(120,linestyle="--",linewidth=2,label="Carga máxima del ejercicio"); ax.scatter([map_s],[map_m],s=90); ax.set_xlabel("s′ (MN/m³)"); ax.set_ylabel("m₁′ (kg/m²)"); ax.legend()
-    st.pyplot(fig,width="stretch"); plt.close(fig)
-    _,mapfo=f0calc(map_m,380,map_s); st.metric("Punto seleccionado · f₀",f"{mapfo:.1f} Hz"); st.caption("La región m₁′ > 120 kg/m² no es admisible por carga en este ejercicio.")
-
-    st.markdown("## 6 · Interactivo 7.4 — ¿Qué tan robusto es tu diseño?")
-    sens=st.slider("Rigidez dinámica s′ (MN/m³)",10.0,14.0,12.0,0.1,key=f"{ns}_sens")
-    _,fs=f0calc(110,380,sens); _,fmin=f0calc(110,380,10); _,fmax=f0calc(110,380,14)
-    st.metric("f₀ con s′ seleccionado",f"{fs:.1f} Hz"); st.info(f"Para el rango didáctico s′ = 10–14 MN/m³, f₀ varía aproximadamente entre {fmin:.1f} y {fmax:.1f} Hz.")
-    st.caption("Análisis de sensibilidad didáctico.")
-    st.latex(r"\boxed{\text{PREDICCIÓN}+\text{SENSIBILIDAD}>\text{PREDICCIÓN AISLADA}}")
-
-    st.markdown("## 7 · Interactivo 7.5 — Del cálculo a la obra")
-    asset("curso2_lab1_etapa7_solucion_obra.webp", "Sistema B correctamente ejecutado. Los defectos siguientes alteran las hipótesis del modelo ideal; no se asignan penalizaciones inventadas en dB.")
-    defect=st.segmented_control("Configuración",["Montaje ideal","Puente perimetral","Tubería rígida","Tornillo","Capa resiliente discontinua"],default="Montaje ideal",key=f"{ns}_defect")
-    if defect=="Montaje ideal": st.success("Configuración coherente con el sistema idealizado de desacople.")
-    else: st.error("MODELO FUERA DE SU CONFIGURACIÓN IDEAL"); st.write({"Puente perimetral":"Aparece una conexión mecánica lateral no representada por el desacople ideal.","Tubería rígida":"La penetración introduce un camino estructural adicional.","Tornillo":"El elemento rígido puentea localmente la capa resiliente.","Capa resiliente discontinua":"La hipótesis de una capa de desacople continua deja de cumplirse."}[defect])
-
-    st.markdown("## 8 · Interactivo 7.6 — Compara modelos")
-    chosen=st.selectbox("Alternativa",["A","B","C"],index=1,key=f"{ns}_chosen"); x={z['name']:z for z in alts}[chosen]
-    fig,ax=plt.subplots(figsize=(8,4)); ax.plot(freqs,trend(freqs,x['f0'],12),label="Cremer · 12 dB/oct"); ax.plot(freqs,trend(freqs,x['f0'],9),label="Vér · 9 dB/oct"); ax.axvline(x['f0'],linestyle=":",label=f"f₀={x['f0']:.1f} Hz"); ax.set_xscale('log'); ax.set_xlabel('Frecuencia (Hz)'); ax.set_ylabel('Tendencia ΔLₙ (dB)'); ax.grid(True,alpha=.25); ax.legend(); st.pyplot(fig,width='stretch'); plt.close(fig)
-    st.info("Los resultados difieren porque representan hipótesis y mecanismos físicos diferentes. Un modelo no es la realidad y ninguno se declara universalmente correcto frente al otro.")
-
-    st.markdown("## 9 · Actividad — ¿Qué dato te falta?")
-    mcq("missing", "Para m₁′=100 kg/m² y m₂′=380 kg/m², ¿qué dato falta para calcular f₀?", ["Espesor comercial","Rigidez dinámica s′","Color de la manta","Nivel de presión sonora"],1,"Se necesita s′. El espesor de una manta no permite deducir directamente su rigidez dinámica.")
-    st.latex(r"\boxed{\text{ESPESOR}\neq\text{RIGIDEZ DINÁMICA}}")
-
-    st.markdown("## 10 · Caso profesional guiado")
-    st.write("Completa mᵣ′ y f₀ para las tres alternativas. Tolerancias: ±0.5 kg/m² y ±0.5 Hz.")
-    all_ok=True
-    for x in alts:
-        c1,c2=st.columns(2)
-        imr=c1.number_input(f"{x['name']} · mᵣ′ (kg/m²)",0.0,300.0,0.0,0.1,key=f"{ns}_case_mr_{x['name']}")
-        iff=c2.number_input(f"{x['name']} · f₀ (Hz)",0.0,300.0,0.0,0.1,key=f"{ns}_case_f0_{x['name']}")
-        if abs(imr-x['mr'])>.5 or abs(iff-x['f0'])>.5: all_ok=False
-    if st.button("Comprobar cálculos",key=f"{ns}_case_check"):
-        st.success("Cálculos correctos.") if all_ok else st.warning("Revisa los valores. Usa masa reducida y luego f₀ con las ecuaciones de la Etapa 6.")
-    order=st.selectbox("Orden de menor a mayor f₀",["Seleccionar","C → B → A","A → B → C","B → C → A"],key=f"{ns}_order")
-    decision=st.radio("Decisión para este ejercicio",["A","B","C"],index=None,key=f"{ns}_decision",horizontal=True)
-    args=st.multiselect("Justificación mínima",["Cumple carga","Cumple espesor","Presenta una resonancia considerablemente menor que A","Debe verificarse la correcta ejecución","El resultado es predictivo y depende de supuestos"],key=f"{ns}_args")
-    required={"Cumple carga","Cumple espesor","Presenta una resonancia considerablemente menor que A","Debe verificarse la correcta ejecución","El resultado es predictivo y depende de supuestos"}
-    if st.button("Evaluar decisión profesional",type="primary",key=f"{ns}_professional"):
-        if order=="C → B → A" and decision=="B" and required.issubset(set(args)):
-            st.success("Has realizado una decisión de diseño y no solamente un cálculo. C presenta una frecuencia natural inferior, pero incumple restricciones; B cumple las restricciones del ejercicio y mantiene una resonancia considerablemente menor que A.")
-        else: st.warning("La justificación debe integrar cálculo, carga, espesor, ejecución y límites del modelo; no basta con indicar que una alternativa tiene menos Hz.")
-
-    st.markdown("## 11 · Preguntas de comprensión")
-    qs=[
-      ("q1","La alternativa con menor f₀ es siempre automáticamente la mejor solución del proyecto.",["Verdadero","Falso"],1,"El diseño integra desempeño y restricciones."),
-      ("q2","Si una alternativa supera la carga estructural admisible, debe evaluarse nuevamente aunque acústicamente parezca atractiva.",["Verdadero","Falso"],0,"La viabilidad estructural es una restricción independiente."),
-      ("q3","Reducir s′ manteniendo las masas constantes tiende a:",["Aumentar f₀","Disminuir f₀","No modificar f₀"],1,"f₀ es proporcional a la raíz cuadrada de s′."),
-      ("q4","¿El espesor de una manta permite conocer directamente su rigidez dinámica?",["Sí","No"],1,"Espesor y rigidez dinámica son propiedades diferentes."),
-      ("q5","Si aparece un puente rígido, ¿debemos seguir utilizando sin advertencias la predicción ideal?",["Sí","No"],1,"El puente altera las hipótesis del sistema ideal."),
-      ("q6","Dos modelos predictivos pueden entregar resultados diferentes sin que necesariamente uno esté matemáticamente mal.",["Verdadero","Falso"],0,"Pueden corresponder a hipótesis y mecanismos diferentes."),
-    ]
-    for q in qs: mcq(*q)
-
-    st.markdown("## 12 · Mapa final de decisión")
-    st.latex(r"\boxed{\text{DATOS}}\rightarrow\boxed{m'_r,\ f_0}\rightarrow\boxed{\Delta L_n(f)}\rightarrow\boxed{\text{RESTRICCIONES}}\rightarrow\boxed{\text{CONSTRUCTIBILIDAD}}\rightarrow\boxed{\text{DECISIÓN}}")
-    st.latex(r"\boxed{\text{BUEN DISEÑO}=\text{PREDICCIÓN}+\text{RESTRICCIONES}+\text{DETALLE CONSTRUCTIVO}}")
-    st.write("El modelo permite comparar alternativas y entender cómo masa, rigidez y resonancia influyen sobre el comportamiento esperado; no selecciona automáticamente el piso con menor frecuencia natural.")
-    st.info("En la Etapa 8 aplicaremos conceptos comunes de dinámica y desacople al control del ruido de instalaciones: piso flotante ↔ aislamiento vibratorio de maquinaria, sin afirmar que sean sistemas idénticos.")
-
-    if role == "Alumno" and not projection_mode:
-        if st.button("Marcar Etapa 7 como revisada",key=f"{ns}_done",width="stretch"):
-            saved["done_7"] = True; saved["updated_7"] = _now(); _save_future_state(class_id,saved); st.success("Progreso guardado."); st.rerun()
-    nav1,nav2=st.columns(2)
-    if nav1.button("← Etapa 6",key=f"{ns}_prev",width="stretch"):
-        st.session_state[stage_selector_key]=6; st.rerun()
-    if nav2.button("Etapa 8 →",key=f"{ns}_next",width="stretch"):
-        st.session_state[stage_selector_key]=8; st.rerun()
-
-
 def future_lab_view_impl(lab):
     """Renderer de los laboratorios posteriores manteniendo la navegación institucional."""
     class_id=lab["id"]
@@ -4511,9 +4294,6 @@ def future_lab_view_impl(lab):
         if selected == 6:
             _render_course2_lab1_stage6(lab, saved)
             return
-        if selected == 7:
-            _render_course2_lab1_stage7(lab, saved)
-            return
 
     title,objective,concept,activity=lab["stages"][selected]
     stage_minutes=20 if selected not in (9,10) else 35
@@ -4617,9 +4397,6 @@ def future_projection_stage_impl(lab, stage):
             return
         if stage == 6:
             _render_course2_lab1_stage6(lab, {})
-            return
-        if stage == 7:
-            _render_course2_lab1_stage7(lab, {})
             return
 
     title, objective, concept, activity = lab["stages"][stage]
