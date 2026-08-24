@@ -129,3 +129,48 @@ def ver_ln_piecewise_db(f_hz, r_db, fc_hz, sigma_rad, eta_p, delta_ln_db=0.0):
         f_hz, r_db, sigma_rad, delta_ln_db
     ), "supercrítico"
 
+def delta_ln_cremer_continuous_db(f_hz, m1_kg_m2, s_mn_m3):
+    """Locally-reactive continuous elastic layer model (Vigran Eq. 8.44).
+
+    ΔL_n = 20 log10(ω² m1' / s') = 40 log10(f/f0)
+    with f0 = (1/2π) sqrt(s'/m1') under the heavy-base / ideal mass-spring
+    assumptions used in the derivation.
+
+    Returns NaN for f <= f0 because the equation is not used there as an
+    'improvement' law in this teaching implementation.
+    """
+    f=float(f_hz); m1=float(m1_kg_m2); s=float(s_mn_m3)*1e6
+    if f <= 0 or m1 <= 0 or s <= 0:
+        raise ValueError("f, m1' y s' deben ser positivos.")
+    f0=(1.0/(2.0*math.pi))*math.sqrt(s/m1)
+    if f <= f0:
+        return float("nan"), f0
+    delta=20.0*math.log10(((2.0*math.pi*f)**2*m1)/s)
+    return delta, f0
+
+
+def delta_ln_ver_discrete_db(
+    f_hz,
+    f0_hz,
+    h1_m,
+    cL1_m_s,
+    N_per_m2,
+    eta11,
+):
+    """High-frequency approximation for Vér discrete elastic supports (Vigran Eq. 8.46).
+
+    ΔL_n ≈ 10 log10[(c_L1 h1 N η11 / (2 π^3 f0^4)) f^3]
+
+    The 9 dB/octave behavior follows when loss factor and support stiffness
+    are approximately frequency independent. This model concerns elastic unit
+    mounts / discrete supports and is not interchangeable with a continuous mat.
+    """
+    f=float(f_hz); f0=float(f0_hz); h1=float(h1_m); cL=float(cL1_m_s)
+    N=float(N_per_m2); eta=float(eta11)
+    if min(f,f0,h1,cL,N,eta) <= 0:
+        raise ValueError("Todos los parámetros del modelo de Vér deben ser positivos.")
+    arg=(cL*h1*N*eta*(f**3))/(2.0*(math.pi**3)*(f0**4))
+    if arg <= 0:
+        raise ValueError("El argumento logarítmico del modelo de Vér debe ser positivo.")
+    return 10.0*math.log10(arg)
+
