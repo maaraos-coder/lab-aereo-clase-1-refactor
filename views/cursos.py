@@ -3865,19 +3865,201 @@ def _render_course2_lab1_stage6(lab, saved):
     st.markdown("## 10 · El modelo solo sirve si la obra se parece al modelo")
     _asset("curso2_lab1_etapa6_piso_correcto_puenteado.webp")
     st.write(
-        "Puentes perimetrales, tornillos, tuberías o discontinuidades crean caminos mecánicos paralelos. "
-        "En ese caso las ecuaciones anteriores pueden dejar de representar adecuadamente al sistema."
+        "El modelo masa–resorte–masa supone que la transferencia entre la capa flotante y la losa base "
+        "ocurre principalmente a través de la capa resiliente. Si aparece una unión mucho más rígida, "
+        "se crea un **camino mecánico paralelo** y el sistema construido deja de coincidir con el modelo ideal."
     )
-    st.latex(r"\boxed{\mathrm{PUENTE\ RÍGIDO}\rightarrow\mathrm{CAMINO\ PARALELO}}")
-    defects=st.multiselect(
-        "Activa un defecto",
-        ["Contacto perimetral","Tornillo","Tubería rígida","Capa resiliente discontinua"],
-        key=f"{ns}_defects"
-    )
-    if defects:
-        st.error("CONFIGURACIÓN FUERA DEL MODELO IDEAL")
-        st.write("No se inventa una penalización en dB.")
+    st.latex(r"\boxed{\mathrm{PISO\ IDEAL}=\mathrm{UN\ CAMINO\ CONTROLADO}}")
+    st.latex(r"\boxed{\mathrm{PISO\ CON\ PUENTE}=\mathrm{CAMINOS\ MECÁNICOS\ EN\ PARALELO}}")
 
+    st.markdown("### 🔬 10.1 · Analiza un defecto de ejecución")
+    defect = st.selectbox(
+        "Selecciona el defecto",
+        [
+            "Contacto perimetral",
+            "Tornillo atravesando la capa resiliente",
+            "Tubería rígida",
+            "Capa resiliente discontinua",
+        ],
+        key=f"{ns}_defect_single",
+    )
+
+    defect_info = {
+        "Contacto perimetral": {
+            "mechanism": (
+                "La sobrelosa toca directamente el muro o un elemento estructural lateral. "
+                "Aparece una conexión rígida adicional que evita parcialmente el camino resiliente previsto."
+            ),
+            "path": r"\mathrm{SOBRELOSA}\rightarrow\mathrm{CONTACTO\ PERIMETRAL}\rightarrow\mathrm{MURO/ESTRUCTURA}",
+            "consequence": (
+                "Parte de la energía puede transmitirse lateralmente por una ruta de alta rigidez. "
+                "La rigidez efectiva del conjunto aumenta y el desacople diseñado puede deteriorarse."
+            ),
+            "correction": (
+                "Restituir la separación mecánica mediante una banda perimetral continua y evitar que morteros, "
+                "revestimientos o remates creen contacto rígido entre la masa flotante y los elementos laterales."
+            ),
+            "calc": (
+                "No debe asignarse una penalización fija en dB. Para cuantificarlo se requiere caracterizar "
+                "la rigidez y extensión del contacto, además de su acoplamiento con las placas y caminos laterales."
+            ),
+        },
+        "Tornillo atravesando la capa resiliente": {
+            "mechanism": (
+                "El tornillo conecta mecánicamente la capa superior con la estructura base atravesando el elemento resiliente. "
+                "Se crea un puente puntual mucho más rígido que el apoyo diseñado."
+            ),
+            "path": r"\mathrm{SOBRELOSA}\rightarrow\mathrm{TORNILLO}\rightarrow\mathrm{LOSA\ BASE}",
+            "consequence": (
+                "La energía encuentra una ruta mecánica en paralelo. Si existen varios tornillos, "
+                "sus rigideces pueden sumarse a la rigidez del apoyo resiliente."
+            ),
+            "correction": (
+                "Eliminar la fijación que atraviesa ambas masas o rediseñar el detalle para que la fijación "
+                "no genere una unión rígida directa entre la masa flotante y la base."
+            ),
+            "calc": (
+                "Puede construirse una primera aproximación mediante una rigidez puntual equivalente, "
+                "pero el modelo uniforme de capa continua deja de representar completamente la geometría real."
+            ),
+        },
+        "Tubería rígida": {
+            "mechanism": (
+                "Una tubería, pasamuros o soporte conecta rígidamente elementos que deberían permanecer desacoplados. "
+                "La tubería se transforma en un camino estructural adicional."
+            ),
+            "path": r"\mathrm{SOBRELOSA}\rightarrow\mathrm{TUBERÍA/SOPORTE}\rightarrow\mathrm{ESTRUCTURA}",
+            "consequence": (
+                "La vibración puede propagarse por la penetración hacia otros elementos del edificio, "
+                "aunque el piso flotante mantenga una buena capa resiliente en el resto de la superficie."
+            ),
+            "correction": (
+                "Diseñar penetraciones y soportes desacoplados, evitar contacto rígido con la masa flotante y "
+                "mantener holguras o soluciones resilientes compatibles con el servicio de la instalación."
+            ),
+            "calc": (
+                "Debe tratarse como un camino estructural adicional. Su cálculo requiere la impedancia o rigidez dinámica "
+                "de la tubería/soporte y su acoplamiento con los elementos conectados."
+            ),
+        },
+        "Capa resiliente discontinua": {
+            "mechanism": (
+                "La capa resiliente deja de soportar uniformemente la sobrelosa. Zonas sin material, pliegues o contactos "
+                "locales pueden generar regiones de rigidez mucho mayor que el resto."
+            ),
+            "path": r"\mathrm{SOBRELOSA}\rightarrow\mathrm{ZONA\ RÍGIDA}\rightarrow\mathrm{LOSA\ BASE}",
+            "consequence": (
+                "El sistema deja de ser un apoyo distribuido uniforme. Pueden aparecer concentraciones locales de carga "
+                "y una rigidez efectiva distinta de la utilizada en el modelo."
+            ),
+            "correction": (
+                "Restituir continuidad, espesor y apoyo uniforme de la capa resiliente, además de evitar perforaciones "
+                "o zonas comprimidas que generen contactos directos."
+            ),
+            "calc": (
+                "Una rigidez efectiva puede utilizarse como aproximación solo si se conoce la proporción y geometría "
+                "de las zonas defectuosas. Para discontinuidades importantes se requiere un modelo espacial más detallado."
+            ),
+        },
+    }
+
+    info = defect_info[defect]
+
+    c1, c2 = st.columns(2)
+    with c1:
+        with st.container(border=True):
+            st.markdown("### 1 · ¿Qué cambió físicamente?")
+            st.write(info["mechanism"])
+            st.latex(info["path"])
+    with c2:
+        with st.container(border=True):
+            st.markdown("### 2 · Consecuencia")
+            st.write(info["consequence"])
+
+    c3, c4 = st.columns(2)
+    with c3:
+        with st.container(border=True):
+            st.markdown("### 3 · Corrección conceptual")
+            st.write(info["correction"])
+    with c4:
+        with st.container(border=True):
+            st.markdown("### 4 · ¿Se puede calcular?")
+            st.write(info["calc"])
+
+    st.warning(
+        "⚠️ **NO ES INCALCULABLE ≠ LO CALCULA ESTE MODELO.** "
+        "El defecto puede modelarse, pero puede requerir un nivel de representación superior al sistema ideal masa–resorte–masa."
+    )
+
+    st.markdown("### 10.2 · Modelo equivalente de rigideces en paralelo")
+    st.write(
+        "Como primera aproximación mecánica, un puente rígido puede representarse como una rigidez adicional "
+        "en paralelo con la capa resiliente:"
+    )
+    st.latex(r"\boxed{K_{\mathrm{eq}}=K_{\mathrm{res}}+\sum_iK_{\mathrm{puente},i}}")
+    st.write(
+        "Si utilizamos magnitudes por unidad de superficie, la misma idea puede expresarse conceptualmente como:"
+    )
+    st.latex(r"\boxed{s'_{\mathrm{eq}}\approx s'_{\mathrm{res}}+s'_{\mathrm{puentes}}}")
+    st.write(
+        "Una mayor rigidez equivalente desplaza la frecuencia natural hacia arriba:"
+    )
+    st.latex(r"\boxed{f_{0,\mathrm{defecto}}\approx\frac1{2\pi}\sqrt{\frac{s'_{\mathrm{eq}}}{m'_r}}}")
+
+    st.markdown("### 🔬 10.3 · ¿Cómo cambia la resonancia si aparece un puente?")
+    c1, c2, c3 = st.columns(3)
+    bridge_m1 = c1.slider("m′₁ [kg/m²]", 50, 250, 120, 5, key=f"{ns}_bridge_m1")
+    bridge_m2 = c2.slider("m′₂ [kg/m²]", 150, 600, 400, 10, key=f"{ns}_bridge_m2")
+    s_res = c3.slider("s′ resiliente [MN/m³]", 3.0, 30.0, 10.0, .5, key=f"{ns}_bridge_sres")
+
+    c4, c5 = st.columns(2)
+    s_bridge = c4.slider(
+        "Rigidez equivalente adicional del puente [MN/m³] · aproximación conceptual",
+        0.0, 50.0, 0.0, .5, key=f"{ns}_bridge_sadd"
+    )
+    n_bridge = c5.slider(
+        "Factor de cantidad/distribución del puente · didáctico",
+        1.0, 10.0, 1.0, .5, key=f"{ns}_bridge_n"
+    )
+
+    mr_bridge = reduced_mass(bridge_m1, bridge_m2)
+    s_eq = s_res + s_bridge * n_bridge
+    f0_clean = (1/(2*math.pi))*math.sqrt((s_res*1e6)/mr_bridge)
+    f0_defect = (1/(2*math.pi))*math.sqrt((s_eq*1e6)/mr_bridge)
+
+    a, b, c = st.columns(3)
+    a.metric("f₀ sin puente", f"{f0_clean:.1f} Hz")
+    b.metric("s′ equivalente", f"{s_eq:.1f} MN/m³")
+    c.metric("f₀ con puente", f"{f0_defect:.1f} Hz", delta=f"{f0_defect-f0_clean:+.1f} Hz")
+
+    st.caption(
+        "Representación didáctica de rigideces en paralelo. El control 'factor de cantidad/distribución' "
+        "NO representa una ley física universal ni convierte automáticamente el defecto en una penalización acústica."
+    )
+
+    st.markdown("### 10.4 · ¿Podemos convertir esto directamente en una pérdida de ΔLₙ?")
+    st.error("No con rigor usando únicamente esta aproximación.")
+    st.write(
+        "El cambio de $f_0$ muestra una consecuencia mecánica posible del puente, pero **no basta para obtener una penalización "
+        "en dB de $\Delta L_n$**. Para eso necesitamos representar cómo el camino localizado transmite energía, cómo excita "
+        "las placas y cómo esas placas radian sonido."
+    )
+
+    with st.container(border=True):
+        st.markdown("### Niveles de modelación")
+        st.write(
+            "**Nivel 1 — Piso ideal:** $m'_1$, $m'_2$, $s'$ → $f_0$ → modelo Cremer/Vér → $\\Delta L_n(f)$."
+        )
+        st.write(
+            "**Nivel 2 — Rigidez equivalente:** útil para mostrar cómo un puente puede aumentar la rigidez y mover la resonancia."
+        )
+        st.write(
+            "**Nivel 3 — Caminos estructurales separados:** cada unión se trata como una ruta mecánica adicional."
+        )
+        st.write(
+            "**Nivel 4 — FEM/SEA o medición:** apropiado para tornillos, contactos parciales, penetraciones, geometría finita "
+            "y distribución espacial real."
+        )
     # ================================================================
     # 11. EXERCISE + SENSITIVITY
     # ================================================================
