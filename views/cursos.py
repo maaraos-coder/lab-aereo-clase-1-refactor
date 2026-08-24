@@ -4063,39 +4063,178 @@ def _render_course2_lab1_stage6(lab, saved):
     # ================================================================
     # 11. EXERCISE + SENSITIVITY
     # ================================================================
-    st.markdown("## 11 · Ejercicio: de parámetros a ΔLₙ")
-    st.write("Datos dinámicos: $m'_1=120$ kg/m², $m'_2=400$ kg/m², $s'=10$ MN/m³.")
-    emr,ef0=natural_frequency(120,400,10)
-    st.latex(rf"\boxed{{m'_r={emr:.1f}\ \mathrm{{kg/m^2}}}}")
-    st.latex(rf"\boxed{{f_0={ef0:.1f}\ \mathrm{{Hz}}}}")
+    st.markdown("## 11 · Ejercicio guiado: de los parámetros a ΔLₙ(f)")
     st.write(
-        "Para calcular la mejora con el modelo continuo de Cremer usamos $m'_1$ y $s'$ del sistema "
-        "y evaluamos la ecuación por banda."
+        "Este ejercicio reúne todo lo anterior, pero ahora el cálculo de la mejora se muestra **paso a paso**. "
+        "No aparecerán valores de ΔLₙ sin indicar primero qué ecuación los produce."
     )
-    exrows=[]
-    for f in [63,125,250]:
-        d, f0c = delta_ln_cremer_continuous_db(f,120,10)
+
+    st.markdown("### Paso 1 · Datos dinámicos del piso flotante")
+    st.latex(
+        r"m'_1=120\ \mathrm{kg/m^2},\qquad"
+        r"m'_2=400\ \mathrm{kg/m^2},\qquad"
+        r"s'=10\ \mathrm{MN/m^3}"
+    )
+    st.write("Primero calculamos la masa reducida y la frecuencia natural del modelo general de dos masas.")
+
+    emr, ef0 = natural_frequency(120, 400, 10)
+
+    st.latex(
+        r"m'_r=\frac{m'_1m'_2}{m'_1+m'_2}"
+        r"=\frac{120(400)}{120+400}"
+        r"=\frac{48000}{520}"
+    )
+    st.latex(rf"\boxed{{m'_r\approx {emr:.1f}\ \mathrm{{kg/m^2}}}}")
+    st.latex(
+        r"f_0=\frac1{2\pi}\sqrt{\frac{s'}{m'_r}}"
+        r"=\frac1{2\pi}\sqrt{\frac{10\times10^6}{92.3}}"
+    )
+    st.latex(rf"\boxed{{f_0\approx {ef0:.1f}\ \mathrm{{Hz}}}}")
+    st.info("Hasta aquí todavía **no hemos calculado ΔLₙ**. Solo hemos caracterizado la dinámica del sistema.")
+
+    st.markdown("### Paso 2 · Seleccionamos la ecuación de mejora")
+    st.write(
+        "Para este ejercicio utilizaremos el **modelo continuo de Cremer/Vigran** para una capa elástica continua."
+    )
+    st.latex(
+        r"\boxed{\Delta L_n(f)=20\log_{10}\left(\frac{\omega^2m'_1}{s'}\right)}"
+    )
+    st.write("Como $\\omega=2\\pi f$:")
+    st.latex(
+        r"\boxed{\Delta L_n(f)=20\log_{10}\left("
+        r"\frac{(2\pi f)^2m'_1}{s'}\right)}"
+    )
+    st.write(
+        "Bajo las hipótesis del modelo ideal de capa continua, también puede escribirse:"
+    )
+    st.latex(
+        r"\boxed{\Delta L_n(f)=40\log_{10}\left(\frac{f}{f_0}\right)}"
+    )
+
+    with st.container(border=True):
+        st.markdown("### 📚 Fundamento y campo de validez")
+        st.write(
+            "Esta relación corresponde al modelo de piso flotante con **capa elástica continua**, "
+            "idealizada como resorte, y una masa superior idealizada. "
+            "No debe confundirse con el modelo de Vér para apoyos elásticos discretos."
+        )
+        st.write(
+            "En esta etapa se utiliza para frecuencias sobre la resonancia y dentro del campo didáctico del modelo. "
+            "No se extrapola como una ley universal."
+        )
+        st.caption(
+            "Fuente: Vigran, T. E., *Building Acoustics* (2008), Ec. 8.44; "
+            "Cremer, Heckl & Ungar, *Structure-Borne Sound*, Ecs. 406–406a."
+        )
+
+    st.markdown("### Paso 3 · Sustitución numérica completa en 125 Hz")
+    ex_f = 125.0
+    ex_m1 = 120.0
+    ex_s = 10.0e6
+    ex_arg = (((2*math.pi*ex_f)**2) * ex_m1) / ex_s
+    ex_delta = 20*math.log10(ex_arg)
+
+    st.latex(r"f=125\ \mathrm{Hz}")
+    st.latex(
+        r"\Delta L_n(125)=20\log_{10}\left("
+        r"\frac{(2\pi\cdot125)^2(120)}{10\times10^6}\right)"
+    )
+    st.latex(rf"\frac{{(2\pi\cdot125)^2(120)}}{{10\times10^6}}\approx {ex_arg:.3f}")
+    st.latex(rf"\boxed{{\Delta L_n(125)\approx {ex_delta:.1f}\ \mathrm{{dB}}}}")
+    st.success("Ahora el resultado tiene una procedencia visible: parámetros → ecuación → sustitución → ΔLₙ.")
+
+    st.markdown("### Paso 4 · Aplicamos la misma ecuación a varias frecuencias")
+    st.write("La tabla siguiente usa exactamente la misma formulación en todas las filas.")
+
+    f0_cremer = (1/(2*math.pi))*math.sqrt((10e6)/120.0)
+    freq_list = [63, 125, 250]
+    exrows = []
+    for f in freq_list:
+        if f <= f0_cremer:
+            dval = None
+        else:
+            arg = (((2*math.pi*f)**2) * 120.0) / 10e6
+            dval = 20*math.log10(arg)
         exrows.append({
-            "f [Hz]":f,
-            "f/f₀":round(f/f0c,2),
-            "ΔLₙ [dB]":None if np.isnan(d) else round(d,1)
+            "f [Hz]": f,
+            "f/f₀ (modelo continuo)": round(f/f0_cremer, 2),
+            "Ecuación aplicada": "20 log10[(2πf)² m′₁ / s′]",
+            "ΔLₙ [dB]": None if dval is None else round(dval, 1),
         })
-    st.dataframe(exrows,use_container_width=True,hide_index=True)
+    st.dataframe(exrows, use_container_width=True, hide_index=True)
 
-    st.markdown("### Sensibilidad")
-    st.write("Compara el efecto de cambiar $s'$ manteniendo la masa superior.")
-    sens=[]
-    for sval in [5,10,20]:
-        _,f0s = delta_ln_cremer_continuous_db(250,120,sval)
-        ds,_ = delta_ln_cremer_continuous_db(250,120,sval)
-        sens.append({"s′ [MN/m³]":sval,"f₀ [Hz]":round(f0s,1),
-                     "ΔLₙ a 250 Hz [dB]":round(ds,1) if not np.isnan(ds) else None})
-    st.dataframe(sens,use_container_width=True,hide_index=True)
-    st.write("Aumentar $s'$ desplaza $f_0$ hacia arriba y, a una frecuencia fija, puede reducir la separación respecto de la resonancia.")
+    st.caption(
+        f"Para el modelo continuo simplificado con m′₁=120 kg/m² y s′=10 MN/m³, "
+        f"f₀≈{f0_cremer:.1f} Hz."
+    )
 
-    # ================================================================
-    # 12. QUESTIONS / CLOSING
-    # ================================================================
+    st.markdown("### Paso 5 · ¿Por qué aparecen dos valores de f₀?")
+    st.write(
+        "Éste es un punto clave para no mezclar modelos. El valor de 52.4 Hz proviene del modelo general con masa reducida. "
+        "La forma simplificada de Cremer utiliza la masa superior cuando la base se considera mucho más pesada o impedante."
+    )
+    c1, c2 = st.columns(2)
+    with c1:
+        with st.container(border=True):
+            st.markdown("#### Modelo general de dos masas")
+            st.latex(r"m'_r=\frac{m'_1m'_2}{m'_1+m'_2}")
+            st.latex(r"f_0=\frac1{2\pi}\sqrt{\frac{s'}{m'_r}}")
+            st.metric("f₀ general", f"{ef0:.1f} Hz")
+            st.write("Considera explícitamente el movimiento relativo de ambas masas.")
+    with c2:
+        with st.container(border=True):
+            st.markdown("#### Cremer continuo simplificado")
+            st.latex(r"f_0\approx\frac1{2\pi}\sqrt{\frac{s'}{m'_1}}")
+            st.metric("f₀ simplificado", f"{f0_cremer:.1f} Hz")
+            st.write("Aproximación cuando la base es suficientemente pesada/impedante.")
+    st.warning("No debemos mezclar ecuaciones pertenecientes a modelos distintos sin declarar la hipótesis utilizada.")
+
+    st.markdown("### Paso 6 · Sensibilidad a la rigidez usando la misma ecuación")
+    st.write(
+        "Mantendremos $m'_1=120$ kg/m² y evaluaremos la ecuación de Cremer a **250 Hz**. "
+        "Solo cambia $s'$."
+    )
+    sens = []
+    for sval in [5.0, 10.0, 20.0]:
+        s_pa = sval*1e6
+        f0_s = (1/(2*math.pi))*math.sqrt(s_pa/120.0)
+        if 250 <= f0_s:
+            d_s = None
+        else:
+            arg_s = (((2*math.pi*250)**2)*120.0)/s_pa
+            d_s = 20*math.log10(arg_s)
+        sens.append({
+            "s′ [MN/m³]": sval,
+            "f₀ simplificado [Hz]": round(f0_s, 1),
+            "f/f₀ a 250 Hz": round(250/f0_s, 2),
+            "ΔLₙ(250 Hz) [dB]": None if d_s is None else round(d_s, 1),
+        })
+    st.dataframe(sens, use_container_width=True, hide_index=True)
+
+    st.write(
+        "Al aumentar $s'$, la resonancia se desplaza hacia arriba. A 250 Hz disminuye la separación $f/f_0$ "
+        "y también disminuye la mejora calculada por este modelo."
+    )
+
+    _mcq(
+        "exercise_delta_origin",
+        "En este ejercicio, ¿de dónde sale el valor de ΔLₙ de cada banda?",
+        [
+            "A. Directamente de la transmisibilidad T_F.",
+            "B. De aplicar la ecuación de Cremer/Vigran con f, m′₁ y s′.",
+            "C. De restar un número arbitrario al nivel de la losa base.",
+            "D. Únicamente de conocer f₀.",
+        ],
+        1,
+        "ΔLₙ se obtiene al evaluar la ecuación de mejora del modelo seleccionado. "
+        "f₀ ayuda a interpretar el régimen, pero no sustituye la ecuación de ΔLₙ.",
+    )
+
+    st.success(
+        "Secuencia completa: **m′₁, m′₂, s′ → m′ᵣ → f₀ → seleccionar el modelo → "
+        "aplicar la ecuación de ΔLₙ(f) → interpretar el resultado**."
+    )
+
     st.markdown("## 12 · Preguntas formativas")
     _mcq("q1","$f_0$ es por sí sola la ecuación de mejora.",["Verdadero","Falso"],1,
          "f₀ localiza la resonancia; ΔLₙ requiere un modelo de mejora.",store=True)
