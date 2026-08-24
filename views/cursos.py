@@ -3117,8 +3117,12 @@ def _render_course2_lab1_stage5(lab, saved):
         "espectral de fuerza resulta aproximadamente:"
     )
     st.latex(r"\boxed{S_{f0}\approx4\ \mathrm{N^2/Hz}}")
+    st.caption(
+        "Fuente: Vér & Beranek (eds.), *Noise and Vibration Control Engineering*, "
+        "2nd ed., cap. 11, §11.11 *Impact Noise*, Ecs. (11.158)–(11.160)."
+    )
 
-    with st.expander("Explora la excitación periódica"):
+    with st.container(border=True):
         fr=st.number_input("fᵣ [Hz]",min_value=0.1,value=10.0,step=0.5,key=f"{ns}_fr")
         mass=st.number_input("m [kg]",min_value=0.01,value=0.5,step=0.05,key=f"{ns}_mass")
         hdrop=st.number_input("h [m]",min_value=0.001,value=0.04,step=0.005,format="%.3f",key=f"{ns}_hdrop")
@@ -3144,6 +3148,10 @@ def _render_course2_lab1_stage5(lab, saved):
         r"\boxed{L_{W,\mathrm{oct}}\approx10\log_{10}\left["
         r"\frac{\rho c\,\sigma_{\mathrm{rad}}}"
         r"{5.1\,\rho_p^2c_L\eta_p t^3}\right]+120}"
+    )
+    st.caption(
+        "Fuente: Vér & Beranek (eds.), *Noise and Vibration Control Engineering*, "
+        "2nd ed., cap. 11, §11.11 *Impact Noise*, Ec. (11.162)."
     )
     with st.container(border=True):
         st.markdown("**Variables**")
@@ -3193,6 +3201,10 @@ def _render_course2_lab1_stage5(lab, saved):
             r"\boxed{f_c=\frac{c^2}{2\pi}\sqrt{\frac{m'}{D}},\qquad "
             r"D=\frac{Eh^3}{12(1-\nu^2)}}"
         )
+        st.caption(
+            "Frecuencia crítica y rigidez flexional: relación de placa simple reutilizada "
+            "desde el Curso 1. La aplicación calcula f_c a partir de las propiedades de la losa."
+        )
         # simple regime visualization
         fig,ax=plt.subplots(figsize=(8,1.8))
         ax.set_xscale("log")
@@ -3217,6 +3229,10 @@ def _render_course2_lab1_stage5(lab, saved):
     st.latex(
         r"\boxed{L_n+R=43+30\log_{10}(f)-10\log_{10}(\sigma_{\mathrm{rad}})-\Delta L_n}"
     )
+    st.caption(
+        "Fuente: Vér & Beranek (eds.), *Noise and Vibration Control Engineering*, "
+        "2nd ed., cap. 11, §11.11 *Impact Noise*, Ec. (11.172)."
+    )
     st.write("Para una losa estructural desnuda:")
     st.latex(r"\Delta L_n=0")
     st.latex(
@@ -3234,6 +3250,10 @@ def _render_course2_lab1_stage5(lab, saved):
     st.latex(
         r"\boxed{R+L_n=39.5+20\log_{10}(f)-\Delta L_n"
         r"-10\log_{10}\left(\frac{\eta_p}{f_c\sigma_{\mathrm{rad}}}\right)}"
+    )
+    st.caption(
+        "Fuente: Vér & Beranek (eds.), *Noise and Vibration Control Engineering*, "
+        "2nd ed., cap. 11, §11.11 *Impact Noise*, Ec. (11.173)."
     )
     st.write("Para la losa desnuda, ΔLₙ=0:")
     st.latex(
@@ -3358,10 +3378,18 @@ def _render_course2_lab1_stage5(lab, saved):
         "constructivas destinadas a reducir el ruido de impacto."
     )
 
-    st.caption(
-        "Fuente: Vér, I. L. & Beranek, L. L. (eds.), Noise and Vibration Control Engineering: "
-        "Principles and Applications, 2nd ed., Wiley, 2006. Cap. 11, sección 11.11 Impact Noise."
-    )
+    with st.container(border=True):
+        st.markdown("### 📚 Referencia técnica de esta etapa")
+        st.write(
+            "Vér, I. L. & Beranek, L. L. (eds.). *Noise and Vibration Control Engineering: "
+            "Principles and Applications*, 2nd ed., Wiley, 2006. "
+            "Capítulo 11, §11.11 **Impact Noise**."
+        )
+        st.write(
+            "Ecuaciones utilizadas: (11.158)–(11.160) para la excitación periódica, "
+            "(11.162) para la potencia sonora radiada, (11.172) para el régimen sobre "
+            "la frecuencia crítica y (11.173) para el régimen subcrítico."
+        )
 
     left,right=st.columns(2)
     with left:
