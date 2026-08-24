@@ -3009,20 +3009,33 @@ def _render_course2_lab1_stage4(lab, saved):
             st.rerun()
 
 def _render_course2_lab1_stage5(lab, saved):
-    """ETAPA 5 — Predicción del nivel de ruido de impacto de la losa base."""
+    """ETAPA 5 — Predicción de L_n,0(f) de la losa base mediante el modelo de Vér."""
     import numpy as np
     import matplotlib.pyplot as plt
-    from core.course2_impact_models import BANDS, ln0_above_fc
-    class_id=lab["id"]; stage_selector_key=f"future_stage_{class_id}"
+    from core.acoustics import critical_frequency
+    from core.course2_impact_models import (
+        ver_impact_velocity_before_contact,
+        ver_impact_force_harmonic,
+        ver_force_spectral_density,
+        ver_lw_oct_db,
+        ver_ln_supercritical_db,
+        ver_ln_subcritical_db,
+        ver_ln_piecewise_db,
+    )
+
+    class_id=lab["id"]
+    stage_selector_key=f"future_stage_{class_id}"
     role=st.session_state.get("role","Alumno")
     projection_mode=bool(st.session_state.get("projection_mode") or role=="Proyección")
-    ns=f"{class_id}_s5"; stage_no=5
+    ns=f"{class_id}_s5"
+    stage_no=5
 
     def _asset(name, caption=None):
         p=ASSET_DIR/name
         if p.exists():
             st.image(p,width="stretch")
-            if caption: st.caption(caption)
+            if caption:
+                st.caption(caption)
             return True
         if st.session_state.get("dev_mode",False):
             st.caption(f"[Render pendiente: {name}]")
@@ -3038,8 +3051,8 @@ def _render_course2_lab1_stage5(lab, saved):
             return
         sk=f"{ns}_{key}"
         choice=st.radio(question,options,index=None,key=sk,label_visibility="collapsed")
-        if st.button("Comprobar y guardar" if store and role=="Alumno" and not projection_mode else "Comprobar",
-                     key=f"{sk}_check"):
+        label="Comprobar y guardar" if store and role=="Alumno" and not projection_mode else "Comprobar"
+        if st.button(label,key=f"{sk}_check"):
             if choice is None:
                 st.warning("Selecciona una alternativa.")
             else:
@@ -3048,177 +3061,317 @@ def _render_course2_lab1_stage5(lab, saved):
                 st.session_state[f"{sk}_result"]=ok
                 if store and role=="Alumno" and not projection_mode:
                     data=saved.get(f"stage{stage_no}_comprehension",{})
-                    if not isinstance(data,dict): data={}
+                    if not isinstance(data,dict):
+                        data={}
                     data[key]={"selected":idx,"correct":ok,"updated_at":_now()}
                     saved[f"stage{stage_no}_comprehension"]=data
                     saved[f"updated_{stage_no}"]=_now()
                     _save_future_state_impl(class_id,saved)
         result=st.session_state.get(f"{sk}_result")
-        if result is True: st.success("Correcto. "+feedback)
-        elif result is False: st.warning("Revisa el concepto. "+feedback)
+        if result is True:
+            st.success("Correcto. "+feedback)
+        elif result is False:
+            st.warning("Revisa el concepto. "+feedback)
 
-    header("ETAPA 5 · LABORATORIO 1","Predicción del nivel de ruido de impacto de la losa base",
-           "¿Cómo estimamos Lₙ,₀(f) para una losa base sin tratamiento?",show_overview=False,duration_minutes=75)
+    header(
+        "ETAPA 5 · LABORATORIO 1",
+        "Predicción del nivel de ruido de impacto de la losa base",
+        "Modelo analítico de Vér: de la excitación mecánica a Lₙ(f).",
+        show_overview=False,
+        duration_minutes=80,
+    )
 
-    st.markdown("## 1 · Objetivo de aprendizaje")
-    st.write("Pasar desde la cadena física del impacto a una predicción por bandas del nivel normalizado de impacto de la losa base.")
-    st.latex(r"\boxed{F(f)\rightarrow Y(f)\rightarrow v(f)\rightarrow W_{\mathrm{rad}}(f)\rightarrow L_{n,0}(f)}")
-    st.info("No se desarrolla todavía medición completa, ISO 16283-2, ISO 10140-3, ISO 717-2, Lₙ,w, L′ₙ,w, L′ₙT,w ni Cᵢ.")
+    # 1. Bridge
+    st.markdown("## De la excitación mecánica al nivel de ruido de impacto")
+    st.write(
+        "Hasta ahora hemos estudiado por separado la excitación, la respuesta vibratoria "
+        "de la losa y su capacidad para radiar sonido. El objetivo ahora es conectar estas "
+        "variables para predecir el ruido generado en el recinto receptor."
+    )
+    st.latex(
+        r"\boxed{\mathrm{IMPACTO}\rightarrow F(f)\rightarrow"
+        r"\mathrm{VIBRACIÓN\ DE\ LA\ LOSA}\rightarrow\sigma_{\mathrm{rad}}(f)"
+        r"\rightarrow W_{\mathrm{rad}}(f)\rightarrow L_n(f)}"
+    )
+    st.info(
+        "El modelo de Vér permite establecer este puente entre la excitación mecánica "
+        "de la losa y el ruido de impacto radiado al recinto inferior."
+    )
 
-    st.markdown("## 2 · Apertura")
-    st.write("Ya sabemos qué ocurre físicamente. Ahora preguntamos: **¿cómo transformamos esa respuesta vibroacústica en una estimación de Lₙ?**")
-    st.latex(r"\boxed{L_n(f)}")
+    # 2. Excitation
+    st.markdown("## 1 · Excitación producida por la máquina de impactos")
+    st.write(
+        "Vér representa la excitación periódica mediante sus componentes espectrales. "
+        "El objetivo aquí es reconocer que la fuente de impacto puede caracterizarse "
+        "en frecuencia."
+    )
+    st.latex(r"\boxed{F_n=2f_rmv_0}")
+    st.latex(r"\boxed{v_0=\sqrt{2gh}}")
+    st.write(
+        "**fᵣ**: frecuencia de repetición · **m**: masa del martillo · "
+        "**v₀**: velocidad antes del impacto · **g**: gravedad · **h**: altura de caída."
+    )
+    st.latex(r"\boxed{S_{f0}=4f_rm^2gh}")
+    st.write(
+        "Para la máquina de impactos normalizada considerada por Vér, la densidad "
+        "espectral de fuerza resulta aproximadamente:"
+    )
+    st.latex(r"\boxed{S_{f0}\approx4\ \mathrm{N^2/Hz}}")
 
-    st.markdown("## 3 · ¿Qué representa Lₙ?")
-    st.latex(r"\boxed{L_n=L_p+10\log_{10}\left(\frac{A}{A_0}\right)}")
-    st.latex(r"A_0=10\ \mathrm{m^2}")
-    st.write("Se introduce como magnitud física y resultado predictivo por bandas. La obtención experimental de A mediante reverberación queda para el Laboratorio 2.")
+    with st.expander("Explora la excitación periódica"):
+        fr=st.number_input("fᵣ [Hz]",min_value=0.1,value=10.0,step=0.5,key=f"{ns}_fr")
+        mass=st.number_input("m [kg]",min_value=0.01,value=0.5,step=0.05,key=f"{ns}_mass")
+        hdrop=st.number_input("h [m]",min_value=0.001,value=0.04,step=0.005,format="%.3f",key=f"{ns}_hdrop")
+        try:
+            v0=ver_impact_velocity_before_contact(9.81,hdrop)
+            fn=ver_impact_force_harmonic(fr,mass,v0)
+            sf=ver_force_spectral_density(fr,mass,9.81,hdrop)
+            c1,c2,c3=st.columns(3)
+            c1.metric("v₀",f"{v0:.3f} m/s")
+            c2.metric("Fₙ",f"{fn:.2f} N")
+            c3.metric("S_f0",f"{sf:.2f} N²/Hz")
+        except ValueError as exc:
+            st.warning(str(exc))
+
+    # 3. Radiation
+    st.markdown("## 2 · De la vibración a la radiación acústica")
+    st.write(
+        "Una losa que vibra no necesariamente radia sonido con la misma eficiencia en "
+        "todas las frecuencias. La conversión de vibración estructural en sonido depende "
+        "de la eficiencia de radiación σ_rad."
+    )
+    st.latex(
+        r"\boxed{L_{W,\mathrm{oct}}\approx10\log_{10}\left["
+        r"\frac{\rho c\,\sigma_{\mathrm{rad}}}"
+        r"{5.1\,\rho_p^2c_L\eta_p t^3}\right]+120}"
+    )
+    with st.container(border=True):
+        st.markdown("**Variables**")
+        st.write(
+            "ρ: densidad del aire · c: velocidad del sonido · σ_rad: eficiencia de radiación · "
+            "ρₚ: densidad de la losa · c_L: velocidad longitudinal del material · "
+            "ηₚ: factor de pérdidas total · t: espesor de la losa."
+        )
+    st.info("🔎 **Observa el término t³.**")
+    st.write(
+        "Dentro de las hipótesis del modelo, duplicar el espesor de una losa homogénea "
+        "produce aproximadamente una reducción de 9 dB en el nivel de potencia sonora radiada."
+    )
+    st.latex(r"\boxed{t\rightarrow2t\quad\Rightarrow\quad\Delta L_W\approx-9\ \mathrm{dB}}")
+    st.write("Un aumento del amortiguamiento ηₚ también reduce la respuesta radiada.")
+
+    # 4. Critical frequency from actual plate properties
+    st.markdown("## 3 · La frecuencia crítica cambia el comportamiento")
+    st.write(
+        "La frecuencia crítica no se selecciona arbitrariamente. Se calcula a partir de "
+        "las propiedades de la placa."
+    )
     c1,c2=st.columns(2)
     with c1:
-        with st.container(border=True):
-            st.markdown("### AISLAMIENTO AÉREO"); st.latex(r"R\uparrow\Rightarrow\text{mejor}")
+        rho_p=st.number_input("Densidad de la losa ρₚ [kg/m³]",min_value=500.0,max_value=4000.0,
+                              value=2400.0,step=50.0,key=f"{ns}_rho_p")
+        t_mm=st.number_input("Espesor t [mm]",min_value=20.0,max_value=500.0,
+                            value=160.0,step=5.0,key=f"{ns}_tmm")
     with c2:
-        with st.container(border=True):
-            st.markdown("### RUIDO DE IMPACTO"); st.latex(r"L_n\downarrow\Rightarrow\text{mejor}")
-    _mcq("piso58","Dos pisos presentan Lₙ,A=58 dB y Lₙ,B=72 dB. ¿Cuál presenta mejor comportamiento?",
-         ["A. Piso A","B. Piso B"],0,"En ruido de impacto, menor Lₙ es favorable.")
+        young=st.number_input("Módulo de Young E [GPa]",min_value=1.0,max_value=80.0,
+                              value=30.0,step=1.0,key=f"{ns}_E")
+        nu=st.number_input("Coeficiente de Poisson ν",min_value=0.05,max_value=0.49,
+                           value=0.20,step=0.01,format="%.2f",key=f"{ns}_nu")
 
-    st.markdown("## 4 · ¿Por qué R(f) y Lₙ(f) pueden relacionarse?")
-    _asset("curso2_lab1_etapa5_aereo_impacto_misma_losa.webp")
-    c1,c2=st.columns(2)
-    with c1: st.latex(r"p\rightarrow\mathrm{LOSA}\rightarrow v\rightarrow p")
-    with c2: st.latex(r"F\rightarrow\mathrm{LOSA}\rightarrow v\rightarrow p")
-    st.latex(r"\boxed{\mathrm{MISMA\ ESTRUCTURA}+\mathrm{DISTINTA\ EXCITACIÓN}}")
+    try:
+        surface_mass, stiffness, fc = critical_frequency(rho_p,t_mm,young,nu,343.0)
+    except Exception as exc:
+        surface_mass, stiffness, fc = None, None, None
+        st.warning(f"No fue posible calcular f_c con estos datos: {exc}")
 
-    st.markdown("## 5 · Del modelo físico al modelo predictivo")
-    st.latex(r"F(f)\downarrow Y(f)\downarrow v(f)=Y(f)F(f)\downarrow W_{\mathrm{rad}}\downarrow L_n(f)")
-    st.write("Un modelo analítico representa esta cadena mediante hipótesis, sin resolver necesariamente toda la estructura mediante FEM.")
+    if fc and fc>0:
+        a,b,c=st.columns(3)
+        a.metric("m′",f"{surface_mass:.1f} kg/m²")
+        b.metric("D",f"{stiffness:.1f} N·m")
+        c.metric("f_c",f"{fc:.0f} Hz")
+        st.latex(
+            r"\boxed{f_c=\frac{c^2}{2\pi}\sqrt{\frac{m'}{D}},\qquad "
+            r"D=\frac{Eh^3}{12(1-\nu^2)}}"
+        )
+        # simple regime visualization
+        fig,ax=plt.subplots(figsize=(8,1.8))
+        ax.set_xscale("log")
+        ax.set_xlim(80,5000)
+        ax.axvspan(80,max(80,min(fc,5000)),alpha=.12)
+        ax.axvspan(max(80,min(fc,5000)),5000,alpha=.06)
+        ax.axvline(fc,linestyle="--")
+        ax.text(120,0.55,"Régimen subcrítico",transform=ax.get_xaxis_transform())
+        ax.text(max(fc*1.15,500),0.55,"Sobre frecuencia crítica",transform=ax.get_xaxis_transform())
+        ax.set_yticks([])
+        ax.set_xlabel("Frecuencia [Hz]")
+        ax.grid(True,which="both",alpha=.15)
+        st.pyplot(fig,use_container_width=True)
+        plt.close(fig)
+        st.write(
+            "La frecuencia crítica separa dos regímenes de radiación. Por ello, "
+            "el modelo de predicción no utiliza exactamente la misma expresión a ambos lados de f_c."
+        )
 
-    st.markdown("## 6 · Modelo analítico de Vér")
-    st.write("Se introduce como modelo analítico de predicción del ruido de impacto de una placa. La formulación avanzada completa solo debe mostrarse si está validada contra la bibliografía del proyecto.")
-    with st.expander("Ver formulación avanzada"):
-        st.warning("No se reconstruye una formulación avanzada desde memoria. Esta sección queda deliberadamente restringida al contenido validado disponible.")
-    st.markdown("### Regiones físicas")
-    fc=st.slider("Frecuencia crítica f_c [Hz] · parámetro didáctico",100,2000,315,5,key=f"{ns}_fc")
-    st.write("La relación entre vibración y radiación cambia alrededor de f_c; una única expresión simplificada no debe aplicarse indiscriminadamente.")
+    # 5. Supercritical
+    st.markdown("## 4 · Predicción para f > f_c")
+    st.latex(
+        r"\boxed{L_n+R=43+30\log_{10}(f)-10\log_{10}(\sigma_{\mathrm{rad}})-\Delta L_n}"
+    )
+    st.write("Para una losa estructural desnuda:")
+    st.latex(r"\Delta L_n=0")
+    st.latex(
+        r"\boxed{L_n=43+30\log_{10}(f)-10\log_{10}(\sigma_{\mathrm{rad}})-R}"
+    )
+    st.write(
+        "Sobre la frecuencia crítica, la eficiencia de radiación puede aproximarse a "
+        "σ_rad≈1 bajo las hipótesis correspondientes:"
+    )
+    st.latex(r"\boxed{L_n\approx43+30\log_{10}(f)-R}")
+    st.warning("Esta simplificación no se presenta como una ley universal.")
 
-    st.markdown("## 7 · Modelo simplificado sobre frecuencia crítica")
-    st.latex(r"\boxed{L_{n,0}(f)=43+30\log_{10}f-10\log_{10}\sigma_{\mathrm{rad}}-R(f)}")
-    st.write("Para radiación eficiente, σ_rad≈1:")
-    st.latex(r"\boxed{L_{n,0}(f)\approx43+30\log_{10}f-R(f)}")
-    st.error("⚠️ Esta expresión corresponde a hipótesis y régimen determinados. MODELO ≠ NORMA y MODELO ≠ MEDICIÓN.")
+    # 6. Subcritical
+    st.markdown("## 5 · Predicción para f < f_c")
+    st.latex(
+        r"\boxed{R+L_n=39.5+20\log_{10}(f)-\Delta L_n"
+        r"-10\log_{10}\left(\frac{\eta_p}{f_c\sigma_{\mathrm{rad}}}\right)}"
+    )
+    st.write("Para la losa desnuda, ΔLₙ=0:")
+    st.latex(
+        r"\boxed{L_n=39.5+20\log_{10}(f)"
+        r"-10\log_{10}\left(\frac{\eta_p}{f_c\sigma_{\mathrm{rad}}}\right)-R}"
+    )
+    st.write(
+        "Bajo la frecuencia crítica aparecen explícitamente el amortiguamiento de la losa, "
+        "la frecuencia crítica y la eficiencia de radiación. Por eso no basta con conocer "
+        "únicamente la masa superficial."
+    )
 
-    st.markdown("## 8 · Ejemplo numérico guiado · 500 Hz")
-    ex=ln0_above_fc(500,55,1)
-    st.latex(r"L_{n,0}(500)=43+30\log_{10}(500)-55")
-    st.write("log₁₀(500)≈2,699 · 30log₁₀(500)≈80,97")
-    st.latex(rf"\boxed{{L_{{n,0}}(500)\approx {ex:.1f}\ \mathrm{{dB}}}}")
-    _mcq("meaning69","¿Qué significa aproximadamente 69 dB?",
-         ["A. El nivel exacto que mediremos en cualquier recinto.",
-          "B. Una estimación del nivel normalizado de impacto de la losa base en esa banda, dentro de las hipótesis.",
-          "C. El aislamiento aéreo de la losa."],1,
-         "Es una predicción por banda condicionada por el modelo.")
+    # 7. Main interactive
+    st.markdown("## 🔬 6 · Explora la predicción de ruido de impacto")
+    bands=[100,125,160,200,250,315,400,500,630,800,1000,1250,1600,2000,2500,3150]
+    fsel=st.select_slider("Frecuencia f [Hz]",options=bands,value=500,key=f"{ns}_fsel")
+    Rsel=st.slider("R(f) [dB]",30.0,80.0,55.0,.5,key=f"{ns}_Rsel")
+    sigma=st.slider("σ_rad(f)",0.05,1.50,1.00,.05,key=f"{ns}_sigma")
+    eta=st.slider("ηₚ",0.001,0.100,0.020,0.001,format="%.3f",key=f"{ns}_eta")
 
-    st.markdown("## 🔬 9 · Interactivo 5.1 — De R a Lₙ")
-    f=st.select_slider("Frecuencia [Hz]",options=list(BANDS.astype(int)),value=500,key=f"{ns}_f")
-    R=st.slider("R(f) [dB]",40.0,70.0,55.0,.5,key=f"{ns}_R")
-    sigma=st.slider("σ_rad",.1,1.5,1.0,.05,key=f"{ns}_sigma")
-    if f<fc:
-        st.warning("Esta banda está bajo f_c. No se aplica automáticamente la formulación superior.")
+    if not fc or fc<=0:
+        st.warning("No hay una f_c válida; revisa las propiedades de la losa.")
+    elif sigma<=0 or eta<=0:
+        st.warning("σ_rad y ηₚ deben ser mayores que cero.")
     else:
-        ln=ln0_above_fc(f,R,sigma)
-        a,b,c=st.columns(3); a.metric("R(f)",f"{R:.1f} dB"); b.metric("σ_rad",f"{sigma:.2f}"); c.metric("Lₙ,₀",f"{ln:.1f} dB")
-    st.caption("Exploración didáctica del modelo.")
+        try:
+            ln,regime=ver_ln_piecewise_db(fsel,Rsel,fc,sigma,eta,0.0)
+            c1,c2,c3,c4=st.columns(4)
+            c1.metric("f",f"{fsel} Hz")
+            c2.metric("f_c",f"{fc:.0f} Hz")
+            c3.metric("R(f)",f"{Rsel:.1f} dB")
+            c4.metric("Lₙ(f)",f"{ln:.1f} dB")
+            if regime=="subcrítico":
+                st.warning("RÉGIMEN SUBCRÍTICO · se aplica automáticamente la expresión para f<f_c.")
+            else:
+                st.success("SOBRE FRECUENCIA CRÍTICA · se aplica automáticamente la expresión para f≥f_c.")
+        except ValueError as exc:
+            st.warning(str(exc))
 
-    st.markdown("## 🔬 10 · Interactivo 5.2 — Eficiencia de radiación")
-    st.write("Mantén f y R constantes y modifica σ_rad arriba. El término de radiación modifica la predicción.")
-    _mcq("sameR","Dos placas con igual R(f) y distinta σ_rad, ¿tienen necesariamente el mismo Lₙ?",["Sí","No"],1,
-         "No. La eficiencia de radiación participa en la predicción.")
+    # 8. Full graph
+    st.markdown("## 7 · Curva Lₙ(f) y cambio de régimen")
+    if fc and fc>0 and sigma>0 and eta>0:
+        # Didactic R(f) input for visual exploration only
+        Rcurve=np.array([47,48,49,50,51,52,53,54,55,56,57,58,59,60,61,62],dtype=float)
+        Lcurve=[]
+        regimes=[]
+        for ff,rr in zip(bands,Rcurve):
+            try:
+                val,rg=ver_ln_piecewise_db(ff,rr,fc,sigma,eta,0.0)
+            except ValueError:
+                val,rg=np.nan,""
+            Lcurve.append(val); regimes.append(rg)
+        fig,ax=plt.subplots()
+        ax.semilogx(bands,Lcurve,marker="o",label="Lₙ(f)")
+        ax.axvline(fc,linestyle="--",label="f_c")
+        ax.set_xlabel("Frecuencia [Hz]")
+        ax.set_ylabel("Lₙ [dB]")
+        ax.grid(True,which="both",alpha=.2)
+        ax.legend()
+        ymin,ymax=ax.get_ylim()
+        ax.text(110,ymax-(ymax-ymin)*.12,"Régimen subcrítico")
+        ax.text(max(fc*1.1,400),ymax-(ymax-ymin)*.12,"Sobre frecuencia crítica")
+        st.pyplot(fig,use_container_width=True)
+        plt.close(fig)
+        st.caption(
+            "La curva R(f) de este gráfico es un dato de ejercicio didáctico para visualizar "
+            "el cambio de régimen; no corresponde a un producto comercial."
+        )
 
-    st.markdown("## 11 · ¿Qué ocurre bajo f_c?")
-    st.write("Bajo la frecuencia crítica la aproximación anterior deja de ser suficiente.")
-    with st.expander("Ver detalle matemático indicado para esta región"):
-        st.latex(r"R+L_n=39.5+20\log_{10}f-\Delta L_n-10\log_{10}\left(\frac{\eta_p}{f_c\sigma_{\mathrm{rad}}}\right)")
-        st.warning("Esta expresión se muestra como contenido de la etapa, pero no se usa en cálculo automático hasta validar constante, signos y definiciones contra la bibliografía del proyecto.")
-    st.info("💡 No usamos exactamente la misma ecuación en todo el espectro porque una placa no radia ni transmite de la misma forma en todas las frecuencias.")
+    # 9. Thickness activity
+    st.markdown("## 8 · ¿Qué ocurre si duplicamos el espesor?")
+    rho_air=st.number_input("ρ aire [kg/m³]",min_value=0.5,max_value=2.0,value=1.21,step=.01,key=f"{ns}_rhoair")
+    c_air=st.number_input("c aire [m/s]",min_value=300.0,max_value=380.0,value=343.0,step=1.0,key=f"{ns}_cair")
+    cL=st.number_input("c_L material [m/s]",min_value=500.0,max_value=8000.0,value=3500.0,step=100.0,key=f"{ns}_cL")
+    try:
+        lw1=ver_lw_oct_db(rho_air,c_air,max(sigma,1e-9),rho_p,cL,max(eta,1e-9),t_mm/1000.0)
+        lw2=ver_lw_oct_db(rho_air,c_air,max(sigma,1e-9),rho_p,cL,max(eta,1e-9),2*t_mm/1000.0)
+        c1,c2,c3=st.columns(3)
+        c1.metric("Losa A · t",f"{lw1:.1f} dB")
+        c2.metric("Losa B · 2t",f"{lw2:.1f} dB")
+        c3.metric("ΔL_W",f"{lw2-lw1:.1f} dB")
+        st.latex(r"\boxed{t\rightarrow2t\Rightarrow\Delta L_W\approx-9\ \mathrm{dB}}")
+        st.write(
+            "Una losa más gruesa presenta una respuesta radiada menor frente a la excitación "
+            "de impacto, dentro de las hipótesis del modelo utilizado."
+        )
+    except ValueError as exc:
+        st.warning(str(exc))
 
-    st.markdown("## 🔬 12 · Interactivo 5.3 — Dos regiones")
-    fregion=st.select_slider("Selecciona una frecuencia",options=list(BANDS.astype(int)),value=250,key=f"{ns}_fregion")
-    if fregion<fc:
-        st.warning("BAJO FRECUENCIA CRÍTICA · faltan parámetros validados para evaluar automáticamente esta región.")
-    else:
-        st.success("SOBRE FRECUENCIA CRÍTICA · la formulación simplificada puede explorarse dentro de sus hipótesis.")
+    # 10. Comprehension question
+    st.markdown("## 9 · Pregunta de comprensión")
+    _mcq(
+        "fc_regimes",
+        "Una losa presenta una frecuencia crítica de 250 Hz. ¿Debe utilizarse necesariamente "
+        "la misma expresión de predicción de Lₙ a 125 Hz y a 1000 Hz?",
+        [
+            "A. Sí, porque el nivel de impacto depende solamente de la masa superficial.",
+            "B. Sí, porque la frecuencia crítica solo afecta al aislamiento aéreo.",
+            "C. No. 125 Hz está bajo la frecuencia crítica y 1000 Hz está sobre ella, por lo que corresponden a regímenes distintos.",
+            "D. No, pero únicamente porque cambia la ponderación A.",
+        ],
+        2,
+        "La frecuencia crítica marca un cambio en el comportamiento vibroacústico de la losa "
+        "y las expresiones de Vér distinguen los regímenes bajo y sobre f_c.",
+        store=True,
+    )
 
-    st.markdown("## 13 · ¿De dónde obtengo R(f)?")
-    st.write("R(f) puede provenir de ensayo de laboratorio, base fiable, fabricante con ensayo o modelo predictivo del elemento.")
-    st.latex(r"\boxed{\rho,h,E,\nu,\eta,\ldots\rightarrow R(f)\rightarrow L_{n,0}(f)}")
-    st.info("CURSO 1: propiedades → R(f) · CURSO 2: R(f) → Lₙ,₀(f)")
+    # Closing
+    st.markdown("## 10 · Cierre")
+    st.write(
+        "Ahora podemos seguir la cadena completa: el impacto introduce energía mecánica, "
+        "la losa responde vibratoriamente, esa vibración se convierte en potencia acústica "
+        "según su eficiencia de radiación y finalmente aparece un nivel de ruido de impacto "
+        "Lₙ en el recinto receptor."
+    )
+    st.latex(
+        r"\boxed{\mathrm{IMPACTO}\rightarrow\mathrm{FUERZA}\rightarrow"
+        r"\mathrm{VIBRACIÓN}\rightarrow\mathrm{RADIACIÓN}\rightarrow L_n}"
+    )
+    st.success(
+        "En las siguientes etapas utilizaremos esta relación para analizar soluciones "
+        "constructivas destinadas a reducir el ruido de impacto."
+    )
 
-    st.markdown("## 🔬 14 · Interactivo 5.4 — Curva completa")
-    Rcurve=np.array([43,45,47,49,51,53,55,57,59,61,63,65,67],dtype=float)
-    lncurve=np.full(BANDS.shape,np.nan)
-    for i,(ff,rr) in enumerate(zip(BANDS,Rcurve)):
-        if ff>=fc: lncurve[i]=ln0_above_fc(ff,rr,1.0)
-    st.caption("Curva R(f) de ejercicio didáctico; no corresponde a un producto comercial.")
-    fig,ax=plt.subplots(); ax.semilogx(BANDS,Rcurve,marker="o"); ax.set_xlabel("Frecuencia [Hz]"); ax.set_ylabel("R(f) [dB]"); ax.grid(True,which="both",alpha=.2)
-    st.pyplot(fig,use_container_width=True); plt.close(fig)
-    fig,ax=plt.subplots(); ax.semilogx(BANDS,lncurve,marker="o"); ax.set_xlabel("Frecuencia [Hz]"); ax.set_ylabel("Lₙ,₀(f) [dB]"); ax.grid(True,which="both",alpha=.2)
-    st.pyplot(fig,use_container_width=True); plt.close(fig)
-    st.dataframe([{"f [Hz]":int(ff),"R(f) [dB]":rr,"régimen":"sobre f_c" if ff>=fc else "bajo f_c",
-                   "Lₙ,₀ [dB]":None if np.isnan(ll) else round(float(ll),1)}
-                  for ff,rr,ll in zip(BANDS,Rcurve,lncurve)],use_container_width=True,hide_index=True)
-    st.caption("Las bandas sin parámetros suficientes no se extrapolan silenciosamente.")
-    _asset("curso2_lab1_etapa5_cadena_prediccion_ln.webp")
+    st.caption(
+        "Fuente: Vér, I. L. & Beranek, L. L. (eds.), Noise and Vibration Control Engineering: "
+        "Principles and Applications, 2nd ed., Wiley, 2006. Cap. 11, sección 11.11 Impact Noise."
+    )
 
-    st.markdown("## 15 · Modelo analítico vs FEM")
-    c1,c2=st.columns(2)
-    with c1:
-        with st.container(border=True):
-            st.markdown("### MODELO ANALÍTICO"); st.write("Rápido, interpretable y útil para diseño preliminar; depende de hipótesis.")
-    with c2:
-        with st.container(border=True):
-            st.markdown("### FEM VIBROACÚSTICO"); st.write("Puede representar geometría e interacción con mayor detalle, pero exige más datos y costo computacional.")
-    st.latex(r"\boxed{\mathrm{MAYOR\ COMPLEJIDAD}\neq\mathrm{AUSENCIA\ DE\ INCERTIDUMBRE}}")
-    _asset("curso2_lab1_etapa5_modelo_analitico_fem.webp")
-
-    st.markdown("## 🔬 16 · Interactivo 5.5 — Analítico o numérico")
-    sc=st.selectbox("Escenario",["Diseño preliminar de losa homogénea","Piso liviano nervado complejo","Estudio local de posiciones de impacto"],key=f"{ns}_scenario")
-    if sc=="Diseño preliminar de losa homogénea": st.success("El modelo analítico puede ser apropiado como primera aproximación.")
-    elif sc=="Piso liviano nervado complejo": st.info("Puede requerir un modelo más detallado.")
-    else: st.info("Un modelo numérico y/o experimental puede ser más adecuado.")
-
-    st.markdown("## 17 · Limitaciones y pregunta profesional")
-    st.latex(r"\boxed{L_{n,\mathrm{pred}}\neq L_{n,\mathrm{med}}\ \mathrm{necesariamente}}")
-    st.write("Amortiguamiento, bordes, geometría, propiedades, fuerza efectiva, posición, movilidad local, radiación, flanqueo y ejecución pueden influir.")
-    _mcq("65vs68","Si el modelo entrega 65 dB y medimos 68 dB, ¿significa automáticamente que el modelo está mal?",["Sí","No"],1,
-         "Debe revisarse campo de validez, incertidumbre, parámetros y diferencias entre sistema modelado y construido.")
-
-    st.markdown("## 18 · Ejercicio de la etapa · 1000 Hz")
-    ex2=ln0_above_fc(1000,61,1)
-    st.latex(r"L_{n,0}(1000)=43+30\log_{10}(1000)-61")
-    st.latex(rf"\boxed{{L_{{n,0}}(1000)={ex2:.0f}\ \mathrm{{dB}}}}")
-    st.write("Las bandas pueden compararse, pero cada resultado debe interpretarse dentro de su régimen físico e hipótesis.")
-
-    st.markdown("## 19 · Preguntas formativas")
-    _mcq("q1","Mayor R representa mejor aislamiento aéreo.",["Verdadero","Falso"],0,"Correcto.",store=True)
-    _mcq("q2","Mayor Lₙ representa mejor comportamiento a impacto.",["Verdadero","Falso"],1,"Menor Lₙ es favorable.",store=True)
-    _mcq("q3","La misma expresión simplificada debe usarse en todo el espectro.",["Verdadero","Falso"],1,"El régimen físico cambia.",store=True)
-    _mcq("q4","R(f) puede ser entrada para un modelo de Lₙ(f).",["Verdadero","Falso"],0,"Correcto.",store=True)
-    _mcq("q5","La eficiencia de radiación no influye en la predicción.",["Verdadero","Falso"],1,"Sí influye.",store=True)
-    _mcq("q6","Un modelo analítico reemplaza obligatoriamente una medición.",["Verdadero","Falso"],1,"No.",store=True)
-
-    st.markdown("## 20 · Cierre")
-    st.latex(r"\boxed{R(f)\rightarrow L_{n,0}(f)}")
-    st.write("Ya conocemos la losa base. ¿Qué ocurre cuando agregamos un piso flotante?")
-    st.latex(r"L_{n,\mathrm{final}}(f)=L_{n,0}(f)-\boxed{\Delta L_n(f)}")
-    st.success("En la Etapa 6 modelaremos precisamente ΔLₙ(f).")
-    a,b=st.columns(2)
-    with a:
+    left,right=st.columns(2)
+    with left:
         if st.button("← Etapa 4",key=f"s5_prev_{class_id}",use_container_width=True):
-            st.session_state[stage_selector_key]=4; st.rerun()
-    with b:
+            st.session_state[stage_selector_key]=4
+            st.rerun()
+    with right:
         if st.button("Etapa 6 →",key=f"s5_next_{class_id}",use_container_width=True):
-            st.session_state[stage_selector_key]=6; st.rerun()
+            st.session_state[stage_selector_key]=6
+            st.rerun()
 
 def _render_course2_lab1_stage6(lab, saved):
     """ETAPA 6 — Predicción de la mejora de un piso flotante: ΔLₙ(f)."""
