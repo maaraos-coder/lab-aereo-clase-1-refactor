@@ -5330,7 +5330,21 @@ def _render_course2_lab1_stage8(lab, saved):
         "El fabricante indica aplicaciones que incluyen bombas montadas sobre base, compresores, equipos de climatización "
         "y ventiladores, con deflexiones estáticas disponibles hasta 4 in (102 mm)."
     )
-    st.caption("Los datos de modelos mostrados a continuación se toman de la ficha oficial Kinetics FDS 4-inch Deflection Isolator. No son valores inventados para el ejercicio.")
+
+    st.markdown(
+        """
+        **Catálogo utilizado en este ejercicio**
+
+        [📄 Abrir catálogo oficial Kinetics FDS — aisladores de resorte de 4"](https://kineticsnoise.com/files/content/downloads/submittal_drawings/pdf/01/01-20fds/S-01-20-41.pdf)
+
+        [🌐 Ver página oficial Kinetics FDS — Free Standing Spring Isolators](https://kineticsnoise.com/fds/free-standing-spring-isolator)
+        """
+    )
+
+    st.caption(
+        "Los datos de modelos mostrados a continuación se toman de la ficha oficial Kinetics FDS 4-inch Deflection Isolator. "
+        "No son valores inventados para el ejercicio."
+    )
 
     fds_models=[
         ("FDS 4-100",100,4.00),
