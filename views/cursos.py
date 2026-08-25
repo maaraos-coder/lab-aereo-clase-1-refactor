@@ -4456,195 +4456,283 @@ def _render_course2_lab1_stage7(lab, saved):
     # ================================================================
     # 7. CONSTRAINTS
     # ================================================================
-    st.markdown("## 7 · Ahora aparecen las restricciones reales")
-    st.warning("NUEVA INFORMACIÓN DEL PROYECTO · carga adicional máxima: 120 kg/m² · altura disponible: 75 mm")
-    constraint_rows=[]
-    for name,p in alternatives.items():
-        constraint_rows.append({
-            "Alternativa":name,
-            "Carga adicional [kg/m²]":p["m1"],
-            "Cumple carga":p["m1"]<=120,
-            "Espesor didáctico [mm]":p["h"],
-            "Cumple altura":p["h"]<=75,
-        })
-    st.dataframe(constraint_rows,use_container_width=True,hide_index=True)
+    # ================================================================
+    # 7. FROM ACOUSTIC RESULT TO PROJECT DECISION
+    # ================================================================
+    st.markdown("## 7 · De la mejor curva acústica a una solución viable")
+    st.write(
+        "Hasta aquí hemos comparado las alternativas principalmente mediante "
+        "$L_{n,\mathrm{final}}(f)$. Ahora incorporamos las restricciones reales del proyecto."
+    )
+    st.latex(
+        r"\boxed{\mathrm{MEJOR\ CURVA}\ L_{n,\mathrm{final}}(f)"
+        r"\neq\mathrm{AUTOMÁTICAMENTE\ MEJOR\ PROYECTO}}"
+    )
+
+    st.warning(
+        "NUEVA INFORMACIÓN DEL PROYECTO · carga adicional máxima: 120 kg/m² · altura disponible: 75 mm"
+    )
+
+    design_rows = []
+    check_freqs = [125, 500, 1000]
+    for name, p in alternatives.items():
+        row = {
+            "Alternativa": name,
+            "Carga [kg/m²]": p["m1"],
+            "Espesor didáctico [mm]": p["h"],
+            "Cumple carga": p["m1"] <= 120,
+            "Cumple altura": p["h"] <= 75,
+        }
+        for freq in check_freqs:
+            idx = int(np.argmin(np.abs(np.log(bands / float(freq)))))
+            val = alt_results[name]["final"][idx]
+            row[f"Lₙ,final {freq} Hz [dB]"] = None if not np.isfinite(val) else round(float(val), 1)
+        design_rows.append(row)
+
+    st.dataframe(design_rows, use_container_width=True, hide_index=True)
     st.caption(
         "Los espesores indicados son datos específicos de este ejercicio y no propiedades universales de estas soluciones."
     )
-    st.latex(
-        r"\boxed{\mathrm{MEJOR\ RESULTADO\ ACÚSTICO}\neq"
-        r"\mathrm{AUTOMÁTICAMENTE\ MEJOR\ SOLUCIÓN\ DEL\ PROYECTO}}"
-    )
-    st.latex(
-        r"\mathrm{DISEÑO}=\mathrm{ACÚSTICA}+\mathrm{ESTRUCTURA}"
-        r"+\mathrm{ARQUITECTURA}+\mathrm{CONSTRUCTIBILIDAD}+\mathrm{DURABILIDAD}"
+
+    st.markdown("### Lectura profesional")
+    st.write(
+        "La alternativa C puede presentar una curva acústicamente favorable, pero queda fuera del ejercicio "
+        "por carga y altura. A y B permanecen como soluciones viables y deben compararse mediante sus curvas "
+        "$L_{n,\mathrm{final}}(f)$, no únicamente por $f_0$."
     )
 
-    feasible=[]
-    for name,p in alternatives.items():
-        if p["m1"]<=120 and p["h"]<=75:
-            feasible.append(name)
+    st.latex(
+        r"\boxed{\mathrm{DISEÑO}=\mathrm{ACÚSTICA}+\mathrm{ESTRUCTURA}"
+        r"+\mathrm{ARQUITECTURA}+\mathrm{CONSTRUCTIBILIDAD}+\mathrm{DURABILIDAD}}"
+    )
+
+    feasible = [name for name, p in alternatives.items() if p["m1"] <= 120 and p["h"] <= 75]
     if "B" in feasible:
-        # Do not force B acoustically: verify it is not dominated at all checked bands by another feasible option.
-        dominated=True
+        b_better_somewhere = False
         for idx in range(len(bands)):
-            vb=alt_results["B"]["final"][idx]
-            if np.isfinite(vb):
-                others=[
-                    alt_results[n]["final"][idx] for n in feasible if n!="B"
-                    and np.isfinite(alt_results[n]["final"][idx])
-                ]
-                if not others or vb <= min(others):
-                    dominated=False
-                    break
-        if not dominated:
+            vb = alt_results["B"]["final"][idx]
+            if not np.isfinite(vb):
+                continue
+            competitors = [
+                alt_results[n]["final"][idx]
+                for n in feasible
+                if n != "B" and np.isfinite(alt_results[n]["final"][idx])
+            ]
+            if not competitors or vb <= min(competitors):
+                b_better_somewhere = True
+                break
+
+        if b_better_somewhere:
             st.success(
-                "Dentro de las restricciones establecidas para este ejercicio, la alternativa B representa "
-                "un compromiso técnicamente favorable."
+                "Dentro de las restricciones establecidas para este ejercicio, "
+                "la alternativa B representa un compromiso técnicamente favorable."
             )
         else:
             st.info(
-                "B cumple las restricciones, pero la selección final debe justificarse con las curvas calculadas; "
-                "el modelo no permite declararla automáticamente preferente."
+                "B cumple las restricciones de proyecto, pero su selección final debe justificarse "
+                "con la comparación espectral calculada frente a las demás alternativas viables."
             )
 
     # ================================================================
-    # 8. OPTIMIZER
+    # 8. PROFESSIONAL DECISION
     # ================================================================
-    st.markdown("## 🔬 8 · Interactivo — Optimiza tu piso")
+    st.markdown("## 8 · Decisión profesional del caso")
     st.write(
-        "Explora parámetros, pero evita reducir el problema a un único número. "
-        r"La salida principal continúa siendo la curva $L_{n,\mathrm{final}}(f)$."
+        "La decisión no se toma minimizando $f_0$. Se toma integrando el resultado acústico "
+        "con las restricciones del proyecto."
     )
-    o1,o2,o3=st.columns(3)
-    om1=o1.slider("m′₁ [kg/m²]",50,200,110,5,key=f"{ns}_om1")
-    om2=o2.slider("m′₂ [kg/m²]",150,600,380,10,key=f"{ns}_om2")
-    os=o3.slider("s′ [MN/m³]",3.0,40.0,12.0,.5,key=f"{ns}_os")
-    omodel=st.segmented_control(
-        "Modelo",["CREMER","VÉR","COMPARAR"],default="CREMER",key=f"{ns}_omodel"
+
+    c1, c2, c3 = st.columns(3)
+    for col, name in zip([c1, c2, c3], ["A", "B", "C"]):
+        p = alternatives[name]
+        with col:
+            with st.container(border=True):
+                st.markdown(f"### Alternativa {name}")
+                st.write("**Acústica:** revisar la curva $L_{n,\mathrm{final}}(f)$ calculada.")
+                st.write(f"**Carga:** {'Cumple' if p['m1'] <= 120 else 'No cumple'}")
+                st.write(f"**Altura:** {'Cumple' if p['h'] <= 75 else 'No cumple'}")
+                if p["m1"] <= 120 and p["h"] <= 75:
+                    st.success("VIABLE EN ESTE EJERCICIO")
+                else:
+                    st.error("NO VIABLE EN ESTE EJERCICIO")
+
+    st.latex(r"\boxed{\mathrm{DECIDIR}\neq\mathrm{ESCOGER\ EL\ MENOR}\ f_0}")
+
+    # ================================================================
+    # 9. EXPLORE YOUR OWN DESIGN
+    # ================================================================
+    st.markdown("## 🔬 9 · Explora una solución propia")
+    st.write(
+        "Los parámetros son entradas, pero el **resultado principal** es siempre "
+        "$L_{n,\mathrm{final}}(f)$."
     )
-    omr,of0=natural_frequency(om1,om2,os)
 
-    odelta_c,of0c=_delta_continuous_curve(om1,os)
-    ofinal_c=_final_curve(ln0_base,odelta_c)
+    o1, o2, o3 = st.columns(3)
+    om1 = o1.slider("m′₁ [kg/m²]", 50, 200, 110, 5, key=f"{ns}_om1")
+    om2 = o2.slider("m′₂ [kg/m²]", 150, 600, 380, 10, key=f"{ns}_om2")
+    os = o3.slider("s′ [MN/m³]", 3.0, 40.0, 12.0, .5, key=f"{ns}_os")
 
-    # For discrete Vér the additional physical parameters are kept explicit.
-    vh=50.0; vcL=3500.0; vN=9.0; veta=.020
-    odelta_v=_delta_discrete_curve(of0,vh,vcL,vN,veta)
-    ofinal_v=_final_curve(ln0_base,odelta_v)
+    omodel = st.segmented_control(
+        "Modelo del tratamiento",
+        ["CAPA RESILIENTE CONTINUA — CREMER", "APOYOS RESILIENTES DISCRETOS — VÉR", "COMPARAR"],
+        default="CAPA RESILIENTE CONTINUA — CREMER",
+        key=f"{ns}_omodel",
+    )
 
-    fig,ax=plt.subplots()
-    if omodel in ("CREMER","COMPARAR"):
-        ax.semilogx(bands,ofinal_c,marker="o",label="Cremer · Lₙ,final")
-    if omodel in ("VÉR","COMPARAR"):
-        ax.semilogx(bands,ofinal_v,marker="o",label="Vér · Lₙ,final")
+    omr, of0 = natural_frequency(om1, om2, os)
+    odelta_c, of0c = _delta_continuous_curve(om1, os)
+    ofinal_c = _final_curve(ln0_base, odelta_c)
+
+    vh, vcL, vN, veta = 50.0, 3500.0, 9.0, .020
+    odelta_v = _delta_discrete_curve(of0, vh, vcL, vN, veta)
+    ofinal_v = _final_curve(ln0_base, odelta_v)
+
+    st.markdown("### RESULTADO PRINCIPAL · Lₙ,final(f)")
+    fig, ax = plt.subplots()
+    if omodel in ("CAPA RESILIENTE CONTINUA — CREMER", "COMPARAR"):
+        ax.semilogx(bands, ofinal_c, marker="o", label="Cremer · Lₙ,final")
+    if omodel in ("APOYOS RESILIENTES DISCRETOS — VÉR", "COMPARAR"):
+        ax.semilogx(bands, ofinal_v, marker="o", label="Vér · Lₙ,final")
     ax.set_xlabel("Frecuencia [Hz]")
     ax.set_ylabel("Lₙ,final [dB]")
-    ax.grid(True,which="both",alpha=.2)
+    ax.grid(True, which="both", alpha=.2)
     ax.legend()
-    st.pyplot(fig,use_container_width=True)
+    st.pyplot(fig, use_container_width=True)
     plt.close(fig)
 
-    r1,r2,r3,r4=st.columns(4)
-    r1.metric("m′ᵣ",f"{omr:.1f} kg/m²")
-    r2.metric("f₀ general",f"{of0:.1f} Hz")
-    r3.metric("Restricción estructural","Cumple" if om1<=120 else "No cumple")
-    # Architecture uses a didactic mapping only for this optimizer:
-    oheight=st.slider("Espesor total del diseño [mm] · dato de proyecto",30,120,65,5,key=f"{ns}_oheight")
-    r4.metric("Restricción arquitectónica","Cumple" if oheight<=75 else "No cumple")
+    st.markdown("### Parámetros que explican el resultado")
+    r1, r2, r3 = st.columns(3)
+    r1.metric("m′ᵣ", f"{omr:.1f} kg/m²")
+    r2.metric("f₀ general", f"{of0:.1f} Hz")
+    r3.metric("Carga estructural", "Cumple" if om1 <= 120 else "No cumple")
+
+    oheight = st.slider(
+        "Espesor total del diseño [mm] · dato específico del proyecto",
+        30, 120, 65, 5, key=f"{ns}_oheight"
+    )
+    st.metric("Restricción arquitectónica", "Cumple" if oheight <= 75 else "No cumple")
     st.caption(
-        "Para Vér se usan en este optimizador valores didácticos explícitos: h₁=50 mm, c_L1=3500 m/s, "
+        "Para Vér se usan valores didácticos explícitos: h₁=50 mm, c_L1=3500 m/s, "
         "N=9 apoyos/m² y η₁₁=0.020. No son propiedades universales."
     )
 
     # ================================================================
-    # 9. DESIGN MAP
+    # 10. DESIGN MAP
     # ================================================================
-    st.markdown("## 🔬 9 · Interactivo — Mapa de diseño")
-    map_m1=st.slider("m′₁ del punto [kg/m²]",50,180,110,5,key=f"{ns}_mapm1")
-    map_s=st.slider("s′ del punto [MN/m³]",3.0,40.0,12.0,.5,key=f"{ns}_maps")
-    mgrid=np.linspace(50,180,60)
-    sgrid=np.linspace(3,40,60)
-    S,M=np.meshgrid(sgrid,mgrid)
-    MR=M*380/(M+380)
-    F0=(1/(2*np.pi))*np.sqrt(S*1e6/MR)
-    fig,ax=plt.subplots()
-    cs=ax.contourf(S,M,F0,levels=14)
-    ax.axhline(120,linestyle="--",label="Límite carga")
-    ax.scatter([map_s],[map_m1])
+    st.markdown("## 🔬 10 · Mapa de diseño")
+    st.write(
+        "El mapa muestra contornos de $f_0$ para comprender el espacio de diseño, "
+        "pero la selección acústica se revisa mediante $L_{n,\mathrm{final}}(f)$."
+    )
+
+    map_m1 = st.slider("m′₁ del punto [kg/m²]", 50, 180, 110, 5, key=f"{ns}_mapm1")
+    map_s = st.slider("s′ del punto [MN/m³]", 3.0, 40.0, 12.0, .5, key=f"{ns}_maps")
+
+    mgrid = np.linspace(50, 180, 60)
+    sgrid = np.linspace(3, 40, 60)
+    S, M = np.meshgrid(sgrid, mgrid)
+    MR = M * 380 / (M + 380)
+    F0 = (1/(2*np.pi)) * np.sqrt(S*1e6/MR)
+
+    fig, ax = plt.subplots()
+    cs = ax.contourf(S, M, F0, levels=14)
+    ax.axhline(120, linestyle="--", label="Límite carga")
+    ax.scatter([map_s], [map_m1])
     ax.set_xlabel("s′ [MN/m³]")
     ax.set_ylabel("m′₁ [kg/m²]")
     ax.legend()
-    fig.colorbar(cs,ax=ax,label="f₀ general [Hz]")
-    st.pyplot(fig,use_container_width=True)
+    fig.colorbar(cs, ax=ax, label="f₀ general [Hz]")
+    st.pyplot(fig, use_container_width=True)
     plt.close(fig)
 
-    map_mr,map_f0=natural_frequency(map_m1,380,map_s)
-    map_delta,map_f0c=_delta_continuous_curve(map_m1,map_s)
-    map_final=_final_curve(ln0_base,map_delta)
-    a,b,c=st.columns(3)
-    a.metric("m′ᵣ",f"{map_mr:.1f} kg/m²")
-    b.metric("f₀ general",f"{map_f0:.1f} Hz")
-    c.metric("Carga","NO ADMISIBLE" if map_m1>120 else "Admisible")
-    if map_m1>120:
+    map_mr, map_f0 = natural_frequency(map_m1, 380, map_s)
+    map_delta, map_f0c = _delta_continuous_curve(map_m1, map_s)
+    map_final = _final_curve(ln0_base, map_delta)
+
+    a, b, c = st.columns(3)
+    a.metric("m′ᵣ", f"{map_mr:.1f} kg/m²")
+    b.metric("f₀ general", f"{map_f0:.1f} Hz")
+    c.metric("Carga", "NO ADMISIBLE" if map_m1 > 120 else "Admisible")
+    if map_m1 > 120:
         st.error("NO ADMISIBLE POR CARGA EN ESTE EJERCICIO")
-    st.caption(
-        "El mapa colorea f₀ para visualizar el espacio de diseño, pero la decisión acústica debe revisarse "
-        "con la curva Lₙ,final(f), que se calcula con el punto seleccionado."
-    )
-    fig,ax=plt.subplots()
-    ax.semilogx(bands,map_final,marker="o")
+
+    st.markdown("### Resultado acústico del punto seleccionado")
+    fig, ax = plt.subplots()
+    ax.semilogx(bands, ln0_base, marker="o", label="Losa base")
+    ax.semilogx(bands, map_final, marker="o", label="Piso terminado")
     ax.set_xlabel("Frecuencia [Hz]")
-    ax.set_ylabel("Lₙ,final [dB]")
-    ax.grid(True,which="both",alpha=.2)
-    st.pyplot(fig,use_container_width=True)
+    ax.set_ylabel("Nivel de ruido de impacto [dB]")
+    ax.grid(True, which="both", alpha=.2)
+    ax.legend()
+    st.pyplot(fig, use_container_width=True)
     plt.close(fig)
 
+    st.latex(
+        r"\boxed{m'_1,s'\rightarrow m'_r,f_0\rightarrow"
+        r"\Delta L_n(f)\rightarrow L_{n,\mathrm{final}}(f)}"
+    )
+
     # ================================================================
-    # 10. SENSITIVITY
+    # 11. ROBUSTNESS
     # ================================================================
-    st.markdown("## 🔬 10 · Interactivo — ¿Qué tan robusta es la predicción?")
-    st.write(r"Caso base: $m'_1=110$ kg/m², $m'_2=380$ kg/m². Comparamos $s'=10,\ 12,\ 14$ MN/m³.")
-    fig,ax=plt.subplots()
-    sensitivity_rows=[]
-    for sval in [10.0,12.0,14.0]:
-        smr,sf0=natural_frequency(110,380,sval)
-        sd,sf0c=_delta_continuous_curve(110,sval)
-        sf=_final_curve(ln0_base,sd)
-        ax.semilogx(bands,sf,marker="o",label=f"s′={sval:g} MN/m³")
+    st.markdown("## 🔬 11 · ¿Qué tan robusta es la predicción?")
+    st.write(
+        "Caso base: $m'_1=110$ kg/m², $m'_2=380$ kg/m². "
+        "Comparamos $s'=10,\ 12,\ 14$ MN/m³ y observamos directamente las curvas finales."
+    )
+
+    fig, ax = plt.subplots()
+    sensitivity_rows = []
+    for sval in [10.0, 12.0, 14.0]:
+        smr, sf0 = natural_frequency(110, 380, sval)
+        sd, sf0c = _delta_continuous_curve(110, sval)
+        sf = _final_curve(ln0_base, sd)
+        ax.semilogx(bands, sf, marker="o", label=f"s′={sval:g} MN/m³ · f₀={sf0:.1f} Hz")
         sensitivity_rows.append({
-            "s′ [MN/m³]":sval,
-            "m′ᵣ [kg/m²]":round(smr,1),
-            "f₀ general [Hz]":round(sf0,1),
+            "s′ [MN/m³]": sval,
+            "m′ᵣ [kg/m²]": round(smr, 1),
+            "f₀ general [Hz]": round(sf0, 1),
         })
+
     ax.set_xlabel("Frecuencia [Hz]")
     ax.set_ylabel("Lₙ,final [dB]")
-    ax.grid(True,which="both",alpha=.2)
+    ax.grid(True, which="both", alpha=.2)
     ax.legend()
-    st.pyplot(fig,use_container_width=True)
+    st.pyplot(fig, use_container_width=True)
     plt.close(fig)
-    st.dataframe(sensitivity_rows,use_container_width=True,hide_index=True)
+    st.dataframe(sensitivity_rows, use_container_width=True, hide_index=True)
+
+    st.latex(
+        r"\boxed{s'\rightarrow f_0\rightarrow\Delta L_n(f)"
+        r"\rightarrow L_{n,\mathrm{final}}(f)}"
+    )
     st.latex(
         r"\boxed{\mathrm{PREDICCIÓN}+\mathrm{SENSIBILIDAD}"
         r">\mathrm{UN\ ÚNICO\ RESULTADO\ CALCULADO}}"
     )
 
     # ================================================================
-    # 11. MODEL TO REAL BUILD
+    # 12. MODEL TO REAL BUILD
     # ================================================================
-    st.markdown("## 🔬 11 · Interactivo — Del modelo a la obra")
+    st.markdown("## 12 · Del modelo a la obra")
     _asset("curso2_lab1_etapa7_modelo_vs_obra.webp")
-    defects=st.multiselect(
+    st.write(
+        "Después de seleccionar una solución por su comportamiento espectral y sus restricciones, "
+        "debemos comprobar que la obra conserve las condiciones del modelo ideal."
+    )
+
+    defects = st.multiselect(
         "Activar defecto",
-        ["CONTACTO PERIMETRAL","TORNILLO","TUBERÍA","DISCONTINUIDAD RESILIENTE"],
+        ["CONTACTO PERIMETRAL", "TORNILLO", "TUBERÍA", "DISCONTINUIDAD RESILIENTE"],
         key=f"{ns}_defects",
     )
-    meanings={
-        "CONTACTO PERIMETRAL":"Se crea un camino mecánico paralelo entre la masa flotante y la estructura.",
-        "TORNILLO":"Una fijación rígida puentea el apoyo resiliente.",
-        "TUBERÍA":"La penetración o soporte puede convertirse en un camino estructural adicional.",
-        "DISCONTINUIDAD RESILIENTE":"El apoyo deja de representar la continuidad ideal asumida por el modelo.",
+    meanings = {
+        "CONTACTO PERIMETRAL": "Se crea un camino mecánico paralelo entre la masa flotante y la estructura.",
+        "TORNILLO": "Una fijación rígida puentea el apoyo resiliente.",
+        "TUBERÍA": "La penetración o su soporte puede convertirse en un camino estructural adicional.",
+        "DISCONTINUIDAD RESILIENTE": "El apoyo deja de representar la continuidad ideal asumida por el modelo.",
     }
+
     if defects:
         st.error(
             "ADVERTENCIA · EL SISTEMA CONSTRUIDO YA NO REPRESENTA COMPLETAMENTE "
@@ -4661,11 +4749,7 @@ def _render_course2_lab1_stage7(lab, saved):
             r"\mathrm{sobrelosa}\rightarrow\mathrm{puente\ rígido}\rightarrow\mathrm{estructura}"
         )
         st.caption("No se aplica ninguna penalización inventada en dB.")
-
-    # ================================================================
-    # 12. PREDICTION VS MEASUREMENT
-    # ================================================================
-    st.markdown("## 12 · ¿La predicción y la medición serán idénticas?")
+    st.markdown("## 13 · ¿La predicción y la medición serán idénticas?")
     st.write("**No necesariamente.**")
     st.write(
         "Pueden existir diferencias por simplificación del modelo, propiedades reales, amortiguamiento, "
@@ -4690,7 +4774,7 @@ def _render_course2_lab1_stage7(lab, saved):
     # ================================================================
     # 13. NO SINGLE NUMBER / BRIDGE TO LAB 2
     # ================================================================
-    st.markdown("## 13 · La Etapa 7 termina en la curva espectral")
+    st.markdown("## 14 · La Etapa 7 termina en la curva espectral")
     st.latex(r"\boxed{L_{n,\mathrm{final}}(f)}")
     st.warning(
         "No calculamos $L_{n,w}$, $L'_n,w$, $L'_{nT,w}$, $C_I$, curvas de referencia "
@@ -4705,7 +4789,7 @@ def _render_course2_lab1_stage7(lab, saved):
     # ================================================================
     # 14. INTEGRATING EXERCISE
     # ================================================================
-    st.markdown("## 14 · Ejercicio integrador")
+    st.markdown("## 15 · Ejercicio integrador")
     st.write(
         "Se entrega la curva R(f) del ejercicio, las propiedades de la losa y un tratamiento continuo "
         "con $m'_1=110$ kg/m², $m'_2=380$ kg/m² y $s'=12$ MN/m³."
@@ -4782,7 +4866,7 @@ def _render_course2_lab1_stage7(lab, saved):
     # ================================================================
     # 15. FORMATIVE QUESTIONS
     # ================================================================
-    st.markdown("## 15 · Preguntas formativas")
+    st.markdown("## 16 · Preguntas formativas")
     _mcq("q1",r"$L_{n,\mathrm{final}}(f)=L_{n,0}(f)-\Delta L_n(f)$.",["Verdadero","Falso"],0,"Correcto.",store=True)
     _mcq("q2","ΔLₙ es necesariamente igual en todas las bandas.",["Verdadero","Falso"],1,"Es función de la frecuencia.",store=True)
     _mcq("q3","La solución con menor f₀ siempre será automáticamente la mejor solución constructiva.",["Verdadero","Falso"],1,"Debe evaluarse el espectro y las restricciones.",store=True)
@@ -4794,7 +4878,7 @@ def _render_course2_lab1_stage7(lab, saved):
     # ================================================================
     # 16. FINAL MAP / CONCLUSION
     # ================================================================
-    st.markdown("## 16 · Mapa conceptual final")
+    st.markdown("## 17 · Mapa conceptual final")
     st.latex(
         r"\boxed{\mathrm{PROPIEDADES\ DE\ LA\ LOSA}\rightarrow R(f)"
         r"\rightarrow L_{n,0}(f)\rightarrow\Delta L_n(f)"
@@ -4837,7 +4921,7 @@ def _render_course2_lab1_stage7(lab, saved):
             "Masa reducida y frecuencia natural: modelo clásico masa–resorte–masa desarrollado en Etapa 6."
         )
 
-    st.markdown("## 17 · Transición a Etapa 8")
+    st.markdown("## 18 · Transición a Etapa 8")
     st.latex(
         r"\boxed{L_{n,0}(f)-\Delta L_n(f)=L_{n,\mathrm{final}}(f)}"
     )
