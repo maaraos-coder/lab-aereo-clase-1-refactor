@@ -5077,7 +5077,6 @@ def _render_course2_lab1_stage8(lab, saved):
     st.latex(r"\text{EQUIPO / INSTALACIÓN}\rightarrow\text{MECANISMO}\rightarrow\text{CAMINO}\rightarrow\text{MEDIDA}\rightarrow\text{COMBINACIÓN DE CONTROLES}")
     st.info("**NO SE SELECCIONA UNA MEDIDA DE CONTROL SIN IDENTIFICAR PRIMERO EL PROBLEMA.**")
     asset("curso2_lab1_etapa8_sala_instalaciones.webp")
-    ref("caps. 28–29, 32 y 40–44; además de las secciones de instalaciones/HVAC y fontanería aplicables")
 
     st.markdown("### 1 · ¿Dónde podemos actuar?")
     zone=st.radio("Selecciona una zona del sistema FUENTE → CAMINO → RECEPTOR",["Fuente","Camino estructural","Camino aéreo","Conexiones","Ubicación / configuración"],horizontal=True,key="e8_zone")
@@ -5124,7 +5123,6 @@ def _render_course2_lab1_stage8(lab, saved):
         "Ruido aéreo bomba/motor":"Equipo de menor emisión + cerramiento/encapsulamiento cuando corresponda + aislamiento/tratamiento del recinto.",
     }
     st.success(pump_controls[pump_problem])
-    ref("principios de control de maquinaria, vibración, aislamiento y tuberías")
 
     st.markdown("### 4 · Interactivo — ¿Qué le pasa a esta bomba?")
     probs=st.multiselect("Activa problemas",["Desequilibrio","Cavitación","Apoyo rígido","Tubería rígida","Abrazaderas rígidas","Ruido aéreo de motor","Recinto técnico reverberante"],key="e8_pump_multi")
@@ -5149,7 +5147,6 @@ def _render_course2_lab1_stage8(lab, saved):
     else:
         st.success("Control principal del camino: aerodinámica del sistema + silenciador/revestimiento cuando corresponda + geometría y velocidad del ducto.")
     st.warning("El mismo tratamiento NO resuelve necesariamente ambos fenómenos.")
-    ref("capítulos de ventilación/HVAC y control de vibración aplicables")
 
     st.markdown("### 6 · Compresores")
     asset("curso2_lab1_etapa8_compresor.webp")
@@ -5201,41 +5198,235 @@ def _render_course2_lab1_stage8(lab, saved):
     st.markdown("### 13 · Ruido de fontanería")
     st.write("Descargas, válvulas, tuberías, bombas, golpes de ariete y contactos estructurales pueden coexistir.")
     st.write("Medidas: control en fuente, velocidades adecuadas, fijaciones resilientes, desacoplamiento, aislamiento de tuberías cuando corresponda, diseño de shafts y prevención de contactos rígidos.")
-    ref("secciones de fontanería/instalaciones y transmisión estructural aplicables")
 
-    st.markdown("### 14 · Bloque específico — aislamiento antivibratorio")
-    st.caption("Este bloque es una herramienta dentro de la estrategia integral, no el eje completo de la etapa.")
-    st.latex(r"f_e=\frac{n}{60}")
+    st.markdown("### 14 · Selección del aislamiento antivibratorio")
+    st.write(
+        "Un antivibratorio no se selecciona únicamente por el peso del equipo ni por decidir entre "
+        "“goma” o “resorte”. La selección parte de la excitación del equipo, continúa con la frecuencia "
+        "natural y la deflexión que necesitamos, y termina verificando la carga real que recibe cada apoyo."
+    )
+    st.latex(r"\boxed{\mathrm{EQUIPO}\rightarrow f_e\rightarrow f_n\rightarrow \delta\rightarrow \mathrm{CARGA\ POR\ APOYO}\rightarrow \mathrm{AISLADOR}\rightarrow \mathrm{VERIFICACI\acute{O}N}}")
+
+    st.markdown("#### Paso 1 · Identifica la frecuencia perturbadora")
+    st.write("Para un equipo rotatorio, si en este ejercicio consideramos como excitación dominante la componente 1×RPM:")
+    st.latex(r"f_e=\frac{\mathrm{RPM}}{60}")
+    st.info(
+        "Las RPM no siempre describen toda la excitación real. Pueden existir frecuencia de paso de álabes o palas, "
+        "armónicos, pulsaciones, componentes electromagnéticas u otras excitaciones. En un proyecto real debe "
+        "identificarse la frecuencia perturbadora relevante."
+    )
+
+    st.markdown("#### Paso 2 · Separa la frecuencia natural de la excitación")
     st.latex(r"f_n=\frac{1}{2\pi}\sqrt{\frac{k}{m}}")
+    st.latex(r"r=\frac{f_e}{f_n}")
+    st.write(
+        "Si la frecuencia natural queda próxima a la excitación, el sistema puede trabajar cerca de resonancia. "
+        "Por eso el objetivo no es simplemente interponer un material flexible, sino obtener una rigidez bajo carga "
+        "que sitúe la frecuencia natural suficientemente alejada de la excitación."
+    )
+    st.latex(r"T_F=\sqrt{\frac{1+(2\zeta r)^2}{(1-r^2)^2+(2\zeta r)^2}}")
+    st.caption("T_F es la transmisibilidad de fuerza del modelo idealizado; no es directamente una reducción de nivel sonoro en dB.")
+
+    st.markdown("#### Paso 3 · Traduce la frecuencia natural a una deflexión")
     st.latex(r"\delta=\frac{mg}{k}")
     st.latex(r"f_n=\frac{1}{2\pi}\sqrt{\frac{g}{\delta}}")
-    st.latex(r"r=\frac{f_e}{f_n}")
-    st.latex(r"T_F=\sqrt{\frac{1+(2\zeta r)^2}{(1-r^2)^2+(2\zeta r)^2}}")
-    rpm=st.slider("RPM — análisis antivibratorio",300,3600,1500,50,key="e8_iso_rpm")
-    delta=st.slider("Deflexión estática [mm]",1.0,75.0,12.0,1.0,key="e8_iso_delta")
-    z=st.slider("ζ",.01,.30,.08,.01,key="e8_iso_z")
-    fe=fe_rpm(rpm); fn=fn_delta(delta); r=fe/fn; tf=tf_force(r,z)
-    c=st.columns(4)
-    c[0].metric("fₑ",f"{fe:.2f} Hz"); c[1].metric("fₙ",f"{fn:.2f} Hz"); c[2].metric("r",f"{r:.2f}"); c[3].metric("T_F",f"{tf:.3f}")
-    rr=np.linspace(.05,6,400); tt=[tf_force(x,z) for x in rr]
-    fig,ax=plt.subplots(); ax.plot(rr,tt); ax.axhline(1,ls="--"); ax.axvline(1,ls="--"); ax.axvline(math.sqrt(2),ls="--"); ax.scatter([r],[tf]); ax.set_xlabel("r"); ax.set_ylabel("T_F"); ax.set_ylim(0,min(8,max(3,np.percentile(tt,95)))); ax.grid(True,alpha=.2)
-    st.pyplot(fig,use_container_width=True); plt.close(fig)
-    st.write("Familias: elastómeros, resortes y sistemas neumáticos. La selección real requiere carga por apoyo, deflexión, centro de gravedad, estabilidad, ambiente y datos del fabricante.")
-    ref("caps. 27–29, especialmente selección/aplicación de aisladores")
+    st.write(
+        "Esta relación crea el puente con un catálogo comercial: una frecuencia natural objetivo implica una "
+        "determinada deflexión estática. En general, una mayor deflexión corresponde a una frecuencia natural menor."
+    )
+    st.latex(r"\boxed{\delta\uparrow\quad\Rightarrow\quad f_n\downarrow}")
 
-    st.markdown("### 15 · Matriz central — EQUIPO → MECANISMO → CAMINO → MEDIDA")
-    matrix=pd.DataFrame([
-        ["Bomba","Cavitación","Fuente","Corregir condición hidráulica"],
-        ["Bomba","Vibración por apoyo","Estructura","Aislamiento vibratorio"],
-        ["Bomba","Vibración por tubería","Conexiones/estructura","Conexiones + soportes resilientes"],
-        ["Ventilador","Ruido aerodinámico","Aire/ducto","Control aerodinámico + silenciador cuando corresponda"],
-        ["Ventilador","Vibración por base","Estructura","Aislamiento vibratorio"],
-        ["Grupo electrógeno","Escape","Aire","Silenciador"],
-        ["Grupo electrógeno","Vibración","Estructura","Aislamiento vibratorio"],
-        ["Compresor","Ruido aéreo","Aire","Encapsulamiento"],
-        ["Compresor","Vibración","Estructura","Aisladores / bancada"],
-    ],columns=["Equipo","Mecanismo","Camino","Medida a evaluar"])
-    st.dataframe(matrix,use_container_width=True)
+    st.markdown("#### Paso 4 · Comprueba la carga por apoyo")
+    st.write("Como primera aproximación, si la carga se distribuye uniformemente entre N apoyos:")
+    st.latex(r"F_{\mathrm{apoyo}}\approx\frac{Mg}{N}")
+    st.warning(
+        "La distribución uniforme es una hipótesis del ejercicio. En equipos reales las reacciones pueden ser diferentes "
+        "por la posición del centro de gravedad, la bancada y la distribución interna de masas. La selección final debe "
+        "realizarse con la carga real de cada apoyo."
+    )
+
+    st.markdown("#### Interactivo · Del equipo al requerimiento del aislador")
+    ca,cb,cc=st.columns(3)
+    with ca:
+        rpm=st.slider("Velocidad [RPM]",300,3600,1500,50,key="e8_iso_rpm")
+        mass=st.slider("Masa total del equipo [kg]",200,4000,1600,50,key="e8_iso_mass")
+    with cb:
+        supports=st.slider("Número de apoyos",2,8,4,1,key="e8_iso_supports")
+        delta=st.slider("Deflexión estática del aislador [mm]",5.0,105.0,50.8,1.0,key="e8_iso_delta")
+    with cc:
+        z=st.slider("Razón de amortiguamiento ζ",.01,.30,.08,.01,key="e8_iso_z")
+
+    fe=fe_rpm(rpm)
+    fn=fn_delta(delta)
+    r=fe/max(fn,1e-9)
+    tf=tf_force(r,z)
+    kg_support=mass/supports
+    force_support=kg_support*9.81
+    isolation=max(0.0,(1.0-tf)*100.0) if tf < 1 else 0.0
+
+    c=st.columns(6)
+    c[0].metric("fₑ",f"{fe:.2f} Hz")
+    c[1].metric("fₙ",f"{fn:.2f} Hz")
+    c[2].metric("r",f"{r:.2f}")
+    c[3].metric("T_F",f"{tf:.3f}")
+    c[4].metric("Carga/apoyo",f"{kg_support:.0f} kg")
+    c[5].metric("F/apoyo",f"{force_support:.0f} N")
+    if tf < 1:
+        st.success(f"En el modelo idealizado, T_F < 1. La reducción de fuerza transmitida asociada es aproximadamente {isolation:.1f} %. Esto no equivale directamente a una reducción acústica en dB.")
+    else:
+        st.error("Con estos parámetros no existe aislamiento de fuerza en el modelo idealizado (T_F ≥ 1). Revisa la proximidad a la resonancia.")
+
+    rr=np.linspace(.05,max(6.0,min(20.0,r*1.15)),500)
+    tt=[tf_force(x,z) for x in rr]
+    fig,ax=plt.subplots()
+    ax.plot(rr,tt,label="Transmisibilidad")
+    ax.axhline(1,ls="--")
+    ax.axvline(1,ls="--")
+    ax.axvline(math.sqrt(2),ls="--")
+    ax.scatter([r],[tf],zorder=5)
+    ax.set_xlabel("r = fₑ / fₙ")
+    ax.set_ylabel("T_F")
+    ax.set_ylim(0,min(8,max(3,float(np.percentile(tt,95)))))
+    ax.grid(True,alpha=.2)
+    st.pyplot(fig,use_container_width=True)
+    plt.close(fig)
+
+    st.markdown("#### Paso 5 · ¿Elastómero o resorte?")
+    c1,c2=st.columns(2)
+    with c1:
+        st.markdown("**AISLADOR ELASTOMÉRICO**")
+        st.write(
+            "Puede ser apropiado cuando la deflexión requerida es relativamente pequeña y sus propiedades bajo la "
+            "carga de operación permiten alcanzar la frecuencia natural buscada. Es compacto y aporta amortiguamiento, "
+            "pero debe verificarse con datos dinámicos y carga–deflexión del fabricante."
+        )
+    with c2:
+        st.markdown("**AISLADOR DE RESORTE**")
+        st.write(
+            "Permite obtener deflexiones estáticas mayores y frecuencias naturales menores. Puede resultar conveniente "
+            "cuando se necesita una separación importante entre fₑ y fₙ. Deben revisarse estabilidad, movimientos, "
+            "conexiones y, cuando corresponda, requisitos de restricción sísmica."
+        )
+    st.latex(r"\boxed{\mathrm{TIPO\ DE\ AISLADOR}\neq\mathrm{SELECCI\acute{O}N\ FINAL}}")
+    st.write(
+        "Después de elegir una familia todavía debemos encontrar un modelo cuya carga de operación y deflexión sean "
+        "compatibles con el apoyo que estamos diseñando."
+    )
+
+    st.markdown("### 15 · Ejercicio profesional — selecciona un antivibratorio de catálogo")
+    st.write(
+        "Trabajaremos con una bomba centrífuga didáctica de 1600 kg, 1500 RPM y cuatro apoyos. "
+        "Para este ejercicio se adopta 1×RPM como excitación dominante y distribución uniforme de carga."
+    )
+    ex_mass,ex_rpm,ex_n=1600.0,1500.0,4
+    ex_fe=ex_rpm/60.0
+    ex_kg=ex_mass/ex_n
+    ex_lb=ex_kg*2.2046226218
+    st.latex(r"f_e=\frac{1500}{60}=25\ \mathrm{Hz}")
+    st.latex(r"m_{\mathrm{apoyo}}=\frac{1600}{4}=400\ \mathrm{kg}\approx 882\ \mathrm{lb}")
+
+    st.write(
+        "Usaremos como documento comercial real la familia **Kinetics FDS — Free Standing Spring Isolators**. "
+        "El fabricante indica aplicaciones que incluyen bombas montadas sobre base, compresores, equipos de climatización "
+        "y ventiladores, con deflexiones estáticas disponibles hasta 4 in (102 mm)."
+    )
+    st.caption("Los datos de modelos mostrados a continuación se toman de la ficha oficial Kinetics FDS 4-inch Deflection Isolator. No son valores inventados para el ejercicio.")
+
+    fds_models=[
+        ("FDS 4-100",100,4.00),
+        ("FDS 4-250",250,4.00),
+        ("FDS 4-500",500,4.00),
+        ("FDS 4-750",750,4.00),
+        ("FDS 4-1000",1000,4.00),
+        ("FDS 4-1250",1250,4.00),
+        ("FDS 4-1600",1600,4.00),
+    ]
+    catalog=pd.DataFrame(fds_models,columns=["Modelo","Carga nominal [lb]","Deflexión nominal [in]"])
+    st.dataframe(catalog,use_container_width=True,hide_index=True)
+
+    model_name=st.selectbox("Selecciona un modelo del catálogo", [x[0] for x in fds_models], index=4, key="e8_catalog_model")
+    selected=next(x for x in fds_models if x[0]==model_name)
+    rated_lb=float(selected[1])
+    rated_def_in=float(selected[2])
+
+    # Para un resorte lineal ideal, la deflexión a carga parcial escala con F/k.
+    # Es una estimación didáctica, no sustituye la curva/dato de operación del fabricante.
+    op_def_in=rated_def_in*(ex_lb/rated_lb)
+    op_def_mm=op_def_in*25.4
+    op_fn=fn_delta(max(op_def_mm,1e-9))
+    op_r=ex_fe/max(op_fn,1e-9)
+    op_tf=tf_force(op_r,0.08)
+    load_ok=ex_lb <= rated_lb
+
+    d1,d2,d3,d4=st.columns(4)
+    d1.metric("Carga requerida",f"{ex_lb:.0f} lb/apoyo")
+    d2.metric("Carga nominal catálogo",f"{rated_lb:.0f} lb")
+    d3.metric("δ estimada a carga",f"{op_def_mm:.1f} mm")
+    d4.metric("fₙ estimada",f"{op_fn:.2f} Hz")
+
+    st.write(
+        "Para poder comparar candidatos dentro del ejercicio, se supone comportamiento lineal del resorte y se estima "
+        "la deflexión a la carga de operación mediante proporcionalidad carga–deflexión:"
+    )
+    st.latex(r"\delta_{\mathrm{op}}\approx\delta_{\mathrm{nom}}\frac{F_{\mathrm{op}}}{F_{\mathrm{nom}}}")
+    st.caption("Esta proporcionalidad es una idealización didáctica. La selección de proyecto debe verificarse con los datos de operación/carga–deflexión del fabricante.")
+
+    if not load_ok:
+        st.error("NO COMPATIBLE POR CARGA: la carga estimada por apoyo supera la carga nominal publicada para este modelo.")
+    else:
+        st.success("COMPATIBLE POR CAPACIDAD NOMINAL dentro de las hipótesis del ejercicio.")
+        st.write(f"Con la deflexión de operación idealizada: **r ≈ {op_r:.2f}** y **T_F ≈ {op_tf:.3f}**.")
+        if rated_lb > ex_lb*1.8:
+            st.warning(
+                "Aunque soporta la carga, este resorte está trabajando bastante por debajo de su carga nominal. "
+                "Eso reduce su deflexión de operación y eleva fₙ. Un aislador con mayor capacidad no es automáticamente una mejor selección."
+            )
+
+    st.markdown("#### La selección todavía no termina")
+    st.write(
+        "Una vez encontrada una combinación compatible de carga y comportamiento dinámico, deben revisarse la distribución "
+        "real de cargas, estabilidad, movimientos de arranque/parada, conexiones flexibles, soportación de tuberías, ambiente, "
+        "anclajes y documentación específica del fabricante."
+    )
+    st.warning(
+        "Además, la ficha FDS indica que estos aisladores libres no proporcionan por sí solos restricción sísmica o de viento. "
+        "Cuando el proyecto requiera restricción frente a acciones externas debe seleccionarse y diseñarse una solución apropiada para esa condición."
+    )
+
+    st.markdown("#### Nueva información del caso")
+    st.info("La bomba está conectada directamente a tuberías rígidas.")
+    bridge=st.radio(
+        "¿Una buena selección de los resortes garantiza por sí sola que el sistema completo quede correctamente aislado?",
+        ["Selecciona una respuesta","Sí","No"],key="e8_catalog_bridge"
+    )
+    if bridge=="No":
+        st.success("Correcto. La tubería rígida puede crear un camino mecánico paralelo y reducir la efectividad del desacoplamiento.")
+        st.latex(r"\boxed{\mathrm{BUEN\ AISLADOR}\neq\mathrm{BUEN\ SISTEMA\ DE\ AISLAMIENTO}}")
+        st.write("También deben evaluarse conexiones flexibles, soportación resiliente y cualquier otro puente estructural.")
+    elif bridge=="Sí":
+        st.error("Revisa el camino completo: una conexión rígida puede puentear el aislamiento de la base.")
+
+    st.markdown("### 15.1 · Relaciona el problema con la medida")
+    st.write("En lugar de memorizar una matriz, relaciona cada mecanismo con la medida que primero corresponde evaluar.")
+    pairs={
+        "Cavitación en una bomba":"Corregir la condición hidráulica",
+        "Vibración transmitida por la base":"Aislamiento vibratorio",
+        "Vibración transmitida por tubería":"Conexión flexible + soportes resilientes",
+        "Ruido aerodinámico de un ventilador":"Control aerodinámico / silenciador cuando corresponda",
+        "Escape de un grupo electrógeno":"Silenciador de escape",
+        "Ruido aéreo dominante de un compresor":"Encapsulamiento",
+    }
+    options=["Selecciona..."]+list(pairs.values())
+    score=0
+    for idx,(problem,answer) in enumerate(pairs.items()):
+        ans=st.selectbox(problem,options,key=f"e8_pair_{idx}")
+        if ans==answer:
+            st.success("✓ Correspondencia correcta.")
+            score+=1
+        elif ans!="Selecciona...":
+            st.warning("Revisa primero cuál es el mecanismo y por qué camino se transmite.")
+    if score==len(pairs):
+        st.success("Has relacionado correctamente todos los mecanismos con una medida coherente.")
 
     st.markdown("### 16 · Interactivo principal — DISEÑA LA SOLUCIÓN")
     eq=st.selectbox("Tipo de equipo",list(control_db.keys()),key="e8_design_eq")
@@ -5319,7 +5510,19 @@ def _render_course2_lab1_stage8(lab, saved):
     st.latex(r"\text{RUIDO DE INSTALACIONES}\Rightarrow\text{FUENTE}+\text{AISLAMIENTO VIBRATORIO}+\text{TUBERÍAS}+\text{DUCTOS}+\text{ENCAPSULAMIENTO}+\text{SILENCIADORES}+\text{RECINTO}+\text{UBICACIÓN}")
     st.info("**NO EXISTE UNA SOLUCIÓN UNIVERSAL.** Un antivibratorio es una herramienta dentro de una estrategia de control.")
     st.success("Al finalizar, la pregunta es: **¿cuál es el mecanismo, por dónde se transmite y qué conjunto de medidas de control debo evaluar?**")
-    ref("Harris: principios de control, vibración/aislamiento, maquinaria, HVAC, transmisión estructural y fontanería")
+    st.markdown("### Fuentes y bibliografía de la Etapa 8")
+    st.write(
+        "Las ecuaciones, criterios y estrategias de esta etapa deben interpretarse dentro del campo de aplicación "
+        "de las fuentes técnicas indicadas. El ejercicio comercial utiliza datos publicados por el fabricante y "
+        "no constituye una especificación de producto para un proyecto real."
+    )
+    st.markdown(
+        "- **Harris, C. M.** — *Manual de medidas acústicas y control del ruido*: principios de control, "
+        "aislamiento de vibraciones, maquinaria, HVAC, transmisión estructural y fontanería.\n"
+        "- **Kinetics Noise Control — FDS Free Standing Spring Isolators**: ficha de producto y aplicaciones.\n"
+        "- **Kinetics Noise Control — FDS 4-inch Deflection Isolator, Drawing S-01.20-41**: "
+        "cargas nominales y deflexiones de los modelos utilizados en el ejercicio."
+    )
 
 
 def future_lab_view_impl(lab):
