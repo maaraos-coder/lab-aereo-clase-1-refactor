@@ -4997,6 +4997,326 @@ def _render_course2_lab1_stage7(lab, saved):
             st.session_state[stage_selector_key]=8
             st.rerun()
 
+
+def _render_course2_lab1_stage8(lab, saved):
+    """Etapa 8 — Control del ruido estructural de instalaciones."""
+    import math
+    import numpy as np
+    import pandas as pd
+    import matplotlib.pyplot as plt
+
+    def excitation_hz(rpm):
+        return max(float(rpm), 0.0) / 60.0
+
+    def natural_frequency_deflection(delta_mm):
+        delta_m = max(float(delta_mm) / 1000.0, 1e-12)
+        return (1.0 / (2.0 * math.pi)) * math.sqrt(9.81 / delta_m)
+
+    def frequency_ratio(fe, fn):
+        return float(fe) / max(float(fn), 1e-12)
+
+    def force_transmissibility(r, zeta):
+        r, zeta = float(r), max(float(zeta), 0.0)
+        return math.sqrt(
+            (1.0 + (2.0*zeta*r)**2) /
+            max((1.0-r**2)**2 + (2.0*zeta*r)**2, 1e-12)
+        )
+
+    def dynamic_state(fe, fn, zeta):
+        r = frequency_ratio(fe, fn)
+        tf = force_transmissibility(r, zeta)
+        if abs(r-1.0) <= 0.10:
+            region = "Próximo a resonancia"
+        elif r <= 1.0:
+            region = "Bajo resonancia"
+        elif r < math.sqrt(2):
+            region = "Sobre fₙ, pero aún con posible amplificación"
+        else:
+            region = "Región ideal de aislamiento"
+        return r, tf, region
+
+    def support_loads(mass, lx, ly, cgx, cgy):
+        W=max(float(mass),0)*9.81
+        lx=max(float(lx),1e-9); ly=max(float(ly),1e-9)
+        x=min(max(float(cgx),-.49*lx),.49*lx)
+        y=min(max(float(cgy),-.49*ly),.49*ly)
+        rx=(.5-x/lx,.5+x/lx); ry=(.5-y/ly,.5+y/ly)
+        return np.array([W*rx[0]*ry[0],W*rx[1]*ry[0],W*rx[0]*ry[1],W*rx[1]*ry[1]])
+
+    def ref(txt):
+        st.caption("Fuente / fundamento: Harris, *Manual de medidas acústicas y control del ruido*, 3.ª ed., "+txt+".")
+
+    def render_asset(name):
+        for base in ("assets","images","static"):
+            q=Path(base)/name
+            if q.exists():
+                st.image(str(q),use_container_width=True)
+                return
+
+    st.markdown("## Etapa 8 — Control del ruido estructural de instalaciones")
+    st.markdown("### Selección y diseño de soluciones antivibratorias")
+    st.write("El objetivo es decidir cómo controlar la energía vibratoria que una bomba, ventilador, compresor u otro equipo puede introducir en la estructura. La selección se realiza por el sistema dinámico completo, no por el nombre o apariencia del aislador.")
+    st.latex(r"\text{EQUIPO}\rightarrow\text{EXCITACIÓN}\rightarrow f_e\rightarrow\text{CARGA}\rightarrow\text{AISLADOR}\rightarrow f_n\rightarrow T_F\rightarrow\text{SELECCIÓN}\rightarrow\text{CONTROL DEL CAMINO ESTRUCTURAL}")
+    render_asset("curso2_lab1_etapa8_sala_bombas.webp")
+
+    st.markdown("### 1 · Una base aislada no significa un equipo aislado")
+    q=st.radio("Una bomba está instalada sobre cuatro soportes antivibratorios. ¿El problema estructural está necesariamente resuelto?",["A. Sí.","B. No."],key="e8_open")
+    if q=="B. No.": st.success("Correcto. Tuberías, abrazaderas, ductos, conductos eléctricos o contactos rígidos pueden crear caminos paralelos.")
+    else: st.warning("No necesariamente. Deben revisarse todos los caminos mecánicos.")
+    st.latex(r"\text{FUERZA DINÁMICA}\rightarrow\text{APOYO / CONEXIÓN}\rightarrow\text{ESTRUCTURA}\rightarrow\text{PROPAGACIÓN}\rightarrow\text{SUPERFICIE RADIANTE}\rightarrow\text{RUIDO}")
+    st.latex(r"F\rightarrow v\rightarrow p")
+    ref("caps. 29, 32 y 40")
+
+    st.markdown("### 2 · El problema no es «poner goma»")
+    st.error("ERROR PROFESIONAL FRECUENTE: «Esta bomba vibra. Pongámosle goma debajo.»")
+    st.latex(r"\text{SELECCIÓN}=\text{FRECUENCIA}+\text{CARGA}+\text{RIGIDEZ}+\text{DEFLEXIÓN}+\text{AMORTIGUAMIENTO}+\text{ESTABILIDAD}+\text{CONEXIONES}+\text{MONTAJE}")
+    st.write("El aislador modifica el acoplamiento dinámico entre la máquina y la estructura. Para seleccionarlo debemos saber qué excita la máquina, cuánto pesa realmente sobre cada apoyo y qué frecuencia natural tendrá el montaje.")
+
+    st.markdown("### 3 · Familias de aisladores")
+    render_asset("curso2_lab1_etapa8_familias_aisladores.webp")
+    a,b=st.columns(2)
+    with a:
+        st.markdown("**Elastoméricos**")
+        st.write("Compactos, configurables en compresión o cizallamiento y con amortiguamiento interno relativamente importante. Pueden ser adecuados cuando la deflexión requerida y la carga son compatibles.")
+        st.markdown("**Resortes metálicos**")
+        st.write("Permiten mayores deflexiones y frecuencias naturales bajas. Pueden requerir control lateral y una revisión más exigente de estabilidad.")
+    with b:
+        st.markdown("**Neumáticos**")
+        st.write("Pueden alcanzar frecuencias naturales muy bajas y se reservan normalmente para requerimientos especiales.")
+        st.markdown("**Otros sistemas**")
+        st.write("Existen materiales fibrosos, corcho y soluciones compuestas. La etapa no los presenta como recetas universales.")
+    ref("cap. 29, partes 1 y 2")
+
+    st.markdown("### 4 · RPM → frecuencia de excitación")
+    st.latex(r"f_e=\frac{n}{60}")
+    rpm=st.slider("Velocidad [rpm]",300,3600,1500,50,key="e8_rpm")
+    fe=excitation_hz(rpm)
+    c1,c2,c3=st.columns(3)
+    c1.metric("1×",f"{fe:.2f} Hz"); c2.metric("2×",f"{2*fe:.2f} Hz"); c3.metric("3×",f"{3*fe:.2f} Hz")
+    st.caption("1×rpm es una referencia fundamental, pero pueden existir armónicos, paso de álabes, fuerzas hidráulicas, electromagnéticas, impactos, engranajes y pulsaciones.")
+    blades=st.slider("Número de álabes — ejemplo ventilador",2,12,6,key="e8_blades")
+    st.latex(r"f_{\mathrm{BPF}}=N_b\frac{n}{60}")
+    st.info(f"Para {rpm} rpm y {blades} álabes: f_BPF = {blades*fe:.1f} Hz. La BPF no reemplaza el análisis de 1×rpm para el aislamiento vibratorio.")
+
+    st.markdown("### 5 · Masa, rigidez, deflexión y frecuencia natural")
+    st.latex(r"f_n=\frac{1}{2\pi}\sqrt{\frac{k}{m}}")
+    st.latex(r"\delta=\frac{mg}{k}")
+    st.latex(r"f_n=\frac{1}{2\pi}\sqrt{\frac{g}{\delta}}")
+    st.write("fₙ es la frecuencia natural del conjunto equipo–aisladores. La deflexión estática permite relacionar la carga vertical con la flexibilidad del montaje.")
+    delta=st.slider("Deflexión estática δ [mm]",1.0,100.0,10.0,1.0,key="e8_delta")
+    fn=natural_frequency_deflection(delta)
+    st.metric("fₙ",f"{fn:.2f} Hz")
+    ds=np.linspace(1,100,100); fns=[natural_frequency_deflection(x) for x in ds]
+    fig,ax=plt.subplots(); ax.plot(ds,fns); ax.scatter([delta],[fn]); ax.set_xlabel("Deflexión [mm]"); ax.set_ylabel("fₙ [Hz]"); ax.grid(True,alpha=.2)
+    st.pyplot(fig,use_container_width=True); plt.close(fig)
+    st.info("Mayor deflexión suele implicar menor fₙ, pero no significa automáticamente mejor diseño: deben comprobarse estabilidad, movimiento, carga, ambiente y conexiones.")
+    ref("caps. 27 y 29")
+
+    st.markdown("### 6 · Relación de frecuencias y transmisibilidad")
+    st.latex(r"r=\frac{f_e}{f_n}")
+    st.latex(r"T_F=\sqrt{\frac{1+(2\zeta r)^2}{(1-r^2)^2+(2\zeta r)^2}}")
+    zeta=st.slider("Razón de amortiguamiento ζ",.01,.30,.08,.01,key="e8_zeta")
+    r,tf,region=dynamic_state(fe,fn,zeta)
+    x,y,z=st.columns(3); x.metric("r",f"{r:.2f}"); y.metric("T_F",f"{tf:.3f}"); z.metric("Estado",region)
+    if tf<=1: st.metric("Eficiencia ideal del modelo mecánico",f"{(1-tf)*100:.1f} %")
+    else: st.warning("T_F > 1: existe amplificación de fuerza transmitida en el modelo.")
+    st.caption("T_F no es una reducción acústica en dB.")
+    rr=np.linspace(.05,6,500); tt=[force_transmissibility(v,zeta) for v in rr]
+    fig,ax=plt.subplots(); ax.plot(rr,tt); ax.axhline(1,ls="--"); ax.axvline(1,ls="--"); ax.axvline(math.sqrt(2),ls="--"); ax.scatter([r],[tf])
+    ax.set_xlabel("r = fₑ/fₙ"); ax.set_ylabel("T_F"); ax.set_ylim(0,min(max(3,np.percentile(tt,95)),12)); ax.grid(True,alpha=.2)
+    st.pyplot(fig,use_container_width=True); plt.close(fig)
+    st.write("r≈1: resonancia. 1<r<√2: todavía puede existir amplificación. r>√2: comienza la región ideal de aislamiento del modelo.")
+    ref("caps. 27 y 29")
+
+    st.markdown("### 7 · Interactivo principal — Selecciona el antivibratorio")
+    eq=st.selectbox("Equipo",["Bomba centrífuga","Ventilador","Compresor","Grupo electrógeno","Motor","Unidad manejadora de aire"],key="e8_eq")
+    mass=st.slider("Masa total [kg]",100,3000,500,50,key="e8_mass")
+    rpm2=st.slider("RPM",300,3600,1500,50,key="e8_rpm2")
+    ns=st.slider("Número de aisladores",3,12,4,key="e8_ns")
+    d2=st.slider("Deflexión de diseño [mm]",1.0,75.0,12.0,1.0,key="e8_d2")
+    z2=st.slider("ζ del modelo",.01,.30,.08,.01,key="e8_z2")
+    inertia=st.checkbox("Bancada/bloque de inercia",key="e8_inertia")
+    flex=st.checkbox("Conexiones principales flexibles",key="e8_flex")
+    fe2=excitation_hz(rpm2); fn2=natural_frequency_deflection(d2); r2,tf2,reg2=dynamic_state(fe2,fn2,z2)
+    cols=st.columns(5)
+    for col,label,val in zip(cols,["fₑ","fₙ","r","T_F","Carga/apoyo*"],[f"{fe2:.1f} Hz",f"{fn2:.2f} Hz",f"{r2:.2f}",f"{tf2:.3f}",f"{mass/ns:.1f} kg"]): col.metric(label,val)
+    st.caption("*Carga/apoyo solo como primera aproximación simétrica.")
+    if fn2<=6 or d2>=7:
+        st.info("**Familia conceptual a evaluar:** resorte metálico o sistema de baja fₙ. Verificar carga–deflexión, estabilidad y especificaciones del fabricante.")
+    elif fn2<=12:
+        st.info("**Familia conceptual a evaluar:** elastómero diseñado o resorte, según la fₙ realmente alcanzable, carga, deflexión y ambiente.")
+    else:
+        st.info("**Familia conceptual a evaluar:** un elastómero diseñado puede ser compatible si la separación de frecuencias es suficiente.")
+    if not flex: st.warning("La base puede estar aislada, pero las conexiones rígidas declaradas pueden puentearla.")
+    if inertia: st.write("La bancada puede aportar masa, estabilidad, alineación y distribución de carga; no aísla si queda rígidamente unida a la losa.")
+    ref("caps. 28, 29 y 40")
+
+    st.markdown("### 8 · Caso bomba: misma máquina, dos frecuencias naturales")
+    rows=[]
+    for name,fni in [("A",12.0),("B",5.0)]:
+        ri,tfi,regi=dynamic_state(25,fni,.08); rows.append([name,25,fni,ri,tfi,regi])
+    st.dataframe(pd.DataFrame(rows,columns=["Alternativa","fₑ [Hz]","fₙ [Hz]","r","T_F","Estado"]).style.format({"r":"{:.2f}","T_F":"{:.3f}"}),use_container_width=True)
+    st.success("Para 1500 rpm, B posee mayor separación de frecuencias y menor T_F para 1×rpm. Eso no basta para especificar un producto.")
+    render_asset("curso2_lab1_etapa8_bomba_resorte_elastomero.webp")
+
+    st.markdown("### 9 · Centro de gravedad: ¿todos los apoyos cargan igual?")
+    Lx=st.slider("Largo bancada [m]",1.0,4.0,2.0,.1,key="e8_lx"); Ly=st.slider("Ancho [m]",.6,2.5,1.2,.1,key="e8_ly")
+    cgx=st.slider("CGx [m]",-.8,.8,0.0,.05,key="e8_cgx"); cgy=st.slider("CGy [m]",-.4,.4,0.0,.05,key="e8_cgy")
+    loads=support_loads(mass,Lx,Ly,cgx,cgy)/9.81
+    cs=st.columns(4)
+    for i,v in enumerate(loads): cs[i].metric(f"Apoyo {i+1}",f"{v:.1f} kg")
+    fig,ax=plt.subplots(); pts=[(-Lx/2,-Ly/2),(Lx/2,-Ly/2),(-Lx/2,Ly/2),(Lx/2,Ly/2)]
+    ax.scatter([q[0] for q in pts],[q[1] for q in pts]); ax.scatter([cgx],[cgy],marker="x",s=120)
+    for i,(xx,yy) in enumerate(pts): ax.text(xx,yy,f" {i+1}: {loads[i]:.0f} kg")
+    ax.set_xlabel("x [m]"); ax.set_ylabel("y [m]"); ax.grid(True,alpha=.2); st.pyplot(fig,use_container_width=True); plt.close(fig)
+    st.caption("Modelo didáctico de equilibrio estático vertical para una base rectangular rígida. La geometría real debe verificarse.")
+    render_asset("curso2_lab1_etapa8_centro_gravedad.webp")
+    ref("cap. 29")
+
+    st.markdown("### 10 · Carga correcta")
+    st.write("Sobrecargar puede sacar al aislador de su rango previsto. Subcargar puede impedir que alcance la deflexión necesaria y elevar fₙ.")
+    load=st.slider("Carga real de un apoyo [kg]",20,800,150,10,key="e8_load")
+    sim=pd.DataFrame([["A","50–120",6],["B","120–220",15],["C","220–400",25]],columns=["Aislador","Rango didáctico [kg]","Deflexión didáctica [mm]"])
+    st.caption("FICHA DIDÁCTICA SIMULADA — no corresponde a un fabricante.")
+    st.dataframe(sim,use_container_width=True)
+    ranges=[("A",50,120,6),("B",120,220,15),("C",220,400,25)]
+    ok=[x for x in ranges if x[1]<=load<=x[2]]
+    if ok:
+        name,lo,hi,dd=ok[0]; fnd=natural_frequency_deflection(dd); rd,tfd,_=dynamic_state(fe2,fnd,z2)
+        st.success(f"{name} contiene la carga en el rango didáctico. Con δ={dd} mm: fₙ≈{fnd:.2f} Hz, r≈{rd:.2f}, T_F≈{tfd:.3f}.")
+    else: st.warning("Ningún rango didáctico contiene esta carga. No se fuerza una selección.")
+    st.caption("En proyecto real: comprobar curva carga–deflexión y capacidad del fabricante.")
+
+    st.markdown("### 11 · Bancada / bloque de inercia")
+    render_asset("curso2_lab1_etapa8_bomba_bancada.webp")
+    st.write("Puede aumentar masa, estabilidad, alineación y distribución de cargas. Es una parte posible del sistema, no un aislador por sí mismo.")
+    st.error("BLOQUE DE INERCIA RÍGIDAMENTE ANCLADO A LA LOSA ≠ AISLAMIENTO VIBRATORIO")
+    ref("caps. 28 y 40")
+
+    st.markdown("### 12 · Encuentra el puente estructural")
+    render_asset("curso2_lab1_etapa8_tuberia_puente.webp")
+    pipe=st.checkbox("Tubería rígida",True,key="e8_pipe"); clamp=st.checkbox("Abrazadera rígida",True,key="e8_clamp")
+    conduit=st.checkbox("Conducto eléctrico rígido",False,key="e8_conduit"); contact=st.checkbox("Contacto rígido de bancada",False,key="e8_contact")
+    connector=st.checkbox("Conector flexible",False,key="e8_connector"); resilient=st.checkbox("Soportes resilientes de tubería",False,key="e8_resilient")
+    active=[]
+    if pipe and not connector: active.append("bomba → tubería rígida")
+    if clamp and not resilient: active.append("tubería → abrazadera → estructura")
+    if conduit: active.append("equipo → conducto eléctrico → estructura")
+    if contact: active.append("bancada → contacto rígido → losa")
+    if active: st.warning("Caminos activos:\n\n- "+"\n- ".join(active))
+    else: st.success("No aparece uno de los puentes rígidos seleccionables en este esquema. La obra real igualmente debe inspeccionarse.")
+    st.caption("No se inventa una penalización en dB.")
+    ref("caps. 28 y 40")
+
+    st.markdown("### 13 · Ventilador: base, ducto y aire")
+    render_asset("curso2_lab1_etapa8_ventilador_ducto.webp")
+    vr=[]
+    for name,fni in [("Montaje 1",10.0),("Montaje 2",3.5)]:
+        ri,tfi,regi=dynamic_state(15,fni,.08); vr.append([name,15,fni,ri,tfi,regi])
+    st.dataframe(pd.DataFrame(vr,columns=["Sistema","fₑ [Hz]","fₙ [Hz]","r","T_F","Estado"]).style.format({"r":"{:.2f}","T_F":"{:.3f}"}),use_container_width=True)
+    st.latex(r"\text{VENTILADOR}\rightarrow\text{BASE}\rightarrow\text{ESTRUCTURA}")
+    st.latex(r"\text{VENTILADOR}\rightarrow\text{DUCTO}\rightarrow\text{SOPORTES}\rightarrow\text{ESTRUCTURA}")
+    st.latex(r"\text{VENTILADOR}\rightarrow\text{AIRE DEL DUCTO}\rightarrow\text{REJILLA}")
+    st.write("Un resorte bajo la base no controla por sí solo propagación acústica por el ducto, ruido aerodinámico ni conexiones rígidas.")
+    ref("caps. 29, 40 y capítulos de ventilación aplicables")
+
+    st.markdown("### 14 · ¿Mismo aislador para todos?")
+    same=[]
+    for name,rpmx in [("Bomba centrífuga",1500),("Ventilador",900),("Compresor reciprocante",600)]:
+        fex=excitation_hz(rpmx); rx,tfx,regx=dynamic_state(fex,8,.08); same.append([name,rpmx,fex,8,rx,tfx,regx])
+    st.dataframe(pd.DataFrame(same,columns=["Equipo","rpm","fₑ [Hz]","fₙ [Hz]","r","T_F","Estado"]).style.format({"fₑ [Hz]":"{:.1f}","r":"{:.2f}","T_F":"{:.3f}"}),use_container_width=True)
+    st.info("El mismo aislador puede comportarse de manera muy distinta frente a excitaciones diferentes. Una máquina reciprocante además puede requerir revisar fuerzas y movimientos adicionales.")
+
+    st.markdown("### 15 · Matriz profesional de control")
+    st.dataframe(pd.DataFrame([
+        ["Bomba centrífuga","Base + tuberías","Aisladores; bancada; conexiones flexibles; soportes resilientes"],
+        ["Ventilador","Base + ducto","Aisladores; conexión flexible; soportes; control acústico del ducto"],
+        ["Compresor","Fuerzas dinámicas + pulsaciones","Aisladores; bloque de inercia; amortiguamiento; conexiones flexibles"],
+        ["Grupo electrógeno","Motor + estructura + escape + conexiones","Aisladores; bancada; conexiones; control aéreo adicional"],
+        ["Unidad manejadora de aire","Ventilador + carcasa + ductos","Aislamiento vibratorio; conectores flexibles; soportes; control de ductos"],
+    ],columns=["Equipo","Problema","Medidas a evaluar"]),use_container_width=True)
+    st.caption("Matriz conceptual: no es una receta universal.")
+
+    st.markdown("### 16 · ¿Qué medida necesita esta bomba?")
+    st.write("Caso: 1500 rpm, 500 kg, 4 apoyos; apoyos y tuberías inicialmente rígidos, abrazaderas metálicas y dormitorio superior.")
+    measures=st.multiselect("Selecciona medidas",["Aislador elastomérico","Resorte","Bancada de inercia","Conexión flexible","Soportes resilientes de tuberías","Absorbente en el dormitorio","Silenciador de ducto"],key="e8_measures")
+    if measures:
+        if "Absorbente en el dormitorio" in measures or "Silenciador de ducto" in measures:
+            st.warning("Esas medidas no corrigen por sí mismas los puentes estructurales descritos.")
+        st.info("Puede haber más de una respuesta correcta porque existen varios caminos.")
+
+    st.markdown("### 17 · Selección completa")
+    srpm=st.slider("RPM del caso",300,3600,1450,50,key="e8_srpm"); smass=st.slider("Masa del caso [kg]",100,3000,600,50,key="e8_smass")
+    sn=st.slider("Apoyos del caso",3,8,4,key="e8_sn"); sd=st.slider("Deflexión del caso [mm]",1.0,75.0,12.0,1.0,key="e8_sd"); sz=st.slider("ζ del caso",.01,.30,.08,.01,key="e8_sz")
+    network=st.checkbox("Tubería/ducto conectado",True,key="e8_network"); sflex=st.checkbox("Conexión flexible instalada",False,key="e8_sflex"); sres=st.checkbox("Soporte resiliente de red",False,key="e8_sres")
+    sfe=excitation_hz(srpm); sfn=natural_frequency_deflection(sd); sr,stf,sreg=dynamic_state(sfe,sfn,sz)
+    a,b,c,d=st.columns(4); a.metric("fₑ",f"{sfe:.2f} Hz"); b.metric("fₙ",f"{sfn:.2f} Hz"); c.metric("r",f"{sr:.2f}"); d.metric("T_F",f"{stf:.3f}")
+    st.write(f"**Adecuación dinámica:** {sreg}")
+    st.write(f"**Carga simétrica preliminar:** {smass/sn:.1f} kg/apoyo. Debe corregirse con el CG.")
+    if network and (not sflex or not sres): st.warning("La red conectada mantiene al menos una condición rígida declarada.")
+    else: st.success("No se declara el puente simplificado de la red; todavía debe verificarse el montaje real.")
+
+    st.markdown("### 18 · Caso profesional: sala de bombas bajo un dormitorio")
+    case=[]
+    fcase=1450/60
+    for name,fni in [("A",11.0),("B",4.5)]:
+        ri,tfi,regi=dynamic_state(fcase,fni,.08); case.append([name,fcase,fni,ri,tfi,regi])
+    st.dataframe(pd.DataFrame(case,columns=["Alternativa","fₑ [Hz]","fₙ [Hz]","r","T_F","Estado"]).style.format({"fₑ [Hz]":"{:.2f}","r":"{:.2f}","T_F":"{:.3f}"}),use_container_width=True)
+    fixes=st.multiselect("Completa la estrategia",["Conexión flexible en succión/impulsión","Soportes resilientes de tubería","Revisar carga por apoyo y CG","Revisar estabilidad","Solo absorbente en dormitorio"],key="e8_fixes")
+    required={"Conexión flexible en succión/impulsión","Soportes resilientes de tubería","Revisar carga por apoyo y CG","Revisar estabilidad"}
+    if required.issubset(set(fixes)): st.success("La estrategia integra el aislamiento de base con los caminos paralelos y las condiciones reales del montaje.")
+    else: st.info("La conclusión no debe ser solo «use resortes»: faltan revisar conexiones, soportes, carga, CG y estabilidad.")
+    st.write("La alternativa B presenta mayor relación de frecuencias y menor transmisibilidad para 1×rpm bajo este modelo. La recomendación solo queda completa al controlar tuberías y verificar el montaje real.")
+    ref("caps. 28, 29 y 40")
+
+    st.markdown("### 19 · Errores frecuentes de montaje")
+    render_asset("curso2_lab1_etapa8_montaje_correcto_incorrecto.webp")
+    errors=st.multiselect("Condiciones observadas",["Aislador sobrecargado","Aislador muy subcargado","Resorte puenteado por tornillo/tope","Contacto rígido de bancada","Tubería rígida","Estabilidad insuficiente"],key="e8_errors")
+    for e in errors:
+        if e=="Aislador sobrecargado": st.warning("Sobrecarga: deformación, fₙ, vida útil y estabilidad pueden dejar de corresponder al diseño.")
+        elif e=="Aislador muy subcargado": st.warning("Subcarga: puede no alcanzarse la deflexión necesaria y fₙ puede ser mayor de lo previsto.")
+        elif e=="Estabilidad insuficiente": st.warning("Una fₙ muy baja puede exigir mayor espacio de movimiento, control lateral y revisión del CG.")
+        else: st.warning(e+": aparece un puente o una condición constructiva que debe corregirse.")
+    st.caption("No se asignan penalizaciones arbitrarias en dB.")
+
+    st.markdown("### 20 · Condiciones ambientales")
+    st.write("Temperatura, humedad, aceites, productos químicos, exterior/interior, envejecimiento y corrosión también condicionan la selección.")
+    ref("cap. 29")
+
+    st.markdown("### 21 · Preguntas formativas")
+    questions=[
+        ("1800 rpm corresponden a:",["30 Hz","60 Hz","1800 Hz"],"30 Hz"),
+        ("Si fₑ=fₙ, el sistema está aproximadamente:",["En resonancia","En aislamiento óptimo","Sin vibración"],"En resonancia"),
+        ("Si fₑ/fₙ>√2 comienza la región ideal de aislamiento.",["Verdadero","Falso"],"Verdadero"),
+        ("Mayor capacidad de carga siempre significa mejor aislador.",["Verdadero","Falso"],"Falso"),
+        ("Una bomba aislada en la base puede transmitir por tuberías.",["Verdadero","Falso"],"Verdadero"),
+        ("Un conector flexible elimina automáticamente toda transmisión por tuberías.",["Verdadero","Falso"],"Falso"),
+        ("Los resortes pueden ser apropiados cuando se requiere fₙ baja y mayor deflexión.",["Verdadero","Falso"],"Verdadero"),
+        ("La selección debe considerar el centro de gravedad.",["Verdadero","Falso"],"Verdadero"),
+        ("Un bloque de inercia rígidamente unido a la losa aísla por sí solo.",["Verdadero","Falso"],"Falso"),
+        ("El mismo aislador funciona necesariamente igual en máquinas con rpm distintas.",["Verdadero","Falso"],"Falso"),
+    ]
+    for i,(qq,opts,ans) in enumerate(questions):
+        val=st.radio(f"{i+1}. {qq}",opts,index=None,key=f"e8_q_{i}")
+        if val is not None:
+            if val==ans: st.success("Correcto.")
+            else: st.warning("Revisa la relación entre excitación, fₙ, carga y caminos mecánicos.")
+
+    st.markdown("### 22 · Jerarquía profesional")
+    st.latex(r"\text{FUENTE}\rightarrow\text{FRECUENCIAS}\rightarrow\text{CAMINOS}\rightarrow f_n\text{ OBJETIVO}\rightarrow\text{DEFLEXIÓN/RIGIDEZ}\rightarrow\text{CARGA}\rightarrow\text{FAMILIA}\rightarrow\text{CONEXIONES}\rightarrow\text{MONTAJE REAL}")
+    st.info("**UN ANTIVIBRATORIO NO SE ELIGE POR SU MATERIAL. SE ELIGE POR EL SISTEMA.**")
+    st.latex(r"\text{AISLAR LA BASE}\neq\text{AISLAR EL EQUIPO COMPLETO}")
+    st.latex(r"\text{CONTROL EFECTIVO}=\text{AISLADOR ADECUADO}+\text{CARGA CORRECTA}+f_n\text{ ADECUADA}+\text{MONTAJE CORRECTO}+\text{CONTROL DE CONEXIONES PARALELAS}")
+
+    st.markdown("### 23 · Conexión con pisos flotantes")
+    a,b=st.columns(2)
+    with a: st.markdown("**Piso flotante**"); st.latex(r"\text{MASA}+\text{RESORTE}+\text{RESONANCIA}")
+    with b: st.markdown("**Maquinaria aislada**"); st.latex(r"\text{MASA}+\text{AISLADOR}+\text{RESONANCIA}")
+    st.write("No son el mismo problema acústico, pero comparten principios de dinámica y desacoplamiento.")
+    st.success("No existe «el mejor antivibratorio». Existe el antivibratorio adecuado para una masa, una frecuencia, una carga y una configuración determinadas.")
+    ref("caps. 27–29, 32 y 40")
+
+
 def future_lab_view_impl(lab):
     """Renderer de los laboratorios posteriores manteniendo la navegación institucional."""
     class_id=lab["id"]
@@ -5152,6 +5472,9 @@ def future_lab_view_impl(lab):
             return
         if selected == 7:
             _render_course2_lab1_stage7(lab, saved)
+            return
+        if selected == 8:
+            _render_course2_lab1_stage8(lab, saved)
             return
 
     title,objective,concept,activity=lab["stages"][selected]
