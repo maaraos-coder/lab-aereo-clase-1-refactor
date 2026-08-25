@@ -5539,6 +5539,198 @@ def _render_course2_lab1_stage8(lab, saved):
     )
 
 
+
+# -----------------------------------------------------------------------------
+# Curso 2 · Laboratorio 1 · Etapa 9 — Preguntas de comprensión
+# Reutiliza la lógica estructural de evaluación del Diplomado: 4 puntos por
+# respuesta, escala chilena 1,0–7,0 con 60 % para nota 4,0, persistencia e9_*
+# y una única respuesta final_comprehension en la tabla responses.
+# -----------------------------------------------------------------------------
+_C2L1_STAGE9_QUESTIONS = [
+    {"title":"Transmisión estructural","question":"Una persona camina sobre una losa y se escucha ruido en el recinto inferior. ¿Cuál describe mejor el proceso?","options":["El impacto genera solamente sonido aéreo en el recinto superior.","El impacto introduce energía mecánica en la estructura, la vibración se propaga y las superficies pueden posteriormente radiar sonido.","El ruido aparece exclusivamente por reflexión en el recinto inferior.","La estructura no participa en la transmisión."],"correct":1,"explanation":"El impacto aplica una fuerza dinámica al elemento constructivo. La estructura vibra, la energía se propaga por los sólidos y determinadas superficies pueden radiar sonido al recinto."},
+    {"title":"Ruido aéreo vs estructural","question":"¿Cuál es la diferencia fundamental entre ruido aéreo y ruido de origen estructural?","options":["El ruido estructural siempre tiene menor frecuencia.","En el ruido estructural, una parte importante de la energía se transmite mecánicamente por elementos sólidos antes de radiarse como sonido.","El ruido aéreo no puede atravesar elementos constructivos.","Son exactamente el mismo fenómeno."],"correct":1,"explanation":"La diferencia está en el camino de transmisión dominante: en el origen estructural la energía se propaga mecánicamente por sólidos antes de radiarse acústicamente."},
+    {"title":"Piso flotante","question":"¿Cuál representa mejor el principio físico de un piso flotante?","options":["Aumentar solamente el espesor del acabado.","Introducir una masa desacoplada de la base mediante un elemento resiliente.","Absorber exclusivamente el sonido dentro del recinto inferior.","Eliminar completamente cualquier vibración estructural."],"correct":1,"explanation":"El piso flotante se idealiza como masas desacopladas mediante un elemento resiliente; su objetivo es reducir la transmisión mecánica, no eliminar toda vibración."},
+    {"title":"Rigidez dinámica","question":"Dos pisos flotantes tienen las mismas masas. El sistema A posee menor rigidez dinámica que el sistema B. Manteniendo las demás variables constantes, ¿qué ocurre generalmente con la frecuencia natural de A?","options":["Aumenta.","Disminuye.","Permanece necesariamente igual.","Se vuelve independiente de las masas."],"correct":1,"explanation":"En el modelo estudiado, una menor rigidez dinámica, manteniendo las masas, conduce generalmente a una menor frecuencia natural."},
+    {"title":"Frecuencia natural","question":"¿Qué representa f₀ en el modelo del piso flotante estudiado?","options":["La frecuencia de muestreo de un instrumento.","Una frecuencia característica asociada a la resonancia del sistema masa–resorte–masa.","El número único de aislamiento.","La máxima frecuencia transmitida."],"correct":1,"explanation":"f₀ caracteriza la resonancia del sistema dinámico idealizado; no es un descriptor acústico de número único."},
+    {"title":"Masa reducida","question":"¿Por qué aparece la masa reducida m’ᵣ en el modelo?","options":["Porque solamente vibra la masa superior.","Porque permite representar la interacción dinámica entre las dos masas del sistema.","Porque reemplaza la rigidez dinámica.","Porque es simplemente el promedio de las dos masas."],"correct":1,"explanation":"La masa reducida representa la interacción dinámica de las dos masas y no corresponde a un promedio aritmético."},
+    {"title":"Losa base","question":"¿Qué representa Lₙ,₀(f)?","options":["La mejora del piso flotante.","El nivel estimado de ruido de impacto de la losa base antes de aplicar la mejora del tratamiento.","El número único final.","El ruido de fondo."],"correct":1,"explanation":"Lₙ,₀(f) es la predicción espectral de la condición base, antes de incorporar la mejora del tratamiento."},
+    {"title":"Mejora del tratamiento","question":"¿Qué representa ΔLₙ(f)?","options":["El nivel absoluto de ruido de impacto.","La mejora introducida por el tratamiento respecto de la condición base.","La frecuencia natural.","El aislamiento aéreo."],"correct":1,"explanation":"ΔLₙ(f) es una diferencia de niveles que cuantifica la mejora del tratamiento y depende de la frecuencia."},
+    {"title":"Dependencia frecuencial","question":"Un sistema presenta ΔLₙ(125 Hz) = 8 dB y ΔLₙ(500 Hz) = 22 dB. ¿Cuál es la interpretación correcta?","options":["Existe un error porque ΔLₙ debe ser constante.","La mejora puede variar con la frecuencia.","El sistema solamente funciona en 500 Hz.","Ambos valores deben promediarse inmediatamente."],"correct":1,"explanation":"La mejora es espectral: ΔLₙ = ΔLₙ(f). Por ello puede adoptar valores distintos en diferentes bandas."},
+    {"title":"Predicción final","question":"Si Lₙ,₀(500 Hz) = 69 dB y ΔLₙ(500 Hz) = 22 dB, ¿cuál es Lₙ,final(500 Hz)?","options":["91 dB","47 dB","22 dB","69 dB"],"correct":1,"explanation":"Por definición, Lₙ,final(f) = Lₙ,₀(f) − ΔLₙ(f). En 500 Hz: 69 − 22 = 47 dB."},
+    {"title":"Interpretación del modelo","question":"El modelo predice Lₙ,final(500 Hz) = 47 dB. ¿Qué podemos afirmar?","options":["La obra construida medirá necesariamente exactamente 47 dB.","Es un resultado predictivo dentro de las hipótesis y datos de entrada del modelo.","El sistema cumple automáticamente cualquier norma.","Corresponde automáticamente a Lₙ,w."],"correct":1,"explanation":"Una predicción depende del modelo, sus hipótesis y los datos de entrada. No equivale automáticamente a una medición ni demuestra cumplimiento normativo."},
+    {"title":"Decisión de diseño","question":"Un sistema presenta menor f₀ que otro. ¿Podemos concluir inmediatamente que es la mejor solución del proyecto?","options":["Sí.","No."],"correct":1,"explanation":"No. También deben considerarse comportamiento espectral, carga, espesor, estabilidad, constructibilidad y durabilidad."},
+    {"title":"Puente rígido","question":"Un piso flotante queda conectado accidentalmente a la estructura mediante un contacto rígido perimetral. ¿Qué puede ocurrir?","options":["Nada.","Puede aparecer un camino mecánico paralelo que reduzca el desacoplamiento previsto.","El aislamiento necesariamente mejora.","Solamente cambia el ruido aéreo."],"correct":1,"explanation":"El contacto rígido crea un camino mecánico paralelo capaz de puentear el elemento resiliente y degradar el desacoplamiento idealizado."},
+    {"title":"Diagnóstico de instalaciones","question":"Una bomba genera ruido en un dormitorio cercano. ¿Cuál debería ser el primer paso técnico?","options":["Comprar inmediatamente resortes.","Instalar absorbente en el dormitorio.","Identificar los mecanismos de generación y los caminos de transmisión.","Aumentar automáticamente la masa de la bomba."],"correct":2,"explanation":"Antes de seleccionar una medida debe diagnosticarse qué genera el problema y por qué caminos llega al receptor."},
+    {"title":"Cavitación","question":"Una bomba presenta cavitación importante. ¿Cuál es la estrategia conceptualmente prioritaria?","options":["Instalar solamente resortes.","Corregir las condiciones hidráulicas que originan la cavitación.","Agregar absorbente al techo.","Aumentar la reverberación."],"correct":1,"explanation":"La prioridad es actuar sobre la fuente del fenómeno: corregir las condiciones hidráulicas que producen cavitación."},
+    {"title":"Tuberías como camino","question":"Una bomba está correctamente montada sobre aisladores, pero las tuberías están conectadas rígidamente a la estructura. ¿Qué afirmación es correcta?","options":["El aislamiento de la base garantiza que no exista transmisión estructural.","Las tuberías pueden constituir un camino mecánico paralelo.","Las tuberías solamente transmiten agua.","Los aisladores de la bomba aíslan automáticamente las tuberías."],"correct":1,"explanation":"Las tuberías rígidamente conectadas pueden transmitir fuerza vibratoria y constituir un camino paralelo independiente de los apoyos de la máquina."},
+    {"title":"RPM a Hz","question":"Una bomba gira a 1800 rpm. ¿Cuál es su frecuencia de rotación?","options":["18 Hz","30 Hz","60 Hz","1800 Hz"],"correct":1,"explanation":"La frecuencia de rotación es fₑ = n/60. Por tanto, 1800/60 = 30 Hz."},
+    {"title":"Región de aislamiento","question":"Para el modelo ideal estudiado, r = fₑ/fₙ. ¿Qué condición marca el comienzo de la región ideal de aislamiento mecánico?","options":["r = 0","r = 1","r > √2","r < 1"],"correct":2,"explanation":"En torno a r = 1 está la resonancia. En el modelo ideal, la región de aislamiento comienza para r > √2; que fₑ sea mayor que fₙ no basta por sí solo."},
+    {"title":"Transmisibilidad","question":"Si T_F > 1, ¿qué significa dentro del modelo mecánico?","options":["Existe amplificación de la fuerza transmitida.","Existe aislamiento perfecto.","El nivel acústico disminuye exactamente T_F dB.","No existe vibración."],"correct":0,"explanation":"T_F > 1 significa que la fuerza transmitida está amplificada respecto de la excitación de referencia. T_F no es directamente una reducción acústica en dB."},
+    {"title":"Selección de aislador","question":"¿Cuál es la forma técnicamente correcta de seleccionar un aislador?","options":["Bomba = goma; ventilador = resorte.","Considerarlo solamente por el peso total.","Considerar frecuencia de excitación, masa, carga por apoyo, rigidez/deflexión, frecuencia natural, estabilidad y condiciones de instalación.","Elegir siempre el más blando."],"correct":2,"explanation":"La selección exige verificar conjuntamente excitación, carga real por apoyo, propiedades dinámicas, estabilidad y condiciones constructivas; no basta el tipo de equipo."},
+    {"title":"Ventilador","question":"Un ventilador transmite vibración por su base y además ruido a través del ducto. ¿Unos buenos aisladores bajo el ventilador resuelven necesariamente ambos problemas?","options":["Sí.","No."],"correct":1,"explanation":"Los aisladores actúan sobre el camino mecánico de la base. El ruido propagado por el ducto requiere medidas específicas para ese camino."},
+    {"title":"Silenciador","question":"¿Sobre qué problema actúa principalmente un silenciador de ducto?","options":["Sobre la propagación acústica a través del ducto.","Sobre cualquier vibración transmitida por la base de la máquina.","Sobre la frecuencia natural de un resorte.","Sobre la masa de la losa."],"correct":0,"explanation":"El silenciador se emplea para reducir la propagación acústica por el sistema de ductos; no sustituye el control de vibración de la base."},
+    {"title":"Absorción en recinto técnico","question":"Una sala de máquinas presenta alta reverberación. Instalar material absorbente puede:","options":["reducir el campo reverberante del recinto.","eliminar automáticamente la vibración estructural.","corregir la cavitación.","sustituir cualquier aislador."],"correct":0,"explanation":"La absorción puede reducir reflexiones y campo reverberante, pero no corrige por sí sola mecanismos de vibración estructural o cavitación."},
+    {"title":"Estrategia combinada","question":"Una bomba presenta simultáneamente cavitación, transmisión por la base y tuberías rígidas. ¿Cuál es la estrategia más correcta?","options":["Utilizar solamente un resorte.","Aplicar una combinación de medidas sobre cada mecanismo.","Instalar solamente absorción en el recinto receptor.","No intervenir porque existen varios mecanismos."],"correct":1,"explanation":"Deben combinarse medidas sobre la fuente, el camino estructural y las conexiones, atendiendo cada mecanismo identificado."},
+    {"title":"Enfoque profesional","question":"¿Cuál resume mejor el enfoque del laboratorio?","options":["Siempre debe seleccionarse la solución con menor frecuencia natural.","Todo problema de instalaciones se resuelve mediante aisladores.","Deben identificarse fuente, mecanismo y caminos antes de seleccionar una combinación de medidas.","Si existe ruido, debe añadirse absorbente."],"correct":2,"explanation":"El enfoque profesional parte del diagnóstico: fuente → mecanismo → camino → medida → verificación."},
+]
+
+
+def _c2l1_stage9_submission():
+    user_key=st.session_state.get("user_key")
+    if not user_key:
+        return None
+    rows=_remote_rows("responses",class_id="clase-03-impacto-instalaciones-lab-1",user_key=user_key) or []
+    row=next((r for r in rows if int(r.get("stage") or -1)==9 and r.get("question_key")=="final_comprehension"),None)
+    if not row:
+        return None
+    payload=row.get("answer") or {}
+    if isinstance(payload,str):
+        try: payload=json.loads(payload)
+        except Exception: payload={}
+    return {"row":row,"payload":payload if isinstance(payload,dict) else {}}
+
+
+def _c2l1_finish_stage9(reason="submitted"):
+    total=len(_C2L1_STAGE9_QUESTIONS)
+    answers={str(i):st.session_state.get(f"e9_q{i}") for i in range(total)}
+    score=sum(4 for i,item in enumerate(_C2L1_STAGE9_QUESTIONS)
+              if answers.get(str(i))==item["options"][item["correct"]])
+    payload={"answers":answers,"reason":reason,"finished_at":_now(),"question_count":total,"points_each":4}
+    _save_formative(
+        9,"final_comprehension","Etapa 9 · Preguntas de comprensión",
+        json.dumps(payload,ensure_ascii=False),
+        "Correcta" if score>=60 else "Incorrecta",
+        f"Resultado automático: {score}/100 puntos.",score=score,max_score=100,
+        correct_answer="Pauta automática de las 25 preguntas disponible después del cierre.",
+    )
+    st.session_state["e9_submitted"]=True
+    st.session_state["e9_score"]=score
+    st.session_state["e9_saved_answers"]=answers
+    save_user_progress()
+
+
+def _c2l1_stage9_teacher_view():
+    st.info("Vista docente: pauta y resultados de la Etapa 9. La evaluación mantiene 4 puntos por pregunta y la escala 1,0–7,0 con exigencia de 60 %.")
+    for i,item in enumerate(_C2L1_STAGE9_QUESTIONS):
+        correct=item["options"][item["correct"]]
+        with st.expander(f"Pregunta {i+1} · {item['title']}",expanded=i==0):
+            st.markdown(f"**{item['question']}**")
+            for j,opt in enumerate(item["options"]):
+                st.write(("✅ " if j==item["correct"] else "○ ")+f"{chr(65+j)}. {opt}")
+            st.success(f"Respuesta correcta: {correct}")
+            st.info(item["explanation"])
+    client=_supabase()
+    if client is None:
+        return
+    try:
+        raw=(client.table("responses").select("*,users(display_name,email)")
+             .eq("class_id","clase-03-impacto-instalaciones-lab-1").eq("stage",9)
+             .eq("question_key","final_comprehension").order("updated_at",desc=True).execute().data or [])
+    except Exception as exc:
+        st.warning(f"No fue posible cargar resultados: {exc}")
+        return
+    if not raw:
+        st.caption("Todavía no hay evaluaciones enviadas.")
+        return
+    st.markdown("### Respuestas de alumnos y rúbrica")
+    def sname(row):
+        u=row.get("users") or {}; return u.get("display_name") or row.get("user_key","Alumno")
+    ix=st.selectbox("Alumno evaluado",range(len(raw)),format_func=lambda k:f"{sname(raw[k])} · {float(raw[k].get('auto_score') or 0):g}/100",key="c2l1_e9_teacher_student")
+    row=raw[ix]; payload=row.get("answer") or {}
+    if isinstance(payload,str):
+        try: payload=json.loads(payload)
+        except Exception: payload={}
+    answers=payload.get("answers",{}) if isinstance(payload,dict) else {}
+    automatic=[]
+    for i,item in enumerate(_C2L1_STAGE9_QUESTIONS):
+        chosen=answers.get(str(i)); correct=item["options"][item["correct"]]
+        automatic.append(4.0 if chosen==correct else 0.0)
+    saved_rubric=payload.get("rubric_scores",[]) if isinstance(payload,dict) else []
+    awarded=[]
+    for i,item in enumerate(_C2L1_STAGE9_QUESTIONS):
+        chosen=answers.get(str(i)); correct=item["options"][item["correct"]]
+        with st.expander(f"{i+1}. {item['title']} · {'Correcta' if chosen==correct else 'Incorrecta'} · {automatic[i]:g}/4"):
+            st.write(f"**Respuesta del alumno:** {chosen or 'Sin respuesta'}")
+            st.success(f"**Respuesta correcta:** {correct}")
+            st.info(item["explanation"])
+            default=float(saved_rubric[i]) if i<len(saved_rubric) else automatic[i]
+            awarded.append(st.number_input("Puntaje otorgado",0.0,4.0,default,0.5,key=f"c2l1_e9_rubric_{row['id']}_{i}"))
+    total=float(sum(awarded)); auto=float(sum(automatic))
+    note=st.text_area("Observación general para el alumno",value=row.get("teacher_note") or "",key=f"c2l1_e9_note_{row['id']}")
+    c1,c2,c3,c4=st.columns(4)
+    c1.metric("Puntaje automático",f"{auto:g}/100"); c2.metric("Nota automática",f"{_grade_from_percent(auto):.1f}")
+    c3.metric("Puntaje ajustado",f"{total:g}/100"); c4.metric("Nota ajustada",f"{_grade_from_percent(total):.1f}")
+    if st.button("Guardar rúbrica docente",type="primary",use_container_width=True,key=f"c2l1_e9_save_{row['id']}"):
+        updated=dict(payload); updated["rubric_scores"]=awarded
+        client.table("responses").update({"answer":updated,"teacher_level":"Correcta" if total>=60 else "Incorrecta","teacher_score":total,"teacher_note":note,"status":"reviewed","updated_at":_now()}).eq("id",row["id"]).execute()
+        st.success("Rúbrica y observación docente guardadas.")
+
+
+def _render_course2_lab1_stage9(lab, saved):
+    header("ETAPA 9 · LABORATORIO 1","PREGUNTAS DE COMPRENSIÓN","COMPRUEBA LO QUE HAS APRENDIDO")
+    st.write("Antes de resolver el desafío integrador final, revisaremos los conceptos fundamentales del laboratorio. Estas preguntas no buscan solamente recordar definiciones o fórmulas: deberás interpretar fenómenos, resultados, modelos y decisiones de control acústico.")
+    st.caption("25 preguntas · 4 puntos por pregunta · 100 puntos totales · exigencia de aprobación: 60 % · misma escala de notas del Diplomado.")
+    if st.session_state.get("role")=="Docente":
+        _c2l1_stage9_teacher_view(); return
+    remote=_c2l1_stage9_submission()
+    submitted=bool(remote or st.session_state.get("e9_submitted"))
+    if submitted:
+        payload=(remote or {}).get("payload",{})
+        row=(remote or {}).get("row",{})
+        answers=payload.get("answers",{}) or st.session_state.get("e9_saved_answers",{})
+        score=float(row.get("teacher_score") if row and row.get("teacher_score") is not None else (row.get("auto_score") if row else st.session_state.get("e9_score",0)) or 0)
+        correct=sum(answers.get(str(i))==q["options"][q["correct"]] for i,q in enumerate(_C2L1_STAGE9_QUESTIONS))
+        pct=score
+        grade=_grade_from_percent(pct)
+        st.success(f"Evaluación finalizada · {correct}/25 respuestas correctas · {score:g}/100 puntos · {pct:.0f}% · Nota {grade:.1f}")
+        st.caption("El intento está cerrado. Tus respuestas permanecen disponibles para revisión.")
+        for i,item in enumerate(_C2L1_STAGE9_QUESTIONS):
+            chosen=answers.get(str(i)); correct_opt=item["options"][item["correct"]]
+            with st.expander(f"Pregunta {i+1} · {item['title']}",expanded=i==0):
+                st.markdown(f"**{item['question']}**"); st.write(f"Tu respuesta: {chosen or 'Sin respuesta'}")
+                if chosen==correct_opt: st.success("✓ CORRECTO")
+                else: st.error(f"✗ REVISA EL CONCEPTO · Respuesta correcta: {correct_opt}")
+                st.info(item["explanation"])
+        st.markdown("### YA CONOCES LAS PIEZAS DEL PROBLEMA. AHORA DEBES CONECTARLAS.")
+        st.markdown("**SIGUIENTE: ETAPA 10 · DESAFÍO DE INTEGRACIÓN**")
+        st.write("En la siguiente etapa deberás enfrentarte a una situación de ingeniería en la que no se indicará directamente qué ecuación o medida utilizar. Deberás identificar el fenómeno, interpretar los datos y justificar una decisión técnica.")
+        return
+    st.info("Selecciona una alternativa y pulsa COMPROBAR. La respuesta y su retroalimentación quedarán visibles. El estado se conserva con la arquitectura de progreso existente.")
+    for i,item in enumerate(_C2L1_STAGE9_QUESTIONS):
+        if i==13:
+            st.markdown("---"); st.markdown("### De pisos a instalaciones")
+            st.info("LOS PRINCIPIOS DE FUERZA, VIBRACIÓN, DESACOPLAMIENTO Y CAMINOS PARALELOS TAMBIÉN APARECEN EN LAS INSTALACIONES DEL EDIFICIO.")
+        st.markdown(f'<div class="question-box"><div class="question-label">PREGUNTA {i+1} DE 25 · 4 PUNTOS</div><div class="question-text">{item["question"]}</div></div>',unsafe_allow_html=True)
+        checked=bool(st.session_state.get(f"e9_checked_{i}"))
+        choice=st.radio("Selecciona una alternativa",item["options"],index=None,key=f"e9_q{i}",label_visibility="collapsed",disabled=checked)
+        if not checked:
+            if st.button("COMPROBAR",key=f"e9_check_{i}",use_container_width=True):
+                if choice is None: st.warning("Selecciona una alternativa antes de comprobar.")
+                else:
+                    st.session_state[f"e9_checked_{i}"]=True; save_user_progress(); st.rerun()
+        else:
+            correct_opt=item["options"][item["correct"]]
+            if st.session_state.get(f"e9_q{i}")==correct_opt: st.success("✓ CORRECTO")
+            else: st.error("✗ REVISA EL CONCEPTO")
+            st.info(item["explanation"])
+            if i==7: st.latex(r"\Delta L_n=\Delta L_n(f)")
+            if i==9: st.latex(r"L_{n,\mathrm{final}}(f)=L_{n,0}(f)-\Delta L_n(f)"); st.write("69 − 22 = 47 dB")
+            if i==16: st.latex(r"f_e=\frac{n}{60}=\frac{1800}{60}=30\ \mathrm{Hz}")
+            if i==23: st.markdown("**CONTROL EN FUENTE + CONTROL ESTRUCTURAL + CONTROL DE CONEXIONES**")
+            if i==24: st.markdown("**DIAGNÓSTICO → MECANISMO → CAMINO → MEDIDA → VERIFICACIÓN**")
+    answered=sum(st.session_state.get(f"e9_q{i}") is not None for i in range(25))
+    checked=sum(bool(st.session_state.get(f"e9_checked_{i}")) for i in range(25))
+    st.progress(checked/25); st.caption(f"{checked} de 25 preguntas comprobadas · {answered} respuestas seleccionadas.")
+    if st.button("Enviar evaluación definitiva",type="primary",use_container_width=True,key="e9_submit_button"):
+        if checked<25:
+            st.warning(f"Aún faltan {25-checked} preguntas por comprobar.")
+            st.session_state["e9_confirm_incomplete"]=True
+        else:
+            _c2l1_finish_stage9("submitted"); st.rerun()
+    if st.session_state.get("e9_confirm_incomplete") and checked<25:
+        if st.button("Confirmar envío con respuestas pendientes",key="e9_submit_incomplete",use_container_width=True):
+            _c2l1_finish_stage9("submitted_incomplete"); st.rerun()
+
 def future_lab_view_impl(lab):
     """Renderer de los laboratorios posteriores manteniendo la navegación institucional."""
     class_id=lab["id"]
@@ -5698,6 +5890,9 @@ def future_lab_view_impl(lab):
         if selected == 8:
             _render_course2_lab1_stage8(lab, saved)
             return
+        if selected == 9:
+            _render_course2_lab1_stage9(lab, saved)
+            return
 
     title,objective,concept,activity=lab["stages"][selected]
     stage_minutes=20 if selected not in (9,10) else 35
@@ -5804,6 +5999,12 @@ def future_projection_stage_impl(lab, stage):
             return
         if stage == 7:
             _render_course2_lab1_stage7(lab, {})
+            return
+        if stage == 8:
+            _render_course2_lab1_stage8(lab, {})
+            return
+        if stage == 9:
+            _render_course2_lab1_stage9(lab, {})
             return
 
     title, objective, concept, activity = lab["stages"][stage]
