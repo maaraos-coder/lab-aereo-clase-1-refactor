@@ -4102,6 +4102,33 @@ def _render_course2_lab1_stage7(lab, saved):
     # Shared numerical inputs/functions: reuse Stage 5 and Stage 6 logic.
     # ------------------------------------------------------------------
     bands = np.asarray(BANDS, dtype=float)
+    band_x = np.arange(len(bands), dtype=float)
+
+    def _band_labels():
+        labels = []
+        for f in bands:
+            if f >= 1000:
+                k = f / 1000.0
+                labels.append(f"{k:g}k")
+            else:
+                labels.append(f"{int(round(f))}")
+        return labels
+
+    def _format_band_axis(ax):
+        ax.set_xticks(band_x)
+        ax.set_xticklabels(_band_labels(), rotation=45, ha="right")
+        ax.set_xlabel("Bandas de frecuencia [Hz]")
+        ax.grid(True, axis="y", alpha=.2)
+        ax.margins(x=.02)
+
+    def _plot_band_curve(ax, values, label, marker="o"):
+        arr = np.asarray(values, dtype=float)
+        ax.plot(band_x, arr, marker=marker, label=label)
+
+    def _nearest_band_text(freq):
+        idx = int(np.argmin(np.abs(np.log(bands / float(freq)))))
+        nearest = bands[idx]
+        return f"{float(freq):.1f} Hz · banda central más cercana: {int(round(nearest))} Hz"
 
     # Same didactic R(f) subset used in Stage 5, restricted to the exact
     # bands shared with Stage 6: 125–2000 Hz in thirds of octave.
@@ -4326,33 +4353,39 @@ def _render_course2_lab1_stage7(lab, saved):
     e.metric("f₀ general",f"{main_f0_general:.1f} Hz")
 
     st.markdown("### Gráfico principal · losa base vs piso terminado")
+    st.caption(
+        "Resultados presentados en las mismas bandas centrales utilizadas por las Etapas 5 y 6. "
+        "Los segmentos solo conectan visualmente valores de bandas discretas; no representan una interpolación continua."
+    )
     show_base=st.checkbox("Mostrar LOSA BASE",True,key=f"{ns}_show_base")
     show_final=st.checkbox("Mostrar PISO TERMINADO",True,key=f"{ns}_show_final")
     fig,ax=plt.subplots()
     if show_base:
-        ax.semilogx(bands,ln0_base,marker="o",label="LOSA BASE · Lₙ,₀")
+        _plot_band_curve(ax, ln0_base, "LOSA BASE · Lₙ,₀")
     if show_final:
-        ax.semilogx(bands,final_main,marker="o",label="PISO TERMINADO · Lₙ,final")
-    ax.set_xlabel("Frecuencia [Hz]")
+        _plot_band_curve(ax, final_main, "PISO TERMINADO · Lₙ,final")
+    _format_band_axis(ax)
     ax.set_ylabel("Nivel de ruido de impacto [dB]")
-    ax.grid(True,which="both",alpha=.2)
     ax.legend()
     st.pyplot(fig,use_container_width=True)
     plt.close(fig)
 
     st.markdown("### Gráfico de mejora")
     fig,ax=plt.subplots()
-    ax.semilogx(bands,delta_main,marker="o",label="ΔLₙ(f)")
-    ax.axvline(main_f0_model,linestyle="--",label="f₀ del modelo")
-    ax.set_xlabel("Frecuencia [Hz]")
+    _plot_band_curve(ax, delta_main, "ΔLₙ(f)")
+    _format_band_axis(ax)
     ax.set_ylabel("ΔLₙ [dB]")
-    ax.grid(True,which="both",alpha=.2)
     ax.legend()
     st.pyplot(fig,use_container_width=True)
     plt.close(fig)
     st.caption(
-        "La línea de f₀ orienta la interpretación de la región resonante. "
-        "No significa que el aislamiento comience exactamente en f₀."
+        "f₀ es un parámetro físico continuo y no una banda espectral. "
+        "Por eso no se dibuja como un punto de la curva por bandas."
+    )
+    st.info(
+        "Frecuencia natural del modelo: "
+        + _nearest_band_text(main_f0_model)
+        + ". Esto solo ubica la resonancia respecto de las bandas analizadas."
     )
 
     st.markdown("### Tabla por bandas")
@@ -4418,10 +4451,9 @@ def _render_course2_lab1_stage7(lab, saved):
     fig,ax=plt.subplots()
     names=list(alternatives) if alt_sel=="COMPARAR TODAS" else [alt_sel]
     for name in names:
-        ax.semilogx(bands,alt_results[name]["final"],marker="o",label=f"{name} · Lₙ,final")
-    ax.set_xlabel("Frecuencia [Hz]")
+        _plot_band_curve(ax, alt_results[name]["final"], f"{name} · Lₙ,final")
+    _format_band_axis(ax)
     ax.set_ylabel("Lₙ,final [dB]")
-    ax.grid(True,which="both",alpha=.2)
     ax.legend()
     st.pyplot(fig,use_container_width=True)
     plt.close(fig)
@@ -4590,12 +4622,11 @@ def _render_course2_lab1_stage7(lab, saved):
     st.markdown("### RESULTADO PRINCIPAL · Lₙ,final(f)")
     fig, ax = plt.subplots()
     if omodel in ("CAPA RESILIENTE CONTINUA — CREMER", "COMPARAR"):
-        ax.semilogx(bands, ofinal_c, marker="o", label="Cremer · Lₙ,final")
+        _plot_band_curve(ax, ofinal_c, "Cremer · Lₙ,final")
     if omodel in ("APOYOS RESILIENTES DISCRETOS — VÉR", "COMPARAR"):
-        ax.semilogx(bands, ofinal_v, marker="o", label="Vér · Lₙ,final")
-    ax.set_xlabel("Frecuencia [Hz]")
+        _plot_band_curve(ax, ofinal_v, "Vér · Lₙ,final")
+    _format_band_axis(ax)
     ax.set_ylabel("Lₙ,final [dB]")
-    ax.grid(True, which="both", alpha=.2)
     ax.legend()
     st.pyplot(fig, use_container_width=True)
     plt.close(fig)
@@ -4690,11 +4721,10 @@ def _render_course2_lab1_stage7(lab, saved):
 
     st.markdown("### Comparación espectral")
     fig, ax = plt.subplots()
-    ax.semilogx(bands, ref_final, marker="o", label="Referencia · Lₙ,final")
-    ax.semilogx(bands, mod_final, marker="o", label="Modificada · Lₙ,final")
-    ax.set_xlabel("Frecuencia [Hz]")
+    _plot_band_curve(ax, ref_final, "Referencia · Lₙ,final")
+    _plot_band_curve(ax, mod_final, "Modificada · Lₙ,final")
+    _format_band_axis(ax)
     ax.set_ylabel("Lₙ,final [dB]")
-    ax.grid(True, which="both", alpha=.2)
     ax.legend()
     st.pyplot(fig, use_container_width=True)
     plt.close(fig)
