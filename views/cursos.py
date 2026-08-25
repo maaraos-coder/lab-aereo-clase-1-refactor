@@ -4561,10 +4561,10 @@ def _render_course2_lab1_stage7(lab, saved):
     # ================================================================
     # 9. EXPLORE YOUR OWN DESIGN
     # ================================================================
-    st.markdown("## 🔬 9 · Explora una solución propia")
+    st.markdown("## 🔬 9 · Diseña y predice tu piso")
     st.write(
-        "Los parámetros son entradas, pero el **resultado principal** es siempre "
-        "$L_{n,\mathrm{final}}(f)$."
+        "Construye una solución propia modificando masa y rigidez, pero recuerda que el **resultado principal** "
+        "es siempre $L_{n,\mathrm{final}}(f)$ por bandas."
     )
 
     o1, o2, o3 = st.columns(3)
@@ -4619,102 +4619,128 @@ def _render_course2_lab1_stage7(lab, saved):
     # ================================================================
     # 10. DESIGN MAP
     # ================================================================
-    st.markdown("## 🔬 10 · Mapa de diseño")
+    # ================================================================
+    # 10. CAUSE–EFFECT SENSITIVITY
+    # ================================================================
+    st.markdown("## 🔬 10 · ¿Por qué cambió el resultado?")
     st.write(
-        "El mapa muestra contornos de $f_0$ para comprender el espacio de diseño, "
-        "pero la selección acústica se revisa mediante $L_{n,\mathrm{final}}(f)$."
+        "En lugar de buscar un 'óptimo' en un mapa abstracto, aquí modificamos **una sola variable a la vez** "
+        "y observamos cómo cambia la predicción final."
     )
 
-    map_m1 = st.slider("m′₁ del punto [kg/m²]", 50, 180, 110, 5, key=f"{ns}_mapm1")
-    map_s = st.slider("s′ del punto [MN/m³]", 3.0, 40.0, 12.0, .5, key=f"{ns}_maps")
+    st.markdown("### Solución de referencia")
+    ref_m1 = 110.0
+    ref_m2 = 380.0
+    ref_s = 12.0
 
-    mgrid = np.linspace(50, 180, 60)
-    sgrid = np.linspace(3, 40, 60)
-    S, M = np.meshgrid(sgrid, mgrid)
-    MR = M * 380 / (M + 380)
-    F0 = (1/(2*np.pi)) * np.sqrt(S*1e6/MR)
+    ref_mr, ref_f0 = natural_frequency(ref_m1, ref_m2, ref_s)
+    ref_delta, ref_f0c = _delta_continuous_curve(ref_m1, ref_s)
+    ref_final = _final_curve(ln0_base, ref_delta)
 
-    fig, ax = plt.subplots()
-    cs = ax.contourf(S, M, F0, levels=14)
-    ax.axhline(120, linestyle="--", label="Límite carga")
-    ax.scatter([map_s], [map_m1])
-    ax.set_xlabel("s′ [MN/m³]")
-    ax.set_ylabel("m′₁ [kg/m²]")
-    ax.legend()
-    fig.colorbar(cs, ax=ax, label="f₀ general [Hz]")
-    st.pyplot(fig, use_container_width=True)
-    plt.close(fig)
+    c1, c2, c3 = st.columns(3)
+    c1.metric("m′₁ referencia", f"{ref_m1:.0f} kg/m²")
+    c2.metric("s′ referencia", f"{ref_s:.0f} MN/m³")
+    c3.metric("f₀ general", f"{ref_f0:.1f} Hz")
 
-    map_mr, map_f0 = natural_frequency(map_m1, 380, map_s)
-    map_delta, map_f0c = _delta_continuous_curve(map_m1, map_s)
-    map_final = _final_curve(ln0_base, map_delta)
+    change = st.radio(
+        "Selecciona una modificación",
+        [
+            "A · Aumentar masa superior: 110 → 150 kg/m²",
+            "B · Reducir rigidez dinámica: 12 → 8 MN/m³",
+            "C · Aumentar rigidez dinámica: 12 → 20 MN/m³",
+        ],
+        key=f"{ns}_cause_effect_choice",
+    )
 
-    a, b, c = st.columns(3)
-    a.metric("m′ᵣ", f"{map_mr:.1f} kg/m²")
-    b.metric("f₀ general", f"{map_f0:.1f} Hz")
-    c.metric("Carga", "NO ADMISIBLE" if map_m1 > 120 else "Admisible")
-    if map_m1 > 120:
-        st.error("NO ADMISIBLE POR CARGA EN ESTE EJERCICIO")
+    if change.startswith("A"):
+        mod_m1, mod_m2, mod_s = 150.0, 380.0, 12.0
+        changed_parameter = "m′₁"
+        interpretation = (
+            "Aumentar la masa superior incrementa la masa reducida y tiende a desplazar la resonancia hacia frecuencias menores."
+        )
+    elif change.startswith("B"):
+        mod_m1, mod_m2, mod_s = 110.0, 380.0, 8.0
+        changed_parameter = "s′"
+        interpretation = (
+            "Reducir la rigidez dinámica desplaza la resonancia hacia frecuencias menores y modifica la mejora espectral."
+        )
+    else:
+        mod_m1, mod_m2, mod_s = 110.0, 380.0, 20.0
+        changed_parameter = "s′"
+        interpretation = (
+            "Aumentar la rigidez dinámica desplaza la resonancia hacia frecuencias mayores y puede reducir la separación respecto de f₀ en algunas bandas."
+        )
 
-    st.markdown("### Resultado acústico del punto seleccionado")
-    fig, ax = plt.subplots()
-    ax.semilogx(bands, ln0_base, marker="o", label="Losa base")
-    ax.semilogx(bands, map_final, marker="o", label="Piso terminado")
-    ax.set_xlabel("Frecuencia [Hz]")
-    ax.set_ylabel("Nivel de ruido de impacto [dB]")
-    ax.grid(True, which="both", alpha=.2)
-    ax.legend()
-    st.pyplot(fig, use_container_width=True)
-    plt.close(fig)
+    mod_mr, mod_f0 = natural_frequency(mod_m1, mod_m2, mod_s)
+    mod_delta, mod_f0c = _delta_continuous_curve(mod_m1, mod_s)
+    mod_final = _final_curve(ln0_base, mod_delta)
 
+    st.markdown("### Qué cambió")
+    a, b, c, d = st.columns(4)
+    a.metric("m′₁", f"{mod_m1:.0f} kg/m²", delta=f"{mod_m1-ref_m1:+.0f}")
+    b.metric("s′", f"{mod_s:.0f} MN/m³", delta=f"{mod_s-ref_s:+.0f}")
+    c.metric("m′ᵣ", f"{mod_mr:.1f} kg/m²", delta=f"{mod_mr-ref_mr:+.1f}")
+    d.metric("f₀", f"{mod_f0:.1f} Hz", delta=f"{mod_f0-ref_f0:+.1f} Hz")
+
+    st.write(interpretation)
     st.latex(
-        r"\boxed{m'_1,s'\rightarrow m'_r,f_0\rightarrow"
-        r"\Delta L_n(f)\rightarrow L_{n,\mathrm{final}}(f)}"
+        r"\boxed{\mathrm{CAMBIO\ CONSTRUCTIVO}\rightarrow f_0"
+        r"\rightarrow\Delta L_n(f)\rightarrow L_{n,\mathrm{final}}(f)}"
     )
 
-    # ================================================================
-    # 11. ROBUSTNESS
-    # ================================================================
-    st.markdown("## 🔬 11 · ¿Qué tan robusta es la predicción?")
-    st.write(
-        "Caso base: $m'_1=110$ kg/m², $m'_2=380$ kg/m². "
-        "Comparamos $s'=10,\ 12,\ 14$ MN/m³ y observamos directamente las curvas finales."
-    )
-
+    st.markdown("### Comparación espectral")
     fig, ax = plt.subplots()
-    sensitivity_rows = []
-    for sval in [10.0, 12.0, 14.0]:
-        smr, sf0 = natural_frequency(110, 380, sval)
-        sd, sf0c = _delta_continuous_curve(110, sval)
-        sf = _final_curve(ln0_base, sd)
-        ax.semilogx(bands, sf, marker="o", label=f"s′={sval:g} MN/m³ · f₀={sf0:.1f} Hz")
-        sensitivity_rows.append({
-            "s′ [MN/m³]": sval,
-            "m′ᵣ [kg/m²]": round(smr, 1),
-            "f₀ general [Hz]": round(sf0, 1),
-        })
-
+    ax.semilogx(bands, ref_final, marker="o", label="Referencia · Lₙ,final")
+    ax.semilogx(bands, mod_final, marker="o", label="Modificada · Lₙ,final")
     ax.set_xlabel("Frecuencia [Hz]")
     ax.set_ylabel("Lₙ,final [dB]")
     ax.grid(True, which="both", alpha=.2)
     ax.legend()
     st.pyplot(fig, use_container_width=True)
     plt.close(fig)
-    st.dataframe(sensitivity_rows, use_container_width=True, hide_index=True)
 
-    st.latex(
-        r"\boxed{s'\rightarrow f_0\rightarrow\Delta L_n(f)"
-        r"\rightarrow L_{n,\mathrm{final}}(f)}"
-    )
-    st.latex(
-        r"\boxed{\mathrm{PREDICCIÓN}+\mathrm{SENSIBILIDAD}"
-        r">\mathrm{UN\ ÚNICO\ RESULTADO\ CALCULADO}}"
+    st.markdown("### ¿Dónde mejoró y dónde empeoró?")
+    compare_rows = []
+    for freq in [125, 500, 1000]:
+        idx = int(np.argmin(np.abs(np.log(bands / float(freq)))))
+        vr = ref_final[idx]
+        vm = mod_final[idx]
+        diff = np.nan
+        if np.isfinite(vr) and np.isfinite(vm):
+            diff = vm - vr
+        if np.isfinite(diff):
+            if diff < -0.05:
+                reading = "Mejora"
+            elif diff > 0.05:
+                reading = "Empeora"
+            else:
+                reading = "Prácticamente igual"
+        else:
+            reading = "Sin comparación válida"
+        compare_rows.append({
+            "Banda [Hz]": freq,
+            "Referencia Lₙ,final [dB]": None if not np.isfinite(vr) else round(float(vr), 1),
+            "Modificada Lₙ,final [dB]": None if not np.isfinite(vm) else round(float(vm), 1),
+            "Cambio [dB]": None if not np.isfinite(diff) else round(float(diff), 1),
+            "Lectura": reading,
+        })
+
+    st.dataframe(compare_rows, use_container_width=True, hide_index=True)
+
+    st.info(
+        "Un cambio de parámetro no produce necesariamente el mismo efecto en todo el espectro. "
+        "Por eso conviene analizar la curva completa y no una sola banda ni únicamente f₀."
     )
 
-    # ================================================================
-    # 12. MODEL TO REAL BUILD
-    # ================================================================
-    st.markdown("## 12 · Del modelo a la obra")
+    _mcq(
+        "cause_effect_q",
+        "Si reducimos s′ y baja f₀, ¿podemos concluir automáticamente que todas las bandas tendrán menor Lₙ,final?",
+        ["A. Sí", "B. No"],
+        1,
+        "No. Debe revisarse la respuesta espectral completa porque ΔLₙ depende de la frecuencia.",
+    )
+
+    st.markdown("## 11 · Del modelo a la obra")
     _asset("curso2_lab1_etapa7_modelo_vs_obra.webp")
     st.write(
         "Después de seleccionar una solución por su comportamiento espectral y sus restricciones, "
@@ -4749,7 +4775,7 @@ def _render_course2_lab1_stage7(lab, saved):
             r"\mathrm{sobrelosa}\rightarrow\mathrm{puente\ rígido}\rightarrow\mathrm{estructura}"
         )
         st.caption("No se aplica ninguna penalización inventada en dB.")
-    st.markdown("## 13 · ¿La predicción y la medición serán idénticas?")
+    st.markdown("## 12 · ¿La predicción y la medición serán idénticas?")
     st.write("**No necesariamente.**")
     st.write(
         "Pueden existir diferencias por simplificación del modelo, propiedades reales, amortiguamiento, "
@@ -4774,7 +4800,7 @@ def _render_course2_lab1_stage7(lab, saved):
     # ================================================================
     # 13. NO SINGLE NUMBER / BRIDGE TO LAB 2
     # ================================================================
-    st.markdown("## 14 · La Etapa 7 termina en la curva espectral")
+    st.markdown("## 13 · La Etapa 7 termina en la curva espectral")
     st.latex(r"\boxed{L_{n,\mathrm{final}}(f)}")
     st.warning(
         "No calculamos $L_{n,w}$, $L'_n,w$, $L'_{nT,w}$, $C_I$, curvas de referencia "
@@ -4789,7 +4815,7 @@ def _render_course2_lab1_stage7(lab, saved):
     # ================================================================
     # 14. INTEGRATING EXERCISE
     # ================================================================
-    st.markdown("## 15 · Ejercicio integrador")
+    st.markdown("## 14 · Ejercicio integrador")
     st.write(
         "Se entrega la curva R(f) del ejercicio, las propiedades de la losa y un tratamiento continuo "
         "con $m'_1=110$ kg/m², $m'_2=380$ kg/m² y $s'=12$ MN/m³."
@@ -4866,7 +4892,7 @@ def _render_course2_lab1_stage7(lab, saved):
     # ================================================================
     # 15. FORMATIVE QUESTIONS
     # ================================================================
-    st.markdown("## 16 · Preguntas formativas")
+    st.markdown("## 15 · Preguntas formativas")
     _mcq("q1",r"$L_{n,\mathrm{final}}(f)=L_{n,0}(f)-\Delta L_n(f)$.",["Verdadero","Falso"],0,"Correcto.",store=True)
     _mcq("q2","ΔLₙ es necesariamente igual en todas las bandas.",["Verdadero","Falso"],1,"Es función de la frecuencia.",store=True)
     _mcq("q3","La solución con menor f₀ siempre será automáticamente la mejor solución constructiva.",["Verdadero","Falso"],1,"Debe evaluarse el espectro y las restricciones.",store=True)
@@ -4878,7 +4904,7 @@ def _render_course2_lab1_stage7(lab, saved):
     # ================================================================
     # 16. FINAL MAP / CONCLUSION
     # ================================================================
-    st.markdown("## 17 · Mapa conceptual final")
+    st.markdown("## 16 · Mapa conceptual final")
     st.latex(
         r"\boxed{\mathrm{PROPIEDADES\ DE\ LA\ LOSA}\rightarrow R(f)"
         r"\rightarrow L_{n,0}(f)\rightarrow\Delta L_n(f)"
@@ -4921,7 +4947,7 @@ def _render_course2_lab1_stage7(lab, saved):
             "Masa reducida y frecuencia natural: modelo clásico masa–resorte–masa desarrollado en Etapa 6."
         )
 
-    st.markdown("## 18 · Transición a Etapa 8")
+    st.markdown("## 17 · Transición a Etapa 8")
     st.latex(
         r"\boxed{L_{n,0}(f)-\Delta L_n(f)=L_{n,\mathrm{final}}(f)}"
     )
