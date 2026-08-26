@@ -1542,7 +1542,7 @@ def _render_course2_lab1_stage1(lab, saved):
     <b>una pisada sobre una losa</b>.
 </div>
 """
-    st.markdown(bridge_html, unsafe_allow_html=True)
+    st.markdown(bridge_html.replace("\n", ""), unsafe_allow_html=True)
 
     st.caption(
         "Modelo introductorio: estas relaciones se usan aquí para comprender la cadena física "
