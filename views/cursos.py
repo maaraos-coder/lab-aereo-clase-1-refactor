@@ -1367,10 +1367,6 @@ def _render_course2_lab1_stage1(lab, saved):
         unsafe_allow_html=True,
     )
 
-    energy_gif = ASSET_DIR / "curso2_lab1_etapa1_recorrido_energia.gif"
-    if energy_gif.exists():
-        st.image(energy_gif, width="stretch")
-
     st.info(
         "Una misma fuente puede disponer de **varios caminos simultáneos**. "
         "El análisis vibroacústico consiste en seguirlos y determinar cuáles son relevantes en el receptor."
@@ -1463,10 +1459,10 @@ def _render_course2_lab1_stage1(lab, saved):
     # --------------------------------------------------------
     # 3 · DE LA VIBRACIÓN AL SONIDO
     # --------------------------------------------------------
-    st.markdown("### 3 · De la vibración al sonido")
+    st.markdown("### 3 · De la vibración al sonido · ruido estructural")
     st.write(
-        "Hasta aquí hemos seguido la energía por el edificio. Ahora observa un paso fundamental: "
-        "**una superficie que vibra puede poner en movimiento el aire que la rodea y generar sonido**."
+        "En el ruido estructural, la energía llega primero a la estructura. Observa cómo una fuerza hace vibrar "
+        "un elemento constructivo y cómo esa vibración puede terminar generando sonido en el recinto receptor."
     )
 
     radiation_gif = ASSET_DIR / "curso2_lab1_etapa1_de_vibracion_a_sonido.gif"
@@ -1478,22 +1474,22 @@ def _render_course2_lab1_stage1(lab, saved):
         <div style="border:1px solid rgba(79,70,229,.16);border-radius:16px;padding:16px 18px;
                     background:linear-gradient(90deg,rgba(79,70,229,.06),rgba(14,165,233,.05));
                     margin:.6rem 0 1rem 0;line-height:1.55;color:#334155;">
-            <b>Qué debes observar:</b><br>
-            1. La superficie se mueve.<br>
-            2. Ese movimiento empuja y libera el aire cercano.<br>
-            3. La perturbación se aleja de la superficie y puede escucharse como sonido.
+            <b>Sigue el fenómeno:</b><br>
+            1. Una fuerza hace vibrar la estructura.<br>
+            2. La vibración llega a una superficie del recinto receptor.<br>
+            3. Esa superficie mueve el aire y genera sonido.
         </div>
         """,
         unsafe_allow_html=True,
     )
 
     st.info(
-        "**Idea clave:** no necesitas todavía una ecuación para comprender este fenómeno. "
-        "Primero identifica la cadena física: **superficie que vibra → aire que se mueve → sonido**."
+        "**Idea clave:** en el ruido estructural, la vibración viaja por el edificio antes de convertirse en sonido: "
+        "**fuerza → vibración de la estructura → movimiento del aire → sonido**."
     )
 
     q_rad = st.radio(
-        "¿Qué debe ocurrir para que la vibración de una superficie pueda escucharse como sonido en el aire?",
+        "En un caso de ruido estructural, ¿qué debe ocurrir para que la vibración termine escuchándose como sonido en el recinto receptor?",
         [
             "La superficie debe poner en movimiento el aire que la rodea.",
             "La superficie debe dejar de vibrar completamente.",
