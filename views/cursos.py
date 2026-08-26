@@ -1270,16 +1270,31 @@ def _render_course2_lab1_stage1(lab, saved):
         """
     )
 
-    st.markdown("### Antes de comenzar")
-    st.info(
-        "En acústica de edificios no basta con identificar dónde se escucha el ruido. "
-        "Para controlarlo necesitamos descubrir **dónde se genera la energía, cómo entra al sistema, "
-        "por dónde se propaga y qué elemento termina radiándola hacia el receptor**."
-    )
-    st.latex(
-        r"\mathrm{FUENTE \rightarrow EXCITACIÓN \rightarrow RESPUESTA \rightarrow PROPAGACIÓN "
-        r"\rightarrow RADIACIÓN \rightarrow RECEPTOR}"
-    )
+    # Tarjeta de apertura: prepara la observación sin repetir el diagrama
+    # completo que se desarrolla inmediatamente después en “Sigue la energía”.
+    with st.container(border=True):
+        st.markdown("### 👀 Antes de comenzar")
+        st.markdown(
+            "En esta etapa vas a **seguir el recorrido de la energía vibroacústica** "
+            "desde el lugar donde se genera hasta el recinto donde finalmente se percibe. "
+            "Antes de entrar al modelo completo, quédate con estas tres preguntas."
+        )
+
+        intro_c1, intro_c2, intro_c3 = st.columns(3)
+        with intro_c1:
+            st.markdown("#### ⚡ Fuente")
+            st.caption("¿Dónde se genera la energía que pone en marcha el fenómeno?")
+        with intro_c2:
+            st.markdown("#### 🧭 Camino")
+            st.caption("¿Por qué elementos del edificio puede propagarse esa energía?")
+        with intro_c3:
+            st.markdown("#### 👂 Receptor")
+            st.caption("¿En qué recinto y de qué forma termina percibiéndose el ruido?")
+
+        st.caption(
+            "Idea guía · Para diagnosticar bien, no basta con reconocer la fuente: "
+            "hay que reconstruir el camino completo hasta el receptor."
+        )
 
     # --------------------------------------------------------
     # 0 · OBSERVAR
@@ -1311,28 +1326,30 @@ def _render_course2_lab1_stage1(lab, saved):
 
     with c_air:
         with st.container(border=True):
-            st.markdown("#### Ruido aéreo")
-            st.latex(r"p \rightarrow v_n \rightarrow p")
+            st.markdown("#### 🌬️ Ruido aéreo")
+            air_path = ASSET_DIR / "curso2_lab1_etapa1_ruido_aereo.webp"
+            if air_path.exists():
+                st.image(air_path, width="stretch")
+            st.markdown("### **p → v → p**")
             st.write(
-                "La fuente genera primero fluctuaciones de presión en el aire. "
-                "Ese campo puede excitar un elemento constructivo, hacerlo vibrar y producir una nueva radiación al otro lado."
+                "El sonido comienza como **presión acústica (p)** en el aire. Al alcanzar un cerramiento, "
+                "esa presión puede hacerlo vibrar **(v)** y la superficie vibrante vuelve a generar presión acústica **(p)** en el recinto receptor."
             )
-            st.caption("**Primero el aire.**")
+            st.info("**Secuencia conceptual:** presión en el aire → vibración del elemento → presión sonora en el receptor.")
 
     with c_struct:
         with st.container(border=True):
-            st.markdown("#### Ruido estructural")
-            st.latex(r"F(t) \rightarrow v_n(t) \rightarrow p(t)")
+            st.markdown("#### 🧱 Ruido estructural")
+            struct_path = ASSET_DIR / "curso2_lab1_etapa1_ruido_estructural.webp"
+            if struct_path.exists():
+                st.image(struct_path, width="stretch")
+            st.markdown("### **F → v → p**")
             st.write(
-                "La fuente introduce primero una fuerza o velocidad mecánica en la estructura. "
-                "La vibración se propaga por elementos sólidos y una superficie puede posteriormente radiar sonido al aire."
+                "Una acción mecánica introduce una **fuerza (F)** directamente en la estructura. "
+                "Esa fuerza produce **vibración (v)** que se propaga por los elementos sólidos y, al llegar a una superficie capaz de radiar, "
+                "se transforma en **presión acústica (p)** en el recinto receptor."
             )
-            st.caption("**Primero la estructura.**")
-
-    st.caption(
-        "Aquí \(v_n\) representa la **componente normal** del movimiento de la superficie, "
-        "la que desplaza directamente el aire adyacente."
-    )
+            st.info("**Secuencia conceptual:** fuerza sobre la estructura → vibración estructural → presión sonora en el receptor.")
 
     # --------------------------------------------------------
     # 3 · CUÁNDO VIBRAR PRODUCE SONIDO
