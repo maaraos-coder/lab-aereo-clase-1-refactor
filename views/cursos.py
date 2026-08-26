@@ -5613,7 +5613,8 @@ def _c2l1_stage9_teacher_view():
     st.info("Vista docente: pauta y resultados de la Etapa 9. La evaluación mantiene 4 puntos por pregunta y la escala 1,0–7,0 con exigencia de 60 %.")
     for i,item in enumerate(_C2L1_STAGE9_QUESTIONS):
         correct=item["options"][item["correct"]]
-        with st.expander(f"Pregunta {i+1} · {item['title']}",expanded=i==0):
+        with st.container(border=True):
+            st.markdown(f"#### Pregunta {i+1} · {item['title']}")
             st.markdown(f"**{item['question']}**")
             for j,opt in enumerate(item["options"]):
                 st.write(("✅ " if j==item["correct"] else "○ ")+f"{chr(65+j)}. {opt}")
@@ -5649,12 +5650,21 @@ def _c2l1_stage9_teacher_view():
     awarded=[]
     for i,item in enumerate(_C2L1_STAGE9_QUESTIONS):
         chosen=answers.get(str(i)); correct=item["options"][item["correct"]]
-        with st.expander(f"{i+1}. {item['title']} · {'Correcta' if chosen==correct else 'Incorrecta'} · {automatic[i]:g}/4"):
+        with st.container(border=True):
+            st.markdown(
+                f"#### {i+1}. {item['title']} · "
+                f"{'Correcta' if chosen==correct else 'Incorrecta'} · {automatic[i]:g}/4"
+            )
             st.write(f"**Respuesta del alumno:** {chosen or 'Sin respuesta'}")
             st.success(f"**Respuesta correcta:** {correct}")
             st.info(item["explanation"])
             default=float(saved_rubric[i]) if i<len(saved_rubric) else automatic[i]
-            awarded.append(st.number_input("Puntaje otorgado",0.0,4.0,default,0.5,key=f"c2l1_e9_rubric_{row['id']}_{i}"))
+            awarded.append(
+                st.number_input(
+                    "Puntaje otorgado",0.0,4.0,default,0.5,
+                    key=f"c2l1_e9_rubric_{row['id']}_{i}"
+                )
+            )
     total=float(sum(awarded)); auto=float(sum(automatic))
     note=st.text_area("Observación general para el alumno",value=row.get("teacher_note") or "",key=f"c2l1_e9_note_{row['id']}")
     c1,c2,c3,c4=st.columns(4)
