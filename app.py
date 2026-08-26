@@ -1402,6 +1402,9 @@ def _save_future_state(class_id, state):
 def future_lab_view(lab):
     return _course_views.run_view("future_lab_view", globals(), lab)
 
+def future_print_view(lab):
+    return _course_views.run_view("future_print_view", globals(), lab)
+
 def calculation_notebook():
     if not ENABLE_CALCULATION_NOTEBOOK:
         return
@@ -1463,6 +1466,11 @@ if st.query_params.get("formulas")=="1":
 if st.query_params.get("print_lab") in ("1", "2"):
     print_lab_number = int(st.query_params["print_lab"])
     render_print_view(globals(), print_lab_number)
+    st.stop()
+
+future_print_id = st.query_params.get("print_future_lab")
+if future_print_id in FUTURE_LABS:
+    future_print_view(FUTURE_LABS[future_print_id])
     st.stop()
 
 st.session_state.pop("projection_mode",None)
