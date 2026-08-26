@@ -1270,32 +1270,6 @@ def _render_course2_lab1_stage1(lab, saved):
         """
     )
 
-    # Tarjeta de apertura: prepara la observación sin repetir el diagrama
-    # completo que se desarrolla inmediatamente después en “Sigue la energía”.
-    with st.container(border=True):
-        st.markdown("### 👀 Antes de comenzar")
-        st.markdown(
-            "En esta etapa vas a **seguir el recorrido de la energía vibroacústica** "
-            "desde el lugar donde se genera hasta el recinto donde finalmente se percibe. "
-            "Antes de entrar al modelo completo, quédate con estas tres preguntas."
-        )
-
-        intro_c1, intro_c2, intro_c3 = st.columns(3)
-        with intro_c1:
-            st.markdown("#### ⚡ Fuente")
-            st.caption("¿Dónde se genera la energía que pone en marcha el fenómeno?")
-        with intro_c2:
-            st.markdown("#### 🧭 Camino")
-            st.caption("¿Por qué elementos del edificio puede propagarse esa energía?")
-        with intro_c3:
-            st.markdown("#### 👂 Receptor")
-            st.caption("¿En qué recinto y de qué forma termina percibiéndose el ruido?")
-
-        st.caption(
-            "Idea guía · Para diagnosticar bien, no basta con reconocer la fuente: "
-            "hay que reconstruir el camino completo hasta el receptor."
-        )
-
     # --------------------------------------------------------
     # 0 · OBSERVAR
     # --------------------------------------------------------
@@ -1306,13 +1280,93 @@ def _render_course2_lab1_stage1(lab, saved):
     # --------------------------------------------------------
     st.markdown("### 1 · Sigue la energía")
     st.write(
-        "Una vez identificada la fuente, el diagnóstico no consiste en volver a preguntar qué produce ruido, "
-        "sino en seguir **cómo la energía sale de la fuente, entra al edificio, cambia de medio y llega al receptor**."
+        "Una vez identificada la fuente, el diagnóstico consiste en seguir **cómo la energía entra al edificio, "
+        "se transmite y finalmente llega al receptor**."
     )
-    st.latex(
-        r"\boxed{\mathrm{FUENTE \rightarrow EXCITACIÓN \rightarrow RESPUESTA \rightarrow "
-        r"PROPAGACIÓN \rightarrow RADIACIÓN \rightarrow RECEPTOR}}"
+
+    st.markdown(
+        """
+        <style>
+        .energy-flow {
+            display:grid;
+            grid-template-columns:repeat(6,minmax(0,1fr));
+            gap:.55rem;
+            align-items:stretch;
+            margin:.9rem 0 1rem 0;
+        }
+        .energy-step {
+            position:relative;
+            border:1px solid rgba(99,102,241,.20);
+            border-radius:16px;
+            background:linear-gradient(180deg,rgba(255,255,255,.98),rgba(248,250,252,.96));
+            padding:.9rem .75rem .8rem;
+            text-align:center;
+            min-height:112px;
+            box-shadow:0 5px 18px rgba(15,23,42,.06);
+        }
+        .energy-step:not(:last-child)::after {
+            content:'→';
+            position:absolute;
+            right:-.46rem;
+            top:50%;
+            transform:translate(50%,-50%);
+            z-index:3;
+            width:1.55rem;
+            height:1.55rem;
+            border-radius:50%;
+            display:flex;
+            align-items:center;
+            justify-content:center;
+            background:#fff;
+            color:#4f46e5;
+            font-weight:800;
+            box-shadow:0 2px 8px rgba(15,23,42,.10);
+        }
+        .energy-kicker {
+            font-size:.72rem;
+            font-weight:800;
+            letter-spacing:.05em;
+            color:#4f46e5;
+            margin-bottom:.35rem;
+        }
+        .energy-label {
+            font-size:.98rem;
+            font-weight:800;
+            color:#111827;
+            line-height:1.12;
+        }
+        .energy-sub {
+            margin-top:.38rem;
+            font-size:.78rem;
+            line-height:1.25;
+            color:#64748b;
+        }
+        .energy-note {
+            border-radius:14px;
+            padding:.78rem 1rem;
+            background:linear-gradient(90deg,rgba(79,70,229,.08),rgba(14,165,233,.07));
+            border:1px solid rgba(79,70,229,.14);
+            color:#334155;
+            margin-bottom:.8rem;
+        }
+        @media (max-width: 900px) {
+            .energy-flow {grid-template-columns:repeat(2,minmax(0,1fr));}
+            .energy-step::after {display:none !important;}
+        }
+        </style>
+        <div class="energy-flow">
+          <div class="energy-step"><div class="energy-kicker">01</div><div class="energy-label">FUENTE</div><div class="energy-sub">Equipo, impacto o actividad</div></div>
+          <div class="energy-step"><div class="energy-kicker">02</div><div class="energy-label">EXCITACIÓN</div><div class="energy-sub">Fuerza o presión que entrega energía</div></div>
+          <div class="energy-step"><div class="energy-kicker">03</div><div class="energy-label">RESPUESTA</div><div class="energy-sub">El elemento entra en vibración</div></div>
+          <div class="energy-step"><div class="energy-kicker">04</div><div class="energy-label">PROPAGACIÓN</div><div class="energy-sub">La energía recorre estructura o aire</div></div>
+          <div class="energy-step"><div class="energy-kicker">05</div><div class="energy-label">RADIACIÓN</div><div class="energy-sub">Una superficie vibrante genera sonido</div></div>
+          <div class="energy-step"><div class="energy-kicker">06</div><div class="energy-label">RECEPTOR</div><div class="energy-sub">Recinto o persona donde se percibe</div></div>
+        </div>
+        <div class="energy-note"><b>Idea de lectura:</b> no basta con reconocer la fuente; hay que reconstruir el camino completo de la energía hasta el receptor.</div>
+        """,
+        unsafe_allow_html=True,
     )
+
     st.info(
         "Una misma fuente puede disponer de **varios caminos simultáneos**. "
         "El análisis vibroacústico consiste en seguirlos y determinar cuáles son relevantes en el receptor."
@@ -1322,34 +1376,85 @@ def _render_course2_lab1_stage1(lab, saved):
     # 2 · DOS FORMAS DE ENTRAR AL SISTEMA
     # --------------------------------------------------------
     st.markdown("### 2 · Dos formas de entrar al sistema")
-    c_air, c_struct = st.columns(2)
+    st.caption("Compara el camino dominante de la energía antes de entrar en modelos y ecuaciones.")
+
+    st.markdown(
+        """
+        <style>
+        .path-card-head {
+            font-size:1.16rem; font-weight:800; color:#111827; margin:.15rem 0 .55rem 0;
+        }
+        .path-card-body {
+            border:1px solid rgba(99,102,241,.16); border-radius:16px; padding:.85rem .95rem .9rem;
+            background:linear-gradient(180deg,rgba(255,255,255,.98),rgba(248,250,252,.97));
+            box-shadow:0 5px 16px rgba(15,23,42,.05); margin-top:.55rem; min-height:228px;
+        }
+        .path-sequence {
+            display:flex; align-items:center; justify-content:center; gap:.5rem;
+            margin:.35rem 0 .7rem; flex-wrap:wrap;
+        }
+        .path-node {
+            min-width:58px; border-radius:12px; padding:.55rem .65rem; text-align:center;
+            background:#fff; border:1px solid rgba(79,70,229,.18); box-shadow:0 2px 8px rgba(15,23,42,.05);
+        }
+        .path-symbol {font-size:1.35rem;font-weight:850;color:#4f46e5;line-height:1;}
+        .path-name {font-size:.70rem;color:#64748b;margin-top:.25rem;line-height:1.1;}
+        .path-arrow {font-size:1.25rem;font-weight:800;color:#94a3b8;}
+        .path-explain {font-size:.91rem;line-height:1.45;color:#334155;margin:.2rem 0 .65rem;}
+        .path-dominant {
+            display:inline-block; border-radius:999px; padding:.34rem .7rem; font-size:.78rem; font-weight:750;
+            background:rgba(79,70,229,.08); color:#4338ca; border:1px solid rgba(79,70,229,.14);
+        }
+        </style>
+        """,
+        unsafe_allow_html=True,
+    )
+
+    c_air, c_struct = st.columns(2, gap="large")
 
     with c_air:
-        with st.container(border=True):
-            st.markdown("#### 🌬️ Ruido aéreo")
-            air_path = ASSET_DIR / "curso2_lab1_etapa1_ruido_aereo.webp"
-            if air_path.exists():
-                st.image(air_path, width="stretch")
-            st.markdown("### **p → v → p**")
-            st.write(
-                "El sonido comienza como **presión acústica (p)** en el aire. Al alcanzar un cerramiento, "
-                "esa presión puede hacerlo vibrar **(v)** y la superficie vibrante vuelve a generar presión acústica **(p)** en el recinto receptor."
-            )
-            st.info("**Secuencia conceptual:** presión en el aire → vibración del elemento → presión sonora en el receptor.")
+        st.markdown('<div class="path-card-head">Ruido aéreo</div>', unsafe_allow_html=True)
+        air_path = ASSET_DIR / "curso2_lab1_etapa1_ruido_aereo.webp"
+        if air_path.exists():
+            st.image(air_path, width="stretch")
+        st.markdown(
+            """
+            <div class="path-card-body">
+              <div class="path-sequence">
+                <div class="path-node"><div class="path-symbol">p</div><div class="path-name">presión<br>incidente</div></div>
+                <div class="path-arrow">→</div>
+                <div class="path-node"><div class="path-symbol">v</div><div class="path-name">respuesta<br>vibratoria</div></div>
+                <div class="path-arrow">→</div>
+                <div class="path-node"><div class="path-symbol">p</div><div class="path-name">presión<br>radiada</div></div>
+              </div>
+              <div class="path-explain">La fuente genera <b>presión sonora en el aire</b>. Esa onda puede excitar un cerramiento; el cerramiento responde mecánicamente y puede volver a radiar sonido hacia el recinto receptor.</div>
+              <span class="path-dominant">Camino dominante · AIRE</span>
+            </div>
+            """,
+            unsafe_allow_html=True,
+        )
 
     with c_struct:
-        with st.container(border=True):
-            st.markdown("#### 🧱 Ruido estructural")
-            struct_path = ASSET_DIR / "curso2_lab1_etapa1_ruido_estructural.webp"
-            if struct_path.exists():
-                st.image(struct_path, width="stretch")
-            st.markdown("### **F → v → p**")
-            st.write(
-                "Una acción mecánica introduce una **fuerza (F)** directamente en la estructura. "
-                "Esa fuerza produce **vibración (v)** que se propaga por los elementos sólidos y, al llegar a una superficie capaz de radiar, "
-                "se transforma en **presión acústica (p)** en el recinto receptor."
-            )
-            st.info("**Secuencia conceptual:** fuerza sobre la estructura → vibración estructural → presión sonora en el receptor.")
+        st.markdown('<div class="path-card-head">Ruido estructural</div>', unsafe_allow_html=True)
+        struct_path = ASSET_DIR / "curso2_lab1_etapa1_ruido_estructural.webp"
+        if struct_path.exists():
+            st.image(struct_path, width="stretch")
+        st.markdown(
+            """
+            <div class="path-card-body">
+              <div class="path-sequence">
+                <div class="path-node"><div class="path-symbol">F</div><div class="path-name">fuerza</div></div>
+                <div class="path-arrow">→</div>
+                <div class="path-node"><div class="path-symbol">v</div><div class="path-name">vibración<br>estructural</div></div>
+                <div class="path-arrow">→</div>
+                <div class="path-node"><div class="path-symbol">p</div><div class="path-name">presión<br>sonora</div></div>
+              </div>
+              <div class="path-explain">Una acción mecánica aplica una <b>fuerza directamente sobre la estructura</b>. La vibración se propaga por los elementos sólidos y una superficie vibrante puede radiar sonido al recinto receptor.</div>
+              <span class="path-dominant">Camino dominante · ESTRUCTURA</span>
+            </div>
+            """,
+            unsafe_allow_html=True,
+        )
 
     # --------------------------------------------------------
     # 3 · CUÁNDO VIBRAR PRODUCE SONIDO
