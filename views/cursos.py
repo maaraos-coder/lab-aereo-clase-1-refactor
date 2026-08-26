@@ -918,9 +918,9 @@ def _render_course2_lab1_welcome(lab, saved):
     stage_selector_key = f"future_stage_{class_id}"
 
     header(
-        "ETAPA 0 · BIENVENIDA",
-        "Laboratorio 1 · Control de ruido de impacto e instalaciones",
-        "Una experiencia visual y aplicada para comprender cómo se genera, transmite, mide y controla la energía vibroacústica en edificios.",
+        "ETAPA 0 · INTRODUCCIÓN AL PROBLEMA",
+        "Introducción al problema",
+        "Reconoce las principales fuentes de ruido de impacto y de instalaciones que afectan el confort acústico en edificaciones.",
         show_overview=False,
         duration_minutes=10,
     )
@@ -1253,8 +1253,8 @@ def _render_course2_lab1_stage1(lab, saved):
 
     header(
         "ETAPA 1 · LABORATORIO 1",
-        "El edificio como sistema vibroacústico",
-        "Observa, sigue la energía, diagnostica sus caminos y decide dónde intervenir.",
+        "Fundamentos del ruido de impacto",
+        "Comprende cómo se genera, transmite y evalúa el ruido producido por impactos sobre elementos constructivos.",
         show_overview=False,
         duration_minutes=45,
     )
@@ -1665,8 +1665,8 @@ def _render_course2_lab1_stage2(lab, saved):
 
     header(
         "ETAPA 2 · LABORATORIO 1",
-        "Excitación y respuesta estructural",
-        "Impedancia, movilidad, resonancia, ondas de flexión y radiación.",
+        "Transmisión del ruido de impacto",
+        "Analiza cómo las vibraciones generadas por impactos se propagan a través de pisos, losas y estructuras del edificio.",
         show_overview=False,
         duration_minutes=55,
     )
@@ -2081,8 +2081,8 @@ def _render_course2_lab1_stage3(lab, saved):
 
     header(
         "ETAPA 3 · LABORATORIO 1",
-        "Diagnóstico vibroacústico: de la molestia al camino de transmisión",
-        "Aplicación práctica: formular y comprobar hipótesis físicas antes de seleccionar una solución.",
+        "Evaluación del aislamiento a ruido de impacto",
+        "Interpreta los principales parámetros e indicadores utilizados para cuantificar el desempeño acústico frente al ruido de impacto.",
         show_overview=False,
         duration_minutes=60,
     )
@@ -2472,8 +2472,8 @@ def _render_course2_lab1_stage4(lab, saved):
 
     header(
         "ETAPA 4 · LABORATORIO 1",
-        "Física del ruido de impacto",
-        "De la fuerza de contacto a la respuesta del piso.",
+        "Soluciones constructivas para ruido de impacto",
+        "Explora cómo pisos flotantes, capas resilientes y sistemas constructivos modifican la transmisión del ruido de impacto.",
         show_overview=False,
         duration_minutes=60,
     )
@@ -3075,8 +3075,8 @@ def _render_course2_lab1_stage5(lab, saved):
 
     header(
         "ETAPA 5 · LABORATORIO 1",
-        "Predicción del nivel de ruido de impacto de la losa base",
-        "Modelo analítico de Vér: de la excitación mecánica a Lₙ(f).",
+        "Ruido generado por instalaciones",
+        "Identifica las fuentes de ruido y vibraciones asociadas a equipos e instalaciones presentes en edificaciones.",
         show_overview=False,
         duration_minutes=80,
     )
@@ -3469,8 +3469,8 @@ def _render_course2_lab1_stage6(lab, saved):
 
     header(
         "ETAPA 6 · LABORATORIO 1",
-        "Predicción de la mejora de un piso flotante: ΔLₙ(f)",
-        "De la solución constructiva a la ecuación de mejora por bandas.",
+        "Transmisión estructural de vibraciones",
+        "Comprende cómo las vibraciones de equipos y sistemas mecánicos se transmiten hacia la estructura y los recintos vecinos.",
         show_overview=False,
         duration_minutes=90,
     )
@@ -4188,8 +4188,8 @@ def _render_course2_lab1_stage7(lab, saved):
 
     header(
         "ETAPA 7 · LABORATORIO 1",
-        "Predicción completa del piso: de la losa base al sistema terminado",
-        "Aplicación práctica avanzada del bloque predictivo de ruido de impacto.",
+        "Diagnóstico acústico de instalaciones",
+        "Analiza los mecanismos de generación y propagación del ruido para identificar los caminos de transmisión dominantes.",
         show_overview=False,
         duration_minutes=95,
     )
@@ -5072,7 +5072,13 @@ def _render_course2_lab1_stage8(lab, saved):
         },
     }
 
-    st.markdown("## Etapa 8 — Medidas de control del ruido de instalaciones y equipos")
+    header(
+        "ETAPA 8 · LABORATORIO 1",
+        "Medidas de control de ruido y vibraciones",
+        "Compara soluciones de control en la fuente, en el camino de transmisión y en el receptor para instalaciones de edificios.",
+        show_overview=False,
+        duration_minutes=75,
+    )
     st.write("La pregunta profesional de esta etapa es: **tengo una instalación que genera ruido en un edificio, ¿qué conjunto de medidas debo evaluar?**")
     st.latex(r"\text{EQUIPO / INSTALACIÓN}\rightarrow\text{MECANISMO}\rightarrow\text{CAMINO}\rightarrow\text{MEDIDA}\rightarrow\text{COMBINACIÓN DE CONTROLES}")
     st.info("**NO SE SELECCIONA UNA MEDIDA DE CONTROL SIN IDENTIFICAR PRIMERO EL PROBLEMA.**")
@@ -5702,7 +5708,7 @@ def _c2l1_stage_overview(stage_number):
 
 
 def _render_course2_lab1_stage9(lab, saved):
-    header("ETAPA 9 · LABORATORIO 1","PREGUNTAS DE COMPRENSIÓN","COMPRUEBA LO QUE HAS APRENDIDO", show_overview=False)
+    header("ETAPA 9 · LABORATORIO 1","Preguntas de comprensión","Integra los conceptos fundamentales del laboratorio mediante preguntas de análisis, interpretación y aplicación.", show_overview=False)
     _c2l1_stage_overview(9)
     st.write("Antes de resolver el desafío integrador final, revisaremos los conceptos fundamentales del laboratorio. Estas preguntas no buscan solamente recordar definiciones o fórmulas: deberás interpretar fenómenos, resultados, modelos y decisiones de control acústico.")
     st.caption("25 preguntas · 4 puntos por pregunta · 100 puntos totales · exigencia de aprobación: 60 % · misma escala de notas del Diplomado.")
@@ -5941,7 +5947,7 @@ def _render_course2_lab1_stage10(lab,saved):
     import plotly.graph_objects as go
     ln0_above_fc,reduced_mass,natural_frequency,delta_cremer,transmissibility_force=_c2l1_s10_models()
     _c2l1_s10_restore(saved)
-    header("ETAPA 10 · DESAFÍO INTEGRADOR","UN EDIFICIO, DOS PROBLEMAS","Diagnóstico, predicción y control del ruido de impacto y del ruido generado por instalaciones.", show_overview=False)
+    header("ETAPA 10 · DESAFÍO INTEGRADOR","Desafío integrador","Resuelve un caso completo de ruido de impacto e instalaciones combinando cálculos, diagnóstico, comparación de alternativas y decisiones de diseño.", show_overview=False)
     _c2l1_stage_overview(10)
     if st.session_state.get("role")=="Docente": _c2l1_stage10_teacher_view(); return
 
