@@ -1457,52 +1457,181 @@ def _render_course2_lab1_stage1(lab, saved):
         )
 
     # --------------------------------------------------------
-    # 3 · DE LA VIBRACIÓN AL SONIDO
+    # 3 · DE LA FUERZA AL SONIDO
     # --------------------------------------------------------
-    st.markdown("### 3 · De la vibración al sonido · ruido estructural")
+    st.markdown("### 3 · De la fuerza al sonido")
     st.write(
-        "En el ruido estructural, la energía llega primero a la estructura. Observa cómo una fuerza hace vibrar "
-        "un elemento constructivo y cómo esa vibración puede terminar generando sonido en el recinto receptor."
+        "Antes de seguir una pisada paso a paso, construyamos el modelo físico más simple del "
+        "**ruido estructural**: una fuerza actúa sobre la estructura, la estructura vibra y esa "
+        "vibración puede terminar generando sonido en el aire."
     )
-
-    radiation_gif = ASSET_DIR / "curso2_lab1_etapa1_de_vibracion_a_sonido.gif"
-    if radiation_gif.exists():
-        st.image(radiation_gif, width="stretch")
 
     st.markdown(
         """
-        <div style="border:1px solid rgba(79,70,229,.16);border-radius:16px;padding:16px 18px;
-                    background:linear-gradient(90deg,rgba(79,70,229,.06),rgba(14,165,233,.05));
-                    margin:.6rem 0 1rem 0;line-height:1.55;color:#334155;">
-            <b>Sigue el fenómeno:</b><br>
-            1. Una fuerza hace vibrar la estructura.<br>
-            2. La vibración llega a una superficie del recinto receptor.<br>
-            3. Esa superficie mueve el aire y genera sonido.
+        <style>
+        .fvp-wrap {
+            display:grid;
+            grid-template-columns:1fr auto 1fr auto 1fr;
+            gap:.75rem;
+            align-items:stretch;
+            margin:.8rem 0 1rem 0;
+        }
+        .fvp-card {
+            border:1px solid rgba(99,102,241,.17);
+            border-radius:18px;
+            padding:1rem 1rem .95rem 1rem;
+            background:linear-gradient(180deg,#ffffff 0%,#f8fafc 100%);
+            box-shadow:0 5px 16px rgba(15,23,42,.05);
+            min-height:240px;
+        }
+        .fvp-step {
+            font-size:.72rem;
+            letter-spacing:.06em;
+            text-transform:uppercase;
+            color:#64748b;
+            font-weight:800;
+            margin-bottom:.45rem;
+        }
+        .fvp-title {
+            font-size:1.03rem;
+            line-height:1.2;
+            color:#0f172a;
+            font-weight:850;
+            margin-bottom:.55rem;
+        }
+        .fvp-symbol {
+            font-size:2.15rem;
+            line-height:1;
+            font-weight:900;
+            color:#4f46e5;
+            margin:.45rem 0 .7rem 0;
+        }
+        .fvp-eq {
+            border-radius:12px;
+            padding:.52rem .65rem;
+            background:rgba(79,70,229,.06);
+            border:1px solid rgba(79,70,229,.10);
+            color:#312e81;
+            font-weight:800;
+            text-align:center;
+            margin:.45rem 0 .75rem 0;
+            font-family:Georgia, "Times New Roman", serif;
+            font-size:1.08rem;
+        }
+        .fvp-text {
+            color:#334155;
+            font-size:.90rem;
+            line-height:1.45;
+        }
+        .fvp-unit {
+            margin-top:.55rem;
+            color:#64748b;
+            font-size:.80rem;
+        }
+        .fvp-arrow {
+            align-self:center;
+            color:#94a3b8;
+            font-size:1.55rem;
+            font-weight:900;
+        }
+        .fvp-summary {
+            border:1px solid rgba(16,185,129,.18);
+            border-radius:16px;
+            background:rgba(16,185,129,.055);
+            padding:.9rem 1rem;
+            margin:.4rem 0 .8rem 0;
+            text-align:center;
+        }
+        .fvp-summary-eq {
+            color:#065f46;
+            font-size:1.35rem;
+            font-weight:900;
+            letter-spacing:.03em;
+            margin-bottom:.35rem;
+        }
+        .fvp-summary-text {
+            color:#334155;
+            font-size:.92rem;
+            line-height:1.4;
+        }
+        @media (max-width: 900px) {
+            .fvp-wrap {grid-template-columns:1fr;}
+            .fvp-arrow {transform:rotate(90deg); justify-self:center;}
+        }
+        </style>
+
+        <div class="fvp-wrap">
+            <div class="fvp-card">
+                <div class="fvp-step">Paso 1</div>
+                <div class="fvp-title">Fuerza aplicada</div>
+                <div class="fvp-symbol">F</div>
+                <div class="fvp-text">
+                    Es la acción que <b>inicia el fenómeno</b>. Puede provenir de una pisada,
+                    un golpe o una máquina apoyada sobre la estructura.
+                </div>
+                <div class="fvp-unit"><b>Unidad:</b> newton (N)</div>
+            </div>
+
+            <div class="fvp-arrow">→</div>
+
+            <div class="fvp-card">
+                <div class="fvp-step">Paso 2</div>
+                <div class="fvp-title">Velocidad de vibración</div>
+                <div class="fvp-symbol">v</div>
+                <div class="fvp-eq">v = F / Z</div>
+                <div class="fvp-text">
+                    <b>v</b> indica qué tan rápido se mueve la estructura al vibrar.
+                    <b>Z</b> es la <b>impedancia mecánica</b>: representa cuánto se opone
+                    la estructura a vibrar frente a una fuerza aplicada.
+                </div>
+                <div class="fvp-unit"><b>Unidad de v:</b> m/s</div>
+            </div>
+
+            <div class="fvp-arrow">→</div>
+
+            <div class="fvp-card">
+                <div class="fvp-step">Paso 3</div>
+                <div class="fvp-title">Presión sonora radiada</div>
+                <div class="fvp-symbol">p</div>
+                <div class="fvp-eq">p ≈ ρ₀ · c · v</div>
+                <div class="fvp-text">
+                    <b>p</b> es la variación de presión generada en el aire.
+                    <b>ρ₀</b> es la densidad del aire, <b>c</b> la velocidad del sonido
+                    y <b>v</b> la velocidad de vibración de la superficie.
+                </div>
+                <div class="fvp-unit"><b>Unidad de p:</b> pascal (Pa)</div>
+            </div>
+        </div>
+
+        <div class="fvp-summary">
+            <div class="fvp-summary-eq">F → v → p</div>
+            <div class="fvp-summary-text">
+                <b>Fuerza aplicada → vibración de la estructura → sonido radiado al aire.</b><br>
+                Primero se introduce energía mecánica, luego la estructura responde y finalmente
+                una superficie vibrante puede poner en movimiento el aire.
+            </div>
         </div>
         """,
         unsafe_allow_html=True,
     )
 
     st.info(
-        "**Idea clave:** en el ruido estructural, la vibración viaja por el edificio antes de convertirse en sonido: "
-        "**fuerza → vibración de la estructura → movimiento del aire → sonido**."
+        "Estas relaciones se usan aquí como un **modelo simplificado para comprender la cadena física**. "
+        "El comportamiento real también depende de la frecuencia, las propiedades de la estructura "
+        "y de qué tan eficientemente la superficie radia sonido."
     )
 
-    q_rad = st.radio(
-        "En un caso de ruido estructural, ¿qué debe ocurrir para que la vibración termine escuchándose como sonido en el recinto receptor?",
-        [
-            "La superficie debe poner en movimiento el aire que la rodea.",
-            "La superficie debe dejar de vibrar completamente.",
-            "El sonido debe permanecer únicamente dentro del sólido.",
-        ],
-        index=None,
-        key=f"{class_id}_stage1_radiation_simple_q",
-    )
-    if q_rad is not None:
-        if q_rad.startswith("La superficie debe poner"):
-            st.success("Correcto. La vibración de la superficie debe transferir movimiento al aire para generar una perturbación sonora.")
-        else:
-            st.warning("Revisa la animación: el paso esencial es que el movimiento de la superficie se comunique al aire cercano.")
+    with st.expander("¿Qué significa cada símbolo?", expanded=False):
+        st.markdown(
+            """
+            - **F** · fuerza aplicada sobre la estructura, en **N**.
+            - **Z** · impedancia mecánica: oposición de la estructura al movimiento vibratorio.
+            - **v** · velocidad de vibración de la superficie, en **m/s**.
+            - **ρ₀** · densidad del aire, en **kg/m³**.
+            - **c** · velocidad del sonido en el aire, en **m/s**.
+            - **p** · presión sonora radiada, en **Pa**.
+            """
+        )
 
     # --------------------------------------------------------
     # 4 · APLICACIÓN 1: PISADA
