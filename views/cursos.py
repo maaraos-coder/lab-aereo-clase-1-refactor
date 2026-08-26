@@ -1465,166 +1465,32 @@ def _render_course2_lab1_stage1(lab, saved):
         "**lo que excita la estructura** con **lo que finalmente escuchamos**."
     )
 
-    st.markdown(
-        """
-        <style>
-        .bridge-main {
-            border:1px solid rgba(79,70,229,.16);
-            border-radius:20px;
-            background:linear-gradient(135deg,rgba(79,70,229,.05),rgba(14,165,233,.04));
-            padding:1.1rem 1.2rem;
-            margin:.7rem 0 1rem 0;
-            text-align:center;
-        }
-        .bridge-chain {
-            font-family:Georgia,"Times New Roman",serif;
-            font-size:2rem;
-            font-weight:900;
-            color:#312e81;
-            letter-spacing:.02em;
-            margin-bottom:.65rem;
-        }
-        .bridge-meaning {
-            display:grid;
-            grid-template-columns:repeat(3,minmax(0,1fr));
-            gap:.7rem;
-            margin-top:.7rem;
-        }
-        .bridge-pill {
-            border-radius:14px;
-            border:1px solid rgba(99,102,241,.12);
-            background:#ffffff;
-            padding:.72rem .8rem;
-            color:#334155;
-            font-size:.88rem;
-            line-height:1.38;
-        }
-        .bridge-pill b {
-            color:#0f172a;
-        }
-        .tool-grid {
-            display:grid;
-            grid-template-columns:repeat(2,minmax(0,1fr));
-            gap:.85rem;
-            margin:.75rem 0 1rem 0;
-        }
-        .tool-card {
-            border:1px solid rgba(15,23,42,.10);
-            border-radius:18px;
-            background:linear-gradient(180deg,#fff,#f8fafc);
-            padding:1rem 1.05rem;
-        }
-        .tool-kicker {
-            color:#64748b;
-            font-size:.72rem;
-            font-weight:800;
-            text-transform:uppercase;
-            letter-spacing:.06em;
-            margin-bottom:.35rem;
-        }
-        .tool-eq {
-            font-family:Georgia,"Times New Roman",serif;
-            font-size:1.55rem;
-            font-weight:800;
-            color:#1e3a8a;
-            text-align:center;
-            margin:.2rem 0 .65rem 0;
-        }
-        .tool-what {
-            color:#0f172a;
-            font-size:.88rem;
-            font-weight:800;
-            margin-bottom:.25rem;
-        }
-        .tool-text {
-            color:#475569;
-            font-size:.86rem;
-            line-height:1.42;
-        }
-        .ref-row {
-            display:grid;
-            grid-template-columns:repeat(4,minmax(0,1fr));
-            gap:.55rem;
-            margin:.5rem 0 .9rem 0;
-        }
-        .ref-chip {
-            border:1px solid rgba(99,102,241,.12);
-            border-radius:12px;
-            background:#fff;
-            padding:.58rem .7rem;
-            text-align:center;
-            color:#475569;
-            font-size:.80rem;
-        }
-        .ref-chip strong {
-            color:#312e81;
-            font-size:1rem;
-            display:block;
-            margin-bottom:.15rem;
-        }
-        .next-step {
-            border:1px solid rgba(16,185,129,.20);
-            border-radius:16px;
-            background:rgba(16,185,129,.055);
-            padding:.9rem 1rem;
-            color:#334155;
-            font-size:.91rem;
-            line-height:1.42;
-            margin:.35rem 0 1rem 0;
-        }
-        .next-step b { color:#065f46; }
-        @media (max-width:800px){
-            .bridge-meaning,.tool-grid,.ref-row{grid-template-columns:1fr;}
-        }
-        </style>
-
-        <div class="bridge-main">
-            <div class="bridge-chain">F → v → p</div>
-            <div class="bridge-meaning">
-                <div class="bridge-pill"><b>F · Fuerza</b><br>excita la estructura.</div>
-                <div class="bridge-pill"><b>v · Vibración</b><br>es la respuesta mecánica.</div>
-                <div class="bridge-pill"><b>p · Presión sonora</b><br>es lo que puede llegar al aire.</div>
-            </div>
-        </div>
-
-        <div class="tool-grid">
-            <div class="tool-card">
-                <div class="tool-kicker">Herramienta 1 · de fuerza a vibración</div>
-                <div class="tool-eq">v = F / Z</div>
-                <div class="tool-what">¿Qué nos dice?</div>
-                <div class="tool-text">
-                    La respuesta vibratoria depende de la fuerza aplicada y de cuánto
-                    se opone la estructura a vibrar. Esa oposición se representa mediante
-                    la <b>impedancia mecánica Z</b>.
-                </div>
-            </div>
-
-            <div class="tool-card">
-                <div class="tool-kicker">Herramienta 2 · de vibración a sonido</div>
-                <div class="tool-eq">p ≈ ρ₀ · c · v</div>
-                <div class="tool-what">¿Qué nos dice?</div>
-                <div class="tool-text">
-                    Una superficie que vibra puede transferir movimiento al aire y generar
-                    una variación de presión sonora. Aquí <b>ρ₀</b> representa la densidad
-                    del aire y <b>c</b> la velocidad del sonido.
-                </div>
-            </div>
-        </div>
-
-        <div class="ref-row">
-            <div class="ref-chip"><strong>F</strong>Fuerza aplicada · N</div>
-            <div class="ref-chip"><strong>Z</strong>Impedancia mecánica</div>
-            <div class="ref-chip"><strong>v</strong>Velocidad de vibración · m/s</div>
-            <div class="ref-chip"><strong>p</strong>Presión sonora · Pa</div>
-        </div>
-
-        <div class="next-step">
-            <b>Ahora viene la aplicación:</b> en la Parte 4 seguiremos esta misma cadena
-            en una situación concreta: <b>una pisada sobre una losa</b>.
-        </div>
-        """,
-        unsafe_allow_html=True,
-    )
+    bridge_html = """
+<style>
+.bridge-main{border:1px solid rgba(79,70,229,.16);border-radius:20px;background:linear-gradient(135deg,rgba(79,70,229,.05),rgba(14,165,233,.04));padding:1.1rem 1.2rem;margin:.7rem 0 1rem 0;text-align:center}
+.bridge-chain{font-family:Georgia,"Times New Roman",serif;font-size:2rem;font-weight:900;color:#312e81;letter-spacing:.02em;margin-bottom:.65rem}
+.bridge-meaning{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:.7rem;margin-top:.7rem}
+.bridge-pill{border-radius:14px;border:1px solid rgba(99,102,241,.12);background:#fff;padding:.72rem .8rem;color:#334155;font-size:.88rem;line-height:1.38}
+.bridge-pill b{color:#0f172a}
+.tool-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:.85rem;margin:.75rem 0 1rem 0}
+.tool-card{border:1px solid rgba(15,23,42,.10);border-radius:18px;background:linear-gradient(180deg,#fff,#f8fafc);padding:1rem 1.05rem}
+.tool-kicker{color:#64748b;font-size:.72rem;font-weight:800;text-transform:uppercase;letter-spacing:.06em;margin-bottom:.35rem}
+.tool-eq{font-family:Georgia,"Times New Roman",serif;font-size:1.55rem;font-weight:800;color:#1e3a8a;text-align:center;margin:.2rem 0 .65rem 0}
+.tool-what{color:#0f172a;font-size:.88rem;font-weight:800;margin-bottom:.25rem}
+.tool-text{color:#475569;font-size:.86rem;line-height:1.42}
+.ref-row{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:.55rem;margin:.5rem 0 .9rem 0}
+.ref-chip{border:1px solid rgba(99,102,241,.12);border-radius:12px;background:#fff;padding:.58rem .7rem;text-align:center;color:#475569;font-size:.80rem}
+.ref-chip strong{color:#312e81;font-size:1rem;display:block;margin-bottom:.15rem}
+.next-step{border:1px solid rgba(16,185,129,.20);border-radius:16px;background:rgba(16,185,129,.055);padding:.9rem 1rem;color:#334155;font-size:.91rem;line-height:1.42;margin:.35rem 0 1rem 0}
+.next-step b{color:#065f46}
+@media(max-width:800px){.bridge-meaning,.tool-grid,.ref-row{grid-template-columns:1fr}}
+</style>
+<div class="bridge-main"><div class="bridge-chain">F → v → p</div><div class="bridge-meaning"><div class="bridge-pill"><b>F · Fuerza</b><br>excita la estructura.</div><div class="bridge-pill"><b>v · Vibración</b><br>es la respuesta mecánica.</div><div class="bridge-pill"><b>p · Presión sonora</b><br>es lo que puede llegar al aire.</div></div></div>
+<div class="tool-grid"><div class="tool-card"><div class="tool-kicker">Herramienta 1 · de fuerza a vibración</div><div class="tool-eq">v = F / Z</div><div class="tool-what">¿Qué nos dice?</div><div class="tool-text">La respuesta vibratoria depende de la fuerza aplicada y de cuánto se opone la estructura a vibrar. Esa oposición se representa mediante la <b>impedancia mecánica Z</b>.</div></div><div class="tool-card"><div class="tool-kicker">Herramienta 2 · de vibración a sonido</div><div class="tool-eq">p ≈ ρ₀ · c · v</div><div class="tool-what">¿Qué nos dice?</div><div class="tool-text">Una superficie que vibra puede transferir movimiento al aire y generar una variación de presión sonora. Aquí <b>ρ₀</b> representa la densidad del aire y <b>c</b> la velocidad del sonido.</div></div></div>
+<div class="ref-row"><div class="ref-chip"><strong>F</strong>Fuerza aplicada · N</div><div class="ref-chip"><strong>Z</strong>Impedancia mecánica</div><div class="ref-chip"><strong>v</strong>Velocidad de vibración · m/s</div><div class="ref-chip"><strong>p</strong>Presión sonora · Pa</div></div>
+<div class="next-step"><b>Ahora viene la aplicación:</b> en la Parte 4 seguiremos esta misma cadena en una situación concreta: <b>una pisada sobre una losa</b>.</div>
+"""
+    st.markdown(bridge_html, unsafe_allow_html=True)
 
     st.caption(
         "Modelo introductorio: estas relaciones se usan aquí para comprender la cadena física "
