@@ -5686,10 +5686,14 @@ def _render_course2_lab1_stage9(lab, saved):
         st.caption("El intento está cerrado. Tus respuestas permanecen disponibles para revisión.")
         for i,item in enumerate(_C2L1_STAGE9_QUESTIONS):
             chosen=answers.get(str(i)); correct_opt=item["options"][item["correct"]]
-            with st.expander(f"Pregunta {i+1} · {item['title']}",expanded=i==0):
-                st.markdown(f"**{item['question']}**"); st.write(f"Tu respuesta: {chosen or 'Sin respuesta'}")
-                if chosen==correct_opt: st.success("✓ CORRECTO")
-                else: st.error(f"✗ REVISA EL CONCEPTO · Respuesta correcta: {correct_opt}")
+            with st.container(border=True):
+                st.markdown(f"#### Pregunta {i+1} · {item['title']}")
+                st.markdown(f"**{item['question']}**")
+                st.write(f"Tu respuesta: {chosen or 'Sin respuesta'}")
+                if chosen==correct_opt:
+                    st.success("✓ CORRECTO")
+                else:
+                    st.error(f"✗ REVISA EL CONCEPTO · Respuesta correcta: {correct_opt}")
                 st.info(item["explanation"])
         st.markdown("### YA CONOCES LAS PIEZAS DEL PROBLEMA. AHORA DEBES CONECTARLAS.")
         st.markdown("**SIGUIENTE: ETAPA 10 · DESAFÍO DE INTEGRACIÓN**")
