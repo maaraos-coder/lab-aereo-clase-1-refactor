@@ -1457,266 +1457,178 @@ def _render_course2_lab1_stage1(lab, saved):
         )
 
     # --------------------------------------------------------
-    # 3 · DE LA FUERZA AL SONIDO
+    # 3 · PUENTE ENTRE FUERZA, VIBRACIÓN Y SONIDO
     # --------------------------------------------------------
-    st.markdown("### 3 · De la fuerza al sonido")
+    st.markdown("### 3 · El puente entre fuerza, vibración y sonido")
     st.write(
-        "Antes de seguir una pisada paso a paso, construyamos el modelo físico más simple del "
-        "**ruido estructural**: una fuerza actúa sobre la estructura, la estructura vibra y esa "
-        "vibración puede terminar generando sonido en el aire."
+        "Antes de analizar una pisada, necesitamos una relación sencilla que conecte "
+        "**lo que excita la estructura** con **lo que finalmente escuchamos**."
     )
 
     st.markdown(
         """
         <style>
-        .fvp-wrap {
-            display:grid;
-            grid-template-columns:1fr auto 1fr auto 1fr;
-            gap:.75rem;
-            align-items:stretch;
-            margin:.8rem 0 1rem 0;
-        }
-        .fvp-card {
-            border:1px solid rgba(99,102,241,.17);
-            border-radius:18px;
-            padding:1rem 1rem .95rem 1rem;
-            background:linear-gradient(180deg,#ffffff 0%,#f8fafc 100%);
-            box-shadow:0 5px 16px rgba(15,23,42,.05);
-            min-height:240px;
-        }
-        .fvp-step {
-            font-size:.72rem;
-            letter-spacing:.06em;
-            text-transform:uppercase;
-            color:#64748b;
-            font-weight:800;
-            margin-bottom:.45rem;
-        }
-        .fvp-title {
-            font-size:1.03rem;
-            line-height:1.2;
-            color:#0f172a;
-            font-weight:850;
-            margin-bottom:.55rem;
-        }
-        .fvp-symbol {
-            font-size:2.15rem;
-            line-height:1;
-            font-weight:900;
-            color:#4f46e5;
-            margin:.45rem 0 .7rem 0;
-        }
-        .fvp-eq {
-            border-radius:12px;
-            padding:.52rem .65rem;
-            background:rgba(79,70,229,.06);
-            border:1px solid rgba(79,70,229,.10);
-            color:#312e81;
-            font-weight:800;
+        .bridge-main {
+            border:1px solid rgba(79,70,229,.16);
+            border-radius:20px;
+            background:linear-gradient(135deg,rgba(79,70,229,.05),rgba(14,165,233,.04));
+            padding:1.1rem 1.2rem;
+            margin:.7rem 0 1rem 0;
             text-align:center;
-            margin:.45rem 0 .75rem 0;
-            font-family:Georgia, "Times New Roman", serif;
-            font-size:1.08rem;
         }
-        .fvp-text {
+        .bridge-chain {
+            font-family:Georgia,"Times New Roman",serif;
+            font-size:2rem;
+            font-weight:900;
+            color:#312e81;
+            letter-spacing:.02em;
+            margin-bottom:.65rem;
+        }
+        .bridge-meaning {
+            display:grid;
+            grid-template-columns:repeat(3,minmax(0,1fr));
+            gap:.7rem;
+            margin-top:.7rem;
+        }
+        .bridge-pill {
+            border-radius:14px;
+            border:1px solid rgba(99,102,241,.12);
+            background:#ffffff;
+            padding:.72rem .8rem;
             color:#334155;
-            font-size:.90rem;
-            line-height:1.45;
+            font-size:.88rem;
+            line-height:1.38;
         }
-        .fvp-unit {
-            margin-top:.55rem;
+        .bridge-pill b {
+            color:#0f172a;
+        }
+        .tool-grid {
+            display:grid;
+            grid-template-columns:repeat(2,minmax(0,1fr));
+            gap:.85rem;
+            margin:.75rem 0 1rem 0;
+        }
+        .tool-card {
+            border:1px solid rgba(15,23,42,.10);
+            border-radius:18px;
+            background:linear-gradient(180deg,#fff,#f8fafc);
+            padding:1rem 1.05rem;
+        }
+        .tool-kicker {
             color:#64748b;
+            font-size:.72rem;
+            font-weight:800;
+            text-transform:uppercase;
+            letter-spacing:.06em;
+            margin-bottom:.35rem;
+        }
+        .tool-eq {
+            font-family:Georgia,"Times New Roman",serif;
+            font-size:1.55rem;
+            font-weight:800;
+            color:#1e3a8a;
+            text-align:center;
+            margin:.2rem 0 .65rem 0;
+        }
+        .tool-what {
+            color:#0f172a;
+            font-size:.88rem;
+            font-weight:800;
+            margin-bottom:.25rem;
+        }
+        .tool-text {
+            color:#475569;
+            font-size:.86rem;
+            line-height:1.42;
+        }
+        .ref-row {
+            display:grid;
+            grid-template-columns:repeat(4,minmax(0,1fr));
+            gap:.55rem;
+            margin:.5rem 0 .9rem 0;
+        }
+        .ref-chip {
+            border:1px solid rgba(99,102,241,.12);
+            border-radius:12px;
+            background:#fff;
+            padding:.58rem .7rem;
+            text-align:center;
+            color:#475569;
             font-size:.80rem;
         }
-        .fvp-arrow {
-            align-self:center;
-            color:#94a3b8;
-            font-size:1.55rem;
-            font-weight:900;
+        .ref-chip strong {
+            color:#312e81;
+            font-size:1rem;
+            display:block;
+            margin-bottom:.15rem;
         }
-        .fvp-summary {
-            border:1px solid rgba(16,185,129,.18);
+        .next-step {
+            border:1px solid rgba(16,185,129,.20);
             border-radius:16px;
             background:rgba(16,185,129,.055);
             padding:.9rem 1rem;
-            margin:.4rem 0 .8rem 0;
-            text-align:center;
-        }
-        .fvp-summary-eq {
-            color:#065f46;
-            font-size:1.35rem;
-            font-weight:900;
-            letter-spacing:.03em;
-            margin-bottom:.35rem;
-        }
-        .fvp-summary-text {
             color:#334155;
-            font-size:.92rem;
-            line-height:1.4;
-        }
-        @media (max-width: 900px) {
-            .fvp-wrap {grid-template-columns:1fr;}
-            .fvp-arrow {transform:rotate(90deg); justify-self:center;}
-        }
-        </style>
-
-        <div class="fvp-wrap">
-            <div class="fvp-card">
-                <div class="fvp-step">Paso 1</div>
-                <div class="fvp-title">Fuerza aplicada</div>
-                <div class="fvp-symbol">F</div>
-                <div class="fvp-text">
-                    Es la acción que <b>inicia el fenómeno</b>. Puede provenir de una pisada,
-                    un golpe o una máquina apoyada sobre la estructura.
-                </div>
-                <div class="fvp-unit"><b>Unidad:</b> newton (N)</div>
-            </div>
-
-            <div class="fvp-arrow">→</div>
-
-            <div class="fvp-card">
-                <div class="fvp-step">Paso 2</div>
-                <div class="fvp-title">Velocidad de vibración</div>
-                <div class="fvp-symbol">v</div>
-                <div class="fvp-eq">v = F / Z</div>
-                <div class="fvp-text">
-                    <b>v</b> indica qué tan rápido se mueve la estructura al vibrar.
-                    <b>Z</b> es la <b>impedancia mecánica</b>: representa cuánto se opone
-                    la estructura a vibrar frente a una fuerza aplicada.
-                </div>
-                <div class="fvp-unit"><b>Unidad de v:</b> m/s</div>
-            </div>
-
-            <div class="fvp-arrow">→</div>
-
-            <div class="fvp-card">
-                <div class="fvp-step">Paso 3</div>
-                <div class="fvp-title">Presión sonora radiada</div>
-                <div class="fvp-symbol">p</div>
-                <div class="fvp-eq">p ≈ ρ₀ · c · v</div>
-                <div class="fvp-text">
-                    <b>p</b> es la variación de presión generada en el aire.
-                    <b>ρ₀</b> es la densidad del aire, <b>c</b> la velocidad del sonido
-                    y <b>v</b> la velocidad de vibración de la superficie.
-                </div>
-                <div class="fvp-unit"><b>Unidad de p:</b> pascal (Pa)</div>
-            </div>
-        </div>
-
-        <div class="fvp-summary">
-            <div class="fvp-summary-eq">F → v → p</div>
-            <div class="fvp-summary-text">
-                <b>Fuerza aplicada → vibración de la estructura → sonido radiado al aire.</b><br>
-                Primero se introduce energía mecánica, luego la estructura responde y finalmente
-                una superficie vibrante puede poner en movimiento el aire.
-            </div>
-        </div>
-        """,
-        unsafe_allow_html=True,
-    )
-
-    st.info(
-        "Estas relaciones se usan aquí como un **modelo simplificado para comprender la cadena física**. "
-        "El comportamiento real también depende de la frecuencia, las propiedades de la estructura "
-        "y de qué tan eficientemente la superficie radia sonido."
-    )
-
-    st.markdown("#### ¿Qué significa cada símbolo?")
-
-    st.markdown(
-        """
-        <style>
-        .symbol-grid {
-            display:grid;
-            grid-template-columns:repeat(3,minmax(0,1fr));
-            gap:.75rem;
-            margin:.55rem 0 1.05rem 0;
-        }
-        .symbol-card {
-            border:1px solid rgba(99,102,241,.14);
-            border-radius:16px;
-            background:linear-gradient(180deg,#ffffff 0%,#f8fafc 100%);
-            padding:.85rem .9rem;
-            min-height:128px;
-        }
-        .symbol-letter {
-            font-family:Georgia, "Times New Roman", serif;
-            font-size:1.75rem;
-            line-height:1;
-            font-weight:800;
-            color:#4338ca;
-            margin-bottom:.45rem;
-        }
-        .symbol-name {
-            color:#0f172a;
             font-size:.91rem;
-            font-weight:800;
-            margin-bottom:.30rem;
+            line-height:1.42;
+            margin:.35rem 0 1rem 0;
         }
-        .symbol-desc {
-            color:#475569;
-            font-size:.82rem;
-            line-height:1.38;
-        }
-        .symbol-unit {
-            margin-top:.35rem;
-            color:#64748b;
-            font-size:.76rem;
-            font-weight:700;
-        }
-        @media (max-width: 850px) {
-            .symbol-grid {grid-template-columns:repeat(2,minmax(0,1fr));}
-        }
-        @media (max-width: 520px) {
-            .symbol-grid {grid-template-columns:1fr;}
+        .next-step b { color:#065f46; }
+        @media (max-width:800px){
+            .bridge-meaning,.tool-grid,.ref-row{grid-template-columns:1fr;}
         }
         </style>
 
-        <div class="symbol-grid">
-            <div class="symbol-card">
-                <div class="symbol-letter">F</div>
-                <div class="symbol-name">Fuerza aplicada</div>
-                <div class="symbol-desc">Acción que inicia la vibración: por ejemplo, una pisada, un golpe o una máquina.</div>
-                <div class="symbol-unit">Unidad: N</div>
+        <div class="bridge-main">
+            <div class="bridge-chain">F → v → p</div>
+            <div class="bridge-meaning">
+                <div class="bridge-pill"><b>F · Fuerza</b><br>excita la estructura.</div>
+                <div class="bridge-pill"><b>v · Vibración</b><br>es la respuesta mecánica.</div>
+                <div class="bridge-pill"><b>p · Presión sonora</b><br>es lo que puede llegar al aire.</div>
+            </div>
+        </div>
+
+        <div class="tool-grid">
+            <div class="tool-card">
+                <div class="tool-kicker">Herramienta 1 · de fuerza a vibración</div>
+                <div class="tool-eq">v = F / Z</div>
+                <div class="tool-what">¿Qué nos dice?</div>
+                <div class="tool-text">
+                    La respuesta vibratoria depende de la fuerza aplicada y de cuánto
+                    se opone la estructura a vibrar. Esa oposición se representa mediante
+                    la <b>impedancia mecánica Z</b>.
+                </div>
             </div>
 
-            <div class="symbol-card">
-                <div class="symbol-letter">Z</div>
-                <div class="symbol-name">Impedancia mecánica</div>
-                <div class="symbol-desc">Indica cuánto se opone la estructura a moverse cuando recibe una fuerza.</div>
-                <div class="symbol-unit">Relaciona F con v</div>
+            <div class="tool-card">
+                <div class="tool-kicker">Herramienta 2 · de vibración a sonido</div>
+                <div class="tool-eq">p ≈ ρ₀ · c · v</div>
+                <div class="tool-what">¿Qué nos dice?</div>
+                <div class="tool-text">
+                    Una superficie que vibra puede transferir movimiento al aire y generar
+                    una variación de presión sonora. Aquí <b>ρ₀</b> representa la densidad
+                    del aire y <b>c</b> la velocidad del sonido.
+                </div>
             </div>
+        </div>
 
-            <div class="symbol-card">
-                <div class="symbol-letter">v</div>
-                <div class="symbol-name">Velocidad de vibración</div>
-                <div class="symbol-desc">Describe qué tan rápido se mueve la superficie mientras vibra.</div>
-                <div class="symbol-unit">Unidad: m/s</div>
-            </div>
+        <div class="ref-row">
+            <div class="ref-chip"><strong>F</strong>Fuerza aplicada · N</div>
+            <div class="ref-chip"><strong>Z</strong>Impedancia mecánica</div>
+            <div class="ref-chip"><strong>v</strong>Velocidad de vibración · m/s</div>
+            <div class="ref-chip"><strong>p</strong>Presión sonora · Pa</div>
+        </div>
 
-            <div class="symbol-card">
-                <div class="symbol-letter">ρ₀</div>
-                <div class="symbol-name">Densidad del aire</div>
-                <div class="symbol-desc">Propiedad del aire que interviene cuando una superficie vibrante transmite movimiento al medio.</div>
-                <div class="symbol-unit">Unidad: kg/m³</div>
-            </div>
-
-            <div class="symbol-card">
-                <div class="symbol-letter">c</div>
-                <div class="symbol-name">Velocidad del sonido</div>
-                <div class="symbol-desc">Velocidad con que una perturbación acústica se propaga por el aire.</div>
-                <div class="symbol-unit">Unidad: m/s</div>
-            </div>
-
-            <div class="symbol-card">
-                <div class="symbol-letter">p</div>
-                <div class="symbol-name">Presión sonora radiada</div>
-                <div class="symbol-desc">Variación de presión que la superficie vibrante genera finalmente en el aire.</div>
-                <div class="symbol-unit">Unidad: Pa</div>
-            </div>
+        <div class="next-step">
+            <b>Ahora viene la aplicación:</b> en la Parte 4 seguiremos esta misma cadena
+            en una situación concreta: <b>una pisada sobre una losa</b>.
         </div>
         """,
         unsafe_allow_html=True,
+    )
+
+    st.caption(
+        "Modelo introductorio: estas relaciones se usan aquí para comprender la cadena física "
+        "antes de incorporar efectos más complejos como frecuencia, resonancia y eficiencia de radiación."
     )
 
     # --------------------------------------------------------
