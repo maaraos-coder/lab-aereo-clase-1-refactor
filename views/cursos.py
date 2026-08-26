@@ -1367,6 +1367,10 @@ def _render_course2_lab1_stage1(lab, saved):
         unsafe_allow_html=True,
     )
 
+    energy_gif = ASSET_DIR / "curso2_lab1_etapa1_recorrido_energia.gif"
+    if energy_gif.exists():
+        st.image(energy_gif, width="stretch")
+
     st.info(
         "Una misma fuente puede disponer de **varios caminos simultáneos**. "
         "El análisis vibroacústico consiste en seguirlos y determinar cuáles son relevantes en el receptor."
@@ -1421,13 +1425,13 @@ def _render_course2_lab1_stage1(lab, saved):
             """
             <div class="path-card-body">
               <div class="path-sequence">
-                <div class="path-node"><div class="path-symbol">p</div><div class="path-name">presión<br>incidente</div></div>
+                <div class="path-node"><div class="path-symbol">p</div><div class="path-name">presión sonora<br>incidente</div></div>
                 <div class="path-arrow">→</div>
-                <div class="path-node"><div class="path-symbol">v</div><div class="path-name">respuesta<br>vibratoria</div></div>
+                <div class="path-node"><div class="path-symbol">v</div><div class="path-name">vibración del<br>cerramiento</div></div>
                 <div class="path-arrow">→</div>
-                <div class="path-node"><div class="path-symbol">p</div><div class="path-name">presión<br>radiada</div></div>
+                <div class="path-node"><div class="path-symbol">p</div><div class="path-name">sonido radiado<br>al receptor</div></div>
               </div>
-              <div class="path-explain">La fuente genera <b>presión sonora en el aire</b>. Esa onda puede excitar un cerramiento; el cerramiento responde mecánicamente y puede volver a radiar sonido hacia el recinto receptor.</div>
+              <div class="path-explain">La fuente genera una <b>onda sonora en el aire</b>. Al llegar a un cerramiento, puede hacerlo vibrar; esa vibración puede generar nuevamente sonido hacia el recinto receptor.</div>
               <span class="path-dominant">Camino dominante · AIRE</span>
             </div>
             """,
@@ -1443,11 +1447,11 @@ def _render_course2_lab1_stage1(lab, saved):
             """
             <div class="path-card-body">
               <div class="path-sequence">
-                <div class="path-node"><div class="path-symbol">F</div><div class="path-name">fuerza</div></div>
+                <div class="path-node"><div class="path-symbol">F</div><div class="path-name">fuerza<br>aplicada</div></div>
                 <div class="path-arrow">→</div>
                 <div class="path-node"><div class="path-symbol">v</div><div class="path-name">vibración<br>estructural</div></div>
                 <div class="path-arrow">→</div>
-                <div class="path-node"><div class="path-symbol">p</div><div class="path-name">presión<br>sonora</div></div>
+                <div class="path-node"><div class="path-symbol">p</div><div class="path-name">sonido radiado<br>al receptor</div></div>
               </div>
               <div class="path-explain">Una acción mecánica aplica una <b>fuerza directamente sobre la estructura</b>. La vibración se propaga por los elementos sólidos y una superficie vibrante puede radiar sonido al recinto receptor.</div>
               <span class="path-dominant">Camino dominante · ESTRUCTURA</span>
@@ -1457,84 +1461,52 @@ def _render_course2_lab1_stage1(lab, saved):
         )
 
     # --------------------------------------------------------
-    # 3 · CUÁNDO VIBRAR PRODUCE SONIDO
+    # 3 · DE LA VIBRACIÓN AL SONIDO
     # --------------------------------------------------------
-    st.markdown("### 3 · ¿Cuándo una superficie vibrante produce sonido?")
+    st.markdown("### 3 · De la vibración al sonido")
     st.write(
-        "Primero necesitamos movimiento normal de la superficie; después debemos preguntarnos "
-        "si ese movimiento se acopla de manera eficiente con el aire."
+        "Hasta aquí hemos seguido la energía por el edificio. Ahora observa un paso fundamental: "
+        "**una superficie que vibra puede poner en movimiento el aire que la rodea y generar sonido**."
     )
 
-    # Reuse the pre-existing surface-motion interactive if present in this project.
-    tangential = ASSET_DIR / "curso2_lab1_etapa0_mov_tangencial.webp"
-    normal = ASSET_DIR / "curso2_lab1_etapa0_mov_normal_apreciable.webp"
-
-    motion_key = f"{class_id}_stage1_motion"
-    motion = st.radio(
-        "Explora dos formas de movimiento de la misma superficie:",
-        ["Movimiento tangencial", "Movimiento normal"],
-        horizontal=True,
-        key=motion_key,
-    )
-
-    motion_asset = tangential if motion == "Movimiento tangencial" else normal
-    if motion_asset.exists():
-        st.image(motion_asset, width="stretch")
-
-    if motion == "Movimiento tangencial":
-        st.info(
-            "El movimiento es principalmente paralelo a la superficie. "
-            "Puede existir vibración medible, pero el desplazamiento normal del aire es pequeño."
-        )
-    else:
-        st.success(
-            "La superficie se mueve hacia y desde el aire. "
-            "Existe una componente normal capaz de generar fluctuaciones de presión."
-        )
-
-    st.latex(r"v_n(t)\neq 0 \quad \Rightarrow \quad \text{la superficie puede acoplar energía al aire}")
-
-    st.markdown("#### Pero vibrar no significa radiar eficientemente")
-    st.latex(r"\mathrm{VIBRACIÓN\ MEDIBLE \neq RADIACIÓN\ ACÚSTICA\ EFICIENTE}")
-    st.write(
-        "Para analizar la radiación no necesitamos todavía una fuente concreta. "
-        "Dos superficies pueden presentar niveles comparables de vibración y, aun así, radiar cantidades de sonido muy diferentes. "
-        "Importan la distribución espacial y fase del movimiento, la frecuencia, las dimensiones y el acoplamiento estructura–aire."
-    )
-
-    rad_cols = st.columns(2)
-    coherent_img = ASSET_DIR / "curso2_lab1_etapa0_radiacion_coherente.webp"
-    cancellation_img = ASSET_DIR / "curso2_lab1_etapa0_radiacion_cancelacion.webp"
-    with rad_cols[0]:
-        if coherent_img.exists():
-            st.image(coherent_img, width="stretch")
-            st.caption("Mayor contribución coherente: distintas regiones pueden reforzar la radiación neta.")
-    with rad_cols[1]:
-        if cancellation_img.exists():
-            st.image(cancellation_img, width="stretch")
-            st.caption("Mayor cancelación espacial: regiones fuera de fase pueden reducir la radiación neta.")
+    radiation_gif = ASSET_DIR / "curso2_lab1_etapa1_de_vibracion_a_sonido.gif"
+    if radiation_gif.exists():
+        st.image(radiation_gif, width="stretch")
 
     st.markdown(
         """
-        <div style="
-            border:1px solid #cfd8e3;
-            border-radius:12px;
-            padding:16px 18px;
-            margin:10px 0 18px 0;
-            background:#f8fbff;">
-            <div style="font-weight:700; font-size:1.02rem; margin-bottom:8px;">
-                💡 ¿Qué representa la eficiencia de radiación σ?
-            </div>
-            <div style="line-height:1.55;">
-                La eficiencia de radiación <b>σ</b> expresa cuán eficazmente el movimiento normal
-                de una superficie se convierte en potencia acústica radiada.
-                <br><br>
-                Medir vibración <b>no demuestra, por sí solo, que una superficie sea un radiador acústico eficiente</b>.
-            </div>
+        <div style="border:1px solid rgba(79,70,229,.16);border-radius:16px;padding:16px 18px;
+                    background:linear-gradient(90deg,rgba(79,70,229,.06),rgba(14,165,233,.05));
+                    margin:.6rem 0 1rem 0;line-height:1.55;color:#334155;">
+            <b>Qué debes observar:</b><br>
+            1. La superficie se mueve.<br>
+            2. Ese movimiento empuja y libera el aire cercano.<br>
+            3. La perturbación se aleja de la superficie y puede escucharse como sonido.
         </div>
         """,
         unsafe_allow_html=True,
     )
+
+    st.info(
+        "**Idea clave:** no necesitas todavía una ecuación para comprender este fenómeno. "
+        "Primero identifica la cadena física: **superficie que vibra → aire que se mueve → sonido**."
+    )
+
+    q_rad = st.radio(
+        "¿Qué debe ocurrir para que la vibración de una superficie pueda escucharse como sonido en el aire?",
+        [
+            "La superficie debe poner en movimiento el aire que la rodea.",
+            "La superficie debe dejar de vibrar completamente.",
+            "El sonido debe permanecer únicamente dentro del sólido.",
+        ],
+        index=None,
+        key=f"{class_id}_stage1_radiation_simple_q",
+    )
+    if q_rad is not None:
+        if q_rad.startswith("La superficie debe poner"):
+            st.success("Correcto. La vibración de la superficie debe transferir movimiento al aire para generar una perturbación sonora.")
+        else:
+            st.warning("Revisa la animación: el paso esencial es que el movimiento de la superficie se comunique al aire cercano.")
 
     # --------------------------------------------------------
     # 4 · APLICACIÓN 1: PISADA
