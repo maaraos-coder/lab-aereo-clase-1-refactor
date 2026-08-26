@@ -5747,41 +5747,19 @@ def _render_course2_lab1_stage9(lab, saved):
 
 
 # -----------------------------------------------------------------------------
-# Curso 2 · Laboratorio 1 · Etapa 10 — Desafío de integración
-# Motor estructural replicado de Curso 1 · Laboratorio 1 · Etapa 10:
-# 29 preguntas = 80 puntos + caso integrador = 20 puntos; total 100.
 # -----------------------------------------------------------------------------
-_C2L1_STAGE10_QUESTIONS = [
-("Diagnóstico de impacto","En el dormitorio inferior se oyen pisadas del piso superior. ¿Cuál representa mejor el mecanismo dominante inicial?",["Reflexiones aéreas exclusivamente.","Fuerza de impacto → vibración estructural → radiación al recinto receptor.","Ruido producido solamente por el cielo inferior.","Propagación exclusivamente por aire exterior."],1),
-("Losa base","¿Qué representa Lₙ,₀(f)?",["La mejora del tratamiento.","El nivel estimado de impacto de la losa base por banda dentro del modelo.","El número único final.","El ruido de fondo."],1),
-("Resultado a 500 Hz","Si el modelo de Etapa 5 entrega Lₙ,₀(500 Hz)≈69 dB, ¿cómo debe interpretarse?",["Como valor exacto de cualquier obra.","Como estimación de la losa base en esa banda y bajo las hipótesis del modelo.","Como aislamiento aéreo final.","Como mejora del piso flotante."],1),
-("Masa reducida","Para m’₁=120 kg/m² y m’₂=400 kg/m², la masa reducida es aproximadamente:",["46,2 kg/m²","92,3 kg/m²","260 kg/m²","520 kg/m²"],1),
-("Frecuencia natural","Con m’ᵣ≈92,3 kg/m² y s’=10 MN/m³, f₀ es aproximadamente:",["5,24 Hz","24,2 Hz","52,4 Hz","104,8 Hz"],2),
-("Interpretación de f₀","¿Qué representa f₀ en este piso flotante?",["El inicio de aislamiento perfecto.","Una frecuencia característica asociada a la resonancia del sistema idealizado.","El número único del piso.","La frecuencia de la máquina de impactos."],1),
-("Mejora","¿Qué representa ΔLₙ(f)?",["Un nivel absoluto.","La mejora del tratamiento respecto de la condición base y dependiente de frecuencia.","La frecuencia natural.","El aislamiento aéreo."],1),
-("Predicción final","Si Lₙ,₀(500)=69 dB y ΔLₙ(500)=22 dB, Lₙ,final(500) es:",["91 dB","47 dB","69 dB","22 dB"],1),
-("Decibeles","¿Por qué es válido usar Lₙ,final=Lₙ,₀−ΔLₙ?",["Porque todo valor en dB puede restarse sin definición.","Porque ΔLₙ está definido como diferencia de niveles respecto de la condición base.","Porque los dB son magnitudes lineales.","Porque 500 Hz es una banda normalizada."],1),
-("Predicción vs medición","Una predicción de 47 dB en 500 Hz significa que:",["La obra medirá exactamente 47 dB.","Es una predicción espectral dentro de las hipótesis del modelo.","Corresponde automáticamente a Lₙ,w.","Demuestra cumplimiento normativo."],1),
-("Puente perimetral","La sobrelosa toca rígidamente un muro. ¿Qué implica?",["No cambia el modelo.","Puede aparecer un camino mecánico paralelo que puentee el desacoplamiento.","Mejora necesariamente el aislamiento.","Sólo cambia el ruido aéreo."],1),
-("Penetración rígida","Una tubería atraviesa rígidamente el piso flotante. ¿Puede mantenerse sin reservas el modelo ideal desacoplado?",["Sí.","No."],1),
-("Dependencia espectral","¿ΔLₙ debe ser igual en todas las bandas?",["Sí.","No, es función de la frecuencia."],1),
-("Decisión de piso","¿Menor f₀ implica automáticamente mejor solución de proyecto?",["Sí.","No; también importan respuesta espectral, carga, espesor y constructibilidad."],1),
-("Diagnóstico de bomba","Ante un zumbido nocturno asociado a una bomba, el primer paso técnico es:",["Comprar resortes.","Identificar fuente, mecanismo y caminos de transmisión.","Instalar absorbente en el dormitorio.","Cambiar todos los soportes por goma."],1),
-("RPM a Hz","Una bomba gira a 1450 rpm. Su frecuencia de rotación 1×RPM es aproximadamente:",["14,5 Hz","24,17 Hz","60 Hz","1450 Hz"],1),
-("Evidencia frecuencial","Se observa una componente cercana a 24 Hz en bomba, tubería, soporte y muro receptor. ¿Qué hipótesis se fortalece?",["Tráfico exterior exclusivamente.","Posible transmisión estructural relacionada con la bomba.","Sólo reverberación.","Resonancia del dormitorio necesariamente a 24 Hz."],1),
-("Relación de frecuencias A","Para fₑ≈24,17 Hz y fₙ=11 Hz, r es aproximadamente:",["0,46","1,00","2,20","5,37"],2),
-("Relación de frecuencias B","Para fₑ≈24,17 Hz y fₙ=4,5 Hz, r es aproximadamente:",["0,19","2,20","4,50","5,37"],3),
-("Comparación aisladores","Considerando sólo la separación fₑ/fₙ, ¿qué aislador tiene mayor potencial de aislamiento?",["A, fₙ=11 Hz.","B, fₙ=4,5 Hz."],1),
-("Selección real","Antes de recomendar el aislador también deben verificarse:",["Sólo el color.","Carga por apoyo, deflexión, estabilidad, centro de gravedad y conexiones.","Sólo el peso total.","Sólo la marca."],1),
-("Tubería paralela","La bomba tiene buenos aisladores pero la impulsión está rígidamente conectada y abrazada al muro. La interpretación más razonable es:",["Los aisladores no sirven.","Existe un camino estructural paralelo a través de la tubería.","Debe usarse neopreno automáticamente.","Basta absorbente en el dormitorio."],1),
-("Control de conexiones","¿Qué medida apunta directamente al camino mecánico por tuberías?",["Silenciador de ducto.","Conexiones flexibles y soportes resilientes correctamente diseñados.","Absorbente decorativo.","Aumentar masa del dormitorio."],1),
-("Cavitación","Si existen signos compatibles con cavitación, una medida prioritaria es:",["Resortes más blandos únicamente.","Investigar y corregir las condiciones hidráulicas que la generan.","Silenciador de ducto.","Aumentar la masa del dormitorio."],1),
-("Fuente y camino","¿Cuál expresa una estrategia más completa?",["Control sólo en receptor.","Control en fuente + control de caminos relevantes.","Comprar un único producto.","Aumentar siempre la rigidez."],1),
-("Propuesta profesional","¿Cuál propuesta es más completa para la bomba?",["Instalar resortes y no intervenir nada más.","Instalar absorción sólo en el dormitorio.","Verificar montaje antivibratorio, conexiones, soportes, anclajes y condiciones hidráulicas.","Cambiar automáticamente todo por goma."],2),
-("Principio común","¿Qué conecta conceptualmente piso flotante y bomba?",["Se resuelven con el mismo producto.","Ambos involucran masa, rigidez, resonancia, transmisión mecánica y desacoplamiento, aunque son sistemas distintos.","Son exclusivamente ruido aéreo.","Ambos requieren ISO 717-2."],1),
-("Modelo y obra","¿Qué debe hacerse si la obra introduce caminos rígidos no incluidos en el modelo?",["Ignorarlos.","Reconocer que la construcción ya no representa completamente el modelo ideal y revisar esos caminos.","Restar una penalización arbitraria fija.","Cambiar el resultado a un número único."],1),
-("Decisión de ingeniería","¿Cuál resume mejor el método profesional del laboratorio?",["Elegir primero un producto y luego buscar el problema.","Identificar mecanismo → modelar/medir → identificar caminos → seleccionar medidas → verificar hipótesis y obra.","Usar siempre el sistema con menor f₀.","Resolver todo con absorción."],1),
-]
+# Curso 2 · Laboratorio 1 · Etapa 10 — Desafío integrador interactivo
+# Conserva el motor institucional de evaluación: 80 puntos de desempeño
+# distribuido + 20 puntos del caso/informe integrador = 100 puntos.
+# -----------------------------------------------------------------------------
+_C2E10_CHECKPOINT_POINTS = {
+    "impact_chain":4,"ln0":4,"mr":4,"f0":4,"resonance":3,"constraints":3,
+    "floor_compare":3,"delta":4,"lnfinal":5,"spectral":2,"floor_choice":4,
+    "floor_errors":4,"pump_fe":4,"pump_spectrum":3,"pump_path":3,
+    "isolator_ratios":4,"transmissibility":4,"support_load":3,"pipe_paths":4,
+    "cavitation":3,"control_match":4,"strategy_compare":4,
+}
+
 
 def _c2l1_stage10_submission():
     user_key=st.session_state.get("user_key")
@@ -5795,50 +5773,77 @@ def _c2l1_stage10_submission():
         except Exception: payload={}
     return {"row":row,"payload":payload if isinstance(payload,dict) else {}}
 
-def _c2l1_stage10_case_score(ln0,mr,f0,lnfinal,fe,ra,rb,choice,justification):
-    score=0
-    score += 3 if abs(float(ln0)-69.0)<=0.5 else 0
-    score += 3 if abs(float(mr)-92.3)<=0.6 else 0
-    score += 3 if abs(float(f0)-52.4)<=0.6 else 0
-    score += 3 if abs(float(lnfinal)-47.0)<=0.5 else 0
-    score += 2 if abs(float(fe)-24.17)<=0.15 else 0
-    score += 2 if abs(float(ra)-2.20)<=0.08 and abs(float(rb)-5.37)<=0.12 else 0
-    score += 2 if choice=="Propuesta C" else 0
-    words=str(justification or "").lower()
-    score += 2 if words.strip() and any(k in words for k in ["tuber", "camino", "cavit", "desacopl", "conex"]) else 0
-    return min(20,score)
 
-def _c2l1_finish_stage10(reason="submitted"):
-    answers=dict(st.session_state.get("c2l1_final_answers",{}))
-    hits=sum(answers.get(str(i))==q[2][q[3]] for i,q in enumerate(_C2L1_STAGE10_QUESTIONS))
-    theory=hits/29*80
-    practical=_c2l1_stage10_case_score(
-        st.session_state.get("c2e10_ln0",0),st.session_state.get("c2e10_mr",0),
-        st.session_state.get("c2e10_f0",0),st.session_state.get("c2e10_lnfinal",0),
-        st.session_state.get("c2e10_fe",0),st.session_state.get("c2e10_ra",0),
-        st.session_state.get("c2e10_rb",0),st.session_state.get("c2e10_choice"),
-        st.session_state.get("c2e10_justification","") )
-    total=theory+practical
-    payload={"respuestas_texto":answers,"aciertos_teoricos":hits,"puntaje_teorico":theory,
-             "puntaje_caso":practical,"reason":reason,"finished_at":_now(),
-             "caso_integrador":{"ln0_500":st.session_state.get("c2e10_ln0",0),"mr":st.session_state.get("c2e10_mr",0),
-             "f0":st.session_state.get("c2e10_f0",0),"lnfinal_500":st.session_state.get("c2e10_lnfinal",0),
-             "fe":st.session_state.get("c2e10_fe",0),"rA":st.session_state.get("c2e10_ra",0),"rB":st.session_state.get("c2e10_rb",0),
-             "recomendacion":st.session_state.get("c2e10_choice"),"justificacion":st.session_state.get("c2e10_justification","")}}
-    _save_formative(10,"final_exam","Etapa 10 · Desafío de integración",json.dumps(payload,ensure_ascii=False),
-        "Correcta" if total>=60 else "Incorrecta",f"Teoría aplicada: {hits}/29 ({theory:.1f}/80). Caso integrador: {practical}/20.",
-        score=total,max_score=100,correct_answer="Pauta docente del desafío integrador.")
-    st.session_state["c2l1_exam_submitted"]=True; st.session_state["c2l1_exam_result"]=(hits,practical,total)
+def _c2e10_state(saved=None):
+    if isinstance(st.session_state.get("c2e10_lab_state"),dict):
+        return st.session_state["c2e10_lab_state"]
+    state={}
+    if isinstance(saved,dict) and isinstance(saved.get("stage10_draft"),dict):
+        state=dict(saved.get("stage10_draft"))
+    st.session_state["c2e10_lab_state"]=state
+    return state
+
+
+def _c2e10_persist(lab,saved,state):
+    st.session_state["c2e10_lab_state"]=state
+    if isinstance(saved,dict):
+        saved["stage10_draft"]=state
+        saved["updated_10"]=_now()
+        _save_future_state_impl(lab["id"],saved)
     save_user_progress()
 
+
+def _c2e10_mark(state,key,ok,value=None):
+    state.setdefault("checks",{})[key]=bool(ok)
+    if value is not None: state.setdefault("values",{})[key]=value
+
+
+def _c2e10_auto_score(state):
+    checks=state.get("checks",{}) if isinstance(state,dict) else {}
+    return float(sum(p for k,p in _C2E10_CHECKPOINT_POINTS.items() if checks.get(k)))
+
+
+def _c2e10_report_score(state):
+    rep=state.get("report",{}) if isinstance(state,dict) else {}
+    score=0
+    if rep.get("impact_mechanism"): score+=3
+    if rep.get("floor_solution"): score+=3
+    if len(rep.get("floor_limits",[]))>=2: score+=3
+    if len(rep.get("pump_paths",[]))>=2: score+=3
+    if len(rep.get("controls",[]))>=3: score+=3
+    txt=str(rep.get("final_decision","")).lower().strip()
+    if len(txt)>=80 and any(k in txt for k in ["verific","hipótesis","ejec","carga","puente","medición"]): score+=5
+    return min(20,float(score))
+
+
+def _c2l1_finish_stage10(lab,saved,state,reason="submitted"):
+    auto=_c2e10_auto_score(state); report=_c2e10_report_score(state); total=min(100.0,auto+report)
+    payload={
+        "version":"interactive_v2","reason":reason,"interactive_score":auto,"report_score":report,
+        "total":total,"state":state,"submitted_at":_now()
+    }
+    _save_formative(10,"final_exam","Etapa 10 · Desafío integrador interactivo",json.dumps(payload,ensure_ascii=False),
+        "Correcta" if total>=60 else "Incorrecta",
+        f"Laboratorios interactivos: {auto:.1f}/80. Informe integrador: {report:.1f}/20.",
+        score=total,max_score=100,correct_answer="Pauta docente del desafío integrador interactivo.")
+    st.session_state["c2l1_exam_submitted"]=True
+    st.session_state["c2l1_exam_result"]=(auto,report,total)
+    if isinstance(saved,dict):
+        saved.pop("stage10_draft",None); _save_future_state_impl(lab["id"],saved)
+    save_user_progress()
+
+
 def _c2l1_stage10_teacher_view():
-    st.info("Vista docente: pauta de consulta y resultados. Se conserva el motor del Curso 1 · Laboratorio 1 · Etapa 10: 29 preguntas = 80 puntos + caso integrador = 20 puntos.")
-    for i,(title,question,opts,correct) in enumerate(_C2L1_STAGE10_QUESTIONS):
+    st.info("Vista docente · Desafío integrador interactivo. Motor conservado: 80 puntos de desempeño + 20 puntos de informe = 100 puntos; aprobación 60 %.")
+    st.markdown("### Pauta visible del desafío")
+    for title,items in [
+        ("Bloque A · Ruido de impacto",["Reconstrucción del fenómeno","Predicción Lₙ,₀","Masa reducida y f₀","Experimentación de resonancia","Comparación de pisos","ΔLₙ(f) y Lₙ,final(f)","Inspección de errores de obra"]),
+        ("Bloque B · Instalaciones",["Frecuencia de excitación","Espectro","Camino estructural","Aisladores y transmisibilidad","Carga por apoyo","Tuberías","Cavitación","Estrategia integral"]),
+        ("Integración",["Informe técnico guiado","Decisión profesional y verificaciones pendientes"])
+    ]:
         with st.container(border=True):
-            st.markdown(f"#### Pregunta {i+1} · {title}")
-            st.markdown(f"**{question}**")
-            for j,opt in enumerate(opts):
-                st.write(("✅ " if j==correct else "○ ")+f"{chr(65+j)}. {opt}")
+            st.markdown(f"#### {title}")
+            for x in items: st.write("• "+x)
     client=_supabase()
     if client is None: return
     try:
@@ -5855,80 +5860,247 @@ def _c2l1_stage10_teacher_view():
         try: payload=json.loads(payload)
         except Exception: payload={}
     score=float(row.get("teacher_score") if row.get("teacher_score") is not None else row.get("auto_score") or 0)
-    c1,c2,c3=st.columns(3); c1.metric("Puntaje",f"{score:.1f}/100"); c2.metric("Porcentaje",f"{score:.1f}%"); c3.metric("Nota",f"{_grade_from_percent(score):.1f}")
-    st.write(f"**Estado:** {'Aprobado' if score>=60 else 'Reprobado'}")
-    st.json(payload,expanded=False)
+    c1,c2,c3,c4=st.columns(4); c1.metric("Puntaje",f"{score:.1f}/100"); c2.metric("Porcentaje",f"{score:.1f}%"); c3.metric("Nota",f"{_grade_from_percent(score):.1f}"); c4.metric("Estado","Aprobado" if score>=60 else "Reprobado")
+    st.markdown("#### Evidencia del alumno")
+    state=payload.get("state",{}) if isinstance(payload,dict) else {}
+    checks=state.get("checks",{}) if isinstance(state,dict) else {}
+    vals=state.get("values",{}) if isinstance(state,dict) else {}
+    for k,p in _C2E10_CHECKPOINT_POINTS.items():
+        st.write(("✅" if checks.get(k) else "○")+f" **{k}** · {p} pt"+(f" · {vals.get(k)}" if k in vals else ""))
+    rep=state.get("report",{}) if isinstance(state,dict) else {}
+    if rep:
+        st.markdown("#### Informe técnico final")
+        for k,v in rep.items(): st.write(f"**{k}:** {v}")
+
 
 def _render_course2_lab1_stage10(lab,saved):
     import math
-    header("ETAPA 10 · DESAFÍO DE INTEGRACIÓN","UN EDIFICIO, DOS PROBLEMAS","Diagnóstico, predicción y control del ruido de impacto y de instalaciones.")
-    st.write("Se evalúa un edificio residencial de hormigón armado. En un departamento se reciben dos reclamos: pisadas desde el nivel superior y un zumbido nocturno asociado a la sala de bombas.")
-    asset=ASSET_DIR/"curso2_lab1_etapa10_caso_integrador.webp"
-    if asset.exists(): st.image(asset,width="stretch")
-    st.markdown("**RUIDO DE IMPACTO + RUIDO DE INSTALACIONES → DECISIÓN DE INGENIERÍA**")
+    import numpy as np
+    import matplotlib.pyplot as plt
+    from core.course2_impact_models import reduced_mass,natural_frequency,ln0_above_fc,delta_ln_cremer_continuous_db,transmissibility_force
+
+    state=_c2e10_state(saved); checks=state.setdefault("checks",{}); values=state.setdefault("values",{})
+    header("ETAPA 10 · DESAFÍO INTEGRADOR","UN EDIFICIO, DOS PROBLEMAS","Diagnóstico, predicción y control del ruido de impacto y del ruido generado por instalaciones.")
+    st.write("Actúas como consultor acústico de un edificio residencial de hormigón armado. Debes resolver un problema de pisadas entre departamentos y un zumbido nocturno asociado a la sala de bombas.")
+    p=ASSET_DIR/"curso2_lab1_etapa10_edificio_integrador.webp"
+    if p.exists(): st.image(p,width="stretch")
+    else: st.caption("Render preparado: assets/curso2_lab1_etapa10_edificio_integrador.webp")
     if st.session_state.get("role")=="Docente": _c2l1_stage10_teacher_view(); return
     remote=_c2l1_stage10_submission()
     if remote or st.session_state.get("c2l1_exam_submitted"):
         payload=(remote or {}).get("payload",{}); row=(remote or {}).get("row",{})
-        total=float(row.get("teacher_score") if row and row.get("teacher_score") is not None else (row.get("auto_score") if row else 0) or 0)
-        theory=float(payload.get("puntaje_teorico",0) or 0); practical=float(payload.get("puntaje_caso",0) or 0)
-        st.success(f"Evaluación enviada y guardada · Puntaje: {total:.1f}/100 · {total:.1f}% · Nota {_grade_from_percent(total):.1f} · {'APROBADO' if total>=60 else 'REPROBADO'}")
-        st.caption("El intento está cerrado. Se conserva la misma lógica de cierre y persistencia de la Etapa 10 del Curso 1.")
-        st.markdown("### Resumen final")
-        c1,c2,c3,c4=st.columns(4); c1.metric("Puntaje",f"{total:.1f}/100"); c2.metric("Porcentaje",f"{total:.1f}%"); c3.metric("Nota",f"{_grade_from_percent(total):.1f}"); c4.metric("Caso",f"{practical:.0f}/20")
-        st.info("Un problema acústico no se resuelve eligiendo un producto: se identifica el mecanismo, se modela o mide, se identifican los caminos, se seleccionan medidas y se verifica la obra real.")
-        st.markdown("**LABORATORIO 1 COMPLETADO**")
-        st.write("Has recorrido el problema desde la generación de la energía hasta la decisión de control: impacto, vibración estructural, predicción del piso, resonancia, tratamiento y ruido de instalaciones.")
-        st.caption("En el Laboratorio 2 estudiaremos cómo medir y evaluar estos fenómenos mediante descriptores, procedimientos y criterios de evaluación específicos.")
+        total=float(row.get("teacher_score") if row and row.get("teacher_score") is not None else (row.get("auto_score") if row else payload.get("total",0)) or 0)
+        st.success(f"DESAFÍO COMPLETADO · {total:.1f}/100 · {total:.1f}% · Nota {_grade_from_percent(total):.1f} · {'APROBADO' if total>=60 else 'REPROBADO'}")
+        st.write("Has analizado dos problemas que comparten un principio fundamental: la energía puede transmitirse por caminos que no siempre son evidentes.")
+        st.caption("En el Laboratorio 2 avanzaremos desde la predicción y el control hacia la medición y evaluación mediante sus descriptores y procedimientos específicos.")
         return
-    tab1,tab2=st.tabs(["Preguntas 1 a 29","Pregunta 30 · Caso profesional integrador"])
-    with tab1:
-        if not isinstance(st.session_state.get("c2l1_final_answers"),dict): st.session_state["c2l1_final_answers"]={}
-        draft=st.session_state["c2l1_final_answers"]
-        qn=st.selectbox("Pregunta",range(29),format_func=lambda i:f"Pregunta {i+1}",key="c2e10_qselector")
-        title,question,opts,correct=_C2L1_STAGE10_QUESTIONS[qn]
-        st.markdown(
-            f'<div class="question-box"><div class="question-label">PREGUNTA {qn+1} DE 29 · {title}</div>'
-            f'<div class="question-text">{question}</div></div>',
-            unsafe_allow_html=True
-        )
-        saved_ans=draft.get(str(qn)); idx=opts.index(saved_ans) if saved_ans in opts else None
-        ans=st.radio("Selecciona una alternativa",opts,index=idx,key=f"_c2e10_visible_q{qn}",label_visibility="collapsed")
-        if st.button("Guardar respuesta",key=f"c2e10_save{qn}"):
-            if ans is None: st.warning("Selecciona una alternativa.")
-            else: draft[str(qn)]=ans; st.session_state["c2l1_final_answers"]=draft; save_user_progress(); st.success("Respuesta guardada.")
-        answered=sum(draft.get(str(i)) is not None for i in range(29)); hits=sum(draft.get(str(i))==_C2L1_STAGE10_QUESTIONS[i][2][_C2L1_STAGE10_QUESTIONS[i][3]] for i in range(29))
-        st.progress(answered/29); st.caption(f"{answered} de 29 respuestas registradas · Puntaje teórico acumulado: {hits/29*80:.1f}/80")
-    with tab2:
-        st.markdown("### UN EDIFICIO, DOS PROBLEMAS")
-        st.write("**Impacto:** R(500)=55 dB, σ_rad≈1; piso flotante m’₁=120 kg/m², m’₂=400 kg/m², s’=10 MN/m³, ΔLₙ(500)=22 dB.")
-        st.write("**Instalaciones:** bomba de 600 kg, 1450 rpm, 4 apoyos; aislador A fₙ=11 Hz; aislador B fₙ=4,5 Hz; tubería de impulsión rígidamente conectada y signos compatibles con cavitación.")
-        c1,c2=st.columns(2)
-        ln0=c1.number_input("Lₙ,₀(500 Hz) [dB]",0.0,120.0,0.0,0.1,key="c2e10_ln0")
-        mr=c2.number_input("m’ᵣ [kg/m²]",0.0,500.0,0.0,0.1,key="c2e10_mr")
-        f0=c1.number_input("f₀ [Hz]",0.0,500.0,0.0,0.1,key="c2e10_f0")
-        lnfinal=c2.number_input("Lₙ,final(500 Hz) [dB]",0.0,120.0,0.0,0.1,key="c2e10_lnfinal")
-        fe=c1.number_input("fₑ de la bomba [Hz]",0.0,100.0,0.0,0.01,key="c2e10_fe")
-        ra=c2.number_input("r_A=fₑ/fₙ,A",0.0,20.0,0.0,0.01,key="c2e10_ra")
-        rb=c1.number_input("r_B=fₑ/fₙ,B",0.0,20.0,0.0,0.01,key="c2e10_rb")
-        choice=st.radio("Recomendación profesional",["Propuesta A","Propuesta B","Propuesta C","Propuesta D"],index=None,key="c2e10_choice",
-            captions=["Resortes bajo la bomba y nada más.","Absorción sólo en dormitorio.","Verificar montaje antivibratorio, controlar conexiones y soportes de tuberías, corregir condiciones hidráulicas y conservar el desacoplamiento.","Cambiar automáticamente todos los soportes por goma."])
-        justification=st.text_area("Justificación técnica",key="c2e10_justification",placeholder="Integra impacto, resonancia, caminos estructurales, conexiones y control en fuente.")
-        practical=_c2l1_stage10_case_score(ln0,mr,f0,lnfinal,fe,ra,rb,choice,justification)
-        draft=st.session_state.get("c2l1_final_answers",{}); hits=sum(draft.get(str(i))==_C2L1_STAGE10_QUESTIONS[i][2][_C2L1_STAGE10_QUESTIONS[i][3]] for i in range(29)); theory=hits/29*80
-        st.markdown(f'<div class="good"><b>Puntaje acumulado: {theory+practical:.1f}/100</b><br>Teoría aplicada: {theory:.1f}/80 · Caso profesional: {practical}/20.</div>',unsafe_allow_html=True)
-        st.latex(r"L_{n,\mathrm{final}}(f)=L_{n,0}(f)-\Delta L_n(f)")
-        st.latex(r"m'_r=\frac{m'_1m'_2}{m'_1+m'_2},\qquad f_0=\frac{1}{2\pi}\sqrt{\frac{s'}{m'_r}},\qquad f_e=\frac{n}{60}")
-        answered=sum(draft.get(str(i)) is not None for i in range(29))
-        if st.button("Enviar evaluación definitiva",type="primary",use_container_width=True,key="c2e10_submit"):
-            if answered<29 or choice is None or not justification.strip(): st.session_state["c2e10_confirm_incomplete"]=True; st.warning("La evaluación tiene respuestas pendientes. Revísalas antes del envío definitivo.")
-            else: _c2l1_finish_stage10("submitted"); st.rerun()
-        if st.session_state.get("c2e10_confirm_incomplete"):
-            if st.button("Confirmar envío con respuestas pendientes",key="c2e10_submit_incomplete",use_container_width=True): _c2l1_finish_stage10("submitted_incomplete"); st.rerun()
+
+    score=_c2e10_auto_score(state)
+    st.progress(score/80 if score<=80 else 1.0); st.caption(f"Desempeño interactivo registrado: {score:.0f}/80 puntos. El informe final aporta hasta 20 puntos.")
+
+    # ---------- BLOQUE A ----------
+    st.markdown("## BLOQUE A · RUIDO DE IMPACTO")
+    st.markdown("### 1 · Reconstruye el fenómeno")
+    chain_opts=["Fuerza de impacto","Vibración del piso","Propagación estructural","Radiación acústica"]
+    chain=[]
+    for i in range(4):
+        remaining=[x for x in chain_opts if x not in chain]
+        pick=st.selectbox(f"Paso {i+1}",["— Selecciona —"]+remaining,key=f"c2e10_chain_{i}")
+        if pick!="— Selecciona —": chain.append(pick)
+    if st.button("Comprobar secuencia",key="c2e10_chain_check"):
+        ok=chain==chain_opts; _c2e10_mark(state,"impact_chain",ok,chain); _c2e10_persist(lab,saved,state)
+        (st.success if ok else st.warning)("Secuencia correcta." if ok else "Revisa qué ocurre primero: la fuerza excita la estructura antes de que ésta radie sonido.")
+
+    st.markdown("### 2 · Predice la losa base")
+    st.caption("Datos didácticos: R(125)=35, R(250)=45, R(500)=55, R(1000)=61, R(2000)=67 dB. Para 500 Hz se adopta σ_rad=1 y se reutiliza el modelo de Vér implementado en Etapa 5.")
+    ln0=st.number_input("Calcula Lₙ,₀(500 Hz) [dB]",0.0,120.0,value=float(values.get("ln0_input",0.0)),step=.1,key="c2e10_ln0")
+    if st.button("Comprobar Lₙ,₀",key="c2e10_ln0_check"):
+        ln0_expected=float(ln0_above_fc(500.0,55.0,1.0)); ok=abs(ln0-ln0_expected)<=.6; values["ln0_input"]=ln0; _c2e10_mark(state,"ln0",ok,ln0); _c2e10_persist(lab,saved,state)
+        (st.success if ok else st.warning)(f"Correcto: la función de Etapa 5 entrega {ln0_expected:.1f} dB para esta banda." if ok else "Revisa el signo asociado a R(f), el término logarítmico y σ_rad.")
+
+    st.markdown("### 3 · Construye un piso flotante")
+    st.write("Sistema inicial: m’₁=120 kg/m² · m’₂=400 kg/m² · s’=10 MN/m³.")
+    mr_true=float(reduced_mass(120.0,400.0)); _,f0_true=natural_frequency(120.0,400.0,10.0); f0_true=float(f0_true)
+    c1,c2=st.columns(2)
+    mr_in=c1.number_input("Calcula m’ᵣ [kg/m²]",0.0,500.0,value=float(values.get("mr_input",0.0)),step=.1,key="c2e10_mr")
+    f0_in=c2.number_input("Calcula f₀ [Hz]",0.0,300.0,value=float(values.get("f0_input",0.0)),step=.1,key="c2e10_f0")
+    if st.button("Comprobar masa reducida y frecuencia natural",key="c2e10_mrf0_check"):
+        ok1=abs(mr_in-mr_true)<=.7; ok2=abs(f0_in-f0_true)<=.7
+        values.update({"mr_input":mr_in,"f0_input":f0_in}); _c2e10_mark(state,"mr",ok1,mr_in); _c2e10_mark(state,"f0",ok2,f0_in); _c2e10_persist(lab,saved,state)
+        if ok1 and ok2: st.success(f"Correcto · m’ᵣ≈{mr_true:.1f} kg/m² · f₀≈{f0_true:.1f} Hz")
+        else: st.warning("Revisa primero la masa reducida y luego utiliza esa masa en la expresión de f₀.")
+
+    st.markdown("### 4 · Experimento: mueve la resonancia")
+    em1=st.slider("m’₁ [kg/m²]",50,180,120,key="c2e10_exp_m1"); es=st.slider("s’ [MN/m³]",3,30,10,key="c2e10_exp_s")
+    emr=float(reduced_mass(em1,400.0)); _,ef0=natural_frequency(float(em1),400.0,float(es)); ef0=float(ef0)
+    a,b=st.columns(2); a.metric("m’ᵣ",f"{emr:.1f} kg/m²"); b.metric("f₀",f"{ef0:.1f} Hz")
+    obs=st.radio("¿Qué combinación tiende a desplazar f₀ hacia frecuencias inferiores?",["Menor masa y mayor rigidez","Mayor masa y menor rigidez","Mayor masa y mayor rigidez siempre"],index=None,key="c2e10_res_obs")
+    if st.button("Registrar observación",key="c2e10_res_check"):
+        ok=obs=="Mayor masa y menor rigidez"; _c2e10_mark(state,"resonance",ok,{"m1":em1,"s":es,"f0":ef0}); _c2e10_persist(lab,saved,state)
+        (st.success if ok else st.warning)("Correcto. Ahora incorpora las restricciones reales: no basta con minimizar f₀." if ok else "Experimenta nuevamente observando cómo cambian masa, rigidez y f₀.")
+
+    st.markdown("### 5 · Comparador de soluciones constructivas")
+    sols={"A":{"m1":70.,"s":25.,"h":45},"B":{"m1":110.,"s":12.,"h":65},"C":{"m1":150.,"s":8.,"h":90}}
+    rows=[]
+    for name,d in sols.items():
+        mr=float(reduced_mass(d["m1"],400.)); f0=float(natural_frequency(d["s"],mr)); rows.append({"Solución":name,"m’₁":d["m1"],"s’":d["s"],"m’ᵣ":round(mr,1),"f₀":round(f0,1),"Carga":"Cumple" if d["m1"]<=120 else "No cumple","Espesor":"Cumple" if d["h"]<=75 else "No cumple"})
+    st.dataframe(rows,use_container_width=True,hide_index=True)
+    feasible=st.multiselect("Selecciona las soluciones compatibles simultáneamente con carga ≤120 kg/m² y espesor ≤75 mm",["A","B","C"],key="c2e10_feasible")
+    if st.button("Comprobar restricciones",key="c2e10_constraints_check"):
+        ok=set(feasible)=={"A","B"}; _c2e10_mark(state,"constraints",ok,feasible); _c2e10_mark(state,"floor_compare",ok,rows); _c2e10_persist(lab,saved,state)
+        (st.success if ok else st.warning)("Correcto: A y B siguen siendo viables; C queda fuera por carga y espesor." if ok else "Comprueba ambas restricciones, no sólo la acústica.")
+
+    st.markdown("### 6 · Predice la mejora ΔLₙ(f)")
+    bands=np.array([125.,250.,500.,1000.,2000.]); R=np.array([35.,45.,55.,61.,67.])
+    model=st.radio("Modelo de mejora",["CREMER","VÉR / referencia de etapa previa"],horizontal=True,key="c2e10_model")
+    # El interactivo cuantitativo usa la función Cremer validada; Vér se mantiene como comparación conceptual si no hay parámetros discretos suficientes.
+    dcurve=np.array([float(delta_ln_cremer_continuous_db(float(f),110.0,12.0)[0]) for f in bands])
+    fig,ax=plt.subplots(); ax.plot(np.arange(len(bands)),dcurve,marker="o"); ax.set_xticks(range(len(bands)),[str(int(x)) for x in bands]); ax.set_xlabel("Bandas [Hz]"); ax.set_ylabel("ΔLₙ [dB]"); ax.grid(True,axis="y",alpha=.2); st.pyplot(fig,use_container_width=True); plt.close(fig)
+    interp=st.radio("¿La mejora es igual en todas las bandas?",["Sí","No, ΔLₙ depende de la frecuencia"],index=None,key="c2e10_delta_interp")
+    if st.button("Registrar interpretación de ΔLₙ",key="c2e10_delta_check"):
+        ok=interp=="No, ΔLₙ depende de la frecuencia"; _c2e10_mark(state,"delta",ok,dcurve.tolist()); _c2e10_persist(lab,saved,state)
+        (st.success if ok else st.warning)("Correcto: ΔLₙ=ΔLₙ(f)." if ok else "Observa la curva banda por banda.")
+
+    st.markdown("### 7 · Construye Lₙ,final(f)")
+    st.latex(r"L_{n,\mathrm{final}}(f)=L_{n,0}(f)-\Delta L_n(f)")
+    # Para preservar el caso pedagógico validado, 500 Hz usa el par 69/22; las otras bandas se trabajan como cálculo guiado.
+    vals250=st.number_input("Lₙ,final(250 Hz) [dB]",-20.0,120.0,0.0,.1,key="c2e10_lnf250")
+    vals500=st.number_input("Lₙ,final(500 Hz), usando Lₙ,₀=69 dB y ΔLₙ=22 dB",-20.0,120.0,0.0,.1,key="c2e10_lnfinal")
+    vals1000=st.number_input("Lₙ,final(1000 Hz) [dB]",-20.0,120.0,0.0,.1,key="c2e10_lnf1000")
+    if st.button("Comprobar construcción del resultado",key="c2e10_lnf_check"):
+        ok=abs(vals500-47.0)<=.6; _c2e10_mark(state,"lnfinal",ok,vals500); _c2e10_mark(state,"spectral",ok,{"250":vals250,"500":vals500,"1000":vals1000}); _c2e10_persist(lab,saved,state)
+        (st.success if ok else st.warning)("500 Hz correcto. Recuerda que el resultado es espectral, no un número único ni una declaración de cumplimiento." if ok else "En 500 Hz aplica directamente 69−22.")
+
+    st.markdown("### 8 · Decide qué piso recomendarías")
+    floor_choice=st.radio("Selecciona una alternativa",["A","B","C"],index=None,key="c2e10_floor_choice")
+    criteria=st.multiselect("Justifica con al menos tres criterios",["Comportamiento en bajas frecuencias","Comportamiento espectral general","Frecuencia natural","Carga estructural","Espesor disponible","Constructibilidad","Riesgo de puentes rígidos"],key="c2e10_floor_criteria")
+    if st.button("Registrar decisión de piso",key="c2e10_floor_choice_check"):
+        ok=floor_choice in ["A","B"] and len(criteria)>=3 and not (len(criteria)==1 and criteria==["Frecuencia natural"]); state["floor_choice"]=floor_choice; state["floor_criteria"]=criteria; _c2e10_mark(state,"floor_choice",ok,{"solution":floor_choice,"criteria":criteria}); _c2e10_persist(lab,saved,state)
+        (st.success if ok else st.warning)("Decisión argumentada registrada." if ok else "La recomendación debe ser viable y apoyarse en varios criterios, no sólo en f₀.")
+
+    st.markdown("### 9 · Inspección de obra: encuentra los errores")
+    p=ASSET_DIR/"curso2_lab1_etapa10_piso_errores.webp"
+    if p.exists(): st.image(p,width="stretch")
+    else: st.caption("Render preparado: assets/curso2_lab1_etapa10_piso_errores.webp")
+    errs=st.multiselect("Marca los defectos que crean o pueden crear puentes rígidos",["Contacto rígido perimetral","Penetración rígida","Discontinuidad de capa resiliente","Color del pavimento","Mayor absorción del dormitorio"],key="c2e10_floor_errors")
+    if st.button("Comprobar inspección",key="c2e10_floor_errors_check"):
+        ok=set(errs)=={"Contacto rígido perimetral","Penetración rígida","Discontinuidad de capa resiliente"}; _c2e10_mark(state,"floor_errors",ok,errs); _c2e10_persist(lab,saved,state)
+        (st.success if ok else st.warning)("Correcto: el sistema construido puede dejar de representar el modelo ideal, sin inventar una penalización fija en dB." if ok else "Busca caminos mecánicos que puenteen la capa resiliente.")
+
+    # ---------- BLOQUE B ----------
+    st.markdown("## BLOQUE B · RUIDO DE INSTALACIONES")
+    st.markdown("### 10 · Encuentra la frecuencia de excitación")
+    st.write("Bomba centrífuga · m=600 kg · n=1450 rpm · 4 apoyos.")
+    fe_true=1450/60
+    fe_in=st.number_input("fₑ=n/60 [Hz]",0.0,100.0,0.0,.01,key="c2e10_fe")
+    if st.button("Comprobar fₑ",key="c2e10_fe_check"):
+        ok=abs(fe_in-fe_true)<=.15; _c2e10_mark(state,"pump_fe",ok,fe_in); _c2e10_persist(lab,saved,state)
+        (st.success if ok else st.warning)(f"Correcto: fₑ≈{fe_true:.2f} Hz." if ok else "Revisa la conversión entre revoluciones por minuto y ciclos por segundo.")
+
+    st.markdown("### 11 · Analiza el espectro")
+    spec=np.array([24.,48.,72.]); amp=np.array([1.0,.55,.3]); fig,ax=plt.subplots(); ax.stem(spec,amp); ax.set_xlabel("Frecuencia [Hz]"); ax.set_ylabel("Amplitud relativa"); ax.set_xlim(0,90); st.pyplot(fig,use_container_width=True); plt.close(fig)
+    peak=st.radio("Selecciona la componente compatible con 1×RPM",["24 Hz","48 Hz","72 Hz"],index=None,horizontal=True,key="c2e10_peak")
+    if st.button("Comprobar componente",key="c2e10_peak_check"):
+        ok=peak=="24 Hz"; _c2e10_mark(state,"pump_spectrum",ok,peak); _c2e10_persist(lab,saved,state)
+        (st.success if ok else st.warning)("Correcto. Las armónicas son didácticas; un equipo real debe medirse." if ok else "Compara la componente con fₑ calculada.")
+
+    st.markdown("### 12 · Investiga el camino")
+    path=st.multiselect("La componente ≈24 Hz aparece en bomba, tubería, soporte y muro. ¿Qué investigarías?",["Transmisión estructural asociada a la bomba","Tubería como camino mecánico","Soportes como camino","Tráfico exterior exclusivamente"],key="c2e10_pump_path")
+    if st.button("Registrar hipótesis",key="c2e10_pump_path_check"):
+        ok="Transmisión estructural asociada a la bomba" in path and len(path)>=2 and "Tráfico exterior exclusivamente" not in path; _c2e10_mark(state,"pump_path",ok,path); _c2e10_persist(lab,saved,state)
+        (st.success if ok else st.warning)("Hipótesis razonable: la coincidencia frecuencial fortalece la investigación estructural, pero no prueba causalidad por sí sola." if ok else "Relaciona fuente, frecuencia y caminos observados.")
+
+    st.markdown("### 13 · Prueba tres montajes antivibratorios")
+    fns={"A":14.0,"B":8.0,"C":4.5}; rtrue={k:fe_true/v for k,v in fns.items()}
+    c1,c2,c3=st.columns(3); ra=c1.number_input("r_A",0.0,20.0,0.0,.01,key="c2e10_ra"); rb=c2.number_input("r_B",0.0,20.0,0.0,.01,key="c2e10_rb"); rc=c3.number_input("r_C",0.0,20.0,0.0,.01,key="c2e10_rc")
+    if st.button("Comprobar relaciones de frecuencia",key="c2e10_r_check"):
+        ok=abs(ra-rtrue["A"])<.08 and abs(rb-rtrue["B"])<.08 and abs(rc-rtrue["C"])<.12; _c2e10_mark(state,"isolator_ratios",ok,{"A":ra,"B":rb,"C":rc}); _c2e10_persist(lab,saved,state)
+        (st.success if ok else st.warning)("Correcto. Ahora observa esos puntos sobre la curva de transmisibilidad." if ok else "Usa r=fₑ/fₙ para cada montaje.")
+
+    st.markdown("### 14 · Curva de transmisibilidad y amortiguamiento")
+    zeta=st.slider("Amortiguamiento ζ",0.02,0.30,0.08,.01,key="c2e10_zeta")
+    rr=np.linspace(.05,6,500); tf=np.array([transmissibility_force(float(x),float(zeta)) for x in rr])
+    fig,ax=plt.subplots(); ax.plot(rr,tf); ax.axhline(1,linestyle="--");
+    for k,rk in rtrue.items(): ax.scatter([rk],[transmissibility_force(rk,zeta)],label=k)
+    ax.set_ylim(0,min(6,max(2,float(np.nanpercentile(tf,95))))); ax.set_xlabel("r=fₑ/fₙ"); ax.set_ylabel("T_F"); ax.legend(); ax.grid(True,alpha=.2); st.pyplot(fig,use_container_width=True); plt.close(fig)
+    tfobs=st.radio("¿Qué interpretación es correcta?",["T_F es directamente una reducción en dB","T_F es una relación mecánica; cerca de resonancia puede existir amplificación y a suficiente separación puede aparecer aislamiento"],index=None,key="c2e10_tfobs")
+    if st.button("Registrar análisis de transmisibilidad",key="c2e10_tf_check"):
+        ok=tfobs and tfobs.startswith("T_F es una relación"); _c2e10_mark(state,"transmissibility",ok,{"zeta":zeta}); _c2e10_persist(lab,saved,state)
+        (st.success if ok else st.warning)("Correcto. No conviertas T_F directamente en dB sin una definición adicional." if ok else "Distingue relación mecánica de un nivel sonoro.")
+
+    st.markdown("### 15 · Carga por apoyo")
+    load=st.number_input("Con CG centrado, carga aproximada por apoyo [kg]",0.0,600.0,0.0,1.0,key="c2e10_load")
+    cg=st.radio("Si el centro de gravedad se desplaza, ¿las cuatro cargas siguen siendo necesariamente iguales?",["Sí","No"],index=None,key="c2e10_cg")
+    if st.button("Comprobar carga",key="c2e10_load_check"):
+        ok=abs(load-150)<=2 and cg=="No"; _c2e10_mark(state,"support_load",ok,{"centered":load,"cg":cg}); _c2e10_persist(lab,saved,state)
+        (st.success if ok else st.warning)("Correcto: 600/4=150 kg sólo es una aproximación simétrica; el aislador se selecciona por la carga real." if ok else "Revisa la distribución simétrica y el efecto del CG.")
+
+    st.markdown("### 16 · La base está aislada, pero quedan caminos")
+    p=ASSET_DIR/"curso2_lab1_etapa10_bomba_caminos.webp"
+    if p.exists(): st.image(p,width="stretch")
+    else: st.caption("Render preparado: assets/curso2_lab1_etapa10_bomba_caminos.webp")
+    paths=st.multiselect("Identifica los caminos mecánicos que permanecen activos",["Conexión rígida de tubería","Abrazadera/soporte rígido","Penetración rígida en muro","Color de la bomba"],key="c2e10_pipe_paths")
+    if st.button("Comprobar caminos",key="c2e10_pipe_paths_check"):
+        ok=set(paths)=={"Conexión rígida de tubería","Abrazadera/soporte rígido","Penetración rígida en muro"}; _c2e10_mark(state,"pipe_paths",ok,paths); _c2e10_persist(lab,saved,state)
+        (st.success if ok else st.warning)("Correcto: AISLAR LA BASE ≠ AISLAR TODO EL SISTEMA." if ok else "Busca conexiones sólidas que puedan transmitir fuerza a la estructura.")
+
+    st.markdown("### 17 · Nuevo dato: cavitación")
+    cav=st.radio("¿Dónde actuarías primero ante síntomas compatibles con cavitación?",["Fuente / condición hidráulica","Base","Recinto receptor","Absorción del dormitorio"],index=None,key="c2e10_cav")
+    if st.button("Comprobar diagnóstico de cavitación",key="c2e10_cav_check"):
+        ok=cav=="Fuente / condición hidráulica"; _c2e10_mark(state,"cavitation",ok,cav); _c2e10_persist(lab,saved,state)
+        (st.success if ok else st.warning)("Correcto: primero se investiga y corrige la condición hidráulica que origina el fenómeno." if ok else "Los aisladores o la absorción no eliminan el mecanismo hidráulico de cavitación.")
+
+    st.markdown("### 18 · Construye la estrategia de control")
+    problems={"Transmisión por base":"Aisladores correctamente seleccionados","Transmisión por tubería":"Conexión flexible + soportes resilientes","Soporte rígido":"Soporte resiliente / revisión del anclaje","Cavitación":"Corrección hidráulica","Ruido aéreo residual":"Encapsulamiento/tratamiento aéreo según diagnóstico"}
+    matches={}
+    opts=list(problems.values())+["Cambiar automáticamente a neopreno","Aumento arbitrario de masa"]
+    for pr in problems: matches[pr]=st.selectbox(pr,["—"]+opts,key=f"c2e10_match_{pr}")
+    if st.button("Comprobar estrategia",key="c2e10_match_check"):
+        ok=all(matches[k]==v for k,v in problems.items()); _c2e10_mark(state,"control_match",ok,matches); _c2e10_persist(lab,saved,state)
+        (st.success if ok else st.warning)("Estrategia coherente: cada mecanismo requiere una medida dirigida a su fuente o camino." if ok else "No existe una solución universal: relaciona cada problema con su mecanismo.")
+
+    st.markdown("### 19 · Compara dos estrategias")
+    st.write("**A:** instalar resortes bajo la bomba.  **B:** verificar base + tuberías/soportes + condición hidráulica + ruido aéreo residual.")
+    matrix={}
+    for pr in ["Vibración por base","Tubería","Soportes","Cavitación","Ruido aéreo"]:
+        matrix[pr]=st.radio(pr,["A controla mejor","B aborda mejor","Ambas equivalentes"],index=None,horizontal=True,key=f"c2e10_strategy_{pr}")
+    if st.button("Comprobar comparación",key="c2e10_strategy_check"):
+        ok=all(v=="B aborda mejor" for v in matrix.values()); _c2e10_mark(state,"strategy_compare",ok,matrix); _c2e10_persist(lab,saved,state)
+        (st.success if ok else st.warning)("Correcto: la estrategia integral cubre mecanismos que un único montaje de base deja activos." if ok else "Evalúa cada fila por separado: base, conexiones, fuente hidráulica y camino aéreo.")
+
+    # ---------- INFORME ----------
+    st.markdown("## INFORME TÉCNICO GUIADO · integra tus resultados")
+    rep=state.setdefault("report",{})
+    rep["impact_mechanism"]=st.selectbox("Problema A · mecanismo",["","Impacto → vibración estructural → radiación","Ruido aéreo exterior"],index=(["","Impacto → vibración estructural → radiación","Ruido aéreo exterior"].index(rep.get("impact_mechanism","")) if rep.get("impact_mechanism","") in ["","Impacto → vibración estructural → radiación","Ruido aéreo exterior"] else 0),key="c2e10_rep_mech")
+    rep["floor_solution"]=state.get("floor_choice") or st.selectbox("Solución de piso",["","A","B","C"],key="c2e10_rep_floor")
+    rep["floor_limits"]=st.multiselect("Limitaciones/verificaciones del piso",["Puentes rígidos","Propiedades reales","Carga y espesor","Condiciones de borde","Ejecución"],default=[x for x in rep.get("floor_limits",[]) if x in ["Puentes rígidos","Propiedades reales","Carga y espesor","Condiciones de borde","Ejecución"]],key="c2e10_rep_floor_limits")
+    rep["pump_paths"]=st.multiselect("Caminos de la bomba",["Base","Tuberías","Soportes","Penetraciones","Aire"],default=[x for x in rep.get("pump_paths",[]) if x in ["Base","Tuberías","Soportes","Penetraciones","Aire"]],key="c2e10_rep_paths")
+    rep["controls"]=st.multiselect("Medidas de control propuestas",["Aisladores seleccionados por carga y frecuencia","Conexiones flexibles","Soportes resilientes","Corrección hidráulica","Control del ruido aéreo residual","Revisión de penetraciones"],default=[x for x in rep.get("controls",[]) if x in ["Aisladores seleccionados por carga y frecuencia","Conexiones flexibles","Soportes resilientes","Corrección hidráulica","Control del ruido aéreo residual","Revisión de penetraciones"]],key="c2e10_rep_controls")
+    rep["final_decision"]=st.text_area("Decisión profesional · ¿aprobarías para ejecución sin verificaciones adicionales? Justifica.",value=str(rep.get("final_decision","")),key="c2e10_rep_decision",height=140)
+    st.markdown("### Resultados arrastrados automáticamente")
+    st.write(f"Lₙ,₀(500): {values.get('ln0_input','—')} dB · m’ᵣ: {values.get('mr_input','—')} kg/m² · f₀: {values.get('f0_input','—')} Hz · Lₙ,final(500): {values.get('lnfinal','—')} dB · fₑ bomba: {values.get('pump_fe','—')} Hz")
+    if st.button("Guardar informe y progreso",use_container_width=True,key="c2e10_save_report"):
+        state["report"]=rep; _c2e10_persist(lab,saved,state); st.success("Informe y progreso guardados.")
+
+    auto=_c2e10_auto_score(state); report=_c2e10_report_score(state); total=auto+report
+    st.markdown(f"### Resumen previo · {total:.0f}/100")
+    c1,c2,c3=st.columns(3); c1.metric("Interactivos",f"{auto:.0f}/80"); c2.metric("Informe",f"{report:.0f}/20"); c3.metric("Nota estimada",f"{_grade_from_percent(total):.1f}")
+    if st.button("Enviar evaluación definitiva",type="primary",use_container_width=True,key="c2e10_submit"):
+        state["report"]=rep; _c2e10_persist(lab,saved,state)
+        if auto<40 or report<8:
+            st.session_state["c2e10_confirm_incomplete"]=True; st.warning("El desafío todavía contiene actividades o elementos del informe pendientes. Puedes revisar o confirmar el envío.")
+        else:
+            _c2l1_finish_stage10(lab,saved,state,"submitted"); st.rerun()
+    if st.session_state.get("c2e10_confirm_incomplete"):
+        if st.button("Confirmar envío con actividades pendientes",key="c2e10_submit_incomplete",use_container_width=True):
+            _c2l1_finish_stage10(lab,saved,state,"submitted_incomplete"); st.rerun()
+
     st.markdown("---")
-    st.markdown("### Mapa final")
-    st.markdown("**IMPACTO → R(f) → Lₙ,₀(f) → ΔLₙ(f) → Lₙ,final(f) → DECISIÓN DE INGENIERÍA**")
-    st.markdown("**INSTALACIÓN → FUENTE → FRECUENCIA → CAMINO → CONTROL EN FUENTE + CONTROL ESTRUCTURAL + CONTROL DE CONEXIONES → DECISIÓN DE INGENIERÍA**")
+    st.markdown("### Mapa conceptual final")
+    st.markdown("**RUIDO DE IMPACTO:** FUERZA → ESTRUCTURA → LOSA BASE → PISO FLOTANTE → PREDICCIÓN → CONTROL → VERIFICACIÓN")
+    st.markdown("**RUIDO DE INSTALACIONES:** EQUIPO → EXCITACIÓN → CAMINOS → TRANSMISIBILIDAD → CONTROL EN FUENTE + ESTRUCTURAL + CONEXIONES + AÉREO → VERIFICACIÓN")
+    st.info("Una solución efectiva comienza por comprender el mecanismo físico antes de seleccionar una medida de control.")
+
 
 def future_lab_view_impl(lab):
     """Renderer de los laboratorios posteriores manteniendo la navegación institucional."""
