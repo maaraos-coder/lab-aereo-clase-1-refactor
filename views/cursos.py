@@ -1621,17 +1621,103 @@ def _render_course2_lab1_stage1(lab, saved):
         "y de qué tan eficientemente la superficie radia sonido."
     )
 
-    with st.expander("¿Qué significa cada símbolo?", expanded=False):
-        st.markdown(
-            """
-            - **F** · fuerza aplicada sobre la estructura, en **N**.
-            - **Z** · impedancia mecánica: oposición de la estructura al movimiento vibratorio.
-            - **v** · velocidad de vibración de la superficie, en **m/s**.
-            - **ρ₀** · densidad del aire, en **kg/m³**.
-            - **c** · velocidad del sonido en el aire, en **m/s**.
-            - **p** · presión sonora radiada, en **Pa**.
-            """
-        )
+    st.markdown("#### ¿Qué significa cada símbolo?")
+
+    st.markdown(
+        """
+        <style>
+        .symbol-grid {
+            display:grid;
+            grid-template-columns:repeat(3,minmax(0,1fr));
+            gap:.75rem;
+            margin:.55rem 0 1.05rem 0;
+        }
+        .symbol-card {
+            border:1px solid rgba(99,102,241,.14);
+            border-radius:16px;
+            background:linear-gradient(180deg,#ffffff 0%,#f8fafc 100%);
+            padding:.85rem .9rem;
+            min-height:128px;
+        }
+        .symbol-letter {
+            font-family:Georgia, "Times New Roman", serif;
+            font-size:1.75rem;
+            line-height:1;
+            font-weight:800;
+            color:#4338ca;
+            margin-bottom:.45rem;
+        }
+        .symbol-name {
+            color:#0f172a;
+            font-size:.91rem;
+            font-weight:800;
+            margin-bottom:.30rem;
+        }
+        .symbol-desc {
+            color:#475569;
+            font-size:.82rem;
+            line-height:1.38;
+        }
+        .symbol-unit {
+            margin-top:.35rem;
+            color:#64748b;
+            font-size:.76rem;
+            font-weight:700;
+        }
+        @media (max-width: 850px) {
+            .symbol-grid {grid-template-columns:repeat(2,minmax(0,1fr));}
+        }
+        @media (max-width: 520px) {
+            .symbol-grid {grid-template-columns:1fr;}
+        }
+        </style>
+
+        <div class="symbol-grid">
+            <div class="symbol-card">
+                <div class="symbol-letter">F</div>
+                <div class="symbol-name">Fuerza aplicada</div>
+                <div class="symbol-desc">Acción que inicia la vibración: por ejemplo, una pisada, un golpe o una máquina.</div>
+                <div class="symbol-unit">Unidad: N</div>
+            </div>
+
+            <div class="symbol-card">
+                <div class="symbol-letter">Z</div>
+                <div class="symbol-name">Impedancia mecánica</div>
+                <div class="symbol-desc">Indica cuánto se opone la estructura a moverse cuando recibe una fuerza.</div>
+                <div class="symbol-unit">Relaciona F con v</div>
+            </div>
+
+            <div class="symbol-card">
+                <div class="symbol-letter">v</div>
+                <div class="symbol-name">Velocidad de vibración</div>
+                <div class="symbol-desc">Describe qué tan rápido se mueve la superficie mientras vibra.</div>
+                <div class="symbol-unit">Unidad: m/s</div>
+            </div>
+
+            <div class="symbol-card">
+                <div class="symbol-letter">ρ₀</div>
+                <div class="symbol-name">Densidad del aire</div>
+                <div class="symbol-desc">Propiedad del aire que interviene cuando una superficie vibrante transmite movimiento al medio.</div>
+                <div class="symbol-unit">Unidad: kg/m³</div>
+            </div>
+
+            <div class="symbol-card">
+                <div class="symbol-letter">c</div>
+                <div class="symbol-name">Velocidad del sonido</div>
+                <div class="symbol-desc">Velocidad con que una perturbación acústica se propaga por el aire.</div>
+                <div class="symbol-unit">Unidad: m/s</div>
+            </div>
+
+            <div class="symbol-card">
+                <div class="symbol-letter">p</div>
+                <div class="symbol-name">Presión sonora radiada</div>
+                <div class="symbol-desc">Variación de presión que la superficie vibrante genera finalmente en el aire.</div>
+                <div class="symbol-unit">Unidad: Pa</div>
+            </div>
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
 
     # --------------------------------------------------------
     # 4 · APLICACIÓN 1: PISADA
