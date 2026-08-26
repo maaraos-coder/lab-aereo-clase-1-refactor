@@ -67,10 +67,10 @@ COURSE_LABS = [
                      "Esta etapa integra preguntas conceptuales y aplicadas sobre transmisión, magnitudes, impacto, instalaciones y control.",
                      "Responde las preguntas de comprensión y revisa la retroalimentación."),
 
-                    ("Ejercicio integrador",
-                     "Integrar diagnóstico, interpretación y selección de medidas de control en un caso completo.",
-                     "El ejercicio final exige identificar fuentes, caminos, evidencia, mecanismo dominante y una estrategia de control coherente.",
-                     "Resuelve el caso integrador justificando diagnóstico y medidas propuestas.")
+                    ("Desafío integrador interactivo",
+                     "Resolver un caso profesional completo mediante diagnóstico, cálculo, experimentación, comparación y decisión técnica.",
+                     "Integra ruido de impacto e instalaciones con los modelos de las Etapas 5–8, inspección de obra, caminos de transmisión y control combinado.",
+                     "Calcula, manipula variables, compara soluciones, detecta errores, diseña medidas de control y construye el informe técnico final.")
                 ],
             },
             {
