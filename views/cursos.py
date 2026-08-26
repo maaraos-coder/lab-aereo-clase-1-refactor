@@ -5676,8 +5676,34 @@ def _c2l1_stage9_teacher_view():
         st.success("Rúbrica y observación docente guardadas.")
 
 
+def _c2l1_stage_overview(stage_number):
+    """Tarjetas propias del Curso 2 · Lab 1 para evitar heredar STAGE_GUIDE del Curso 1."""
+    guides = {
+        9: [
+            ("🧠", "INTERPRETARÁS", "Fenómenos de impacto e instalaciones a partir de mecanismos, magnitudes y caminos de transmisión."),
+            ("🧮", "COMPROBARÁS", "Relaciones entre masa, rigidez dinámica, frecuencia natural, mejora espectral y transmisibilidad."),
+            ("🛠️", "DECIDIRÁS", "Qué medida de control corresponde según el mecanismo y cómo verificar técnicamente la decisión."),
+        ],
+        10: [
+            ("🏢", "DIAGNOSTICARÁS", "Dos reclamos del mismo edificio: ruido de impacto por pisadas y zumbido nocturno de una bomba."),
+            ("🧪", "EXPERIMENTARÁS", "Pisos flotantes, frecuencia natural, respuesta espectral y montajes antivibratorios bajo restricciones reales."),
+            ("✅", "JUSTIFICARÁS", "Una estrategia integral de control mediante cálculos, caminos de transmisión, verificación e informe técnico."),
+        ],
+    }
+    cards = guides.get(stage_number, [])
+    if not cards:
+        return
+    html = '<div class="overview">'
+    for icon, title, text in cards:
+        html += (f'<div class="overview-card"><div class="overview-icon">{icon}</div>'
+                 f'<div class="overview-title">{title}</div>'
+                 f'<div class="overview-text">{text}</div></div>')
+    st.markdown(html + '</div>', unsafe_allow_html=True)
+
+
 def _render_course2_lab1_stage9(lab, saved):
-    header("ETAPA 9 · LABORATORIO 1","PREGUNTAS DE COMPRENSIÓN","COMPRUEBA LO QUE HAS APRENDIDO")
+    header("ETAPA 9 · LABORATORIO 1","PREGUNTAS DE COMPRENSIÓN","COMPRUEBA LO QUE HAS APRENDIDO", show_overview=False)
+    _c2l1_stage_overview(9)
     st.write("Antes de resolver el desafío integrador final, revisaremos los conceptos fundamentales del laboratorio. Estas preguntas no buscan solamente recordar definiciones o fórmulas: deberás interpretar fenómenos, resultados, modelos y decisiones de control acústico.")
     st.caption("25 preguntas · 4 puntos por pregunta · 100 puntos totales · exigencia de aprobación: 60 % · misma escala de notas del Diplomado.")
     if st.session_state.get("role")=="Docente":
@@ -5915,8 +5941,24 @@ def _render_course2_lab1_stage10(lab,saved):
     import plotly.graph_objects as go
     ln0_above_fc,reduced_mass,natural_frequency,delta_cremer,transmissibility_force=_c2l1_s10_models()
     _c2l1_s10_restore(saved)
-    header("ETAPA 10 · DESAFÍO INTEGRADOR","UN EDIFICIO, DOS PROBLEMAS","Diagnóstico, predicción y control del ruido de impacto y del ruido generado por instalaciones.")
+    header("ETAPA 10 · DESAFÍO INTEGRADOR","UN EDIFICIO, DOS PROBLEMAS","Diagnóstico, predicción y control del ruido de impacto y del ruido generado por instalaciones.", show_overview=False)
+    _c2l1_stage_overview(10)
     if st.session_state.get("role")=="Docente": _c2l1_stage10_teacher_view(); return
+
+    st.markdown("## 🏢 Problema integrador · Diagnóstico acústico de un edificio residencial")
+    st.info(
+        "Has sido contratado como **consultor acústico** para estudiar un edificio residencial en el que aparecen "
+        "dos problemas simultáneos. En un departamento se perciben con claridad las **pisadas provenientes del piso "
+        "superior** y, durante la noche, los residentes reportan un **zumbido asociado a la sala de bombas**. "
+        "Tu tarea no es elegir una respuesta de memoria: deberás reconstruir los mecanismos físicos, realizar "
+        "predicciones, comparar alternativas de piso flotante y aislamiento vibratorio, detectar caminos paralelos "
+        "y terminar proponiendo una estrategia de control técnicamente justificable."
+    )
+    st.markdown(
+        "**Objetivo del desafío:** conectar todo lo aprendido en el laboratorio para responder tres preguntas: "
+        "**qué está ocurriendo, por dónde se transmite la energía y qué conjunto de medidas debe verificarse antes "
+        "de aprobar una solución.**"
+    )
     remote=_c2l1_stage10_submission()
     if remote or st.session_state.get("c2l1_exam_submitted"):
         payload=(remote or {}).get("payload",{}); row=(remote or {}).get("row",{})
@@ -6110,12 +6152,11 @@ def future_lab_view_impl(lab):
 
         # Herramientas comunes del diplomado.
         formula_popup_button()
-        st.button(
+        st.link_button(
             "📕 Generar apunte visual (PDF)",
-            key=f"future_pdf_pending_{class_id}",
+            f"?print_future_lab={class_id}",
             width="stretch",
-            disabled=True,
-            help="La exportación visual de este nuevo laboratorio se habilitará cuando sus etapas estén completamente integradas.",
+            help="Abre una vista limpia con las etapas 0 a 10 para imprimirla o guardarla como PDF.",
         )
 
         # Mismos controles de proyección docente disponibles en el Curso 1.
@@ -6300,6 +6341,71 @@ def future_lab_view_impl(lab):
                 "Corregir promedios aritméticos de decibeles, símbolos intercambiados y conclusiones normativas sin fuente."
             )
 
+def future_print_view_impl(lab):
+    """Apunte visual imprimible para el Curso 2 · Laboratorio 1."""
+    import html
+
+    class_id = lab.get("id", "")
+    st.session_state["print_mode"] = True
+    st.session_state["projection_mode"] = True
+    st.session_state["role"] = "Proyección"
+    st.session_state["access"] = True
+    st.session_state["user_key"] = "print-preview"
+    st.session_state["name"] = "Apunte visual"
+
+    st.markdown("""
+        <style>
+        [data-testid="stSidebar"], header[data-testid="stHeader"] {display:none !important;}
+        .main .block-container {max-width:1050px;padding-top:1rem;padding-bottom:3rem;}
+        .print-cover{padding:3rem 2.4rem;border:1px solid #d8e5ef;border-radius:18px;margin-bottom:1.5rem;}
+        .print-cover h1{font-size:2.4rem;margin:.3rem 0;color:#0a3559;}
+        .print-cover h2{font-size:1.45rem;color:#0b74b5;margin:.2rem 0 1rem;}
+        .print-stage{break-before:page;page-break-before:always;margin-top:1.5rem;padding-top:.4rem;}
+        .print-note{background:#eef7ff;border-left:4px solid #0b74b5;padding:.8rem 1rem;border-radius:8px;margin:1rem 0;}
+        @media print {
+          @page {size:A4; margin:12mm 11mm 14mm;}
+          .print-note,[data-testid="stSidebar"] {display:none !important;}
+          .main .block-container {max-width:none !important;padding:0 !important;}
+          body {-webkit-print-color-adjust:exact !important;print-color-adjust:exact !important;}
+        }
+        </style>
+    """, unsafe_allow_html=True)
+    st.markdown(
+        f'<section class="print-cover"><div style="font-size:.78rem;letter-spacing:.12em;font-weight:800;color:#0b74b5">DIPLOMADO EN ACÚSTICA EN LA EDIFICACIÓN</div>'
+        f'<h1>Laboratorio {html.escape(str(lab.get("number", "")))}</h1>'
+        f'<h2>{html.escape(str(lab.get("focus", "")))}</h2>'
+        '<p>Apunte visual generado desde el contenido real del laboratorio. Incluye las etapas 0 a 10, ecuaciones, tablas, gráficos y actividades en su estado de referencia.</p></section>',
+        unsafe_allow_html=True,
+    )
+    st.markdown('<div class="print-note"><b>Cómo guardar:</b> pulsa “Imprimir / Guardar PDF”, elige <b>Guardar como PDF</b> y activa los gráficos de fondo.</div>', unsafe_allow_html=True)
+    components.html(
+        '<div style="display:flex;justify-content:flex-end"><button onclick="window.parent.print()" style="background:#0b5f98;color:white;border:1px solid #63d6f2;border-radius:9px;padding:10px 18px;font-weight:700;cursor:pointer">Imprimir / Guardar PDF</button></div>',
+        height=55,
+    )
+
+    renderers = {
+        0: _render_course2_lab1_welcome, 1: _render_course2_lab1_stage1,
+        2: _render_course2_lab1_stage2, 3: _render_course2_lab1_stage3,
+        4: _render_course2_lab1_stage4, 5: _render_course2_lab1_stage5,
+        6: _render_course2_lab1_stage6, 7: _render_course2_lab1_stage7,
+        8: _render_course2_lab1_stage8, 9: _render_course2_lab1_stage9,
+        10: _render_course2_lab1_stage10,
+    }
+    if class_id != "clase-03-impacto-instalaciones-lab-1":
+        st.warning("El apunte visual todavía no está integrado para este laboratorio.")
+        return
+    for stage in range(11):
+        st.markdown('<div class="print-stage"></div>', unsafe_allow_html=True)
+        try:
+            renderers[stage](lab, {})
+        except Exception as exc:
+            st.warning(f"La Etapa {stage} no pudo renderizarse completamente en modo impresión: {exc}")
+    components.html(
+        "<script>setTimeout(()=>{const doc=window.parent.document;doc.querySelectorAll('details').forEach(el=>el.open=true);},1800);</script>",
+        height=0,
+    )
+
+
 def future_projection_stage_impl(lab, stage):
     """Vista limpia de una etapa futura para la ventana compartida en Zoom."""
     stage = int(stage or 0)
@@ -6401,6 +6507,7 @@ _VIEWS = {
     "_save_future_state": _save_future_state_impl,
     "future_lab_view": future_lab_view_impl,
     "future_projection_stage": future_projection_stage_impl,
+    "future_print_view": future_print_view_impl,
 }
 
 def run_view(name, runtime, *args, **kwargs):
