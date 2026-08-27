@@ -4036,24 +4036,99 @@ def _render_course2_lab1_stage5(lab, saved):
         unsafe_allow_html=True,
     )
 
+    st.markdown("### Configuración normalizada de referencia")
+    st.write(
+        "Para la predicción oficial del laboratorio usamos una **máquina de impactos de referencia**. "
+        "Los parámetros siguientes describen cómo se genera la excitación mecánica y no representan una elección libre de diseño."
+    )
+
+    st.markdown(
+        """
+        <div style="display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;margin:.5rem 0 .8rem">
+          <div style="padding:14px;border:1px solid #dbe4ee;border-radius:14px;background:#fff;min-height:155px">
+            <b>fᵣ · Frecuencia de repetición</b><br>
+            <span style="color:#64748b">Indica cuántos impactos se producen por segundo. En la configuración de referencia usamos <b>10 Hz</b>.</span>
+          </div>
+          <div style="padding:14px;border:1px solid #dbe4ee;border-radius:14px;background:#fff;min-height:155px">
+            <b>m · Masa del martillo</b><br>
+            <span style="color:#64748b">Masa del elemento que golpea la losa. En esta referencia usamos <b>0,50 kg</b>.</span>
+          </div>
+          <div style="padding:14px;border:1px solid #dbe4ee;border-radius:14px;background:#fff;min-height:155px">
+            <b>h · Altura de caída</b><br>
+            <span style="color:#64748b">Distancia desde la cual cae el martillo antes del contacto. En esta referencia usamos <b>0,040 m</b> (40 mm).</span>
+          </div>
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
+
+    st.markdown(
+        """
+        <div style="border:1px solid #bfdbfe;background:#eff6ff;border-radius:14px;padding:13px 16px;margin:.3rem 0 .8rem">
+          <b>¿Para qué sirven estos tres datos?</b><br>
+          A partir de <b>m</b> y <b>h</b> obtenemos la velocidad antes del impacto <b>v₀</b>.
+          Al incorporar la repetición <b>fᵣ</b>, el modelo puede caracterizar la excitación periódica que recibe la losa.
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
+
     st.latex(r"v_0=\sqrt{2gh}")
     st.latex(r"F_n=2f_rmv_0")
     st.latex(r"S_{f0}=4f_rm^2gh")
 
-    s1,s2,s3=st.columns(3)
-    with s1:
-        fr=st.number_input("Repetición fᵣ (Hz)",0.1,30.0,10.0,0.5,key=f"{ns}_fr")
-    with s2:
-        mass=st.number_input("Masa del martillo m (kg)",0.05,2.0,0.50,0.05,key=f"{ns}_mass")
-    with s3:
-        h=st.number_input("Altura de caída h (m)",0.005,0.200,0.040,0.005,format="%.3f",key=f"{ns}_h")
+    source_mode = st.radio(
+        "Modo de la fuente",
+        ["Usar máquina normalizada de referencia", "Explorar variaciones de la fuente"],
+        index=0,
+        horizontal=True,
+        key=f"{ns}_source_mode",
+    )
+
+    if source_mode == "Usar máquina normalizada de referencia":
+        fr = 10.0
+        mass = 0.50
+        h = 0.040
+
+        s1,s2,s3=st.columns(3)
+        with s1:
+            _card("fᵣ · Repetición",f"{fr:.2f} Hz","Valor de referencia utilizado para la predicción oficial.")
+        with s2:
+            _card("m · Masa",f"{mass:.2f} kg","Masa de referencia del martillo.")
+        with s3:
+            _card("h · Altura de caída",f"{h:.3f} m","Equivale a 40 mm de caída.",tone="blue")
+    else:
+        st.info(
+            "Modo exploratorio: puedes modificar la fuente para observar tendencias. "
+            "Estos cambios **no sustituyen** la configuración normalizada usada para el baseline oficial."
+        )
+        s1,s2,s3=st.columns(3)
+        with s1:
+            fr=st.number_input("Repetición fᵣ (Hz)",0.1,30.0,10.0,0.5,key=f"{ns}_fr")
+        with s2:
+            mass=st.number_input("Masa del martillo m (kg)",0.05,2.0,0.50,0.05,key=f"{ns}_mass")
+        with s3:
+            h=st.number_input("Altura de caída h (m)",0.005,0.200,0.040,0.005,format="%.3f",key=f"{ns}_h")
+
     try:
         v0=ver_impact_velocity_before_contact(9.81,h)
         Fn=ver_impact_force_harmonic(fr,mass,v0)
         Sf0=ver_force_spectral_density(fr,mass,9.81,h)
+
+        st.markdown("### Resultado de la caracterización de la fuente")
         a1,a2,a3=st.columns(3)
-        with a1: _card("v₀",f"{v0:.3f} m/s","Velocidad del martillo inmediatamente antes del impacto.")
-        with a2: _card("Fₙ",f"{Fn:.2f} N","Magnitud característica de la excitación repetitiva.")
+        with a1:
+            _card(
+                "Velocidad antes del impacto v₀",
+                f"{v0:.3f} m/s",
+                "Velocidad del martillo inmediatamente antes del contacto."
+            )
+        with a2:
+            _card(
+                "Fuerza periódica característica Fₙ",
+                f"{Fn:.2f} N",
+                "Magnitud asociada a la excitación repetitiva de la fuente."
+            )
         with a3:
             _card(
                 "Densidad espectral de fuerza S_f0",
@@ -4560,6 +4635,7 @@ def _render_course2_lab1_stage5(lab, saved):
                 "D_Nm":float(D),
                 "fc_hz":float(fc),
                 "source":{
+                    "mode":source_mode,
                     "fr_hz":float(fr),
                     "hammer_mass_kg":float(mass),
                     "drop_height_m":float(h),
