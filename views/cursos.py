@@ -2024,51 +2024,131 @@ def _render_course2_lab1_stage2(lab, saved):
         "La resonancia amplifica la respuesta del sistema frente a la energía que ya entrega la fuente."
     )
 
-    # 4 · Modos propios
-    st.markdown("### 4 · Una losa real no tiene una sola resonancia")
+    # 4 · De una resonancia simple a los modos de una losa real
+    st.markdown("### 4 · De una resonancia simple a los modos de una losa real")
     st.write(
-        "El modelo masa–resorte permite entender la idea de resonancia, pero una losa es un sistema continuo. "
-        "Por eso posee **muchas frecuencias propias** y cada una tiene una forma característica de vibrar."
+        "En la Parte 3 usamos un sistema simple para entender una **frecuencia natural f₀** y la resonancia. "
+        "Una losa real es más compleja: puede deformarse de varias maneras y, por eso, posee "
+        "**varias frecuencias naturales**."
     )
+
     st.markdown(
         """
-        <div style="border:1px solid #d8e2ec;border-radius:18px;padding:16px 18px;background:linear-gradient(180deg,#fff,#f8fafc);margin:.5rem 0 .9rem">
-        <div style="font-weight:850;color:#0f172a;font-size:1.02rem;margin-bottom:.45rem">¿Qué es un modo propio?</div>
-        <div style="color:#475569;line-height:1.5">
-        Un <b>modo propio</b> es una forma característica de vibrar que puede adoptar la losa cuando se excita
-        cerca de una de sus <b>frecuencias naturales</b>. Cada modo combina dos ideas:
-        <b>cuándo</b> aparece (su frecuencia natural) y <b>cómo</b> se mueve la superficie (su forma modal).
-        </div>
+        <div style="border:1px solid #d8e2ec;border-radius:18px;padding:16px 18px;
+                    background:linear-gradient(180deg,#fff,#f8fafc);margin:.6rem 0 .9rem">
+          <div style="font-weight:850;color:#0f172a;font-size:1.02rem;margin-bottom:.45rem">
+            El paso siguiente
+          </div>
+          <div style="color:#475569;line-height:1.5">
+            En un sistema simple hablamos de una frecuencia natural principal.
+            En una losa real aparecen varias:
+          </div>
+          <div style="font-family:Georgia,'Times New Roman',serif;font-size:1.35rem;
+                      text-align:center;color:#1e3a8a;margin:.7rem 0">
+            f₁, f₂, f₃, …
+          </div>
+          <div style="color:#475569;line-height:1.5">
+            Cada una de esas frecuencias está asociada a una <b>forma particular de vibrar</b>.
+            Esa forma característica se llama <b>modo propio</b>.
+          </div>
         </div>
         """,
         unsafe_allow_html=True,
     )
+
     st.markdown(
         """
-        <div style="border:1px solid #d8e2ec;border-radius:18px;padding:16px 18px;background:#fff;margin:.5rem 0 .8rem">
-        <div style="font-weight:850;color:#0f172a;font-size:1.02rem;margin-bottom:.45rem">¿Qué significan los índices (m,n)?</div>
-        <div style="color:#475569;line-height:1.5">
-        En una placa rectangular, <b>m</b> y <b>n</b> indican cuántas <b>medias ondas</b> aparecen en cada una de las dos
-        direcciones principales de la losa. Los números describen la <b>forma espacial</b> del modo; no indican qué tan fuerte vibra.
-        </div>
-        <div style="display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;margin-top:.7rem">
-          <div style="padding:10px;border-radius:12px;background:#f8fafc;border:1px solid #e2e8f0"><b>(1,1)</b><br><span style="color:#64748b">1 media onda × 1 media onda</span></div>
-          <div style="padding:10px;border-radius:12px;background:#f8fafc;border:1px solid #e2e8f0"><b>(2,1)</b><br><span style="color:#64748b">2 medias ondas × 1 media onda</span></div>
-          <div style="padding:10px;border-radius:12px;background:#f8fafc;border:1px solid #e2e8f0"><b>(2,2)</b><br><span style="color:#64748b">2 medias ondas × 2 medias ondas</span></div>
-        </div>
+        <div style="display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;margin:.55rem 0 .85rem">
+          <div style="padding:12px;border:1px solid #d9e2ec;border-radius:14px;background:#fff;text-align:center">
+            <b>f₁</b><br><span style="color:#64748b">→ modo 1</span>
+          </div>
+          <div style="padding:12px;border:1px solid #d9e2ec;border-radius:14px;background:#fff;text-align:center">
+            <b>f₂</b><br><span style="color:#64748b">→ modo 2</span>
+          </div>
+          <div style="padding:12px;border:1px solid #d9e2ec;border-radius:14px;background:#fff;text-align:center">
+            <b>f₃</b><br><span style="color:#64748b">→ modo 3</span>
+          </div>
         </div>
         """,
         unsafe_allow_html=True,
     )
+
+    st.markdown(
+        """
+        <div style="border-radius:14px;padding:12px 16px;background:#eef6ff;border:1px solid #d8e8fa;margin:.3rem 0 .85rem">
+          <b>Conexión con la Parte 3:</b><br>
+          La <b>resonancia</b> nos indica <b>cuándo aumenta la respuesta</b> al acercarnos a una frecuencia natural.<br>
+          El <b>modo propio</b> nos muestra <b>cómo se deforma la losa</b> cuando esa frecuencia domina la respuesta.
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
+
+    st.markdown("#### ¿Qué es un modo propio?")
+    st.write(
+        "Un **modo propio** es una forma característica de vibración de la losa asociada a una frecuencia natural determinada. "
+        "Si la frecuencia de excitación se acerca a esa frecuencia natural, ese patrón de vibración puede amplificarse."
+    )
+
+    st.markdown(
+        """
+        <div style="border:1px solid #d8e2ec;border-radius:18px;padding:16px 18px;background:#fff;margin:.55rem 0 .85rem">
+          <div style="font-weight:850;color:#0f172a;font-size:1.02rem;margin-bottom:.45rem">
+            ¿Cómo leer los índices (m,n)?
+          </div>
+          <div style="color:#475569;line-height:1.5">
+            Para esta introducción, piensa en los índices como una forma sencilla de describir
+            <b>cómo se divide espacialmente el patrón de vibración</b> sobre una losa rectangular.
+            No indican qué tan fuerte vibra la losa.
+          </div>
+          <div style="display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;margin-top:.7rem">
+            <div style="padding:10px;border-radius:12px;background:#f8fafc;border:1px solid #e2e8f0">
+              <b>(1,1)</b><br><span style="color:#64748b">1 × 1 zona principal</span>
+            </div>
+            <div style="padding:10px;border-radius:12px;background:#f8fafc;border:1px solid #e2e8f0">
+              <b>(2,1)</b><br><span style="color:#64748b">2 × 1 zonas</span>
+            </div>
+            <div style="padding:10px;border-radius:12px;background:#f8fafc;border:1px solid #e2e8f0">
+              <b>(2,2)</b><br><span style="color:#64748b">2 × 2 zonas</span>
+            </div>
+          </div>
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
+
     _asset("curso2_lab1_etapa2_modos_animados.gif")
+
     st.markdown(
-        """<div style="display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;margin:.5rem 0 1rem">
-        <div style="padding:13px;border:1px solid #d9e2ec;border-radius:14px;background:#fff"><b>Modo propio</b><br><span style="color:#64748b">Patrón espacial de vibración asociado a una frecuencia natural.</span></div>
-        <div style="padding:13px;border:1px solid #d9e2ec;border-radius:14px;background:#fff"><b>Nodo</b><br><span style="color:#64748b">Zona del modo donde el desplazamiento es prácticamente cero.</span></div>
-        <div style="padding:13px;border:1px solid #d9e2ec;border-radius:14px;background:#fff"><b>Antinodo</b><br><span style="color:#64748b">Zona donde el movimiento alcanza amplitudes máximas.</span></div>
-        </div>""",
+        """
+        <div style="display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;margin:.5rem 0 1rem">
+          <div style="padding:13px;border:1px solid #d9e2ec;border-radius:14px;background:#fff">
+            <b>Modo propio</b><br>
+            <span style="color:#64748b">Patrón espacial de vibración asociado a una frecuencia natural.</span>
+          </div>
+          <div style="padding:13px;border:1px solid #d9e2ec;border-radius:14px;background:#fff">
+            <b>Nodo</b><br>
+            <span style="color:#64748b">Zona del modo donde el desplazamiento es prácticamente cero.</span>
+          </div>
+          <div style="padding:13px;border:1px solid #d9e2ec;border-radius:14px;background:#fff">
+            <b>Antinodo</b><br>
+            <span style="color:#64748b">Zona donde el movimiento alcanza amplitudes máximas.</span>
+          </div>
+        </div>
+        """,
         unsafe_allow_html=True,
     )
+
+    st.markdown(
+        """
+        <div style="border-radius:14px;padding:12px 16px;background:#f0fdf4;border:1px solid #bbf7d0;margin:.3rem 0 .85rem">
+          <b>Idea clave:</b> una losa real puede resonar de distintas maneras.
+          Cada frecuencia natural está asociada a un modo propio diferente.
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
+
     fscan=st.slider("Explora la frecuencia (Hz)",20,500,120,5,key=f"{class_id}_s2_fscan")
     Fconst=80.0
     fs=np.linspace(20,500,700)
@@ -2077,19 +2157,40 @@ def _render_course2_lab1_stage2(lab, saved):
     for fp,amp,w in peaks:
         mob+=amp/(1+((fs-fp)/w)**2)
     ycur=float(np.interp(fscan,fs,mob)); vrel=Fconst*ycur
+
     fig,ax=plt.subplots()
-    ax.plot(fs,mob); ax.axvline(fscan,linestyle="--")
-    ax.set_xlabel("Frecuencia (Hz)"); ax.set_ylabel("|Y(f)| relativa")
-    ax.set_title("Movilidad conceptual con varios modos"); ax.grid(True,alpha=.2)
-    st.pyplot(fig,use_container_width=True); plt.close(fig)
-    st.metric("Respuesta relativa",f"{vrel:.1f} u.r.")
+    ax.plot(fs,mob)
+    ax.axvline(fscan,linestyle="--")
+    ax.set_xlabel("Frecuencia (Hz)")
+    ax.set_ylabel("|Y(f)| relativa")
+    ax.set_title("Movilidad conceptual con varios modos")
+    ax.grid(True,alpha=.2)
+    st.pyplot(fig,use_container_width=True)
+    plt.close(fig)
+
+    st.metric("Respuesta vibratoria relativa",f"{vrel:.1f} u.r.")
+
     nearest_mode=min([70,180,340], key=lambda ff: abs(fscan-ff))
-    mode_name={70:"Modo cercano al primer patrón",180:"Modo cercano al segundo patrón",340:"Modo cercano al tercer patrón"}[nearest_mode]
+    mode_name={
+        70:"primer patrón modal",
+        180:"segundo patrón modal",
+        340:"tercer patrón modal"
+    }[nearest_mode]
+
     if abs(fscan-nearest_mode) <= 25:
-        st.success(f"Estás cerca de un pico de respuesta (~{nearest_mode} Hz): **{mode_name}** puede dominar la forma de vibración.")
+        st.success(
+            f"Estás cerca de una frecuencia natural del modelo (~{nearest_mode} Hz). "
+            f"El **{mode_name}** puede dominar la forma de vibración."
+        )
     else:
-        st.info("Estás entre picos modales: ningún modo del modelo conceptual domina claramente.")
-    st.caption("Cada pico de respuesta puede asociarse a la excitación preferente de un modo propio distinto.")
+        st.info(
+            "Estás entre picos de respuesta. Ninguno de los modos del modelo conceptual domina claramente."
+        )
+
+    st.caption(
+        "Los picos representan frecuencias naturales del modelo conceptual. "
+        "Cada pico puede asociarse a una forma modal diferente."
+    )
 
     # 5 · Propagación
     st.markdown("### 5 · La vibración no se queda donde nació")
