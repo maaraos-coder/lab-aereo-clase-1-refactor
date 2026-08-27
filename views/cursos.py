@@ -2861,70 +2861,111 @@ def _render_course2_lab1_stage3(lab, saved):
     # ------------------------------------------------------------------
     st.markdown("## 3 · Compara posibles fuentes con el receptor")
     st.write(
-        "Ahora compara las firmas espectrales de dos fuentes candidatas con el sonido medido en el dormitorio. "
-        "El objetivo es identificar coincidencias de frecuencia que orienten el diagnóstico, sin confundirlas todavía con una prueba causal."
+        "Ahora compara **espectros acústicos** medidos cerca de dos fuentes candidatas con el sonido medido en el dormitorio. "
+        "En los tres casos se representa el **nivel de presión sonora por frecuencia, Lp (dB)**. "
+        "El objetivo es detectar coincidencias que orienten el diagnóstico, sin confundirlas todavía con una prueba causal."
     )
 
-    # Frecuencias discretas: evitamos escala logarítmica continua porque aquí interesa
-    # comparar bandas/puntos de frecuencia concretos de forma pedagógica.
+    # Frecuencias discretas: posiciones numéricas uniformes para aprovechar todo
+    # el ancho del gráfico y etiquetas de frecuencia independientes.
     freq_labels = ["10", "16", "20", "25", "31,5", "40", "50", "63", "80", "100"]
-    pump = [-58, -52, -38, -10, -31, -40, -28, -45, -53, -60]
-    fan  = [-61, -58, -55, -50, -48, -35, -12, -32, -48, -57]
-    rec  = [-64, -58, -45, -19, -33, -41, -31, -48, -56, -63]
+    xpos = list(range(len(freq_labels)))
+
+    # Niveles de presión sonora simulados y físicamente intuitivos (dB).
+    # Bomba y dormitorio comparten el máximo dominante en 25 Hz.
+    # El ventilador presenta su máximo principal en 50 Hz.
+    pump = [39, 43, 52, 72, 55, 48, 46, 42, 38, 35]
+    fan  = [36, 38, 41, 43, 45, 50, 68, 54, 43, 38]
+    rec  = [34, 37, 46, 62, 51, 46, 44, 40, 36, 33]
 
     fig = go.Figure()
+
+    # Banda visual de 25 Hz.
+    fig.add_vrect(
+        x0=2.62, x1=3.38,
+        fillcolor="rgba(37,99,235,0.10)",
+        line_width=0,
+        layer="below",
+    )
+
     fig.add_trace(go.Scatter(
-        x=freq_labels, y=pump, mode="lines+markers", name="Bomba",
-        line=dict(width=3), marker=dict(size=9)
+        x=xpos, y=pump,
+        mode="lines+markers",
+        name="Bomba · medición acústica cercana",
+        line=dict(width=3),
+        marker=dict(size=[8,8,8,12,8,8,8,8,8,8]),
+        hovertemplate="Bomba<br>%{customdata} Hz<br>Lp = %{y:.0f} dB<extra></extra>",
+        customdata=freq_labels,
     ))
     fig.add_trace(go.Scatter(
-        x=freq_labels, y=fan, mode="lines+markers", name="Ventilador",
-        line=dict(width=2), marker=dict(size=8)
+        x=xpos, y=fan,
+        mode="lines+markers",
+        name="Ventilador · medición acústica cercana",
+        line=dict(width=2),
+        marker=dict(size=[8,8,8,8,8,8,12,8,8,8]),
+        hovertemplate="Ventilador<br>%{customdata} Hz<br>Lp = %{y:.0f} dB<extra></extra>",
+        customdata=freq_labels,
     ))
     fig.add_trace(go.Scatter(
-        x=freq_labels, y=rec, mode="lines+markers", name="Dormitorio receptor",
-        line=dict(width=3, dash="dash"), marker=dict(size=9)
+        x=xpos, y=rec,
+        mode="lines+markers",
+        name="Dormitorio receptor",
+        line=dict(width=3, dash="dash"),
+        marker=dict(size=[8,8,8,12,8,8,8,8,8,8]),
+        hovertemplate="Dormitorio<br>%{customdata} Hz<br>Lp = %{y:.0f} dB<extra></extra>",
+        customdata=freq_labels,
     ))
 
-    # Resaltamos la banda de 25 Hz, común a bomba y receptor.
-    fig.add_shape(
-        type="rect", xref="x", yref="paper",
-        x0=2.55, x1=3.45, y0=0, y1=1,
-        fillcolor="rgba(37,99,235,0.10)",
-        line=dict(width=0), layer="below"
+    fig.add_annotation(
+        x=3, y=72,
+        text="<b>25 Hz</b><br>coincidencia dominante<br>bomba ↔ dormitorio",
+        showarrow=True,
+        arrowhead=2,
+        ax=75, ay=-58,
+        bgcolor="rgba(255,255,255,0.96)",
+        bordercolor="#cbd5e1",
+        borderwidth=1,
     )
     fig.add_annotation(
-        x="25", y=-7,
-        text="<b>Coincidencia dominante<br>bomba ↔ dormitorio</b>",
-        showarrow=True, arrowhead=2, ax=78, ay=-52,
-        bgcolor="rgba(255,255,255,0.95)", bordercolor="#cbd5e1", borderwidth=1
+        x=6, y=68,
+        text="<b>50 Hz</b><br>máximo principal<br>del ventilador",
+        showarrow=True,
+        arrowhead=2,
+        ax=55, ay=-52,
+        bgcolor="rgba(255,255,255,0.96)",
+        bordercolor="#cbd5e1",
+        borderwidth=1,
     )
-    fig.add_annotation(
-        x="50", y=-9,
-        text="Pico principal<br>ventilador",
-        showarrow=True, arrowhead=2, ax=62, ay=-45,
-        bgcolor="rgba(255,255,255,0.95)", bordercolor="#cbd5e1", borderwidth=1
-    )
+
     fig.update_layout(
-        height=460,
-        margin=dict(l=55, r=25, t=70, b=60),
+        height=470,
+        margin=dict(l=65, r=25, t=82, b=65),
         xaxis=dict(
             title=dict(text="Frecuencia (Hz)", font=dict(size=14)),
-            type="category",
-            categoryorder="array",
-            categoryarray=freq_labels,
+            range=[-0.35, len(freq_labels)-0.65],
+            tickmode="array",
+            tickvals=xpos,
+            ticktext=freq_labels,
+            tickangle=0,
             tickfont=dict(size=13),
             showgrid=False,
+            zeroline=False,
         ),
         yaxis=dict(
-            title=dict(text="Nivel relativo (dB)", font=dict(size=14)),
-            range=[-70, 0], dtick=10,
+            title=dict(text="Nivel de presión sonora por banda, Lp (dB)", font=dict(size=14)),
+            range=[25, 80],
+            dtick=5,
             tickfont=dict(size=13),
-            gridcolor="rgba(148,163,184,0.22)", zeroline=False,
+            gridcolor="rgba(148,163,184,0.22)",
+            zeroline=False,
         ),
         legend=dict(
-            orientation="h", yanchor="bottom", y=1.05, xanchor="left", x=0,
-            font=dict(size=13)
+            orientation="h",
+            yanchor="bottom",
+            y=1.07,
+            xanchor="left",
+            x=0,
+            font=dict(size=12),
         ),
         hovermode="x unified",
     )
@@ -2933,9 +2974,11 @@ def _render_course2_lab1_stage3(lab, saved):
     st.markdown(
         """
         <div style="border:1px solid #dbeafe;background:#eff6ff;border-radius:14px;padding:13px 16px;margin:.2rem 0 .9rem">
-          <b>Lectura del gráfico:</b> la bomba presenta su componente dominante en <b>25 Hz</b> y el dormitorio receptor
-          también muestra un máximo en esa frecuencia. El ventilador concentra su energía alrededor de <b>50 Hz</b>.
-          La coincidencia a 25 Hz fortalece la hipótesis de la bomba, pero todavía no demuestra por sí sola el camino ni la causalidad.
+          <b>Lectura del gráfico:</b> la medición acústica cercana a la bomba presenta su máximo en
+          <b>25 Hz (72 dB)</b> y el dormitorio receptor también muestra su componente principal en
+          <b>25 Hz (62 dB)</b>. El ventilador, en cambio, tiene su máximo alrededor de
+          <b>50 Hz (68 dB)</b>. La coincidencia de frecuencia fortalece la hipótesis de la bomba,
+          pero todavía no demuestra por sí sola el camino de transmisión ni la causalidad.
         </div>
         """,
         unsafe_allow_html=True,
