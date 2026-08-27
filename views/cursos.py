@@ -2887,9 +2887,11 @@ def _render_course2_lab1_stage3(lab, saved):
     ))
 
     # Resaltamos la banda de 25 Hz, común a bomba y receptor.
-    fig.add_vrect(
-        x0=2.55, x1=3.45,
-        fillcolor="rgba(37,99,235,0.10)", line_width=0, layer="below"
+    fig.add_shape(
+        type="rect", xref="x", yref="paper",
+        x0=2.55, x1=3.45, y0=0, y1=1,
+        fillcolor="rgba(37,99,235,0.10)",
+        line=dict(width=0), layer="below"
     )
     fig.add_annotation(
         x="25", y=-7,
@@ -2907,17 +2909,17 @@ def _render_course2_lab1_stage3(lab, saved):
         height=460,
         margin=dict(l=55, r=25, t=70, b=60),
         xaxis=dict(
-            title="Frecuencia (Hz)",
+            title=dict(text="Frecuencia (Hz)", font=dict(size=14)),
             type="category",
             categoryorder="array",
             categoryarray=freq_labels,
             tickfont=dict(size=13),
-            titlefont=dict(size=14),
             showgrid=False,
         ),
         yaxis=dict(
-            title="Nivel relativo (dB)", range=[-70, 0], dtick=10,
-            tickfont=dict(size=13), titlefont=dict(size=14),
+            title=dict(text="Nivel relativo (dB)", font=dict(size=14)),
+            range=[-70, 0], dtick=10,
+            tickfont=dict(size=13),
             gridcolor="rgba(148,163,184,0.22)", zeroline=False,
         ),
         legend=dict(
