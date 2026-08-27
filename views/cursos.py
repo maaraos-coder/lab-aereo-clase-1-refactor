@@ -3836,7 +3836,8 @@ def _render_course2_lab1_stage4(lab, saved):
             st.rerun()
 
 def _render_course2_lab1_stage5(lab, saved):
-    """ETAPA 5 · Predicción de L_n,0(f) de la losa base mediante el modelo de Vér."""
+    """Etapa 5 · Predicción guiada y banda a banda de L_n,0(f) para la losa base."""
+    import math
     import numpy as np
     import matplotlib.pyplot as plt
     from core.acoustics import critical_frequency
@@ -3851,7 +3852,7 @@ def _render_course2_lab1_stage5(lab, saved):
     stage_selector_key = f"future_stage_{class_id}"
     role = st.session_state.get("role","Alumno")
     projection_mode = bool(st.session_state.get("projection_mode") or role=="Proyección")
-    ns = f"{class_id}_s5"
+    ns=f"{class_id}_s5"
 
     def _asset(name, caption=None):
         p=ASSET_DIR/name
@@ -3865,450 +3866,507 @@ def _render_course2_lab1_stage5(lab, saved):
         return False
 
     def _persist():
-        saved["updated_5"] = _now()
-        fn = globals().get("_save_future_state_impl") or globals().get("_save_future_state")
+        saved["updated_5"]=_now()
+        fn=globals().get("_save_future_state_impl") or globals().get("_save_future_state")
         if callable(fn):
             fn(class_id,saved)
 
-    def _card(title, value, text, tone="white"):
-        bg = "#ffffff" if tone=="white" else "#eff6ff"
-        border = "#dbe4ee" if tone=="white" else "#bfdbfe"
+    def _card(title,value,text,tone="white"):
+        bg="#fff" if tone=="white" else "#eff6ff"
+        bd="#dbe4ee" if tone=="white" else "#bfdbfe"
         st.markdown(
-            f"""
-            <div style="border:1px solid {border};border-radius:16px;padding:15px 16px;background:{bg};
-                        min-height:165px;box-sizing:border-box">
+            f"""<div style="border:1px solid {bd};border-radius:16px;padding:15px 16px;
+            background:{bg};min-height:170px;box-sizing:border-box;margin-bottom:6px">
               <div style="font-weight:800;color:#0f172a">{title}</div>
-              <div style="font-size:1.65rem;font-weight:850;color:#0f172a;margin:.35rem 0">{value}</div>
+              <div style="font-size:1.6rem;font-weight:850;color:#0f172a;margin:.35rem 0">{value}</div>
               <div style="color:#64748b;line-height:1.45">{text}</div>
-            </div>
-            """,
+            </div>""",
             unsafe_allow_html=True,
         )
+
+    def _mass_law_R(f_hz, m_surface):
+        # Aproximación didáctica de ley de masa para una placa homogénea.
+        # Se usa para cerrar el laboratorio sin pedir R(f) como dato arbitrario.
+        val=20.0*math.log10(max(float(m_surface)*float(f_hz),1e-12))-47.0
+        return max(5.0,float(val))
+
+    def _sigma_estimate(f_hz, fc_hz):
+        # Aproximación pedagógica dependiente de f/fc:
+        # bajo fc crece progresivamente; sobre fc se aproxima a 1.
+        r=max(float(f_hz)/max(float(fc_hz),1e-9),1e-6)
+        if r < 1.0:
+            return max(0.05,min(0.98,math.sqrt(r)))
+        return 1.0
+
+    def _band_solution(f_hz, m_surface, fc_hz, eta):
+        R=_mass_law_R(f_hz,m_surface)
+        sigma=_sigma_estimate(f_hz,fc_hz)
+        ln,regime=ver_ln_piecewise_db(float(f_hz),float(R),float(fc_hz),float(sigma),float(eta),0.0)
+        return float(R),float(sigma),float(ln),regime
 
     header(
         "ETAPA 5 · LABORATORIO 1",
         "Predicción del nivel de ruido de impacto de la losa base",
-        "Modelo analítico de Vér: construye la curva base Lₙ,₀(f) que usarás como referencia.",
+        "Construye banda por banda la curva de referencia Lₙ,₀(f).",
         show_overview=False,
-        duration_minutes=85,
+        duration_minutes=90,
     )
 
-    st.markdown("### Objetivo de la etapa")
+    st.markdown("### De la física de la Etapa 4 a una predicción")
     st.write(
-        "Transformar la cadena física construida en la Etapa 4 en una **predicción espectral de la losa base sin tratamiento**."
+        "En la etapa anterior construimos la cadena física. Ahora la convertiremos en una predicción "
+        "para una **losa de hormigón desnuda**, que será la referencia de las soluciones posteriores."
     )
-    st.latex(
-        r"\boxed{F(f)\rightarrow \mathrm{propiedades\ de\ la\ losa}\rightarrow f_c"
-        r"\rightarrow \mathrm{régimen}\rightarrow L_{n,0}(f)}"
+
+    st.markdown(
+        """
+        <div style="display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:9px;margin:.6rem 0 .9rem">
+          <div style="padding:11px;border:1px solid #dbe4ee;border-radius:13px;background:#fff;text-align:center"><b>Fuente</b><br><span style="color:#64748b">F(f)</span></div>
+          <div style="padding:11px;border:1px solid #dbe4ee;border-radius:13px;background:#fff;text-align:center"><b>Losa</b><br><span style="color:#64748b">m′, D, ηₚ</span></div>
+          <div style="padding:11px;border:1px solid #dbe4ee;border-radius:13px;background:#fff;text-align:center"><b>Radiación</b><br><span style="color:#64748b">f_c, σrad</span></div>
+          <div style="padding:11px;border:1px solid #dbe4ee;border-radius:13px;background:#fff;text-align:center"><b>Régimen</b><br><span style="color:#64748b">f&lt;f_c / f≥f_c</span></div>
+          <div style="padding:11px;border:1px solid #bfdbfe;border-radius:13px;background:#eff6ff;text-align:center"><b>Predicción</b><br><span style="color:#475569">Lₙ,₀(f)</span></div>
+        </div>
+        """,
+        unsafe_allow_html=True,
     )
     st.info(
-        "El resultado final de esta etapa será una **curva base guardada**. "
-        "Las etapas posteriores podrán comparar sus soluciones contra esa referencia."
+        "La etapa termina cuando hayas calculado y registrado correctamente cada banda. "
+        "El gráfico se construirá únicamente con tus resultados validados."
     )
 
     # ==============================================================
-    # 1 · DEFINE BASE SLAB
+    # 1. LOSA BASE
     # ==============================================================
     st.markdown("## 1 · Define la losa base")
     st.write(
-        "Primero fija el elemento que vas a predecir. Esta será la condición de referencia **sin tratamiento**."
+        "Estos parámetros describen la placa que vamos a modelar. "
+        "No hay tratamiento resiliente: ésta es la condición de referencia."
     )
-
-    c1,c2 = st.columns(2)
+    c1,c2=st.columns(2)
     with c1:
-        rho_p = st.number_input(
-            "Densidad del hormigón ρₚ (kg/m³)",
-            min_value=1500.0,max_value=3000.0,value=2400.0,step=50.0,
-            key=f"{ns}_rho_p"
-        )
-        t_mm = st.number_input(
-            "Espesor t (mm)",
-            min_value=80.0,max_value=350.0,value=160.0,step=5.0,
-            key=f"{ns}_tmm"
-        )
-        eta = st.number_input(
-            "Factor de pérdidas ηₚ",
-            min_value=0.001,max_value=0.100,value=0.020,step=0.001,format="%.3f",
-            key=f"{ns}_eta"
-        )
+        rho_p=st.number_input("Densidad ρₚ (kg/m³)",1500.0,3000.0,2400.0,50.0,key=f"{ns}_rho")
+        t_mm=st.number_input("Espesor t (mm)",80.0,350.0,160.0,5.0,key=f"{ns}_t")
+        eta=st.number_input("Factor de pérdidas ηₚ",0.001,0.100,0.020,0.001,format="%.3f",key=f"{ns}_eta")
     with c2:
-        young = st.number_input(
-            "Módulo de Young E (GPa)",
-            min_value=10.0,max_value=60.0,value=30.0,step=1.0,
-            key=f"{ns}_young"
-        )
-        nu = st.number_input(
-            "Coeficiente de Poisson ν",
-            min_value=0.05,max_value=0.49,value=0.20,step=0.01,format="%.2f",
-            key=f"{ns}_nu"
-        )
+        E=st.number_input("Módulo de Young E (GPa)",10.0,60.0,30.0,1.0,key=f"{ns}_E")
+        nu=st.number_input("Coeficiente de Poisson ν",0.05,0.49,0.20,0.01,format="%.2f",key=f"{ns}_nu")
         st.markdown(
-            """
-            <div style="border:1px solid #dbe4ee;border-radius:14px;padding:13px 15px;background:#f8fbff;margin-top:6px">
-              <b>Condición base</b><br>
-              Losa estructural homogénea, desnuda y sin capa resiliente.<br>
-              <span style="color:#64748b">Esta será la referencia Lₙ,₀(f).</span>
-            </div>
-            """,
+            """<div style="border:1px solid #dbe4ee;border-radius:14px;padding:13px 15px;background:#f8fbff;margin-top:8px">
+            <b>Qué estamos definiendo</b><br>
+            Una placa homogénea de hormigón. A partir de estos datos obtendremos masa superficial,
+            rigidez flexional y frecuencia crítica.
+            </div>""",
             unsafe_allow_html=True,
         )
 
     try:
-        m_surface, D, fc = critical_frequency(rho_p,t_mm,young,nu,343.0)
+        m_surface,D,fc=critical_frequency(rho_p,t_mm,E,nu,343.0)
     except Exception as exc:
         m_surface,D,fc=None,None,None
-        st.error(f"No fue posible calcular las propiedades de la losa: {exc}")
+        st.error(f"No fue posible calcular la losa: {exc}")
 
-    if fc and fc>0:
-        a1,a2,a3=st.columns(3)
-        with a1:
-            _card(
-                "Masa superficial m′",
-                f"{m_surface:.1f} kg/m²",
-                "Masa de la losa por unidad de superficie. Depende de ρₚ y del espesor."
-            )
-        with a2:
-            _card(
-                "Rigidez flexional D",
-                f"{D:.2e} N·m",
-                "Mide la resistencia de la placa a curvarse. Aumenta fuertemente con el espesor."
-            )
-        with a3:
-            _card(
-                "Frecuencia crítica f_c",
-                f"{fc:.0f} Hz",
-                "Marca el cambio de régimen de radiación y determina qué expresión de predicción corresponde.",
-                tone="blue"
-            )
+    if fc:
+        cc1,cc2,cc3=st.columns(3)
+        with cc1:
+            _card("Masa superficial m′",f"{m_surface:.1f} kg/m²","Cuánta masa tiene la losa por cada metro cuadrado.")
+        with cc2:
+            _card("Rigidez flexional D",f"{D:.2e} N·m","Qué tan difícil es curvar la placa; depende fuertemente del espesor.")
+        with cc3:
+            _card("Frecuencia crítica f_c",f"{fc:.0f} Hz","Frecuencia que separa dos regímenes de radiación del modelo.",tone="blue")
 
     # ==============================================================
-    # 2 · IMPACT SOURCE
+    # 2. FUENTE NORMALIZADA
     # ==============================================================
-    st.markdown("## 2 · Caracteriza la máquina de impactos")
+    st.markdown("## 2 · ¿Por qué necesitamos caracterizar la máquina de impactos?")
+    st.write(
+        "Porque toda predicción necesita una **entrada mecánica conocida y repetible**. "
+        "La máquina normalizada proporciona esa excitación de referencia; no estamos estudiando la máquina como objetivo final."
+    )
     _asset(
         "curso2_lab1_etapa5_maquina_impactos.gif",
-        "Animación conceptual de la excitación periódica considerada por el modelo."
+        "La caída y repetición de los martillos permiten representar la excitación mecánica en frecuencia."
     )
-    st.write(
-        "La máquina de impactos introduce una excitación periódica. "
-        "La caída de los martillos determina la velocidad antes del contacto y la repetición define la excitación en frecuencia."
+    st.markdown(
+        """<div style="border:1px solid #bfdbfe;background:#eff6ff;border-radius:14px;padding:13px 16px;margin:.3rem 0 .8rem">
+        <b>En una frase:</b> necesitamos caracterizar la fuente para saber <b>qué excitación F(f) recibe la losa</b>;
+        después el modelo transforma esa entrada en una predicción Lₙ(f).
+        </div>""",
+        unsafe_allow_html=True,
     )
+
     st.latex(r"v_0=\sqrt{2gh}")
     st.latex(r"F_n=2f_rmv_0")
     st.latex(r"S_{f0}=4f_rm^2gh")
 
-    q1,q2,q3=st.columns(3)
-    with q1:
-        fr=st.number_input("Frecuencia de repetición fᵣ (Hz)",0.1,30.0,10.0,0.5,key=f"{ns}_fr")
-    with q2:
+    s1,s2,s3=st.columns(3)
+    with s1:
+        fr=st.number_input("Repetición fᵣ (Hz)",0.1,30.0,10.0,0.5,key=f"{ns}_fr")
+    with s2:
         mass=st.number_input("Masa del martillo m (kg)",0.05,2.0,0.50,0.05,key=f"{ns}_mass")
-    with q3:
-        hdrop=st.number_input("Altura de caída h (m)",0.005,0.200,0.040,0.005,format="%.3f",key=f"{ns}_hdrop")
-
+    with s3:
+        h=st.number_input("Altura de caída h (m)",0.005,0.200,0.040,0.005,format="%.3f",key=f"{ns}_h")
     try:
-        v0=ver_impact_velocity_before_contact(9.81,hdrop)
+        v0=ver_impact_velocity_before_contact(9.81,h)
         Fn=ver_impact_force_harmonic(fr,mass,v0)
-        Sf0=ver_force_spectral_density(fr,mass,9.81,hdrop)
-        r1,r2,r3=st.columns(3)
-        with r1:
-            _card("Velocidad antes del impacto v₀",f"{v0:.3f} m/s","Qué tan rápido llega el martillo a la losa.")
-        with r2:
-            _card("Fuerza periódica característica Fₙ",f"{Fn:.2f} N","Magnitud asociada a la excitación repetitiva.")
-        with r3:
-            _card("Densidad espectral S_f0",f"{Sf0:.2f} N²/Hz","Representación de la intensidad de la fuente en frecuencia.",tone="blue")
+        Sf0=ver_force_spectral_density(fr,mass,9.81,h)
+        a1,a2,a3=st.columns(3)
+        with a1: _card("v₀",f"{v0:.3f} m/s","Velocidad del martillo inmediatamente antes del impacto.")
+        with a2: _card("Fₙ",f"{Fn:.2f} N","Magnitud característica de la excitación repetitiva.")
+        with a3: _card("S_f0",f"{Sf0:.2f} N²/Hz","Representación espectral de la fuente usada por el modelo.",tone="blue")
     except Exception as exc:
         st.warning(str(exc))
 
     st.caption(
-        "Fuente: Vér & Beranek (eds.), *Noise and Vibration Control Engineering*, 2nd ed., "
-        "cap. 11, §11.11 Impact Noise, Ecs. (11.158)–(11.160)."
+        "Vér & Beranek, *Noise and Vibration Control Engineering*, 2nd ed., cap. 11, §11.11, "
+        "Ecs. (11.158)–(11.160)."
     )
 
     # ==============================================================
-    # 3 · CRITICAL FREQUENCY / REGIME
+    # 3. FRECUENCIA CRÍTICA — DETALLADO
     # ==============================================================
-    st.markdown("## 3 · Identifica el régimen de predicción")
+    st.markdown("## 3 · Entiende la frecuencia crítica antes de calcular")
+    st.write(
+        "La frecuencia crítica no es simplemente una frontera matemática. "
+        "Indica un cambio en la relación entre la **onda de flexión de la losa** y la **radiación hacia el aire**."
+    )
     _asset(
         "curso2_lab1_etapa5_cambio_regimen.gif",
-        "La frecuencia crítica separa dos expresiones del modelo."
-    )
-    st.write(
-        "No usamos una única expresión en todo el espectro. "
-        "Primero comparamos cada banda con la frecuencia crítica de la losa."
-    )
-    st.latex(
-        r"f_c=\frac{c^2}{2\pi}\sqrt{\frac{m'}{D}},\qquad "
-        r"D=\frac{Eh^3}{12(1-\nu^2)}"
+        "La misma losa puede encontrarse bajo o sobre su frecuencia crítica según la banda que estemos analizando."
     )
 
-    f_explore=st.slider(
-        "Explora una frecuencia (Hz)",
-        min_value=50,max_value=3150,value=250,step=25,
-        key=f"{ns}_f_explore"
+    st.markdown("### 3.1 · ¿De dónde sale f_c?")
+    st.latex(r"m'=\rho_p\,t")
+    st.latex(r"D=\frac{Et^3}{12(1-\nu^2)}")
+    st.latex(r"f_c=\frac{c^2}{2\pi}\sqrt{\frac{m'}{D}}")
+    st.markdown(
+        """
+        <div style="display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;margin:.5rem 0 .9rem">
+          <div style="padding:13px;border:1px solid #dbe4ee;border-radius:14px;background:#fff"><b>m′ · masa superficial</b><br><span style="color:#64748b">Aumenta con densidad y espesor.</span></div>
+          <div style="padding:13px;border:1px solid #dbe4ee;border-radius:14px;background:#fff"><b>D · rigidez flexional</b><br><span style="color:#64748b">Aumenta aproximadamente con t³.</span></div>
+          <div style="padding:13px;border:1px solid #bfdbfe;border-radius:14px;background:#eff6ff"><b>f_c · frecuencia crítica</b><br><span style="color:#475569">Resulta de la relación entre masa y rigidez de la placa.</span></div>
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
+
+    st.markdown("### 3.2 · ¿Qué cambia al cruzar f_c?")
+    r1,r2=st.columns(2)
+    with r1:
+        st.markdown(
+            """<div style="border:1px solid #bfdbfe;border-radius:16px;padding:15px;background:#eff6ff;min-height:210px">
+            <b>Régimen subcrítico · f &lt; f_c</b><br><br>
+            La radiación es menos eficiente y la expresión de Vér mantiene explícitamente
+            <b>ηₚ, f_c y σrad</b>.<br><br>
+            <span style="color:#475569">No basta conocer solo la masa de la losa.</span>
+            </div>""",
+            unsafe_allow_html=True,
+        )
+    with r2:
+        st.markdown(
+            """<div style="border:1px solid #bbf7d0;border-radius:16px;padding:15px;background:#f0fdf4;min-height:210px">
+            <b>Sobre frecuencia crítica · f ≥ f_c</b><br><br>
+            Cambia el régimen de radiación. En la aproximación utilizada,
+            σrad puede acercarse a 1 y la expresión de predicción se simplifica.<br><br>
+            <span style="color:#475569">No significa que la física desaparezca; cambia la aproximación aplicable.</span>
+            </div>""",
+            unsafe_allow_html=True,
+        )
+
+    st.markdown("### 3.3 · Explora una banda")
+    f_demo=st.select_slider(
+        "Frecuencia a comparar con f_c (Hz)",
+        options=[63,80,100,125,160,200,250,315,400,500,630,800,1000,1250,1600,2000,2500,3150],
+        value=250,
+        key=f"{ns}_fdemo",
     )
     if fc:
-        if f_explore < fc:
-            st.warning(
-                f"{f_explore} Hz < f_c ≈ {fc:.0f} Hz → **RÉGIMEN SUBCRÍTICO**. "
-                "La expresión incluye explícitamente ηₚ, f_c y σ_rad."
-            )
-            st.latex(
-                r"L_n=39.5+20\log_{10}(f)"
-                r"-10\log_{10}\left(\frac{\eta_p}{f_c\sigma_{\mathrm{rad}}}\right)-R"
-            )
+        ratio=float(f_demo/fc)
+        c1,c2,c3=st.columns(3)
+        with c1: _card("Frecuencia seleccionada",f"{f_demo} Hz","Banda que quieres evaluar.")
+        with c2: _card("Frecuencia crítica",f"{fc:.0f} Hz","Propiedad de esta losa.")
+        with c3: _card("Relación f / f_c",f"{ratio:.2f}","Menor que 1: subcrítico. Igual o mayor que 1: sobre f_c.",tone="blue")
+
+        if f_demo < fc:
+            st.warning(f"{f_demo} Hz < {fc:.0f} Hz → estamos **bajo la frecuencia crítica**.")
         else:
-            st.success(
-                f"{f_explore} Hz ≥ f_c ≈ {fc:.0f} Hz → **SOBRE FRECUENCIA CRÍTICA**."
-            )
-            st.latex(
-                r"L_n=43+30\log_{10}(f)-10\log_{10}(\sigma_{\mathrm{rad}})-R"
-            )
+            st.success(f"{f_demo} Hz ≥ {fc:.0f} Hz → estamos **sobre la frecuencia crítica**.")
+
+    # ==============================================================
+    # 4. ECUACIONES + UNA BANDA
+    # ==============================================================
+    st.markdown("## 4 · Laboratorio: calcula una banda completa")
+    st.write(
+        "Ahora usamos la frecuencia seleccionada como única decisión del alumno. "
+        "Las propiedades acústicas necesarias se estiman automáticamente a partir de la losa y de esa banda."
+    )
+
+    st.markdown("### ¿Qué ecuación de predicción estamos usando?")
+    st.write(
+        "El modelo de Vér relaciona el nivel de ruido de impacto con el aislamiento aéreo de la losa, "
+        "la frecuencia y la eficiencia de radiación. Para la **losa base sin tratamiento**, tomamos ΔLₙ=0."
+    )
+
+    e1,e2=st.columns(2)
+    with e1:
+        st.markdown("**Si \(f<f_c\):**")
+        st.latex(
+            r"L_{n,0}=39.5+20\log_{10}(f)"
+            r"-10\log_{10}\left(\frac{\eta_p}{f_c\sigma_{\mathrm{rad}}}\right)-R(f)"
+        )
         st.caption(
-            "Ecuaciones de Vér para los regímenes bajo y sobre f_c. "
-            "Para la losa base se toma ΔLₙ=0."
+            "Aparecen explícitamente el amortiguamiento ηₚ, la frecuencia crítica f_c "
+            "y la eficiencia de radiación σrad."
+        )
+    with e2:
+        st.markdown("**Si \(f\geq f_c\):**")
+        st.latex(
+            r"L_{n,0}=43+30\log_{10}(f)"
+            r"-10\log_{10}(\sigma_{\mathrm{rad}})-R(f)"
+        )
+        st.caption(
+            "Sobre f_c cambia el régimen de radiación y el modelo utiliza esta expresión."
         )
 
-    # ==============================================================
-    # 4 · SOLVE ONE BAND
-    # ==============================================================
-    st.markdown("## 4 · Laboratorio: resuelve una banda")
-    st.write(
-        "Antes de construir toda la curva, calcula una sola banda paso a paso. "
-        "Así puedes ver de dónde sale Lₙ(f)."
+    st.markdown(
+        """<div style="border:1px solid #dbe4ee;border-radius:14px;padding:14px 16px;background:#f8fbff;margin:.5rem 0 .9rem">
+        <b>Cómo interpretar los términos</b><br>
+        <b>f:</b> banda que estamos calculando ·
+        <b>R(f):</b> capacidad estimada de la losa para reducir transmisión aérea en esa banda ·
+        <b>σrad:</b> eficiencia con que la vibración de la placa radia sonido ·
+        <b>ηₚ:</b> amortiguamiento estructural ·
+        <b>f_c:</b> determina el régimen de cálculo.
+        </div>""",
+        unsafe_allow_html=True,
     )
+
+    st.warning(
+        "**Importante sobre R(f) y σrad:** las ecuaciones de Vér del material de referencia necesitan estas variables, "
+        "pero el documento no entrega una fórmula única para obtenerlas desde las propiedades de la losa. "
+        "Para este laboratorio se estiman automáticamente mediante aproximaciones didácticas transparentes: "
+        "R(f) con una ley de masa de placa homogénea y σrad a partir de f/f_c. "
+        "No deben confundirse con una medición de laboratorio ni con un modelo FEM."
+    )
+
     bands=[100,125,160,200,250,315,400,500,630,800,1000,1250,1600,2000,2500,3150]
-    fsel=st.select_slider("Banda de frecuencia f (Hz)",options=bands,value=500,key=f"{ns}_fsel")
-    Rsel=st.slider("Índice de reducción sonora R(f) usado como dato de ejercicio (dB)",35.0,75.0,55.0,0.5,key=f"{ns}_Rsel")
-    sigma=st.slider("Eficiencia de radiación σ_rad",0.05,1.50,1.00,0.05,key=f"{ns}_sigma")
+    fsel=st.select_slider(
+        "Selecciona la banda que quieres calcular (Hz)",
+        options=bands,
+        value=250,
+        key=f"{ns}_fsel",
+    )
 
     if fc:
-        try:
-            ln_one,regime=ver_ln_piecewise_db(fsel,Rsel,fc,sigma,eta,0.0)
-            st.markdown("#### Paso 1 · Identifica el régimen")
-            st.write(
-                f"f = **{fsel} Hz** · f_c = **{fc:.0f} Hz** → "
-                + ("**subcrítico**" if regime=="subcrítico" else "**sobre frecuencia crítica**")
-            )
+        R_auto,sigma_auto,ln_auto,regime=_band_solution(fsel,m_surface,fc,eta)
+        st.markdown("### Paso 1 · El modelo obtiene las entradas de esa banda")
+        q1,q2,q3,q4=st.columns(4)
+        with q1:
+            _card("f / f_c",f"{fsel/fc:.2f}",("Subcrítico" if fsel<fc else "Sobre frecuencia crítica"))
+        with q2:
+            _card("R(f) estimado",f"{R_auto:.1f} dB","Estimación automática mediante ley de masa.")
+        with q3:
+            _card("σrad estimada",f"{sigma_auto:.2f}","Estimación automática dependiente de f/f_c.")
+        with q4:
+            _card("ηₚ",f"{eta:.3f}","Factor de pérdidas definido para la losa.")
 
-            st.markdown("#### Paso 2 · Valores que entran al cálculo")
-            x1,x2,x3,x4=st.columns(4)
-            x1.metric("f",f"{fsel} Hz")
-            x2.metric("f_c",f"{fc:.0f} Hz")
-            x3.metric("R(f)",f"{Rsel:.1f} dB")
-            x4.metric("σ_rad",f"{sigma:.2f}")
-
-            st.markdown("#### Paso 3 · Resultado")
-            _card(
-                f"Nivel de ruido de impacto Lₙ({fsel} Hz)",
-                f"{ln_one:.1f} dB",
-                "Este es el nivel predicho para una sola banda de la losa base. "
-                "Aún falta repetir el procedimiento para construir todo el espectro.",
-                tone="blue"
-            )
-        except Exception as exc:
-            st.warning(str(exc))
-
-    # ==============================================================
-    # 5 · BUILD FULL BASELINE CURVE
-    # ==============================================================
-    st.markdown("## 5 · Construye la curva base Lₙ,₀(f)")
-    st.write(
-        "Ahora repetimos el cálculo en todas las bandas. "
-        "La curva resultante será la **referencia acústica de la losa desnuda**."
-    )
-
-    st.info(
-        "Para este laboratorio, R(f) se entrega como una **curva de ejercicio** para completar el modelo de Vér. "
-        "No representa un producto comercial ni una medición real."
-    )
-
-    # Curva didáctica R(f), explícita y visible
-    Rcurve=np.array([47,48,49,50,51,52,53,54,55,56,57,58,59,60,61,62],dtype=float)
-    R_offset=st.slider(
-        "Ajuste global de la curva R(f) de ejercicio (dB)",
-        -8.0,8.0,0.0,0.5,
-        key=f"{ns}_Roffset"
-    )
-    Rwork=Rcurve+R_offset
-
-    Lcurve=[]
-    regimes=[]
-    if fc:
-        for ff,rr in zip(bands,Rwork):
-            try:
-                val,rg=ver_ln_piecewise_db(ff,float(rr),fc,sigma,eta,0.0)
-            except Exception:
-                val,rg=np.nan,""
-            Lcurve.append(float(val))
-            regimes.append(rg)
-
-        # progressively reveal
-        n_show=st.slider(
-            "Número de bandas calculadas",
-            1,len(bands),len(bands),1,
-            key=f"{ns}_bands_show"
-        )
-        fig,ax=plt.subplots(figsize=(9,4.8))
-        ax.semilogx(bands[:n_show],Lcurve[:n_show],marker="o",linewidth=2.2,label="Lₙ,₀(f)")
-        ax.axvline(fc,linestyle="--",linewidth=1.6,label="f_c")
-        ax.set_xlabel("Frecuencia (Hz)")
-        ax.set_ylabel("Nivel de ruido de impacto Lₙ,₀ (dB)")
-        ax.set_title("Predicción espectral de la losa base")
-        ax.grid(True,which="both",alpha=.22)
-        ax.legend()
-        st.pyplot(fig,use_container_width=True)
-        plt.close(fig)
-
-        if n_show < len(bands):
-            st.info(
-                f"Has construido {n_show} de {len(bands)} bandas. "
-                "Mueve el control hasta completar la curva."
+        st.markdown("### Paso 2 · Se selecciona automáticamente la ecuación")
+        if fsel < fc:
+            st.info("Se aplica la expresión **subcrítica** porque f < f_c.")
+            st.latex(
+                rf"L_{{n,0}}({fsel})=39.5+20\log_{{10}}({fsel})"
+                rf"-10\log_{{10}}\left(\frac{{{eta:.3f}}}{{{fc:.1f}\cdot {sigma_auto:.3f}}}\right)-{R_auto:.1f}"
             )
         else:
-            st.success(
-                "Curva completa. Ya tienes el baseline espectral de la losa base."
+            st.success("Se aplica la expresión **sobre frecuencia crítica** porque f ≥ f_c.")
+            st.latex(
+                rf"L_{{n,0}}({fsel})=43+30\log_{{10}}({fsel})"
+                rf"-10\log_{{10}}({sigma_auto:.3f})-{R_auto:.1f}"
             )
 
+        st.markdown("### Paso 3 · Resultado de la banda")
+        _card(
+            f"Lₙ,₀({fsel} Hz)",
+            f"{ln_auto:.1f} dB",
+            "Anota este valor. En la siguiente parte tendrás que registrarlo correctamente "
+            "para incorporar esta banda a la curva base.",
+            tone="blue",
+        )
+
     # ==============================================================
-    # 6 · SENSITIVITY
+    # 5. CURVA BANDA A BANDA — EL ALUMNO INGRESA
     # ==============================================================
-    st.markdown("## 6 · Laboratorio de sensibilidad de la losa base")
+    st.markdown("## 5 · Construye tú mismo la curva base Lₙ,₀(f)")
     st.write(
-        "Explora cómo cambian las propiedades de placa y la predicción cuando modificas el espesor o el amortiguamiento. "
-        "No estamos diseñando todavía una solución constructiva: solo estudiamos sensibilidad del modelo."
+        "El gráfico parte vacío. Calcula una banda en la Parte 4, escribe aquí el resultado y compruébalo. "
+        "**Solo los valores correctos se incorporan al gráfico.**"
     )
 
-    sens_t=st.slider(
-        "Espesor alternativo (mm)",
-        100,280,int(t_mm),5,
-        key=f"{ns}_sens_t"
+    answers=saved.get("stage5_band_answers",{})
+    if not isinstance(answers,dict):
+        answers={}
+        saved["stage5_band_answers"]=answers
+
+    band_register=st.selectbox(
+        "Banda que vas a registrar",
+        bands,
+        index=bands.index(fsel) if fsel in bands else 0,
+        key=f"{ns}_band_register",
     )
-    sens_eta=st.slider(
-        "Factor de pérdidas alternativo ηₚ",
-        0.005,0.080,float(eta),0.005,
-        key=f"{ns}_sens_eta"
+    entered=st.number_input(
+        f"Ingresa Lₙ,₀({band_register} Hz) calculado (dB)",
+        min_value=0.0,max_value=150.0,value=0.0,step=0.1,format="%.1f",
+        key=f"{ns}_band_value",
     )
 
-    try:
-        ms2,D2,fc2=critical_frequency(rho_p,float(sens_t),young,nu,343.0)
-        L2=[]
-        for ff,rr in zip(bands,Rwork):
-            val,_=ver_ln_piecewise_db(ff,float(rr),fc2,sigma,sens_eta,0.0)
-            L2.append(float(val))
+    ccheck,creset=st.columns([2,1])
+    with ccheck:
+        if st.button("Comprobar y agregar al gráfico",type="primary",key=f"{ns}_add_band",use_container_width=True):
+            if not fc:
+                st.warning("Primero define correctamente la losa.")
+            else:
+                Rb,sb,expected,_=_band_solution(band_register,m_surface,fc,eta)
+                if abs(float(entered)-float(expected)) <= 0.15:
+                    answers[str(band_register)]=round(float(expected),3)
+                    saved["stage5_band_answers"]=answers
+                    _persist()
+                    st.success(f"Banda {band_register} Hz correcta. Se agregó al gráfico.")
+                    st.rerun()
+                else:
+                    st.warning(
+                        "El valor no coincide con el cálculo de esa banda. "
+                        "Vuelve a la Parte 4, selecciona la misma frecuencia y revisa la ecuación aplicada."
+                    )
+    with creset:
+        if st.button("Resetear curva",key=f"{ns}_reset_curve",use_container_width=True):
+            saved["stage5_band_answers"]={}
+            saved.pop("stage5_baseline",None)
+            saved["done_5"]=False
+            _persist()
+            st.rerun()
 
-        fig,ax=plt.subplots(figsize=(9,4.5))
-        ax.semilogx(bands,Lcurve,marker="o",label=f"Base · {t_mm:.0f} mm")
-        ax.semilogx(bands,L2,marker="s",label=f"Alternativa · {sens_t} mm")
-        ax.axvline(fc,linestyle="--",alpha=.55)
-        ax.axvline(fc2,linestyle=":",alpha=.55)
+    completed=[f for f in bands if str(f) in answers]
+    st.progress(len(completed)/len(bands),text=f"Bandas completadas: {len(completed)} / {len(bands)}")
+
+    # Tabla de estado sin revelar los valores pendientes.
+    rows=[]
+    for ff in bands:
+        if str(ff) in answers:
+            rows.append({"Banda (Hz)":ff,"Estado":"Completada","Lₙ,₀ (dB)":f"{answers[str(ff)]:.1f}"})
+        else:
+            rows.append({"Banda (Hz)":ff,"Estado":"Pendiente","Lₙ,₀ (dB)":"—"})
+    st.dataframe(rows,hide_index=True,use_container_width=True)
+
+    if completed:
+        x=np.array(completed,dtype=float)
+        y=np.array([answers[str(f)] for f in completed],dtype=float)
+        order=np.argsort(x)
+        fig,ax=plt.subplots(figsize=(9,4.8))
+        ax.semilogx(x[order],y[order],marker="o",linewidth=2.2,label="Bandas validadas")
+        ax.axvline(fc,linestyle="--",linewidth=1.5,label=f"f_c ≈ {fc:.0f} Hz")
         ax.set_xlabel("Frecuencia (Hz)")
-        ax.set_ylabel("Lₙ(f) predicho (dB)")
-        ax.set_title("Sensibilidad del modelo")
+        ax.set_ylabel("Lₙ,₀ (dB)")
+        ax.set_title("Curva base construida por el alumno")
         ax.grid(True,which="both",alpha=.22)
         ax.legend()
         st.pyplot(fig,use_container_width=True)
         plt.close(fig)
+    else:
+        st.info("Todavía no hay puntos validados. Calcula la primera banda en la Parte 4.")
 
-        s1,s2,s3=st.columns(3)
-        s1.metric("m′ alternativa",f"{ms2:.1f} kg/m²")
-        s2.metric("D alternativa",f"{D2:.2e} N·m")
-        s3.metric("f_c alternativa",f"{fc2:.0f} Hz")
-    except Exception as exc:
-        st.warning(str(exc))
+    if len(completed)==len(bands):
+        st.success(
+            "Has completado todas las bandas. La curva Lₙ,₀(f) está lista para guardarse como referencia oficial."
+        )
 
     # ==============================================================
-    # 7 · SAVE OFFICIAL BASELINE
+    # 6. GUARDA BASELINE
     # ==============================================================
-    st.markdown("## 7 · Guarda la referencia de la losa base")
+    st.markdown("## 6 · Guarda la referencia oficial de la losa")
     st.write(
-        "Este paso convierte el ejercicio en un resultado reutilizable. "
-        "Las siguientes etapas utilizarán esta curva como condición base."
+        "Solo cuando todas las bandas estén validadas puedes guardar el baseline que utilizarán las siguientes etapas."
     )
 
-    if fc and len(Lcurve)==len(bands):
+    if len(completed)==len(bands) and fc:
+        ln_full=[float(answers[str(f)]) for f in bands]
         b1,b2,b3=st.columns(3)
         with b1:
-            _card("Losa base",f"{t_mm:.0f} mm",f"ρₚ = {rho_p:.0f} kg/m³ · m′ = {m_surface:.1f} kg/m²")
+            _card("Losa base",f"{t_mm:.0f} mm",f"m′ = {m_surface:.1f} kg/m²")
         with b2:
-            _card("Frecuencia crítica",f"{fc:.0f} Hz","Marca el cambio de régimen dentro de la predicción.")
+            _card("f_c",f"{fc:.0f} Hz","Cambio de régimen de la placa.")
         with b3:
-            _card("Curva calculada",f"{len(bands)} bandas","Resultado espectral Lₙ,₀(f) disponible para comparar soluciones.",tone="blue")
+            _card("Curva",f"{len(bands)} bandas","Lₙ,₀(f) completada por el alumno.",tone="blue")
 
-        if st.button("Guardar curva base Lₙ,₀(f)",type="primary",key=f"{ns}_save_baseline"):
+        if st.button("Guardar Lₙ,₀(f) como baseline",type="primary",key=f"{ns}_save_base"):
+            R_list=[]; sigma_list=[]
+            for ff in bands:
+                RR,ss,_,_=_band_solution(ff,m_surface,fc,eta)
+                R_list.append(round(RR,3)); sigma_list.append(round(ss,4))
             saved["stage5_baseline"]={
-                "bands_hz":[int(x) for x in bands],
-                "ln0_db":[round(float(x),3) for x in Lcurve],
-                "R_exercise_db":[round(float(x),3) for x in Rwork],
+                "bands_hz":[int(f) for f in bands],
+                "ln0_db":[round(v,3) for v in ln_full],
+                "R_estimated_db":R_list,
+                "sigma_estimated":sigma_list,
                 "rho_p_kg_m3":float(rho_p),
                 "thickness_mm":float(t_mm),
-                "young_gpa":float(young),
+                "young_gpa":float(E),
                 "poisson":float(nu),
                 "eta":float(eta),
                 "surface_mass_kg_m2":float(m_surface),
                 "D_Nm":float(D),
                 "fc_hz":float(fc),
-                "sigma_rad":float(sigma),
                 "source":{
                     "fr_hz":float(fr),
                     "hammer_mass_kg":float(mass),
-                    "drop_height_m":float(hdrop),
+                    "drop_height_m":float(h),
                     "v0_m_s":float(v0),
                     "Fn_N":float(Fn),
                     "Sf0_N2_Hz":float(Sf0),
                 },
+                "estimation_note":"R(f): aproximación didáctica de ley de masa; sigma_rad(f): aproximación didáctica dependiente de f/f_c.",
                 "updated_at":_now(),
             }
             saved["done_5"]=True
             _persist()
-            st.success(
-                "Curva base guardada. Ya puede utilizarse como referencia Lₙ,₀(f) en las etapas siguientes."
-            )
-
-    if saved.get("stage5_baseline"):
-        st.success("Existe una curva base guardada para este laboratorio.")
+            st.success("Baseline guardado. Las etapas posteriores ya pueden comparar soluciones con esta curva.")
 
     # ==============================================================
-    # CLOSING
+    # CIERRE / DOCENTE
     # ==============================================================
-    st.markdown("## Cierre · Ya tenemos una referencia")
-    st.write(
-        "La Etapa 4 preparó la cadena física. En esta etapa la convertimos en una predicción espectral de la losa desnuda."
-    )
+    st.markdown("## Cierre · Ya tenemos la referencia que necesitábamos")
     st.latex(r"\boxed{L_{n,0}(f)}")
     st.write(
-        "A partir de ahora, una solución constructiva deberá demostrar cuánto modifica esta curva."
+        "La curva base representa la predicción de la losa desnuda. "
+        "A partir de ahora estudiaremos cuánto cambia al incorporar una solución constructiva."
     )
-    st.latex(r"\boxed{L_{n,\mathrm{tratado}}(f)=L_{n,0}(f)-\Delta L(f)}")
-    st.success(
-        "En la Etapa 6 comenzaremos a identificar qué parámetros de una solución pueden modificar la respuesta respecto de esta losa base."
-    )
+    st.latex(r"L_{n,\mathrm{tratado}}(f)=L_{n,0}(f)-\Delta L(f)")
+    st.success("La Etapa 6 utilizará esta referencia para comenzar a estudiar parámetros de control de impacto.")
 
     with st.container(border=True):
-        st.markdown("### Referencia técnica")
+        st.markdown("### Referencia y alcance del modelo")
         st.write(
             "Vér, I. L. & Beranek, L. L. (eds.). *Noise and Vibration Control Engineering: "
-            "Principles and Applications*, 2nd ed., Wiley, 2006. Capítulo 11, §11.11 **Impact Noise**."
+            "Principles and Applications*, 2nd ed., Wiley, 2006. Cap. 11, §11.11 Impact Noise."
         )
         st.write(
-            "Se mantienen las expresiones de excitación periódica y las expresiones de predicción "
-            "para los regímenes bajo y sobre la frecuencia crítica empleadas en la versión anterior de esta etapa."
+            "Las expresiones de predicción bajo y sobre f_c corresponden al material de referencia de esta etapa. "
+            "Las estimaciones automáticas de R(f) y σrad(f) se incorporan únicamente para hacer autocontenido el laboratorio "
+            "y se identifican expresamente como aproximaciones didácticas."
         )
 
     if role=="Docente" and not projection_mode:
         st.markdown("---")
         st.markdown("## Vista docente · desarrollo esperado")
         st.write(
-            "El estudiante debe terminar la etapa comprendiendo que Lₙ,₀(f) es una curva espectral de referencia, "
-            "no un único número. Debe identificar la losa base, calcular m′, D y f_c, distinguir los dos regímenes "
-            "y construir la curva banda por banda."
+            "El alumno debe justificar por qué se caracteriza la fuente, comprender físicamente f_c, "
+            "identificar la expresión de Vér aplicable y construir la curva banda por banda."
         )
-        if saved.get("stage5_baseline"):
-            base=saved["stage5_baseline"]
-            st.write(
-                f"Baseline guardado: t={base.get('thickness_mm',0):.0f} mm · "
-                f"m′={base.get('surface_mass_kg_m2',0):.1f} kg/m² · "
-                f"f_c={base.get('fc_hz',0):.0f} Hz."
-            )
+        st.write(
+            "R(f) y σrad(f) no se presentan como datos libres: la plataforma los estima automáticamente "
+            "mediante aproximaciones didácticas y las identifica como tales."
+        )
+        st.write(
+            "La etapa se completa solo al validar todas las bandas y guardar Lₙ,₀(f)."
+        )
 
     left,right=st.columns(2)
     with left:
