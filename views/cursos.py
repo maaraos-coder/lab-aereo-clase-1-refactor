@@ -3603,7 +3603,7 @@ def _render_course2_lab1_stage4(lab, saved):
     with ma:
         st.markdown(
             f"""
-            <div style="border:1px solid #dbe4ee;border-radius:16px;padding:15px;background:#fff;height:175px">
+            <div style="border:1px solid #dbe4ee;border-radius:16px;padding:16px;background:#fff;min-height:205px;height:auto;box-sizing:border-box;margin-bottom:10px">
               <div style="font-weight:800;color:#0f172a">Movilidad del Piso A</div>
               <div style="font-size:1.75rem;font-weight:800;margin:.35rem 0">{YA[ia]:.3f} u.r.</div>
               <div style="color:#64748b;line-height:1.4">
@@ -3617,7 +3617,7 @@ def _render_course2_lab1_stage4(lab, saved):
         relation_b = "mayor" if YB[ia] > YA[ia] else "menor"
         st.markdown(
             f"""
-            <div style="border:1px solid #dbe4ee;border-radius:16px;padding:15px;background:#fff;height:175px">
+            <div style="border:1px solid #dbe4ee;border-radius:16px;padding:16px;background:#fff;min-height:205px;height:auto;box-sizing:border-box;margin-bottom:10px">
               <div style="font-weight:800;color:#0f172a">Movilidad del Piso B</div>
               <div style="font-size:1.75rem;font-weight:800;margin:.35rem 0">{YB[ia]:.3f} u.r.</div>
               <div style="color:#64748b;line-height:1.4">
@@ -3630,17 +3630,19 @@ def _render_course2_lab1_stage4(lab, saved):
     with mc:
         st.markdown(
             f"""
-            <div style="border:1px solid #bfdbfe;border-radius:16px;padding:15px;background:#eff6ff;height:175px">
+            <div style="border:1px solid #bfdbfe;border-radius:16px;padding:16px;background:#eff6ff;min-height:205px;height:auto;box-sizing:border-box;margin-bottom:10px">
               <div style="font-weight:800;color:#0f172a">Comparación de vibración</div>
               <div style="font-size:1.75rem;font-weight:800;margin:.35rem 0">{ratio:.2f} veces</div>
               <div style="color:#475569;line-height:1.4">
-                Con la misma excitación, el Piso B desarrolla aproximadamente
-                <b>{ratio:.2f} veces</b> la velocidad vibratoria del Piso A.
+                Con la misma excitación, el Piso B alcanza una velocidad vibratoria
+                de aproximadamente <b>{ratio:.2f} veces</b> la del Piso A.
               </div>
             </div>
             """,
             unsafe_allow_html=True,
         )
+
+    st.markdown("<div style='height:6px'></div>", unsafe_allow_html=True)
 
     if ratio > 1.05:
         st.info(
