@@ -2570,6 +2570,11 @@ def _render_course2_lab1_stage2(lab, saved):
 
 def _render_course2_lab1_stage3(lab, saved):
     """Etapa 3 · laboratorio aplicado de diagnóstico vibroacústico."""
+    import math
+    import numpy as np
+    import pandas as pd
+    import plotly.graph_objects as go
+
     class_id = lab["id"]
     stage_selector_key = f"future_stage_{class_id}"
     role = st.session_state.get("role", "Alumno")
@@ -2590,7 +2595,6 @@ def _render_course2_lab1_stage3(lab, saved):
         st.info(f"Asset pendiente: `{name}`")
         return False
 
-    # Estado persistente de la etapa.
     state = saved.get("stage3_case")
     if not isinstance(state, dict):
         state = {}
@@ -2598,43 +2602,44 @@ def _render_course2_lab1_stage3(lab, saved):
 
     header(
         "ETAPA 3 · LABORATORIO 1",
-        "Aplicación: diagnostica el camino vibroacústico",
-        "Caso aplicado: inspecciona, mide, calcula, contrasta hipótesis y emite un diagnóstico vibroacústico sustentado.",
+        "Aplicación: diagnostica un zumbido de origen desconocido",
+        "Caso aplicado: diseña una campaña de medición, interpreta datos y reconstruye el camino vibroacústico.",
         show_overview=False,
-        duration_minutes=70,
+        duration_minutes=75,
     )
 
     st.markdown("### Misión")
     st.write(
-        "Un residente reclama por ruido en su dormitorio. **No conoces todavía la causa ni el camino dominante**. "
-        "Tu trabajo es reconstruir cómo llegó la energía hasta el receptor y justificar tu diagnóstico con datos."
+        "Un residente informa un **zumbido de baja frecuencia durante la noche** en su dormitorio. "
+        "El ruido aparece por intervalos y, en ocasiones, también percibe una ligera vibración. "
+        "**No se conoce la fuente ni el camino de transmisión.**"
     )
+    st.info(
+        "Tu trabajo no es adivinar la fuente. Debes formular hipótesis, decidir qué medir, seleccionar el instrumento adecuado, "
+        "obtener evidencia y recién después emitir un diagnóstico."
+    )
+
     st.markdown(
         """
-        <div style="display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:7px;margin:.6rem 0 1rem">
-          <div style="padding:10px;border:1px solid #dbe4ee;border-radius:12px;background:#fff;text-align:center"><b>Fuente</b><br><span style="color:#64748b">¿qué genera?</span></div>
-          <div style="padding:10px;border:1px solid #dbe4ee;border-radius:12px;background:#fff;text-align:center"><b>Excitación</b><br><span style="color:#64748b">¿cómo entra?</span></div>
-          <div style="padding:10px;border:1px solid #dbe4ee;border-radius:12px;background:#fff;text-align:center"><b>Respuesta</b><br><span style="color:#64748b">¿cómo vibra?</span></div>
-          <div style="padding:10px;border:1px solid #dbe4ee;border-radius:12px;background:#fff;text-align:center"><b>Propagación</b><br><span style="color:#64748b">¿por dónde?</span></div>
-          <div style="padding:10px;border:1px solid #dbe4ee;border-radius:12px;background:#fff;text-align:center"><b>Radiación</b><br><span style="color:#64748b">¿qué superficie?</span></div>
-          <div style="padding:10px;border:1px solid #dbe4ee;border-radius:12px;background:#fff;text-align:center"><b>Receptor</b><br><span style="color:#64748b">¿dónde?</span></div>
-          <div style="padding:10px;border:1px solid #dbe4ee;border-radius:12px;background:#fff;text-align:center"><b>Evidencia</b><br><span style="color:#64748b">¿qué comprueba?</span></div>
+        <div style="display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:8px;margin:.7rem 0 1rem">
+          <div style="padding:10px;border:1px solid #dbe4ee;border-radius:12px;background:#fff;text-align:center"><b>1 · Observar</b><br><span style="color:#64748b">formular hipótesis</span></div>
+          <div style="padding:10px;border:1px solid #dbe4ee;border-radius:12px;background:#fff;text-align:center"><b>2 · Medir</b><br><span style="color:#64748b">punto + instrumento</span></div>
+          <div style="padding:10px;border:1px solid #dbe4ee;border-radius:12px;background:#fff;text-align:center"><b>3 · Comparar</b><br><span style="color:#64748b">frecuencias y niveles</span></div>
+          <div style="padding:10px;border:1px solid #dbe4ee;border-radius:12px;background:#fff;text-align:center"><b>4 · Calcular</b><br><span style="color:#64748b">respuesta dinámica</span></div>
+          <div style="padding:10px;border:1px solid #dbe4ee;border-radius:12px;background:#fff;text-align:center"><b>5 · Verificar</b><br><span style="color:#64748b">prueba causal</span></div>
+          <div style="padding:10px;border:1px solid #dbe4ee;border-radius:12px;background:#fff;text-align:center"><b>6 · Diagnosticar</b><br><span style="color:#64748b">con evidencia</span></div>
         </div>
         """,
         unsafe_allow_html=True,
     )
-    st.info(
-        "Usarás herramientas de las Etapas 1 y 2: entrada de energía, movilidad, velocidad vibratoria, "
-        "resonancia, propagación estructural y radiación."
-    )
 
     # ------------------------------------------------------------------
-    # 1 · Inspección
+    # 1 · Inspección e hipótesis
     # ------------------------------------------------------------------
-    st.markdown("## 1 · Inspecciona el edificio")
+    st.markdown("## 1 · Inspecciona el edificio y formula hipótesis")
     st.write(
-        "Observa la escena y selecciona **hasta tres fuentes o conexiones que investigarías primero**. "
-        "No se revela todavía cuál es la causa."
+        "Observa la escena. Como el reclamo solo describe un zumbido, existen varias fuentes plausibles. "
+        "Selecciona **hasta tres hipótesis iniciales**."
     )
     _asset(
         "curso2_lab1_etapa3_edificio_diagnostico.webp",
@@ -2642,17 +2647,17 @@ def _render_course2_lab1_stage3(lab, saved):
     )
 
     source_options = [
-        "Pisadas en piso superior",
-        "Bomba en sala de máquinas",
+        "Bomba centrífuga en sala de máquinas",
+        "Ventilador de extracción en cubierta",
+        "Tubería de impulsión rígidamente conectada",
         "Descarga sanitaria",
-        "Tuberías conectadas a la estructura",
-        "Ventilador de extracción",
+        "Actividad de ocupantes / impactos",
     ]
-    previous_sources = state.get("sources", [])
+    prev_sources = state.get("sources", [])
     selected_sources = st.multiselect(
         "Hipótesis iniciales",
         source_options,
-        default=[x for x in previous_sources if x in source_options],
+        default=[x for x in prev_sources if x in source_options],
         max_selections=3,
         key=f"{class_id}_s3_sources",
     )
@@ -2662,243 +2667,353 @@ def _render_course2_lab1_stage3(lab, saved):
         else:
             state["sources"] = selected_sources
             _persist()
-            st.success("Hipótesis iniciales guardadas. Aún no constituyen un diagnóstico.")
+            st.success("Hipótesis guardadas. Todavía no existe evidencia suficiente para elegir una causa.")
 
     # ------------------------------------------------------------------
-    # 2 · Plan de medición
+    # 2 · Diseño de campaña de medición
     # ------------------------------------------------------------------
-    st.markdown("## 2 · Selecciona dónde medir")
+    st.markdown("## 2 · Diseña tu campaña de medición")
     st.write(
-        "Dispones de tiempo limitado: elige **tres puntos de medición**. Tu elección condicionará la evidencia que obtendrás."
+        "Dispones de tiempo limitado y puedes realizar **máximo cuatro mediciones**. "
+        "En cada medición debes decidir **dónde medir, con qué instrumento y qué parámetro obtener**."
     )
     _asset(
         "curso2_lab1_etapa3_puntos_medicion.webp",
-        "P1–P5 son puntos posibles de medición en la ruta fuente–receptor."
+        "Los marcadores representan zonas posibles de investigación. No todos los puntos requieren el mismo instrumento."
     )
 
-    measurement_options = {
-        "P1 · Losa bajo la fuente": ("25 Hz", "Alta"),
-        "P2 · Muro lateral": ("25 Hz", "Media"),
-        "P3 · Tubería vertical": ("50 Hz", "Baja"),
-        "P4 · Cielo del dormitorio": ("25 Hz", "Alta"),
-        "P5 · Aire del dormitorio": ("25 Hz", "Alta"),
+    st.markdown(
+        """
+        <div style="display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;margin:.5rem 0 .9rem">
+          <div style="padding:13px;border:1px solid #d9e2ec;border-radius:14px;background:#fff">
+            <b>Acelerómetro</b><br><span style="color:#64748b">Mide aceleración de una superficie vibrante y permite obtener su espectro.</span>
+          </div>
+          <div style="padding:13px;border:1px solid #d9e2ec;border-radius:14px;background:#fff">
+            <b>Sensor de velocidad vibratoria</b><br><span style="color:#64748b">Mide velocidad RMS de vibración en elementos sólidos.</span>
+          </div>
+          <div style="padding:13px;border:1px solid #d9e2ec;border-radius:14px;background:#fff">
+            <b>Sonómetro / micrófono</b><br><span style="color:#64748b">Mide presión sonora en el aire y su contenido espectral.</span>
+          </div>
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
+
+    points = [
+        "Carcasa de la bomba",
+        "Apoyo de la bomba sobre la losa",
+        "Tubería de impulsión",
+        "Muro / shaft técnico",
+        "Cielo del dormitorio receptor",
+        "Aire del dormitorio receptor",
+        "Ventilador de cubierta",
+    ]
+    instruments = [
+        "Acelerómetro",
+        "Sensor de velocidad vibratoria",
+        "Sonómetro / micrófono",
+    ]
+    parameters_by_instrument = {
+        "Acelerómetro": [
+            "Aceleración RMS (m/s²)",
+            "Espectro de aceleración / frecuencia dominante (Hz)",
+        ],
+        "Sensor de velocidad vibratoria": [
+            "Velocidad vibratoria RMS (mm/s)",
+            "Espectro de velocidad / frecuencia dominante (Hz)",
+        ],
+        "Sonómetro / micrófono": [
+            "Nivel de presión sonora Lp (dB)",
+            "Espectro acústico / frecuencia dominante (Hz)",
+        ],
     }
-    prev_points = state.get("measurement_points", [])
-    points = st.multiselect(
-        "Selecciona exactamente 3 puntos",
-        list(measurement_options),
-        default=[x for x in prev_points if x in measurement_options],
-        max_selections=3,
-        key=f"{class_id}_s3_points",
+    valid_medium = {
+        "Carcasa de la bomba": "estructura",
+        "Apoyo de la bomba sobre la losa": "estructura",
+        "Tubería de impulsión": "estructura",
+        "Muro / shaft técnico": "estructura",
+        "Cielo del dormitorio receptor": "estructura",
+        "Aire del dormitorio receptor": "aire",
+        "Ventilador de cubierta": "estructura",
+    }
+
+    plans = []
+    for i in range(4):
+        st.markdown(f"**Medición {i+1}**")
+        c1,c2,c3 = st.columns(3)
+        with c1:
+            p = st.selectbox(
+                "Punto",
+                ["— No usar —"] + points,
+                key=f"{class_id}_s3_plan_point_{i}",
+            )
+        with c2:
+            inst = st.selectbox(
+                "Instrumento",
+                ["— Selecciona —"] + instruments,
+                key=f"{class_id}_s3_plan_inst_{i}",
+            )
+        with c3:
+            pars = parameters_by_instrument.get(inst, [])
+            par = st.selectbox(
+                "Parámetro",
+                ["— Selecciona —"] + pars,
+                key=f"{class_id}_s3_plan_param_{i}",
+            )
+        if p != "— No usar —":
+            plans.append((p, inst, par))
+
+    st.caption(
+        "Ejemplo: para conocer la vibración del cielo necesitas un sensor sobre el cielo; "
+        "para caracterizar lo que escucha el residente necesitas un sonómetro en el aire del dormitorio."
     )
 
-    if st.button("Realizar mediciones", type="primary", key=f"{class_id}_s3_measure"):
-        if len(points) != 3:
-            st.warning("Debes seleccionar exactamente tres puntos.")
+    # Simulated measurement database
+    measurement_db = {
+        "Carcasa de la bomba": {
+            "Aceleración RMS (m/s²)": "0,86 m/s²",
+            "Espectro de aceleración / frecuencia dominante (Hz)": "25 Hz",
+            "Velocidad vibratoria RMS (mm/s)": "1,35 mm/s",
+            "Espectro de velocidad / frecuencia dominante (Hz)": "25 Hz",
+        },
+        "Apoyo de la bomba sobre la losa": {
+            "Aceleración RMS (m/s²)": "0,69 m/s²",
+            "Espectro de aceleración / frecuencia dominante (Hz)": "25 Hz",
+            "Velocidad vibratoria RMS (mm/s)": "1,10 mm/s",
+            "Espectro de velocidad / frecuencia dominante (Hz)": "25 Hz",
+        },
+        "Tubería de impulsión": {
+            "Aceleración RMS (m/s²)": "0,62 m/s²",
+            "Espectro de aceleración / frecuencia dominante (Hz)": "25 Hz",
+            "Velocidad vibratoria RMS (mm/s)": "0,92 mm/s",
+            "Espectro de velocidad / frecuencia dominante (Hz)": "25 Hz",
+        },
+        "Muro / shaft técnico": {
+            "Aceleración RMS (m/s²)": "0,31 m/s²",
+            "Espectro de aceleración / frecuencia dominante (Hz)": "25 Hz",
+            "Velocidad vibratoria RMS (mm/s)": "0,48 mm/s",
+            "Espectro de velocidad / frecuencia dominante (Hz)": "25 Hz",
+        },
+        "Cielo del dormitorio receptor": {
+            "Aceleración RMS (m/s²)": "0,45 m/s²",
+            "Espectro de aceleración / frecuencia dominante (Hz)": "25 Hz",
+            "Velocidad vibratoria RMS (mm/s)": "0,71 mm/s",
+            "Espectro de velocidad / frecuencia dominante (Hz)": "25 Hz",
+        },
+        "Aire del dormitorio receptor": {
+            "Nivel de presión sonora Lp (dB)": "48 dB",
+            "Espectro acústico / frecuencia dominante (Hz)": "25 Hz",
+        },
+        "Ventilador de cubierta": {
+            "Aceleración RMS (m/s²)": "0,38 m/s²",
+            "Espectro de aceleración / frecuencia dominante (Hz)": "47 Hz",
+            "Velocidad vibratoria RMS (mm/s)": "0,55 mm/s",
+            "Espectro de velocidad / frecuencia dominante (Hz)": "47 Hz",
+        },
+    }
+
+    if st.button("Validar y realizar campaña", type="primary", key=f"{class_id}_s3_measure"):
+        if len(plans) < 2:
+            st.warning("Realiza al menos dos mediciones para poder comparar evidencia.")
         else:
-            state["measurement_points"] = points
-            state["measured"] = True
-            _persist()
-            st.rerun()
+            errors = []
+            used_points = []
+            for p,inst,par in plans:
+                if inst == "— Selecciona —" or par == "— Selecciona —":
+                    errors.append(f"{p}: falta seleccionar instrumento o parámetro.")
+                    continue
+                medium = valid_medium[p]
+                if medium == "aire" and inst != "Sonómetro / micrófono":
+                    errors.append(f"{p}: el aire del dormitorio debe caracterizarse acústicamente con sonómetro/micrófono.")
+                if medium == "estructura" and inst == "Sonómetro / micrófono":
+                    errors.append(f"{p}: para medir la vibración del elemento debes usar acelerómetro o sensor de velocidad.")
+                if p in used_points:
+                    errors.append(f"{p}: repetiste el mismo punto.")
+                used_points.append(p)
+            if errors:
+                for e in errors:
+                    st.error(e)
+            else:
+                state["measurement_plan"] = plans
+                state["measured"] = True
+                _persist()
+                st.rerun()
 
     if state.get("measured"):
-        chosen = state.get("measurement_points", [])
         rows = []
-        for p in chosen:
-            freq, level = measurement_options[p]
-            rows.append({"Punto": p.split(" · ")[0], "Ubicación": p.split(" · ")[1], "Frecuencia dominante": freq, "Vibración / nivel relativo": level})
+        for p,inst,par in state.get("measurement_plan", []):
+            result = measurement_db.get(p, {}).get(par, "Sin resultado")
+            rows.append({
+                "Punto": p,
+                "Instrumento": inst,
+                "Parámetro": par,
+                "Resultado": result,
+            })
+        st.markdown("#### Resultados obtenidos")
         st.dataframe(pd.DataFrame(rows), hide_index=True, use_container_width=True)
-        st.caption(
-            "Una medición elevada indica que el elemento participa en el fenómeno, pero **no demuestra por sí sola que sea el camino dominante**."
+        st.info(
+            "Una coincidencia de frecuencia entre varios puntos puede sugerir un camino de transmisión, "
+            "pero la causalidad debe verificarse con una prueba adicional."
         )
 
     # ------------------------------------------------------------------
-    # 3 · Evidencia espectral
+    # 3 · Comparación espectral
     # ------------------------------------------------------------------
-    st.markdown("## 3 · Compara fuente y receptor")
+    st.markdown("## 3 · Compara posibles fuentes con el receptor")
     st.write(
-        "La coincidencia de frecuencias puede apoyar una hipótesis. Compara los espectros simulados de un punto cercano a la fuente y del dormitorio."
+        "El espectro permite comparar firmas de frecuencia. Aquí se muestran tres mediciones simuladas: "
+        "bomba, ventilador y dormitorio receptor."
     )
-    freq = np.array([10, 16, 20, 25, 31.5, 40, 50, 63, 80, 100], dtype=float)
-    src_spec = np.array([-54, -50, -36, -12, -29, -35, -22, -40, -48, -58], dtype=float)
-    rec_spec = np.array([-60, -55, -44, -18, -31, -38, -28, -43, -52, -61], dtype=float)
+    freq = np.array([10,16,20,25,31.5,40,47,50,63,80,100], dtype=float)
+    pump = np.array([-58,-52,-38,-10,-31,-40,-47,-28,-45,-53,-60], dtype=float)
+    fan = np.array([-61,-58,-55,-50,-48,-35,-12,-18,-32,-48,-57], dtype=float)
+    rec = np.array([-64,-58,-45,-19,-33,-41,-43,-31,-48,-56,-63], dtype=float)
+
     fig = go.Figure()
-    fig.add_trace(go.Scatter(x=freq, y=src_spec, mode="lines+markers", name="Punto próximo a fuente"))
-    fig.add_trace(go.Scatter(x=freq, y=rec_spec, mode="lines+markers", name="Dormitorio receptor"))
-    fig.add_vline(x=25, line_dash="dot", annotation_text="25 Hz")
+    fig.add_trace(go.Scatter(x=freq,y=pump,mode="lines+markers",name="Bomba"))
+    fig.add_trace(go.Scatter(x=freq,y=fan,mode="lines+markers",name="Ventilador"))
+    fig.add_trace(go.Scatter(x=freq,y=rec,mode="lines+markers",name="Dormitorio"))
+    fig.add_vline(x=25,line_dash="dot",annotation_text="25 Hz")
+    fig.add_vline(x=47,line_dash="dot",annotation_text="47 Hz")
     fig.update_layout(
-        height=360, margin=dict(l=30,r=20,t=25,b=35),
+        height=370, margin=dict(l=30,r=20,t=25,b=35),
         xaxis_type="log", xaxis_title="Frecuencia (Hz)",
         yaxis_title="Nivel relativo (dB)", hovermode="x unified",
     )
-    st.plotly_chart(fig, use_container_width=True, key=f"{class_id}_s3_spectra")
+    st.plotly_chart(fig,use_container_width=True,key=f"{class_id}_s3_spectra")
 
-    evidence = st.radio(
-        "¿Cómo interpretarías la coincidencia dominante a 25 Hz?",
+    interp = st.selectbox(
+        "¿Qué hipótesis queda mejor respaldada por esta comparación?",
         [
-            "Es evidencia compatible con una relación entre fuente y receptor, pero aún falta comprobar el camino.",
-            "Demuestra por sí sola que la fuente es causal y que conocemos el camino.",
-            "No aporta ninguna información al diagnóstico.",
+            "— Selecciona —",
+            "La bomba es una fuente candidata fuerte porque comparte el componente dominante de 25 Hz con el dormitorio.",
+            "El ventilador es necesariamente la causa porque está en la cubierta.",
+            "La coincidencia espectral demuestra por sí sola el camino completo.",
         ],
-        index=None,
-        key=f"{class_id}_s3_evidence",
+        key=f"{class_id}_s3_interp",
     )
-    if st.button("Agregar interpretación como evidencia", key=f"{class_id}_s3_evidence_check"):
-        ok = evidence == "Es evidencia compatible con una relación entre fuente y receptor, pero aún falta comprobar el camino."
+    if st.button("Guardar interpretación espectral", key=f"{class_id}_s3_interp_check"):
+        ok = interp.startswith("La bomba es una fuente candidata fuerte")
         state["spectral_evidence"] = bool(ok)
         _persist()
         if ok:
-            st.success("Bien. La coincidencia espectral fortalece la hipótesis, pero todavía debes demostrar cómo viaja la energía.")
+            st.success("Bien. La bomba pasa a ser una hipótesis fuerte, pero todavía debemos demostrar el camino y la causalidad.")
         else:
-            st.warning("La coincidencia de frecuencia no prueba por sí sola causalidad ni identifica automáticamente el camino.")
+            st.warning("Busca la coincidencia dominante entre la fuente candidata y el dormitorio, sin confundir correlación con prueba causal.")
 
     # ------------------------------------------------------------------
-    # 4 · Cálculo aplicado de movilidad
+    # 4 · Respuesta dinámica
     # ------------------------------------------------------------------
-    st.markdown("## 4 · Comprueba la respuesta dinámica")
+    st.markdown("## 4 · Evalúa la respuesta estructural")
     st.write(
-        "Dos caminos reciben una fuerza dinámica comparable. Usa la relación de la Etapa 2 para estimar cuál desarrolla mayor velocidad vibratoria."
+        "Supón que la bomba introduce una fuerza dinámica en su apoyo. Usa lo aprendido en la Etapa 2 para estimar la velocidad vibratoria."
     )
     st.latex(r"v(f)=Y(f)\,F(f)")
-    c1,c2,c3 = st.columns(3)
+    c1,c2 = st.columns(2)
     with c1:
-        F = st.number_input("Fuerza aplicada F (N)", min_value=10.0, max_value=500.0, value=120.0, step=10.0, key=f"{class_id}_s3_F")
+        F = st.number_input("Fuerza dinámica F (N)",20.0,500.0,120.0,10.0,key=f"{class_id}_s3_F")
     with c2:
-        YA_u = st.number_input("Movilidad camino A (×10⁻⁶ m/(N·s))", min_value=0.1, max_value=20.0, value=2.0, step=0.1, key=f"{class_id}_s3_YA")
-    with c3:
-        YB_u = st.number_input("Movilidad camino B (×10⁻⁶ m/(N·s))", min_value=0.1, max_value=20.0, value=8.0, step=0.1, key=f"{class_id}_s3_YB")
-
-    vA = F * YA_u * 1e-6
-    vB = F * YB_u * 1e-6
-    a1,a2 = st.columns(2)
-    a1.metric("Velocidad vibratoria A", f"{vA*1000:.3f} mm/s")
-    a2.metric("Velocidad vibratoria B", f"{vB*1000:.3f} mm/s")
-
-    dyn_choice = st.selectbox(
-        "¿Qué camino presenta mayor respuesta vibratoria?",
-        ["— Selecciona —", "Camino A", "Camino B", "Son iguales"],
-        key=f"{class_id}_s3_dyn_choice",
-    )
-    if st.button("Comprobar cálculo e interpretación", key=f"{class_id}_s3_dyn_check"):
-        correct = "Camino A" if vA > vB else ("Camino B" if vB > vA else "Son iguales")
-        ok = dyn_choice == correct
-        state["dynamic_response"] = bool(ok)
-        state["vA"] = vA
-        state["vB"] = vB
+        Y_u = st.number_input("Movilidad del apoyo Y (×10⁻⁶ m/(N·s))",0.1,20.0,8.0,0.1,key=f"{class_id}_s3_Y")
+    v = F * Y_u * 1e-6
+    st.metric("Velocidad vibratoria estimada",f"{v*1000:.3f} mm/s")
+    if st.button("Guardar cálculo", key=f"{class_id}_s3_dyn_check"):
+        state["dynamic_response"] = True
+        state["calc_v_mm_s"] = float(v*1000)
         _persist()
-        if ok:
-            st.success(f"Correcto. Con la misma fuerza, la mayor movilidad produce la mayor velocidad vibratoria: {correct}.")
-        else:
-            st.warning("Revisa v = Y·F. Con F común, el camino de mayor Y desarrolla mayor v.")
+        st.success("Cálculo guardado. La movilidad permite convertir la fuerza aplicada en una estimación de respuesta vibratoria.")
 
     # ------------------------------------------------------------------
-    # 5 · Resonancia aplicada
+    # 5 · Resonancia
     # ------------------------------------------------------------------
-    st.markdown("## 5 · Investiga una posible resonancia")
+    st.markdown("## 5 · ¿Puede existir amplificación dinámica?")
     st.write(
-        "La componente dominante de la excitación es 25 Hz. Evalúa si un elemento cuya frecuencia natural está próxima podría amplificar la respuesta."
+        "La componente dominante de la bomba es 25 Hz. Una medición/estimación modal del elemento estructural indica una frecuencia natural cercana a 24 Hz."
     )
-    r1,r2 = st.columns(2)
-    with r1:
-        fe = st.number_input("Frecuencia de excitación fₑ (Hz)", min_value=1.0, max_value=100.0, value=25.0, step=1.0, key=f"{class_id}_s3_fe")
-    with r2:
-        fn = st.number_input("Frecuencia natural estimada fₙ (Hz)", min_value=1.0, max_value=100.0, value=24.0, step=1.0, key=f"{class_id}_s3_fn")
-    rr = fe / max(fn, 1e-9)
-    st.metric("Relación de frecuencias fₑ/fₙ", f"{rr:.2f}")
-
-    fs = np.linspace(2, 80, 450)
+    fe = 25.0
+    fn = 24.0
     zeta = 0.08
-    ratio = fs / max(fn, 1e-9)
-    response = 1 / np.sqrt((1-ratio**2)**2 + (2*zeta*ratio)**2)
-    rfig = go.Figure()
-    rfig.add_trace(go.Scatter(x=fs, y=response, mode="lines", name="Respuesta relativa"))
-    rfig.add_vline(x=fn, line_dash="dash", annotation_text="fₙ")
-    rfig.add_vline(x=fe, line_dash="dot", annotation_text="fₑ")
-    rfig.update_layout(height=330, xaxis_title="Frecuencia (Hz)", yaxis_title="Respuesta relativa", margin=dict(l=30,r=20,t=25,b=35))
-    st.plotly_chart(rfig, use_container_width=True, key=f"{class_id}_s3_resonance")
-
-    resonance_choice = st.selectbox(
-        "¿Cómo interpretarías este resultado?",
-        [
-            "— Selecciona —",
-            "Existe riesgo de respuesta elevada porque fₑ está próxima a fₙ.",
-            "La fuerza necesariamente aumentó.",
-            "La resonancia solo puede ocurrir sobre 100 Hz.",
-        ],
-        key=f"{class_id}_s3_res_choice",
+    fs = np.linspace(5,60,400)
+    r = fs/fn
+    resp = 1/np.sqrt((1-r**2)**2+(2*zeta*r)**2)
+    rf = go.Figure()
+    rf.add_trace(go.Scatter(x=fs,y=resp,mode="lines",name="Respuesta relativa"))
+    rf.add_vline(x=fn,line_dash="dash",annotation_text="fₙ = 24 Hz")
+    rf.add_vline(x=fe,line_dash="dot",annotation_text="fₑ = 25 Hz")
+    rf.update_layout(height=330,xaxis_title="Frecuencia (Hz)",yaxis_title="Respuesta relativa",margin=dict(l=30,r=20,t=25,b=35))
+    st.plotly_chart(rf,use_container_width=True,key=f"{class_id}_s3_resonance")
+    st.info(
+        "La proximidad entre la frecuencia de excitación de la fuente y una frecuencia natural del elemento "
+        "puede aumentar la respuesta vibratoria sin que aumente la fuerza aplicada."
     )
-    if st.button("Comprobar resonancia", key=f"{class_id}_s3_res_check"):
-        ok = resonance_choice == "Existe riesgo de respuesta elevada porque fₑ está próxima a fₙ."
-        state["resonance"] = bool(ok)
+    if st.button("Registrar posible resonancia", key=f"{class_id}_s3_res_check"):
+        state["resonance"] = True
         _persist()
-        if ok:
-            st.success("Correcto. La proximidad entre fₑ y fₙ puede elevar la respuesta sin que la fuente aplique una fuerza mayor.")
-        else:
-            st.warning("Compara fₑ con fₙ: el fenómeno importante es la proximidad de frecuencias, no un aumento obligatorio de fuerza.")
+        st.success("Hipótesis de amplificación dinámica registrada.")
 
     # ------------------------------------------------------------------
-    # 6 · Reconstrucción del camino
+    # 6 · Reconstrucción de camino
     # ------------------------------------------------------------------
-    st.markdown("## 6 · Reconstruye el camino de energía")
-    st.write("Construye una hipótesis físicamente coherente para el caso de pisadas.")
-    path_lists = [
-        ["— Selecciona —", "Pisadas en piso superior", "Bomba", "Descarga sanitaria"],
-        ["— Selecciona —", "Fuerza de impacto", "Presión sonora aérea", "Caudal de agua"],
-        ["— Selecciona —", "Vibración de la losa", "Reflexión del aire", "Movimiento del agua"],
-        ["— Selecciona —", "Losa estructural", "Aire exterior", "Ventana"],
-        ["— Selecciona —", "Cielo del dormitorio", "Tubería sanitaria", "Ventilador"],
-        ["— Selecciona —", "Dormitorio inferior", "Sala de máquinas", "Cubierta"],
+    st.markdown("## 6 · Reconstruye el camino de transmisión")
+    st.write(
+        "Con la evidencia disponible, construye el camino físico más probable desde la bomba hasta el dormitorio."
+    )
+    lists = [
+        ["— Selecciona —","Bomba centrífuga","Ventilador","Descarga sanitaria"],
+        ["— Selecciona —","Fuerza dinámica en apoyos / tuberías","Presión sonora aérea","Impacto de pisada"],
+        ["— Selecciona —","Vibración de apoyos y tubería","Movimiento del aire exterior","Movimiento del agua únicamente"],
+        ["— Selecciona —","Losa / shaft / uniones estructurales","Aire exterior","Ventana"],
+        ["— Selecciona —","Cielo o muro del dormitorio","Bomba","Ventilador"],
+        ["— Selecciona —","Aire del dormitorio receptor","Sala de máquinas","Cubierta"],
     ]
-    labels = ["Fuente", "Excitación", "Respuesta", "Propagación", "Radiación", "Receptor"]
-    path_values = []
-    cols = st.columns(3)
-    for i,(label,opts) in enumerate(zip(labels,path_lists)):
+    labels = ["Fuente","Excitación","Respuesta","Propagación","Superficie radiante","Receptor"]
+    vals=[]
+    cols=st.columns(3)
+    for i,(labx,opts) in enumerate(zip(labels,lists)):
         with cols[i%3]:
-            path_values.append(st.selectbox(label, opts, key=f"{class_id}_s3_path_{i}"))
-
+            vals.append(st.selectbox(labx,opts,key=f"{class_id}_s3_path_{i}"))
     expected = [
-        "Pisadas en piso superior",
-        "Fuerza de impacto",
-        "Vibración de la losa",
-        "Losa estructural",
-        "Cielo del dormitorio",
-        "Dormitorio inferior",
+        "Bomba centrífuga",
+        "Fuerza dinámica en apoyos / tuberías",
+        "Vibración de apoyos y tubería",
+        "Losa / shaft / uniones estructurales",
+        "Cielo o muro del dormitorio",
+        "Aire del dormitorio receptor",
     ]
-    if st.button("Comprobar camino", key=f"{class_id}_s3_path_check"):
-        hits = sum(got == exp for got,exp in zip(path_values,expected))
-        state["path_hits"] = hits
-        state["path_ok"] = hits == len(expected)
+    if st.button("Comprobar camino",key=f"{class_id}_s3_path_check"):
+        hits=sum(a==b for a,b in zip(vals,expected))
+        state["path_hits"]=hits
+        state["path_ok"]=hits==len(expected)
         _persist()
-        if hits == len(expected):
-            st.success("Camino coherente: fuente → impacto → respuesta de la losa → propagación estructural → radiación → receptor.")
+        if hits==len(expected):
+            st.success("Camino físicamente coherente. Ahora falta una prueba que fortalezca la causalidad.")
         else:
-            st.warning(f"Hay {hits} de {len(expected)} pasos coherentes. Revisa dónde entra la energía y qué superficie termina radiando al dormitorio.")
+            st.warning(f"Hay {hits} de {len(expected)} pasos coherentes. Revisa cómo entra la energía y por dónde llega al dormitorio.")
 
     # ------------------------------------------------------------------
-    # 7 · Prueba de confirmación
+    # 7 · Prueba causal
     # ------------------------------------------------------------------
     st.markdown("## 7 · Elige una prueba de confirmación")
     st.write(
-        "Un buen diagnóstico no termina con una hipótesis: debes elegir una prueba que pueda confirmarla o debilitarla."
+        "La coincidencia a 25 Hz y el camino estructural son evidencia importante, pero todavía necesitamos una prueba que relacione directamente la fuente con el efecto."
     )
-    test_options = [
-        "Medir simultáneamente vibración en la losa bajo la fuente y en el cielo del dormitorio.",
-        "Medir solamente el nivel sonoro del dormitorio una vez.",
-        "Cambiar un material al azar y observar si el residente reclama menos.",
-        "Medir únicamente la temperatura del recinto.",
+    tests = [
+        "Detener temporalmente la bomba y medir simultáneamente vibración en el camino y nivel sonoro en el dormitorio.",
+        "Medir una sola vez el nivel sonoro del dormitorio.",
+        "Agregar material absorbente al dormitorio sin verificar la fuente.",
+        "Medir solo la temperatura de la sala de máquinas.",
     ]
-    confirm_test = st.radio("Prueba a realizar", test_options, index=None, key=f"{class_id}_s3_confirm_test")
-    if st.button("Simular resultado", key=f"{class_id}_s3_confirm_run"):
-        ok = confirm_test == test_options[0]
+    test = st.radio("Prueba propuesta",tests,index=None,key=f"{class_id}_s3_test")
+    if st.button("Simular prueba",key=f"{class_id}_s3_test_run"):
+        ok = test == tests[0]
         state["confirmation"] = bool(ok)
         _persist()
         if ok:
             st.success(
-                "Resultado simulado: aparece una componente temporal y espectral coherente a 25 Hz en ambos puntos. "
-                "La evidencia de transmisión estructural se fortalece."
+                "Resultado simulado: al detener la bomba, disminuye fuertemente el componente de 25 Hz en el apoyo, tubería, cielo y dormitorio. "
+                "Al volver a operar, reaparece. La evidencia causal es fuerte."
             )
-        elif confirm_test:
-            st.warning("La prueba seleccionada entrega evidencia débil o no permite verificar el camino estructural de forma directa.")
+        elif test:
+            st.warning("La prueba seleccionada entrega evidencia insuficiente para confirmar la causalidad.")
         else:
             st.warning("Selecciona una prueba.")
 
@@ -2906,107 +3021,117 @@ def _render_course2_lab1_stage3(lab, saved):
     # 8 · Diagnóstico final
     # ------------------------------------------------------------------
     st.markdown("## 8 · Emite tu diagnóstico")
-    st.write("Integra las observaciones, mediciones y cálculos. Esta es una conclusión técnica, no una respuesta de memoria.")
+    st.write("Integra la campaña de medición, el espectro, el cálculo dinámico, el camino y la prueba de confirmación.")
 
     d1,d2,d3 = st.columns(3)
     with d1:
-        final_source = st.selectbox("Fuente probable", ["— Selecciona —","Pisadas en piso superior","Bomba","Descarga sanitaria"], key=f"{class_id}_s3_final_source")
+        final_source = st.selectbox(
+            "Fuente probable",
+            ["— Selecciona —","Bomba centrífuga","Ventilador de cubierta","Descarga sanitaria"],
+            key=f"{class_id}_s3_final_source",
+        )
     with d2:
-        final_path = st.selectbox("Camino dominante", ["— Selecciona —","Losa estructural","Tubería sanitaria","Aire únicamente"], key=f"{class_id}_s3_final_path")
+        final_path = st.selectbox(
+            "Camino dominante",
+            ["— Selecciona —","Apoyos / tuberías → estructura → dormitorio","Solo aire","Ventana exterior"],
+            key=f"{class_id}_s3_final_path",
+        )
     with d3:
-        final_rad = st.selectbox("Superficie radiante probable", ["— Selecciona —","Cielo del dormitorio","Ventana exterior","Bomba"], key=f"{class_id}_s3_final_rad")
+        final_rad = st.selectbox(
+            "Superficie radiante",
+            ["— Selecciona —","Cielo / muro del dormitorio","Bomba","Ventilador"],
+            key=f"{class_id}_s3_final_rad",
+        )
 
-    confidence = st.select_slider(
-        "Nivel de confianza del diagnóstico",
-        options=["Bajo","Medio","Alto"],
-        value="Medio",
-        key=f"{class_id}_s3_confidence",
-    )
     justification = st.text_area(
         "Justificación técnica",
         value=state.get("justification",""),
-        placeholder="Integra evidencia espectral, mediciones, movilidad/respuesta, posible resonancia y camino reconstruido.",
+        placeholder="Explica qué mediciones realizaste, qué magnitudes observaste, qué frecuencia coincidió y qué prueba confirmó la hipótesis.",
         key=f"{class_id}_s3_justification",
     )
 
-    if st.button("Comprobar y guardar diagnóstico", type="primary", key=f"{class_id}_s3_final_check"):
-        score = 0
+    if st.button("Comprobar y guardar diagnóstico",type="primary",key=f"{class_id}_s3_final_check"):
+        score=0
+        score += 15 if state.get("measured") else 0
         score += 15 if state.get("spectral_evidence") else 0
-        score += 20 if state.get("dynamic_response") else 0
-        score += 15 if state.get("resonance") else 0
+        score += 15 if state.get("dynamic_response") else 0
+        score += 10 if state.get("resonance") else 0
         score += 20 if state.get("path_ok") else int(state.get("path_hits",0))*3
         score += 15 if state.get("confirmation") else 0
-        score += 5 if final_source == "Pisadas en piso superior" else 0
-        score += 5 if final_path == "Losa estructural" else 0
-        score += 5 if final_rad == "Cielo del dormitorio" else 0
+        score += 4 if final_source=="Bomba centrífuga" else 0
+        score += 3 if final_path=="Apoyos / tuberías → estructura → dormitorio" else 0
+        score += 3 if final_rad=="Cielo / muro del dormitorio" else 0
         if justification.strip():
-            score = min(100, score + 5)
+            score=min(100,score+5)
 
         state.update({
-            "final_source": final_source,
-            "final_path": final_path,
-            "final_radiator": final_rad,
-            "confidence": confidence,
-            "justification": justification,
-            "score": int(score),
-            "completed": score >= 70 and bool(justification.strip()),
+            "final_source":final_source,
+            "final_path":final_path,
+            "final_radiator":final_rad,
+            "justification":justification,
+            "score":int(score),
+            "completed":score>=70 and bool(justification.strip()),
         })
         if state["completed"]:
-            saved["done_3"] = True
+            saved["done_3"]=True
         _persist()
         st.rerun()
 
     if state.get("score") is not None:
-        st.metric("Resultado formativo del diagnóstico", f"{state['score']}/100")
+        st.metric("Resultado formativo del diagnóstico",f"{state['score']}/100")
         if state.get("completed"):
-            st.success(
-                "Diagnóstico suficientemente sustentado. La etapa queda completada. "
-                "La puntuación es formativa: mide coherencia del proceso, no corresponde a la nota final del curso."
-            )
+            st.success("Diagnóstico suficientemente sustentado. La etapa queda completada.")
         else:
-            st.warning("El diagnóstico aún tiene evidencia o pasos incompletos. Revisa el proceso y vuelve a comprobar.")
+            st.warning("Aún faltan evidencias o pasos del proceso de diagnóstico.")
 
-    # Vista docente: pauta visible, sin desplegables.
+    # ------------------------------------------------------------------
+    # Vista docente
+    # ------------------------------------------------------------------
     if role == "Docente":
         st.markdown("---")
         st.markdown("## Vista docente · desarrollo esperado")
-        st.markdown("### Hipótesis principal")
+        st.markdown("### Reclamo")
         st.write(
-            "Caso de pisadas: contacto pie–piso → fuerza de impacto → vibración de la losa → propagación estructural "
-            "→ movimiento del cielo/losa del dormitorio → radiación acústica → receptor."
+            "Zumbido nocturno de baja frecuencia en dormitorio, de aparición intermitente y origen inicialmente desconocido."
         )
-        st.markdown("### Evidencia esperada")
+        st.markdown("### Fuente y camino esperados")
         st.write(
-            "La coincidencia a 25 Hz entre puntos próximos a la fuente y el receptor es evidencia compatible, "
-            "pero debe combinarse con medición de vibración sobre el camino. Una vibración elevada aislada no demuestra dominancia."
+            "La hipótesis principal es la bomba centrífuga. Su componente dominante de 25 Hz se transmite por apoyos y/o tuberías "
+            "hacia elementos estructurales conectados; una superficie del dormitorio (cielo o muro) radia finalmente sonido al aire receptor."
         )
-        st.markdown("### Cálculo de referencia")
-        st.latex(r"v=YF")
+        st.markdown("### Estrategia de medición")
         st.write(
-            "Con F=120 N, Y_A=2×10⁻⁶ m/(N·s) y Y_B=8×10⁻⁶ m/(N·s): "
-            "v_A=0,24 mm/s y v_B=0,96 mm/s. El camino B presenta cuatro veces la respuesta vibratoria."
+            "Debe combinar mediciones estructurales y acústicas: acelerómetro o sensor de velocidad sobre bomba/apoyos/tubería/cielo, "
+            "y sonómetro o micrófono para medir Lp y espectro en el aire del dormitorio."
         )
-        st.markdown("### Resonancia")
+        st.markdown("### Magnitudes")
         st.write(
-            "Para fₑ=25 Hz y fₙ≈24 Hz existe proximidad suficiente para considerar amplificación dinámica en el modelo didáctico. "
-            "No implica que la fuente esté aplicando una fuerza mayor."
+            "Estructura: aceleración RMS, velocidad vibratoria RMS y espectros. "
+            "Aire receptor: nivel de presión sonora Lp y espectro acústico. "
+            "No deben mezclarse las unidades ni tratar todos los puntos como si midieran la misma magnitud."
         )
-        st.markdown("### Criterio de diagnóstico")
+        st.markdown("### Evidencia")
         st.write(
-            "La conclusión debe integrar fuente, excitación, respuesta, camino, radiación, receptor y evidencia. "
-            "El control se selecciona después de establecer el mecanismo dominante."
+            "Coincidencia espectral a 25 Hz en bomba, camino estructural y dormitorio; respuesta dinámica compatible; "
+            "y prueba de detención de bomba que reduce/desaparece el componente dominante."
+        )
+        st.markdown("### Diagnóstico")
+        st.write(
+            "Bomba centrífuga → fuerza dinámica en apoyos/tuberías → vibración estructural → propagación por conexiones → "
+            "radiación desde cielo/muro del dormitorio → presión sonora en el receptor."
         )
 
     st.markdown("---")
-    nav1,nav2 = st.columns(2)
+    nav1,nav2=st.columns(2)
     with nav1:
-        if st.button("← Etapa 2", key=f"{class_id}_s3_prev", use_container_width=True):
-            st.session_state[stage_selector_key] = 2
+        if st.button("← Etapa 2",key=f"{class_id}_s3_prev",use_container_width=True):
+            st.session_state[stage_selector_key]=2
             st.rerun()
     with nav2:
-        if st.button("Etapa 4 →", key=f"{class_id}_s3_next", use_container_width=True):
-            st.session_state[stage_selector_key] = 4
+        if st.button("Etapa 4 →",key=f"{class_id}_s3_next",use_container_width=True):
+            st.session_state[stage_selector_key]=4
             st.rerun()
+
 
 def _render_course2_lab1_stage4(lab, saved):
     """Curso 2 · Lab 1 · Etapa 4: física del ruido de impacto."""
