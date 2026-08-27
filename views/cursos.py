@@ -3918,18 +3918,33 @@ def _render_course2_lab1_stage5(lab, saved):
         "para una **losa de hormigón desnuda**, que será la referencia de las soluciones posteriores."
     )
 
-    st.markdown(
-        """
-        <div style="display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:9px;margin:.6rem 0 .9rem">
-          <div style="padding:11px;border:1px solid #dbe4ee;border-radius:13px;background:#fff;text-align:center"><b>Fuente</b><br><span style="color:#64748b">F(f)</span></div>
-          <div style="padding:11px;border:1px solid #dbe4ee;border-radius:13px;background:#fff;text-align:center"><b>Losa</b><br><span style="color:#64748b">m′, D, ηₚ</span></div>
-          <div style="padding:11px;border:1px solid #dbe4ee;border-radius:13px;background:#fff;text-align:center"><b>Radiación</b><br><span style="color:#64748b">f_c, σrad</span></div>
-          <div style="padding:11px;border:1px solid #dbe4ee;border-radius:13px;background:#fff;text-align:center"><b>Régimen</b><br><span style="color:#64748b">f&lt;f_c / f≥f_c</span></div>
-          <div style="padding:11px;border:1px solid #bfdbfe;border-radius:13px;background:#eff6ff;text-align:center"><b>Predicción</b><br><span style="color:#475569">Lₙ,₀(f)</span></div>
-        </div>
-        """,
-        unsafe_allow_html=True,
-    )
+    st.markdown("### Mapa de variables que usaremos")
+    top_cols = st.columns(5)
+    with top_cols[0]:
+        with st.container(border=True):
+            st.markdown("**Fuente**")
+            st.latex(r"F(f)")
+            st.caption("Excitación mecánica en frecuencia.")
+    with top_cols[1]:
+        with st.container(border=True):
+            st.markdown("**Losa**")
+            st.latex(r"m',\;D,\;\eta_p")
+            st.caption("Propiedades dinámicas de la placa.")
+    with top_cols[2]:
+        with st.container(border=True):
+            st.markdown("**Radiación**")
+            st.latex(r"f_c,\;\sigma_{\mathrm{rad}}")
+            st.caption("Cambio de régimen y eficiencia radiativa.")
+    with top_cols[3]:
+        with st.container(border=True):
+            st.markdown("**Régimen**")
+            st.latex(r"f<f_c\quad \mathrm{o}\quad f\geq f_c")
+            st.caption("Define qué ecuación de Vér corresponde.")
+    with top_cols[4]:
+        with st.container(border=True):
+            st.markdown("**Predicción**")
+            st.latex(r"L_{n,0}(f)")
+            st.caption("Nivel de impacto de la losa base.")
     st.info(
         "La etapa termina cuando hayas calculado y registrado correctamente cada banda. "
         "El gráfico se construirá únicamente con tus resultados validados."
@@ -4039,7 +4054,14 @@ def _render_course2_lab1_stage5(lab, saved):
         a1,a2,a3=st.columns(3)
         with a1: _card("v₀",f"{v0:.3f} m/s","Velocidad del martillo inmediatamente antes del impacto.")
         with a2: _card("Fₙ",f"{Fn:.2f} N","Magnitud característica de la excitación repetitiva.")
-        with a3: _card("S_f0",f"{Sf0:.2f} N²/Hz","Representación espectral de la fuente usada por el modelo.",tone="blue")
+        with a3:
+            _card(
+                "Densidad espectral de fuerza S_f0",
+                f"{Sf0:.2f} N²/Hz",
+                "Describe la intensidad de la excitación mecánica distribuida por unidad de frecuencia. "
+                "No es una fuerza instantánea en newtons.",
+                tone="blue"
+            )
     except Exception as exc:
         st.warning(str(exc))
 
@@ -4058,7 +4080,26 @@ def _render_course2_lab1_stage5(lab, saved):
     )
     _asset(
         "curso2_lab1_etapa5_cambio_regimen.gif",
-        "La misma losa puede encontrarse bajo o sobre su frecuencia crítica según la banda que estemos analizando."
+        "La misma losa puede encontrarse bajo, cerca o sobre su frecuencia crítica según la banda que estemos analizando."
+    )
+
+    st.markdown("### ¿Qué representa físicamente la frecuencia crítica?")
+    st.write(
+        "Piensa en la losa como una superficie que vibra e intenta mover el aire del recinto. "
+        "La vibración de la losa se propaga mediante **ondas de flexión**, mientras que el sonido se propaga en el aire. "
+        "La frecuencia crítica aparece cuando ambas formas de propagación alcanzan una condición de acoplamiento especialmente eficiente."
+    )
+
+    st.markdown(
+        """
+        <div style="border:1px solid #dbe4ee;border-radius:15px;padding:14px 16px;background:#fff;margin:.4rem 0 .8rem">
+          <b>En palabras simples:</b><br>
+          por debajo de la frecuencia crítica, la losa puede vibrar sin radiar sonido de manera especialmente eficiente.
+          Al acercarnos a <b>f_c</b>, el acoplamiento entre la vibración de la placa y el aire mejora.
+          Por encima de <b>f_c</b>, el comportamiento radiativo cambia y el modelo utiliza otro régimen de predicción.
+        </div>
+        """,
+        unsafe_allow_html=True,
     )
 
     st.markdown("### 3.1 · ¿De dónde sale f_c?")
@@ -4076,34 +4117,61 @@ def _render_course2_lab1_stage5(lab, saved):
         unsafe_allow_html=True,
     )
 
-    st.markdown("### 3.2 · ¿Qué cambia al cruzar la frecuencia crítica?")
+    st.markdown("### 3.2 · ¿Qué cambia al acercarnos y cruzar la frecuencia crítica?")
     st.write(
-        "La frecuencia crítica separa **dos formas de comportamiento radiativo de la placa**. "
-        "La losa es la misma; lo que cambia es la frecuencia que estamos analizando y, con ello, "
-        "la forma en que el modelo representa la radiación."
+        "La losa no cambia de material ni deja de vibrar. Lo que cambia es **qué tan eficientemente esa vibración puede transformarse en sonido radiado**."
     )
+
+    csub, ccrit, csup = st.columns(3)
+    with csub:
+        st.markdown(
+            """
+            <div style="border:1px solid #bfdbfe;border-radius:16px;padding:15px;background:#eff6ff;min-height:245px">
+              <div style="font-weight:850;color:#1d4ed8">1 · BAJO f_c</div>
+              <div style="font-size:1.25rem;font-weight:850;margin:.35rem 0">f &lt; f_c</div>
+              <div style="color:#475569;line-height:1.5">
+                La placa puede vibrar, pero el acoplamiento con el aire es menos eficiente.
+                En este régimen el modelo conserva explícitamente
+                <b>ηₚ</b>, <b>f_c</b> y <b>σrad</b>.
+              </div>
+            </div>
+            """,
+            unsafe_allow_html=True,
+        )
+    with ccrit:
+        st.markdown(
+            """
+            <div style="border:1px solid #fde68a;border-radius:16px;padding:15px;background:#fffbeb;min-height:245px">
+              <div style="font-weight:850;color:#b45309">2 · CERCA DE f_c</div>
+              <div style="font-size:1.25rem;font-weight:850;margin:.35rem 0">f ≈ f_c</div>
+              <div style="color:#57534e;line-height:1.5">
+                Se alcanza una condición de coincidencia entre la propagación flexional de la placa
+                y el sonido en el aire. El acoplamiento placa–aire mejora y la radiación puede aumentar.
+              </div>
+            </div>
+            """,
+            unsafe_allow_html=True,
+        )
+    with csup:
+        st.markdown(
+            """
+            <div style="border:1px solid #bbf7d0;border-radius:16px;padding:15px;background:#f0fdf4;min-height:245px">
+              <div style="font-weight:850;color:#15803d">3 · SOBRE f_c</div>
+              <div style="font-size:1.25rem;font-weight:850;margin:.35rem 0">f &gt; f_c</div>
+              <div style="color:#475569;line-height:1.5">
+                La placa puede radiar de manera más eficiente. Bajo la aproximación empleada,
+                <b>σrad puede aproximarse a 1</b> y la ecuación de predicción cambia.
+              </div>
+            </div>
+            """,
+            unsafe_allow_html=True,
+        )
 
     st.markdown(
         """
-        <div style="display:grid;grid-template-columns:1fr 70px 1fr;gap:12px;align-items:stretch;margin:.5rem 0 .9rem">
-          <div style="border:1px solid #bfdbfe;border-radius:16px;padding:16px;background:#eff6ff">
-            <div style="font-size:1.05rem;font-weight:850;color:#1d4ed8">RÉGIMEN SUBCRÍTICO</div>
-            <div style="font-size:1.35rem;font-weight:850;color:#0f172a;margin:.35rem 0">f &lt; f_c</div>
-            <div style="color:#475569;line-height:1.5">
-              La placa radia con menor eficiencia. El modelo necesita considerar explícitamente:
-              <b>amortiguamiento ηₚ</b>, <b>frecuencia crítica f_c</b> y
-              <b>eficiencia de radiación σrad</b>.
-            </div>
-          </div>
-          <div style="display:flex;align-items:center;justify-content:center;font-size:1.8rem;color:#64748b">→</div>
-          <div style="border:1px solid #bbf7d0;border-radius:16px;padding:16px;background:#f0fdf4">
-            <div style="font-size:1.05rem;font-weight:850;color:#15803d">SOBRE FRECUENCIA CRÍTICA</div>
-            <div style="font-size:1.35rem;font-weight:850;color:#0f172a;margin:.35rem 0">f ≥ f_c</div>
-            <div style="color:#475569;line-height:1.5">
-              Cambia el régimen de radiación. Bajo la aproximación utilizada,
-              <b>σrad puede aproximarse a 1</b> y la expresión de predicción se simplifica.
-            </div>
-          </div>
+        <div style="border:1px solid #dbe4ee;border-radius:14px;padding:14px 16px;background:#f8fbff;margin:.7rem 0 .7rem">
+          <b>La cadena física es:</b><br>
+          vibración de la losa → acoplamiento con el aire → eficiencia de radiación → nivel de ruido de impacto.
         </div>
         """,
         unsafe_allow_html=True,
@@ -4111,9 +4179,11 @@ def _render_course2_lab1_stage5(lab, saved):
 
     st.markdown(
         """
-        <div style="border:1px solid #dbe4ee;border-radius:14px;padding:13px 16px;background:#fff;margin:.3rem 0 .8rem">
-          <b>Idea central:</b> no estamos cambiando de losa. Estamos cambiando de
-          <b>régimen físico de radiación</b> según la relación entre la frecuencia analizada y f_c.
+        <div style="border:1px solid #fecaca;border-radius:14px;padding:14px 16px;background:#fff7f7;margin:.4rem 0 .9rem">
+          <b>No confundir f_c con una frecuencia natural.</b><br>
+          Una <b>frecuencia natural</b> está asociada a modos propios y a una posible resonancia de la estructura.
+          La <b>frecuencia crítica</b> está asociada al acoplamiento entre las ondas de flexión de la placa
+          y las ondas acústicas del aire.
         </div>
         """,
         unsafe_allow_html=True,
@@ -4129,14 +4199,39 @@ def _render_course2_lab1_stage5(lab, saved):
     if fc:
         ratio=float(f_demo/fc)
         c1,c2,c3=st.columns(3)
-        with c1: _card("Frecuencia seleccionada",f"{f_demo} Hz","Banda que quieres evaluar.")
-        with c2: _card("Frecuencia crítica",f"{fc:.0f} Hz","Propiedad de esta losa.")
-        with c3: _card("Relación f / f_c",f"{ratio:.2f}","Menor que 1: subcrítico. Igual o mayor que 1: sobre f_c.",tone="blue")
+        with c1:
+            _card("Frecuencia seleccionada",f"{f_demo} Hz","Banda que estás analizando.")
+        with c2:
+            _card("Frecuencia crítica de la losa",f"{fc:.0f} Hz","Propiedad calculada a partir de masa y rigidez.")
+        with c3:
+            if ratio < 0.90:
+                pos_txt="Bajo f_c"
+                pos_desc=f"{f_demo} Hz está por debajo de f_c. Corresponde el régimen subcrítico."
+            elif ratio <= 1.10:
+                pos_txt="Cerca de f_c"
+                pos_desc=f"{f_demo} Hz está muy próximo a f_c. Estamos en la zona de transición crítica."
+            else:
+                pos_txt="Sobre f_c"
+                pos_desc=f"{f_demo} Hz está por encima de f_c. Corresponde el régimen sobre frecuencia crítica."
+            _card("Posición respecto de f_c",pos_txt,pos_desc,tone="blue")
 
-        if f_demo < fc:
-            st.warning(f"{f_demo} Hz < {fc:.0f} Hz → estamos **bajo la frecuencia crítica**.")
+        st.caption(f"Dato secundario: f / f_c = {ratio:.2f}")
+
+        if ratio < 0.90:
+            st.warning(
+                f"{f_demo} Hz está bajo f_c ≈ {fc:.0f} Hz. "
+                "La predicción debe usar la expresión subcrítica."
+            )
+        elif ratio <= 1.10:
+            st.info(
+                f"{f_demo} Hz está cerca de f_c ≈ {fc:.0f} Hz. "
+                "Estás observando la zona donde cambia el comportamiento radiativo."
+            )
         else:
-            st.success(f"{f_demo} Hz ≥ {fc:.0f} Hz → estamos **sobre la frecuencia crítica**.")
+            st.success(
+                f"{f_demo} Hz está sobre f_c ≈ {fc:.0f} Hz. "
+                "La predicción debe usar la expresión correspondiente al régimen sobre frecuencia crítica."
+            )
 
     # ==============================================================
     # 4. ECUACIONES + UNA BANDA
