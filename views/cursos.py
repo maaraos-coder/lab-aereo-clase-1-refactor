@@ -699,7 +699,7 @@ def _course2_lab1_stage0_energy_interactive(class_id, saved):
     }
     base_asset = ASSET_DIR / "curso2_lab1_etapa0_edificio_vibroacustico.webp"
 
-    st.markdown("### 🔎 Observa el edificio")
+    st.markdown("### Observa el edificio")
     st.write(
         "Identifica las fuentes que pueden introducir fuerzas o vibraciones directamente en la estructura del edificio."
     )
@@ -1711,7 +1711,7 @@ def _render_course2_lab1_stage1(lab, saved):
             margin:14px 0 18px 0;
             background:#f8fbff;">
             <div style="font-weight:700; font-size:1.05rem; margin-bottom:10px;">
-                🎯 Lo que debes llevarte de esta etapa
+                Lo que debes llevarte de esta etapa
             </div>
             <div style="line-height:1.6;">
                 Una medida de control es eficaz solo si actúa sobre el <b>camino que realmente transporta energía</b>
