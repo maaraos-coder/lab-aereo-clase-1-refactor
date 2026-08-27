@@ -1999,6 +1999,10 @@ def _render_course2_lab1_stage2(lab, saved):
     f0=(1/(2*math.pi))*math.sqrt(stiffness*1000/mass)
     with cc3:
         fe=st.slider("Frecuencia de excitación fₑ (Hz)",1.0,100.0,min(100.0,max(1.0,f0)),0.5,key=f"{class_id}_s2_fe")
+    st.caption(
+        "**Frecuencia de excitación fₑ:** frecuencia con que la fuente aplica una fuerza repetitiva sobre el sistema. "
+        "Se compara con la frecuencia natural f₀ para evaluar si la excitación se acerca a una condición de resonancia."
+    )
     st.metric("Frecuencia natural f₀",f"{f0:.2f} Hz")
     freqs=np.linspace(1,100,400); zeta=.08
     rr=freqs/max(f0,1e-9)
@@ -2106,96 +2110,132 @@ def _render_course2_lab1_stage2(lab, saved):
     # 6 · Espesor, masa y rigidez
     st.markdown("### 6 · ¿Qué cambia cuando hacemos una losa más gruesa?")
     st.write(
-        "El espesor modifica simultáneamente la **masa superficial** y la **rigidez flexional**, pero no en la misma proporción."
+        "El espesor modifica simultáneamente la **masa superficial** y la **rigidez flexional**, "
+        "pero no en la misma proporción."
     )
+
     st.markdown(
         """
         <div style="display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;margin:.55rem 0 .9rem">
           <div style="border:1px solid #d9e2ec;border-radius:16px;padding:14px 16px;background:#fff">
-            <b>Masa superficial · m′</b><br><span style="color:#64748b">Cuánta masa existe por cada metro cuadrado de losa.</span>
+            <b>Masa superficial · m′</b><br>
+            <span style="color:#64748b">Cuánta masa existe por cada metro cuadrado de losa.</span>
           </div>
           <div style="border:1px solid #d9e2ec;border-radius:16px;padding:14px 16px;background:#fff">
-            <b>Rigidez flexional · B</b><br><span style="color:#64748b">Qué tan difícil es <b>doblar o curvar</b> la losa. Una B alta significa mayor oposición a la flexión.</span>
+            <b>Rigidez flexional · B</b><br>
+            <span style="color:#64748b">Qué tan difícil es doblar o curvar la losa. Una B mayor significa mayor oposición a la flexión.</span>
           </div>
         </div>
         <div style="border-radius:14px;padding:12px 16px;background:#fff7ed;border:1px solid #fed7aa;margin-bottom:.8rem">
-        <b>Analogía:</b> una regla delgada se dobla con facilidad; una regla del mismo material pero mucho más gruesa cuesta mucho más doblarla.
+        <b>Analogía:</b> una regla delgada se dobla fácilmente; una regla del mismo material pero mucho más gruesa cuesta mucho más doblarla.
         </div>
         """,
         unsafe_allow_html=True,
     )
-    st.latex(r"m'=\rho h \qquad\Rightarrow\qquad m'\propto h")
-    st.latex(r"B=\frac{Eh^3}{12(1-\nu^2)} \qquad\Rightarrow\qquad B\propto h^3")
-    st.caption("Si solo duplicamos el espesor y mantenemos el mismo material, la masa superficial se duplica, pero la rigidez flexional aumenta aproximadamente 2³ = 8 veces.")
-    h_mm=st.slider("Espesor de hormigón h (mm)",80,250,150,5,key=f"{class_id}_s2_h")
-    rho=2400.; E=30e9; nu=.20; h=h_mm/1000
-    ms=rho*h; B=E*h**3/(12*(1-nu**2))
-    m1,m2=st.columns(2)
-    m1.metric("Masa superficial m′",f"{ms:.0f} kg/m²")
-    m2.metric("Rigidez flexional B",f"{B/1e6:.2f} MN·m")
-    # Comparación pedagógica respecto de una referencia
-    h_ref_mm = 100
-    ratio_h = h_mm / h_ref_mm
-    ratio_m = ratio_h
-    ratio_B = ratio_h**3
+
+    st.latex(r"m'=\rho h")
+    st.caption("La masa superficial crece de forma lineal con el espesor: m′ ∝ h.")
+
+    st.latex(r"B=\frac{E h^3}{12(1-\nu^2)}")
+    st.caption("La rigidez flexional crece con el cubo del espesor: B ∝ h³.")
 
     st.markdown(
-        f"""
+        """
         <div style="border:1px solid #f4c58b;border-radius:18px;padding:16px 18px;background:linear-gradient(180deg,#fffaf3,#fff7ed);margin:.7rem 0 .9rem">
-          <div style="font-weight:900;color:#9a3412;font-size:1.04rem;margin-bottom:.5rem">Idea clave · el espesor no afecta igual a masa y rigidez</div>
+          <div style="font-weight:900;color:#9a3412;font-size:1.04rem;margin-bottom:.5rem">Si duplicamos el espesor</div>
           <div style="display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;text-align:center">
             <div style="padding:12px;border-radius:12px;background:#fff;border:1px solid #fed7aa"><b>Espesor</b><br><span style="font-size:1.35rem">h × 2</span></div>
             <div style="padding:12px;border-radius:12px;background:#fff;border:1px solid #fed7aa"><b>Masa superficial</b><br><span style="font-size:1.35rem">m′ × 2</span></div>
             <div style="padding:12px;border-radius:12px;background:#fff;border:1px solid #fed7aa"><b>Rigidez flexional</b><br><span style="font-size:1.35rem">B × 8</span></div>
           </div>
           <div style="margin-top:.7rem;color:#7c2d12;line-height:1.45">
-          Duplicar el espesor duplica aproximadamente la masa superficial, pero multiplica por ocho la rigidez flexional,
-          porque <b>B ∝ h³</b>.
+          La masa aumenta en proporción directa al espesor, pero la rigidez flexional aumenta mucho más rápido porque depende de <b>h³</b>.
           </div>
         </div>
         """,
         unsafe_allow_html=True,
     )
 
-    st.markdown("#### Compara el espesor actual con una losa de referencia de 100 mm")
-    cA,cB,cC = st.columns(3)
-    cA.metric("Espesor relativo", f"{ratio_h:.2f} ×")
-    cB.metric("Masa superficial relativa", f"{ratio_m:.2f} ×")
-    cC.metric("Rigidez flexional relativa", f"{ratio_B:.2f} ×")
+    h_mm=st.slider("Espesor de hormigón h (mm)",80,250,150,5,key=f"{class_id}_s2_h")
+    rho=2400.; E=30e9; nu=.20; h=h_mm/1000
+    ms=rho*h; B=E*h**3/(12*(1-nu**2))
 
-    import pandas as pd
-    comp_df = pd.DataFrame(
-        {
-            "Magnitud": ["Masa superficial", "Rigidez flexional"],
-            "Referencia 100 mm": [1.0, 1.0],
-            f"Actual {h_mm} mm": [ratio_m, ratio_B],
-        }
-    ).set_index("Magnitud")
-    st.bar_chart(comp_df, horizontal=True)
+    m1,m2=st.columns(2)
+    m1.metric("Masa superficial m′",f"{ms:.0f} kg/m²")
+    m2.metric("Rigidez flexional B",f"{B/1e6:.2f} MN·m")
 
-    st.caption(
-        "El gráfico está normalizado respecto de una losa de 100 mm: 1,0 representa el valor de referencia. "
-        "Así se compara directamente cuánto cambia cada magnitud, no solo la forma de dos curvas distintas."
+    h_ref_mm = 100
+    ratio_h = h_mm / h_ref_mm
+    ratio_m = ratio_h
+    ratio_B = ratio_h**3
+
+    st.markdown("#### Ahora prueba con una losa real")
+    st.write(
+        f"Comparamos una losa de referencia de **{h_ref_mm} mm** con la losa seleccionada de **{h_mm} mm**."
+    )
+    c1,c2,c3 = st.columns(3)
+    c1.metric("Espesor", f"{ratio_h:.2f} ×")
+    c2.metric("Masa superficial", f"{ratio_m:.2f} ×")
+    c3.metric("Rigidez flexional", f"{ratio_B:.2f} ×")
+
+    st.markdown(
+        f"""
+        <div style="border-radius:14px;padding:12px 16px;background:#eef6ff;border:1px solid #d8e8fa;margin-top:.55rem">
+        Al pasar de <b>{h_ref_mm} mm</b> a <b>{h_mm} mm</b>, la masa superficial aumenta aproximadamente
+        <b>{ratio_m:.2f} veces</b>, mientras que la rigidez flexional aumenta aproximadamente
+        <b>{ratio_B:.2f} veces</b>.
+        </div>
+        """,
+        unsafe_allow_html=True,
     )
 
     # 7 · Dispersión de ondas de flexión
     st.markdown("### 7 · En flexión, distintas frecuencias no viajan igual")
     st.write(
         "Una **onda de flexión** es una deformación transversal que se desplaza por la losa. "
-        "En este tipo de onda, la frecuencia modifica tanto la longitud de onda como la velocidad con que avanza la fase."
+        "En este tipo de onda, la frecuencia modifica la longitud de onda y también la velocidad de propagación."
     )
+
     _asset("curso2_lab1_etapa2_dispersion_flexion.gif")
+
     st.markdown(
-        """<div style="display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;margin:.55rem 0 .9rem">
-        <div style="padding:13px;border:1px solid #d9e2ec;border-radius:14px;background:#fff"><b>Onda de flexión</b><br><span style="color:#64748b">La placa se curva transversalmente mientras la perturbación avanza.</span></div>
-        <div style="padding:13px;border:1px solid #d9e2ec;border-radius:14px;background:#fff"><b>Dispersión</b><br><span style="color:#64748b">Distintas frecuencias presentan diferentes velocidades de fase.</span></div>
-        <div style="padding:13px;border:1px solid #d9e2ec;border-radius:14px;background:#fff"><b>No confundir</b><br><span style="color:#64748b">Velocidad de propagación ≠ velocidad vibratoria local de la superficie.</span></div>
-        </div>""",
+        """
+        <div style="display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;margin:.55rem 0 .9rem">
+        <div style="padding:13px;border:1px solid #d9e2ec;border-radius:14px;background:#fff">
+          <b>Onda de flexión</b><br><span style="color:#64748b">La placa se curva transversalmente mientras la perturbación avanza.</span>
+        </div>
+        <div style="padding:13px;border:1px solid #d9e2ec;border-radius:14px;background:#fff">
+          <b>Dispersión</b><br><span style="color:#64748b">Distintas frecuencias presentan diferentes velocidades de fase.</span>
+        </div>
+        <div style="padding:13px;border:1px solid #d9e2ec;border-radius:14px;background:#fff">
+          <b>No confundir</b><br><span style="color:#64748b">Velocidad de propagación ≠ velocidad vibratoria local de la superficie.</span>
+        </div>
+        </div>
+        """,
         unsafe_allow_html=True,
     )
-    st.latex(r"k_B^4=\\frac{m'\\omega^2}{B}")
-    st.latex(r"c_B=\\frac{\\omega}{k_B}")
-    st.info("No necesitas memorizar todavía estas expresiones. Lo importante es reconocer que **c_B depende de la frecuencia**.")
+
+    st.markdown("#### ¿Cómo se relacionan las variables?")
+    st.latex(r"k_B^4=\frac{m'\,\omega^2}{B}")
+    st.latex(r"c_B=\frac{\omega}{k_B}")
+
+    st.markdown(
+        """
+        <div style="display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:8px;margin:.5rem 0 .8rem">
+          <div style="padding:10px;border:1px solid #d9e2ec;border-radius:12px;background:#fff"><b>k<sub>B</sub></b><br><span style="color:#64748b">número de onda de flexión</span></div>
+          <div style="padding:10px;border:1px solid #d9e2ec;border-radius:12px;background:#fff"><b>m′</b><br><span style="color:#64748b">masa superficial</span></div>
+          <div style="padding:10px;border:1px solid #d9e2ec;border-radius:12px;background:#fff"><b>ω = 2πf</b><br><span style="color:#64748b">frecuencia angular</span></div>
+          <div style="padding:10px;border:1px solid #d9e2ec;border-radius:12px;background:#fff"><b>B</b><br><span style="color:#64748b">rigidez flexional</span></div>
+          <div style="padding:10px;border:1px solid #d9e2ec;border-radius:12px;background:#fff"><b>c<sub>B</sub></b><br><span style="color:#64748b">velocidad de fase</span></div>
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
+
+    st.info(
+        "Lo importante aquí no es memorizar las fórmulas, sino reconocer que **c_B depende de la frecuencia**. "
+        "Por eso distintas componentes de una vibración no se propagan de la misma manera por la losa."
+    )
 
     # 8 · Radiación
     st.markdown("### 8 · Vibrar mucho no significa necesariamente sonar mucho")
