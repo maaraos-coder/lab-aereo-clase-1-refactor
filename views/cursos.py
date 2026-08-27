@@ -1844,6 +1844,35 @@ def _render_course2_lab1_stage2(lab, saved):
     )
     st.info("Impedancia y movilidad **dependen de la frecuencia**. La misma estructura puede responder de forma muy distinta según cómo se la excite.")
 
+    st.markdown("#### ¿Qué hace que la movilidad sea distinta?")
+    st.write(
+        "La movilidad **no aumenta porque aumentemos la fuerza**. En régimen lineal, la movilidad pertenece "
+        "a la respuesta dinámica de la estructura a una frecuencia determinada."
+    )
+    st.markdown(
+        """
+        <div style="display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px;margin:.55rem 0 .8rem">
+          <div style="padding:12px;border:1px solid #d9e2ec;border-radius:14px;background:#fff"><b>Masa</b><br><span style="color:#64748b">Influye en la inercia del sistema.</span></div>
+          <div style="padding:12px;border:1px solid #d9e2ec;border-radius:14px;background:#fff"><b>Rigidez</b><br><span style="color:#64748b">Controla cuánto se opone a deformarse.</span></div>
+          <div style="padding:12px;border:1px solid #d9e2ec;border-radius:14px;background:#fff"><b>Amortiguamiento</b><br><span style="color:#64748b">Disipa energía vibratoria.</span></div>
+          <div style="padding:12px;border:1px solid #d9e2ec;border-radius:14px;background:#fff"><b>Frecuencia</b><br><span style="color:#64748b">Puede acercar el sistema a una resonancia.</span></div>
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
+    _mcq(
+        "mobility_why",
+        "Si dos estructuras reciben la misma fuerza, ¿qué puede hacer que una tenga mayor movilidad que la otra?",
+        [
+            "A. Solo la magnitud de la fuerza.",
+            "B. Sus propiedades dinámicas y la frecuencia de excitación.",
+            "C. Solo el área de la losa.",
+            "D. La presión sonora del recinto.",
+        ],
+        1,
+        "La movilidad depende de la estructura y de la frecuencia a la que se la excita."
+    )
+
     st.markdown("#### Laboratorio · misma fuerza, dos estructuras")
     st.write(
         "Aquí la **fuerza es la excitación** y la **movilidad pertenece a la estructura a una frecuencia determinada**. "
@@ -1902,7 +1931,23 @@ def _render_course2_lab1_stage2(lab, saved):
         "frecuencia natural, la respuesta puede aumentar notablemente: eso es **resonancia**."
     )
     _asset("curso2_lab1_etapa2_resonancia.gif")
-    st.caption("Compara las tres situaciones: la fuerza es la misma; la amplitud de respuesta cambia al modificar la frecuencia de excitación.")
+    st.markdown(
+        """
+        <div style="border-radius:14px;padding:12px 16px;background:#eef6ff;border:1px solid #d8e8fa;margin:.5rem 0 .9rem">
+        <b>¿Qué significa “mayor respuesta”?</b><br>
+        En esta etapa usamos <b>respuesta vibratoria</b> para referirnos a cuánto vibra la estructura.
+        La representamos principalmente mediante la <b>velocidad vibratoria v(f)</b>. Cerca de resonancia,
+        con la misma fuerza aplicada, la velocidad de vibración puede aumentar notablemente.
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
+
+    st.markdown("#### ¿Qué describe la ecuación dinámica?")
+    st.write(
+        "El modelo más simple combina tres propiedades del sistema —masa, amortiguamiento y rigidez— "
+        "con una fuerza externa que cambia en el tiempo."
+    )
     st.latex(r"m\ddot{x}+c\dot{x}+kx=F(t)")
     r1,r2,r3=st.columns(3)
     with r1:
@@ -1911,7 +1956,40 @@ def _render_course2_lab1_stage2(lab, saved):
         st.markdown("**c · amortiguamiento**  \nDisipa energía.")
     with r3:
         st.markdown("**k · rigidez**  \nTiende a restaurar la posición.")
+
+    st.markdown(
+        """
+        <div style="border-radius:14px;padding:12px 16px;background:#f8fafc;border:1px solid #dce4ec;margin:.5rem 0 .9rem">
+        <b>F(t) · fuerza externa</b><br>
+        Es la excitación que actúa sobre el sistema. La vibración observada resulta del equilibrio dinámico entre
+        esa fuerza y los efectos de masa, amortiguamiento y rigidez.
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
+
+    st.markdown(
+        """
+        <div style="border:1px solid #d8e2ec;border-radius:18px;padding:16px 18px;background:linear-gradient(180deg,#fff,#f8fafc);margin:.6rem 0 .9rem">
+        <div style="font-weight:850;color:#0f172a;font-size:1.02rem;margin-bottom:.45rem">Frecuencia natural del sistema</div>
+        <div style="color:#475569;line-height:1.5">
+        La <b>frecuencia natural f₀</b> es la frecuencia a la que este sistema ideal tiende naturalmente a vibrar.
+        Para este modelo simple, depende principalmente de la masa <b>m</b> y de la rigidez <b>k</b>.
+        </div>
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
     st.latex(r"f_0=\frac{1}{2\pi}\sqrt{\frac{k}{m}}")
+    st.markdown(
+        """
+        <div style="display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;margin:.4rem 0 .9rem">
+          <div style="padding:12px;border:1px solid #d9e2ec;border-radius:14px;background:#fff"><b>Si aumenta k</b><br><span style="color:#64748b">f₀ aumenta.</span></div>
+          <div style="padding:12px;border:1px solid #d9e2ec;border-radius:14px;background:#fff"><b>Si aumenta m</b><br><span style="color:#64748b">f₀ disminuye.</span></div>
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
 
     cc1,cc2,cc3 = st.columns(3)
     with cc1:
@@ -1956,6 +2034,23 @@ def _render_course2_lab1_stage2(lab, saved):
         Un <b>modo propio</b> es una forma característica de vibrar que puede adoptar la losa cuando se excita
         cerca de una de sus <b>frecuencias naturales</b>. Cada modo combina dos ideas:
         <b>cuándo</b> aparece (su frecuencia natural) y <b>cómo</b> se mueve la superficie (su forma modal).
+        </div>
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
+    st.markdown(
+        """
+        <div style="border:1px solid #d8e2ec;border-radius:18px;padding:16px 18px;background:#fff;margin:.5rem 0 .8rem">
+        <div style="font-weight:850;color:#0f172a;font-size:1.02rem;margin-bottom:.45rem">¿Qué significan los índices (m,n)?</div>
+        <div style="color:#475569;line-height:1.5">
+        En una placa rectangular, <b>m</b> y <b>n</b> indican cuántas <b>medias ondas</b> aparecen en cada una de las dos
+        direcciones principales de la losa. Los números describen la <b>forma espacial</b> del modo; no indican qué tan fuerte vibra.
+        </div>
+        <div style="display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;margin-top:.7rem">
+          <div style="padding:10px;border-radius:12px;background:#f8fafc;border:1px solid #e2e8f0"><b>(1,1)</b><br><span style="color:#64748b">1 media onda × 1 media onda</span></div>
+          <div style="padding:10px;border-radius:12px;background:#f8fafc;border:1px solid #e2e8f0"><b>(2,1)</b><br><span style="color:#64748b">2 medias ondas × 1 media onda</span></div>
+          <div style="padding:10px;border-radius:12px;background:#f8fafc;border:1px solid #e2e8f0"><b>(2,2)</b><br><span style="color:#64748b">2 medias ondas × 2 medias ondas</span></div>
         </div>
         </div>
         """,
@@ -2038,24 +2133,50 @@ def _render_course2_lab1_stage2(lab, saved):
     m1,m2=st.columns(2)
     m1.metric("Masa superficial m′",f"{ms:.0f} kg/m²")
     m2.metric("Rigidez flexional B",f"{B/1e6:.2f} MN·m")
+    # Comparación pedagógica respecto de una referencia
+    h_ref_mm = 100
+    ratio_h = h_mm / h_ref_mm
+    ratio_m = ratio_h
+    ratio_B = ratio_h**3
+
     st.markdown(
-        f"""<div style="border-radius:14px;padding:13px 16px;background:#f7fafc;border:1px solid #dce4ec">
-        Si duplicaras el espesor respecto de una referencia, la masa aumentaría aproximadamente al doble,
-        mientras que la rigidez flexional tendería a aumentar mucho más rápido, por su dependencia con <b>h³</b>.
-        </div>""",
+        f"""
+        <div style="border:1px solid #f4c58b;border-radius:18px;padding:16px 18px;background:linear-gradient(180deg,#fffaf3,#fff7ed);margin:.7rem 0 .9rem">
+          <div style="font-weight:900;color:#9a3412;font-size:1.04rem;margin-bottom:.5rem">Idea clave · el espesor no afecta igual a masa y rigidez</div>
+          <div style="display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;text-align:center">
+            <div style="padding:12px;border-radius:12px;background:#fff;border:1px solid #fed7aa"><b>Espesor</b><br><span style="font-size:1.35rem">h × 2</span></div>
+            <div style="padding:12px;border-radius:12px;background:#fff;border:1px solid #fed7aa"><b>Masa superficial</b><br><span style="font-size:1.35rem">m′ × 2</span></div>
+            <div style="padding:12px;border-radius:12px;background:#fff;border:1px solid #fed7aa"><b>Rigidez flexional</b><br><span style="font-size:1.35rem">B × 8</span></div>
+          </div>
+          <div style="margin-top:.7rem;color:#7c2d12;line-height:1.45">
+          Duplicar el espesor duplica aproximadamente la masa superficial, pero multiplica por ocho la rigidez flexional,
+          porque <b>B ∝ h³</b>.
+          </div>
+        </div>
+        """,
         unsafe_allow_html=True,
     )
-    hs=np.linspace(.08,.25,100)
-    mss=rho*hs; Bs=E*hs**3/(12*(1-nu**2))
-    p1,p2=st.columns(2)
-    with p1:
-        fig,ax=plt.subplots(); ax.plot(hs*1000,mss); ax.scatter([h_mm],[ms])
-        ax.set_xlabel("Espesor (mm)"); ax.set_ylabel("m′ (kg/m²)"); ax.set_title("Masa superficial")
-        ax.grid(True,alpha=.2); st.pyplot(fig,use_container_width=True); plt.close(fig)
-    with p2:
-        fig,ax=plt.subplots(); ax.plot(hs*1000,Bs/1e6); ax.scatter([h_mm],[B/1e6])
-        ax.set_xlabel("Espesor (mm)"); ax.set_ylabel("B (MN·m)"); ax.set_title("Rigidez flexional")
-        ax.grid(True,alpha=.2); st.pyplot(fig,use_container_width=True); plt.close(fig)
+
+    st.markdown("#### Compara el espesor actual con una losa de referencia de 100 mm")
+    cA,cB,cC = st.columns(3)
+    cA.metric("Espesor relativo", f"{ratio_h:.2f} ×")
+    cB.metric("Masa superficial relativa", f"{ratio_m:.2f} ×")
+    cC.metric("Rigidez flexional relativa", f"{ratio_B:.2f} ×")
+
+    import pandas as pd
+    comp_df = pd.DataFrame(
+        {
+            "Magnitud": ["Masa superficial", "Rigidez flexional"],
+            "Referencia 100 mm": [1.0, 1.0],
+            f"Actual {h_mm} mm": [ratio_m, ratio_B],
+        }
+    ).set_index("Magnitud")
+    st.bar_chart(comp_df, horizontal=True)
+
+    st.caption(
+        "El gráfico está normalizado respecto de una losa de 100 mm: 1,0 representa el valor de referencia. "
+        "Así se compara directamente cuánto cambia cada magnitud, no solo la forma de dos curvas distintas."
+    )
 
     # 7 · Dispersión de ondas de flexión
     st.markdown("### 7 · En flexión, distintas frecuencias no viajan igual")
