@@ -701,8 +701,7 @@ def _course2_lab1_stage0_energy_interactive(class_id, saved):
 
     st.markdown("### 🔎 Observa el edificio")
     st.write(
-        "Identifica primero las fuentes relevantes. Después podrás seguir, sobre la **misma escena**, "
-        "el recorrido principal de la energía de cada una."
+        "Identifica las fuentes que pueden introducir fuerzas o vibraciones directamente en la estructura del edificio."
     )
 
     if not identified:
