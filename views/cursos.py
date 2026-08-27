@@ -2216,8 +2216,8 @@ def _render_course2_lab1_stage2(lab, saved):
     )
 
     st.markdown("#### ¿Cómo se relacionan las variables?")
-    st.latex(r"k_B^4=\frac{m'\,\omega^2}{B}")
-    st.latex(r"c_B=\frac{\omega}{k_B}")
+    st.latex(r"""k_B^4 = \frac{m'\,\omega^2}{B}""")
+    st.latex(r"""c_B = \frac{\omega}{k_B}""")
 
     st.markdown(
         """
@@ -2244,12 +2244,67 @@ def _render_course2_lab1_stage2(lab, saved):
         "La eficiencia con que lo hace se representa mediante **σ, eficiencia de radiación**."
     )
     _asset("curso2_lab1_etapa2_vibracion_radiacion.webp")
-    st.latex(r"W_{\mathrm{rad}}\propto S\,\sigma\,v_n^2")
     st.markdown(
-        """<div style="border-radius:16px;padding:14px 16px;background:#fff7ed;border:1px solid #fed7aa">
-        <b>Dos superficies pueden vibrar con la misma velocidad y radiar cantidades muy distintas de sonido.</b>
-        La radiación depende también del área y de la eficiencia con que la superficie acopla su movimiento al aire.
-        </div>""",
+        """
+        <div style="border:1px solid #d8e2ec;border-radius:18px;padding:16px 18px;
+                    background:linear-gradient(180deg,#fff,#f8fafc);margin:.55rem 0 .8rem">
+          <div style="font-weight:850;color:#0f172a;font-size:1.02rem;margin-bottom:.45rem">
+            ¿Qué describe esta relación?
+          </div>
+          <div style="color:#475569;line-height:1.5">
+            Esta expresión muestra, de forma simplificada, de qué depende la
+            <b>potencia acústica radiada</b> por una superficie que vibra.
+          </div>
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
+
+    st.latex(r"""W_{\mathrm{rad}} \propto S\,\sigma\,v_n^2""")
+
+    st.markdown(
+        """
+        <div style="display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px;margin:.55rem 0 .9rem">
+          <div style="padding:12px;border:1px solid #d9e2ec;border-radius:14px;background:#fff">
+            <b>W<sub>rad</sub></b><br>
+            <span style="color:#64748b">
+              Potencia acústica radiada: energía acústica que la superficie entrega al aire por unidad de tiempo.
+            </span>
+          </div>
+          <div style="padding:12px;border:1px solid #d9e2ec;border-radius:14px;background:#fff">
+            <b>S</b><br>
+            <span style="color:#64748b">
+              Área radiante: superficie que efectivamente participa en la radiación sonora.
+            </span>
+          </div>
+          <div style="padding:12px;border:1px solid #d9e2ec;border-radius:14px;background:#fff">
+            <b>σ</b><br>
+            <span style="color:#64748b">
+              Eficiencia de radiación: indica qué tan eficazmente la vibración se transforma en sonido en el aire.
+            </span>
+          </div>
+          <div style="padding:12px;border:1px solid #d9e2ec;border-radius:14px;background:#fff">
+            <b>v<sub>n</sub></b><br>
+            <span style="color:#64748b">
+              Velocidad normal de vibración: velocidad con que la superficie se mueve perpendicularmente a su plano.
+            </span>
+          </div>
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
+
+    st.markdown(
+        """
+        <div style="border-radius:16px;padding:14px 16px;background:#fff7ed;
+                    border:1px solid #fed7aa;margin:.3rem 0 .8rem">
+          <b>Idea clave:</b> la potencia radiada aumenta con el área <b>S</b>,
+          con la eficiencia de radiación <b>σ</b> y, especialmente,
+          con el <b>cuadrado de la velocidad normal v<sub>n</sub></b>.
+          Por eso dos superficies que vibran con la misma velocidad no necesariamente
+          radian la misma potencia acústica.
+        </div>
+        """,
         unsafe_allow_html=True,
     )
     st.markdown("#### Laboratorio · ¿qué superficie radiará más sonido?")
