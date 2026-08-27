@@ -3985,12 +3985,38 @@ def _render_course2_lab1_stage5(lab, saved):
     )
     _asset(
         "curso2_lab1_etapa5_maquina_impactos.gif",
-        "La caída y repetición de los martillos permiten representar la excitación mecánica en frecuencia."
+        "La animación muestra la caída, la velocidad antes del impacto y el contacto con la losa."
     )
+
+    st.markdown("### ¿Qué datos de la fuente necesita el modelo?")
+    st.markdown(
+        """
+        <div style="display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px;margin:.45rem 0 .85rem">
+          <div style="padding:14px;border:1px solid #dbe4ee;border-radius:14px;background:#fff;min-height:145px">
+            <b>h · Altura de caída</b><br>
+            <span style="color:#64748b">Define la energía potencial antes de caer.</span>
+          </div>
+          <div style="padding:14px;border:1px solid #dbe4ee;border-radius:14px;background:#fff;min-height:145px">
+            <b>v₀ · Velocidad de impacto</b><br>
+            <span style="color:#64748b">Velocidad del martillo inmediatamente antes del contacto.</span>
+          </div>
+          <div style="padding:14px;border:1px solid #dbe4ee;border-radius:14px;background:#fff;min-height:145px">
+            <b>fᵣ · Repetición</b><br>
+            <span style="color:#64748b">Cantidad de impactos que se repiten por segundo.</span>
+          </div>
+          <div style="padding:14px;border:1px solid #bfdbfe;border-radius:14px;background:#eff6ff;min-height:145px">
+            <b>S_f0 · Excitación espectral</b><br>
+            <span style="color:#475569">Representación de la entrada mecánica que luego utilizará el modelo de predicción.</span>
+          </div>
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
+
     st.markdown(
         """<div style="border:1px solid #bfdbfe;background:#eff6ff;border-radius:14px;padding:13px 16px;margin:.3rem 0 .8rem">
-        <b>En una frase:</b> necesitamos caracterizar la fuente para saber <b>qué excitación F(f) recibe la losa</b>;
-        después el modelo transforma esa entrada en una predicción Lₙ(f).
+        <b>En una frase:</b> caracterizamos la máquina únicamente para definir <b>qué excitación mecánica recibe la losa</b>.
+        A partir de esa entrada, el modelo estima el nivel de ruido de impacto.
         </div>""",
         unsafe_allow_html=True,
     )
@@ -4050,28 +4076,48 @@ def _render_course2_lab1_stage5(lab, saved):
         unsafe_allow_html=True,
     )
 
-    st.markdown("### 3.2 · ¿Qué cambia al cruzar f_c?")
-    r1,r2=st.columns(2)
-    with r1:
-        st.markdown(
-            """<div style="border:1px solid #bfdbfe;border-radius:16px;padding:15px;background:#eff6ff;min-height:210px">
-            <b>Régimen subcrítico · f &lt; f_c</b><br><br>
-            La radiación es menos eficiente y la expresión de Vér mantiene explícitamente
-            <b>ηₚ, f_c y σrad</b>.<br><br>
-            <span style="color:#475569">No basta conocer solo la masa de la losa.</span>
-            </div>""",
-            unsafe_allow_html=True,
-        )
-    with r2:
-        st.markdown(
-            """<div style="border:1px solid #bbf7d0;border-radius:16px;padding:15px;background:#f0fdf4;min-height:210px">
-            <b>Sobre frecuencia crítica · f ≥ f_c</b><br><br>
-            Cambia el régimen de radiación. En la aproximación utilizada,
-            σrad puede acercarse a 1 y la expresión de predicción se simplifica.<br><br>
-            <span style="color:#475569">No significa que la física desaparezca; cambia la aproximación aplicable.</span>
-            </div>""",
-            unsafe_allow_html=True,
-        )
+    st.markdown("### 3.2 · ¿Qué cambia al cruzar la frecuencia crítica?")
+    st.write(
+        "La frecuencia crítica separa **dos formas de comportamiento radiativo de la placa**. "
+        "La losa es la misma; lo que cambia es la frecuencia que estamos analizando y, con ello, "
+        "la forma en que el modelo representa la radiación."
+    )
+
+    st.markdown(
+        """
+        <div style="display:grid;grid-template-columns:1fr 70px 1fr;gap:12px;align-items:stretch;margin:.5rem 0 .9rem">
+          <div style="border:1px solid #bfdbfe;border-radius:16px;padding:16px;background:#eff6ff">
+            <div style="font-size:1.05rem;font-weight:850;color:#1d4ed8">RÉGIMEN SUBCRÍTICO</div>
+            <div style="font-size:1.35rem;font-weight:850;color:#0f172a;margin:.35rem 0">f &lt; f_c</div>
+            <div style="color:#475569;line-height:1.5">
+              La placa radia con menor eficiencia. El modelo necesita considerar explícitamente:
+              <b>amortiguamiento ηₚ</b>, <b>frecuencia crítica f_c</b> y
+              <b>eficiencia de radiación σrad</b>.
+            </div>
+          </div>
+          <div style="display:flex;align-items:center;justify-content:center;font-size:1.8rem;color:#64748b">→</div>
+          <div style="border:1px solid #bbf7d0;border-radius:16px;padding:16px;background:#f0fdf4">
+            <div style="font-size:1.05rem;font-weight:850;color:#15803d">SOBRE FRECUENCIA CRÍTICA</div>
+            <div style="font-size:1.35rem;font-weight:850;color:#0f172a;margin:.35rem 0">f ≥ f_c</div>
+            <div style="color:#475569;line-height:1.5">
+              Cambia el régimen de radiación. Bajo la aproximación utilizada,
+              <b>σrad puede aproximarse a 1</b> y la expresión de predicción se simplifica.
+            </div>
+          </div>
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
+
+    st.markdown(
+        """
+        <div style="border:1px solid #dbe4ee;border-radius:14px;padding:13px 16px;background:#fff;margin:.3rem 0 .8rem">
+          <b>Idea central:</b> no estamos cambiando de losa. Estamos cambiando de
+          <b>régimen físico de radiación</b> según la relación entre la frecuencia analizada y f_c.
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
 
     st.markdown("### 3.3 · Explora una banda")
     f_demo=st.select_slider(
@@ -4103,40 +4149,100 @@ def _render_course2_lab1_stage5(lab, saved):
 
     st.markdown("### ¿Qué ecuación de predicción estamos usando?")
     st.write(
-        "El modelo de Vér relaciona el nivel de ruido de impacto con el aislamiento aéreo de la losa, "
-        "la frecuencia y la eficiencia de radiación. Para la **losa base sin tratamiento**, tomamos ΔLₙ=0."
+        "El modelo de Vér estima el nivel de ruido de impacto de la losa a partir de la banda de frecuencia, "
+        "su aislamiento aéreo, la eficiencia de radiación y —bajo f_c— el amortiguamiento estructural. "
+        "Como estamos calculando la **losa base sin tratamiento**, se toma ΔLₙ = 0."
     )
 
-    e1,e2=st.columns(2)
-    with e1:
-        st.markdown("**Si \(f<f_c\):**")
-        st.latex(
-            r"L_{n,0}=39.5+20\log_{10}(f)"
-            r"-10\log_{10}\left(\frac{\eta_p}{f_c\sigma_{\mathrm{rad}}}\right)-R(f)"
+    st.markdown("#### A · Si la banda está bajo la frecuencia crítica")
+    st.markdown(
+        """<div style="border:2px solid #bfdbfe;border-radius:16px;padding:14px 18px;background:#eff6ff;margin:.35rem 0 .55rem">
+        <div style="font-weight:850;color:#1d4ed8">CONDICIÓN: f &lt; f_c</div>
+        </div>""",
+        unsafe_allow_html=True,
+    )
+    st.latex(
+        r"\boxed{"
+        r"L_{n,0}(f)=39.5+20\log_{10}(f)"
+        r"-10\log_{10}\left(\frac{\eta_p}{f_c\,\sigma_{\mathrm{rad}}(f)}\right)"
+        r"-R(f)"
+        r"}"
+    )
+    st.write(
+        "En este régimen la predicción depende explícitamente del **amortiguamiento de la losa**, "
+        "de la **frecuencia crítica** y de la **eficiencia de radiación**."
+    )
+
+    st.markdown("#### B · Si la banda está sobre la frecuencia crítica")
+    st.markdown(
+        """<div style="border:2px solid #bbf7d0;border-radius:16px;padding:14px 18px;background:#f0fdf4;margin:.35rem 0 .55rem">
+        <div style="font-weight:850;color:#15803d">CONDICIÓN: f ≥ f_c</div>
+        </div>""",
+        unsafe_allow_html=True,
+    )
+    st.latex(
+        r"\boxed{"
+        r"L_{n,0}(f)=43+30\log_{10}(f)"
+        r"-10\log_{10}\left(\sigma_{\mathrm{rad}}(f)\right)"
+        r"-R(f)"
+        r"}"
+    )
+    st.write(
+        "Sobre la frecuencia crítica cambia el régimen de radiación y la expresión se simplifica. "
+        "En la aproximación utilizada, σrad puede acercarse a 1."
+    )
+
+    st.markdown("### ¿Qué significa cada parámetro?")
+    p1,p2,p3=st.columns(3)
+    with p1:
+        _card(
+            "f · Frecuencia",
+            "Hz",
+            "Banda que estamos calculando. Cada frecuencia puede caer bajo o sobre f_c."
         )
-        st.caption(
-            "Aparecen explícitamente el amortiguamiento ηₚ, la frecuencia crítica f_c "
-            "y la eficiencia de radiación σrad."
+    with p2:
+        _card(
+            "R(f) · Índice de reducción sonora",
+            "dB",
+            "Representa la capacidad estimada de la losa para oponerse a la transmisión sonora aérea en esa banda."
         )
-    with e2:
-        st.markdown("**Si \(f\geq f_c\):**")
-        st.latex(
-            r"L_{n,0}=43+30\log_{10}(f)"
-            r"-10\log_{10}(\sigma_{\mathrm{rad}})-R(f)"
+    with p3:
+        _card(
+            "σrad(f) · Eficiencia de radiación",
+            "adimensional",
+            "Indica qué tan eficientemente la vibración de la placa se transforma en sonido radiado."
         )
-        st.caption(
-            "Sobre f_c cambia el régimen de radiación y el modelo utiliza esta expresión."
+
+    p4,p5,p6=st.columns(3)
+    with p4:
+        _card(
+            "ηₚ · Factor de pérdidas",
+            "adimensional",
+            "Representa el amortiguamiento estructural de la losa. Aparece explícitamente en el régimen subcrítico."
+        )
+    with p5:
+        _card(
+            "f_c · Frecuencia crítica",
+            "Hz",
+            "Separa los dos regímenes de radiación y decide qué ecuación corresponde."
+        )
+    with p6:
+        _card(
+            "Lₙ,₀(f) · Resultado",
+            "dB",
+            "Nivel de ruido de impacto predicho para la losa base sin tratamiento en esa banda.",
+            tone="blue"
         )
 
     st.markdown(
-        """<div style="border:1px solid #dbe4ee;border-radius:14px;padding:14px 16px;background:#f8fbff;margin:.5rem 0 .9rem">
-        <b>Cómo interpretar los términos</b><br>
-        <b>f:</b> banda que estamos calculando ·
-        <b>R(f):</b> capacidad estimada de la losa para reducir transmisión aérea en esa banda ·
-        <b>σrad:</b> eficiencia con que la vibración de la placa radia sonido ·
-        <b>ηₚ:</b> amortiguamiento estructural ·
-        <b>f_c:</b> determina el régimen de cálculo.
-        </div>""",
+        """
+        <div style="border:1px solid #dbe4ee;border-radius:14px;padding:14px 16px;background:#f8fbff;margin:.5rem 0 .9rem">
+          <b>Lectura física de la ecuación:</b><br>
+          la frecuencia fija la banda de análisis; R(f) representa cuánto se opone la losa a transmitir sonido;
+          σrad representa cuánto de su vibración logra radiar; ηₚ introduce el efecto del amortiguamiento bajo f_c;
+          y el resultado final es Lₙ,₀(f).
+        </div>
+        """,
         unsafe_allow_html=True,
     )
 
