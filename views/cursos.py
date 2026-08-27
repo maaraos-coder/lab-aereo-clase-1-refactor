@@ -4458,19 +4458,63 @@ def _render_course2_lab1_stage5(lab, saved):
     st.dataframe(rows,hide_index=True,use_container_width=True)
 
     if completed:
-        x=np.array(completed,dtype=float)
+        # Eje por bandas discretas: cada banda ocupa el mismo espacio visual.
+        band_positions={ff:i for i,ff in enumerate(bands)}
+        x=np.array([band_positions[f] for f in completed],dtype=float)
         y=np.array([answers[str(f)] for f in completed],dtype=float)
         order=np.argsort(x)
-        fig,ax=plt.subplots(figsize=(9,4.8))
-        ax.semilogx(x[order],y[order],marker="o",linewidth=2.2,label="Bandas validadas")
-        ax.axvline(fc,linestyle="--",linewidth=1.5,label=f"f_c ≈ {fc:.0f} Hz")
-        ax.set_xlabel("Frecuencia (Hz)")
+
+        fig,ax=plt.subplots(figsize=(10.5,4.8))
+        ax.plot(
+            x[order],
+            y[order],
+            marker="o",
+            linewidth=2.2,
+            markersize=7,
+            label="Bandas validadas"
+        )
+
+        # Mostrar todas las bandas normalizadas en el eje X.
+        all_positions=np.arange(len(bands))
+        ax.set_xticks(all_positions)
+        ax.set_xticklabels([str(f) for f in bands],rotation=45,ha="right")
+
+        # Marcar la posición aproximada de f_c entre bandas, sin convertir el
+        # eje en una escala continua/logarítmica.
+        if fc <= bands[0]:
+            fc_pos=0.0
+        elif fc >= bands[-1]:
+            fc_pos=float(len(bands)-1)
+        else:
+            fc_pos=0.0
+            for i in range(len(bands)-1):
+                f1,f2=bands[i],bands[i+1]
+                if f1 <= fc <= f2:
+                    frac=(fc-f1)/(f2-f1)
+                    fc_pos=i+frac
+                    break
+
+        ax.axvline(
+            fc_pos,
+            linestyle="--",
+            linewidth=1.5,
+            label=f"f_c ≈ {fc:.0f} Hz"
+        )
+
+        ax.set_xlim(-0.4,len(bands)-0.6)
+        ax.set_xlabel("Bandas de frecuencia (Hz)")
         ax.set_ylabel("Lₙ,₀ (dB)")
-        ax.set_title("Curva base construida por el alumno")
-        ax.grid(True,which="both",alpha=.22)
+        ax.set_title("Curva base construida por bandas")
+        ax.grid(True,axis="y",alpha=.22)
         ax.legend()
+        fig.tight_layout()
         st.pyplot(fig,use_container_width=True)
         plt.close(fig)
+
+        st.caption(
+            "Cada posición del eje X corresponde a una banda discreta del laboratorio. "
+            "La línea vertical indica la ubicación aproximada de la frecuencia crítica entre esas bandas."
+        )
     else:
         st.info("Todavía no hay puntos validados. Calcula la primera banda en la Parte 4.")
 
