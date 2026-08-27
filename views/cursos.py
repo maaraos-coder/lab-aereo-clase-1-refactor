@@ -2861,26 +2861,83 @@ def _render_course2_lab1_stage3(lab, saved):
     # ------------------------------------------------------------------
     st.markdown("## 3 · Compara posibles fuentes con el receptor")
     st.write(
-        "El espectro permite comparar firmas de frecuencia. Aquí se muestran tres mediciones simuladas: "
-        "bomba, ventilador y dormitorio receptor."
+        "Ahora compara las firmas espectrales de dos fuentes candidatas con el sonido medido en el dormitorio. "
+        "El objetivo es identificar coincidencias de frecuencia que orienten el diagnóstico, sin confundirlas todavía con una prueba causal."
     )
-    freq = np.array([10,16,20,25,31.5,40,47,50,63,80,100], dtype=float)
-    pump = np.array([-58,-52,-38,-10,-31,-40,-47,-28,-45,-53,-60], dtype=float)
-    fan = np.array([-61,-58,-55,-50,-48,-35,-12,-18,-32,-48,-57], dtype=float)
-    rec = np.array([-64,-58,-45,-19,-33,-41,-43,-31,-48,-56,-63], dtype=float)
+
+    # Frecuencias discretas: evitamos escala logarítmica continua porque aquí interesa
+    # comparar bandas/puntos de frecuencia concretos de forma pedagógica.
+    freq_labels = ["10", "16", "20", "25", "31,5", "40", "50", "63", "80", "100"]
+    pump = [-58, -52, -38, -10, -31, -40, -28, -45, -53, -60]
+    fan  = [-61, -58, -55, -50, -48, -35, -12, -32, -48, -57]
+    rec  = [-64, -58, -45, -19, -33, -41, -31, -48, -56, -63]
 
     fig = go.Figure()
-    fig.add_trace(go.Scatter(x=freq,y=pump,mode="lines+markers",name="Bomba"))
-    fig.add_trace(go.Scatter(x=freq,y=fan,mode="lines+markers",name="Ventilador"))
-    fig.add_trace(go.Scatter(x=freq,y=rec,mode="lines+markers",name="Dormitorio"))
-    fig.add_vline(x=25,line_dash="dot",annotation_text="25 Hz")
-    fig.add_vline(x=47,line_dash="dot",annotation_text="47 Hz")
-    fig.update_layout(
-        height=370, margin=dict(l=30,r=20,t=25,b=35),
-        xaxis_type="log", xaxis_title="Frecuencia (Hz)",
-        yaxis_title="Nivel relativo (dB)", hovermode="x unified",
+    fig.add_trace(go.Scatter(
+        x=freq_labels, y=pump, mode="lines+markers", name="Bomba",
+        line=dict(width=3), marker=dict(size=9)
+    ))
+    fig.add_trace(go.Scatter(
+        x=freq_labels, y=fan, mode="lines+markers", name="Ventilador",
+        line=dict(width=2), marker=dict(size=8)
+    ))
+    fig.add_trace(go.Scatter(
+        x=freq_labels, y=rec, mode="lines+markers", name="Dormitorio receptor",
+        line=dict(width=3, dash="dash"), marker=dict(size=9)
+    ))
+
+    # Resaltamos la banda de 25 Hz, común a bomba y receptor.
+    fig.add_vrect(
+        x0=2.55, x1=3.45,
+        fillcolor="rgba(37,99,235,0.10)", line_width=0, layer="below"
     )
-    st.plotly_chart(fig,use_container_width=True,key=f"{class_id}_s3_spectra")
+    fig.add_annotation(
+        x="25", y=-7,
+        text="<b>Coincidencia dominante<br>bomba ↔ dormitorio</b>",
+        showarrow=True, arrowhead=2, ax=78, ay=-52,
+        bgcolor="rgba(255,255,255,0.95)", bordercolor="#cbd5e1", borderwidth=1
+    )
+    fig.add_annotation(
+        x="50", y=-9,
+        text="Pico principal<br>ventilador",
+        showarrow=True, arrowhead=2, ax=62, ay=-45,
+        bgcolor="rgba(255,255,255,0.95)", bordercolor="#cbd5e1", borderwidth=1
+    )
+    fig.update_layout(
+        height=460,
+        margin=dict(l=55, r=25, t=70, b=60),
+        xaxis=dict(
+            title="Frecuencia (Hz)",
+            type="category",
+            categoryorder="array",
+            categoryarray=freq_labels,
+            tickfont=dict(size=13),
+            titlefont=dict(size=14),
+            showgrid=False,
+        ),
+        yaxis=dict(
+            title="Nivel relativo (dB)", range=[-70, 0], dtick=10,
+            tickfont=dict(size=13), titlefont=dict(size=14),
+            gridcolor="rgba(148,163,184,0.22)", zeroline=False,
+        ),
+        legend=dict(
+            orientation="h", yanchor="bottom", y=1.05, xanchor="left", x=0,
+            font=dict(size=13)
+        ),
+        hovermode="x unified",
+    )
+    st.plotly_chart(fig, use_container_width=True, key=f"{class_id}_s3_spectra")
+
+    st.markdown(
+        """
+        <div style="border:1px solid #dbeafe;background:#eff6ff;border-radius:14px;padding:13px 16px;margin:.2rem 0 .9rem">
+          <b>Lectura del gráfico:</b> la bomba presenta su componente dominante en <b>25 Hz</b> y el dormitorio receptor
+          también muestra un máximo en esa frecuencia. El ventilador concentra su energía alrededor de <b>50 Hz</b>.
+          La coincidencia a 25 Hz fortalece la hipótesis de la bomba, pero todavía no demuestra por sí sola el camino ni la causalidad.
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
 
     interp = st.selectbox(
         "¿Qué hipótesis queda mejor respaldada por esta comparación?",
@@ -2902,25 +2959,82 @@ def _render_course2_lab1_stage3(lab, saved):
             st.warning("Busca la coincidencia dominante entre la fuente candidata y el dormitorio, sin confundir correlación con prueba causal.")
 
     # ------------------------------------------------------------------
-    # 4 · Respuesta dinámica
+    # 4 · Comparación de caminos mediante movilidad
     # ------------------------------------------------------------------
-    st.markdown("## 4 · Evalúa la respuesta estructural")
+    st.markdown("## 4 · Compara dos caminos estructurales candidatos")
     st.write(
-        "Supón que la bomba introduce una fuerza dinámica en su apoyo. Usa lo aprendido en la Etapa 2 para estimar la velocidad vibratoria."
+        "La comparación espectral orienta hacia la bomba, pero ahora necesitamos saber **por dónde podría transmitirse con mayor facilidad su vibración**. "
+        "Usa lo aprendido en la Etapa 2: para una misma fuerza dinámica, un camino con mayor movilidad desarrolla mayor velocidad vibratoria."
     )
     st.latex(r"v(f)=Y(f)\,F(f)")
-    c1,c2 = st.columns(2)
-    with c1:
-        F = st.number_input("Fuerza dinámica F (N)",20.0,500.0,120.0,10.0,key=f"{class_id}_s3_F")
-    with c2:
-        Y_u = st.number_input("Movilidad del apoyo Y (×10⁻⁶ m/(N·s))",0.1,20.0,8.0,0.1,key=f"{class_id}_s3_Y")
-    v = F * Y_u * 1e-6
-    st.metric("Velocidad vibratoria estimada",f"{v*1000:.3f} mm/s")
-    if st.button("Guardar cálculo", key=f"{class_id}_s3_dyn_check"):
+
+    st.markdown(
+        """
+        <div style="border:1px solid #e2e8f0;border-radius:14px;padding:12px 15px;background:#fff;margin:.3rem 0 .8rem">
+          <b>Pregunta de diagnóstico:</b> si la bomba aplica la misma fuerza a sus conexiones, ¿qué camino tendría mayor capacidad de transmitir vibración hacia el edificio?
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
+
+    F = st.number_input(
+        "Fuerza dinámica común de la bomba F (N)",
+        20.0, 500.0, 120.0, 10.0,
+        key=f"{class_id}_s3_F"
+    )
+
+    ca, cb = st.columns(2)
+    with ca:
+        st.markdown("#### Camino A · apoyo → losa")
+        st.caption("Transmisión desde el apoyo de la bomba hacia la losa de la sala de máquinas.")
+        YA_u = st.number_input(
+            "Movilidad Yₐ (×10⁻⁶ m/(N·s))",
+            0.1, 20.0, 3.0, 0.1,
+            key=f"{class_id}_s3_YA"
+        )
+        vA = F * YA_u * 1e-6
+        st.metric("Velocidad vibratoria estimada vₐ", f"{vA*1000:.3f} mm/s")
+
+    with cb:
+        st.markdown("#### Camino B · tubería → shaft/muro")
+        st.caption("Transmisión por la tubería rígidamente conectada y sus uniones con el edificio.")
+        YB_u = st.number_input(
+            "Movilidad Yᵦ (×10⁻⁶ m/(N·s))",
+            0.1, 20.0, 8.0, 0.1,
+            key=f"{class_id}_s3_YB"
+        )
+        vB = F * YB_u * 1e-6
+        st.metric("Velocidad vibratoria estimada vᵦ", f"{vB*1000:.3f} mm/s")
+
+    if vA > 0:
+        ratio = vB / vA
+        st.info(
+            f"Con estos valores, el camino B desarrolla aproximadamente **{ratio:.1f} veces** la velocidad vibratoria del camino A. "
+            "Esto no demuestra todavía que sea el camino dominante, pero permite priorizarlo para contrastarlo con las mediciones."
+        )
+
+    predicted_path = st.radio(
+        "Antes de comprobar: ¿qué camino esperas que presente mayor respuesta vibratoria?",
+        ["Camino A · apoyo → losa", "Camino B · tubería → shaft/muro", "Serán iguales"],
+        index=None,
+        key=f"{class_id}_s3_path_prediction",
+    )
+
+    if st.button("Comparar cálculo con la evidencia", key=f"{class_id}_s3_dyn_check"):
+        correct = (vB > vA and predicted_path == "Camino B · tubería → shaft/muro") or (vA > vB and predicted_path == "Camino A · apoyo → losa") or (abs(vA-vB) < 1e-12 and predicted_path == "Serán iguales")
         state["dynamic_response"] = True
-        state["calc_v_mm_s"] = float(v*1000)
+        state["calc_vA_mm_s"] = float(vA*1000)
+        state["calc_vB_mm_s"] = float(vB*1000)
+        state["dynamic_prediction_ok"] = bool(correct)
         _persist()
-        st.success("Cálculo guardado. La movilidad permite convertir la fuerza aplicada en una estimación de respuesta vibratoria.")
+        if correct:
+            st.success(
+                "La predicción coincide con el cálculo. Ahora compara esta tendencia con las mediciones estructurales para decidir si el camino candidato también está respaldado experimentalmente."
+            )
+        else:
+            st.warning(
+                "Revisa la relación v = Y·F: como la fuerza es la misma en ambos candidatos, la mayor movilidad produce la mayor velocidad vibratoria."
+            )
 
     # ------------------------------------------------------------------
     # 5 · Resonancia
