@@ -2849,7 +2849,29 @@ def _render_course2_lab1_stage3(lab, saved):
                 "Parámetro": par,
                 "Resultado": result,
             })
-        st.markdown("#### Resultados obtenidos")
+
+        title_col, reset_col = st.columns([4, 1])
+        with title_col:
+            st.markdown("#### Resultados obtenidos")
+        with reset_col:
+            if st.button(
+                "Resetear mediciones",
+                key=f"{class_id}_s3_reset_measurements",
+                use_container_width=True,
+            ):
+                # Borra resultados persistidos de la campaña.
+                state.pop("measurement_plan", None)
+                state.pop("measured", None)
+
+                # Limpia también los widgets de planificación para que
+                # el alumno pueda comenzar una campaña completamente nueva.
+                for i in range(4):
+                    for suffix in ("point", "inst", "param"):
+                        st.session_state.pop(f"{class_id}_s3_plan_{suffix}_{i}", None)
+
+                _persist()
+                st.rerun()
+
         st.dataframe(pd.DataFrame(rows), hide_index=True, use_container_width=True)
         st.info(
             "Una coincidencia de frecuencia entre varios puntos puede sugerir un camino de transmisión, "
