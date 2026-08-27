@@ -4700,626 +4700,533 @@ def _render_course2_lab1_stage5(lab, saved):
             st.rerun()
 
 def _render_course2_lab1_stage6(lab, saved):
-    """ETAPA 6 — Predicción de la mejora de un piso flotante: ΔLₙ(f)."""
+    """Etapa 6 · Diseño de una solución y predicción banda a banda de ΔL_n(f)."""
     import math
     import numpy as np
     import matplotlib.pyplot as plt
-    from core.course2_impact_models import (
-        BANDS,
-        surface_mass,
-        reduced_mass,
-        natural_frequency,
-        transmissibility_force,
-        nearest_band,
-        delta_ln_cremer_continuous_db,
-        delta_ln_ver_discrete_db,
-    )
 
-    class_id = lab["id"]
-    stage_selector_key = f"future_stage_{class_id}"
-    role = st.session_state.get("role", "Alumno")
-    projection_mode = bool(st.session_state.get("projection_mode") or role == "Proyección")
-    ns = f"{class_id}_s6"
-    stage_no = 6
+    class_id=lab["id"]
+    stage_selector_key=f"future_stage_{class_id}"
+    role=st.session_state.get("role","Alumno")
+    projection_mode=bool(st.session_state.get("projection_mode") or role=="Proyección")
+    ns=f"{class_id}_s6"
 
-    def _asset(name, caption=None):
-        p = ASSET_DIR / name
+    def _asset(name,caption=None):
+        p=ASSET_DIR/name
         if p.exists():
-            st.image(p, width="stretch")
+            st.image(str(p),width="stretch")
             if caption:
                 st.caption(caption)
             return True
-        if st.session_state.get("dev_mode", False):
-            st.caption(f"[Render pendiente: {name}]")
+        if st.session_state.get("dev_mode",False):
+            st.caption(f"[Asset pendiente: {name}]")
         return False
 
-    def _mcq(key, question, options, correct, feedback, store=False):
-        st.markdown(f"#### {question}")
-        if role == "Docente" and not projection_mode:
-            with st.container(border=True):
-                for i, opt in enumerate(options):
-                    st.write(("✅ " if i == correct else "○ ") + opt)
-                st.caption(feedback)
-            return
-        sk = f"{ns}_{key}"
-        choice = st.radio(question, options, index=None, key=sk, label_visibility="collapsed")
-        label = "Comprobar y guardar" if store and role == "Alumno" and not projection_mode else "Comprobar"
-        if st.button(label, key=f"{sk}_check"):
-            if choice is None:
-                st.warning("Selecciona una alternativa.")
-            else:
-                idx = options.index(choice)
-                ok = idx == correct
-                st.session_state[f"{sk}_result"] = ok
-                if store and role == "Alumno" and not projection_mode:
-                    data = saved.get(f"stage{stage_no}_comprehension", {})
-                    if not isinstance(data, dict):
-                        data = {}
-                    data[key] = {"selected": idx, "correct": ok, "updated_at": _now()}
-                    saved[f"stage{stage_no}_comprehension"] = data
-                    saved[f"updated_{stage_no}"] = _now()
-                    _save_future_state_impl(class_id, saved)
-        result = st.session_state.get(f"{sk}_result")
-        if result is True:
-            st.success("Correcto. " + feedback)
-        elif result is False:
-            st.warning("Revisa el concepto. " + feedback)
+    def _persist():
+        saved["updated_6"]=_now()
+        fn=globals().get("_save_future_state_impl") or globals().get("_save_future_state")
+        if callable(fn):
+            fn(class_id,saved)
+
+    def _card(title,value,text,tone="white"):
+        bg="#fff" if tone=="white" else "#eff6ff"
+        bd="#dbe4ee" if tone=="white" else "#bfdbfe"
+        st.markdown(
+            f"""<div style="border:1px solid {bd};border-radius:16px;padding:15px 16px;
+            background:{bg};min-height:165px;box-sizing:border-box;margin-bottom:6px">
+              <div style="font-weight:800;color:#0f172a">{title}</div>
+              <div style="font-size:1.55rem;font-weight:850;color:#0f172a;margin:.35rem 0">{value}</div>
+              <div style="color:#64748b;line-height:1.45">{text}</div>
+            </div>""",
+            unsafe_allow_html=True,
+        )
+
+    def _mred(m1,m2):
+        return (m1*m2)/max(m1+m2,1e-12)
+
+    def _f0_general(s_MN_m3,m1,m2):
+        mr=_mred(m1,m2)
+        return (1/(2*math.pi))*math.sqrt((s_MN_m3*1e6)/max(mr,1e-12))
+
+    def _f0_cont(s_MN_m3,m1):
+        return (1/(2*math.pi))*math.sqrt((s_MN_m3*1e6)/max(m1,1e-12))
+
+    def _delta_cremer(f,s_MN_m3,m1):
+        # Formulación presentada en la etapa fuente:
+        # ΔLn = 20 log10((2πf)^2 m1'/s')
+        arg=((2*math.pi*f)**2 * m1)/(s_MN_m3*1e6)
+        return 20*math.log10(max(arg,1e-12))
+
+    def _delta_ver_demo(f,f0,cL1,h1,Nsup,eta11):
+        # Implementación didáctica de la expresión mostrada en la etapa anterior.
+        # Se conserva como modelo distinto para apoyos discretos.
+        num=cL1*h1*Nsup*eta11*(f**3)
+        den=2*(math.pi**3)*(f0**4)
+        return 10*math.log10(max(num/max(den,1e-12),1e-12))
 
     header(
         "ETAPA 6 · LABORATORIO 1",
-        "Predicción de la mejora de un piso flotante: ΔLₙ(f)",
-        "De la solución constructiva a la ecuación de mejora por bandas.",
+        "Predicción de la mejora del piso flotante: ΔLₙ(f)",
+        "Diseña la solución y construye banda por banda su mejora respecto de la losa base.",
         show_overview=False,
         duration_minutes=90,
     )
 
-    # ================================================================
-    # BLOQUE 1 — OBJETIVO
-    # ================================================================
-    st.markdown("## 1 · ¿Qué queremos calcular?")
-    st.write(
-        "En la Etapa 5 estimamos el nivel de ruido de impacto de la **losa base**, "
-        "$L_{n,0}(f)$. Ahora queremos conocer cuánto cambia ese resultado cuando incorporamos "
-        "una solución de piso flotante."
-    )
+    st.markdown("### Continuidad con la Etapa 5")
+    baseline=saved.get("stage5_baseline")
+    if baseline:
+        bands=[int(x) for x in baseline.get("bands_hz",[])]
+        ln0=[float(x) for x in baseline.get("ln0_db",[])]
+        m2=float(baseline.get("surface_mass_kg_m2",384.0))
+        t_base=float(baseline.get("thickness_mm",160.0))
+        fc_base=float(baseline.get("fc_hz",0.0))
+        st.success("Se recuperó correctamente la losa base guardada en la Etapa 5.")
+        b1,b2,b3=st.columns(3)
+        with b1: _card("Losa base",f"{t_base:.0f} mm",f"Masa superficial m′₂ = {m2:.1f} kg/m²")
+        with b2: _card("Frecuencia crítica",f"{fc_base:.0f} Hz","Propiedad calculada en la Etapa 5.")
+        with b3: _card("Baseline",f"{len(bands)} bandas","Curva Lₙ,₀(f) disponible para comparar la solución.",tone="blue")
+    else:
+        st.warning(
+            "No encuentro una curva base guardada de la Etapa 5. "
+            "Para mantener la continuidad del laboratorio, completa y guarda primero Lₙ,₀(f)."
+        )
+        bands=[100,125,160,200,250,315,400,500,630,800,1000,1250,1600,2000,2500,3150]
+        ln0=[]
+        m2=384.0
+
     st.latex(r"\boxed{\Delta L_n(f)=L_{n,0}(f)-L_n(f)}")
-    st.write(
-        "$\\Delta L_n(f)$ es una **mejora por banda de frecuencia**. "
-        "No es una constante del producto ni una penalización fija."
-    )
-    st.latex(
-        r"\boxed{m'_1,\ m'_2,\ s'\rightarrow m'_r\rightarrow f_0"
-        r"\rightarrow \mathrm{MODELO}\rightarrow\Delta L_n(f)}"
-    )
     st.info(
-        "La Etapa 6 termina en ΔLₙ(f). En la Etapa 7 combinaremos esa mejora con "
-        "$L_{n,0}(f)$ para obtener el piso terminado."
+        "En esta etapa **no calcularemos todavía Lₙ,final(f)**. "
+        "El resultado que debemos producir es únicamente la curva de mejora ΔLₙ(f). "
+        "La Etapa 7 combinará ambas curvas."
     )
 
-    # ================================================================
-    # BLOQUE 2 — SISTEMA REAL Y TIPO DE MODELO
-    # ================================================================
-    st.markdown("## 2 · ¿Qué sistema constructivo estamos modelando?")
-    _asset("curso2_lab1_etapa6_revestimiento_vs_flotante.webp")
-
-    c1, c2 = st.columns(2)
-    with c1:
-        with st.container(border=True):
-            st.markdown("### Revestimiento resiliente superficial")
-            st.write(
-                "Ejemplos: alfombra, caucho o revestimiento blando directamente bajo la terminación. "
-                "Su efecto principal está en el **contacto del impacto**: modifica $F(t)$ y $F(f)$."
-            )
-            st.latex(r"F(t)\rightarrow F(f)")
-    with c2:
-        with st.container(border=True):
-            st.markdown("### Piso flotante")
-            st.write(
-                "Existe una **masa superior** separada de la losa base mediante un elemento resiliente. "
-                "Aparece un sistema dinámico con resonancia propia."
-            )
-            st.latex(r"\mathrm{MASA\ SUPERIOR}+\mathrm{ELEMENTO\ RESILIENTE}+\mathrm{BASE}")
-
-    st.latex(r"\boxed{\mathrm{REVESTIMIENTO\ RESILIENTE}\neq\mathrm{PISO\ FLOTANTE}}")
-
-    st.markdown("### ¿Qué piso representa cada modelo?")
+    # ==============================================================
+    # 1 · ELEGIR SISTEMA
+    # ==============================================================
+    st.markdown("## 1 · ¿Cómo está construido el piso?")
     st.write(
-        "Antes de seleccionar Cremer o Vér debemos mirar **cómo está construido físicamente el piso**."
+        "Primero identifica la configuración física. El modelo no se elige por cuál entrega más dB, "
+        "sino por cómo está construido realmente el sistema."
+    )
+    _asset(
+        "curso2_lab1_etapa6_sistemas_flotantes.gif",
+        "Capa continua y apoyos discretos representan dos mecanismos de transferencia distintos."
     )
 
-    c1, c2 = st.columns(2)
-    with c1:
-        with st.container(border=True):
-            st.markdown("### A · Capa resiliente continua — modelo tipo Cremer")
-            st.write(
-                "La sobrelosa descansa sobre un material resiliente que cubre prácticamente toda la superficie."
-            )
-            st.write(
-                "**Ejemplos reales:** manta acústica continua bajo sobrelosa; lámina elastomérica continua; "
-                "lana mineral rígida colocada de forma continua; panel pesado sobre una capa resiliente continua."
-            )
-            st.latex(
-                r"\mathrm{SOBRELOSA}\newline"
-                r"\mathrm{CAPA\ RESILIENTE\ CONTINUA}\newline"
-                r"\mathrm{LOSA\ BASE}"
-            )
-            st.write(
-                "La transferencia mecánica se distribuye sobre la superficie."
-            )
-    with c2:
-        with st.container(border=True):
-            st.markdown("### B · Apoyos resilientes discretos — modelo tipo Vér")
-            st.write(
-                "La masa flotante descansa sobre elementos resilientes separados espacialmente."
-            )
-            st.write(
-                "**Ejemplos reales:** pads de caucho; plots o pedestales elastoméricos; aisladores individuales; "
-                "montajes antivibratorios distribuidos en una retícula."
-            )
-            st.latex(
-                r"\mathrm{LOSA\ FLOTANTE}\newline"
-                r"\bullet\quad\bullet\quad\bullet\quad\bullet\newline"
-                r"\mathrm{LOSA\ BASE}"
-            )
-            st.write(
-                "La transferencia se concentra en puntos de apoyo. Por eso aparece $N$, la densidad de apoyos por unidad de superficie."
-            )
-
-    st.warning(
-        "Primero identificamos la configuración constructiva y **después** elegimos el modelo. "
-        "No elegimos Cremer o Vér por la pendiente o por el resultado que nos convenga."
-    )
-
-    # ================================================================
-    # BLOQUE 3 — PARÁMETROS DINÁMICOS
-    # ================================================================
-    st.markdown("## 3 · Construimos los parámetros dinámicos")
-    _asset("curso2_lab1_etapa6_modelo_masa_resorte_masa.webp")
-    st.latex(r"\boxed{m'_1\quad-\quad s'\quad-\quad m'_2}")
-    st.write(
-        "$m'_1$: masa superficial de la capa flotante · "
-        "$s'$: rigidez dinámica superficial del apoyo resiliente · "
-        "$m'_2$: masa superficial de la losa base."
-    )
-
-    st.markdown("### Masa superficial")
-    st.latex(r"\boxed{m'=\rho h}")
-    st.write(
-        "La masa superficial indica cuánta masa aporta una capa por cada metro cuadrado."
-    )
-    st.latex(
-        r"\rho=2100\ \mathrm{kg/m^3},\qquad "
-        r"h=0.05\ \mathrm{m}\qquad "
-        r"\Rightarrow\qquad "
-        r"\boxed{m'=105\ \mathrm{kg/m^2}}"
-    )
-
-    st.markdown("### Rigidez dinámica superficial")
-    _asset("curso2_lab1_etapa6_rigidez_dinamica.webp")
-    st.latex(r"\boxed{s'\ [\mathrm{N/m^3}]\quad\text{o}\quad\mathrm{MN/m^3}}")
-    st.write(
-        "$s'$ describe cuánto se opone el elemento resiliente a una deformación **dinámica distribuida**."
-    )
-    st.warning(
-        "No confundir $s'$ con el módulo de Young, la rigidez estática, el espesor ni la constante de un resorte puntual."
-    )
-
-    st.markdown("### Masa reducida")
-    st.write(
-        "Cuando ambas masas pueden participar en el movimiento relativo, utilizamos una masa equivalente:"
-    )
-    st.latex(r"\boxed{m'_r=\frac{m'_1m'_2}{m'_1+m'_2}}")
-    st.write(
-        "Si la losa base es mucho más pesada que la sobrelosa, entonces $m'_r\approx m'_1$."
-    )
-
-    st.markdown("### 🔬 Construye el sistema")
-    c1, c2, c3 = st.columns(3)
-    m1 = c1.slider("m′₁ [kg/m²]", 50, 250, 120, 5, key=f"{ns}_model_m1")
-    m2 = c2.slider("m′₂ [kg/m²]", 150, 600, 400, 10, key=f"{ns}_model_m2")
-    s_dyn = c3.slider("s′ [MN/m³]", 3.0, 50.0, 10.0, .5, key=f"{ns}_model_s")
-    mr, f0_general = natural_frequency(m1, m2, s_dyn)
-    a,b,c = st.columns(3)
-    a.metric("m′ᵣ", f"{mr:.1f} kg/m²")
-    b.metric("f₀ general", f"{f0_general:.1f} Hz")
-    c.metric("1/3 octava cercana", f"{nearest_band(f0_general):g} Hz")
-
-    # ================================================================
-    # BLOQUE 4 — RESONANCIA Y TF
-    # ================================================================
-    st.markdown("## 4 · ¿Qué significa la resonancia?")
-    st.latex(r"\boxed{f_0=\frac1{2\pi}\sqrt{\frac{s'}{m'_r}}}")
-    st.write(
-        "$f_0$ identifica la región donde el sistema puede presentar una respuesta relativa elevada. "
-        "No significa que desde allí el piso comience a aislar perfectamente."
-    )
-    st.latex(r"s'\uparrow\Rightarrow f_0\uparrow,\qquad m'_r\uparrow\Rightarrow f_0\downarrow")
-
-    st.markdown("### Transmisibilidad: solo para entender la dinámica")
-    st.latex(r"\boxed{r=\frac f{f_0}}")
-    st.latex(
-        r"\boxed{T_F=\sqrt{\frac{1+(2\zeta r)^2}{(1-r^2)^2+(2\zeta r)^2}}}"
-    )
-    st.error("⚠️ $T_F\\neq\\Delta L_n$")
-    st.write(
-        "$T_F$ describe la transmisión mecánica de fuerza en un sistema ideal. "
-        "$\\Delta L_n$ es una mejora vibroacústica y requiere un modelo adicional."
-    )
-
-    st.markdown("### 🔬 Atraviesa la resonancia")
-    c1,c2,c3 = st.columns(3)
-    tf0 = c1.slider("f₀ [Hz]", 20.0, 200.0, 60.0, 1.0, key=f"{ns}_tf0")
-    ff = c2.slider("f [Hz]", 10.0, 500.0, 90.0, 1.0, key=f"{ns}_ff")
-    zeta = c3.slider("ζ", .01, .40, .10, .01, key=f"{ns}_zeta")
-    r = ff/tf0
-    tf = transmissibility_force(r, zeta)
-    a,b = st.columns(2)
-    a.metric("r=f/f₀", f"{r:.2f}")
-    b.metric("T_F", f"{tf:.2f}")
-    rr=np.linspace(.1,4,500)
-    yy=np.sqrt((1+(2*zeta*rr)**2)/((1-rr**2)**2+(2*zeta*rr)**2))
-    fig,ax=plt.subplots()
-    ax.plot(rr,yy)
-    ax.scatter([r],[tf])
-    ax.axvline(1,linestyle="--",label="resonancia")
-    ax.axvline(math.sqrt(2),linestyle=":",label="r=√2")
-    ax.set_xlabel("r=f/f₀")
-    ax.set_ylabel("T_F")
-    ax.set_ylim(0,8)
-    ax.grid(True,alpha=.2)
-    ax.legend()
-    st.pyplot(fig,use_container_width=True)
-    plt.close(fig)
-
-    # ================================================================
-    # BLOQUE 5 — DELTA L: CORAZÓN DE LA ETAPA
-    # ================================================================
-    st.markdown("## 5 · El salto clave: de f₀ a ΔLₙ(f)")
-    st.write(
-        "Hasta ahora solo hemos descrito la dinámica. **Aquí aparece por primera vez la ecuación que entrega la mejora acústica.**"
-    )
-
-    st.markdown("### A · Capa resiliente continua — Cremer/Vigran")
-    st.write(
-        "Para una capa elástica continua idealizada, con la base suficientemente pesada/impedante, "
-        "la mejora de nivel de impacto puede escribirse como:"
-    )
-    st.latex(
-        r"\boxed{\Delta L_n(f)=20\log_{10}\left(\frac{\omega^2m'_1}{s'}\right)}"
-    )
-    st.write("con $\\omega=2\\pi f$:")
-    st.latex(
-        r"\boxed{\Delta L_n(f)=20\log_{10}\left(\frac{(2\pi f)^2m'_1}{s'}\right)}"
-    )
-    st.write(
-        "Si definimos la frecuencia natural del **modelo continuo simplificado**:"
-    )
-    st.latex(
-        r"\boxed{f_{0,\mathrm{cont}}\approx\frac1{2\pi}\sqrt{\frac{s'}{m'_1}}}"
-    )
-    st.write("entonces:")
-    st.latex(
-        r"\boxed{\Delta L_n(f)=40\log_{10}\left(\frac f{f_{0,\mathrm{cont}}}\right)}"
-    )
-    st.warning(
-        "Este $f_{0,\mathrm{cont}}$ no es necesariamente idéntico al $f_0$ general calculado con masa reducida. "
-        "La diferencia proviene de la hipótesis de base muy pesada del modelo simplificado."
-    )
-    st.caption(
-        "Fuente: Vigran, *Building Acoustics* (2008), Ec. 8.44; "
-        "Cremer, Heckl & Ungar, *Structure-Borne Sound*, Ecs. 406–406a."
-    )
-
-    st.markdown("### B · Apoyos resilientes discretos — Vér")
-    st.write(
-        "Para apoyos elásticos discretos, Vér estudia un sistema diferente. "
-        "La aproximación de alta frecuencia utilizada aquí es:"
-    )
-    st.latex(
-        r"\boxed{\Delta L_n(f)\approx10\log_{10}\left["
-        r"\frac{c_{L1}h_1N\eta_{11}}{2\pi^3f_0^4}\,f^3\right]}"
-    )
-    st.write(
-        "$N$ representa la cantidad de apoyos por unidad de superficie. "
-        "El término $f^3$ conduce a una tendencia cercana a 9 dB/octava bajo las hipótesis correspondientes."
-    )
-    st.caption(
-        "Fuente: Vigran, *Building Acoustics* (2008), Ecs. 8.45–8.46; Vér (1971)."
-    )
-
-    c1,c2 = st.columns(2)
-    with c1:
-        with st.container(border=True):
-            st.markdown("### Cremer")
-            st.write("Manta/capa resiliente continua.")
-            st.write("Transferencia distribuida.")
-            st.write("Modelo localmente reactivo idealizado.")
-    with c2:
-        with st.container(border=True):
-            st.markdown("### Vér")
-            st.write("Pads, plots o aisladores separados.")
-            st.write("Transferencia concentrada en apoyos.")
-            st.write("Modelo para apoyos discretos.")
-
-    # ================================================================
-    # BLOQUE 6 — LABORATORIO ESTRELLA
-    # ================================================================
-    st.markdown("## 🔬 6 · Laboratorio principal — Predice ΔLₙ(f)")
-    st.write(
-        "Selecciona primero el **tipo físico de piso**. La app mostrará únicamente las variables compatibles con ese modelo."
-    )
-
-    model = st.segmented_control(
+    config=st.radio(
         "Configuración constructiva",
         [
-            "CAPA RESILIENTE CONTINUA — CREMER",
-            "APOYOS RESILIENTES DISCRETOS — VÉR",
+            "Piso flotante sobre capa resiliente continua",
+            "Piso flotante sobre apoyos resilientes discretos",
         ],
-        default="CAPA RESILIENTE CONTINUA — CREMER",
-        key=f"{ns}_main_model",
+        horizontal=True,
+        key=f"{ns}_config",
     )
 
-    if model.startswith("CAPA"):
-        c1,c2 = st.columns(2)
-        cm1 = c1.slider("m′₁ [kg/m²]", 50, 250, 120, 5, key=f"{ns}_cm1")
-        cs = c2.slider("s′ [MN/m³]", 3.0, 50.0, 10.0, .5, key=f"{ns}_cs")
-
-        f0_cont = (1/(2*math.pi))*math.sqrt((cs*1e6)/cm1)
-        vals=[]
-        for f in BANDS:
-            d,_ = delta_ln_cremer_continuous_db(f, cm1, cs)
-            vals.append(d)
-        vals=np.array(vals,dtype=float)
-
-        a,b = st.columns(2)
-        a.metric("f₀ continuo", f"{f0_cont:.1f} Hz")
-        b.metric("Tipo de apoyo", "Continuo")
-
-        fig,ax=plt.subplots()
-        ax.semilogx(BANDS,vals,marker="o",label="ΔLₙ(f)")
-        ax.axvline(f0_cont,linestyle="--",label="f₀ continuo")
-        ax.axvline(4*f0_cont,linestyle=":",label="4f₀ · referencia")
-        ax.set_xlabel("Frecuencia [Hz]")
-        ax.set_ylabel("ΔLₙ [dB]")
-        ax.grid(True,which="both",alpha=.2)
-        ax.legend()
-        st.pyplot(fig,use_container_width=True)
-        plt.close(fig)
-
-        st.dataframe(
-            [
-                {
-                    "f [Hz]":int(f),
-                    "f/f₀":round(float(f/f0_cont),2),
-                    "ΔLₙ [dB]":None if np.isnan(d) else round(float(d),1),
-                }
-                for f,d in zip(BANDS,vals)
-            ],
-            use_container_width=True,
-            hide_index=True,
-        )
-        st.caption(
-            "Bandas en o bajo la resonancia quedan sin valor. "
-            "Valores muy alejados de la región de validez deben interpretarse como extrapolación del modelo ideal."
-        )
-
+    if config=="Piso flotante sobre capa resiliente continua":
+        model="Cremer/Vigran"
+        st.success("Construcción identificada → modelo compatible: **Cremer/Vigran**.")
+        st.caption("La transferencia mecánica se distribuye prácticamente sobre toda la superficie.")
     else:
-        c1,c2,c3 = st.columns(3)
-        vh = c1.slider("h₁ [mm]", 20, 120, 50, 5, key=f"{ns}_vh")
-        vcL = c2.slider("c_L1 [m/s]", 1000, 6000, 3500, 100, key=f"{ns}_vcl")
-        vN = c3.slider("N [apoyos/m²]", 1.0, 25.0, 9.0, 1.0, key=f"{ns}_vN")
-        c4,c5 = st.columns(2)
-        veta = c4.slider("η₁₁", .005, .100, .020, .005, key=f"{ns}_veta")
-        vf0 = c5.slider("f₀ [Hz]", 20.0, 150.0, 40.0, 1.0, key=f"{ns}_vf0")
+        model="Vér"
+        st.success("Construcción identificada → modelo compatible: **Vér**.")
+        st.caption("La transferencia mecánica se concentra en apoyos separados espacialmente.")
 
-        vals=np.array(
-            [
-                delta_ln_ver_discrete_db(f,vf0,vh/1000,vcL,vN,veta) if f>vf0 else np.nan
-                for f in BANDS
-            ],
-            dtype=float,
-        )
+    st.markdown(
+        """<div style="border:1px solid #fde68a;background:#fffbeb;border-radius:14px;padding:13px 16px;margin:.5rem 0 .8rem">
+        <b>Regla del laboratorio:</b> no se permite cambiar de modelo para obtener una mejora mayor.
+        La geometría y el mecanismo de apoyo determinan qué formulación es físicamente compatible.
+        </div>""",
+        unsafe_allow_html=True,
+    )
 
-        a,b = st.columns(2)
-        a.metric("f₀", f"{vf0:.1f} Hz")
-        b.metric("Densidad de apoyos N", f"{vN:.0f} /m²")
-
-        fig,ax=plt.subplots()
-        ax.semilogx(BANDS,vals,marker="o",label="ΔLₙ(f)")
-        ax.axvline(vf0,linestyle="--",label="f₀")
-        ax.set_xlabel("Frecuencia [Hz]")
-        ax.set_ylabel("ΔLₙ [dB]")
-        ax.grid(True,which="both",alpha=.2)
-        ax.legend()
-        st.pyplot(fig,use_container_width=True)
-        plt.close(fig)
-
-        st.dataframe(
-            [
-                {
-                    "f [Hz]":int(f),
-                    "f/f₀":round(float(f/vf0),2),
-                    "ΔLₙ [dB]":None if np.isnan(d) else round(float(d),1),
-                }
-                for f,d in zip(BANDS,vals)
-            ],
-            use_container_width=True,
-            hide_index=True,
-        )
-        st.caption(
-            "Aproximación de alta frecuencia para apoyos elásticos discretos. "
-            "No debe trasladarse a una manta continua."
-        )
-
-    # ================================================================
-    # BLOQUE 7 — DEFECTOS
-    # ================================================================
-    st.markdown("## 7 · ¿Qué pasa si la obra deja de parecerse al modelo?")
-    _asset("curso2_lab1_etapa6_piso_correcto_puenteado.webp")
+    # ==============================================================
+    # 2 · CONSTRUIR SOLUCIÓN
+    # ==============================================================
+    st.markdown("## 2 · Construye físicamente la solución")
     st.write(
-        "Los modelos anteriores suponen un desacople definido. Un puente rígido crea un camino mecánico paralelo."
-    )
-    st.latex(r"\boxed{K_{\mathrm{eq}}=K_{\mathrm{res}}+\sum_iK_{\mathrm{puente},i}}")
-
-    defect = st.selectbox(
-        "Selecciona un defecto",
-        [
-            "Contacto perimetral",
-            "Tornillo atravesando la capa resiliente",
-            "Tubería rígida",
-            "Capa resiliente discontinua",
-        ],
-        key=f"{ns}_defect",
+        "La losa base ya viene de la Etapa 5. Ahora define únicamente la masa flotante superior "
+        "y el elemento resiliente."
     )
 
-    defect_data = {
-        "Contacto perimetral": (
-            "La sobrelosa toca el muro y aparece una ruta rígida lateral.",
-            "Restituir banda perimetral y separación mecánica.",
-            "Requiere caracterizar rigidez y extensión del contacto; no corresponde asignar una penalización fija en dB.",
-        ),
-        "Tornillo atravesando la capa resiliente": (
-            "El tornillo une la masa superior con la base y puentea el apoyo resiliente.",
-            "Eliminar o rediseñar la fijación para mantener el desacople.",
-            "Puede aproximarse mediante una rigidez puntual adicional, pero el modelo continuo deja de representar completamente el sistema.",
-        ),
-        "Tubería rígida": (
-            "La tubería o su soporte se transforma en un camino estructural adicional.",
-            "Usar penetraciones y soportes desacoplados compatibles con la instalación.",
-            "Debe analizarse como un camino adicional con su propia impedancia/rigidez dinámica.",
-        ),
-        "Capa resiliente discontinua": (
-            "Aparecen zonas de apoyo de rigidez distinta o contacto directo.",
-            "Restituir continuidad y apoyo uniforme de la capa.",
-            "Una rigidez efectiva solo es una aproximación si se conoce la proporción y geometría del defecto.",
-        ),
-    }
-    mechanism, correction, calculation = defect_data[defect]
-
-    c1,c2,c3 = st.columns(3)
+    c1,c2,c3=st.columns(3)
     with c1:
-        with st.container(border=True):
-            st.markdown("### Mecanismo")
-            st.write(mechanism)
+        rho1=st.number_input("Densidad de sobrelosa ρ₁ (kg/m³)",800.0,2600.0,2100.0,50.0,key=f"{ns}_rho1")
     with c2:
-        with st.container(border=True):
-            st.markdown("### Corrección")
-            st.write(correction)
+        h1_mm=st.number_input("Espesor de sobrelosa h₁ (mm)",20.0,120.0,50.0,5.0,key=f"{ns}_h1")
     with c3:
-        with st.container(border=True):
-            st.markdown("### ¿Cómo se calcula?")
-            st.write(calculation)
+        s_dyn=st.number_input("Rigidez dinámica superficial s′ (MN/m³)",1.0,80.0,10.0,0.5,key=f"{ns}_sdyn")
+
+    m1=rho1*(h1_mm/1000.0)
+    mr=_mred(m1,m2)
+    f0g=_f0_general(s_dyn,m1,m2)
+
+    q1,q2,q3,q4=st.columns(4)
+    with q1: _card("m′₁ · Sobrelosa",f"{m1:.1f} kg/m²","Masa superficial de la capa flotante.")
+    with q2: _card("m′₂ · Losa base",f"{m2:.1f} kg/m²","Dato recuperado de la Etapa 5.")
+    with q3: _card("m′ᵣ · Masa reducida",f"{mr:.1f} kg/m²","Masa equivalente para el movimiento relativo.")
+    with q4: _card("f₀ general",f"{f0g:.1f} Hz","Frecuencia natural del sistema de dos masas.",tone="blue")
+
+    st.markdown("### ¿Qué representa s′?")
+    st.write(
+        "La **rigidez dinámica superficial** indica cuánto se opone el elemento resiliente "
+        "a una deformación dinámica distribuida sobre la superficie."
+    )
+    st.latex(r"s'\;[\mathrm{N/m^3}]\quad \mathrm{o}\quad \mathrm{MN/m^3}")
+    st.warning(
+        "No confundir s′ con el módulo de Young, la rigidez estática, el espesor del material "
+        "ni la constante de un resorte puntual."
+    )
+
+    # ==============================================================
+    # 3 · RESONANCIA APLICADA
+    # ==============================================================
+    st.markdown("## 3 · Aplica la resonancia al piso flotante")
+    st.write(
+        "La resonancia ya fue estudiada en etapas anteriores. Aquí la utilizamos para saber "
+        "dónde el sistema flotante puede presentar una respuesta relativa elevada."
+    )
+    st.latex(r"m_r'=\frac{m_1'm_2'}{m_1'+m_2'}")
+    st.latex(r"f_0=\frac{1}{2\pi}\sqrt{\frac{s'}{m_r'}}")
+
+    r1,r2,r3=st.columns(3)
+    with r1:
+        st.markdown("**Si aumenta s′**")
+        st.latex(r"s'\uparrow\Rightarrow f_0\uparrow")
+        st.caption("Un apoyo más rígido eleva la resonancia.")
+    with r2:
+        st.markdown("**Si aumenta la masa flotante**")
+        st.latex(r"m_1'\uparrow\Rightarrow f_0\downarrow")
+        st.caption("Más masa tiende a bajar la resonancia.")
+    with r3:
+        st.markdown("**Si la base es muy pesada**")
+        st.latex(r"m_2'\gg m_1'\Rightarrow m_r'\approx m_1'")
+        st.caption("Aparece la aproximación usada por el modelo continuo.")
+
+    if model=="Cremer/Vigran":
+        f0_model=_f0_cont(s_dyn,m1)
+        st.info(
+            f"Para la formulación continua usamos la aproximación de base pesada: "
+            f"**f₀,cont ≈ {f0_model:.1f} Hz**. "
+            f"No es un error que difiera del f₀ general = {f0g:.1f} Hz."
+        )
+    else:
+        f0_model=f0g
+        st.info(
+            f"Para el sistema con apoyos discretos conservamos como referencia dinámica "
+            f"**f₀ ≈ {f0_model:.1f} Hz**."
+        )
+
+    # ==============================================================
+    # 4 · MODELO ACÚSTICO
+    # ==============================================================
+    st.markdown("## 4 · De la dinámica a la mejora acústica ΔLₙ(f)")
+    st.write(
+        "La frecuencia natural por sí sola **no entrega la mejora acústica**. "
+        "Ahora necesitamos una formulación compatible con la construcción."
+    )
+
+    if model=="Cremer/Vigran":
+        st.markdown("### Modelo para capa resiliente continua")
+        st.write(
+            "Se aplica cuando la masa superior descansa sobre una capa resiliente prácticamente continua."
+        )
+        st.latex(
+            r"\boxed{\Delta L_n(f)=20\log_{10}\left("
+            r"\frac{(2\pi f)^2m_1'}{s'}"
+            r"\right)}"
+        )
+        st.write("Definiendo:")
+        st.latex(
+            r"f_{0,\mathrm{cont}}\approx\frac{1}{2\pi}\sqrt{\frac{s'}{m_1'}}"
+        )
+        st.write("la misma expresión puede escribirse como:")
+        st.latex(
+            r"\boxed{\Delta L_n(f)=40\log_{10}\left("
+            r"\frac{f}{f_{0,\mathrm{cont}}}"
+            r"\right)}"
+        )
+        p1,p2,p3=st.columns(3)
+        with p1: _card("f","Hz","Banda en la que calculamos la mejora.")
+        with p2: _card("m′₁","kg/m²","Masa superficial de la sobrelosa.")
+        with p3: _card("s′","MN/m³","Rigidez dinámica superficial de la capa resiliente.")
+    else:
+        st.markdown("### Modelo para apoyos resilientes discretos")
+        st.write(
+            "Se aplica cuando la masa flotante descansa sobre pads, plots o aisladores separados."
+        )
+        st.latex(
+            r"\boxed{\Delta L_n(f)\approx10\log_{10}\left["
+            r"\frac{c_{L1}h_1N\eta_{11}}{2\pi^3f_0^4}\,f^3"
+            r"\right]}"
+        )
+        st.write(
+            "En este modelo aparece **N**, la densidad de apoyos por unidad de superficie. "
+            "La tendencia con \(f^3\) conduce aproximadamente a 9 dB/octava bajo las hipótesis correspondientes."
+        )
+        p1,p2,p3=st.columns(3)
+        with p1:
+            Nsup=st.number_input("Densidad de apoyos N (1/m²)",0.5,20.0,4.0,0.5,key=f"{ns}_N")
+        with p2:
+            cL1=st.number_input("Velocidad longitudinal c_L1 (m/s)",1000.0,6000.0,3500.0,100.0,key=f"{ns}_cL")
+        with p3:
+            eta11=st.number_input("Factor de pérdidas η₁₁",0.005,0.100,0.020,0.005,key=f"{ns}_eta11")
 
     st.warning(
-        "NO ES INCALCULABLE ≠ LO CALCULA ESTE MODELO. "
-        "Un defecto puede requerir caminos estructurales separados, FEM/SEA o medición."
+        "Transmisibilidad mecánica y ΔLₙ no son la misma magnitud. "
+        "La primera describe transmisión de fuerza en un sistema ideal; la segunda es una mejora vibroacústica por banda."
     )
 
-    # ================================================================
-    # BLOQUE 8 — EJERCICIO FINAL
-    # ================================================================
-    st.markdown("## 8 · Ejercicio final: del piso real a ΔLₙ")
+    # ==============================================================
+    # 5 · CALCULAR UNA BANDA
+    # ==============================================================
+    st.markdown("## 5 · Laboratorio: calcula una banda")
     st.write(
-        "Consideremos un piso flotante con capa resiliente **continua**:"
+        "Selecciona una frecuencia. La app usa automáticamente el modelo compatible con la construcción y muestra el resultado."
     )
-    st.latex(
-        r"m'_1=120\ \mathrm{kg/m^2},\qquad "
-        r"m'_2=400\ \mathrm{kg/m^2},\qquad "
-        r"s'=10\ \mathrm{MN/m^3}"
-    )
+    fsel=st.select_slider("Banda de frecuencia (Hz)",options=bands,value=250 if 250 in bands else bands[0],key=f"{ns}_fsel")
 
-    emr, ef0 = natural_frequency(120,400,10)
-    st.markdown("### Paso 1 · Modelo general")
-    st.latex(
-        r"m'_r=\frac{120(400)}{120+400}"
-        r"=\boxed{92.3\ \mathrm{kg/m^2}}"
-    )
-    st.latex(
-        r"f_{0,\mathrm{general}}=\frac1{2\pi}\sqrt{\frac{10\times10^6}{92.3}}"
-        r"=\boxed{52.4\ \mathrm{Hz}}"
-    )
-    st.write(
-        "Este valor caracteriza el sistema general de dos masas."
-    )
-
-    st.markdown("### Paso 2 · Elegimos el modelo compatible con la construcción")
-    st.write(
-        "Como el apoyo es una **capa resiliente continua**, adoptamos la formulación de Cremer/Vigran."
-    )
-    f0_cont_ex = (1/(2*math.pi))*math.sqrt(10e6/120.0)
-    st.latex(
-        r"f_{0,\mathrm{cont}}\approx\frac1{2\pi}\sqrt{\frac{10\times10^6}{120}}"
-        rf"=\boxed{{{f0_cont_ex:.1f}\ \mathrm{{Hz}}}}"
-    )
-    st.write(
-        "La diferencia entre 52.4 Hz y este valor no es un error: "
-        "el segundo pertenece a la aproximación de base suficientemente pesada utilizada por el modelo continuo."
-    )
-
-    st.markdown("### Paso 3 · Calculamos ΔLₙ a 125 Hz")
-    f_ex=125.0
-    arg_ex=(((2*math.pi*f_ex)**2)*120.0)/10e6
-    delta_ex=20*math.log10(arg_ex)
-    st.latex(
-        r"\Delta L_n(125)=20\log_{10}\left["
-        r"\frac{(2\pi\cdot125)^2(120)}{10\times10^6}\right]"
-    )
-    st.latex(rf"\boxed{{\Delta L_n(125)\approx {delta_ex:.1f}\ \mathrm{{dB}}}}")
-
-    st.markdown("### Paso 4 · Calculamos por bandas")
-    rows=[]
-    for f in [63,125,250]:
-        d,_=delta_ln_cremer_continuous_db(f,120,10)
-        rows.append(
-            {
-                "f [Hz]":f,
-                "f/f₀ continuo":round(f/f0_cont_ex,2),
-                "ΔLₙ [dB]":None if np.isnan(d) else round(float(d),1),
-            }
+    if model=="Cremer/Vigran":
+        delta=max(0.0,_delta_cremer(fsel,s_dyn,m1))
+        st.latex(
+            rf"\Delta L_n({fsel})="
+            rf"20\log_{{10}}\left("
+            rf"\frac{{(2\pi\cdot {fsel})^2\cdot {m1:.1f}}}{{{s_dyn:.2f}\times10^6}}"
+            rf"\right)"
         )
-    st.dataframe(rows,use_container_width=True,hide_index=True)
+        st.caption(
+            f"f₀,cont ≈ {f0_model:.1f} Hz. "
+            "Bandas demasiado próximas o bajo la resonancia deben interpretarse con cautela."
+        )
+    else:
+        h1_m=h1_mm/1000.0
+        delta=max(0.0,_delta_ver_demo(fsel,f0_model,cL1,h1_m,Nsup,eta11))
+        st.latex(
+            rf"\Delta L_n({fsel})\approx10\log_{{10}}\left["
+            rf"\frac{{{cL1:.0f}\cdot {h1_m:.3f}\cdot {Nsup:.2f}\cdot {eta11:.3f}}}"
+            rf"{{2\pi^3\cdot {f0_model:.1f}^4}}\cdot {fsel}^3"
+            rf"\right]"
+        )
+
+    _card(
+        f"Mejora prevista ΔLₙ({fsel} Hz)",
+        f"{delta:.1f} dB",
+        "Anota este resultado. En la siguiente parte tendrás que registrarlo correctamente "
+        "para incorporarlo a la curva de mejora.",
+        tone="blue"
+    )
+
+    # ==============================================================
+    # 6 · CONSTRUIR CURVA
+    # ==============================================================
+    st.markdown("## 6 · Construye la curva ΔLₙ(f) banda por banda")
     st.write(
-        "Ahora cada valor tiene un origen visible: **configuración real → modelo → parámetros → ecuación → ΔLₙ(f)**."
+        "Igual que en la Etapa 5, el gráfico comienza vacío. "
+        "Cada valor correcto que ingreses agrega un nuevo punto."
     )
 
-    _mcq(
-        "final_origin",
-        "¿Qué debemos hacer antes de aplicar una ecuación de ΔLₙ?",
-        [
-            "A. Elegir la ecuación que entregue mayor mejora.",
-            "B. Identificar cómo está construido el piso y seleccionar el modelo compatible.",
-            "C. Usar siempre Vér.",
-            "D. Usar siempre Cremer.",
-        ],
-        1,
-        "Primero se identifica la configuración física; después se selecciona el modelo.",
-        store=True,
+    answers=saved.get("stage6_delta_answers",{})
+    if not isinstance(answers,dict):
+        answers={}
+        saved["stage6_delta_answers"]=answers
+
+    f_reg=st.selectbox(
+        "Banda que vas a registrar",
+        bands,
+        index=bands.index(fsel) if fsel in bands else 0,
+        key=f"{ns}_band_register"
+    )
+    entered=st.number_input(
+        f"Ingresa ΔLₙ({f_reg} Hz) calculado (dB)",
+        min_value=0.0,max_value=100.0,value=0.0,step=0.1,format="%.1f",
+        key=f"{ns}_band_value"
     )
 
-    st.markdown("## 9 · Preguntas de comprensión")
-    _mcq("q1","Una manta continua y pads separados representan exactamente el mismo sistema.",["Verdadero","Falso"],1,"Son configuraciones diferentes.",store=True)
-    _mcq("q2","$f_0$ por sí sola entrega ΔLₙ.",["Verdadero","Falso"],1,"f₀ localiza la resonancia; se requiere un modelo de mejora.",store=True)
-    _mcq("q3","$T_F$ y ΔLₙ son exactamente la misma magnitud.",["Verdadero","Falso"],1,"Una es mecánica y la otra vibroacústica.",store=True)
-    _mcq("q4","En el modelo de Vér mostrado, N representa la densidad de apoyos discretos.",["Verdadero","Falso"],0,"Correcto.",store=True)
-    _mcq("q5","Un puente rígido puede dejar la obra fuera de las hipótesis del modelo ideal.",["Verdadero","Falso"],0,"Correcto.",store=True)
+    def expected_delta(ff):
+        if model=="Cremer/Vigran":
+            return max(0.0,_delta_cremer(ff,s_dyn,m1))
+        return max(0.0,_delta_ver_demo(ff,f0_model,cL1,h1_mm/1000.0,Nsup,eta11))
 
-    st.markdown("## 10 · Cierre")
-    st.latex(
-        r"\boxed{\mathrm{CONSTRUCCIÓN}\rightarrow\mathrm{MODELO}"
-        r"\rightarrow(m',s')\rightarrow f_0\rightarrow\Delta L_n(f)}"
+    ca,cb=st.columns([2,1])
+    with ca:
+        if st.button("Comprobar y agregar al gráfico",type="primary",key=f"{ns}_add",use_container_width=True):
+            exp=expected_delta(f_reg)
+            if abs(float(entered)-float(exp))<=0.15:
+                answers[str(f_reg)]=round(float(exp),3)
+                saved["stage6_delta_answers"]=answers
+                _persist()
+                st.success(f"Banda {f_reg} Hz correcta.")
+                st.rerun()
+            else:
+                st.warning("El valor no coincide. Revisa la Parte 5 con la misma banda.")
+    with cb:
+        if st.button("Resetear curva",key=f"{ns}_reset",use_container_width=True):
+            saved["stage6_delta_answers"]={}
+            saved.pop("stage6_solution",None)
+            saved["done_6"]=False
+            _persist()
+            st.rerun()
+
+    completed=[ff for ff in bands if str(ff) in answers]
+    st.progress(len(completed)/len(bands),text=f"Bandas completadas: {len(completed)} / {len(bands)}")
+
+    rows=[]
+    for ff in bands:
+        if str(ff) in answers:
+            rows.append({"Banda (Hz)":ff,"Estado":"Completada","ΔLₙ (dB)":f"{answers[str(ff)]:.1f}"})
+        else:
+            rows.append({"Banda (Hz)":ff,"Estado":"Pendiente","ΔLₙ (dB)":"—"})
+    st.dataframe(rows,hide_index=True,use_container_width=True)
+
+    if completed:
+        pos={ff:i for i,ff in enumerate(bands)}
+        x=np.array([pos[ff] for ff in completed],dtype=float)
+        y=np.array([answers[str(ff)] for ff in completed],dtype=float)
+        order=np.argsort(x)
+        fig,ax=plt.subplots(figsize=(10.5,4.8))
+        ax.plot(x[order],y[order],marker="o",linewidth=2.2,label="ΔLₙ(f) validada")
+        ax.set_xticks(np.arange(len(bands)))
+        ax.set_xticklabels([str(ff) for ff in bands],rotation=45,ha="right")
+        ax.set_xlim(-0.4,len(bands)-0.6)
+        ax.set_xlabel("Bandas de frecuencia (Hz)")
+        ax.set_ylabel("Mejora ΔLₙ (dB)")
+        ax.set_title("Curva de mejora construida por el alumno")
+        ax.grid(True,axis="y",alpha=.22)
+        ax.legend()
+        fig.tight_layout()
+        st.pyplot(fig,use_container_width=True)
+        plt.close(fig)
+    else:
+        st.info("Todavía no hay bandas validadas.")
+
+    # ==============================================================
+    # 7 · DEFECTOS
+    # ==============================================================
+    st.markdown("## 7 · ¿Qué pasa si la obra deja de parecerse al modelo?")
+    _asset(
+        "curso2_lab1_etapa6_puente_rigido.gif",
+        "Un contacto rígido lateral crea un camino mecánico paralelo al elemento resiliente."
     )
     st.write(
-        "La mejora de impacto no se obtiene solo con una frecuencia de resonancia ni con una transmisibilidad. "
-        "Primero debemos identificar el sistema físico y luego utilizar una formulación compatible con esa configuración."
+        "Los modelos anteriores suponen un desacople definido. "
+        "Un puente rígido puede introducir un camino adicional de transmisión."
     )
-    st.write("En la Etapa 7 combinaremos:")
+    st.latex(r"K_{\mathrm{eq}}=K_{\mathrm{res}}+\sum_i K_{\mathrm{puente},i}")
+    st.warning(
+        "Esto no significa que el defecto sea incalculable; significa que puede quedar fuera de las hipótesis "
+        "del modelo simplificado y requerir medición, FEM/SEA o un modelo de caminos estructurales."
+    )
+
+    defect=st.selectbox(
+        "Ejemplo de defecto",
+        ["Contacto perimetral rígido","Tornillo atravesando la capa resiliente","Instalación apoyada sobre ambas masas"],
+        key=f"{ns}_defect"
+    )
+    defects={
+        "Contacto perimetral rígido":(
+            "La sobrelosa toca el muro y aparece una ruta rígida lateral.",
+            "Restituir banda perimetral y separación mecánica."
+        ),
+        "Tornillo atravesando la capa resiliente":(
+            "El elemento metálico conecta mecánicamente ambas partes del sistema.",
+            "Eliminar o rediseñar la fijación para mantener el desacople."
+        ),
+        "Instalación apoyada sobre ambas masas":(
+            "Una tubería o elemento constructivo crea un puente entre sobrelosa y base.",
+            "Desacoplar la instalación y controlar sus puntos de contacto."
+        ),
+    }
+    mech,corr=defects[defect]
+    d1,d2=st.columns(2)
+    with d1: _card("Mecanismo","Camino paralelo",mech)
+    with d2: _card("Corrección","Restituir desacople",corr,tone="blue")
+
+    # ==============================================================
+    # 8 · GUARDAR SOLUCIÓN
+    # ==============================================================
+    st.markdown("## 8 · Guarda la solución para la Etapa 7")
+    st.write(
+        "Cuando todas las bandas estén calculadas, guardaremos la solución constructiva y su curva ΔLₙ(f)."
+    )
+
+    if len(completed)==len(bands):
+        delta_full=[float(answers[str(ff)]) for ff in bands]
+        z1,z2,z3=st.columns(3)
+        with z1: _card("Modelo",model,"Seleccionado por la configuración física.")
+        with z2: _card("f₀ del modelo",f"{f0_model:.1f} Hz","Referencia dinámica de la solución.")
+        with z3: _card("Curva ΔLₙ",f"{len(bands)} bandas","Lista para combinar con Lₙ,₀(f).",tone="blue")
+
+        if st.button("Guardar solución y ΔLₙ(f)",type="primary",key=f"{ns}_save_solution"):
+            data={
+                "configuration":config,
+                "model":model,
+                "bands_hz":[int(ff) for ff in bands],
+                "delta_ln_db":[round(v,3) for v in delta_full],
+                "m1_surface_kg_m2":float(m1),
+                "m2_surface_kg_m2":float(m2),
+                "reduced_mass_kg_m2":float(mr),
+                "s_dyn_MN_m3":float(s_dyn),
+                "f0_general_hz":float(f0g),
+                "f0_model_hz":float(f0_model),
+                "rho1_kg_m3":float(rho1),
+                "h1_mm":float(h1_mm),
+                "updated_at":_now(),
+            }
+            if model=="Vér":
+                data.update({
+                    "support_density_per_m2":float(Nsup),
+                    "cL1_m_s":float(cL1),
+                    "eta11":float(eta11),
+                })
+            saved["stage6_solution"]=data
+            saved["done_6"]=True
+            _persist()
+            st.success("Solución guardada. La Etapa 7 ya puede combinarla con la curva base.")
+
+    # ==============================================================
+    # CIERRE
+    # ==============================================================
+    st.markdown("## Cierre · Ya tenemos las dos piezas")
+    cA,cB=st.columns(2)
+    with cA:
+        st.markdown("**De la Etapa 5**")
+        st.latex(r"L_{n,0}(f)")
+        st.caption("Nivel de impacto de la losa base.")
+    with cB:
+        st.markdown("**De la Etapa 6**")
+        st.latex(r"\Delta L_n(f)")
+        st.caption("Mejora prevista de la solución.")
+
+    st.write("En la siguiente etapa combinaremos ambas:")
     st.latex(r"\boxed{L_{n,\mathrm{final}}(f)=L_{n,0}(f)-\Delta L_n(f)}")
+    st.success(
+        "Etapa 7: predicción completa del piso terminado."
+    )
 
     with st.container(border=True):
-        st.markdown("### 📚 Fuentes técnicas")
-        st.write("Vigran, T. E. (2008), *Building Acoustics*, sección de pisos flotantes, Ecs. 8.43–8.46.")
-        st.write("Cremer, Heckl & Ungar, *Structure-Borne Sound*, formulación de pisos flotantes continuos.")
-        st.write("Vér, I. L. (1971), *Impact noise isolation of composite floors*, JASA 50, 1043–1050.")
+        st.markdown("### Fuentes técnicas")
+        st.write(
+            "Vigran, T. E. (2008), *Building Acoustics*, sección de pisos flotantes, Ecs. 8.43–8.46."
+        )
+        st.write(
+            "Cremer, Heckl & Ungar, *Structure-Borne Sound*, formulación para pisos flotantes continuos."
+        )
+        st.write(
+            "Vér, I. L. (1971), *Impact noise isolation of composite floors*, JASA 50, 1043–1050."
+        )
+
+    if role=="Docente" and not projection_mode:
+        st.markdown("---")
+        st.markdown("## Vista docente · desarrollo esperado")
+        st.write(
+            "La etapa debe terminar en una curva ΔLₙ(f), no en Lₙ,final(f). "
+            "La configuración física determina el modelo: capa continua → Cremer/Vigran; apoyos discretos → Vér."
+        )
+        st.write(
+            "La losa base y m′₂ deben recuperarse de la Etapa 5. "
+            "El estudiante calcula la solución banda por banda y la guarda para la Etapa 7."
+        )
 
     left,right=st.columns(2)
     with left:
