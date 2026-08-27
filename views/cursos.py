@@ -1845,25 +1845,55 @@ def _render_course2_lab1_stage2(lab, saved):
     st.info("Impedancia y movilidad **dependen de la frecuencia**. La misma estructura puede responder de forma muy distinta según cómo se la excite.")
 
     st.markdown("#### Laboratorio · misma fuerza, dos estructuras")
-    F = st.slider("Fuerza dinámica F (N)", 10, 500, 100, 10, key=f"{class_id}_s2_F")
-    c1,c2 = st.columns(2)
-    with c1:
-        logYA = st.slider("Movilidad estructura A · log₁₀Y", -7.0, -3.0, -5.7, 0.1, key=f"{class_id}_s2_logYA")
-    with c2:
-        logYB = st.slider("Movilidad estructura B · log₁₀Y", -7.0, -3.0, -5.1, 0.1, key=f"{class_id}_s2_logYB")
-    YA,YB=10**logYA,10**logYB
-    vA,vB=F*YA,F*YB
-    a,b,c = st.columns(3)
-    a.metric("Fuerza común", f"{F} N")
-    b.metric("Velocidad A", f"{vA:.2e} m/s")
-    c.metric("Velocidad B", f"{vB:.2e} m/s")
-    ratio=max(vA,vB)/max(min(vA,vB),1e-15)
+    st.write(
+        "Aquí la **fuerza es la excitación** y la **movilidad pertenece a la estructura a una frecuencia determinada**. "
+        "Cambiar la fuerza modifica la velocidad vibratoria, pero no modifica por sí sola la movilidad si trabajamos en régimen lineal."
+    )
     st.markdown(
-        f"""<div style="border-radius:14px;padding:12px 16px;background:#eef6ff;border:1px solid #d8e8fa">
-        <b>Misma fuerza, distinta respuesta:</b> la estructura que presenta mayor movilidad vibra aproximadamente
-        <b>{ratio:.1f} veces</b> más en este ejemplo.</div>""",
+        """<div style="border-radius:14px;padding:12px 16px;background:#eef6ff;border:1px solid #d8e8fa;margin:.4rem 0 .8rem">
+        <b>Relación:</b> v(f) = Y(f) · F(f). &nbsp; La movilidad Y(f) cambia principalmente con la
+        <b>estructura y la frecuencia</b>, no con la magnitud de F.
+        </div>""",
         unsafe_allow_html=True,
     )
+
+    F = st.slider("Fuerza dinámica común F (N)", 10, 500, 100, 10, key=f"{class_id}_s2_F")
+    fmob = st.slider("Frecuencia de excitación para comparar Y(f) (Hz)", 20, 400, 120, 5, key=f"{class_id}_s2_fmob")
+
+    # Curvas conceptuales de movilidad de dos estructuras distintas.
+    def _mob_curve(f, base, modes):
+        y = base
+        for fp, amp, width in modes:
+            y += amp / (1.0 + ((f - fp) / width) ** 2)
+        return y
+
+    YA_rel = _mob_curve(fmob, 0.10, [(80, 0.90, 18), (240, 0.40, 30)])
+    YB_rel = _mob_curve(fmob, 0.08, [(150, 1.05, 22), (330, 0.50, 34)])
+    # Escala didáctica en m/(N·s)
+    YA = YA_rel * 1e-5
+    YB = YB_rel * 1e-5
+    vA, vB = F * YA, F * YB
+
+    c1,c2 = st.columns(2)
+    with c1:
+        st.markdown("**Estructura A**")
+        st.metric("Movilidad Yₐ(f)", f"{YA:.2e} m/(N·s)")
+        st.metric("Velocidad vₐ", f"{vA:.2e} m/s")
+    with c2:
+        st.markdown("**Estructura B**")
+        st.metric("Movilidad Yᵦ(f)", f"{YB:.2e} m/(N·s)")
+        st.metric("Velocidad vᵦ", f"{vB:.2e} m/s")
+
+    ratio=max(vA,vB)/max(min(vA,vB),1e-15)
+    which="A" if vA>vB else "B"
+    st.markdown(
+        f"""<div style="border-radius:14px;padding:12px 16px;background:#f0fdf4;border:1px solid #bbf7d0">
+        A <b>{fmob} Hz</b>, la estructura <b>{which}</b> presenta mayor movilidad y por eso, con la misma fuerza,
+        desarrolla una velocidad vibratoria aproximadamente <b>{ratio:.1f} veces</b> mayor.
+        </div>""",
+        unsafe_allow_html=True,
+    )
+    st.caption("Curvas de movilidad conceptuales para aprendizaje; no corresponden a un elemento constructivo normativo específico.")
 
     # 3 · Resonancia
     st.markdown("### 3 · La respuesta cambia con la frecuencia")
@@ -1872,6 +1902,7 @@ def _render_course2_lab1_stage2(lab, saved):
         "frecuencia natural, la respuesta puede aumentar notablemente: eso es **resonancia**."
     )
     _asset("curso2_lab1_etapa2_resonancia.gif")
+    st.caption("Compara las tres situaciones: la fuerza es la misma; la amplitud de respuesta cambia al modificar la frecuencia de excitación.")
     st.latex(r"m\ddot{x}+c\dot{x}+kx=F(t)")
     r1,r2,r3=st.columns(3)
     with r1:
@@ -1917,12 +1948,25 @@ def _render_course2_lab1_stage2(lab, saved):
         "El modelo masa–resorte permite entender la idea de resonancia, pero una losa es un sistema continuo. "
         "Por eso posee **muchas frecuencias propias** y cada una tiene una forma característica de vibrar."
     )
+    st.markdown(
+        """
+        <div style="border:1px solid #d8e2ec;border-radius:18px;padding:16px 18px;background:linear-gradient(180deg,#fff,#f8fafc);margin:.5rem 0 .9rem">
+        <div style="font-weight:850;color:#0f172a;font-size:1.02rem;margin-bottom:.45rem">¿Qué es un modo propio?</div>
+        <div style="color:#475569;line-height:1.5">
+        Un <b>modo propio</b> es una forma característica de vibrar que puede adoptar la losa cuando se excita
+        cerca de una de sus <b>frecuencias naturales</b>. Cada modo combina dos ideas:
+        <b>cuándo</b> aparece (su frecuencia natural) y <b>cómo</b> se mueve la superficie (su forma modal).
+        </div>
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
     _asset("curso2_lab1_etapa2_modos_animados.gif")
     st.markdown(
         """<div style="display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;margin:.5rem 0 1rem">
-        <div style="padding:12px;border:1px solid #d9e2ec;border-radius:14px;background:#fff"><b>Modo propio</b><br><span style="color:#64748b">Forma característica de vibración.</span></div>
-        <div style="padding:12px;border:1px solid #d9e2ec;border-radius:14px;background:#fff"><b>Nodo</b><br><span style="color:#64748b">Zona que prácticamente no se mueve.</span></div>
-        <div style="padding:12px;border:1px solid #d9e2ec;border-radius:14px;background:#fff"><b>Antinodo</b><br><span style="color:#64748b">Zona donde la amplitud es mayor.</span></div>
+        <div style="padding:13px;border:1px solid #d9e2ec;border-radius:14px;background:#fff"><b>Modo propio</b><br><span style="color:#64748b">Patrón espacial de vibración asociado a una frecuencia natural.</span></div>
+        <div style="padding:13px;border:1px solid #d9e2ec;border-radius:14px;background:#fff"><b>Nodo</b><br><span style="color:#64748b">Zona del modo donde el desplazamiento es prácticamente cero.</span></div>
+        <div style="padding:13px;border:1px solid #d9e2ec;border-radius:14px;background:#fff"><b>Antinodo</b><br><span style="color:#64748b">Zona donde el movimiento alcanza amplitudes máximas.</span></div>
         </div>""",
         unsafe_allow_html=True,
     )
@@ -1940,7 +1984,13 @@ def _render_course2_lab1_stage2(lab, saved):
     ax.set_title("Movilidad conceptual con varios modos"); ax.grid(True,alpha=.2)
     st.pyplot(fig,use_container_width=True); plt.close(fig)
     st.metric("Respuesta relativa",f"{vrel:.1f} u.r.")
-    st.caption("Los picos representan frecuencias donde la estructura responde con mayor facilidad.")
+    nearest_mode=min([70,180,340], key=lambda ff: abs(fscan-ff))
+    mode_name={70:"Modo cercano al primer patrón",180:"Modo cercano al segundo patrón",340:"Modo cercano al tercer patrón"}[nearest_mode]
+    if abs(fscan-nearest_mode) <= 25:
+        st.success(f"Estás cerca de un pico de respuesta (~{nearest_mode} Hz): **{mode_name}** puede dominar la forma de vibración.")
+    else:
+        st.info("Estás entre picos modales: ningún modo del modelo conceptual domina claramente.")
+    st.caption("Cada pico de respuesta puede asociarse a la excitación preferente de un modo propio distinto.")
 
     # 5 · Propagación
     st.markdown("### 5 · La vibración no se queda donde nació")
@@ -1963,8 +2013,25 @@ def _render_course2_lab1_stage2(lab, saved):
     st.write(
         "El espesor modifica simultáneamente la **masa superficial** y la **rigidez flexional**, pero no en la misma proporción."
     )
+    st.markdown(
+        """
+        <div style="display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;margin:.55rem 0 .9rem">
+          <div style="border:1px solid #d9e2ec;border-radius:16px;padding:14px 16px;background:#fff">
+            <b>Masa superficial · m′</b><br><span style="color:#64748b">Cuánta masa existe por cada metro cuadrado de losa.</span>
+          </div>
+          <div style="border:1px solid #d9e2ec;border-radius:16px;padding:14px 16px;background:#fff">
+            <b>Rigidez flexional · B</b><br><span style="color:#64748b">Qué tan difícil es <b>doblar o curvar</b> la losa. Una B alta significa mayor oposición a la flexión.</span>
+          </div>
+        </div>
+        <div style="border-radius:14px;padding:12px 16px;background:#fff7ed;border:1px solid #fed7aa;margin-bottom:.8rem">
+        <b>Analogía:</b> una regla delgada se dobla con facilidad; una regla del mismo material pero mucho más gruesa cuesta mucho más doblarla.
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
     st.latex(r"m'=\rho h \qquad\Rightarrow\qquad m'\propto h")
     st.latex(r"B=\frac{Eh^3}{12(1-\nu^2)} \qquad\Rightarrow\qquad B\propto h^3")
+    st.caption("Si solo duplicamos el espesor y mantenemos el mismo material, la masa superficial se duplica, pero la rigidez flexional aumenta aproximadamente 2³ = 8 veces.")
     h_mm=st.slider("Espesor de hormigón h (mm)",80,250,150,5,key=f"{class_id}_s2_h")
     rho=2400.; E=30e9; nu=.20; h=h_mm/1000
     ms=rho*h; B=E*h**3/(12*(1-nu**2))
@@ -1990,21 +2057,24 @@ def _render_course2_lab1_stage2(lab, saved):
         ax.set_xlabel("Espesor (mm)"); ax.set_ylabel("B (MN·m)"); ax.set_title("Rigidez flexional")
         ax.grid(True,alpha=.2); st.pyplot(fig,use_container_width=True); plt.close(fig)
 
-    # 7 · Dispersión (compacta)
+    # 7 · Dispersión de ondas de flexión
     st.markdown("### 7 · En flexión, distintas frecuencias no viajan igual")
     st.write(
-        "Las ondas de flexión son **dispersivas**: su velocidad de propagación depende de la frecuencia. "
-        "Por eso componentes graves y agudas pueden recorrer una placa de manera diferente."
+        "Una **onda de flexión** es una deformación transversal que se desplaza por la losa. "
+        "En este tipo de onda, la frecuencia modifica tanto la longitud de onda como la velocidad con que avanza la fase."
     )
-    st.latex(r"k_B^4=\frac{m'\omega^2}{B}")
-    st.latex(r"c_B=\frac{\omega}{k_B}")
+    _asset("curso2_lab1_etapa2_dispersion_flexion.gif")
     st.markdown(
-        """<div style="border-radius:14px;padding:13px 16px;background:#eef6ff;border:1px solid #d8e8fa">
-        <b>Idea clave:</b> no necesitas memorizar todavía estas expresiones; debes reconocer que
-        <b>c<sub>B</sub> depende de la frecuencia</b> y que propagación no significa lo mismo que velocidad vibratoria.
+        """<div style="display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;margin:.55rem 0 .9rem">
+        <div style="padding:13px;border:1px solid #d9e2ec;border-radius:14px;background:#fff"><b>Onda de flexión</b><br><span style="color:#64748b">La placa se curva transversalmente mientras la perturbación avanza.</span></div>
+        <div style="padding:13px;border:1px solid #d9e2ec;border-radius:14px;background:#fff"><b>Dispersión</b><br><span style="color:#64748b">Distintas frecuencias presentan diferentes velocidades de fase.</span></div>
+        <div style="padding:13px;border:1px solid #d9e2ec;border-radius:14px;background:#fff"><b>No confundir</b><br><span style="color:#64748b">Velocidad de propagación ≠ velocidad vibratoria local de la superficie.</span></div>
         </div>""",
         unsafe_allow_html=True,
     )
+    st.latex(r"k_B^4=\\frac{m'\\omega^2}{B}")
+    st.latex(r"c_B=\\frac{\\omega}{k_B}")
+    st.info("No necesitas memorizar todavía estas expresiones. Lo importante es reconocer que **c_B depende de la frecuencia**.")
 
     # 8 · Radiación
     st.markdown("### 8 · Vibrar mucho no significa necesariamente sonar mucho")
@@ -2021,21 +2091,57 @@ def _render_course2_lab1_stage2(lab, saved):
         </div>""",
         unsafe_allow_html=True,
     )
-    st.markdown("#### Laboratorio · misma vibración, distinta radiación")
+    st.markdown("#### Laboratorio · ¿qué superficie radiará más sonido?")
+    st.write(
+        "Imagina dos superficies de un edificio que presentan la **misma velocidad normal de vibración**. "
+        "Sin embargo, no tienen necesariamente la misma área radiante ni la misma eficiencia de radiación."
+    )
+    st.markdown(
+        """<div style="border-radius:14px;padding:12px 16px;background:#eef6ff;border:1px solid #d8e8fa;margin:.4rem 0 .8rem">
+        <b>Desafío:</b> antes de cambiar los controles, predice cuál superficie radiará mayor potencia acústica.
+        Luego modifica <b>S</b> y <b>σ</b> y comprueba tu hipótesis.
+        </div>""",
+        unsafe_allow_html=True,
+    )
+    prediction = st.radio(
+        "Predicción inicial",
+        ["A radiará más", "B radiará más", "Radiarán igual"],
+        index=None,
+        key=f"{class_id}_s2_rad_prediction",
+        horizontal=True,
+    )
+
     vn=st.slider("Velocidad normal común vₙ (mm/s)",.1,10.0,2.0,.1,key=f"{class_id}_s2_vn")/1000
     rc1,rc2=st.columns(2)
     with rc1:
-        S1=st.slider("Área A (m²)",.5,30.0,8.0,.5,key=f"{class_id}_s2_S1")
-        sig1=st.slider("σ A",.01,1.50,.20,.01,key=f"{class_id}_s2_sig1")
+        st.markdown("**Superficie A**")
+        S1=st.slider("Área radiante Sₐ (m²)",.5,30.0,8.0,.5,key=f"{class_id}_s2_S1")
+        sig1=st.slider("Eficiencia de radiación σₐ",.01,1.50,.20,.01,key=f"{class_id}_s2_sig1")
         W1=S1*sig1*vn**2
-        st.metric("Radiación relativa A",f"{W1:.3e}")
+        st.metric("Potencia acústica radiada relativa A",f"{W1:.3e}")
     with rc2:
-        S2=st.slider("Área B (m²)",.5,30.0,8.0,.5,key=f"{class_id}_s2_S2")
-        sig2=st.slider("σ B",.01,1.50,.80,.01,key=f"{class_id}_s2_sig2")
+        st.markdown("**Superficie B**")
+        S2=st.slider("Área radiante Sᵦ (m²)",.5,30.0,8.0,.5,key=f"{class_id}_s2_S2")
+        sig2=st.slider("Eficiencia de radiación σᵦ",.01,1.50,.80,.01,key=f"{class_id}_s2_sig2")
         W2=S2*sig2*vn**2
-        st.metric("Radiación relativa B",f"{W2:.3e}")
-    if max(W1,W2)>0:
-        st.progress(min(W1,W2)/max(W1,W2))
+        st.metric("Potencia acústica radiada relativa B",f"{W2:.3e}")
+
+    winner = "A radiará más" if W1>W2 else ("B radiará más" if W2>W1 else "Radiarán igual")
+    if st.button("Comprobar predicción", key=f"{class_id}_s2_rad_check"):
+        if prediction is None:
+            st.warning("Haz primero una predicción.")
+        elif prediction == winner:
+            st.success("Correcto. Tu predicción coincide con el resultado del modelo.")
+        else:
+            st.info(f"Con los valores actuales, la respuesta es: **{winner}**.")
+
+    st.markdown(
+        f"""<div style="border-radius:14px;padding:12px 16px;background:#f0fdf4;border:1px solid #bbf7d0;margin-top:.7rem">
+        <b>Conclusión:</b> aunque ambas superficies vibran con el mismo vₙ, la radiación no tiene por qué ser igual.
+        En este caso, el modelo indica: <b>{winner}</b>. El área radiante S y la eficiencia σ también controlan la radiación.
+        </div>""",
+        unsafe_allow_html=True,
+    )
     st.caption("Comparación didáctica basada en Wrad ∝ S·σ·vₙ². No representa un nivel normativo.")
 
     # 9 · Integración y puente a Etapa 3
