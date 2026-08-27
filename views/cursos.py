@@ -2191,50 +2191,113 @@ def _render_course2_lab1_stage2(lab, saved):
 
     # 7 · Dispersión de ondas de flexión
     st.markdown("### 7 · En flexión, distintas frecuencias no viajan igual")
+
+    st.markdown("#### 1 · Primero observa el fenómeno")
     st.write(
         "Una **onda de flexión** es una deformación transversal que se desplaza por la losa. "
-        "En este tipo de onda, la frecuencia modifica la longitud de onda y también la velocidad de propagación."
+        "La propia superficie se curva mientras la perturbación avanza."
     )
-
     _asset("curso2_lab1_etapa2_dispersion_flexion.gif")
 
+    st.markdown("#### 2 · Movimiento local y propagación no son lo mismo")
     st.markdown(
         """
-        <div style="display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;margin:.55rem 0 .9rem">
-        <div style="padding:13px;border:1px solid #d9e2ec;border-radius:14px;background:#fff">
-          <b>Onda de flexión</b><br><span style="color:#64748b">La placa se curva transversalmente mientras la perturbación avanza.</span>
+        <div style="display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;margin:.55rem 0 .75rem">
+          <div style="padding:14px;border:1px solid #d9e2ec;border-radius:16px;background:#fff">
+            <b>Velocidad vibratoria · v</b><br>
+            <span style="color:#64748b">
+              Describe qué tan rápido se mueve <b>un punto de la losa</b> hacia arriba y abajo mientras vibra.
+            </span>
+          </div>
+          <div style="padding:14px;border:1px solid #d9e2ec;border-radius:16px;background:#fff">
+            <b>Velocidad de propagación · c<sub>B</sub></b><br>
+            <span style="color:#64748b">
+              Describe qué tan rápido <b>avanza la onda de flexión</b> por la losa.
+            </span>
+          </div>
         </div>
-        <div style="padding:13px;border:1px solid #d9e2ec;border-radius:14px;background:#fff">
-          <b>Dispersión</b><br><span style="color:#64748b">Distintas frecuencias presentan diferentes velocidades de fase.</span>
-        </div>
-        <div style="padding:13px;border:1px solid #d9e2ec;border-radius:14px;background:#fff">
-          <b>No confundir</b><br><span style="color:#64748b">Velocidad de propagación ≠ velocidad vibratoria local de la superficie.</span>
-        </div>
+        <div style="border-radius:14px;padding:12px 16px;background:#eef6ff;border:1px solid #d8e8fa;margin-bottom:.85rem">
+          <b>No son la misma velocidad.</b> Una describe el movimiento local de la superficie;
+          la otra describe el avance de la perturbación por la estructura.
         </div>
         """,
         unsafe_allow_html=True,
     )
 
-    st.markdown("#### ¿Cómo se relacionan las variables?")
+    st.markdown("#### 3 · ¿Qué significa que la onda sea dispersiva?")
+    st.write(
+        "Significa que **la velocidad de propagación depende de la frecuencia**. "
+        "Por eso una componente grave y una componente aguda no necesariamente avanzan de la misma manera por la losa."
+    )
+    st.markdown(
+        """
+        <div style="border:1px solid #d8e2ec;border-radius:18px;padding:14px 16px;background:#fff;margin:.55rem 0 .85rem;text-align:center">
+          <div style="font-size:1.18rem;font-weight:850;color:#1e3a8a">
+            frecuencia f cambia → k<sub>B</sub> cambia → c<sub>B</sub> cambia
+          </div>
+          <div style="margin-top:.35rem;color:#64748b">
+            En ondas de flexión, cambiar la frecuencia modifica la forma espacial de la onda y su velocidad de fase.
+          </div>
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
+
+    st.markdown("#### 4 · ¿Cómo se describe matemáticamente?")
+    st.write(
+        "Primero obtenemos el **número de onda de flexión \(k_B\)**. "
+        "Esta magnitud relaciona la frecuencia con las propiedades mecánicas de la losa."
+    )
     st.latex(r"""k_B^4 = \frac{m'\,\omega^2}{B}""")
+
+    st.markdown(
+        """
+        <div style="border-radius:14px;padding:12px 16px;background:#f8fafc;border:1px solid #dce4ec;margin:.4rem 0 .8rem">
+          <b>¿De qué depende k<sub>B</sub>?</b><br>
+          De la <b>masa superficial m′</b>, de la <b>frecuencia angular ω</b>
+          y de la <b>rigidez flexional B</b>.
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
+
+    st.write(
+        "Una vez conocido \(k_B\), podemos obtener la **velocidad de fase de la onda de flexión \(c_B\)**:"
+    )
     st.latex(r"""c_B = \frac{\omega}{k_B}""")
 
+    st.markdown("#### 5 · Símbolos que aparecen en las ecuaciones")
     st.markdown(
         """
-        <div style="display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:8px;margin:.5rem 0 .8rem">
-          <div style="padding:10px;border:1px solid #d9e2ec;border-radius:12px;background:#fff"><b>k<sub>B</sub></b><br><span style="color:#64748b">número de onda de flexión</span></div>
-          <div style="padding:10px;border:1px solid #d9e2ec;border-radius:12px;background:#fff"><b>m′</b><br><span style="color:#64748b">masa superficial</span></div>
-          <div style="padding:10px;border:1px solid #d9e2ec;border-radius:12px;background:#fff"><b>ω = 2πf</b><br><span style="color:#64748b">frecuencia angular</span></div>
-          <div style="padding:10px;border:1px solid #d9e2ec;border-radius:12px;background:#fff"><b>B</b><br><span style="color:#64748b">rigidez flexional</span></div>
-          <div style="padding:10px;border:1px solid #d9e2ec;border-radius:12px;background:#fff"><b>c<sub>B</sub></b><br><span style="color:#64748b">velocidad de fase</span></div>
+        <div style="display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:8px;margin:.5rem 0 .85rem">
+          <div style="padding:10px;border:1px solid #d9e2ec;border-radius:12px;background:#fff">
+            <b>m′</b><br><span style="color:#64748b">masa superficial</span>
+          </div>
+          <div style="padding:10px;border:1px solid #d9e2ec;border-radius:12px;background:#fff">
+            <b>B</b><br><span style="color:#64748b">rigidez flexional</span>
+          </div>
+          <div style="padding:10px;border:1px solid #d9e2ec;border-radius:12px;background:#fff">
+            <b>ω = 2πf</b><br><span style="color:#64748b">frecuencia angular</span>
+          </div>
+          <div style="padding:10px;border:1px solid #d9e2ec;border-radius:12px;background:#fff">
+            <b>k<sub>B</sub></b><br><span style="color:#64748b">número de onda de flexión</span>
+          </div>
+          <div style="padding:10px;border:1px solid #d9e2ec;border-radius:12px;background:#fff">
+            <b>c<sub>B</sub></b><br><span style="color:#64748b">velocidad de fase</span>
+          </div>
         </div>
         """,
         unsafe_allow_html=True,
     )
 
-    st.info(
-        "Lo importante aquí no es memorizar las fórmulas, sino reconocer que **c_B depende de la frecuencia**. "
-        "Por eso distintas componentes de una vibración no se propagan de la misma manera por la losa."
+    st.markdown(
+        """
+        <div style="border-radius:16px;padding:14px 16px;background:#eef6ff;border:1px solid #d8e8fa;margin:.3rem 0 .9rem">
+          <b>Idea clave:</b> en una onda de flexión, la frecuencia influye en cómo se propaga la perturbación.
+          Por eso las ondas de flexión son <b>dispersivas</b>.
+        </div>
+        """,
+        unsafe_allow_html=True,
     )
 
     # 8 · Radiación
