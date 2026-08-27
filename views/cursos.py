@@ -3410,6 +3410,13 @@ def _render_course2_lab1_stage4(lab, saved):
     )
     _asset("curso2_lab1_etapa4_tiempo_frecuencia.gif")
 
+    _concept(
+        "Qué significa físicamente",
+        "Un contacto corto obliga a la fuerza a cambiar muy rápido y, por ello, aparecen componentes en un rango amplio de frecuencias. "
+        "Cuando el contacto dura más, la fuerza cambia más lentamente y disminuye el contenido relativo de frecuencias altas. "
+        "Esto no significa que desaparezcan las bajas frecuencias ni que cambie necesariamente la energía total."
+    )
+
     dt_ms = st.slider(
         "Duración de contacto Δt (ms)",
         min_value=1.0,
@@ -3450,9 +3457,9 @@ def _render_course2_lab1_stage4(lab, saved):
         plt.close(fig)
 
     if dt_ms <= 6:
-        st.success("Contacto corto → espectro relativamente más extendido hacia altas frecuencias.")
+        st.success("Contacto corto: la fuerza cambia muy rápido, por lo que el impacto contiene componentes en un rango más amplio de frecuencias, incluyendo frecuencias altas.")
     elif dt_ms >= 16:
-        st.info("Contacto más prolongado → menor contenido relativo de altas frecuencias.")
+        st.info("Contacto más largo: la fuerza cambia más lentamente y disminuye el contenido relativo de frecuencias altas.")
     else:
         st.info("Duración intermedia → transición entre ambos comportamientos.")
 
@@ -3511,20 +3518,60 @@ def _render_course2_lab1_stage4(lab, saved):
     vA=YA*force_f; vB=YB*force_f
 
     tab1,tab2,tab3=st.tabs(["F(f) · excitación","Y(f) · movilidad","v(f) · respuesta"])
+
     with tab1:
+        st.markdown(
+            """
+            <div style="border:1px solid #dbe4ee;border-radius:14px;padding:13px 16px;background:#f8fbff;margin:.2rem 0 .7rem">
+              <b>¿Qué muestra este gráfico?</b><br>
+              Representa <b>qué frecuencias contiene la fuerza de impacto</b>.<br><br>
+              <b>Eje X:</b> frecuencia (Hz).<br>
+              <b>Eje Y:</b> magnitud relativa de la fuerza.<br><br>
+              En esta comparación usamos la <b>misma F(f) para ambos pisos</b>, de modo que cualquier diferencia posterior
+              se deba a la respuesta de la estructura.
+            </div>
+            """,
+            unsafe_allow_html=True,
+        )
         fig,ax=plt.subplots(figsize=(8,3.6))
         ax.plot(f,force_f)
         ax.set_xlabel("Frecuencia (Hz)"); ax.set_ylabel("|F(f)| relativa")
-        ax.set_title("Excitación común para la comparación"); ax.grid(True,alpha=.2)
+        ax.set_title("Excitación común para ambos pisos"); ax.grid(True,alpha=.2)
         st.pyplot(fig,use_container_width=True); plt.close(fig)
+
     with tab2:
+        st.markdown(
+            """
+            <div style="border:1px solid #dbe4ee;border-radius:14px;padding:13px 16px;background:#f8fbff;margin:.2rem 0 .7rem">
+              <b>¿Qué muestra este gráfico?</b><br>
+              La movilidad indica <b>qué tan fácilmente vibra cada piso</b> cuando recibe una fuerza a cada frecuencia.<br><br>
+              <b>Mayor Y(f)</b> → mayor velocidad vibratoria ante la misma fuerza.<br>
+              <b>Menor Y(f)</b> → mayor oposición dinámica.<br><br>
+              Los máximos de la curva señalan frecuencias donde la estructura responde con mayor facilidad.
+            </div>
+            """,
+            unsafe_allow_html=True,
+        )
+        st.latex(r"Y(f)=\frac{v(f)}{F(f)}")
         fig,ax=plt.subplots(figsize=(8,3.6))
         ax.plot(f,YA,label="Piso A")
         ax.plot(f,YB,label="Piso B")
         ax.set_xlabel("Frecuencia (Hz)"); ax.set_ylabel("Y(f) relativa")
         ax.set_title("Movilidad de los dos pisos"); ax.grid(True,alpha=.2); ax.legend()
         st.pyplot(fig,use_container_width=True); plt.close(fig)
+
     with tab3:
+        st.markdown(
+            """
+            <div style="border:1px solid #dbe4ee;border-radius:14px;padding:13px 16px;background:#f8fbff;margin:.2rem 0 .7rem">
+              <b>¿Qué muestra este gráfico?</b><br>
+              Es la <b>respuesta vibratoria resultante</b> luego de combinar la fuerza de impacto con la movilidad del piso.<br><br>
+              Una curva más alta significa que ese piso desarrolla <b>mayor velocidad vibratoria</b> en esa frecuencia.
+            </div>
+            """,
+            unsafe_allow_html=True,
+        )
+        st.latex(r"v(f)=Y(f)\,F(f)")
         fig,ax=plt.subplots(figsize=(8,3.6))
         ax.plot(f,vA,label="Piso A")
         ax.plot(f,vB,label="Piso B")
@@ -3532,19 +3579,85 @@ def _render_course2_lab1_stage4(lab, saved):
         ax.set_title("Respuesta vibratoria resultante"); ax.grid(True,alpha=.2); ax.legend()
         st.pyplot(fig,use_container_width=True); plt.close(fig)
 
+    st.markdown(
+        """
+        <div style="border:1px solid #bfdbfe;background:#eff6ff;border-radius:14px;padding:13px 16px;margin:.7rem 0 1rem">
+          <b>Cómo leer los tres gráficos juntos</b><br>
+          Primero observamos <b>qué frecuencias contiene el impacto F(f)</b>; luego,
+          <b>cómo responde cada piso Y(f)</b>; y finalmente obtenemos
+          <b>cuánto vibra cada piso v(f)</b>.<br><br>
+          <div style="text-align:center;font-weight:800;color:#1e3a8a">
+            Impacto F(f) + respuesta del piso Y(f) → vibración v(f)
+          </div>
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
+
     f_eval=st.slider("Frecuencia para comparar (Hz)",50,700,160,10,key=f"{ns}_f_eval")
     ia=int(np.argmin(np.abs(f-f_eval)))
+    ratio=float(vB[ia]/max(vA[ia],1e-9))
+
+    st.markdown(f"#### Comparación a {f_eval} Hz")
     ma,mb,mc=st.columns(3)
     with ma:
-        st.metric(f"Y_A a {f_eval} Hz",f"{YA[ia]:.3f} u.r.")
+        st.markdown(
+            f"""
+            <div style="border:1px solid #dbe4ee;border-radius:16px;padding:15px;background:#fff;height:175px">
+              <div style="font-weight:800;color:#0f172a">Movilidad del Piso A</div>
+              <div style="font-size:1.75rem;font-weight:800;margin:.35rem 0">{YA[ia]:.3f} u.r.</div>
+              <div style="color:#64748b;line-height:1.4">
+                Indica qué tan fácilmente responde el Piso A ante una fuerza aplicada a {f_eval} Hz.
+              </div>
+            </div>
+            """,
+            unsafe_allow_html=True,
+        )
     with mb:
-        st.metric(f"Y_B a {f_eval} Hz",f"{YB[ia]:.3f} u.r.")
+        relation_b = "mayor" if YB[ia] > YA[ia] else "menor"
+        st.markdown(
+            f"""
+            <div style="border:1px solid #dbe4ee;border-radius:16px;padding:15px;background:#fff;height:175px">
+              <div style="font-weight:800;color:#0f172a">Movilidad del Piso B</div>
+              <div style="font-size:1.75rem;font-weight:800;margin:.35rem 0">{YB[ia]:.3f} u.r.</div>
+              <div style="color:#64748b;line-height:1.4">
+                A {f_eval} Hz, su movilidad es <b>{relation_b}</b> que la del Piso A.
+              </div>
+            </div>
+            """,
+            unsafe_allow_html=True,
+        )
     with mc:
-        ratio=float(vB[ia]/max(vA[ia],1e-9))
-        st.metric("v_B / v_A",f"{ratio:.2f}")
+        st.markdown(
+            f"""
+            <div style="border:1px solid #bfdbfe;border-radius:16px;padding:15px;background:#eff6ff;height:175px">
+              <div style="font-weight:800;color:#0f172a">Comparación de vibración</div>
+              <div style="font-size:1.75rem;font-weight:800;margin:.35rem 0">{ratio:.2f} veces</div>
+              <div style="color:#475569;line-height:1.4">
+                Con la misma excitación, el Piso B desarrolla aproximadamente
+                <b>{ratio:.2f} veces</b> la velocidad vibratoria del Piso A.
+              </div>
+            </div>
+            """,
+            unsafe_allow_html=True,
+        )
+
+    if ratio > 1.05:
+        st.info(
+            f"A {f_eval} Hz ambos pisos reciben la misma F(f), pero el Piso B tiene mayor movilidad. "
+            f"Por eso su respuesta vibratoria es aproximadamente {ratio:.2f} veces la del Piso A."
+        )
+    elif ratio < 0.95:
+        st.info(
+            f"A {f_eval} Hz ambos pisos reciben la misma F(f), pero el Piso A presenta mayor respuesta vibratoria."
+        )
+    else:
+        st.info(
+            f"A {f_eval} Hz las respuestas de ambos pisos son muy similares para esta excitación conceptual."
+        )
 
     pred=st.radio(
-        "A esta frecuencia, ¿qué piso presenta mayor respuesta vibratoria?",
+        f"Con la misma fuerza de impacto a {f_eval} Hz, ¿qué piso vibrará más?",
         ["Piso A","Piso B","Prácticamente iguales"],
         index=None,
         horizontal=True,
