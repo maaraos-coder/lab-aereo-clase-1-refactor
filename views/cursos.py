@@ -3315,7 +3315,7 @@ def _render_course2_lab1_stage3(lab, saved):
 
 
 def _render_course2_lab1_stage4(lab, saved):
-    """Curso 2 · Lab 1 · Etapa 4: física del ruido de impacto."""
+    """Curso 2 · Lab 1 · Etapa 4: puente físico hacia la predicción del ruido de impacto."""
     class_id = lab["id"]
     stage_selector_key = f"future_stage_{class_id}"
     role = st.session_state.get("role", "Alumno")
@@ -3328,611 +3328,396 @@ def _render_course2_lab1_stage4(lab, saved):
     def _asset(name, caption=None):
         path = ASSET_DIR / name
         if path.exists():
-            st.image(path, width="stretch")
+            st.image(str(path), width="stretch")
             if caption:
                 st.caption(caption)
             return True
         if st.session_state.get("dev_mode", False):
-            st.caption(f"[Render pendiente: {name}]")
+            st.caption(f"[Asset pendiente: {name}]")
         return False
 
-    def _card(title, body, icon="💡"):
+    def _persist():
+        saved["updated_4"] = _now()
+        fn = globals().get("_save_future_state_impl") or globals().get("_save_future_state")
+        if callable(fn):
+            fn(class_id, saved)
+
+    def _concept(title, body):
         st.markdown(
-            f"""<div style="border:1px solid #cfd8e3;border-radius:12px;padding:16px 18px;
-            margin:10px 0 16px;background:#f8fbff">
-            <div style="font-weight:800;margin-bottom:7px">{icon} {title}</div>
-            <div style="line-height:1.55">{body}</div></div>""",
+            f"""<div style="border:1px solid #dbe4ee;border-radius:14px;padding:14px 16px;
+            background:#f8fbff;margin:.5rem 0 .9rem">
+            <div style="font-weight:800;color:#0f172a;margin-bottom:5px">{title}</div>
+            <div style="color:#475569;line-height:1.5">{body}</div>
+            </div>""",
             unsafe_allow_html=True,
         )
-
-    def _mcq(key, question, options, correct, feedback, store=False):
-        st.markdown(f"#### {question}")
-
-        # Docente: pauta visible, sin responder ni generar avance personal.
-        if role == "Docente" and not projection_mode:
-            with st.container(border=True):
-                for i, option in enumerate(options):
-                    prefix = "✅" if i == correct else "○"
-                    st.write(f"{prefix} {option}")
-                st.caption("Explicación: " + feedback)
-            return
-
-        state_key = f"{ns}_{key}"
-        selected = st.radio(
-            question,
-            options,
-            index=None,
-            key=state_key,
-            label_visibility="collapsed",
-        )
-
-        button_label = "Comprobar"
-        if store and role == "Alumno" and not projection_mode:
-            button_label = "Comprobar y guardar"
-
-        if st.button(button_label, key=f"{state_key}_check"):
-            if selected is None:
-                st.warning("Selecciona una alternativa.")
-            else:
-                selected_idx = options.index(selected)
-                ok = selected_idx == correct
-                st.session_state[f"{state_key}_result"] = ok
-
-                if store and role == "Alumno" and not projection_mode:
-                    answers = saved.get("stage4_comprehension", {})
-                    if not isinstance(answers, dict):
-                        answers = {}
-                    answers[key] = {
-                        "selected": selected_idx,
-                        "correct": ok,
-                        "updated_at": _now(),
-                    }
-                    saved["stage4_comprehension"] = answers
-                    saved["updated_4"] = _now()
-                    _save_future_state_impl(class_id, saved)
-
-        result = st.session_state.get(f"{state_key}_result")
-        if result is True:
-            st.success("Correcto. " + feedback)
-        elif result is False:
-            st.warning("Revisa el concepto. " + feedback)
 
     header(
         "ETAPA 4 · LABORATORIO 1",
         "Física del ruido de impacto",
-        "De la fuerza de contacto a la respuesta del piso.",
+        "Puente hacia la predicción del nivel de ruido de impacto de la losa base.",
         show_overview=False,
-        duration_minutes=60,
+        duration_minutes=65,
     )
 
     st.markdown("### Objetivo de aprendizaje")
     st.write(
-        "Comprender el impacto como una fuerza variable en el tiempo, relacionar duración de contacto y contenido frecuencial, "
-        "interpretar la interacción fuente–piso y seguir la cadena física desde F(f) hasta la radiación."
+        "Comprender qué hace especial a una excitación de impacto y reconocer las variables físicas "
+        "que necesitaremos en la Etapa 5 para predecir el nivel de ruido de impacto de una losa base."
     )
     st.latex(
-        r"\boxed{\mathrm{IMPACTO}\rightarrow F(t)\rightarrow F(f)\rightarrow "
-        r"\mathrm{RESPUESTA\ DEL\ PISO}\rightarrow v(f)\rightarrow \mathrm{RADIACIÓN}}"
+        r"\boxed{F(t)\rightarrow F(f)\rightarrow Y(f)\rightarrow v(f)\rightarrow "
+        r"W_{\mathrm{rad}}(f)\rightarrow L_n(f)}"
+    )
+    st.info(
+        "En esta etapa **no calcularemos todavía Lₙ(f)**. Prepararemos cada eslabón físico para que "
+        "la predicción de la Etapa 5 tenga sentido."
     )
 
     # ------------------------------------------------------------------
-    # 1 · APERTURA
+    # 1 · IMPACTO
     # ------------------------------------------------------------------
-    st.markdown("### 1 · Mismo peso, impacto diferente")
-    _asset("curso2_lab1_etapa4_impacto_duro_resiliente.webp")
-
-    _mcq(
-        "opening",
-        "¿Por qué el segundo impacto puede generar menos ruido si la persona y su peso son exactamente los mismos?",
-        [
-            "A. Porque disminuye la masa de la persona.",
-            "B. Porque cambia la interacción mecánica durante el contacto.",
-            "C. Porque la capa resiliente absorbe directamente todo el sonido aéreo.",
-            "D. Porque la gravedad cambia.",
-        ],
-        1,
-        "La capa resiliente modifica la forma temporal de la fuerza de impacto. "
-        "Al cambiar la duración y rigidez del contacto también cambia su contenido espectral.",
+    st.markdown("## 1 · ¿Qué ocurre durante un impacto?")
+    _asset(
+        "curso2_lab1_etapa4_impacto_fuerza.gif",
+        "Animación conceptual: la fuerza aparece, alcanza un máximo y desaparece durante el contacto."
     )
-
-    # ------------------------------------------------------------------
-    # 2 · IMPACTO COMO FUERZA VARIABLE
-    # ------------------------------------------------------------------
-    st.markdown("### 2 · El impacto como fuerza variable")
-    st.latex(r"F=F(t)")
     st.write(
-        "Durante un impacto, la fuerza no es constante. Aumenta rápidamente, alcanza un máximo "
-        "y posteriormente disminuye."
+        "Un impacto no es una fuerza constante. La interacción entre el elemento que golpea y el piso "
+        "produce una **fuerza variable en el tiempo**."
     )
-    st.latex(r"\boxed{J=\int F(t)\,dt}")
-    st.write("**J:** impulso mecánico · **F(t):** fuerza · **dt:** intervalo temporal.")
-    st.info("En esta etapa interesa reconocer tres atributos del impacto: **magnitud, duración y forma temporal**.")
-
-    _card(
-        "EN PALABRAS SIMPLES",
-        "Un golpe no se caracteriza solamente por “qué tan fuerte fue”. También importa cuánto duró el contacto. "
-        "Una cuchara metálica y una pelota de goma pueden entregar impactos de energía comparable, pero la interacción temporal es distinta.",
+    st.latex(r"F=F(t)")
+    c1,c2,c3=st.columns(3)
+    with c1:
+        st.metric("Magnitud", "Fmáx")
+    with c2:
+        st.metric("Duración", "Δt")
+    with c3:
+        st.metric("Forma temporal", "F(t)")
+    _concept(
+        "Idea clave",
+        "Dos impactos con una carga estática semejante pueden excitar de manera muy distinta al piso "
+        "si cambia la duración o la rigidez del contacto."
     )
-
-    st.markdown("#### Impacto duro vs. impacto resiliente")
-    hard, soft = st.columns(2)
-    with hard:
-        with st.container(border=True):
-            st.markdown("**IMPACTO DURO**")
-            st.write("• contacto corto  \n• pendiente rápida  \n• pico elevado  \n• espectro más extendido hacia altas frecuencias")
-            st.latex(r"\Delta t\downarrow\Rightarrow\text{mayor extensión espectral}")
-    with soft:
-        with st.container(border=True):
-            st.markdown("**IMPACTO RESILIENTE**")
-            st.write("• contacto más prolongado  \n• fuerza distribuida en mayor tiempo  \n• menor contenido relativo de altas frecuencias")
-            st.latex(r"\Delta t\uparrow\Rightarrow\text{menor contenido relativo de alta frecuencia}")
-    st.caption("Esto no significa que las componentes de baja frecuencia desaparezcan.")
 
     # ------------------------------------------------------------------
-    # Interactivo 4.1
+    # 2 · TIME -> FREQUENCY
     # ------------------------------------------------------------------
-    st.markdown("### 🔬 3 · Del tiempo al espectro")
-    st.caption("Simulación conceptual/didáctica. No representa una máquina de impactos normalizada.")
+    st.markdown("## 2 · Del tiempo a la frecuencia")
+    st.write(
+        "La duración del contacto modifica el contenido frecuencial de la excitación. "
+        "Esta relación será una de las entradas físicas del modelo predictivo."
+    )
+    _asset("curso2_lab1_etapa4_tiempo_frecuencia.gif")
 
     dt_ms = st.slider(
         "Duración de contacto Δt (ms)",
-        min_value=0.5,
+        min_value=1.0,
         max_value=30.0,
         value=5.0,
         step=0.5,
         key=f"{ns}_dt",
     )
 
-    # Pulso gaussiano de impulso constante, utilizado solo como demostración.
-    dt = dt_ms / 1000.0
+    # Pulso gaussiano normalizado solo con finalidad didáctica.
     t = np.linspace(-0.06, 0.06, 1600)
-    sigma_t = max(dt / 2.355, 1e-5)
-    force = np.exp(-0.5 * (t / sigma_t) ** 2)
-    impulse_area = np.sum(0.5 * (force[:-1] + force[1:]) * np.diff(t))
-    force = force / max(float(impulse_area), 1e-12)  # impulso normalizado
+    sigma_t = max((dt_ms/1000.0)/2.355,1e-5)
+    force = np.exp(-0.5*(t/sigma_t)**2)
+    force /= max(force.max(),1e-12)
+    freqs=np.fft.rfftfreq(len(t),d=t[1]-t[0])
+    spec=np.abs(np.fft.rfft(force))
+    spec/=max(spec.max(),1e-12)
+    valid=freqs<=2000
 
-    fig, ax = plt.subplots()
-    ax.plot(t * 1000, force / force.max())
-    ax.set_xlabel("Tiempo (ms)")
-    ax.set_ylabel("F(t) normalizada")
-    ax.set_title("Forma temporal del impacto")
-    ax.grid(True, alpha=.2)
-    st.pyplot(fig, use_container_width=True)
-    plt.close(fig)
+    ct,cf=st.columns(2)
+    with ct:
+        fig,ax=plt.subplots(figsize=(6,3.4))
+        ax.plot(t*1000,force)
+        ax.set_xlabel("Tiempo (ms)")
+        ax.set_ylabel("F(t) normalizada")
+        ax.set_title("Fuerza en el tiempo")
+        ax.grid(True,alpha=.2)
+        st.pyplot(fig,use_container_width=True)
+        plt.close(fig)
+    with cf:
+        fig,ax=plt.subplots(figsize=(6,3.4))
+        ax.plot(freqs[valid],spec[valid])
+        ax.set_xlabel("Frecuencia (Hz)")
+        ax.set_ylabel("|F(f)| normalizada")
+        ax.set_title("Contenido frecuencial")
+        ax.grid(True,alpha=.2)
+        st.pyplot(fig,use_container_width=True)
+        plt.close(fig)
 
-    freqs = np.fft.rfftfreq(len(t), d=(t[1] - t[0]))
-    spectrum = np.abs(np.fft.rfft(force))
-    spectrum = spectrum / max(spectrum.max(), 1e-12)
-    valid = freqs <= 2000
-
-    fig, ax = plt.subplots()
-    ax.plot(freqs[valid], spectrum[valid])
-    ax.set_xlabel("Frecuencia (Hz)")
-    ax.set_ylabel("|F(f)| normalizada")
-    ax.set_title("Contenido frecuencial conceptual")
-    ax.grid(True, alpha=.2)
-    st.pyplot(fig, use_container_width=True)
-    plt.close(fig)
-
-    _mcq(
-        "duration_q",
-        "Al aumentar la duración del contacto, ¿qué ocurre principalmente con el contenido de alta frecuencia del impacto?",
-        [
-            "A. Aumenta necesariamente.",
-            "B. Tiende a disminuir.",
-            "C. Permanece idéntico.",
-            "D. Desaparece toda la fuerza.",
-        ],
-        1,
-        "Un contacto más prolongado distribuye la fuerza en mayor tiempo y tiende a reducir el contenido relativo de alta frecuencia.",
-    )
-
-    # ------------------------------------------------------------------
-    # 4 · EL PISO PARTICIPA
-    # ------------------------------------------------------------------
-    st.markdown("### 4 · El piso también participa en el impacto")
-    st.latex(r"\boxed{F_{\mathrm{impacto}}\neq\text{propiedad exclusiva del martillo}}")
-    st.write(
-        "La fuerza de contacto depende de la interacción entre el elemento impactante y la respuesta mecánica local del piso."
-    )
-    st.latex(r"Y(f)=\frac{v(f)}{F(f)}")
-    st.write("Un piso con distinta movilidad modifica la interacción durante el impacto.")
-
-    massive, light = st.columns(2)
-    with massive:
-        with st.container(border=True):
-            st.markdown("#### Piso masivo")
-            st.write(
-                "**Ejemplo:** losa de hormigón.  \n"
-                "• alta masa  \n"
-                "• alta impedancia de punto en muchos rangos  \n"
-                "• deformación local pequeña  \n"
-                "• interacción relativamente dura"
-            )
-    with light:
-        with st.container(border=True):
-            st.markdown("#### Piso liviano")
-            st.write(
-                "**Ejemplo:** entramado de madera.  \n"
-                "• mayor movilidad local  \n"
-                "• respuesta local más relevante  \n"
-                "• posición del impacto importante  \n"
-                "• interacción martillo–estructura más acoplada"
-            )
-    st.caption("“Liviano” no significa automáticamente “peor” en todo el rango de frecuencias.")
-    _asset("curso2_lab1_etapa4_mismo_martillo_dos_pisos.webp")
-
-    # ------------------------------------------------------------------
-    # Interactivo 4.2
-    # ------------------------------------------------------------------
-    st.markdown("### 🔬 5 · Mismo martillo, otro piso")
-    floor_type = st.segmented_control(
-        "Selecciona el piso",
-        ["LOSA MASIVA", "PISO LIVIANO"],
-        default="LOSA MASIVA",
-        key=f"{ns}_floor_type",
-    )
-
-    f = np.linspace(20, 800, 700)
-    if floor_type == "LOSA MASIVA":
-        mobility = 0.18 + 0.18 * np.exp(-0.5 * ((f - 180) / 60) ** 2) + 0.12 * np.exp(-0.5 * ((f - 520) / 100) ** 2)
-        contact = np.exp(-f / 680)
-        label = "Movilidad conceptual relativamente menor"
+    if dt_ms <= 6:
+        st.success("Contacto corto → espectro relativamente más extendido hacia altas frecuencias.")
+    elif dt_ms >= 16:
+        st.info("Contacto más prolongado → menor contenido relativo de altas frecuencias.")
     else:
-        mobility = 0.32 + 0.55 * np.exp(-0.5 * ((f - 110) / 45) ** 2) + 0.38 * np.exp(-0.5 * ((f - 360) / 70) ** 2)
-        contact = np.exp(-f / 520)
-        label = "Movilidad conceptual mayor y con resonancias más marcadas"
+        st.info("Duración intermedia → transición entre ambos comportamientos.")
 
-    velocity = mobility * contact
-
-    fig, ax = plt.subplots()
-    ax.plot(f, mobility)
-    ax.set_xlabel("Frecuencia (Hz)")
-    ax.set_ylabel("Y(f) relativa")
-    ax.set_title("Movilidad conceptual del piso")
-    ax.grid(True, alpha=.2)
-    st.pyplot(fig, use_container_width=True)
-    plt.close(fig)
-
-    fig, ax = plt.subplots()
-    ax.plot(f, contact)
-    ax.set_xlabel("Frecuencia (Hz)")
-    ax.set_ylabel("|F(f)| relativa")
-    ax.set_title("Fuerza de contacto conceptual")
-    ax.grid(True, alpha=.2)
-    st.pyplot(fig, use_container_width=True)
-    plt.close(fig)
-
-    fig, ax = plt.subplots()
-    ax.plot(f, velocity)
-    ax.set_xlabel("Frecuencia (Hz)")
-    ax.set_ylabel("v(f) relativa")
-    ax.set_title("Respuesta resultante · v(f)=Y(f)F(f)")
-    ax.grid(True, alpha=.2)
-    st.pyplot(fig, use_container_width=True)
-    plt.close(fig)
-
-    st.info(label)
-    st.latex(r"\boxed{v(f)=Y(f)F(f)}")
-    st.caption("Modelo conceptual simplificado; no corresponde a un cálculo FEM.")
-
-    _mcq(
-        "same_hammer",
-        "Si la misma máquina de impactos se coloca sobre dos pisos diferentes, ¿podemos asumir que la fuerza efectiva transmitida es exactamente idéntica?",
-        ["A. Sí.", "B. No."],
-        1,
-        "La interacción entre martillo y piso depende de la respuesta mecánica local del sistema.",
+    # ------------------------------------------------------------------
+    # 3 · FLOOR PARTICIPATES
+    # ------------------------------------------------------------------
+    st.markdown("## 3 · El piso también participa")
+    st.write(
+        "La excitación por impacto no puede separarse completamente de la estructura que recibe el golpe. "
+        "El piso tiene una respuesta dinámica propia."
+    )
+    st.latex(r"\boxed{Y(f)=\frac{v(f)}{F(f)}}")
+    st.latex(r"\boxed{v(f)=Y(f)\,F(f)}")
+    st.caption("Y(f): movilidad · v(f): velocidad vibratoria · F(f): fuerza de excitación.")
+    _asset(
+        "curso2_lab1_etapa4_dos_pisos.gif",
+        "Misma excitación conceptual; distinta movilidad → distinta respuesta vibratoria."
+    )
+    _concept(
+        "Conexión con la Etapa 2",
+        "Ya aprendiste qué es la movilidad. Aquí la usamos específicamente para comprender "
+        "por qué un impacto puede producir respuestas distintas en dos pisos."
     )
 
     # ------------------------------------------------------------------
-    # 6 · POSICIÓN DEL IMPACTO
+    # 4 · SAME IMPACT, TWO FLOORS
     # ------------------------------------------------------------------
-    st.markdown("### 6 · La posición del impacto también importa")
+    st.markdown("## 4 · Laboratorio: mismo impacto, dos pisos")
     st.write(
-        "En pisos livianos o modulares, la movilidad local puede cambiar considerablemente con la posición."
+        "Compara dos estructuras sometidas a la misma excitación conceptual. "
+        "El objetivo no es decidir cuál piso es 'mejor' en general, sino observar cómo cambia v(f)."
+    )
+
+    profiles={
+        "Losa de hormigón 200 mm": {"base":0.18,"p1":170,"a1":0.18,"p2":510,"a2":0.11},
+        "Losa de hormigón 120 mm": {"base":0.24,"p1":150,"a1":0.28,"p2":470,"a2":0.17},
+        "Piso liviano entramado": {"base":0.34,"p1":110,"a1":0.52,"p2":350,"a2":0.36},
+    }
+    ca,cb=st.columns(2)
+    with ca:
+        floor_a=st.selectbox("Piso A",list(profiles),index=0,key=f"{ns}_floor_a")
+    with cb:
+        floor_b=st.selectbox("Piso B",list(profiles),index=2,key=f"{ns}_floor_b")
+
+    f=np.linspace(20,800,700)
+    force_f=np.exp(-f/620)
+
+    def mobility(cfg):
+        return (
+            cfg["base"]
+            +cfg["a1"]*np.exp(-0.5*((f-cfg["p1"])/55)**2)
+            +cfg["a2"]*np.exp(-0.5*((f-cfg["p2"])/95)**2)
+        )
+
+    YA=mobility(profiles[floor_a]); YB=mobility(profiles[floor_b])
+    vA=YA*force_f; vB=YB*force_f
+
+    tab1,tab2,tab3=st.tabs(["F(f) · excitación","Y(f) · movilidad","v(f) · respuesta"])
+    with tab1:
+        fig,ax=plt.subplots(figsize=(8,3.6))
+        ax.plot(f,force_f)
+        ax.set_xlabel("Frecuencia (Hz)"); ax.set_ylabel("|F(f)| relativa")
+        ax.set_title("Excitación común para la comparación"); ax.grid(True,alpha=.2)
+        st.pyplot(fig,use_container_width=True); plt.close(fig)
+    with tab2:
+        fig,ax=plt.subplots(figsize=(8,3.6))
+        ax.plot(f,YA,label="Piso A")
+        ax.plot(f,YB,label="Piso B")
+        ax.set_xlabel("Frecuencia (Hz)"); ax.set_ylabel("Y(f) relativa")
+        ax.set_title("Movilidad de los dos pisos"); ax.grid(True,alpha=.2); ax.legend()
+        st.pyplot(fig,use_container_width=True); plt.close(fig)
+    with tab3:
+        fig,ax=plt.subplots(figsize=(8,3.6))
+        ax.plot(f,vA,label="Piso A")
+        ax.plot(f,vB,label="Piso B")
+        ax.set_xlabel("Frecuencia (Hz)"); ax.set_ylabel("v(f) relativa")
+        ax.set_title("Respuesta vibratoria resultante"); ax.grid(True,alpha=.2); ax.legend()
+        st.pyplot(fig,use_container_width=True); plt.close(fig)
+
+    f_eval=st.slider("Frecuencia para comparar (Hz)",50,700,160,10,key=f"{ns}_f_eval")
+    ia=int(np.argmin(np.abs(f-f_eval)))
+    ma,mb,mc=st.columns(3)
+    with ma:
+        st.metric(f"Y_A a {f_eval} Hz",f"{YA[ia]:.3f} u.r.")
+    with mb:
+        st.metric(f"Y_B a {f_eval} Hz",f"{YB[ia]:.3f} u.r.")
+    with mc:
+        ratio=float(vB[ia]/max(vA[ia],1e-9))
+        st.metric("v_B / v_A",f"{ratio:.2f}")
+
+    pred=st.radio(
+        "A esta frecuencia, ¿qué piso presenta mayor respuesta vibratoria?",
+        ["Piso A","Piso B","Prácticamente iguales"],
+        index=None,
+        horizontal=True,
+        key=f"{ns}_floor_prediction",
+    )
+    if st.button("Comprobar comparación",key=f"{ns}_floor_check"):
+        if abs(vA[ia]-vB[ia])/max(vA[ia],vB[ia],1e-9)<0.05:
+            correct="Prácticamente iguales"
+        else:
+            correct="Piso A" if vA[ia]>vB[ia] else "Piso B"
+        if pred==correct:
+            st.success("Correcto. La respuesta cambia porque Y(f) cambia, aun usando la misma excitación conceptual.")
+        elif pred is None:
+            st.warning("Selecciona una predicción.")
+        else:
+            st.warning("Revisa v(f)=Y(f)F(f) en la frecuencia seleccionada.")
+
+    # ------------------------------------------------------------------
+    # 5 · POSITION
+    # ------------------------------------------------------------------
+    st.markdown("## 5 · La posición del impacto también importa")
+    st.write(
+        "En un piso real la movilidad puede variar espacialmente. "
+        "Por eso la posición del impacto puede cambiar la respuesta."
     )
     st.latex(r"Y=Y(f,x,y)")
-    _asset("curso2_lab1_etapa4_posiciones_impacto.webp")
 
-    position = st.segmented_control(
-        "¿Dónde golpeas?",
-        ["S1 · Sobre nervio", "S2 · Entre nervios", "S3 · Próximo al borde"],
-        default="S1 · Sobre nervio",
+    pos=st.segmented_control(
+        "Explora la posición",
+        ["S1 · Sobre apoyo/nervio","S2 · Entre apoyos","S3 · Cerca del borde"],
+        default="S1 · Sobre apoyo/nervio",
         key=f"{ns}_position",
     )
-
-    pos_cfg = {
-        "S1 · Sobre nervio": ("BAJA", 0.70, 210),
-        "S2 · Entre nervios": ("ALTA", 1.30, 145),
-        "S3 · Próximo al borde": ("MEDIA", 0.95, 175),
+    cfg={
+        "S1 · Sobre apoyo/nervio":("BAJA",0.58,215),
+        "S2 · Entre apoyos":("ALTA",1.25,145),
+        "S3 · Cerca del borde":("MEDIA",0.88,180),
     }
-    level, amp, fp = pos_cfg[position]
-    fpos = np.linspace(20, 500, 500)
-    ypos = 0.12 + amp / (1 + ((fpos - fp) / 40) ** 2)
-
-    st.metric("Movilidad local relativa", level)
-    fig, ax = plt.subplots()
-    ax.plot(fpos, ypos)
-    ax.set_xlabel("Frecuencia (Hz)")
-    ax.set_ylabel("Y(f) relativa")
-    ax.set_title(f"Respuesta conceptual · {position}")
-    ax.grid(True, alpha=.2)
-    st.pyplot(fig, use_container_width=True)
-    plt.close(fig)
-    st.success("POSICIÓN DE IMPACTO → RESPUESTA DIFERENTE")
+    lev,amp,fp=cfg[pos]
+    fpos=np.linspace(20,500,500)
+    ypos=0.12+amp/(1+((fpos-fp)/42)**2)
+    st.metric("Movilidad local relativa",lev)
+    fig,ax=plt.subplots(figsize=(8,3.5))
+    ax.plot(fpos,ypos)
+    ax.axvline(fp,linestyle="--",alpha=.5)
+    ax.set_xlabel("Frecuencia (Hz)"); ax.set_ylabel("Y(f) relativa")
+    ax.set_title(f"Respuesta conceptual · {pos}"); ax.grid(True,alpha=.2)
+    st.pyplot(fig,use_container_width=True); plt.close(fig)
+    _concept(
+        "Qué debes llevar a la Etapa 5",
+        "Una predicción requiere definir cómo representaremos la respuesta de la losa. "
+        "La estructura no responde igual en todas las frecuencias ni necesariamente en todos los puntos."
+    )
 
     # ------------------------------------------------------------------
-    # 7 · CADENA PREDICTIVA
+    # 6 · RADIATION
     # ------------------------------------------------------------------
-    st.markdown("### 7 · Cadena predictiva del ruido de impacto")
-    st.latex(
-        r"\boxed{F(f)\rightarrow Y(f)\rightarrow v(f)\rightarrow "
-        r"W_{\mathrm{rad}}(f)\rightarrow L_n(f)}"
+    st.markdown("## 6 · De vibración a sonido")
+    _asset(
+        "curso2_lab1_etapa4_radiacion.gif",
+        "La velocidad normal de la losa moviliza el aire del recinto receptor."
     )
     st.write(
-        "Esta es la arquitectura física de un modelo de predicción del nivel de ruido de impacto. "
-        "Todavía no utilizaremos una fórmula cerrada para Lₙ(f)."
+        "Conocer v(f) todavía no entrega directamente Lₙ. "
+        "Debemos estimar cuánto de esa vibración se transforma en potencia acústica."
+    )
+    st.latex(r"W_{\mathrm{rad}}=\rho_0c_0S\sigma\,v_n^2")
+
+    r1,r2,r3=st.columns(3)
+    with r1:
+        vn_um=st.slider("Velocidad normal vₙ (µm/s)",0.1,20.0,4.0,0.1,key=f"{ns}_vn")
+    with r2:
+        area=st.slider("Área radiante S (m²)",5.0,80.0,30.0,1.0,key=f"{ns}_area")
+    with r3:
+        sigma=st.slider("Eficiencia de radiación σ",0.05,1.0,0.35,0.05,key=f"{ns}_sigma")
+
+    rho0=1.2; c0=343.0; vn=vn_um*1e-6
+    Wrad=rho0*c0*area*sigma*vn**2
+    Lw=10*np.log10(max(Wrad,1e-20)/1e-12)
+    rr1,rr2=st.columns(2)
+    with rr1:
+        st.metric("Potencia sonora radiada",f"{Wrad:.2e} W")
+    with rr2:
+        st.metric("Nivel de potencia relativo a 1 pW",f"{Lw:.1f} dB")
+    st.caption(
+        "Laboratorio conceptual: el objetivo es observar tendencias. "
+        "La predicción de Lₙ de la Etapa 5 utilizará un modelo específico para la losa base."
     )
 
-    st.markdown("#### Radiación")
-    st.latex(r"W_{\mathrm{rad}}=\rho_0c_0S\sigma\left\langle v_n^2\right\rangle")
+    # ------------------------------------------------------------------
+    # 7 · BUILD THE CHAIN / BRIDGE TO STAGE 5
+    # ------------------------------------------------------------------
+    st.markdown("## 7 · Construye la cadena que usaremos en la predicción")
     st.write(
-        "Una vez conocida la respuesta vibratoria, todavía debemos conocer cuánto de esa vibración "
-        "se convierte en potencia sonora."
+        "Ordena conceptualmente los eslabones físicos. La salida de uno se convierte en la entrada del siguiente."
     )
-    st.latex(r"\boxed{\mathrm{VIBRACIÓN}\neq\mathrm{RUIDO\ FINAL}}")
 
-    # ------------------------------------------------------------------
-    # Interactivo 4.4
-    # ------------------------------------------------------------------
-    st.markdown("### 🔬 8 · Construye el modelo")
-    model_steps = [
-        ("IMPACTO", r"F(t)", "El contacto genera una fuerza variable en el tiempo."),
-        ("ESPECTRO DE FUERZA", r"F(f)", "La forma temporal del impacto determina su contenido frecuencial."),
-        ("RESPUESTA DEL PISO", r"Y(f)", "La movilidad describe la sensibilidad dinámica local del piso."),
-        ("VELOCIDAD", r"v(f)=Y(f)F(f)", "La fuerza y la movilidad determinan la respuesta vibratoria."),
-        ("RADIACIÓN", r"\sigma,\ W_{\mathrm{rad}}", "La superficie vibrante convierte parte de la energía en sonido."),
-        ("RESULTADO", r"L_n(f)", "El resultado acústico es el final de toda la cadena física."),
+    options=[
+        "— Selecciona —",
+        "F(t) · Fuerza en el tiempo",
+        "F(f) · Espectro de fuerza",
+        "Y(f) · Movilidad del piso",
+        "v(f) · Velocidad vibratoria",
+        "Wrad(f) · Potencia acústica radiada",
+        "Ln(f) · Nivel de ruido de impacto",
     ]
-    build_key = f"{ns}_build_step"
-    if build_key not in st.session_state:
-        st.session_state[build_key] = 0
-
-    current = st.session_state[build_key]
-    with st.container(border=True):
-        st.markdown(f"#### {model_steps[current][0]}")
-        st.latex(model_steps[current][1])
-        st.write(model_steps[current][2])
-
-    b1, b2 = st.columns(2)
-    with b1:
-        if st.button(
-            "Reiniciar",
-            key=f"{ns}_build_reset",
-            use_container_width=True,
-            disabled=current == 0,
-        ):
-            st.session_state[build_key] = 0
-            st.rerun()
-    with b2:
-        if st.button(
-            "Continuar →",
-            key=f"{ns}_build_next",
-            use_container_width=True,
-            type="primary",
-            disabled=current >= len(model_steps) - 1,
-        ):
-            st.session_state[build_key] += 1
-            st.rerun()
-
-    # ------------------------------------------------------------------
-    # 9 · ABSOLUTO VS MEJORA
-    # ------------------------------------------------------------------
-    st.markdown("### 9 · Nivel absoluto y mejora son problemas distintos")
-    qa, qb = st.columns(2)
-    with qa:
-        with st.container(border=True):
-            st.markdown("#### Pregunta A")
-            st.write("¿Cuánto ruido produce este piso?")
-            st.latex(r"L_n(f)")
-    with qb:
-        with st.container(border=True):
-            st.markdown("#### Pregunta B")
-            st.write("¿Cuánto mejora si agregamos un tratamiento?")
-            st.latex(r"\Delta L(f)")
-    st.latex(r"\boxed{\Delta L(f)=L_{n,0}(f)-L_n(f)}")
-    st.latex(r"\boxed{L_n(f)=L_{n,0}(f)-\Delta L(f)}")
-
-    _card(
-        "DOS PROBLEMAS DIFERENTES",
-        "Predecir el nivel absoluto de un piso requiere modelar fuente, estructura y radiación. "
-        "Predecir la mejora de un tratamiento puede ser más sencillo porque se compara el sistema tratado "
-        "con una condición de referencia.",
-    )
-    _asset("curso2_lab1_etapa4_base_tratado.webp")
-
-    st.markdown("### 🔬 10 · Nivel o mejora")
-    _mcq(
-        "level_or_improvement_1",
-        "Caso 1 · “Necesito saber cuánto ruido producirá esta losa desnuda.”",
-        ["A. Lₙ(f)", "B. ΔL(f)"],
-        0,
-        "La pregunta busca un nivel absoluto del sistema.",
-    )
-    _mcq(
-        "level_or_improvement_2",
-        "Caso 2 · “Quiero saber cuánto mejora una solución respecto del piso base.”",
-        ["A. Lₙ(f)", "B. ΔL(f)"],
-        1,
-        "La pregunta compara una condición tratada con una condición de referencia.",
-    )
-
-    # ------------------------------------------------------------------
-    # 11 · LIMITACIONES DE MODELOS
-    # ------------------------------------------------------------------
-    st.markdown("### 11 · Limitaciones de los modelos")
-    st.latex(r"\boxed{\mathrm{MODELO}\neq\mathrm{REALIDAD\ EXACTA}}")
-    st.write(
-        "Una predicción puede depender de propiedades reales de materiales, condiciones de borde, amortiguamiento, "
-        "posición de impacto, geometría, uniones, flanqueo, incertidumbre de la fuerza y radiación acústica."
-    )
-
-    st.markdown("#### Jerarquía de modelos")
-    ma, mb, mc = st.columns(3)
-    with ma:
-        with st.container(border=True):
-            st.markdown("**Modelo conceptual**")
-            st.latex(r"F\rightarrow Y\rightarrow v")
-    with mb:
-        with st.container(border=True):
-            st.markdown("**Modelo analítico**")
-            st.write("Ecuaciones de placas / modelos específicos.")
-    with mc:
-        with st.container(border=True):
-            st.markdown("**Modelo numérico**")
-            st.write("FEM vibroacústico.")
-    st.latex(r"\boxed{\mathrm{EXCITACIÓN}\rightarrow\mathrm{ESTRUCTURA}\rightarrow\mathrm{ACÚSTICA}}")
-
-    _card(
-        "¿PARA QUÉ SIRVE UN MODELO?",
-        "No para “adivinar exactamente” un resultado. Sirve para comparar alternativas, comprender tendencias, "
-        "identificar variables dominantes, dimensionar soluciones, anticipar riesgos y apoyar decisiones de diseño.",
-        "🎓",
-    )
-
-    # ------------------------------------------------------------------
-    # 12 · EJERCICIO
-    # ------------------------------------------------------------------
-    st.markdown("### 12 · Ejercicio de la etapa")
-    st.latex(
-        r"F=120\ \mathrm{N},\qquad "
-        r"Y_A=2.5\times10^{-6}\frac{\mathrm{m/s}}{\mathrm{N}},\qquad "
-        r"Y_B=10\times10^{-6}\frac{\mathrm{m/s}}{\mathrm{N}}"
-    )
-
-    e1, e2 = st.columns(2)
-    with e1:
-        va = st.number_input(
-            "a) v_A (m/s)",
-            min_value=0.0,
-            value=0.0,
-            format="%.6f",
-            key=f"{ns}_va",
-        )
-        ratio = st.number_input(
-            "c) v_B / v_A",
-            min_value=0.0,
-            value=0.0,
-            format="%.2f",
-            key=f"{ns}_ratio",
-        )
-    with e2:
-        vb = st.number_input(
-            "b) v_B (m/s)",
-            min_value=0.0,
-            value=0.0,
-            format="%.6f",
-            key=f"{ns}_vb",
-        )
-        dlv = st.number_input(
-            "Diferencia de nivel vibratorio (dB)",
-            value=0.0,
-            format="%.1f",
-            key=f"{ns}_dlv",
-        )
-
-    if st.button("Comprobar ejercicio", key=f"{ns}_exercise_check"):
-        ok = (
-            abs(va - 3.0e-4) <= 3e-6
-            and abs(vb - 1.2e-3) <= 3e-6
-            and abs(ratio - 4.0) <= 0.05
-            and abs(dlv - 12.04) <= 0.2
-        )
-        if ok:
-            st.success(
-                "Correcto: v_A=3,0×10⁻⁴ m/s; v_B=1,2×10⁻³ m/s; "
-                "v_B/v_A=4 y 20log₁₀(4)≈12 dB."
+    expected=options[1:]
+    selections=[]
+    cols=st.columns(3)
+    for i in range(6):
+        with cols[i%3]:
+            selections.append(
+                st.selectbox(
+                    f"Paso {i+1}",
+                    options,
+                    index=0,
+                    key=f"{ns}_chain_{i}",
+                )
             )
+
+    if st.button("Comprobar cadena",type="primary",key=f"{ns}_chain_check"):
+        hits=sum(a==b for a,b in zip(selections,expected))
+        saved["stage4_chain_hits"]=hits
+        saved["stage4_bridge_ready"]=hits==6
+        _persist()
+        if hits==6:
+            st.success("Cadena completa. Ya tienes preparado el mapa físico que utilizará la predicción de la Etapa 5.")
         else:
-            st.warning("Revisa v=YF y luego 20log₁₀(v_B/v_A).")
+            st.warning(f"{hits} de 6 pasos están en la posición correcta. Sigue la transformación: tiempo → frecuencia → estructura → vibración → radiación → nivel.")
 
-    _mcq(
-        "exercise_interpretation",
-        "¿Podemos concluir que el Piso B producirá exactamente 12 dB más de Lₙ?",
-        ["A. Sí.", "B. No."],
-        1,
-        "Todavía debemos considerar propagación, distribución vibratoria y eficiencia de radiación.",
-    )
+    st.markdown("### Antes de pasar a la Etapa 5")
+    c1,c2,c3,c4=st.columns(4)
+    with c1:
+        st.markdown("**Excitación**")
+        st.latex(r"F(f)")
+    with c2:
+        st.markdown("**Respuesta de la losa**")
+        st.latex(r"Y(f)")
+    with c3:
+        st.markdown("**Vibración**")
+        st.latex(r"v(f)")
+    with c4:
+        st.markdown("**Radiación**")
+        st.latex(r"W_{\mathrm{rad}}(f)")
 
-    # ------------------------------------------------------------------
-    # 13 · COMPRENSIÓN
-    # ------------------------------------------------------------------
-    st.markdown("### 13 · Preguntas de comprensión")
-    st.caption("Formativas y no calificadas.")
-
-    _mcq(
-        "q1",
-        "1. Un impacto más corto tiende a presentar:",
-        [
-            "A. Menor contenido de alta frecuencia.",
-            "B. Mayor extensión espectral hacia altas frecuencias.",
-            "C. Exactamente el mismo espectro.",
-            "D. Solamente componentes bajas.",
-        ],
-        1,
-        "Un contacto más breve concentra la fuerza en el tiempo y extiende relativamente su contenido hacia frecuencias más altas.",
-        store=True,
-    )
-    _mcq(
-        "q2",
-        "2. La fuerza efectiva de una máquina de impactos depende solamente de la masa del martillo.",
-        ["A. Verdadero.", "B. Falso."],
-        1,
-        "También interviene la interacción dinámica entre el martillo y el piso.",
-        store=True,
-    )
-    _mcq(
-        "q3",
-        "3. En un piso liviano, cambiar la posición de impacto puede modificar la respuesta.",
-        ["A. Verdadero.", "B. Falso."],
-        0,
-        "La movilidad local puede variar con la posición sobre nervios, entre nervios o cerca de bordes.",
-        store=True,
-    )
-    _mcq(
-        "q4",
-        "4. Predecir Lₙ(f) y predecir ΔL(f) son exactamente el mismo problema.",
-        ["A. Verdadero.", "B. Falso."],
-        1,
-        "El primero busca un nivel absoluto; el segundo compara una solución con una condición de referencia.",
-        store=True,
-    )
-
-    # ------------------------------------------------------------------
-    # CIERRE
-    # ------------------------------------------------------------------
-    st.markdown("### Cierre")
-    st.latex(
-        r"\boxed{F(t)\rightarrow F(f)\rightarrow Y(f)\rightarrow v(f)\rightarrow "
-        r"W_{\mathrm{rad}}(f)\rightarrow L_n(f)}"
-    )
-    st.write(
-        "El ruido de impacto no depende únicamente del golpe. Es el resultado de la interacción entre la fuente, "
-        "la respuesta dinámica del piso y la eficiencia con que la estructura vibrante radia sonido."
-    )
     st.success(
-        "En la siguiente etapa aplicaremos estos principios para analizar distintas soluciones constructivas de piso "
-        "y entender por qué algunas reducen el impacto y otras pueden fracasar en obra."
+        "**Puente a la Etapa 5:** en la siguiente etapa aplicaremos estas relaciones a una **losa base definida** "
+        "para obtener la predicción de su **nivel de ruido de impacto Lₙ(f)**. "
+        "Recién después podremos estudiar cuánto mejora una solución constructiva respecto de esa base."
     )
 
-    left, right = st.columns(2)
+    if role=="Docente" and not projection_mode:
+        st.markdown("---")
+        st.markdown("## Vista docente · desarrollo esperado")
+        st.write(
+            "La Etapa 4 debe funcionar como puente físico hacia la predicción. "
+            "No se busca todavía obtener Lₙ(f), sino asegurar que el estudiante comprenda la cadena "
+            "F(t) → F(f) → Y(f) → v(f) → Wrad(f) → Lₙ(f)."
+        )
+        st.write(
+            "**Puntos críticos:** impacto corto extiende el contenido relativo hacia altas frecuencias; "
+            "la movilidad correcta es Y=v/F; la misma excitación puede producir respuestas distintas; "
+            "la posición modifica Y(f,x,y); y la vibración necesita un modelo de radiación antes de transformarse en resultado acústico."
+        )
+
+    left,right=st.columns(2)
     with left:
-        if st.button("← Etapa 3", key=f"s4_prev_{class_id}", use_container_width=True):
-            st.session_state[stage_selector_key] = 3
+        if st.button("← Etapa 3",key=f"s4_prev_{class_id}",use_container_width=True):
+            st.session_state[stage_selector_key]=3
             st.rerun()
     with right:
-        if st.button("Etapa 5 →", key=f"s4_next_{class_id}", use_container_width=True):
-            st.session_state[stage_selector_key] = 5
+        if st.button("Etapa 5 · Predecir losa base →",key=f"s4_next_{class_id}",use_container_width=True):
+            st.session_state[stage_selector_key]=5
             st.rerun()
 
 def _render_course2_lab1_stage5(lab, saved):
