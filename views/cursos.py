@@ -4841,20 +4841,44 @@ def _render_course2_lab1_stage6(lab, saved):
         unsafe_allow_html=True,
     )
 
+    st.markdown("### Ejemplos de sistemas reales")
+    link1,link2,link3=st.columns(3)
+    with link1:
+        st.link_button(
+            "ROCKWOOL · suelo flotante",
+            "https://www.rockwool.com/es/productos-y-aplicaciones/aislamiento-suelos-y-forjados/suelo-flotante/suelo-flotante/",
+            use_container_width=True,
+        )
+    with link2:
+        st.link_button(
+            "REGUPOL · capa continua",
+            "https://acoustics.regupol.com/products/range/regupol-comfort/regupol-comfort-5/",
+            use_container_width=True,
+        )
+    with link3:
+        st.link_button(
+            "Kinetics · apoyos discretos",
+            "https://kineticsnoise.com/flm/lift-slab-floor-mount",
+            use_container_width=True,
+        )
+    st.caption(
+        "Los enlaces se incluyen para comparar la idealización del modelo con configuraciones constructivas reales."
+    )
+
     # ==============================================================
     # 2 · CONSTRUIR SOLUCIÓN
     # ==============================================================
-    st.markdown("## 2 · Construye físicamente la solución")
+    st.markdown("## 2 · Construye físicamente el piso flotante")
     st.write(
-        "La losa base ya viene de la Etapa 5. Ahora define únicamente la masa flotante superior "
-        "y el elemento resiliente."
+        "La losa base ya viene de la Etapa 5. Ahora define la **masa flotante superior** "
+        "y el **elemento resiliente** que la separa de la losa base."
     )
 
     c1,c2,c3=st.columns(3)
     with c1:
-        rho1=st.number_input("Densidad de sobrelosa ρ₁ (kg/m³)",800.0,2600.0,2100.0,50.0,key=f"{ns}_rho1")
+        rho1=st.number_input("Densidad de la masa flotante superior ρ₁ (kg/m³)",800.0,2600.0,2100.0,50.0,key=f"{ns}_rho1")
     with c2:
-        h1_mm=st.number_input("Espesor de sobrelosa h₁ (mm)",20.0,120.0,50.0,5.0,key=f"{ns}_h1")
+        h1_mm=st.number_input("Espesor de la masa flotante superior h₁ (mm)",20.0,120.0,50.0,5.0,key=f"{ns}_h1")
     with c3:
         s_dyn=st.number_input("Rigidez dinámica superficial s′ (MN/m³)",1.0,80.0,10.0,0.5,key=f"{ns}_sdyn")
 
@@ -4863,60 +4887,134 @@ def _render_course2_lab1_stage6(lab, saved):
     f0g=_f0_general(s_dyn,m1,m2)
 
     q1,q2,q3,q4=st.columns(4)
-    with q1: _card("m′₁ · Sobrelosa",f"{m1:.1f} kg/m²","Masa superficial de la capa flotante.")
+    with q1: _card("m′₁ · Masa flotante superior",f"{m1:.1f} kg/m²","Masa superficial del elemento superior desacoplado de la losa base.")
     with q2: _card("m′₂ · Losa base",f"{m2:.1f} kg/m²","Dato recuperado de la Etapa 5.")
     with q3: _card("m′ᵣ · Masa reducida",f"{mr:.1f} kg/m²","Masa equivalente para el movimiento relativo.")
-    with q4: _card("f₀ general",f"{f0g:.1f} Hz","Frecuencia natural del sistema de dos masas.",tone="blue")
+    with q4: _card("f₀ · Sistema general",f"{f0g:.1f} Hz","Frecuencia natural del sistema masa flotante–resiliente–losa base.",tone="blue")
 
-    st.markdown("### ¿Qué representa s′?")
-    st.write(
-        "La **rigidez dinámica superficial** indica cuánto se opone el elemento resiliente "
-        "a una deformación dinámica distribuida sobre la superficie."
-    )
-    st.latex(r"s'\;[\mathrm{N/m^3}]\quad \mathrm{o}\quad \mathrm{MN/m^3}")
-    st.warning(
-        "No confundir s′ con el módulo de Young, la rigidez estática, el espesor del material "
-        "ni la constante de un resorte puntual."
+    st.markdown("### Rigidez dinámica superficial del elemento resiliente")
+    sr1,sr2=st.columns([1.1,1])
+    with sr1:
+        if (ASSET_DIR/"curso2_lab1_etapa6_rigidez_dinamica_realista.webp").exists():
+            st.image(str(ASSET_DIR/"curso2_lab1_etapa6_rigidez_dinamica_realista.webp"),width="stretch")
+    with sr2:
+        st.markdown(
+            """
+            <div style="border:1px solid #dbe4ee;border-radius:18px;padding:17px;background:#fff;margin-bottom:10px">
+              <div style="font-weight:850;color:#0f172a;font-size:1.05rem">¿Qué representa s′?</div>
+              <div style="color:#64748b;line-height:1.5;margin-top:.4rem">
+                Mide cuánto se opone el elemento resiliente a una
+                <b>deformación dinámica distribuida</b> sobre la superficie.
+              </div>
+            </div>
+            """,
+            unsafe_allow_html=True,
+        )
+        st.latex(r"\boxed{s'\;[\mathrm{MN/m^3}]}")
+        st.markdown(
+            """
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:10px">
+              <div style="border:1px solid #bbf7d0;border-radius:14px;padding:13px;background:#f0fdf4">
+                <b>s′ alta</b><br>
+                <span style="color:#475569">Apoyo más rígido.<br>Tiende a elevar f₀.</span>
+              </div>
+              <div style="border:1px solid #bfdbfe;border-radius:14px;padding:13px;background:#eff6ff">
+                <b>s′ baja</b><br>
+                <span style="color:#475569">Apoyo más flexible.<br>Tiende a reducir f₀.</span>
+              </div>
+            </div>
+            """,
+            unsafe_allow_html=True,
+        )
+    st.markdown(
+        """
+        <div style="border:1px solid #fde68a;background:#fffbeb;border-radius:14px;padding:13px 16px;margin:.6rem 0 .9rem">
+          <b>No confundir s′ con:</b> módulo de Young E, rigidez estática,
+          espesor del material ni constante de un resorte puntual.
+        </div>
+        """,
+        unsafe_allow_html=True,
     )
 
     # ==============================================================
     # 3 · RESONANCIA APLICADA
     # ==============================================================
-    st.markdown("## 3 · Aplica la resonancia al piso flotante")
+    st.markdown("## 3 · Frecuencia natural del piso flotante")
     st.write(
-        "La resonancia ya fue estudiada en etapas anteriores. Aquí la utilizamos para saber "
-        "dónde el sistema flotante puede presentar una respuesta relativa elevada."
+        "Aplicamos aquí el concepto de resonancia al sistema "
+        "**masa flotante – elemento resiliente – losa base**. "
+        "Cuando la excitación se aproxima a f₀, la respuesta relativa del sistema puede aumentar."
     )
-    st.latex(r"m_r'=\frac{m_1'm_2'}{m_1'+m_2'}")
-    st.latex(r"f_0=\frac{1}{2\pi}\sqrt{\frac{s'}{m_r'}}")
 
-    r1,r2,r3=st.columns(3)
-    with r1:
-        st.markdown("**Si aumenta s′**")
-        st.latex(r"s'\uparrow\Rightarrow f_0\uparrow")
-        st.caption("Un apoyo más rígido eleva la resonancia.")
-    with r2:
-        st.markdown("**Si aumenta la masa flotante**")
-        st.latex(r"m_1'\uparrow\Rightarrow f_0\downarrow")
-        st.caption("Más masa tiende a bajar la resonancia.")
-    with r3:
-        st.markdown("**Si la base es muy pesada**")
-        st.latex(r"m_2'\gg m_1'\Rightarrow m_r'\approx m_1'")
-        st.caption("Aparece la aproximación usada por el modelo continuo.")
+    if (ASSET_DIR/"curso2_lab1_etapa6_sistema_flotante_realista.webp").exists():
+        st.image(str(ASSET_DIR/"curso2_lab1_etapa6_sistema_flotante_realista.webp"),width="stretch")
+
+    with st.container(border=True):
+        st.markdown("### Ecuaciones del sistema")
+        eq1,eq2=st.columns(2)
+        with eq1:
+            st.markdown("**Masa reducida**")
+            st.latex(r"m_r'=\frac{m_1'm_2'}{m_1'+m_2'}")
+        with eq2:
+            st.markdown("**Frecuencia natural**")
+            st.latex(r"f_0=\frac{1}{2\pi}\sqrt{\frac{s'}{m_r'}}")
+
+    st.markdown("### ¿Qué pasa si cambio los parámetros?")
+    rr1,rr2,rr3=st.columns(3)
+    with rr1:
+        st.markdown(
+            """<div style="border:1px solid #bbf7d0;border-radius:16px;padding:15px;background:#f0fdf4;min-height:170px">
+            <b>Apoyo más rígido</b><br><br>
+            <span style="font-size:1.15rem;font-weight:800">s′ ↑ → f₀ ↑</span><br><br>
+            <span style="color:#475569">La resonancia se desplaza hacia frecuencias mayores.</span>
+            </div>""",unsafe_allow_html=True)
+    with rr2:
+        st.markdown(
+            """<div style="border:1px solid #bfdbfe;border-radius:16px;padding:15px;background:#eff6ff;min-height:170px">
+            <b>Mayor masa flotante</b><br><br>
+            <span style="font-size:1.15rem;font-weight:800">m′₁ ↑ → f₀ ↓</span><br><br>
+            <span style="color:#475569">Más masa tiende a bajar la resonancia.</span>
+            </div>""",unsafe_allow_html=True)
+    with rr3:
+        st.markdown(
+            """<div style="border:1px solid #ddd6fe;border-radius:16px;padding:15px;background:#f5f3ff;min-height:170px">
+            <b>Base mucho más pesada</b><br><br>
+            <span style="font-size:1.05rem;font-weight:800">m′₂ ≫ m′₁ → m′ᵣ ≈ m′₁</span><br><br>
+            <span style="color:#475569">Aparece la aproximación utilizada por el modelo continuo.</span>
+            </div>""",unsafe_allow_html=True)
 
     if model=="Cremer/Vigran":
         f0_model=_f0_cont(s_dyn,m1)
-        st.info(
-            f"Para la formulación continua usamos la aproximación de base pesada: "
-            f"**f₀,cont ≈ {f0_model:.1f} Hz**. "
-            f"No es un error que difiera del f₀ general = {f0g:.1f} Hz."
-        )
     else:
         f0_model=f0g
-        st.info(
-            f"Para el sistema con apoyos discretos conservamos como referencia dinámica "
-            f"**f₀ ≈ {f0_model:.1f} Hz**."
+
+    st.markdown("### Comparación de frecuencias naturales")
+    cf1,cf2=st.columns(2)
+    with cf1:
+        _card(
+            "Sistema general de dos masas",
+            f"{f0g:.1f} Hz",
+            "Considera el movimiento relativo de ambas masas mediante m′ᵣ."
         )
+    with cf2:
+        if model=="Cremer/Vigran":
+            _card(
+                "Modelo continuo simplificado",
+                f"{f0_model:.1f} Hz",
+                "Supone una base suficientemente pesada y usa principalmente m′₁.",
+                tone="blue"
+            )
+        else:
+            _card(
+                "Modelo seleccionado",
+                f"{f0_model:.1f} Hz",
+                "Para apoyos discretos se conserva la referencia dinámica general.",
+                tone="blue"
+            )
+
+    st.info(
+        "Si los dos valores de f₀ son distintos, **no es un error**: corresponden a hipótesis diferentes del sistema."
+    )
 
     # ==============================================================
     # 4 · MODELO ACÚSTICO
@@ -4924,47 +5022,66 @@ def _render_course2_lab1_stage6(lab, saved):
     st.markdown("## 4 · De la dinámica a la mejora acústica ΔLₙ(f)")
     st.write(
         "La frecuencia natural por sí sola **no entrega la mejora acústica**. "
-        "Ahora necesitamos una formulación compatible con la construcción."
+        "Ahora usamos la formulación compatible con la construcción seleccionada."
+    )
+
+    active_bg="#eff6ff" if model=="Cremer/Vigran" else "#f0fdf4"
+    active_bd="#bfdbfe" if model=="Cremer/Vigran" else "#bbf7d0"
+    st.markdown(
+        f"""<div style="border:2px solid {active_bd};border-radius:18px;padding:16px 18px;background:{active_bg};margin:.5rem 0 .9rem">
+        <div style="font-size:1.05rem;font-weight:850;color:#0f172a">MODELO ACTIVO</div>
+        <div style="font-size:1.45rem;font-weight:900;margin:.25rem 0">{model}</div>
+        <div style="color:#475569">La configuración física del piso determinó automáticamente este modelo.</div>
+        </div>""",
+        unsafe_allow_html=True,
     )
 
     if model=="Cremer/Vigran":
-        st.markdown("### Modelo para capa resiliente continua")
-        st.write(
-            "Se aplica cuando la masa superior descansa sobre una capa resiliente prácticamente continua."
-        )
-        st.latex(
-            r"\boxed{\Delta L_n(f)=20\log_{10}\left("
-            r"\frac{(2\pi f)^2m_1'}{s'}"
-            r"\right)}"
-        )
-        st.write("Definiendo:")
+        st.markdown("### Capa resiliente continua")
+        st.write("La masa flotante superior descansa sobre una capa resiliente distribuida prácticamente en toda la superficie.")
+        with st.container(border=True):
+            st.markdown("**Ecuación principal**")
+            st.latex(
+                r"\boxed{\Delta L_n(f)=20\log_{10}\left("
+                r"\frac{(2\pi f)^2m_1'}{s'}"
+                r"\right)}"
+            )
+            st.caption("Calcula la mejora por banda a partir de frecuencia, masa flotante y rigidez dinámica superficial.")
+
+        st.markdown("### Misma formulación expresada mediante f₀,cont")
+        flow1,flow2,flow3=st.columns([1,1,1])
+        with flow1:
+            _card("Parámetros del piso",f"m′₁={m1:.1f} kg/m²",f"s′={s_dyn:.2f} MN/m³")
+        with flow2:
+            _card("Frecuencia natural continua",f"{f0_model:.1f} Hz","Resultado de m′₁ y s′.")
+        with flow3:
+            _card("Salida del modelo","ΔLₙ(f)","Mejora acústica por banda.",tone="blue")
         st.latex(
             r"f_{0,\mathrm{cont}}\approx\frac{1}{2\pi}\sqrt{\frac{s'}{m_1'}}"
         )
-        st.write("la misma expresión puede escribirse como:")
         st.latex(
             r"\boxed{\Delta L_n(f)=40\log_{10}\left("
             r"\frac{f}{f_{0,\mathrm{cont}}}"
             r"\right)}"
         )
-        p1,p2,p3=st.columns(3)
-        with p1: _card("f","Hz","Banda en la que calculamos la mejora.")
-        with p2: _card("m′₁","kg/m²","Masa superficial de la sobrelosa.")
-        with p3: _card("s′","MN/m³","Rigidez dinámica superficial de la capa resiliente.")
+
+        st.markdown("### Variables que entran al cálculo")
+        p1,p2,p3,p4=st.columns(4)
+        with p1: _card("Frecuencia f",f"{250 if 250 in bands else bands[0]} Hz","Banda donde evaluaremos la mejora.")
+        with p2: _card("Masa flotante m′₁",f"{m1:.1f} kg/m²","Masa superficial del elemento superior.")
+        with p3: _card("Rigidez s′",f"{s_dyn:.2f} MN/m³","Rigidez dinámica superficial del desacople.")
+        with p4: _card("f₀,cont",f"{f0_model:.1f} Hz","Referencia dinámica del modelo.",tone="blue")
     else:
-        st.markdown("### Modelo para apoyos resilientes discretos")
-        st.write(
-            "Se aplica cuando la masa flotante descansa sobre pads, plots o aisladores separados."
-        )
-        st.latex(
-            r"\boxed{\Delta L_n(f)\approx10\log_{10}\left["
-            r"\frac{c_{L1}h_1N\eta_{11}}{2\pi^3f_0^4}\,f^3"
-            r"\right]}"
-        )
-        st.write(
-            "En este modelo aparece **N**, la densidad de apoyos por unidad de superficie. "
-            "La tendencia con \(f^3\) conduce aproximadamente a 9 dB/octava bajo las hipótesis correspondientes."
-        )
+        st.markdown("### Apoyos resilientes discretos")
+        st.write("La masa flotante descansa sobre pads, plots o aisladores separados.")
+        with st.container(border=True):
+            st.markdown("**Ecuación principal**")
+            st.latex(
+                r"\boxed{\Delta L_n(f)\approx10\log_{10}\left["
+                r"\frac{c_{L1}h_1N\eta_{11}}{2\pi^3f_0^4}\,f^3"
+                r"\right]}"
+            )
+        st.write("En este modelo aparece N, la densidad de apoyos por unidad de superficie.")
         p1,p2,p3=st.columns(3)
         with p1:
             Nsup=st.number_input("Densidad de apoyos N (1/m²)",0.5,20.0,4.0,0.5,key=f"{ns}_N")
@@ -4973,9 +5090,12 @@ def _render_course2_lab1_stage6(lab, saved):
         with p3:
             eta11=st.number_input("Factor de pérdidas η₁₁",0.005,0.100,0.020,0.005,key=f"{ns}_eta11")
 
-    st.warning(
-        "Transmisibilidad mecánica y ΔLₙ no son la misma magnitud. "
-        "La primera describe transmisión de fuerza en un sistema ideal; la segunda es una mejora vibroacústica por banda."
+    st.markdown(
+        """<div style="border:1px solid #fde68a;background:#fffbeb;border-radius:14px;padding:13px 16px;margin:.7rem 0 .9rem">
+        <b>No confundir:</b> la transmisibilidad mecánica describe fuerza transmitida;
+        ΔLₙ(f) representa una <b>mejora acústica por banda</b>.
+        </div>""",
+        unsafe_allow_html=True,
     )
 
     # ==============================================================
@@ -5104,10 +5224,12 @@ def _render_course2_lab1_stage6(lab, saved):
     # 7 · DEFECTOS
     # ==============================================================
     st.markdown("## 7 · ¿Qué pasa si la obra deja de parecerse al modelo?")
-    _asset(
-        "curso2_lab1_etapa6_puente_rigido.gif",
-        "Un contacto rígido lateral crea un camino mecánico paralelo al elemento resiliente."
-    )
+    if (ASSET_DIR/"curso2_lab1_etapa6_puente_rigido_realista.webp").exists():
+        st.image(
+            str(ASSET_DIR/"curso2_lab1_etapa6_puente_rigido_realista.webp"),
+            width="stretch",
+            caption="Comparación constructiva: desacople perimetral correcto frente a contacto rígido lateral."
+        )
     st.write(
         "Los modelos anteriores suponen un desacople definido. "
         "Un puente rígido puede introducir un camino adicional de transmisión."
