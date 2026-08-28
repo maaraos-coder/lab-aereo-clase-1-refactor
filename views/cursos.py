@@ -6228,11 +6228,29 @@ def _render_course2_lab1_stage8(lab, saved):
         """,
         unsafe_allow_html=True
     )
-    st.latex(
-        r"\boxed{\mathrm{EQUIPO}\rightarrow\mathrm{MECANISMO}\rightarrow"
-        r"\mathrm{CAMINO}\rightarrow\mathrm{MEDIDA}\rightarrow\mathrm{VERIFICACIÓN}}"
+    st.markdown(
+        """
+        <style>
+        .s8-route{display:grid;grid-template-columns:repeat(5,1fr);gap:10px;margin:.4rem 0 .7rem}
+        .s8-step{position:relative;background:#fff;border:1px solid #d8e3ef;border-radius:15px;padding:13px 13px 14px;min-height:104px}
+        .s8-step:not(:last-child):after{content:'→';position:absolute;right:-10px;top:37px;color:#7890aa;font-weight:900;font-size:1.15rem;z-index:3}
+        .s8-num{font-size:.72rem;font-weight:900;color:#2563eb;letter-spacing:.06em}
+        .s8-title{font-size:.94rem;font-weight:900;color:#0f2748;margin:.18rem 0}
+        .s8-sub{font-size:.79rem;color:#64748b;line-height:1.3}
+        .s8-principle{border:1px solid #bcd2ed;background:linear-gradient(90deg,#f4f8ff,#eef7ff);border-radius:15px;padding:13px 16px;margin:0 0 1rem;color:#17365d}
+        @media(max-width:900px){.s8-route{grid-template-columns:1fr}.s8-step:not(:last-child):after{display:none}}
+        </style>
+        <div class="s8-route">
+          <div class="s8-step"><div class="s8-num">01</div><div class="s8-title">EQUIPO</div><div class="s8-sub">¿Qué instalación tengo y en qué condición opera?</div></div>
+          <div class="s8-step"><div class="s8-num">02</div><div class="s8-title">MECANISMO</div><div class="s8-sub">¿Qué genera realmente el ruido o la vibración?</div></div>
+          <div class="s8-step"><div class="s8-num">03</div><div class="s8-title">CAMINO</div><div class="s8-sub">¿Por dónde llega la energía al receptor?</div></div>
+          <div class="s8-step"><div class="s8-num">04</div><div class="s8-title">MEDIDA</div><div class="s8-sub">¿Dónde conviene actuar para cortar el problema?</div></div>
+          <div class="s8-step"><div class="s8-num">05</div><div class="s8-title">VERIFICACIÓN</div><div class="s8-sub">¿La solución redujo el mecanismo o camino dominante?</div></div>
+        </div>
+        <div class="s8-principle"><b>Principio de diagnóstico:</b> no selecciones una medida de control antes de identificar <b>qué genera el problema</b> y <b>por qué camino llega al receptor</b>. &nbsp; Diagnosticar primero → controlar después.</div>
+        """,
+        unsafe_allow_html=True,
     )
-    st.info("No se selecciona una medida de control antes de identificar el problema y el camino de transmisión.")
 
     # =========================================================
     # 1 · SISTEMA COMPLETO
@@ -6252,200 +6270,364 @@ def _render_course2_lab1_stage8(lab, saved):
         ["Fuente","Camino estructural","Camino aéreo / ducto","Conexiones","Ubicación / recinto"],
         horizontal=True,key=f"{ns}_zone"
     )
-    zone_data={
-        "Fuente":("Reducir generación","selección de equipo, punto de operación, balanceo, alineación, mantenimiento, control de cavitación o turbulencia."),
-        "Camino estructural":("Reducir fuerza transmitida","aisladores, resortes, elastómeros, bancadas, soportes resilientes y eliminación de puentes rígidos."),
-        "Camino aéreo / ducto":("Reducir propagación acústica","silenciadores, ductos revestidos, cerramientos, barreras y control de flujo."),
-        "Conexiones":("Evitar puentes mecánicos","conectores flexibles, soportes resilientes, manguitos y penetraciones desacopladas."),
-        "Ubicación / recinto":("Reducir exposición","separación de receptores sensibles, recintos técnicos, absorción y envolventes adecuadas."),
-    }
-    _card(zone,*zone_data[zone],tone="blue")
+
+    if zone=="Fuente":
+        st.markdown("### Actuar en la fuente · reducir lo que nace en el equipo")
+        st.write(
+            "Controlar en la fuente significa modificar la **selección, operación o condición física del equipo** para que "
+            "genere menos fuerza dinámica, turbulencia, pulsaciones o ruido antes de que la energía entre a los caminos de transmisión."
+        )
+        f1,f2,f3=st.columns(3)
+        with f1:
+            _card("Selección y punto de operación","Evitar generar de más",
+                  "Seleccionar equipos con datos acústicos adecuados; evitar sobredimensionamiento; operar bombas y ventiladores cerca de su zona eficiente; reducir RPM con variador cuando el proceso lo permita.",tone="blue")
+            _card("Condición mecánica","Rotor / eje / acoplamiento",
+                  "Balanceo dinámico, alineación motor–bomba, revisión de rodamientos, holguras, acoplamientos, correas y piezas sueltas. Un aislador no corrige un rotor desequilibrado.")
+        with f2:
+            _card("Condición hidráulica","Bombas",
+                  "Revisar caudal, presión de succión, NPSH, válvulas, obstrucciones y pérdidas en aspiración. Evitar cavitación y pulsaciones hidráulicas.",tone="green")
+            _card("Condición aerodinámica","Ventiladores / ductos",
+                  "Reducir velocidad excesiva, evitar entrada distorsionada, codos inmediatos, transiciones abruptas y grandes pérdidas de presión que regeneren ruido.")
+        with f3:
+            _card("Mantenimiento","Conservar la condición de diseño",
+                  "Lubricación, limpieza de impulsor/ventilador, tensión de correas, rodamientos, filtros, válvulas y aprietes. El deterioro puede aumentar ruido aunque el aislamiento sea correcto.",tone="orange")
+            st.markdown("**Ejemplo técnico**")
+            st.latex(r"f_{1\times}=\frac{\mathrm{RPM}}{60}")
+            st.caption("1500 RPM → 25 Hz. Cambiar la velocidad cambia también las frecuencias de excitación que pueden coincidir con resonancias.")
+
+        st.markdown("#### Mini ejercicio · ¿actúa realmente en la fuente?")
+        source_action=st.selectbox(
+            "Selecciona una medida",
+            ["Balancear el impulsor","Instalar resortes bajo la bomba","Corregir cavitación","Instalar un silenciador en un ducto","Alinear motor y bomba","Agregar absorción al recinto"],
+            key=f"{ns}_source_action"
+        )
+        source_true={"Balancear el impulsor","Corregir cavitación","Alinear motor y bomba"}
+        if source_action in source_true:
+            st.success("Sí. Esta acción modifica directamente la generación en el equipo o proceso.")
+        else:
+            mapping={
+                "Instalar resortes bajo la bomba":"Actúa principalmente sobre el camino estructural.",
+                "Instalar un silenciador en un ducto":"Actúa sobre la propagación por ducto.",
+                "Agregar absorción al recinto":"Actúa sobre el campo acústico del recinto, no sobre la generación."
+            }
+            st.info(mapping.get(source_action,"No actúa directamente en la fuente."))
+
+    elif zone=="Camino estructural":
+        st.markdown("### Camino estructural · reducir la fuerza que entra al edificio")
+        c1,c2,c3=st.columns(3)
+        with c1: _card("Aislamiento vibratorio","Resortes / elastómeros","Seleccionar por frecuencia perturbadora, frecuencia natural, deflexión y carga real; no solo por tipo de material.",tone="green")
+        with c2: _card("Bancada y soporte","Controlar movimiento","Una base de inercia puede estabilizar conjuntos y distribuir cargas, pero debe integrarse con el sistema de aislación.")
+        with c3: _card("Evitar puentes","Revisar montaje","Pernos, anclajes, tuberías, ductos y apoyos rígidos pueden crear caminos paralelos y anular parte del aislamiento.",tone="orange")
+
+    elif zone=="Camino aéreo / ducto":
+        st.markdown("### Camino aéreo / ducto · controlar propagación y regeneración")
+        c1,c2,c3=st.columns(3)
+        with c1: _card("Reducir generación por flujo","Velocidad y geometría","Aumentar sección, usar transiciones graduales, evitar codos/compuertas mal ubicados y flujo muy turbulento.",tone="blue")
+        with c2: _card("Atenuar en el camino","Silenciadores / revestimientos","Silenciadores, ductos revestidos y plenums deben seleccionarse por espectro, pérdida de carga y espacio disponible.")
+        with c3: _card("Controlar breakout","Carcasa / ducto","Mejorar cerramientos, masa y tratamiento cuando el ruido rompe a través del ducto o carcasa antes de llegar al terminal.",tone="orange")
+
+    elif zone=="Conexiones":
+        st.markdown("### Conexiones · evitar caminos mecánicos paralelos")
+        c1,c2,c3=st.columns(3)
+        with c1: _card("Conectores flexibles","Bomba–tubería / ventilador–ducto","Desacoplan movimientos y reducen transferencia mecánica cuando están correctamente dimensionados e instalados.",tone="green")
+        with c2: _card("Soportes resilientes","Tuberías y ductos","Evitan que la vibración del servicio se inyecte directamente en muros, losas o estructuras auxiliares.")
+        with c3: _card("Penetraciones","Manguitos y sellos","Una penetración rígida puede puentear el sistema; el detalle constructivo forma parte de la solución.",tone="orange")
+
+    else:
+        st.markdown("### Ubicación / recinto · controlar exposición y campo acústico")
+        c1,c2,c3=st.columns(3)
+        with c1: _card("Ubicación","Alejar receptores sensibles","Separar salas técnicas de dormitorios, estudios u otros espacios críticos reduce la exigencia sobre tratamientos posteriores.",tone="blue")
+        with c2: _card("Recinto técnico","Absorción y envolvente","Absorción reduce acumulación reverberante; cerramientos y puertas controlan transmisión aérea hacia espacios vecinos.")
+        with c3: _card("Operación","Horario y mantenimiento","Una estrategia profesional también considera periodos sensibles, accesibilidad, ventilación, mantenimiento y verificación posterior.",tone="green")
 
 
     # =========================================================
     # 2 · LAB A: DIAGNÓSTICO
     # =========================================================
-    st.markdown("## 2 · Laboratorio A — ¿Cómo demostrarías cuál es el problema?")
+    st.markdown("## 2 · Laboratorio A — Diagnóstico de una bomba centrífuga")
     st.markdown(
         """
-        **Caso profesional.** Un dormitorio ubicado sobre una sala técnica presenta un zumbido nocturno.
-        La bomba centrífuga trabaja a **1500 RPM**, pero todavía no sabemos si el problema se origina en
-        desequilibrio/desalineación, cavitación, transmisión por tuberías, vibración estructural o radiación aérea.
+        **Caso profesional.** Un dormitorio sobre una sala técnica presenta un zumbido nocturno. La bomba trabaja a **1500 RPM**.
+        Todavía no sabemos si domina un fenómeno rotacional, una condición hidráulica, la transmisión por la base, las tuberías o la radiación aérea.
 
-        **Tu misión no es escoger una solución todavía.** Primero debes construir evidencia suficiente para responder:
-
-        1. **¿Qué está excitando el sistema?**
-        2. **¿Por qué camino se transmite?**
-        3. **¿Qué llega realmente al receptor?**
+        **Objetivo:** diseñar una campaña, observar los resultados y construir las evidencias tú mismo. La app no entregará la conclusión antes de que analices los datos.
         """
     )
 
-    st.markdown("### 2.1 · Diseña el plan de medición")
+    # ---------------------------------------------------------
+    # 2.1 Cavitación y NPSH: prerrequisito
+    # ---------------------------------------------------------
+    st.markdown("### 2.1 · Antes de diagnosticar: ¿qué es la cavitación?")
     st.write(
-        "Cada medición responde una pregunta distinta. Revisa primero qué demuestra cada una y después construye tu plan."
+        "La **cavitación** puede aparecer cuando la presión local del líquido cae hasta valores cercanos a su presión de vapor. "
+        "Se forman cavidades o burbujas de vapor que luego llegan a zonas de mayor presión y colapsan. Ese proceso puede generar ruido, vibración, pérdida de desempeño y, si persiste, erosión del impulsor."
     )
-
-    _asset("curso2_lab1_etapa8_bomba_medicion_profesional.webp")
-    st.caption("Puntos sugeridos: A base/apoyo · B carcasa/motor · C tubería de descarga · D tubería horizontal.")
-
-    # Tabla visual de diagnóstico
-    rows=[
-        ("RPM / tacómetro","Eje del motor","¿Cuál es la frecuencia mecánica de excitación?","1×RPM, 2×RPM, armónicos"),
-        ("Vibración de carcasa","B · motor/bomba","¿La propia máquina vibra fuertemente?","Picos en órdenes de giro"),
-        ("Vibración de base","A · apoyo/losa","¿La fuerza dinámica entra a la estructura?","Misma componente presente en apoyo"),
-        ("Vibración de tuberías","C y D","¿La tubería funciona como camino paralelo?","Componente común que se mantiene a distancia"),
-        ("Ruido por bandas","Dormitorio","¿Qué frecuencias recibe el ocupante?","Tono/banda coincidente con la excitación"),
-        ("Presión, caudal y NPSH","Succión/impulsión","¿Hay una causa hidráulica?","Condición compatible con cavitación/pulsación"),
-    ]
     st.markdown(
         """
-        <style>
-        .s8diag-grid{display:grid;grid-template-columns:1.05fr .9fr 1.5fr 1.45fr;gap:1px;
-        background:#dbe4ee;border:1px solid #dbe4ee;border-radius:14px;overflow:hidden;margin:.5rem 0 1rem}
-        .s8diag-h{background:#eaf2ff;padding:10px 12px;font-weight:850;color:#17365d}
-        .s8diag-c{background:#fff;padding:10px 12px;color:#334155;line-height:1.35}
-        </style>
+        <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin:.55rem 0 1rem">
+          <div style="border:1px solid #cfe0f1;border-radius:14px;padding:13px;background:#fff"><b>1 · Baja la presión local</b><br><span style="color:#64748b">Zona de succión/entrada del impulsor.</span></div>
+          <div style="border:1px solid #cfe0f1;border-radius:14px;padding:13px;background:#fff"><b>2 · Se forma vapor</b><br><span style="color:#64748b">Aparecen pequeñas cavidades de vapor.</span></div>
+          <div style="border:1px solid #cfe0f1;border-radius:14px;padding:13px;background:#fff"><b>3 · Viajan a mayor presión</b><br><span style="color:#64748b">Las burbujas salen de la zona de baja presión.</span></div>
+          <div style="border:1px solid #f3c7bf;border-radius:14px;padding:13px;background:#fff7f5"><b>4 · Colapsan</b><br><span style="color:#7c4a42">Generan impulsos, ruido, vibración y posible erosión.</span></div>
+        </div>
         """,unsafe_allow_html=True
     )
-    html='<div class="s8diag-grid">'
-    for h in ["Medición / instrumento","Dónde","Qué pregunta responde","Qué patrón buscar"]:
-        html+=f'<div class="s8diag-h">{h}</div>'
-    for row in rows:
-        for cell in row:
-            html+=f'<div class="s8diag-c">{cell}</div>'
-    html+='</div>'
-    st.markdown(html,unsafe_allow_html=True)
 
-    st.markdown("#### Construye tu plan")
-    plan_options=[
-        "RPM / frecuencia de operación",
-        "Vibración en carcasa y base",
-        "Vibración en tuberías",
-        "Espectro de ruido en dormitorio",
-        "Presión, caudal y NPSH disponible",
-    ]
-    plan=st.multiselect(
-        "Selecciona las mediciones que realizarías para separar fuente, caminos y receptor",
-        plan_options,
-        key=f"{ns}_diag_plan"
-    )
-
-    plan_groups={
-        "Excitación":"RPM / frecuencia de operación" in plan,
-        "Fuente/estructura":"Vibración en carcasa y base" in plan,
-        "Conexiones":"Vibración en tuberías" in plan,
-        "Receptor":"Espectro de ruido en dormitorio" in plan,
-        "Hidráulica":"Presión, caudal y NPSH disponible" in plan,
-    }
-    pc=st.columns(5)
-    for col,(label,ok) in zip(pc,plan_groups.items()):
-        with col:
-            _card(label,"Cubierto" if ok else "Falta",
-                  "Tienes evidencia para esta parte del diagnóstico." if ok else "Incluye una medición que responda esta pregunta.",
-                  tone="green" if ok else "orange")
-
-    if sum(plan_groups.values())>=4:
-        st.success("Plan suficientemente completo para comenzar el diagnóstico.")
-    elif plan:
-        st.info("Todavía falta evidencia para separar con confianza fuente, camino y receptor.")
-
-    st.markdown("### 2.2 · Ejecuta las mediciones: evidencia del caso")
-    st.write(
-        "Ahora la app entrega resultados simulados del levantamiento. No los interpretes por separado: "
-        "busca coincidencias de frecuencia, diferencias entre puntos y evidencia específica del proceso hidráulico."
-    )
-
-    # Resultados en tarjetas propias de diagnóstico
     r1,r2,r3,r4=st.columns(4)
-    with r1:
-        _card("A · Base / apoyo","4.8 mm/s RMS","Pico dominante a 25 Hz. La fuerza dinámica está llegando al apoyo.",tone="green")
-    with r2:
-        _card("C–D · Tuberías","3.9 mm/s RMS","El mismo pico de 25 Hz persiste en la red de tuberías.",tone="green")
-    with r3:
-        _card("Receptor","46 dB @ 25 Hz","El dormitorio contiene una componente coincidente con 1×RPM.",tone="blue")
-    with r4:
-        _card("Velocidad","1500 RPM","1×RPM = 25 Hz. Define una referencia para comparar espectros.",tone="purple")
+    with r1: _card("Ruido","crepitación / banda ancha","Puede sonar irregular, similar a grava o crepitación; no es necesariamente un único tono.",tone="blue")
+    with r2: _card("Vibración","contenido más amplio","Puede aumentar la vibración y agregar energía de banda ancha; un pico a 1×RPM por sí solo no demuestra cavitación.")
+    with r3: _card("Hidráulica","presión + caudal","Cambios de presión, caudal o margen de succión ayudan a comprobar si la hipótesis es físicamente plausible.",tone="green")
+    with r4: _card("Daño","erosión / pitting","La cavitación persistente puede deteriorar superficies del impulsor; es una consecuencia, no el primer indicador a esperar.",tone="orange")
 
-    st.markdown("### 2.3 · Interpreta la coincidencia de frecuencias")
-    st.latex(r"f_{1\times}=\frac{1500}{60}=25\ \mathrm{Hz}")
+    st.markdown("#### ¿Qué es NPSH y por qué se usa?")
     st.write(
-        "Que la base, la tubería y el dormitorio presenten energía a 25 Hz **aumenta la plausibilidad de un origen relacionado con la rotación**, "
-        "pero no permite por sí solo distinguir entre desequilibrio, desalineación, fuerzas hidráulicas o una combinación de ellas."
+        "El NPSH expresa el **margen de presión en la succión respecto de la vaporización del líquido**. Para el diagnóstico distinguimos dos cantidades."
     )
-
-    diagnosis=st.radio(
-        "Con la información disponible, ¿qué conclusión es técnicamente más defendible?",
-        [
-            "Ya está demostrado que la causa es cavitación",
-            "Existe una excitación a 1×RPM y hay al menos dos caminos mecánicos que deben investigarse",
-            "El problema es únicamente ruido aéreo",
-            "La tubería no participa porque la bomba tiene aisladores",
-        ],
-        key=f"{ns}_diag_conclusion"
-    )
-    if diagnosis=="Existe una excitación a 1×RPM y hay al menos dos caminos mecánicos que deben investigarse":
-        st.success(
-            "Correcto. La evidencia permite sostener excitación rotacional y transmisión por base/tuberías, "
-            "pero todavía falta identificar la causa física exacta."
-        )
-    elif diagnosis!="":
-        st.warning("La evidencia disponible todavía no permite sostener esa conclusión.")
-
-    st.markdown("### 2.4 · ¿Cómo confirmarías o descartarías cavitación?")
+    n1,n2=st.columns(2)
+    with n1:
+        _card("NPSH disponible · NPSHₐ","lo determina la instalación",
+              "Depende de la condición de succión: presión absoluta, temperatura/presión de vapor, altura y pérdidas del sistema. Se calcula a partir de mediciones y condiciones de instalación.",tone="green")
+    with n2:
+        _card("NPSH requerido · NPSHᵣ","lo declara la bomba",
+              "Se obtiene de la curva o ficha del fabricante para un caudal y velocidad determinados. No es una constante universal independiente del punto de operación.",tone="blue")
+    st.latex(r"\boxed{M_{NPSH}=NPSH_A-NPSH_R}")
     st.write(
-        "La cavitación no debe inferirse solo porque existe ruido o vibración. Necesitas relacionar el comportamiento "
-        "con las condiciones hidráulicas de la bomba."
+        "Para una primera lectura didáctica, un margen positivo es necesario; un margen pequeño requiere revisión y "
+        "**NPSHₐ ≤ NPSHᵣ** indica una condición de riesgo. En un proyecto real se exige además un margen de diseño apropiado."
     )
-    add_measure=st.radio(
-        "¿Qué verificación adicional aporta evidencia directa para esta hipótesis?",
-        [
-            "Medir únicamente el nivel global dB(A) en el dormitorio",
-            "Comparar NPSH disponible con NPSH requerido y revisar presión/caudal en succión",
-            "Medir temperatura del recinto",
-            "Aumentar la rigidez de los soportes sin medir",
-        ],
-        key=f"{ns}_diag_cav_confirm"
+
+    st.markdown("#### ¿Cómo se obtiene la información?")
+    npsh_rows=[
+        ("Presión de succión","Manómetro o transductor cerca de la succión"),
+        ("Caudal Q","Caudalímetro / sistema de control"),
+        ("Temperatura del líquido","Termómetro / sensor; permite conocer presión de vapor"),
+        ("NPSHₐ","Se calcula con las condiciones hidráulicas de la instalación"),
+        ("NPSHᵣ","Curva o ficha del fabricante al caudal de operación"),
+        ("Ruido y vibración","Sonómetro y acelerómetro/analizador para correlacionar el fenómeno"),
+    ]
+    st.dataframe(pd.DataFrame(npsh_rows,columns=["Dato","Cómo se obtiene"]),hide_index=True,use_container_width=True)
+
+    st.markdown("#### Mini laboratorio · interpreta el margen de NPSH")
+    na,nb=st.columns(2)
+    with na: npsha_demo=st.slider("NPSH disponible, NPSHₐ (m)",1.0,6.0,2.6,0.1,key=f"{ns}_npsha_demo")
+    with nb: npshr_demo=st.slider("NPSH requerido, NPSHᵣ (m)",1.0,6.0,3.1,0.1,key=f"{ns}_npshr_demo")
+    margin_demo=npsha_demo-npshr_demo
+    if margin_demo<=0:
+        _card("Margen de NPSH",f"{margin_demo:+.2f} m","Condición compatible con riesgo de cavitación: la instalación no entrega suficiente margen respecto de lo requerido.",tone="orange")
+    elif margin_demo<0.7:
+        _card("Margen de NPSH",f"{margin_demo:+.2f} m","El margen es positivo pero pequeño. Requiere revisar el criterio de diseño y las condiciones reales.",tone="blue")
+    else:
+        _card("Margen de NPSH",f"{margin_demo:+.2f} m","Existe margen positivo en este ejercicio simplificado; aún deben revisarse las condiciones reales y el criterio del fabricante.",tone="green")
+
+    npsh_action=st.radio(
+        "¿Qué acción puede aumentar el NPSH disponible de la instalación?",
+        ["Aumentar pérdidas en la succión","Reducir pérdidas en la succión / mejorar presión disponible","Cerrar más la válvula de succión","Instalar resortes bajo la bomba"],
+        key=f"{ns}_npsh_action"
     )
-    if add_measure=="Comparar NPSH disponible con NPSH requerido y revisar presión/caudal en succión":
-        st.success(
-            "Correcto. Esa verificación relaciona la hipótesis con el proceso hidráulico y permite confirmar o descartar cavitación."
+    if npsh_action=="Reducir pérdidas en la succión / mejorar presión disponible":
+        st.success("Correcto. Actúas sobre las condiciones hidráulicas que determinan el margen disponible.")
+    elif npsh_action:
+        st.info("Revisa qué variables pertenecen al circuito hidráulico de succión. Los resortes, por ejemplo, actúan sobre transmisión estructural, no sobre NPSH.")
+
+    # ---------------------------------------------------------
+    # 2.2 Plan real de medición
+    # ---------------------------------------------------------
+    st.markdown("### 2.2 · Diseña tu plan de medición")
+    st.write(
+        "Ahora decide **qué medir, dónde medir y qué quieres comprobar**. No es obligatorio medir todo: si ejecutas una campaña incompleta, también tendrás evidencia incompleta."
+    )
+    _asset("curso2_lab1_etapa8_bomba_medicion_profesional.webp")
+    st.caption("A · base/apoyo · B · carcasa/motor · C · tubería de descarga cercana · D · tubería más alejada")
+
+    measure_catalog={
+        "RPM / tacómetro":{
+            "locations":["Eje del motor"],
+            "objectives":["Establecer 1×RPM como referencia espectral"]},
+        "Vibración · velocidad RMS":{
+            "locations":["B · Carcasa/motor","A · Base/apoyo","C · Tubería cercana","D · Tubería alejada"],
+            "objectives":["Caracterizar vibración en la fuente","Comprobar transmisión hacia estructura","Comprobar camino por tuberías","Evaluar persistencia a lo largo de tubería"]},
+        "Ruido · espectro por bandas":{
+            "locations":["Dormitorio receptor","Sala técnica"],
+            "objectives":["Identificar qué frecuencia llega al receptor","Caracterizar radiación aérea en sala"]},
+        "Condición hidráulica / NPSH":{
+            "locations":["Succión de la bomba"],
+            "objectives":["Evaluar condición compatible con cavitación"]},
+    }
+    pc1,pc2,pc3=st.columns([1.05,1,1.45])
+    with pc1:
+        mtype=st.selectbox("Magnitud / instrumento",list(measure_catalog),key=f"{ns}_plan_type")
+    with pc2:
+        mloc=st.selectbox("Dónde medir",measure_catalog[mtype]["locations"],key=f"{ns}_plan_location")
+    with pc3:
+        mobj=st.selectbox("Qué quiero comprobar",measure_catalog[mtype]["objectives"],key=f"{ns}_plan_objective")
+
+    plan=saved.get("stage8_measurement_plan",[])
+    if not isinstance(plan,list): plan=[]
+    badd,breset=st.columns([2,1])
+    with badd:
+        if st.button("Agregar medición al plan",type="primary",use_container_width=True,key=f"{ns}_plan_add"):
+            row={"Medición":mtype,"Punto":mloc,"Objetivo":mobj}
+            if row not in plan:
+                plan.append(row)
+                saved["stage8_measurement_plan"]=plan
+                _persist(); st.rerun()
+            else:
+                st.info("Esa medición ya está en el plan.")
+    with breset:
+        if st.button("Limpiar plan",use_container_width=True,key=f"{ns}_plan_reset"):
+            saved["stage8_measurement_plan"]=[]
+            saved["stage8_campaign_executed"]=False
+            saved["stage8_evidence"]={}
+            _persist(); st.rerun()
+
+    plan=saved.get("stage8_measurement_plan",[])
+    if plan:
+        st.dataframe(pd.DataFrame(plan),hide_index=True,use_container_width=True)
+        selected_points={r["Punto"] for r in plan}
+        coverage={
+            "Excitación":"Eje del motor" in selected_points,
+            "Fuente":"B · Carcasa/motor" in selected_points,
+            "Estructura":"A · Base/apoyo" in selected_points,
+            "Tuberías":bool({"C · Tubería cercana","D · Tubería alejada"}&selected_points),
+            "Receptor":"Dormitorio receptor" in selected_points,
+            "Hidráulica":"Succión de la bomba" in selected_points,
+        }
+        cols=st.columns(6)
+        for col,(lab,ok) in zip(cols,coverage.items()):
+            with col:
+                _card(lab,"Incluido" if ok else "No medido","La campaña entregará datos de esta parte." if ok else "No tendrás evidencia directa de esta parte.",tone="green" if ok else "orange")
+        if st.button("Ejecutar campaña de medición",type="primary",use_container_width=True,key=f"{ns}_campaign_run"):
+            saved["stage8_campaign_executed"]=True
+            _persist(); st.rerun()
+    else:
+        st.info("Agrega al menos una medición para construir la campaña.")
+
+    # ---------------------------------------------------------
+    # 2.3 Resultados sólo de lo que el alumno midió
+    # ---------------------------------------------------------
+    if saved.get("stage8_campaign_executed") and plan:
+        st.markdown("### 2.3 · Ejecuta las mediciones: observa antes de concluir")
+        st.write(
+            "La app muestra únicamente los resultados correspondientes a tu plan. **No se entrega la interpretación automática**: identifica picos, compara puntos y registra tus evidencias."
+        )
+        selected_points={r["Punto"] for r in plan}
+        evidence=saved.get("stage8_evidence",{})
+        if not isinstance(evidence,dict): evidence={}
+
+        freqs=np.array([10,12.5,16,20,25,31.5,40,50,63,80,100,125,160,200],dtype=float)
+        carc=np.array([0.22,0.28,0.34,0.48,7.6,0.72,0.50,0.42,0.34,0.29,0.24,0.20,0.17,0.14])
+        base=np.array([0.12,0.15,0.19,0.29,4.8,0.48,0.33,0.27,0.22,0.19,0.16,0.13,0.11,0.09])
+        pipe_c=np.array([0.10,0.13,0.17,0.25,4.2,0.41,0.31,0.25,0.21,0.17,0.14,0.12,0.10,0.08])
+        pipe_d=np.array([0.08,0.10,0.13,0.20,3.1,0.33,0.25,0.21,0.17,0.14,0.12,0.10,0.08,0.07])
+        lp=np.array([34,35,36,39,46,41,39,38,37,36,35,34,33,32],dtype=float)
+
+        if "Eje del motor" in selected_points:
+            st.markdown("#### Medición · RPM / referencia de giro")
+            q1,q2=st.columns([1,1.2])
+            with q1:
+                _card("Tacómetro","1500 RPM","Dato medido en el eje. Aún debes convertirlo a frecuencia para compararlo con los espectros.",tone="blue")
+            with q2:
+                rpm_calc=st.number_input("Calcula 1×RPM (Hz)",0.0,100.0,0.0,0.5,key=f"{ns}_ev_rpm")
+                if st.button("Registrar evidencia de RPM",key=f"{ns}_ev_rpm_save"):
+                    if abs(rpm_calc-25.0)<=0.5:
+                        evidence["rpm"]="1×RPM = 25 Hz"
+                        saved["stage8_evidence"]=evidence; _persist(); st.success("Evidencia registrada.")
+                    else: st.warning("Revisa la conversión RPM/60.")
+
+        if "B · Carcasa/motor" in selected_points:
+            st.markdown("#### Medición B · Vibración en carcasa")
+            fig,ax=plt.subplots(figsize=(8.5,3.5)); ax.plot(freqs,carc,marker='o'); ax.set_xscale('log'); ax.set_yscale('log'); ax.set_xlabel('Frecuencia (Hz)'); ax.set_ylabel('Velocidad RMS (mm/s)'); ax.grid(True,alpha=.25); ax.set_title('Espectro de vibración · carcasa/motor'); st.pyplot(fig,use_container_width=True); plt.close(fig)
+            dom=st.number_input("¿Cuál es la frecuencia dominante del gráfico? (Hz)",0.0,200.0,0.0,1.0,key=f"{ns}_ev_carc_f")
+            if st.button("Registrar evidencia de carcasa",key=f"{ns}_ev_carc_save"):
+                if abs(dom-25)<=1:
+                    evidence["carcasa"]="Pico dominante de vibración en carcasa a 25 Hz"
+                    saved["stage8_evidence"]=evidence; _persist(); st.success("Evidencia registrada.")
+                else: st.warning("Observa nuevamente el máximo del espectro.")
+
+        if "A · Base/apoyo" in selected_points:
+            st.markdown("#### Medición A · Vibración en base/apoyo")
+            fig,ax=plt.subplots(figsize=(8.5,3.5)); ax.plot(freqs,base,marker='o'); ax.set_xscale('log'); ax.set_yscale('log'); ax.set_xlabel('Frecuencia (Hz)'); ax.set_ylabel('Velocidad RMS (mm/s)'); ax.grid(True,alpha=.25); ax.set_title('Espectro de vibración · base/apoyo'); st.pyplot(fig,use_container_width=True); plt.close(fig)
+            base_interp=st.radio("¿Qué evidencia aporta que la misma componente aparezca en la base?",["La vibración queda confinada a la máquina","Existe evidencia de transmisión hacia la estructura","Demuestra cavitación","Demuestra propagación exclusivamente aérea"],key=f"{ns}_ev_base_q")
+            if st.button("Registrar evidencia estructural",key=f"{ns}_ev_base_save"):
+                if base_interp=="Existe evidencia de transmisión hacia la estructura":
+                    evidence["estructura"]="Componente de 25 Hz presente en base/apoyo: camino estructural plausible"
+                    saved["stage8_evidence"]=evidence; _persist(); st.success("Evidencia registrada.")
+                else: st.warning("La presencia de la componente en el apoyo indica que la fuerza dinámica está entrando al soporte.")
+
+        if "C · Tubería cercana" in selected_points or "D · Tubería alejada" in selected_points:
+            st.markdown("#### Medición · Vibración en tuberías")
+            fig,ax=plt.subplots(figsize=(8.5,3.5))
+            if "C · Tubería cercana" in selected_points: ax.plot(freqs,pipe_c,marker='o',label='C · cercana')
+            if "D · Tubería alejada" in selected_points: ax.plot(freqs,pipe_d,marker='o',label='D · alejada')
+            ax.set_xscale('log'); ax.set_yscale('log'); ax.set_xlabel('Frecuencia (Hz)'); ax.set_ylabel('Velocidad RMS (mm/s)'); ax.grid(True,alpha=.25); ax.legend(); ax.set_title('Espectro de vibración · tuberías'); st.pyplot(fig,use_container_width=True); plt.close(fig)
+            if {"C · Tubería cercana","D · Tubería alejada"}.issubset(selected_points):
+                pipe_interp=st.radio("¿Qué observas al comparar C y D?",["La componente desaparece completamente","La componente de 25 Hz disminuye pero persiste a distancia","La frecuencia cambia a 50 Hz","No hay información útil"],key=f"{ns}_ev_pipe_q")
+                if st.button("Registrar evidencia por tuberías",key=f"{ns}_ev_pipe_save"):
+                    if pipe_interp=="La componente de 25 Hz disminuye pero persiste a distancia":
+                        evidence["tuberias"]="25 Hz persiste desde C hasta D: tuberías constituyen un camino mecánico plausible"
+                        saved["stage8_evidence"]=evidence; _persist(); st.success("Evidencia registrada.")
+                    else: st.warning("Compara la posición del pico y su amplitud en ambos puntos.")
+            else:
+                st.info("Mediste solo un punto de tubería. Puedes detectar vibración, pero tienes menos evidencia para evaluar su persistencia a lo largo de la red.")
+
+        if "Dormitorio receptor" in selected_points:
+            st.markdown("#### Medición · Espectro acústico en dormitorio")
+            fig,ax=plt.subplots(figsize=(8.5,3.5)); ax.plot(freqs,lp,marker='o'); ax.set_xscale('log'); ax.set_xlabel('Frecuencia (Hz)'); ax.set_ylabel('Nivel (dB)'); ax.grid(True,alpha=.25); ax.set_title('Espectro acústico · receptor'); st.pyplot(fig,use_container_width=True); plt.close(fig)
+            recv_f=st.number_input("¿En qué frecuencia aparece la componente más destacada? (Hz)",0.0,200.0,0.0,1.0,key=f"{ns}_ev_recv_f")
+            if st.button("Registrar evidencia en receptor",key=f"{ns}_ev_recv_save"):
+                if abs(recv_f-25)<=1:
+                    evidence["receptor"]="Componente acústica destacada a 25 Hz en el dormitorio"
+                    saved["stage8_evidence"]=evidence; _persist(); st.success("Evidencia registrada.")
+                else: st.warning("Revisa el máximo local más relevante del espectro mostrado.")
+
+        if "Succión de la bomba" in selected_points:
+            st.markdown("#### Medición hidráulica · condición de succión")
+            h1,h2,h3=st.columns(3)
+            with h1: _card("Caudal Q","48 m³/h","Punto de operación del ejercicio.")
+            with h2: _card("NPSHₐ","2.60 m","Calculado a partir de las condiciones medidas en succión.",tone="green")
+            with h3: _card("NPSHᵣ","3.10 m","Valor de la curva del fabricante a Q = 48 m³/h.",tone="blue")
+            margin_ans=st.number_input("Calcula M_NPSH = NPSHₐ − NPSHᵣ (m)",-10.0,10.0,0.0,0.1,key=f"{ns}_ev_npsh_margin")
+            npsh_interp=st.radio("¿Qué significa el resultado?",["Margen suficiente demostrado","Condición compatible con riesgo de cavitación","Demuestra desequilibrio","No tiene relación con la bomba"],key=f"{ns}_ev_npsh_q")
+            if st.button("Registrar evidencia hidráulica",key=f"{ns}_ev_npsh_save"):
+                if abs(margin_ans+0.5)<=0.11 and npsh_interp=="Condición compatible con riesgo de cavitación":
+                    evidence["hidraulica"]="NPSHₐ − NPSHᵣ = −0.50 m: condición hidráulica compatible con riesgo de cavitación"
+                    saved["stage8_evidence"]=evidence; _persist(); st.success("Evidencia registrada.")
+                else: st.warning("Revisa la resta y la interpretación del signo del margen.")
+
+        # -----------------------------------------------------
+        # 2.4 Tablero de evidencia y diagnóstico
+        # -----------------------------------------------------
+        evidence=saved.get("stage8_evidence",{})
+        st.markdown("### 2.4 · Tablero de evidencias construido por ti")
+        labels=[
+            ("Excitación",evidence.get("rpm") or evidence.get("carcasa")),
+            ("Fuente",evidence.get("carcasa")),
+            ("Estructura",evidence.get("estructura")),
+            ("Tuberías",evidence.get("tuberias")),
+            ("Receptor",evidence.get("receptor")),
+            ("Hidráulica",evidence.get("hidraulica")),
+        ]
+        cols=st.columns(3)
+        for i,(lab,val) in enumerate(labels):
+            with cols[i%3]:
+                _card(lab,"Evidencia" if val else "Sin evidencia",val or "No fue medida o todavía no has interpretado correctamente el resultado.",tone="green" if val else "orange")
+
+        st.warning(
+            "La coincidencia de frecuencias **aumenta la evidencia de relación**, pero por sí sola no demuestra causalidad ni identifica el mecanismo físico. El diagnóstico se fortalece al combinar evidencia mecánica, hidráulica y acústica."
         )
 
-    st.markdown("### 2.5 · Construye el diagnóstico preliminar")
-    cpath1,cpath2,cpath3=st.columns(3)
-    with cpath1:
-        _card("Mecanismo probable","Excitación rotacional","La componente 1×RPM merece investigación mecánica/hidráulica.",tone="blue")
-    with cpath2:
-        _card("Caminos confirmados","Base + tuberías","La misma componente aparece en ambos caminos.",tone="green")
-    with cpath3:
-        _card("Dato aún pendiente","Condición hidráulica","Necesario para confirmar o descartar cavitación.",tone="orange")
-
-    hypothesis=st.multiselect(
-        "¿Qué hipótesis mantienes abiertas después de esta primera campaña?",
-        [
-            "Desequilibrio / desalineación",
-            "Fuerzas hidráulicas / pulsaciones",
-            "Cavitación",
-            "Transmisión estructural por base",
-            "Transmisión por tuberías",
-            "Radiación aérea de carcasa",
-        ],
-        key=f"{ns}_diag_hyp_final"
-    )
-
-    if st.button("Guardar diagnóstico preliminar",type="primary",use_container_width=True,key=f"{ns}_diag_save"):
-        if len(hypothesis)<2:
-            st.warning("Mantén abiertas las hipótesis que todavía requieren verificación; no cierres el diagnóstico demasiado pronto.")
-        else:
-            saved["stage8_diagnosis"]={
-                "plan":plan,
-                "conclusion":diagnosis,
-                "additional_check":add_measure,
-                "hypotheses":hypothesis,
-            }
-            _persist()
-            st.success("Diagnóstico preliminar guardado. Ahora puedes pasar a seleccionar medidas según cada camino.")
-
+        st.markdown("### 2.5 · Construye tu diagnóstico preliminar")
+        mech=st.multiselect("Mecanismos que mantienes como plausibles",["Desequilibrio / desalineación","Fuerzas hidráulicas / pulsaciones","Cavitación","Radiación aérea de carcasa"],key=f"{ns}_diag_mech_final")
+        dom_path=st.selectbox("Camino dominante que propones",["Aún no puedo definirlo","Estructura/base","Tuberías","Aéreo","Combinación de base + tuberías"],key=f"{ns}_diag_path_final")
+        reasoning=st.text_area("Justifica tu diagnóstico usando las evidencias que construiste",key=f"{ns}_diag_reason_final",height=120)
+        if st.button("Guardar diagnóstico preliminar",type="primary",use_container_width=True,key=f"{ns}_diag_final_save"):
+            if len(evidence)<3:
+                st.warning("Tu diagnóstico tiene poca evidencia. Puedes guardarlo después de analizar más mediciones.")
+            elif dom_path=="Aún no puedo definirlo" or len(reasoning.strip())<45:
+                st.warning("Define un camino y justifica la decisión con los resultados observados.")
+            else:
+                saved["stage8_diagnosis"]={"plan":plan,"evidence":evidence,"mechanisms":mech,"dominant_path":dom_path,"reasoning":reasoning.strip()}
+                _persist(); st.success("Diagnóstico preliminar guardado.")
     # =========================================================
     # 3 · FAMILIAS DE EQUIPO
     # =========================================================
@@ -6804,9 +6986,16 @@ def _render_course2_lab1_stage8(lab, saved):
     # 8 · CIERRE
     # =========================================================
     st.markdown("## 8 · Cierre — una estrategia, no un producto aislado")
-    st.latex(
-        r"\boxed{\mathrm{DIAGNÓSTICO}\rightarrow\mathrm{MECANISMO}\rightarrow"
-        r"\mathrm{CAMINO}\rightarrow\mathrm{MEDIDA}\rightarrow\mathrm{VERIFICACIÓN}}"
+    st.markdown(
+        """
+        <div style="display:grid;grid-template-columns:repeat(5,1fr);gap:8px;margin:.4rem 0 1rem">
+          <div style="border:1px solid #cbd5e1;border-radius:13px;padding:12px;background:#fff"><b>Diagnóstico</b><br><span style="color:#64748b">qué ocurre</span></div>
+          <div style="border:1px solid #cbd5e1;border-radius:13px;padding:12px;background:#fff"><b>Mecanismo</b><br><span style="color:#64748b">qué lo genera</span></div>
+          <div style="border:1px solid #cbd5e1;border-radius:13px;padding:12px;background:#fff"><b>Camino</b><br><span style="color:#64748b">por dónde viaja</span></div>
+          <div style="border:1px solid #cbd5e1;border-radius:13px;padding:12px;background:#fff"><b>Medida</b><br><span style="color:#64748b">dónde actuar</span></div>
+          <div style="border:1px solid #bbf7d0;border-radius:13px;padding:12px;background:#f0fdf4"><b>Verificación</b><br><span style="color:#48745a">comprobar resultado</span></div>
+        </div>
+        """,unsafe_allow_html=True
     )
     st.write(
         "La Etapa 8 termina cuando puedes justificar **por qué** cada medida está en la solución. "
