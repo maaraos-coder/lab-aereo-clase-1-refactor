@@ -6639,6 +6639,14 @@ def _render_course2_lab1_stage8(lab, saved):
     is_teacher_npsh = role == "Docente"
     if is_teacher_npsh:
         st.markdown("##### Clave docente · valores esperados del ejercicio")
+        st.write(
+            "La siguiente figura muestra **cómo se realiza la lectura gráfica** en la curva NPSH–Q. "
+            "Esta ayuda no se muestra en Alumno ni en Zoom/Proyección."
+        )
+        _asset(
+            "curso2_lab1_etapa8_npsh_clave_docente.webp",
+            "Clave docente: desde Q ≈ 48 m³/h se proyecta hasta la curva 50-125/75 y se lee NPSHᵣ ≈ 3,8 m."
+        )
         kd1,kd2,kd3=st.columns(3)
         with kd1:
             _card(
@@ -6664,6 +6672,59 @@ def _render_course2_lab1_stage8(lab, saved):
         st.info(
             "Esta clave solo aparece en **Vista Docente**. En **Alumno** y **Zoom/Proyección** "
             "los campos permanecen como actividad a completar."
+        )
+
+        st.markdown("##### ¿Cómo interpretar el margen NPSH?")
+        st.latex(r"M_{NPSH}=NPSH_A-NPSH_R")
+
+        mi1,mi2,mi3=st.columns(3)
+        with mi1:
+            _card(
+                r"$M_{NPSH}>0$",
+                "Margen positivo",
+                "La instalación dispone de más NPSH que el requerido por la bomba. "
+                "Es una condición favorable, aunque en proyecto debe existir un margen de diseño suficiente.",
+                tone="green"
+            )
+        with mi2:
+            _card(
+                r"$M_{NPSH}=0$",
+                "Sin margen",
+                "NPSH disponible y requerido coinciden. La instalación queda en el límite "
+                "y pequeñas variaciones de operación pueden volverla desfavorable.",
+                tone="orange"
+            )
+        with mi3:
+            _card(
+                r"$M_{NPSH}<0$",
+                "Condición desfavorable",
+                "La instalación dispone de menos NPSH que el requerido. "
+                "La condición hidráulica es compatible con riesgo de cavitación.",
+                tone="orange"
+            )
+
+        st.markdown("##### Interpretación del caso del laboratorio")
+        st.latex(
+            r"M_{NPSH}=3.41-3.80\approx-0.39\;\mathrm{m}"
+        )
+        st.warning(
+            "**Lectura docente:** la instalación dispone aproximadamente **0,39 m menos** de NPSH "
+            "que el requerido por la bomba en ese punto de operación. Por lo tanto, la condición de "
+            "succión es hidráulicamente desfavorable y compatible con riesgo de cavitación."
+        )
+        st.markdown(
+            """
+            **Importante para la corrección:** un margen negativo **no demuestra por sí solo que el ruido medido sea causado por cavitación**.
+            En el laboratorio la hipótesis se fortalece cuando se combina:
+
+            - evidencia hidráulica: margen NPSH insuficiente;
+            - evidencia vibroacústica: aumento de contenido de banda ancha;
+            - comportamiento operacional: presión/caudal o desempeño compatibles con una condición hidráulica anómala.
+            """
+        )
+        st.success(
+            "Conclusión esperada del alumno: **la condición hidráulica y la evidencia vibroacústica, consideradas en conjunto, "
+            "son compatibles con cavitación**. No corresponde afirmar que NPSH se convierte directamente en dB o mm/s."
         )
 
     # Valor real calculado internamente para comprobar el trabajo del alumno
