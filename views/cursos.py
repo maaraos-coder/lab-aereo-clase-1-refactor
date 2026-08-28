@@ -5468,969 +5468,243 @@ def _render_course2_lab1_stage6(lab, saved):
             st.rerun()
 
 def _render_course2_lab1_stage7(lab, saved):
-    """ETAPA 7 — Predicción completa del piso: de la losa base al sistema terminado."""
+    """Etapa 7 · Construcción y decisión sobre la curva final del piso terminado."""
     import math
     import numpy as np
     import matplotlib.pyplot as plt
-    from core.acoustics import critical_frequency
-    from core.course2_impact_models import (
-        BANDS,
-        ver_ln_piecewise_db,
-        reduced_mass,
-        natural_frequency,
-        delta_ln_cremer_continuous_db,
-        delta_ln_ver_discrete_db,
-    )
 
-    class_id = lab["id"]
-    stage_selector_key = f"future_stage_{class_id}"
-    role = st.session_state.get("role", "Alumno")
-    projection_mode = bool(st.session_state.get("projection_mode") or role == "Proyección")
-    ns = f"{class_id}_s7"
-    stage_no = 7
+    class_id=lab["id"]
+    stage_selector_key=f"future_stage_{class_id}"
+    role=st.session_state.get("role","Alumno")
+    projection_mode=bool(st.session_state.get("projection_mode") or role=="Proyección")
+    ns=f"{class_id}_s7"
 
-    def _asset(name, caption=None):
-        p = ASSET_DIR / name
+    def _asset(name,caption=None):
+        p=ASSET_DIR/name
         if p.exists():
-            st.image(p, width="stretch")
-            if caption:
-                st.caption(caption)
+            st.image(str(p),width="stretch")
+            if caption: st.caption(caption)
             return True
-        if st.session_state.get("dev_mode", False):
-            st.caption(f"[Render pendiente: {name}]")
         return False
 
-    def _mcq(key, question, options, correct, feedback, store=False):
-        st.markdown(f"#### {question}")
-        if role == "Docente" and not projection_mode:
-            with st.container(border=True):
-                for i, opt in enumerate(options):
-                    st.write(("✅ " if i == correct else "○ ") + opt)
-                st.caption(feedback)
-            return
-        sk = f"{ns}_{key}"
-        choice = st.radio(question, options, index=None, key=sk, label_visibility="collapsed")
-        label = "Comprobar y guardar" if store and role == "Alumno" and not projection_mode else "Comprobar"
-        if st.button(label, key=f"{sk}_check"):
-            if choice is None:
-                st.warning("Selecciona una alternativa.")
-            else:
-                idx = options.index(choice)
-                ok = idx == correct
-                st.session_state[f"{sk}_result"] = ok
-                if store and role == "Alumno" and not projection_mode:
-                    data = saved.get(f"stage{stage_no}_comprehension", {})
-                    if not isinstance(data, dict):
-                        data = {}
-                    data[key] = {"selected": idx, "correct": ok, "updated_at": _now()}
-                    saved[f"stage{stage_no}_comprehension"] = data
-                    saved[f"updated_{stage_no}"] = _now()
-                    _save_future_state_impl(class_id, saved)
-        result = st.session_state.get(f"{sk}_result")
-        if result is True:
-            st.success("Correcto. " + feedback)
-        elif result is False:
-            st.warning("Revisa el concepto. " + feedback)
+    def _persist():
+        saved["updated_7"]=_now()
+        fn=globals().get("_save_future_state_impl") or globals().get("_save_future_state")
+        if callable(fn): fn(class_id,saved)
 
-    # ------------------------------------------------------------------
-    # Shared numerical inputs/functions: reuse Stage 5 and Stage 6 logic.
-    # ------------------------------------------------------------------
-    bands = np.asarray(BANDS, dtype=float)
-    band_x = np.arange(len(bands), dtype=float)
+    def _card(title,value,text,tone="white"):
+        bg="#fff" if tone=="white" else "#f3f0ff"
+        bd="#dbe4ee" if tone=="white" else "#d8ccff"
+        st.markdown(f"""<div style="border:1px solid {bd};border-radius:16px;padding:15px 16px;background:{bg};min-height:155px;margin-bottom:6px">
+        <div style="font-weight:850;color:#0f172a">{title}</div><div style="font-size:1.45rem;font-weight:900;color:#0f172a;margin:.35rem 0">{value}</div>
+        <div style="color:#64748b;line-height:1.45">{text}</div></div>""",unsafe_allow_html=True)
 
-    def _band_labels():
-        labels = []
-        for f in bands:
-            if f >= 1000:
-                k = f / 1000.0
-                labels.append(f"{k:g}k")
-            else:
-                labels.append(f"{int(round(f))}")
-        return labels
+    baseline=saved.get("stage5_baseline") or {}
+    solution=saved.get("stage6_solution") or {}
 
-    def _format_band_axis(ax):
-        ax.set_xticks(band_x)
-        ax.set_xticklabels(_band_labels(), rotation=45, ha="right")
-        ax.set_xlabel("Bandas de frecuencia [Hz]")
-        ax.grid(True, axis="y", alpha=.2)
-        ax.margins(x=.02)
+    bands=[int(x) for x in baseline.get("bands_hz",[]) if x is not None]
+    ln0=[float(x) for x in baseline.get("ln0_db",[]) if x is not None]
+    sbands=[int(x) for x in solution.get("bands_hz",[]) if x is not None]
+    delta=[float(x) for x in solution.get("delta_ln_db",[]) if x is not None]
 
-    def _plot_band_curve(ax, values, label, marker="o"):
-        arr = np.asarray(values, dtype=float)
-        ax.plot(band_x, arr, marker=marker, label=label)
+    if not bands or not ln0:
+        bands=[100,125,160,200,250,315,400,500,630,800,1000,1250,1600,2000,2500,3150]
+        ln0=[]
+    if sbands and sbands!=bands:
+        common=[f for f in bands if f in sbands]
+        idx0={f:i for i,f in enumerate(bands)}; idxd={f:i for i,f in enumerate(sbands)}
+        ln0=[ln0[idx0[f]] for f in common] if ln0 else []
+        delta=[delta[idxd[f]] for f in common]
+        bands=common
 
-    def _nearest_band_text(freq):
-        idx = int(np.argmin(np.abs(np.log(bands / float(freq)))))
-        nearest = bands[idx]
-        return f"{float(freq):.1f} Hz · banda central más cercana: {int(round(nearest))} Hz"
-
-    # Same didactic R(f) subset used in Stage 5, restricted to the exact
-    # bands shared with Stage 6: 125–2000 Hz in thirds of octave.
-    R_base = np.array([48, 49, 50, 51, 52, 53, 54, 55, 56, 57, 58, 59, 60], dtype=float)
-
-    # Stage 5 default homogeneous concrete slab used as the exercise base.
-    rho_p_base = 2400.0
-    t_base_mm = 160.0
-    E_base_gpa = 30.0
-    nu_base = 0.20
-    sigma_base = 1.0
-    eta_base = 0.020
-
-    _, _, fc_base = critical_frequency(
-        rho_p_base, t_base_mm, E_base_gpa, nu_base, 343.0
-    )
-
-    def _ln0_curve():
-        vals = []
-        regimes = []
-        for f, R in zip(bands, R_base):
-            ln, regime = ver_ln_piecewise_db(
-                f, R, fc_base, sigma_base, eta_base, 0.0
-            )
-            vals.append(float(ln))
-            regimes.append(regime)
-        return np.asarray(vals, dtype=float), regimes
-
-    def _delta_continuous_curve(m1, s_mn):
-        vals = []
-        f0_cont = (1/(2*math.pi))*math.sqrt((float(s_mn)*1e6)/float(m1))
-        for f in bands:
-            d, _ = delta_ln_cremer_continuous_db(f, m1, s_mn)
-            vals.append(d)
-        return np.asarray(vals, dtype=float), f0_cont
-
-    def _delta_discrete_curve(f0, h1_mm, cL1, N, eta11):
-        vals = []
-        for f in bands:
-            if f <= f0:
-                vals.append(np.nan)
-            else:
-                vals.append(
-                    delta_ln_ver_discrete_db(
-                        f, f0, float(h1_mm)/1000.0, cL1, N, eta11
-                    )
-                )
-        return np.asarray(vals, dtype=float)
-
-    def _final_curve(ln0, delta):
-        out = np.full_like(ln0, np.nan, dtype=float)
-        mask = np.isfinite(ln0) & np.isfinite(delta)
-        out[mask] = ln0[mask] - delta[mask]
-        return out
-
-    ln0_base, regimes_base = _ln0_curve()
+    ready=bool(ln0 and delta and len(ln0)==len(delta)==len(bands))
 
     header(
         "ETAPA 7 · LABORATORIO 1",
-        "Predicción completa del piso: de la losa base al sistema terminado",
-        "Aplicación práctica avanzada del bloque predictivo de ruido de impacto.",
+        "Predicción completa del piso terminado",
+        "Combina la curva de la losa base con la mejora del sistema y toma una decisión de diseño.",
         show_overview=False,
-        duration_minutes=95,
+        duration_minutes=85,
     )
 
-    # ================================================================
-    # 1. APERTURA
-    # ================================================================
-    st.markdown("## 1 · Ya tenemos las dos piezas del problema")
-    c1, c2 = st.columns(2)
-    with c1:
-        with st.container(border=True):
-            st.markdown("### ETAPA 5 · LOSA BASE")
-            st.latex(r"\boxed{L_{n,0}(f)}")
-            st.write("Predicción espectral del nivel de ruido de impacto de la losa sin tratamiento.")
-    with c2:
-        with st.container(border=True):
-            st.markdown("### ETAPA 6 · MEJORA")
-            st.latex(r"\boxed{\Delta L_n(f)}")
-            st.write("Mejora espectral introducida por el tratamiento compatible con el modelo seleccionado.")
+    _asset("curso2_lab1_etapa7_cadena_fisica.webp")
 
-    st.write("¿Cómo obtenemos ahora el nivel estimado del piso terminado?")
-    st.latex(
-        r"\boxed{L_{n,\mathrm{final}}(f)=L_{n,0}(f)-\Delta L_n(f)}"
-    )
-    st.caption("Esta relación se obtiene directamente por reordenamiento de la definición de ΔLₙ anterior.")
-    st.success(
-        "Ésta es la ecuación visual principal de la Etapa 7. "
-        r"La salida que compararemos será $L_{n,\mathrm{final}}(f)$ por bandas."
-    )
-
-    # ================================================================
-    # 2. PHYSICAL INTERPRETATION + DECIBELS
-    # ================================================================
-    st.markdown("## 2 · ¿Qué significa cada término?")
+    st.markdown("## 1 · Recuperamos lo que ya construiste")
+    st.write("La Etapa 7 no vuelve a calcular desde cero las Etapas 5 y 6. **Recupera sus resultados guardados** y los combina por banda.")
     c1,c2,c3=st.columns(3)
     with c1:
-        with st.container(border=True):
-            st.markdown("### LOSA BASE")
-            st.latex(r"L_{n,0}(f)")
-            st.write("Nivel estimado antes del tratamiento.")
+        _card("Etapa 5 · Losa base",f"{len(ln0)} bandas" if ln0 else "Pendiente","Curva guardada Lₙ,₀(f).")
     with c2:
-        with st.container(border=True):
-            st.markdown("### MEJORA")
-            st.latex(r"\Delta L_n(f)")
-            st.write("Diferencia de niveles introducida por el tratamiento.")
+        _card("Etapa 6 · Mejora",f"{len(delta)} bandas" if delta else "Pendiente","Curva guardada ΔLₙ(f).")
     with c3:
-        with st.container(border=True):
-            st.markdown("### PISO TERMINADO")
-            st.latex(r"L_{n,\mathrm{final}}(f)")
-            st.write("Nivel estimado después de aplicar la mejora.")
+        _card("Etapa 7 · Resultado","Lₙ,final(f)","Se construye restando las dos curvas banda por banda.",tone="purple")
 
-    st.markdown("### ¿Por qué podemos restar decibeles aquí?")
-    st.write(
-        "$\\Delta L_n$ ya está **definido como una diferencia de niveles** expresada en dB:"
-    )
-    st.latex(r"\Delta L_n(f)=L_{n,0}(f)-L_n(f)")
-    st.write("Por definición:")
-    st.latex(r"L_n(f)=L_{n,0}(f)-\Delta L_n(f)")
-    st.info(
-        "No estamos restando directamente potencias lineales. "
-        "Estamos aplicando una diferencia de niveles previamente definida."
-    )
+    st.latex(r"\boxed{L_{n,\mathrm{final}}(f)=L_{n,0}(f)-\Delta L_n(f)}")
+    st.info("Aquí ΔLₙ(f) ya es una **diferencia de niveles en dB**. Por eso la operación es una resta de niveles definidos de esta manera, no una resta directa de potencias lineales.")
 
-    # ================================================================
-    # 3. SIMPLE EXAMPLE
-    # ================================================================
-    st.markdown("## 3 · Ejemplo simple · 500 Hz")
-    st.latex(r"L_{n,0}(500)=69\ \mathrm{dB}")
-    st.latex(r"\Delta L_n(500)=22\ \mathrm{dB}")
-    st.latex(r"L_{n,\mathrm{final}}(500)=69-22")
-    st.latex(r"\boxed{L_{n,\mathrm{final}}(500)=47\ \mathrm{dB}}")
-    st.write(
-        "La lectura correcta es: según el modelo utilizado, el tratamiento reduce 22 dB "
-        "el nivel de la losa base **en la banda de 500 Hz**."
-    )
-    st.warning(
-        "No significa que todas las bandas mejoren 22 dB, que cualquier obra mida exactamente 47 dB, "
-        "que se hayan incluido flancos ni que 47 dB sea un número único."
-    )
-    _mcq(
-        "simple47",
-        "¿Una obra construida con esta solución necesariamente medirá exactamente 47 dB a 500 Hz?",
-        ["A. Sí", "B. No"],
-        1,
-        "Es una predicción dentro de las hipótesis del modelo; ejecución, materiales, bordes y caminos secundarios pueden modificarla.",
-    )
+    if not ready:
+        st.warning("Para realizar esta etapa con continuidad real, primero debes guardar la curva base en la Etapa 5 y la curva de mejora en la Etapa 6.")
+        left,right=st.columns(2)
+        with left:
+            if st.button("← Etapa 6",key=f"s7_prev_{class_id}",use_container_width=True):
+                st.session_state[stage_selector_key]=6; st.rerun()
+        with right:
+            st.button("Etapa 8 →",disabled=True,use_container_width=True,key=f"s7_next_disabled_{class_id}")
+        return
 
-    _asset("curso2_lab1_etapa7_losa_base_piso_final.webp")
+    ln0_arr=np.asarray(ln0,float); delta_arr=np.asarray(delta,float); final_arr=ln0_arr-delta_arr
 
-    # ================================================================
-    # 4. MAIN INTERACTIVE
-    # ================================================================
-    st.markdown("## 🔬 4 · Interactivo principal — Construye la predicción completa")
-    st.write(
-        "La rama de la losa base reutiliza la función de la Etapa 5. "
-        "La rama del tratamiento reutiliza las funciones de la Etapa 6. "
-        "Aquí **no se vuelven a definir sus ecuaciones**."
-    )
+    # =========================================================
+    # LAB A
+    # =========================================================
+    st.markdown("## 2 · Laboratorio A — Construye la curva final banda por banda")
+    st.write("La app te entrega los dos datos obtenidos en las etapas anteriores. Tu tarea es **hacer la resta y registrar correctamente el nivel final**. Cada resultado validado agrega un punto a la curva.")
+    _asset("curso2_lab1_etapa7_construccion_curva.gif","El gráfico se construye progresivamente a medida que validas bandas.")
 
-    with st.container(border=True):
-        st.markdown("### Flujo")
-        st.latex(
-            r"\mathrm{LOSA\ BASE}\rightarrow\mathrm{MODELO\ ETAPA\ 5}"
-            r"\rightarrow L_{n,0}(f)"
-        )
-        st.latex(
-            r"\mathrm{TRATAMIENTO}\rightarrow(m'_1,m'_2,s')"
-            r"\rightarrow\mathrm{MODELO\ ETAPA\ 6}\rightarrow\Delta L_n(f)"
-        )
-        st.latex(
-            r"\boxed{L_{n,0}(f)-\Delta L_n(f)\rightarrow L_{n,\mathrm{final}}(f)}"
-        )
+    answers=saved.get("stage7_final_answers",{})
+    if not isinstance(answers,dict): answers={}
+    fsel=st.selectbox("Banda que vas a resolver",bands,key=f"{ns}_band")
+    i=bands.index(fsel)
+    a1,a2,a3=st.columns(3)
+    with a1: _card("Losa base",f"{ln0_arr[i]:.1f} dB",f"Lₙ,₀({fsel} Hz) recuperado de Etapa 5.")
+    with a2: _card("Mejora",f"{delta_arr[i]:.1f} dB",f"ΔLₙ({fsel} Hz) recuperado de Etapa 6.")
+    with a3: _card("Operación",f"{ln0_arr[i]:.1f} − {delta_arr[i]:.1f}","Calcula el nivel final y escríbelo abajo.",tone="purple")
 
-    st.caption(
-        "Losa base didáctica de esta etapa: hormigón homogéneo 160 mm, "
-        "ρ=2400 kg/m³, E=30 GPa, ν=0.20; R(f) proviene del ejercicio de Etapa 5. "
-        "No corresponde a una ficha comercial."
-    )
-
-    model_main = st.segmented_control(
-        "Tratamiento",
-        [
-            "CAPA RESILIENTE CONTINUA — CREMER",
-            "APOYOS RESILIENTES DISCRETOS — VÉR",
-        ],
-        default="CAPA RESILIENTE CONTINUA — CREMER",
-        key=f"{ns}_main_model",
-    )
-
-    if model_main.startswith("CAPA"):
-        c1,c2,c3=st.columns(3)
-        main_m1=c1.slider("m′₁ [kg/m²]",50,200,110,5,key=f"{ns}_main_m1")
-        main_m2=c2.slider("m′₂ [kg/m²]",150,600,380,10,key=f"{ns}_main_m2")
-        main_s=c3.slider("s′ [MN/m³]",3.0,40.0,12.0,.5,key=f"{ns}_main_s")
-        main_mr, main_f0_general = natural_frequency(main_m1, main_m2, main_s)
-        delta_main, main_f0_model = _delta_continuous_curve(main_m1,main_s)
-    else:
-        c1,c2,c3=st.columns(3)
-        main_m1=c1.slider("m′₁ [kg/m²]",50,200,110,5,key=f"{ns}_main_vm1")
-        main_m2=c2.slider("m′₂ [kg/m²]",150,600,380,10,key=f"{ns}_main_vm2")
-        main_s=c3.slider("s′ equivalente [MN/m³]",3.0,40.0,12.0,.5,key=f"{ns}_main_vs")
-        main_mr, main_f0_general = natural_frequency(main_m1, main_m2, main_s)
-        d1,d2,d3=st.columns(3)
-        h1=d1.slider("h₁ [mm]",20,120,50,5,key=f"{ns}_main_h1")
-        cL1=d2.slider("c_L1 [m/s]",1000,6000,3500,100,key=f"{ns}_main_cL")
-        N=d3.slider("N [apoyos/m²]",1.0,25.0,9.0,1.0,key=f"{ns}_main_N")
-        d4,d5=st.columns(2)
-        eta11=d4.slider("η₁₁",.005,.100,.020,.005,key=f"{ns}_main_eta")
-        main_f0_model=d5.slider("f₀ del modelo Vér [Hz]",20.0,150.0,float(round(main_f0_general)),1.0,key=f"{ns}_main_vf0")
-        delta_main=_delta_discrete_curve(main_f0_model,h1,cL1,N,eta11)
-
-    final_main=_final_curve(ln0_base,delta_main)
-
-    st.markdown("### Tres salidas distintas")
-    a,b,c=st.columns(3)
-    a.metric("LOSA BASE · Lₙ,₀", "curva por bandas")
-    b.metric("MEJORA · ΔLₙ", "curva por bandas")
-    c.metric("PISO TERMINADO · Lₙ,final", "curva por bandas")
-    d,e=st.columns(2)
-    d.metric("m′ᵣ",f"{main_mr:.1f} kg/m²")
-    e.metric("f₀ general",f"{main_f0_general:.1f} Hz")
-
-    st.markdown("### Gráfico principal · losa base vs piso terminado")
-    st.caption(
-        "Resultados presentados en las mismas bandas centrales utilizadas por las Etapas 5 y 6. "
-        "Los segmentos solo conectan visualmente valores de bandas discretas; no representan una interpolación continua."
-    )
-    show_base=st.checkbox("Mostrar LOSA BASE",True,key=f"{ns}_show_base")
-    show_final=st.checkbox("Mostrar PISO TERMINADO",True,key=f"{ns}_show_final")
-    fig,ax=plt.subplots()
-    if show_base:
-        _plot_band_curve(ax, ln0_base, "LOSA BASE · Lₙ,₀")
-    if show_final:
-        _plot_band_curve(ax, final_main, "PISO TERMINADO · Lₙ,final")
-    _format_band_axis(ax)
-    ax.set_ylabel("Nivel de ruido de impacto [dB]")
-    ax.legend()
-    st.pyplot(fig,use_container_width=True)
-    plt.close(fig)
-
-    st.markdown("### Gráfico de mejora")
-    fig,ax=plt.subplots()
-    _plot_band_curve(ax, delta_main, "ΔLₙ(f)")
-    _format_band_axis(ax)
-    ax.set_ylabel("ΔLₙ [dB]")
-    ax.legend()
-    st.pyplot(fig,use_container_width=True)
-    plt.close(fig)
-    st.caption(
-        "f₀ es un parámetro físico continuo y no una banda espectral. "
-        "Por eso no se dibuja como un punto de la curva por bandas."
-    )
-    st.info(
-        "Frecuencia natural del modelo: "
-        + _nearest_band_text(main_f0_model)
-        + ". Esto solo ubica la resonancia respecto de las bandas analizadas."
-    )
-
-    st.markdown("### Tabla por bandas")
-    table_main=[]
-    for f,R,l0,d,lf in zip(bands,R_base,ln0_base,delta_main,final_main):
-        table_main.append({
-            "Frecuencia [Hz]":int(f),
-            "R(f) [dB]":round(float(R),1),
-            "Lₙ,₀(f) [dB]":round(float(l0),1),
-            "ΔLₙ(f) [dB]":None if not np.isfinite(d) else round(float(d),1),
-            "Lₙ,final(f) [dB]":None if not np.isfinite(lf) else round(float(lf),1),
-        })
-    st.dataframe(table_main,use_container_width=True,hide_index=True)
-
-    _mcq(
-        "notconstant",
-        "¿El tratamiento desplaza toda la curva exactamente la misma cantidad?",
-        ["A. Sí", "B. No"],
-        1,
-        "No. ΔLₙ es función de la frecuencia, por lo que la separación entre las curvas cambia por banda.",
-    )
-
-    # ================================================================
-    # 5. THREE ALTERNATIVES
-    # ================================================================
-    st.markdown("## 5 · Problema de diseño — Compara tres pisos")
-    _asset("curso2_lab1_etapa7_tres_alternativas.webp")
-    st.write("Losa base común: $m'_2=380$ kg/m². Las tres alternativas usan capa resiliente continua.")
-    st.caption(
-        "Masa reducida y frecuencia natural: modelo clásico masa–resorte–masa desarrollado en Etapa 6. "
-        "La referencia bibliográfica exacta de esta derivación debe mantenerse trazada en la documentación técnica del curso."
-    )
-
-    alternatives={
-        "A":{"m1":70.0,"m2":380.0,"s":25.0,"h":45.0},
-        "B":{"m1":110.0,"m2":380.0,"s":12.0,"h":65.0},
-        "C":{"m1":150.0,"m2":380.0,"s":8.0,"h":90.0},
-    }
-    alt_results={}
-    cols=st.columns(3)
-    for col,(name,p) in zip(cols,alternatives.items()):
-        mr_i,f0_i=natural_frequency(p["m1"],p["m2"],p["s"])
-        delta_i,f0c_i=_delta_continuous_curve(p["m1"],p["s"])
-        final_i=_final_curve(ln0_base,delta_i)
-        alt_results[name]={**p,"mr":mr_i,"f0":f0_i,"f0_model":f0c_i,"delta":delta_i,"final":final_i}
-        with col:
-            with st.container(border=True):
-                st.markdown(f"### Alternativa {name}")
-                st.write(f"m′₁ = {p['m1']:.0f} kg/m²")
-                st.write(f"s′ = {p['s']:.0f} MN/m³")
-                st.write(f"m′ᵣ ≈ {mr_i:.1f} kg/m²")
-                st.write(f"f₀ general ≈ {f0_i:.1f} Hz")
-
-    st.caption(
-        "Validación requerida: A ≈ 59.1 kg/m² y 103.5 Hz · "
-        "B ≈ 85.3 kg/m² y 59.7 Hz · C ≈ 107.5 kg/m² y 43.4 Hz."
-    )
-
-    st.markdown("## 🔬 6 · Interactivo — Compara tres pisos")
-    alt_sel=st.segmented_control(
-        "Mostrar",["A","B","C","COMPARAR TODAS"],default="COMPARAR TODAS",key=f"{ns}_altsel"
-    )
-    fig,ax=plt.subplots()
-    names=list(alternatives) if alt_sel=="COMPARAR TODAS" else [alt_sel]
-    for name in names:
-        _plot_band_curve(ax, alt_results[name]["final"], f"{name} · Lₙ,final")
-    _format_band_axis(ax)
-    ax.set_ylabel("Lₙ,final [dB]")
-    ax.legend()
-    st.pyplot(fig,use_container_width=True)
-    plt.close(fig)
-
-    def _best_at(freq):
-        idx=int(np.argmin(np.abs(np.log(bands/float(freq)))))
-        vals={n:alt_results[n]["final"][idx] for n in alternatives}
-        vals={n:v for n,v in vals.items() if np.isfinite(v)}
-        if not vals:
-            return None,None,idx
-        best=min(vals,key=vals.get)
-        return best,vals[best],idx
-
-    st.markdown("### Interpretación calculada")
-    qcols=st.columns(3)
-    for col,freq in zip(qcols,[125,500,1000]):
-        best,val,idx=_best_at(freq)
-        with col:
-            with st.container(border=True):
-                st.markdown(f"### {freq} Hz")
-                if best is None:
-                    st.write("Sin resultado válido en esta banda.")
-                else:
-                    st.write(f"Menor Lₙ,final: **{best}**")
-                    st.write(f"{val:.1f} dB")
-    st.write(
-        "La solución con menor $f_0$ **no se declara automáticamente mejor**. "
-        r"La comparación principal se hace con $L_{n,\mathrm{final}}(f)$."
-    )
-    st.latex(r"\boxed{\mathrm{MENOR}\ f_0\neq\mathrm{AUTOMÁTICAMENTE\ MEJOR\ PROYECTO}}")
-
-    # ================================================================
-    # 7. CONSTRAINTS
-    # ================================================================
-    # ================================================================
-    # 7. FROM ACOUSTIC RESULT TO PROJECT DECISION
-    # ================================================================
-    st.markdown("## 7 · De la mejor curva acústica a una solución viable")
-    st.write(
-        "Hasta aquí hemos comparado las alternativas principalmente mediante "
-        "$L_{n,\mathrm{final}}(f)$. Ahora incorporamos las restricciones reales del proyecto."
-    )
-    st.latex(
-        r"\boxed{\mathrm{MEJOR\ CURVA}\ L_{n,\mathrm{final}}(f)"
-        r"\neq\mathrm{AUTOMÁTICAMENTE\ MEJOR\ PROYECTO}}"
-    )
-
-    st.warning(
-        "NUEVA INFORMACIÓN DEL PROYECTO · carga adicional máxima: 120 kg/m² · altura disponible: 75 mm"
-    )
-
-    design_rows = []
-    check_freqs = [125, 500, 1000]
-    for name, p in alternatives.items():
-        row = {
-            "Alternativa": name,
-            "Carga [kg/m²]": p["m1"],
-            "Espesor didáctico [mm]": p["h"],
-            "Cumple carga": p["m1"] <= 120,
-            "Cumple altura": p["h"] <= 75,
-        }
-        for freq in check_freqs:
-            idx = int(np.argmin(np.abs(np.log(bands / float(freq)))))
-            val = alt_results[name]["final"][idx]
-            row[f"Lₙ,final {freq} Hz [dB]"] = None if not np.isfinite(val) else round(float(val), 1)
-        design_rows.append(row)
-
-    st.dataframe(design_rows, use_container_width=True, hide_index=True)
-    st.caption(
-        "Los espesores indicados son datos específicos de este ejercicio y no propiedades universales de estas soluciones."
-    )
-
-    st.markdown("### Lectura profesional")
-    st.write(
-        "La alternativa C puede presentar una curva acústicamente favorable, pero queda fuera del ejercicio "
-        "por carga y altura. A y B permanecen como soluciones viables y deben compararse mediante sus curvas "
-        "$L_{n,\mathrm{final}}(f)$, no únicamente por $f_0$."
-    )
-
-    st.latex(
-        r"\boxed{\mathrm{DISEÑO}=\mathrm{ACÚSTICA}+\mathrm{ESTRUCTURA}"
-        r"+\mathrm{ARQUITECTURA}+\mathrm{CONSTRUCTIBILIDAD}+\mathrm{DURABILIDAD}}"
-    )
-
-    feasible = [name for name, p in alternatives.items() if p["m1"] <= 120 and p["h"] <= 75]
-    if "B" in feasible:
-        b_better_somewhere = False
-        for idx in range(len(bands)):
-            vb = alt_results["B"]["final"][idx]
-            if not np.isfinite(vb):
-                continue
-            competitors = [
-                alt_results[n]["final"][idx]
-                for n in feasible
-                if n != "B" and np.isfinite(alt_results[n]["final"][idx])
-            ]
-            if not competitors or vb <= min(competitors):
-                b_better_somewhere = True
-                break
-
-        if b_better_somewhere:
-            st.success(
-                "Dentro de las restricciones establecidas para este ejercicio, "
-                "la alternativa B representa un compromiso técnicamente favorable."
-            )
-        else:
-            st.info(
-                "B cumple las restricciones de proyecto, pero su selección final debe justificarse "
-                "con la comparación espectral calculada frente a las demás alternativas viables."
-            )
-
-    # ================================================================
-    # 8. PROFESSIONAL DECISION
-    # ================================================================
-    st.markdown("## 8 · Decisión profesional del caso")
-    st.write(
-        "La decisión no se toma minimizando $f_0$. Se toma integrando el resultado acústico "
-        "con las restricciones del proyecto."
-    )
-
-    c1, c2, c3 = st.columns(3)
-    for col, name in zip([c1, c2, c3], ["A", "B", "C"]):
-        p = alternatives[name]
-        with col:
-            with st.container(border=True):
-                st.markdown(f"### Alternativa {name}")
-                st.write("**Acústica:** revisar la curva $L_{n,\mathrm{final}}(f)$ calculada.")
-                st.write(f"**Carga:** {'Cumple' if p['m1'] <= 120 else 'No cumple'}")
-                st.write(f"**Altura:** {'Cumple' if p['h'] <= 75 else 'No cumple'}")
-                if p["m1"] <= 120 and p["h"] <= 75:
-                    st.success("VIABLE EN ESTE EJERCICIO")
-                else:
-                    st.error("NO VIABLE EN ESTE EJERCICIO")
-
-    st.latex(r"\boxed{\mathrm{DECIDIR}\neq\mathrm{ESCOGER\ EL\ MENOR}\ f_0}")
-
-    # ================================================================
-    # 9. EXPLORE YOUR OWN DESIGN
-    # ================================================================
-    st.markdown("## 🔬 9 · Diseña y predice tu piso")
-    st.write(
-        "Construye una solución propia modificando masa y rigidez, pero recuerda que el **resultado principal** "
-        "es siempre $L_{n,\mathrm{final}}(f)$ por bandas."
-    )
-
-    o1, o2, o3 = st.columns(3)
-    om1 = o1.slider("m′₁ [kg/m²]", 50, 200, 110, 5, key=f"{ns}_om1")
-    om2 = o2.slider("m′₂ [kg/m²]", 150, 600, 380, 10, key=f"{ns}_om2")
-    os = o3.slider("s′ [MN/m³]", 3.0, 40.0, 12.0, .5, key=f"{ns}_os")
-
-    omodel = st.segmented_control(
-        "Modelo del tratamiento",
-        ["CAPA RESILIENTE CONTINUA — CREMER", "APOYOS RESILIENTES DISCRETOS — VÉR", "COMPARAR"],
-        default="CAPA RESILIENTE CONTINUA — CREMER",
-        key=f"{ns}_omodel",
-    )
-
-    omr, of0 = natural_frequency(om1, om2, os)
-    odelta_c, of0c = _delta_continuous_curve(om1, os)
-    ofinal_c = _final_curve(ln0_base, odelta_c)
-
-    vh, vcL, vN, veta = 50.0, 3500.0, 9.0, .020
-    odelta_v = _delta_discrete_curve(of0, vh, vcL, vN, veta)
-    ofinal_v = _final_curve(ln0_base, odelta_v)
-
-    st.markdown("### RESULTADO PRINCIPAL · Lₙ,final(f)")
-    fig, ax = plt.subplots()
-    if omodel in ("CAPA RESILIENTE CONTINUA — CREMER", "COMPARAR"):
-        _plot_band_curve(ax, ofinal_c, "Cremer · Lₙ,final")
-    if omodel in ("APOYOS RESILIENTES DISCRETOS — VÉR", "COMPARAR"):
-        _plot_band_curve(ax, ofinal_v, "Vér · Lₙ,final")
-    _format_band_axis(ax)
-    ax.set_ylabel("Lₙ,final [dB]")
-    ax.legend()
-    st.pyplot(fig, use_container_width=True)
-    plt.close(fig)
-
-    st.markdown("### Parámetros que explican el resultado")
-    r1, r2, r3 = st.columns(3)
-    r1.metric("m′ᵣ", f"{omr:.1f} kg/m²")
-    r2.metric("f₀ general", f"{of0:.1f} Hz")
-    r3.metric("Carga estructural", "Cumple" if om1 <= 120 else "No cumple")
-
-    oheight = st.slider(
-        "Espesor total del diseño [mm] · dato específico del proyecto",
-        30, 120, 65, 5, key=f"{ns}_oheight"
-    )
-    st.metric("Restricción arquitectónica", "Cumple" if oheight <= 75 else "No cumple")
-    st.caption(
-        "Para Vér se usan valores didácticos explícitos: h₁=50 mm, c_L1=3500 m/s, "
-        "N=9 apoyos/m² y η₁₁=0.020. No son propiedades universales."
-    )
-
-    # ================================================================
-    # 10. DESIGN MAP
-    # ================================================================
-    # ================================================================
-    # 10. CAUSE–EFFECT SENSITIVITY
-    # ================================================================
-    st.markdown("## 🔬 10 · ¿Por qué cambió el resultado?")
-    st.write(
-        "En lugar de buscar un 'óptimo' en un mapa abstracto, aquí modificamos **una sola variable a la vez** "
-        "y observamos cómo cambia la predicción final."
-    )
-
-    st.markdown("### Solución de referencia")
-    ref_m1 = 110.0
-    ref_m2 = 380.0
-    ref_s = 12.0
-
-    ref_mr, ref_f0 = natural_frequency(ref_m1, ref_m2, ref_s)
-    ref_delta, ref_f0c = _delta_continuous_curve(ref_m1, ref_s)
-    ref_final = _final_curve(ln0_base, ref_delta)
-
-    c1, c2, c3 = st.columns(3)
-    c1.metric("m′₁ referencia", f"{ref_m1:.0f} kg/m²")
-    c2.metric("s′ referencia", f"{ref_s:.0f} MN/m³")
-    c3.metric("f₀ general", f"{ref_f0:.1f} Hz")
-
-    change = st.radio(
-        "Selecciona una modificación",
-        [
-            "A · Aumentar masa superior: 110 → 150 kg/m²",
-            "B · Reducir rigidez dinámica: 12 → 8 MN/m³",
-            "C · Aumentar rigidez dinámica: 12 → 20 MN/m³",
-        ],
-        key=f"{ns}_cause_effect_choice",
-    )
-
-    if change.startswith("A"):
-        mod_m1, mod_m2, mod_s = 150.0, 380.0, 12.0
-        changed_parameter = "m′₁"
-        interpretation = (
-            "Aumentar la masa superior incrementa la masa reducida y tiende a desplazar la resonancia hacia frecuencias menores."
-        )
-    elif change.startswith("B"):
-        mod_m1, mod_m2, mod_s = 110.0, 380.0, 8.0
-        changed_parameter = "s′"
-        interpretation = (
-            "Reducir la rigidez dinámica desplaza la resonancia hacia frecuencias menores y modifica la mejora espectral."
-        )
-    else:
-        mod_m1, mod_m2, mod_s = 110.0, 380.0, 20.0
-        changed_parameter = "s′"
-        interpretation = (
-            "Aumentar la rigidez dinámica desplaza la resonancia hacia frecuencias mayores y puede reducir la separación respecto de f₀ en algunas bandas."
-        )
-
-    mod_mr, mod_f0 = natural_frequency(mod_m1, mod_m2, mod_s)
-    mod_delta, mod_f0c = _delta_continuous_curve(mod_m1, mod_s)
-    mod_final = _final_curve(ln0_base, mod_delta)
-
-    st.markdown("### Qué cambió")
-    a, b, c, d = st.columns(4)
-    a.metric("m′₁", f"{mod_m1:.0f} kg/m²", delta=f"{mod_m1-ref_m1:+.0f}")
-    b.metric("s′", f"{mod_s:.0f} MN/m³", delta=f"{mod_s-ref_s:+.0f}")
-    c.metric("m′ᵣ", f"{mod_mr:.1f} kg/m²", delta=f"{mod_mr-ref_mr:+.1f}")
-    d.metric("f₀", f"{mod_f0:.1f} Hz", delta=f"{mod_f0-ref_f0:+.1f} Hz")
-
-    st.write(interpretation)
-    st.latex(
-        r"\boxed{\mathrm{CAMBIO\ CONSTRUCTIVO}\rightarrow f_0"
-        r"\rightarrow\Delta L_n(f)\rightarrow L_{n,\mathrm{final}}(f)}"
-    )
-
-    st.markdown("### Comparación espectral")
-    fig, ax = plt.subplots()
-    _plot_band_curve(ax, ref_final, "Referencia · Lₙ,final")
-    _plot_band_curve(ax, mod_final, "Modificada · Lₙ,final")
-    _format_band_axis(ax)
-    ax.set_ylabel("Lₙ,final [dB]")
-    ax.legend()
-    st.pyplot(fig, use_container_width=True)
-    plt.close(fig)
-
-    st.markdown("### ¿Dónde mejoró y dónde empeoró?")
-    compare_rows = []
-    for freq in [125, 500, 1000]:
-        idx = int(np.argmin(np.abs(np.log(bands / float(freq)))))
-        vr = ref_final[idx]
-        vm = mod_final[idx]
-        diff = np.nan
-        if np.isfinite(vr) and np.isfinite(vm):
-            diff = vm - vr
-        if np.isfinite(diff):
-            if diff < -0.05:
-                reading = "Mejora"
-            elif diff > 0.05:
-                reading = "Empeora"
+    entered=st.number_input(f"Lₙ,final({fsel} Hz) [dB]",min_value=-20.0,max_value=150.0,value=0.0,step=0.1,format="%.1f",key=f"{ns}_entered")
+    b1,b2=st.columns([2,1])
+    with b1:
+        if st.button("Comprobar y agregar a la curva",type="primary",use_container_width=True,key=f"{ns}_check_band"):
+            expected=float(final_arr[i])
+            if abs(float(entered)-expected)<=0.15:
+                answers[str(fsel)]=round(expected,3); saved["stage7_final_answers"]=answers; _persist(); st.success("Correcto. Banda incorporada."); st.rerun()
             else:
-                reading = "Prácticamente igual"
-        else:
-            reading = "Sin comparación válida"
-        compare_rows.append({
-            "Banda [Hz]": freq,
-            "Referencia Lₙ,final [dB]": None if not np.isfinite(vr) else round(float(vr), 1),
-            "Modificada Lₙ,final [dB]": None if not np.isfinite(vm) else round(float(vm), 1),
-            "Cambio [dB]": None if not np.isfinite(diff) else round(float(diff), 1),
-            "Lectura": reading,
-        })
+                st.warning("Revisa la resta banda por banda. El valor todavía no coincide.")
+    with b2:
+        if st.button("Resetear curva",use_container_width=True,key=f"{ns}_reset_curve"):
+            saved["stage7_final_answers"]={}; saved.pop("stage7_result",None); saved["done_7"]=False; _persist(); st.rerun()
 
-    st.dataframe(compare_rows, use_container_width=True, hide_index=True)
+    completed=[f for f in bands if str(f) in answers]
+    st.progress(len(completed)/len(bands),text=f"Bandas validadas: {len(completed)} / {len(bands)}")
 
-    st.info(
-        "Un cambio de parámetro no produce necesariamente el mismo efecto en todo el espectro. "
-        "Por eso conviene analizar la curva completa y no una sola banda ni únicamente f₀."
-    )
+    if completed:
+        pos={f:i for i,f in enumerate(bands)}
+        x=np.arange(len(bands))
+        fig,ax=plt.subplots(figsize=(10.5,4.8))
+        ax.plot(x,ln0_arr,marker="o",label="Losa base · Lₙ,₀(f)")
+        xc=[pos[f] for f in completed]; yc=[answers[str(f)] for f in completed]
+        order=np.argsort(xc); xc=np.asarray(xc)[order]; yc=np.asarray(yc,float)[order]
+        ax.plot(xc,yc,marker="o",linewidth=2.3,label="Piso terminado · Lₙ,final(f)")
+        ax.set_xticks(x); ax.set_xticklabels([str(f) if f<1000 else f"{f/1000:g}k" for f in bands],rotation=45,ha="right")
+        ax.set_xlabel("Bandas de frecuencia [Hz]"); ax.set_ylabel("Nivel de ruido de impacto [dB]"); ax.set_title("Curva final construida por el alumno")
+        ax.grid(True,axis="y",alpha=.22); ax.legend(); fig.tight_layout(); st.pyplot(fig,use_container_width=True); plt.close(fig)
 
-    _mcq(
-        "cause_effect_q",
-        "Si reducimos s′ y baja f₀, ¿podemos concluir automáticamente que todas las bandas tendrán menor Lₙ,final?",
-        ["A. Sí", "B. No"],
-        1,
-        "No. Debe revisarse la respuesta espectral completa porque ΔLₙ depende de la frecuencia.",
-    )
+    st.markdown("### Tabla de trabajo")
+    st.dataframe([
+        {"Banda (Hz)":f,"Lₙ,₀ (dB)":round(float(ln0_arr[j]),1),"ΔLₙ (dB)":round(float(delta_arr[j]),1),"Lₙ,final (dB)":round(float(answers[str(f)]),1) if str(f) in answers else "—"}
+        for j,f in enumerate(bands)
+    ],hide_index=True,use_container_width=True)
 
-    st.markdown("## 11 · Del modelo a la obra")
-    _asset("curso2_lab1_etapa7_modelo_vs_obra.webp")
-    st.write(
-        "Después de seleccionar una solución por su comportamiento espectral y sus restricciones, "
-        "debemos comprobar que la obra conserve las condiciones del modelo ideal."
-    )
+    # =========================================================
+    # LAB B
+    # =========================================================
+    st.markdown("## 3 · Laboratorio B — Sensibilidad del diseño")
+    st.write("Ahora sí puedes modificar el piso y observar **por qué cambia la curva final**. Este laboratorio no reemplaza la solución guardada de Etapa 6; es una exploración de sensibilidad.")
+    model=solution.get("model","Cremer/Vigran")
+    m1_ref=float(solution.get("m1_surface_kg_m2",85.0)); m2=float(solution.get("m2_surface_kg_m2",baseline.get("surface_mass_kg_m2",384.0))); s_ref=float(solution.get("s_dyn_MN_m3",12.0))
+    h_ref=float(solution.get("h1_mm",40.0))
+    cc1,cc2=st.columns(2)
+    with cc1:
+        m1_test=st.slider("Masa superficial superior m′₁ (kg/m²)",max(2.0,m1_ref*.35),max(20.0,m1_ref*2.0),m1_ref,step=1.0,key=f"{ns}_sens_m1")
+    with cc2:
+        s_test=st.slider("Rigidez dinámica s′ (MN/m³)",max(1.0,s_ref*.35),max(5.0,s_ref*2.2),s_ref,step=0.5,key=f"{ns}_sens_s")
 
-    defects = st.multiselect(
-        "Activar defecto",
-        ["CONTACTO PERIMETRAL", "TORNILLO", "TUBERÍA", "DISCONTINUIDAD RESILIENTE"],
-        key=f"{ns}_defects",
-    )
-    meanings = {
-        "CONTACTO PERIMETRAL": "Se crea un camino mecánico paralelo entre la masa flotante y la estructura.",
-        "TORNILLO": "Una fijación rígida puentea el apoyo resiliente.",
-        "TUBERÍA": "La penetración o su soporte puede convertirse en un camino estructural adicional.",
-        "DISCONTINUIDAD RESILIENTE": "El apoyo deja de representar la continuidad ideal asumida por el modelo.",
-    }
+    mr=(m1_test*m2)/max(m1_test+m2,1e-9)
+    f0_general=(1/(2*math.pi))*math.sqrt((s_test*1e6)/mr)
+    if model=="Cremer/Vigran":
+        f0_model=(1/(2*math.pi))*math.sqrt((s_test*1e6)/m1_test)
+        delta_test=np.asarray([max(0.0,40*math.log10(max(f/f0_model,1e-12))) for f in bands],float)
+    else:
+        f0_model=f0_general
+        # Para la sensibilidad del modelo discreto conservamos la forma f^3 del ejercicio original.
+        N=float(solution.get("support_density_per_m2",4.0)); cL=float(solution.get("cL1_m_s",3500.0)); eta=float(solution.get("eta11",0.02)); h_m=h_ref/1000.0
+        vals=[]
+        for f in bands:
+            arg=(cL*h_m*N*eta*(f**3))/(2*(math.pi**3)*(f0_model**4))
+            vals.append(max(0.0,10*math.log10(max(arg,1e-12))))
+        delta_test=np.asarray(vals,float)
+    final_test=ln0_arr-delta_test
 
-    if defects:
-        st.error(
-            "ADVERTENCIA · EL SISTEMA CONSTRUIDO YA NO REPRESENTA COMPLETAMENTE "
-            "EL MODELO IDEAL UTILIZADO EN LA PREDICCIÓN."
-        )
-        for d in defects:
-            st.write(f"**{d}:** {meanings[d]}")
-        st.latex(
-            r"\mathrm{CAMINO\ PREVISTO:}\quad"
-            r"\mathrm{sobrelosa}\rightarrow\mathrm{capa\ resiliente}\rightarrow\mathrm{losa}"
-        )
-        st.latex(
-            r"\mathrm{CAMINO\ ADICIONAL:}\quad"
-            r"\mathrm{sobrelosa}\rightarrow\mathrm{puente\ rígido}\rightarrow\mathrm{estructura}"
-        )
-        st.caption("No se aplica ninguna penalización inventada en dB.")
-    st.markdown("## 12 · ¿La predicción y la medición serán idénticas?")
-    st.write("**No necesariamente.**")
-    st.write(
-        "Pueden existir diferencias por simplificación del modelo, propiedades reales, amortiguamiento, "
-        "condiciones de borde, ejecución, caminos secundarios e incertidumbre experimental."
-    )
-    st.info(
-        "No se implementa el interactivo Predicción vs medición porque en el proyecto actual no existe "
-        "un conjunto de datos espectrales bibliográficos validados. No se inventan puntos ni se reconstruyen curvas desde memoria."
-    )
-    _mcq(
-        "avgerror",
-        "Si el error promedio es pequeño, ¿significa que el error es pequeño en todas las bandas?",
-        ["A. Sí","B. No"],
-        1,
-        "Un error global pequeño no garantiza coincidencia banda a banda.",
-    )
-    st.latex(
-        r"\boxed{\mathrm{ERROR\ PROMEDIO\ PEQUEÑO}\neq"
-        r"\mathrm{ERROR\ PEQUEÑO\ EN\ TODO\ EL\ ESPECTRO}}"
-    )
+    s1,s2,s3=st.columns(3)
+    with s1: _card("Modelo",model,"Se conserva el tipo de sistema elegido en Etapa 6.")
+    with s2: _card("f₀ calculada",f"{f0_model:.1f} Hz","Resultado dinámico de los parámetros actuales.")
+    with s3: _card("Cambio medio",f"{np.mean(final_test-final_arr):+.1f} dB","Diferencia media respecto de la solución guardada.",tone="purple")
 
-    # ================================================================
-    # 13. NO SINGLE NUMBER / BRIDGE TO LAB 2
-    # ================================================================
-    st.markdown("## 13 · La Etapa 7 termina en la curva espectral")
-    st.latex(r"\boxed{L_{n,\mathrm{final}}(f)}")
-    st.warning(
-        "No calculamos $L_{n,w}$, $L'_n,w$, $L'_{nT,w}$, $C_I$, curvas de referencia "
-        "ni procedimientos ISO 717-2 / ISO 12354 en esta etapa."
-    )
-    st.write(
-        "Ahora tenemos muchos valores de $L_n$, uno para cada frecuencia. "
-        "¿Cómo transformaremos después esta información espectral en descriptores comparables?"
-    )
-    st.success("Ese problema será desarrollado en el Laboratorio 2.")
+    fig,ax=plt.subplots(figsize=(10.5,4.8)); x=np.arange(len(bands))
+    ax.plot(x,final_arr,marker="o",label="Solución guardada")
+    ax.plot(x,final_test,marker="o",label="Solución explorada")
+    ax.set_xticks(x); ax.set_xticklabels([str(f) if f<1000 else f"{f/1000:g}k" for f in bands],rotation=45,ha="right")
+    ax.set_xlabel("Bandas de frecuencia [Hz]"); ax.set_ylabel("Lₙ,final [dB]"); ax.set_title("¿Cómo cambia el piso terminado?")
+    ax.grid(True,axis="y",alpha=.22); ax.legend(); fig.tight_layout(); st.pyplot(fig,use_container_width=True); plt.close(fig)
+    st.info("No evalúes el diseño únicamente por f₀. La decisión debe mirar la **curva final completa** y las restricciones de proyecto.")
 
-    # ================================================================
-    # 14. INTEGRATING EXERCISE
-    # ================================================================
-    st.markdown("## 14 · Ejercicio integrador")
-    st.write(
-        "Se entrega la curva R(f) del ejercicio, las propiedades de la losa y un tratamiento continuo "
-        "con $m'_1=110$ kg/m², $m'_2=380$ kg/m² y $s'=12$ MN/m³."
-    )
-    st.dataframe(
-        [{"f [Hz]":int(f),"R(f) [dB]":round(float(R),1)} for f,R in zip(bands,R_base)],
-        use_container_width=True,hide_index=True,
-    )
+    # =========================================================
+    # LAB C
+    # =========================================================
+    st.markdown("## 4 · Laboratorio C — Decisión profesional del proyecto")
+    st.write("Caso del ejercicio: además del desempeño acústico, el proyecto impone restricciones de carga y altura. **No son límites normativos**; son condiciones del caso para practicar una decisión multidisciplinaria.")
+    p1,p2,p3=st.columns(3)
+    with p1: max_load=st.number_input("Carga máxima admisible del tratamiento (kg/m²)",20.0,300.0,120.0,5.0,key=f"{ns}_maxload")
+    with p2: max_h=st.number_input("Altura máxima disponible (mm)",10.0,200.0,75.0,5.0,key=f"{ns}_maxh")
+    with p3: target500=st.number_input("Objetivo del ejercicio a 500 Hz (dB)",20.0,100.0,50.0,1.0,key=f"{ns}_target500")
 
-    step_key=f"{ns}_integrating_step"
-    if step_key not in st.session_state:
-        st.session_state[step_key]=0
-    step=int(st.session_state[step_key])
+    j500=min(range(len(bands)),key=lambda j:abs(bands[j]-500))
+    acoustic_ok=final_test[j500] <= target500
+    load_ok=m1_test <= max_load
+    height_ok=h_ref <= max_h
+    q1,q2,q3=st.columns(3)
+    with q1: _card("Acústica","Cumple" if acoustic_ok else "No cumple",f"Lₙ,final({bands[j500]} Hz) = {final_test[j500]:.1f} dB · objetivo ≤ {target500:.1f} dB",tone="purple" if acoustic_ok else "white")
+    with q2: _card("Carga","Cumple" if load_ok else "No cumple",f"m′₁ = {m1_test:.1f} kg/m² · máximo {max_load:.1f} kg/m²")
+    with q3: _card("Altura","Cumple" if height_ok else "No cumple",f"h₁ = {h_ref:.0f} mm · máximo {max_h:.0f} mm")
 
-    labels=[
-        "PASO 1 · CALCULAR LOSA BASE",
-        "PASO 2 · CALCULAR MASA REDUCIDA",
-        "PASO 3 · CALCULAR f₀",
-        "PASO 4 · OBTENER ΔLₙ(f)",
-        "PASO 5 · OBTENER Lₙ,final(f)",
-        "PASO 6 · INTERPRETAR",
-    ]
-    if step < len(labels):
-        if st.button(labels[step],key=f"{ns}_integrating_button",use_container_width=True):
-            st.session_state[step_key]=step+1
-            st.rerun()
+    viable=acoustic_ok and load_ok and height_ok
+    if viable: st.success("La alternativa explorada es viable dentro de las tres restricciones del ejercicio.")
+    else: st.warning("La alternativa todavía no es viable. Ajusta el diseño y observa qué restricción controla la decisión.")
 
-    ex_mr,ex_f0=natural_frequency(110,380,12)
-    ex_delta,ex_f0c=_delta_continuous_curve(110,12)
-    ex_final=_final_curve(ln0_base,ex_delta)
+    # =========================================================
+    # SAVE / CLOSING
+    # =========================================================
+    st.markdown("## 5 · Cierre — Guarda la predicción completa")
+    if len(completed)==len(bands):
+        st.success("Has construido correctamente todas las bandas de Lₙ,final(f).")
+        if st.button("Guardar curva final y decisión",type="primary",use_container_width=True,key=f"{ns}_save"):
+            saved["stage7_result"]={
+                "bands_hz":[int(f) for f in bands],
+                "ln0_db":[round(float(v),3) for v in ln0_arr],
+                "delta_ln_db":[round(float(v),3) for v in delta_arr],
+                "ln_final_db":[round(float(v),3) for v in final_arr],
+                "source_stage5":True,"source_stage6":True,
+                "model":model,
+                "decision_exploration":{"m1_kg_m2":float(m1_test),"s_dyn_MN_m3":float(s_test),"f0_hz":float(f0_model),"viable":bool(viable)},
+                "updated_at":_now(),
+            }
+            saved["done_7"]=True; _persist(); st.success("Etapa 7 guardada. Ya existe una curva final completa para continuar.")
+    else:
+        st.info("Completa todas las bandas del Laboratorio A para habilitar el guardado final.")
 
-    if step>=1:
-        st.markdown("### PASO 1 · Losa base")
-        st.write("Se reutiliza la función predictiva de la Etapa 5.")
-        st.dataframe(
-            [{"f [Hz]":int(f),"Lₙ,₀ [dB]":round(float(v),1)} for f,v in zip(bands,ln0_base)],
-            use_container_width=True,hide_index=True,
-        )
-    if step>=2:
-        st.markdown("### PASO 2 · Masa reducida")
-        st.latex(r"m'_r=\frac{110(380)}{110+380}")
-        st.latex(rf"\boxed{{m'_r\approx{ex_mr:.1f}\ \mathrm{{kg/m^2}}}}")
-    if step>=3:
-        st.markdown("### PASO 3 · Frecuencia natural")
-        st.latex(r"f_0=\frac1{2\pi}\sqrt{\frac{12\times10^6}{m'_r}}")
-        st.latex(rf"\boxed{{f_0\approx{ex_f0:.1f}\ \mathrm{{Hz}}}}")
-    if step>=4:
-        st.markdown("### PASO 4 · Mejora ΔLₙ(f)")
-        st.write("Como el tratamiento es una capa resiliente continua, se reutiliza el modelo Cremer/Vigran de la Etapa 6.")
-        st.dataframe(
-            [{"f [Hz]":int(f),"ΔLₙ [dB]":None if not np.isfinite(v) else round(float(v),1)}
-             for f,v in zip(bands,ex_delta)],
-            use_container_width=True,hide_index=True,
-        )
-    if step>=5:
-        st.markdown("### PASO 5 · Piso terminado")
-        st.latex(r"L_{n,\mathrm{final}}(f)=L_{n,0}(f)-\Delta L_n(f)")
-        st.dataframe(
-            [{"f [Hz]":int(f),"Lₙ,final [dB]":None if not np.isfinite(v) else round(float(v),1)}
-             for f,v in zip(bands,ex_final)],
-            use_container_width=True,hide_index=True,
-        )
-    if step>=6:
-        st.markdown("### PASO 6 · Interpretación")
-        st.write(
-            "Compara la forma espectral de la losa base y del piso terminado, ubica la región de resonancia "
-            "y señala al menos dos limitaciones: por ejemplo, hipótesis del modelo ideal y sensibilidad a ejecución/puentes."
-        )
-        st.success(
-            "Conclusión técnica esperada: la predicción permite comparar tendencias y alternativas, "
-            "pero debe interpretarse dentro del campo de validez del modelo y de la configuración constructiva."
-        )
+    st.latex(r"\boxed{L_{n,0}(f)-\Delta L_n(f)=L_{n,\mathrm{final}}(f)}")
+    st.write("La Etapa 7 termina en una **curva espectral completa del piso terminado**. No calculamos todavía un número único ni promedios normativos.")
+    st.success("Etapa 8: pasaremos desde el piso terminado a medidas de control de ruido y vibraciones en instalaciones.")
 
-    # ================================================================
-    # 15. FORMATIVE QUESTIONS
-    # ================================================================
-    st.markdown("## 15 · Preguntas formativas")
-    _mcq("q1",r"$L_{n,\mathrm{final}}(f)=L_{n,0}(f)-\Delta L_n(f)$.",["Verdadero","Falso"],0,"Correcto.",store=True)
-    _mcq("q2","ΔLₙ es necesariamente igual en todas las bandas.",["Verdadero","Falso"],1,"Es función de la frecuencia.",store=True)
-    _mcq("q3","La solución con menor f₀ siempre será automáticamente la mejor solución constructiva.",["Verdadero","Falso"],1,"Debe evaluarse el espectro y las restricciones.",store=True)
-    _mcq("q4","Un puente rígido puede hacer que la obra deje de representar adecuadamente el modelo ideal.",["Verdadero","Falso"],0,"Correcto.",store=True)
-    _mcq("q5","Un resultado predictivo debe interpretarse dentro del campo de aplicación y las hipótesis del modelo.",["Verdadero","Falso"],0,"Correcto.",store=True)
-    _mcq("q6",r"$L_{n,\mathrm{final}}(f)$ corresponde automáticamente a $L_{n,w}$.",["Verdadero","Falso"],1,"No. Aquí todavía tenemos una curva espectral.",store=True)
-    _mcq("q7","El número único se obtiene promediando aritméticamente todos los niveles por bandas.",["Verdadero","Falso"],1,"No; el procedimiento normativo se estudiará después.",store=True)
-
-    # ================================================================
-    # 16. FINAL MAP / CONCLUSION
-    # ================================================================
-    st.markdown("## 16 · Mapa conceptual final")
-    st.latex(
-        r"\boxed{\mathrm{PROPIEDADES\ DE\ LA\ LOSA}\rightarrow R(f)"
-        r"\rightarrow L_{n,0}(f)\rightarrow\Delta L_n(f)"
-        r"\rightarrow L_{n,\mathrm{final}}(f)}"
-    )
-    st.write(
-        "**Laboratorio 2:** medición + descriptores + curvas de referencia + números únicos."
-    )
-
-    with st.container(border=True):
-        st.markdown("### Conclusión profesional")
-        st.latex(
-            r"\boxed{\mathrm{BUENA\ PREDICCIÓN}=\mathrm{MODELO}"
-            r"+\mathrm{DATOS\ DE\ ENTRADA}+\mathrm{CAMPO\ DE\ VALIDEZ}"
-            r"+\mathrm{SENSIBILIDAD}+\mathrm{INTERPRETACIÓN}}"
-        )
-        st.write(
-            "Una predicción acústica útil no consiste únicamente en generar una curva. "
-            "Debe permitir comprender qué fenómeno controla el resultado, qué parámetros son sensibles, "
-            "cuáles son las hipótesis del modelo y qué condiciones constructivas deben conservarse "
-            "para que la obra represente razonablemente el sistema analizado."
-        )
-
-    with st.container(border=True):
-        st.markdown("### 📚 Fuente / fundamento")
-        st.write(
-            "Losa base $L_{n,0}(f)$: relaciones de impacto de Vér utilizadas en Etapa 5, "
-            "Vér & Beranek (eds.), *Noise and Vibration Control Engineering*, 2nd ed., Wiley, 2006, "
-            "cap. 11, §11.11."
-        )
-        st.write(
-            "Capa continua: Vigran, *Building Acoustics* (2008), Ec. 8.44; "
-            "Cremer, Heckl & Ungar, *Structure-Borne Sound*."
-        )
-        st.write(
-            "Apoyos discretos: Vigran, Ecs. 8.45–8.46; Vér (1971), "
-            "*Impact noise isolation of composite floors*."
-        )
-        st.write(
-            "Masa reducida y frecuencia natural: modelo clásico masa–resorte–masa desarrollado en Etapa 6."
-        )
-
-    st.markdown("## 17 · Transición a Etapa 8")
-    st.latex(
-        r"\boxed{L_{n,0}(f)-\Delta L_n(f)=L_{n,\mathrm{final}}(f)}"
-    )
-    st.success("HEMOS COMPLETADO LA CADENA PREDICTIVA DEL RUIDO DE IMPACTO.")
-    st.write(
-        "En la Etapa 8 aplicaremos fuerza dinámica, resonancia, transmisibilidad, desacople y caminos estructurales "
-        "al control de ruido y vibraciones de bombas, ventiladores, ductos, tuberías y otras instalaciones."
-    )
+    if role=="Docente" and not projection_mode:
+        with st.container(border=True):
+            st.markdown("### Vista docente · objetivo de la etapa")
+            st.write("El estudiante debe demostrar que sabe combinar resultados previos, construir Lₙ,final(f) por bandas y justificar una decisión considerando desempeño acústico y restricciones del caso.")
 
     left,right=st.columns(2)
     with left:
-        if st.button("← Etapa 6",key=f"s7_prev_{class_id}",use_container_width=True):
-            st.session_state[stage_selector_key]=6
-            st.rerun()
+        if st.button("← Etapa 6",key=f"s7_prev_{class_id}",use_container_width=True): st.session_state[stage_selector_key]=6; st.rerun()
     with right:
-        if st.button("Etapa 8 →",key=f"s7_next_{class_id}",use_container_width=True):
-            st.session_state[stage_selector_key]=8
-            st.rerun()
-
+        if st.button("Etapa 8 →",key=f"s7_next_{class_id}",use_container_width=True): st.session_state[stage_selector_key]=8; st.rerun()
 
 def _render_course2_lab1_stage8(lab, saved):
     """Etapa 8 — Medidas de control del ruido de instalaciones y equipos."""
