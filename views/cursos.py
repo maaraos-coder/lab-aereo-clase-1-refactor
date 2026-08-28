@@ -6135,546 +6135,440 @@ def _render_course2_lab1_stage7(lab, saved):
     with right:
         if st.button("Etapa 8 →",key=f"s7_next_{class_id}",use_container_width=True): st.session_state[stage_selector_key]=8; st.rerun()
 
+
 def _render_course2_lab1_stage8(lab, saved):
-    """Etapa 8 — Medidas de control del ruido de instalaciones y equipos."""
+    """Etapa 8 — Diagnóstico y control profesional del ruido de instalaciones."""
     import math
     import numpy as np
     import pandas as pd
     import matplotlib.pyplot as plt
 
-    # ---------- utilidades ----------
-    def fe_rpm(rpm): return max(float(rpm),0.0)/60.0
+    class_id=lab["id"]
+    role=st.session_state.get("role","Alumno")
+    ns=f"{class_id}_s8"
+
+    def _asset(name,caption=None):
+        p=ASSET_DIR/name
+        if p.exists():
+            st.image(str(p),width="stretch")
+            if caption: st.caption(caption)
+            return True
+        return False
+
+    def _persist():
+        saved["updated_8"]=_now()
+        fn=globals().get("_save_future_state_impl") or globals().get("_save_future_state")
+        if callable(fn): fn(class_id,saved)
+
+    def _card(title,value,text,tone="white"):
+        palette={
+            "white":("#ffffff","#dbe4ee"),
+            "blue":("#eff6ff","#bfdbfe"),
+            "green":("#f0fdf4","#bbf7d0"),
+            "orange":("#fff7ed","#fed7aa"),
+            "purple":("#f5f3ff","#ddd6fe"),
+        }
+        bg,bd=palette.get(tone,palette["white"])
+        st.markdown(
+            f"""<div style="border:1px solid {bd};border-radius:16px;padding:15px 16px;
+            background:{bg};min-height:145px;margin-bottom:8px">
+            <div style="font-weight:850;color:#0f172a">{title}</div>
+            <div style="font-size:1.3rem;font-weight:900;color:#0f172a;margin:.35rem 0">{value}</div>
+            <div style="color:#64748b;line-height:1.45">{text}</div></div>""",
+            unsafe_allow_html=True
+        )
+
+    def fe_rpm(rpm):
+        return max(float(rpm),0.0)/60.0
+
     def fn_delta(delta_mm):
         dm=max(float(delta_mm)/1000.0,1e-12)
         return (1/(2*math.pi))*math.sqrt(9.81/dm)
+
     def tf_force(r,z):
         r=float(r); z=max(float(z),0.0)
         return math.sqrt((1+(2*z*r)**2)/max((1-r*r)**2+(2*z*r)**2,1e-12))
-    def ref(txt):
-        st.caption("Fuente / fundamento: Harris, *Manual de medidas acústicas y control del ruido*, 3.ª ed., "+txt+".")
-    def asset(name):
-        for base in ("assets","images","static"):
-            q=Path(base)/name
-            if q.exists():
-                st.image(str(q),use_container_width=True)
-                return True
-        return False
 
-    # Base de diagnóstico. No es un catálogo de productos: relaciona mecanismo, camino y familia de control.
-    control_db = {
-        "Bomba": {
-            "vibración en losa": [("Vibración transmitida por la base","Camino estructural",["Aislamiento vibratorio","Bancada/bloque de inercia cuando corresponda","Revisar carga, rigidez y montaje"])],
-            "vibración de tubería": [("Vibración transmitida por tuberías","Conexiones / estructura",["Conexiones flexibles","Soportes resilientes","Revisar penetraciones y contactos rígidos"])],
-            "cavitación": [("Cavitación / condición hidráulica","Fuente",["Corregir condición hidráulica","Revisar succión, presión disponible y operación","No intentar resolverla solo con aisladores"])],
-            "ruido aéreo elevado": [("Radiación de bomba/motor","Camino aéreo",["Equipo de menor emisión","Encapsulamiento/cerramiento cuando corresponda","Aislamiento y tratamiento del recinto"])],
-            "ruido tonal": [("Rotación, motor o fenómeno hidráulico tonal","Fuente + aire/estructura",["Diagnóstico espectral","Balanceo/alineación/mantenimiento según causa","Control del camino dominante"])],
-        },
-        "Ventilador": {
-            "vibración en losa": [("Vibración de motor/rotor/base","Camino estructural",["Balanceo y mantenimiento","Aislamiento vibratorio","Soportes adecuados"])],
-            "ruido por ducto": [("Ruido aerodinámico propagado por ducto","Camino aéreo / ducto",["Control aerodinámico","Silenciador cuando corresponda","Revestimiento acústico cuando corresponda","Transiciones adecuadas"])],
-            "ruido aéreo elevado": [("Radiación de carcasa/ventilador","Camino aéreo",["Selección de menor emisión","Cerramiento","Tratamiento del recinto"])],
-            "ruido tonal": [("Paso de álabes / rotación","Fuente + ducto",["Revisar velocidad y aerodinámica","Balanceo","Control acústico del ducto"])],
-        },
-        "Compresor": {
-            "vibración en losa": [("Fuerzas dinámicas","Camino estructural",["Aislamiento vibratorio","Bancada/bloque de inercia cuando corresponda","Revisar estabilidad y conexiones"])],
-            "vibración de tubería": [("Pulsaciones / vibración de conexiones","Conexiones",["Conexiones flexibles","Control de pulsaciones según sistema","Soportes adecuados"])],
-            "ruido aéreo elevado": [("Radiación de carcasa","Camino aéreo",["Encapsulamiento","Selección/mantenimiento","Tratamiento del recinto"])],
-            "impactos": [("Fuerzas dinámicas/reciprocantes","Fuente + estructura",["Diagnosticar tipo de compresor","Control en fuente","Aislamiento y/o masa de inercia según diseño"])],
-        },
-        "Chiller / HVAC": {
-            "vibración en losa": [("Compresor, bombas o ventiladores","Camino estructural",["Aislamiento vibratorio","Soportes resilientes","Revisar conexiones"])],
-            "vibración de tubería": [("Transmisión por red hidráulica","Conexiones",["Conexiones flexibles","Soportes resilientes","Evitar puentes"])],
-            "ruido aéreo elevado": [("Compresor/ventiladores","Camino aéreo",["Selección de baja emisión","Pantallas/cerramientos cuando corresponda","Ubicación"])],
-            "ruido tonal": [("Ventiladores/compresor","Fuente + aire",["Diagnóstico de fuente","Control de ventiladores","Pantalla/cerramiento si corresponde"])],
-        },
-        "Unidad exterior A/A": {
-            "vibración en losa": [("Compresor/ventilador transmitido por soporte","Camino estructural",["Aisladores adecuados","Soporte correctamente diseñado","Mantenimiento"])],
-            "ruido aéreo elevado": [("Ventilador/compresor","Camino aéreo",["Equipo silencioso","Ubicación","Pantalla acústica cuando corresponda"])],
-            "ruido tonal": [("Compresor o ventilador","Fuente + aire/estructura",["Diagnóstico tonal","Mantenimiento","Control del camino dominante"])],
-        },
-        "Grupo electrógeno": {
-            "vibración en losa": [("Vibración del motor","Camino estructural",["Aisladores","Bancada","Control de conexiones"])],
-            "ruido aéreo elevado": [("Motor/carcasa","Camino aéreo",["Encapsulamiento","Aislamiento del recinto","Control de ventilación compatible con flujo"])],
-            "ruido tonal": [("Motor/elementos rotatorios","Fuente + aire/estructura",["Diagnóstico","Mantenimiento","Control del camino dominante"])],
-        },
-        "Ascensor": {
-            "vibración en losa": [("Máquina de tracción / guías","Camino estructural",["Aislamiento de maquinaria","Desacoplamiento estructural","Soportes resilientes"])],
-            "impactos": [("Puertas, maniobras o contactos","Fuente + estructura",["Control de impactos","Mantenimiento","Desacoplamiento"])],
-            "ruido aéreo elevado": [("Maquinaria / recinto","Camino aéreo",["Diseño del recinto de maquinaria","Aislamiento","Separación de recintos sensibles"])],
-        },
-        "Sistema de tuberías": {
-            "vibración de tubería": [("Flujo, equipos conectados o contactos","Conexiones / estructura",["Diseño hidráulico adecuado","Soportes resilientes","Conexiones flexibles","Penetraciones desacopladas"])],
-            "impactos": [("Golpe de ariete / válvulas","Fuente + estructura",["Control hidráulico del golpe","Revisar válvulas y operación","Soportes y desacoplamiento"])],
-            "ruido aéreo elevado": [("Radiación de tubería","Camino aéreo",["Control en fuente/flujo","Aislamiento de tubería cuando corresponda","Diseño de shaft"])],
-        },
-    }
-
-    st.markdown("## Etapa 8 — Medidas de control del ruido de instalaciones y equipos")
-    st.write("La pregunta profesional de esta etapa es: **tengo una instalación que genera ruido en un edificio, ¿qué conjunto de medidas debo evaluar?**")
-    st.latex(r"\text{EQUIPO / INSTALACIÓN}\rightarrow\text{MECANISMO}\rightarrow\text{CAMINO}\rightarrow\text{MEDIDA}\rightarrow\text{COMBINACIÓN DE CONTROLES}")
-    st.info("**NO SE SELECCIONA UNA MEDIDA DE CONTROL SIN IDENTIFICAR PRIMERO EL PROBLEMA.**")
-    asset("curso2_lab1_etapa8_sala_instalaciones.webp")
-
-    st.markdown("### 1 · ¿Dónde podemos actuar?")
-    zone=st.radio("Selecciona una zona del sistema FUENTE → CAMINO → RECEPTOR",["Fuente","Camino estructural","Camino aéreo","Conexiones","Ubicación / configuración"],horizontal=True,key="e8_zone")
-    zones={
-        "Fuente":["Seleccionar equipos de menor emisión","Reducir velocidad cuando el sistema lo permita","Balancear elementos rotatorios","Alinear motor y equipo","Mantenimiento","Corregir piezas sueltas","Evitar cavitación","Reducir turbulencia e impactos","Modificar condiciones de operación"],
-        "Camino estructural":["Aisladores elastoméricos","Resortes","Bancadas/bloques de inercia","Soportes resilientes","Desacoplamiento","Evitar puentes rígidos"],
-        "Camino aéreo":["Encapsulamientos/cerramientos","Barreras/pantallas cuando corresponda","Silenciadores","Revestimientos acústicos","Tratamiento de ductos","Aumentar aislamiento del recinto"],
-        "Conexiones":["Conectores flexibles de tuberías","Soportes resilientes","Conectores flexibles de ductos","Pasos de instalaciones desacoplados"],
-        "Ubicación / configuración":["Alejar equipos de recintos sensibles","Evitar instalación sobre dormitorios cuando sea posible","Usar recintos técnicos","Evitar apoyos desfavorables","Resolver ubicación durante el diseño"],
-    }
-    st.markdown("**Medidas a evaluar:**\n\n- "+"\n- ".join(zones[zone]))
-    st.latex(r"\text{CONTROL}=\text{FUENTE}+\text{ESTRUCTURA}+\text{AIRE}+\text{CONEXIONES}+\text{RECINTO/UBICACIÓN}")
-
-    st.markdown("### 2 · Diagnóstico antes de la solución")
-    d1,d2=st.columns(2)
-    with d1:
-        st.checkbox("¿Existe vibración?",key="e8_diag_v")
-        st.checkbox("¿Existe ruido aéreo?",key="e8_diag_a")
-        st.checkbox("¿Existen tuberías?",key="e8_diag_p")
-        st.checkbox("¿Existen ductos?",key="e8_diag_d")
-        st.checkbox("¿Existen conexiones rígidas?",key="e8_diag_r")
-    with d2:
-        st.checkbox("¿Existe flujo de aire o agua?",key="e8_diag_f")
-        st.checkbox("¿Cavitación, turbulencia o pulsación?",key="e8_diag_c")
-        st.selectbox("Receptor sensible",["Dormitorio","Vivienda vecina","Oficina","Sala de clases","Hospital/recinto sensible","Otro"],key="e8_receiver")
-    st.write("El diagnóstico debe separar **qué genera el ruido**, **por dónde se transmite** y **qué receptor resulta afectado**.")
-
-    st.markdown("### 3 · Bombas de agua — múltiples mecanismos")
-    asset("curso2_lab1_etapa8_bomba_problemas.webp")
-    st.code("""BOMBA
-├── vibración del conjunto
-├── desequilibrio / desalineación
-├── fuerzas hidráulicas
-├── turbulencia / cavitación
-├── pulsaciones
-├── vibración de tuberías
-└── radiación acústica de carcasa""",language=None)
-    pump_problem=st.selectbox("Problema de la bomba",["Vibración por base","Vibración por tuberías","Cavitación","Desequilibrio / desalineación","Ruido aéreo bomba/motor"],key="e8_pump_problem")
-    pump_controls={
-        "Vibración por base":"Aislamiento vibratorio + posible bancada/bloque de inercia + rigidez/deflexión y distribución de cargas.",
-        "Vibración por tuberías":"Conexiones flexibles + soportes resilientes + revisión de abrazaderas, penetraciones y contactos.",
-        "Cavitación":"**Prioridad: corregir la fuente / condición hidráulica.** No intentar resolverla colocando solamente resortes.",
-        "Desequilibrio / desalineación":"Balanceo + alineación + mantenimiento + corrección en la fuente.",
-        "Ruido aéreo bomba/motor":"Equipo de menor emisión + cerramiento/encapsulamiento cuando corresponda + aislamiento/tratamiento del recinto.",
-    }
-    st.success(pump_controls[pump_problem])
-
-    st.markdown("### 4 · Interactivo — ¿Qué le pasa a esta bomba?")
-    probs=st.multiselect("Activa problemas",["Desequilibrio","Cavitación","Apoyo rígido","Tubería rígida","Abrazaderas rígidas","Ruido aéreo de motor","Recinto técnico reverberante"],key="e8_pump_multi")
-    mapping={
-        "Desequilibrio":("FUENTE",["Balanceo","Alineación/mantenimiento"]),
-        "Cavitación":("FUENTE / HIDRÁULICA",["Corregir condición hidráulica","Revisar operación y succión"]),
-        "Apoyo rígido":("CAMINO ESTRUCTURAL",["Aislamiento vibratorio","Revisar bancada/montaje"]),
-        "Tubería rígida":("CONEXIONES",["Conexión flexible","Revisar trazado y penetraciones"]),
-        "Abrazaderas rígidas":("CONEXIONES / ESTRUCTURA",["Soportes resilientes","Evitar puentes"]),
-        "Ruido aéreo de motor":("CAMINO AÉREO",["Encapsulamiento/cerramiento","Aislamiento del recinto"]),
-        "Recinto técnico reverberante":("RECINTO",["Tratamiento absorbente compatible con el recinto"]),
-    }
-    for pr in probs:
-        area,meas=mapping[pr]; st.write(f"**{pr} → {area}:** "+", ".join(meas))
-
-    st.markdown("### 5 · Ventiladores")
-    asset("curso2_lab1_etapa8_ventilador.webp")
-    st.write("Revisar separadamente desequilibrio, motor, carcasa, bancada, ductos, ruido aerodinámico, turbulencia, paso de álabes y radiación por ductos.")
-    vent_case=st.radio("Ventilador: selecciona el fenómeno",["A. Vibración transmitida a la estructura","B. Ruido propagado por el ducto"],key="e8_vent_case")
-    if vent_case.startswith("A"):
-        st.success("Control principal del camino: balanceo/mantenimiento + aislamiento mecánico + soportes/conexiones adecuados.")
-    else:
-        st.success("Control principal del camino: aerodinámica del sistema + silenciador/revestimiento cuando corresponda + geometría y velocidad del ducto.")
-    st.warning("El mismo tratamiento NO resuelve necesariamente ambos fenómenos.")
-
-    st.markdown("### 6 · Compresores")
-    asset("curso2_lab1_etapa8_compresor.webp")
-    comp=st.radio("Tipo conceptual",["Rotativo","Reciprocante"],horizontal=True,key="e8_comp")
-    if comp=="Rotativo":
-        st.write("Evaluar rotación, vibración, ruido aéreo, conexiones, pulsaciones y condiciones de operación.")
-    else:
-        st.write("Además de ruido aéreo y conexiones, las fuerzas dinámicas y pulsaciones pueden ser especialmente relevantes; no debe modelarse como equivalente a un rotativo.")
-    st.write("Medidas posibles: aislamiento vibratorio, masa/bancada cuando corresponda, conexiones flexibles, control de pulsaciones, encapsulamiento, mantenimiento y ubicación.")
-
-    st.markdown("### 7 · Chillers y equipos HVAC")
-    asset("curso2_lab1_etapa8_chiller.webp")
-    st.write("Un chiller o unidad HVAC puede combinar compresor, ventiladores, bombas, tuberías, estructura y radiación aérea.")
-    st.markdown("- **Estructura:** aislamiento vibratorio y soportes.\n- **Tuberías:** conexiones flexibles y soportes resilientes.\n- **Aire:** selección de baja emisión, pantallas/cerramientos cuando correspondan.\n- **Diseño:** ubicación y relación con receptores sensibles.")
-
-    st.markdown("### 8 · Unidades exteriores de aire acondicionado")
-    st.write("Separar compresor, ventilador, vibración de carcasa, transmisión por soportes, ruido aéreo y ubicación.")
-    st.info("Una pantalla acústica no necesariamente controla vibración estructural. Un aislador no necesariamente controla el ruido aéreo del ventilador.")
-
-    st.markdown("### 9 · Ascensores")
-    asset("curso2_lab1_etapa8_ascensor.webp")
-    st.write("Fuentes posibles: máquina de tracción, motor, poleas, guías, fricción, puertas, maniobras e impactos.")
-    st.write("Medidas conceptuales: aislamiento de maquinaria, desacoplamiento estructural, soportes resilientes, control de impactos, mantenimiento, diseño del recinto y separación de recintos sensibles.")
-    st.caption("No se asignan reducciones inventadas en dB.")
-
-    st.markdown("### 10 · Grupos electrógenos — un equipo, varias familias de control")
-    asset("curso2_lab1_etapa8_grupo_electrogeno.webp")
-    gen=pd.DataFrame([
-        ["Vibración del motor","Estructura","Aisladores / bancada"],
-        ["Escape","Aire","Silenciador apropiado para el sistema"],
-        ["Admisión / ventilación","Aire / flujo","Control acústico compatible con caudal y pérdidas"],
-        ["Carcasa / motor","Aire","Encapsulamiento / aislamiento"],
-        ["Ubicación","Configuración","Separación de receptores"],
-    ],columns=["Problema","Camino","Familia de medida"])
-    st.dataframe(gen,use_container_width=True)
-
-    st.markdown("### 11 · Tuberías")
-    asset("curso2_lab1_etapa8_tuberias.webp")
-    st.write("Analizar vibración desde equipos, turbulencia, cambios bruscos, válvulas, presión, golpes, contactos estructurales y soportes.")
-    st.markdown("- conexiones flexibles;\n- soportes resilientes;\n- diseño hidráulico adecuado;\n- velocidades apropiadas;\n- control de golpes;\n- penetraciones desacopladas;\n- evitar puentes estructurales.")
-
-    st.markdown("### 12 · Ductos: no confundir aire con vibración mecánica")
-    duct=st.radio("Fenómeno",["Ruido que viaja por el ducto","Vibración mecánica del ducto"],horizontal=True,key="e8_duct")
-    if duct.startswith("Ruido"):
-        st.success("Evaluar silenciadores, revestimiento acústico cuando corresponda, velocidad, transiciones y reducción de turbulencia.")
-    else:
-        st.success("Evaluar conectores flexibles, soportes resilientes y desacoplamiento respecto del ventilador/estructura.")
-
-    st.markdown("### 13 · Ruido de fontanería")
-    st.write("Descargas, válvulas, tuberías, bombas, golpes de ariete y contactos estructurales pueden coexistir.")
-    st.write("Medidas: control en fuente, velocidades adecuadas, fijaciones resilientes, desacoplamiento, aislamiento de tuberías cuando corresponda, diseño de shafts y prevención de contactos rígidos.")
-
-    st.markdown("### 14 · Selección del aislamiento antivibratorio")
-    st.write(
-        "Un antivibratorio no se selecciona únicamente por el peso del equipo ni por decidir entre "
-        "“goma” o “resorte”. La selección parte de la excitación del equipo, continúa con la frecuencia "
-        "natural y la deflexión que necesitamos, y termina verificando la carga real que recibe cada apoyo."
-    )
-    st.latex(r"\boxed{\mathrm{EQUIPO}\rightarrow f_e\rightarrow f_n\rightarrow \delta\rightarrow \mathrm{CARGA\ POR\ APOYO}\rightarrow \mathrm{AISLADOR}\rightarrow \mathrm{VERIFICACI\acute{O}N}}")
-
-    st.markdown("#### Paso 1 · Identifica la frecuencia perturbadora")
-    st.write("Para un equipo rotatorio, si en este ejercicio consideramos como excitación dominante la componente 1×RPM:")
-    st.latex(r"f_e=\frac{\mathrm{RPM}}{60}")
-    st.info(
-        "Las RPM no siempre describen toda la excitación real. Pueden existir frecuencia de paso de álabes o palas, "
-        "armónicos, pulsaciones, componentes electromagnéticas u otras excitaciones. En un proyecto real debe "
-        "identificarse la frecuencia perturbadora relevante."
-    )
-
-    st.markdown("#### Paso 2 · Separa la frecuencia natural de la excitación")
-    st.latex(r"f_n=\frac{1}{2\pi}\sqrt{\frac{k}{m}}")
-    st.latex(r"r=\frac{f_e}{f_n}")
-    st.write(
-        "Si la frecuencia natural queda próxima a la excitación, el sistema puede trabajar cerca de resonancia. "
-        "Por eso el objetivo no es simplemente interponer un material flexible, sino obtener una rigidez bajo carga "
-        "que sitúe la frecuencia natural suficientemente alejada de la excitación."
-    )
-    st.latex(r"T_F=\sqrt{\frac{1+(2\zeta r)^2}{(1-r^2)^2+(2\zeta r)^2}}")
-    st.caption("T_F es la transmisibilidad de fuerza del modelo idealizado; no es directamente una reducción de nivel sonoro en dB.")
-
-    st.markdown("#### Paso 3 · Traduce la frecuencia natural a una deflexión")
-    st.latex(r"\delta=\frac{mg}{k}")
-    st.latex(r"f_n=\frac{1}{2\pi}\sqrt{\frac{g}{\delta}}")
-    st.write(
-        "Esta relación crea el puente con un catálogo comercial: una frecuencia natural objetivo implica una "
-        "determinada deflexión estática. En general, una mayor deflexión corresponde a una frecuencia natural menor."
-    )
-    st.latex(r"\boxed{\delta\uparrow\quad\Rightarrow\quad f_n\downarrow}")
-
-    st.markdown("#### Paso 4 · Comprueba la carga por apoyo")
-    st.write("Como primera aproximación, si la carga se distribuye uniformemente entre N apoyos:")
-    st.latex(r"F_{\mathrm{apoyo}}\approx\frac{Mg}{N}")
-    st.warning(
-        "La distribución uniforme es una hipótesis del ejercicio. En equipos reales las reacciones pueden ser diferentes "
-        "por la posición del centro de gravedad, la bancada y la distribución interna de masas. La selección final debe "
-        "realizarse con la carga real de cada apoyo."
-    )
-
-    st.markdown("#### Interactivo · Del equipo al requerimiento del aislador")
-    ca,cb,cc=st.columns(3)
-    with ca:
-        rpm=st.slider("Velocidad [RPM]",300,3600,1500,50,key="e8_iso_rpm")
-        mass=st.slider("Masa total del equipo [kg]",200,4000,1600,50,key="e8_iso_mass")
-    with cb:
-        supports=st.slider("Número de apoyos",2,8,4,1,key="e8_iso_supports")
-        delta=st.slider("Deflexión estática del aislador [mm]",5.0,105.0,50.8,1.0,key="e8_iso_delta")
-    with cc:
-        z=st.slider("Razón de amortiguamiento ζ",.01,.30,.08,.01,key="e8_iso_z")
-
-    fe=fe_rpm(rpm)
-    fn=fn_delta(delta)
-    r=fe/max(fn,1e-9)
-    tf=tf_force(r,z)
-    kg_support=mass/supports
-    force_support=kg_support*9.81
-    isolation=max(0.0,(1.0-tf)*100.0) if tf < 1 else 0.0
-
-    c=st.columns(6)
-    c[0].metric("fₑ",f"{fe:.2f} Hz")
-    c[1].metric("fₙ",f"{fn:.2f} Hz")
-    c[2].metric("r",f"{r:.2f}")
-    c[3].metric("T_F",f"{tf:.3f}")
-    c[4].metric("Carga/apoyo",f"{kg_support:.0f} kg")
-    c[5].metric("F/apoyo",f"{force_support:.0f} N")
-    if tf < 1:
-        st.success(f"En el modelo idealizado, T_F < 1. La reducción de fuerza transmitida asociada es aproximadamente {isolation:.1f} %. Esto no equivale directamente a una reducción acústica en dB.")
-    else:
-        st.error("Con estos parámetros no existe aislamiento de fuerza en el modelo idealizado (T_F ≥ 1). Revisa la proximidad a la resonancia.")
-
-    rr=np.linspace(.05,max(6.0,min(20.0,r*1.15)),500)
-    tt=[tf_force(x,z) for x in rr]
-    fig,ax=plt.subplots()
-    ax.plot(rr,tt,label="Transmisibilidad")
-    ax.axhline(1,ls="--")
-    ax.axvline(1,ls="--")
-    ax.axvline(math.sqrt(2),ls="--")
-    ax.scatter([r],[tf],zorder=5)
-    ax.set_xlabel("r = fₑ / fₙ")
-    ax.set_ylabel("T_F")
-    ax.set_ylim(0,min(8,max(3,float(np.percentile(tt,95)))))
-    ax.grid(True,alpha=.2)
-    st.pyplot(fig,use_container_width=True)
-    plt.close(fig)
-
-    st.markdown("#### Paso 5 · ¿Elastómero o resorte?")
-    c1,c2=st.columns(2)
-    with c1:
-        st.markdown("**AISLADOR ELASTOMÉRICO**")
-        st.write(
-            "Puede ser apropiado cuando la deflexión requerida es relativamente pequeña y sus propiedades bajo la "
-            "carga de operación permiten alcanzar la frecuencia natural buscada. Es compacto y aporta amortiguamiento, "
-            "pero debe verificarse con datos dinámicos y carga–deflexión del fabricante."
-        )
-    with c2:
-        st.markdown("**AISLADOR DE RESORTE**")
-        st.write(
-            "Permite obtener deflexiones estáticas mayores y frecuencias naturales menores. Puede resultar conveniente "
-            "cuando se necesita una separación importante entre fₑ y fₙ. Deben revisarse estabilidad, movimientos, "
-            "conexiones y, cuando corresponda, requisitos de restricción sísmica."
-        )
-    st.latex(r"\boxed{\mathrm{TIPO\ DE\ AISLADOR}\neq\mathrm{SELECCI\acute{O}N\ FINAL}}")
-    st.write(
-        "Después de elegir una familia todavía debemos encontrar un modelo cuya carga de operación y deflexión sean "
-        "compatibles con el apoyo que estamos diseñando."
-    )
-
-    st.markdown("### 15 · Ejercicio profesional — selecciona un antivibratorio de catálogo")
-    st.write(
-        "Trabajaremos con una bomba centrífuga didáctica de 1600 kg, 1500 RPM y cuatro apoyos. "
-        "Para este ejercicio se adopta 1×RPM como excitación dominante y distribución uniforme de carga."
-    )
-    ex_mass,ex_rpm,ex_n=1600.0,1500.0,4
-    ex_fe=ex_rpm/60.0
-    ex_kg=ex_mass/ex_n
-    ex_lb=ex_kg*2.2046226218
-    st.latex(r"f_e=\frac{1500}{60}=25\ \mathrm{Hz}")
-    st.latex(r"m_{\mathrm{apoyo}}=\frac{1600}{4}=400\ \mathrm{kg}\approx 882\ \mathrm{lb}")
-
-    st.write(
-        "Usaremos como documento comercial real la familia **Kinetics FDS — Free Standing Spring Isolators**. "
-        "El fabricante indica aplicaciones que incluyen bombas montadas sobre base, compresores, equipos de climatización "
-        "y ventiladores, con deflexiones estáticas disponibles hasta 4 in (102 mm)."
+    header(
+        "ETAPA 8 · LABORATORIO 1",
+        "CONTROL DEL RUIDO DE INSTALACIONES Y EQUIPOS",
+        "Diagnosticar mecanismos, identificar caminos y diseñar una estrategia de control combinada."
     )
 
     st.markdown(
         """
-        **Catálogo utilizado en este ejercicio**
-
-        [📄 Abrir catálogo oficial Kinetics FDS — aisladores de resorte de 4"](https://kineticsnoise.com/files/content/downloads/submittal_drawings/pdf/01/01-20fds/S-01-20-41.pdf)
-
-        [🌐 Ver página oficial Kinetics FDS — Free Standing Spring Isolators](https://kineticsnoise.com/fds/free-standing-spring-isolator)
-        """
+        <div style="border:1px solid #cbd5e1;background:#fff;border-radius:18px;padding:15px 18px;margin:.4rem 0 1rem">
+        <b>Pregunta profesional:</b> tengo una instalación que genera ruido o vibración en un edificio.
+        ¿Qué debo medir, qué camino domina y qué conjunto de medidas debo evaluar?
+        </div>
+        """,
+        unsafe_allow_html=True
     )
+    st.latex(
+        r"\boxed{\mathrm{EQUIPO}\rightarrow\mathrm{MECANISMO}\rightarrow"
+        r"\mathrm{CAMINO}\rightarrow\mathrm{MEDIDA}\rightarrow\mathrm{VERIFICACIÓN}}"
+    )
+    st.info("No se selecciona una medida de control antes de identificar el problema y el camino de transmisión.")
+
+    # =========================================================
+    # 1 · SISTEMA COMPLETO
+    # =========================================================
+    st.markdown("## 1 · Un equipo no es una fuente aislada: forma parte de un sistema")
+    st.write(
+        "CIBSE Guide B5 propone analizar la instalación completa. Un mismo equipo puede generar ruido por aire, "
+        "introducir fuerzas en la estructura y transmitir vibración a través de tuberías, ductos o soportes."
+    )
+    _asset(
+        "curso2_lab1_etapa8_mapa_caminos_profesional.webp",
+        "Mapa didáctico de caminos: estructural, aéreo, ductos y conexiones."
+    )
+
+    zone=st.radio(
+        "Selecciona dónde quieres actuar",
+        ["Fuente","Camino estructural","Camino aéreo / ducto","Conexiones","Ubicación / recinto"],
+        horizontal=True,key=f"{ns}_zone"
+    )
+    zone_data={
+        "Fuente":("Reducir generación","selección de equipo, punto de operación, balanceo, alineación, mantenimiento, control de cavitación o turbulencia."),
+        "Camino estructural":("Reducir fuerza transmitida","aisladores, resortes, elastómeros, bancadas, soportes resilientes y eliminación de puentes rígidos."),
+        "Camino aéreo / ducto":("Reducir propagación acústica","silenciadores, ductos revestidos, cerramientos, barreras y control de flujo."),
+        "Conexiones":("Evitar puentes mecánicos","conectores flexibles, soportes resilientes, manguitos y penetraciones desacopladas."),
+        "Ubicación / recinto":("Reducir exposición","separación de receptores sensibles, recintos técnicos, absorción y envolventes adecuadas."),
+    }
+    _card(zone,*zone_data[zone],tone="blue")
 
     st.caption(
-        "Los datos de modelos mostrados a continuación se toman de la ficha oficial Kinetics FDS 4-inch Deflection Isolator. "
-        "No son valores inventados para el ejercicio."
+        "Base técnica incorporada: CIBSE Guide B5, secciones 2.2–2.3 y 11.1. "
+        "El control debe considerar todos los caminos relevantes y el detalle de instalación."
     )
 
-    fds_models=[
-        ("FDS 4-100",100,4.00),
-        ("FDS 4-250",250,4.00),
-        ("FDS 4-500",500,4.00),
-        ("FDS 4-750",750,4.00),
-        ("FDS 4-1000",1000,4.00),
-        ("FDS 4-1250",1250,4.00),
-        ("FDS 4-1600",1600,4.00),
+    # =========================================================
+    # 2 · LAB A: DIAGNÓSTICO
+    # =========================================================
+    st.markdown("## 2 · Laboratorio A — Diagnostica antes de proponer una solución")
+    st.write(
+        "Caso: una bomba centrífuga ubicada en una sala técnica bajo departamentos produce un zumbido perceptible de noche. "
+        "No sabemos todavía si domina la base, las tuberías o la radiación aérea."
+    )
+    _asset("curso2_lab1_etapa8_bomba_caminos.gif")
+
+    st.markdown("### 2.1 · ¿Qué medirías?")
+    meas_options=[
+        "Velocidad vibratoria RMS en carcasa/base (mm/s)",
+        "Aceleración en soportes o losa (m/s²)",
+        "Espectro de vibración en tuberías",
+        "Nivel de presión sonora por bandas en recinto receptor",
+        "RPM / frecuencia de operación",
+        "Presión/condición hidráulica de succión",
     ]
-    catalog=pd.DataFrame(fds_models,columns=["Modelo","Carga nominal [lb]","Deflexión nominal [in]"])
-    st.dataframe(catalog,use_container_width=True,hide_index=True)
-
-    model_name=st.selectbox("Selecciona un modelo del catálogo", [x[0] for x in fds_models], index=4, key="e8_catalog_model")
-    selected=next(x for x in fds_models if x[0]==model_name)
-    rated_lb=float(selected[1])
-    rated_def_in=float(selected[2])
-
-    # Para un resorte lineal ideal, la deflexión a carga parcial escala con F/k.
-    # Es una estimación didáctica, no sustituye la curva/dato de operación del fabricante.
-    op_def_in=rated_def_in*(ex_lb/rated_lb)
-    op_def_mm=op_def_in*25.4
-    op_fn=fn_delta(max(op_def_mm,1e-9))
-    op_r=ex_fe/max(op_fn,1e-9)
-    op_tf=tf_force(op_r,0.08)
-    load_ok=ex_lb <= rated_lb
-
-    d1,d2,d3,d4=st.columns(4)
-    d1.metric("Carga requerida",f"{ex_lb:.0f} lb/apoyo")
-    d2.metric("Carga nominal catálogo",f"{rated_lb:.0f} lb")
-    d3.metric("δ estimada a carga",f"{op_def_mm:.1f} mm")
-    d4.metric("fₙ estimada",f"{op_fn:.2f} Hz")
-
-    st.write(
-        "Para poder comparar candidatos dentro del ejercicio, se supone comportamiento lineal del resorte y se estima "
-        "la deflexión a la carga de operación mediante proporcionalidad carga–deflexión:"
+    measurements=st.multiselect(
+        "Selecciona las mediciones que ayudan a separar mecanismos y caminos",
+        meas_options,key=f"{ns}_diag_meas"
     )
-    st.latex(r"\delta_{\mathrm{op}}\approx\delta_{\mathrm{nom}}\frac{F_{\mathrm{op}}}{F_{\mathrm{nom}}}")
-    st.caption("Esta proporcionalidad es una idealización didáctica. La selección de proyecto debe verificarse con los datos de operación/carga–deflexión del fabricante.")
+    if len(measurements)>=4:
+        st.success("Buena estrategia: estás combinando evidencia mecánica, acústica y de operación.")
+    elif measurements:
+        st.info("Aún puedes complementar la evidencia para distinguir fuente, estructura, tuberías y aire.")
 
-    if not load_ok:
-        st.error("NO COMPATIBLE POR CARGA: la carga estimada por apoyo supera la carga nominal publicada para este modelo.")
-    else:
-        st.success("COMPATIBLE POR CAPACIDAD NOMINAL dentro de las hipótesis del ejercicio.")
-        st.write(f"Con la deflexión de operación idealizada: **r ≈ {op_r:.2f}** y **T_F ≈ {op_tf:.3f}**.")
-        if rated_lb > ex_lb*1.8:
-            st.warning(
-                "Aunque soporta la carga, este resorte está trabajando bastante por debajo de su carga nominal. "
-                "Eso reduce su deflexión de operación y eleva fₙ. Un aislador con mayor capacidad no es automáticamente una mejor selección."
-            )
+    st.markdown("### 2.2 · Evidencia simulada")
+    e1,e2,e3,e4=st.columns(4)
+    with e1: _card("Base bomba","4.8 mm/s","Componente dominante a 25 Hz.",tone="green")
+    with e2: _card("Tubería","3.9 mm/s","También aparece 25 Hz.",tone="green")
+    with e3: _card("Dormitorio","46 dB @ 25 Hz","Coincidencia de frecuencia, no prueba causal por sí sola.",tone="orange")
+    with e4: _card("RPM","1500 rpm","1×RPM = 25 Hz.",tone="blue")
 
-    st.markdown("#### La selección todavía no termina")
-    st.write(
-        "Una vez encontrada una combinación compatible de carga y comportamiento dinámico, deben revisarse la distribución "
-        "real de cargas, estabilidad, movimientos de arranque/parada, conexiones flexibles, soportación de tuberías, ambiente, "
-        "anclajes y documentación específica del fabricante."
+    mechanism=st.multiselect(
+        "¿Qué hipótesis mantendrías abiertas?",
+        [
+            "Transmisión por la base",
+            "Tuberías como camino paralelo",
+            "Radiación aérea de bomba/motor",
+            "Cavitación como fuente dominante",
+            "Ruido por ducto",
+        ],
+        key=f"{ns}_diag_hyp"
     )
+    if {"Transmisión por la base","Tuberías como camino paralelo"}.issubset(set(mechanism)):
+        st.success("Diagnóstico coherente: hay evidencia para estudiar al menos dos caminos mecánicos.")
+    if "Cavitación como fuente dominante" in mechanism:
+        st.warning("La coincidencia a 25 Hz no demuestra cavitación. Para sostener esa hipótesis necesitas evidencia hidráulica adicional.")
+
+    # =========================================================
+    # 3 · FAMILIAS DE EQUIPO
+    # =========================================================
+    st.markdown("## 3 · ¿Qué cambia según el tipo de equipo?")
+    st.write("En lugar de memorizar una medida por equipo, identifica primero qué mecanismos son plausibles.")
+    a,b,c=st.columns(3)
+    with a:
+        _card("Bombas","motor + hidráulica + tuberías",
+              "CIBSE B5 destaca ruido del motor, ruido transportado por el fluido, vibración estructural y vibración de tuberías. "
+              "Evaluar aisladores, conexión flexible y soportes resilientes.",tone="blue")
+        _card("Compresores / chillers","tonos + broadband",
+              "Pueden combinar rotación o reciprocación, flujo, carcasa, tuberías y estructura. "
+              "La solución suele necesitar más de una familia de control.",tone="white")
+    with b:
+        _card("Ventiladores","rotor + aerodinámica",
+              "Control: punto de operación eficiente, buen flujo de entrada/salida, aislamiento vibratorio, conexión flexible al ducto "
+              "y silenciador cuando la predicción lo requiera.",tone="green")
+        _card("Unidades exteriores","aire + soporte",
+              "Una pantalla puede reducir ruido aéreo, pero no sustituye el desacoplamiento mecánico del soporte.",tone="white")
+    with c:
+        _card("Grupo electrógeno","cuatro caminos",
+              "Entrada de aire, descarga de ventilación, escape y transmisión estructural. "
+              "Puede requerir silenciamiento, aislamiento vibratorio y absorción en sala.",tone="orange")
+        _card("Ascensores / fontanería","impactos + estructura",
+              "Motores, guías, puertas, válvulas, golpes de ariete y contactos rígidos requieren diagnóstico específico.",tone="white")
+
+    # =========================================================
+    # 4 · LAB B: DUCTOS Y VELOCIDAD
+    # =========================================================
+    st.markdown("## 4 · Laboratorio B — ¿Por qué aumentar la velocidad del aire puede disparar el ruido?")
+    st.write(
+        "CIBSE B5 describe el ruido regenerado por turbulencia mediante una relación aproximada "
+        "en la que la potencia sonora depende fuertemente de la velocidad del aire."
+    )
+    _asset("curso2_lab1_etapa8_flujo_ducto.gif")
+
+    st.latex(r"L_W \approx C + 10\log_{10}(A)+60\log_{10}(U)")
+    st.write(
+        "Si comparamos **el mismo fitting y la misma sección**, C y A no cambian. Entonces:"
+    )
+    st.latex(r"\Delta L_W = 60\log_{10}\left(\frac{U_2}{U_1}\right)")
+
+    dc1,dc2=st.columns(2)
+    with dc1:
+        u1=st.slider("Velocidad de referencia U₁ (m/s)",1.0,12.0,4.0,.5,key=f"{ns}_u1")
+    with dc2:
+        u2=st.slider("Nueva velocidad U₂ (m/s)",1.0,15.0,8.0,.5,key=f"{ns}_u2")
+    delta_lw=60*math.log10(max(u2,1e-9)/max(u1,1e-9))
+    d1,d2,d3=st.columns(3)
+    with d1: _card("U₁",f"{u1:.1f} m/s","Condición de referencia.")
+    with d2: _card("U₂",f"{u2:.1f} m/s","Nueva condición.")
+    with d3: _card("Cambio estimado",f"{delta_lw:+.1f} dB","Cambio relativo del ruido regenerado bajo las hipótesis indicadas.",tone="orange")
+    if abs(u2/u1-2)<0.08:
+        st.success("Has duplicado aproximadamente la velocidad: el modelo entrega cerca de **+18 dB**, tal como destaca CIBSE B5.")
     st.warning(
-        "Además, la ficha FDS indica que estos aisladores libres no proporcionan por sí solos restricción sísmica o de viento. "
-        "Cuando el proyecto requiera restricción frente a acciones externas debe seleccionarse y diseñarse una solución apropiada para esa condición."
+        "Este cálculo NO predice todo el sistema HVAC. Es una comparación didáctica del ruido regenerado del mismo elemento "
+        "cuando cambia la velocidad. En proyecto deben utilizarse datos del fitting/fabricante y pérdidas de presión."
     )
 
-    st.markdown("#### Nueva información del caso")
-    st.info("La bomba está conectada directamente a tuberías rígidas.")
-    bridge=st.radio(
-        "¿Una buena selección de los resortes garantiza por sí sola que el sistema completo quede correctamente aislado?",
-        ["Selecciona una respuesta","Sí","No"],key="e8_catalog_bridge"
-    )
-    if bridge=="No":
-        st.success("Correcto. La tubería rígida puede crear un camino mecánico paralelo y reducir la efectividad del desacoplamiento.")
-        st.latex(r"\boxed{\mathrm{BUEN\ AISLADOR}\neq\mathrm{BUEN\ SISTEMA\ DE\ AISLAMIENTO}}")
-        st.write("También deben evaluarse conexiones flexibles, soportación resiliente y cualquier otro puente estructural.")
-    elif bridge=="Sí":
-        st.error("Revisa el camino completo: una conexión rígida puede puentear el aislamiento de la base.")
-
-    st.markdown("### 15.1 · Relaciona el problema con la medida")
-    st.write("En lugar de memorizar una matriz, relaciona cada mecanismo con la medida que primero corresponde evaluar.")
-    pairs={
-        "Cavitación en una bomba":"Corregir la condición hidráulica",
-        "Vibración transmitida por la base":"Aislamiento vibratorio",
-        "Vibración transmitida por tubería":"Conexión flexible + soportes resilientes",
-        "Ruido aerodinámico de un ventilador":"Control aerodinámico / silenciador cuando corresponda",
-        "Escape de un grupo electrógeno":"Silenciador de escape",
-        "Ruido aéreo dominante de un compresor":"Encapsulamiento",
-    }
-    options=["Selecciona..."]+list(pairs.values())
-    score=0
-    for idx,(problem,answer) in enumerate(pairs.items()):
-        ans=st.selectbox(problem,options,key=f"e8_pair_{idx}")
-        if ans==answer:
-            st.success("✓ Correspondencia correcta.")
-            score+=1
-        elif ans!="Selecciona...":
-            st.warning("Revisa primero cuál es el mecanismo y por qué camino se transmite.")
-    if score==len(pairs):
-        st.success("Has relacionado correctamente todos los mecanismos con una medida coherente.")
-
-    st.markdown("### 16 · Interactivo principal — DISEÑA LA SOLUCIÓN")
-    eq=st.selectbox("Tipo de equipo",list(control_db.keys()),key="e8_design_eq")
-    symptoms=st.multiselect("Síntomas observados",["vibración en losa","ruido en recinto vecino","ruido por ducto","vibración de tubería","ruido tonal","cavitación","impactos","ruido aéreo elevado"],key="e8_design_sym")
-    # translate generic neighbour symptom to likely air/structure; deliberately not overdiagnose
-    found=[]
-    for s in symptoms:
-        if s in control_db[eq]: found += control_db[eq][s]
-        elif s=="ruido en recinto vecino":
-            found.append(("Ruido recibido: mecanismo todavía no identificado","Requiere diagnóstico",["Comprobar componente aéreo y estructural antes de seleccionar la medida"]))
-        elif s=="ruido por ducto" and eq!="Ventilador":
-            found.append(("Posible propagación por ducto","Camino aéreo",["Verificar conexión al sistema de ventilación y controlar el ducto si corresponde"]))
-    if found:
-        st.markdown("**Posibles mecanismos y caminos:**")
-        for mech,path,meas in found:
-            st.write(f"- **{mech}** → {path}: "+", ".join(meas))
-    else:
-        st.info("Selecciona uno o más síntomas. La app no asignará automáticamente una solución sin un mecanismo plausible.")
-    all_measures=sorted({m for db in control_db.values() for arr in db.values() for _,_,ms in arr for m in ms})
-    chosen=st.multiselect("¿Qué medidas evaluarías?",all_measures,key="e8_design_measures")
-    if found and chosen:
-        valid={m for _,_,ms in found for m in ms}
-        hits=set(chosen)&valid
-        if hits: st.success("Medidas relacionadas con los mecanismos identificados: "+", ".join(sorted(hits)))
-        misses=set(chosen)-valid
-        if misses: st.warning("Estas medidas no están directamente vinculadas al diagnóstico simplificado actual: "+", ".join(sorted(misses))+". Revisa si existe otro mecanismo que las justifique.")
-    st.caption("Puede haber varias respuestas correctas. El objetivo es comprobar correspondencia mecanismo–camino–medida.")
-
-    st.markdown("### 17 · Arma la solución completa — sala de bombas bajo departamentos")
-    st.write("Problemas detectados: vibración por base + tuberías rígidas + cavitación + recinto técnico reverberante.")
-    combo=st.multiselect("Selecciona una combinación",["Resorte","Elastómero","Conexión flexible","Soporte resiliente","Corregir condición hidráulica","Absorción en recinto","Barrera exterior","Silenciador de ducto"],key="e8_combo")
-    groups={
-        "CONTROL EN FUENTE":{"Corregir condición hidráulica"},
-        "CONTROL ESTRUCTURAL":{"Resorte","Elastómero"},
-        "CONTROL DE CONEXIONES":{"Conexión flexible","Soporte resiliente"},
-        "CONTROL DEL RECINTO":{"Absorción en recinto"},
-    }
-    for name,opts in groups.items():
-        hit=set(combo)&opts
-        if hit: st.success(name+": "+", ".join(sorted(hit)))
-        else: st.warning(name+": falta una medida relacionada con el problema declarado.")
-    if "Barrera exterior" in combo or "Silenciador de ducto" in combo:
-        st.info("Barrera exterior/silenciador de ducto no corresponden directamente a los cuatro problemas declarados en este caso.")
-    asset("curso2_lab1_etapa8_solucion_integral.webp")
-
-    st.markdown("### 18 · ¿Dónde actúa esta medida?")
-    measure_area={
-        "Balanceo":"Fuente","Aislador":"Camino estructural","Conexión flexible":"Conexiones","Silenciador":"Camino aéreo",
-        "Encapsulamiento":"Camino aéreo","Soporte resiliente":"Conexiones","Pantalla":"Camino aéreo",
-        "Tratamiento absorbente":"Recinto","Corrección hidráulica":"Fuente"
-    }
-    mm=st.selectbox("Medida",list(measure_area),key="e8_where_m")
-    aa=st.radio("Zona",["Fuente","Camino estructural","Camino aéreo","Conexiones","Recinto"],horizontal=True,key="e8_where_a")
-    if aa==measure_area[mm]: st.success("Correcto para la clasificación principal de este ejercicio.")
-    else: st.warning(f"En este ejercicio, {mm} se clasifica principalmente en: {measure_area[mm]}.")
-
-    st.markdown("### 19 · Encuentra todos los caminos")
-    asset("curso2_lab1_etapa8_sala_instalaciones.webp")
-    paths=st.multiselect("Identifica caminos presentes en una sala técnica",["Base → losa","Tubería → soporte → estructura","Ducto → soportes / estructura","Propagación aérea","Penetraciones","Soportes/anclajes"],key="e8_paths")
-    if paths:
-        st.write("Para cada camino identificado debe elegirse una medida específica; **aislar la base no elimina automáticamente los demás caminos**.")
-
-    st.markdown("### 20 · Preguntas formativas")
-    qs=[
-        ("Una bomba con cavitación se corrige principalmente instalando resortes.",["Verdadero","Falso"],"Falso"),
-        ("Un equipo puede requerir simultáneamente control en fuente, estructura y conexiones.",["Verdadero","Falso"],"Verdadero"),
-        ("Una pantalla acústica controla necesariamente vibración estructural.",["Verdadero","Falso"],"Falso"),
-        ("Un aislador controla necesariamente el ruido aéreo de un ventilador.",["Verdadero","Falso"],"Falso"),
-        ("El ruido por ducto y la vibración mecánica del ducto deben diagnosticarse por separado.",["Verdadero","Falso"],"Verdadero"),
-        ("Un grupo electrógeno puede requerir aisladores, silenciador de escape y control de ventilación.",["Verdadero","Falso"],"Verdadero"),
-        ("Las conexiones rígidas pueden puentear un aislamiento vibratorio.",["Verdadero","Falso"],"Verdadero"),
-        ("La ubicación del equipo puede ser una medida de control.",["Verdadero","Falso"],"Verdadero"),
-    ]
-    for i,(q,op,ans) in enumerate(qs):
-        v=st.radio(f"{i+1}. {q}",op,index=None,key=f"e8_form_{i}")
-        if v is not None:
-            st.success("Correcto.") if v==ans else st.warning("Revisa mecanismo, camino y familia de control.")
-
-    st.markdown("### 21 · Conclusión — selecciona una estrategia, no un producto aislado")
-    st.latex(r"\text{DIAGNÓSTICO}\rightarrow\text{MECANISMO}\rightarrow\text{CAMINO}\rightarrow\text{MEDIDA}")
-    st.latex(r"\text{RUIDO DE INSTALACIONES}\Rightarrow\text{FUENTE}+\text{AISLAMIENTO VIBRATORIO}+\text{TUBERÍAS}+\text{DUCTOS}+\text{ENCAPSULAMIENTO}+\text{SILENCIADORES}+\text{RECINTO}+\text{UBICACIÓN}")
-    st.info("**NO EXISTE UNA SOLUCIÓN UNIVERSAL.** Un antivibratorio es una herramienta dentro de una estrategia de control.")
-    st.success("Al finalizar, la pregunta es: **¿cuál es el mecanismo, por dónde se transmite y qué conjunto de medidas de control debo evaluar?**")
-    st.markdown("### Fuentes y bibliografía de la Etapa 8")
+    # =========================================================
+    # 5 · LAB C: AISLAMIENTO VIBRATORIO
+    # =========================================================
+    st.markdown("## 5 · Laboratorio C — Del equipo al requerimiento del aislador")
     st.write(
-        "Las ecuaciones, criterios y estrategias de esta etapa deben interpretarse dentro del campo de aplicación "
-        "de las fuentes técnicas indicadas. El ejercicio comercial utiliza datos publicados por el fabricante y "
-        "no constituye una especificación de producto para un proyecto real."
+        "El objetivo no es elegir 'goma o resorte' por intuición. Primero definimos la frecuencia perturbadora, "
+        "la frecuencia natural requerida, la deflexión y la carga que recibe cada apoyo."
+    )
+    _asset("curso2_lab1_etapa8_aislamiento_resonancia.gif")
+
+    st.latex(r"f_e=\frac{\mathrm{RPM}}{60}")
+    st.latex(r"f_n=\frac{1}{2\pi}\sqrt{\frac{g}{\delta}}")
+    st.latex(r"r=\frac{f_e}{f_n}")
+    st.latex(r"T_F=\sqrt{\frac{1+(2\zeta r)^2}{(1-r^2)^2+(2\zeta r)^2}}")
+
+    ic1,ic2,ic3=st.columns(3)
+    with ic1:
+        rpm=st.slider("Velocidad (RPM)",300,3600,1500,50,key=f"{ns}_iso_rpm")
+        mass=st.slider("Masa total (kg)",200,5000,1600,50,key=f"{ns}_iso_mass")
+    with ic2:
+        supports=st.slider("Número de apoyos",2,10,4,1,key=f"{ns}_iso_supports")
+        delta=st.slider("Deflexión estática δ (mm)",3.0,120.0,50.0,1.0,key=f"{ns}_iso_delta")
+    with ic3:
+        zeta=st.slider("Amortiguamiento ζ",.01,.30,.08,.01,key=f"{ns}_iso_zeta")
+        lowest_component=st.selectbox("Componente perturbadora del ejercicio",["1×RPM","2×RPM","Paso de álabes (ejemplo 6×RPM)"],key=f"{ns}_iso_component")
+
+    mult={"1×RPM":1.0,"2×RPM":2.0,"Paso de álabes (ejemplo 6×RPM)":6.0}[lowest_component]
+    fe=fe_rpm(rpm)*mult
+    fn=fn_delta(delta)
+    r=fe/max(fn,1e-9)
+    tf=tf_force(r,zeta)
+    kg_support=mass/supports
+    force_support=kg_support*9.81
+
+    m1,m2,m3,m4,m5=st.columns(5)
+    with m1: _card("fₑ",f"{fe:.2f} Hz","Frecuencia perturbadora considerada.",tone="blue")
+    with m2: _card("fₙ",f"{fn:.2f} Hz","Frecuencia natural estimada.")
+    with m3: _card("r=fₑ/fₙ",f"{r:.2f}","r≈1: resonancia; r>√2: comienza aislamiento ideal.",tone="purple")
+    with m4: _card("T_F",f"{tf:.3f}","Fracción de fuerza transmitida en el modelo.")
+    with m5: _card("Carga/apoyo",f"{kg_support:.0f} kg",f"≈ {force_support:.0f} N por apoyo.",tone="green")
+
+    if r<=1.05:
+        st.error("La excitación está cerca o por debajo de la frecuencia natural: no es una condición de aislamiento satisfactoria.")
+    elif r<=math.sqrt(2):
+        st.warning("La excitación ya supera fₙ, pero todavía no estás claramente en la región ideal de aislamiento.")
+    elif tf<1:
+        st.success(f"Región de aislamiento idealizada. Reducción de fuerza transmitida ≈ {(1-tf)*100:.1f} %.")
+    st.caption(
+        "CIBSE B5 advierte que la estructura soporte real puede interactuar con el equipo aislado; "
+        "en pisos flexibles debe revisarse también la dinámica de la losa, no solo el aislador."
+    )
+
+    # =========================================================
+    # 6 · LAB D: CATÁLOGO REAL
+    # =========================================================
+    st.markdown("## 6 · Laboratorio D — Selecciona un aislador de catálogo")
+    st.write(
+        "Caso de diseño: bomba de **1600 kg**, **1500 RPM**, cuatro apoyos y distribución uniforme de carga. "
+        "Usaremos la familia real **Kinetics FDS — Free Standing Spring Isolators**."
     )
     st.markdown(
-        "- **Harris, C. M.** — *Manual de medidas acústicas y control del ruido*: principios de control, "
-        "aislamiento de vibraciones, maquinaria, HVAC, transmisión estructural y fontanería.\n"
-        "- **Kinetics Noise Control — FDS Free Standing Spring Isolators**: ficha de producto y aplicaciones.\n"
-        "- **Kinetics Noise Control — FDS 4-inch Deflection Isolator, Drawing S-01.20-41**: "
-        "cargas nominales y deflexiones de los modelos utilizados en el ejercicio."
+        """
+        [Abrir catálogo oficial Kinetics FDS — 4 in](https://kineticsnoise.com/files/content/downloads/submittal_drawings/pdf/01/01-20fds/S-01-20-41.pdf)
+
+        [Ver página oficial Kinetics FDS](https://kineticsnoise.com/fds/free-standing-spring-isolator)
+        """
+    )
+    st.info(
+        "La actividad consiste en **leer el catálogo**. La app no mostrará de inmediato la carga nominal del modelo."
     )
 
+    fds={
+        "FDS 4-100":(100,4.00),
+        "FDS 4-250":(250,4.00),
+        "FDS 4-500":(500,4.00),
+        "FDS 4-750":(750,4.00),
+        "FDS 4-1000":(1000,4.00),
+        "FDS 4-1250":(1250,4.00),
+        "FDS 4-1600":(1600,4.00),
+    }
+    ex_mass,ex_rpm,ex_n=1600.0,1500.0,4
+    ex_kg=ex_mass/ex_n
+    ex_lb=ex_kg*2.2046226218
+    ex_fe=ex_rpm/60.0
+
+    cd1,cd2=st.columns(2)
+    with cd1:
+        model=st.selectbox("Modelo a investigar",list(fds),index=4,key=f"{ns}_cat_model")
+    with cd2:
+        entered_lb=st.number_input("Carga nominal encontrada en catálogo (lb)",50.0,3000.0,900.0,25.0,key=f"{ns}_cat_lb")
+    entered_def=st.number_input("Deflexión nominal encontrada (in)",1.0,6.0,4.0,.25,key=f"{ns}_cat_def")
+
+    true_lb,true_def=fds[model]
+    catalog_ok=abs(entered_lb-true_lb)<=1 and abs(entered_def-true_def)<=.01
+    if st.button("Comprobar datos del catálogo",type="primary",use_container_width=True,key=f"{ns}_cat_check"):
+        if catalog_ok:
+            saved["stage8_catalog_validated"]=model
+            _persist()
+            st.success("Datos correctos. Ahora puedes evaluar la selección.")
+            st.rerun()
+        else:
+            st.warning("Revisa la fila correspondiente al modelo elegido en la ficha del fabricante.")
+
+    if saved.get("stage8_catalog_validated")==model:
+        op_def_in=true_def*(ex_lb/true_lb)
+        op_def_mm=op_def_in*25.4
+        op_fn=fn_delta(max(op_def_mm,1e-9))
+        op_r=ex_fe/max(op_fn,1e-9)
+        op_tf=tf_force(op_r,.08)
+        load_ok=ex_lb<=true_lb
+
+        c1,c2,c3,c4=st.columns(4)
+        with c1: _card("Carga requerida",f"{ex_lb:.0f} lb/apoyo","1600 kg / 4 apoyos.")
+        with c2: _card("Carga nominal",f"{true_lb:.0f} lb","Dato validado del catálogo.",tone="blue")
+        with c3: _card("δ de operación",f"{op_def_mm:.1f} mm","Estimación lineal carga–deflexión.")
+        with c4: _card("fₙ estimada",f"{op_fn:.2f} Hz",f"r≈{op_r:.2f}, T_F≈{op_tf:.3f}.",tone="green" if load_ok else "orange")
+
+        st.latex(r"\delta_{op}\approx\delta_{nom}\frac{F_{op}}{F_{nom}}")
+        if not load_ok:
+            st.error("No compatible: la carga requerida supera la capacidad nominal del modelo.")
+        else:
+            st.success("Compatible por capacidad nominal dentro de las hipótesis del ejercicio.")
+            if true_lb>ex_lb*1.8:
+                st.warning(
+                    "Sobredimensionar la capacidad no mejora automáticamente el aislamiento: al trabajar con poca carga, "
+                    "el resorte deflecta menos, aumenta fₙ y puede empeorar la separación dinámica."
+                )
+
+        st.markdown("### 6.1 · El aislador correcto no basta")
+        st.info("Nueva información: la bomba está conectada mediante tuberías rígidas directamente a la estructura.")
+        ans=st.radio(
+            "¿La selección correcta del resorte garantiza por sí sola el aislamiento del sistema completo?",
+            ["Selecciona","Sí","No"],key=f"{ns}_bridge"
+        )
+        if ans=="No":
+            st.success(
+                "Correcto. CIBSE B5 recomienda además conexión flexible entre bomba y tubería "
+                "y soportes resilientes para evitar que la tubería puentee el aislamiento."
+            )
+        elif ans=="Sí":
+            st.error("Revisa los caminos paralelos: tuberías, ductos, anclajes y conexiones pueden puentear la base.")
+
+    # =========================================================
+    # 7 · LAB E: DISEÑA ESTRATEGIA INTEGRAL
+    # =========================================================
+    st.markdown("## 7 · Laboratorio E — Diseña la solución completa")
+    st.write(
+        "Sala de bombas bajo departamentos. Diagnóstico confirmado: "
+        "**vibración por base + tuberías rígidas + cavitación + recinto técnico muy reverberante**."
+    )
+
+    solution_options=[
+        "Corregir condición hidráulica / cavitación",
+        "Aislamiento vibratorio de bomba",
+        "Bancada o base de inercia si el diseño lo requiere",
+        "Conexiones flexibles en tuberías",
+        "Soportes resilientes de tuberías",
+        "Absorción acústica en sala técnica",
+        "Silenciador de ducto",
+        "Pantalla exterior",
+        "Aumentar velocidad del aire",
+    ]
+    chosen=st.multiselect("Selecciona las medidas que formarían tu estrategia",solution_options,key=f"{ns}_integral")
+    requirements={
+        "Fuente":{"Corregir condición hidráulica / cavitación"},
+        "Estructura":{"Aislamiento vibratorio de bomba","Bancada o base de inercia si el diseño lo requiere"},
+        "Conexiones":{"Conexiones flexibles en tuberías","Soportes resilientes de tuberías"},
+        "Recinto":{"Absorción acústica en sala técnica"},
+    }
+    cols=st.columns(4)
+    all_ok=True
+    for col,(name,opts) in zip(cols,requirements.items()):
+        hit=set(chosen)&opts
+        ok=bool(hit)
+        all_ok &= ok
+        with col:
+            _card(name,"Cubierto" if ok else "Falta",
+                  ", ".join(sorted(hit)) if hit else "Selecciona una medida coherente con este mecanismo.",
+                  tone="green" if ok else "orange")
+    irrelevant=set(chosen)&{"Silenciador de ducto","Pantalla exterior","Aumentar velocidad del aire"}
+    if irrelevant:
+        st.warning(
+            "Estas medidas no responden directamente a los cuatro problemas declarados: "
+            + ", ".join(sorted(irrelevant))
+        )
+    if all_ok:
+        st.success("Estrategia integral coherente: actúas sobre fuente, estructura, conexiones y recinto.")
+        if st.button("Guardar estrategia de Etapa 8",type="primary",use_container_width=True,key=f"{ns}_save"):
+            saved["stage8_result"]={
+                "diagnosis":mechanism,
+                "strategy":chosen,
+                "complete":True,
+            }
+            _persist()
+            st.success("Estrategia guardada.")
+
+    # =========================================================
+    # 8 · CIERRE
+    # =========================================================
+    st.markdown("## 8 · Cierre — una estrategia, no un producto aislado")
+    st.latex(
+        r"\boxed{\mathrm{DIAGNÓSTICO}\rightarrow\mathrm{MECANISMO}\rightarrow"
+        r"\mathrm{CAMINO}\rightarrow\mathrm{MEDIDA}\rightarrow\mathrm{VERIFICACIÓN}}"
+    )
+    st.write(
+        "La Etapa 8 termina cuando puedes justificar **por qué** cada medida está en la solución. "
+        "Las preguntas conceptuales y de comprensión quedan concentradas en la Etapa 9."
+    )
+
+    st.markdown("### Referencias técnicas utilizadas")
+    st.markdown(
+        "- **CIBSE Guide B5 (2002), Noise and vibration control for HVAC**: "
+        "secciones 2.2–2.3 (caminos y control), 3.1 (ventiladores), 3.6–3.8 (chillers, bombas y generadores), "
+        "5.1–5.2 (ruido regenerado por flujo), 6.7 (silenciadores) y 11.1–11.5 (control de vibraciones e isoladores).\n"
+        "- **Harris, C. M.** — principios de control, aislamiento vibratorio y maquinaria.\n"
+        "- **Kinetics Noise Control — FDS Free Standing Spring Isolators** — catálogo usado en el ejercicio profesional."
+    )
 
 
 # -----------------------------------------------------------------------------
