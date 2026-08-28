@@ -4809,13 +4809,13 @@ def _render_course2_lab1_stage6(lab, saved):
         "Primero identifica la configuración física. El modelo no se elige por cuál entrega más dB, "
         "sino por cómo está construido realmente el sistema."
     )
-    vis1,vis2=st.columns(2)
-    with vis1:
-        st.image(str(ASSET_DIR/"curso2_lab1_etapa6_continua_laminado.webp"),width="stretch",
-                 caption="Capa continua: piso laminado flotante sobre manta resiliente.")
-    with vis2:
-        st.image(str(ASSET_DIR/"curso2_lab1_etapa6_discretos_sobrelosa.webp"),width="stretch",
-                 caption="Apoyos discretos: sobrelosa flotante pesada sobre pads o aisladores.")
+    systems_render=ASSET_DIR/"curso2_lab1_etapa6_sistemas_flotantes_profesional.webp"
+    if systems_render.exists():
+        st.image(
+            str(systems_render),
+            width="stretch",
+            caption="Comparación física: capa resiliente continua y apoyos resilientes discretos."
+        )
 
     config=st.radio(
         "Configuración constructiva",
@@ -4913,8 +4913,9 @@ def _render_course2_lab1_stage6(lab, saved):
     st.markdown("### Rigidez dinámica superficial del elemento resiliente")
     sr1,sr2=st.columns([1.1,1])
     with sr1:
-        if (ASSET_DIR/"curso2_lab1_etapa6_rigidez_dinamica_independiente.webp").exists():
-            st.image(str(ASSET_DIR/"curso2_lab1_etapa6_rigidez_dinamica_independiente.webp"),width="stretch")
+        if (ASSET_DIR/"curso2_lab1_etapa6_rigidez_dinamica_profesional.webp").exists():
+            st.image(str(ASSET_DIR/"curso2_lab1_etapa6_rigidez_dinamica_profesional.webp"),width="stretch")
+            st.caption("Arriba: piso laminado flotante (m′₁) · Centro: manta resiliente (s′) · Abajo: losa base (m′₂).")
     with sr2:
         st.markdown(
             """
