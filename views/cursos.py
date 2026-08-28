@@ -6401,11 +6401,83 @@ def _render_course2_lab1_stage8(lab, saved):
         """,unsafe_allow_html=True
     )
 
+    st.markdown("#### Antes de seguir: tono y contenido de banda ancha no son lo mismo")
+    st.write(
+        "En un espectro podemos encontrar energía concentrada alrededor de una frecuencia concreta o energía distribuida "
+        "sobre muchas frecuencias. Esta diferencia será importante cuando interpretemos las mediciones de la bomba."
+    )
+
+    patt_f=np.array([20,25,31.5,40,50,63,80,100,125,160,200,250,315,400,500,630,800,1000,1250,1600,2000],dtype=float)
+    patt_tonal=np.array([0.12,3.6,0.18,0.15,0.28,0.13,0.12,0.11,0.10,0.09,0.08,0.075,0.07,0.065,0.06,0.055,0.05,0.048,0.045,0.043,0.04])
+    patt_broad=np.array([0.16,0.22,0.19,0.20,0.23,0.24,0.26,0.30,0.34,0.39,0.46,0.55,0.66,0.78,0.88,0.95,1.02,1.05,1.00,0.93,0.84])
+
+    tp1,tp2=st.columns(2)
+    with tp1:
+        st.markdown("**Componente tonal**")
+        fig,ax=plt.subplots(figsize=(6.4,3.2))
+        ax.plot(patt_f,patt_tonal,marker='o')
+        _format_band_axis(ax,patt_f)
+        ax.set_yscale('log')
+        ax.set_xlabel("Bandas de frecuencia (Hz)")
+        ax.set_ylabel("Nivel vibratorio relativo")
+        ax.set_title("Energía concentrada en una frecuencia")
+        ax.grid(True,alpha=.22)
+        fig.tight_layout()
+        st.pyplot(fig,use_container_width=True); plt.close(fig)
+        st.caption(
+            "Ejemplo didáctico: aparece un pico claramente diferenciado. En una máquina rotatoria puede coincidir, "
+            "por ejemplo, con 1×RPM u otro fenómeno periódico."
+        )
+    with tp2:
+        st.markdown("**Contenido de banda ancha (broadband)**")
+        fig,ax=plt.subplots(figsize=(6.4,3.2))
+        ax.plot(patt_f,patt_broad,marker='o')
+        _format_band_axis(ax,patt_f)
+        ax.set_yscale('log')
+        ax.set_xlabel("Bandas de frecuencia (Hz)")
+        ax.set_ylabel("Nivel vibratorio relativo")
+        ax.set_title("Energía distribuida en muchas frecuencias")
+        ax.grid(True,alpha=.22)
+        fig.tight_layout()
+        st.pyplot(fig,use_container_width=True); plt.close(fig)
+        st.caption(
+            "La energía aumenta en un rango amplio del espectro. Procesos irregulares como turbulencia, impactos "
+            "o colapso de burbujas pueden producir este tipo de patrón."
+        )
+
+    st.info(
+        "**Banda ancha** significa que la energía no está concentrada únicamente en un tono. "
+        "Un aumento de banda ancha puede ser compatible con cavitación, pero **no la demuestra por sí solo**."
+    )
+
     r1,r2,r3,r4=st.columns(4)
-    with r1: _card("Ruido","crepitación / banda ancha","Puede sonar irregular, similar a grava o crepitación; no es necesariamente un único tono.",tone="blue")
-    with r2: _card("Vibración","contenido más amplio","Puede aumentar la vibración y agregar energía de banda ancha; un pico a 1×RPM por sí solo no demuestra cavitación.")
-    with r3: _card("Hidráulica","presión + caudal","Cambios de presión, caudal o margen de succión ayudan a comprobar si la hipótesis es físicamente plausible.",tone="green")
-    with r4: _card("Daño","erosión / pitting","La cavitación persistente puede deteriorar superficies del impulsor; es una consecuencia, no el primer indicador a esperar.",tone="orange")
+    with r1:
+        _card(
+            "Ruido",
+            "irregular + banda ancha",
+            "Puede percibirse como grava, crepitación o golpeteo y acompañarse de energía distribuida en varias frecuencias.",
+            tone="blue"
+        )
+    with r2:
+        _card(
+            "Vibración",
+            "más que un tono",
+            "Puede aumentar en un rango de frecuencias. Un pico aislado a 1×RPM por sí solo no demuestra cavitación."
+        )
+    with r3:
+        _card(
+            "Hidráulica",
+            "presión + caudal + NPSH",
+            "La condición de succión permite evaluar si la hipótesis de cavitación es físicamente plausible.",
+            tone="green"
+        )
+    with r4:
+        _card(
+            "Daño",
+            "erosión / pitting",
+            "La cavitación persistente puede deteriorar el impulsor; es una consecuencia que refuerza el diagnóstico, no una condición necesaria para detectarlo.",
+            tone="orange"
+        )
 
     st.markdown("#### ¿Qué es NPSH y por qué se usa?")
     st.write(
@@ -6431,20 +6503,56 @@ def _render_course2_lab1_stage8(lab, saved):
 
     st.markdown("##### ¿Cómo se calcula el NPSH disponible?")
     st.write(
-        "Para un sistema que aspira desde un estanque abierto podemos escribir, de manera simplificada:"
+        "Para un sistema que aspira desde un estanque abierto, una forma simplificada de expresar el margen disponible es:"
     )
+
     st.latex(
-        r"\boxed{NPSH_A=\frac{p_{atm}}{\rho g}+z-h_f-\frac{p_v}{\rho g}}"
+        r"\boxed{\displaystyle NPSH_A="
+        r"\frac{p_{\mathrm{atm}}}{\rho g}"
+        r"+z"
+        r"-h_f"
+        r"-\frac{p_v}{\rho g}}"
     )
-    st.markdown(
-        """
-        - \(p_{atm}\): presión atmosférica absoluta.
-        - \(\rho\): densidad del líquido.
-        - \(g\): aceleración de gravedad.
-        - \(z\): diferencia de cota entre la superficie libre y el eje de la bomba. Es positiva si el nivel está sobre la bomba y negativa si está bajo ella.
-        - \(h_f\): pérdidas de carga de la línea de succión.
-        - \(p_v\): presión de vapor del líquido a la temperatura de operación.
-        """
+
+    st.markdown("**Significado de cada término**")
+
+    p1,p2,p3=st.columns(3)
+    with p1:
+        st.latex(r"p_{\mathrm{atm}}\;[\mathrm{Pa}]")
+        st.caption("Presión atmosférica absoluta que actúa sobre la superficie libre del líquido.")
+    with p2:
+        st.latex(r"\rho\;[\mathrm{kg/m^3}]")
+        st.caption("Densidad del líquido a la temperatura de operación.")
+    with p3:
+        st.latex(r"g\;[\mathrm{m/s^2}]")
+        st.caption("Aceleración de gravedad.")
+
+    p4,p5,p6=st.columns(3)
+    with p4:
+        st.latex(r"z\;[\mathrm{m}]")
+        st.caption(
+            "Diferencia de cota entre la superficie libre y el eje de la bomba. "
+            "Es positiva si el nivel del líquido está sobre la bomba y negativa si está bajo ella."
+        )
+    with p5:
+        st.latex(r"h_f\;[\mathrm{m}]")
+        st.caption("Pérdidas de carga de la línea de succión.")
+    with p6:
+        st.latex(r"p_v\;[\mathrm{Pa}]")
+        st.caption("Presión de vapor del líquido a la temperatura de operación.")
+
+    st.markdown("**Lectura física de la ecuación**")
+    st.latex(
+        r"\boxed{\text{presión disponible}"
+        r"+\text{altura estática}"
+        r"-\text{pérdidas en succión}"
+        r"-\text{presión de vapor}"
+        r"\;\longrightarrow\;NPSH_A}"
+    )
+
+    st.info(
+        "El NPSHₐ aumenta cuando existe mayor presión disponible en la succión o mayor altura favorable, "
+        "y disminuye cuando aumentan las pérdidas de carga o la presión de vapor del líquido."
     )
     st.info(
         "Si se dispone de una medición de **presión absoluta directamente en la brida de succión**, el NPSHₐ también puede "
@@ -6593,6 +6701,60 @@ def _render_course2_lab1_stage8(lab, saved):
         with nn3:
             _card("Margen",f"{npsh_saved['margin_m']:+.2f} m","Diferencia disponible − requerido.",tone="orange" if npsh_saved["margin_m"]<=0 else "green")
 
+    st.markdown("#### ¿Qué tiene que ver el NPSH con el ruido y la vibración?")
+    st.write(
+        "El cálculo de NPSH **no predice un nivel acústico en dB**. Su función en este laboratorio es distinta: "
+        "indica si existe una condición hidráulica capaz de favorecer la formación y el colapso de burbujas. "
+        "Después debemos buscar evidencia vibroacústica compatible."
+    )
+
+    st.markdown(
+        """
+        <div style="display:grid;grid-template-columns:repeat(5,1fr);gap:9px;margin:.6rem 0 1rem">
+          <div style="border:1px solid #cbd5e1;border-radius:14px;padding:12px;background:#fff;text-align:center">
+            <b>1 · NPSH</b><br><span style="color:#64748b">margen hidráulico insuficiente</span>
+          </div>
+          <div style="display:flex;align-items:center;justify-content:center;font-size:1.5rem">→</div>
+          <div style="border:1px solid #fed7aa;border-radius:14px;padding:12px;background:#fff7ed;text-align:center">
+            <b>2 · Cavidades de vapor</b><br><span style="color:#7c4a03">formación y colapso irregular</span>
+          </div>
+          <div style="display:flex;align-items:center;justify-content:center;font-size:1.5rem">→</div>
+          <div style="border:1px solid #bfdbfe;border-radius:14px;padding:12px;background:#eff6ff;text-align:center">
+            <b>3 · Evidencia vibroacústica</b><br><span style="color:#1e40af">ruido/vibración adicional de banda ancha</span>
+          </div>
+        </div>
+        """,
+        unsafe_allow_html=True
+    )
+
+    nb1,nb2=st.columns(2)
+    with nb1:
+        _card(
+            "Lo que sí aporta el NPSH",
+            "evidencia hidráulica",
+            "Un margen insuficiente indica que la condición de succión es compatible con riesgo de cavitación.",
+            tone="green"
+        )
+    with nb2:
+        _card(
+            "Lo que NO aporta el NPSH",
+            "no entrega dB ni mm/s",
+            "No existe una conversión universal desde el margen NPSH hacia un nivel acústico o vibratorio.",
+            tone="orange"
+        )
+
+    st.markdown("##### Integración que buscaremos en la campaña")
+    st.latex(
+        r"\boxed{\text{evidencia hidráulica}"
+        r"+\text{evidencia de banda ancha}"
+        r"+\text{comportamiento operacional}"
+        r"\;\longrightarrow\;"
+        r"\text{diagnóstico compatible con cavitación}}"
+    )
+    st.caption(
+        "La palabra clave es **compatible**: ninguna de estas observaciones aisladas demuestra por sí sola que exista cavitación."
+    )
+
     # ---------------------------------------------------------
     # 2.2 Plan real de medición
     # ---------------------------------------------------------
@@ -6605,25 +6767,34 @@ def _render_course2_lab1_stage8(lab, saved):
 
     measure_catalog={
         "RPM / tacómetro":{
-            "locations":["Eje del motor"],
-            "objectives":["Establecer 1×RPM como referencia espectral"]},
+            "Eje del motor":["Establecer 1×RPM como referencia espectral"]
+        },
         "Vibración · velocidad RMS":{
-            "locations":["B · Carcasa/motor","A · Base/apoyo","C · Tubería cercana","D · Tubería alejada"],
-            "objectives":["Caracterizar vibración en la fuente","Comprobar transmisión hacia estructura","Comprobar camino por tuberías","Evaluar persistencia a lo largo de tubería"]},
+            "B · Carcasa/motor":["Caracterizar vibración en la fuente"],
+            "A · Base/apoyo":["Comprobar transmisión hacia estructura"],
+            "C · Tubería cercana":["Comprobar camino por tuberías"],
+            "D · Tubería alejada":["Evaluar persistencia a lo largo de tubería"],
+        },
         "Ruido · espectro por bandas":{
-            "locations":["Dormitorio receptor","Sala técnica"],
-            "objectives":["Identificar qué frecuencia llega al receptor","Caracterizar radiación aérea en sala"]},
+            "Dormitorio receptor":["Identificar qué componentes acústicas llegan al receptor"],
+            "Sala técnica":["Caracterizar el campo acústico próximo a la fuente"],
+        },
         "Condición hidráulica / NPSH":{
-            "locations":["Succión de la bomba"],
-            "objectives":["Evaluar condición compatible con cavitación"]},
+            "Succión de la bomba":["Evaluar condición compatible con cavitación"]
+        },
     }
     pc1,pc2,pc3=st.columns([1.05,1,1.45])
     with pc1:
         mtype=st.selectbox("Magnitud / instrumento",list(measure_catalog),key=f"{ns}_plan_type")
+    available_locations=list(measure_catalog[mtype].keys())
     with pc2:
-        mloc=st.selectbox("Dónde medir",measure_catalog[mtype]["locations"],key=f"{ns}_plan_location")
+        mloc=st.selectbox("Dónde medir",available_locations,key=f"{ns}_plan_location")
     with pc3:
-        mobj=st.selectbox("Qué quiero comprobar",measure_catalog[mtype]["objectives"],key=f"{ns}_plan_objective")
+        mobj=st.selectbox(
+            "Qué quiero comprobar",
+            measure_catalog[mtype][mloc],
+            key=f"{ns}_plan_objective"
+        )
 
     plan=saved.get("stage8_measurement_plan",[])
     if not isinstance(plan,list): plan=[]
@@ -6650,16 +6821,25 @@ def _render_course2_lab1_stage8(lab, saved):
         selected_points={r["Punto"] for r in plan}
         coverage={
             "Excitación":"Eje del motor" in selected_points,
-            "Fuente":"B · Carcasa/motor" in selected_points,
+            "Fuente mecánica":"B · Carcasa/motor" in selected_points,
             "Estructura":"A · Base/apoyo" in selected_points,
             "Tuberías":bool({"C · Tubería cercana","D · Tubería alejada"}&selected_points),
+            "Aéreo · sala":"Sala técnica" in selected_points,
             "Receptor":"Dormitorio receptor" in selected_points,
             "Hidráulica":"Succión de la bomba" in selected_points,
         }
-        cols=st.columns(6)
-        for col,(lab,ok) in zip(cols,coverage.items()):
-            with col:
-                _card(lab,"Incluido" if ok else "No medido","La campaña entregará datos de esta parte." if ok else "No tendrás evidencia directa de esta parte.",tone="green" if ok else "orange")
+        coverage_items=list(coverage.items())
+        for i in range(0,len(coverage_items),4):
+            batch=coverage_items[i:i+4]
+            cols=st.columns(len(batch))
+            for col,(lab,ok) in zip(cols,batch):
+                with col:
+                    _card(
+                        lab,
+                        "Incluido" if ok else "No medido",
+                        "La campaña entregará datos de esta parte." if ok else "No tendrás evidencia directa de esta parte.",
+                        tone="green" if ok else "orange"
+                    )
         if st.button("Ejecutar campaña de medición",type="primary",use_container_width=True,key=f"{ns}_campaign_run"):
             saved["stage8_campaign_executed"]=True
             _persist(); st.rerun()
@@ -6683,6 +6863,9 @@ def _render_course2_lab1_stage8(lab, saved):
         base=np.array([0.12,0.15,0.19,0.29,4.8,0.48,0.33,0.27,0.22,0.19,0.16,0.13,0.11,0.09])
         pipe_c=np.array([0.10,0.13,0.17,0.25,4.2,0.41,0.31,0.25,0.21,0.17,0.14,0.12,0.10,0.08])
         pipe_d=np.array([0.08,0.10,0.13,0.20,3.1,0.33,0.25,0.21,0.17,0.14,0.12,0.10,0.08,0.07])
+        # Nivel en sala técnica: campo próximo a la fuente.
+        # Nivel en dormitorio: receptor sensible.
+        lp_room=np.array([56,58,60,64,72,68,65,63,61,59,57,55,53,51],dtype=float)
         lp=np.array([34,35,36,39,46,41,39,38,37,36,35,34,33,32],dtype=float)
 
         if "Eje del motor" in selected_points:
@@ -6769,6 +6952,52 @@ def _render_course2_lab1_stage8(lab, saved):
             else:
                 st.info("Mediste solo un punto de tubería. Puedes detectar vibración, pero tienes menos evidencia para evaluar su persistencia a lo largo de la red.")
 
+        if "Sala técnica" in selected_points:
+            st.markdown("#### Medición · Espectro acústico en sala técnica")
+            st.write(
+                "Esta medición caracteriza el campo acústico próximo a la bomba. "
+                "El objetivo todavía no es decidir el camino dominante, sino identificar qué componentes están presentes cerca de la fuente."
+            )
+            fig,ax=plt.subplots(figsize=(8.5,3.8))
+            ax.plot(freqs,lp_room,marker='o')
+            _format_band_axis(ax,freqs)
+            ax.set_xlabel('Bandas de frecuencia (Hz)')
+            ax.set_ylabel('Nivel (dB)')
+            ax.grid(True,alpha=.25)
+            ax.set_title('Espectro acústico · sala técnica')
+            if evidence.get("aereo_sala"):
+                ax.axvline(25,linestyle='--',linewidth=1.2)
+                ax.annotate("25 Hz",xy=(25,72),xytext=(31.5,69),arrowprops=dict(arrowstyle="->"))
+            fig.tight_layout()
+            st.pyplot(fig,use_container_width=True); plt.close(fig)
+
+            room_f=st.number_input(
+                "¿En qué banda aparece la componente más destacada en la sala técnica? (Hz)",
+                0.0,200.0,0.0,1.0,
+                key=f"{ns}_ev_room_f"
+            )
+            room_interp=st.radio(
+                "¿Qué puedes afirmar solo con esta medición?",
+                [
+                    "Existe una componente acústica importante cerca de la fuente",
+                    "Demuestra que el camino dominante hacia el dormitorio es aéreo",
+                    "Demuestra cavitación",
+                    "Demuestra que la estructura no transmite vibración",
+                ],
+                key=f"{ns}_ev_room_q"
+            )
+            if st.button("Registrar evidencia acústica en sala",key=f"{ns}_ev_room_save"):
+                if abs(room_f-25)<=1 and room_interp=="Existe una componente acústica importante cerca de la fuente":
+                    evidence["aereo_sala"]="Componente acústica destacada a 25 Hz en la sala técnica"
+                    saved["stage8_evidence"]=evidence
+                    _persist()
+                    st.success("Evidencia registrada.")
+                else:
+                    st.warning(
+                        "Lee primero la banda dominante. Una medición acústica en la sala confirma emisión próxima a la fuente, "
+                        "pero no demuestra por sí sola qué camino domina hacia el dormitorio."
+                    )
+
         if "Dormitorio receptor" in selected_points:
             st.markdown("#### Medición · Espectro acústico en dormitorio")
             fig,ax=plt.subplots(figsize=(8.5,3.8))
@@ -6789,6 +7018,45 @@ def _render_course2_lab1_stage8(lab, saved):
                     evidence["receptor"]="Componente acústica destacada a 25 Hz en el dormitorio"
                     saved["stage8_evidence"]=evidence; _persist(); st.success("Evidencia registrada.")
                 else: st.warning("Revisa el máximo local más relevante del espectro mostrado.")
+
+        if {"Sala técnica","Dormitorio receptor"}.issubset(selected_points):
+            st.markdown("#### Comparación acústica · sala técnica → dormitorio")
+            st.write(
+                "Como planificaste mediciones en ambos recintos, ahora puedes comparar sus formas espectrales. "
+                "Busca si las componentes aparecen en las mismas bandas y cómo cambia su nivel."
+            )
+            fig,ax=plt.subplots(figsize=(8.8,4.0))
+            ax.plot(freqs,lp_room,marker='o',label='Sala técnica')
+            ax.plot(freqs,lp,marker='o',label='Dormitorio receptor')
+            _format_band_axis(ax,freqs)
+            ax.set_xlabel('Bandas de frecuencia (Hz)')
+            ax.set_ylabel('Nivel (dB)')
+            ax.grid(True,alpha=.25)
+            ax.legend()
+            ax.set_title('Comparación espectral · fuente próxima y receptor')
+            fig.tight_layout()
+            st.pyplot(fig,use_container_width=True); plt.close(fig)
+
+            compare_air=st.radio(
+                "¿Qué conclusión es válida al observar ambos espectros?",
+                [
+                    "La componente de 25 Hz aparece en ambos, lo que aporta correspondencia espectral",
+                    "La diferencia entre curvas es directamente el aislamiento acústico del edificio",
+                    "La coincidencia demuestra que el único camino es aéreo",
+                    "Como los niveles son distintos, no existe relación entre fuente y receptor",
+                ],
+                key=f"{ns}_ev_air_compare"
+            )
+            if compare_air=="La componente de 25 Hz aparece en ambos, lo que aporta correspondencia espectral":
+                st.success(
+                    "Correcto. La correspondencia espectral es evidencia útil, pero todavía debe compararse con la evidencia estructural "
+                    "y de tuberías antes de decidir cuál camino domina."
+                )
+            else:
+                st.info(
+                    "No interpretes la diferencia entre ambos niveles como una pérdida de transmisión directa: "
+                    "son mediciones realizadas en campos acústicos y posiciones distintas."
+                )
 
         if "Succión de la bomba" in selected_points:
             st.markdown("#### Medición hidráulica · condición de succión")
@@ -6832,26 +7100,136 @@ def _render_course2_lab1_stage8(lab, saved):
                         st.warning("Relaciona el signo y magnitud del margen con la condición hidráulica, no con un defecto mecánico.")
 
         # -----------------------------------------------------
+        # Medición complementaria para relacionar NPSH con ruido/vibración
+        # -----------------------------------------------------
+        if {"B · Carcasa/motor","Succión de la bomba"}.issubset(selected_points):
+            st.markdown("#### Medición complementaria · ¿aparece contenido de banda ancha?")
+            st.write(
+                "Como tu plan incluye **vibración en carcasa** y **condición hidráulica**, puedes confrontar ambas evidencias. "
+                "Los siguientes espectros son **simulados con finalidad didáctica**: muestran el tipo de cambio que buscaríamos, "
+                "no una firma universal de cavitación."
+            )
+
+            cav_f=np.array([20,25,31.5,40,50,63,80,100,125,160,200,250,315,400,500,630,800,1000,1250,1600,2000,2500,3150,4000,5000],dtype=float)
+            vib_ref=np.array([0.16,2.6,0.24,0.18,0.31,0.16,0.14,0.13,0.12,0.11,0.10,0.095,0.09,0.085,0.08,0.075,0.070,0.066,0.063,0.060,0.057,0.054,0.052,0.050,0.048])
+            vib_low=np.array([0.20,2.8,0.29,0.25,0.36,0.27,0.28,0.30,0.34,0.40,0.48,0.58,0.72,0.86,1.02,1.14,1.22,1.28,1.25,1.18,1.10,1.02,0.93,0.84,0.76])
+            noise_ref=np.array([48,57,50,48,52,47,46,45,44,43,42,42,41,41,40,40,39,39,38,38,37,37,36,36,35],dtype=float)
+            noise_low=np.array([50,59,52,51,54,51,52,53,54,56,58,60,62,64,66,68,69,70,70,69,68,67,65,63,61],dtype=float)
+
+            bw1,bw2=st.columns(2)
+            with bw1:
+                fig,ax=plt.subplots(figsize=(6.5,3.7))
+                ax.plot(cav_f,vib_ref,marker='o',label='Condición de referencia')
+                ax.plot(cav_f,vib_low,marker='o',label='Condición con margen NPSH insuficiente')
+                _format_band_axis(ax,cav_f)
+                ax.set_yscale('log')
+                ax.set_xlabel("Bandas de frecuencia (Hz)")
+                ax.set_ylabel("Velocidad RMS relativa")
+                ax.set_title("Vibración en carcasa · comparación didáctica")
+                ax.grid(True,alpha=.22); ax.legend(fontsize=8)
+                fig.tight_layout()
+                st.pyplot(fig,use_container_width=True); plt.close(fig)
+            with bw2:
+                fig,ax=plt.subplots(figsize=(6.5,3.7))
+                ax.plot(cav_f,noise_ref,marker='o',label='Condición de referencia')
+                ax.plot(cav_f,noise_low,marker='o',label='Condición con margen NPSH insuficiente')
+                _format_band_axis(ax,cav_f)
+                ax.set_xlabel("Bandas de frecuencia (Hz)")
+                ax.set_ylabel("Nivel acústico relativo (dB)")
+                ax.set_title("Ruido próximo a la bomba · comparación didáctica")
+                ax.grid(True,alpha=.22); ax.legend(fontsize=8)
+                fig.tight_layout()
+                st.pyplot(fig,use_container_width=True); plt.close(fig)
+
+            bw_pattern=st.radio(
+                "¿Qué cambio principal observas en la condición hidráulicamente desfavorable?",
+                [
+                    "Solo aparece un tono nuevo y aislado",
+                    "Aumenta la energía en un rango amplio de frecuencias",
+                    "Desaparece toda componente asociada a RPM",
+                    "El espectro no cambia",
+                ],
+                key=f"{ns}_broadband_pattern"
+            )
+            bw_meaning=st.radio(
+                "¿Qué conclusión es técnicamente correcta?",
+                [
+                    "El patrón de banda ancha demuestra por sí solo cavitación",
+                    "El patrón de banda ancha es compatible con un proceso irregular, pero debe combinarse con evidencia hidráulica",
+                    "Todo contenido de banda ancha proviene necesariamente de una bomba",
+                    "NPSH permite convertir directamente este espectro a dB",
+                ],
+                key=f"{ns}_broadband_meaning"
+            )
+
+            if st.button("Registrar evidencia de banda ancha",key=f"{ns}_broadband_save"):
+                npsh_case=saved.get("stage8_npsh_case",{})
+                hydraulic_ok=(
+                    isinstance(npsh_case,dict)
+                    and npsh_case.get("validated")
+                    and float(npsh_case.get("margin_m",99))<=0
+                )
+                if (
+                    bw_pattern=="Aumenta la energía en un rango amplio de frecuencias"
+                    and bw_meaning=="El patrón de banda ancha es compatible con un proceso irregular, pero debe combinarse con evidencia hidráulica"
+                ):
+                    evidence["banda_ancha"]="Aumento de energía distribuida en un rango amplio del espectro"
+                    if hydraulic_ok:
+                        evidence["cavitacion_integrada"]=(
+                            "Margen NPSH insuficiente + patrón vibroacústico de banda ancha: "
+                            "conjunto de evidencias compatible con cavitación"
+                        )
+                    saved["stage8_evidence"]=evidence
+                    _persist()
+                    st.success("Evidencia vibroacústica registrada.")
+                    if hydraulic_ok:
+                        st.success(
+                            "Ahora sí existe una **integración de evidencia hidráulica y vibroacústica compatible con cavitación**. "
+                            "Sigue siendo un diagnóstico técnico, no una conversión directa de NPSH a nivel de ruido."
+                        )
+                else:
+                    st.warning(
+                        "Revisa la diferencia entre un tono aislado y un aumento distribuido en muchas frecuencias. "
+                        "Recuerda además que la banda ancha no demuestra cavitación por sí sola."
+                    )
+
+        # -----------------------------------------------------
         # 2.4 Tablero de evidencia y diagnóstico
         # -----------------------------------------------------
         evidence=saved.get("stage8_evidence",{})
         st.markdown("### 2.4 · Tablero de evidencias construido por ti")
         labels=[
             ("Excitación",evidence.get("rpm") or evidence.get("carcasa")),
-            ("Fuente",evidence.get("carcasa")),
+            ("Fuente mecánica",evidence.get("carcasa")),
             ("Estructura",evidence.get("estructura")),
             ("Tuberías",evidence.get("tuberias")),
+            ("Sala técnica",evidence.get("aereo_sala")),
             ("Receptor",evidence.get("receptor")),
-            ("Hidráulica",evidence.get("hidraulica")),
+            ("Hidráulica / NPSH",evidence.get("hidraulica")),
+            ("Banda ancha",evidence.get("banda_ancha")),
+            ("Integración cavitación",evidence.get("cavitacion_integrada")),
         ]
         cols=st.columns(3)
         for i,(lab,val) in enumerate(labels):
             with cols[i%3]:
-                _card(lab,"Evidencia" if val else "Sin evidencia",val or "No fue medida o todavía no has interpretado correctamente el resultado.",tone="green" if val else "orange")
+                _card(
+                    lab,
+                    "Evidencia" if val else "Sin evidencia",
+                    val or "No fue medida o todavía no has interpretado correctamente el resultado.",
+                    tone="green" if val else "orange"
+                )
 
         st.warning(
-            "La coincidencia de frecuencias **aumenta la evidencia de relación**, pero por sí sola no demuestra causalidad ni identifica el mecanismo físico. El diagnóstico se fortalece al combinar evidencia mecánica, hidráulica y acústica."
+            "Una coincidencia de frecuencias aumenta la evidencia de relación, pero por sí sola no demuestra causalidad. "
+            "Del mismo modo, **NPSH insuficiente no entrega un nivel de ruido** y **banda ancha no demuestra cavitación por sí sola**. "
+            "El diagnóstico se fortalece cuando varias evidencias independientes apuntan al mismo mecanismo."
         )
+
+        if evidence.get("hidraulica") and evidence.get("banda_ancha"):
+            st.success(
+                "Has combinado evidencia de dos dominios distintos: **condición hidráulica + comportamiento vibroacústico**. "
+                "Esta integración es mucho más fuerte que interpretar cualquiera de las dos por separado."
+            )
 
         st.markdown("### 2.5 · Construye tu diagnóstico preliminar")
         mech=st.multiselect("Mecanismos que mantienes como plausibles",["Desequilibrio / desalineación","Fuerzas hidráulicas / pulsaciones","Cavitación","Radiación aérea de carcasa"],key=f"{ns}_diag_mech_final")
@@ -6875,8 +7253,8 @@ def _render_course2_lab1_stage8(lab, saved):
         _card("Bombas","motor + hidráulica + tuberías",
               ""
               "Evaluar aisladores, conexión flexible y soportes resilientes.",tone="blue")
-        _card("Compresores / chillers","tonos + broadband",
-              "Pueden combinar rotación o reciprocación, flujo, carcasa, tuberías y estructura. "
+        _card("Compresores / chillers","tonos + banda ancha",
+              "Pueden combinar componentes tonales con contenido de banda ancha, además de flujo, carcasa, tuberías y estructura. "
               "La solución suele necesitar más de una familia de control.",tone="white")
     with b:
         _card("Ventiladores","rotor + aerodinámica",
