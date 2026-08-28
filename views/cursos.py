@@ -4965,8 +4965,8 @@ def _render_course2_lab1_stage6(lab, saved):
         "Cuando la excitación se aproxima a f₀, la respuesta relativa del sistema puede aumentar."
     )
 
-    if (ASSET_DIR/"curso2_lab1_etapa6_frecuencia_natural_independiente.webp").exists():
-        st.image(str(ASSET_DIR/"curso2_lab1_etapa6_frecuencia_natural_independiente.webp"),width="stretch")
+    if (ASSET_DIR/"curso2_lab1_etapa6_frecuencia_natural_profesional.webp").exists():
+        st.image(str(ASSET_DIR/"curso2_lab1_etapa6_frecuencia_natural_profesional.webp"),width="stretch")
 
     with st.container(border=True):
         st.markdown("### Ecuaciones del sistema")
@@ -5008,16 +5008,50 @@ def _render_course2_lab1_stage6(lab, saved):
         f0_model=f0g
 
     if model=="Cremer/Vigran":
-        st.markdown("### Comparación de frecuencias naturales")
+        st.markdown("### ¿Con qué parámetros se calcularon estas frecuencias?")
+        pfc1,pfc2,pfc3=st.columns(3)
+        with pfc1:
+            _card("m′₁ · Piso laminado",f"{m1:.1f} kg/m²","Calculado a partir de la densidad y el espesor definidos arriba.")
+        with pfc2:
+            _card("m′₂ · Losa base",f"{m2:.1f} kg/m²","Valor recuperado de la Etapa 5.")
+        with pfc3:
+            _card("s′ · Manta resiliente",f"{s_dyn:.2f} MN/m³","Rigidez dinámica superficial del elemento resiliente.",tone="blue")
+
+        st.markdown("#### Sistema general de dos masas")
+        st.latex(fr"""m_r'=\frac{{{m1:.1f}\cdot {m2:.1f}}}{{{m1:.1f}+{m2:.1f}}}
+        ={mr:.1f}\;\mathrm{{kg/m^2}}""")
+        st.latex(fr"""f_{{0,\mathrm{{general}}}}
+        =\frac{{1}}{{2\pi}}\sqrt{{\frac{{{s_dyn:.2f}\times10^6}}{{{mr:.1f}}}}}
+        ={f0g:.1f}\;\mathrm{{Hz}}""")
+
+        st.markdown("#### Modelo continuo simplificado")
+        st.write("Supone que la losa base es suficientemente pesada y utiliza principalmente la masa superficial del piso flotante.")
+        st.latex(fr"""f_{{0,\mathrm{{cont}}}}
+        =\frac{{1}}{{2\pi}}\sqrt{{\frac{{{s_dyn:.2f}\times10^6}}{{{m1:.1f}}}}}
+        ={f0_model:.1f}\;\mathrm{{Hz}}""")
+
         cf1,cf2=st.columns(2)
         with cf1:
-            _card("Sistema general de dos masas",f"{f0g:.1f} Hz","Considera ambas masas mediante m′ᵣ.")
+            _card("Sistema general",f"{f0g:.1f} Hz","Usa m′₁, m′₂ y s′ a través de la masa reducida.")
         with cf2:
-            _card("Modelo continuo simplificado",f"{f0_model:.1f} Hz","Supone una base suficientemente pesada y utiliza principalmente m′₁.",tone="blue")
-        st.info("Los dos valores pueden diferir porque corresponden a hipótesis distintas.")
+            _card("Modelo continuo",f"{f0_model:.1f} Hz","Usa m′₁ y s′ bajo la hipótesis de base pesada.",tone="blue")
+        st.info("Los valores pueden diferir porque corresponden a hipótesis de modelación diferentes.")
     else:
-        st.markdown("### Frecuencia natural utilizada por el modelo")
-        _card("Sistema con apoyos discretos",f"{f0_model:.1f} Hz","Se utiliza la frecuencia natural del sistema general con masa reducida.",tone="blue")
+        st.markdown("### ¿Con qué parámetros se calcula f₀?")
+        pfc1,pfc2,pfc3=st.columns(3)
+        with pfc1:
+            _card("m′₁ · Sobrelosa",f"{m1:.1f} kg/m²","Masa superficial de la sobrelosa flotante.")
+        with pfc2:
+            _card("m′₂ · Losa base",f"{m2:.1f} kg/m²","Valor recuperado de la Etapa 5.")
+        with pfc3:
+            _card("s′ equivalente",f"{s_dyn:.2f} MN/m³","Rigidez dinámica superficial equivalente de los apoyos.",tone="blue")
+
+        st.latex(fr"""m_r'=\frac{{{m1:.1f}\cdot {m2:.1f}}}{{{m1:.1f}+{m2:.1f}}}
+        ={mr:.1f}\;\mathrm{{kg/m^2}}""")
+        st.latex(fr"""f_0=\frac{{1}}{{2\pi}}
+        \sqrt{{\frac{{{s_dyn:.2f}\times10^6}}{{{mr:.1f}}}}}
+        ={f0_model:.1f}\;\mathrm{{Hz}}""")
+        _card("Frecuencia natural utilizada",f"{f0_model:.1f} Hz","Resultado calculado con la masa reducida del sistema.",tone="blue")
 
     # ==============================================================
     # 4 · MODELO ACÚSTICO
@@ -5051,29 +5085,39 @@ def _render_course2_lab1_stage6(lab, saved):
             )
             st.caption("Calcula la mejora por banda a partir de frecuencia, masa flotante y rigidez dinámica superficial.")
 
-        st.markdown("### Misma formulación expresada mediante f₀,cont")
-        flow1,flow2,flow3=st.columns([1,1,1])
-        with flow1:
-            _card("Parámetros del piso",f"m′₁={m1:.1f} kg/m²",f"s′={s_dyn:.2f} MN/m³")
-        with flow2:
-            _card("Frecuencia natural continua",f"{f0_model:.1f} Hz","Resultado de m′₁ y s′.")
-        with flow3:
-            _card("Salida del modelo","ΔLₙ(f)","Mejora acústica por banda.",tone="blue")
-        st.latex(
-            r"f_{0,\mathrm{cont}}\approx\frac{1}{2\pi}\sqrt{\frac{s'}{m_1'}}"
-        )
-        st.latex(
-            r"\boxed{\Delta L_n(f)=40\log_{10}\left("
-            r"\frac{f}{f_{0,\mathrm{cont}}}"
-            r"\right)}"
+        st.markdown("### Cómo se construye el cálculo de ΔLₙ(f)")
+        st.write("En vez de repetir variables en varias tarjetas, seguimos una secuencia única:")
+
+        f_demo_calc = 250 if 250 in bands else bands[0]
+        delta_demo_calc = max(0.0,_delta_cremer(f_demo_calc,s_dyn,m1))
+
+        st.markdown("#### 1 · Datos definidos para el piso")
+        fd1,fd2=st.columns(2)
+        with fd1:
+            _card("m′₁ · Masa superficial",f"{m1:.1f} kg/m²","Resultado de densidad × espesor del piso laminado.")
+        with fd2:
+            _card("s′ · Rigidez dinámica",f"{s_dyn:.2f} MN/m³","Propiedad de la manta resiliente.",tone="blue")
+
+        st.markdown("#### 2 · De esos datos obtenemos f₀,cont")
+        st.latex(fr"""f_{{0,\mathrm{{cont}}}}
+        =\frac{{1}}{{2\pi}}\sqrt{{\frac{{{s_dyn:.2f}\times10^6}}{{{m1:.1f}}}}}
+        ={f0_model:.1f}\;\mathrm{{Hz}}""")
+        st.info(f"{f0_model:.1f} Hz es una **propiedad calculada del piso**, no una banda elegida.")
+
+        st.markdown("#### 3 · Elegimos una banda para evaluar la mejora")
+        _card("Frecuencia de ejemplo",f"{f_demo_calc} Hz","Esta frecuencia sí corresponde a una banda del laboratorio.")
+
+        st.markdown("#### 4 · Calculamos ΔLₙ en esa banda")
+        st.latex(fr"""\Delta L_n({f_demo_calc})
+        =40\log_{{10}}\left(\frac{{{f_demo_calc}}}{{{f0_model:.1f}}}\right)
+        ={delta_demo_calc:.1f}\;\mathrm{{dB}}""")
+        _card(
+            f"Mejora prevista a {f_demo_calc} Hz",
+            f"{delta_demo_calc:.1f} dB",
+            "Este valor corresponde a una sola banda. Luego repetiremos el procedimiento para construir la curva completa.",
+            tone="blue"
         )
 
-        st.markdown("### Variables que entran al cálculo")
-        p1,p2,p3,p4=st.columns(4)
-        with p1: _card("Frecuencia f",f"{250 if 250 in bands else bands[0]} Hz","Banda donde evaluaremos la mejora.")
-        with p2: _card("Masa flotante m′₁",f"{m1:.1f} kg/m²","Masa superficial del elemento superior.")
-        with p3: _card("Rigidez s′",f"{s_dyn:.2f} MN/m³","Rigidez dinámica superficial del desacople.")
-        with p4: _card("f₀,cont",f"{f0_model:.1f} Hz","Referencia dinámica del modelo.",tone="blue")
     else:
         st.markdown("### Apoyos resilientes discretos")
         st.write("La masa flotante descansa sobre pads, plots o aisladores separados.")
@@ -5237,38 +5281,79 @@ def _render_course2_lab1_stage6(lab, saved):
         "del modelo simplificado y requerir medición, FEM/SEA o un modelo de caminos estructurales."
     )
 
-    defect=st.selectbox(
-        "Ejemplo de defecto",
-        ["Contacto perimetral rígido","Tornillo atravesando la capa resiliente","Instalación apoyada sobre ambas masas"],
-        key=f"{ns}_defect"
-    )
-    defects={
-        "Contacto perimetral rígido":(
-            "La sobrelosa toca el muro y aparece una ruta rígida lateral.",
-            "Restituir banda perimetral y separación mecánica."
-        ),
-        "Tornillo atravesando la capa resiliente":(
-            "El elemento metálico conecta mecánicamente ambas partes del sistema.",
-            "Eliminar o rediseñar la fijación para mantener el desacople."
-        ),
-        "Instalación apoyada sobre ambas masas":(
-            "Una tubería o elemento constructivo crea un puente entre sobrelosa y base.",
-            "Desacoplar la instalación y controlar sus puntos de contacto."
-        ),
-    }
-    defect_assets={
-        "Contacto perimetral rígido":"curso2_lab1_etapa6_defecto_perimetral.webp",
-        "Tornillo atravesando la capa resiliente":"curso2_lab1_etapa6_defecto_tornillo.webp",
-        "Instalación apoyada sobre ambas masas":"curso2_lab1_etapa6_defecto_instalacion.webp",
-    }
-    defect_asset=ASSET_DIR/defect_assets[defect]
+    if config=="Piso flotante sobre capa resiliente continua":
+        st.markdown("### Defectos del piso laminado flotante")
+        defect=st.selectbox(
+            "Ejemplo de defecto",
+            [
+                "Contacto perimetral rígido",
+                "Fijación atravesando laminado y manta",
+                "Penetración de tubería sin desacople",
+                "Elemento fijo bloqueando el piso flotante",
+            ],
+            key=f"{ns}_defect_laminado"
+        )
+        defects={
+            "Contacto perimetral rígido":(
+                "El piso laminado queda en contacto rígido con el muro o el rodapié.",
+                "Restituir la junta perimetral y evitar compresión rígida contra los cerramientos.",
+                "curso2_lab1_etapa6_laminado_defecto_perimetral.webp",
+            ),
+            "Fijación atravesando laminado y manta":(
+                "Una fijación atraviesa la manta resiliente y conecta el piso con la losa base.",
+                "Eliminar o rediseñar la fijación para no puentear la manta.",
+                "curso2_lab1_etapa6_laminado_defecto_fijacion.webp",
+            ),
+            "Penetración de tubería sin desacople":(
+                "La tubería queda en contacto rígido con el piso flotante al atravesarlo.",
+                "Usar manguito/junta resiliente y mantener separación alrededor de la penetración.",
+                "curso2_lab1_etapa6_laminado_defecto_tuberia.webp",
+            ),
+            "Elemento fijo bloqueando el piso flotante":(
+                "Un elemento fijo inmoviliza localmente el piso y altera su desacople.",
+                "Evitar apoyos o fijaciones rígidas que bloqueen el movimiento flotante.",
+                "curso2_lab1_etapa6_laminado_defecto_elemento_fijo.webp",
+            ),
+        }
+    else:
+        st.markdown("### Defectos de la sobrelosa sobre apoyos discretos")
+        defect=st.selectbox(
+            "Ejemplo de defecto",
+            [
+                "Contacto perimetral rígido",
+                "Tornillo conectando ambas masas",
+                "Instalación conectando ambas masas",
+            ],
+            key=f"{ns}_defect_discreto"
+        )
+        defects={
+            "Contacto perimetral rígido":(
+                "La sobrelosa toca el muro y aparece una ruta estructural paralela.",
+                "Restituir banda perimetral y separación mecánica.",
+                "curso2_lab1_etapa6_defecto_perimetral_profesional.webp",
+            ),
+            "Tornillo conectando ambas masas":(
+                "La fijación une rígidamente la sobrelosa con la losa base.",
+                "Eliminar o rediseñar la fijación para conservar el desacople.",
+                "curso2_lab1_etapa6_defecto_tornillo_profesional.webp",
+            ),
+            "Instalación conectando ambas masas":(
+                "Una tubería o instalación rígida conecta ambas masas y puentea los apoyos.",
+                "Desacoplar la instalación en penetraciones y puntos de apoyo.",
+                "curso2_lab1_etapa6_defecto_instalacion_profesional.webp",
+            ),
+        }
+
+    mech,corr,asset_name=defects[defect]
+    defect_asset=ASSET_DIR/asset_name
     if defect_asset.exists():
         st.image(str(defect_asset),width="stretch")
 
-    mech,corr=defects[defect]
     d1,d2=st.columns(2)
-    with d1: _card("Mecanismo","Camino paralelo",mech)
-    with d2: _card("Corrección","Restituir desacople",corr,tone="blue")
+    with d1:
+        _card("Mecanismo","Camino mecánico paralelo",mech)
+    with d2:
+        _card("Corrección","Restituir desacople",corr,tone="blue")
 
     # ==============================================================
     # 8 · GUARDAR SOLUCIÓN
