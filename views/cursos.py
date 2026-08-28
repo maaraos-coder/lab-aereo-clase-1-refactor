@@ -5650,25 +5650,400 @@ def _render_course2_lab1_stage7(lab, saved):
     # =========================================================
     # LAB C
     # =========================================================
-    st.markdown("## 4 · Laboratorio C — Decisión profesional del proyecto")
-    st.write("Caso del ejercicio: además del desempeño acústico, el proyecto impone restricciones de carga y altura. **No son límites normativos**; son condiciones del caso para practicar una decisión multidisciplinaria.")
-    p1,p2,p3=st.columns(3)
-    with p1: max_load=st.number_input("Carga máxima admisible del tratamiento (kg/m²)",20.0,300.0,120.0,5.0,key=f"{ns}_maxload")
-    with p2: max_h=st.number_input("Altura máxima disponible (mm)",10.0,200.0,75.0,5.0,key=f"{ns}_maxh")
-    with p3: target500=st.number_input("Objetivo del ejercicio a 500 Hz (dB)",20.0,100.0,50.0,1.0,key=f"{ns}_target500")
+    st.markdown("## 4 · Laboratorio C — Selección profesional desde catálogos reales")
+    st.write(
+        "Ahora trabajarás como proyectista. El cliente no te entrega la rigidez dinámica de la solución: "
+        "**debes buscarla en una ficha técnica real**, interpretar correctamente los datos y utilizarlos para diseñar el piso."
+    )
+
+    st.markdown(
+        """
+        <div style="border:1px solid #bfdbfe;background:#eff6ff;border-radius:16px;padding:15px 17px;margin:.5rem 0 1rem">
+          <b>Encargo profesional</b><br>
+          Diseña una sobrelosa flotante sobre una manta resiliente real que cumpla simultáneamente:
+          <br><br>
+          <b>1.</b> Nivel máximo de ruido de impacto a 500 Hz.<br>
+          <b>2.</b> Carga adicional máxima permitida por el proyecto.<br>
+          <b>3.</b> La carga aplicada debe ser compatible con la capacidad declarada por la manta seleccionada.
+          <br><br>
+          El objetivo es encontrar una solución <b>acústicamente suficiente y lo más liviana posible</b>.
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
+
+    # Datos ocultos para validación. El alumno NO los ve hasta leer y validar el catálogo.
+    catalog_products = {
+        "REGUPOL sound 15": {
+            "url": "https://acoustics.regupol.com/fileadmin/user_upload/acoustics/products/documents/technical_data/en/regupol_sound/regupol_sound_15/Technical_data_REGUPOL_sound_15.pdf",
+            "manufacturer": "REGUPOL",
+            "thickness_mm": 12.0,
+            "s_dyn": 6.0,
+            "delta_lw": 29.0,
+            "load_value": 30.0,
+            "load_unit": "kN/m²",
+            "load_kN_m2": 30.0,
+        },
+        "REGUPOL sound 47": {
+            "url": "https://acoustics.regupol.com/fileadmin/user_upload/acoustics/products/documents/technical_data/en/regupol_sound/regupol_sound_47/Technical_data_REGUPOL_sound_47.pdf",
+            "manufacturer": "REGUPOL",
+            "thickness_mm": 8.0,
+            "s_dyn": 30.0,
+            "delta_lw": 22.0,
+            "load_value": 30.0,
+            "load_unit": "kN/m²",
+            "load_kN_m2": 30.0,
+        },
+        "Getzner Acoustic Floor Mat 29": {
+            "url": "https://www.getzner.com/media/14078/download/Data%20Sheet%20Acoustic%20Floor%20Mat%2029%20EN.pdf?v=4",
+            "manufacturer": "Getzner",
+            "thickness_mm": 11.0,
+            "s_dyn": 10.0,
+            "delta_lw": 29.0,
+            "load_value": 5000.0,
+            "load_unit": "kg/m²",
+            "load_kN_m2": 5000.0 * 9.80665 / 1000.0,
+        },
+        "Getzner Acoustic Floor Mat 35": {
+            "url": "https://www.getzner.com/media/49828/download/Data%20Sheet%20Acoustic%20Floor%20Mat%2035%20ES.pdf?v=1",
+            "manufacturer": "Getzner",
+            "thickness_mm": 16.0,
+            "s_dyn": 5.0,
+            "delta_lw": 35.0,
+            "load_value": 2500.0,
+            "load_unit": "kg/m²",
+            "load_kN_m2": 2500.0 * 9.80665 / 1000.0,
+        },
+    }
+
+    # ---------------------------------------------------------
+    # C1 · Caso del proyecto
+    # ---------------------------------------------------------
+    st.markdown("### C1 · Restricciones del proyecto")
+    st.write(
+        "Estos límites pertenecen **al caso de ejercicio**; no representan por sí solos una exigencia normativa."
+    )
+    pc1,pc2=st.columns(2)
+    with pc1:
+        target500=st.number_input(
+            "Nivel máximo permitido Lₙ,final a 500 Hz (dB)",
+            20.0,100.0,50.0,1.0,
+            key=f"{ns}_catalog_target500"
+        )
+    with pc2:
+        max_added_mass=st.number_input(
+            "Carga adicional máxima del piso (kg/m²)",
+            20.0,300.0,100.0,5.0,
+            key=f"{ns}_catalog_maxmass"
+        )
 
     j500=min(range(len(bands)),key=lambda j:abs(bands[j]-500))
-    acoustic_ok=final_test[j500] <= target500
-    load_ok=m1_test <= max_load
-    height_ok=h_ref <= max_h
-    q1,q2,q3=st.columns(3)
-    with q1: _card("Acústica","Cumple" if acoustic_ok else "No cumple",f"Lₙ,final({bands[j500]} Hz) = {final_test[j500]:.1f} dB · objetivo ≤ {target500:.1f} dB",tone="purple" if acoustic_ok else "white")
-    with q2: _card("Carga","Cumple" if load_ok else "No cumple",f"m′₁ = {m1_test:.1f} kg/m² · máximo {max_load:.1f} kg/m²")
-    with q3: _card("Altura","Cumple" if height_ok else "No cumple",f"h₁ = {h_ref:.0f} mm · máximo {max_h:.0f} mm")
+    base500=float(ln0_arr[j500])
+    st.info(
+        f"La losa base de tu proyecto, recuperada de la Etapa 5, tiene "
+        f"**Lₙ,₀({bands[j500]} Hz) = {base500:.1f} dB**."
+    )
 
-    viable=acoustic_ok and load_ok and height_ok
-    if viable: st.success("La alternativa explorada es viable dentro de las tres restricciones del ejercicio.")
-    else: st.warning("La alternativa todavía no es viable. Ajusta el diseño y observa qué restricción controla la decisión.")
+    # ---------------------------------------------------------
+    # C2 · Buscar datos reales
+    # ---------------------------------------------------------
+    st.markdown("### C2 · Elige un producto y consulta su ficha técnica")
+    product_name=st.selectbox(
+        "Producto resiliente a investigar",
+        list(catalog_products.keys()),
+        key=f"{ns}_catalog_product"
+    )
+    product=catalog_products[product_name]
+
+    ca,cb=st.columns([1.35,1])
+    with ca:
+        st.write(
+            f"Seleccionaste **{product_name}**. Abre la ficha oficial del fabricante y localiza los datos solicitados."
+        )
+    with cb:
+        st.link_button(
+            "Abrir ficha técnica oficial",
+            product["url"],
+            use_container_width=True
+        )
+
+    st.markdown(
+        """
+        <div style="border:1px solid #fde68a;background:#fffbeb;border-radius:14px;padding:13px 16px;margin:.4rem 0 .8rem">
+          <b>No copies todavía valores desde la app:</b> la actividad consiste en encontrarlos en la ficha.
+          Busca <b>espesor</b>, <b>rigidez dinámica superficial s′</b>,
+          <b>capacidad/rango de carga</b> y <b>ΔL<sub>w</sub></b>.
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
+
+    e1,e2,e3,e4=st.columns(4)
+    with e1:
+        cat_h=st.number_input(
+            "Espesor encontrado (mm)",
+            min_value=1.0,max_value=50.0,value=10.0,step=0.5,
+            key=f"{ns}_cat_h"
+        )
+    with e2:
+        cat_s=st.number_input(
+            "s′ encontrado (MN/m³)",
+            min_value=0.5,max_value=100.0,value=10.0,step=0.5,
+            key=f"{ns}_cat_s"
+        )
+    with e3:
+        cat_load=st.number_input(
+            f"Capacidad/rango de carga ({product['load_unit']})",
+            min_value=1.0,max_value=10000.0,
+            value=30.0 if product["load_unit"]=="kN/m²" else 2500.0,
+            step=1.0 if product["load_unit"]=="kN/m²" else 100.0,
+            key=f"{ns}_cat_load"
+        )
+    with e4:
+        cat_dlw=st.number_input(
+            "ΔLw declarado (dB)",
+            min_value=1.0,max_value=60.0,value=25.0,step=1.0,
+            key=f"{ns}_cat_dlw"
+        )
+
+    catalog_valid=saved.get("stage7_catalog_validated_product")==product_name
+
+    if st.button(
+        "Comprobar datos del catálogo",
+        type="primary",
+        use_container_width=True,
+        key=f"{ns}_catalog_validate"
+    ):
+        checks = {
+            "Espesor": abs(float(cat_h)-product["thickness_mm"]) <= 0.25,
+            "Rigidez dinámica s′": abs(float(cat_s)-product["s_dyn"]) <= 0.25,
+            "Carga": abs(float(cat_load)-product["load_value"]) <= max(0.2,product["load_value"]*0.015),
+            "ΔLw": abs(float(cat_dlw)-product["delta_lw"]) <= 0.25,
+        }
+        if all(checks.values()):
+            saved["stage7_catalog_validated_product"]=product_name
+            saved["stage7_catalog_extracted"]={
+                "product":product_name,
+                "thickness_mm":float(product["thickness_mm"]),
+                "s_dyn_MN_m3":float(product["s_dyn"]),
+                "declared_load_value":float(product["load_value"]),
+                "declared_load_unit":product["load_unit"],
+                "delta_lw_db":float(product["delta_lw"]),
+            }
+            _persist()
+            st.success("Datos correctos. Ya puedes usar este producto en el diseño.")
+            st.rerun()
+        else:
+            wrong=[k for k,v in checks.items() if not v]
+            st.warning("Revisa en la ficha técnica: " + ", ".join(wrong) + ".")
+
+    catalog_valid=saved.get("stage7_catalog_validated_product")==product_name
+    if not catalog_valid:
+        st.info("Valida correctamente los datos del catálogo para desbloquear el diseño.")
+    else:
+        st.success(f"Catálogo validado: {product_name}")
+
+        # Mostrar lo que el alumno ya encontró, ahora como datos activos del modelo.
+        v1,v2,v3,v4=st.columns(4)
+        with v1: _card("Espesor de manta",f"{product['thickness_mm']:.0f} mm","Dato extraído de la ficha.")
+        with v2: _card("Rigidez dinámica s′",f"{product['s_dyn']:.1f} MN/m³","Dato que alimentará el modelo espectral.",tone="blue")
+        with v3: _card("Capacidad declarada",f"{product['load_value']:g} {product['load_unit']}","Se usará para comprobar compatibilidad de carga.")
+        with v4: _card("ΔLw del fabricante",f"{product['delta_lw']:.0f} dB","Índice ponderado declarado. No sustituye ΔLₙ(f).")
+
+        st.warning(
+            "ΔLw es un **índice ponderado de referencia del producto**. "
+            "No lo introducimos directamente en la ecuación de ΔLₙ(500 Hz). "
+            "Para nuestra predicción espectral utilizaremos s′."
+        )
+
+        # -----------------------------------------------------
+        # C3 · Diseñar la sobrelosa
+        # -----------------------------------------------------
+        st.markdown("### C3 · Diseña la sobrelosa flotante")
+        st.write(
+            "Ahora debes elegir la masa superior. Para una sobrelosa homogénea, la carga adicional por unidad de superficie es:"
+        )
+        st.latex(r"\boxed{m_1'=\rho_1\,h_1}")
+        st.caption(
+            "ρ₁ en kg/m³ · h₁ en m · m′₁ en kg/m². "
+            "En este ejercicio despreciamos la pequeña masa propia de la manta para concentrarnos en la sobrelosa."
+        )
+
+        sc1,sc2=st.columns(2)
+        with sc1:
+            screed_rho=st.selectbox(
+                "Material de la sobrelosa",
+                [
+                    "Mortero cementicio liviano · 1600 kg/m³",
+                    "Mortero cementicio · 2000 kg/m³",
+                    "Hormigón · 2300 kg/m³",
+                ],
+                index=1,
+                key=f"{ns}_screed_material"
+            )
+        rho_map={
+            "Mortero cementicio liviano · 1600 kg/m³":1600.0,
+            "Mortero cementicio · 2000 kg/m³":2000.0,
+            "Hormigón · 2300 kg/m³":2300.0,
+        }
+        rho1=rho_map[screed_rho]
+        with sc2:
+            screed_h_mm=st.slider(
+                "Espesor de sobrelosa h₁ (mm)",
+                25,100,40,5,
+                key=f"{ns}_screed_h"
+            )
+
+        h1_m=screed_h_mm/1000.0
+        m1_design=rho1*h1_m
+        applied_load_kN_m2=m1_design*9.80665/1000.0
+
+        st.latex(
+            fr"""m_1'={rho1:.0f}\cdot {h1_m:.3f}
+            ={m1_design:.1f}\;\mathrm{{kg/m^2}}"""
+        )
+
+        # -----------------------------------------------------
+        # C4 · Acústica
+        # -----------------------------------------------------
+        st.markdown("### C4 · Calcula el desempeño acústico a 500 Hz")
+        s_used=float(product["s_dyn"])
+        f0_design=(1/(2*math.pi))*math.sqrt((s_used*1e6)/max(m1_design,1e-12))
+        delta500=max(0.0,40*math.log10(max(bands[j500]/f0_design,1e-12)))
+        final500=base500-delta500
+
+        ac1,ac2,ac3=st.columns(3)
+        with ac1:
+            _card("Frecuencia natural",f"{f0_design:.1f} Hz","Calculada con m′₁ y s′ del producto.")
+        with ac2:
+            _card(f"ΔLₙ({bands[j500]} Hz)",f"{delta500:.1f} dB","Mejora espectral predicha por el modelo.")
+        with ac3:
+            _card(f"Lₙ,final({bands[j500]} Hz)",f"{final500:.1f} dB","Nivel final estimado del piso.",tone="purple")
+
+        st.markdown("**Sustitución utilizada**")
+        st.latex(
+            fr"""f_{{0,\mathrm{{cont}}}}
+            =\frac{{1}}{{2\pi}}\sqrt{{\frac{{{s_used:.1f}\times10^6}}{{{m1_design:.1f}}}}}
+            ={f0_design:.1f}\;\mathrm{{Hz}}"""
+        )
+        st.latex(
+            fr"""\Delta L_n({bands[j500]})
+            =40\log_{{10}}\left(\frac{{{bands[j500]}}}{{{f0_design:.1f}}}\right)
+            ={delta500:.1f}\;\mathrm{{dB}}"""
+        )
+        st.latex(
+            fr"""L_{{n,\mathrm{{final}}}}({bands[j500]})
+            ={base500:.1f}-{delta500:.1f}
+            ={final500:.1f}\;\mathrm{{dB}}"""
+        )
+
+        # -----------------------------------------------------
+        # C5 · Tres verificaciones
+        # -----------------------------------------------------
+        st.markdown("### C5 · ¿La solución es profesionalmente viable?")
+        acoustic_ok=final500 <= target500
+        project_load_ok=m1_design <= max_added_mass
+        product_load_ok=applied_load_kN_m2 <= product["load_kN_m2"]
+
+        vr1,vr2,vr3=st.columns(3)
+        with vr1:
+            _card(
+                "Criterio acústico",
+                "Cumple" if acoustic_ok else "No cumple",
+                f"{final500:.1f} dB frente al máximo de {target500:.1f} dB.",
+                tone="purple" if acoustic_ok else "white"
+            )
+        with vr2:
+            _card(
+                "Carga del proyecto",
+                "Cumple" if project_load_ok else "No cumple",
+                f"m′₁ = {m1_design:.1f} kg/m² frente al máximo de {max_added_mass:.1f} kg/m²."
+            )
+        with vr3:
+            _card(
+                "Compatibilidad de la manta",
+                "Cumple" if product_load_ok else "No cumple",
+                f"Carga aplicada ≈ {applied_load_kN_m2:.2f} kN/m²; debe estar dentro del rango declarado.",
+                tone="blue" if product_load_ok else "white"
+            )
+
+        viable_catalog=acoustic_ok and project_load_ok and product_load_ok
+        if viable_catalog:
+            st.success(
+                "SOLUCIÓN VIABLE: cumple acústica, carga máxima del proyecto y capacidad declarada de la manta."
+            )
+        else:
+            st.warning(
+                "La solución todavía no es viable. Cambia producto, material o espesor de sobrelosa y vuelve a comprobar."
+            )
+
+        # -----------------------------------------------------
+        # C6 · Registrar intentos y comparar
+        # -----------------------------------------------------
+        st.markdown("### C6 · Registra tus alternativas")
+        attempts=saved.get("stage7_catalog_attempts",[])
+        if not isinstance(attempts,list):
+            attempts=[]
+
+        if st.button(
+            "Guardar este intento",
+            use_container_width=True,
+            key=f"{ns}_save_catalog_attempt"
+        ):
+            attempt={
+                "Producto":product_name,
+                "Sobrelosa":screed_rho.split(" · ")[0],
+                "h₁ (mm)":int(screed_h_mm),
+                "m′₁ (kg/m²)":round(m1_design,1),
+                "s′ (MN/m³)":round(s_used,1),
+                "f₀ (Hz)":round(f0_design,1),
+                f"Lₙ,final {bands[j500]} Hz (dB)":round(final500,1),
+                "Acústica":"Cumple" if acoustic_ok else "No cumple",
+                "Carga proyecto":"Cumple" if project_load_ok else "No cumple",
+                "Carga producto":"Cumple" if product_load_ok else "No cumple",
+                "Viable":"Sí" if viable_catalog else "No",
+            }
+            attempts.append(attempt)
+            saved["stage7_catalog_attempts"]=attempts[-20:]
+            _persist()
+            st.success("Intento registrado.")
+            st.rerun()
+
+        attempts=saved.get("stage7_catalog_attempts",[])
+        if attempts:
+            st.dataframe(attempts,hide_index=True,use_container_width=True)
+
+            viable_attempts=[a for a in attempts if a.get("Viable")=="Sí"]
+            if viable_attempts:
+                lightest=min(viable_attempts,key=lambda a:float(a["m′₁ (kg/m²)"]))
+                st.success(
+                    f"Mejor solución viable registrada hasta ahora: "
+                    f"**{lightest['Producto']}**, {lightest['h₁ (mm)']} mm de sobrelosa, "
+                    f"m′₁ = {lightest['m′₁ (kg/m²)']} kg/m²."
+                )
+            else:
+                st.info("Todavía no has registrado una alternativa que cumpla los tres criterios.")
+
+        if st.button(
+            "Resetear intentos del Laboratorio C",
+            key=f"{ns}_reset_catalog_attempts"
+        ):
+            saved["stage7_catalog_attempts"]=[]
+            saved.pop("stage7_catalog_validated_product",None)
+            saved.pop("stage7_catalog_extracted",None)
+            _persist()
+            st.rerun()
+
+    st.markdown(
+        """
+        <div style="border:1px solid #dbe4ee;border-radius:16px;padding:14px 16px;background:#fff;margin-top:1rem">
+          <b>Lectura profesional:</b> una manta con menor s′ puede ayudar a reducir la frecuencia natural,
+          pero la solución final no se decide por un único parámetro. Debes comprobar
+          <b>Lₙ,final(f)</b>, la masa añadida, la capacidad de carga del producto y las hipótesis del modelo.
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
 
     # =========================================================
     # SAVE / CLOSING
