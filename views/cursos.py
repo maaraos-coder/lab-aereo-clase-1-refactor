@@ -4809,10 +4809,13 @@ def _render_course2_lab1_stage6(lab, saved):
         "Primero identifica la configuración física. El modelo no se elige por cuál entrega más dB, "
         "sino por cómo está construido realmente el sistema."
     )
-    _asset(
-        "curso2_lab1_etapa6_sistemas_flotantes.gif",
-        "Capa continua y apoyos discretos representan dos mecanismos de transferencia distintos."
-    )
+    vis1,vis2=st.columns(2)
+    with vis1:
+        st.image(str(ASSET_DIR/"curso2_lab1_etapa6_continua_laminado.webp"),width="stretch",
+                 caption="Capa continua: piso laminado flotante sobre manta resiliente.")
+    with vis2:
+        st.image(str(ASSET_DIR/"curso2_lab1_etapa6_discretos_sobrelosa.webp"),width="stretch",
+                 caption="Apoyos discretos: sobrelosa flotante pesada sobre pads o aisladores.")
 
     config=st.radio(
         "Configuración constructiva",
@@ -4874,20 +4877,35 @@ def _render_course2_lab1_stage6(lab, saved):
         "y el **elemento resiliente** que la separa de la losa base."
     )
 
-    c1,c2,c3=st.columns(3)
-    with c1:
-        rho1=st.number_input("Densidad de la masa flotante superior ρ₁ (kg/m³)",800.0,2600.0,2100.0,50.0,key=f"{ns}_rho1")
-    with c2:
-        h1_mm=st.number_input("Espesor de la masa flotante superior h₁ (mm)",20.0,120.0,50.0,5.0,key=f"{ns}_h1")
-    with c3:
-        s_dyn=st.number_input("Rigidez dinámica superficial s′ (MN/m³)",1.0,80.0,10.0,0.5,key=f"{ns}_sdyn")
+    if config=="Piso flotante sobre capa resiliente continua":
+        st.info("Sistema de referencia: **piso laminado flotante liviano sobre manta resiliente continua**.")
+        c1,c2,c3=st.columns(3)
+        with c1:
+            rho1=st.number_input("Densidad del piso laminado ρ₁ (kg/m³)",500.0,1200.0,850.0,25.0,key=f"{ns}_rho1_cont")
+        with c2:
+            h1_mm=st.number_input("Espesor del piso laminado h₁ (mm)",6.0,20.0,12.0,1.0,key=f"{ns}_h1_cont")
+        with c3:
+            s_dyn=st.number_input("Rigidez dinámica superficial de la manta s′ (MN/m³)",1.0,80.0,15.0,0.5,key=f"{ns}_sdyn_cont")
+    else:
+        st.info("Sistema de referencia: **sobrelosa flotante pesada sobre apoyos resilientes discretos**.")
+        c1,c2,c3=st.columns(3)
+        with c1:
+            rho1=st.number_input("Densidad de la sobrelosa ρ₁ (kg/m³)",1500.0,2600.0,2100.0,50.0,key=f"{ns}_rho1_disc")
+        with c2:
+            h1_mm=st.number_input("Espesor de la sobrelosa h₁ (mm)",30.0,120.0,50.0,5.0,key=f"{ns}_h1_disc")
+        with c3:
+            s_dyn=st.number_input("Rigidez dinámica superficial equivalente s′ (MN/m³)",1.0,80.0,10.0,0.5,key=f"{ns}_sdyn_disc")
 
     m1=rho1*(h1_mm/1000.0)
     mr=_mred(m1,m2)
     f0g=_f0_general(s_dyn,m1,m2)
 
     q1,q2,q3,q4=st.columns(4)
-    with q1: _card("m′₁ · Masa flotante superior",f"{m1:.1f} kg/m²","Masa superficial del elemento superior desacoplado de la losa base.")
+    with q1:
+        if config=="Piso flotante sobre capa resiliente continua":
+            _card("m′₁ · Piso laminado flotante",f"{m1:.1f} kg/m²","Masa superficial del piso laminado desacoplado por la manta.")
+        else:
+            _card("m′₁ · Sobrelosa flotante",f"{m1:.1f} kg/m²","Masa superficial de la sobrelosa sobre apoyos discretos.")
     with q2: _card("m′₂ · Losa base",f"{m2:.1f} kg/m²","Dato recuperado de la Etapa 5.")
     with q3: _card("m′ᵣ · Masa reducida",f"{mr:.1f} kg/m²","Masa equivalente para el movimiento relativo.")
     with q4: _card("f₀ · Sistema general",f"{f0g:.1f} Hz","Frecuencia natural del sistema masa flotante–resiliente–losa base.",tone="blue")
@@ -4895,8 +4913,8 @@ def _render_course2_lab1_stage6(lab, saved):
     st.markdown("### Rigidez dinámica superficial del elemento resiliente")
     sr1,sr2=st.columns([1.1,1])
     with sr1:
-        if (ASSET_DIR/"curso2_lab1_etapa6_rigidez_dinamica_realista.webp").exists():
-            st.image(str(ASSET_DIR/"curso2_lab1_etapa6_rigidez_dinamica_realista.webp"),width="stretch")
+        if (ASSET_DIR/"curso2_lab1_etapa6_rigidez_dinamica_independiente.webp").exists():
+            st.image(str(ASSET_DIR/"curso2_lab1_etapa6_rigidez_dinamica_independiente.webp"),width="stretch")
     with sr2:
         st.markdown(
             """
@@ -4946,8 +4964,8 @@ def _render_course2_lab1_stage6(lab, saved):
         "Cuando la excitación se aproxima a f₀, la respuesta relativa del sistema puede aumentar."
     )
 
-    if (ASSET_DIR/"curso2_lab1_etapa6_sistema_flotante_realista.webp").exists():
-        st.image(str(ASSET_DIR/"curso2_lab1_etapa6_sistema_flotante_realista.webp"),width="stretch")
+    if (ASSET_DIR/"curso2_lab1_etapa6_frecuencia_natural_independiente.webp").exists():
+        st.image(str(ASSET_DIR/"curso2_lab1_etapa6_frecuencia_natural_independiente.webp"),width="stretch")
 
     with st.container(border=True):
         st.markdown("### Ecuaciones del sistema")
@@ -4988,33 +5006,17 @@ def _render_course2_lab1_stage6(lab, saved):
     else:
         f0_model=f0g
 
-    st.markdown("### Comparación de frecuencias naturales")
-    cf1,cf2=st.columns(2)
-    with cf1:
-        _card(
-            "Sistema general de dos masas",
-            f"{f0g:.1f} Hz",
-            "Considera el movimiento relativo de ambas masas mediante m′ᵣ."
-        )
-    with cf2:
-        if model=="Cremer/Vigran":
-            _card(
-                "Modelo continuo simplificado",
-                f"{f0_model:.1f} Hz",
-                "Supone una base suficientemente pesada y usa principalmente m′₁.",
-                tone="blue"
-            )
-        else:
-            _card(
-                "Modelo seleccionado",
-                f"{f0_model:.1f} Hz",
-                "Para apoyos discretos se conserva la referencia dinámica general.",
-                tone="blue"
-            )
-
-    st.info(
-        "Si los dos valores de f₀ son distintos, **no es un error**: corresponden a hipótesis diferentes del sistema."
-    )
+    if model=="Cremer/Vigran":
+        st.markdown("### Comparación de frecuencias naturales")
+        cf1,cf2=st.columns(2)
+        with cf1:
+            _card("Sistema general de dos masas",f"{f0g:.1f} Hz","Considera ambas masas mediante m′ᵣ.")
+        with cf2:
+            _card("Modelo continuo simplificado",f"{f0_model:.1f} Hz","Supone una base suficientemente pesada y utiliza principalmente m′₁.",tone="blue")
+        st.info("Los dos valores pueden diferir porque corresponden a hipótesis distintas.")
+    else:
+        st.markdown("### Frecuencia natural utilizada por el modelo")
+        _card("Sistema con apoyos discretos",f"{f0_model:.1f} Hz","Se utiliza la frecuencia natural del sistema general con masa reducida.",tone="blue")
 
     # ==============================================================
     # 4 · MODELO ACÚSTICO
@@ -5224,12 +5226,6 @@ def _render_course2_lab1_stage6(lab, saved):
     # 7 · DEFECTOS
     # ==============================================================
     st.markdown("## 7 · ¿Qué pasa si la obra deja de parecerse al modelo?")
-    if (ASSET_DIR/"curso2_lab1_etapa6_puente_rigido_realista.webp").exists():
-        st.image(
-            str(ASSET_DIR/"curso2_lab1_etapa6_puente_rigido_realista.webp"),
-            width="stretch",
-            caption="Comparación constructiva: desacople perimetral correcto frente a contacto rígido lateral."
-        )
     st.write(
         "Los modelos anteriores suponen un desacople definido. "
         "Un puente rígido puede introducir un camino adicional de transmisión."
@@ -5259,6 +5255,15 @@ def _render_course2_lab1_stage6(lab, saved):
             "Desacoplar la instalación y controlar sus puntos de contacto."
         ),
     }
+    defect_assets={
+        "Contacto perimetral rígido":"curso2_lab1_etapa6_defecto_perimetral.webp",
+        "Tornillo atravesando la capa resiliente":"curso2_lab1_etapa6_defecto_tornillo.webp",
+        "Instalación apoyada sobre ambas masas":"curso2_lab1_etapa6_defecto_instalacion.webp",
+    }
+    defect_asset=ASSET_DIR/defect_assets[defect]
+    if defect_asset.exists():
+        st.image(str(defect_asset),width="stretch")
+
     mech,corr=defects[defect]
     d1,d2=st.columns(2)
     with d1: _card("Mecanismo","Camino paralelo",mech)
