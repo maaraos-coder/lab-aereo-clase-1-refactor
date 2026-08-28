@@ -5502,17 +5502,37 @@ def _render_course2_lab1_stage7(lab, saved):
     baseline=saved.get("stage5_baseline") or {}
     solution=saved.get("stage6_solution") or {}
 
+    # La dependencia Etapa 5 -> Etapa 6 -> Etapa 7 es obligatoria para el Alumno.
+    # Para Docente y Proyección la etapa debe poder revisarse completa aunque aún no
+    # existan resultados previos. En ese caso usamos datos demostrativos temporales.
+    teacher_preview = role in ("Docente","Proyección") or projection_mode
+    using_teacher_demo = False
+
     bands=[int(x) for x in baseline.get("bands_hz",[]) if x is not None]
     ln0=[float(x) for x in baseline.get("ln0_db",[]) if x is not None]
     sbands=[int(x) for x in solution.get("bands_hz",[]) if x is not None]
     delta=[float(x) for x in solution.get("delta_ln_db",[]) if x is not None]
 
+    demo_bands=[125,160,200,250,315,400,500,630,800,1000,1250,1600,2000]
+
+    if teacher_preview and (not bands or not ln0):
+        bands=demo_bands[:]
+        ln0=[58.0,60.0,62.0,64.0,66.0,68.0,70.0,72.0,74.0,76.0,78.0,80.0,82.0]
+        using_teacher_demo=True
+
+    if teacher_preview and (not sbands or not delta):
+        sbands=demo_bands[:]
+        delta=[15.0,19.0,23.0,27.0,31.0,35.0,39.0,43.0,47.0,51.0,55.0,59.0,63.0]
+        using_teacher_demo=True
+
     if not bands or not ln0:
         bands=[100,125,160,200,250,315,400,500,630,800,1000,1250,1600,2000,2500,3150]
         ln0=[]
+
     if sbands and sbands!=bands:
         common=[f for f in bands if f in sbands]
-        idx0={f:i for i,f in enumerate(bands)}; idxd={f:i for i,f in enumerate(sbands)}
+        idx0={f:i for i,f in enumerate(bands)}
+        idxd={f:i for i,f in enumerate(sbands)}
         ln0=[ln0[idx0[f]] for f in common] if ln0 else []
         delta=[delta[idxd[f]] for f in common]
         bands=common
@@ -5542,14 +5562,37 @@ def _render_course2_lab1_stage7(lab, saved):
     st.latex(r"\boxed{L_{n,\mathrm{final}}(f)=L_{n,0}(f)-\Delta L_n(f)}")
     st.info("Aquí ΔLₙ(f) ya es una **diferencia de niveles en dB**. Por eso la operación es una resta de niveles definidos de esta manera, no una resta directa de potencias lineales.")
 
-    if not ready:
-        st.warning("Para realizar esta etapa con continuidad real, primero debes guardar la curva base en la Etapa 5 y la curva de mejora en la Etapa 6.")
+    if using_teacher_demo:
+        st.markdown(
+            """
+            <div style="border:1px solid #c4b5fd;background:#f5f3ff;border-radius:14px;
+            padding:13px 16px;margin:.5rem 0 .9rem">
+              <b>Vista docente · datos demostrativos</b><br>
+              Las Etapas 5 y/o 6 aún no tienen resultados guardados en esta sesión.
+              Para que puedas revisar la Etapa 7 completa, se cargaron curvas de demostración.
+              <b>No corresponden a resultados de un alumno y no sustituyen las tablas reales.</b>
+            </div>
+            """,
+            unsafe_allow_html=True,
+        )
+
+    if not ready and not teacher_preview:
+        st.warning(
+            "Para realizar esta etapa con continuidad real, primero debes guardar la curva base "
+            "en la Etapa 5 y la curva de mejora en la Etapa 6."
+        )
         left,right=st.columns(2)
         with left:
             if st.button("← Etapa 6",key=f"s7_prev_{class_id}",use_container_width=True):
-                st.session_state[stage_selector_key]=6; st.rerun()
+                st.session_state[stage_selector_key]=6
+                st.rerun()
         with right:
-            st.button("Etapa 8 →",disabled=True,use_container_width=True,key=f"s7_next_disabled_{class_id}")
+            st.button(
+                "Etapa 8 →",
+                disabled=True,
+                use_container_width=True,
+                key=f"s7_next_disabled_{class_id}"
+            )
         return
 
     ln0_arr=np.asarray(ln0,float); delta_arr=np.asarray(delta,float); final_arr=ln0_arr-delta_arr
@@ -5695,7 +5738,7 @@ def _render_course2_lab1_stage7(lab, saved):
             "load_kN_m2": 30.0,
         },
         "Getzner Acoustic Floor Mat 29": {
-            "url": "https://www.getzner.com/media/14078/download/Data%20Sheet%20Acoustic%20Floor%20Mat%2029%20EN.pdf?v=4",
+            "url": "https://www.getzner.com/es/productos/productos-para-la-construccion/aislamiento-acustico-de-impacto",
             "manufacturer": "Getzner",
             "thickness_mm": 11.0,
             "s_dyn": 10.0,
@@ -5705,7 +5748,7 @@ def _render_course2_lab1_stage7(lab, saved):
             "load_kN_m2": 5000.0 * 9.80665 / 1000.0,
         },
         "Getzner Acoustic Floor Mat 35": {
-            "url": "https://www.getzner.com/media/49828/download/Data%20Sheet%20Acoustic%20Floor%20Mat%2035%20ES.pdf?v=1",
+            "url": "https://www.getzner.com/media/17656/download/Data%20Sheet%20Acoustic%20Floor%20Mat%2035%20EN.pdf?v=2",
             "manufacturer": "Getzner",
             "thickness_mm": 16.0,
             "s_dyn": 5.0,
@@ -5766,6 +5809,11 @@ def _render_course2_lab1_stage7(lab, saved):
             product["url"],
             use_container_width=True
         )
+        if product["manufacturer"]=="Getzner":
+            st.caption(
+                "Si Getzner cambia la URL del PDF, consulta la página oficial de "
+                "Aislamiento acústico de impacto y abre la ficha del producto seleccionado."
+            )
 
     st.markdown(
         """
@@ -6044,6 +6092,12 @@ def _render_course2_lab1_stage7(lab, saved):
         """,
         unsafe_allow_html=True,
     )
+
+    if teacher_preview and using_teacher_demo:
+        st.info(
+            "Modo revisión docente: todos los controles de esta etapa están disponibles. "
+            "Cuando existan curvas reales guardadas en Etapas 5 y 6, la Etapa 7 las utilizará automáticamente."
+        )
 
     # =========================================================
     # SAVE / CLOSING
