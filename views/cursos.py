@@ -7124,41 +7124,53 @@ def future_projection_stage_impl(lab, stage):
     st.session_state["role"] = "Proyección"
     st.session_state["name"] = "Pantalla de clase"
 
-    # Curso 2 · Laboratorio 1: Etapa 0 de bienvenida y Etapa 1 vibroacústica.
-    # La proyección usa estado efímero para no registrar respuestas desde Zoom.
+    # Estado compartido y efímero de la ventana Zoom.
+    # Antes cada etapa recibía {}, por lo que tablas, bandas validadas y resultados
+    # desaparecían después de cualquier st.rerun().
+    #
+    # Se utiliza la misma clave que _save_future_state_impl actualiza en sesión,
+    # pero projection_mode impide escribir este estado en Supabase.
+    projection_saved_key = f"future_saved_{lab.get('id', '')}"
+    projection_saved = st.session_state.get(projection_saved_key)
+    if not isinstance(projection_saved, dict):
+        projection_saved = {}
+        st.session_state[projection_saved_key] = projection_saved
+
+    # Curso 2 · Laboratorio 1: las interacciones de Zoom se conservan únicamente
+    # durante la sesión de proyección y NO modifican el progreso real.
     if lab.get("id") == "clase-03-impacto-instalaciones-lab-1":
         if stage == 0:
-            _render_course2_lab1_welcome(lab, {})
+            _render_course2_lab1_welcome(lab, projection_saved)
             return
         if stage == 1:
-            _render_course2_lab1_stage1(lab, {})
+            _render_course2_lab1_stage1(lab, projection_saved)
             return
         if stage == 2:
-            _render_course2_lab1_stage2(lab, {})
+            _render_course2_lab1_stage2(lab, projection_saved)
             return
         if stage == 3:
-            _render_course2_lab1_stage3(lab, {})
+            _render_course2_lab1_stage3(lab, projection_saved)
             return
         if stage == 4:
-            _render_course2_lab1_stage4(lab, {})
+            _render_course2_lab1_stage4(lab, projection_saved)
             return
         if stage == 5:
-            _render_course2_lab1_stage5(lab, {})
+            _render_course2_lab1_stage5(lab, projection_saved)
             return
         if stage == 6:
-            _render_course2_lab1_stage6(lab, {})
+            _render_course2_lab1_stage6(lab, projection_saved)
             return
         if stage == 7:
-            _render_course2_lab1_stage7(lab, {})
+            _render_course2_lab1_stage7(lab, projection_saved)
             return
         if stage == 8:
-            _render_course2_lab1_stage8(lab, {})
+            _render_course2_lab1_stage8(lab, projection_saved)
             return
         if stage == 9:
-            _render_course2_lab1_stage9(lab, {})
+            _render_course2_lab1_stage9(lab, projection_saved)
             return
         if stage == 10:
-            _render_course2_lab1_stage10(lab, {})
+            _render_course2_lab1_stage10(lab, projection_saved)
             return
 
     title, objective, concept, activity = lab["stages"][stage]
