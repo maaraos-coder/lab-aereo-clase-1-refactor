@@ -6189,6 +6189,20 @@ def _render_course2_lab1_stage8(lab, saved):
         r=float(r); z=max(float(z),0.0)
         return math.sqrt((1+(2*z*r)**2)/max((1-r*r)**2+(2*z*r)**2,1e-12))
 
+    def _format_band_axis(ax, freqs):
+        """Eje logarítmico con cada banda visible para lectura didáctica."""
+        labels=[]
+        for f in freqs:
+            if abs(float(f)-round(float(f)))<1e-9:
+                labels.append(str(int(round(float(f)))))
+            else:
+                labels.append(str(float(f)).replace(".",","))
+        ax.set_xscale("log")
+        ax.set_xticks(freqs)
+        ax.set_xticklabels(labels, rotation=45, ha="right", fontsize=8)
+        ax.set_xlim(float(freqs[0])*0.92, float(freqs[-1])*1.08)
+        ax.tick_params(axis="x", which="minor", bottom=False, labelbottom=False)
+
     header(
         "ETAPA 8 · LABORATORIO 1",
         "CONTROL DEL RUIDO DE INSTALACIONES Y EQUIPOS",
@@ -6295,22 +6309,36 @@ def _render_course2_lab1_stage8(lab, saved):
             st.latex(r"f_{1\times}=\frac{\mathrm{RPM}}{60}")
             st.caption("1500 RPM → 25 Hz. Cambiar la velocidad cambia también las frecuencias de excitación que pueden coincidir con resonancias.")
 
-        st.markdown("#### Mini ejercicio · ¿actúa realmente en la fuente?")
-        source_action=st.selectbox(
-            "Selecciona una medida",
-            ["Balancear el impulsor","Instalar resortes bajo la bomba","Corregir cavitación","Instalar un silenciador en un ducto","Alinear motor y bomba","Agregar absorción al recinto"],
-            key=f"{ns}_source_action"
+        st.markdown("#### ¿Qué significan estas acciones en la práctica?")
+        source_terms=pd.DataFrame([
+            ["Balanceo", "Corregir la distribución de masa de una pieza giratoria para reducir fuerzas periódicas al rotar."],
+            ["Alineación", "Ajustar la posición relativa de los ejes del motor y de la bomba para evitar esfuerzos y vibraciones adicionales."],
+            ["Punto de operación", "Trabajar en una zona de caudal y presión adecuada para el equipo, evitando condiciones ineficientes o inestables."],
+            ["Condición hidráulica", "Revisar presión de succión, caudal, pérdidas y margen NPSH para evitar cavitación o pulsaciones."],
+            ["Mantenimiento", "Conservar rodamientos, acoplamientos, impulsor, válvulas y fijaciones en la condición prevista de diseño."],
+        ],columns=["Concepto","Qué significa"])
+        st.dataframe(source_terms,hide_index=True,use_container_width=True)
+
+        st.markdown("#### Fuente y camino no son lo mismo")
+        sf1,sf2=st.columns(2)
+        with sf1:
+            _card(
+                "Actuar en la fuente",
+                "Generar menos",
+                "Ejemplos: corregir cavitación, balancear un conjunto giratorio, alinear motor–bomba o reducir una velocidad excesiva cuando el proceso lo permita.",
+                tone="green"
+            )
+        with sf2:
+            _card(
+                "Actuar en el camino",
+                "Transmitir menos",
+                "Ejemplos: resortes bajo la bomba, conexiones flexibles, soportes resilientes, silenciadores o tratamientos del recinto.",
+                tone="blue"
+            )
+        st.info(
+            "En esta parte no necesitas memorizar términos de mecánica. Lo importante es distinguir si una medida "
+            "**reduce lo que genera el equipo** o si **reduce la energía que se transmite después**."
         )
-        source_true={"Balancear el impulsor","Corregir cavitación","Alinear motor y bomba"}
-        if source_action in source_true:
-            st.success("Sí. Esta acción modifica directamente la generación en el equipo o proceso.")
-        else:
-            mapping={
-                "Instalar resortes bajo la bomba":"Actúa principalmente sobre el camino estructural.",
-                "Instalar un silenciador en un ducto":"Actúa sobre la propagación por ducto.",
-                "Agregar absorción al recinto":"Actúa sobre el campo acústico del recinto, no sobre la generación."
-            }
-            st.info(mapping.get(source_action,"No actúa directamente en la fuente."))
 
     elif zone=="Camino estructural":
         st.markdown("### Camino estructural · reducir la fuerza que entra al edificio")
@@ -6381,53 +6409,189 @@ def _render_course2_lab1_stage8(lab, saved):
 
     st.markdown("#### ¿Qué es NPSH y por qué se usa?")
     st.write(
-        "El NPSH expresa el **margen de presión en la succión respecto de la vaporización del líquido**. Para el diagnóstico distinguimos dos cantidades."
+        "El NPSH expresa el **margen de presión disponible en la succión antes de alcanzar condiciones favorables "
+        "para la vaporización del líquido**. Para diagnosticar cavitación debemos separar dos cantidades que provienen "
+        "de lugares distintos."
     )
     n1,n2=st.columns(2)
     with n1:
-        _card("NPSH disponible · NPSHₐ","lo determina la instalación",
-              "Depende de la condición de succión: presión absoluta, temperatura/presión de vapor, altura y pérdidas del sistema. Se calcula a partir de mediciones y condiciones de instalación.",tone="green")
+        _card(
+            "NPSH disponible · NPSHₐ",
+            "lo determina la instalación",
+            "Depende de presión disponible, temperatura y presión de vapor, diferencia de altura y pérdidas del circuito de succión. No lo entrega el catálogo de la bomba.",
+            tone="green"
+        )
     with n2:
-        _card("NPSH requerido · NPSHᵣ","lo declara la bomba",
-              "Se obtiene de la curva o ficha del fabricante para un caudal y velocidad determinados. No es una constante universal independiente del punto de operación.",tone="blue")
-    st.latex(r"\boxed{M_{NPSH}=NPSH_A-NPSH_R}")
+        _card(
+            "NPSH requerido · NPSHᵣ",
+            "lo determina la bomba",
+            "Se obtiene de la curva del fabricante para un caudal y una velocidad de giro determinados. Debe leerse en la ficha técnica.",
+            tone="blue"
+        )
+
+    st.markdown("##### ¿Cómo se calcula el NPSH disponible?")
     st.write(
-        "Para una primera lectura didáctica, un margen positivo es necesario; un margen pequeño requiere revisión y "
-        "**NPSHₐ ≤ NPSHᵣ** indica una condición de riesgo. En un proyecto real se exige además un margen de diseño apropiado."
+        "Para un sistema que aspira desde un estanque abierto podemos escribir, de manera simplificada:"
+    )
+    st.latex(
+        r"\boxed{NPSH_A=\frac{p_{atm}}{\rho g}+z-h_f-\frac{p_v}{\rho g}}"
+    )
+    st.markdown(
+        """
+        - \(p_{atm}\): presión atmosférica absoluta.
+        - \(\rho\): densidad del líquido.
+        - \(g\): aceleración de gravedad.
+        - \(z\): diferencia de cota entre la superficie libre y el eje de la bomba. Es positiva si el nivel está sobre la bomba y negativa si está bajo ella.
+        - \(h_f\): pérdidas de carga de la línea de succión.
+        - \(p_v\): presión de vapor del líquido a la temperatura de operación.
+        """
+    )
+    st.info(
+        "Si se dispone de una medición de **presión absoluta directamente en la brida de succión**, el NPSHₐ también puede "
+        "determinarse a partir de esa presión, la velocidad local y la presión de vapor. En este ejercicio utilizaremos el balance desde un estanque abierto."
     )
 
-    st.markdown("#### ¿Cómo se obtiene la información?")
+    st.markdown("##### ¿Qué información se mide y qué información se consulta?")
     npsh_rows=[
-        ("Presión de succión","Manómetro o transductor cerca de la succión"),
-        ("Caudal Q","Caudalímetro / sistema de control"),
-        ("Temperatura del líquido","Termómetro / sensor; permite conocer presión de vapor"),
-        ("NPSHₐ","Se calcula con las condiciones hidráulicas de la instalación"),
-        ("NPSHᵣ","Curva o ficha del fabricante al caudal de operación"),
-        ("Ruido y vibración","Sonómetro y acelerómetro/analizador para correlacionar el fenómeno"),
+        ("Presión atmosférica o presión absoluta de succión","Barómetro / transductor","Instalación"),
+        ("Caudal Q","Caudalímetro / sistema de control","Instalación"),
+        ("Temperatura del líquido","Termómetro / sensor","Instalación"),
+        ("Presión de vapor pᵥ","Tabla de propiedades a la temperatura medida","Propiedad del líquido"),
+        ("Diferencia de cota z","Plano / medición en terreno","Instalación"),
+        ("Pérdidas h_f","Cálculo hidráulico de la succión","Instalación"),
+        ("NPSHᵣ","Curva NPSH–Q del fabricante","Bomba / catálogo"),
     ]
-    st.dataframe(pd.DataFrame(npsh_rows,columns=["Dato","Cómo se obtiene"]),hide_index=True,use_container_width=True)
-
-    st.markdown("#### Mini laboratorio · interpreta el margen de NPSH")
-    na,nb=st.columns(2)
-    with na: npsha_demo=st.slider("NPSH disponible, NPSHₐ (m)",1.0,6.0,2.6,0.1,key=f"{ns}_npsha_demo")
-    with nb: npshr_demo=st.slider("NPSH requerido, NPSHᵣ (m)",1.0,6.0,3.1,0.1,key=f"{ns}_npshr_demo")
-    margin_demo=npsha_demo-npshr_demo
-    if margin_demo<=0:
-        _card("Margen de NPSH",f"{margin_demo:+.2f} m","Condición compatible con riesgo de cavitación: la instalación no entrega suficiente margen respecto de lo requerido.",tone="orange")
-    elif margin_demo<0.7:
-        _card("Margen de NPSH",f"{margin_demo:+.2f} m","El margen es positivo pero pequeño. Requiere revisar el criterio de diseño y las condiciones reales.",tone="blue")
-    else:
-        _card("Margen de NPSH",f"{margin_demo:+.2f} m","Existe margen positivo en este ejercicio simplificado; aún deben revisarse las condiciones reales y el criterio del fabricante.",tone="green")
-
-    npsh_action=st.radio(
-        "¿Qué acción puede aumentar el NPSH disponible de la instalación?",
-        ["Aumentar pérdidas en la succión","Reducir pérdidas en la succión / mejorar presión disponible","Cerrar más la válvula de succión","Instalar resortes bajo la bomba"],
-        key=f"{ns}_npsh_action"
+    st.dataframe(
+        pd.DataFrame(npsh_rows,columns=["Dato","Cómo se obtiene","De dónde proviene"]),
+        hide_index=True,use_container_width=True
     )
-    if npsh_action=="Reducir pérdidas en la succión / mejorar presión disponible":
-        st.success("Correcto. Actúas sobre las condiciones hidráulicas que determinan el margen disponible.")
-    elif npsh_action:
-        st.info("Revisa qué variables pertenecen al circuito hidráulico de succión. Los resortes, por ejemplo, actúan sobre transmisión estructural, no sobre NPSH.")
+
+    st.markdown("#### Laboratorio NPSH · instalación real + catálogo real")
+    st.markdown(
+        """
+        **Caso profesional.** Una bomba **Lowara SHOE–SHOS–SHOD 50-125/75** trabaja aproximadamente a
+        \(Q=48\ \mathrm{m^3/h}\).
+
+        Tu trabajo tiene dos partes:
+
+        **A.** calcular \(NPSH_A\) a partir de la instalación;  
+        **B.** abrir el catálogo oficial y leer \(NPSH_R\) en la curva correspondiente al caudal de operación.
+        """
+    )
+
+    lc1,lc2=st.columns([1.25,1])
+    with lc1:
+        st.markdown("**A · Datos de la instalación**")
+        install_data=pd.DataFrame([
+            ["Presión atmosférica absoluta", "101,3 kPa"],
+            ["Temperatura del agua", "20 °C"],
+            ["Presión de vapor del agua a 20 °C", "2,34 kPa"],
+            ["Densidad adoptada", "998 kg/m³"],
+            ["Diferencia de cota z", "−4,50 m"],
+            ["Pérdidas de carga en succión h_f", "2,20 m"],
+            ["Caudal de operación Q", "48 m³/h"],
+        ],columns=["Variable","Valor"])
+        st.dataframe(install_data,hide_index=True,use_container_width=True)
+    with lc2:
+        st.markdown("**B · Catálogo de la bomba**")
+        st.write(
+            "Busca el modelo **SHOE–SHOS–SHOD 50-125/75** y localiza la curva **NPSH vs. Q**. "
+            "En la edición utilizada aparece en la página 70."
+        )
+        st.link_button(
+            "Abrir catálogo oficial Lowara / Xylem",
+            "https://www.xylem.com/siteassets/brand/lowara/resources/manual/cosho-td-en.pdf",
+            use_container_width=True
+        )
+        st.caption(
+            "Lee gráficamente el NPSH requerido cerca de Q = 48 m³/h. Al tratarse de una lectura de gráfico se acepta un pequeño rango."
+        )
+
+    # Valor real calculado internamente para comprobar el trabajo del alumno
+    rho_w=998.0
+    g_npsh=9.81
+    patm_pa=101300.0
+    pv_pa=2340.0
+    z_npsh=-4.50
+    hf_npsh=2.20
+    npsha_expected=patm_pa/(rho_w*g_npsh)+z_npsh-hf_npsh-pv_pa/(rho_w*g_npsh)
+
+    st.markdown("##### Paso 1 · Calcula el NPSH disponible")
+    st.latex(
+        r"NPSH_A=\frac{101300}{998\cdot9.81}-4.50-2.20-\frac{2340}{998\cdot9.81}"
+    )
+    npsha_student=st.number_input(
+        "Ingresa tu NPSHₐ calculado (m)",
+        min_value=0.0,max_value=15.0,value=0.0,step=0.05,
+        key=f"{ns}_npsha_student"
+    )
+
+    st.markdown("##### Paso 2 · Lee el NPSH requerido en el catálogo")
+    npshr_student=st.number_input(
+        "NPSHᵣ leído en la curva del fabricante a Q ≈ 48 m³/h (m)",
+        min_value=0.0,max_value=10.0,value=0.0,step=0.1,
+        key=f"{ns}_npshr_student"
+    )
+
+    st.markdown("##### Paso 3 · Calcula el margen")
+    st.latex(r"M_{NPSH}=NPSH_A-NPSH_R")
+    margin_student=st.number_input(
+        "Margen M_NPSH calculado (m)",
+        min_value=-10.0,max_value=10.0,value=0.0,step=0.05,
+        key=f"{ns}_npsh_margin_student"
+    )
+
+    if st.button(
+        "Comprobar cálculo y lectura del catálogo",
+        type="primary",
+        use_container_width=True,
+        key=f"{ns}_npsh_real_check"
+    ):
+        ok_a=abs(float(npsha_student)-float(npsha_expected))<=0.12
+        # La curva del catálogo es gráfica: valor cercano a 3.8 m en Q≈48 m³/h.
+        ok_r=3.5 <= float(npshr_student) <= 4.1
+        ok_m=abs(float(margin_student)-(float(npsha_student)-float(npshr_student)))<=0.12
+
+        if ok_a and ok_r and ok_m:
+            saved["stage8_npsh_case"]={
+                "product":"Lowara SHOE-SHOS-SHOD 50-125/75",
+                "Q_m3_h":48.0,
+                "npsha_m":float(npsha_student),
+                "npshr_m":float(npshr_student),
+                "margin_m":float(margin_student),
+                "validated":True,
+            }
+            _persist()
+            st.success(
+                "Cálculo coherente. Has obtenido NPSHₐ desde la instalación y NPSHᵣ desde la curva real del fabricante."
+            )
+            if margin_student<=0:
+                st.warning(
+                    "El margen resulta nulo o negativo: la condición es compatible con riesgo de cavitación y requiere corregir la instalación/punto de operación."
+                )
+            else:
+                st.info(
+                    "El margen es positivo, pero en proyecto no basta con que sea apenas mayor que cero: debe revisarse el margen recomendado para la aplicación."
+                )
+            st.caption(
+                "La ficha Lowara indica que los valores NPSH mostrados son de laboratorio y sugiere aumentar esos valores en 0,5 m para uso práctico."
+            )
+        else:
+            problems=[]
+            if not ok_a: problems.append("revisa el cálculo de NPSHₐ y los signos de z y h_f")
+            if not ok_r: problems.append("revisa la lectura de la curva NPSH–Q del catálogo")
+            if not ok_m: problems.append("revisa la resta NPSHₐ − NPSHᵣ")
+            st.warning("Aún hay algo que revisar: " + "; ".join(problems) + ".")
+
+    npsh_saved=saved.get("stage8_npsh_case",{})
+    if isinstance(npsh_saved,dict) and npsh_saved.get("validated"):
+        nn1,nn2,nn3=st.columns(3)
+        with nn1:
+            _card("NPSHₐ calculado",f"{npsh_saved['npsha_m']:.2f} m","Resultado obtenido desde las condiciones de la instalación.",tone="green")
+        with nn2:
+            _card("NPSHᵣ leído",f"{npsh_saved['npshr_m']:.2f} m","Lectura realizada por el alumno en la curva del fabricante.",tone="blue")
+        with nn3:
+            _card("Margen",f"{npsh_saved['margin_m']:+.2f} m","Diferencia disponible − requerido.",tone="orange" if npsh_saved["margin_m"]<=0 else "green")
 
     # ---------------------------------------------------------
     # 2.2 Plan real de medición
@@ -6536,7 +6700,19 @@ def _render_course2_lab1_stage8(lab, saved):
 
         if "B · Carcasa/motor" in selected_points:
             st.markdown("#### Medición B · Vibración en carcasa")
-            fig,ax=plt.subplots(figsize=(8.5,3.5)); ax.plot(freqs,carc,marker='o'); ax.set_xscale('log'); ax.set_yscale('log'); ax.set_xlabel('Frecuencia (Hz)'); ax.set_ylabel('Velocidad RMS (mm/s)'); ax.grid(True,alpha=.25); ax.set_title('Espectro de vibración · carcasa/motor'); st.pyplot(fig,use_container_width=True); plt.close(fig)
+            fig,ax=plt.subplots(figsize=(8.5,3.8))
+            ax.plot(freqs,carc,marker='o')
+            _format_band_axis(ax,freqs)
+            ax.set_yscale('log')
+            ax.set_xlabel('Bandas de frecuencia (Hz)')
+            ax.set_ylabel('Velocidad RMS (mm/s)')
+            ax.grid(True,alpha=.25)
+            ax.set_title('Espectro de vibración · carcasa/motor')
+            if evidence.get("carcasa"):
+                ax.axvline(25,linestyle='--',linewidth=1.2)
+                ax.annotate("25 Hz",xy=(25,7.6),xytext=(31.5,4.8),arrowprops=dict(arrowstyle="->"))
+            fig.tight_layout()
+            st.pyplot(fig,use_container_width=True); plt.close(fig)
             dom=st.number_input("¿Cuál es la frecuencia dominante del gráfico? (Hz)",0.0,200.0,0.0,1.0,key=f"{ns}_ev_carc_f")
             if st.button("Registrar evidencia de carcasa",key=f"{ns}_ev_carc_save"):
                 if abs(dom-25)<=1:
@@ -6546,7 +6722,19 @@ def _render_course2_lab1_stage8(lab, saved):
 
         if "A · Base/apoyo" in selected_points:
             st.markdown("#### Medición A · Vibración en base/apoyo")
-            fig,ax=plt.subplots(figsize=(8.5,3.5)); ax.plot(freqs,base,marker='o'); ax.set_xscale('log'); ax.set_yscale('log'); ax.set_xlabel('Frecuencia (Hz)'); ax.set_ylabel('Velocidad RMS (mm/s)'); ax.grid(True,alpha=.25); ax.set_title('Espectro de vibración · base/apoyo'); st.pyplot(fig,use_container_width=True); plt.close(fig)
+            fig,ax=plt.subplots(figsize=(8.5,3.8))
+            ax.plot(freqs,base,marker='o')
+            _format_band_axis(ax,freqs)
+            ax.set_yscale('log')
+            ax.set_xlabel('Bandas de frecuencia (Hz)')
+            ax.set_ylabel('Velocidad RMS (mm/s)')
+            ax.grid(True,alpha=.25)
+            ax.set_title('Espectro de vibración · base/apoyo')
+            if evidence.get("estructura"):
+                ax.axvline(25,linestyle='--',linewidth=1.2)
+                ax.annotate("25 Hz",xy=(25,4.8),xytext=(31.5,3.0),arrowprops=dict(arrowstyle="->"))
+            fig.tight_layout()
+            st.pyplot(fig,use_container_width=True); plt.close(fig)
             base_interp=st.radio("¿Qué evidencia aporta que la misma componente aparezca en la base?",["La vibración queda confinada a la máquina","Existe evidencia de transmisión hacia la estructura","Demuestra cavitación","Demuestra propagación exclusivamente aérea"],key=f"{ns}_ev_base_q")
             if st.button("Registrar evidencia estructural",key=f"{ns}_ev_base_save"):
                 if base_interp=="Existe evidencia de transmisión hacia la estructura":
@@ -6559,7 +6747,18 @@ def _render_course2_lab1_stage8(lab, saved):
             fig,ax=plt.subplots(figsize=(8.5,3.5))
             if "C · Tubería cercana" in selected_points: ax.plot(freqs,pipe_c,marker='o',label='C · cercana')
             if "D · Tubería alejada" in selected_points: ax.plot(freqs,pipe_d,marker='o',label='D · alejada')
-            ax.set_xscale('log'); ax.set_yscale('log'); ax.set_xlabel('Frecuencia (Hz)'); ax.set_ylabel('Velocidad RMS (mm/s)'); ax.grid(True,alpha=.25); ax.legend(); ax.set_title('Espectro de vibración · tuberías'); st.pyplot(fig,use_container_width=True); plt.close(fig)
+            _format_band_axis(ax,freqs)
+            ax.set_yscale('log')
+            ax.set_xlabel('Bandas de frecuencia (Hz)')
+            ax.set_ylabel('Velocidad RMS (mm/s)')
+            ax.grid(True,alpha=.25)
+            ax.legend()
+            ax.set_title('Espectro de vibración · tuberías')
+            if evidence.get("tuberias"):
+                ax.axvline(25,linestyle='--',linewidth=1.2)
+                ax.annotate("25 Hz",xy=(25,4.2),xytext=(31.5,2.6),arrowprops=dict(arrowstyle="->"))
+            fig.tight_layout()
+            st.pyplot(fig,use_container_width=True); plt.close(fig)
             if {"C · Tubería cercana","D · Tubería alejada"}.issubset(selected_points):
                 pipe_interp=st.radio("¿Qué observas al comparar C y D?",["La componente desaparece completamente","La componente de 25 Hz disminuye pero persiste a distancia","La frecuencia cambia a 50 Hz","No hay información útil"],key=f"{ns}_ev_pipe_q")
                 if st.button("Registrar evidencia por tuberías",key=f"{ns}_ev_pipe_save"):
@@ -6572,7 +6771,18 @@ def _render_course2_lab1_stage8(lab, saved):
 
         if "Dormitorio receptor" in selected_points:
             st.markdown("#### Medición · Espectro acústico en dormitorio")
-            fig,ax=plt.subplots(figsize=(8.5,3.5)); ax.plot(freqs,lp,marker='o'); ax.set_xscale('log'); ax.set_xlabel('Frecuencia (Hz)'); ax.set_ylabel('Nivel (dB)'); ax.grid(True,alpha=.25); ax.set_title('Espectro acústico · receptor'); st.pyplot(fig,use_container_width=True); plt.close(fig)
+            fig,ax=plt.subplots(figsize=(8.5,3.8))
+            ax.plot(freqs,lp,marker='o')
+            _format_band_axis(ax,freqs)
+            ax.set_xlabel('Bandas de frecuencia (Hz)')
+            ax.set_ylabel('Nivel (dB)')
+            ax.grid(True,alpha=.25)
+            ax.set_title('Espectro acústico · receptor')
+            if evidence.get("receptor"):
+                ax.axvline(25,linestyle='--',linewidth=1.2)
+                ax.annotate("25 Hz",xy=(25,46),xytext=(31.5,44),arrowprops=dict(arrowstyle="->"))
+            fig.tight_layout()
+            st.pyplot(fig,use_container_width=True); plt.close(fig)
             recv_f=st.number_input("¿En qué frecuencia aparece la componente más destacada? (Hz)",0.0,200.0,0.0,1.0,key=f"{ns}_ev_recv_f")
             if st.button("Registrar evidencia en receptor",key=f"{ns}_ev_recv_save"):
                 if abs(recv_f-25)<=1:
@@ -6582,17 +6792,44 @@ def _render_course2_lab1_stage8(lab, saved):
 
         if "Succión de la bomba" in selected_points:
             st.markdown("#### Medición hidráulica · condición de succión")
-            h1,h2,h3=st.columns(3)
-            with h1: _card("Caudal Q","48 m³/h","Punto de operación del ejercicio.")
-            with h2: _card("NPSHₐ","2.60 m","Calculado a partir de las condiciones medidas en succión.",tone="green")
-            with h3: _card("NPSHᵣ","3.10 m","Valor de la curva del fabricante a Q = 48 m³/h.",tone="blue")
-            margin_ans=st.number_input("Calcula M_NPSH = NPSHₐ − NPSHᵣ (m)",-10.0,10.0,0.0,0.1,key=f"{ns}_ev_npsh_margin")
-            npsh_interp=st.radio("¿Qué significa el resultado?",["Margen suficiente demostrado","Condición compatible con riesgo de cavitación","Demuestra desequilibrio","No tiene relación con la bomba"],key=f"{ns}_ev_npsh_q")
-            if st.button("Registrar evidencia hidráulica",key=f"{ns}_ev_npsh_save"):
-                if abs(margin_ans+0.5)<=0.11 and npsh_interp=="Condición compatible con riesgo de cavitación":
-                    evidence["hidraulica"]="NPSHₐ − NPSHᵣ = −0.50 m: condición hidráulica compatible con riesgo de cavitación"
-                    saved["stage8_evidence"]=evidence; _persist(); st.success("Evidencia registrada.")
-                else: st.warning("Revisa la resta y la interpretación del signo del margen.")
+            npsh_case=saved.get("stage8_npsh_case",{})
+            if not isinstance(npsh_case,dict) or not npsh_case.get("validated"):
+                st.warning(
+                    "Incluiste la condición hidráulica en tu campaña, pero todavía no has completado el laboratorio NPSH anterior. "
+                    "Calcula primero NPSHₐ con los datos de la instalación y lee NPSHᵣ en el catálogo real."
+                )
+            else:
+                h1,h2,h3=st.columns(3)
+                with h1:
+                    _card("Caudal Q",f"{npsh_case['Q_m3_h']:.0f} m³/h","Punto de operación usado para consultar la curva.")
+                with h2:
+                    _card("NPSHₐ",f"{npsh_case['npsha_m']:.2f} m","Resultado que calculaste desde la instalación.",tone="green")
+                with h3:
+                    _card("NPSHᵣ",f"{npsh_case['npshr_m']:.2f} m","Valor que leíste en la curva oficial del fabricante.",tone="blue")
+
+                npsh_interp=st.radio(
+                    "¿Qué evidencia aporta el margen que calculaste?",
+                    [
+                        "Demuestra desequilibrio mecánico",
+                        "Condición compatible con riesgo de cavitación",
+                        "Demuestra que el ruido es únicamente aéreo",
+                        "No aporta información hidráulica",
+                    ],
+                    key=f"{ns}_ev_npsh_q"
+                )
+                if st.button("Registrar evidencia hidráulica",key=f"{ns}_ev_npsh_save"):
+                    if npsh_case["margin_m"]<=0 and npsh_interp=="Condición compatible con riesgo de cavitación":
+                        evidence["hidraulica"]=(
+                            f"NPSHₐ − NPSHᵣ = {npsh_case['margin_m']:+.2f} m: "
+                            "condición hidráulica compatible con riesgo de cavitación"
+                        )
+                        saved["stage8_evidence"]=evidence
+                        _persist()
+                        st.success("Evidencia hidráulica registrada.")
+                    elif npsh_case["margin_m"]>0 and npsh_interp=="Condición compatible con riesgo de cavitación":
+                        st.info("El margen es positivo. Evalúa además el margen de diseño requerido por el fabricante/aplicación antes de sostener esa hipótesis.")
+                    else:
+                        st.warning("Relaciona el signo y magnitud del margen con la condición hidráulica, no con un defecto mecánico.")
 
         # -----------------------------------------------------
         # 2.4 Tablero de evidencia y diagnóstico
@@ -7008,7 +7245,8 @@ def _render_course2_lab1_stage8(lab, saved):
         "secciones 2.2–2.3 (caminos y control), 3.1 (ventiladores), 3.6–3.8 (chillers, bombas y generadores), "
         "5.1–5.2 (ruido regenerado por flujo), 6.7 (silenciadores) y 11.1–11.5 (control de vibraciones e isoladores).\n"
         "- **Harris, C. M.** — principios de control, aislamiento vibratorio y maquinaria.\n"
-        "- **Kinetics Noise Control — FDS Free Standing Spring Isolators** — catálogo usado en el ejercicio profesional."
+        "- **Kinetics Noise Control — FDS Free Standing Spring Isolators** — catálogo usado en el ejercicio profesional.\n"
+        "- **Lowara / Xylem — SHOE–SHOS–SHOD Series** — curva NPSH–Q utilizada en el laboratorio de cavitación/NPSH."
     )
 
 
