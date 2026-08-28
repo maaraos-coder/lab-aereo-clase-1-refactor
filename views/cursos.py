@@ -6192,7 +6192,31 @@ def _render_course2_lab1_stage8(lab, saved):
     header(
         "ETAPA 8 · LABORATORIO 1",
         "CONTROL DEL RUIDO DE INSTALACIONES Y EQUIPOS",
-        "Diagnosticar mecanismos, identificar caminos y diseñar una estrategia de control combinada."
+        "Diagnosticar mecanismos, identificar caminos y diseñar una estrategia de control combinada.",
+        show_overview=False
+    )
+
+    st.markdown(
+        """
+        <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin:.35rem 0 1rem">
+          <div style="background:#fff;border:1px solid #dbe4ee;border-radius:16px;padding:16px">
+            <div style="font-size:.78rem;font-weight:900;color:#2563eb;letter-spacing:.05em">DIAGNOSTICARÁS</div>
+            <div style="font-size:1.05rem;font-weight:850;color:#0f172a;margin-top:.35rem">Qué está generando el problema</div>
+            <div style="color:#64748b;margin-top:.35rem">Separarás fuente mecánica, hidráulica, aerodinámica y acústica.</div>
+          </div>
+          <div style="background:#fff;border:1px solid #dbe4ee;border-radius:16px;padding:16px">
+            <div style="font-size:.78rem;font-weight:900;color:#0f766e;letter-spacing:.05em">COMPROBARÁS</div>
+            <div style="font-size:1.05rem;font-weight:850;color:#0f172a;margin-top:.35rem">Por dónde se transmite</div>
+            <div style="color:#64748b;margin-top:.35rem">Usarás mediciones para distinguir estructura, tuberías, ductos y aire.</div>
+          </div>
+          <div style="background:#fff;border:1px solid #dbe4ee;border-radius:16px;padding:16px">
+            <div style="font-size:.78rem;font-weight:900;color:#9333ea;letter-spacing:.05em">DISEÑARÁS</div>
+            <div style="font-size:1.05rem;font-weight:850;color:#0f172a;margin-top:.35rem">Una estrategia verificable</div>
+            <div style="color:#64748b;margin-top:.35rem">Cada medida deberá responder a un mecanismo y a un camino confirmado.</div>
+          </div>
+        </div>
+        """,
+        unsafe_allow_html=True
     )
 
     st.markdown(
@@ -6215,11 +6239,11 @@ def _render_course2_lab1_stage8(lab, saved):
     # =========================================================
     st.markdown("## 1 · Un equipo no es una fuente aislada: forma parte de un sistema")
     st.write(
-        "CIBSE Guide B5 propone analizar la instalación completa. Un mismo equipo puede generar ruido por aire, "
+        "Una instalación debe analizarse como un sistema completo. Un mismo equipo puede generar ruido por aire, "
         "introducir fuerzas en la estructura y transmitir vibración a través de tuberías, ductos o soportes."
     )
     _asset(
-        "curso2_lab1_etapa8_mapa_caminos_profesional.webp",
+        "curso2_lab1_etapa8_sistema_profesional.webp",
         "Mapa didáctico de caminos: estructural, aéreo, ductos y conexiones."
     )
 
@@ -6237,61 +6261,190 @@ def _render_course2_lab1_stage8(lab, saved):
     }
     _card(zone,*zone_data[zone],tone="blue")
 
-    st.caption(
-        "Base técnica incorporada: CIBSE Guide B5, secciones 2.2–2.3 y 11.1. "
-        "El control debe considerar todos los caminos relevantes y el detalle de instalación."
-    )
 
     # =========================================================
     # 2 · LAB A: DIAGNÓSTICO
     # =========================================================
-    st.markdown("## 2 · Laboratorio A — Diagnostica antes de proponer una solución")
+    st.markdown("## 2 · Laboratorio A — ¿Cómo demostrarías cuál es el problema?")
+    st.markdown(
+        """
+        **Caso profesional.** Un dormitorio ubicado sobre una sala técnica presenta un zumbido nocturno.
+        La bomba centrífuga trabaja a **1500 RPM**, pero todavía no sabemos si el problema se origina en
+        desequilibrio/desalineación, cavitación, transmisión por tuberías, vibración estructural o radiación aérea.
+
+        **Tu misión no es escoger una solución todavía.** Primero debes construir evidencia suficiente para responder:
+
+        1. **¿Qué está excitando el sistema?**
+        2. **¿Por qué camino se transmite?**
+        3. **¿Qué llega realmente al receptor?**
+        """
+    )
+
+    st.markdown("### 2.1 · Diseña el plan de medición")
     st.write(
-        "Caso: una bomba centrífuga ubicada en una sala técnica bajo departamentos produce un zumbido perceptible de noche. "
-        "No sabemos todavía si domina la base, las tuberías o la radiación aérea."
+        "Cada medición responde una pregunta distinta. Revisa primero qué demuestra cada una y después construye tu plan."
     )
-    _asset("curso2_lab1_etapa8_bomba_caminos.gif")
 
-    st.markdown("### 2.1 · ¿Qué medirías?")
-    meas_options=[
-        "Velocidad vibratoria RMS en carcasa/base (mm/s)",
-        "Aceleración en soportes o losa (m/s²)",
-        "Espectro de vibración en tuberías",
-        "Nivel de presión sonora por bandas en recinto receptor",
-        "RPM / frecuencia de operación",
-        "Presión/condición hidráulica de succión",
+    _asset("curso2_lab1_etapa8_bomba_medicion_profesional.webp")
+    st.caption("Puntos sugeridos: A base/apoyo · B carcasa/motor · C tubería de descarga · D tubería horizontal.")
+
+    # Tabla visual de diagnóstico
+    rows=[
+        ("RPM / tacómetro","Eje del motor","¿Cuál es la frecuencia mecánica de excitación?","1×RPM, 2×RPM, armónicos"),
+        ("Vibración de carcasa","B · motor/bomba","¿La propia máquina vibra fuertemente?","Picos en órdenes de giro"),
+        ("Vibración de base","A · apoyo/losa","¿La fuerza dinámica entra a la estructura?","Misma componente presente en apoyo"),
+        ("Vibración de tuberías","C y D","¿La tubería funciona como camino paralelo?","Componente común que se mantiene a distancia"),
+        ("Ruido por bandas","Dormitorio","¿Qué frecuencias recibe el ocupante?","Tono/banda coincidente con la excitación"),
+        ("Presión, caudal y NPSH","Succión/impulsión","¿Hay una causa hidráulica?","Condición compatible con cavitación/pulsación"),
     ]
-    measurements=st.multiselect(
-        "Selecciona las mediciones que ayudan a separar mecanismos y caminos",
-        meas_options,key=f"{ns}_diag_meas"
+    st.markdown(
+        """
+        <style>
+        .s8diag-grid{display:grid;grid-template-columns:1.05fr .9fr 1.5fr 1.45fr;gap:1px;
+        background:#dbe4ee;border:1px solid #dbe4ee;border-radius:14px;overflow:hidden;margin:.5rem 0 1rem}
+        .s8diag-h{background:#eaf2ff;padding:10px 12px;font-weight:850;color:#17365d}
+        .s8diag-c{background:#fff;padding:10px 12px;color:#334155;line-height:1.35}
+        </style>
+        """,unsafe_allow_html=True
     )
-    if len(measurements)>=4:
-        st.success("Buena estrategia: estás combinando evidencia mecánica, acústica y de operación.")
-    elif measurements:
-        st.info("Aún puedes complementar la evidencia para distinguir fuente, estructura, tuberías y aire.")
+    html='<div class="s8diag-grid">'
+    for h in ["Medición / instrumento","Dónde","Qué pregunta responde","Qué patrón buscar"]:
+        html+=f'<div class="s8diag-h">{h}</div>'
+    for row in rows:
+        for cell in row:
+            html+=f'<div class="s8diag-c">{cell}</div>'
+    html+='</div>'
+    st.markdown(html,unsafe_allow_html=True)
 
-    st.markdown("### 2.2 · Evidencia simulada")
-    e1,e2,e3,e4=st.columns(4)
-    with e1: _card("Base bomba","4.8 mm/s","Componente dominante a 25 Hz.",tone="green")
-    with e2: _card("Tubería","3.9 mm/s","También aparece 25 Hz.",tone="green")
-    with e3: _card("Dormitorio","46 dB @ 25 Hz","Coincidencia de frecuencia, no prueba causal por sí sola.",tone="orange")
-    with e4: _card("RPM","1500 rpm","1×RPM = 25 Hz.",tone="blue")
+    st.markdown("#### Construye tu plan")
+    plan_options=[
+        "RPM / frecuencia de operación",
+        "Vibración en carcasa y base",
+        "Vibración en tuberías",
+        "Espectro de ruido en dormitorio",
+        "Presión, caudal y NPSH disponible",
+    ]
+    plan=st.multiselect(
+        "Selecciona las mediciones que realizarías para separar fuente, caminos y receptor",
+        plan_options,
+        key=f"{ns}_diag_plan"
+    )
 
-    mechanism=st.multiselect(
-        "¿Qué hipótesis mantendrías abiertas?",
+    plan_groups={
+        "Excitación":"RPM / frecuencia de operación" in plan,
+        "Fuente/estructura":"Vibración en carcasa y base" in plan,
+        "Conexiones":"Vibración en tuberías" in plan,
+        "Receptor":"Espectro de ruido en dormitorio" in plan,
+        "Hidráulica":"Presión, caudal y NPSH disponible" in plan,
+    }
+    pc=st.columns(5)
+    for col,(label,ok) in zip(pc,plan_groups.items()):
+        with col:
+            _card(label,"Cubierto" if ok else "Falta",
+                  "Tienes evidencia para esta parte del diagnóstico." if ok else "Incluye una medición que responda esta pregunta.",
+                  tone="green" if ok else "orange")
+
+    if sum(plan_groups.values())>=4:
+        st.success("Plan suficientemente completo para comenzar el diagnóstico.")
+    elif plan:
+        st.info("Todavía falta evidencia para separar con confianza fuente, camino y receptor.")
+
+    st.markdown("### 2.2 · Ejecuta las mediciones: evidencia del caso")
+    st.write(
+        "Ahora la app entrega resultados simulados del levantamiento. No los interpretes por separado: "
+        "busca coincidencias de frecuencia, diferencias entre puntos y evidencia específica del proceso hidráulico."
+    )
+
+    # Resultados en tarjetas propias de diagnóstico
+    r1,r2,r3,r4=st.columns(4)
+    with r1:
+        _card("A · Base / apoyo","4.8 mm/s RMS","Pico dominante a 25 Hz. La fuerza dinámica está llegando al apoyo.",tone="green")
+    with r2:
+        _card("C–D · Tuberías","3.9 mm/s RMS","El mismo pico de 25 Hz persiste en la red de tuberías.",tone="green")
+    with r3:
+        _card("Receptor","46 dB @ 25 Hz","El dormitorio contiene una componente coincidente con 1×RPM.",tone="blue")
+    with r4:
+        _card("Velocidad","1500 RPM","1×RPM = 25 Hz. Define una referencia para comparar espectros.",tone="purple")
+
+    st.markdown("### 2.3 · Interpreta la coincidencia de frecuencias")
+    st.latex(r"f_{1\times}=\frac{1500}{60}=25\ \mathrm{Hz}")
+    st.write(
+        "Que la base, la tubería y el dormitorio presenten energía a 25 Hz **aumenta la plausibilidad de un origen relacionado con la rotación**, "
+        "pero no permite por sí solo distinguir entre desequilibrio, desalineación, fuerzas hidráulicas o una combinación de ellas."
+    )
+
+    diagnosis=st.radio(
+        "Con la información disponible, ¿qué conclusión es técnicamente más defendible?",
         [
-            "Transmisión por la base",
-            "Tuberías como camino paralelo",
-            "Radiación aérea de bomba/motor",
-            "Cavitación como fuente dominante",
-            "Ruido por ducto",
+            "Ya está demostrado que la causa es cavitación",
+            "Existe una excitación a 1×RPM y hay al menos dos caminos mecánicos que deben investigarse",
+            "El problema es únicamente ruido aéreo",
+            "La tubería no participa porque la bomba tiene aisladores",
         ],
-        key=f"{ns}_diag_hyp"
+        key=f"{ns}_diag_conclusion"
     )
-    if {"Transmisión por la base","Tuberías como camino paralelo"}.issubset(set(mechanism)):
-        st.success("Diagnóstico coherente: hay evidencia para estudiar al menos dos caminos mecánicos.")
-    if "Cavitación como fuente dominante" in mechanism:
-        st.warning("La coincidencia a 25 Hz no demuestra cavitación. Para sostener esa hipótesis necesitas evidencia hidráulica adicional.")
+    if diagnosis=="Existe una excitación a 1×RPM y hay al menos dos caminos mecánicos que deben investigarse":
+        st.success(
+            "Correcto. La evidencia permite sostener excitación rotacional y transmisión por base/tuberías, "
+            "pero todavía falta identificar la causa física exacta."
+        )
+    elif diagnosis!="":
+        st.warning("La evidencia disponible todavía no permite sostener esa conclusión.")
+
+    st.markdown("### 2.4 · ¿Cómo confirmarías o descartarías cavitación?")
+    st.write(
+        "La cavitación no debe inferirse solo porque existe ruido o vibración. Necesitas relacionar el comportamiento "
+        "con las condiciones hidráulicas de la bomba."
+    )
+    add_measure=st.radio(
+        "¿Qué verificación adicional aporta evidencia directa para esta hipótesis?",
+        [
+            "Medir únicamente el nivel global dB(A) en el dormitorio",
+            "Comparar NPSH disponible con NPSH requerido y revisar presión/caudal en succión",
+            "Medir temperatura del recinto",
+            "Aumentar la rigidez de los soportes sin medir",
+        ],
+        key=f"{ns}_diag_cav_confirm"
+    )
+    if add_measure=="Comparar NPSH disponible con NPSH requerido y revisar presión/caudal en succión":
+        st.success(
+            "Correcto. Esa verificación relaciona la hipótesis con el proceso hidráulico y permite confirmar o descartar cavitación."
+        )
+
+    st.markdown("### 2.5 · Construye el diagnóstico preliminar")
+    cpath1,cpath2,cpath3=st.columns(3)
+    with cpath1:
+        _card("Mecanismo probable","Excitación rotacional","La componente 1×RPM merece investigación mecánica/hidráulica.",tone="blue")
+    with cpath2:
+        _card("Caminos confirmados","Base + tuberías","La misma componente aparece en ambos caminos.",tone="green")
+    with cpath3:
+        _card("Dato aún pendiente","Condición hidráulica","Necesario para confirmar o descartar cavitación.",tone="orange")
+
+    hypothesis=st.multiselect(
+        "¿Qué hipótesis mantienes abiertas después de esta primera campaña?",
+        [
+            "Desequilibrio / desalineación",
+            "Fuerzas hidráulicas / pulsaciones",
+            "Cavitación",
+            "Transmisión estructural por base",
+            "Transmisión por tuberías",
+            "Radiación aérea de carcasa",
+        ],
+        key=f"{ns}_diag_hyp_final"
+    )
+
+    if st.button("Guardar diagnóstico preliminar",type="primary",use_container_width=True,key=f"{ns}_diag_save"):
+        if len(hypothesis)<2:
+            st.warning("Mantén abiertas las hipótesis que todavía requieren verificación; no cierres el diagnóstico demasiado pronto.")
+        else:
+            saved["stage8_diagnosis"]={
+                "plan":plan,
+                "conclusion":diagnosis,
+                "additional_check":add_measure,
+                "hypotheses":hypothesis,
+            }
+            _persist()
+            st.success("Diagnóstico preliminar guardado. Ahora puedes pasar a seleccionar medidas según cada camino.")
 
     # =========================================================
     # 3 · FAMILIAS DE EQUIPO
@@ -6301,7 +6454,7 @@ def _render_course2_lab1_stage8(lab, saved):
     a,b,c=st.columns(3)
     with a:
         _card("Bombas","motor + hidráulica + tuberías",
-              "CIBSE B5 destaca ruido del motor, ruido transportado por el fluido, vibración estructural y vibración de tuberías. "
+              ""
               "Evaluar aisladores, conexión flexible y soportes resilientes.",tone="blue")
         _card("Compresores / chillers","tonos + broadband",
               "Pueden combinar rotación o reciprocación, flujo, carcasa, tuberías y estructura. "
@@ -6322,12 +6475,21 @@ def _render_course2_lab1_stage8(lab, saved):
     # =========================================================
     # 4 · LAB B: DUCTOS Y VELOCIDAD
     # =========================================================
-    st.markdown("## 4 · Laboratorio B — ¿Por qué aumentar la velocidad del aire puede disparar el ruido?")
-    st.write(
-        "CIBSE B5 describe el ruido regenerado por turbulencia mediante una relación aproximada "
-        "en la que la potencia sonora depende fuertemente de la velocidad del aire."
+    st.markdown("## 4 · Laboratorio B — Rediseña un ducto que está generando ruido")
+    st.markdown(
+        """
+        **Caso profesional.** Un dormitorio recibe ruido desde un ramal de impulsión. La geometría del codo no cambia,
+        pero el caudal del sistema aumentó y la velocidad del aire pasó a ser mayor.
+
+        **Tu tarea:** cuantificar cuánto puede cambiar el ruido regenerado **solo por el aumento de velocidad** y decidir
+        si conviene aceptar la condición, aumentar sección, mejorar la transición o incorporar control adicional.
+        """
     )
-    _asset("curso2_lab1_etapa8_flujo_ducto.gif")
+    st.write(
+        "Para comparar una misma configuración, utilizamos una relación aproximada en la que "
+        "la potencia sonora depende fuertemente de la velocidad del aire."
+    )
+    _asset("curso2_lab1_etapa8_ducto_profesional.webp")
 
     st.latex(r"L_W \approx C + 10\log_{10}(A)+60\log_{10}(U)")
     st.write(
@@ -6346,21 +6508,46 @@ def _render_course2_lab1_stage8(lab, saved):
     with d2: _card("U₂",f"{u2:.1f} m/s","Nueva condición.")
     with d3: _card("Cambio estimado",f"{delta_lw:+.1f} dB","Cambio relativo del ruido regenerado bajo las hipótesis indicadas.",tone="orange")
     if abs(u2/u1-2)<0.08:
-        st.success("Has duplicado aproximadamente la velocidad: el modelo entrega cerca de **+18 dB**, tal como destaca CIBSE B5.")
+        st.success("Has duplicado aproximadamente la velocidad: el modelo entrega cerca de **+18 dB**, como muestra la relación anterior.")
     st.warning(
         "Este cálculo NO predice todo el sistema HVAC. Es una comparación didáctica del ruido regenerado del mismo elemento "
         "cuando cambia la velocidad. En proyecto deben utilizarse datos del fitting/fabricante y pérdidas de presión."
     )
 
+    st.markdown("### 4.1 · Toma una decisión de diseño")
+    duct_decision=st.radio(
+        "Si el aumento calculado resulta inaceptable, ¿qué acción evaluarías primero?",
+        [
+            "Mantener la misma geometría y aceptar el aumento",
+            "Aumentar la sección para reducir la velocidad",
+            "Agregar un silenciador sin revisar la velocidad",
+            "Crear una transición más abrupta",
+        ],
+        key=f"{ns}_duct_decision"
+    )
+    if duct_decision=="Aumentar la sección para reducir la velocidad":
+        st.success(
+            "Decisión coherente: reduces una causa de regeneración antes de añadir un elemento de control."
+        )
+    elif duct_decision in ("Agregar un silenciador sin revisar la velocidad","Crear una transición más abrupta"):
+        st.warning(
+            "Primero revisa la generación de ruido. Un control aguas abajo no corrige necesariamente una mala condición de flujo."
+        )
+
     # =========================================================
     # 5 · LAB C: AISLAMIENTO VIBRATORIO
     # =========================================================
-    st.markdown("## 5 · Laboratorio C — Del equipo al requerimiento del aislador")
-    st.write(
-        "El objetivo no es elegir 'goma o resorte' por intuición. Primero definimos la frecuencia perturbadora, "
-        "la frecuencia natural requerida, la deflexión y la carga que recibe cada apoyo."
+    st.markdown("## 5 · Laboratorio C — Diseña el aislamiento vibratorio")
+    st.markdown(
+        """
+        **Caso profesional.** Debes especificar el aislamiento de una bomba sobre una losa estructural.
+        Conoces RPM, masa y número de apoyos, pero todavía no sabes qué deflexión necesita el aislador.
+
+        **Tu tarea:** escoger una deflexión, calcular \(f_n\), evaluar la razón \(r=f_e/f_n\),
+        estimar la transmisibilidad y comprobar cuánto carga recibe cada apoyo.
+        """
     )
-    _asset("curso2_lab1_etapa8_aislamiento_resonancia.gif")
+    _asset("curso2_lab1_etapa8_aislamiento_resonancia.webp")
 
     st.latex(r"f_e=\frac{\mathrm{RPM}}{60}")
     st.latex(r"f_n=\frac{1}{2\pi}\sqrt{\frac{g}{\delta}}")
@@ -6400,17 +6587,22 @@ def _render_course2_lab1_stage8(lab, saved):
     elif tf<1:
         st.success(f"Región de aislamiento idealizada. Reducción de fuerza transmitida ≈ {(1-tf)*100:.1f} %.")
     st.caption(
-        "CIBSE B5 advierte que la estructura soporte real puede interactuar con el equipo aislado; "
+        "En una instalación real la estructura soporte puede interactuar con el equipo aislado; "
         "en pisos flexibles debe revisarse también la dinámica de la losa, no solo el aislador."
     )
 
     # =========================================================
     # 6 · LAB D: CATÁLOGO REAL
     # =========================================================
-    st.markdown("## 6 · Laboratorio D — Selecciona un aislador de catálogo")
-    st.write(
-        "Caso de diseño: bomba de **1600 kg**, **1500 RPM**, cuatro apoyos y distribución uniforme de carga. "
-        "Usaremos la familia real **Kinetics FDS — Free Standing Spring Isolators**."
+    st.markdown("## 6 · Laboratorio D — Verifica tu diseño con un catálogo real")
+    st.markdown(
+        """
+        El Laboratorio C te entregó un **requerimiento dinámico**. Ahora debes comprobar si existe un producto comercial
+        capaz de trabajar con la carga por apoyo y la deflexión requerida.
+
+        **Caso:** bomba de 1600 kg, 1500 RPM y cuatro apoyos. Se adopta distribución uniforme únicamente para este ejercicio.
+        La selección final debe quedar respaldada por una ficha técnica real.
+        """
     )
     st.markdown(
         """
@@ -6488,7 +6680,7 @@ def _render_course2_lab1_stage8(lab, saved):
         )
         if ans=="No":
             st.success(
-                "Correcto. CIBSE B5 recomienda además conexión flexible entre bomba y tubería "
+                "Correcto. Además debes incorporar conexión flexible entre bomba y tubería "
                 "y soportes resilientes para evitar que la tubería puentee el aislamiento."
             )
         elif ans=="Sí":
@@ -6497,56 +6689,116 @@ def _render_course2_lab1_stage8(lab, saved):
     # =========================================================
     # 7 · LAB E: DISEÑA ESTRATEGIA INTEGRAL
     # =========================================================
-    st.markdown("## 7 · Laboratorio E — Diseña la solución completa")
-    st.write(
-        "Sala de bombas bajo departamentos. Diagnóstico confirmado: "
-        "**vibración por base + tuberías rígidas + cavitación + recinto técnico muy reverberante**."
+    st.markdown("## 7 · Laboratorio E — Proyecto integrador: sala de bombas bajo departamentos")
+    st.markdown(
+        """
+        **Situación de proyecto**
+
+        Una sala de bombas se ubica bajo departamentos. La investigación previa confirmó:
+
+        - componente vibratoria dominante transmitida por la base;
+        - tuberías rígidas conectadas directamente a la estructura;
+        - evidencia hidráulica compatible con cavitación;
+        - sala técnica con superficies duras y elevada reverberación.
+
+        **Restricción:** no puedes resolver el caso con una sola medida. Debes construir una estrategia que actúe
+        sobre todos los mecanismos y caminos confirmados.
+        """
     )
 
-    solution_options=[
-        "Corregir condición hidráulica / cavitación",
-        "Aislamiento vibratorio de bomba",
-        "Bancada o base de inercia si el diseño lo requiere",
-        "Conexiones flexibles en tuberías",
-        "Soportes resilientes de tuberías",
-        "Absorción acústica en sala técnica",
-        "Silenciador de ducto",
-        "Pantalla exterior",
-        "Aumentar velocidad del aire",
-    ]
-    chosen=st.multiselect("Selecciona las medidas que formarían tu estrategia",solution_options,key=f"{ns}_integral")
-    requirements={
-        "Fuente":{"Corregir condición hidráulica / cavitación"},
-        "Estructura":{"Aislamiento vibratorio de bomba","Bancada o base de inercia si el diseño lo requiere"},
-        "Conexiones":{"Conexiones flexibles en tuberías","Soportes resilientes de tuberías"},
-        "Recinto":{"Absorción acústica en sala técnica"},
-    }
+    st.markdown("### 7.1 · Selecciona medidas por familia de control")
+    source_choices=st.multiselect(
+        "FUENTE · ¿Qué harías sobre la bomba y su operación?",
+        [
+            "Corregir condición hidráulica / cavitación",
+            "Balancear y alinear conjunto motor–bomba",
+            "Mantener la operación actual sin revisión",
+        ],
+        key=f"{ns}_E_source"
+    )
+    structural_choices=st.multiselect(
+        "ESTRUCTURA · ¿Cómo reducirías la fuerza transmitida a la losa?",
+        [
+            "Aislamiento vibratorio de bomba",
+            "Bancada/base de inercia cuando el diseño lo justifique",
+            "Anclar rígidamente la bomba directamente a la losa",
+        ],
+        key=f"{ns}_E_struct"
+    )
+    connection_choices=st.multiselect(
+        "CONEXIONES · ¿Cómo evitarías que las tuberías puenteen el aislamiento?",
+        [
+            "Conexiones flexibles en impulsión y retorno",
+            "Soportes resilientes de tuberías",
+            "Fijar rígidamente la tubería junto a la bomba",
+        ],
+        key=f"{ns}_E_conn"
+    )
+    room_choices=st.multiselect(
+        "RECINTO · ¿Qué harías con el campo acústico de la sala técnica?",
+        [
+            "Incorporar absorción acústica adecuada",
+            "Revisar cerramientos/penetraciones si el ruido aéreo sigue siendo relevante",
+            "Instalar una pantalla exterior dentro de la sala sin diagnóstico adicional",
+        ],
+        key=f"{ns}_E_room"
+    )
+
+    st.markdown("### 7.2 · La app revisa coherencia, no memoriza una lista")
+    good_source="Corregir condición hidráulica / cavitación" in source_choices
+    good_struct="Aislamiento vibratorio de bomba" in structural_choices
+    good_conn=(
+        "Conexiones flexibles en impulsión y retorno" in connection_choices
+        and "Soportes resilientes de tuberías" in connection_choices
+    )
+    good_room="Incorporar absorción acústica adecuada" in room_choices
+
+    bad_any=(
+        "Mantener la operación actual sin revisión" in source_choices
+        or "Anclar rígidamente la bomba directamente a la losa" in structural_choices
+        or "Fijar rígidamente la tubería junto a la bomba" in connection_choices
+    )
+
     cols=st.columns(4)
-    all_ok=True
-    for col,(name,opts) in zip(cols,requirements.items()):
-        hit=set(chosen)&opts
-        ok=bool(hit)
-        all_ok &= ok
+    checks=[
+        ("Fuente",good_source,"Cavitación controlada en origen."),
+        ("Estructura",good_struct,"Fuerza dinámica desacoplada de la losa."),
+        ("Conexiones",good_conn,"Tuberías no puentean el aislamiento."),
+        ("Recinto",good_room,"Menor acumulación de energía reverberante."),
+    ]
+    for col,(title,ok,text) in zip(cols,checks):
         with col:
-            _card(name,"Cubierto" if ok else "Falta",
-                  ", ".join(sorted(hit)) if hit else "Selecciona una medida coherente con este mecanismo.",
-                  tone="green" if ok else "orange")
-    irrelevant=set(chosen)&{"Silenciador de ducto","Pantalla exterior","Aumentar velocidad del aire"}
-    if irrelevant:
-        st.warning(
-            "Estas medidas no responden directamente a los cuatro problemas declarados: "
-            + ", ".join(sorted(irrelevant))
+            _card(title,"Cubierto" if ok else "Falta",text if ok else "Aún falta una medida coherente.",tone="green" if ok else "orange")
+
+    if bad_any:
+        st.error(
+            "Hay al menos una medida incompatible con el diagnóstico: estás creando o manteniendo un camino rígido."
         )
-    if all_ok:
-        st.success("Estrategia integral coherente: actúas sobre fuente, estructura, conexiones y recinto.")
-        if st.button("Guardar estrategia de Etapa 8",type="primary",use_container_width=True,key=f"{ns}_save"):
-            saved["stage8_result"]={
-                "diagnosis":mechanism,
-                "strategy":chosen,
-                "complete":True,
-            }
-            _persist()
-            st.success("Estrategia guardada.")
+
+    complete=good_source and good_struct and good_conn and good_room and not bad_any
+    if complete:
+        st.success(
+            "Estrategia integral coherente. La solución actúa sobre generación, estructura, conexiones y recinto."
+        )
+        justification=st.text_area(
+            "Justifica brevemente por qué tu estrategia necesita varias medidas y no solo resortes:",
+            key=f"{ns}_E_justification",
+            height=110
+        )
+        if st.button("Guardar solución integral",type="primary",use_container_width=True,key=f"{ns}_E_save"):
+            if len(justification.strip())<40:
+                st.warning("Explica con un poco más de detalle cómo se relacionan mecanismo, camino y medida.")
+            else:
+                saved["stage8_result"]={
+                    "source":source_choices,
+                    "structure":structural_choices,
+                    "connections":connection_choices,
+                    "room":room_choices,
+                    "justification":justification.strip(),
+                    "complete":True,
+                }
+                _persist()
+                st.success("Solución integral guardada.")
 
     # =========================================================
     # 8 · CIERRE
@@ -6561,7 +6813,7 @@ def _render_course2_lab1_stage8(lab, saved):
         "Las preguntas conceptuales y de comprensión quedan concentradas en la Etapa 9."
     )
 
-    st.markdown("### Referencias técnicas utilizadas")
+    st.markdown("### Fuentes y bibliografía de la Etapa 8")
     st.markdown(
         "- **CIBSE Guide B5 (2002), Noise and vibration control for HVAC**: "
         "secciones 2.2–2.3 (caminos y control), 3.1 (ventiladores), 3.6–3.8 (chillers, bombas y generadores), "
