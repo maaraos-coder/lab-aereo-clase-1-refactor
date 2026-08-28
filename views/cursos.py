@@ -5287,34 +5287,36 @@ def _render_course2_lab1_stage6(lab, saved):
             "Ejemplo de defecto",
             [
                 "Contacto perimetral rígido",
-                "Fijación atravesando laminado y manta",
+                "Fijación atravesando la manta resiliente",
                 "Penetración de tubería sin desacople",
-                "Elemento fijo bloqueando el piso flotante",
+                "Elemento fijo apoyado sobre el piso",
             ],
-            key=f"{ns}_defect_laminado"
+            key=f"{ns}_defect_laminado_final"
         )
-        defects={
-            "Contacto perimetral rígido":(
-                "El piso laminado queda en contacto rígido con el muro o el rodapié.",
-                "Restituir la junta perimetral y evitar compresión rígida contra los cerramientos.",
-                "curso2_lab1_etapa6_laminado_defecto_perimetral.webp",
-            ),
-            "Fijación atravesando laminado y manta":(
-                "Una fijación atraviesa la manta resiliente y conecta el piso con la losa base.",
-                "Eliminar o rediseñar la fijación para no puentear la manta.",
-                "curso2_lab1_etapa6_laminado_defecto_fijacion.webp",
-            ),
-            "Penetración de tubería sin desacople":(
-                "La tubería queda en contacto rígido con el piso flotante al atravesarlo.",
-                "Usar manguito/junta resiliente y mantener separación alrededor de la penetración.",
-                "curso2_lab1_etapa6_laminado_defecto_tuberia.webp",
-            ),
-            "Elemento fijo bloqueando el piso flotante":(
-                "Un elemento fijo inmoviliza localmente el piso y altera su desacople.",
-                "Evitar apoyos o fijaciones rígidas que bloqueen el movimiento flotante.",
-                "curso2_lab1_etapa6_laminado_defecto_elemento_fijo.webp",
-            ),
+
+        defect_data={
+            "Contacto perimetral rígido":{
+                "asset":"curso2_lab1_etapa6_laminado_defecto_perimetral_final.webp",
+                "mechanism":"El piso laminado toca rígidamente el muro o queda comprimido por el rodapié.",
+                "correction":"Mantener una junta perimetral libre y evitar contactos rígidos con muros o rodapiés."
+            },
+            "Fijación atravesando la manta resiliente":{
+                "asset":"curso2_lab1_etapa6_laminado_defecto_fijacion_final.webp",
+                "mechanism":"La fijación atraviesa el sistema flotante y crea una conexión rígida con la losa base.",
+                "correction":"Eliminar o rediseñar la fijación para no atravesar el desacople resiliente."
+            },
+            "Penetración de tubería sin desacople":{
+                "asset":"curso2_lab1_etapa6_laminado_defecto_tuberia_final.webp",
+                "mechanism":"La tubería queda en contacto rígido con el piso laminado y puentea la manta resiliente.",
+                "correction":"Incorporar manguito o junta resiliente alrededor de la penetración."
+            },
+            "Elemento fijo apoyado sobre el piso":{
+                "asset":"curso2_lab1_etapa6_laminado_defecto_elemento_fijo_final.webp",
+                "mechanism":"Un mueble, tabique u otro elemento fijo inmoviliza localmente el piso flotante.",
+                "correction":"Evitar que elementos fijos bloqueen o conecten rígidamente el piso flotante con la estructura."
+            },
         }
+
     else:
         st.markdown("### Defectos de la sobrelosa sobre apoyos discretos")
         defect=st.selectbox(
@@ -5324,36 +5326,50 @@ def _render_course2_lab1_stage6(lab, saved):
                 "Tornillo conectando ambas masas",
                 "Instalación conectando ambas masas",
             ],
-            key=f"{ns}_defect_discreto"
+            key=f"{ns}_defect_discreto_final"
         )
-        defects={
-            "Contacto perimetral rígido":(
-                "La sobrelosa toca el muro y aparece una ruta estructural paralela.",
-                "Restituir banda perimetral y separación mecánica.",
-                "curso2_lab1_etapa6_defecto_perimetral_profesional.webp",
-            ),
-            "Tornillo conectando ambas masas":(
-                "La fijación une rígidamente la sobrelosa con la losa base.",
-                "Eliminar o rediseñar la fijación para conservar el desacople.",
-                "curso2_lab1_etapa6_defecto_tornillo_profesional.webp",
-            ),
-            "Instalación conectando ambas masas":(
-                "Una tubería o instalación rígida conecta ambas masas y puentea los apoyos.",
-                "Desacoplar la instalación en penetraciones y puntos de apoyo.",
-                "curso2_lab1_etapa6_defecto_instalacion_profesional.webp",
-            ),
+
+        defect_data={
+            "Contacto perimetral rígido":{
+                "asset":"curso2_lab1_etapa6_discreto_defecto_perimetral_final.webp",
+                "mechanism":"La sobrelosa toca el muro y crea una ruta estructural paralela a los apoyos resilientes.",
+                "correction":"Restituir la separación perimetral y evitar contacto rígido con los cerramientos."
+            },
+            "Tornillo conectando ambas masas":{
+                "asset":"curso2_lab1_etapa6_discreto_defecto_tornillo_final.webp",
+                "mechanism":"La fijación conecta rígidamente la sobrelosa con la losa base.",
+                "correction":"Eliminar o rediseñar la fijación para mantener el desacople entre ambas masas."
+            },
+            "Instalación conectando ambas masas":{
+                "asset":"curso2_lab1_etapa6_discreto_defecto_instalacion_final.webp",
+                "mechanism":"La instalación rígida une la sobrelosa y la base, creando un camino mecánico paralelo.",
+                "correction":"Desacoplar la instalación en penetraciones, abrazaderas y puntos de apoyo."
+            },
         }
 
-    mech,corr,asset_name=defects[defect]
-    defect_asset=ASSET_DIR/asset_name
+    data=defect_data[defect]
+    defect_asset=ASSET_DIR/data["asset"]
+
     if defect_asset.exists():
+        # El render ya contiene su propia señalización visual.
+        # No se añaden títulos, banners ni advertencias superpuestas.
         st.image(str(defect_asset),width="stretch")
 
+    # Explicación de la app separada del render, sin duplicar contenido visual.
     d1,d2=st.columns(2)
     with d1:
-        _card("Mecanismo","Camino mecánico paralelo",mech)
+        _card(
+            "Qué ocurre",
+            "Camino mecánico paralelo",
+            data["mechanism"]
+        )
     with d2:
-        _card("Corrección","Restituir desacople",corr,tone="blue")
+        _card(
+            "Cómo corregirlo",
+            "Restituir el desacople",
+            data["correction"],
+            tone="blue"
+        )
 
     # ==============================================================
     # 8 · GUARDAR SOLUCIÓN
