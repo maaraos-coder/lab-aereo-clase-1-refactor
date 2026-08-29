@@ -7692,90 +7692,295 @@ def _render_course2_lab1_stage8(lab, saved):
     # ---------------------------------------------------------
     # RUTA VISIBLE
     # ---------------------------------------------------------
+    # ---------------------------------------------------------
+    # 3.0 RUTA TÉCNICA DE SELECCIÓN
+    # ---------------------------------------------------------
     st.markdown("### 3.0 · Ruta técnica de selección")
-    route = [
-        ("01","Máquina","RPM · masa · componente perturbadora"),
-        ("02","Carga","kg y lb que recibe cada apoyo"),
-        ("03","Dinámica","fₙ · deflexión · razón r"),
-        ("04","Desempeño","T_F · porcentaje de aislamiento"),
-        ("05","Especificación","carga + δ + fₙ + T_F"),
-        ("06","Catálogo","producto real que cumple lo calculado"),
-    ]
-    rc=st.columns(6)
-    for col,(num,title,text) in zip(rc,route):
-        with col:
-            st.markdown(
-                f"""<div style="border:1px solid #dbe4ee;border-radius:14px;padding:11px 10px;
-                min-height:132px;background:#fff">
-                <div style="font-size:.72rem;font-weight:900;color:#2563eb">{num}</div>
-                <div style="font-weight:900;color:#0f172a;margin:.2rem 0">{title}</div>
-                <div style="font-size:.82rem;color:#64748b;line-height:1.35">{text}</div>
-                </div>""",
-                unsafe_allow_html=True
-            )
-
-    # ---------------------------------------------------------
-    # 3.1 CONCEPTO FÍSICO
-    # ---------------------------------------------------------
-    st.markdown("### 3.1 · ¿Qué hace realmente un aislador antivibratorio?")
     st.write(
-        "La bomba tiene que seguir soportada: el aislador **no elimina el peso**. "
-        "Su función dinámica es permitir un movimiento controlado del conjunto para que una fracción menor "
-        "de la fuerza vibratoria llegue a la losa."
+        "Antes de usar ecuaciones, necesitamos entender **qué pregunta responde cada etapa del diseño**. "
+        "Seleccionar un aislador no consiste en buscar el resorte más grande ni el que tenga mayor deflexión. "
+        "Seguiremos una secuencia lógica desde la bomba real hasta un producto de catálogo que pueda sostenerla "
+        "y, al mismo tiempo, reducir la transmisión de vibraciones hacia la estructura."
     )
 
-    c1,c2=st.columns(2)
-    with c1:
+    rt1,rt2,rt3,rt4,rt5,rt6=st.columns(6)
+    with rt1:
         _card(
-            "Carga estática",
-            "W = m · g",
-            "Es el peso del conjunto que el resorte debe sostener permanentemente. Determina cuánto se comprime el aislador.",
+            "01",
+            "Máquina",
+            "Identificamos qué equipo vibra, cuánto pesa y a qué velocidad gira. Con eso sabemos qué excitación debemos controlar.",
             tone="blue"
         )
-    with c2:
+    with rt2:
         _card(
-            "Fuerza dinámica",
-            "F(t)",
-            "Es la componente variable asociada al funcionamiento de la máquina. El objetivo es reducir cuánto de ella llega a la estructura.",
+            "02",
+            "Carga",
+            "Calculamos cuánto peso recibe cada aislador. Así evitamos escoger un resorte que quede sobrecargado o demasiado descargado."
+        )
+    with rt3:
+        _card(
+            "03",
+            "Dinámica",
+            "Estudiamos cómo se comportará la bomba apoyada sobre resortes: cuánto se comprimen y a qué frecuencia natural tenderá a oscilar el conjunto.",
+            tone="purple"
+        )
+    with rt4:
+        _card(
+            "04",
+            "Desempeño",
+            "Comparamos la excitación de la bomba con la respuesta del sistema para estimar qué parte de la fuerza vibratoria podría llegar a la estructura.",
+            tone="green"
+        )
+    with rt5:
+        _card(
+            "05",
+            "Especificación",
+            "Convertimos los cálculos en requisitos concretos que deberá cumplir el aislador: carga, deflexión, frecuencia natural y transmisión de fuerza."
+        )
+    with rt6:
+        _card(
+            "06",
+            "Catálogo",
+            "Buscamos un modelo comercial real y comprobamos que pueda soportar la carga y cumplir el comportamiento dinámico que necesitamos.",
+            tone="blue"
+        )
+
+    st.markdown("#### ¿Qué significa esta ruta en palabras simples?")
+    st.markdown(
+        """
+        **1. Máquina.** Identificamos qué equipo estamos aislando, cuánto pesa y a qué velocidad trabaja.
+
+        **2. Carga.** Calculamos cuánto peso debe soportar cada aislador.
+
+        **3. Dinámica.** Estudiamos cómo se comportaría el conjunto bomba–resortes cuando vibra.
+
+        **4. Desempeño.** Estimamos qué fracción de la fuerza vibratoria podría seguir llegando a la estructura.
+
+        **5. Especificación.** Convertimos todo lo anterior en requisitos concretos que debe cumplir el aislador.
+
+        **6. Catálogo.** Buscamos un producto comercial real y comprobamos si satisface esos requisitos.
+        """
+    )
+    st.info(
+        "La idea central es avanzar desde **la máquina real** hacia **un aislador verificable**. "
+        "Las ecuaciones son herramientas para tomar esa decisión, no el objetivo del ejercicio."
+    )
+
+    # ---------------------------------------------------------
+    # 3.1 QUÉ HACE REALMENTE UN AISLADOR
+    # ---------------------------------------------------------
+    # ---------------------------------------------------------
+    # 3.1 QUÉ HACE REALMENTE UN AISLADOR
+    # ---------------------------------------------------------
+    st.markdown("### 3.1 · ¿Qué hace realmente un aislador antivibratorio?")
+
+    st.write(
+        "Antes de hablar de fórmulas, respondamos directamente la pregunta. "
+        "Cuando una bomba funciona, no solo permanece apoyada por su peso: también genera pequeñas fuerzas variables "
+        "que pueden hacer vibrar sus apoyos y transmitir esa vibración a la losa."
+    )
+
+    st.markdown("#### A · ¿Qué ocurriría si la bomba estuviera unida rígidamente a la losa?")
+    st.write(
+        "Si la bomba estuviera apoyada directamente sobre una unión muy rígida, las fuerzas vibratorias generadas por la máquina "
+        "tendrían un camino directo hacia la estructura. La losa podría comenzar a vibrar y esa vibración podría propagarse "
+        "hacia otros recintos del edificio."
+    )
+
+    p1,p2,p3=st.columns(3)
+    with p1:
+        _card(
+            "1 · La bomba funciona",
+            "genera fuerzas variables",
+            "El giro y otros mecanismos internos producen fuerzas que cambian con el tiempo.",
+            tone="orange"
+        )
+    with p2:
+        _card(
+            "2 · Unión rígida",
+            "la fuerza pasa fácilmente",
+            "Si no existe desacople elástico, una parte importante de esas fuerzas puede transmitirse directamente al apoyo."
+        )
+    with p3:
+        _card(
+            "3 · La losa responde",
+            "la estructura puede vibrar",
+            "La vibración puede propagarse por el edificio y contribuir al ruido percibido en otros recintos.",
             tone="purple"
         )
 
-    st.latex(r"\boxed{T_F=\frac{F_{\mathrm{transmitida}}}{F_{\mathrm{excitación}}}}")
+    st.markdown("#### B · Entonces, ¿qué introduce el aislador?")
     st.write(
-        "La **transmisibilidad de fuerza** es el indicador principal de este modelo."
+        "El aislador coloca un **elemento elástico** entre la bomba y la estructura. "
+        "En nuestro caso será un resorte. Ese elemento puede deformarse ligeramente y permite que la bomba tenga "
+        "un pequeño movimiento controlado en lugar de obligar a que toda la fuerza vibratoria pase directamente a la losa."
     )
-    st.latex(r"T_F=0.10")
+
+    a1,a2,a3=st.columns(3)
+    with a1:
+        _card(
+            "Bomba",
+            "genera la excitación",
+            "La máquina sigue vibrando mientras funciona. El aislador no elimina el fenómeno dentro de la bomba.",
+            tone="orange"
+        )
+    with a2:
+        _card(
+            "Aislador",
+            "se deforma y desacopla",
+            "El resorte introduce flexibilidad entre la máquina y la estructura y modifica cómo se transmite la fuerza.",
+            tone="green"
+        )
+    with a3:
+        _card(
+            "Losa",
+            "recibe una fuerza menor",
+            "Si el sistema está bien seleccionado, la amplitud de la fuerza dinámica que llega a la estructura disminuye.",
+            tone="blue"
+        )
+
+    st.success(
+        "**Eso es aislar vibraciones:** no significa detener el movimiento de la bomba, sino reducir la interacción dinámica "
+        "entre la máquina y la estructura para que llegue menos fuerza vibratoria a la losa."
+    )
+
+    st.markdown("#### C · El aislador tiene que cumplir dos trabajos diferentes")
     st.write(
-        "En este ejemplo, la amplitud de fuerza transmitida sería aproximadamente el 10 % "
-        "de la fuerza dinámica de excitación considerada."
+        "Aquí recién aparecen los dos conceptos que necesitaremos durante el diseño. "
+        "El mismo resorte debe **sostener el peso permanente de la bomba** y, al mismo tiempo, "
+        "**reducir la transmisión de las fuerzas variables producidas durante el funcionamiento**."
     )
+
+    cst,cdyn=st.columns(2)
+    with cst:
+        _card(
+            "Trabajo 1 · Sostener la máquina",
+            "carga estática",
+            "Es el peso permanente que actúa sobre el resorte incluso cuando la bomba está apagada. "
+            "Esta carga determina cuánto debe soportar y cuánto se comprime el aislador.",
+            tone="blue"
+        )
+    with cdyn:
+        _card(
+            "Trabajo 2 · Reducir la vibración",
+            "fuerza dinámica",
+            "Es la parte variable asociada al funcionamiento de la bomba. "
+            "El objetivo del aislamiento es reducir cuánto de esa fuerza alcanza la estructura.",
+            tone="purple"
+        )
+
+    st.write(
+        "Por eso **carga estática** y **fuerza dinámica** no son dos nombres para lo mismo. "
+        "La primera responde a la pregunta «¿puede el resorte sostener la bomba?». "
+        "La segunda responde a «¿qué tan bien evita que la vibración llegue a la estructura?»."
+    )
+
+    st.markdown("#### D · Ahora sí: fuerza de excitación y fuerza transmitida")
+    st.write(
+        "Para describir el segundo trabajo necesitamos distinguir el antes y el después del aislador."
+    )
+
+    ex1,ex2=st.columns(2)
+    with ex1:
+        _card(
+            "Fuerza de excitación",
+            "antes del aislador",
+            "Es la fuerza dinámica que la máquina genera e intenta transmitir hacia sus apoyos.",
+            tone="orange"
+        )
+    with ex2:
+        _card(
+            "Fuerza transmitida",
+            "después del aislador",
+            "Es la parte de esa fuerza que finalmente logra atravesar el sistema de aislamiento y llega a la losa.",
+            tone="green"
+        )
+
+    st.markdown("#### E · Un ejemplo sin fórmulas")
+    st.write(
+        "Imaginemos, solo para entender el concepto, que la bomba genera una fuerza dinámica de **100 N** "
+        "en una determinada frecuencia."
+    )
+
+    exa1,exa2,exa3=st.columns(3)
+    with exa1:
+        _card(
+            "La bomba genera",
+            "100 N",
+            "Esta es nuestra fuerza de excitación del ejemplo."
+        )
+    with exa2:
+        _card(
+            "El aislador actúa",
+            "reduce la transmisión",
+            "Parte de la energía dinámica queda asociada al movimiento del sistema elástico."
+        )
+    with exa3:
+        _card(
+            "A la losa llegan",
+            "10 N",
+            "En este ejemplo, solo una décima parte de la amplitud de fuerza original llega a la estructura.",
+            tone="green"
+        )
+
+    st.write(
+        "Ahora sí necesitamos una manera de expresar numéricamente esa relación. "
+        "La llamamos **transmisibilidad de fuerza**, T_F."
+    )
+    st.latex(
+        r"\boxed{T_F=\frac{F_{\mathrm{transmitida}}}{F_{\mathrm{excitación}}}}"
+    )
+
+    st.write("Para el ejemplo anterior:")
+    st.latex(r"T_F=\frac{10}{100}=0.10")
+
+    tf1,tf2,tf3=st.columns(3)
+    with tf1:
+        _card(
+            "T_F = 1,0",
+            "llega el 100 %",
+            "No existe reducción de la amplitud de fuerza en este ejemplo."
+        )
+    with tf2:
+        _card(
+            "T_F = 0,5",
+            "llega el 50 %",
+            "La amplitud de fuerza transmitida queda aproximadamente en la mitad."
+        )
+    with tf3:
+        _card(
+            "T_F = 0,10",
+            "llega el 10 %",
+            "En el modelo idealizado, aproximadamente el 90 % de esa amplitud de fuerza deja de transmitirse.",
+            tone="green"
+        )
 
     st.info(
-        "**Primer criterio profesional:** un aislador debe cumplir simultáneamente una condición **estática** "
-        "(soportar la carga) y una condición **dinámica** (alcanzar la deflexión/frecuencia natural necesaria)."
+        "Los 100 N y 10 N son solo un ejemplo didáctico. "
+        "En el laboratorio utilizaremos T_F para evaluar el comportamiento del sistema a partir de sus frecuencias y su amortiguamiento."
     )
 
-    # ---------------------------------------------------------
-    # La lógica de diseño de Lab B cambió: ahora parte de un criterio de
-    # deflexión de 19 mm, no de un porcentaje arbitrario de aislamiento.
-    # Se invalidan una sola vez únicamente los resultados antiguos de Lab B/C.
-    _design_version="deflection_19mm_v1"
-    if saved.get("stage8_design_version") != _design_version:
-        for _old_key in [
-            "stage8_isolator_design",
-            "stage8_catalog_validated",
-            "stage8_catalog_lookup",
-            "stage8_catalog_result",
-        ]:
-            saved.pop(_old_key,None)
-        for _ssk in list(st.session_state.keys()):
-            if isinstance(_ssk,str) and (
-                _ssk.startswith(f"{ns}_iso_target")
-                or _ssk.startswith(f"{ns}_cat_")
-            ):
-                st.session_state.pop(_ssk,None)
-        saved["stage8_design_version"]=_design_version
-        _persist()
+    st.markdown("#### F · La idea que debemos llevar a la siguiente sección")
+    f1,f2=st.columns(2)
+    with f1:
+        _card(
+            "Primero",
+            "el resorte debe soportar la carga",
+            "Necesitamos saber cuánto peso recibe cada aislador y cuánto se comprimirá.",
+            tone="blue"
+        )
+    with f2:
+        _card(
+            "Después",
+            "debe aislar dinámicamente",
+            "Necesitamos que la combinación masa–resorte tenga un comportamiento que reduzca la fuerza transmitida.",
+            tone="purple"
+        )
+
+    st.warning(
+        "Un resorte puede soportar perfectamente el peso de la bomba y aun así ser una mala solución antivibratoria. "
+        "Por eso, en las siguientes secciones comprobaremos **capacidad de carga** y **comportamiento dinámico** por separado."
+    )
 
     # ---------------------------------------------------------
     # 3.2 DATOS DE LA MISMA BOMBA Y FRECUENCIA DE EXCITACIÓN
