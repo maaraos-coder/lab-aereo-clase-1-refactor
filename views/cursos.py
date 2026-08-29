@@ -8437,12 +8437,21 @@ def _render_course2_lab1_stage8(lab, saved):
         "el resorte comienza a reducir la fuerza que llega a la estructura."
     )
 
+    st.info(
+        "**¿Por qué aparece el número 1,41?** "
+        "Es simplemente el valor aproximado de √2. No es una frecuencia ni un dato propio de la bomba. "
+        "En este modelo marca el límite a partir del cual la amplitud de la fuerza transmitida comienza a ser menor "
+        "que la amplitud de la fuerza de excitación."
+    )
+
+    st.latex(r"\sqrt{2}\approx1.41")
+
     reg1,reg2,reg3,reg4=st.columns(4)
     with reg1:
         _card(
             "r < 1",
             "la bomba excita por debajo de fₙ",
-            "Todavía no estamos en una condición útil de aislamiento."
+            "La frecuencia de excitación todavía es menor que la frecuencia natural del sistema. No estamos en una condición útil de aislamiento."
         )
     with reg2:
         _card(
@@ -8453,17 +8462,22 @@ def _render_course2_lab1_stage8(lab, saved):
         )
     with reg3:
         _card(
-            "1 < r < √2",
+            "1 < r < 1,41",
             "zona de transición",
-            "La excitación ya superó fₙ, pero aún no se obtiene una reducción efectiva de la fuerza transmitida."
+            "La frecuencia de la bomba ya superó la frecuencia natural, pero todavía no se obtiene una reducción efectiva de la fuerza transmitida."
         )
     with reg4:
         _card(
-            "r > √2",
+            "r > 1,41",
             "comienza el aislamiento",
-            "En el modelo ideal, la amplitud de fuerza transmitida empieza a ser menor que la fuerza de excitación.",
+            "La frecuencia de excitación es más de 1,41 veces la frecuencia natural. Desde aquí el modelo predice que la fuerza transmitida comienza a ser menor que la fuerza de excitación.",
             tone="green"
         )
+
+    st.caption(
+        "En términos matemáticos, 1,41 corresponde aproximadamente a √2. "
+        "Para interpretar el diseño basta recordar que r debe superar 1,41 para entrar en la región de aislamiento."
+    )
 
     st.markdown("#### De la razón de frecuencias a la fuerza que realmente se transmite")
     st.write(
@@ -8498,29 +8512,89 @@ def _render_course2_lab1_stage8(lab, saved):
     )
     st.latex(r"T_F=\frac{F_{\mathrm{transmitida}}}{F_{\mathrm{excitación}}}")
 
-    st.markdown("#### ¿Y qué es ζ?")
+    st.markdown("#### ¿Qué es ζ y por qué aparece ahora?")
     st.write(
-        "Los sistemas reales pierden energía por fricción y otros mecanismos. "
-        "Esa capacidad de disipar energía se representa mediante la **razón de amortiguamiento**, ζ. "
-        "Tiene especial importancia cerca de la resonancia."
+        "Hasta aquí hemos comparado la **frecuencia de excitación de la bomba** con la "
+        "**frecuencia natural del sistema** mediante la razón r. "
+        "Pero un sistema real no oscila para siempre: parte de la energía se pierde por fricción, "
+        "deformaciones internas y otros mecanismos. Esa capacidad de hacer que las oscilaciones "
+        "vayan disminuyendo con el tiempo se llama **amortiguamiento**."
     )
+
     st.info(
-        "En este laboratorio usamos un valor didáctico de amortiguamiento para explorar el modelo. "
-        "No estamos afirmando que todos los resortes comerciales tengan exactamente ese valor."
+        "**ζ (zeta) no es una frecuencia ni un dato de las RPM de la bomba.** "
+        "Es un parámetro del modelo que representa cuánto se amortiguan las oscilaciones del conjunto."
     )
 
-    zeta=st.slider(
-        "Explora la razón de amortiguamiento ζ",
-        0.01,0.30,0.08,0.01,
-        key=f"{ns}_iso_zeta"
-    )
+    za,zb=st.columns(2)
+    with za:
+        _card(
+            "Resorte",
+            "aporta flexibilidad",
+            "Permite un movimiento controlado entre la bomba y la estructura.",
+            tone="blue"
+        )
+    with zb:
+        _card(
+            "Amortiguamiento ζ",
+            "hace decaer la oscilación",
+            "Representa de forma simplificada la pérdida de energía del sistema.",
+            tone="purple"
+        )
 
     st.write(
-        "Con r y ζ, el modelo masa–resorte–amortiguador permite estimar la transmisibilidad:"
+        "Una analogía sencilla es la suspensión de un automóvil: el resorte permite movimiento, "
+        "mientras que el amortiguamiento evita que el sistema continúe rebotando durante mucho tiempo."
+    )
+
+    zeta=0.06
+
+    st.markdown("##### Valor utilizado en este ejercicio")
+    st.latex(r"\boxed{\zeta=0.06}")
+    st.write(
+        "Para este laboratorio adoptaremos **ζ = 0,06** como un valor didáctico fijo del modelo. "
+        "El alumno no debe seleccionarlo ni memorizarlo. Su función es permitirnos calcular la transmisibilidad "
+        "de una forma consistente durante todo el ejercicio."
+    )
+
+    st.warning(
+        "Este valor no significa que todos los aisladores comerciales tengan exactamente ζ = 0,06. "
+        "En un proyecto real, el amortiguamiento depende del sistema y del tipo de aislador."
+    )
+
+    st.markdown("##### ¿Por qué ζ aparece en la ecuación de transmisibilidad?")
+    st.write(
+        "La fuerza que finalmente llega a la estructura depende principalmente de dos ideas: "
+        "**qué tan separadas están las frecuencias**, representado por r, y "
+        "**cuánto amortiguamiento tiene el sistema**, representado por ζ."
+    )
+
+    rz1,rz2=st.columns(2)
+    with rz1:
+        _card(
+            "r",
+            "separación entre frecuencias",
+            "Compara la frecuencia de excitación de la bomba con la frecuencia natural del montaje.",
+            tone="green"
+        )
+    with rz2:
+        _card(
+            "ζ",
+            "amortiguamiento",
+            "Representa la disipación de energía y es especialmente importante cerca de la resonancia."
+        )
+
+    st.write(
+        "Con r y ζ, el modelo masa–resorte–amortiguador permite estimar la **transmisibilidad de fuerza T_F**:"
     )
     st.latex(
         r"\boxed{T_F="
         r"\sqrt{\frac{1+(2\zeta r)^2}{(1-r^2)^2+(2\zeta r)^2}}}"
+    )
+
+    st.success(
+        "**No necesitas memorizar esta ecuación.** Lo importante es interpretar el resultado: "
+        "T_F nos dirá qué fracción de la amplitud de fuerza dinámica del modelo consigue transmitirse a la estructura."
     )
 
     r_curve=np.linspace(0.10,20.0,900)
@@ -8530,7 +8604,7 @@ def _render_course2_lab1_stage8(lab, saved):
     ax.plot(r_curve,tf_curve)
     ax.axhline(1.0,linestyle="--",linewidth=1)
     ax.axvline(1.0,linestyle="--",linewidth=1)
-    ax.axvline(math.sqrt(2),linestyle="--",linewidth=1)
+    ax.axvline(math.sqrt(2),linestyle="--",linewidth=1)  # r ≈ 1,41: inicio teórico del aislamiento
     ax.set_xlim(0.1,20)
     ax.set_ylim(0,3.0)
     ax.set_xlabel(r"Razón de frecuencias  r = fₑ/fₙ")
@@ -8545,8 +8619,9 @@ def _render_course2_lab1_stage8(lab, saved):
     st.markdown(
         """
         - cerca de **r = 1** aparece la zona de resonancia;
-        - a partir de **r > √2** comienza la región de aislamiento del modelo ideal;
+        - a partir de **r > 1,41** comienza la región de aislamiento del modelo ideal;
         - mientras mayor sea la separación de frecuencias, **T_F tiende a disminuir**;
+        - un T_F pequeño significa que una fracción pequeña de la amplitud de fuerza dinámica llega a la estructura;
         - por eso buscamos que la frecuencia natural del sistema quede bastante por debajo de la frecuencia de excitación de la bomba.
         """
     )
@@ -8744,6 +8819,7 @@ def _render_course2_lab1_stage8(lab, saved):
         fr"={one_op_mm:.1f}\;\mathrm{{mm}}"
     )
 
+    one_transmitted_pct=one_tf*100.0
     e11,e12,e13,e14=st.columns(4)
     with e11:
         _card("Carga real",f"{lb_support:.1f} lb","Lo que entrega nuestra bomba al aislador.",tone="blue")
@@ -8752,7 +8828,13 @@ def _render_course2_lab1_stage8(lab, saved):
     with e13:
         _card("Frecuencia natural",f"{one_fn:.2f} Hz",f"Queda por debajo de {fn_max:.2f} Hz.")
     with e14:
-        _card("Resultado idealizado",f"{one_iso:.1f} %",f"T_F ≈ {one_tf:.3f}.",tone="purple")
+        _card(
+            "Transmisibilidad estimada",
+            f"T_F ≈ {one_tf:.3f}",
+            f"El modelo estima que se transmite aproximadamente {one_transmitted_pct:.1f} % de la amplitud de fuerza dinámica; "
+            f"equivale a una reducción idealizada de {one_iso:.1f} %.",
+            tone="purple"
+        )
 
     if one_op_mm >= delta_min_mm:
         st.success(
@@ -8782,6 +8864,7 @@ def _render_course2_lab1_stage8(lab, saved):
         fr"={four_op_mm:.1f}\;\mathrm{{mm}}"
     )
 
+    four_transmitted_pct=four_tf*100.0
     e21,e22,e23,e24=st.columns(4)
     with e21:
         _card("Carga nominal",f"{four_rated_lb:.0f} lb","Valor para el cual se declaran las 4 pulgadas.")
@@ -8790,11 +8873,23 @@ def _render_course2_lab1_stage8(lab, saved):
     with e23:
         _card("Deflexión estimada",f"{four_op_mm:.1f} mm","No son 101,6 mm porque el resorte está parcialmente cargado.")
     with e24:
-        _card("Resultado idealizado",f"{four_iso:.1f} %",f"T_F ≈ {four_tf:.3f}.",tone="green")
+        _card(
+            "Transmisibilidad estimada",
+            f"T_F ≈ {four_tf:.3f}",
+            f"El modelo estima que se transmite aproximadamente {four_transmitted_pct:.1f} % de la amplitud de fuerza dinámica; "
+            f"equivale a una reducción idealizada de {four_iso:.1f} %.",
+            tone="green"
+        )
 
     st.info(
         "Que este resorte entregue una mayor deflexión estimada **no significa automáticamente que sea la mejor selección**. "
         "También debemos considerar si su rango de carga es apropiado, dimensiones, estabilidad, recorrido disponible y las conexiones de tubería."
+    )
+
+    st.info(
+        "**Cómo interpretar T_F en estas tarjetas:** multiplica T_F por 100 para obtener el porcentaje aproximado "
+        "de amplitud de fuerza dinámica transmitida. Por ejemplo, T_F = 0,006 significa aproximadamente 0,6 % transmitido "
+        "y, por diferencia, una reducción idealizada cercana al 99,4 %."
     )
 
     st.markdown("#### E · Comparación preliminar")
@@ -8808,6 +8903,8 @@ def _render_course2_lab1_stage8(lab, saved):
             "Sí" if one_op_mm>=delta_min_mm else "No",
             f"{one_fn:.2f} Hz",
             f"{one_tf:.3f}",
+            f"{one_transmitted_pct:.1f} %",
+            f"{one_iso:.1f} %",
         ],
         [
             "4 pulgadas",
@@ -8818,6 +8915,8 @@ def _render_course2_lab1_stage8(lab, saved):
             "Sí" if four_op_mm>=delta_min_mm else "No",
             f"{four_fn:.2f} Hz",
             f"{four_tf:.3f}",
+            f"{four_transmitted_pct:.1f} %",
+            f"{four_iso:.1f} %",
         ],
     ],columns=[
         "Familia",
@@ -8828,6 +8927,8 @@ def _render_course2_lab1_stage8(lab, saved):
         f"¿Cumple δ ≥ {delta_min_mm:.0f} mm?",
         "fₙ estimada",
         "T_F estimada",
+        "% transmitido",
+        "Reducción idealizada",
     ])
     st.dataframe(compare_df,hide_index=True,use_container_width=True)
 
@@ -8880,7 +8981,12 @@ def _render_course2_lab1_stage8(lab, saved):
     with spec3:
         _card("fₙ asociada",f"≤ {fn_max:.2f} Hz","Es la frecuencia natural máxima asociada al criterio de 19 mm.",tone="purple")
     with spec4:
-        _card("T_F de referencia",f"≈ {tf_target:.3f}",f"Resultado idealizado del criterio adoptado con el amortiguamiento explorado.")
+        _card(
+            "T_F de referencia",
+            f"≈ {tf_target:.3f}",
+            f"Con ζ = 0,06, equivale aproximadamente a {tf_target*100:.1f} % de amplitud de fuerza transmitida "
+            f"y {target_iso:.1f} % de reducción idealizada."
+        )
 
     st.markdown("#### Qué deberás leer en la ficha técnica")
     cat_fields=pd.DataFrame([
@@ -8974,7 +9080,12 @@ def _render_course2_lab1_stage8(lab, saved):
     with rr3:
         _card("fₙ asociada",f"≤ {req_fn:.2f} Hz","Frecuencia natural máxima asociada al criterio.",tone="purple")
     with rr4:
-        _card("T_F de referencia",f"≈ {req_tf:.3f}",f"El modelo idealizado equivale aproximadamente a {req_iso:.1f} % de reducción.")
+        _card(
+            "T_F de referencia",
+            f"≈ {req_tf:.3f}",
+            f"Significa aproximadamente {req_tf*100:.1f} % de amplitud de fuerza transmitida "
+            f"y {req_iso:.1f} % de reducción idealizada."
+        )
 
     st.markdown("### 4.2 · Elige una familia de deflexión")
     family=st.radio(
