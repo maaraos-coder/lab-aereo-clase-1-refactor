@@ -6147,6 +6147,91 @@ def _render_course2_lab1_stage8(lab, saved):
     role=st.session_state.get("role","Alumno")
     ns=f"{class_id}_s8"
 
+    # ---------------------------------------------------------
+    # CASO ÚNICO · TODA LA ETAPA 8
+    # ---------------------------------------------------------
+    CASE_VERSION="lowara_shos_50_125_75_v1"
+    CASE_MODEL="Lowara SHOS 50-125/75/P"
+    CASE_SERIES="Lowara SHOE–SHOS–SHOD 50-125/75"
+    CASE_RPM=2900.0
+    CASE_F_ROT=CASE_RPM/60.0
+    CASE_BAND_HZ=50.0
+    CASE_Q=48.0
+    CASE_MOTOR_KW=7.5
+    CASE_MASS_KG=79.0
+    CASE_SUPPORTS=4
+    CASE_NPSHR=3.8
+
+    # ---------------------------------------------------------
+    # Restauración de controles guardados del alumno
+    # ---------------------------------------------------------
+    def _json_safe(value):
+        if value is None or isinstance(value,(str,int,float,bool)):
+            return value
+        if isinstance(value,(list,tuple)):
+            out=[]
+            for x in value:
+                sx=_json_safe(x)
+                if sx is not None:
+                    out.append(sx)
+            return out
+        if isinstance(value,dict):
+            out={}
+            for k,v in value.items():
+                sv=_json_safe(v)
+                if sv is not None:
+                    out[str(k)]=sv
+            return out
+        return None
+
+    _action_fragments=(
+        "_save","_check","_add","_clear","_execute","_reset","_validate",
+        "_next","_prev","_back","_run","_guardar","_comprobar"
+    )
+
+    ui_saved=saved.get("stage8_ui_state",{})
+    if isinstance(ui_saved,dict):
+        for _k,_v in ui_saved.items():
+            if (
+                isinstance(_k,str)
+                and _k.startswith(ns)
+                and not any(frag in _k for frag in _action_fragments)
+                and _k not in st.session_state
+            ):
+                st.session_state[_k]=_v
+
+    # Compatibilidad con alumnos que ya habían guardado resultados antes
+    _npsh_old=saved.get("stage8_npsh_case",{})
+    if isinstance(_npsh_old,dict) and _npsh_old.get("validated"):
+        st.session_state.setdefault(f"{ns}_npsha_student",float(_npsh_old.get("npsha_m",0.0)))
+        st.session_state.setdefault(f"{ns}_npshr_student",float(_npsh_old.get("npshr_m",0.0)))
+        st.session_state.setdefault(f"{ns}_npsh_margin_student",float(_npsh_old.get("margin_m",0.0)))
+
+    _diag_old=saved.get("stage8_diagnosis",{})
+    if isinstance(_diag_old,dict):
+        if isinstance(_diag_old.get("mechanisms"),list):
+            st.session_state.setdefault(f"{ns}_diag_mech_final",_diag_old["mechanisms"])
+        if _diag_old.get("dominant_path"):
+            st.session_state.setdefault(f"{ns}_diag_path_final",_diag_old["dominant_path"])
+        if _diag_old.get("reasoning"):
+            st.session_state.setdefault(f"{ns}_diag_reason_final",_diag_old["reasoning"])
+
+    _iso_old=saved.get("stage8_isolator_design",{})
+    if isinstance(_iso_old,dict) and _iso_old.get("saved"):
+        st.session_state.setdefault(f"{ns}_iso_rpm",int(round(_iso_old.get("rpm",CASE_RPM))))
+        st.session_state.setdefault(f"{ns}_iso_mass",int(round(_iso_old.get("mass_kg",CASE_MASS_KG))))
+        st.session_state.setdefault(f"{ns}_iso_supports",int(round(_iso_old.get("supports",CASE_SUPPORTS))))
+        st.session_state.setdefault(f"{ns}_iso_zeta",float(_iso_old.get("zeta",0.08)))
+        st.session_state.setdefault(f"{ns}_iso_component",_iso_old.get("component","1×RPM"))
+        st.session_state.setdefault(f"{ns}_iso_target",int(round(_iso_old.get("target_isolation_pct",90))))
+        st.session_state.setdefault(f"{ns}_iso_delta",float(_iso_old.get("candidate_deflection_mm",50.0)))
+
+    _cat_old=saved.get("stage8_catalog_result",{})
+    if isinstance(_cat_old,dict) and _cat_old.get("model"):
+        st.session_state.setdefault(f"{ns}_cat_model",_cat_old["model"])
+        st.session_state.setdefault(f"{ns}_cat_lb",float(_cat_old.get("rated_load_lb",900.0)))
+        st.session_state.setdefault(f"{ns}_cat_def",float(_cat_old.get("rated_deflection_in",4.0)))
+
     def _asset(name,caption=None):
         p=ASSET_DIR/name
         if p.exists():
@@ -6156,9 +6241,48 @@ def _render_course2_lab1_stage8(lab, saved):
         return False
 
     def _persist():
+        # Guardar también el estado de controles para reconstruir la sesión del alumno.
+        ui_state={}
+        for _k,_v in list(st.session_state.items()):
+            if (
+                isinstance(_k,str)
+                and _k.startswith(ns)
+                and not any(frag in _k for frag in _action_fragments)
+            ):
+                _sv=_json_safe(_v)
+                if _sv is not None:
+                    ui_state[_k]=_sv
+        saved["stage8_ui_state"]=ui_state
         saved["updated_8"]=_now()
         fn=globals().get("_save_future_state_impl") or globals().get("_save_future_state")
         if callable(fn): fn(class_id,saved)
+
+    # Si el alumno tenía respuestas de la versión anterior (1500 RPM), se reinician
+    # solo los datos incompatibles de Etapa 8. Esto ocurre una sola vez.
+    if saved.get("stage8_case_version") != CASE_VERSION:
+        for _old_key in [
+            "stage8_ui_state","stage8_npsh_case","stage8_measurement_plan",
+            "stage8_campaign_executed","stage8_evidence","stage8_diagnosis",
+            "stage8_isolator_design","stage8_catalog_validated",
+            "stage8_catalog_lookup","stage8_catalog_result"
+        ]:
+            saved.pop(_old_key,None)
+        for _ssk in list(st.session_state.keys()):
+            if isinstance(_ssk,str) and _ssk.startswith(ns):
+                st.session_state.pop(_ssk,None)
+        saved["stage8_case_version"]=CASE_VERSION
+        saved["stage8_case"]={
+            "model":CASE_MODEL,
+            "series":CASE_SERIES,
+            "rpm":CASE_RPM,
+            "f_rot_hz":CASE_F_ROT,
+            "spectral_band_hz":CASE_BAND_HZ,
+            "flow_m3_h":CASE_Q,
+            "motor_kw":CASE_MOTOR_KW,
+            "mass_kg":CASE_MASS_KG,
+            "supports":CASE_SUPPORTS,
+        }
+        _persist()
 
     def _card(title,value,text,tone="white"):
         palette={
@@ -6205,8 +6329,8 @@ def _render_course2_lab1_stage8(lab, saved):
 
     header(
         "ETAPA 8 · LABORATORIO 1",
-        "CONTROL DEL RUIDO DE INSTALACIONES Y EQUIPOS",
-        "Diagnosticar mecanismos, identificar caminos y diseñar una estrategia de control combinada.",
+        "DIAGNÓSTICO Y CONTROL VIBROACÚSTICO DE UNA BOMBA CENTRÍFUGA",
+        "Desarrollar un único caso profesional desde el diagnóstico hasta la selección real del aislador.",
         show_overview=False
     )
 
@@ -6216,12 +6340,12 @@ def _render_course2_lab1_stage8(lab, saved):
           <div style="background:#fff;border:1px solid #dbe4ee;border-radius:16px;padding:16px">
             <div style="font-size:.78rem;font-weight:900;color:#2563eb;letter-spacing:.05em">DIAGNOSTICARÁS</div>
             <div style="font-size:1.05rem;font-weight:850;color:#0f172a;margin-top:.35rem">Qué está generando el problema</div>
-            <div style="color:#64748b;margin-top:.35rem">Separarás fuente mecánica, hidráulica, aerodinámica y acústica.</div>
+            <div style="color:#64748b;margin-top:.35rem">Separarás excitación rotacional, condición hidráulica, transmisión estructural, tuberías y radiación aérea.</div>
           </div>
           <div style="background:#fff;border:1px solid #dbe4ee;border-radius:16px;padding:16px">
             <div style="font-size:.78rem;font-weight:900;color:#0f766e;letter-spacing:.05em">COMPROBARÁS</div>
             <div style="font-size:1.05rem;font-weight:850;color:#0f172a;margin-top:.35rem">Por dónde se transmite</div>
-            <div style="color:#64748b;margin-top:.35rem">Usarás mediciones para distinguir estructura, tuberías, ductos y aire.</div>
+            <div style="color:#64748b;margin-top:.35rem">Usarás mediciones para distinguir base/losa, tuberías, campo acústico y condición hidráulica.</div>
           </div>
           <div style="background:#fff;border:1px solid #dbe4ee;border-radius:16px;padding:16px">
             <div style="font-size:.78rem;font-weight:900;color:#9333ea;letter-spacing:.05em">DISEÑARÁS</div>
@@ -6234,13 +6358,33 @@ def _render_course2_lab1_stage8(lab, saved):
     )
 
     st.markdown(
-        """
-        <div style="border:1px solid #cbd5e1;background:#fff;border-radius:18px;padding:15px 18px;margin:.4rem 0 1rem">
-        <b>Pregunta profesional:</b> tengo una instalación que genera ruido o vibración en un edificio.
-        ¿Qué debo medir, qué camino domina y qué conjunto de medidas debo evaluar?
+        f"""
+        <div style="border:1px solid #bfdbfe;background:linear-gradient(90deg,#eff6ff,#ffffff);
+        border-radius:18px;padding:16px 18px;margin:.4rem 0 1rem">
+          <div style="font-size:.78rem;font-weight:900;color:#2563eb;letter-spacing:.06em">CASO ÚNICO · ETAPA 8</div>
+          <div style="font-size:1.25rem;font-weight:900;color:#0f172a;margin:.25rem 0">{CASE_MODEL}</div>
+          <div style="color:#475569;line-height:1.55">
+            La misma bomba se mantiene en <b>Laboratorio A</b>, análisis de <b>NPSH/cavitación</b>,
+            <b>Laboratorio B</b> y selección comercial del <b>Laboratorio C</b>.
+          </div>
         </div>
         """,
         unsafe_allow_html=True
+    )
+
+    case1,case2,case3,case4=st.columns(4)
+    with case1:
+        _card("Velocidad",f"{CASE_RPM:.0f} RPM",f"1×RPM = {CASE_F_ROT:.1f} Hz.",tone="blue")
+    with case2:
+        _card("Motor",f"{CASE_MOTOR_KW:.1f} kW","Potencia nominal asociada al modelo del caso.")
+    with case3:
+        _card("Masa del conjunto",f"{CASE_MASS_KG:.0f} kg","Peso de catálogo de la variante SHOS 50-125/75/P.",tone="green")
+    with case4:
+        _card("Punto hidráulico",f"{CASE_Q:.0f} m³/h","Caudal utilizado para la lectura de NPSHᵣ.",tone="purple")
+
+    st.caption(
+        "Para el dimensionamiento antivibratorio se adoptan **4 apoyos con reparto uniforme** como hipótesis del ejercicio. "
+        "Si se agrega una bancada de inercia, su masa debe sumarse y la carga por apoyo debe recalcularse."
     )
     st.markdown(
         """
@@ -6298,12 +6442,12 @@ def _render_course2_lab1_stage8(lab, saved):
     )
 
     zone=st.radio(
-        "Selecciona dónde quieres actuar",
-        ["Fuente","Camino estructural","Camino aéreo / ducto","Conexiones","Ubicación / recinto"],
+        "Selecciona qué parte del problema quieres revisar",
+        ["Fuente / bomba","Base y losa","Tuberías y conexiones","Radiación aérea","Receptor"],
         horizontal=True,key=f"{ns}_zone"
     )
 
-    if zone=="Fuente":
+    if zone=="Fuente / bomba":
         st.markdown("### Actuar en la fuente · reducir lo que nace en el equipo")
         st.write(
             "Controlar en la fuente significa modificar la **selección, operación o condición física del equipo** para que "
@@ -6325,7 +6469,7 @@ def _render_course2_lab1_stage8(lab, saved):
                   "Lubricación, limpieza de impulsor/ventilador, tensión de correas, rodamientos, filtros, válvulas y aprietes. El deterioro puede aumentar ruido aunque el aislamiento sea correcto.",tone="orange")
             st.markdown("**Ejemplo técnico**")
             st.latex(r"f_{1\times}=\frac{\mathrm{RPM}}{60}")
-            st.caption("1500 RPM → 25 Hz. Cambiar la velocidad cambia también las frecuencias de excitación que pueden coincidir con resonancias.")
+            st.caption(f"{CASE_RPM:.0f} RPM → {CASE_F_ROT:.1f} Hz. En los espectros por bandas, esta componente aparece principalmente en la banda central de {CASE_BAND_HZ:.0f} Hz.")
 
         st.markdown("#### ¿Qué significan estas acciones en la práctica?")
         source_terms=pd.DataFrame([
@@ -6358,29 +6502,32 @@ def _render_course2_lab1_stage8(lab, saved):
             "**reduce lo que genera el equipo** o si **reduce la energía que se transmite después**."
         )
 
-    elif zone=="Camino estructural":
+    elif zone=="Base y losa":
         st.markdown("### Camino estructural · reducir la fuerza que entra al edificio")
         c1,c2,c3=st.columns(3)
         with c1: _card("Aislamiento vibratorio","Resortes / elastómeros","Seleccionar por frecuencia perturbadora, frecuencia natural, deflexión y carga real; no solo por tipo de material.",tone="green")
         with c2: _card("Bancada y soporte","Controlar movimiento","Una base de inercia puede estabilizar conjuntos y distribuir cargas, pero debe integrarse con el sistema de aislación.")
         with c3: _card("Evitar puentes","Revisar montaje","Pernos, anclajes, tuberías, ductos y apoyos rígidos pueden crear caminos paralelos y anular parte del aislamiento.",tone="orange")
 
-    elif zone=="Camino aéreo / ducto":
-        st.markdown("### Camino aéreo / ducto · controlar propagación y regeneración")
+    elif zone=="Radiación aérea":
+        st.markdown("### Radiación aérea · ruido emitido por la bomba y el motor")
         c1,c2,c3=st.columns(3)
-        with c1: _card("Reducir generación por flujo","Velocidad y geometría","Aumentar sección, usar transiciones graduales, evitar codos/compuertas mal ubicados y flujo muy turbulento.",tone="blue")
-        with c2: _card("Atenuar en el camino","Silenciadores / revestimientos","Silenciadores, ductos revestidos y plenums deben seleccionarse por espectro, pérdida de carga y espacio disponible.")
-        with c3: _card("Controlar breakout","Carcasa / ducto","Mejorar cerramientos, masa y tratamiento cuando el ruido rompe a través del ducto o carcasa antes de llegar al terminal.",tone="orange")
+        with c1:
+            _card("Carcasa y motor","emisión directa","Las superficies vibrantes pueden radiar sonido al recinto técnico.",tone="blue")
+        with c2:
+            _card("Campo de la sala","reverberación","La absorción puede reducir acumulación sonora, pero no corrige una fuente mecánica o hidráulica.")
+        with c3:
+            _card("Envolvente","transmisión aérea","Puertas, muros y penetraciones condicionan cuánto sonido aéreo llega a recintos vecinos.",tone="orange")
 
-    elif zone=="Conexiones":
-        st.markdown("### Conexiones · evitar caminos mecánicos paralelos")
+    elif zone=="Tuberías y conexiones":
+        st.markdown("### Tuberías y conexiones · evitar caminos mecánicos paralelos")
         c1,c2,c3=st.columns(3)
-        with c1: _card("Conectores flexibles","Bomba–tubería / ventilador–ducto","Desacoplan movimientos y reducen transferencia mecánica cuando están correctamente dimensionados e instalados.",tone="green")
-        with c2: _card("Soportes resilientes","Tuberías y ductos","Evitan que la vibración del servicio se inyecte directamente en muros, losas o estructuras auxiliares.")
+        with c1: _card("Conectores flexibles","Bomba–tubería","Desacoplan movimientos y reducen transferencia mecánica cuando están correctamente dimensionados e instalados.",tone="green")
+        with c2: _card("Soportes resilientes","Tuberías","Evitan que la vibración del servicio se inyecte directamente en muros, losas o estructuras auxiliares.")
         with c3: _card("Penetraciones","Manguitos y sellos","Una penetración rígida puede puentear el sistema; el detalle constructivo forma parte de la solución.",tone="orange")
 
     else:
-        st.markdown("### Ubicación / recinto · controlar exposición y campo acústico")
+        st.markdown("### Receptor · comprobar qué llega realmente al dormitorio")
         c1,c2,c3=st.columns(3)
         with c1: _card("Ubicación","Alejar receptores sensibles","Separar salas técnicas de dormitorios, estudios u otros espacios críticos reduce la exigencia sobre tratamientos posteriores.",tone="blue")
         with c2: _card("Recinto técnico","Absorción y envolvente","Absorción reduce acumulación reverberante; cerramientos y puertas controlan transmisión aérea hacia espacios vecinos.")
@@ -6393,7 +6540,7 @@ def _render_course2_lab1_stage8(lab, saved):
     st.markdown("## 2 · Laboratorio A — Diagnóstico de una bomba centrífuga")
     st.markdown(
         """
-        **Caso profesional.** Un dormitorio sobre una sala técnica presenta un zumbido nocturno. La bomba trabaja a **1500 RPM**.
+        **Caso profesional.** El dormitorio se encuentra sobre la sala técnica de la misma **Lowara SHOS 50-125/75/P**. La bomba opera a **2900 RPM**.
         Todavía no sabemos si domina un fenómeno rotacional, una condición hidráulica, la transmisión por la base, las tuberías o la radiación aérea.
 
         **Objetivo:** diseñar una campaña, observar los resultados y construir las evidencias tú mismo. La app no entregará la conclusión antes de que analices los datos.
@@ -6426,7 +6573,7 @@ def _render_course2_lab1_stage8(lab, saved):
     )
 
     patt_f=np.array([20,25,31.5,40,50,63,80,100,125,160,200,250,315,400,500,630,800,1000,1250,1600,2000],dtype=float)
-    patt_tonal=np.array([0.12,3.6,0.18,0.15,0.28,0.13,0.12,0.11,0.10,0.09,0.08,0.075,0.07,0.065,0.06,0.055,0.05,0.048,0.045,0.043,0.04])
+    patt_tonal=np.array([0.12,0.15,0.18,0.22,3.6,0.28,0.16,0.13,0.11,0.10,0.09,0.08,0.075,0.070,0.065,0.060,0.055,0.050,0.047,0.044,0.041])
     patt_broad=np.array([0.16,0.22,0.19,0.20,0.23,0.24,0.26,0.30,0.34,0.39,0.46,0.55,0.66,0.78,0.88,0.95,1.02,1.05,1.00,0.93,0.84])
 
     tp1,tp2=st.columns(2)
@@ -6595,7 +6742,7 @@ def _render_course2_lab1_stage8(lab, saved):
     st.markdown("#### Laboratorio NPSH · instalación real + catálogo real")
     st.markdown(
         """
-        **Caso profesional.** Una bomba **Lowara SHOE–SHOS–SHOD 50-125/75** trabaja aproximadamente a
+        **Misma bomba del caso.** La **Lowara SHOS 50-125/75/P** trabaja aproximadamente a
         \(Q=48\ \mathrm{m^3/h}\).
 
         Tu trabajo tiene dos partes:
@@ -6626,7 +6773,7 @@ def _render_course2_lab1_stage8(lab, saved):
         )
         st.link_button(
             "Abrir catálogo oficial Lowara / Xylem",
-            "https://www.xylem.com/siteassets/brand/lowara/resources/manual/cosho-td-en.pdf",
+            "https://www.xylem.com/siteassets/brand/lowara/resources/technical-brochure/19100390u_d_05-2023_co-sho-50hz_uk.pdf",
             use_container_width=True
         )
         st.caption(
@@ -6784,7 +6931,7 @@ def _render_course2_lab1_stage8(lab, saved):
 
         if ok_a and ok_r and ok_m:
             saved["stage8_npsh_case"]={
-                "product":"Lowara SHOE-SHOS-SHOD 50-125/75",
+                "product":CASE_MODEL,
                 "Q_m3_h":48.0,
                 "npsha_m":float(npsha_student),
                 "npshr_m":float(npshr_student),
@@ -7005,27 +7152,31 @@ def _render_course2_lab1_stage8(lab, saved):
         if not isinstance(evidence,dict): evidence={}
 
         freqs=np.array([10,12.5,16,20,25,31.5,40,50,63,80,100,125,160,200],dtype=float)
-        carc=np.array([0.22,0.28,0.34,0.48,7.6,0.72,0.50,0.42,0.34,0.29,0.24,0.20,0.17,0.14])
-        base=np.array([0.12,0.15,0.19,0.29,4.8,0.48,0.33,0.27,0.22,0.19,0.16,0.13,0.11,0.09])
-        pipe_c=np.array([0.10,0.13,0.17,0.25,4.2,0.41,0.31,0.25,0.21,0.17,0.14,0.12,0.10,0.08])
-        pipe_d=np.array([0.08,0.10,0.13,0.20,3.1,0.33,0.25,0.21,0.17,0.14,0.12,0.10,0.08,0.07])
+        carc=np.array([0.22,0.25,0.30,0.36,0.44,0.58,0.82,7.6,0.72,0.50,0.36,0.28,0.21,0.17])
+        base=np.array([0.12,0.14,0.17,0.20,0.24,0.30,0.42,4.8,0.48,0.33,0.25,0.19,0.14,0.11])
+        pipe_c=np.array([0.10,0.12,0.15,0.18,0.22,0.28,0.38,4.2,0.43,0.31,0.24,0.18,0.13,0.10])
+        pipe_d=np.array([0.08,0.10,0.12,0.15,0.19,0.24,0.33,3.1,0.35,0.26,0.20,0.15,0.11,0.08])
         # Nivel en sala técnica: campo próximo a la fuente.
         # Nivel en dormitorio: receptor sensible.
-        lp_room=np.array([56,58,60,64,72,68,65,63,61,59,57,55,53,51],dtype=float)
-        lp=np.array([34,35,36,39,46,41,39,38,37,36,35,34,33,32],dtype=float)
+        lp_room=np.array([55,56,57,58,59,60,62,72,67,63,60,57,54,52],dtype=float)
+        lp=np.array([33,34,35,36,37,38,40,46,42,39,37,35,34,33],dtype=float)
 
         if "Eje del motor" in selected_points:
             st.markdown("#### Medición · RPM / referencia de giro")
             q1,q2=st.columns([1,1.2])
             with q1:
-                _card("Tacómetro","1500 RPM","Dato medido en el eje. Aún debes convertirlo a frecuencia para compararlo con los espectros.",tone="blue")
+                _card("Tacómetro",f"{CASE_RPM:.0f} RPM","Dato medido en el eje de la misma bomba. Convierte RPM a Hz antes de comparar con el espectro.",tone="blue")
             with q2:
                 rpm_calc=st.number_input("Calcula 1×RPM (Hz)",0.0,100.0,0.0,0.5,key=f"{ns}_ev_rpm")
                 if st.button("Registrar evidencia de RPM",key=f"{ns}_ev_rpm_save"):
-                    if abs(rpm_calc-25.0)<=0.5:
-                        evidence["rpm"]="1×RPM = 25 Hz"
+                    if abs(rpm_calc-CASE_F_ROT)<=0.6:
+                        evidence["rpm"]=f"1×RPM = {CASE_F_ROT:.1f} Hz → banda de {CASE_BAND_HZ:.0f} Hz"
                         saved["stage8_evidence"]=evidence; _persist(); st.success("Evidencia registrada.")
                     else: st.warning("Revisa la conversión RPM/60.")
+            st.caption(
+                f"El valor exacto es {CASE_F_ROT:.1f} Hz. Como los gráficos se presentan en bandas preferentes, "
+                f"esa componente se observa principalmente en la banda de {CASE_BAND_HZ:.0f} Hz."
+            )
 
         if "B · Carcasa/motor" in selected_points:
             st.markdown("#### Medición B · Vibración en carcasa")
@@ -7038,14 +7189,14 @@ def _render_course2_lab1_stage8(lab, saved):
             ax.grid(True,alpha=.25)
             ax.set_title('Espectro de vibración · carcasa/motor')
             if evidence.get("carcasa"):
-                ax.axvline(25,linestyle='--',linewidth=1.2)
-                ax.annotate("25 Hz",xy=(25,7.6),xytext=(31.5,4.8),arrowprops=dict(arrowstyle="->"))
+                ax.axvline(CASE_BAND_HZ,linestyle='--',linewidth=1.2)
+                ax.annotate("50 Hz",xy=(50,7.6),xytext=(63,4.8),arrowprops=dict(arrowstyle="->"))
             fig.tight_layout()
             st.pyplot(fig,use_container_width=True); plt.close(fig)
             dom=st.number_input("¿Cuál es la frecuencia dominante del gráfico? (Hz)",0.0,200.0,0.0,1.0,key=f"{ns}_ev_carc_f")
             if st.button("Registrar evidencia de carcasa",key=f"{ns}_ev_carc_save"):
-                if abs(dom-25)<=1:
-                    evidence["carcasa"]="Pico dominante de vibración en carcasa a 25 Hz"
+                if abs(dom-CASE_BAND_HZ)<=1:
+                    evidence["carcasa"]="Pico dominante de vibración en carcasa en la banda de 50 Hz"
                     saved["stage8_evidence"]=evidence; _persist(); st.success("Evidencia registrada.")
                 else: st.warning("Observa nuevamente el máximo del espectro.")
 
@@ -7060,14 +7211,14 @@ def _render_course2_lab1_stage8(lab, saved):
             ax.grid(True,alpha=.25)
             ax.set_title('Espectro de vibración · base/apoyo')
             if evidence.get("estructura"):
-                ax.axvline(25,linestyle='--',linewidth=1.2)
-                ax.annotate("25 Hz",xy=(25,4.8),xytext=(31.5,3.0),arrowprops=dict(arrowstyle="->"))
+                ax.axvline(CASE_BAND_HZ,linestyle='--',linewidth=1.2)
+                ax.annotate("50 Hz",xy=(50,4.8),xytext=(63,3.0),arrowprops=dict(arrowstyle="->"))
             fig.tight_layout()
             st.pyplot(fig,use_container_width=True); plt.close(fig)
             base_interp=st.radio("¿Qué evidencia aporta que la misma componente aparezca en la base?",["La vibración queda confinada a la máquina","Existe evidencia de transmisión hacia la estructura","Demuestra cavitación","Demuestra propagación exclusivamente aérea"],key=f"{ns}_ev_base_q")
             if st.button("Registrar evidencia estructural",key=f"{ns}_ev_base_save"):
                 if base_interp=="Existe evidencia de transmisión hacia la estructura":
-                    evidence["estructura"]="Componente de 25 Hz presente en base/apoyo: camino estructural plausible"
+                    evidence["estructura"]="Componente de 50 Hz presente en base/apoyo: camino estructural plausible"
                     saved["stage8_evidence"]=evidence; _persist(); st.success("Evidencia registrada.")
                 else: st.warning("La presencia de la componente en el apoyo indica que la fuerza dinámica está entrando al soporte.")
 
@@ -7084,15 +7235,15 @@ def _render_course2_lab1_stage8(lab, saved):
             ax.legend()
             ax.set_title('Espectro de vibración · tuberías')
             if evidence.get("tuberias"):
-                ax.axvline(25,linestyle='--',linewidth=1.2)
-                ax.annotate("25 Hz",xy=(25,4.2),xytext=(31.5,2.6),arrowprops=dict(arrowstyle="->"))
+                ax.axvline(CASE_BAND_HZ,linestyle='--',linewidth=1.2)
+                ax.annotate("50 Hz",xy=(50,4.2),xytext=(63,2.6),arrowprops=dict(arrowstyle="->"))
             fig.tight_layout()
             st.pyplot(fig,use_container_width=True); plt.close(fig)
             if {"C · Tubería cercana","D · Tubería alejada"}.issubset(selected_points):
-                pipe_interp=st.radio("¿Qué observas al comparar C y D?",["La componente desaparece completamente","La componente de 25 Hz disminuye pero persiste a distancia","La frecuencia cambia a 50 Hz","No hay información útil"],key=f"{ns}_ev_pipe_q")
+                pipe_interp=st.radio("¿Qué observas al comparar C y D?",["La componente desaparece completamente","La componente de 50 Hz disminuye pero persiste a distancia","La frecuencia cambia a 50 Hz","No hay información útil"],key=f"{ns}_ev_pipe_q")
                 if st.button("Registrar evidencia por tuberías",key=f"{ns}_ev_pipe_save"):
-                    if pipe_interp=="La componente de 25 Hz disminuye pero persiste a distancia":
-                        evidence["tuberias"]="25 Hz persiste desde C hasta D: tuberías constituyen un camino mecánico plausible"
+                    if pipe_interp=="La componente de 50 Hz disminuye pero persiste a distancia":
+                        evidence["tuberias"]="50 Hz persiste desde C hasta D: tuberías constituyen un camino mecánico plausible"
                         saved["stage8_evidence"]=evidence; _persist(); st.success("Evidencia registrada.")
                     else: st.warning("Compara la posición del pico y su amplitud en ambos puntos.")
             else:
@@ -7112,8 +7263,8 @@ def _render_course2_lab1_stage8(lab, saved):
             ax.grid(True,alpha=.25)
             ax.set_title('Espectro acústico · sala técnica')
             if evidence.get("aereo_sala"):
-                ax.axvline(25,linestyle='--',linewidth=1.2)
-                ax.annotate("25 Hz",xy=(25,72),xytext=(31.5,69),arrowprops=dict(arrowstyle="->"))
+                ax.axvline(CASE_BAND_HZ,linestyle='--',linewidth=1.2)
+                ax.annotate("50 Hz",xy=(50,72),xytext=(63,69),arrowprops=dict(arrowstyle="->"))
             fig.tight_layout()
             st.pyplot(fig,use_container_width=True); plt.close(fig)
 
@@ -7133,8 +7284,8 @@ def _render_course2_lab1_stage8(lab, saved):
                 key=f"{ns}_ev_room_q"
             )
             if st.button("Registrar evidencia acústica en sala",key=f"{ns}_ev_room_save"):
-                if abs(room_f-25)<=1 and room_interp=="Existe una componente acústica importante cerca de la fuente":
-                    evidence["aereo_sala"]="Componente acústica destacada a 25 Hz en la sala técnica"
+                if abs(room_f-CASE_BAND_HZ)<=1 and room_interp=="Existe una componente acústica importante cerca de la fuente":
+                    evidence["aereo_sala"]="Componente acústica destacada en la banda de 50 Hz en la sala técnica"
                     saved["stage8_evidence"]=evidence
                     _persist()
                     st.success("Evidencia registrada.")
@@ -7154,14 +7305,14 @@ def _render_course2_lab1_stage8(lab, saved):
             ax.grid(True,alpha=.25)
             ax.set_title('Espectro acústico · receptor')
             if evidence.get("receptor"):
-                ax.axvline(25,linestyle='--',linewidth=1.2)
-                ax.annotate("25 Hz",xy=(25,46),xytext=(31.5,44),arrowprops=dict(arrowstyle="->"))
+                ax.axvline(CASE_BAND_HZ,linestyle='--',linewidth=1.2)
+                ax.annotate("50 Hz",xy=(50,46),xytext=(63,44),arrowprops=dict(arrowstyle="->"))
             fig.tight_layout()
             st.pyplot(fig,use_container_width=True); plt.close(fig)
             recv_f=st.number_input("¿En qué frecuencia aparece la componente más destacada? (Hz)",0.0,200.0,0.0,1.0,key=f"{ns}_ev_recv_f")
             if st.button("Registrar evidencia en receptor",key=f"{ns}_ev_recv_save"):
-                if abs(recv_f-25)<=1:
-                    evidence["receptor"]="Componente acústica destacada a 25 Hz en el dormitorio"
+                if abs(recv_f-CASE_BAND_HZ)<=1:
+                    evidence["receptor"]="Componente acústica destacada en la banda de 50 Hz en el dormitorio"
                     saved["stage8_evidence"]=evidence; _persist(); st.success("Evidencia registrada.")
                 else: st.warning("Revisa el máximo local más relevante del espectro mostrado.")
 
@@ -7186,14 +7337,14 @@ def _render_course2_lab1_stage8(lab, saved):
             compare_air=st.radio(
                 "¿Qué conclusión es válida al observar ambos espectros?",
                 [
-                    "La componente de 25 Hz aparece en ambos, lo que aporta correspondencia espectral",
+                    "La componente de 50 Hz aparece en ambos, lo que aporta correspondencia espectral",
                     "La diferencia entre curvas es directamente el aislamiento acústico del edificio",
                     "La coincidencia demuestra que el único camino es aéreo",
                     "Como los niveles son distintos, no existe relación entre fuente y receptor",
                 ],
                 key=f"{ns}_ev_air_compare"
             )
-            if compare_air=="La componente de 25 Hz aparece en ambos, lo que aporta correspondencia espectral":
+            if compare_air=="La componente de 50 Hz aparece en ambos, lo que aporta correspondencia espectral":
                 st.success(
                     "Correcto. La correspondencia espectral es evidencia útil, pero todavía debe compararse con la evidencia estructural "
                     "y de tuberías antes de decidir cuál camino domina."
@@ -7257,10 +7408,10 @@ def _render_course2_lab1_stage8(lab, saved):
             )
 
             cav_f=np.array([20,25,31.5,40,50,63,80,100,125,160,200,250,315,400,500,630,800,1000,1250,1600,2000,2500,3150,4000,5000],dtype=float)
-            vib_ref=np.array([0.16,2.6,0.24,0.18,0.31,0.16,0.14,0.13,0.12,0.11,0.10,0.095,0.09,0.085,0.08,0.075,0.070,0.066,0.063,0.060,0.057,0.054,0.052,0.050,0.048])
-            vib_low=np.array([0.20,2.8,0.29,0.25,0.36,0.27,0.28,0.30,0.34,0.40,0.48,0.58,0.72,0.86,1.02,1.14,1.22,1.28,1.25,1.18,1.10,1.02,0.93,0.84,0.76])
-            noise_ref=np.array([48,57,50,48,52,47,46,45,44,43,42,42,41,41,40,40,39,39,38,38,37,37,36,36,35],dtype=float)
-            noise_low=np.array([50,59,52,51,54,51,52,53,54,56,58,60,62,64,66,68,69,70,70,69,68,67,65,63,61],dtype=float)
+            vib_ref=np.array([0.16,0.18,0.20,0.24,2.6,0.31,0.20,0.16,0.14,0.13,0.12,0.11,0.10,0.095,0.09,0.085,0.080,0.075,0.070,0.066,0.062,0.058,0.055,0.052,0.050])
+            vib_low=np.array([0.20,0.23,0.26,0.31,2.8,0.42,0.34,0.36,0.40,0.46,0.54,0.64,0.76,0.90,1.04,1.16,1.24,1.30,1.27,1.20,1.12,1.04,0.95,0.86,0.78])
+            noise_ref=np.array([47,48,49,50,57,52,48,46,45,44,43,42,42,41,41,40,40,39,39,38,38,37,37,36,36],dtype=float)
+            noise_low=np.array([49,50,51,52,59,55,54,55,56,58,60,62,64,66,68,69,70,71,71,70,69,68,66,64,62],dtype=float)
 
             bw1,bw2=st.columns(2)
             with bw1:
@@ -7390,156 +7541,733 @@ def _render_course2_lab1_stage8(lab, saved):
                 saved["stage8_diagnosis"]={"plan":plan,"evidence":evidence,"mechanisms":mech,"dominant_path":dom_path,"reasoning":reasoning.strip()}
                 _persist(); st.success("Diagnóstico preliminar guardado.")
     # =========================================================
-    # 3 · LAB B: AISLAMIENTO VIBRATORIO DE LA BOMBA
+    # 3 · LAB B: DIMENSIONAMIENTO ANTIVIBRATORIO
     # =========================================================
-    st.markdown("## 3 · Laboratorio B — Diseña el aislamiento vibratorio de la bomba")
+    st.markdown("## 3 · Laboratorio B — De la vibración de la bomba a la especificación del aislador")
+
     st.markdown(
         """
-        **Caso profesional.** Debes especificar el aislamiento de una bomba sobre una losa estructural.
-        Conoces RPM, masa y número de apoyos, pero todavía no sabes qué deflexión necesita el aislador.
+        **Problema de ingeniería.** El diagnóstico confirmó que parte de la fuerza dinámica generada por la bomba
+        entra a la estructura a través de su base. Ahora debemos transformar esa información en una
+        **especificación técnica que pueda buscarse en un catálogo real**.
 
-        **Tu tarea:** escoger una deflexión, calcular \(f_n\), evaluar la razón \(r=f_e/f_n\),
-        estimar la transmisibilidad y comprobar cuánto carga recibe cada apoyo.
+        Al terminar este laboratorio no elegirás todavía una marca. Obtendrás cuatro requerimientos:
+
+        \[
+        \boxed{\text{carga por apoyo}}
+        \qquad
+        \boxed{\text{deflexión requerida}}
+        \qquad
+        \boxed{f_n\text{ máxima}}
+        \qquad
+        \boxed{T_F\text{ máxima}}
+        \]
+
+        Esos cuatro valores serán la entrada del Laboratorio C.
         """
     )
-    _asset("curso2_lab1_etapa8_aislamiento_resonancia.webp")
 
-    st.latex(r"f_e=\frac{\mathrm{RPM}}{60}")
-    st.latex(r"f_n=\frac{1}{2\pi}\sqrt{\frac{g}{\delta}}")
-    st.latex(r"r=\frac{f_e}{f_n}")
-    st.latex(r"T_F=\sqrt{\frac{1+(2\zeta r)^2}{(1-r^2)^2+(2\zeta r)^2}}")
+    _asset(
+        "curso2_lab1_etapa8_aislamiento_resonancia.webp",
+        "Conjunto bomba–motor sobre bancada y aisladores. El aislador soporta el peso estático y reduce la transmisión de fuerza dinámica."
+    )
 
-    ic1,ic2,ic3=st.columns(3)
-    with ic1:
-        rpm=st.slider("Velocidad (RPM)",300,3600,1500,50,key=f"{ns}_iso_rpm")
-        mass=st.slider("Masa total (kg)",200,5000,1600,50,key=f"{ns}_iso_mass")
-    with ic2:
-        supports=st.slider("Número de apoyos",2,10,4,1,key=f"{ns}_iso_supports")
-        delta=st.slider("Deflexión estática δ (mm)",3.0,120.0,50.0,1.0,key=f"{ns}_iso_delta")
-    with ic3:
-        zeta=st.slider("Amortiguamiento ζ",.01,.30,.08,.01,key=f"{ns}_iso_zeta")
-        lowest_component=st.selectbox("Componente perturbadora del ejercicio",["1×RPM","2×RPM","Paso de álabes (ejemplo 6×RPM)"],key=f"{ns}_iso_component")
+    # ---------------------------------------------------------
+    # RUTA VISIBLE
+    # ---------------------------------------------------------
+    st.markdown("### 3.0 · Ruta técnica de selección")
+    route = [
+        ("01","Máquina","RPM · masa · componente perturbadora"),
+        ("02","Carga","kg y lb que recibe cada apoyo"),
+        ("03","Dinámica","fₙ · deflexión · razón r"),
+        ("04","Desempeño","T_F · porcentaje de aislamiento"),
+        ("05","Especificación","carga + δ + fₙ + T_F"),
+        ("06","Catálogo","producto real que cumple lo calculado"),
+    ]
+    rc=st.columns(6)
+    for col,(num,title,text) in zip(rc,route):
+        with col:
+            st.markdown(
+                f"""<div style="border:1px solid #dbe4ee;border-radius:14px;padding:11px 10px;
+                min-height:132px;background:#fff">
+                <div style="font-size:.72rem;font-weight:900;color:#2563eb">{num}</div>
+                <div style="font-weight:900;color:#0f172a;margin:.2rem 0">{title}</div>
+                <div style="font-size:.82rem;color:#64748b;line-height:1.35">{text}</div>
+                </div>""",
+                unsafe_allow_html=True
+            )
 
-    mult={"1×RPM":1.0,"2×RPM":2.0,"Paso de álabes (ejemplo 6×RPM)":6.0}[lowest_component]
-    fe=fe_rpm(rpm)*mult
-    fn=fn_delta(delta)
-    r=fe/max(fn,1e-9)
-    tf=tf_force(r,zeta)
+    # ---------------------------------------------------------
+    # 3.1 CONCEPTO FÍSICO
+    # ---------------------------------------------------------
+    st.markdown("### 3.1 · ¿Qué hace realmente un aislador antivibratorio?")
+    st.write(
+        "La bomba tiene que seguir soportada: el aislador **no elimina el peso**. "
+        "Su función dinámica es permitir un movimiento controlado del conjunto para que una fracción menor "
+        "de la fuerza vibratoria llegue a la losa."
+    )
+
+    c1,c2=st.columns(2)
+    with c1:
+        _card(
+            "Carga estática",
+            r"$W=mg$",
+            "Es el peso del conjunto que el resorte debe sostener permanentemente. Determina cuánto se comprime el aislador.",
+            tone="blue"
+        )
+    with c2:
+        _card(
+            "Fuerza dinámica",
+            r"$F(t)$",
+            "Es la componente variable asociada al funcionamiento de la máquina. El objetivo es reducir cuánto de ella llega a la estructura.",
+            tone="purple"
+        )
+
+    st.latex(r"\boxed{T_F=\frac{F_{\mathrm{transmitida}}}{F_{\mathrm{excitación}}}}")
+    st.write(
+        "La **transmisibilidad de fuerza \(T_F\)** es el indicador principal de este modelo. "
+        "Si \(T_F=0.10\), la amplitud de fuerza transmitida es aproximadamente el 10 % de la fuerza dinámica de excitación considerada."
+    )
+
+    st.info(
+        "**Primer criterio profesional:** un aislador debe cumplir simultáneamente una condición **estática** "
+        "(soportar la carga) y una condición **dinámica** (alcanzar la deflexión/frecuencia natural necesaria)."
+    )
+
+    # ---------------------------------------------------------
+    # 3.2 DATOS DE LA MÁQUINA
+    # ---------------------------------------------------------
+    st.markdown("### 3.2 · Recuperamos los datos de la misma bomba del Laboratorio A")
+    st.write(
+        "El Laboratorio B **no parte de una bomba nueva**. Recuperamos los datos del caso que ya diagnosticamos."
+    )
+
+    rpm=CASE_RPM
+    mass=CASE_MASS_KG
+    supports=CASE_SUPPORTS
+    component="1×RPM"
+    multiplier=1.0
+    frot=CASE_F_ROT
+    fe=CASE_F_ROT
+
+    i1,i2,i3,i4=st.columns(4)
+    with i1:
+        _card("Velocidad",f"{rpm:.0f} RPM",f"1×RPM = {CASE_F_ROT:.1f} Hz.",tone="blue")
+    with i2:
+        _card("Masa",f"{mass:.0f} kg","Peso de catálogo de la misma variante SHOS.")
+    with i3:
+        _card("Apoyos",f"{supports}","Hipótesis del ejercicio: reparto uniforme.",tone="green")
+    with i4:
+        _card("Componente de diseño","1×RPM","La campaña A la relacionó con la banda de 50 Hz.",tone="purple")
+
+    st.warning(
+        "Los **79 kg** corresponden al conjunto catalogado. Si el proyecto incluye una bancada de inercia adicional, "
+        "debes sumar su masa y recalcular la carga de cada aislador."
+    )
+
+    st.markdown("#### A · De RPM a frecuencia de excitación")
+    st.latex(r"f_{\mathrm{giro}}=\frac{\mathrm{RPM}}{60}")
+    st.latex(
+        fr"f_{{\mathrm{{giro}}}}=\frac{{{rpm}}}{{60}}={frot:.2f}\;\mathrm{{Hz}}"
+    )
+    if multiplier != 1:
+        st.latex(
+            fr"f_e={multiplier:g}\,f_{{\mathrm{{giro}}}}={fe:.2f}\;\mathrm{{Hz}}"
+        )
+    else:
+        st.latex(fr"f_e=f_{{\mathrm{{giro}}}}={fe:.2f}\;\mathrm{{Hz}}")
+
+    fd1,fd2,fd3=st.columns(3)
+    with fd1:
+        _card("1×RPM","una repetición por vuelta","Referencia básica para componentes asociadas al giro.")
+    with fd2:
+        _card("2×RPM","dos repeticiones por vuelta","Puede aparecer en otros mecanismos periódicos.")
+    with fd3:
+        _card("Paso de álabes",r"$N\,f_{\mathrm{giro}}$","Depende del número de álabes y de la velocidad de giro.",tone="blue")
+
+    st.warning(
+        "Para aislamiento se debe comprobar la **frecuencia perturbadora relevante más baja**. "
+        "Una frecuencia más baja suele exigir una frecuencia natural todavía menor y, por tanto, mayor deflexión."
+    )
+
+    # ---------------------------------------------------------
+    # 3.3 CARGA POR APOYO
+    # ---------------------------------------------------------
+    st.markdown("### 3.3 · Carga que debe soportar cada aislador")
     kg_support=mass/supports
     force_support=kg_support*9.81
+    lb_support=kg_support*2.2046226218
 
-    m1,m2,m3,m4,m5=st.columns(5)
-    with m1: _card("fₑ",f"{fe:.2f} Hz","Frecuencia perturbadora considerada.",tone="blue")
-    with m2: _card("fₙ",f"{fn:.2f} Hz","Frecuencia natural estimada.")
-    with m3: _card("r=fₑ/fₙ",f"{r:.2f}","r≈1: resonancia; r>√2: comienza aislamiento ideal.",tone="purple")
-    with m4: _card("T_F",f"{tf:.3f}","Fracción de fuerza transmitida en el modelo.")
-    with m5: _card("Carga/apoyo",f"{kg_support:.0f} kg",f"≈ {force_support:.0f} N por apoyo.",tone="green")
-
-    if r<=1.05:
-        st.error("La excitación está cerca o por debajo de la frecuencia natural: no es una condición de aislamiento satisfactoria.")
-    elif r<=math.sqrt(2):
-        st.warning("La excitación ya supera fₙ, pero todavía no estás claramente en la región ideal de aislamiento.")
-    elif tf<1:
-        st.success(f"Región de aislamiento idealizada. Reducción de fuerza transmitida ≈ {(1-tf)*100:.1f} %.")
-    st.caption(
-        "En una instalación real la estructura soporte puede interactuar con el equipo aislado; "
-        "en pisos flexibles debe revisarse también la dinámica de la losa, no solo el aislador."
+    st.latex(r"m_i=\frac{m_{\mathrm{total}}}{N}")
+    st.latex(
+        fr"m_i=\frac{{{mass}}}{{{supports}}}={kg_support:.1f}\;\mathrm{{kg/apoyo}}"
+    )
+    st.latex(
+        fr"W_i=m_i g={kg_support:.1f}\cdot9.81={force_support:.0f}\;\mathrm{{N}}"
     )
 
-    # =========================================================
-    # 4 · LAB C: CATÁLOGO REAL
-    # =========================================================
-    st.markdown("## 4 · Laboratorio C — Verifica el aislamiento con un catálogo real")
-    st.markdown(
-        """
-        El Laboratorio B te entregó un **requerimiento dinámico**. Ahora debes comprobar si existe un producto comercial
-        capaz de trabajar con la carga por apoyo y la deflexión requerida.
+    lc1,lc2,lc3=st.columns(3)
+    with lc1:
+        _card("Masa por apoyo",f"{kg_support:.1f} kg","Distribución uniforme adoptada en el ejercicio.",tone="green")
+    with lc2:
+        _card("Peso por apoyo",f"{force_support:.0f} N","Fuerza estática vertical sobre cada aislador.")
+    with lc3:
+        _card("Carga para catálogo",f"{lb_support:.0f} lb","Unidad usada por el catálogo Kinetics FDS.",tone="blue")
 
-        **Caso:** bomba de 1600 kg, 1500 RPM y cuatro apoyos. Se adopta distribución uniforme únicamente para este ejercicio.
-        La selección final debe quedar respaldada por una ficha técnica real.
-        """
-    )
-    st.markdown(
-        """
-        [Abrir catálogo oficial Kinetics FDS — 4 in](https://kineticsnoise.com/files/content/downloads/submittal_drawings/pdf/01/01-20fds/S-01-20-41.pdf)
-
-        [Ver página oficial Kinetics FDS](https://kineticsnoise.com/fds/free-standing-spring-isolator)
-        """
-    )
     st.info(
-        "La actividad consiste en **leer el catálogo**. La app no mostrará de inmediato la carga nominal del modelo."
+        "En una instalación real no se debe asumir automáticamente que todos los apoyos reciben la misma carga. "
+        "La posición del centro de gravedad y la bancada pueden producir cargas diferentes."
     )
 
-    fds={
-        "FDS 4-100":(100,4.00),
-        "FDS 4-250":(250,4.00),
-        "FDS 4-500":(500,4.00),
-        "FDS 4-750":(750,4.00),
-        "FDS 4-1000":(1000,4.00),
-        "FDS 4-1250":(1250,4.00),
-        "FDS 4-1600":(1600,4.00),
+    # ---------------------------------------------------------
+    # 3.4 RIGIDEZ, DEFLEXIÓN Y FRECUENCIA NATURAL
+    # ---------------------------------------------------------
+    st.markdown("### 3.4 · ¿Por qué el catálogo habla de carga y deflexión?")
+    st.write(
+        "Un resorte se caracteriza físicamente por su rigidez. Pero muchos catálogos entregan una **carga nominal** "
+        "y la **deflexión que produce esa carga**. Con esos dos datos podemos interpretar su rigidez."
+    )
+
+    st.latex(r"\boxed{k_i\approx\frac{F_i}{\delta_i}}")
+    st.write(
+        "Para \(N\) resortes iguales trabajando en paralelo, la rigidez vertical total es aproximadamente:"
+    )
+    st.latex(r"k_{\mathrm{tot}}\approx N\,k_i")
+    st.write("La frecuencia natural del conjunto aislado es:")
+    st.latex(r"\boxed{f_n=\frac{1}{2\pi}\sqrt{\frac{k_{\mathrm{tot}}}{m}}}")
+
+    st.markdown("#### Relación directa con la deflexión estática")
+    st.write(
+        "Como en equilibrio estático \(k_{\mathrm{tot}}\delta\approx mg\), podemos sustituir la rigidez y obtener una relación muy útil:"
+    )
+    st.latex(r"\boxed{f_n=\frac{1}{2\pi}\sqrt{\frac{g}{\delta}}}")
+    st.write(
+        "Esta ecuación explica por qué la **deflexión** es un parámetro fundamental de catálogo: "
+        "a mayor deflexión de trabajo, menor frecuencia natural del sistema."
+    )
+
+    ex1,ex2=st.columns(2)
+    with ex1:
+        _card(
+            "Resorte más rígido",
+            "menor deflexión",
+            "Produce una frecuencia natural más alta y puede entregar menor separación respecto de la excitación.",
+            tone="orange"
+        )
+    with ex2:
+        _card(
+            "Resorte más flexible",
+            "mayor deflexión",
+            "Produce una frecuencia natural más baja y normalmente aumenta la separación dinámica.",
+            tone="green"
+        )
+
+    # ---------------------------------------------------------
+    # 3.5 RAZÓN DE FRECUENCIAS Y TRANSMISIBILIDAD
+    # ---------------------------------------------------------
+    st.markdown("### 3.5 · ¿Cuándo comienza realmente el aislamiento?")
+    st.latex(r"\boxed{r=\frac{f_e}{f_n}}")
+    st.write(
+        "La razón \(r\) compara la frecuencia que genera la máquina con la frecuencia natural del sistema aislado."
+    )
+
+    reg1,reg2,reg3,reg4=st.columns(4)
+    with reg1:
+        _card(r"$r<1$","por debajo de resonancia","La excitación está por debajo de la frecuencia natural.")
+    with reg2:
+        _card(r"$r\approx1$","resonancia","La respuesta puede amplificarse. Es la región que queremos evitar.",tone="orange")
+    with reg3:
+        _card(r"$1<r<\sqrt{2}$","transición","Superar fₙ no significa todavía que exista aislamiento efectivo.")
+    with reg4:
+        _card(r"$r>\sqrt{2}$","región de aislamiento","En el modelo ideal comienza la reducción de fuerza transmitida.",tone="green")
+
+    st.latex(
+        r"\boxed{T_F="
+        r"\sqrt{\frac{1+(2\zeta r)^2}{(1-r^2)^2+(2\zeta r)^2}}}"
+    )
+
+    zeta=st.slider(
+        "Razón de amortiguamiento ζ",0.01,0.30,0.08,0.01,
+        key=f"{ns}_iso_zeta"
+    )
+
+    # Curva de transmisibilidad para entender el diseño
+    r_curve=np.linspace(0.10,8.0,500)
+    tf_curve=np.array([tf_force(rr,zeta) for rr in r_curve])
+
+    fig,ax=plt.subplots(figsize=(9.2,4.0))
+    ax.plot(r_curve,tf_curve)
+    ax.axhline(1.0,linestyle="--",linewidth=1)
+    ax.axvline(1.0,linestyle="--",linewidth=1)
+    ax.axvline(math.sqrt(2),linestyle="--",linewidth=1)
+    ax.set_xlim(0.1,8)
+    ax.set_ylim(0,3.0)
+    ax.set_xlabel(r"Razón de frecuencias  r = fₑ/fₙ")
+    ax.set_ylabel(r"Transmisibilidad de fuerza  T_F")
+    ax.set_title("Transmisibilidad del sistema masa–resorte–amortiguador")
+    ax.grid(True,alpha=.22)
+    fig.tight_layout()
+    st.pyplot(fig,use_container_width=True)
+    plt.close(fig)
+
+    st.caption(
+        "La curva muestra por qué no basta con elegir un resorte que 'se vea blando': "
+        "la selección debe producir una razón de frecuencias suficiente en el punto real de operación."
+    )
+
+    # ---------------------------------------------------------
+    # 3.6 OBJETIVO DE DISEÑO
+    # ---------------------------------------------------------
+    st.markdown("### 3.6 · Convierte el objetivo de aislamiento en una deflexión requerida")
+    target_iso=st.slider(
+        "Aislamiento objetivo de fuerza (%)",90,99,98,1,
+        key=f"{ns}_iso_target"
+    )
+    tf_target=max(1.0-target_iso/100.0,0.001)
+
+    st.latex(
+        fr"T_{{F,\mathrm{{objetivo}}}}=1-\frac{{{target_iso}}}{{100}}={tf_target:.3f}"
+    )
+
+    def _r_required(target_tf,z):
+        lo=math.sqrt(2.0)+1e-5
+        hi=100.0
+        if tf_force(hi,z)>target_tf:
+            return hi
+        for _ in range(90):
+            mid=(lo+hi)/2
+            if tf_force(mid,z)>target_tf:
+                lo=mid
+            else:
+                hi=mid
+        return hi
+
+    r_req=_r_required(tf_target,zeta)
+    fn_max=fe/r_req
+    delta_min_m=9.81/max((2*math.pi*fn_max)**2,1e-12)
+    delta_min_mm=delta_min_m*1000.0
+
+    dr1,dr2,dr3,dr4=st.columns(4)
+    with dr1:
+        _card("Objetivo",f"{target_iso:.0f} %",f"T_F ≤ {tf_target:.3f}.",tone="green")
+    with dr2:
+        _card("r mínima",f"≥ {r_req:.2f}","Separación dinámica necesaria.")
+    with dr3:
+        _card("fₙ máxima",f"≤ {fn_max:.2f} Hz","La frecuencia natural no debería superar este valor.",tone="purple")
+    with dr4:
+        _card("δ mínima",f"≥ {delta_min_mm:.1f} mm","Deflexión estática requerida por el modelo.",tone="blue")
+
+    st.markdown("#### Sustitución del caso")
+    st.latex(
+        fr"f_{{n,\max}}=\frac{{f_e}}{{r_{{\min}}}}"
+        fr"=\frac{{{fe:.2f}}}{{{r_req:.2f}}}"
+        fr"={fn_max:.2f}\;\mathrm{{Hz}}"
+    )
+    st.latex(
+        fr"\delta_{{\min}}="
+        fr"\frac{{g}}{{(2\pi f_{{n,\max}})^2}}"
+        fr"={delta_min_mm:.1f}\;\mathrm{{mm}}"
+    )
+
+    # ---------------------------------------------------------
+    # 3.7 PREVISUALIZACIÓN DE FAMILIAS DE CATÁLOGO
+    # ---------------------------------------------------------
+    st.markdown("### 3.7 · ¿Qué tipo de resorte deberíamos buscar?")
+    st.write(
+        "Antes de abrir el catálogo podemos comparar clases de deflexión. "
+        "La deflexión nominal de una familia indica la compresión aproximada a su carga nominal."
+    )
+
+    family_examples=[
+        ("1 in",25.4),
+        ("4 in",101.6),
+    ]
+    fc=st.columns(2)
+    for col,(label,dmm) in zip(fc,family_examples):
+        fam_fn=fn_delta(dmm)
+        fam_r=fe/max(fam_fn,1e-9)
+        fam_tf=tf_force(fam_r,zeta)
+        fam_iso=max(0.0,(1-fam_tf)*100)
+        with col:
+            _card(
+                f"Familia {label}",
+                f"δ nominal ≈ {dmm:.1f} mm",
+                f"Si trabajara cerca de su deflexión nominal: fₙ≈{fam_fn:.2f} Hz · "
+                f"aislamiento idealizado≈{fam_iso:.1f} % a {fe:.1f} Hz.",
+                tone="green" if dmm>=delta_min_mm else "orange"
+            )
+
+    st.warning(
+        "La deflexión **nominal** del catálogo solo se alcanza a la **carga nominal**. "
+        "Si escoges un resorte demasiado grande para la carga real, se comprimirá menos y su frecuencia natural será mayor."
+    )
+
+    # ---------------------------------------------------------
+    # 3.8 FICHA PARA CATALOGO
+    # ---------------------------------------------------------
+    st.markdown("### 3.8 · Especificación que llevaremos al catálogo")
+    spec1,spec2,spec3,spec4=st.columns(4)
+    with spec1:
+        _card("Carga de operación",f"{lb_support:.0f} lb/apoyo",f"≈ {kg_support:.0f} kg.",tone="blue")
+    with spec2:
+        _card("Deflexión mínima",f"{delta_min_mm:.1f} mm","Debe alcanzarse bajo la carga real de operación.")
+    with spec3:
+        _card("fₙ máxima",f"{fn_max:.2f} Hz","Resultado máximo admisible del aislador instalado.",tone="purple")
+    with spec4:
+        _card("T_F máxima",f"{tf_target:.3f}",f"Objetivo ≈ {target_iso:.0f} % de aislamiento.",tone="green")
+
+    st.markdown("#### Qué deberás leer en la ficha técnica")
+    cat_fields=pd.DataFrame([
+        ["Modelo / tamaño","Identifica el resorte comercial."],
+        ["Rated load / carga nominal","Carga para la cual el fabricante declara la deflexión nominal."],
+        ["Rated deflection / deflexión nominal","Compresión del resorte a su carga nominal."],
+        ["Free height / altura libre","Altura física del resorte sin carga; sirve para instalación y revisión dimensional."],
+        ["Operating load / carga de operación","Nuestra carga calculada; no viene del catálogo, la aporta el proyecto."],
+        ["Operating deflection / deflexión real","Debe calcularse para la carga real y comprobar que satisface el requerimiento dinámico."],
+    ],columns=["Dato","Para qué sirve"])
+    st.dataframe(cat_fields,hide_index=True,use_container_width=True)
+
+    current_design={
+        "saved":False,
+        "rpm":float(CASE_RPM),
+        "pump_model":CASE_MODEL,
+        "flow_m3_h":float(CASE_Q),
+        "motor_kw":float(CASE_MOTOR_KW),
+        "component":component,
+        "forcing_multiplier":float(multiplier),
+        "fe_hz":float(fe),
+        "mass_kg":float(mass),
+        "supports":int(supports),
+        "load_per_support_kg":float(kg_support),
+        "load_per_support_N":float(force_support),
+        "load_per_support_lb":float(lb_support),
+        "zeta":float(zeta),
+        "target_isolation_pct":float(target_iso),
+        "target_tf":float(tf_target),
+        "required_r":float(r_req),
+        "max_fn_hz":float(fn_max),
+        "min_deflection_mm":float(delta_min_mm),
     }
-    ex_mass,ex_rpm,ex_n=1600.0,1500.0,4
-    ex_kg=ex_mass/ex_n
-    ex_lb=ex_kg*2.2046226218
-    ex_fe=ex_rpm/60.0
 
-    cd1,cd2=st.columns(2)
-    with cd1:
-        model=st.selectbox("Modelo a investigar",list(fds),index=4,key=f"{ns}_cat_model")
-    with cd2:
-        entered_lb=st.number_input("Carga nominal encontrada en catálogo (lb)",50.0,3000.0,900.0,25.0,key=f"{ns}_cat_lb")
-    entered_def=st.number_input("Deflexión nominal encontrada (in)",1.0,6.0,4.0,.25,key=f"{ns}_cat_def")
+    if st.button(
+        "Guardar especificación y pasar al catálogo",
+        type="primary",
+        use_container_width=True,
+        key=f"{ns}_iso_save"
+    ):
+        current_design["saved"]=True
+        saved["stage8_isolator_design"]=current_design
+        _persist()
+        st.success("Especificación guardada. El Laboratorio C utilizará estos requerimientos.")
+        st.rerun()
 
-    true_lb,true_def=fds[model]
-    catalog_ok=abs(entered_lb-true_lb)<=1 and abs(entered_def-true_def)<=.01
-    if st.button("Comprobar datos del catálogo",type="primary",use_container_width=True,key=f"{ns}_cat_check"):
-        if catalog_ok:
+    saved_design=saved.get("stage8_isolator_design",{})
+    if isinstance(saved_design,dict) and saved_design.get("saved"):
+        st.success(
+            f"Especificación activa: {saved_design['load_per_support_lb']:.0f} lb/apoyo · "
+            f"δ ≥ {saved_design['min_deflection_mm']:.1f} mm · "
+            f"fₙ ≤ {saved_design['max_fn_hz']:.2f} Hz · "
+            f"T_F ≤ {saved_design['target_tf']:.3f}."
+        )
+
+    # =========================================================
+    # 4 · LAB C: SELECCIÓN REAL DE CATÁLOGO
+    # =========================================================
+    st.markdown("## 4 · Laboratorio C — Selecciona y verifica un aislador de catálogo")
+
+    design=saved.get("stage8_isolator_design",{})
+    if not (isinstance(design,dict) and design.get("saved")):
+        design=current_design.copy()
+        if role=="Docente":
+            st.info(
+                "Vista docente: se muestran los valores actuales del Laboratorio B para revisar el flujo completo."
+            )
+        else:
+            st.warning(
+                "Aún no has guardado la especificación B. Puedes explorar este laboratorio, "
+                "pero guarda primero B para conservar la selección al volver."
+            )
+
+    req_lb=float(design["load_per_support_lb"])
+    req_kg=float(design["load_per_support_kg"])
+    req_delta=float(design["min_deflection_mm"])
+    req_fn=float(design["max_fn_hz"])
+    req_tf=float(design["target_tf"])
+    req_iso=float(design["target_isolation_pct"])
+    req_fe=float(design["fe_hz"])
+    req_zeta=float(design["zeta"])
+
+    st.markdown("### 4.1 · Lo que debe cumplir el producto")
+    rr1,rr2,rr3,rr4=st.columns(4)
+    with rr1:
+        _card("Carga real",f"{req_lb:.0f} lb","Carga de operación por aislador.",tone="blue")
+    with rr2:
+        _card("δ mínima",f"{req_delta:.1f} mm","Resultado del dimensionamiento B.")
+    with rr3:
+        _card("fₙ máxima",f"{req_fn:.2f} Hz","Límite dinámico calculado.",tone="purple")
+    with rr4:
+        _card("T_F máxima",f"{req_tf:.3f}",f"Objetivo ≈ {req_iso:.0f} %.",tone="green")
+
+    st.markdown("### 4.2 · Elige una familia de deflexión")
+    family=st.radio(
+        "Familia Kinetics FDS a investigar",
+        ["FDS 1 in · deflexión nominal ≈ 1 pulgada","FDS 4 in · deflexión nominal = 4 pulgadas"],
+        horizontal=True,
+        key=f"{ns}_cat_family"
+    )
+
+    if family.startswith("FDS 1"):
+        catalog_url="https://kineticsnoise.com/files/content/downloads/submittal_drawings/pdf/01/01-20fds/S-01-20-11.pdf"
+        catalog_label="Abrir catálogo oficial Kinetics FDS — 1 in"
+        models={
+            "FDS 1-24":(24.0,1.04),
+            "FDS 1-30":(30.0,1.00),
+            "FDS 1-37":(37.0,1.00),
+            "FDS 1-50":(50.0,0.97),
+            "FDS 1-75":(75.0,1.01),
+            "FDS 1-100":(100.0,0.98),
+            "FDS 1-150":(150.0,1.00),
+            "FDS 1-210":(210.0,1.02),
+            "FDS 1-300":(300.0,1.00),
+            "FDS 1-385":(385.0,1.00),
+            "FDS 1-500":(500.0,1.00),
+        }
+        default_model="FDS 1-50"
+    else:
+        catalog_url="https://kineticsnoise.com/files/content/downloads/submittal_drawings/pdf/01/01-20fds/S-01-20-41.pdf"
+        catalog_label="Abrir catálogo oficial Kinetics FDS — 4 in"
+        models={
+            "FDS 4-100":(100.0,4.00),
+            "FDS 4-250":(250.0,4.00),
+            "FDS 4-500":(500.0,4.00),
+            "FDS 4-750":(750.0,4.00),
+            "FDS 4-1000":(1000.0,4.00),
+            "FDS 4-1250":(1250.0,4.00),
+            "FDS 4-1600":(1600.0,4.00),
+        }
+        default_model="FDS 4-1000"
+
+    st.link_button(catalog_label,catalog_url,use_container_width=True)
+
+    st.markdown(
+        """
+        **Cómo leer la ficha**
+
+        1. busca la fila del modelo;
+        2. identifica **Rated Load**;
+        3. identifica **Rated Deflection**;
+        4. compara la carga nominal con tu **carga de operación**;
+        5. calcula la deflexión que realmente desarrollará el resorte bajo tu carga.
+        """
+    )
+
+    model_names=list(models)
+    default_index=model_names.index(default_model) if default_model in model_names else 0
+    mc1,mc2,mc3=st.columns(3)
+    with mc1:
+        model=st.selectbox(
+            "Modelo a evaluar",
+            model_names,
+            index=default_index,
+            key=f"{ns}_cat_model"
+        )
+    with mc2:
+        entered_load=st.number_input(
+            "Rated Load leído (lb)",
+            min_value=10.0,max_value=5000.0,value=50.0,step=1.0,
+            key=f"{ns}_cat_lb"
+        )
+    with mc3:
+        entered_def=st.number_input(
+            "Rated Deflection leída (in)",
+            min_value=0.5,max_value=5.0,value=1.0,step=.01,
+            key=f"{ns}_cat_def"
+        )
+
+    true_load,true_def=models[model]
+    lookup_ok=abs(entered_load-true_load)<=1.0 and abs(entered_def-true_def)<=0.02
+
+    if st.button(
+        "Comprobar lectura del catálogo",
+        type="primary",
+        use_container_width=True,
+        key=f"{ns}_cat_check"
+    ):
+        if lookup_ok:
             saved["stage8_catalog_validated"]=model
+            saved["stage8_catalog_lookup"]={
+                "family":family,
+                "model":model,
+                "rated_load_lb":float(true_load),
+                "rated_deflection_in":float(true_def),
+            }
             _persist()
-            st.success("Datos correctos. Ahora puedes evaluar la selección.")
+            st.success("Lectura correcta. Ahora comprobaremos cómo trabaja ese resorte con la carga real.")
             st.rerun()
         else:
-            st.warning("Revisa la fila correspondiente al modelo elegido en la ficha del fabricante.")
+            st.warning("Revisa Rated Load y Rated Deflection en la fila seleccionada.")
 
     if saved.get("stage8_catalog_validated")==model:
-        op_def_in=true_def*(ex_lb/true_lb)
-        op_def_mm=op_def_in*25.4
-        op_fn=fn_delta(max(op_def_mm,1e-9))
-        op_r=ex_fe/max(op_fn,1e-9)
-        op_tf=tf_force(op_r,.08)
-        load_ok=ex_lb<=true_lb
-
-        c1,c2,c3,c4=st.columns(4)
-        with c1: _card("Carga requerida",f"{ex_lb:.0f} lb/apoyo","1600 kg / 4 apoyos.")
-        with c2: _card("Carga nominal",f"{true_lb:.0f} lb","Dato validado del catálogo.",tone="blue")
-        with c3: _card("δ de operación",f"{op_def_mm:.1f} mm","Estimación lineal carga–deflexión.")
-        with c4: _card("fₙ estimada",f"{op_fn:.2f} Hz",f"r≈{op_r:.2f}, T_F≈{op_tf:.3f}.",tone="green" if load_ok else "orange")
-
-        st.latex(r"\delta_{op}\approx\delta_{nom}\frac{F_{op}}{F_{nom}}")
-        if not load_ok:
-            st.error("No compatible: la carga requerida supera la capacidad nominal del modelo.")
-        else:
-            st.success("Compatible por capacidad nominal dentro de las hipótesis del ejercicio.")
-            if true_lb>ex_lb*1.8:
-                st.warning(
-                    "Sobredimensionar la capacidad no mejora automáticamente el aislamiento: al trabajar con poca carga, "
-                    "el resorte deflecta menos, aumenta fₙ y puede empeorar la separación dinámica."
-                )
-
-        st.markdown("### 4.1 · El aislador correcto no basta")
-        st.info("Nueva información: la bomba está conectada mediante tuberías rígidas directamente a la estructura.")
-        ans=st.radio(
-            "¿La selección correcta del resorte garantiza por sí sola el aislamiento del sistema completo?",
-            ["Selecciona","Sí","No"],key=f"{ns}_bridge"
+        st.markdown("### 4.3 · De valor nominal a condición real de operación")
+        st.write(
+            "El fabricante declara la deflexión a la **carga nominal**. "
+            "Si nuestra carga es distinta, aproximamos la deflexión de operación mediante comportamiento lineal:"
         )
-        if ans=="No":
-            st.success(
-                "Correcto. Además debes incorporar conexión flexible entre bomba y tubería "
-                "y soportes resilientes para evitar que la tubería puentee el aislamiento."
+        st.latex(
+            r"\boxed{\delta_{\mathrm{op}}\approx"
+            r"\delta_{\mathrm{rated}}\frac{F_{\mathrm{op}}}{F_{\mathrm{rated}}}}"
+        )
+
+        load_ok=req_lb<=true_load
+        op_def_in=true_def*(req_lb/true_load)
+        op_def_mm=op_def_in*25.4
+
+        # Rigidez equivalente del aislador en la aproximación lineal
+        req_force_N=req_kg*9.81
+        k_i_N_m=req_force_N/max(op_def_mm/1000.0,1e-12)
+
+        op_fn=fn_delta(max(op_def_mm,1e-9))
+        op_r=req_fe/max(op_fn,1e-12)
+        op_tf=tf_force(op_r,req_zeta)
+        op_iso=max(0.0,(1-op_tf)*100.0)
+
+        st.latex(
+            fr"\delta_{{\mathrm{{op}}}}\approx"
+            fr"{true_def:.2f}\,\mathrm{{in}}\;"
+            fr"\frac{{{req_lb:.0f}}}{{{true_load:.0f}}}"
+            fr"={op_def_in:.2f}\,\mathrm{{in}}"
+            fr"={op_def_mm:.1f}\,\mathrm{{mm}}"
+        )
+        st.latex(
+            fr"k_i\approx\frac{{F_i}}{{\delta_{{\mathrm{{op}}}}}}"
+            fr"=\frac{{{req_force_N:.0f}}}{{{op_def_mm/1000:.4f}}}"
+            fr"\approx{k_i_N_m/1000:.1f}\;\mathrm{{kN/m}}"
+        )
+        st.latex(
+            fr"f_n=\frac{{1}}{{2\pi}}\sqrt{{\frac{{g}}{{\delta_{{\mathrm{{op}}}}}}}}"
+            fr"={op_fn:.2f}\;\mathrm{{Hz}}"
+        )
+        st.latex(
+            fr"r=\frac{{{req_fe:.2f}}}{{{op_fn:.2f}}}={op_r:.2f}"
+        )
+
+        def_ok=op_def_mm>=req_delta
+        fn_ok=op_fn<=req_fn
+        tf_ok=op_tf<=req_tf
+        overall=load_ok and def_ok and fn_ok and tf_ok
+
+        ck1,ck2,ck3,ck4=st.columns(4)
+        with ck1:
+            _card(
+                "1 · Carga",
+                "Cumple" if load_ok else "No cumple",
+                f"Operación {req_lb:.0f} lb · nominal {true_load:.0f} lb.",
+                tone="green" if load_ok else "orange"
             )
-        elif ans=="Sí":
-            st.error("Revisa los caminos paralelos: tuberías, ductos, anclajes y conexiones pueden puentear la base.")
+        with ck2:
+            _card(
+                "2 · Deflexión real",
+                f"{op_def_mm:.1f} mm",
+                f"Requerida ≥ {req_delta:.1f} mm.",
+                tone="green" if def_ok else "orange"
+            )
+        with ck3:
+            _card(
+                "3 · Frecuencia natural",
+                f"{op_fn:.2f} Hz",
+                f"Requerida ≤ {req_fn:.2f} Hz.",
+                tone="green" if fn_ok else "orange"
+            )
+        with ck4:
+            _card(
+                "4 · Transmisibilidad",
+                f"T_F={op_tf:.3f}",
+                f"Aislamiento estimado ≈ {op_iso:.1f} %.",
+                tone="green" if tf_ok else "orange"
+            )
+
+        if overall:
+            st.success(
+                f"**{model} cumple la especificación dinámica del ejercicio bajo la carga real calculada.**"
+            )
+        else:
+            failed=[]
+            if not load_ok: failed.append("carga nominal insuficiente")
+            if not def_ok: failed.append("deflexión real insuficiente")
+            if not fn_ok: failed.append("frecuencia natural demasiado alta")
+            if not tf_ok: failed.append("transmisibilidad mayor al objetivo")
+            st.warning("El modelo no cumple completamente: " + "; ".join(failed) + ".")
+
+        if load_ok and req_lb/true_load<0.65:
+            st.warning(
+                "El aislador está trabajando bastante por debajo de su carga nominal. "
+                "Aunque tenga gran capacidad, se comprime menos de lo previsto. "
+                "Por eso un resorte 'más grande' no significa automáticamente un aislamiento mejor."
+            )
+
+        st.markdown("### 4.4 · Decisión de selección")
+        st.write(
+            "Una selección correcta debe cumplir **todos** los criterios anteriores y además ser compatible "
+            "con restricciones de instalación, estabilidad, conexiones de tubería y eventuales requerimientos sísmicos."
+        )
+
+        if st.button(
+            "Guardar selección del aislador",
+            use_container_width=True,
+            key=f"{ns}_cat_eval_save"
+        ):
+            saved["stage8_catalog_result"]={
+                "family":family,
+                "model":model,
+                "rated_load_lb":float(true_load),
+                "rated_deflection_in":float(true_def),
+                "required_load_lb":float(req_lb),
+                "operating_deflection_mm":float(op_def_mm),
+                "stiffness_kN_m":float(k_i_N_m/1000.0),
+                "operating_fn_hz":float(op_fn),
+                "operating_r":float(op_r),
+                "operating_tf":float(op_tf),
+                "operating_isolation_pct":float(op_iso),
+                "load_ok":bool(load_ok),
+                "deflection_ok":bool(def_ok),
+                "fn_ok":bool(fn_ok),
+                "tf_ok":bool(tf_ok),
+                "overall_ok":bool(overall),
+            }
+            _persist()
+            st.success("Selección guardada en el progreso del alumno.")
+
+        if role=="Docente":
+            st.markdown("#### Clave docente · qué debería observarse")
+            st.info(
+                f"Clave del caso: {CASE_MASS_KG:.0f} kg / {CASE_SUPPORTS} apoyos ≈ "
+                f"**{req_lb:.1f} lb por aislador**. En la familia FDS de 1 in, el alumno debe buscar "
+                "un modelo cuya Rated Load sea suficiente y luego recalcular la deflexión de operación. "
+                "El **FDS 1-50** es un candidato lógico para discutir porque su Rated Load es 50 lb y "
+                "su Rated Deflection es aproximadamente 0,97 in."
+            )
+
+        st.markdown("### 4.5 · El aislador no puede quedar puenteado")
+        st.write(
+            "La selección de resortes puede ser correcta y aun así fracasar si tuberías, anclajes o conexiones rígidas "
+            "crean un camino paralelo entre la bomba y la estructura."
+        )
+        bridge=st.radio(
+            "¿Qué debe verificarse como parte del cierre de la especificación?",
+            [
+                "Selecciona",
+                "Conexiones flexibles y soportes resilientes de tuberías",
+                "Conectar rígidamente las tuberías para estabilizar la bomba",
+                "Aumentar siempre la capacidad nominal del resorte",
+            ],
+            key=f"{ns}_bridge"
+        )
+        if bridge=="Conexiones flexibles y soportes resilientes de tuberías":
+            st.success(
+                "Correcto. El aislamiento de la base debe mantenerse en los demás caminos mecánicos."
+            )
+        elif bridge not in ("Selecciona",):
+            st.warning("Revisa el concepto de caminos paralelos de transmisión.")
 
     # =========================================================
     # 5 · CIERRE
@@ -7559,7 +8287,8 @@ def _render_course2_lab1_stage8(lab, saved):
     st.write(
         "La Etapa 8 termina cuando puedes seguir la cadena completa de una **bomba centrífuga**: "
         "reconocer sus componentes, diseñar una campaña de medición, interpretar evidencia mecánica e hidráulica, "
-        "evaluar cavitación mediante NPSH y comprobar el aislamiento vibratorio del conjunto."
+        "evaluar cavitación mediante NPSH y, finalmente, convertir RPM, masa y carga en una "
+        "**especificación antivibratoria verificable contra un catálogo comercial real**."
     )
     st.success(
         "Idea central: primero identifica **qué ocurre y por dónde se transmite**; después selecciona y verifica la medida de control."
