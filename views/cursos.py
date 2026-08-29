@@ -6741,16 +6741,27 @@ def _render_course2_lab1_stage8(lab, saved):
 
     st.markdown("#### Laboratorio NPSH · instalación real + catálogo real")
     st.markdown(
-        """
-        **Misma bomba del caso.** La **Lowara SHOS 50-125/75/P** trabaja aproximadamente a
-        \(Q=48\ \mathrm{m^3/h}\).
-
-        Tu trabajo tiene dos partes:
-
-        **A.** calcular \(NPSH_A\) a partir de la instalación;  
-        **B.** abrir el catálogo oficial y leer \(NPSH_R\) en la curva correspondiente al caudal de operación.
-        """
+        "**Misma bomba del caso:** Lowara SHOS 50-125/75/P."
     )
+    st.write("Punto de operación utilizado en el ejercicio:")
+    st.latex(r"Q=48\;\mathrm{m^3/h}")
+
+    st.markdown("**Tu trabajo tiene dos partes:**")
+    np_a,np_b=st.columns(2)
+    with np_a:
+        _card(
+            "A · Instalación",
+            "Calcular NPSHₐ",
+            "Obtendrás el NPSH disponible a partir de presión, temperatura, altura y pérdidas de la línea de succión.",
+            tone="green"
+        )
+    with np_b:
+        _card(
+            "B · Bomba",
+            "Leer NPSHᵣ",
+            "Abrirás el catálogo oficial y leerás el NPSH requerido en la curva correspondiente al caudal de operación.",
+            tone="blue"
+        )
 
     lc1,lc2=st.columns([1.25,1])
     with lc1:
@@ -6760,16 +6771,16 @@ def _render_course2_lab1_stage8(lab, saved):
             ["Temperatura del agua", "20 °C"],
             ["Presión de vapor del agua a 20 °C", "2,34 kPa"],
             ["Densidad adoptada", "998 kg/m³"],
-            ["Diferencia de cota z", "−4,50 m"],
-            ["Pérdidas de carga en succión h_f", "2,20 m"],
-            ["Caudal de operación Q", "48 m³/h"],
+            ["Diferencia de cota (z)", "−4,50 m"],
+            ["Pérdidas de carga en succión (h_f)", "2,20 m"],
+            ["Caudal de operación (Q)", "48 m³/h"],
         ],columns=["Variable","Valor"])
         st.dataframe(install_data,hide_index=True,use_container_width=True)
     with lc2:
         st.markdown("**B · Catálogo de la bomba**")
         st.write(
-            "Busca el modelo **SHOE–SHOS–SHOD 50-125/75** y localiza la curva **NPSH vs. Q**. "
-            "En la edición utilizada aparece en la página 70."
+            "Busca la familia **SHOE–SHOS–SHOD 50-125/75** y localiza la gráfica **NPSH–Q** "
+            "correspondiente al modelo 50-125/75. Usa el eje de caudal para llegar a Q = 48 m³/h y luego lee NPSHᵣ en el eje vertical."
         )
         st.link_button(
             "Abrir catálogo oficial Lowara / Xylem",
@@ -6827,7 +6838,7 @@ def _render_course2_lab1_stage8(lab, saved):
         mi1,mi2,mi3=st.columns(3)
         with mi1:
             _card(
-                r"$M_{NPSH}>0$",
+                "M_NPSH > 0",
                 "Margen positivo",
                 "La instalación dispone de más NPSH que el requerido por la bomba. "
                 "Es una condición favorable, aunque en proyecto debe existir un margen de diseño suficiente.",
@@ -6835,7 +6846,7 @@ def _render_course2_lab1_stage8(lab, saved):
             )
         with mi2:
             _card(
-                r"$M_{NPSH}=0$",
+                "M_NPSH = 0",
                 "Sin margen",
                 "NPSH disponible y requerido coinciden. La instalación queda en el límite "
                 "y pequeñas variaciones de operación pueden volverla desfavorable.",
@@ -6843,7 +6854,7 @@ def _render_course2_lab1_stage8(lab, saved):
             )
         with mi3:
             _card(
-                r"$M_{NPSH}<0$",
+                "M_NPSH < 0",
                 "Condición desfavorable",
                 "La instalación dispone de menos NPSH que el requerido. "
                 "La condición hidráulica es compatible con riesgo de cavitación.",
@@ -7551,20 +7562,43 @@ def _render_course2_lab1_stage8(lab, saved):
         entra a la estructura a través de su base. Ahora debemos transformar esa información en una
         **especificación técnica que pueda buscarse en un catálogo real**.
 
-        Al terminar este laboratorio no elegirás todavía una marca. Obtendrás cuatro requerimientos:
-
-        \[
-        \boxed{\text{carga por apoyo}}
-        \qquad
-        \boxed{\text{deflexión requerida}}
-        \qquad
-        \boxed{f_n\text{ máxima}}
-        \qquad
-        \boxed{T_F\text{ máxima}}
-        \]
-
-        Esos cuatro valores serán la entrada del Laboratorio C.
+        Al terminar este laboratorio todavía no elegirás una marca. Primero obtendrás los cuatro
+        requerimientos que debe cumplir cualquier aislador candidato:
         """
+    )
+
+    rq_a,rq_b,rq_c,rq_d=st.columns(4)
+    with rq_a:
+        _card(
+            "1 · Carga por apoyo",
+            "lb / apoyo",
+            "Cuánto peso debe soportar realmente cada aislador.",
+            tone="blue"
+        )
+    with rq_b:
+        _card(
+            "2 · Deflexión requerida",
+            "δ mínima",
+            "Compresión estática mínima necesaria para obtener la frecuencia natural de diseño."
+        )
+    with rq_c:
+        _card(
+            "3 · Frecuencia natural",
+            "fₙ máxima",
+            "Límite máximo de frecuencia natural admisible para mantener separación respecto de la excitación.",
+            tone="purple"
+        )
+    with rq_d:
+        _card(
+            "4 · Transmisibilidad",
+            "T_F máxima",
+            "Fracción máxima de fuerza dinámica que aceptaremos transmitir a la estructura.",
+            tone="green"
+        )
+
+    st.info(
+        "Estos cuatro requerimientos serán la **entrada del Laboratorio C**. "
+        "El catálogo se usa después para comprobar qué producto real satisface simultáneamente la carga y el comportamiento dinámico."
     )
 
     _asset(
@@ -7611,22 +7645,26 @@ def _render_course2_lab1_stage8(lab, saved):
     with c1:
         _card(
             "Carga estática",
-            r"$W=mg$",
+            "W = m · g",
             "Es el peso del conjunto que el resorte debe sostener permanentemente. Determina cuánto se comprime el aislador.",
             tone="blue"
         )
     with c2:
         _card(
             "Fuerza dinámica",
-            r"$F(t)$",
+            "F(t)",
             "Es la componente variable asociada al funcionamiento de la máquina. El objetivo es reducir cuánto de ella llega a la estructura.",
             tone="purple"
         )
 
     st.latex(r"\boxed{T_F=\frac{F_{\mathrm{transmitida}}}{F_{\mathrm{excitación}}}}")
     st.write(
-        "La **transmisibilidad de fuerza \(T_F\)** es el indicador principal de este modelo. "
-        "Si \(T_F=0.10\), la amplitud de fuerza transmitida es aproximadamente el 10 % de la fuerza dinámica de excitación considerada."
+        "La **transmisibilidad de fuerza** es el indicador principal de este modelo."
+    )
+    st.latex(r"T_F=0.10")
+    st.write(
+        "En este ejemplo, la amplitud de fuerza transmitida sería aproximadamente el 10 % "
+        "de la fuerza dinámica de excitación considerada."
     )
 
     st.info(
@@ -7683,7 +7721,15 @@ def _render_course2_lab1_stage8(lab, saved):
     with fd2:
         _card("2×RPM","dos repeticiones por vuelta","Puede aparecer en otros mecanismos periódicos.")
     with fd3:
-        _card("Paso de álabes",r"$N\,f_{\mathrm{giro}}$","Depende del número de álabes y de la velocidad de giro.",tone="blue")
+        _card(
+            "Paso de álabes",
+            "N × frecuencia de giro",
+            "Si el impulsor tiene N álabes, cada vuelta puede producir N excitaciones asociadas al paso de los álabes.",
+            tone="blue"
+        )
+
+    st.write("Para el paso de álabes, la relación general es:")
+    st.latex(r"f_{\mathrm{álabes}}=N\,f_{\mathrm{giro}}")
 
     st.warning(
         "Para aislamiento se debe comprobar la **frecuencia perturbadora relevante más baja**. "
@@ -7730,7 +7776,7 @@ def _render_course2_lab1_stage8(lab, saved):
 
     st.latex(r"\boxed{k_i\approx\frac{F_i}{\delta_i}}")
     st.write(
-        "Para \(N\) resortes iguales trabajando en paralelo, la rigidez vertical total es aproximadamente:"
+        "Para varios resortes iguales trabajando en paralelo, la rigidez vertical total es aproximadamente:"
     )
     st.latex(r"k_{\mathrm{tot}}\approx N\,k_i")
     st.write("La frecuencia natural del conjunto aislado es:")
@@ -7738,7 +7784,7 @@ def _render_course2_lab1_stage8(lab, saved):
 
     st.markdown("#### Relación directa con la deflexión estática")
     st.write(
-        "Como en equilibrio estático \(k_{\mathrm{tot}}\delta\approx mg\), podemos sustituir la rigidez y obtener una relación muy útil:"
+        "En equilibrio estático, el peso del conjunto comprime los resortes hasta alcanzar una deflexión estática. ""Esa deflexión permite relacionar directamente el montaje con su frecuencia natural:"
     )
     st.latex(r"\boxed{f_n=\frac{1}{2\pi}\sqrt{\frac{g}{\delta}}}")
     st.write(
@@ -7768,18 +7814,36 @@ def _render_course2_lab1_stage8(lab, saved):
     st.markdown("### 3.5 · ¿Cuándo comienza realmente el aislamiento?")
     st.latex(r"\boxed{r=\frac{f_e}{f_n}}")
     st.write(
-        "La razón \(r\) compara la frecuencia que genera la máquina con la frecuencia natural del sistema aislado."
+        "La razón de frecuencias compara la frecuencia de excitación de la bomba con la frecuencia natural del sistema aislado."
     )
 
     reg1,reg2,reg3,reg4=st.columns(4)
     with reg1:
-        _card(r"$r<1$","por debajo de resonancia","La excitación está por debajo de la frecuencia natural.")
+        _card(
+            "r < 1",
+            "Excitación bajo fₙ",
+            "La frecuencia de la bomba está por debajo de la frecuencia natural del sistema."
+        )
     with reg2:
-        _card(r"$r\approx1$","resonancia","La respuesta puede amplificarse. Es la región que queremos evitar.",tone="orange")
+        _card(
+            "r ≈ 1",
+            "Resonancia",
+            "La excitación se aproxima a la frecuencia natural y la respuesta puede amplificarse.",
+            tone="orange"
+        )
     with reg3:
-        _card(r"$1<r<\sqrt{2}$","transición","Superar fₙ no significa todavía que exista aislamiento efectivo.")
+        _card(
+            "1 < r < √2",
+            "Zona de transición",
+            "La excitación ya superó fₙ, pero todavía no existe una reducción efectiva de fuerza transmitida."
+        )
     with reg4:
-        _card(r"$r>\sqrt{2}$","región de aislamiento","En el modelo ideal comienza la reducción de fuerza transmitida.",tone="green")
+        _card(
+            "r > √2",
+            "Región de aislamiento",
+            "En el modelo ideal, la fuerza transmitida comienza a ser menor que la fuerza de excitación.",
+            tone="green"
+        )
 
     st.latex(
         r"\boxed{T_F="
@@ -7870,36 +7934,234 @@ def _render_course2_lab1_stage8(lab, saved):
     )
 
     # ---------------------------------------------------------
-    # 3.7 PREVISUALIZACIÓN DE FAMILIAS DE CATÁLOGO
+    # 3.7 PRESELECCIÓN TÉCNICA DE FAMILIAS DE RESORTE
     # ---------------------------------------------------------
     st.markdown("### 3.7 · ¿Qué tipo de resorte deberíamos buscar?")
     st.write(
-        "Antes de abrir el catálogo podemos comparar clases de deflexión. "
-        "La deflexión nominal de una familia indica la compresión aproximada a su carga nominal."
+        "Los catálogos norteamericanos suelen expresar la deflexión de los resortes en **pulgadas**. "
+        "Antes de comparar familias debemos entender esa unidad y distinguir entre **deflexión nominal** "
+        "y **deflexión real de operación**."
     )
 
-    family_examples=[
-        ("1 in",25.4),
-        ("4 in",101.6),
-    ]
-    fc=st.columns(2)
-    for col,(label,dmm) in zip(fc,family_examples):
-        fam_fn=fn_delta(dmm)
-        fam_r=fe/max(fam_fn,1e-9)
-        fam_tf=tf_force(fam_r,zeta)
-        fam_iso=max(0.0,(1-fam_tf)*100)
-        with col:
-            _card(
-                f"Familia {label}",
-                f"δ nominal ≈ {dmm:.1f} mm",
-                f"Si trabajara cerca de su deflexión nominal: fₙ≈{fam_fn:.2f} Hz · "
-                f"aislamiento idealizado≈{fam_iso:.1f} % a {fe:.1f} Hz.",
-                tone="green" if dmm>=delta_min_mm else "orange"
-            )
+    st.markdown("#### ¿Qué significa “in”?")
+    st.write(
+        "**in** es la abreviatura inglesa de *inch* (pulgada). En esta etapa siempre mostraremos también "
+        "su equivalente en milímetros."
+    )
+    st.latex(r"1\;\mathrm{in}=25.4\;\mathrm{mm}")
+    st.latex(r"4\;\mathrm{in}=101.6\;\mathrm{mm}")
 
-    st.warning(
-        "La deflexión **nominal** del catálogo solo se alcanza a la **carga nominal**. "
-        "Si escoges un resorte demasiado grande para la carga real, se comprimirá menos y su frecuencia natural será mayor."
+    conv1,conv2=st.columns(2)
+    with conv1:
+        _card(
+            "Familia de 1 pulgada (1 in)",
+            "25,4 mm nominales",
+            "La familia está diseñada para desarrollar aproximadamente una pulgada de compresión cuando trabaja cerca de su carga nominal.",
+            tone="blue"
+        )
+    with conv2:
+        _card(
+            "Familia de 4 pulgadas (4 in)",
+            "101,6 mm nominales",
+            "La familia está diseñada para desarrollar aproximadamente cuatro pulgadas de compresión cuando trabaja cerca de su carga nominal.",
+            tone="purple"
+        )
+
+    st.markdown("#### Deflexión nominal no significa deflexión real")
+    st.write(
+        "La cifra de 1 o 4 pulgadas describe la **deflexión nominal de la familia a su carga nominal de catálogo**. "
+        "Nuestra bomba puede cargar el resorte con un valor diferente; por eso debemos estimar cuánto se comprimirá realmente."
+    )
+    st.latex(
+        r"\boxed{\delta_{\mathrm{op}}\approx"
+        r"\delta_{\mathrm{nom}}\frac{F_{\mathrm{op}}}{F_{\mathrm{nom}}}}"
+    )
+
+    dn1,dn2,dn3=st.columns(3)
+    with dn1:
+        _card(
+            "Carga nominal",
+            "F_nom",
+            "Carga para la que el fabricante declara la deflexión nominal."
+        )
+    with dn2:
+        _card(
+            "Carga de operación",
+            f"{lb_support:.1f} lb/apoyo",
+            "Es la carga que realmente entrega nuestra bomba a cada aislador.",
+            tone="green"
+        )
+    with dn3:
+        _card(
+            "Deflexión de operación",
+            "δ_op",
+            "Compresión que realmente desarrollará el resorte con la carga del proyecto.",
+            tone="blue"
+        )
+
+    st.markdown("#### Apliquémoslo a la misma bomba del caso")
+    st.write(
+        f"Con {CASE_MASS_KG:.0f} kg distribuidos uniformemente sobre {CASE_SUPPORTS} apoyos, "
+        f"cada aislador recibe aproximadamente **{kg_support:.2f} kg**, equivalentes a **{lb_support:.1f} lb**."
+    )
+
+    # Ejemplos representativos de las dos familias que después aparecen en el catálogo.
+    one_rated_lb=50.0
+    one_nom_in=0.97
+    four_rated_lb=100.0
+    four_nom_in=4.00
+
+    one_op_in=one_nom_in*(lb_support/one_rated_lb)
+    one_op_mm=one_op_in*25.4
+    one_fn=fn_delta(max(one_op_mm,1e-9))
+    one_r=fe/max(one_fn,1e-9)
+    one_tf=tf_force(one_r,zeta)
+    one_iso=max(0.0,(1-one_tf)*100.0)
+
+    four_op_in=four_nom_in*(lb_support/four_rated_lb)
+    four_op_mm=four_op_in*25.4
+    four_fn=fn_delta(max(four_op_mm,1e-9))
+    four_r=fe/max(four_fn,1e-9)
+    four_tf=tf_force(four_r,zeta)
+    four_iso=max(0.0,(1-four_tf)*100.0)
+
+    ex1,ex2=st.columns(2)
+    with ex1:
+        st.markdown("**Ejemplo preliminar · familia de 1 pulgada**")
+        _card(
+            "Ejemplo FDS 1-50",
+            "50 lb nominales · 0,97 in",
+            "Usamos este modelo solo para comprender cómo cambia la deflexión cuando la carga real no coincide exactamente con la nominal.",
+            tone="blue"
+        )
+        st.latex(
+            fr"\delta_{{\mathrm{{op}}}}\approx"
+            fr"0.97\;\mathrm{{in}}\;"
+            fr"\frac{{{lb_support:.1f}}}{{50}}"
+            fr"={one_op_in:.2f}\;\mathrm{{in}}"
+            fr"={one_op_mm:.1f}\;\mathrm{{mm}}"
+        )
+        st.write(
+            f"Con esa deflexión: **fₙ ≈ {one_fn:.2f} Hz**, "
+            f"**r ≈ {one_r:.1f}** y aislamiento idealizado ≈ **{one_iso:.1f} %**."
+        )
+
+    with ex2:
+        st.markdown("**Ejemplo preliminar · familia de 4 pulgadas**")
+        _card(
+            "Ejemplo FDS 4-100",
+            "100 lb nominales · 4,00 in",
+            "Aunque la familia se denomine 4 pulgadas, nuestra bomba no desarrolla automáticamente 101,6 mm de deflexión.",
+            tone="purple"
+        )
+        st.latex(
+            fr"\delta_{{\mathrm{{op}}}}\approx"
+            fr"4.00\;\mathrm{{in}}\;"
+            fr"\frac{{{lb_support:.1f}}}{{100}}"
+            fr"={four_op_in:.2f}\;\mathrm{{in}}"
+            fr"={four_op_mm:.1f}\;\mathrm{{mm}}"
+        )
+        st.write(
+            f"Con esa deflexión: **fₙ ≈ {four_fn:.2f} Hz**, "
+            f"**r ≈ {four_r:.1f}** y aislamiento idealizado ≈ **{four_iso:.1f} %**."
+        )
+
+    st.markdown("#### Comparación técnica preliminar")
+    compare_df=pd.DataFrame([
+        [
+            "1 pulgada (1 in)",
+            "25,4 mm",
+            "FDS 1-50",
+            f"{one_rated_lb:.0f} lb",
+            f"{one_op_mm:.1f} mm",
+            f"{one_fn:.2f} Hz",
+            f"{one_r:.1f}",
+            f"{one_iso:.1f} %",
+        ],
+        [
+            "4 pulgadas (4 in)",
+            "101,6 mm",
+            "FDS 4-100",
+            f"{four_rated_lb:.0f} lb",
+            f"{four_op_mm:.1f} mm",
+            f"{four_fn:.2f} Hz",
+            f"{four_r:.1f}",
+            f"{four_iso:.1f} %",
+        ],
+    ],columns=[
+        "Familia",
+        "Deflexión nominal de la familia",
+        "Ejemplo",
+        "Carga nominal",
+        "Deflexión estimada con nuestra carga",
+        "fₙ estimada",
+        "r = fₑ/fₙ",
+        "Aislamiento idealizado",
+    ])
+    st.dataframe(compare_df,hide_index=True,use_container_width=True)
+
+    st.markdown("#### ¿Por qué no elegimos simplemente la familia de mayor deflexión?")
+    why1,why2,why3=st.columns(3)
+    with why1:
+        _card(
+            "Dinámica",
+            "Más deflexión → menor fₙ",
+            "Puede mejorar la separación respecto de la excitación, siempre que el resorte trabaje realmente en el rango previsto.",
+            tone="green"
+        )
+    with why2:
+        _card(
+            "Carga",
+            "Evitar sobredimensionar",
+            "Un resorte con capacidad muy superior puede trabajar demasiado descargado, comprimirse poco y perder parte de la ventaja esperada.",
+            tone="orange"
+        )
+    with why3:
+        _card(
+            "Construcción",
+            "Movimiento y estabilidad",
+            "Grandes deflexiones implican más recorrido, altura y control de movimientos; también deben revisarse tuberías y restricciones laterales."
+        )
+
+    st.info(
+        "**Criterio de preselección:** no buscamos el resorte con el número de pulgadas más grande. "
+        "Buscamos una familia cuya **carga nominal sea compatible con la carga real** y cuya "
+        "**deflexión de operación** permita cumplir la frecuencia natural y transmisibilidad calculadas."
+    )
+
+    st.markdown("#### ¿Qué debemos comprobar después en el catálogo?")
+    next1,next2,next3,next4=st.columns(4)
+    with next1:
+        _card(
+            "1 · Carga",
+            f"≥ {lb_support:.1f} lb",
+            "La capacidad del aislador debe ser suficiente para la carga real por apoyo.",
+            tone="blue"
+        )
+    with next2:
+        _card(
+            "2 · Deflexión real",
+            f"≥ {delta_min_mm:.1f} mm",
+            "Debe alcanzarse bajo la carga de operación, no solamente a la carga nominal."
+        )
+    with next3:
+        _card(
+            "3 · Frecuencia natural",
+            f"≤ {fn_max:.2f} Hz",
+            "Se recalcula a partir de la deflexión que realmente desarrolla el producto.",
+            tone="purple"
+        )
+    with next4:
+        _card(
+            "4 · Transmisibilidad",
+            f"≤ {tf_target:.3f}",
+            "Es la verificación dinámica final del modelo.",
+            tone="green"
+        )
+
+    st.success(
+        "Con esta información ya podemos entrar al Laboratorio C con una **especificación calculada**, "
+        "en lugar de abrir el catálogo y escoger un resorte solo por su nombre o capacidad."
     )
 
     # ---------------------------------------------------------
