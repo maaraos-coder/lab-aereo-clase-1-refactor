@@ -8232,47 +8232,173 @@ def _render_course2_lab1_stage8(lab, saved):
     )
     st.latex(r"k_{\mathrm{tot}}\approx N\,k_i")
 
-    st.markdown("#### C · El conjunto bomba–resortes tiene una frecuencia propia")
+    st.markdown("#### C · ¿De qué depende la frecuencia natural del conjunto bomba–resortes?")
     st.write(
         "Si imagináramos empujar la bomba ligeramente hacia abajo y soltarla con el motor apagado, "
-        "el conjunto tendería a oscilar arriba y abajo a una determinada velocidad. "
-        "A esa velocidad propia de oscilación la llamamos **frecuencia natural**, fₙ."
+        "el conjunto bomba–resortes tendería a oscilar arriba y abajo. "
+        "La rapidez propia con que ese sistema oscila se llama **frecuencia natural**, fₙ."
     )
-    st.latex(r"\boxed{f_n=\frac{1}{2\pi}\sqrt{\frac{k_{\mathrm{tot}}}{m}}}")
 
     st.info(
         "La frecuencia natural **no es la velocidad de giro de la bomba**. "
-        "Es una propiedad del conjunto formado por la masa de la máquina y la flexibilidad de sus aisladores."
+        "Es una propiedad del conjunto formado por la masa de la máquina y la rigidez total de los aisladores."
     )
 
-    st.markdown("#### D · ¿Por qué la deflexión del catálogo nos resulta tan útil?")
     st.write(
-        "Cuando la bomba está quieta, su peso comprime los resortes hasta alcanzar una deflexión estática. "
-        "Para un sistema vertical idealizado, esa deflexión permite estimar directamente la frecuencia natural:"
+        "La forma fundamental de calcularla para un sistema masa–resorte idealizado es:"
+    )
+    st.latex(r"\boxed{f_n=\frac{1}{2\pi}\sqrt{\frac{k_{\mathrm{tot}}}{m}}}")
+
+    st.markdown("##### ¿Qué significa cada término?")
+    p1,p2,p3=st.columns(3)
+    with p1:
+        _card(
+            "fₙ",
+            "frecuencia natural [Hz]",
+            "Indica cuántas oscilaciones por segundo tendería a realizar el conjunto bomba–resortes."
+        )
+    with p2:
+        _card(
+            "k_tot",
+            "rigidez total [N/m]",
+            "Representa cuánta resistencia ofrecen, en conjunto, los resortes a deformarse.",
+            tone="purple"
+        )
+    with p3:
+        _card(
+            "m",
+            "masa total [kg]",
+            "Es la masa que está siendo sostenida por el sistema de aisladores.",
+            tone="blue"
+        )
+
+    st.write(
+        "Esta ecuación permite ver dos tendencias físicas muy simples:"
+    )
+    tr1,tr2=st.columns(2)
+    with tr1:
+        _card(
+            "Más rigidez",
+            "mayor fₙ",
+            "Si los resortes son más rígidos, el conjunto tiende a oscilar más rápido."
+        )
+    with tr2:
+        _card(
+            "Más masa",
+            "menor fₙ",
+            "Si aumenta la masa y la rigidez se mantiene, el conjunto tiende a oscilar más lentamente.",
+            tone="green"
+        )
+
+    st.markdown("#### D · ¿Cómo obtenemos esa misma frecuencia natural usando la deflexión del catálogo?")
+    st.write(
+        "Aquí aparece una segunda ecuación, pero es importante entender que **no calcula otra frecuencia distinta**. "
+        "Es simplemente una forma equivalente de obtener la **misma frecuencia natural fₙ**, usando un dato que suele ser más fácil de encontrar en un catálogo: "
+        "la **deflexión estática** del resorte."
+    )
+
+    st.markdown("##### 1 · ¿Qué es la deflexión estática?")
+    st.write(
+        "Cuando la bomba está quieta, su peso comprime los resortes. "
+        "La cantidad que se comprimen bajo ese peso se llama **deflexión estática**, δ."
+    )
+
+    st.markdown("##### 2 · ¿Cómo se conecta la deflexión con la rigidez?")
+    st.write(
+        "En equilibrio, la fuerza que desarrollan los resortes compensa el peso de la bomba. "
+        "En un modelo lineal idealizado podemos escribir:"
+    )
+    st.latex(r"k_{\mathrm{tot}}\,\delta \approx m\,g")
+
+    st.write(
+        "Si despejamos la relación entre rigidez y masa:"
+    )
+    st.latex(r"\frac{k_{\mathrm{tot}}}{m}\approx\frac{g}{\delta}")
+
+    st.write(
+        "Y reemplazamos esa relación en la ecuación anterior de frecuencia natural, obtenemos:"
     )
     st.latex(r"\boxed{f_n=\frac{1}{2\pi}\sqrt{\frac{g}{\delta}}}")
 
-    st.write(
-        "Esta relación entrega una idea muy importante para el diseño:"
+    st.success(
+        "**Ambas ecuaciones calculan la misma frecuencia natural.** "
+        "La primera usa masa y rigidez. La segunda usa la deflexión estática que desarrolla el sistema bajo carga."
     )
-    rel1,rel2=st.columns(2)
-    with rel1:
+
+    st.markdown("##### ¿Qué significa cada término en esta forma?")
+    q1,q2,q3,q4=st.columns(4)
+    with q1:
         _card(
-            "Resorte que se comprime poco",
-            "menor δ → mayor fₙ",
-            "El sistema queda dinámicamente más rígido."
+            "fₙ",
+            "frecuencia natural [Hz]",
+            "Es la misma frecuencia natural definida en la sección anterior."
         )
-    with rel2:
+    with q2:
         _card(
-            "Resorte que se comprime más",
-            "mayor δ → menor fₙ",
-            "El sistema queda más flexible y puede separarse mejor de la frecuencia de excitación de la bomba.",
+            "g",
+            "9,81 m/s²",
+            "Es la aceleración de gravedad usada en el cálculo.",
+            tone="blue"
+        )
+    with q3:
+        _card(
+            "δ",
+            "deflexión estática [m]",
+            "Es cuánto se comprime verticalmente el sistema de resortes debido al peso de la bomba.",
+            tone="green"
+        )
+    with q4:
+        _card(
+            "2π",
+            "constante matemática",
+            "Aparece al expresar la oscilación en ciclos por segundo, es decir, en hertz."
+        )
+
+    st.warning(
+        "En esta ecuación, δ debe introducirse en **metros**. "
+        "Por ejemplo, 19 mm = 0,019 m."
+    )
+
+    st.markdown("##### 3 · Ejemplo con el criterio adoptado en este laboratorio")
+    st.write(
+        "Más adelante utilizaremos una deflexión mínima de diseño de **19 mm**. "
+        "Podemos usarla para estimar directamente la frecuencia natural máxima asociada a ese criterio."
+    )
+    st.latex(r"19\;\mathrm{mm}=0.019\;\mathrm{m}")
+    st.latex(
+        r"f_n=\frac{1}{2\pi}\sqrt{\frac{9.81}{0.019}}\approx3.62\;\mathrm{Hz}"
+    )
+
+    st.info(
+        "Una frecuencia natural de aproximadamente **3,62 Hz** significa que, si el conjunto bomba–resortes "
+        "fuera desplazado y soltado, tendería a oscilar unas 3,6 veces por segundo."
+    )
+
+    st.markdown("##### 4 · ¿Por qué esta forma es tan útil cuando trabajamos con catálogos?")
+    st.write(
+        "Porque un fabricante suele indicar la **carga** que soporta un resorte y la **deflexión** que desarrolla a esa carga. "
+        "Con ese dato podemos estimar la frecuencia natural sin necesidad de conocer directamente la rigidez k."
+    )
+
+    cv1,cv2=st.columns(2)
+    with cv1:
+        _card(
+            "Camino teórico",
+            "masa + rigidez → fₙ",
+            "Es la forma fundamental para comprender de qué depende la frecuencia natural.",
+            tone="purple"
+        )
+    with cv2:
+        _card(
+            "Camino práctico de catálogo",
+            "deflexión bajo carga → fₙ",
+            "Es la forma que usaremos al evaluar un aislador comercial.",
             tone="green"
         )
 
     st.success(
-        "Por eso el catálogo no solo nos interesa por la cantidad de peso que puede soportar. "
-        "También necesitamos saber **cuánto se comprimirá con nuestra carga**, porque esa compresión determina la frecuencia natural del montaje."
+        "La idea clave es que **los dos caminos llegan a la misma fₙ**. "
+        "La deflexión del catálogo es útil porque nos permite pasar de un dato práctico del producto a su comportamiento dinámico."
     )
 
     # ---------------------------------------------------------
