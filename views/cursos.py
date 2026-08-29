@@ -12079,6 +12079,8 @@ _VIEWS = {
     "future_lab_view": future_lab_view_impl,
     "future_projection_stage": future_projection_stage_impl,
     "future_print_view": future_print_view_impl,
+    "c2l1_stage9_teacher_view": _c2l1_stage9_teacher_view,
+    "c2l1_stage10_teacher_view": _c2l1_stage10_teacher_view,
 }
 
 def run_view(name, runtime, *args, **kwargs):
