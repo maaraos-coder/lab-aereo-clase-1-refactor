@@ -10858,6 +10858,34 @@ def _render_course2_lab1_stage10(lab,saved):
     import pandas as pd
     import plotly.graph_objects as go
 
+    # Constructor de tarjetas propio de la Etapa 10.
+    # No depende de helpers locales definidos dentro de otras etapas.
+    def _card(title,value,text,tone="white"):
+        palette={
+            "white":("#ffffff","#dbe4ee"),
+            "blue":("#eff6ff","#bfdbfe"),
+            "green":("#ecfdf5","#a7f3d0"),
+            "purple":("#f5f3ff","#ddd6fe"),
+            "orange":("#fff7ed","#fed7aa"),
+        }
+        bg,bd=palette.get(tone,palette["white"])
+        st.markdown(
+            f"""<div style="
+                border:1px solid {bd};
+                border-radius:16px;
+                padding:15px 16px;
+                background:{bg};
+                min-height:155px;
+                box-sizing:border-box;
+                margin-bottom:8px;
+            ">
+              <div style="font-weight:800;color:#0f172a;margin-bottom:5px;">{title}</div>
+              <div style="font-size:1.35rem;font-weight:850;color:#0f172a;margin:.25rem 0 .45rem 0;">{value}</div>
+              <div style="color:#526174;line-height:1.45;">{text}</div>
+            </div>""",
+            unsafe_allow_html=True,
+        )
+
     ln0_above_fc,reduced_mass,natural_frequency,delta_cremer,transmissibility_force=_c2l1_s10_models()
     _c2l1_s10_restore(saved)
     pump=_c2l1_s10_pump_reference(transmissibility_force)
