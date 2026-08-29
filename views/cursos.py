@@ -8771,6 +8771,13 @@ def _render_course2_lab1_stage8(lab, saved):
             tone="green"
         )
 
+    st.markdown("#### B.1 · ¿Cuánto se comprimirá realmente el resorte con nuestra bomba?")
+    st.write(
+        "El catálogo entrega una **carga nominal** y la **deflexión que el resorte desarrolla cuando trabaja con esa carga**. "
+        "Pero nuestra bomba puede aplicar una carga diferente. Por eso necesitamos estimar cuánto se comprimirá el resorte "
+        "con la **carga real de operación**."
+    )
+
     st.write(
         "Para este ejercicio utilizaremos una aproximación lineal: si cargamos el resorte con una fracción de su carga nominal, "
         "estimaremos que desarrolla aproximadamente esa misma fracción de la deflexión nominal."
@@ -8779,14 +8786,68 @@ def _render_course2_lab1_stage8(lab, saved):
         r"\boxed{\delta_{\mathrm{op}}\approx"
         r"\delta_{\mathrm{nom}}\frac{F_{\mathrm{op}}}{F_{\mathrm{nom}}}}"
     )
+
+    st.markdown("##### ¿Qué significa cada término?")
+    df1,df2,df3,df4=st.columns(4)
+    with df1:
+        _card(
+            "δ_op",
+            "deflexión de operación",
+            "Cuánto se comprimirá realmente el resorte con la carga de nuestra bomba.",
+            tone="green"
+        )
+    with df2:
+        _card(
+            "δ_nom",
+            "deflexión nominal",
+            "Deflexión declarada por el fabricante para una determinada carga nominal."
+        )
+    with df3:
+        _card(
+            "F_op",
+            "carga real de operación",
+            "Carga que nuestra bomba aplica sobre cada aislador.",
+            tone="blue"
+        )
+    with df4:
+        _card(
+            "F_nom",
+            "carga nominal",
+            "Carga para la cual el fabricante declara la deflexión nominal del resorte.",
+            tone="purple"
+        )
+
+    st.info(
+        "Si nuestra bomba carga el resorte **menos** que su carga nominal, esperamos que el resorte se comprima "
+        "**menos** que su deflexión nominal."
+    )
+
     st.caption(
-        "Es una aproximación didáctica de resorte lineal. En un proyecto real se deben revisar los datos de carga–deflexión y las condiciones indicadas por el fabricante."
+        "Esta relación es una aproximación lineal didáctica. En una selección profesional definitiva deben revisarse "
+        "los datos carga–deflexión y las condiciones indicadas por el fabricante."
     )
 
     one_rated_lb=50.0
     one_nom_in=0.97
     four_rated_lb=100.0
     four_nom_in=4.00
+
+    st.markdown("##### Ejemplo rápido · FDS 1-50")
+    st.write(
+        f"El catálogo indica aproximadamente **50 lb de carga nominal** y **0,97 in de deflexión nominal**. "
+        f"Nuestra bomba aplica aproximadamente **{lb_support:.1f} lb por apoyo**."
+    )
+    st.latex(
+        fr"\delta_{{\mathrm{{op}}}}\approx"
+        fr"0.97\;\mathrm{{in}}\;"
+        fr"\frac{{{lb_support:.1f}}}{{50}}"
+        fr"\approx0.85\;\mathrm{{in}}"
+    )
+    st.latex(r"0.85\;\mathrm{in}\times25.4\approx21.5\;\mathrm{mm}")
+    st.success(
+        "Como nuestra bomba aplica menos carga que las 50 lb nominales, el resorte se comprime algo menos que 0,97 in. "
+        "La deflexión de operación estimada es aproximadamente **0,85 in ≈ 21,5 mm**."
+    )
 
     one_op_in=one_nom_in*(lb_support/one_rated_lb)
     one_op_mm=one_op_in*25.4
@@ -8924,7 +8985,7 @@ def _render_course2_lab1_stage8(lab, saved):
         "Carga nominal",
         "Deflexión nominal",
         "Deflexión estimada con nuestra carga",
-        f"¿Cumple δ ≥ {delta_min_mm:.0f} mm?",
+        f"¿Cumple δ ≥ {delta_min_mm:.0f} mm (≈ {delta_min_mm/25.4:.2f} in)?",
         "fₙ estimada",
         "T_F estimada",
         "% transmitido",
@@ -8977,7 +9038,12 @@ def _render_course2_lab1_stage8(lab, saved):
     with spec1:
         _card("Carga de operación",f"{lb_support:.1f} lb/apoyo",f"Equivale a aproximadamente {force_support:.0f} N por apoyo.",tone="blue")
     with spec2:
-        _card("Criterio de deflexión",f"≥ {delta_min_mm:.0f} mm","Debe alcanzarse con la carga real de nuestra bomba.",tone="green")
+        _card(
+            "Criterio de deflexión",
+            f"≥ {delta_min_mm:.0f} mm (≈ {delta_min_mm/25.4:.2f} in)",
+            "Debe alcanzarse con la carga real de nuestra bomba. Mostramos ambas unidades porque el catálogo trabaja en pulgadas.",
+            tone="green"
+        )
     with spec3:
         _card("fₙ asociada",f"≤ {fn_max:.2f} Hz","Es la frecuencia natural máxima asociada al criterio de 19 mm.",tone="purple")
     with spec4:
@@ -9065,6 +9131,7 @@ def _render_course2_lab1_stage8(lab, saved):
     req_lb=float(design["load_per_support_lb"])
     req_kg=float(design["load_per_support_kg"])
     req_delta=float(design["min_deflection_mm"])
+    req_delta_in=req_delta/25.4
     req_fn=float(design["max_fn_hz"])
     req_tf=float(design["target_tf"])
     req_iso=float(design["target_isolation_pct"])
@@ -9076,7 +9143,12 @@ def _render_course2_lab1_stage8(lab, saved):
     with rr1:
         _card("Carga real",f"{req_lb:.0f} lb","Carga de operación por aislador.",tone="blue")
     with rr2:
-        _card("Criterio de deflexión",f"≥ {req_delta:.0f} mm","Criterio adoptado en el Laboratorio B.",tone="green")
+        _card(
+            "Criterio de deflexión",
+            f"≥ {req_delta:.0f} mm (≈ {req_delta_in:.2f} in)",
+            "Debe cumplirse con la carga real de operación. El catálogo expresa la deflexión en pulgadas.",
+            tone="green"
+        )
     with rr3:
         _card("fₙ asociada",f"≤ {req_fn:.2f} Hz","Frecuencia natural máxima asociada al criterio.",tone="purple")
     with rr4:
@@ -9087,7 +9159,25 @@ def _render_course2_lab1_stage8(lab, saved):
             f"y {req_iso:.1f} % de reducción idealizada."
         )
 
+    st.info(
+        f"**Conversión para trabajar con el catálogo:** {req_delta:.0f} mm ≈ {req_delta_in:.2f} in. "
+        "Cuando revisemos un aislador, compararemos su **deflexión de operación bajo nuestra carga real** "
+        f"con el requisito de **{req_delta:.0f} mm ≈ {req_delta_in:.2f} in**."
+    )
+
+    st.warning(
+        "**No compares directamente “familia de 1 pulgada” con los 19 mm.** "
+        "La denominación de la familia corresponde a una deflexión nominal aproximada. "
+        "Debemos calcular cuánto se comprime realmente el resorte con la carga de nuestra bomba y comparar "
+        "esa deflexión de operación con el criterio del ejercicio."
+    )
+
     st.markdown("### 4.2 · Elige una familia de deflexión")
+    st.write(
+        f"Nuestro requisito es **{req_delta:.0f} mm ≈ {req_delta_in:.2f} in de deflexión de operación**. "
+        "Las familias de 1 in y 4 in del catálogo describen su comportamiento nominal; no significan que el resorte "
+        "se comprimirá exactamente esa cantidad con cualquier carga."
+    )
     family=st.radio(
         "Familia Kinetics FDS a investigar",
         ["FDS 1 in · deflexión nominal ≈ 1 pulgada","FDS 4 in · deflexión nominal = 4 pulgadas"],
@@ -9133,9 +9223,11 @@ def _render_course2_lab1_stage8(lab, saved):
         **Cómo leer la ficha**
 
         1. busca la fila del modelo;
-        2. identifica **Rated Load**;
-        3. identifica **Rated Deflection**;
+        2. identifica **Rated Load**: carga nominal del resorte;
+        3. identifica **Rated Deflection**: deflexión nominal, expresada en pulgadas;
         4. compara la carga nominal con tu **carga de operación**;
+        5. estima la **deflexión de operación** con la carga real de la bomba;
+        6. compara esa deflexión con el criterio del ejercicio: **19 mm ≈ 0,75 in**;
         5. calcula la deflexión que realmente desarrollará el resorte bajo tu carga.
         """
     )
