@@ -9477,7 +9477,7 @@ def _render_course2_lab1_stage8(lab, saved):
 # -----------------------------------------------------------------------------
 # Curso 2 · Laboratorio 1 · Etapa 9 — Preguntas de comprensión
 # Reutiliza la lógica estructural de evaluación del Diplomado: 4 puntos por
-# respuesta, escala chilena 1,0–7,0 con 60 % para nota 4,0, persistencia e9_*
+# respuesta, puntaje máximo 100 y persistencia e9_*
 # y una única respuesta final_comprehension en la tabla responses.
 # -----------------------------------------------------------------------------
 _C2L1_STAGE9_VERSION = "etapas_1_a_8_v2"
@@ -9940,6 +9940,11 @@ def _c2l1_stage9_save_draft(saved, status="in_progress"):
     return answered_count,checked_count
 
 
+def _c2l1_stage9_autosave(saved):
+    """Persiste inmediatamente la alternativa seleccionada por el alumno."""
+    _c2l1_stage9_save_draft(saved)
+
+
 def _c2l1_finish_stage9(saved, reason="submitted"):
     total=len(_C2L1_STAGE9_QUESTIONS)
     answers={str(i):st.session_state.get(f"e9_q{i}") for i in range(total)}
@@ -9957,15 +9962,15 @@ def _c2l1_finish_stage9(saved, reason="submitted"):
         "question_count":total,
         "points_each":4,
         "max_score":100,
-        "passing_percent":60,
+        "evaluation_mode":"points_only",
     }
     _save_formative(
         9,
         "final_comprehension",
         "Etapa 9 · Preguntas de comprensión",
         json.dumps(payload,ensure_ascii=False),
-        "Correcta" if score>=60 else "Incorrecta",
-        f"Resultado automático: {score}/100 puntos.",
+        "Finalizada",
+        f"Resultado automático: {score}/100 puntos. Laboratorio 1: puntaje sin nota.",
         score=score,
         max_score=100,
         correct_answer="Pauta automática de las 25 preguntas disponible después del cierre.",
@@ -9989,11 +9994,11 @@ def _c2l1_finish_stage9(saved, reason="submitted"):
 
 
 def _c2l1_stage9_teacher_view():
-    st.info("Vista docente: pauta y resultados de la Etapa 9 actualizada con contenidos de las Etapas 1 a 8. Se mantienen 25 preguntas, 4 puntos por pregunta, 100 puntos totales y escala 1,0–7,0 con exigencia de 60 %.")
+    st.info("Vista docente: pauta y resultados de la Etapa 9 actualizada con contenidos de las Etapas 1 a 8. Se mantienen 25 preguntas, 4 puntos por pregunta y 100 puntos totales. En este Laboratorio 1 se registra puntaje, no nota.")
     for i,item in enumerate(_C2L1_STAGE9_QUESTIONS):
         correct=item["options"][item["correct"]]
         with st.container(border=True):
-            st.markdown(f"#### Pregunta {i+1} · Etapa {item.get('stage','—')} · {item['title']}")
+            st.markdown(f"#### Pregunta {i+1} de 25 · {item['title']}")
             st.markdown(f"**{item['question']}**")
             for j,opt in enumerate(item["options"]):
                 st.write(("✅ " if j==item["correct"] else "○ ")+f"{chr(65+j)}. {opt}")
@@ -10057,12 +10062,13 @@ def _c2l1_stage9_teacher_view():
             )
     total=float(sum(awarded)); auto=float(sum(automatic))
     note=st.text_area("Observación general para el alumno",value=row.get("teacher_note") or "",key=f"c2l1_e9_note_{row['id']}")
-    c1,c2,c3,c4=st.columns(4)
-    c1.metric("Puntaje automático",f"{auto:g}/100"); c2.metric("Nota automática",f"{_grade_from_percent(auto):.1f}")
-    c3.metric("Puntaje ajustado",f"{total:g}/100"); c4.metric("Nota ajustada",f"{_grade_from_percent(total):.1f}")
+    c1,c2,c3=st.columns(3)
+    c1.metric("Puntaje automático",f"{auto:g}/100")
+    c2.metric("Puntaje ajustado",f"{total:g}/100")
+    c3.metric("Máximo", "100 puntos")
     if st.button("Guardar rúbrica docente",type="primary",use_container_width=True,key=f"c2l1_e9_save_{row['id']}"):
         updated=dict(payload); updated["rubric_scores"]=awarded
-        client.table("responses").update({"answer":updated,"teacher_level":"Correcta" if total>=60 else "Incorrecta","teacher_score":total,"teacher_note":note,"status":"reviewed","updated_at":_now()}).eq("id",row["id"]).execute()
+        client.table("responses").update({"answer":updated,"teacher_level":"Revisada","teacher_score":total,"teacher_note":note,"status":"reviewed","updated_at":_now()}).eq("id",row["id"]).execute()
         st.success("Rúbrica y observación docente guardadas.")
 
 
@@ -10090,7 +10096,7 @@ def _render_course2_lab1_stage9(lab, saved):
     header(
         "ETAPA 9 · LABORATORIO 1",
         "PREGUNTAS DE COMPRENSIÓN",
-        "COMPRUEBA LO QUE HAS APRENDIDO",
+        "ETAPAS 1 A 8 DE ESTE LABORATORIO",
         show_overview=False
     )
 
@@ -10102,8 +10108,7 @@ def _render_course2_lab1_stage9(lab, saved):
         "el diseño de pisos flotantes y el diagnóstico/control de la bomba centrífuga."
     )
     st.caption(
-        "25 preguntas · 4 puntos por pregunta · 100 puntos totales · "
-        "exigencia de aprobación: 60 % · escala de notas 1,0–7,0."
+        "25 preguntas · 4 puntos por pregunta · 100 puntos totales · evaluación con puntaje, sin nota."
     )
 
     if st.session_state.get("role")=="Docente":
@@ -10135,12 +10140,9 @@ def _render_course2_lab1_stage9(lab, saved):
             answers.get(str(i))==q["options"][q["correct"]]
             for i,q in enumerate(_C2L1_STAGE9_QUESTIONS)
         )
-        pct=score
-        grade=_grade_from_percent(pct)
-
         st.success(
             f"Evaluación finalizada · {correct}/25 respuestas correctas · "
-            f"{score:g}/100 puntos · {pct:.0f}% · Nota {grade:.1f}"
+            f"{score:g}/100 puntos"
         )
         st.caption(
             "Tu evaluación está guardada. Puedes volver a esta etapa cuando quieras para visualizar "
@@ -10152,7 +10154,7 @@ def _render_course2_lab1_stage9(lab, saved):
             correct_opt=item["options"][item["correct"]]
             with st.container(border=True):
                 st.markdown(
-                    f"#### Pregunta {i+1} · Etapa {item['stage']} · {item['title']}"
+                    f"#### Pregunta {i+1} de 25 · {item['title']}"
                 )
                 st.markdown(f"**{item['question']}**")
                 st.write(f"**Tu respuesta:** {chosen or 'Sin respuesta'}")
@@ -10178,20 +10180,21 @@ def _render_course2_lab1_stage9(lab, saved):
     if draft and draft.get("version")==_C2L1_STAGE9_VERSION:
         saved_at=draft.get("updated_at")
         st.success(
-            "Tu avance guardado fue restaurado. Puedes continuar exactamente donde lo dejaste."
+            "Tu avance guardado fue restaurado. Puedes continuar exactamente donde lo dejaste, incluso si saliste para revisar la materia."
         )
         if saved_at:
             st.caption(f"Último guardado: {saved_at}")
 
     st.info(
-        "Selecciona una alternativa y pulsa **COMPROBAR**. Al comprobar una pregunta, "
-        "su respuesta queda bloqueada y se guarda automáticamente. "
-        "También puedes usar **Guardar respuestas y continuar después** para conservar las selecciones que aún no has comprobado."
+        "Cada alternativa que selecciones se **guarda automáticamente**. "
+        "Puedes ir a revisar la materia en cualquiera de las Etapas 1 a 8 y volver después: "
+        "tus respuestas seleccionadas y las preguntas ya comprobadas permanecerán guardadas. "
+        "Cuando estés seguro de una respuesta, pulsa **COMPROBAR** para cerrarla y ver su retroalimentación."
     )
 
     # Botón superior de guardado manual.
     if st.button(
-        "💾 Guardar respuestas y continuar después",
+        "💾 Guardar avance ahora",
         key="c2l1_e9_save_top",
         use_container_width=True
     ):
@@ -10201,18 +10204,10 @@ def _render_course2_lab1_stage9(lab, saved):
             f"{checked}/25 preguntas comprobadas."
         )
 
-    previous_stage=None
     for i,item in enumerate(_C2L1_STAGE9_QUESTIONS):
-        # Separadores simples por etapa: no son tarjetas heredadas.
-        if item["stage"] != previous_stage:
-            if previous_stage is not None:
-                st.markdown("---")
-            st.markdown(f"### Contenidos de la Etapa {item['stage']}")
-            previous_stage=item["stage"]
-
         st.markdown(
             f'<div class="question-box">'
-            f'<div class="question-label">PREGUNTA {i+1} DE 25 · ETAPA {item["stage"]} · 4 PUNTOS</div>'
+            f'<div class="question-label">PREGUNTA {i+1} DE 25 · 4 PUNTOS</div>'
             f'<div class="question-text">{item["question"]}</div>'
             f'</div>',
             unsafe_allow_html=True
@@ -10225,7 +10220,9 @@ def _render_course2_lab1_stage9(lab, saved):
             index=None,
             key=f"e9_q{i}",
             label_visibility="collapsed",
-            disabled=checked
+            disabled=checked,
+            on_change=_c2l1_stage9_autosave,
+            args=(saved,)
         )
 
         if not checked:
@@ -10277,7 +10274,7 @@ def _render_course2_lab1_stage9(lab, saved):
     )
 
     if st.button(
-        "💾 Guardar respuestas y continuar después",
+        "💾 Guardar avance ahora",
         key="c2l1_e9_save_bottom",
         use_container_width=True
     ):
@@ -10322,8 +10319,8 @@ def _render_course2_lab1_stage9(lab, saved):
 # -----------------------------------------------------------------------------
 # Curso 2 · Laboratorio 1 · Etapa 10 — Desafío integrador interactivo
 # Aislado del contenido de los laboratorios anteriores. Conserva el cierre,
-# persistencia, escala 1,0–7,0, exigencia 60 % y puntaje máximo 100 del motor
-# de evaluación del Diplomado, pero reemplaza la antigua prueba de alternativas.
+# persistencia y puntaje máximo 100. En este Laboratorio 1 no se calcula nota.
+# La evaluación formal con nota corresponde al Laboratorio 2.
 # -----------------------------------------------------------------------------
 _C2L1_S10_CLASS_ID = "clase-03-impacto-instalaciones-lab-1"
 _C2L1_S10_R = {125:35.0, 250:45.0, 500:55.0, 1000:61.0, 2000:67.0}
@@ -10421,7 +10418,7 @@ def _c2l1_finish_stage10(saved,reason="submitted"):
             "course_id":COURSE_ID,"class_id":_C2L1_S10_CLASS_ID,"user_key":user_key,
             "stage":10,"question_key":"final_exam","question_text":"Etapa 10 · Desafío integrador interactivo",
             "correct_answer":"Pauta docente del desafío integrador interactivo.",
-            "answer":payload,"auto_level":"Correcta" if total>=60 else "Incorrecta",
+            "answer":payload,"auto_level":"Finalizada",
             "feedback":f"Desempeño técnico: {technical}/80. Informe integrador: {report}/20.",
             "auto_score":total,"max_score":100,"status":"submitted",
             "updated_at":_now(),"submitted_at":_now(),
@@ -10433,7 +10430,7 @@ def _c2l1_finish_stage10(saved,reason="submitted"):
 def _c2l1_stage10_teacher_view():
     ln0_above_fc,reduced_mass,natural_frequency,delta_cremer,transmissibility_force=_c2l1_s10_models()
     ln0=ln0_above_fc(500,55,1); mr,f0=natural_frequency(120,400,10); fe=1450/60
-    st.info("Vista docente · solución desarrollada visible. El contenido pedagógico de esta etapa es propio del Curso 2 · Laboratorio 1; no se cargan tarjetas ni preguntas heredadas de laboratorios anteriores.")
+    st.info("Vista docente · solución desarrollada visible. Puedes revisar el desarrollo entregado por cada alumno y su puntaje. Esta Etapa 10 del Laboratorio 1 registra puntaje solamente; no genera nota.")
     st.markdown("## 1 · Planteamiento completo")
     st.write("Edificio residencial de hormigón armado con dos reclamos simultáneos: ruido de impacto por pisadas desde el departamento superior y zumbido nocturno asociado a una bomba centrífuga. El estudiante debe diagnosticar, calcular, experimentar, identificar caminos y proponer control.")
     st.markdown("## 2 · Datos iniciales")
@@ -10460,7 +10457,7 @@ def _c2l1_stage10_teacher_view():
     st.markdown("## 9 · Respuesta profesional esperada")
     st.write("No aprobar la ejecución sin verificaciones adicionales. Deben comprobarse cargas por apoyo, estabilidad, especificaciones dinámicas, continuidad resiliente, ausencia de puentes, conexiones, condiciones hidráulicas y desempeño final medido cuando corresponda.")
     st.markdown("## 10 · Criterios de evaluación")
-    st.write("80 puntos por desempeño técnico comprobado en ocho bloques interactivos + 20 puntos por informe integrador completo. Aprobación: 60 %, con la misma conversión de nota del Diplomado.")
+    st.write("80 puntos por desempeño técnico comprobado en ocho bloques interactivos + 20 puntos por informe integrador completo. Puntaje máximo: 100 puntos. Esta etapa no genera nota.")
     client=_supabase()
     if client is None: return
     try:
@@ -10477,7 +10474,9 @@ def _c2l1_stage10_teacher_view():
         try: payload=json.loads(payload)
         except Exception: payload={}
     score=float(row.get("teacher_score") if row.get("teacher_score") is not None else row.get("auto_score") or 0)
-    c1,c2,c3=st.columns(3); c1.metric("Puntaje",f"{score:.1f}/100"); c2.metric("Porcentaje",f"{score:.1f}%"); c3.metric("Nota",f"{_grade_from_percent(score):.1f}")
+    c1,c2=st.columns(2)
+    c1.metric("Puntaje",f"{score:.1f}/100")
+    c2.metric("Máximo","100 puntos")
     st.markdown("### Desarrollo entregado")
     for section in ["impacto","instalaciones","informe"]:
         st.markdown(f"**{section.capitalize()}**")
@@ -10489,6 +10488,7 @@ def _render_course2_lab1_stage10(lab,saved):
     ln0_above_fc,reduced_mass,natural_frequency,delta_cremer,transmissibility_force=_c2l1_s10_models()
     _c2l1_s10_restore(saved)
     header("ETAPA 10 · DESAFÍO INTEGRADOR","UN EDIFICIO, DOS PROBLEMAS","Diagnóstico, predicción y control del ruido de impacto y del ruido generado por instalaciones.", show_overview=False)
+    st.caption("Puntaje máximo: 100 puntos. Esta etapa del Laboratorio 1 registra puntaje solamente; no genera nota.")
     _c2l1_stage_overview(10)
     if st.session_state.get("role")=="Docente": _c2l1_stage10_teacher_view(); return
 
@@ -10510,7 +10510,7 @@ def _render_course2_lab1_stage10(lab,saved):
     if remote or st.session_state.get("c2l1_exam_submitted"):
         payload=(remote or {}).get("payload",{}); row=(remote or {}).get("row",{})
         total=float(row.get("teacher_score") if row and row.get("teacher_score") is not None else (row.get("auto_score") if row else saved.get("stage10_result",{}).get("score",0)) or 0)
-        st.success(f"Desafío enviado y guardado · {total:.1f}/100 · {total:.1f}% · Nota {_grade_from_percent(total):.1f} · {'APROBADO' if total>=60 else 'REPROBADO'}")
+        st.success(f"Desafío enviado y guardado · {total:.1f}/100 puntos")
         st.write("El intento está cerrado y el desarrollo permanece guardado.")
         st.markdown("### Resumen final")
         st.json(payload if payload else saved.get("stage10_draft",{}),expanded=True)
