@@ -10317,12 +10317,12 @@ def _render_course2_lab1_stage9(lab, saved):
 
 
 # -----------------------------------------------------------------------------
-# Curso 2 · Laboratorio 1 · Etapa 10 — Desafío integrador interactivo
-# Aislado del contenido de los laboratorios anteriores. Conserva el cierre,
-# persistencia y puntaje máximo 100. En este Laboratorio 1 no se calcula nota.
-# La evaluación formal con nota corresponde al Laboratorio 2.
+# Curso 2 · Laboratorio 1 · Etapa 10 — Desafío integrador profesional
+# Puntaje máximo: 100. Laboratorio 1: puntaje sin nota.
 # -----------------------------------------------------------------------------
 _C2L1_S10_CLASS_ID = "clase-03-impacto-instalaciones-lab-1"
+_C2L1_S10_VERSION = "integrador_lowara_v3"
+
 _C2L1_S10_R = {125:35.0, 250:45.0, 500:55.0, 1000:61.0, 2000:67.0}
 _C2L1_S10_FLOORS = {
     "Solución A · sistema liviano": {"m1":70.0, "s":25.0, "load":70.0, "thickness":55.0},
@@ -10330,10 +10330,30 @@ _C2L1_S10_FLOORS = {
     "Solución C · mayor masa y menor rigidez": {"m1":150.0, "s":8.0, "load":150.0, "thickness":85.0},
 }
 _C2L1_S10_CRITERIA = [
-    "comportamiento en bajas frecuencias", "comportamiento espectral general",
-    "frecuencia natural", "carga estructural", "espesor disponible",
-    "constructibilidad", "riesgo de puentes rígidos",
+    "comportamiento en bajas frecuencias",
+    "comportamiento espectral general",
+    "frecuencia natural",
+    "carga estructural",
+    "espesor disponible",
+    "constructibilidad",
+    "riesgo de puentes rígidos",
 ]
+_C2L1_S10_PUMP = {
+    "model":"Lowara SHOS 50-125/75/P",
+    "rpm":2900.0,
+    "mass_kg":79.0,
+    "supports":4,
+    "flow_m3h":48.0,
+    "npshr_m":3.8,
+    "npsha_m":3.4078814101189114,
+    "delta_min_mm":19.0,
+    "zeta":0.06,
+}
+_C2L1_S10_ISOLATORS = {
+    "FDS 1-50": {"rated_lb":50.0, "nominal_in":0.97},
+    "FDS 4-100": {"rated_lb":100.0, "nominal_in":4.00},
+}
+
 
 def _c2l1_s10_models():
     from core.course2_impact_models import (
@@ -10342,302 +10362,929 @@ def _c2l1_s10_models():
     )
     return ln0_above_fc, reduced_mass, natural_frequency, delta_ln_cremer_continuous_db, transmissibility_force
 
+
+def _c2l1_s10_fn_from_delta(delta_mm):
+    delta_m=max(float(delta_mm),1e-9)/1000.0
+    return (1.0/(2.0*math.pi))*math.sqrt(9.81/delta_m)
+
+
+def _c2l1_s10_pump_reference(transmissibility_force):
+    p=_C2L1_S10_PUMP
+    fe=p["rpm"]/60.0
+    kg_support=p["mass_kg"]/p["supports"]
+    n_support=kg_support*9.81
+    lb_support=n_support/4.4482216152605
+    data={
+        "fe":fe,
+        "kg_support":kg_support,
+        "n_support":n_support,
+        "lb_support":lb_support,
+        "npsha":p["npsha_m"],
+        "npshr":p["npshr_m"],
+        "npsh_margin":p["npsha_m"]-p["npshr_m"],
+    }
+    for name,d in _C2L1_S10_ISOLATORS.items():
+        op_in=d["nominal_in"]*(lb_support/d["rated_lb"])
+        op_mm=op_in*25.4
+        fn=_c2l1_s10_fn_from_delta(op_mm)
+        r=fe/fn
+        tf=transmissibility_force(r,p["zeta"])
+        data[name]={
+            "op_in":op_in,
+            "op_mm":op_mm,
+            "fn":fn,
+            "r":r,
+            "tf":tf,
+            "reduction":max(0.0,(1.0-tf)*100.0),
+        }
+    return data
+
+
 def _c2l1_s10_restore(saved):
+    # Migración acotada: invalida únicamente el borrador antiguo de Etapa 10.
+    if saved.get("stage10_content_version") != _C2L1_S10_VERSION:
+        for key in list(st.session_state.keys()):
+            if str(key).startswith("c2s10_") or key=="c2l1_exam_submitted":
+                st.session_state.pop(key,None)
+        saved.pop("stage10_draft",None)
+        saved.pop("stage10_result",None)
+        saved.pop("done_10",None)
+        saved["stage10_content_version"]=_C2L1_S10_VERSION
+        _save_future_state(_C2L1_S10_CLASS_ID,saved)
+
     draft=saved.get("stage10_draft",{}) if isinstance(saved,dict) else {}
-    if not isinstance(draft,dict): draft={}
+    if not isinstance(draft,dict):
+        draft={}
     defaults={
+        # diagnóstico inicial
         "c2s10_impact_1":"", "c2s10_impact_2":"", "c2s10_impact_3":"", "c2s10_impact_4":"",
+        "c2s10_pump_1":"", "c2s10_pump_2":"", "c2s10_pump_3":"", "c2s10_pump_4":"",
+        # impacto
         "c2s10_ln0":0.0, "c2s10_mr":0.0, "c2s10_f0":0.0,
         "c2s10_floor":"", "c2s10_floor_criteria":[], "c2s10_floor_note":"",
         "c2s10_ln250":0.0, "c2s10_ln500":0.0, "c2s10_ln1000":0.0,
-        "c2s10_floor_errors":[], "c2s10_fe":0.0, "c2s10_ra":0.0, "c2s10_rb":0.0, "c2s10_rc":0.0,
-        "c2s10_paths":[], "c2s10_cavitation":"", "c2s10_controls":[],
+        "c2s10_floor_errors":[],
+        # bomba
+        "c2s10_fe":0.0, "c2s10_npsha":0.0, "c2s10_npshr":0.0,
+        "c2s10_npsh_diag":"",
+        "c2s10_load_lb":0.0,
+        "c2s10_isolator":"",
+        "c2s10_delta_op":0.0, "c2s10_fn_iso":0.0, "c2s10_tf_iso":0.0,
+        "c2s10_paths":[],
+        # integración
+        "c2s10_controls":[],
         "c2s10_final_limit":"", "c2s10_final_conclusion":"",
     }
     for key,default in defaults.items():
         if key not in st.session_state:
             st.session_state[key]=draft.get(key,default)
     checks=draft.get("checks",{}) if isinstance(draft.get("checks",{}),dict) else {}
-    if "c2s10_checks" not in st.session_state: st.session_state["c2s10_checks"]=checks
+    if "c2s10_checks" not in st.session_state:
+        st.session_state["c2s10_checks"]=checks
 
-def _c2l1_s10_save_draft(saved):
-    keys=[k for k in st.session_state if str(k).startswith("c2s10_") and k not in {"c2s10_checks"}]
+
+def _c2l1_s10_current_draft():
+    keys=[
+        k for k in st.session_state
+        if str(k).startswith("c2s10_") and k!="c2s10_checks"
+    ]
     draft={k:st.session_state.get(k) for k in keys}
     draft["checks"]=dict(st.session_state.get("c2s10_checks",{}))
+    draft["version"]=_C2L1_S10_VERSION
+    return draft
+
+
+def _c2l1_s10_save_draft(saved):
+    draft=_c2l1_s10_current_draft()
+    saved["stage10_content_version"]=_C2L1_S10_VERSION
     saved["stage10_draft"]=draft
     _save_future_state(_C2L1_S10_CLASS_ID,saved)
 
+
+def _c2l1_s10_autosave(saved):
+    """Guarda únicamente cuando el estado cambió; permite salir y volver sin perder avances."""
+    draft=_c2l1_s10_current_draft()
+    previous=saved.get("stage10_draft",{}) if isinstance(saved,dict) else {}
+    try:
+        changed=json.dumps(draft,sort_keys=True,ensure_ascii=False,default=str) != json.dumps(previous,sort_keys=True,ensure_ascii=False,default=str)
+    except Exception:
+        changed=True
+    if changed:
+        saved["stage10_content_version"]=_C2L1_S10_VERSION
+        saved["stage10_draft"]=draft
+        _save_future_state(_C2L1_S10_CLASS_ID,saved)
+
+
 def _c2l1_s10_check(saved,block,ok,success,feedback):
-    checks=dict(st.session_state.get("c2s10_checks",{})); checks[block]=bool(ok)
-    st.session_state["c2s10_checks"]=checks; _c2l1_s10_save_draft(saved)
+    checks=dict(st.session_state.get("c2s10_checks",{}))
+    checks[block]=bool(ok)
+    st.session_state["c2s10_checks"]=checks
+    _c2l1_s10_save_draft(saved)
     (st.success if ok else st.warning)(success if ok else feedback)
+
 
 def _c2l1_s10_scores():
     checks=st.session_state.get("c2s10_checks",{})
-    technical=sum(10 for key in ["impact","ln0","floor_math","floor_final","floor_decision","pump_math","inspection","controls"] if checks.get(key))
-    final_fields=[st.session_state.get("c2s10_floor"),st.session_state.get("c2s10_paths"),st.session_state.get("c2s10_controls"),st.session_state.get("c2s10_final_limit"),st.session_state.get("c2s10_final_conclusion")]
+    # Conserva el motor 80 + 20 utilizado por esta Etapa 10:
+    technical=sum(
+        10 for key in
+        ["impact","ln0","floor_math","floor_final","floor_decision","pump_math","inspection","controls"]
+        if checks.get(key)
+    )
+    final_fields=[
+        st.session_state.get("c2s10_floor"),
+        st.session_state.get("c2s10_paths"),
+        st.session_state.get("c2s10_controls"),
+        st.session_state.get("c2s10_final_limit"),
+        st.session_state.get("c2s10_final_conclusion"),
+    ]
     report=20 if all(final_fields) and len(str(st.session_state.get("c2s10_final_conclusion","")).split())>=12 else 10 if sum(bool(x) for x in final_fields)>=4 else 0
     return technical,report,min(100,technical+report)
 
+
 def _c2l1_stage10_submission():
     user_key=st.session_state.get("user_key")
-    if not user_key: return None
+    if not user_key:
+        return None
     rows=_remote_rows("responses",class_id=_C2L1_S10_CLASS_ID,user_key=user_key) or []
-    row=next((r for r in rows if int(r.get("stage") or -1)==10 and r.get("question_key")=="final_exam"),None)
-    if not row: return None
+    row=next(
+        (
+            r for r in rows
+            if int(r.get("stage") or -1)==10
+            and r.get("question_key")=="final_exam"
+        ),
+        None
+    )
+    if not row:
+        return None
     payload=row.get("answer") or {}
     if isinstance(payload,str):
-        try: payload=json.loads(payload)
-        except Exception: payload={}
-    return {"row":row,"payload":payload if isinstance(payload,dict) else {}}
+        try:
+            payload=json.loads(payload)
+        except Exception:
+            payload={}
+    if not isinstance(payload,dict) or payload.get("version") != _C2L1_S10_VERSION:
+        return None
+    return {"row":row,"payload":payload}
+
 
 def _c2l1_finish_stage10(saved,reason="submitted"):
     technical,report,total=_c2l1_s10_scores()
     payload={
-        "tipo":"desafio_integrador_interactivo", "reason":reason, "finished_at":_now(),
-        "puntaje_tecnico":technical, "puntaje_informe":report,
-        "impacto":{"secuencia":[st.session_state.get(f"c2s10_impact_{i}") for i in range(1,5)],"ln0_500":st.session_state.get("c2s10_ln0"),"mr":st.session_state.get("c2s10_mr"),"f0":st.session_state.get("c2s10_f0"),"solucion":st.session_state.get("c2s10_floor"),"criterios":st.session_state.get("c2s10_floor_criteria"),"ln_final":{"250":st.session_state.get("c2s10_ln250"),"500":st.session_state.get("c2s10_ln500"),"1000":st.session_state.get("c2s10_ln1000")},"errores_obra":st.session_state.get("c2s10_floor_errors")},
-        "instalaciones":{"fe":st.session_state.get("c2s10_fe"),"rA":st.session_state.get("c2s10_ra"),"rB":st.session_state.get("c2s10_rb"),"rC":st.session_state.get("c2s10_rc"),"caminos":st.session_state.get("c2s10_paths"),"cavitacion":st.session_state.get("c2s10_cavitation"),"medidas":st.session_state.get("c2s10_controls")},
-        "informe":{"limitacion":st.session_state.get("c2s10_final_limit"),"conclusion":st.session_state.get("c2s10_final_conclusion")},
+        "version":_C2L1_S10_VERSION,
+        "tipo":"desafio_integrador_interactivo",
+        "reason":reason,
+        "finished_at":_now(),
+        "puntaje_tecnico":technical,
+        "puntaje_informe":report,
+        "impacto":{
+            "secuencia":[st.session_state.get(f"c2s10_impact_{i}") for i in range(1,5)],
+            "ln0_500":st.session_state.get("c2s10_ln0"),
+            "mr":st.session_state.get("c2s10_mr"),
+            "f0":st.session_state.get("c2s10_f0"),
+            "solucion":st.session_state.get("c2s10_floor"),
+            "criterios":st.session_state.get("c2s10_floor_criteria"),
+            "justificacion":st.session_state.get("c2s10_floor_note"),
+            "ln_final":{
+                "250":st.session_state.get("c2s10_ln250"),
+                "500":st.session_state.get("c2s10_ln500"),
+                "1000":st.session_state.get("c2s10_ln1000"),
+            },
+            "errores_obra":st.session_state.get("c2s10_floor_errors"),
+        },
+        "instalaciones":{
+            "modelo":_C2L1_S10_PUMP["model"],
+            "secuencia":[st.session_state.get(f"c2s10_pump_{i}") for i in range(1,5)],
+            "fe":st.session_state.get("c2s10_fe"),
+            "npsha":st.session_state.get("c2s10_npsha"),
+            "npshr":st.session_state.get("c2s10_npshr"),
+            "diagnostico_npsh":st.session_state.get("c2s10_npsh_diag"),
+            "carga_lb":st.session_state.get("c2s10_load_lb"),
+            "aislador":st.session_state.get("c2s10_isolator"),
+            "delta_op_mm":st.session_state.get("c2s10_delta_op"),
+            "fn_hz":st.session_state.get("c2s10_fn_iso"),
+            "tf":st.session_state.get("c2s10_tf_iso"),
+            "caminos":st.session_state.get("c2s10_paths"),
+            "medidas":st.session_state.get("c2s10_controls"),
+        },
+        "informe":{
+            "limitacion":st.session_state.get("c2s10_final_limit"),
+            "conclusion":st.session_state.get("c2s10_final_conclusion"),
+        },
         "checks":dict(st.session_state.get("c2s10_checks",{})),
     }
-    # Persistencia aislada del Curso 2: no usar _save_formative(), porque ese
-    # motor global trabaja con CLASS_ID del laboratorio activo del Curso 1.
-    # Aquí la respuesta se guarda explícitamente bajo el class_id de este laboratorio.
+
     client=_supabase()
     user_key=st.session_state.get("user_key")
     if client is not None and user_key:
-        qid=f"{_C2L1_S10_CLASS_ID}-final_exam-v1"
+        qid=f"{_C2L1_S10_CLASS_ID}-final_exam-v3"
         client.table("questions").upsert({
-            "id":qid,"class_id":_C2L1_S10_CLASS_ID,"stage":10,
-            "question_key":"final_exam","question_text":"Etapa 10 · Desafío integrador interactivo",
-            "correct_answer":"Pauta docente del desafío integrador interactivo.",
-            "max_score":100,"content_version":2,"active":True,"updated_at":_now(),
+            "id":qid,
+            "class_id":_C2L1_S10_CLASS_ID,
+            "stage":10,
+            "question_key":"final_exam",
+            "question_text":"Etapa 10 · Desafío integrador profesional",
+            "correct_answer":"Pauta docente del desafío integrador profesional.",
+            "max_score":100,
+            "content_version":3,
+            "active":True,
+            "updated_at":_now(),
         },on_conflict="id").execute()
         client.table("responses").upsert({
-            "course_id":COURSE_ID,"class_id":_C2L1_S10_CLASS_ID,"user_key":user_key,
-            "stage":10,"question_key":"final_exam","question_text":"Etapa 10 · Desafío integrador interactivo",
-            "correct_answer":"Pauta docente del desafío integrador interactivo.",
-            "answer":payload,"auto_level":"Finalizada",
+            "course_id":COURSE_ID,
+            "class_id":_C2L1_S10_CLASS_ID,
+            "user_key":user_key,
+            "stage":10,
+            "question_key":"final_exam",
+            "question_text":"Etapa 10 · Desafío integrador profesional",
+            "correct_answer":"Pauta docente del desafío integrador profesional.",
+            "answer":payload,
+            "auto_level":"Finalizada",
             "feedback":f"Desempeño técnico: {technical}/80. Informe integrador: {report}/20.",
-            "auto_score":total,"max_score":100,"status":"submitted",
-            "updated_at":_now(),"submitted_at":_now(),
+            "auto_score":total,
+            "max_score":100,
+            "status":"submitted",
+            "updated_at":_now(),
+            "submitted_at":_now(),
         },on_conflict="class_id,user_key,question_key").execute()
-    saved["done_10"]=True; saved["stage10_result"]={"score":total,"technical":technical,"report":report,"submitted_at":_now(),"payload":payload}
-    _c2l1_s10_save_draft(saved); _save_future_state(_C2L1_S10_CLASS_ID,saved)
+
+    saved["done_10"]=True
+    saved["stage10_content_version"]=_C2L1_S10_VERSION
+    saved["stage10_result"]={
+        "score":total,
+        "technical":technical,
+        "report":report,
+        "submitted_at":_now(),
+        "payload":payload,
+    }
+    _c2l1_s10_save_draft(saved)
+    _save_future_state(_C2L1_S10_CLASS_ID,saved)
     st.session_state["c2l1_exam_submitted"]=True
+
 
 def _c2l1_stage10_teacher_view():
     ln0_above_fc,reduced_mass,natural_frequency,delta_cremer,transmissibility_force=_c2l1_s10_models()
-    ln0=ln0_above_fc(500,55,1); mr,f0=natural_frequency(120,400,10); fe=1450/60
-    st.info("Vista docente · solución desarrollada visible. Puedes revisar el desarrollo entregado por cada alumno y su puntaje. Esta Etapa 10 del Laboratorio 1 registra puntaje solamente; no genera nota.")
-    st.markdown("## 1 · Planteamiento completo")
-    st.write("Edificio residencial de hormigón armado con dos reclamos simultáneos: ruido de impacto por pisadas desde el departamento superior y zumbido nocturno asociado a una bomba centrífuga. El estudiante debe diagnosticar, calcular, experimentar, identificar caminos y proponer control.")
-    st.markdown("## 2 · Datos iniciales")
-    st.write("Impacto: R(125–2000 Hz) = 35, 45, 55, 61 y 67 dB; σrad=1. Piso flotante base: m’1=120 kg/m², m’2=400 kg/m², s’=10 MN/m³. Restricciones: carga adicional ≤120 kg/m² y espesor ≤75 mm.")
-    st.write("Instalaciones: bomba centrífuga de 600 kg, 1450 rpm y 4 apoyos. Montajes didácticos con fn=14, 8 y 4,5 Hz.")
-    st.markdown("## 3 · Procedimiento y ecuaciones")
-    st.latex(r"L_{n,0}=43+30\log_{10}(f)-10\log_{10}(\sigma_{rad})-R(f)")
-    st.latex(r"m'_r=\frac{m'_1m'_2}{m'_1+m'_2},\qquad f_0=\frac{1}{2\pi}\sqrt{\frac{s'}{m'_r}}")
-    st.latex(r"L_{n,final}(f)=L_{n,0}(f)-\Delta L_n(f),\qquad f_e=\frac{n}{60},\qquad r=\frac{f_e}{f_n}")
-    st.markdown("## 4 · Cálculos desarrollados")
-    st.write(f"A 500 Hz: Lₙ,₀ = {ln0:.1f} dB. Masa reducida = {mr:.1f} kg/m². Frecuencia natural = {f0:.1f} Hz. Frecuencia de rotación de la bomba = {fe:.2f} Hz.")
-    st.write(f"Relaciones de frecuencia: A={fe/14:.2f}; B={fe/8:.2f}; C={fe/4.5:.2f}.")
-    st.markdown("## 5 · Comparación de soluciones de piso")
-    for name,d in _C2L1_S10_FLOORS.items():
-        mr_i,f0_i=natural_frequency(d["m1"],400,d["s"])
-        st.write(f"**{name}:** m’1={d['m1']:.0f} kg/m² · s’={d['s']:.0f} MN/m³ · m’r={mr_i:.1f} kg/m² · f₀={f0_i:.1f} Hz · carga {'cumple' if d['load']<=120 else 'NO cumple'} · espesor {'cumple' if d['thickness']<=75 else 'NO cumple'}.")
-    st.write("Pauta de decisión: la Solución B constituye la referencia didáctica más equilibrada porque conserva carga y espesor dentro de las restricciones y mejora la separación dinámica frente a A; C no es aceptable sin rediseño por exceder las restricciones. La decisión debe justificarse con más de un criterio.")
-    st.markdown("## 6 · Inspección de obra")
-    st.write("Errores esperados: contacto rígido perimetral, penetración rígida y discontinuidad de la capa resiliente. Estos caminos pueden puentear el desacoplamiento; no se asigna una pérdida fija en dB sin datos.")
-    st.markdown("## 7 · Instalaciones y caminos")
-    st.write("La coincidencia de una componente cercana a 24 Hz en bomba, tubería, soporte y receptor fortalece la hipótesis de transmisión estructural, pero no demuestra causalidad por sí sola. Deben revisarse base, tuberías, soportes, penetraciones y condición hidráulica.")
-    st.markdown("## 8 · Criterios para seleccionar control")
-    st.write("Base → aisladores seleccionados por frecuencia y carga real; tuberías → conexiones flexibles y soportes resilientes; penetraciones → desacoplamiento/sellado compatible; cavitación → corregir primero la causa hidráulica; ruido aéreo residual → encierro/absorción/silenciación según el camino real.")
-    st.markdown("## 9 · Respuesta profesional esperada")
-    st.write("No aprobar la ejecución sin verificaciones adicionales. Deben comprobarse cargas por apoyo, estabilidad, especificaciones dinámicas, continuidad resiliente, ausencia de puentes, conexiones, condiciones hidráulicas y desempeño final medido cuando corresponda.")
-    st.markdown("## 10 · Criterios de evaluación")
-    st.write("80 puntos por desempeño técnico comprobado en ocho bloques interactivos + 20 puntos por informe integrador completo. Puntaje máximo: 100 puntos. Esta etapa no genera nota.")
+    pump=_c2l1_s10_pump_reference(transmissibility_force)
+    ln0=ln0_above_fc(500,55,1)
+    mr,f0=natural_frequency(120,400,10)
+
+    st.info(
+        "Vista Docente · solución desarrollada y resultados de alumnos. "
+        "Esta etapa registra puntaje sobre 100 y no genera nota."
+    )
+
+    st.markdown("## Problema profesional")
+    st.write(
+        "En un edificio residencial existen dos reclamos simultáneos: "
+        "**pisadas provenientes del piso superior** y un **zumbido grave nocturno** que aparece "
+        f"cuando funciona la bomba **{_C2L1_S10_PUMP['model']}** de la sala técnica. "
+        "La pauta integra diagnóstico, predicción, selección y verificación."
+    )
+
+    st.markdown("## A · Desarrollo esperado · ruido de impacto")
+    st.write(
+        "**Cadena física:** Fuerza de impacto → Vibración del piso → Propagación estructural → Radiación acústica."
+    )
+    st.write(
+        f"Con los datos del caso, a 500 Hz se obtiene **Lₙ,₀ ≈ {ln0:.1f} dB**. "
+        f"Para el sistema base m’₁=120 kg/m², m’₂=400 kg/m² y s’=10 MN/m³: "
+        f"**m’ᵣ ≈ {mr:.1f} kg/m²** y **f₀ ≈ {f0:.1f} Hz**."
+    )
+    st.write(
+        "La **Solución B** es la referencia didáctica más equilibrada porque cumple las restricciones "
+        "de carga y espesor. La Solución C mejora la separación dinámica, pero excede las restricciones del caso."
+    )
+    st.write(
+        "Errores constructivos esperados: **contacto rígido perimetral, penetración rígida y discontinuidad "
+        "de la capa resiliente**. Cualquiera puede puentear el desacoplamiento."
+    )
+
+    st.markdown("## B · Desarrollo esperado · bomba e instalaciones")
+    p=_C2L1_S10_PUMP
+    st.write(
+        f"**Bomba:** {p['model']} · {p['mass_kg']:.0f} kg · {p['rpm']:.0f} RPM · "
+        f"{p['supports']} apoyos · Q ≈ {p['flow_m3h']:.0f} m³/h."
+    )
+    st.write(
+        f"**Componente rotacional:** 1×RPM = {pump['fe']:.2f} Hz, representada principalmente "
+        "en la banda de 50 Hz de los espectros por bandas."
+    )
+    st.write(
+        f"**NPSH:** NPSHₐ ≈ {pump['npsha']:.2f} m · NPSHᵣ ≈ {pump['npshr']:.2f} m · "
+        f"margen ≈ {pump['npsh_margin']:.2f} m. El margen negativo es evidencia hidráulica desfavorable "
+        "compatible con riesgo de cavitación; no es por sí solo una prueba acústica de cavitación."
+    )
+    st.write(
+        f"**Carga por aislador:** {pump['kg_support']:.2f} kg ≈ {pump['n_support']:.0f} N ≈ "
+        f"{pump['lb_support']:.1f} lb."
+    )
+    fds1=pump["FDS 1-50"]
+    fds4=pump["FDS 4-100"]
+    st.write(
+        f"**FDS 1-50:** δ_op ≈ {fds1['op_in']:.2f} in ≈ {fds1['op_mm']:.1f} mm · "
+        f"fₙ ≈ {fds1['fn']:.2f} Hz · T_F ≈ {fds1['tf']:.3f}."
+    )
+    st.write(
+        f"**FDS 4-100:** δ_op ≈ {fds4['op_in']:.2f} in ≈ {fds4['op_mm']:.1f} mm · "
+        f"fₙ ≈ {fds4['fn']:.2f} Hz · T_F ≈ {fds4['tf']:.3f}. "
+        "Ambos pueden superar el criterio de 19 mm; para el ejercicio se espera justificar FDS 1-50 como "
+        "preselección más proporcionada a la carga, no elegir automáticamente la mayor deflexión."
+    )
+    st.write(
+        "Caminos que deben revisarse: **base, tuberías, soportes/abrazaderas y penetraciones rígidas**. "
+        "Si persiste una condición hidráulica desfavorable, se corrige primero la causa hidráulica."
+    )
+
+    st.markdown("## C · Estrategia profesional esperada")
+    st.write(
+        "Piso flotante correctamente desacoplado + control de puentes rígidos; "
+        "para la bomba: corregir la condición hidráulica, verificar aisladores bajo la carga real, "
+        "conexiones flexibles, soportes resilientes y penetraciones desacopladas. "
+        "El tratamiento aéreo solo se añade si la medición demuestra un componente aéreo residual relevante."
+    )
+    st.write(
+        "**Cierre esperado:** los cálculos son una predicción. Antes de aprobar la solución se deben verificar "
+        "cargas reales, especificaciones, montaje, continuidad resiliente, conexiones, condición hidráulica "
+        "y desempeño medido cuando corresponda."
+    )
+
+    st.markdown("## Puntaje")
+    st.write(
+        "80 puntos por ocho bloques técnicos comprobados + 20 puntos por informe integrador completo. "
+        "Máximo 100 puntos. **Sin nota en Laboratorio 1.**"
+    )
+
     client=_supabase()
-    if client is None: return
+    if client is None:
+        return
     try:
-        raw=(client.table("responses").select("*,users(display_name,email)").eq("class_id",_C2L1_S10_CLASS_ID).eq("stage",10).eq("question_key","final_exam").order("updated_at",desc=True).execute().data or [])
+        raw=(
+            client.table("responses")
+            .select("*,users(display_name,email)")
+            .eq("class_id",_C2L1_S10_CLASS_ID)
+            .eq("stage",10)
+            .eq("question_key","final_exam")
+            .order("updated_at",desc=True)
+            .execute().data or []
+        )
     except Exception as exc:
-        st.warning(f"No fue posible cargar resultados: {exc}"); return
-    if not raw: st.caption("Todavía no hay desafíos enviados."); return
+        st.warning(f"No fue posible cargar resultados: {exc}")
+        return
+
+    # Filtrar versiones antiguas incompatibles.
+    valid=[]
+    for row in raw:
+        payload=row.get("answer") or {}
+        if isinstance(payload,str):
+            try:
+                payload=json.loads(payload)
+            except Exception:
+                payload={}
+        if isinstance(payload,dict) and payload.get("version")==_C2L1_S10_VERSION:
+            valid.append(row)
+    raw=valid
+
+    if not raw:
+        st.caption("Todavía no hay desafíos enviados con la versión actual.")
+        return
+
     st.markdown("## Resultados de alumnos")
     def sname(row):
-        u=row.get("users") or {}; return u.get("display_name") or u.get("email") or row.get("user_key","Alumno")
-    ix=st.selectbox("Alumno evaluado",range(len(raw)),format_func=lambda k:f"{sname(raw[k])} · {float(raw[k].get('teacher_score') if raw[k].get('teacher_score') is not None else raw[k].get('auto_score') or 0):.1f}/100",key="c2l1_e10_teacher_student")
-    row=raw[ix]; payload=row.get("answer") or {}
+        u=row.get("users") or {}
+        return u.get("display_name") or u.get("email") or row.get("user_key","Alumno")
+
+    ix=st.selectbox(
+        "Alumno evaluado",
+        range(len(raw)),
+        format_func=lambda k:f"{sname(raw[k])} · {float(raw[k].get('teacher_score') if raw[k].get('teacher_score') is not None else raw[k].get('auto_score') or 0):.1f}/100",
+        key="c2l1_e10_teacher_student",
+    )
+    row=raw[ix]
+    payload=row.get("answer") or {}
     if isinstance(payload,str):
-        try: payload=json.loads(payload)
-        except Exception: payload={}
-    score=float(row.get("teacher_score") if row.get("teacher_score") is not None else row.get("auto_score") or 0)
-    c1,c2=st.columns(2)
-    c1.metric("Puntaje",f"{score:.1f}/100")
-    c2.metric("Máximo","100 puntos")
-    st.markdown("### Desarrollo entregado")
-    for section in ["impacto","instalaciones","informe"]:
-        st.markdown(f"**{section.capitalize()}**")
-        st.json(payload.get(section,{}),expanded=True)
+        try:
+            payload=json.loads(payload)
+        except Exception:
+            payload={}
+    score=float(
+        row.get("teacher_score")
+        if row.get("teacher_score") is not None
+        else row.get("auto_score") or 0
+    )
+    c1,c2,c3=st.columns(3)
+    c1.metric("Puntaje vigente",f"{score:.1f}/100")
+    c2.metric("Técnico",f"{float(payload.get('puntaje_tecnico',0) or 0):.0f}/80")
+    c3.metric("Informe",f"{float(payload.get('puntaje_informe',0) or 0):.0f}/20")
+
+    impacto=payload.get("impacto",{}) if isinstance(payload,dict) else {}
+    instalaciones=payload.get("instalaciones",{}) if isinstance(payload,dict) else {}
+    informe=payload.get("informe",{}) if isinstance(payload,dict) else {}
+
+    st.markdown("### Desarrollo entregado · impacto")
+    st.write(f"Secuencia: {' → '.join([x for x in impacto.get('secuencia',[]) if x]) or 'Sin completar'}")
+    st.write(
+        f"Lₙ,₀(500): {impacto.get('ln0_500','—')} dB · "
+        f"m’ᵣ: {impacto.get('mr','—')} kg/m² · f₀: {impacto.get('f0','—')} Hz."
+    )
+    st.write(f"Solución seleccionada: **{impacto.get('solucion') or 'Sin seleccionar'}**")
+    st.write(f"Criterios: {', '.join(impacto.get('criterios') or []) or 'Sin completar'}")
+    st.write(f"Justificación: {impacto.get('justificacion') or 'Sin completar'}")
+    st.write(f"Errores de obra: {', '.join(impacto.get('errores_obra') or []) or 'Sin completar'}")
+
+    st.markdown("### Desarrollo entregado · instalaciones")
+    st.write(f"Modelo: **{instalaciones.get('modelo') or '—'}**")
+    st.write(
+        f"fₑ: {instalaciones.get('fe','—')} Hz · NPSHₐ: {instalaciones.get('npsha','—')} m · "
+        f"NPSHᵣ: {instalaciones.get('npshr','—')} m."
+    )
+    st.write(f"Diagnóstico NPSH: {instalaciones.get('diagnostico_npsh') or 'Sin completar'}")
+    st.write(
+        f"Carga por apoyo: {instalaciones.get('carga_lb','—')} lb · "
+        f"Aislador: **{instalaciones.get('aislador') or 'Sin seleccionar'}** · "
+        f"δ_op: {instalaciones.get('delta_op_mm','—')} mm · fₙ: {instalaciones.get('fn_hz','—')} Hz · "
+        f"T_F: {instalaciones.get('tf','—')}."
+    )
+    st.write(f"Caminos: {', '.join(instalaciones.get('caminos') or []) or 'Sin completar'}")
+    st.write(f"Medidas: {', '.join(instalaciones.get('medidas') or []) or 'Sin completar'}")
+
+    st.markdown("### Informe final del alumno")
+    st.write(f"Verificación principal: {informe.get('limitacion') or 'Sin completar'}")
+    st.write(informe.get("conclusion") or "Sin conclusión.")
+
+    adjusted=st.number_input(
+        "Puntaje final otorgado por el docente",
+        0.0,100.0,score,0.5,
+        key=f"c2l1_e10_teacher_score_{row['id']}",
+    )
+    note=st.text_area(
+        "Observación docente",
+        value=row.get("teacher_note") or "",
+        key=f"c2l1_e10_teacher_note_{row['id']}",
+    )
+    if st.button(
+        "Guardar revisión docente",
+        type="primary",
+        use_container_width=True,
+        key=f"c2l1_e10_teacher_save_{row['id']}",
+    ):
+        client.table("responses").update({
+            "teacher_level":"Revisada",
+            "teacher_score":adjusted,
+            "teacher_note":note,
+            "status":"reviewed",
+            "updated_at":_now(),
+        }).eq("id",row["id"]).execute()
+        st.success("Puntaje y observación docente guardados.")
+
 
 def _render_course2_lab1_stage10(lab,saved):
     import numpy as np
+    import pandas as pd
     import plotly.graph_objects as go
+
     ln0_above_fc,reduced_mass,natural_frequency,delta_cremer,transmissibility_force=_c2l1_s10_models()
     _c2l1_s10_restore(saved)
-    header("ETAPA 10 · DESAFÍO INTEGRADOR","UN EDIFICIO, DOS PROBLEMAS","Diagnóstico, predicción y control del ruido de impacto y del ruido generado por instalaciones.", show_overview=False)
-    st.caption("Puntaje máximo: 100 puntos. Esta etapa del Laboratorio 1 registra puntaje solamente; no genera nota.")
-    _c2l1_stage_overview(10)
-    if st.session_state.get("role")=="Docente": _c2l1_stage10_teacher_view(); return
+    pump=_c2l1_s10_pump_reference(transmissibility_force)
 
-    st.markdown("## 🏢 Problema integrador · Diagnóstico acústico de un edificio residencial")
-    st.info(
-        "Has sido contratado como **consultor acústico** para estudiar un edificio residencial en el que aparecen "
-        "dos problemas simultáneos. En un departamento se perciben con claridad las **pisadas provenientes del piso "
-        "superior** y, durante la noche, los residentes reportan un **zumbido asociado a la sala de bombas**. "
-        "Tu tarea no es elegir una respuesta de memoria: deberás reconstruir los mecanismos físicos, realizar "
-        "predicciones, comparar alternativas de piso flotante y aislamiento vibratorio, detectar caminos paralelos "
-        "y terminar proponiendo una estrategia de control técnicamente justificable."
+    # Se eliminan expresamente las tarjetas heredadas DIAGNOSTICARÁS / EXPERIMENTARÁS / JUSTIFICARÁS.
+    header(
+        "ETAPA 10 · DESAFÍO INTEGRADOR",
+        "UN EDIFICIO, DOS PROBLEMAS",
+        "Diagnostica, calcula, selecciona y justifica una solución técnica integrada.",
+        show_overview=False,
     )
-    st.markdown(
-        "**Objetivo del desafío:** conectar todo lo aprendido en el laboratorio para responder tres preguntas: "
-        "**qué está ocurriendo, por dónde se transmite la energía y qué conjunto de medidas debe verificarse antes "
-        "de aprobar una solución.**"
+    st.caption(
+        "Puntaje máximo: 100 puntos · Laboratorio 1: evaluación con puntaje, sin nota. "
+        "Tu desarrollo se guarda para que puedas salir y volver."
     )
-    remote=_c2l1_stage10_submission()
-    if remote or st.session_state.get("c2l1_exam_submitted"):
-        payload=(remote or {}).get("payload",{}); row=(remote or {}).get("row",{})
-        total=float(row.get("teacher_score") if row and row.get("teacher_score") is not None else (row.get("auto_score") if row else saved.get("stage10_result",{}).get("score",0)) or 0)
-        st.success(f"Desafío enviado y guardado · {total:.1f}/100 puntos")
-        st.write("El intento está cerrado y el desarrollo permanece guardado.")
-        st.markdown("### Resumen final")
-        st.json(payload if payload else saved.get("stage10_draft",{}),expanded=True)
+
+    if st.session_state.get("role")=="Docente":
+        _c2l1_stage10_teacher_view()
         return
 
-    main_asset=ASSET_DIR/"curso2_lab1_etapa10_edificio_integrador.webp"
-    if main_asset.exists(): st.image(str(main_asset),width="stretch")
-    else: st.info("Render preparado: `curso2_lab1_etapa10_edificio_integrador.webp`. La etapa funciona sin sustituirlo por imágenes heredadas o genéricas.")
-    st.write("Actúas como **consultor acústico**. Debes resolver dos reclamos del mismo edificio: pisadas desde el piso superior y un zumbido nocturno asociado a la sala de bombas.")
+    remote=_c2l1_stage10_submission()
+    if remote or st.session_state.get("c2l1_exam_submitted"):
+        payload=(remote or {}).get("payload",{})
+        row=(remote or {}).get("row",{})
+        total=float(
+            row.get("teacher_score")
+            if row and row.get("teacher_score") is not None
+            else (
+                row.get("auto_score")
+                if row
+                else saved.get("stage10_result",{}).get("score",0)
+            ) or 0
+        )
+        st.success(f"Desafío enviado y guardado · {total:.1f}/100 puntos")
+        st.caption(
+            "El desarrollo permanece guardado. Puedes volver a esta etapa para revisar el resumen de tu entrega."
+        )
+        impacto=payload.get("impacto",{}) if isinstance(payload,dict) else {}
+        instalaciones=payload.get("instalaciones",{}) if isinstance(payload,dict) else {}
+        informe=payload.get("informe",{}) if isinstance(payload,dict) else {}
+        st.markdown("### Tu entrega")
+        st.write(f"**Piso seleccionado:** {impacto.get('solucion') or '—'}")
+        st.write(f"**Aislador seleccionado:** {instalaciones.get('aislador') or '—'}")
+        st.write(f"**Puntaje técnico:** {payload.get('puntaje_tecnico',0)}/80")
+        st.write(f"**Informe integrador:** {payload.get('puntaje_informe',0)}/20")
+        st.write(f"**Conclusión:** {informe.get('conclusion') or '—'}")
+        if row and row.get("teacher_note"):
+            st.info(f"Observación docente: {row.get('teacher_note')}")
+        return
 
-    st.markdown("## A · Ruido de impacto")
-    st.markdown("### 1 · Reconstruye el fenómeno")
-    seq_opts=["","Fuerza de impacto","Vibración del piso","Propagación estructural","Radiación acústica"]
+    st.markdown("## Problema integrador · evaluación acústica de un edificio residencial")
+    st.write(
+        "Una comunidad residencial reporta **dos problemas en el mismo sector del edificio**. "
+        "En un dormitorio se perciben claramente las pisadas provenientes del departamento superior. "
+        "Durante la noche, los ocupantes también perciben un **zumbido grave y persistente** que aparece "
+        f"cuando entra en funcionamiento la bomba **{_C2L1_S10_PUMP['model']}** de la sala técnica."
+    )
+    st.info(
+        "Actúas como consultor acústico. Debes reconstruir los fenómenos, usar los modelos estudiados, "
+        "comparar soluciones, inspeccionar caminos de transmisión y terminar con una recomendación profesional. "
+        "**La app no entrega la solución antes de que analices las evidencias.**"
+    )
+
+    # ------------------------------------------------------------------
+    # 1 · DIAGNÓSTICO INICIAL
+    # ------------------------------------------------------------------
+    st.markdown("## 1 · Construye el diagnóstico inicial")
+    st.write(
+        "Antes de calcular, ordena físicamente qué ocurre en cada problema. "
+        "La cadena causal te ayudará a decidir después qué magnitudes calcular y dónde actuar."
+    )
+
+    st.markdown("### Problema A · Pisadas")
+    impact_opts=["","Fuerza de impacto","Vibración del piso","Propagación estructural","Radiación acústica"]
     cols=st.columns(4)
     for i,col in enumerate(cols,1):
-        col.selectbox(f"Paso {i}",seq_opts,key=f"c2s10_impact_{i}")
-    if st.button("COMPROBAR SECUENCIA",key="c2s10_check_impact",width="stretch"):
-        got=[st.session_state.get(f"c2s10_impact_{i}") for i in range(1,5)]
-        _c2l1_s10_check(saved,"impact",got==seq_opts[1:],"Secuencia correcta.","Revisa la cadena: primero existe una fuerza, luego respuesta vibratoria, propagación por la estructura y finalmente radiación acústica.")
+        col.selectbox(f"Paso {i}",impact_opts,key=f"c2s10_impact_{i}")
+
+    st.markdown("### Problema B · Bomba")
+    pump_opts=["","Excitación de la bomba","Vibración de base y conexiones","Propagación por caminos mecánicos","Respuesta en el dormitorio"]
+    cols=st.columns(4)
+    for i,col in enumerate(cols,1):
+        col.selectbox(f"Paso {i}",pump_opts,key=f"c2s10_pump_{i}")
+
+    if st.button("COMPROBAR DIAGNÓSTICO INICIAL",key="c2s10_check_impact",width="stretch"):
+        got_a=[st.session_state.get(f"c2s10_impact_{i}") for i in range(1,5)]
+        got_b=[st.session_state.get(f"c2s10_pump_{i}") for i in range(1,5)]
+        ok=got_a==impact_opts[1:] and got_b==pump_opts[1:]
+        _c2l1_s10_check(
+            saved,"impact",ok,
+            "Las dos cadenas causales están correctamente reconstruidas.",
+            "Revisa qué ocurre primero: existe una excitación, luego una respuesta mecánica, después propagación y finalmente respuesta en el receptor."
+        )
+
+    # ------------------------------------------------------------------
+    # A · IMPACTO
+    # ------------------------------------------------------------------
+    st.markdown("## A · Resuelve el problema de ruido de impacto")
 
     st.markdown("### 2 · Predice la losa base")
-    st.caption("Datos didácticos entregados para el ejercicio: R(125,250,500,1000,2000 Hz) = 35,45,55,61,67 dB; σrad=1.")
+    st.write(
+        "Utiliza el mismo enfoque espectral estudiado anteriormente. Para comprobar que manejas el modelo, "
+        "calcula una banda representativa antes de diseñar el tratamiento."
+    )
+    st.caption("Datos del ejercicio: R(125, 250, 500, 1000, 2000 Hz) = 35, 45, 55, 61, 67 dB · σrad = 1.")
     expected_ln0=ln0_above_fc(500,_C2L1_S10_R[500],1.0)
-    st.number_input("Calcula Lₙ,₀(500 Hz) [dB]",0.0,120.0,step=0.1,key="c2s10_ln0")
-    if st.button("COMPROBAR Lₙ,₀",key="c2s10_check_ln0"):
-        _c2l1_s10_check(saved,"ln0",abs(st.session_state.c2s10_ln0-expected_ln0)<=0.6,"Cálculo correcto.","Revisa el signo de R(f), el término logarítmico y σrad. El valor se calcula con el mismo modelo de la Etapa 5.")
+    st.number_input("Lₙ,₀(500 Hz) [dB]",0.0,120.0,step=0.1,key="c2s10_ln0")
+    if st.button("COMPROBAR LOSA BASE",key="c2s10_check_ln0"):
+        _c2l1_s10_check(
+            saved,"ln0",
+            abs(st.session_state.c2s10_ln0-expected_ln0)<=0.6,
+            "La predicción de la losa base es correcta.",
+            "Revisa el modelo de la losa base y recuerda que Lₙ,₀(f) se obtiene por bandas."
+        )
 
-    st.markdown("### 3 · Construye el piso flotante")
+    st.markdown("### 3 · Diseña el piso flotante")
+    st.write(
+        "El tratamiento debe mejorar la respuesta acústica, pero también debe ser constructivamente viable. "
+        "Primero calcula la masa reducida y la frecuencia natural del sistema base."
+    )
     mr_expected,f0_expected=natural_frequency(120,400,10)
     c1,c2=st.columns(2)
-    c1.number_input("m’ᵣ [kg/m²]",0.0,500.0,step=0.1,key="c2s10_mr")
-    c2.number_input("f₀ [Hz]",0.0,300.0,step=0.1,key="c2s10_f0")
-    if st.button("COMPROBAR MASA REDUCIDA Y f₀",key="c2s10_check_floor_math",width="stretch"):
+    c1.number_input("Masa reducida m’ᵣ [kg/m²]",0.0,500.0,step=0.1,key="c2s10_mr")
+    c2.number_input("Frecuencia natural f₀ [Hz]",0.0,300.0,step=0.1,key="c2s10_f0")
+    if st.button("COMPROBAR m’ᵣ Y f₀",key="c2s10_check_floor_math",width="stretch"):
         ok=abs(st.session_state.c2s10_mr-mr_expected)<=0.6 and abs(st.session_state.c2s10_f0-f0_expected)<=0.6
-        _c2l1_s10_check(saved,"floor_math",ok,"m’ᵣ y f₀ correctos.","Comprueba la masa reducida y recuerda convertir s’ de MN/m³ a N/m³ antes de calcular f₀.")
-    st.markdown("#### Experimento · mueve la resonancia")
+        _c2l1_s10_check(
+            saved,"floor_math",ok,
+            "Masa reducida y frecuencia natural correctas.",
+            "Comprueba la masa reducida y convierte s’ de MN/m³ a N/m³ antes de calcular f₀."
+        )
+
+    st.markdown("#### Laboratorio interactivo · observa cómo se mueve f₀")
     ex1=st.slider("Masa superficial superior m’₁ [kg/m²]",50,180,120,key="c2s10_exp_m1")
     exs=st.slider("Rigidez dinámica s’ [MN/m³]",3.0,30.0,10.0,0.5,key="c2s10_exp_s")
     exmr,exf0=natural_frequency(ex1,400,exs)
-    a,b=st.columns(2); a.metric("m’ᵣ",f"{exmr:.1f} kg/m²"); b.metric("f₀",f"{exf0:.1f} Hz")
-    fig=go.Figure(); fig.add_trace(go.Scatter(x=[10,200],y=[0,0],mode="lines",name="eje")); fig.add_trace(go.Scatter(x=[exf0],y=[0],mode="markers",marker=dict(size=16),name="f₀")); fig.update_xaxes(type="log",title="Frecuencia (Hz)"); fig.update_yaxes(visible=False); fig.update_layout(height=220,margin=dict(l=20,r=20,t=25,b=40)); st.plotly_chart(fig,width="stretch")
+    a,b=st.columns(2)
+    a.metric("m’ᵣ",f"{exmr:.1f} kg/m²")
+    b.metric("f₀",f"{exf0:.1f} Hz")
+    st.caption(
+        "Usa este experimento para comprender tendencias. La decisión final no se toma solo por obtener la menor f₀."
+    )
 
-    st.markdown("### 4 · Compara soluciones constructivas")
+    st.markdown("### 4 · Compara tres soluciones constructivas")
+    st.write(
+        "Ahora debes elegir una solución que combine desempeño dinámico y viabilidad constructiva. "
+        "El proyecto admite una carga adicional máxima de 120 kg/m² y un espesor máximo de 75 mm."
+    )
     cards=st.columns(3)
     for col,(name,d) in zip(cards,_C2L1_S10_FLOORS.items()):
         mr_i,f0_i=natural_frequency(d["m1"],400,d["s"])
         with col:
             st.markdown(f"**{name}**")
-            st.write(f"m’₁ {d['m1']:.0f} kg/m² · s’ {d['s']:.0f} MN/m³")
-            st.write(f"m’ᵣ {mr_i:.1f} kg/m² · f₀ {f0_i:.1f} Hz")
-            st.write(f"Carga: {'✓ CUMPLE' if d['load']<=120 else '✗ NO CUMPLE'}")
-            st.write(f"Espesor: {'✓ CUMPLE' if d['thickness']<=75 else '✗ NO CUMPLE'}")
-    st.selectbox("Solución que recomendarías",[""]+list(_C2L1_S10_FLOORS),key="c2s10_floor")
-    st.multiselect("Criterios de decisión · selecciona al menos tres",_C2L1_S10_CRITERIA,key="c2s10_floor_criteria")
-    st.text_area("Justificación breve",key="c2s10_floor_note")
-    if st.button("COMPROBAR DECISIÓN DE PISO",key="c2s10_check_floor_decision",width="stretch"):
-        ok=st.session_state.c2s10_floor.startswith("Solución B") and len(st.session_state.c2s10_floor_criteria)>=3 and len(st.session_state.c2s10_floor_note.strip())>=20
-        _c2l1_s10_check(saved,"floor_decision",ok,"Decisión técnicamente coherente para los datos del caso.","No decidas sólo por f₀. Verifica carga, espesor, respuesta espectral y constructibilidad; la solución C excede las restricciones didácticas.")
+            st.write(f"Masa superior: {d['m1']:.0f} kg/m²")
+            st.write(f"Rigidez dinámica: {d['s']:.0f} MN/m³")
+            st.write(f"f₀ estimada: {f0_i:.1f} Hz")
+            st.write(f"Carga: {'✓ cumple' if d['load']<=120 else '✗ no cumple'}")
+            st.write(f"Espesor: {'✓ cumple' if d['thickness']<=75 else '✗ no cumple'}")
 
-    st.markdown("### 5 · Construye Lₙ,final(f)")
+    st.selectbox("Solución que recomendarías",[""]+list(_C2L1_S10_FLOORS),key="c2s10_floor")
+    st.multiselect("Criterios usados para decidir · selecciona al menos tres",_C2L1_S10_CRITERIA,key="c2s10_floor_criteria")
+    st.text_area(
+        "Justificación técnica",
+        key="c2s10_floor_note",
+        placeholder="Explica por qué tu selección equilibra desempeño acústico, carga, espesor y constructibilidad."
+    )
+
+    st.markdown("### 5 · Comprueba la predicción final")
     selected=st.session_state.get("c2s10_floor") or "Solución B · sistema intermedio"
     d=_C2L1_S10_FLOORS.get(selected,_C2L1_S10_FLOORS["Solución B · sistema intermedio"])
     calc={}
     for f in [250,500,1000]:
-        base=ln0_above_fc(f,_C2L1_S10_R[f],1.0); delta,_=delta_cremer(f,d["m1"],d["s"]); calc[f]=base-delta
-    c1,c2,c3=st.columns(3); c1.number_input("Lₙ,final(250) [dB]",0.0,120.0,step=0.1,key="c2s10_ln250"); c2.number_input("Lₙ,final(500) [dB]",0.0,120.0,step=0.1,key="c2s10_ln500"); c3.number_input("Lₙ,final(1000) [dB]",0.0,120.0,step=0.1,key="c2s10_ln1000")
-    if st.button("COMPROBAR RESULTADO ESPECTRAL",key="c2s10_check_floor_final",width="stretch"):
-        ok=all(abs(st.session_state[k]-calc[f])<=0.7 for k,f in [("c2s10_ln250",250),("c2s10_ln500",500),("c2s10_ln1000",1000)])
-        _c2l1_s10_check(saved,"floor_final",ok,"Resultados coherentes con el modelo seleccionado.","Recuerda construir cada banda como Lₙ,₀(f) − ΔLₙ(f). ΔLₙ no es una constante.")
-    freqs=np.array(list(_C2L1_S10_R),dtype=float); base=np.array([ln0_above_fc(f,_C2L1_S10_R[int(f)],1.0) for f in freqs]); delta=np.array([delta_cremer(f,d["m1"],d["s"])[0] for f in freqs]); final=base-delta
-    fig=go.Figure(); fig.add_trace(go.Scatter(x=freqs,y=base,mode="lines+markers",name="Losa base Lₙ,₀")); fig.add_trace(go.Scatter(x=freqs,y=final,mode="lines+markers",name="Piso tratado Lₙ,final")); fig.update_xaxes(type="log",title="Frecuencia (Hz)"); fig.update_yaxes(title="Nivel (dB)"); fig.update_layout(height=390,hovermode="x unified"); st.plotly_chart(fig,width="stretch")
+        base=ln0_above_fc(f,_C2L1_S10_R[f],1.0)
+        delta,_=delta_cremer(f,d["m1"],d["s"])
+        calc[f]=base-delta
 
-    st.markdown("### 6 · Inspección de obra")
-    floor_asset=ASSET_DIR/"curso2_lab1_etapa10_piso_errores.webp"
-    if floor_asset.exists(): st.image(str(floor_asset),width="stretch")
-    st.multiselect("Encuentra los tres errores",["Contacto rígido perimetral","Penetración rígida de una instalación","Discontinuidad de la capa resiliente","Mayor masa superficial","Absorbente en el recinto"],key="c2s10_floor_errors")
+    c1,c2,c3=st.columns(3)
+    c1.number_input("Lₙ,final(250 Hz) [dB]",0.0,120.0,step=0.1,key="c2s10_ln250")
+    c2.number_input("Lₙ,final(500 Hz) [dB]",0.0,120.0,step=0.1,key="c2s10_ln500")
+    c3.number_input("Lₙ,final(1000 Hz) [dB]",0.0,120.0,step=0.1,key="c2s10_ln1000")
 
-    st.markdown("## B · Ruido de instalaciones")
-    st.markdown("### 7 · Frecuencia de excitación y montajes")
-    fe_expected=1450/60
-    c1,c2=st.columns(2); c1.number_input("fₑ = n/60 [Hz]",0.0,100.0,step=0.01,key="c2s10_fe"); c2.write("Bomba centrífuga · 600 kg · 1450 rpm · 4 apoyos")
-    st.write("Montajes didácticos: A fₙ=14 Hz · B fₙ=8 Hz · C fₙ=4,5 Hz")
-    a,b,c=st.columns(3); a.number_input("r_A",0.0,20.0,step=0.01,key="c2s10_ra"); b.number_input("r_B",0.0,20.0,step=0.01,key="c2s10_rb"); c.number_input("r_C",0.0,20.0,step=0.01,key="c2s10_rc")
-    if st.button("COMPROBAR BOMBA Y MONTAJES",key="c2s10_check_pump_math",width="stretch"):
-        ok=abs(st.session_state.c2s10_fe-fe_expected)<=0.15 and abs(st.session_state.c2s10_ra-fe_expected/14)<=0.08 and abs(st.session_state.c2s10_rb-fe_expected/8)<=0.08 and abs(st.session_state.c2s10_rc-fe_expected/4.5)<=0.12
-        _c2l1_s10_check(saved,"pump_math",ok,"Conversión y relaciones de frecuencia correctas.","Revisa rpm/60 y calcula cada r con la frecuencia natural de su propio montaje.")
-    zeta=st.slider("Amortiguamiento ζ",0.02,0.30,0.08,0.01,key="c2s10_zeta")
-    rr=np.linspace(.2,7,240); tf=np.array([transmissibility_force(x,zeta) for x in rr]); fig=go.Figure(); fig.add_trace(go.Scatter(x=rr,y=tf,mode="lines",name="T_F(r)"));
-    for label,fn in [("A",14),("B",8),("C",4.5)]:
-        r=fe_expected/fn; fig.add_trace(go.Scatter(x=[r],y=[transmissibility_force(r,zeta)],mode="markers+text",text=[label],textposition="top center",name=label))
-    fig.update_yaxes(type="log",title="Transmisibilidad de fuerza"); fig.update_xaxes(title="r = fₑ/fₙ"); fig.update_layout(height=390); st.plotly_chart(fig,width="stretch"); st.caption("T_F es una relación mecánica; no se interpreta directamente como una reducción en dB.")
+    if st.button("COMPROBAR SOLUCIÓN DE PISO",key="c2s10_check_floor_final",width="stretch"):
+        spectral_ok=all(
+            abs(st.session_state[k]-calc[f])<=0.7
+            for k,f in [("c2s10_ln250",250),("c2s10_ln500",500),("c2s10_ln1000",1000)]
+        )
+        decision_ok=(
+            st.session_state.c2s10_floor.startswith("Solución B")
+            and len(st.session_state.c2s10_floor_criteria)>=3
+            and len(st.session_state.c2s10_floor_note.strip())>=20
+        )
+        _c2l1_s10_check(
+            saved,"floor_final",spectral_ok,
+            "La curva final es coherente con el modelo seleccionado.",
+            "Recuerda construir cada banda como Lₙ,₀(f) − ΔLₙ(f)."
+        )
+        _c2l1_s10_check(
+            saved,"floor_decision",decision_ok,
+            "La decisión de piso está técnicamente justificada.",
+            "No elijas solo por f₀. Verifica carga, espesor, respuesta espectral y constructibilidad."
+        )
 
-    st.markdown("### 8 · Encuentra los caminos que siguen activos")
-    pump_asset=ASSET_DIR/"curso2_lab1_etapa10_bomba_caminos.webp"
-    if pump_asset.exists(): st.image(str(pump_asset),width="stretch")
-    st.multiselect("Caminos mecánicos",["Tubería rígida","Abrazadera/soporte rígido","Penetración rígida en muro","Aire exterior","Pintura del recinto"],key="c2s10_paths")
-    st.radio("Si aparecen síntomas compatibles con cavitación, ¿dónde actuarías primero?",["","Fuente / condición hidráulica","Base antivibratoria","Tubería solamente","Recinto receptor"],key="c2s10_cavitation")
-    if st.button("COMPROBAR INSPECCIÓN",key="c2s10_check_inspection",width="stretch"):
-        floor_ok=set(st.session_state.c2s10_floor_errors)=={"Contacto rígido perimetral","Penetración rígida de una instalación","Discontinuidad de la capa resiliente"}
-        path_ok=set(st.session_state.c2s10_paths)=={"Tubería rígida","Abrazadera/soporte rígido","Penetración rígida en muro"} and st.session_state.c2s10_cavitation=="Fuente / condición hidráulica"
-        _c2l1_s10_check(saved,"inspection",floor_ok and path_ok,"Inspección correctamente resuelta.","Busca caminos rígidos que puenteen el desacoplamiento. La cavitación se aborda primero investigando su causa hidráulica, no con absorbentes o aisladores.")
+    freqs=np.array(list(_C2L1_S10_R),dtype=float)
+    base_curve=np.array([ln0_above_fc(f,_C2L1_S10_R[int(f)],1.0) for f in freqs])
+    delta_curve=np.array([delta_cremer(f,d["m1"],d["s"])[0] for f in freqs])
+    final_curve=base_curve-delta_curve
+    fig=go.Figure()
+    fig.add_trace(go.Scatter(x=freqs,y=base_curve,mode="lines+markers",name="Losa base Lₙ,₀"))
+    fig.add_trace(go.Scatter(x=freqs,y=final_curve,mode="lines+markers",name="Piso tratado Lₙ,final"))
+    fig.update_xaxes(type="log",title="Frecuencia (Hz)")
+    fig.update_yaxes(title="Nivel (dB)")
+    fig.update_layout(height=380,hovermode="x unified")
+    st.plotly_chart(fig,width="stretch")
 
-    st.markdown("### 9 · Construye la estrategia de control")
-    control_opts=["Aisladores correctamente seleccionados","Conexión flexible","Soportes resilientes","Revisión/desacoplamiento de penetraciones","Corrección hidráulica","Balanceo/alineación cuando corresponda","Tratamiento del ruido aéreo residual si es necesario","Aumento arbitrario de masa","Cambiar automáticamente a neopreno"]
-    st.multiselect("Selecciona una estrategia integral",control_opts,key="c2s10_controls")
-    if st.button("COMPROBAR ESTRATEGIA",key="c2s10_check_controls",width="stretch"):
-        req={"Aisladores correctamente seleccionados","Conexión flexible","Soportes resilientes","Revisión/desacoplamiento de penetraciones","Corrección hidráulica"}; chosen=set(st.session_state.c2s10_controls)
-        ok=req.issubset(chosen) and "Aumento arbitrario de masa" not in chosen and "Cambiar automáticamente a neopreno" not in chosen
-        _c2l1_s10_check(saved,"controls",ok,"La estrategia cubre fuente, base, conexiones y caminos estructurales.","Una medida única no cubre todos los mecanismos. Revisa base, tuberías, soportes, penetraciones y causa hidráulica.")
+    st.markdown("### 6 · Inspecciona la ejecución")
+    st.write(
+        "Un cálculo correcto puede fallar en obra si aparecen contactos rígidos que puentean la capa resiliente. "
+        "Selecciona únicamente los defectos que comprometen el desacoplamiento."
+    )
+    st.multiselect(
+        "Observaciones de obra",
+        [
+            "Contacto rígido perimetral",
+            "Penetración rígida de una instalación",
+            "Discontinuidad de la capa resiliente",
+            "Mayor masa superficial dentro del límite de proyecto",
+            "Acabado superficial continuo sin puente rígido",
+        ],
+        key="c2s10_floor_errors"
+    )
 
-    st.markdown("## C · Informe técnico guiado")
-    technical,report,total=_c2l1_s10_scores(); st.progress(total/100); st.caption(f"Puntaje acumulado: {total}/100 · desempeño técnico {technical}/80 · informe {report}/20")
-    st.write(f"**Problema A:** Lₙ,₀(500) ingresado: {st.session_state.c2s10_ln0:.1f} dB · f₀: {st.session_state.c2s10_f0:.1f} Hz · solución: {st.session_state.c2s10_floor or 'pendiente'}.")
-    st.write(f"**Problema B:** fₑ: {st.session_state.c2s10_fe:.2f} Hz · caminos: {', '.join(st.session_state.c2s10_paths) if st.session_state.c2s10_paths else 'pendientes'}.")
-    st.selectbox("Limitación/verificación principal antes de ejecutar",["","Verificar cargas reales, especificaciones, ejecución y ausencia de puentes rígidos","Aprobar sin comprobaciones porque el cálculo basta","Verificar sólo el color de los aisladores"],key="c2s10_final_limit")
-    st.text_area("Conclusión profesional final",key="c2s10_final_conclusion",placeholder="Integra diagnóstico, cálculos, solución de piso, caminos de la bomba, medidas de control y verificaciones pendientes.")
+    # ------------------------------------------------------------------
+    # B · BOMBA
+    # ------------------------------------------------------------------
+    st.markdown("## B · Diagnostica y controla la bomba")
+    p=_C2L1_S10_PUMP
+    st.write(
+        f"Continúas con **la misma bomba de la Etapa 8**: {p['model']} · "
+        f"{p['mass_kg']:.0f} kg · {p['rpm']:.0f} RPM · {p['supports']} apoyos · "
+        f"Q ≈ {p['flow_m3h']:.0f} m³/h."
+    )
+
+    st.markdown("### 7 · Integra frecuencia, NPSH y carga por apoyo")
+    c1,c2,c3=st.columns(3)
+    c1.number_input("Frecuencia 1×RPM fₑ [Hz]",0.0,100.0,step=0.01,key="c2s10_fe")
+    c2.number_input("NPSHₐ calculado [m]",0.0,20.0,step=0.01,key="c2s10_npsha")
+    c3.number_input("NPSHᵣ leído del catálogo [m]",0.0,20.0,step=0.01,key="c2s10_npshr")
+
+    st.selectbox(
+        "Interpretación hidráulica",
+        [
+            "",
+            "NPSHₐ < NPSHᵣ: condición hidráulica desfavorable compatible con riesgo de cavitación; requiere evidencia adicional para confirmar cavitación.",
+            "NPSH es un nivel acústico y debe expresarse en dB.",
+            "Un margen negativo demuestra que el único camino es el ruido aéreo.",
+        ],
+        key="c2s10_npsh_diag"
+    )
+    st.number_input("Carga por aislador para consultar el catálogo [lb]",0.0,500.0,step=0.1,key="c2s10_load_lb")
+
+    if st.button("COMPROBAR DIAGNÓSTICO DE LA BOMBA",key="c2s10_check_pump_math",width="stretch"):
+        expected_diag="NPSHₐ < NPSHᵣ: condición hidráulica desfavorable compatible con riesgo de cavitación; requiere evidencia adicional para confirmar cavitación."
+        ok=(
+            abs(st.session_state.c2s10_fe-pump["fe"])<=0.15
+            and abs(st.session_state.c2s10_npsha-pump["npsha"])<=0.12
+            and abs(st.session_state.c2s10_npshr-pump["npshr"])<=0.20
+            and st.session_state.c2s10_npsh_diag==expected_diag
+            and abs(st.session_state.c2s10_load_lb-pump["lb_support"])<=1.0
+        )
+        _c2l1_s10_check(
+            saved,"pump_math",ok,
+            "Frecuencia, NPSH e identificación de carga coherentes con el caso.",
+            "Revisa 2900/60, distingue NPSH disponible de requerido y calcula la carga de 79 kg repartida en cuatro apoyos."
+        )
+
+    st.markdown("### 8 · Selecciona y verifica el aislador")
+    st.write(
+        f"El criterio adoptado en el Laboratorio B fue **δ ≥ {p['delta_min_mm']:.0f} mm ≈ {p['delta_min_mm']/25.4:.2f} in** "
+        f"bajo una carga de operación de aproximadamente **{pump['lb_support']:.1f} lb por apoyo**."
+    )
+
+    comp_rows=[]
+    for name in ["FDS 1-50","FDS 4-100"]:
+        ref=_C2L1_S10_ISOLATORS[name]
+        res=pump[name]
+        comp_rows.append({
+            "Modelo":name,
+            "Carga nominal":f"{ref['rated_lb']:.0f} lb",
+            "Deflexión nominal":f"{ref['nominal_in']:.2f} in",
+            "δ operación estimada":f"{res['op_mm']:.1f} mm",
+            "fₙ estimada":f"{res['fn']:.2f} Hz",
+            "T_F estimada":f"{res['tf']:.3f}",
+        })
+    st.dataframe(pd.DataFrame(comp_rows),hide_index=True,use_container_width=True)
+
+    st.selectbox("Aislador que preseleccionarías",["","FDS 1-50","FDS 4-100"],key="c2s10_isolator")
+    c1,c2,c3=st.columns(3)
+    c1.number_input("δ operación del modelo elegido [mm]",0.0,200.0,step=0.1,key="c2s10_delta_op")
+    c2.number_input("fₙ estimada [Hz]",0.0,50.0,step=0.01,key="c2s10_fn_iso")
+    c3.number_input("T_F estimada",0.0,2.0,step=0.001,format="%.3f",key="c2s10_tf_iso")
+
+    st.multiselect(
+        "Caminos mecánicos que todavía deben revisarse",
+        [
+            "Tubería rígida",
+            "Abrazadera o soporte rígido",
+            "Penetración rígida en muro",
+            "Base de la bomba",
+            "Pintura del recinto",
+            "Color de la tubería",
+        ],
+        key="c2s10_paths"
+    )
+
+    if st.button("COMPROBAR AISLADOR Y CAMINOS",key="c2s10_check_inspection",width="stretch"):
+        chosen=st.session_state.c2s10_isolator
+        ref=pump.get(chosen,{})
+        iso_ok=(
+            chosen=="FDS 1-50"
+            and ref
+            and abs(st.session_state.c2s10_delta_op-ref["op_mm"])<=1.0
+            and abs(st.session_state.c2s10_fn_iso-ref["fn"])<=0.20
+            and abs(st.session_state.c2s10_tf_iso-ref["tf"])<=0.003
+        )
+        floor_ok=set(st.session_state.c2s10_floor_errors)=={
+            "Contacto rígido perimetral",
+            "Penetración rígida de una instalación",
+            "Discontinuidad de la capa resiliente",
+        }
+        paths=set(st.session_state.c2s10_paths)
+        path_ok={
+            "Tubería rígida",
+            "Abrazadera o soporte rígido",
+            "Penetración rígida en muro",
+            "Base de la bomba",
+        }.issubset(paths) and "Pintura del recinto" not in paths and "Color de la tubería" not in paths
+        _c2l1_s10_check(
+            saved,"inspection",iso_ok and floor_ok and path_ok,
+            "La inspección constructiva y la preselección del aislador son coherentes.",
+            "Revisa tres cosas: puentes rígidos del piso, carga/deflexión real del aislador y caminos mecánicos que pueden puentear el montaje."
+        )
+
+    # ------------------------------------------------------------------
+    # C · INTEGRACIÓN
+    # ------------------------------------------------------------------
+    st.markdown("## C · Integra la estrategia de control")
+    st.write(
+        "Ya no estás resolviendo dos ejercicios separados. Debes construir una estrategia que actúe sobre "
+        "los mecanismos y caminos que realmente identificaste."
+    )
+    control_opts=[
+        "Piso flotante correctamente desacoplado",
+        "Eliminar puentes rígidos del piso flotante",
+        "Corregir la condición hidráulica que favorece cavitación",
+        "Aisladores seleccionados según carga y deflexión real",
+        "Conexiones flexibles en tuberías cuando corresponda",
+        "Soportes resilientes de tuberías",
+        "Desacoplamiento de penetraciones rígidas",
+        "Tratamiento del ruido aéreo residual solo si las mediciones muestran que sigue siendo relevante",
+        "Aumentar arbitrariamente la masa de la bomba",
+        "Cambiar automáticamente todos los soportes por goma",
+    ]
+    st.multiselect("Construye tu estrategia integral",control_opts,key="c2s10_controls")
+
+    if st.button("COMPROBAR ESTRATEGIA INTEGRAL",key="c2s10_check_controls",width="stretch"):
+        required={
+            "Piso flotante correctamente desacoplado",
+            "Eliminar puentes rígidos del piso flotante",
+            "Corregir la condición hidráulica que favorece cavitación",
+            "Aisladores seleccionados según carga y deflexión real",
+            "Conexiones flexibles en tuberías cuando corresponda",
+            "Soportes resilientes de tuberías",
+            "Desacoplamiento de penetraciones rígidas",
+        }
+        chosen=set(st.session_state.c2s10_controls)
+        ok=(
+            required.issubset(chosen)
+            and "Aumentar arbitrariamente la masa de la bomba" not in chosen
+            and "Cambiar automáticamente todos los soportes por goma" not in chosen
+        )
+        _c2l1_s10_check(
+            saved,"controls",ok,
+            "La estrategia integra fuente, transmisión estructural, conexiones y ejecución.",
+            "Una sola medida no cubre todos los mecanismos. Vincula cada medida con la fuente o el camino que intenta controlar."
+        )
+
+    # ------------------------------------------------------------------
+    # D · INFORME
+    # ------------------------------------------------------------------
+    st.markdown("## D · Informe profesional final")
+    technical,report,total=_c2l1_s10_scores()
+    st.progress(total/100)
+    st.caption(f"Puntaje acumulado: {total}/100 · desarrollo técnico {technical}/80 · informe integrador {report}/20")
+
+    st.write(
+        f"**Impacto:** Lₙ,₀(500) = {st.session_state.c2s10_ln0:.1f} dB · "
+        f"f₀ = {st.session_state.c2s10_f0:.1f} Hz · "
+        f"solución = {st.session_state.c2s10_floor or 'pendiente'}."
+    )
+    st.write(
+        f"**Bomba:** fₑ = {st.session_state.c2s10_fe:.2f} Hz · "
+        f"aislador = {st.session_state.c2s10_isolator or 'pendiente'} · "
+        f"caminos = {', '.join(st.session_state.c2s10_paths) if st.session_state.c2s10_paths else 'pendientes'}."
+    )
+
+    st.selectbox(
+        "¿Qué debe verificarse antes de considerar resuelto el proyecto?",
+        [
+            "",
+            "Cargas reales, especificaciones, ejecución, ausencia de puentes rígidos, conexiones, condición hidráulica y desempeño final cuando corresponda.",
+            "Nada más: si el cálculo es correcto la obra queda automáticamente aprobada.",
+            "Solo el color y la marca de los aisladores.",
+        ],
+        key="c2s10_final_limit"
+    )
+    st.text_area(
+        "Conclusión profesional final",
+        key="c2s10_final_conclusion",
+        placeholder=(
+            "Integra: qué ocurre en el ruido de impacto, qué ocurre en la bomba, "
+            "qué soluciones seleccionas, qué caminos debes controlar y qué verificarías después de ejecutar."
+        )
+    )
+
+    # Autoguardado al final de cada rerun: cualquier cambio de control queda persistido.
+    _c2l1_s10_autosave(saved)
+
     c1,c2=st.columns(2)
-    if c1.button("GUARDAR DESARROLLO",key="c2s10_save_draft",width="stretch"):
-        _c2l1_s10_save_draft(saved); st.success("Desarrollo guardado. Puedes salir y continuar después.")
+    if c1.button("GUARDAR AVANCE AHORA",key="c2s10_save_draft",width="stretch"):
+        _c2l1_s10_save_draft(saved)
+        st.success("Desarrollo guardado. Puedes salir, revisar otras etapas y continuar después.")
+
     technical,report,total=_c2l1_s10_scores()
     if c2.button("ENVIAR EVALUACIÓN DEFINITIVA",type="primary",key="c2s10_submit",width="stretch"):
-        if technical<80 or report<20: st.warning("Aún hay bloques sin comprobar o el informe final está incompleto. Puedes guardar el desarrollo y continuar.")
-        else: _c2l1_finish_stage10(saved,"submitted"); st.rerun()
-    st.markdown("---")
-    st.markdown("### Mapa conceptual final")
-    st.markdown("**IMPACTO → FUERZA → ESTRUCTURA → LOSA BASE → PISO FLOTANTE → PREDICCIÓN → CONTROL → VERIFICACIÓN → DECISIÓN PROFESIONAL**")
-    st.markdown("**INSTALACIÓN → EQUIPO → EXCITACIÓN → CAMINOS → CONTROL EN FUENTE + CONTROL ESTRUCTURAL + CONTROL DE CONEXIONES + CONTROL AÉREO → VERIFICACIÓN → DECISIÓN PROFESIONAL**")
+        if technical<80 or report<20:
+            st.warning(
+                "Aún hay bloques sin comprobar o el informe final está incompleto. "
+                "Tu avance permanece guardado."
+            )
+        else:
+            _c2l1_finish_stage10(saved,"submitted")
+            st.rerun()
+
 
 def future_lab_view_impl(lab):
     """Renderer de los laboratorios posteriores manteniendo la navegación institucional."""

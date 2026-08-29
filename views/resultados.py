@@ -17,6 +17,7 @@ _LOCAL_NAMES = {
     "_grade", "_answer_release_allowed",
     "_render_stage9_comparison", "_render_stage10_comparison",
     "_formative_progress_data", "_render_formative_progress", "_official_rows", "_official_summary",
+    "_course2_lab1_rows", "_render_course2_lab1_scores",
     "student_sidebar_summary", "results_view",
 }
 
@@ -404,7 +405,11 @@ def student_sidebar_summary(client, user_key):
         rows = (
             client.table("responses").select("*")
             .eq("user_key", user_key)
-            .in_("class_id", [LABORATORIES[1]["id"], LABORATORIES[2]["id"]])
+            .in_("class_id", [
+                LABORATORIES[1]["id"],
+                LABORATORIES[2]["id"],
+                "clase-03-impacto-instalaciones-lab-1",
+            ])
             .execute().data or []
         )
     except Exception:
@@ -438,6 +443,97 @@ def student_sidebar_summary(client, user_key):
         </div>
         """,
         unsafe_allow_html=True,
+    )
+
+
+
+def _course2_lab1_rows(rows):
+    """Devuelve las entregas vigentes de Etapas 9 y 10 del Curso 2 · Lab 1."""
+    class_id = "clase-03-impacto-instalaciones-lab-1"
+    expected_versions = {
+        "final_comprehension": "etapas_1_a_8_v2",
+        "final_exam": "integrador_lowara_v3",
+    }
+    latest = {}
+    for row in rows:
+        if row.get("class_id") != class_id:
+            continue
+        key = row.get("question_key")
+        if key not in expected_versions or key in latest:
+            continue
+        payload = _student_result_payload(row.get("answer"))
+        if isinstance(payload, dict) and payload.get("version") == expected_versions[key]:
+            latest[key] = row
+    return latest
+
+
+def _render_course2_lab1_scores(rows):
+    """Puntajes formativos del Curso 2 · Lab 1, separados de las notas oficiales."""
+    current = _course2_lab1_rows(rows)
+    stage9 = current.get("final_comprehension")
+    stage10 = current.get("final_exam")
+
+    st.markdown("## Puntajes formativos · Curso 2")
+    st.markdown("### Laboratorio 1 · Control de ruido de impacto y ruido de instalaciones")
+    st.caption(
+        "Las Etapas 9 y 10 de este Laboratorio 1 registran **puntaje solamente**. "
+        "No generan nota ni modifican la calificación oficial del curso. "
+        "La evaluación con nota corresponderá al Laboratorio 2."
+    )
+
+    delivered = sum(item is not None for item in (stage9, stage10))
+    reviewed = sum(
+        bool(item and (item.get("status") == "reviewed" or item.get("teacher_score") is not None))
+        for item in (stage9, stage10)
+    )
+    c1, c2, c3 = st.columns(3)
+    c1.metric("Entregadas", f"{delivered} de 2")
+    c2.metric("Revisadas por docente", f"{reviewed} de {delivered}" if delivered else "0 de 0")
+    c3.metric("Tipo", "Puntaje · sin nota")
+
+    evaluations = [
+        ("Etapa 9 · Preguntas de comprensión", stage9, 100),
+        ("Etapa 10 · Desafío integrador", stage10, 100),
+    ]
+    for title, row, maximum in evaluations:
+        if row is None:
+            with st.expander(f"⏳ {title} · Pendiente"):
+                st.caption("Todavía no existe una entrega registrada para esta etapa.")
+            continue
+
+        reviewed_row = row.get("status") == "reviewed" or row.get("teacher_score") is not None
+        score = _effective_row_score(row)
+        icon = "✅" if reviewed_row else "🕒"
+        state = "Revisada por docente" if reviewed_row else "Entregada · corrección automática"
+        with st.expander(f"{icon} {title} · {score:g}/{maximum} puntos", expanded=False):
+            a, b, c = st.columns(3)
+            a.metric("Puntaje vigente", f"{score:g}/{maximum}")
+            b.metric("Estado", state)
+            c.metric("Nota", "No aplica")
+            st.caption(f"Entrega: {_result_date(row.get('submitted_at') or row.get('updated_at'))}")
+
+            payload = _student_result_payload(row.get("answer"))
+            if not isinstance(payload, dict):
+                payload = {}
+
+            if row.get("question_key") == "final_comprehension":
+                answers = payload.get("answers", {}) if isinstance(payload.get("answers", {}), dict) else {}
+                st.write(f"**Respuestas registradas:** {sum(v not in (None, '') for v in answers.values())}/25")
+                st.caption("Vuelve a la Etapa 9 para revisar tus respuestas, comprobaciones y retroalimentación pregunta por pregunta.")
+            else:
+                st.write(f"**Desarrollo técnico:** {float(payload.get('puntaje_tecnico', 0) or 0):g}/80")
+                st.write(f"**Informe integrador:** {float(payload.get('puntaje_informe', 0) or 0):g}/20")
+                impacto = payload.get("impacto", {}) if isinstance(payload.get("impacto", {}), dict) else {}
+                instalaciones = payload.get("instalaciones", {}) if isinstance(payload.get("instalaciones", {}), dict) else {}
+                st.write(f"**Piso seleccionado:** {impacto.get('solucion') or 'Sin información'}")
+                st.write(f"**Aislador seleccionado:** {instalaciones.get('aislador') or 'Sin información'}")
+
+            if row.get("teacher_note"):
+                st.info(f"Comentario docente: {row.get('teacher_note')}")
+
+    st.info(
+        "Estos resultados forman parte del progreso del **Laboratorio 1** y se muestran separados "
+        "de las evaluaciones oficiales con nota."
     )
 
 
@@ -573,6 +669,7 @@ def results_view(client, catalog, user_key):
                     st.markdown("**Retroalimentación automática**")
                     st.write(row.get("feedback"))
 
+    _render_course2_lab1_scores(rows)
     _render_formative_progress(rows)
 
 
