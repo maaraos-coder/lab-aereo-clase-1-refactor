@@ -6540,12 +6540,73 @@ def _render_course2_lab1_stage8(lab, saved):
     st.markdown("## 2 · Laboratorio A — Diagnóstico de una bomba centrífuga")
     st.markdown(
         """
-        **Caso profesional.** El dormitorio se encuentra sobre la sala técnica de la misma **Lowara SHOS 50-125/75/P**. La bomba opera a **2900 RPM**.
-        Todavía no sabemos si domina un fenómeno rotacional, una condición hidráulica, la transmisión por la base, las tuberías o la radiación aérea.
+        **Caso profesional.** Los ocupantes del dormitorio ubicado sobre la sala técnica reportan un
+        **zumbido grave y persistente durante la noche**. Indican que el ruido aparece cuando entra en operación
+        la bomba **Lowara SHOS 50-125/75/P** y disminuye o desaparece cuando la bomba se detiene.
 
-        **Objetivo:** diseñar una campaña, observar los resultados y construir las evidencias tú mismo. La app no entregará la conclusión antes de que analices los datos.
+        La bomba opera a **2900 RPM**. A partir del reclamo todavía no podemos afirmar si el problema está dominado
+        por una componente rotacional, una condición hidráulica, la transmisión por la base, las tuberías
+        o la radiación aérea.
+
+        **Objetivo:** diseñar una campaña de medición, interpretar los resultados y construir un diagnóstico sustentado
+        en evidencias. La app no entregará la conclusión al alumno antes de que analice los datos.
         """
     )
+
+    if role=="Docente":
+        with st.container(border=True):
+            st.markdown("### Clave docente · desarrollo esperado del diagnóstico")
+            st.write(
+                "Esta sección resume la lógica que debería construir el estudiante durante el Laboratorio A. "
+                "No aparece en Alumno ni en Zoom/Proyección."
+            )
+
+            td1,td2,td3,td4=st.columns(4)
+            with td1:
+                _card(
+                    "1 · Reclamo",
+                    "Zumbido grave nocturno",
+                    "El síntoma aparece cuando opera la bomba y se reduce al detenerla. Esto orienta la campaña, pero todavía no identifica el mecanismo.",
+                    tone="blue"
+                )
+            with td2:
+                _card(
+                    "2 · Referencia rotacional",
+                    "2900 RPM → 48,3 Hz",
+                    "En espectros por bandas, la componente 1×RPM se espera principalmente en la banda central de 50 Hz.",
+                    tone="purple"
+                )
+            with td3:
+                _card(
+                    "3 · Caminos",
+                    "Base + tuberías + aire",
+                    "Debe comprobarse si la misma banda aparece en carcasa, apoyo, tuberías, sala técnica y dormitorio."
+                )
+            with td4:
+                _card(
+                    "4 · Hidráulica",
+                    "NPSH + banda ancha",
+                    "El margen NPSH evalúa riesgo hidráulico. La cavitación solo se fortalece como hipótesis si existe evidencia vibroacústica compatible.",
+                    tone="green"
+                )
+
+            st.markdown("#### Diagnóstico esperado al integrar las evidencias")
+            st.info(
+                "**Componente principal del zumbido:** una excitación asociada al giro de la bomba, "
+                "1×RPM ≈ 48,3 Hz, observable principalmente en la banda de 50 Hz. "
+                "Si esa componente aparece en carcasa, base/tuberías y dormitorio, existe correspondencia espectral "
+                "compatible con transmisión desde la bomba hacia el receptor."
+            )
+            st.warning(
+                "**Cavitación:** NPSHₐ < NPSHᵣ indica una condición hidráulica desfavorable, "
+                "pero no explica por sí sola el zumbido tonal. La hipótesis de cavitación se fortalece únicamente "
+                "si además aparecen contenido de banda ancha, inestabilidad hidráulica u otra evidencia compatible."
+            )
+            st.success(
+                "**Conclusión docente esperada:** el caso puede contener dos fenómenos simultáneos: "
+                "(1) una componente rotacional asociada al zumbido de baja frecuencia y transmitida por base/tuberías, "
+                "y (2) una condición hidráulica compatible con cavitación que puede agregar ruido y vibración de banda ancha."
+            )
 
     # ---------------------------------------------------------
     # 2.1 Cavitación y NPSH: prerrequisito
@@ -6778,9 +6839,22 @@ def _render_course2_lab1_stage8(lab, saved):
         st.dataframe(install_data,hide_index=True,use_container_width=True)
     with lc2:
         st.markdown("**B · Catálogo de la bomba**")
-        st.write(
-            "Busca la familia **SHOE–SHOS–SHOD 50-125/75** y localiza la gráfica **NPSH–Q** "
-            "correspondiente al modelo 50-125/75. Usa el eje de caudal para llegar a Q = 48 m³/h y luego lee NPSHᵣ en el eje vertical."
+        st.markdown("**Dónde buscar en el catálogo**")
+        st.success(
+            "Ve directamente a la **página 58** del catálogo PDF. "
+            "La página está titulada **SHOE–SHOS–SHOD 50-125 · Operating Characteristics at 50 Hz, 2 Poles**."
+        )
+        st.markdown(
+            """
+            En esa página encontrarás tres gráficos. Para este ejercicio utiliza el **gráfico central de NPSH**:
+
+            1. confirma que la página corresponde a **50-125** y aproximadamente **2900 RPM**;
+            2. identifica la curva **50-125/75**;
+            3. en el eje horizontal inferior localiza **Q = 48 m³/h**;
+            4. sube verticalmente hasta interceptar la curva 50-125/75;
+            5. desde la intersección desplázate horizontalmente hacia el **eje vertical izquierdo**, expresado en metros;
+            6. registra el valor de **NPSH requerido** que obtengas gráficamente.
+            """
         )
         st.link_button(
             "Abrir catálogo oficial Lowara / Xylem",
@@ -6788,7 +6862,8 @@ def _render_course2_lab1_stage8(lab, saved):
             use_container_width=True
         )
         st.caption(
-            "Lee gráficamente el NPSH requerido cerca de Q = 48 m³/h. Al tratarse de una lectura de gráfico se acepta un pequeño rango."
+            "Referencia para la actividad: **página 58**, gráfico central NPSH–Q, curva 50-125/75. "
+            "Al tratarse de una lectura gráfica se acepta una pequeña tolerancia."
         )
 
 
@@ -6798,33 +6873,41 @@ def _render_course2_lab1_stage8(lab, saved):
     if is_teacher_npsh:
         st.markdown("##### Clave docente · valores esperados del ejercicio")
         st.write(
-            "La siguiente figura muestra **cómo se realiza la lectura gráfica** en la curva NPSH–Q. "
-            "Esta ayuda no se muestra en Alumno ni en Zoom/Proyección."
+            "La figura utiliza el **mismo catálogo que abre actualmente la app**. "
+            "La curva corresponde a **SHOE–SHOS–SHOD 50-125**, página impresa **58**, "
+            "modelo hidráulico 50-125/75. Esta ayuda no se muestra en Alumno ni en Zoom/Proyección."
         )
         _asset(
             "curso2_lab1_etapa8_npsh_clave_docente.webp",
-            "Clave docente: desde Q ≈ 48 m³/h se proyecta hasta la curva 50-125/75 y se lee NPSHᵣ ≈ 3,8 m."
+            "Clave docente · catálogo actual, página 58: Q ≈ 48 m³/h → curva 50-125/75 → NPSHᵣ ≈ 3,8 m."
         )
-        kd1,kd2,kd3=st.columns(3)
+        kd1,kd2,kd3,kd4=st.columns(4)
         with kd1:
             _card(
-                "NPSHᵣ del catálogo",
-                "≈ 3.8 m",
-                "Lectura gráfica esperada a Q ≈ 48 m³/h. Para la corrección se acepta aproximadamente 3.5–4.1 m.",
+                "NPSHᵣ · catálogo",
+                "≈ 3,8 m",
+                "Lectura gráfica en página 58, Q ≈ 48 m³/h, curva 50-125/75. Se acepta una pequeña tolerancia.",
                 tone="blue"
             )
         with kd2:
             _card(
-                "NPSHₐ calculado",
-                "≈ 3.41 m",
-                "Resultado esperado con los datos de instalación entregados en el ejercicio.",
+                "NPSHₐ · instalación",
+                "≈ 3,41 m",
+                "Resultado calculado con presión atmosférica, cota, pérdidas y presión de vapor del caso.",
                 tone="green"
             )
         with kd3:
             _card(
-                "Margen esperado",
-                "≈ −0.39 m",
-                "M_NPSH = NPSHₐ − NPSHᵣ usando NPSHᵣ ≈ 3.8 m.",
+                "Margen vs. catálogo",
+                "≈ −0,39 m",
+                "3,41 − 3,80. La instalación dispone de menos NPSH que el requerido por la curva.",
+                tone="orange"
+            )
+        with kd4:
+            _card(
+                "Referencia práctica",
+                "≈ 4,30 m",
+                "El fabricante sugiere aumentar el valor de catálogo en 0,5 m para uso práctico. Déficit práctico ≈ −0,89 m.",
                 tone="orange"
             )
         st.info(
