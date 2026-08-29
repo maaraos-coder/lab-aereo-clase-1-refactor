@@ -10422,6 +10422,7 @@ def _c2l1_s10_restore(saved):
         # impacto
         "c2s10_ln0":0.0, "c2s10_mr":0.0, "c2s10_f0":0.0,
         "c2s10_floor":"", "c2s10_floor_criteria":[], "c2s10_floor_note":"",
+        "c2s10_delta250":0.0, "c2s10_delta500":0.0, "c2s10_delta1000":0.0,
         "c2s10_ln250":0.0, "c2s10_ln500":0.0, "c2s10_ln1000":0.0,
         "c2s10_floor_errors":[],
         # bomba
@@ -10545,6 +10546,11 @@ def _c2l1_finish_stage10(saved,reason="submitted"):
             "solucion":st.session_state.get("c2s10_floor"),
             "criterios":st.session_state.get("c2s10_floor_criteria"),
             "justificacion":st.session_state.get("c2s10_floor_note"),
+            "delta_ln":{
+                "250":st.session_state.get("c2s10_delta250"),
+                "500":st.session_state.get("c2s10_delta500"),
+                "1000":st.session_state.get("c2s10_delta1000"),
+            },
             "ln_final":{
                 "250":st.session_state.get("c2s10_ln250"),
                 "500":st.session_state.get("c2s10_ln500"),
@@ -10645,10 +10651,20 @@ def _c2l1_stage10_teacher_view():
     st.write(
         "**Cadena física:** Fuerza de impacto → Vibración del piso → Propagación estructural → Radiación acústica."
     )
+    delta250_ref=delta_cremer(250,120,10)[0]
+    delta500_ref=delta_cremer(500,120,10)[0]
+    delta1000_ref=delta_cremer(1000,120,10)[0]
     st.write(
         f"Con los datos del caso, a 500 Hz se obtiene **Lₙ,₀ ≈ {ln0:.1f} dB**. "
         f"Para el sistema base m’₁=120 kg/m², m’₂=400 kg/m² y s’=10 MN/m³: "
         f"**m’ᵣ ≈ {mr:.1f} kg/m²** y **f₀ ≈ {f0:.1f} Hz**."
+    )
+    st.write(
+        f"El mismo modelo de piso flotante entrega aproximadamente "
+        f"**ΔLₙ(250)={delta250_ref:.1f} dB**, "
+        f"**ΔLₙ(500)={delta500_ref:.1f} dB** y "
+        f"**ΔLₙ(1000)={delta1000_ref:.1f} dB**. "
+        "Luego se obtiene Lₙ,final(f)=Lₙ,₀(f)−ΔLₙ(f), banda por banda."
     )
     st.write(
         "La **Solución B** es la referencia didáctica más equilibrada porque cumple las restricciones "
@@ -10946,7 +10962,40 @@ def _render_course2_lab1_stage10(lab,saved):
         "Utiliza el mismo enfoque espectral estudiado anteriormente. Para comprobar que manejas el modelo, "
         "calcula una banda representativa antes de diseñar el tratamiento."
     )
-    st.caption("Datos del ejercicio: R(125, 250, 500, 1000, 2000 Hz) = 35, 45, 55, 61, 67 dB · σrad = 1.")
+    st.markdown("#### Datos entregados para el cálculo")
+    st.write(
+        "Estos valores corresponden al aislamiento acústico de la losa en las bandas que utilizaremos "
+        "para construir la predicción espectral."
+    )
+
+    d1,d2,d3=st.columns(3)
+    with d1:
+        _card(
+            "Bandas de frecuencia",
+            "125 · 250 · 500 · 1000 · 2000 Hz",
+            "Son las bandas en las que evaluaremos el comportamiento de la losa.",
+            tone="blue"
+        )
+    with d2:
+        _card(
+            "Aislamiento R(f)",
+            "35 · 45 · 55 · 61 · 67 dB",
+            "Cada valor corresponde, en el mismo orden, a las bandas 125, 250, 500, 1000 y 2000 Hz.",
+            tone="green"
+        )
+    with d3:
+        _card(
+            "Eficiencia de radiación",
+            "σ_rad = 1",
+            "Valor adoptado para este ejercicio en la banda que estamos comprobando.",
+            tone="purple"
+        )
+
+    st.info(
+        "**Para esta comprobación trabajaremos a 500 Hz.** "
+        "Por lo tanto, debes utilizar **R(500 Hz) = 55 dB** y **σ_rad = 1**."
+    )
+
     expected_ln0=ln0_above_fc(500,_C2L1_S10_R[500],1.0)
     st.number_input("Lₙ,₀(500 Hz) [dB]",0.0,120.0,step=0.1,key="c2s10_ln0")
     if st.button("COMPROBAR LOSA BASE",key="c2s10_check_ln0"):
@@ -10959,104 +11008,392 @@ def _render_course2_lab1_stage10(lab,saved):
 
     st.markdown("### 3 · Diseña el piso flotante")
     st.write(
-        "El tratamiento debe mejorar la respuesta acústica, pero también debe ser constructivamente viable. "
-        "Primero calcula la masa reducida y la frecuencia natural del sistema base."
+        "Ahora agregaremos un piso flotante sobre la losa base. "
+        "Antes de estimar cuánto mejora acústicamente, necesitamos conocer cómo se comporta dinámicamente "
+        "el conjunto formado por la capa superior, el elemento resiliente y la losa."
     )
+
+    st.markdown("#### Datos del sistema base")
+    fd1,fd2,fd3=st.columns(3)
+    with fd1:
+        _card(
+            "Masa superior m’₁",
+            "120 kg/m²",
+            "Corresponde a la masa superficial de la capa flotante que agregamos sobre el elemento resiliente.",
+            tone="blue"
+        )
+    with fd2:
+        _card(
+            "Masa de la losa m’₂",
+            "400 kg/m²",
+            "Representa la masa superficial de la losa estructural existente."
+        )
+    with fd3:
+        _card(
+            "Rigidez dinámica s’",
+            "10 MN/m³",
+            "Representa cuán rígido o flexible es el elemento resiliente del piso flotante.",
+            tone="purple"
+        )
+
+    st.markdown("#### Paso 1 · Calcula la masa reducida")
+    st.write(
+        "La masa reducida no es una tercera capa física. "
+        "Es una forma matemática de representar la interacción dinámica entre la masa superior y la losa."
+    )
+    st.latex(r"m'_r=\frac{m'_1m'_2}{m'_1+m'_2}")
+
+    st.markdown("#### Paso 2 · Calcula la frecuencia natural del sistema")
+    st.write(
+        "El conjunto masa–resorte–masa posee una frecuencia propia de oscilación. "
+        "Esa frecuencia natural, f₀, es importante porque determina en qué zona comienza a desarrollarse "
+        "el desacoplamiento del piso flotante."
+    )
+    st.latex(r"f_0=\frac{1}{2\pi}\sqrt{\frac{s'}{m'_r}}")
+    st.info(
+        "**Recuerda la conversión:** 10 MN/m³ = 10 000 000 N/m³."
+    )
+
     mr_expected,f0_expected=natural_frequency(120,400,10)
     c1,c2=st.columns(2)
     c1.number_input("Masa reducida m’ᵣ [kg/m²]",0.0,500.0,step=0.1,key="c2s10_mr")
     c2.number_input("Frecuencia natural f₀ [Hz]",0.0,300.0,step=0.1,key="c2s10_f0")
+
     if st.button("COMPROBAR m’ᵣ Y f₀",key="c2s10_check_floor_math",width="stretch"):
-        ok=abs(st.session_state.c2s10_mr-mr_expected)<=0.6 and abs(st.session_state.c2s10_f0-f0_expected)<=0.6
+        ok=(
+            abs(st.session_state.c2s10_mr-mr_expected)<=0.6
+            and abs(st.session_state.c2s10_f0-f0_expected)<=0.6
+        )
         _c2l1_s10_check(
             saved,"floor_math",ok,
             "Masa reducida y frecuencia natural correctas.",
-            "Comprueba la masa reducida y convierte s’ de MN/m³ a N/m³ antes de calcular f₀."
+            "Comprueba la masa reducida y recuerda convertir s’ de MN/m³ a N/m³ antes de calcular f₀."
         )
 
-    st.markdown("#### Laboratorio interactivo · observa cómo se mueve f₀")
+    st.markdown("#### Laboratorio interactivo · ¿qué hace subir o bajar f₀?")
+    st.write(
+        "Modifica una variable a la vez. El objetivo no es buscar simplemente la menor f₀, "
+        "sino comprender qué cambio físico produce cada resultado."
+    )
     ex1=st.slider("Masa superficial superior m’₁ [kg/m²]",50,180,120,key="c2s10_exp_m1")
     exs=st.slider("Rigidez dinámica s’ [MN/m³]",3.0,30.0,10.0,0.5,key="c2s10_exp_s")
     exmr,exf0=natural_frequency(ex1,400,exs)
+
     a,b=st.columns(2)
     a.metric("m’ᵣ",f"{exmr:.1f} kg/m²")
     b.metric("f₀",f"{exf0:.1f} Hz")
-    st.caption(
-        "Usa este experimento para comprender tendencias. La decisión final no se toma solo por obtener la menor f₀."
-    )
 
-    st.markdown("### 4 · Compara tres soluciones constructivas")
+    t1,t2=st.columns(2)
+    with t1:
+        _card(
+            "Si aumenta la masa",
+            "m’₁ ↑ → f₀ tiende a bajar",
+            "Un sistema más pesado tiende a oscilar más lentamente si la rigidez no cambia.",
+            tone="green"
+        )
+    with t2:
+        _card(
+            "Si aumenta la rigidez",
+            "s’ ↑ → f₀ sube",
+            "Un elemento resiliente más rígido eleva la frecuencia natural del sistema.",
+            tone="orange"
+        )
+
+    # ------------------------------------------------------------------
+    # 4 · PREDICE LA MEJORA ΔLn
+    # ------------------------------------------------------------------
+    st.markdown("### 4 · Predice la mejora que aporta el piso flotante")
     st.write(
-        "Ahora debes elegir una solución que combine desempeño dinámico y viabilidad constructiva. "
-        "El proyecto admite una carga adicional máxima de 120 kg/m² y un espesor máximo de 75 mm."
-    )
-    cards=st.columns(3)
-    for col,(name,d) in zip(cards,_C2L1_S10_FLOORS.items()):
-        mr_i,f0_i=natural_frequency(d["m1"],400,d["s"])
-        with col:
-            st.markdown(f"**{name}**")
-            st.write(f"Masa superior: {d['m1']:.0f} kg/m²")
-            st.write(f"Rigidez dinámica: {d['s']:.0f} MN/m³")
-            st.write(f"f₀ estimada: {f0_i:.1f} Hz")
-            st.write(f"Carga: {'✓ cumple' if d['load']<=120 else '✗ no cumple'}")
-            st.write(f"Espesor: {'✓ cumple' if d['thickness']<=75 else '✗ no cumple'}")
-
-    st.selectbox("Solución que recomendarías",[""]+list(_C2L1_S10_FLOORS),key="c2s10_floor")
-    st.multiselect("Criterios usados para decidir · selecciona al menos tres",_C2L1_S10_CRITERIA,key="c2s10_floor_criteria")
-    st.text_area(
-        "Justificación técnica",
-        key="c2s10_floor_note",
-        placeholder="Explica por qué tu selección equilibra desempeño acústico, carga, espesor y constructibilidad."
+        "Ya conocemos cómo se comporta dinámicamente el piso flotante. "
+        "Ahora utilizaremos **el mismo modelo de mejora estudiado anteriormente** para estimar, por bandas, "
+        "cuántos decibeles aporta el tratamiento respecto de la losa base."
     )
 
-    st.markdown("### 5 · Comprueba la predicción final")
-    selected=st.session_state.get("c2s10_floor") or "Solución B · sistema intermedio"
-    d=_C2L1_S10_FLOORS.get(selected,_C2L1_S10_FLOORS["Solución B · sistema intermedio"])
-    calc={}
-    for f in [250,500,1000]:
-        base=ln0_above_fc(f,_C2L1_S10_R[f],1.0)
-        delta,_=delta_cremer(f,d["m1"],d["s"])
-        calc[f]=base-delta
+    st.info(
+        "**ΔLₙ(f) no es el nivel final.** "
+        "Representa la **mejora acústica** introducida por el piso flotante en cada banda."
+    )
+
+    st.latex(r"\Delta L_n(f)=\text{mejora del tratamiento respecto de la losa base}")
+
+    # Para esta etapa se usa el sistema base m1=120 kg/m², s'=10 MN/m³
+    delta_expected={}
+    for _f in [250,500,1000]:
+        _delta,_meta=delta_cremer(_f,120,10)
+        delta_expected[_f]=_delta
+
+    st.markdown("#### Estima la mejora en tres bandas representativas")
+    d1,d2,d3=st.columns(3)
+    d1.number_input("ΔLₙ(250 Hz) [dB]",0.0,80.0,step=0.1,key="c2s10_delta250")
+    d2.number_input("ΔLₙ(500 Hz) [dB]",0.0,80.0,step=0.1,key="c2s10_delta500")
+    d3.number_input("ΔLₙ(1000 Hz) [dB]",0.0,80.0,step=0.1,key="c2s10_delta1000")
+
+    if st.button("COMPROBAR MEJORA ΔLₙ",key="c2s10_check_delta_ln",width="stretch"):
+        delta_ok=all(
+            abs(st.session_state[k]-delta_expected[f])<=0.7
+            for k,f in [
+                ("c2s10_delta250",250),
+                ("c2s10_delta500",500),
+                ("c2s10_delta1000",1000),
+            ]
+        )
+        _c2l1_s10_check(
+            saved,"floor_final",delta_ok,
+            "La mejora ΔLₙ(f) está correctamente estimada para las tres bandas.",
+            "Revisa el modelo del piso flotante. ΔLₙ(f) es una mejora en dB y depende de la frecuencia y de las propiedades del sistema."
+        )
+
+    # ------------------------------------------------------------------
+    # 5 · CONSTRUYE Ln FINAL
+    # ------------------------------------------------------------------
+    st.markdown("### 5 · Construye el nivel final del piso tratado")
+    st.write(
+        "Ahora combinamos las dos partes que ya calculaste: "
+        "**cómo se comporta la losa sin tratamiento** y **cuánto mejora el piso flotante**."
+    )
+    st.latex(r"\boxed{L_{n,\mathrm{final}}(f)=L_{n,0}(f)-\Delta L_n(f)}")
+
+    st.write(
+        "La operación se realiza **banda por banda**. "
+        "Una mejora mayor significa que el nivel final esperado será menor."
+    )
+
+    base_expected={}
+    final_expected={}
+    for _f in [250,500,1000]:
+        base_expected[_f]=ln0_above_fc(_f,_C2L1_S10_R[_f],1.0)
+        final_expected[_f]=base_expected[_f]-delta_expected[_f]
+
+    e1,e2,e3=st.columns(3)
+    with e1:
+        _card(
+            "250 Hz",
+            f"Losa base: {base_expected[250]:.1f} dB",
+            f"Mejora esperada del modelo: ΔLₙ ≈ {delta_expected[250]:.1f} dB",
+            tone="blue"
+        )
+    with e2:
+        _card(
+            "500 Hz",
+            f"Losa base: {base_expected[500]:.1f} dB",
+            f"Mejora esperada del modelo: ΔLₙ ≈ {delta_expected[500]:.1f} dB",
+            tone="green"
+        )
+    with e3:
+        _card(
+            "1000 Hz",
+            f"Losa base: {base_expected[1000]:.1f} dB",
+            f"Mejora esperada del modelo: ΔLₙ ≈ {delta_expected[1000]:.1f} dB",
+            tone="purple"
+        )
 
     c1,c2,c3=st.columns(3)
     c1.number_input("Lₙ,final(250 Hz) [dB]",0.0,120.0,step=0.1,key="c2s10_ln250")
     c2.number_input("Lₙ,final(500 Hz) [dB]",0.0,120.0,step=0.1,key="c2s10_ln500")
     c3.number_input("Lₙ,final(1000 Hz) [dB]",0.0,120.0,step=0.1,key="c2s10_ln1000")
 
-    if st.button("COMPROBAR SOLUCIÓN DE PISO",key="c2s10_check_floor_final",width="stretch"):
-        spectral_ok=all(
-            abs(st.session_state[k]-calc[f])<=0.7
-            for k,f in [("c2s10_ln250",250),("c2s10_ln500",500),("c2s10_ln1000",1000)]
+    if st.button("COMPROBAR NIVEL FINAL",key="c2s10_check_floor_final",width="stretch"):
+        final_ok=all(
+            abs(st.session_state[k]-final_expected[f])<=0.7
+            for k,f in [
+                ("c2s10_ln250",250),
+                ("c2s10_ln500",500),
+                ("c2s10_ln1000",1000),
+            ]
         )
+        # floor_final ya comprueba ΔLn; floor_decision se usa después.
+        # Para preservar 80 puntos, el resultado final correcto consolida este bloque.
+        checks=dict(st.session_state.get("c2s10_checks",{}))
+        checks["floor_final"]=bool(checks.get("floor_final")) and final_ok
+        st.session_state["c2s10_checks"]=checks
+        _c2l1_s10_save_draft(saved)
+        (st.success if final_ok else st.warning)(
+            "Los niveles finales son coherentes con Lₙ,₀(f) − ΔLₙ(f)."
+            if final_ok
+            else "Revisa la resta banda por banda: Lₙ,final = Lₙ,₀ − ΔLₙ."
+        )
+
+    freqs=np.array(list(_C2L1_S10_R),dtype=float)
+    base_curve=np.array([ln0_above_fc(f,_C2L1_S10_R[int(f)],1.0) for f in freqs])
+    delta_curve=np.array([delta_cremer(f,120,10)[0] for f in freqs])
+    final_curve=base_curve-delta_curve
+
+    fig=go.Figure()
+    fig.add_trace(go.Scatter(
+        x=freqs,y=base_curve,mode="lines+markers",
+        name="Losa base Lₙ,₀(f)"
+    ))
+    fig.add_trace(go.Scatter(
+        x=freqs,y=delta_curve,mode="lines+markers",
+        name="Mejora ΔLₙ(f)"
+    ))
+    fig.add_trace(go.Scatter(
+        x=freqs,y=final_curve,mode="lines+markers",
+        name="Piso tratado Lₙ,final(f)"
+    ))
+    fig.update_xaxes(type="log",title="Frecuencia (Hz)")
+    fig.update_yaxes(title="Nivel / mejora (dB)")
+    fig.update_layout(height=420,hovermode="x unified")
+    st.plotly_chart(fig,width="stretch")
+
+    # ------------------------------------------------------------------
+    # 6 · COMPARA SOLUCIONES DESPUÉS DE ENTENDER ΔLn Y Ln FINAL
+    # ------------------------------------------------------------------
+    st.markdown("### 6 · Compara tres soluciones constructivas")
+    st.write(
+        "Ahora sí tiene sentido comparar alternativas: ya viste que cambiar masa y rigidez modifica f₀, "
+        "la mejora ΔLₙ(f) y finalmente Lₙ,final(f). "
+        "La solución debe combinar comportamiento acústico y viabilidad constructiva."
+    )
+
+    st.markdown("#### Restricciones del proyecto")
+    rc1,rc2=st.columns(2)
+    with rc1:
+        _card(
+            "Carga adicional máxima",
+            "≤ 120 kg/m²",
+            "La solución no debe superar la capacidad adoptada para este ejercicio.",
+            tone="blue"
+        )
+    with rc2:
+        _card(
+            "Espesor máximo disponible",
+            "≤ 75 mm",
+            "La solución debe caber dentro del espacio constructivo disponible.",
+            tone="purple"
+        )
+
+    st.markdown("#### Alternativas disponibles")
+    cards=st.columns(3)
+    solution_tones=["blue","green","orange"]
+    solution_labels=[
+        ("Solución A","Sistema liviano"),
+        ("Solución B","Sistema intermedio"),
+        ("Solución C","Mayor masa y menor rigidez"),
+    ]
+
+    for idx,(col,(name,d)) in enumerate(zip(cards,_C2L1_S10_FLOORS.items())):
+        mr_i,f0_i=natural_frequency(d["m1"],400,d["s"])
+        delta500_i=delta_cremer(500,d["m1"],d["s"])[0]
+        ln500_i=ln0_above_fc(500,_C2L1_S10_R[500],1.0)-delta500_i
+        load_ok=d["load"]<=120
+        thickness_ok=d["thickness"]<=75
+        both_ok=load_ok and thickness_ok
+
+        with col:
+            _card(
+                solution_labels[idx][0],
+                solution_labels[idx][1],
+                f"Masa: {d['m1']:.0f} kg/m² · Rigidez: {d['s']:.0f} MN/m³",
+                tone=solution_tones[idx]
+            )
+            st.markdown(
+                f"""
+                <div style="
+                    border:1px solid #d9e2ec;
+                    border-radius:14px;
+                    padding:14px 16px;
+                    margin-top:8px;
+                    background:white;
+                ">
+                  <div style="font-size:13px;color:#607080;">Frecuencia natural</div>
+                  <div style="font-size:24px;font-weight:700;margin-bottom:10px;">{f0_i:.1f} Hz</div>
+
+                  <div style="font-size:13px;color:#607080;">Mejora estimada a 500 Hz</div>
+                  <div style="font-size:21px;font-weight:700;margin-bottom:10px;">ΔLₙ ≈ {delta500_i:.1f} dB</div>
+
+                  <div style="font-size:13px;color:#607080;">Nivel final estimado a 500 Hz</div>
+                  <div style="font-size:21px;font-weight:700;margin-bottom:12px;">Lₙ,final ≈ {ln500_i:.1f} dB</div>
+
+                  <div style="font-size:13px;color:#607080;">Carga adicional</div>
+                  <div style="font-size:17px;font-weight:650;margin-bottom:8px;">
+                    {d['load']:.0f} kg/m² · {'✓ CUMPLE' if load_ok else '✗ NO CUMPLE'}
+                  </div>
+
+                  <div style="font-size:13px;color:#607080;">Espesor</div>
+                  <div style="font-size:17px;font-weight:650;margin-bottom:10px;">
+                    {d['thickness']:.0f} mm · {'✓ CUMPLE' if thickness_ok else '✗ NO CUMPLE'}
+                  </div>
+
+                  <div style="
+                    margin-top:10px;
+                    padding:8px 10px;
+                    border-radius:10px;
+                    font-weight:700;
+                    text-align:center;
+                    background:{'#e8f7ee' if both_ok else '#fff0ed'};
+                    color:{'#177245' if both_ok else '#a23a2a'};
+                  ">
+                    {'VIABLE SEGÚN RESTRICCIONES' if both_ok else 'NO VIABLE SIN REDISEÑO'}
+                  </div>
+                </div>
+                """,
+                unsafe_allow_html=True
+            )
+
+    st.markdown("#### ¿Qué debes comparar antes de decidir?")
+    q1,q2,q3,q4=st.columns(4)
+    with q1:
+        _card(
+            "1 · Resultado acústico",
+            "ΔLₙ y Lₙ,final",
+            "Compara cuánto mejora cada solución y qué nivel final predice.",
+            tone="green"
+        )
+    with q2:
+        _card(
+            "2 · Dinámica",
+            "f₀",
+            "Una frecuencia natural menor puede favorecer la separación dinámica, pero no decide por sí sola."
+        )
+    with q3:
+        _card(
+            "3 · Restricciones",
+            "carga y espesor",
+            "Una solución acústicamente buena puede quedar descartada si no cabe o sobrecarga la estructura.",
+            tone="blue"
+        )
+    with q4:
+        _card(
+            "4 · Constructibilidad",
+            "ejecución real",
+            "Debe poder construirse sin puentes rígidos ni discontinuidades de la capa resiliente.",
+            tone="purple"
+        )
+
+    st.markdown("#### Toma tu decisión")
+    st.selectbox(
+        "Solución que recomendarías",
+        [""]+list(_C2L1_S10_FLOORS),
+        key="c2s10_floor"
+    )
+    st.multiselect(
+        "Criterios usados para decidir · selecciona al menos tres",
+        _C2L1_S10_CRITERIA,
+        key="c2s10_floor_criteria"
+    )
+    st.text_area(
+        "Justificación técnica",
+        key="c2s10_floor_note",
+        placeholder=(
+            "Explica por qué tu selección equilibra mejora acústica, nivel final, "
+            "frecuencia natural, carga, espesor y constructibilidad."
+        )
+    )
+
+    if st.button("COMPROBAR DECISIÓN DE PISO",key="c2s10_check_floor_decision",width="stretch"):
         decision_ok=(
             st.session_state.c2s10_floor.startswith("Solución B")
             and len(st.session_state.c2s10_floor_criteria)>=3
             and len(st.session_state.c2s10_floor_note.strip())>=20
         )
         _c2l1_s10_check(
-            saved,"floor_final",spectral_ok,
-            "La curva final es coherente con el modelo seleccionado.",
-            "Recuerda construir cada banda como Lₙ,₀(f) − ΔLₙ(f)."
-        )
-        _c2l1_s10_check(
             saved,"floor_decision",decision_ok,
             "La decisión de piso está técnicamente justificada.",
-            "No elijas solo por f₀. Verifica carga, espesor, respuesta espectral y constructibilidad."
+            "No elijas solo por f₀ o por ΔLₙ. Verifica también nivel final, carga, espesor y constructibilidad."
         )
 
-    freqs=np.array(list(_C2L1_S10_R),dtype=float)
-    base_curve=np.array([ln0_above_fc(f,_C2L1_S10_R[int(f)],1.0) for f in freqs])
-    delta_curve=np.array([delta_cremer(f,d["m1"],d["s"])[0] for f in freqs])
-    final_curve=base_curve-delta_curve
-    fig=go.Figure()
-    fig.add_trace(go.Scatter(x=freqs,y=base_curve,mode="lines+markers",name="Losa base Lₙ,₀"))
-    fig.add_trace(go.Scatter(x=freqs,y=final_curve,mode="lines+markers",name="Piso tratado Lₙ,final"))
-    fig.update_xaxes(type="log",title="Frecuencia (Hz)")
-    fig.update_yaxes(title="Nivel (dB)")
-    fig.update_layout(height=380,hovermode="x unified")
-    st.plotly_chart(fig,width="stretch")
-
-    st.markdown("### 6 · Inspecciona la ejecución")
+    st.markdown("### 7 · Inspecciona la ejecución")
     st.write(
         "Un cálculo correcto puede fallar en obra si aparecen contactos rígidos que puentean la capa resiliente. "
         "Selecciona únicamente los defectos que comprometen el desacoplamiento."
@@ -11084,7 +11421,7 @@ def _render_course2_lab1_stage10(lab,saved):
         f"Q ≈ {p['flow_m3h']:.0f} m³/h."
     )
 
-    st.markdown("### 7 · Integra frecuencia, NPSH y carga por apoyo")
+    st.markdown("### 8 · Integra frecuencia, NPSH y carga por apoyo")
     c1,c2,c3=st.columns(3)
     c1.number_input("Frecuencia 1×RPM fₑ [Hz]",0.0,100.0,step=0.01,key="c2s10_fe")
     c2.number_input("NPSHₐ calculado [m]",0.0,20.0,step=0.01,key="c2s10_npsha")
@@ -11117,7 +11454,7 @@ def _render_course2_lab1_stage10(lab,saved):
             "Revisa 2900/60, distingue NPSH disponible de requerido y calcula la carga de 79 kg repartida en cuatro apoyos."
         )
 
-    st.markdown("### 8 · Selecciona y verifica el aislador")
+    st.markdown("### 9 · Selecciona y verifica el aislador")
     st.write(
         f"El criterio adoptado en el Laboratorio B fue **δ ≥ {p['delta_min_mm']:.0f} mm ≈ {p['delta_min_mm']/25.4:.2f} in** "
         f"bajo una carga de operación de aproximadamente **{pump['lb_support']:.1f} lb por apoyo**."
