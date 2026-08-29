@@ -18,6 +18,9 @@ _LOCAL_NAMES = {
     "_render_stage9_comparison", "_render_stage10_comparison",
     "_formative_progress_data", "_render_formative_progress", "_official_rows", "_official_summary",
     "_course2_lab1_rows", "_render_course2_lab1_scores",
+    "_future_progress_rows", "_future_progress_state", "_future_lab_progress",
+    "_render_lab_progress_card", "_render_course1_official_evaluations",
+    "_render_course1_block", "_render_course2_block",
     "student_sidebar_summary", "results_view",
 }
 
@@ -397,48 +400,391 @@ def _render_formative_progress(rows):
                         st.caption(f"{mark} {activity.get('label')}")
 
 
+
+def _future_progress_rows(client, user_key):
+    """Recupera progreso persistido de laboratorios posteriores por class_id."""
+    if client is None or not user_key:
+        return {}
+    class_ids=[lab["id"] for lab in FUTURE_LABS.values()]
+    if not class_ids:
+        return {}
+    try:
+        raw=(
+            client.table("user_progress")
+            .select("class_id,state_json,updated_at")
+            .eq("user_key",user_key)
+            .in_("class_id",class_ids)
+            .execute().data or []
+        )
+    except Exception:
+        return {}
+
+    result={}
+    for row in raw:
+        state=row.get("state_json") or {}
+        if isinstance(state,str):
+            try:
+                state=json.loads(state)
+            except Exception:
+                state={}
+        if not isinstance(state,dict):
+            state={}
+        result[str(row.get("class_id"))]={
+            "state":state,
+            "updated_at":row.get("updated_at"),
+        }
+    return result
+
+
+def _future_progress_state(progress_rows, class_id):
+    item=(progress_rows or {}).get(class_id) or {}
+    state=item.get("state") or {}
+    return state if isinstance(state,dict) else {}
+
+
+def _future_lab_progress(lab, progress_rows):
+    """Resumen por etapas para laboratorios futuros sin mezclarlo con el catálogo del Curso 1."""
+    state=_future_progress_state(progress_rows,lab["id"])
+    total=len(lab.get("stages") or [])
+    stage_rows=[]
+    completed=0
+    for stage in range(total):
+        done=bool(state.get(f"done_{stage}"))
+        completed+=int(done)
+        stage_rows.append({
+            "stage":stage,
+            "title":lab["stages"][stage][0] if stage < len(lab["stages"]) else f"Etapa {stage}",
+            "completed":done,
+        })
+    percent=(100.0*completed/total) if total else 0.0
+    return {
+        "completed":completed,
+        "expected":total,
+        "percent":percent,
+        "stage_rows":stage_rows,
+        "state":state,
+        "updated_at":(progress_rows.get(lab["id"]) or {}).get("updated_at") if progress_rows else None,
+    }
+
+
+def _render_lab_progress_card(title, subtitle, completed, expected, percent, stage_rows=None):
+    """Tarjeta visual reutilizable para cualquier laboratorio."""
+    if expected and completed >= expected:
+        status="✅ Completado"
+    elif completed:
+        status="🟡 En desarrollo"
+    else:
+        status="⚪ Sin iniciar"
+
+    with st.container(border=True):
+        st.markdown(f"### {title}")
+        if subtitle:
+            st.caption(subtitle)
+        a,b=st.columns([1,1])
+        a.metric("Avance",f"{completed} de {expected}")
+        b.metric("Progreso",f"{percent:.0f} %")
+        st.progress(max(0.0,min(1.0,percent/100.0)))
+        st.caption(f"{status}")
+
+        if stage_rows:
+            with st.popover("Ver detalle por etapa",use_container_width=True):
+                for item in stage_rows:
+                    if "expected" in item:
+                        mark="✅" if item["expected"] and item["completed"]>=item["expected"] else ("🟡" if item["completed"] else "⚪")
+                        st.markdown(
+                            f"**{mark} Etapa {item['stage']} · "
+                            f"{item['completed']} de {item['expected']} actividades**"
+                        )
+                        for activity in item.get("activity_details",[]):
+                            amark="✅" if activity.get("completed") else "○"
+                            st.caption(f"{amark} {activity.get('label')}")
+                    else:
+                        mark="✅" if item.get("completed") else "⚪"
+                        st.markdown(
+                            f"**{mark} Etapa {item.get('stage')} · {item.get('title','')}**"
+                        )
+
+
+def _render_course1_official_evaluations(official):
+    st.markdown("### Evaluaciones oficiales")
+    st.caption(
+        "La nota del Curso 1 se obtiene exclusivamente con el Laboratorio 2: "
+        "Etapa 9 (40 puntos) y Etapa 10 (60 puntos)."
+    )
+
+    evaluations=[
+        ("stage9","Etapa 9 · Evaluación de comprensión",official["stage9"],40),
+        ("stage10","Etapa 10 · Aplicación integradora",official["stage10"],60),
+    ]
+    for kind,title,row,maximum in evaluations:
+        if row is None:
+            with st.expander(f"⏳ {title} · Pendiente"):
+                st.caption("Todavía no existe una entrega registrada para esta evaluación.")
+            continue
+
+        reviewed=row.get("status")=="reviewed" or row.get("teacher_score") is not None
+        score=_effective_row_score(row) if reviewed else None
+        grade=_grade(score,maximum) if reviewed else None
+        icon="✅" if reviewed else "🕒"
+        summary=(
+            f"{icon} {title} · {score:g}/{maximum} puntos · Nota {grade:.1f}"
+            if reviewed
+            else f"{icon} {title} · Entregada · Pendiente de revisión"
+        )
+
+        with st.expander(summary,expanded=False):
+            a,b,c=st.columns(3)
+            a.metric("Puntaje oficial",f"{score:g}/{maximum}" if reviewed else "Pendiente")
+            b.metric("Nota",f"{grade:.1f}" if reviewed else "Pendiente")
+            c.metric("Estado","Revisada" if reviewed else "Pendiente de revisión")
+            st.caption(f"Entrega: {_result_date(row.get('submitted_at') or row.get('updated_at'))}")
+
+            if not reviewed:
+                st.info(
+                    "Tu entrega está registrada. La pauta, la rúbrica y la retroalimentación "
+                    "se publicarán cuando el docente termine la revisión."
+                )
+
+            payload=_student_result_payload(row.get("answer"))
+            if not isinstance(payload,dict):
+                payload={}
+            allow_answers=_answer_release_allowed(row)
+            response_tab,rubric_tab,feedback_tab=st.tabs([
+                "Tus respuestas y pauta","Rúbrica","Retroalimentación docente",
+            ])
+            with response_tab:
+                if kind=="stage9":
+                    _render_stage9_comparison(row,payload,allow_answers)
+                else:
+                    _render_stage10_comparison(row,payload,allow_answers)
+            with rubric_tab:
+                if not reviewed:
+                    st.info("La rúbrica se habilitará cuando finalice la revisión docente.")
+                elif kind=="stage9":
+                    rubric=payload.get("rubric_scores",[])
+                    answers=payload.get("answers",{})
+                    rows_rubric=[]
+                    for i,item in enumerate(STAGE9_QUESTIONS):
+                        chosen=answers.get(str(i)) if isinstance(answers,dict) else None
+                        correct=item["options"][item["correct"]]
+                        points=float(rubric[i]) if isinstance(rubric,list) and i<len(rubric) else (4.0 if chosen==correct else 0.0)
+                        rows_rubric.append({
+                            "Criterio":f"Pregunta {i+1} · {item['title']}",
+                            "Puntaje":f"{points:g}/4",
+                            "Nivel":"Logrado" if points>=4 else ("En desarrollo" if points>0 else "No logrado"),
+                        })
+                    st.dataframe(pd.DataFrame(rows_rubric),hide_index=True,width="stretch")
+                else:
+                    rubric=payload.get("rubric_scores",{})
+                    if not isinstance(rubric,dict):
+                        rubric={}
+                    st.dataframe(pd.DataFrame([
+                        {
+                            "Criterio":"Diseño técnico del paramento",
+                            "Puntaje":f"{float(rubric.get('design',payload.get('design_score',0) or 0)):g}/40",
+                        },
+                        {
+                            "Criterio":"Comprensión e interpretación",
+                            "Puntaje":f"{float(rubric.get('comprehension',payload.get('comprehension_score',0) or 0)):g}/20",
+                        },
+                    ]),hide_index=True,width="stretch")
+            with feedback_tab:
+                note=row.get("teacher_note")
+                if note:
+                    st.info(note)
+                elif reviewed:
+                    st.caption("El docente no dejó una observación general.")
+                else:
+                    st.info("La retroalimentación estará disponible cuando termine la revisión.")
+                if reviewed and row.get("feedback"):
+                    st.markdown("**Retroalimentación automática**")
+                    st.write(row.get("feedback"))
+
+
+def _render_course1_block(rows):
+    official=_official_summary(rows)
+    progress_data=_formative_progress_data(rows)
+
+    total_completed=sum(item["completed"] for item in progress_data.values())
+    total_expected=sum(item["expected"] for item in progress_data.values())
+    progress_pct=(100.0*total_completed/total_expected) if total_expected else 0.0
+    grade_text=f"{official['grade']:.1f}" if official["grade"] is not None else "Pendiente"
+
+    label=(
+        f"Curso 1 · Aislamiento acústico al ruido aéreo · "
+        f"{progress_pct:.0f}% formativo · Nota {grade_text}"
+    )
+    with st.expander(label,expanded=True):
+        a,b,c=st.columns(3)
+        a.metric("Avance formativo",f"{progress_pct:.0f} %")
+        b.metric("Evaluaciones oficiales",f"{official['completed']} de 2")
+        c.metric("Nota del curso",grade_text)
+
+        tabs=st.tabs(["Laboratorios","Evaluaciones oficiales"])
+        with tabs[0]:
+            items=list(progress_data.items())
+            cols=st.columns(2)
+            for col,(lab_number,definition) in zip(cols,items):
+                with col:
+                    _render_lab_progress_card(
+                        definition["title"],
+                        definition["subtitle"],
+                        definition["completed"],
+                        definition["expected"],
+                        definition["percent"],
+                        definition.get("stage_rows"),
+                    )
+        with tabs[1]:
+            _render_course1_official_evaluations(official)
+
+
+def _render_course2_block(rows, progress_rows):
+    current=_course2_lab1_rows(rows)
+    stage9=current.get("final_comprehension")
+    stage10=current.get("final_exam")
+
+    # El bloque se construye desde FUTURE_LABS para poder incorporar nuevos laboratorios sin rediseñar la página.
+    course2_labs=[
+        lab for lab in FUTURE_LABS.values()
+        if lab.get("course")=="Control de ruido de impacto y ruido de instalaciones"
+    ]
+    lab1=next((lab for lab in course2_labs if int(lab.get("number") or 0)==1),None)
+    lab1_progress=_future_lab_progress(lab1,progress_rows) if lab1 else {
+        "completed":0,"expected":0,"percent":0.0,"stage_rows":[]
+    }
+
+    delivered=sum(item is not None for item in (stage9,stage10))
+    reviewed=sum(
+        bool(item and (item.get("status")=="reviewed" or item.get("teacher_score") is not None))
+        for item in (stage9,stage10)
+    )
+
+    label=(
+        f"Curso 2 · Control de ruido de impacto y ruido de instalaciones · "
+        f"{lab1_progress['percent']:.0f}% Lab 1 · Sin nota oficial"
+    )
+    with st.expander(label,expanded=True):
+        a,b,c=st.columns(3)
+        a.metric("Avance Lab 1",f"{lab1_progress['percent']:.0f} %")
+        b.metric("Puntajes formativos entregados",f"{delivered} de 2")
+        c.metric("Nota oficial","Aún no aplica")
+
+        tabs=st.tabs(["Laboratorios","Puntajes del Lab 1"])
+        with tabs[0]:
+            # Lab 1 actual
+            if lab1:
+                _render_lab_progress_card(
+                    "Laboratorio 1 · Ruido de impacto e instalaciones",
+                    "Etapas 0 a 10 · práctica, comprensión e integración",
+                    lab1_progress["completed"],
+                    lab1_progress["expected"],
+                    lab1_progress["percent"],
+                    lab1_progress.get("stage_rows"),
+                )
+
+            # Otros laboratorios del mismo curso: se muestran solo si ya tienen progreso persistido.
+            for lab in sorted(course2_labs,key=lambda x:int(x.get("number") or 0)):
+                if lab1 and lab["id"]==lab1["id"]:
+                    continue
+                p=_future_lab_progress(lab,progress_rows)
+                if not p["completed"]:
+                    continue
+                _render_lab_progress_card(
+                    f"Laboratorio {lab['number']} · {lab.get('focus','')}",
+                    lab.get("source",""),
+                    p["completed"],p["expected"],p["percent"],p.get("stage_rows"),
+                )
+
+        with tabs[1]:
+            st.caption(
+                "Las Etapas 9 y 10 del Laboratorio 1 registran puntaje sobre 100, "
+                "pero no generan nota. La evaluación con nota del Curso 2 corresponderá al Laboratorio 2."
+            )
+            c1,c2,c3=st.columns(3)
+            c1.metric("Entregadas",f"{delivered} de 2")
+            c2.metric("Revisadas por docente",f"{reviewed} de {delivered}" if delivered else "0 de 0")
+            c3.metric("Tipo","Puntaje · sin nota")
+
+            evaluations=[
+                ("Etapa 9 · Preguntas de comprensión",stage9,100),
+                ("Etapa 10 · Desafío integrador",stage10,100),
+            ]
+            for title,row,maximum in evaluations:
+                if row is None:
+                    with st.expander(f"⏳ {title} · Pendiente"):
+                        st.caption("Todavía no existe una entrega registrada.")
+                    continue
+                reviewed_row=row.get("status")=="reviewed" or row.get("teacher_score") is not None
+                score=_effective_row_score(row)
+                icon="✅" if reviewed_row else "🕒"
+                with st.expander(f"{icon} {title} · {score:g}/{maximum} puntos",expanded=False):
+                    a,b,c=st.columns(3)
+                    a.metric("Puntaje vigente",f"{score:g}/{maximum}")
+                    b.metric("Estado","Revisada por docente" if reviewed_row else "Entregada")
+                    c.metric("Nota","No aplica")
+                    st.caption(f"Entrega: {_result_date(row.get('submitted_at') or row.get('updated_at'))}")
+
+                    payload=_student_result_payload(row.get("answer"))
+                    if not isinstance(payload,dict):
+                        payload={}
+
+                    if row.get("question_key")=="final_comprehension":
+                        answers=payload.get("answers",{}) if isinstance(payload.get("answers",{}),dict) else {}
+                        st.write(f"**Respuestas registradas:** {sum(v not in (None,'') for v in answers.values())}/25")
+                        st.caption("Puedes volver a la Etapa 9 para revisar tus respuestas y retroalimentación.")
+                    else:
+                        st.write(f"**Desarrollo técnico:** {float(payload.get('puntaje_tecnico',0) or 0):g}/80")
+                        st.write(f"**Informe integrador:** {float(payload.get('puntaje_informe',0) or 0):g}/20")
+                        impacto=payload.get("impacto",{}) if isinstance(payload.get("impacto",{}),dict) else {}
+                        instalaciones=payload.get("instalaciones",{}) if isinstance(payload.get("instalaciones",{}),dict) else {}
+                        st.write(f"**Piso seleccionado:** {impacto.get('solucion') or 'Sin información'}")
+                        st.write(f"**Aislador seleccionado:** {instalaciones.get('aislador') or 'Sin información'}")
+
+                    if row.get("teacher_note"):
+                        st.info(f"Comentario docente: {row.get('teacher_note')}")
+
+
 def student_sidebar_summary(client, user_key):
-    """Tarjeta lateral compacta: avance formativo y calificaciones oficiales."""
+    """Tarjeta lateral compacta del diplomado, sin confundir la nota de un curso con el total."""
     if not user_key or client is None:
         return
+    class_ids=[LABORATORIES[1]["id"],LABORATORIES[2]["id"],"clase-03-impacto-instalaciones-lab-1"]
     try:
-        rows = (
+        rows=(
             client.table("responses").select("*")
-            .eq("user_key", user_key)
-            .in_("class_id", [
-                LABORATORIES[1]["id"],
-                LABORATORIES[2]["id"],
-                "clase-03-impacto-instalaciones-lab-1",
-            ])
+            .eq("user_key",user_key)
+            .in_("class_id",class_ids)
             .execute().data or []
         )
     except Exception:
         return
 
-    official = _official_summary(rows)
-    progress_data = _formative_progress_data(rows)
-    expected = sum(item["expected"] for item in progress_data.values())
-    completed = sum(item["completed"] for item in progress_data.values())
-    formative_percent = 100.0 * completed / expected if expected else 0
-    grade_text = f"{official['grade']:.1f}" if official["grade"] is not None else "—"
+    official=_official_summary(rows)
+    progress_data=_formative_progress_data(rows)
+    expected=sum(item["expected"] for item in progress_data.values())
+    completed=sum(item["completed"] for item in progress_data.values())
+    formative_percent=100.0*completed/expected if expected else 0
+
+    course2=_course2_lab1_rows(rows)
+    c2_delivered=sum(course2.get(k) is not None for k in ("final_comprehension","final_exam"))
 
     st.markdown(
         f"""
         <div style="background:linear-gradient(145deg,#0b5b91,#0e91c7);border:1px solid #59d4ef;
                     border-radius:14px;padding:.85rem;margin:.8rem 0;color:white">
-          <div style="font-weight:800;font-size:.95rem;margin-bottom:.55rem">📘 PROGRESO DEL CURSO</div>
+          <div style="font-weight:800;font-size:.95rem;margin-bottom:.55rem">📘 PROGRESO DEL DIPLOMADO</div>
           <div style="display:flex;justify-content:space-between;gap:.5rem;font-size:.82rem">
-            <span>Evaluaciones oficiales</span><b>{official['completed']}/2</b>
+            <span>Curso 1 · evaluaciones</span><b>{official['completed']}/2</b>
           </div>
           <div style="display:flex;justify-content:space-between;gap:.5rem;font-size:.82rem;margin-top:.35rem">
-            <span>Nota del curso</span><b>{grade_text}</b>
+            <span>Curso 1 · avance formativo</span><b>{formative_percent:.0f}%</b>
+          </div>
+          <div style="display:flex;justify-content:space-between;gap:.5rem;font-size:.82rem;margin-top:.35rem">
+            <span>Curso 2 · Lab 1 puntajes</span><b>{c2_delivered}/2</b>
           </div>
           <hr style="border:0;border-top:1px solid rgba(255,255,255,.25);margin:.6rem 0">
-          <div style="display:flex;justify-content:space-between;gap:.5rem;font-size:.82rem">
-            <span>Actividades formativas</span><b>{completed}/{expected}</b>
-          </div>
-          <div style="height:7px;background:rgba(255,255,255,.22);border-radius:99px;margin-top:.45rem;overflow:hidden">
-            <div style="width:{min(100, formative_percent):.1f}%;height:100%;background:#8de7ff"></div>
+          <div style="font-size:.78rem;color:#d9f5ff">
+            Las notas oficiales se muestran dentro de cada curso.
           </div>
         </div>
         """,
@@ -538,139 +884,85 @@ def _render_course2_lab1_scores(rows):
 
 
 def results_view(client, catalog, user_key):
-    """Expediente del alumno con progreso y revisión publicada al finalizar la corrección docente."""
+    """Mi desempeño organizado por curso y preparado para incorporar nuevos laboratorios."""
     header(
         "MI DESEMPEÑO",
         "Tu aprendizaje y calificaciones",
-        "Revisa tu progreso formativo y compara tus evaluaciones oficiales con la pauta y la rúbrica.",
+        "Revisa el avance de cada curso, sus laboratorios, puntajes formativos y evaluaciones oficiales.",
     )
     if client is None:
         st.info("Los resultados estarán disponibles cuando la aplicación recupere la conexión permanente.")
         return
+
+    response_class_ids=[
+        LABORATORIES[1]["id"],
+        LABORATORIES[2]["id"],
+        "clase-03-impacto-instalaciones-lab-1",
+    ]
     try:
-        rows = (
+        rows=(
             client.table("responses").select("*")
-            .eq("user_key", user_key)
-            .in_("class_id", [LABORATORIES[1]["id"], LABORATORIES[2]["id"]])
-            .order("updated_at", desc=True).execute().data or []
+            .eq("user_key",user_key)
+            .in_("class_id",response_class_ids)
+            .order("updated_at",desc=True)
+            .execute().data or []
         )
     except Exception as exc:
         st.warning(f"No fue posible cargar tu desempeño en este momento: {exc}")
         return
 
-    official = _official_summary(rows)
-    grade_text = f"{official['grade']:.1f}" if official["grade"] is not None else "Pendiente"
-    total_text = f"{official['total']:.1f}/100" if official["total"] is not None else "Pendiente"
-    status_text = "Calificación completa" if official["completed"] == 2 else "Evaluación incompleta"
+    progress_rows=_future_progress_rows(client,user_key)
 
-    c1, c2, c3, c4 = st.columns(4)
-    c1.metric("Evaluaciones oficiales", f"{official['completed']} de 2")
-    c2.metric("Revisadas por docente", f"{official['reviewed']} de {official['completed']}")
-    c3.metric("Puntaje del curso", total_text)
-    c4.metric("Nota del curso", grade_text)
-    st.caption(status_text)
+    official=_official_summary(rows)
+    course1_progress=_formative_progress_data(rows)
+    c1_expected=sum(item["expected"] for item in course1_progress.values())
+    c1_completed=sum(item["completed"] for item in course1_progress.values())
 
-    st.markdown("## Evaluaciones oficiales · Curso 1")
-    st.caption(
-        "La calificación del curso se obtiene exclusivamente con el Laboratorio 2: "
-        "Etapa 9 (40 puntos) y Etapa 10 (60 puntos)."
+    course2_current=_course2_lab1_rows(rows)
+    c2_delivered=sum(
+        course2_current.get(k) is not None
+        for k in ("final_comprehension","final_exam")
     )
 
-    evaluations = [
-        ("stage9", "Etapa 9 · Evaluación de comprensión", official["stage9"], 40),
-        ("stage10", "Etapa 10 · Aplicación integradora", official["stage10"], 60),
+    course2_labs=[
+        lab for lab in FUTURE_LABS.values()
+        if lab.get("course")=="Control de ruido de impacto y ruido de instalaciones"
     ]
-    for kind, title, row, maximum in evaluations:
-        if row is None:
-            with st.expander(f"⏳ {title} · Pendiente"):
-                st.caption("Todavía no existe una entrega registrada para esta evaluación.")
-            continue
+    c2_lab1=next((lab for lab in course2_labs if int(lab.get("number") or 0)==1),None)
+    c2_prog=_future_lab_progress(c2_lab1,progress_rows) if c2_lab1 else {
+        "completed":0,"expected":0,"percent":0.0
+    }
 
-        reviewed = row.get("status") == "reviewed" or row.get("teacher_score") is not None
-        score = _effective_row_score(row) if reviewed else None
-        grade = _grade(score, maximum) if reviewed else None
-        icon = "✅" if reviewed else "🕒"
-        summary_text = (
-            f"{icon} {title} · {score:g}/{maximum} puntos · Nota {grade:.1f}"
-            if reviewed
-            else f"{icon} {title} · Entregada · Pendiente de revisión"
-        )
-        with st.expander(summary_text, expanded=False):
-            a, b, c = st.columns(3)
-            a.metric("Puntaje oficial", f"{score:g}/{maximum}" if reviewed else "Pendiente")
-            b.metric("Nota", f"{grade:.1f}" if reviewed else "Pendiente")
-            c.metric("Estado", "Revisada" if reviewed else "Pendiente de revisión")
-            st.caption(f"Entrega: {_result_date(row.get('submitted_at') or row.get('updated_at'))}")
-            if not reviewed:
-                st.info(
-                    "⏳ **Evaluación pendiente de revisión docente.**  "
-                    "Tu entrega está registrada. Cuando el docente finalice la corrección, "
-                    "se habilitarán automáticamente la pauta, la rúbrica, el puntaje por criterio "
-                    "y los comentarios."
-                )
+    courses_with_progress=0
+    if c1_completed or official["completed"]:
+        courses_with_progress+=1
+    if c2_prog["completed"] or c2_delivered:
+        courses_with_progress+=1
 
-            payload = _student_result_payload(row.get("answer"))
-            if not isinstance(payload, dict):
-                payload = {}
-            allow_answers = _answer_release_allowed(row)
-            response_tab, rubric_tab, feedback_tab = st.tabs([
-                "Tus respuestas y pauta", "Rúbrica", "Retroalimentación docente",
-            ])
-            with response_tab:
-                if kind == "stage9":
-                    _render_stage9_comparison(row, payload, allow_answers)
-                else:
-                    _render_stage10_comparison(row, payload, allow_answers)
-            with rubric_tab:
-                if not reviewed:
-                    st.info(
-                        "⏳ La rúbrica estará disponible cuando el docente finalice la revisión. "
-                        "Hasta entonces, tu entrega permanece registrada sin publicar criterios ni puntajes ajustados."
-                    )
-                elif kind == "stage9":
-                    rubric = payload.get("rubric_scores", [])
-                    answers = payload.get("answers", {})
-                    rows_rubric = []
-                    for i, item in enumerate(STAGE9_QUESTIONS):
-                        chosen = answers.get(str(i)) if isinstance(answers, dict) else None
-                        correct = item["options"][item["correct"]]
-                        points = float(rubric[i]) if isinstance(rubric, list) and i < len(rubric) else (4.0 if chosen == correct else 0.0)
-                        rows_rubric.append({
-                            "Criterio": f"Pregunta {i + 1} · {item['title']}",
-                            "Puntaje": f"{points:g}/4",
-                            "Nivel alcanzado": "Logrado" if points >= 4 else ("En desarrollo" if points > 0 else "No logrado"),
-                        })
-                    st.dataframe(pd.DataFrame(rows_rubric), hide_index=True, width="stretch")
-                else:
-                    rubric = payload.get("rubric_scores", {})
-                    if not isinstance(rubric, dict):
-                        rubric = {}
-                    st.dataframe(pd.DataFrame([
-                        {
-                            "Criterio": "Diseño técnico del paramento",
-                            "Puntaje": f"{float(rubric.get('design', payload.get('design_score', 0) or 0)):g}/40",
-                        },
-                        {
-                            "Criterio": "Comprensión e interpretación",
-                            "Puntaje": f"{float(rubric.get('comprehension', payload.get('comprehension_score', 0) or 0)):g}/20",
-                        },
-                    ]), hide_index=True, width="stretch")
-            with feedback_tab:
-                note = row.get("teacher_note")
-                if note:
-                    st.info(note)
-                elif reviewed:
-                    st.caption("La evaluación fue revisada, pero el docente no dejó una observación general.")
-                else:
-                    st.info(
-                        "⏳ La retroalimentación docente estará disponible cuando la revisión haya finalizado."
-                    )
-                if reviewed and row.get("feedback"):
-                    st.markdown("**Retroalimentación automática**")
-                    st.write(row.get("feedback"))
+    labs_with_progress=sum(1 for item in course1_progress.values() if item["completed"])
+    if c2_prog["completed"]:
+        labs_with_progress+=1
 
-    _render_course2_lab1_scores(rows)
-    _render_formative_progress(rows)
+    st.markdown("## Resumen del Diplomado")
+    st.caption(
+        "Este resumen no mezcla notas de cursos distintos. "
+        "Cada curso mantiene debajo su propio progreso, evaluaciones y calificación."
+    )
+    a,b,c,d=st.columns(4)
+    a.metric("Cursos con avance",str(courses_with_progress))
+    b.metric("Laboratorios con avance",str(labs_with_progress))
+    c.metric("Evaluaciones oficiales entregadas",f"{official['completed']}")
+    d.metric("Puntajes formativos Curso 2",f"{c2_delivered}/2")
+
+    st.markdown("## Cursos")
+    st.caption(
+        "Abre cada curso para revisar sus laboratorios. "
+        "Esta estructura permite incorporar nuevos cursos y laboratorios sin alargar innecesariamente la página."
+    )
+
+    _render_course1_block(rows)
+    _render_course2_block(rows,progress_rows)
+
 
 
 _VIEWS = {
