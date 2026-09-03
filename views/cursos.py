@@ -23,23 +23,80 @@ def _bind_runtime(runtime):
 def course_dashboard_impl():
     header("MIS CLASES","Diplomado en Acústica en la Edificación",
            "Selecciona un curso y abre el laboratorio habilitado en la fecha programada.")
+
+    st.markdown(
+        """
+        <style>
+        .dashboard-lab-card{
+            min-height:178px;
+            height:178px;
+            display:flex;
+            flex-direction:column;
+            box-sizing:border-box;
+            border:1px solid #cbd9e8;
+            border-left:4px solid #1689d8;
+            border-radius:14px;
+            background:#fff;
+            padding:14px 16px 13px;
+            margin:0 0 8px 0;
+            box-shadow:0 3px 12px rgba(15,23,42,.035);
+            overflow:hidden;
+        }
+        .dashboard-lab-card .dashboard-kicker{
+            color:#075ea8;font-size:.72rem;font-weight:850;
+            letter-spacing:.055em;text-transform:uppercase;margin-bottom:5px;
+        }
+        .dashboard-lab-card .dashboard-date{
+            color:#748398;font-size:.79rem;line-height:1.25;min-height:20px;
+        }
+        .dashboard-lab-card .dashboard-divider{
+            height:1px;background:#d8e0e9;margin:13px 0 11px;flex:0 0 auto;
+        }
+        .dashboard-lab-card .dashboard-state{
+            color:#142033;font-size:.88rem;font-weight:750;line-height:1.3;margin-bottom:5px;
+        }
+        .dashboard-lab-card .dashboard-detail{
+            color:#66768a;font-size:.80rem;line-height:1.35;
+            display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;
+        }
+        @media (max-width:800px){
+            .dashboard-lab-card{min-height:168px;height:auto;}
+        }
+        </style>
+        """,
+        unsafe_allow_html=True,
+    )
+
+    def _dashboard_card(number, meta, state, detail):
+        html=(
+            f'<div class="dashboard-lab-card">'
+            f'<div class="dashboard-kicker">LABORATORIO {number}</div>'
+            f'<div class="dashboard-date">{meta}</div>'
+            f'<div class="dashboard-divider"></div>'
+            f'<div class="dashboard-state">{state}</div>'
+            f'<div class="dashboard-detail">{detail}</div>'
+            f'</div>'
+        )
+        st.markdown(html, unsafe_allow_html=True)
+
     client=_supabase()
     if client is None:
         st.warning("Supabase todavía no está configurado. La aplicación está usando almacenamiento local de prueba.")
         classes=[
             {"id":"clase-01-aislamiento-ruido-aereo","class_number":1,
-             "title":"Laboratorio 1",
-             "description":"","status":"published","due_at":None},
+             "title":"Laboratorio 1","description":"","status":"published","due_at":None},
             {"id":"clase-02-aislamiento-ruido-aereo-minvu","class_number":2,
-             "title":"Laboratorio 2",
-             "description":"","status":"draft","due_at":None},
+             "title":"Laboratorio 2","description":"","status":"draft","due_at":None},
         ]
     else:
         classes=_course_classes(client)
+
     class_by_number={item.get("class_number"):item for item in classes}
     summaries,course_result=_result_summary()
     first_course=ACADEMIC_COURSES[0]
     st.markdown(f"### {first_course['title']}")
+
+    visible_first=[]
     for lab in first_course["labs"]:
         number=lab["number"]
         item=class_by_number.get(number,{})
@@ -50,29 +107,35 @@ def course_dashboard_impl():
         available=released and _is_open(opening)
         if st.session_state.get("role")=="Docente":
             available=True
+        visible_first.append((lab,item,opening,released,available))
+
+    first_cols=st.columns(2)
+    for col,(lab,item,opening,released,available) in zip(first_cols,visible_first):
+        number=lab["number"]
         summary=summaries[number]
         progress_status=("Pendiente" if summary["answered"]==0 else
                          "Completado" if summary["answered"]>=summary["expected"] else "En progreso")
         if st.session_state.get("role")=="Docente":
-            availability=("Publicado para alumnos" if released else
-                          "Borrador · oculto para alumnos")
+            availability=("Publicado para alumnos" if released else "Borrador · oculto para alumnos")
         else:
             availability="Disponible" if available else f"Habilitación: {_opening_label(opening)}"
-        st.markdown(
-            f'<div class="lesson"><div class="overview-title">LABORATORIO {number}</div>'
-            f'<span class="muted">{availability}</span><hr>'
-            f'<b>{summary["earned"]:g}/{summary["maximum"]:g} puntos</b><br>'
-            f'<span class="muted">Estado: {progress_status} · '
-            f'{summary["answered"]} de {summary["expected"]} actividades realizadas</span></div>',
-            unsafe_allow_html=True)
-        if available and st.button(
-            "Continuar laboratorio" if number==ACTIVE_LAB else "Abrir laboratorio",
-            key=f"open_lab_{number}",type="primary" if number==ACTIVE_LAB else "secondary",
-            use_container_width=True,
-        ):
-            st.session_state.active_lab=number
-            st.session_state["_open_lab_requested"]=True
-            st.rerun()
+
+        with col:
+            _dashboard_card(
+                number,
+                availability,
+                f'{summary["earned"]:g}/{summary["maximum"]:g} puntos',
+                f'Estado: {progress_status} · {summary["answered"]} de {summary["expected"]} actividades realizadas',
+            )
+            if available and st.button(
+                "Continuar laboratorio" if number==ACTIVE_LAB else "Abrir laboratorio",
+                key=f"open_lab_{number}",
+                type="primary" if number==ACTIVE_LAB else "secondary",
+                use_container_width=True,
+            ):
+                st.session_state.active_lab=number
+                st.session_state["_open_lab_requested"]=True
+                st.rerun()
 
     lab2_released=class_by_number.get(2,{}).get("status") in ("published","archived")
     if st.session_state.get("role")=="Alumno":
@@ -103,16 +166,17 @@ def course_dashboard_impl():
                 visible_labs.append((lab,row,published))
         if not visible_labs:
             continue
+
         st.markdown(f"### {course['course']}")
         columns=st.columns(2)
         for column,(lab,row,published) in zip(columns,visible_labs):
             with column:
                 state=("Publicado para alumnos" if published else "Borrador · oculto para alumnos")
-                st.markdown(
-                    f'<div class="lesson"><div class="overview-title">LABORATORIO {lab["number"]}</div>'
-                    f'<span class="muted">Programado: {_opening_label(row.get("opens_at") or lab["opens_at"])}</span><hr>'
-                    f'<b>{state}</b><br><span class="muted">{lab["focus"]}</span></div>',
-                    unsafe_allow_html=True,
+                _dashboard_card(
+                    lab["number"],
+                    f'Programado: {_opening_label(row.get("opens_at") or lab["opens_at"])}',
+                    state,
+                    lab["focus"],
                 )
                 if st.button("Abrir laboratorio",key=f'open_{lab["id"]}',use_container_width=True):
                     st.session_state["future_lab_id"]=lab["id"]
