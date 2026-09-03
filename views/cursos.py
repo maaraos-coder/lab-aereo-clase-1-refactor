@@ -11993,13 +11993,116 @@ def _c2l2_stage0(lab,saved):
     )
 
     st.markdown("### ¿Qué vas a ser capaz de hacer al terminar?")
+
+    st.markdown(
+        """
+        <style>
+        .c2l2-outcome-card{
+            border:1px solid #dbe4ee;
+            border-radius:18px;
+            padding:18px 18px 16px 18px;
+            min-height:176px;
+            background:#ffffff;
+            box-sizing:border-box;
+        }
+        .c2l2-outcome-blue{background:#eff6ff;border-color:#bfdbfe;}
+        .c2l2-outcome-green{background:#ecfdf5;border-color:#a7f3d0;}
+        .c2l2-outcome-purple{background:#f5f3ff;border-color:#ddd6fe;}
+        .c2l2-kicker{
+            font-size:.72rem;
+            font-weight:800;
+            letter-spacing:.10em;
+            color:#075985;
+            margin-bottom:10px;
+        }
+        .c2l2-badges{
+            display:flex;
+            flex-wrap:wrap;
+            gap:8px;
+            align-items:center;
+            margin-bottom:12px;
+        }
+        .c2l2-badge{
+            display:inline-flex;
+            align-items:center;
+            justify-content:center;
+            border-radius:999px;
+            padding:6px 11px;
+            font-size:1.03rem;
+            font-weight:800;
+            line-height:1;
+            background:rgba(255,255,255,.82);
+            border:1px solid rgba(15,23,42,.12);
+            color:#0f172a;
+            box-shadow:0 1px 2px rgba(15,23,42,.04);
+        }
+        .c2l2-arrow{
+            font-weight:800;
+            color:#64748b;
+            padding:0 1px;
+        }
+        .c2l2-outcome-text{
+            color:#526174;
+            line-height:1.48;
+            font-size:.94rem;
+        }
+        </style>
+        """,
+        unsafe_allow_html=True,
+    )
+
     cols=st.columns(3)
+
     with cols[0]:
-        _c2l2_card("CONSTRUIR","Lₙ,w","Moverás la referencia ISO 717-2 y encontrarás tú mismo la posición límite.",tone="blue")
+        st.markdown(
+            """
+            <div class="c2l2-outcome-card c2l2-outcome-blue">
+                <div class="c2l2-kicker">CONSTRUIR</div>
+                <div class="c2l2-badges">
+                    <span class="c2l2-badge">Lₙ,w</span>
+                </div>
+                <div class="c2l2-outcome-text">
+                    Moverás la referencia ISO 717-2 y encontrarás tú mismo la posición límite.
+                </div>
+            </div>
+            """,
+            unsafe_allow_html=True,
+        )
+
     with cols[1]:
-        _c2l2_card("INTERPRETAR","C_I y ΔL_w","Distinguirás nivel ponderado, adaptación espectral y reducción de revestimiento.",tone="green")
+        st.markdown(
+            """
+            <div class="c2l2-outcome-card c2l2-outcome-green">
+                <div class="c2l2-kicker">INTERPRETAR</div>
+                <div class="c2l2-badges">
+                    <span class="c2l2-badge">Cᵢ</span>
+                    <span class="c2l2-badge">ΔLw</span>
+                </div>
+                <div class="c2l2-outcome-text">
+                    Distinguirás nivel ponderado, adaptación espectral y reducción de revestimiento.
+                </div>
+            </div>
+            """,
+            unsafe_allow_html=True,
+        )
+
     with cols[2]:
-        _c2l2_card("INTEGRAR","impacto + instalaciones","Cerrarás el curso conectando el piso con el diagnóstico y control de una bomba.",tone="purple")
+        st.markdown(
+            """
+            <div class="c2l2-outcome-card c2l2-outcome-purple">
+                <div class="c2l2-kicker">INTEGRAR</div>
+                <div class="c2l2-badges">
+                    <span class="c2l2-badge">Ruido de impacto</span>
+                    <span class="c2l2-arrow">→</span>
+                    <span class="c2l2-badge">Instalaciones</span>
+                </div>
+                <div class="c2l2-outcome-text">
+                    Cerrarás el curso conectando el piso con el diagnóstico y control de una bomba.
+                </div>
+            </div>
+            """,
+            unsafe_allow_html=True,
+        )
 
     if st.button(
         "Comenzar laboratorio →",
