@@ -12104,17 +12104,14 @@ def _c2l2_stage0(lab,saved):
             unsafe_allow_html=True,
         )
 
-    if st.button(
-        "Comenzar laboratorio →",
-        type="primary",
-        key=f"start_course2_lab2_{class_id}",
-        use_container_width=True,
-    ):
-        saved["done_0"]=True
-        saved["updated_0"]=_now()
-        _save_future_state_impl(class_id,saved)
-        st.session_state[stage_selector_key]=1
-        st.rerun()
+    # Navegación del Curso 2 · Lab 2: exclusivamente mediante la barra lateral.
+    # La bienvenida se considera visitada al abrirla como Alumno.
+    if st.session_state.get("role") == "Alumno" and not saved.get("done_0"):
+        saved["done_0"] = True
+        saved["updated_0"] = _now()
+        _save_future_state_impl(class_id, saved)
+
+    st.caption("Para continuar, selecciona la siguiente etapa desde la barra lateral.")
 
 
 
