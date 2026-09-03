@@ -11651,7 +11651,6 @@ def _render_course2_lab1_stage10(lab,saved):
             st.rerun()
 
 
-
 # =============================================================================
 # CURSO 2 · LABORATORIO 2
 # Del espectro al número único · ISO 717-2 · impacto + instalaciones
@@ -11919,47 +11918,123 @@ def _c2l2_stage_header(stage,title,purpose):
 
 
 def _c2l2_stage0(lab,saved):
-    curve,source=_c2l2_floor_curve()
-    _c2l2_stage_header(0,"DEL ESPECTRO AL NÚMERO ÚNICO","Conecta la curva Lₙ,final(f) del Laboratorio 1 con la evaluación ponderada.")
-    _c2l2_asset(stage=0,caption="Del comportamiento espectral del piso a su evaluación ponderada.")
-    st.write(
-        "En el Laboratorio 1 diseñaste un piso y obtuviste una predicción de su comportamiento por frecuencia. "
-        "Ahora vamos a aprender cómo esa información espectral se transforma en descriptores de evaluación."
-    )
-    st.info(f"Fuente de la curva actual: **{source}**.")
-    _c2l2_plot(curve,shift=0,show_deviations=False,title="Lₙ,final(f) · 16 bandas de tercio de octava",key="c2l2_s0_curve")
-    c1,c2=st.columns(2)
-    _c2l2_card("Tenemos","16 BANDAS","Cada punto conserva información sobre una región distinta del espectro.",tone="blue")
-    with c2:
-        _c2l2_card("Queremos construir","Lₙ,w","Un descriptor ponderado de número único obtenido mediante un procedimiento normativo.",tone="green")
-    st.markdown("### Lo que Lₙ,w NO es")
-    cols=st.columns(4)
-    for col,(t,v) in zip(cols,[
-        ("No es","promedio aritmético"),("No es","promedio energético"),
-        ("No es","el máximo"),("No es","Lₙ(500 Hz)"),
-    ]):
-        with col:_c2l2_card(t,v,"El valor aparece después de desplazar una curva de referencia.",tone="orange")
-    st.success("En ruido de impacto: **MENOR Lₙ,w = MEJOR desempeño frente a impactos.**")
+    """Etapa 0 · Bienvenida y ruta, coherente con las otras Etapas 0 del diplomado."""
+    class_id=lab["id"]
+    stage_selector_key=f"future_stage_{class_id}"
 
-    st.markdown("### Interactivo · ¿puede un número describir perfectamente una curva?")
-    profile=st.radio("Compara dos espectros",["Piso A · equilibrado","Piso B · mayor contenido en bajas frecuencias"],horizontal=True,key="c2l2_s0_profile")
-    import plotly.graph_objects as go
-    a=list(curve)
-    b=[v+(5 if f<=250 else (-1 if f>=1000 else 0)) for f,v in zip(_C2L2_FREQS,curve)]
-    show=a if profile.startswith("Piso A") else b
-    fig=go.Figure(go.Scatter(x=_C2L2_FREQS,y=show,mode="lines+markers"))
-    fig.update_xaxes(type="log",tickvals=_C2L2_FREQS,ticktext=[str(x) for x in _C2L2_FREQS],title="Frecuencia (Hz)")
-    fig.update_yaxes(title="Lₙ (dB)")
-    fig.update_layout(height=330)
-    st.plotly_chart(fig,use_container_width=True,key="c2l2_s0_compare")
-    st.info("Dos espectros diferentes pueden terminar con números únicos similares. Más adelante veremos por qué existe **C_I**.")
-    if st.button("COMPLETAR ETAPA 0",key="c2l2_s0_done",type="primary"):
-        _c2l2_finish_stage(saved,0); st.success("Etapa 0 completada.")
+    header(
+        "ETAPA 0 · BIENVENIDA",
+        "Laboratorio 2 · Del espectro al número único",
+        "Una experiencia aplicada para transformar la predicción espectral del piso en descriptores ponderados, interpretarlos profesionalmente e integrar nuevamente el problema de instalaciones.",
+        show_overview=False,
+        duration_minutes=10,
+    )
+
+    route_minutes=[20,20,20,25,20,20,25,20,20,40]
+    break_after_stage=5
+    break_minutes=30
+    active_minutes=sum(route_minutes)
+    total_minutes=active_minutes+break_minutes
+
+    st.markdown(
+        f'<div class="class-clock"><div><strong>⏱️ Duración total del laboratorio: 4 horas</strong>'
+        f'<br><span>{active_minutes} min de aprendizaje y evaluación + {break_minutes} min de pausa</span>'
+        f'</div><div><strong>{total_minutes} min</strong></div></div>',
+        unsafe_allow_html=True,
+    )
+
+    st.markdown(
+        '<div class="section-band"><span>🗺️</span><h3>Tu ruta de aprendizaje</h3></div>',
+        unsafe_allow_html=True,
+    )
+
+    route_descriptions=[
+        "Distingue Lₙ, L′ₙ y L′ₙT y reconoce qué magnitud estás ponderando antes de interpretar un número.",
+        "Superpone la curva de referencia ISO 717-2 y aprende a desplazarla verticalmente sin modificar su forma.",
+        "Identifica qué bandas producen desviaciones desfavorables y construye visualmente la suma Σdᵢ.",
+        "Encuentra la posición límite de la referencia y construye manualmente Lₙ,w leyendo el valor en 500 Hz.",
+        "Comprende por qué Lₙ,w no cuenta toda la historia y calcula el término de adaptación espectral C_I.",
+        "Amplía el análisis hacia 50, 63 y 80 Hz y compara C_I con C_I,50-2500.",
+        "Convierte una mejora espectral ΔL(f) en la reducción ponderada ΔL_w mediante el piso de referencia.",
+        "Interpreta profesionalmente Lₙ,w, C_I y ΔL_w y distingue pisos pesados, livianos y fichas técnicas.",
+        "Resuelve 10 preguntas integradoras del Curso 2 con la misma estructura evaluativa del Curso 1 · Lab 2.",
+        "Cierra el curso resolviendo un caso profesional completo: impacto + Lₙ,w + C_I + bomba + caminos + control.",
+    ]
+
+    html='<div class="route-grid">'
+    for stage in range(1,len(lab["stages"])):
+        title=lab["stages"][stage][0]
+        description=route_descriptions[stage-1]
+        minutes=route_minutes[stage-1]
+        html+=(
+            f'<div class="route-card"><span class="step">{stage}</span><div>'
+            f'<b>{title}</b><p>{description}</p>'
+            f'<span class="route-time">⏱️ {minutes} min</span></div></div>'
+        )
+        if stage==break_after_stage:
+            html+=(
+                f'<div class="break-card"><span class="step">☕</span><div>'
+                f'<b>Pausa pedagógica</b><p>Descanso antes de continuar con el bloque aplicado e interpretativo.</p>'
+                f'<span class="route-time">⏱️ {break_minutes} min</span></div></div>'
+            )
+    st.markdown(html+"</div>",unsafe_allow_html=True)
+
+    st.markdown(
+        '<div class="good" style="margin-top:1rem"><b>Así aprenderás:</b> '
+        'recuperar curva → mover referencia → identificar desviaciones → comprobar → calcular → interpretar → decidir.</div>',
+        unsafe_allow_html=True,
+    )
+    st.markdown(
+        '<div class="warn" style="margin-top:.8rem"><b>Continuidad con el Laboratorio 1:</b> '
+        'partiremos desde L<sub>n,final</sub>(f). Si tu curva completa no está guardada, la app utilizará un caso didáctico de respaldo claramente identificado.</div>',
+        unsafe_allow_html=True,
+    )
+
+    st.markdown("### ¿Qué vas a ser capaz de hacer al terminar?")
+    cols=st.columns(3)
+    with cols[0]:
+        _c2l2_card("CONSTRUIR","Lₙ,w","Moverás la referencia ISO 717-2 y encontrarás tú mismo la posición límite.",tone="blue")
+    with cols[1]:
+        _c2l2_card("INTERPRETAR","C_I y ΔL_w","Distinguirás nivel ponderado, adaptación espectral y reducción de revestimiento.",tone="green")
+    with cols[2]:
+        _c2l2_card("INTEGRAR","impacto + instalaciones","Cerrarás el curso conectando el piso con el diagnóstico y control de una bomba.",tone="purple")
+
+    if st.button(
+        "Comenzar laboratorio →",
+        type="primary",
+        key=f"start_course2_lab2_{class_id}",
+        use_container_width=True,
+    ):
+        saved["done_0"]=True
+        saved["updated_0"]=_now()
+        _save_future_state_impl(class_id,saved)
+        st.session_state[stage_selector_key]=1
+        st.rerun()
+
 
 
 def _c2l2_stage1(lab,saved):
     _c2l2_stage_header(1,"DEL NIVEL ESPECTRAL AL DESCRIPTOR PONDERADO","Distingue la magnitud antes de interpretar el número.")
     _c2l2_asset(stage=1)
+    st.markdown("### 1 · Antes del número único: identifica qué estás midiendo")
+    st.write(
+        "En acústica de edificios no basta con mirar un subíndice y asumir que todos los niveles de impacto son equivalentes. "
+        "La magnitud cambia según **dónde se evalúa**, **qué corrección se aplica** y **qué representa el resultado**."
+    )
+    st.markdown(
+        """
+        - **Lₙ** describe un nivel de ruido de impactos **normalizado**.
+        - **L′ₙ** se utiliza en el contexto de edificio, donde la transmisión real puede incorporar encuentros y caminos laterales.
+        - **L′ₙT** es un nivel de impacto **estandarizado**, relacionado con una referencia de tiempo de reverberación.
+
+        La letra **w** no cambia la naturaleza de la magnitud: indica que la curva espectral fue transformada en una
+        **cantidad ponderada de número único** mediante el procedimiento correspondiente.
+        """
+    )
+    st.info(
+        "**Idea profesional:** primero identifica la magnitud por bandas; después interpreta su cantidad ponderada. "
+        "Un Lₙ,w y un L′ₙT,w no deben tratarse como si fueran el mismo dato."
+    )
     st.write("El símbolo importa porque no todas las cantidades describen el mismo contexto físico o de medición.")
     cols=st.columns(3)
     cards=[
@@ -11993,6 +12068,36 @@ def _c2l2_stage2(lab,saved):
     curve,source=_c2l2_floor_curve()
     _c2l2_stage_header(2,"CONOCE LA CURVA DE REFERENCIA","Aprende a superponer y desplazar la curva ISO 717-2 sin cambiar su forma.")
     _c2l2_asset(stage=2)
+    st.markdown("### 1 · ¿Qué es esta curva?")
+    st.write(
+        "La curva de referencia es una **plantilla normalizada**. No representa otro piso y tampoco es un límite reglamentario independiente. "
+        "Su función es entregar una forma común contra la cual comparar los 16 valores de Lₙ(f)."
+    )
+    st.markdown("### 2 · ¿Qué podemos modificar?")
+    c1,c2=st.columns(2)
+    with c1:
+        _c2l2_card(
+            "La forma",
+            "NO CAMBIA",
+            "Las diferencias relativas entre 100, 125, 160 Hz… y 3150 Hz permanecen fijas.",
+            tone="orange",
+        )
+    with c2:
+        _c2l2_card(
+            "La posición vertical",
+            "SÍ CAMBIA",
+            "Toda la referencia se desplaza la misma cantidad, en pasos enteros de 1 dB.",
+            tone="green",
+        )
+    st.markdown("### 3 · ¿Para qué hacemos esto?")
+    st.write(
+        "Porque Lₙ,w no se obtiene promediando la curva del piso. La posición final de esta plantilla será determinada "
+        "por las **desviaciones desfavorables** que aprenderás a reconocer en la siguiente etapa."
+    )
+    st.info(
+        "En esta etapa no busques todavía el resultado correcto. El objetivo es dominar el gesto técnico: "
+        "**superponer → mover verticalmente → observar cómo cambia la relación con el espectro**."
+    )
     st.info(f"Curva evaluada: **{source}**.")
     st.write(
         "La referencia ISO 717-2 posee una forma fija. En esta etapa solo aprenderás a moverla verticalmente "
@@ -12011,6 +12116,25 @@ def _c2l2_stage2(lab,saved):
 def _c2l2_stage3(lab,saved):
     curve,_=_c2l2_floor_curve()
     _c2l2_stage_header(3,"¿QUÉ BANDAS PENALIZAN EL RESULTADO?","Identifica las desviaciones desfavorables y construye Σdᵢ.")
+    st.markdown("### 1 · Una banda no penaliza por ser alta o baja en frecuencia")
+    st.write(
+        "Lo que importa es la **posición relativa** entre el nivel de impacto del piso y la referencia desplazada. "
+        "Para ruido de impacto, un nivel mayor significa peor comportamiento; por eso la penalización aparece cuando Lₙ queda sobre la referencia."
+    )
+    st.markdown("### 2 · Lee la ecuación físicamente")
+    st.write(
+        "**Lₙ,i − Lref,i** responde una pregunta simple: ¿cuántos decibeles está el piso por encima de la referencia en esta banda? "
+        "Si el resultado es negativo o cero, esa banda no agrega penalización y se toma dᵢ = 0."
+    )
+    st.markdown("### 3 · ¿Por qué no se compensan las bandas?")
+    st.write(
+        "Una banda con comportamiento muy favorable no borra una banda problemática. "
+        "La suma considera únicamente los excesos desfavorables. Por eso el método conserva sensibilidad frente a valles o zonas espectrales débiles."
+    )
+    st.info(
+        "**Σdᵢ** es la suma de todos esos excesos. En 16 tercios de octava, la posición final de la referencia "
+        "se busca con una suma tan grande como sea posible, pero **sin superar 32 dB**."
+    )
     st.write("Para ruido de impacto una banda penaliza cuando el nivel evaluado queda **por encima** de la referencia desplazada.")
     st.latex(r"\boxed{d_i=\max\left(0,\;L_{n,i}-L_{\mathrm{ref},i}\right)}")
     shift,ref,dev,total=_c2l2_curve_control(saved,"c2l2_s3",curve,require_limit=False)
@@ -12038,6 +12162,37 @@ def _c2l2_stage3(lab,saved):
 def _c2l2_stage4(lab,saved):
     curve,_=_c2l2_floor_curve()
     _c2l2_stage_header(4,"CONSTRUYE EL NÚMERO ÚNICO Lₙ,w","Encuentra la posición límite y lee el valor de la referencia a 500 Hz.")
+    st.markdown("### Procedimiento completo")
+    st.markdown(
+        """
+        1. Parte de los **16 valores de Lₙ(f)** entre 100 y 3150 Hz.
+        2. Superpone la curva de referencia ISO 717-2.
+        3. Calcula solo las desviaciones donde **Lₙ > Lref**.
+        4. Suma esas desviaciones: **Σdᵢ**.
+        5. Mueve la referencia en pasos de **1 dB** hasta encontrar la posición límite.
+        6. Una vez fijada esa posición, lee la referencia en **500 Hz**: ese valor es **Lₙ,w**.
+        """
+    )
+    st.markdown("### ¿Qué significa posición límite?")
+    st.write(
+        "No basta con obtener Σdᵢ ≤ 32 dB. Debes acercar la referencia hasta que un desplazamiento adicional de 1 dB "
+        "haga que la suma supere 32 dB. Esa comprobación evita aceptar una referencia demasiado alejada del espectro."
+    )
+    c1,c2=st.columns(2)
+    with c1:
+        _c2l2_card(
+            "Lₙ(500 Hz)",
+            "dato medido/calculado del piso",
+            "Es el nivel real de la curva del piso en la banda de 500 Hz.",
+            tone="blue",
+        )
+    with c2:
+        _c2l2_card(
+            "Lₙ,w",
+            "lectura de la referencia",
+            "Es el valor que tiene la curva de referencia desplazada a 500 Hz después de completar el ajuste.",
+            tone="green",
+        )
     st.warning(
         "No buscamos cualquier posición con Σdᵢ ≤ 32 dB. Buscamos la **posición límite**: "
         "la mayor suma posible sin superar 32 dB."
@@ -12068,6 +12223,28 @@ def _c2l2_stage5(lab,saved):
     lnw,shift=_c2l2_lnw(curve)
     _c2l2_stage_header(5,"TÉRMINO DE ADAPTACIÓN ESPECTRAL C_I","Construye una suma energética y úsala como información espectral complementaria.")
     _c2l2_asset(stage=5)
+    st.markdown("### 1 · ¿Por qué hace falta algo además de Lₙ,w?")
+    st.write(
+        "Al convertir 16 bandas en un único número perdemos parte de la forma espectral. "
+        "Dos pisos pueden terminar con Lₙ,w parecido y, sin embargo, uno concentrar mucha más energía en una región de frecuencia."
+    )
+    st.markdown("### 2 · La suma energética no es un promedio")
+    st.write(
+        "Los niveles en dB no se suman aritméticamente. Primero cada nivel se transforma a una cantidad proporcional a energía, "
+        "se suman esas contribuciones y después se vuelve a escala logarítmica."
+    )
+    st.latex(r"L_{n,\mathrm{sum}}=10\log_{10}\left(\sum_i10^{L_{n,i}/10}\right)")
+    st.markdown(
+        """
+        **¿Qué calcula?** Un nivel global energético a partir de las bandas consideradas.  
+        **¿Para qué lo necesitamos?** Para construir el término C_I.  
+        **¿Cómo lo interpreto?** C_I acompaña a Lₙ,w y ayuda a describir cómo está distribuido el contenido espectral.
+        """
+    )
+    st.warning(
+        "C_I no significa «cuántos dB mejora el piso». Tampoco se debe confundir con ΔL_w. "
+        "Es un **término de adaptación espectral**."
+    )
     st.write(
         "Dos pisos pueden tener Lₙ,w parecido y, sin embargo, distribuir la energía de forma distinta. "
         "C_I añade información sobre la forma del espectro."
@@ -12104,6 +12281,25 @@ def _c2l2_stage6(lab,saved):
     ci50,lsum50=_c2l2_ci(curve,lnw,True)
     _c2l2_stage_header(6,"BAJAS FRECUENCIAS Y C_I,50-2500","Visualiza lo que cambia cuando ampliamos el rango hacia 50 Hz.")
     _c2l2_asset(stage=6)
+    st.markdown("### 1 · Conexión con el Laboratorio 1")
+    st.write(
+        "En pisos flotantes aprendiste que masa, rigidez dinámica y masa reducida determinan una frecuencia natural f₀. "
+        "Cerca de esa región puede aparecer resonancia y el comportamiento de baja frecuencia puede ser especialmente relevante."
+    )
+    st.markdown("### 2 · ¿Qué cambia al ampliar el rango?")
+    st.write(
+        "El análisis habitual de C_I parte en 100 Hz. Al incorporar 50, 63 y 80 Hz añadimos información que antes no estaba participando "
+        "en la suma energética. Si esas bandas son elevadas, la lectura global puede cambiar de manera apreciable."
+    )
+    c1,c2=st.columns(2)
+    with c1:
+        _c2l2_card("Rango normal","100–2500 Hz","Describe el término C_I con el rango convencional utilizado en esta etapa.",tone="blue")
+    with c2:
+        _c2l2_card("Rango ampliado","50–2500 Hz","Añade 50, 63 y 80 Hz para observar la sensibilidad a bajas frecuencias.",tone="purple")
+    st.info(
+        "El objetivo no es concluir automáticamente que todo piso con energía grave sea deficiente. "
+        "Debes entender **qué información adicional aparece** cuando amplías el rango."
+    )
     st.write(
         "Los pisos flotantes y sistemas livianos pueden presentar comportamiento relevante cerca de resonancias "
         "y en baja frecuencia. Un único número puede ocultar esa concentración."
@@ -12139,6 +12335,37 @@ def _c2l2_stage6(lab,saved):
 def _c2l2_stage7(lab,saved):
     _c2l2_stage_header(7,"¿CUÁNTO MEJORA REALMENTE UN REVESTIMIENTO?","Transforma ΔL(f) en la reducción ponderada ΔL_w.")
     _c2l2_asset(stage=7)
+    st.markdown("### 1 · Recupera la diferencia fundamental")
+    st.write(
+        "En el Laboratorio 1 calculaste **ΔLₙ(f)**: una reducción que depende de la frecuencia. "
+        "Ahora queremos expresar el efecto del revestimiento mediante un único valor ponderado, **ΔL_w**."
+    )
+    st.markdown("### 2 · No ponderamos directamente ΔL(f)")
+    st.write(
+        "El procedimiento utiliza un **piso pesado de referencia**. Primero aplicamos la reducción espectral al piso de referencia, "
+        "obtenemos una nueva curva de niveles de impacto y esa curva resultante se pondera con el mismo método de Lₙ,w."
+    )
+    st.markdown(
+        """
+        **Cadena de cálculo**
+
+        ΔL(f)  
+        ↓  
+        piso de referencia sin revestimiento  
+        ↓  
+        Lₙ,r(f) = Lₙ,r,0(f) − ΔL(f)  
+        ↓  
+        ponderación ISO 717-2  
+        ↓  
+        Lₙ,r,w  
+        ↓  
+        **ΔL_w = 78 − Lₙ,r,w**
+        """
+    )
+    st.warning(
+        "ΔL_w caracteriza la reducción obtenida bajo un procedimiento de referencia. "
+        "No significa que cualquier piso real vaya a mejorar exactamente esa misma cantidad."
+    )
     st.write("En el Laboratorio 1 trabajaste con una reducción **por frecuencia**. Ahora veremos cómo se obtiene una reducción ponderada.")
     c1,c2=st.columns(2)
     with c1:_c2l2_card("ΔLₙ(f)","reducción por frecuencia","Conserva la información banda a banda.",tone="blue")
@@ -12171,6 +12398,15 @@ def _c2l2_stage7(lab,saved):
 def _c2l2_stage8(lab,saved):
     _c2l2_stage_header(8,"UN NÚMERO NO ES UN SISTEMA CONSTRUCTIVO","Interpreta profesionalmente Lₙ,w, C_I y ΔL_w.")
     _c2l2_asset(stage=8)
+    st.markdown("### De calcular a especificar")
+    st.write(
+        "Hasta ahora obtuviste números. En práctica profesional debes preguntarte **qué describe cada número, bajo qué montaje se obtuvo "
+        "y hasta dónde puede transferirse a otro sistema constructivo**."
+    )
+    st.info(
+        "Esta etapa no agrega otra fórmula principal. Su objetivo es evitar tres errores frecuentes: "
+        "confundir nivel con reducción, transferir resultados entre pisos incompatibles y leer una ficha técnica sin identificar la magnitud."
+    )
     station=st.radio("Estación",["A · Lₙ,w vs ΔL_w","B · Piso pesado vs piso liviano","C · Lₙ,eq,0,w","D · Lee una ficha técnica"],horizontal=True,key="c2l2_s8_station")
     if station.startswith("A"):
         c1,c2=st.columns(2)

@@ -20,8 +20,7 @@ _LOCAL_NAMES = {
     "_course2_lab1_rows", "_render_course2_lab1_scores",
     "_future_progress_rows", "_future_progress_state", "_future_lab_progress",
     "_render_lab_progress_card", "_render_course1_official_evaluations",
-    "_render_course1_block", "_render_course2_block",
-    "_course2_lab2_official_summary",
+    "_render_course1_block", "_render_course2_block", "_course2_lab2_official_summary",
     "student_sidebar_summary", "results_view",
 }
 
