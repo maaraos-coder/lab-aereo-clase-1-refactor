@@ -12116,54 +12116,355 @@ def _c2l2_stage0(lab,saved):
 
 
 def _c2l2_stage1(lab,saved):
-    _c2l2_stage_header(1,"DEL NIVEL ESPECTRAL AL DESCRIPTOR PONDERADO","Distingue la magnitud antes de interpretar el número.")
-    _c2l2_asset(stage=1)
-    st.markdown("### 1 · Antes del número único: identifica qué estás midiendo")
-    st.write(
-        "En acústica de edificios no basta con mirar un subíndice y asumir que todos los niveles de impacto son equivalentes. "
-        "La magnitud cambia según **dónde se evalúa**, **qué corrección se aplica** y **qué representa el resultado**."
+    _c2l2_stage_header(
+        1,
+        "LABORATORIO, TERRENO Y CANTIDADES PONDERADAS",
+        "Distingue qué magnitud estás midiendo, cómo se corrige y qué representa el resultado antes de construir el número único."
     )
+    _c2l2_asset(stage=1)
+
+    st.markdown("## 1 · ¿De dónde viene la curva que vamos a ponderar?")
+    st.write(
+        "En el **Laboratorio 1** no realizamos un ensayo normalizado ni una medición in situ. "
+        "Construimos una **predicción espectral** del piso terminado a partir del modelo de la losa base "
+        "y de la mejora estimada del piso flotante."
+    )
+
+    st.latex(r"\boxed{L_{n,\mathrm{final}}(f)=L_{n,0}(f)-\Delta L_n(f)}")
+
+    c0a,c0b,c0c=st.columns(3)
+    with c0a:
+        _c2l2_card(
+            "LABORATORIO 1",
+            "Predicción",
+            "La curva Lₙ,final(f) fue calculada mediante modelos físicos y acústicos; no proviene de un ensayo normativo.",
+            tone="blue",
+        )
+    with c0b:
+        _c2l2_card(
+            "LABORATORIO 2",
+            "Ponderación",
+            "Usaremos esa curva como entrada didáctica para aprender el procedimiento de evaluación de ISO 717-2.",
+            tone="green",
+        )
+    with c0c:
+        _c2l2_card(
+            "RESULTADO",
+            "Lₙ,w estimado",
+            "El número único obtenido debe interpretarse como una estimación/predicción, no como un valor medido conforme a norma.",
+            tone="purple",
+        )
+
+    st.markdown("### Cadena de trabajo de este curso")
+    st.latex(
+        r"L_{n,\mathrm{final}}(f)"
+        r"\;\longrightarrow\;"
+        r"\mathrm{ISO\ 717\!-\!2}"
+        r"\;\longrightarrow\;"
+        r"L_{n,w,\mathrm{estimado}}"
+    )
+
+    st.warning(
+        "**Importante:** ISO 717-2 establece el procedimiento para convertir resultados dependientes de la frecuencia "
+        "en cantidades de número único. En aplicación normativa, esos espectros provienen de mediciones realizadas "
+        "según las normas de ensayo correspondientes. En este diplomado reutilizamos una curva predicha para aprender "
+        "el procedimiento de ponderación."
+    )
+
+    st.markdown("### Predicción, laboratorio y terreno: no son lo mismo")
+    comparison=pd.DataFrame([
+        {
+            "Origen del espectro":"Predicción del Laboratorio 1",
+            "Cómo se obtiene":"Modelo físico/acústico",
+            "Aplicación de ISO 717-2":"Didáctica sobre curva predicha",
+            "Resultado":"Lₙ,w estimado / predicho",
+            "¿Es una medición normativa?":"No",
+        },
+        {
+            "Origen del espectro":"Ensayo de laboratorio",
+            "Cómo se obtiene":"Medición del elemento bajo condiciones de ensayo",
+            "Aplicación de ISO 717-2":"Evaluación de resultados medidos",
+            "Resultado":"Lₙ,w",
+            "¿Es una medición normativa?":"Sí, si el ensayo cumple la norma de medición aplicable",
+        },
+        {
+            "Origen del espectro":"Medición in situ / edificio",
+            "Cómo se obtiene":"Medición entre recintos de la construcción real",
+            "Aplicación de ISO 717-2":"Evaluación de resultados medidos",
+            "Resultado":"L′ₙ,w o L′ₙT,w",
+            "¿Es una medición normativa?":"Sí, si la medición cumple la norma de terreno aplicable",
+        },
+    ])
+    st.dataframe(comparison,hide_index=True,use_container_width=True)
+
+    st.info(
+        "**Conclusión pedagógica:** el procedimiento matemático de ISO 717-2 se puede aplicar a nuestra curva predicha "
+        "para aprender a construir el número único, pero el resultado debe rotularse como **estimado**. "
+        "No reemplaza un ensayo de laboratorio ni una medición in situ."
+    )
+
+    st.markdown("## 2 · Primero: ¿qué mide realmente la máquina de impactos?")
+    st.write(
+        "La máquina de impactos excita el elemento separador de una forma repetible. "
+        "En el recinto receptor medimos un **nivel de presión sonora de impactos, Lᵢ(f)**, por bandas de frecuencia. "
+        "Ese nivel bruto depende no solo del piso: también depende de las condiciones acústicas del recinto receptor."
+    )
+
+    c1,c2,c3=st.columns(3)
+    with c1:
+        _c2l2_card(
+            "Excitación",
+            "máquina de impactos",
+            "Genera una excitación mecánica normalizada sobre el piso para poder comparar resultados.",
+            tone="blue",
+        )
+    with c2:
+        _c2l2_card(
+            "Medición directa",
+            "Lᵢ(f)",
+            "Nivel de presión sonora de impactos medido en el recinto receptor, antes de normalizar o estandarizar.",
+            tone="white",
+        )
+    with c3:
+        _c2l2_card(
+            "Problema",
+            "el recinto influye",
+            "Un recinto más reverberante puede entregar un nivel medido mayor aunque el elemento separador sea el mismo.",
+            tone="orange",
+        )
+
+    st.info(
+        "**Por eso no ponderamos directamente Lᵢ(f).** Primero debemos expresar el resultado mediante una magnitud "
+        "que permita comparar el comportamiento bajo una condición de referencia."
+    )
+
+    st.markdown("## 3 · Ensayo de laboratorio: caracterizar el elemento")
+    st.write(
+        "En laboratorio se intenta caracterizar el **elemento de piso** bajo condiciones controladas. "
+        "El montaje, los recintos de ensayo y las condiciones de medición están diseñados para reducir la incertidumbre "
+        "asociada a la obra real y permitir comparar productos o soluciones constructivas."
+    )
+
+    st.markdown("### Nivel normalizado de ruido de impactos, Lₙ")
+    st.write(
+        "El nivel medido Lᵢ se corrige utilizando el **área de absorción sonora equivalente A** del recinto receptor "
+        "y un área de referencia A₀. Así obtenemos el nivel normalizado:"
+    )
+    st.latex(r"\boxed{L_n=L_i+10\log_{10}\left(\frac{A}{A_0}\right)}")
+    st.latex(r"A_0=10\;\mathrm{m^2}")
+
+    p1,p2,p3=st.columns(3)
+    with p1:
+        _c2l2_card(
+            "Lᵢ",
+            "nivel medido",
+            "Es lo que registra el sistema de medición en el recinto receptor.",
+            tone="blue",
+        )
+    with p2:
+        _c2l2_card(
+            "A",
+            "absorción equivalente",
+            "Representa cuánta absorción acústica efectiva tiene el recinto receptor.",
+            tone="green",
+        )
+    with p3:
+        _c2l2_card(
+            "Lₙ",
+            "nivel normalizado",
+            "Permite caracterizar el elemento respecto de una condición de absorción de referencia.",
+            tone="purple",
+        )
+
+    st.success(
+        "**Contexto típico:** el valor ponderado **Lₙ,w** se utiliza para caracterizar el aislamiento a ruido de impactos "
+        "de un piso o elemento ensayado en laboratorio. Menor Lₙ,w significa mejor comportamiento."
+    )
+
+    st.markdown("## 4 · Terreno / edificio terminado: aparece la construcción real")
+    st.write(
+        "En un edificio terminado ya no tenemos solamente el elemento de piso aislado. "
+        "El resultado puede incorporar **uniones reales, encuentros con muros, continuidad estructural, montaje, "
+        "puentes rígidos y transmisión flanqueante**."
+    )
+
     st.markdown(
         """
-        - **Lₙ** describe un nivel de ruido de impactos **normalizado**.
-        - **L′ₙ** se utiliza en el contexto de edificio, donde la transmisión real puede incorporar encuentros y caminos laterales.
-        - **L′ₙT** es un nivel de impacto **estandarizado**, relacionado con una referencia de tiempo de reverberación.
+        Por eso un resultado de laboratorio **no debe trasladarse directamente** al edificio terminado.
 
-        La letra **w** no cambia la naturaleza de la magnitud: indica que la curva espectral fue transformada en una
-        **cantidad ponderada de número único** mediante el procedimiento correspondiente.
+        En terreno pueden aparecer, por ejemplo:
+
+        - transmisión por muros y elementos laterales;
+        - continuidad de losas;
+        - encuentros piso–muro;
+        - puentes rígidos en pisos flotantes;
+        - cambios en el montaje respecto del ensayo;
+        - diferencias de ejecución y terminaciones.
         """
     )
-    st.info(
-        "**Idea profesional:** primero identifica la magnitud por bandas; después interpreta su cantidad ponderada. "
-        "Un Lₙ,w y un L′ₙT,w no deben tratarse como si fueran el mismo dato."
+
+    lab_col,field_col=st.columns(2)
+    with lab_col:
+        st.markdown(
+            """
+            <div style="border:1px solid #bfdbfe;border-radius:16px;padding:17px;background:#eff6ff;min-height:230px">
+              <div style="font-size:.72rem;font-weight:850;letter-spacing:.08em;color:#075985;margin-bottom:8px">LABORATORIO</div>
+              <div style="font-size:1.25rem;font-weight:850;color:#0f172a;margin-bottom:10px">Caracteriza el elemento</div>
+              <div style="color:#526174;line-height:1.5">
+                Condiciones controladas.<br>
+                Montaje de ensayo definido.<br>
+                Se busca aislar el comportamiento del piso.<br><br>
+                <b>Magnitud típica:</b> Lₙ(f)<br>
+                <b>Cantidad ponderada:</b> Lₙ,w
+              </div>
+            </div>
+            """,
+            unsafe_allow_html=True,
+        )
+    with field_col:
+        st.markdown(
+            """
+            <div style="border:1px solid #ddd6fe;border-radius:16px;padding:17px;background:#f5f3ff;min-height:230px">
+              <div style="font-size:.72rem;font-weight:850;letter-spacing:.08em;color:#6d28d9;margin-bottom:8px">TERRENO / EDIFICIO</div>
+              <div style="font-size:1.25rem;font-weight:850;color:#0f172a;margin-bottom:10px">Caracteriza el desempeño construido</div>
+              <div style="color:#526174;line-height:1.5">
+                Construcción real.<br>
+                Incluye encuentros y ejecución.<br>
+                Puede incorporar transmisión flanqueante.<br><br>
+                <b>Magnitudes:</b> L′ₙ(f) o L′ₙT(f)<br>
+                <b>Ponderadas:</b> L′ₙ,w o L′ₙT,w
+              </div>
+            </div>
+            """,
+            unsafe_allow_html=True,
+        )
+
+    st.warning(
+        "**Idea clave:** dos pisos con el mismo Lₙ,w de laboratorio no tienen garantizado el mismo resultado en terreno. "
+        "El edificio completo añade caminos que el ensayo del elemento no representa de la misma manera."
     )
-    st.write("El símbolo importa porque no todas las cantidades describen el mismo contexto físico o de medición.")
-    cols=st.columns(3)
-    cards=[
-        ("Lₙ","Nivel normalizado de impactos","Magnitud de impactos normalizada en el contexto correspondiente."),
-        ("L'ₙ","Descriptor de edificio","Incluye la situación real de transmisión del edificio y sus encuentros."),
-        ("L'ₙT","Nivel estandarizado","La normalización utiliza el tiempo de reverberación de referencia."),
-    ]
-    for col,(a,b,c) in zip(cols,cards):
-        with col:_c2l2_card(a,b,c,tone="blue")
-    st.markdown("### De la curva al valor ponderado")
+
+    st.markdown("## 5 · En terreno hay dos formas frecuentes de referenciar el nivel")
+
+    st.markdown("### A · Nivel normalizado aparente de impactos, L′ₙ")
+    st.write(
+        "Mantiene la lógica de normalización mediante el **área de absorción equivalente** del recinto receptor, "
+        "pero el apóstrofo indica que estamos evaluando el comportamiento **en el edificio**, donde pueden participar "
+        "caminos indirectos o flanqueantes."
+    )
+    st.latex(r"L'_n=L'_i+10\log_{10}\left(\frac{A}{A_0}\right)")
+
+    st.markdown("### B · Nivel estandarizado de impactos, L′ₙT")
+    st.write(
+        "En vez de referenciar el resultado a un área de absorción, se refiere el nivel medido a un "
+        "**tiempo de reverberación de referencia T₀**. Para viviendas se utiliza habitualmente T₀ = 0,5 s."
+    )
+    st.latex(r"\boxed{L'_{nT}=L'_i-10\log_{10}\left(\frac{T}{T_0}\right)}")
+    st.latex(r"T_0=0.5\;\mathrm{s}\quad\text{(referencia habitual en viviendas)}")
+
+    q1,q2=st.columns(2)
+    with q1:
+        _c2l2_card(
+            "L′ₙ",
+            "normalizado por A",
+            "El resultado se refiere a un área de absorción equivalente de referencia.",
+            tone="blue",
+        )
+    with q2:
+        _c2l2_card(
+            "L′ₙT",
+            "estandarizado por T",
+            "El resultado se refiere a un tiempo de reverberación de referencia.",
+            tone="green",
+        )
+
+    st.info(
+        "No son dos nombres para lo mismo. **La diferencia está en la condición de referencia utilizada para corregir "
+        "la influencia del recinto receptor.**"
+    )
+
+    st.markdown("## 6 · ¿Qué significa finalmente la letra w?")
+    st.write(
+        "Hasta aquí todas las magnitudes siguen siendo **curvas por frecuencia**. "
+        "La letra **w** aparece después de aplicar el procedimiento de ponderación de ISO 717-2."
+    )
+
     st.latex(r"L_n(f)\;\longrightarrow\;L_{n,w}")
     st.latex(r"L'_n(f)\;\longrightarrow\;L'_{n,w}")
     st.latex(r"L'_{nT}(f)\;\longrightarrow\;L'_{nT,w}")
-    st.warning("**REGLA DE ORO:** antes de interpretar el número, identifica qué magnitud fue evaluada.")
 
+    st.markdown(
+        """
+        **w = weighted / ponderado**
+
+        No significa «500 Hz», no significa «promedio» y no cambia el origen de la magnitud.
+        Solamente indica que la curva completa fue convertida en una cantidad de número único mediante la referencia ISO 717-2.
+        """
+    )
+
+    st.markdown("## 7 · Mapa técnico para no confundirse")
+    table=pd.DataFrame([
+        {
+            "Contexto":"Laboratorio",
+            "Magnitud por bandas":"Lₙ(f)",
+            "Referencia del recinto":"Área de absorción A₀ = 10 m²",
+            "Cantidad ponderada":"Lₙ,w",
+            "Qué representa":"Prestación del elemento ensayado",
+        },
+        {
+            "Contexto":"Terreno / edificio",
+            "Magnitud por bandas":"L′ₙ(f)",
+            "Referencia del recinto":"Área de absorción A₀ = 10 m²",
+            "Cantidad ponderada":"L′ₙ,w",
+            "Qué representa":"Prestación construida con caminos reales",
+        },
+        {
+            "Contexto":"Terreno / edificio",
+            "Magnitud por bandas":"L′ₙT(f)",
+            "Referencia del recinto":"Tiempo T₀",
+            "Cantidad ponderada":"L′ₙT,w",
+            "Qué representa":"Prestación construida estandarizada por reverberación",
+        },
+    ])
+    st.dataframe(table,hide_index=True,use_container_width=True)
+
+    st.markdown("## 8 · Comprueba si puedes elegir la magnitud correcta")
     scenarios={
-        "Ensayo del elemento con nivel normalizado":"Lₙ → Lₙ,w",
-        "Evaluación de edificio expresada como nivel normalizado aparente":"L'ₙ → L'ₙ,w",
-        "Evaluación de edificio estandarizada al tiempo de reverberación":"L'ₙT → L'ₙT,w",
+        "Un fabricante ensaya en laboratorio una solución de piso sobre una losa de referencia.":"Lₙ → Lₙ,w",
+        "Se mide un piso ya construido y el resultado se normaliza mediante absorción equivalente.":"L′ₙ → L′ₙ,w",
+        "Se mide entre recintos de un edificio y se corrige al tiempo de reverberación de referencia.":"L′ₙT → L′ₙT,w",
     }
-    scenario=st.selectbox("¿Qué descriptor estoy mirando?",[""]+list(scenarios),key="c2l2_s1_scenario")
-    answer=st.radio("Descriptor",["Lₙ → Lₙ,w","L'ₙ → L'ₙ,w","L'ₙT → L'ₙT,w"],index=None,key="c2l2_s1_answer")
-    if st.button("COMPROBAR DESCRIPTOR",key="c2l2_s1_check"):
+
+    scenario=st.selectbox(
+        "Situación de medición",
+        [""]+list(scenarios),
+        key="c2l2_s1_scenario"
+    )
+    answer=st.radio(
+        "¿Qué cadena corresponde?",
+        ["Lₙ → Lₙ,w","L′ₙ → L′ₙ,w","L′ₙT → L′ₙT,w"],
+        index=None,
+        key="c2l2_s1_answer"
+    )
+
+    if st.button("COMPROBAR MAGNITUD",key="c2l2_s1_check",type="primary"):
         if scenario and answer==scenarios[scenario]:
-            st.success("Correcto: identificaste primero la magnitud y luego su cantidad ponderada.")
+            st.success(
+                "Correcto. Identificaste el contexto de medición, la forma de referencia del recinto "
+                "y la cantidad ponderada correspondiente."
+            )
             _c2l2_finish_stage(saved,1)
-        else: st.warning("Revisa si el escenario corresponde a elemento/laboratorio o a edificio/recintos.")
+        else:
+            st.warning(
+                "Revisa tres preguntas: ¿es laboratorio o edificio?, ¿la referencia usa A o T?, "
+                "y recién después agrega la ponderación w."
+            )
+
+    st.markdown("### Regla que debes llevarte a la Etapa 2")
+    st.success(
+        "**Magnitud física por bandas → condición de referencia → contexto de ensayo → ponderación ISO 717-2.** "
+        "Nunca empieces interpretando solamente la letra w."
+    )
 
 
 def _c2l2_stage2(lab,saved):
