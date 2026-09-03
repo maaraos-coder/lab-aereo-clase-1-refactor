@@ -401,6 +401,79 @@ def _render_formative_progress(rows):
 
 
 
+def student_sidebar_summary(client, user_key):
+    """Tarjeta lateral compacta del diplomado, separando el avance por curso."""
+    if not user_key or client is None:
+        return
+
+    class_ids=[
+        LABORATORIES[1]["id"],
+        LABORATORIES[2]["id"],
+        "clase-03-impacto-instalaciones-lab-1",
+        "clase-04-impacto-instalaciones-lab-2",
+    ]
+    try:
+        rows=(
+            client.table("responses").select("*")
+            .eq("user_key",user_key)
+            .in_("class_id",class_ids)
+            .execute().data or []
+        )
+    except Exception:
+        return
+
+    official=_official_summary(rows)
+    progress_data=_formative_progress_data(rows)
+    expected=sum(item["expected"] for item in progress_data.values())
+    completed=sum(item["completed"] for item in progress_data.values())
+    formative_percent=100.0*completed/expected if expected else 0.0
+
+    course2_lab1=_course2_lab1_rows(rows) if "_course2_lab1_rows" in globals() else {}
+    c2_lab1_delivered=sum(
+        course2_lab1.get(k) is not None
+        for k in ("final_comprehension","final_exam")
+    )
+
+    c2_lab2_rows=[
+        r for r in rows
+        if r.get("class_id")=="clase-04-impacto-instalaciones-lab-2"
+        and r.get("question_key") in {"final_comprehension","final_integrated_design"}
+    ]
+    c2_lab2_delivered=len({r.get("question_key") for r in c2_lab2_rows})
+
+    st.markdown(
+        f"""
+        <div style="background:linear-gradient(145deg,#0b5b91,#0e91c7);border:1px solid #59d4ef;
+                    border-radius:14px;padding:.85rem;margin:.8rem 0;color:white">
+          <div style="font-weight:800;font-size:.95rem;margin-bottom:.55rem">📘 PROGRESO DEL DIPLOMADO</div>
+
+          <div style="display:flex;justify-content:space-between;gap:.5rem;font-size:.82rem">
+            <span>Curso 1 · evaluaciones</span><b>{official['completed']}/2</b>
+          </div>
+
+          <div style="display:flex;justify-content:space-between;gap:.5rem;font-size:.82rem;margin-top:.35rem">
+            <span>Curso 1 · avance formativo</span><b>{formative_percent:.0f}%</b>
+          </div>
+
+          <div style="display:flex;justify-content:space-between;gap:.5rem;font-size:.82rem;margin-top:.35rem">
+            <span>Curso 2 · Lab 1 puntajes</span><b>{c2_lab1_delivered}/2</b>
+          </div>
+
+          <div style="display:flex;justify-content:space-between;gap:.5rem;font-size:.82rem;margin-top:.35rem">
+            <span>Curso 2 · Lab 2 evaluaciones</span><b>{c2_lab2_delivered}/2</b>
+          </div>
+
+          <hr style="border:0;border-top:1px solid rgba(255,255,255,.25);margin:.6rem 0">
+
+          <div style="font-size:.78rem;color:#d9f5ff">
+            Las notas oficiales se muestran dentro de cada curso.
+          </div>
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
+
+
 def _future_progress_rows(client, user_key):
     """Recupera progreso persistido de laboratorios posteriores por class_id."""
     if client is None or not user_key:
