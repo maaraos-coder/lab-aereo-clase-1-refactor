@@ -12123,6 +12123,17 @@ def _c2l2_stage1(lab,saved):
     )
     _c2l2_asset(stage=1)
 
+    st.markdown(
+        """
+        <div style="border-left:5px solid #0284c7;background:#e0f2fe;border-radius:12px;
+                    padding:14px 16px;margin:10px 0 18px 0;color:#0c4a6e">
+          <div style="font-size:.72rem;font-weight:900;letter-spacing:.08em;margin-bottom:5px">CONTINUIDAD CON EL LABORATORIO 1</div>
+          <div style="font-size:1.05rem;font-weight:850">Predicción espectral → procedimiento ISO 717-2 → Lₙ,w estimado</div>
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
+
     st.markdown("## 1 · ¿De dónde viene la curva que vamos a ponderar?")
     st.write(
         "En el **Laboratorio 1** no realizamos un ensayo normalizado ni una medición in situ. "
