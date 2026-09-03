@@ -562,6 +562,24 @@ def _teacher_course_results_impl(compact=False):
                     "reviewer":"c2_stage10",
                 },
             },
+            "Laboratorio 2 · Evaluaciones oficiales":{
+                "Etapa 9 · Evaluación de comprensión":{
+                    "class_id":"clase-04-impacto-instalaciones-lab-2",
+                    "question_key":"final_comprehension",
+                    "stage":9,
+                    "maximum":40,
+                    "with_grade":True,
+                    "reviewer":"c2l2_stage9",
+                },
+                "Etapa 10 · Evaluación integradora":{
+                    "class_id":"clase-04-impacto-instalaciones-lab-2",
+                    "question_key":"final_integrated_design",
+                    "stage":10,
+                    "maximum":60,
+                    "with_grade":True,
+                    "reviewer":"c2l2_stage10",
+                },
+            },
         },
     }
 
@@ -687,6 +705,78 @@ def _teacher_course_results_impl(compact=False):
             _course_views.run_view("c2l1_stage9_teacher_view",globals())
         elif reviewer=="c2_stage10":
             _course_views.run_view("c2l1_stage10_teacher_view",globals())
+        elif reviewer in ("c2l2_stage9","c2l2_stage10"):
+            if not rows:
+                st.caption("Todavía no hay entregas para revisar.")
+            else:
+                selected_idx=st.selectbox(
+                    "Alumno",
+                    range(len(rows)),
+                    format_func=lambda i: (
+                        (rows[i].get("users") or {}).get("display_name")
+                        or (rows[i].get("users") or {}).get("email")
+                        or rows[i].get("user_key","Alumno")
+                    ),
+                    key=f"teacher_c2l2_student_{config['stage']}",
+                )
+                row=rows[selected_idx]
+                payload=row.get("answer") or {}
+                if isinstance(payload,str):
+                    try:
+                        payload=json.loads(payload)
+                    except Exception:
+                        payload={}
+                if not isinstance(payload,dict):
+                    payload={}
+                score=float(
+                    row.get("teacher_score")
+                    if row.get("teacher_score") is not None
+                    else row.get("auto_score") or 0
+                )
+                st.markdown("#### Resumen de la entrega")
+                a,b,c=st.columns(3)
+                a.metric("Puntaje vigente",f"{score:g}/{config['maximum']}")
+                b.metric("Nota",f"{_grade_from_percent(score/config['maximum']*100):.1f}")
+                c.metric("Estado","Revisada" if row.get("teacher_score") is not None or row.get("status")=="reviewed" else "Pendiente")
+                if reviewer=="c2l2_stage9":
+                    answers=payload.get("answers",{}) if isinstance(payload.get("answers",{}),dict) else {}
+                    st.markdown("#### Respuestas del alumno")
+                    for i in range(10):
+                        st.write(f"**Pregunta {i+1}:** {answers.get(str(i)) or 'Sin respuesta'}")
+                else:
+                    st.markdown("#### Desarrollo técnico")
+                    st.write(f"**Lₙ,w:** {payload.get('lnw','—')} dB")
+                    st.write(f"**C_I:** {payload.get('ci','—')} dB")
+                    pump=payload.get("pump",{}) if isinstance(payload.get("pump",{}),dict) else {}
+                    st.write(f"**Bomba:** fₑ={pump.get('fe_hz','—')} Hz · montaje={pump.get('isolator') or '—'}")
+                    st.write(f"**Camino:** {pump.get('path') or '—'}")
+                    st.write(f"**Medidas:** {', '.join(pump.get('controls') or []) or '—'}")
+                    st.write(f"**Conclusión:** {payload.get('conclusion') or '—'}")
+                    st.write(f"**Diseño automático:** {payload.get('design_score',0)}/40 · **Comprensión:** {payload.get('comprehension_score',0)}/20")
+                adjusted=st.number_input(
+                    "Puntaje final otorgado por el docente",
+                    0.0,float(config["maximum"]),score,0.5,
+                    key=f"teacher_c2l2_score_{row['id']}",
+                )
+                note=st.text_area(
+                    "Observación docente",
+                    value=row.get("teacher_note") or "",
+                    key=f"teacher_c2l2_note_{row['id']}",
+                )
+                if st.button(
+                    "Guardar revisión docente",
+                    type="primary",
+                    use_container_width=True,
+                    key=f"teacher_c2l2_save_{row['id']}",
+                ):
+                    client.table("responses").update({
+                        "teacher_level":"Revisada",
+                        "teacher_score":adjusted,
+                        "teacher_note":note,
+                        "status":"reviewed",
+                        "updated_at":_now(),
+                    }).eq("id",row["id"]).execute()
+                    st.success("Revisión guardada.")
 
     # ---------------------------------------------------------------
     # TAB 3 · CONSOLIDADO

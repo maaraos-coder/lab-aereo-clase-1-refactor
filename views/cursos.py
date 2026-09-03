@@ -11651,6 +11651,916 @@ def _render_course2_lab1_stage10(lab,saved):
             st.rerun()
 
 
+
+# =============================================================================
+# CURSO 2 · LABORATORIO 2
+# Del espectro al número único · ISO 717-2 · impacto + instalaciones
+# =============================================================================
+_C2L2_ASSETS={
+    0:"curso2_lab2_etapa0_espectro.webp",
+    1:"curso2_lab2_etapa1_laboratorio_edificio.webp",
+    2:"curso2_lab2_etapa2_curva_referencia.webp",
+    5:"curso2_lab2_etapa5_dos_pisos.webp",
+    6:"curso2_lab2_etapa6_bajas_frecuencias.webp",
+    7:"curso2_lab2_etapa7_revestimiento.webp",
+    8:"curso2_lab2_etapa8_pesado_liviano.webp",
+    10:"curso2_lab2_etapa10_edificio.webp",
+}
+_C2L2_EXTRA_ASSETS={
+    "bomba":"curso2_lab2_etapa10_bomba.webp",
+    "tuberias":"curso2_lab2_etapa10_tuberias.webp",
+}
+
+def _c2l2_asset(stage=None,name=None,caption=None):
+    filename=_C2L2_ASSETS.get(stage) if stage is not None else _C2L2_EXTRA_ASSETS.get(name)
+    if not filename:
+        return
+    path=ASSET_DIR/filename
+    if path.exists():
+        st.image(str(path),use_container_width=True)
+        if caption:
+            st.caption(caption)
+
+
+_C2L2_CLASS_ID="clase-04-impacto-instalaciones-lab-2"
+_C2L2_VERSION="iso7172_integral_v1"
+_C2L2_FREQS=[100,125,160,200,250,315,400,500,630,800,1000,1250,1600,2000,2500,3150]
+_C2L2_REF=[62,62,62,62,62,62,61,60,59,58,57,54,51,48,45,42]
+_C2L2_REF_FLOOR=[67.0,67.5,68.0,68.5,69.0,69.5,70.0,70.5,71.0,71.5,72.0,72.0,72.0,72.0,72.0,72.0]
+_C2L2_FALLBACK=[61.0,62.0,63.0,64.0,64.0,64.0,63.0,62.0,61.0,59.0,57.0,54.0,52.0,50.0,48.0,46.0]
+_C2L2_LOW=[66.0,64.0,63.0]  # 50, 63, 80 Hz: extensión didáctica para explorar CI,50-2500
+_C2L2_DELTA=[3.0,4.0,5.0,6.0,7.0,8.0,10.0,12.0,14.0,16.0,18.0,20.0,22.0,24.0,25.0,25.0]
+
+
+def _c2l2_card(title,value,text,tone="white"):
+    palette={
+        "white":("#ffffff","#dbe4ee"),
+        "blue":("#eff6ff","#bfdbfe"),
+        "green":("#ecfdf5","#a7f3d0"),
+        "purple":("#f5f3ff","#ddd6fe"),
+        "orange":("#fff7ed","#fed7aa"),
+    }
+    bg,bd=palette.get(tone,palette["white"])
+    st.markdown(
+        f"""<div style="border:1px solid {bd};border-radius:16px;padding:15px 16px;
+        background:{bg};min-height:145px;box-sizing:border-box;margin-bottom:8px">
+        <div style="font-weight:800;color:#0f172a;margin-bottom:5px">{title}</div>
+        <div style="font-size:1.32rem;font-weight:850;color:#0f172a;margin:.25rem 0 .45rem">{value}</div>
+        <div style="color:#526174;line-height:1.45">{text}</div></div>""",
+        unsafe_allow_html=True,
+    )
+
+
+def _c2l2_find_16_curve(value):
+    """Busca recursivamente una curva de 16 bandas sin inventar interpolaciones."""
+    if isinstance(value,dict):
+        preferred=[
+            "ln_final_curve","stage7_final_curve","final_curve","ln_final",
+            "curve_final","combined_curve","curve",
+        ]
+        for key in preferred:
+            if key in value:
+                found=_c2l2_find_16_curve(value.get(key))
+                if found is not None:
+                    return found
+        for val in value.values():
+            found=_c2l2_find_16_curve(val)
+            if found is not None:
+                return found
+    elif isinstance(value,(list,tuple)):
+        if len(value)==16:
+            try:
+                vals=[float(x) for x in value]
+                if all(math.isfinite(x) for x in vals):
+                    return vals
+            except Exception:
+                pass
+        for val in value:
+            found=_c2l2_find_16_curve(val)
+            if found is not None:
+                return found
+    return None
+
+
+def _c2l2_floor_curve():
+    """Recupera L_n,final(f) del Lab 1 cuando existe en 16 bandas."""
+    try:
+        prev=_future_saved("clase-03-impacto-instalaciones-lab-1") or {}
+    except Exception:
+        prev={}
+    curve=_c2l2_find_16_curve(prev)
+    if curve is not None:
+        return curve,"CURVA RECUPERADA DEL LABORATORIO 1"
+    return list(_C2L2_FALLBACK),"CASO DIDÁCTICO DE RESPALDO"
+
+
+def _c2l2_ref_shift(shift):
+    return [float(v)+float(shift) for v in _C2L2_REF]
+
+
+def _c2l2_deviations(curve,shift):
+    ref=_c2l2_ref_shift(shift)
+    dev=[max(0.0,float(y)-float(r)) for y,r in zip(curve,ref)]
+    return ref,dev,sum(dev)
+
+
+def _c2l2_limit_shift(curve):
+    """Menor desplazamiento entero cuya suma no supera 32; un paso inferior ya falla."""
+    for shift in range(-40,61):
+        _,_,total=_c2l2_deviations(curve,shift)
+        _,_,below=_c2l2_deviations(curve,shift-1)
+        if total<=32.0+1e-9 and below>32.0+1e-9:
+            return shift
+    # Respaldo por minimización si una curva extrema cae fuera del rango didáctico.
+    candidates=[]
+    for shift in range(-80,101):
+        _,_,total=_c2l2_deviations(curve,shift)
+        if total<=32:
+            candidates.append((abs(32-total),shift))
+    return min(candidates)[1] if candidates else 0
+
+
+def _c2l2_lnw(curve):
+    shift=_c2l2_limit_shift(curve)
+    return int(round(_C2L2_REF[_C2L2_FREQS.index(500)]+shift)),shift
+
+
+def _c2l2_energy_sum(values):
+    return 10.0*math.log10(sum(10.0**(float(v)/10.0) for v in values))
+
+
+def _c2l2_ci(curve,lnw,include_low=False):
+    if include_low:
+        vals=list(_C2L2_LOW)+list(curve[:15])
+    else:
+        vals=list(curve[:15])  # 100–2500 Hz
+    lsum=_c2l2_energy_sum(vals)
+    return int(round(lsum))-15-int(round(lnw)),lsum
+
+
+def _c2l2_plot(curve,shift=0,show_deviations=True,title="Curva del piso y referencia ISO 717-2",key=None,highlight_500=False):
+    import plotly.graph_objects as go
+    ref,dev,total=_c2l2_deviations(curve,shift)
+    fig=go.Figure()
+    fig.add_trace(go.Scatter(
+        x=_C2L2_FREQS,y=curve,mode="lines+markers",name="Lₙ del piso",
+        line=dict(width=4,color="#0b69d1"),
+        marker=dict(size=8),
+    ))
+    fig.add_trace(go.Scatter(
+        x=_C2L2_FREQS,y=ref,mode="lines+markers",name="Referencia ISO 717-2",
+        line=dict(width=4,color="#111827"),
+        marker=dict(size=7),
+    ))
+    if show_deviations:
+        for f,y,r,d in zip(_C2L2_FREQS,curve,ref,dev):
+            if d>0:
+                fig.add_trace(go.Scatter(
+                    x=[f,f],y=[r,y],mode="lines",
+                    line=dict(width=6,color="#ef4444"),
+                    showlegend=False,
+                    hovertemplate=f"{f} Hz<br>Desviación: {d:.1f} dB<extra></extra>",
+                ))
+    if highlight_500:
+        idx=_C2L2_FREQS.index(500)
+        fig.add_trace(go.Scatter(
+            x=[500],y=[ref[idx]],mode="markers+text",
+            marker=dict(size=15,color="#f59e0b",symbol="diamond"),
+            text=["LEE AQUÍ"],textposition="top center",
+            name="Lectura Lₙ,w",
+        ))
+    fig.update_xaxes(
+        type="log",title="Frecuencia (Hz)",
+        tickvals=_C2L2_FREQS,ticktext=[str(x) for x in _C2L2_FREQS],
+    )
+    fig.update_yaxes(title="Nivel (dB)")
+    fig.update_layout(height=460,hovermode="x unified",margin=dict(l=35,r=20,t=65,b=60),title=title)
+    st.plotly_chart(fig,use_container_width=True,key=key)
+    return ref,dev,total
+
+
+def _c2l2_curve_control(saved,prefix,curve,require_limit=False,unlock_reading=False):
+    """Misma mecánica visual del Curso 1 · Lab 2: slider de la referencia en 500 Hz."""
+    position_key=f"{prefix}_ref500"
+    default_position=int(saved.get(position_key,60) or 60)
+    if position_key not in st.session_state:
+        st.session_state[position_key]=default_position
+
+    st.markdown("#### Mueve la curva de referencia")
+    ref500=st.slider(
+        "Posición de la referencia en 500 Hz (dB)",
+        30,90,int(st.session_state[position_key]),1,
+        key=position_key,
+    )
+    if st.button("REINICIAR CURVA",key=f"{prefix}_reset",use_container_width=True):
+        st.session_state[position_key]=60
+        st.rerun()
+
+    shift=int(ref500)-60
+    ref,dev,total=_c2l2_plot(
+        curve,shift,show_deviations=True,
+        key=f"{prefix}_plot",
+        highlight_500=bool(st.session_state.get(f"{prefix}_position_ok")),
+    )
+    c1,c2,c3=st.columns(3)
+    c1.metric("Referencia a 500 Hz",f"{ref500} dB")
+    c2.metric("Desplazamiento actual",f"{shift:+d} dB")
+    c3.metric("Σdᵢ",f"{total:.1f} dB")
+
+    if total>32:
+        st.error("✗ LA CURVA AÚN NO CUMPLE EL CRITERIO · Σdᵢ > 32 dB.")
+    else:
+        st.success("✓ LA SUMA NO SUPERA 32 dB.")
+        st.caption("Cumplir 32 dB no basta: todavía debes comprobar si estás en la posición límite.")
+
+    if require_limit:
+        if st.button("COMPROBAR POSICIÓN",key=f"{prefix}_check_position",type="primary",use_container_width=True):
+            # En ruido de impacto, bajar 1 dB la referencia aumenta las desviaciones.
+            _,_,one_step_lower=_c2l2_deviations(curve,shift-1)
+            if total>32:
+                st.warning(
+                    "La suma de desviaciones desfavorables supera 32 dB. "
+                    "Sube nuevamente la curva de referencia."
+                )
+                st.session_state[f"{prefix}_position_ok"]=False
+            elif one_step_lower<=32:
+                st.warning(
+                    "La posición cumple el límite, pero todavía no has encontrado la posición límite. "
+                    "Prueba bajar la referencia 1 dB más."
+                )
+                st.session_state[f"{prefix}_position_ok"]=False
+            else:
+                st.success(
+                    "Correcto. Has encontrado la posición de la curva de referencia que produce "
+                    "la mayor suma posible de desviaciones desfavorables sin superar 32 dB."
+                )
+                st.session_state[f"{prefix}_position_ok"]=True
+            saved[position_key]=int(ref500)
+            saved[f"{prefix}_position_ok"]=bool(st.session_state.get(f"{prefix}_position_ok"))
+            _save_future_state(_C2L2_CLASS_ID,saved)
+    return shift,ref,dev,total
+
+
+
+def _c2l2_finish_stage(saved,stage):
+    saved[f"done_{stage}"]=True
+    saved[f"updated_{stage}"]=_now()
+    _save_future_state(_C2L2_CLASS_ID,saved)
+
+
+def _c2l2_stage_header(stage,title,purpose):
+    header(
+        f"ETAPA {stage} · LABORATORIO 2",
+        title,
+        purpose,
+        show_overview=False,
+        duration_minutes=20 if stage not in (9,10) else (20 if stage==9 else 40),
+    )
+
+
+def _c2l2_stage0(lab,saved):
+    curve,source=_c2l2_floor_curve()
+    _c2l2_stage_header(0,"DEL ESPECTRO AL NÚMERO ÚNICO","Conecta la curva Lₙ,final(f) del Laboratorio 1 con la evaluación ponderada.")
+    _c2l2_asset(stage=0,caption="Del comportamiento espectral del piso a su evaluación ponderada.")
+    st.write(
+        "En el Laboratorio 1 diseñaste un piso y obtuviste una predicción de su comportamiento por frecuencia. "
+        "Ahora vamos a aprender cómo esa información espectral se transforma en descriptores de evaluación."
+    )
+    st.info(f"Fuente de la curva actual: **{source}**.")
+    _c2l2_plot(curve,shift=0,show_deviations=False,title="Lₙ,final(f) · 16 bandas de tercio de octava",key="c2l2_s0_curve")
+    c1,c2=st.columns(2)
+    _c2l2_card("Tenemos","16 BANDAS","Cada punto conserva información sobre una región distinta del espectro.",tone="blue")
+    with c2:
+        _c2l2_card("Queremos construir","Lₙ,w","Un descriptor ponderado de número único obtenido mediante un procedimiento normativo.",tone="green")
+    st.markdown("### Lo que Lₙ,w NO es")
+    cols=st.columns(4)
+    for col,(t,v) in zip(cols,[
+        ("No es","promedio aritmético"),("No es","promedio energético"),
+        ("No es","el máximo"),("No es","Lₙ(500 Hz)"),
+    ]):
+        with col:_c2l2_card(t,v,"El valor aparece después de desplazar una curva de referencia.",tone="orange")
+    st.success("En ruido de impacto: **MENOR Lₙ,w = MEJOR desempeño frente a impactos.**")
+
+    st.markdown("### Interactivo · ¿puede un número describir perfectamente una curva?")
+    profile=st.radio("Compara dos espectros",["Piso A · equilibrado","Piso B · mayor contenido en bajas frecuencias"],horizontal=True,key="c2l2_s0_profile")
+    import plotly.graph_objects as go
+    a=list(curve)
+    b=[v+(5 if f<=250 else (-1 if f>=1000 else 0)) for f,v in zip(_C2L2_FREQS,curve)]
+    show=a if profile.startswith("Piso A") else b
+    fig=go.Figure(go.Scatter(x=_C2L2_FREQS,y=show,mode="lines+markers"))
+    fig.update_xaxes(type="log",tickvals=_C2L2_FREQS,ticktext=[str(x) for x in _C2L2_FREQS],title="Frecuencia (Hz)")
+    fig.update_yaxes(title="Lₙ (dB)")
+    fig.update_layout(height=330)
+    st.plotly_chart(fig,use_container_width=True,key="c2l2_s0_compare")
+    st.info("Dos espectros diferentes pueden terminar con números únicos similares. Más adelante veremos por qué existe **C_I**.")
+    if st.button("COMPLETAR ETAPA 0",key="c2l2_s0_done",type="primary"):
+        _c2l2_finish_stage(saved,0); st.success("Etapa 0 completada.")
+
+
+def _c2l2_stage1(lab,saved):
+    _c2l2_stage_header(1,"DEL NIVEL ESPECTRAL AL DESCRIPTOR PONDERADO","Distingue la magnitud antes de interpretar el número.")
+    _c2l2_asset(stage=1)
+    st.write("El símbolo importa porque no todas las cantidades describen el mismo contexto físico o de medición.")
+    cols=st.columns(3)
+    cards=[
+        ("Lₙ","Nivel normalizado de impactos","Magnitud de impactos normalizada en el contexto correspondiente."),
+        ("L'ₙ","Descriptor de edificio","Incluye la situación real de transmisión del edificio y sus encuentros."),
+        ("L'ₙT","Nivel estandarizado","La normalización utiliza el tiempo de reverberación de referencia."),
+    ]
+    for col,(a,b,c) in zip(cols,cards):
+        with col:_c2l2_card(a,b,c,tone="blue")
+    st.markdown("### De la curva al valor ponderado")
+    st.latex(r"L_n(f)\;\longrightarrow\;L_{n,w}")
+    st.latex(r"L'_n(f)\;\longrightarrow\;L'_{n,w}")
+    st.latex(r"L'_{nT}(f)\;\longrightarrow\;L'_{nT,w}")
+    st.warning("**REGLA DE ORO:** antes de interpretar el número, identifica qué magnitud fue evaluada.")
+
+    scenarios={
+        "Ensayo del elemento con nivel normalizado":"Lₙ → Lₙ,w",
+        "Evaluación de edificio expresada como nivel normalizado aparente":"L'ₙ → L'ₙ,w",
+        "Evaluación de edificio estandarizada al tiempo de reverberación":"L'ₙT → L'ₙT,w",
+    }
+    scenario=st.selectbox("¿Qué descriptor estoy mirando?",[""]+list(scenarios),key="c2l2_s1_scenario")
+    answer=st.radio("Descriptor",["Lₙ → Lₙ,w","L'ₙ → L'ₙ,w","L'ₙT → L'ₙT,w"],index=None,key="c2l2_s1_answer")
+    if st.button("COMPROBAR DESCRIPTOR",key="c2l2_s1_check"):
+        if scenario and answer==scenarios[scenario]:
+            st.success("Correcto: identificaste primero la magnitud y luego su cantidad ponderada.")
+            _c2l2_finish_stage(saved,1)
+        else: st.warning("Revisa si el escenario corresponde a elemento/laboratorio o a edificio/recintos.")
+
+
+def _c2l2_stage2(lab,saved):
+    curve,source=_c2l2_floor_curve()
+    _c2l2_stage_header(2,"CONOCE LA CURVA DE REFERENCIA","Aprende a superponer y desplazar la curva ISO 717-2 sin cambiar su forma.")
+    _c2l2_asset(stage=2)
+    st.info(f"Curva evaluada: **{source}**.")
+    st.write(
+        "La referencia ISO 717-2 posee una forma fija. En esta etapa solo aprenderás a moverla verticalmente "
+        "en pasos de 1 dB; todavía no tienes que encontrar la posición definitiva."
+    )
+    st.dataframe(
+        pd.DataFrame({"Frecuencia (Hz)":_C2L2_FREQS,"Referencia ISO 717-2 (dB)":_C2L2_REF}),
+        hide_index=True,use_container_width=True,
+    )
+    shift,ref,dev,total=_c2l2_curve_control(saved,"c2l2_s2",curve,require_limit=False)
+    st.info("Observa que **la forma no cambia**: todos los puntos suben o bajan exactamente la misma cantidad.")
+    if st.button("COMPLETAR ETAPA 2",key="c2l2_s2_done",type="primary"):
+        _c2l2_finish_stage(saved,2); st.success("Etapa 2 completada.")
+
+
+def _c2l2_stage3(lab,saved):
+    curve,_=_c2l2_floor_curve()
+    _c2l2_stage_header(3,"¿QUÉ BANDAS PENALIZAN EL RESULTADO?","Identifica las desviaciones desfavorables y construye Σdᵢ.")
+    st.write("Para ruido de impacto una banda penaliza cuando el nivel evaluado queda **por encima** de la referencia desplazada.")
+    st.latex(r"\boxed{d_i=\max\left(0,\;L_{n,i}-L_{\mathrm{ref},i}\right)}")
+    shift,ref,dev,total=_c2l2_curve_control(saved,"c2l2_s3",curve,require_limit=False)
+    selected=st.selectbox("Selecciona una banda para inspeccionarla",_C2L2_FREQS,index=7,key="c2l2_s3_band")
+    i=_C2L2_FREQS.index(selected)
+    c1,c2,c3,c4=st.columns(4)
+    c1.metric("Frecuencia",f"{selected} Hz")
+    c2.metric("Lₙ",f"{curve[i]:.1f} dB")
+    c3.metric("Referencia",f"{ref[i]:.1f} dB")
+    c4.metric("dᵢ",f"{dev[i]:.1f} dB")
+    with st.expander("Ver tabla dinámica de desviaciones"):
+        st.dataframe(pd.DataFrame({
+            "f (Hz)":_C2L2_FREQS,"Lₙ (dB)":curve,"L_ref (dB)":ref,
+            "dᵢ desfavorable (dB)":[round(x,1) for x in dev],
+        }),hide_index=True,use_container_width=True)
+    candidates=[f for f,d in zip(_C2L2_FREQS,dev) if d>0]
+    picked=st.multiselect("¿Cuáles bandas suman?",_C2L2_FREQS,key="c2l2_s3_picked")
+    if st.button("COMPROBAR BANDAS",key="c2l2_s3_check"):
+        if set(picked)==set(candidates):
+            st.success("Correcto: solo suman las bandas con Lₙ > L_ref.")
+            _c2l2_finish_stage(saved,3)
+        else: st.warning("Revisa los segmentos rojos: esas son las diferencias que contribuyen a Σdᵢ.")
+
+
+def _c2l2_stage4(lab,saved):
+    curve,_=_c2l2_floor_curve()
+    _c2l2_stage_header(4,"CONSTRUYE EL NÚMERO ÚNICO Lₙ,w","Encuentra la posición límite y lee el valor de la referencia a 500 Hz.")
+    st.warning(
+        "No buscamos cualquier posición con Σdᵢ ≤ 32 dB. Buscamos la **posición límite**: "
+        "la mayor suma posible sin superar 32 dB."
+    )
+    shift,ref,dev,total=_c2l2_curve_control(saved,"c2l2_s4",curve,require_limit=True)
+    if st.session_state.get("c2l2_s4_position_ok"):
+        st.markdown("### Ahora lee el valor a 500 Hz")
+        st.info(
+            "Lₙ,w no es Lₙ(500 Hz). Es el valor a 500 Hz de la **curva de referencia ya desplazada**."
+        )
+        idx=_C2L2_FREQS.index(500)
+        ans=st.number_input("Lₙ,w [dB]",0,120,0,1,key="c2l2_s4_lnw")
+        if st.button("COMPROBAR Lₙ,w",key="c2l2_s4_check_lnw",type="primary"):
+            expected=int(round(ref[idx]))
+            if int(ans)==expected:
+                st.success(f"Correcto: Lₙ,w = {expected} dB.")
+                saved["c2l2_lnw"]=expected
+                saved["c2l2_lnw_shift"]=shift
+                _c2l2_finish_stage(saved,4)
+            else:
+                st.warning("Lee el punto de la referencia desplazada exactamente en 500 Hz.")
+    else:
+        st.caption("La lectura de Lₙ,w se habilita cuando compruebes correctamente la posición límite.")
+
+
+def _c2l2_stage5(lab,saved):
+    curve,_=_c2l2_floor_curve()
+    lnw,shift=_c2l2_lnw(curve)
+    _c2l2_stage_header(5,"TÉRMINO DE ADAPTACIÓN ESPECTRAL C_I","Construye una suma energética y úsala como información espectral complementaria.")
+    _c2l2_asset(stage=5)
+    st.write(
+        "Dos pisos pueden tener Lₙ,w parecido y, sin embargo, distribuir la energía de forma distinta. "
+        "C_I añade información sobre la forma del espectro."
+    )
+    st.latex(r"L_{n,\mathrm{sum}}=10\log_{10}\left(\sum_i10^{L_{n,i}/10}\right)")
+    st.latex(r"\boxed{C_I=L_{n,\mathrm{sum}}-15-L_{n,w}}")
+    st.markdown("### Laboratorio de suma energética")
+    selected=st.multiselect(
+        "Activa bandas para observar su contribución energética",
+        _C2L2_FREQS[:15],default=[100,125,160],key="c2l2_s5_bands"
+    )
+    values=[curve[_C2L2_FREQS.index(f)] for f in selected]
+    if values:
+        partial=_c2l2_energy_sum(values)
+        st.metric("Suma energética de las bandas seleccionadas",f"{partial:.1f} dB")
+        shares=[10**(v/10)/sum(10**(x/10) for x in values)*100 for v in values]
+        st.dataframe(pd.DataFrame({"f (Hz)":selected,"Lₙ (dB)":values,"Aporte energético (%)":[round(x,1) for x in shares]}),hide_index=True)
+    ci,lsum=_c2l2_ci(curve,lnw,False)
+    st.caption("Para el cálculo normativo de este ejercicio se utilizan las bandas de 100 a 2500 Hz.")
+    ans=st.number_input("Calcula C_I [dB]",-30,30,0,1,key="c2l2_s5_ci")
+    if st.button("COMPROBAR C_I",key="c2l2_s5_check",type="primary"):
+        if int(ans)==ci:
+            st.success(f"Correcto. Lₙ,sum ≈ {lsum:.1f} dB → C_I = {ci:+d} dB.")
+            saved["c2l2_ci"]=ci
+            _c2l2_finish_stage(saved,5)
+        else: st.warning("Revisa la suma energética completa y luego aplica C_I = Lₙ,sum − 15 − Lₙ,w.")
+    st.info("C_I **no es una mejora**, no sustituye Lₙ,w y no es una corrección arbitraria.")
+
+
+def _c2l2_stage6(lab,saved):
+    curve,_=_c2l2_floor_curve()
+    lnw,_=_c2l2_lnw(curve)
+    ci,_=_c2l2_ci(curve,lnw,False)
+    ci50,lsum50=_c2l2_ci(curve,lnw,True)
+    _c2l2_stage_header(6,"BAJAS FRECUENCIAS Y C_I,50-2500","Visualiza lo que cambia cuando ampliamos el rango hacia 50 Hz.")
+    _c2l2_asset(stage=6)
+    st.write(
+        "Los pisos flotantes y sistemas livianos pueden presentar comportamiento relevante cerca de resonancias "
+        "y en baja frecuencia. Un único número puede ocultar esa concentración."
+    )
+    mode=st.radio("Rango visible",["100–2500 Hz","50–2500 Hz"],horizontal=True,key="c2l2_s6_range")
+    import plotly.graph_objects as go
+    if mode=="100–2500 Hz":
+        freqs=_C2L2_FREQS[:15]; vals=curve[:15]
+    else:
+        freqs=[50,63,80]+_C2L2_FREQS[:15]; vals=list(_C2L2_LOW)+curve[:15]
+    fig=go.Figure(go.Bar(x=[str(f) for f in freqs],y=vals))
+    fig.update_layout(height=340,xaxis_title="Frecuencia (Hz)",yaxis_title="Lₙ (dB)")
+    st.plotly_chart(fig,use_container_width=True,key="c2l2_s6_plot")
+    c1,c2=st.columns(2)
+    c1.metric("C_I · 100–2500 Hz",f"{ci:+d} dB")
+    c2.metric("C_I,50-2500",f"{ci50:+d} dB")
+    interpretation=st.radio(
+        "¿Por qué puede ser importante ampliar el rango?",
+        [
+            "Porque un problema concentrado a 50–80 Hz puede quedar poco representado por Lₙ,w.",
+            "Porque Lₙ,w deja de existir sobre 100 Hz.",
+            "Porque se suman aritméticamente todos los dB.",
+        ],
+        index=None,key="c2l2_s6_interpret"
+    )
+    if st.button("COMPROBAR INTERPRETACIÓN",key="c2l2_s6_check"):
+        if interpretation and interpretation.startswith("Porque un problema"):
+            st.success("Correcto: el rango ampliado aporta contexto de baja frecuencia.")
+            _c2l2_finish_stage(saved,6)
+        else: st.warning("Piensa en qué información espectral puede esconder un único descriptor.")
+
+
+def _c2l2_stage7(lab,saved):
+    _c2l2_stage_header(7,"¿CUÁNTO MEJORA REALMENTE UN REVESTIMIENTO?","Transforma ΔL(f) en la reducción ponderada ΔL_w.")
+    _c2l2_asset(stage=7)
+    st.write("En el Laboratorio 1 trabajaste con una reducción **por frecuencia**. Ahora veremos cómo se obtiene una reducción ponderada.")
+    c1,c2=st.columns(2)
+    with c1:_c2l2_card("ΔLₙ(f)","reducción por frecuencia","Conserva la información banda a banda.",tone="blue")
+    with c2:_c2l2_card("ΔL_w","reducción ponderada","Resume la reducción mediante el piso de referencia y el procedimiento ISO 717-2.",tone="green")
+    st.markdown("### Piso pesado de referencia")
+    st.write("Para el piso pesado de referencia: **Lₙ,r,0,w = 78 dB**.")
+    st.latex(r"L_{n,r}(f)=L_{n,r,0}(f)-\Delta L(f)")
+    treated=[a-b for a,b in zip(_C2L2_REF_FLOOR,_C2L2_DELTA)]
+    lnrw,shift=_c2l2_lnw(treated)
+    dlw=78-lnrw
+    step=st.slider("Construcción paso a paso",1,5,1,1,key="c2l2_s7_step")
+    if step>=1:
+        st.dataframe(pd.DataFrame({"f (Hz)":_C2L2_FREQS,"ΔL(f) (dB)":_C2L2_DELTA}),hide_index=True)
+    if step>=2:
+        st.dataframe(pd.DataFrame({"f (Hz)":_C2L2_FREQS,"Piso ref. Lₙ,r,0":_C2L2_REF_FLOOR}),hide_index=True)
+    if step>=3:
+        _c2l2_plot(treated,0,False,"Piso de referencia después de aplicar ΔL(f)",key="c2l2_s7_treated")
+    if step>=4:
+        st.info("Ahora la curva resultante se pondera con **el mismo procedimiento de referencia** usado para Lₙ,w.")
+    if step>=5:
+        ans=st.number_input("ΔL_w [dB]",0,60,0,1,key="c2l2_s7_dlw")
+        if st.button("COMPROBAR ΔL_w",key="c2l2_s7_check",type="primary"):
+            if int(ans)==int(dlw):
+                st.success(f"Correcto: Lₙ,r,w = {lnrw} dB → ΔL_w = 78 − {lnrw} = {dlw} dB.")
+                _c2l2_finish_stage(saved,7)
+            else: st.warning("Primero pondera la curva del piso de referencia tratado y luego resta su Lₙ,r,w a 78 dB.")
+    st.warning("Un ΔL_w obtenido sobre un piso pesado de referencia **no debe transferirse automáticamente** a cualquier sistema constructivo.")
+
+
+def _c2l2_stage8(lab,saved):
+    _c2l2_stage_header(8,"UN NÚMERO NO ES UN SISTEMA CONSTRUCTIVO","Interpreta profesionalmente Lₙ,w, C_I y ΔL_w.")
+    _c2l2_asset(stage=8)
+    station=st.radio("Estación",["A · Lₙ,w vs ΔL_w","B · Piso pesado vs piso liviano","C · Lₙ,eq,0,w","D · Lee una ficha técnica"],horizontal=True,key="c2l2_s8_station")
+    if station.startswith("A"):
+        c1,c2=st.columns(2)
+        with c1:_c2l2_card("Lₙ,w","prestación ponderada","Describe el nivel de impacto ponderado del piso/sistema. Menor es mejor.",tone="blue")
+        with c2:_c2l2_card("ΔL_w","reducción ponderada","Describe cuánto reduce un revestimiento bajo el procedimiento de referencia.",tone="green")
+        st.warning("NO LOS CONFUNDAS: nivel resultante y reducción de revestimiento son magnitudes distintas.")
+    elif station.startswith("B"):
+        st.markdown("### Losa pesada vs piso liviano")
+        st.write(
+            "La ISO 717-2 contempla procedimientos específicos para revestimientos sobre pisos ligeros. "
+            "Un valor obtenido sobre una losa pesada no es universalmente transferible."
+        )
+        cols=st.columns(3)
+        for col,label in zip(cols,["ΔL_t1,w","ΔL_t2,w","ΔL_t3,w"]):
+            with col:_c2l2_card(label,"piso liviano","Descriptor de reducción asociado al procedimiento específico correspondiente.",tone="purple")
+    elif station.startswith("C"):
+        _c2l2_card("Lₙ,eq,0,w","bloque avanzado","Nivel normalizado ponderado equivalente de impactos de un piso pesado desnudo; ayuda a caracterizar el piso base.",tone="orange")
+        st.write("En este laboratorio se introduce para interpretación, sin exigir un desarrollo matemático extenso.")
+    else:
+        st.markdown("### Ficha técnica ficticia")
+        st.dataframe(pd.DataFrame([{"Lₙ,w":"52 dB","C_I":"−5 dB","ΔL_w":"18 dB"}]),hide_index=True)
+        q=st.multiselect(
+            "Asocia correctamente los valores",
+            [
+                "52 dB describe la prestación ponderada del piso/sistema.",
+                "−5 dB añade información espectral complementaria.",
+                "18 dB describe reducción ponderada del revestimiento bajo el procedimiento correspondiente.",
+                "18 dB es el nivel final del piso.",
+            ],key="c2l2_s8_sheet"
+        )
+        correct=set(q)=={
+            "52 dB describe la prestación ponderada del piso/sistema.",
+            "−5 dB añade información espectral complementaria.",
+            "18 dB describe reducción ponderada del revestimiento bajo el procedimiento correspondiente.",
+        }
+        if st.button("COMPROBAR FICHA",key="c2l2_s8_check"):
+            if correct:
+                st.success("Correcto: identificaste qué describe cada número.")
+                _c2l2_finish_stage(saved,8)
+            else: st.warning("No preguntes solo cuál es mayor: identifica primero qué magnitud describe cada valor.")
+
+
+_C2L2_STAGE9_QUESTIONS=[
+    ("Significado de Lₙ,w","¿Qué representa Lₙ,w?",["Un promedio aritmético del espectro.","El valor a 500 Hz de la referencia desplazada según ISO 717-2.","El máximo de Lₙ(f).","Una reducción de revestimiento."],1,"Lₙ,w se lee a 500 Hz en la referencia después de encontrar su posición normativa."),
+    ("Sentido del resultado","Para ruido de impacto, ¿qué comparación es favorable?",["Mayor Lₙ,w es mejor.","Menor Lₙ,w es mejor.","Lₙ,w no permite comparar.","Solo importa 500 Hz medido."],1,"En niveles de impacto, un menor nivel ponderado representa mejor comportamiento."),
+    ("Desviaciones","¿Cuándo una banda aporta desviación desfavorable?",["Cuando Lₙ<L_ref.","Cuando Lₙ>L_ref.","Siempre.","Solo a 500 Hz."],1,"La desviación es max(0,Lₙ−L_ref)."),
+    ("Posición límite","Una posición da Σdᵢ=20 dB y al bajar 1 dB queda en 27 dB. ¿Es definitiva?",["Sí.","No, todavía puede acercarse sin superar 32 dB.","Solo si 500 Hz coincide.","Depende de C_I."],1,"Se busca la mayor suma posible sin superar 32 dB."),
+    ("C_I","¿Qué aporta C_I?",["Una mejora adicional que se suma al piso.","Información espectral complementaria a Lₙ,w.","La frecuencia natural.","La carga por apoyo."],1,"C_I complementa la lectura espectral; no es una mejora."),
+    ("Bajas frecuencias","¿Qué aporta C_I,50-2500?",["Extiende la información hacia 50, 63 y 80 Hz.","Elimina las bajas frecuencias.","Reemplaza Lₙ,w.","Convierte Hz a rpm."],0,"El rango ampliado revela contenido de baja frecuencia."),
+    ("ΔL_w","¿Qué diferencia principal existe entre ΔL(f) y ΔL_w?",["Son idénticos.","ΔL(f) es espectral y ΔL_w es una reducción ponderada.","ΔL_w es un nivel final.","ΔL(f) solo existe a 500 Hz."],1,"Uno conserva bandas; el otro resume la reducción mediante ponderación."),
+    ("Bomba rpm → Hz","Una bomba gira a 1450 rpm. ¿Cuál es aproximadamente su frecuencia fundamental?",["12,1 Hz","24,2 Hz","48,3 Hz","1450 Hz"],1,"1450/60≈24,17 Hz."),
+    ("Camino paralelo","La bomba tiene buenos aisladores pero la tubería está rígidamente conectada. ¿Qué queda?",["Nada.","Un camino estructural paralelo.","Solo ruido aéreo.","Un problema de C_I."],1,"La tubería puede puentear el aislamiento de la base."),
+    ("Cavitación","Si se detecta una condición compatible con cavitación, ¿qué enfoque es correcto?",["Solo instalar aisladores.","Corregir la condición hidráulica en la fuente y luego controlar caminos.","Agregar absorbente únicamente.","Aumentar Lₙ,w."],1,"La cavitación exige investigar y corregir la condición hidráulica, además de los caminos de transmisión."),
+]
+
+
+def _c2l2_stage9_remote():
+    user_key=st.session_state.get("user_key")
+    if not user_key:return None
+    rows=_remote_rows("responses",class_id=_C2L2_CLASS_ID,user_key=user_key) or []
+    row=next((r for r in rows if int(r.get("stage") or -1)==9 and r.get("question_key")=="final_comprehension"),None)
+    if not row:return None
+    payload=row.get("answer") or {}
+    if isinstance(payload,str):
+        try:payload=json.loads(payload)
+        except Exception:payload={}
+    return {"row":row,"payload":payload}
+
+
+def _c2l2_stage9_save(saved):
+    saved["c2l2_e9_started_at"]=st.session_state.get("c2l2_e9_started_at")
+    saved["c2l2_e9_deadline"]=st.session_state.get("c2l2_e9_deadline")
+    saved["c2l2_e9_answers"]={str(i):st.session_state.get(f"c2l2_e9_q{i}") for i in range(10)}
+    _save_future_state(_C2L2_CLASS_ID,saved)
+
+
+def _c2l2_stage9_finish(saved,reason):
+    answers={str(i):st.session_state.get(f"c2l2_e9_q{i}") for i in range(10)}
+    score=sum(4 for i,q in enumerate(_C2L2_STAGE9_QUESTIONS) if answers.get(str(i))==q[2][q[3]])
+    payload={"version":_C2L2_VERSION,"answers":answers,"reason":reason,"score":score,"max_score":40,"finished_at":_now()}
+    client=_supabase(); user_key=st.session_state.get("user_key")
+    if client is not None and user_key:
+        qid=f"{_C2L2_CLASS_ID}-final_comprehension-v1"
+        client.table("questions").upsert({
+            "id":qid,"class_id":_C2L2_CLASS_ID,"stage":9,"question_key":"final_comprehension",
+            "question_text":"Curso 2 · Laboratorio 2 · Evaluación de comprensión",
+            "correct_answer":"Pauta de 10 preguntas","max_score":40,"content_version":1,
+            "active":True,"updated_at":_now(),
+        },on_conflict="id").execute()
+        client.table("responses").upsert({
+            "course_id":COURSE_ID,"class_id":_C2L2_CLASS_ID,"user_key":user_key,"stage":9,
+            "question_key":"final_comprehension","question_text":"Evaluación de comprensión · Curso 2",
+            "correct_answer":"Pauta de 10 preguntas","answer":payload,
+            "auto_level":"Finalizada","feedback":f"Resultado automático: {score}/40 puntos.",
+            "auto_score":score,"max_score":40,"status":"submitted","updated_at":_now(),"submitted_at":_now(),
+        },on_conflict="class_id,user_key,question_key").execute()
+    saved["c2l2_e9_submitted"]=True; saved["c2l2_e9_score"]=score; saved["done_9"]=True
+    _save_future_state(_C2L2_CLASS_ID,saved)
+
+
+def _c2l2_stage9(lab,saved):
+    _c2l2_stage_header(9,"EVALUACIÓN FINAL · PREGUNTAS DE COMPRENSIÓN","Diez preguntas · 20 minutos · 40 puntos · un intento.")
+    st.info(
+        "Misma arquitectura evaluativa del Curso 1 · Laboratorio 2: 10 preguntas, 4 puntos cada una, "
+        "20 minutos continuos y un único intento."
+    )
+    if st.session_state.get("role")=="Docente":
+        st.markdown("### Pauta docente")
+        for i,q in enumerate(_C2L2_STAGE9_QUESTIONS):
+            with st.expander(f"Pregunta {i+1} · {q[0]}"):
+                st.write(q[1]); st.success(q[2][q[3]]); st.info(q[4])
+        st.markdown("### Respuestas de alumnos")
+        rows=_remote_rows("responses",class_id=_C2L2_CLASS_ID) or []
+        rows=[r for r in rows if int(r.get("stage") or -1)==9 and r.get("question_key")=="final_comprehension"]
+        if rows:
+            st.dataframe(pd.DataFrame([{"Alumno":r.get("user_key"),"Puntaje":f"{float(r.get('teacher_score') if r.get('teacher_score') is not None else r.get('auto_score') or 0):g}/40","Estado":r.get("status")} for r in rows]),hide_index=True)
+        else: st.caption("Sin entregas todavía.")
+        return
+
+    remote=_c2l2_stage9_remote()
+    if remote or saved.get("c2l2_e9_submitted"):
+        payload=(remote or {}).get("payload",{})
+        score=float((remote or {}).get("row",{}).get("teacher_score") if remote and (remote or {}).get("row",{}).get("teacher_score") is not None else payload.get("score",saved.get("c2l2_e9_score",0)) or 0)
+        answers=payload.get("answers",saved.get("c2l2_e9_answers",{}))
+        st.success(f"Evaluación finalizada · Puntaje: {score:g}/40")
+        for i,q in enumerate(_C2L2_STAGE9_QUESTIONS):
+            chosen=answers.get(str(i)) if isinstance(answers,dict) else None
+            with st.expander(f"Pregunta {i+1} · {q[0]}",expanded=i==0):
+                st.write(q[1]); st.write(f"Tu respuesta: {chosen or 'Sin respuesta'}")
+                if chosen==q[2][q[3]]:st.success(f"Respuesta correcta: {q[2][q[3]]}")
+                else:st.error(f"Respuesta correcta: {q[2][q[3]]}")
+                st.info(q[4])
+        return
+
+    if "c2l2_e9_started_at" not in st.session_state:
+        if saved.get("c2l2_e9_started_at"):
+            st.session_state["c2l2_e9_started_at"]=saved.get("c2l2_e9_started_at")
+            st.session_state["c2l2_e9_deadline"]=saved.get("c2l2_e9_deadline")
+            for i,v in (saved.get("c2l2_e9_answers") or {}).items():
+                st.session_state.setdefault(f"c2l2_e9_q{i}",v)
+    if not st.session_state.get("c2l2_e9_started_at"):
+        st.markdown("### Antes de comenzar")
+        st.markdown("- **20 minutos continuos**.\n- **4 puntos por pregunta**.\n- Un solo intento.\n- Al enviar, el intento queda cerrado.")
+        if st.button("COMENZAR EVALUACIÓN",type="primary",use_container_width=True,key="c2l2_e9_start"):
+            now=dt.datetime.now(dt.timezone.utc)
+            st.session_state["c2l2_e9_started_at"]=now.isoformat()
+            st.session_state["c2l2_e9_deadline"]=(now+dt.timedelta(minutes=20)).isoformat()
+            _c2l2_stage9_save(saved); st.rerun()
+        return
+
+    deadline=dt.datetime.fromisoformat(str(st.session_state["c2l2_e9_deadline"]).replace("Z","+00:00"))
+    now=dt.datetime.now(dt.timezone.utc)
+    remaining=max(0,int((deadline-now).total_seconds()))
+    st.metric("Tiempo restante",f"{remaining//60:02d}:{remaining%60:02d}")
+    if remaining<=0:
+        _c2l2_stage9_finish(saved,"timeout"); st.rerun()
+
+    for i,q in enumerate(_C2L2_STAGE9_QUESTIONS):
+        st.markdown(f'<div class="question-box"><div class="question-label">PREGUNTA {i+1} DE 10 · 4 PUNTOS</div><div class="question-text">{q[1]}</div></div>',unsafe_allow_html=True)
+        st.radio("Selecciona una alternativa",q[2],index=None,key=f"c2l2_e9_q{i}",label_visibility="collapsed",on_change=_c2l2_stage9_save,args=(saved,))
+    answered=sum(st.session_state.get(f"c2l2_e9_q{i}") is not None for i in range(10))
+    st.progress(answered/10); st.caption(f"{answered} de 10 respuestas registradas.")
+    if st.button("ENVIAR EVALUACIÓN DEFINITIVA",type="primary",use_container_width=True,key="c2l2_e9_submit"):
+        if answered<10:
+            st.session_state["c2l2_e9_confirm"]=True
+            st.warning(f"Faltan {10-answered} respuestas. Puedes confirmar el envío con preguntas pendientes.")
+        else:
+            _c2l2_stage9_finish(saved,"submitted"); st.rerun()
+    if st.session_state.get("c2l2_e9_confirm") and answered<10:
+        if st.button("CONFIRMAR ENVÍO INCOMPLETO",key="c2l2_e9_submit_incomplete"):
+            _c2l2_stage9_finish(saved,"submitted_incomplete"); st.rerun()
+
+
+_C2L2_S10_Q=[
+    ("¿Qué información añade C_I frente a Lₙ,w?",["Una reducción física adicional.","Información sobre la distribución espectral.","La velocidad de giro de la bomba.","La carga del resorte."],1),
+    ("Si dos pisos tienen Lₙ,w parecido y C_I distinto, ¿son acústicamente idénticos?",["Sí.","No; la distribución espectral puede ser distinta.","Solo si pesan igual.","Siempre que tengan el mismo revestimiento."],1),
+    ("Una coincidencia de 24 Hz en bomba, tubería y estructura significa:",["Causalidad absoluta demostrada.","Evidencia para investigar un camino común, no prueba única de causalidad.","Que existe cavitación obligatoriamente.","Que el piso tiene Lₙ,w=24."],1),
+    ("Si la base está aislada pero la tubería es rígida, ¿está resuelto?",["Sí.","No; existe un camino paralelo.","Sí, si r>1.","Solo depende de C_I."],1),
+    ("Si existe cavitación, la primera prioridad es:",["Aislar solamente la base.","Investigar/corregir la condición hidráulica en la fuente.","Agregar absorbente al dormitorio.","Bajar Lₙ,w."],1),
+]
+
+
+def _c2l2_s10_remote():
+    user_key=st.session_state.get("user_key")
+    if not user_key:return None
+    rows=_remote_rows("responses",class_id=_C2L2_CLASS_ID,user_key=user_key) or []
+    row=next((r for r in rows if int(r.get("stage") or -1)==10 and r.get("question_key")=="final_integrated_design"),None)
+    if not row:return None
+    payload=row.get("answer") or {}
+    if isinstance(payload,str):
+        try:payload=json.loads(payload)
+        except Exception:payload={}
+    return {"row":row,"payload":payload}
+
+
+def _c2l2_s10_finish(saved,payload,score):
+    client=_supabase(); user_key=st.session_state.get("user_key")
+    if client is not None and user_key:
+        qid=f"{_C2L2_CLASS_ID}-final_integrated_design-v1"
+        client.table("questions").upsert({
+            "id":qid,"class_id":_C2L2_CLASS_ID,"stage":10,"question_key":"final_integrated_design",
+            "question_text":"Evaluación integradora · Curso 2","correct_answer":"Pauta docente del caso integrado",
+            "max_score":60,"content_version":1,"active":True,"updated_at":_now(),
+        },on_conflict="id").execute()
+        client.table("responses").upsert({
+            "course_id":COURSE_ID,"class_id":_C2L2_CLASS_ID,"user_key":user_key,"stage":10,
+            "question_key":"final_integrated_design","question_text":"Evaluación integradora · Curso 2",
+            "correct_answer":"Pauta docente del caso integrado","answer":payload,"auto_level":"Finalizada",
+            "feedback":f"Resultado automático: {score:g}/60 puntos.","auto_score":score,"max_score":60,
+            "status":"submitted","updated_at":_now(),"submitted_at":_now(),
+        },on_conflict="class_id,user_key,question_key").execute()
+    saved["c2l2_s10_submitted"]=True;saved["c2l2_s10_score"]=score;saved["done_10"]=True
+    _save_future_state(_C2L2_CLASS_ID,saved)
+
+
+def _c2l2_stage10(lab,saved):
+    curve,source=_c2l2_floor_curve()
+    expected_lnw,limit_shift=_c2l2_lnw(curve)
+    expected_ci,_=_c2l2_ci(curve,expected_lnw,False)
+    _c2l2_stage_header(10,"EVALUACIÓN INTEGRADORA · DEL ESPECTRO AL DIAGNÓSTICO PROFESIONAL","40 minutos · 60 puntos · ruido de impacto + instalaciones.")
+    _c2l2_asset(stage=10)
+    st.info("Misma arquitectura de 60 puntos del Curso 1 · Laboratorio 2: desarrollo técnico + 5 preguntas de comprensión.")
+
+    if st.session_state.get("role")=="Docente":
+        st.markdown("### Pauta desarrollada")
+        st.write(f"Curva: {source}")
+        st.write(f"Posición límite de referencia: {limit_shift:+d} dB · **Lₙ,w esperado = {expected_lnw} dB**.")
+        st.write(f"**C_I esperado = {expected_ci:+d} dB**.")
+        st.write("Bomba: 1450 rpm → fₑ≈24,17 Hz; masa 600 kg; 4 apoyos → 150 kg por apoyo.")
+        st.write("Un aislamiento de base correcto puede ser puenteado por tubería y abrazadera rígidas.")
+        st.write("Cavitación: controlar primero la condición hidráulica/fuente, además de caminos de transmisión.")
+        rows=_remote_rows("responses",class_id=_C2L2_CLASS_ID) or []
+        rows=[r for r in rows if int(r.get("stage") or -1)==10 and r.get("question_key")=="final_integrated_design"]
+        if rows:
+            st.dataframe(pd.DataFrame([{"Alumno":r.get("user_key"),"Puntaje":f"{float(r.get('teacher_score') if r.get('teacher_score') is not None else r.get('auto_score') or 0):g}/60","Estado":r.get("status")} for r in rows]),hide_index=True)
+        return
+
+    remote=_c2l2_s10_remote()
+    if remote or saved.get("c2l2_s10_submitted"):
+        row=(remote or {}).get("row",{})
+        payload=(remote or {}).get("payload",{})
+        score=float(row.get("teacher_score") if row and row.get("teacher_score") is not None else row.get("auto_score") if row else saved.get("c2l2_s10_score",0) or 0)
+        st.success(f"Evaluación enviada · {score:g}/60 puntos.")
+        st.write(payload.get("conclusion") or "")
+        return
+
+    st.markdown("## Encargo profesional")
+    st.write(
+        "Vuelves al edificio del Laboratorio 1. Debes evaluar el piso mediante ISO 717-2 y resolver un segundo reclamo "
+        "nocturno asociado a una bomba centrífuga."
+    )
+    st.info(f"Curva disponible: **{source}**.")
+
+    st.markdown("## A · Recupera y evalúa el piso")
+    _c2l2_plot(curve,0,False,"Comportamiento espectral del piso",key="c2l2_s10_floor")
+
+    st.markdown("## B · Construcción manual de Lₙ,w")
+    shift,ref,dev,total=_c2l2_curve_control(saved,"c2l2_s10_curve",curve,require_limit=True)
+    lnw_verified=False
+    if st.session_state.get("c2l2_s10_curve_position_ok"):
+        ans_lnw=st.number_input("Lee Lₙ,w a 500 Hz [dB]",0,120,0,1,key="c2l2_s10_lnw")
+        if st.button("VERIFICAR Lₙ,w",key="c2l2_s10_verify_lnw"):
+            st.session_state["c2l2_s10_lnw_ok"]=int(ans_lnw)==expected_lnw
+        lnw_verified=bool(st.session_state.get("c2l2_s10_lnw_ok"))
+        (st.success if lnw_verified else st.info)(
+            "Lₙ,w verificado correctamente." if lnw_verified else "Ingresa el valor leído y verifica."
+        )
+
+    st.markdown("## C · C_I")
+    st.write("Construye la suma energética de 100 a 2500 Hz y aplica C_I=Lₙ,sum−15−Lₙ,w.")
+    ans_ci=st.number_input("C_I [dB]",-30,30,0,1,key="c2l2_s10_ci")
+    if st.button("VERIFICAR C_I",key="c2l2_s10_verify_ci"):
+        st.session_state["c2l2_s10_ci_ok"]=int(ans_ci)==expected_ci
+    ci_ok=bool(st.session_state.get("c2l2_s10_ci_ok"))
+    if ci_ok:st.success("C_I correcto.")
+
+    st.markdown("## D · Interpreta dos soluciones")
+    interpretation=st.radio(
+        "Dos pisos presentan Lₙ,w muy parecido, pero C_I diferente. ¿Los considerarías acústicamente idénticos?",
+        ["Sí, porque Lₙ,w es suficiente para todo.","No; C_I indica diferencias en la distribución espectral."],
+        index=None,key="c2l2_s10_interpret"
+    )
+
+    st.markdown("## E · Vuelve el problema de la bomba")
+    _c2l2_asset(name="bomba")
+    st.write("Bomba centrífuga · n=1450 rpm · masa=600 kg · 4 apoyos.")
+    fe=st.number_input("Calcula fₑ=n/60 [Hz]",0.0,100.0,0.0,0.01,key="c2l2_s10_fe")
+    fe_ok=abs(float(fe)-1450/60)<=0.15
+    if fe_ok:st.success("Frecuencia fundamental coherente: ≈24,17 Hz.")
+
+    st.markdown("## F · Diagnóstico espectral")
+    import plotly.graph_objects as go
+    fdiag=[12.5,16,20,25,31.5,40,50,63,80,100]
+    pump_levels=[42,44,48,67,50,46,58,44,42,40]
+    fig=go.Figure(go.Bar(x=[str(x) for x in fdiag],y=pump_levels))
+    fig.update_layout(height=320,xaxis_title="Banda (Hz)",yaxis_title="Nivel relativo")
+    st.plotly_chart(fig,use_container_width=True,key="c2l2_s10_pump_spectrum")
+    path=st.radio(
+        "Bomba, tubería y estructura muestran componentes próximas a 24 Hz. ¿Qué interpretación es correcta?",
+        ["Existe evidencia para investigar un camino estructural común, sin afirmar causalidad absoluta.","La coincidencia demuestra causalidad absoluta.","Solo puede ser ruido aéreo."],
+        index=None,key="c2l2_s10_path"
+    )
+
+    st.markdown("## G · Aislamiento vibratorio")
+    iso=st.selectbox("Montaje a evaluar",["","Montaje A · fₙ=12 Hz","Montaje B · fₙ=6 Hz","Montaje C · fₙ=3 Hz"],key="c2l2_s10_iso")
+    fn={"Montaje A · fₙ=12 Hz":12.0,"Montaje B · fₙ=6 Hz":6.0,"Montaje C · fₙ=3 Hz":3.0}.get(iso)
+    r_value=(1450/60)/fn if fn else None
+    if r_value:
+        st.metric("Razón de frecuencias r=fₑ/fₙ",f"{r_value:.2f}")
+        st.caption("Interpreta este valor junto con la transmisibilidad estudiada en el Laboratorio 1.")
+
+    st.markdown("## H · El giro del caso")
+    _c2l2_asset(name="tuberias")
+    st.warning("La tubería permanece rígidamente conectada y existe una abrazadera rígida a la estructura.")
+    parallel=st.radio("¿Está resuelto el problema?",["Sí.","No; existe un camino paralelo bomba → tubería → soporte → estructura."],index=None,key="c2l2_s10_parallel")
+
+    st.markdown("## I · Control integral")
+    controls=st.multiselect(
+        "Construye una estrategia según mecanismo → medida",
+        [
+            "Aisladores correctamente seleccionados",
+            "Conexión flexible de tubería",
+            "Soportes resilientes",
+            "Corregir penetraciones rígidas",
+            "Corrección hidráulica si existe cavitación",
+            "Balanceo y alineación si corresponde",
+            "Absorbente como única medida",
+            "Silenciador de ducto para la tubería",
+        ],key="c2l2_s10_controls"
+    )
+    required={
+        "Aisladores correctamente seleccionados","Conexión flexible de tubería",
+        "Soportes resilientes","Corregir penetraciones rígidas",
+        "Corrección hidráulica si existe cavitación",
+    }
+    controls_ok=required.issubset(set(controls)) and "Absorbente como única medida" not in controls
+
+    st.markdown("## J · Conclusión profesional")
+    conclusion=st.text_area(
+        "Conclusión",
+        key="c2l2_s10_conclusion",
+        placeholder="Integra Lₙ,w, C_I, la interpretación del piso y el diagnóstico/control de la bomba."
+    )
+
+    # 40 puntos de desarrollo técnico
+    design_checks=[
+        lnw_verified,ci_ok,
+        interpretation=="No; C_I indica diferencias en la distribución espectral.",
+        fe_ok,
+        path=="Existe evidencia para investigar un camino estructural común, sin afirmar causalidad absoluta.",
+        bool(r_value and r_value>math.sqrt(2)),
+        parallel=="No; existe un camino paralelo bomba → tubería → soporte → estructura.",
+        controls_ok,
+    ]
+    design_score=sum(5 for x in design_checks if x)  # 8 x 5 = 40
+
+    st.markdown("## Preguntas de comprensión · 20 puntos")
+    answers={}
+    correct_count=0
+    for i,q in enumerate(_C2L2_S10_Q):
+        v=st.radio(f"{i+1}. {q[0]}",q[1],index=None,key=f"c2l2_s10_q{i}")
+        answers[str(i)]=v
+        correct_count+=int(v==q[1][q[2]])
+    comprehension_score=correct_count*4
+    total=design_score+comprehension_score
+    c1,c2,c3=st.columns(3)
+    c1.metric("Desarrollo técnico",f"{design_score}/40")
+    c2.metric("Comprensión",f"{comprehension_score}/20")
+    c3.metric("Puntaje acumulado",f"{total}/60")
+
+    submitted_ready=all(v is not None for v in answers.values()) and len(conclusion.split())>=12
+    if st.button("ENVIAR DESARROLLO DEFINITIVO",type="primary",use_container_width=True,key="c2l2_s10_submit"):
+        if not submitted_ready:
+            st.warning("Completa las cinco preguntas y una conclusión profesional antes de enviar.")
+        else:
+            payload={
+                "version":_C2L2_VERSION,
+                "floor_source":source,
+                "lnw":st.session_state.get("c2l2_s10_lnw"),
+                "ci":ans_ci,
+                "reference_shift":shift,
+                "pump":{"rpm":1450,"mass_kg":600,"supports":4,"fe_hz":fe,"path":path,"isolator":iso,"r":r_value,"parallel_path":parallel,"controls":controls},
+                "interpretation":interpretation,
+                "conclusion":conclusion,
+                "answers":answers,
+                "design_score":design_score,"comprehension_score":comprehension_score,
+            }
+            _c2l2_s10_finish(saved,payload,total); st.success(f"Evaluación enviada · {total}/60 puntos."); st.rerun()
+
+
 def future_lab_view_impl(lab):
     """Renderer de los laboratorios posteriores manteniendo la navegación institucional."""
     class_id=lab["id"]
@@ -11830,6 +12740,14 @@ def future_lab_view_impl(lab):
         if selected == 10:
             _render_course2_lab1_stage10(lab, saved)
             return
+
+    if class_id == _C2L2_CLASS_ID:
+        renderers=[
+            _c2l2_stage0,_c2l2_stage1,_c2l2_stage2,_c2l2_stage3,_c2l2_stage4,
+            _c2l2_stage5,_c2l2_stage6,_c2l2_stage7,_c2l2_stage8,_c2l2_stage9,_c2l2_stage10,
+        ]
+        renderers[selected](lab,saved)
+        return
 
     title,objective,concept,activity=lab["stages"][selected]
     stage_minutes=20 if selected not in (9,10) else 35
