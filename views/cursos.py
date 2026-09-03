@@ -986,12 +986,14 @@ def _render_course2_lab1_welcome(lab, saved):
         unsafe_allow_html=True,
     )
 
-    if st.button("Comenzar laboratorio →", type="primary", key=f"start_course2_lab1_{class_id}", width="stretch"):
+    # Navegación del Curso 2 · Lab 1: exclusivamente mediante la barra lateral.
+    # La bienvenida se considera visitada al abrirla como alumno; Proyección no persiste progreso.
+    if st.session_state.get("role") == "Alumno" and not saved.get("done_0"):
         saved["done_0"] = True
         saved["updated_0"] = _now()
         _save_future_state_impl(class_id, saved)
-        st.session_state[stage_selector_key] = 1
-        st.rerun()
+
+    st.caption("Para continuar, selecciona la siguiente etapa desde la barra lateral.")
 
 
 def _course2_stage1_comprehension_block(class_id, saved):
@@ -1731,15 +1733,7 @@ def _render_course2_lab1_stage1(lab, saved):
     # --------------------------------------------------------
     _course2_stage1_comprehension_block(class_id, saved)
 
-    nav_left, nav_right = st.columns(2)
-    with nav_left:
-        if st.button("← Etapa 0", key=f"stage1_prev_{class_id}", width="stretch"):
-            st.session_state[stage_selector_key] = 0
-            st.rerun()
-    with nav_right:
-        if st.button("Etapa 2 →", key=f"stage1_next_{class_id}", width="stretch"):
-            st.session_state[stage_selector_key] = 2
-            st.rerun()
+    st.caption("Navega entre etapas desde la barra lateral.")
 
 
 def _render_course2_lab1_stage2(lab, saved):
@@ -2557,15 +2551,7 @@ def _render_course2_lab1_stage2(lab, saved):
         "para diagnosticar casos reales de impacto e instalaciones."
     )
 
-    left,right=st.columns(2)
-    with left:
-        if st.button("← Etapa 1",key=f"s2_prev_{class_id}",use_container_width=True):
-            st.session_state[stage_selector_key]=1
-            st.rerun()
-    with right:
-        if st.button("Etapa 3 →",key=f"s2_next_{class_id}",use_container_width=True):
-            st.session_state[stage_selector_key]=3
-            st.rerun()
+    st.caption("Navega entre etapas desde la barra lateral.")
 
 
 def _render_course2_lab1_stage3(lab, saved):
@@ -3302,16 +3288,7 @@ def _render_course2_lab1_stage3(lab, saved):
             "radiación desde cielo/muro del dormitorio → presión sonora en el receptor."
         )
 
-    st.markdown("---")
-    nav1,nav2=st.columns(2)
-    with nav1:
-        if st.button("← Etapa 2",key=f"{class_id}_s3_prev",use_container_width=True):
-            st.session_state[stage_selector_key]=2
-            st.rerun()
-    with nav2:
-        if st.button("Etapa 4 →",key=f"{class_id}_s3_next",use_container_width=True):
-            st.session_state[stage_selector_key]=4
-            st.rerun()
+    st.caption("Navega entre etapas desde la barra lateral.")
 
 
 def _render_course2_lab1_stage4(lab, saved):
@@ -3825,15 +3802,7 @@ def _render_course2_lab1_stage4(lab, saved):
             "la posición modifica Y(f,x,y); y la vibración necesita un modelo de radiación antes de transformarse en resultado acústico."
         )
 
-    left,right=st.columns(2)
-    with left:
-        if st.button("← Etapa 3",key=f"s4_prev_{class_id}",use_container_width=True):
-            st.session_state[stage_selector_key]=3
-            st.rerun()
-    with right:
-        if st.button("Etapa 5 · Predecir losa base →",key=f"s4_next_{class_id}",use_container_width=True):
-            st.session_state[stage_selector_key]=5
-            st.rerun()
+    st.caption("Navega entre etapas desde la barra lateral.")
 
 def _render_course2_lab1_stage5(lab, saved):
     """Etapa 5 · Predicción guiada y banda a banda de L_n,0(f) para la losa base."""
@@ -4689,15 +4658,7 @@ def _render_course2_lab1_stage5(lab, saved):
             "La etapa se completa solo al validar todas las bandas y guardar Lₙ,₀(f)."
         )
 
-    left,right=st.columns(2)
-    with left:
-        if st.button("← Etapa 4",key=f"s5_prev_{class_id}",use_container_width=True):
-            st.session_state[stage_selector_key]=4
-            st.rerun()
-    with right:
-        if st.button("Etapa 6 →",key=f"s5_next_{class_id}",use_container_width=True):
-            st.session_state[stage_selector_key]=6
-            st.rerun()
+    st.caption("Navega entre etapas desde la barra lateral.")
 
 def _render_course2_lab1_stage6(lab, saved):
     """Etapa 6 · Diseño de una solución y predicción banda a banda de ΔL_n(f)."""
@@ -5457,15 +5418,7 @@ def _render_course2_lab1_stage6(lab, saved):
             "El estudiante calcula la solución banda por banda y la guarda para la Etapa 7."
         )
 
-    left,right=st.columns(2)
-    with left:
-        if st.button("← Etapa 5",key=f"s6_prev_{class_id}",use_container_width=True):
-            st.session_state[stage_selector_key]=5
-            st.rerun()
-    with right:
-        if st.button("Etapa 7 →",key=f"s6_next_{class_id}",use_container_width=True):
-            st.session_state[stage_selector_key]=7
-            st.rerun()
+    st.caption("Navega entre etapas desde la barra lateral.")
 
 def _render_course2_lab1_stage7(lab, saved):
     """Etapa 7 · Construcción y decisión sobre la curva final del piso terminado."""
@@ -5581,18 +5534,7 @@ def _render_course2_lab1_stage7(lab, saved):
             "Para realizar esta etapa con continuidad real, primero debes guardar la curva base "
             "en la Etapa 5 y la curva de mejora en la Etapa 6."
         )
-        left,right=st.columns(2)
-        with left:
-            if st.button("← Etapa 6",key=f"s7_prev_{class_id}",use_container_width=True):
-                st.session_state[stage_selector_key]=6
-                st.rerun()
-        with right:
-            st.button(
-                "Etapa 8 →",
-                disabled=True,
-                use_container_width=True,
-                key=f"s7_next_disabled_{class_id}"
-            )
+        st.caption("Vuelve a las Etapas 5 o 6 desde la barra lateral para completar los datos faltantes.")
         return
 
     ln0_arr=np.asarray(ln0,float); delta_arr=np.asarray(delta,float); final_arr=ln0_arr-delta_arr
@@ -6129,11 +6071,7 @@ def _render_course2_lab1_stage7(lab, saved):
             st.markdown("### Vista docente · objetivo de la etapa")
             st.write("El estudiante debe demostrar que sabe combinar resultados previos, construir Lₙ,final(f) por bandas y justificar una decisión considerando desempeño acústico y restricciones del caso.")
 
-    left,right=st.columns(2)
-    with left:
-        if st.button("← Etapa 6",key=f"s7_prev_{class_id}",use_container_width=True): st.session_state[stage_selector_key]=6; st.rerun()
-    with right:
-        if st.button("Etapa 8 →",key=f"s7_next_{class_id}",use_container_width=True): st.session_state[stage_selector_key]=8; st.rerun()
+    st.caption("Para continuar, selecciona la Etapa 8 desde la barra lateral.")
 
 
 def _render_course2_lab1_stage8(lab, saved):
