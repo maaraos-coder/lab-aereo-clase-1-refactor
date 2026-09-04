@@ -16121,10 +16121,114 @@ def _c2l2_stage10(lab,saved):
 
     st.markdown("## Encargo profesional")
     st.write(
-        "Vuelves al edificio del Laboratorio 1. Debes evaluar el piso mediante ISO 717-2 y resolver un segundo reclamo "
-        "nocturno asociado a una bomba centrífuga."
+        "Se recibe un reclamo nocturno en un edificio residencial. "
+        "La administración solicita una revisión integral porque existen **dos problemas que podrían estar relacionados con transmisión estructural**: "
+        "ruido de impacto proveniente del piso superior y vibraciones/ruido asociados a una bomba centrífuga instalada en un recinto técnico."
     )
-    st.info(f"Curva disponible: **{source}**.")
+
+    st.markdown(
+        """
+        <div style="border:1px solid #dbe4ee;border-radius:18px;padding:17px 18px;background:#f8fbff;margin:.6rem 0 1rem">
+          <div style="font-size:.78rem;font-weight:900;letter-spacing:.05em;color:#075985">OBJETIVO DE LA EVALUACIÓN</div>
+          <div style="font-size:1.15rem;font-weight:800;color:#0f172a;margin:.35rem 0">
+            Elaborar un diagnóstico técnico completo y proponer una estrategia de control.
+          </div>
+          <div style="color:#475569;line-height:1.55">
+            Debes evaluar el comportamiento del piso mediante ISO 717-2, interpretar el número único y el término espectral,
+            y después resolver el problema de la bomba considerando excitación, transmisión estructural, tuberías y aislamiento vibratorio.
+          </div>
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
+
+    st.markdown("### Antecedentes del edificio")
+    e1,e2,e3=st.columns(3)
+    with e1:
+        _c2l2_card(
+            "Recinto afectado",
+            "Dormitorio en horario nocturno",
+            "El usuario reporta golpes transmitidos por el piso y un zumbido/vibración periódica durante el funcionamiento de la bomba.",
+            tone="blue",
+        )
+    with e2:
+        _c2l2_card(
+            "Sistema de piso",
+            "Losa pesada + terminación",
+            "Se dispone del espectro de nivel normalizado de ruido de impacto para realizar la ponderación ISO 717-2.",
+            tone="orange",
+        )
+    with e3:
+        _c2l2_card(
+            "Recinto técnico",
+            "Bomba centrífuga conectada a tuberías",
+            "La bomba está montada sobre apoyos y existe continuidad mecánica mediante tuberías y soportes rígidos.",
+            tone="green",
+        )
+
+    st.markdown("### Datos completos del problema de impacto")
+    st.write(
+        "No necesitas recuperar información de otro laboratorio. "
+        "La curva que aparece a continuación es el **espectro disponible para esta evaluación**."
+    )
+
+    impact_data=pd.DataFrame({
+        "Frecuencia (Hz)":_C2L2_FREQS,
+        "Lₙ del piso [dB]":[61,62,63,64,64,64,63,62,61,59,57,54,52,50,48,46],
+    })
+    st.dataframe(impact_data,hide_index=True,use_container_width=True)
+
+    st.markdown(
+        """
+        <div style="border:1px solid #bfdbfe;border-radius:15px;padding:14px 16px;background:#eff6ff;margin:.55rem 0 .9rem">
+          <b>Con esta curva debes:</b><br><br>
+          1. mover la referencia ISO 717-2;<br>
+          2. controlar Σdᵢ ≤ 32 dB;<br>
+          3. encontrar la posición límite;<br>
+          4. leer Lₙ,w en 500 Hz;<br>
+          5. calcular e interpretar Cᵢ.
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
+
+    st.markdown("### Datos completos de la bomba")
+    b1,b2,b3,b4=st.columns(4)
+    b1.metric("Velocidad de giro","1450 rpm")
+    b2.metric("Masa de la bomba","600 kg")
+    b3.metric("Número de apoyos","4")
+    b4.metric("Frecuencia de excitación esperada","n / 60")
+
+    st.markdown(
+        """
+        <div style="border:1px solid #dbe4ee;border-radius:16px;padding:15px 17px;background:#fff;margin:.55rem 0 1rem">
+          <b>Condiciones de montaje observadas</b><br><br>
+          • La bomba se encuentra apoyada sobre una base con elementos de aislamiento vibratorio.<br>
+          • La tubería de descarga permanece <b>rígidamente conectada</b> a la bomba.<br>
+          • Existe al menos una <b>abrazadera rígida</b> que conecta la tubería con la estructura del edificio.<br>
+          • En mediciones exploratorias aparecen componentes próximas a <b>24 Hz</b> en bomba, tubería y estructura.<br>
+          • También existen indicios de posible condición hidráulica anómala que debe evaluarse antes de atribuir todo el problema al aislamiento de la base.
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
+
+    st.markdown("### Qué debes entregar")
+    st.markdown(
+        """
+        1. **Piso:** Lₙ,w y Cᵢ correctamente calculados e interpretados.  
+        2. **Bomba:** frecuencia de excitación a partir de las rpm.  
+        3. **Diagnóstico:** interpretación de la coincidencia espectral sin afirmar causalidad absoluta.  
+        4. **Transmisión:** identificación de caminos paralelos por tuberías y soportes.  
+        5. **Control:** estrategia integral fuente → aislamiento → conexiones → estructura.  
+        6. **Conclusión profesional:** síntesis del caso con lenguaje técnico claro.
+        """
+    )
+
+    st.warning(
+        "Toda la información necesaria para resolver la evaluación está contenida en esta Etapa 10. "
+        "No debes volver al Laboratorio 1 ni buscar datos en otras etapas."
+    )
 
     st.markdown("## A · Recupera y evalúa el piso")
     _c2l2_plot(curve,0,False,"Comportamiento espectral del piso",key="c2l2_s10_floor")
