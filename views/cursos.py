@@ -12278,46 +12278,6 @@ def _c2l2_stage1(lab,saved):
     st.info("**w = weighted / ponderado.** No significa promedio ni 500 Hz.")
 
 
-    st.markdown(
-        """
-        <style>
-        /* SOLO alternativas de los tres casos de la Etapa 1.
-           Streamlit agrega una clase st-key-* a cada widget según su key.
-           No toca sidebar, navegación ni otros botones. */
-        [class*="st-key-"][class*="c2l2_s1_opt_"] button {
-            min-height: 58px !important;
-            height: auto !important;
-            padding: 12px 16px !important;
-            justify-content: flex-start !important;
-            text-align: left !important;
-            white-space: normal !important;
-            border-radius: 12px !important;
-            margin-bottom: 6px !important;
-        }
-
-        [class*="st-key-"][class*="c2l2_s1_opt_"] button p {
-            font-size: 1.08rem !important;
-            line-height: 1.35 !important;
-            font-weight: 650 !important;
-            text-align: left !important;
-            white-space: normal !important;
-            width: 100% !important;
-        }
-
-        [class*="st-key-"][class*="c2l2_s1_opt_"] button:hover {
-            transform: none !important;
-        }
-
-        @media (max-width: 700px) {
-            [class*="st-key-"][class*="c2l2_s1_opt_"] button p {
-                font-size: 1rem !important;
-            }
-        }
-        </style>
-        """,
-        unsafe_allow_html=True,
-    )
-
     st.markdown("## 7 · Tres decisiones de terreno")
     st.write(
         "Estas preguntas ya no buscan memorizar símbolos. Lee la situación y decide según **qué condición de referencia se quiere representar**."
@@ -12359,6 +12319,33 @@ def _c2l2_stage1(lab,saved):
     stored=saved.get("c2l2_stage1_real_cases",{})
     if not isinstance(stored,dict): stored={}
 
+    # Estilo local: SOLO los radios de estos tres casos.
+    st.markdown(
+        """
+        <style>
+        [class*="st-key-"][class*="c2l2_s1_real_"] [role="radiogroup"] {
+            gap: .65rem !important;
+        }
+        [class*="st-key-"][class*="c2l2_s1_real_"] [role="radiogroup"] label {
+            padding: .45rem .35rem !important;
+            align-items: flex-start !important;
+        }
+        [class*="st-key-"][class*="c2l2_s1_real_"] [role="radiogroup"] label p {
+            font-size: 1.08rem !important;
+            line-height: 1.38 !important;
+            font-weight: 600 !important;
+            white-space: normal !important;
+        }
+        @media (max-width: 700px) {
+            [class*="st-key-"][class*="c2l2_s1_real_"] [role="radiogroup"] label p {
+                font-size: 1rem !important;
+            }
+        }
+        </style>
+        """,
+        unsafe_allow_html=True,
+    )
+
     for i,q in enumerate(questions,1):
         with st.container(border=True):
             st.markdown(f"### Caso {i}")
@@ -12366,25 +12353,15 @@ def _c2l2_stage1(lab,saved):
 
             prev=stored.get(q["id"],{}) if isinstance(stored.get(q["id"]),dict) else {}
             prev_choice=prev.get("choice")
-            choice_key=f"{class_id}_c2l2_s1_choice_{q['id']}"
+            index=q["opts"].index(prev_choice) if prev_choice in q["opts"] else None
 
-            if choice_key not in st.session_state:
-                st.session_state[choice_key]=prev_choice if prev_choice in q["opts"] else None
-
-            st.caption("Selecciona una alternativa")
-            for j,opt in enumerate(q["opts"]):
-                selected_now=st.session_state.get(choice_key)==opt
-                prefix="✓ " if selected_now else ""
-                if st.button(
-                    f"{prefix}{chr(65+j)}. {opt}",
-                    key=f"{class_id}_c2l2_s1_opt_{q['id']}_{j}",
-                    use_container_width=True,
-                    type="primary" if selected_now else "secondary",
-                ):
-                    st.session_state[choice_key]=opt
-                    st.rerun()
-
-            choice=st.session_state.get(choice_key)
+            choice=st.radio(
+                f"Respuesta del caso {i}",
+                q["opts"],
+                index=index,
+                key=f"{class_id}_c2l2_s1_real_{q['id']}",
+                label_visibility="collapsed",
+            )
 
             if role=="Docente" and not projection_mode:
                 st.success("Respuesta correcta: "+q["correct"])
@@ -12404,6 +12381,7 @@ def _c2l2_stage1(lab,saved):
                         saved["updated_1"]=_now()
                         _save_future_state(_C2L2_CLASS_ID,saved)
                         st.rerun()
+
                 result=stored.get(q["id"])
                 if isinstance(result,dict) and result.get("choice"):
                     if result.get("correct"):
