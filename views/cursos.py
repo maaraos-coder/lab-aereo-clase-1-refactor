@@ -15205,96 +15205,257 @@ def _c2l2_stage8(lab,saved):
     )
     st.plotly_chart(fig,use_container_width=True,key="c2l2_s8_bare_treated")
 
-    st.markdown("## 4 · Calcula el número único antes y después")
+    st.markdown("## 4 · Calcula tú el número único del sistema tratado")
+    st.write(
+        "Ya tienes la losa desnuda, el revestimiento seleccionado y el espectro tratado. "
+        "Ahora debes obtener el **Lₙ,w del sistema tratado** aplicando lo aprendido en las Etapas 2–4."
+    )
+
     treated_lnw,treated_shift=_c2l2_lnw(treated)
-
-    st.markdown(
-        """
-        El revestimiento modifica primero la **curva por frecuencia**.  
-        Después se aplica nuevamente ISO 717-2 para obtener el nuevo descriptor ponderado.
-        """
-    )
-
-    n1,n2,n3=st.columns(3)
-    n1.metric("Lₙ,w · desnudo",f"{bare_lnw} dB")
-    n2.metric("Lₙ,w · tratado",f"{treated_lnw} dB")
-    n3.metric("Mejora del sistema",f"{bare_lnw-treated_lnw} dB")
-
-    st.markdown("## 5 · Obtén ΔLw del revestimiento")
     delta_lw=int(bare_lnw-treated_lnw)
-    st.latex(r"\Delta L_w=L_{n,r,0,w}-L_{n,r,w}")
-    st.success(
-        f"Para este caso de referencia: **ΔLw = {bare_lnw} − {treated_lnw} = {delta_lw} dB**."
-    )
-    st.warning(
-        "ΔLw describe la **reducción ponderada del revestimiento bajo este procedimiento de referencia**. "
-        "No es lo mismo que Lₙ,w y no debe trasladarse automáticamente a cualquier piso real."
-    )
-
-    st.markdown("## 6 · Añade la información espectral")
     treated_ci,treated_lsum=_c2l2_ci(treated,treated_lnw,False)
 
-    # Extend treated curve with didactic low-frequency bands for CI50-2500.
     low_ext=[treated[0]+4,treated[0]+3,treated[0]+2]
     treated_ext=low_ext+treated
     treated_ci50,treated_lsum50=_c2l2_ci(treated_ext,treated_lnw,True)
 
-    s1,s2,s3=st.columns(3)
-    s1.metric("Lₙ,w",f"{treated_lnw} dB")
-    s2.metric("Cᵢ",f"{treated_ci:+d} dB")
-    s3.metric("Cᵢ,50–2500",f"{treated_ci50:+d} dB")
+    if role=="Docente" and not projection_mode:
+        st.info(
+            f"**Pauta docente:** al ponderar el espectro tratado se obtiene **Lₙ,w = {treated_lnw} dB**."
+        )
+        p1,p2=st.columns(2)
+        p1.metric("Lₙ,w · losa desnuda",f"{bare_lnw} dB")
+        p2.metric("Lₙ,w · sistema tratado",f"{treated_lnw} dB")
+        st.caption(
+            "En Alumno/Zoom este valor no aparece resuelto hasta que el estudiante lo ingresa correctamente."
+        )
+        step1_ok=True
+    else:
+        ans_lnw=st.number_input(
+            "Ingresa el Lₙ,w del sistema tratado [dB]",
+            min_value=0,max_value=120,value=0,step=1,
+            key="c2l2_s8_ans_lnw",
+        )
+        if st.button(
+            "COMPROBAR Lₙ,w",
+            key="c2l2_s8_check_lnw",
+            type="primary",
+            use_container_width=True,
+        ):
+            st.session_state["c2l2_s8_lnw_ok"]=int(ans_lnw)==int(treated_lnw)
+            st.rerun()
 
-    st.markdown(
-        f"""
-        <div style="border:1px solid #dbe4ee;border-radius:16px;padding:15px 17px;background:#f8fbff;margin:.6rem 0 1rem">
-          <b>Lectura integrada del sistema tratado</b><br><br>
-          Resultado principal: <b>Lₙ,w = {treated_lnw} dB</b><br>
-          Adaptación espectral 100–2500 Hz: <b>Cᵢ = {treated_ci:+d} dB</b><br>
-          Adaptación espectral ampliada 50–2500 Hz: <b>Cᵢ,50–2500 = {treated_ci50:+d} dB</b><br>
-          Reducción ponderada del revestimiento: <b>ΔLw = {delta_lw} dB</b>
-        </div>
-        """,
-        unsafe_allow_html=True,
-    )
+        step1_ok=bool(st.session_state.get("c2l2_s8_lnw_ok"))
+        if "c2l2_s8_lnw_ok" in st.session_state:
+            if step1_ok:
+                st.success(
+                    f"✓ Correcto. El espectro tratado entrega **Lₙ,w = {treated_lnw} dB**."
+                )
+            else:
+                st.warning(
+                    "Todavía no. Debes ponderar el espectro tratado con el procedimiento ISO 717-2 y leer la referencia final en 500 Hz."
+                )
 
-    st.markdown("## 7 · Expresa el resultado como lo harías profesionalmente")
+    if step1_ok:
+        st.markdown("## 5 · Obtén tú la reducción ponderada ΔLw")
+        st.write(
+            "Ahora compara el piso pesado de referencia sin revestimiento con el piso de referencia tratado."
+        )
+        st.latex(r"\Delta L_w=L_{n,r,0,w}-L_{n,r,w}=78-L_{n,r,w}")
+
+        if role=="Docente" and not projection_mode:
+            st.success(
+                f"**Pauta docente:** ΔLw = 78 − {treated_lnw} = **{delta_lw} dB**."
+            )
+            step2_ok=True
+        else:
+            ans_dlw=st.number_input(
+                "Ingresa ΔLw [dB]",
+                min_value=0,max_value=60,value=0,step=1,
+                key="c2l2_s8_ans_dlw",
+            )
+            if st.button(
+                "COMPROBAR ΔLw",
+                key="c2l2_s8_check_dlw",
+                use_container_width=True,
+            ):
+                st.session_state["c2l2_s8_dlw_ok"]=int(ans_dlw)==int(delta_lw)
+                st.rerun()
+
+            step2_ok=bool(st.session_state.get("c2l2_s8_dlw_ok"))
+            if "c2l2_s8_dlw_ok" in st.session_state:
+                if step2_ok:
+                    st.success(
+                        f"✓ Correcto. **ΔLw = {delta_lw} dB**."
+                    )
+                    st.caption(
+                        "Este valor describe la reducción ponderada del revestimiento bajo el procedimiento de referencia."
+                    )
+                else:
+                    st.warning(
+                        "Revisa la diferencia: el piso de referencia sin revestimiento vale 78 dB y debes restar el Lₙ,r,w del sistema tratado."
+                    )
+
+    else:
+        step2_ok=False
+        st.caption("Completa primero el cálculo de Lₙ,w para desbloquear ΔLw.")
+
+    if step1_ok and step2_ok:
+        st.markdown("## 6 · Añade tú la información espectral")
+        st.write(
+            "Ahora incorpora los términos espectrales. Calcula primero **Cᵢ** con 100–2500 Hz "
+            "y luego **Cᵢ,50–2500** incorporando 50, 63 y 80 Hz."
+        )
+
+        st.latex(r"C_I=L_{n,\mathrm{sum}(100-2500)}-15-L_{n,w}")
+        st.latex(r"C_{I,50-2500}=L_{n,\mathrm{sum}(50-2500)}-15-L_{n,w}")
+
+        if role=="Docente" and not projection_mode:
+            st.info(
+                f"**Pauta docente:** Lₙ,sum(100–2500) = {treated_lsum:.1f} dB → "
+                f"Cᵢ = **{treated_ci:+d} dB**."
+            )
+            st.info(
+                f"**Pauta docente:** Lₙ,sum(50–2500) = {treated_lsum50:.1f} dB → "
+                f"Cᵢ,50–2500 = **{treated_ci50:+d} dB**."
+            )
+            step3_ok=True
+            step4_ok=True
+        else:
+            c1,c2=st.columns(2)
+            with c1:
+                ans_ci=st.number_input(
+                    "Cᵢ [dB]",
+                    min_value=-30,max_value=30,value=0,step=1,
+                    key="c2l2_s8_ans_ci",
+                )
+            with c2:
+                ans_ci50=st.number_input(
+                    "Cᵢ,50–2500 [dB]",
+                    min_value=-30,max_value=30,value=0,step=1,
+                    key="c2l2_s8_ans_ci50",
+                )
+
+            if st.button(
+                "COMPROBAR TÉRMINOS ESPECTRALES",
+                key="c2l2_s8_check_ci",
+                use_container_width=True,
+            ):
+                st.session_state["c2l2_s8_ci_ok"]=int(ans_ci)==int(treated_ci)
+                st.session_state["c2l2_s8_ci50_ok"]=int(ans_ci50)==int(treated_ci50)
+                st.rerun()
+
+            step3_ok=bool(st.session_state.get("c2l2_s8_ci_ok"))
+            step4_ok=bool(st.session_state.get("c2l2_s8_ci50_ok"))
+
+            if "c2l2_s8_ci_ok" in st.session_state or "c2l2_s8_ci50_ok" in st.session_state:
+                if step3_ok and step4_ok:
+                    st.success(
+                        f"✓ Correcto. **Cᵢ = {treated_ci:+d} dB** y **Cᵢ,50–2500 = {treated_ci50:+d} dB**."
+                    )
+                else:
+                    if not step3_ok:
+                        st.warning("Revisa Cᵢ: usa la suma energética de 100–2500 Hz.")
+                    if not step4_ok:
+                        st.warning("Revisa Cᵢ,50–2500: aquí sí debes incluir 50, 63 y 80 Hz.")
+    else:
+        step3_ok=False
+        step4_ok=False
+        st.caption("Completa primero Lₙ,w y ΔLw para desbloquear los términos espectrales.")
+
+    if step1_ok and step2_ok and step3_ok and step4_ok:
+        st.markdown("## 7 · Expresa tú el resultado como lo harías profesionalmente")
+        st.write(
+            "Ya calculaste todas las magnitudes. Ahora el desafío es **comunicarlas sin mezclarlas**."
+        )
+
+        st.markdown(
+            f"""
+            <div style="border:1px solid #dbe4ee;border-radius:16px;padding:15px 17px;background:#f8fbff;margin:.6rem 0 1rem">
+              <b>Valores que debes reportar</b><br><br>
+              Lₙ,w = <b>{treated_lnw} dB</b><br>
+              ΔLw = <b>{delta_lw} dB</b><br>
+              Cᵢ = <b>{treated_ci:+d} dB</b><br>
+              Cᵢ,50–2500 = <b>{treated_ci50:+d} dB</b>
+            </div>
+            """,
+            unsafe_allow_html=True,
+        )
+
+        report_q="¿Cuál es la forma más correcta de comunicar el resultado?"
+        report_opts=[
+            f"El piso mejora {delta_lw} dB y por tanto su resultado final es {treated_lnw-delta_lw} dB.",
+            f"El sistema tratado presenta Lₙ,w = {treated_lnw} dB; el revestimiento tiene ΔLw = {delta_lw} dB bajo el procedimiento de referencia; Cᵢ = {treated_ci:+d} dB y Cᵢ,50–2500 = {treated_ci50:+d} dB complementan la información espectral.",
+            f"El resultado final debe expresarse únicamente como ΔLw = {delta_lw} dB porque contiene toda la información del sistema.",
+        ]
+        report_correct=report_opts[1]
+
+        if role=="Docente" and not projection_mode:
+            st.success("Pauta docente: "+report_correct)
+            report_ok=True
+        else:
+            prev=saved.get("c2l2_s8_report",{}) if isinstance(saved.get("c2l2_s8_report"),dict) else {}
+            prev_choice=prev.get("choice")
+            idx=report_opts.index(prev_choice) if prev_choice in report_opts else None
+            report_choice=st.radio(
+                report_q,
+                report_opts,
+                index=idx,
+                key="c2l2_s8_report_choice",
+            )
+
+            if st.button(
+                "COMPROBAR REPORTE FINAL",
+                key="c2l2_s8_report_check",
+                type="primary",
+                use_container_width=True,
+            ):
+                result={
+                    "choice":report_choice,
+                    "correct":report_choice==report_correct,
+                    "updated_at":_now(),
+                }
+                if projection_mode:
+                    st.session_state["c2l2_s8_report_projection"]=result
+                else:
+                    saved["c2l2_s8_report"]=result
+                    saved["updated_8"]=_now()
+                    _save_future_state(_C2L2_CLASS_ID,saved)
+                st.rerun()
+
+            report_result=(
+                st.session_state.get("c2l2_s8_report_projection")
+                if projection_mode
+                else saved.get("c2l2_s8_report")
+            )
+            report_ok=isinstance(report_result,dict) and report_result.get("correct") is True
+
+            if isinstance(report_result,dict):
+                if report_ok:
+                    st.success(
+                        "✓ Correcto. Has separado correctamente el nivel final, la reducción del revestimiento y los términos espectrales."
+                    )
+                else:
+                    st.warning(
+                        "No mezcles magnitudes: Lₙ,w describe el sistema tratado; ΔLw describe la reducción del revestimiento; Cᵢ y Cᵢ,50–2500 complementan la información espectral."
+                    )
+
+        if report_ok:
+            st.markdown("### Lectura para no especialistas")
+            st.markdown(
+                f"""
+                > **“La solución de piso terminada presenta un nivel de impacto ponderado de {treated_lnw} dB. 
+                > El revestimiento seleccionado aporta una reducción ponderada ΔLw de {delta_lw} dB bajo el procedimiento de referencia. 
+                > Los términos Cᵢ = {treated_ci:+d} dB y Cᵢ,50–2500 = {treated_ci50:+d} dB entregan información adicional sobre la forma espectral.”**
+                """
+            )
+    else:
+        report_ok=False
+        st.caption("Completa los cálculos anteriores para desbloquear el reporte profesional.")
+
+    st.markdown("## 8 · Comprobación final del caso integrador")
     st.write(
-        "No mezcles magnitudes. El nivel final del sistema, los términos espectrales y la reducción del revestimiento "
-        "deben leerse como resultados relacionados, pero distintos."
-    )
-
-    st.markdown(
-        f"""
-        <div style="display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;margin:.6rem 0 1rem">
-          <div style="border:2px solid #bfdbfe;border-radius:15px;padding:14px;background:#eff6ff;text-align:center">
-            <small>NIVEL PONDERADO</small><br><b style="font-size:1.55rem">Lₙ,w = {treated_lnw} dB</b>
-          </div>
-          <div style="border:2px solid #bbf7d0;border-radius:15px;padding:14px;background:#f0fdf4;text-align:center">
-            <small>ADAPTACIÓN</small><br><b style="font-size:1.55rem">Cᵢ = {treated_ci:+d} dB</b>
-          </div>
-          <div style="border:2px solid #ddd6fe;border-radius:15px;padding:14px;background:#f5f3ff;text-align:center">
-            <small>BAJAS FRECUENCIAS</small><br><b style="font-size:1.55rem">Cᵢ,50–2500 = {treated_ci50:+d} dB</b>
-          </div>
-          <div style="border:2px solid #fed7aa;border-radius:15px;padding:14px;background:#fff7ed;text-align:center">
-            <small>REVESTIMIENTO</small><br><b style="font-size:1.55rem">ΔLw = {delta_lw} dB</b>
-          </div>
-        </div>
-        """,
-        unsafe_allow_html=True,
-    )
-
-    st.markdown("### Lectura para no especialistas")
-    st.markdown(
-        f"""
-        > **“La losa con el revestimiento {product["name"]} presenta un nivel de impacto ponderado de {treated_lnw} dB. 
-        > El revestimiento aporta una reducción ponderada ΔLw de {delta_lw} dB bajo el procedimiento de referencia.
-        > Los términos Cᵢ = {treated_ci:+d} dB y Cᵢ,50–2500 = {treated_ci50:+d} dB entregan información adicional sobre la forma espectral.”**
-        """
-    )
-
-    st.markdown("## 8 · Ejercicio guiado integrador")
-    st.write(
-        "Ordena mentalmente la cadena completa y responde qué magnitud corresponde a cada paso."
+        "Ya realizaste los cálculos. Comprueba ahora que puedes reconocer qué describe cada magnitud dentro de la cadena completa."
     )
 
     questions=[
