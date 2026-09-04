@@ -12146,8 +12146,6 @@ def _c2l2_stage1(lab,saved):
         "Conecta la predicción del Laboratorio 1 con una medición real y comprende por qué en terreno existen L′ₙ y L′ₙT."
     )
 
-    st.caption("Etapa 1 actualizada · versión casos reales de terreno")
-
     st.markdown(
         """
         <div style="border-left:5px solid #0284c7;background:linear-gradient(90deg,#e0f2fe,#f8fbff);
@@ -12324,19 +12322,39 @@ def _c2l2_stage1(lab,saved):
         with st.container(border=True):
             st.markdown(f"### Caso {i}")
             st.write(q["q"])
+
             prev=stored.get(q["id"],{}) if isinstance(stored.get(q["id"]),dict) else {}
             prev_choice=prev.get("choice")
-            index=q["opts"].index(prev_choice) if prev_choice in q["opts"] else None
-            choice=st.radio(
-                f"Respuesta del caso {i}", q["opts"], index=index,
-                key=f"{class_id}_c2l2_s1_real_{q['id']}", label_visibility="collapsed"
-            )
+            choice_key=f"{class_id}_c2l2_s1_choice_{q['id']}"
+
+            if choice_key not in st.session_state:
+                st.session_state[choice_key]=prev_choice if prev_choice in q["opts"] else None
+
+            st.caption("Selecciona una alternativa")
+            for j,opt in enumerate(q["opts"]):
+                selected_now=st.session_state.get(choice_key)==opt
+                prefix="✓ " if selected_now else ""
+                if st.button(
+                    f"{prefix}{chr(65+j)}. {opt}",
+                    key=f"{class_id}_c2l2_s1_opt_{q['id']}_{j}",
+                    use_container_width=True,
+                    type="primary" if selected_now else "secondary",
+                ):
+                    st.session_state[choice_key]=opt
+                    st.rerun()
+
+            choice=st.session_state.get(choice_key)
 
             if role=="Docente" and not projection_mode:
                 st.success("Respuesta correcta: "+q["correct"])
                 st.caption(q["feedback"])
             else:
-                if st.button("Comprobar y guardar",key=f"{class_id}_c2l2_s1_real_check_{q['id']}"):
+                if st.button(
+                    "Comprobar y guardar",
+                    key=f"{class_id}_c2l2_s1_real_check_{q['id']}",
+                    use_container_width=True,
+                    type="primary",
+                ):
                     if choice is None:
                         st.warning("Selecciona una alternativa.")
                     else:
