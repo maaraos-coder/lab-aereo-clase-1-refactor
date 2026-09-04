@@ -11860,7 +11860,7 @@ def _c2l2_plot(curve,shift=0,show_deviations=True,title="Curva del piso y refere
     return ref,dev,total
 
 
-def _c2l2_curve_control(saved,prefix,curve,require_limit=False,unlock_reading=False):
+def _c2l2_curve_control(saved,prefix,curve,require_limit=False,unlock_reading=False,auto_limit_feedback=False):
     """Misma mecánica visual del Curso 1 · Lab 2: slider de la referencia en 500 Hz."""
     position_key=f"{prefix}_ref500"
     default_position=int(saved.get(position_key,60) or 60)
@@ -11888,11 +11888,43 @@ def _c2l2_curve_control(saved,prefix,curve,require_limit=False,unlock_reading=Fa
     c2.metric("Desplazamiento actual",f"{shift:+d} dB")
     c3.metric("Σdᵢ",f"{total:.1f} dB")
 
-    if total>32:
-        st.error("✗ LA CURVA AÚN NO CUMPLE EL CRITERIO · Σdᵢ > 32 dB.")
+    _,_,one_step_lower=_c2l2_deviations(curve,shift-1)
+
+    if auto_limit_feedback:
+        st.markdown("#### ¿La posición actual es la correcta?")
+        if total>32:
+            st.error(
+                f"✗ **NO CUMPLE.** Σdᵢ = {total:.1f} dB, por lo que supera 32 dB. "
+                "La curva quedó demasiado baja. **Súbela 1 dB**."
+            )
+        elif one_step_lower<=32:
+            st.warning(
+                f"△ **CUMPLE, PERO TODAVÍA NO ES LA POSICIÓN FINAL.** "
+                f"Ahora Σdᵢ = {total:.1f} dB. Si bajas 1 dB más, Σdᵢ sería {one_step_lower:.1f} dB "
+                "y todavía seguiría siendo ≤ 32 dB. **Por eso debes bajar otro 1 dB.**"
+            )
+        else:
+            st.success(
+                f"✓ **POSICIÓN CORRECTA.** Ahora Σdᵢ = {total:.1f} dB y cumple. "
+                f"Si bajas 1 dB más, Σdᵢ sería {one_step_lower:.1f} dB y superaría 32 dB. "
+                f"**Por eso esta es la posición límite.**"
+            )
+            st.markdown(
+                f"""
+                <div style="border:2px solid #86efac;border-radius:16px;padding:16px 18px;background:#f0fdf4;margin:.6rem 0 .9rem">
+                  <div style="font-size:.78rem;font-weight:850;letter-spacing:.05em;color:#166534">LECTURA FINAL EN 500 Hz</div>
+                  <div style="font-size:1.8rem;font-weight:900;color:#14532d;margin:.2rem 0">Lₙ,w = {ref500} dB</div>
+                  <div style="color:#3f6212">Se obtiene leyendo la curva de referencia en 500 Hz en esta posición límite.</div>
+                </div>
+                """,
+                unsafe_allow_html=True,
+            )
     else:
-        st.success("✓ LA SUMA NO SUPERA 32 dB.")
-        st.caption("Cumplir 32 dB no basta: todavía debes comprobar si estás en la posición límite.")
+        if total>32:
+            st.error("✗ LA CURVA AÚN NO CUMPLE EL CRITERIO · Σdᵢ > 32 dB.")
+        else:
+            st.success("✓ LA SUMA NO SUPERA 32 dB.")
+            st.caption("Cumplir 32 dB no basta: todavía debes comprobar si estás en la posición límite.")
 
     if require_limit:
         if st.button("COMPROBAR POSICIÓN",key=f"{prefix}_check_position",type="primary",use_container_width=True):
@@ -12432,22 +12464,54 @@ def _c2l2_stage2(lab,saved):
         "La curva de referencia es una **plantilla normalizada**. No representa otro piso y tampoco es un límite reglamentario independiente. "
         "Su función es entregar una forma común contra la cual comparar los 16 valores de Lₙ(f)."
     )
-    st.markdown("### 2 · ¿Qué podemos modificar?")
+    st.markdown("### 2 · ¿Qué significa mover la curva?")
+    st.write(
+        "Piensa en la curva de referencia como una **regla rígida**. "
+        "No puedes doblarla ni mover una frecuencia por separado. "
+        "Lo único que puedes hacer es **subir o bajar la regla completa**."
+    )
+
     c1,c2=st.columns(2)
     with c1:
         _c2l2_card(
             "La forma",
-            "NO CAMBIA",
-            "Las diferencias relativas entre 100, 125, 160 Hz… y 3150 Hz permanecen fijas.",
+            "NO SE DEFORMA",
+            "Las diferencias entre sus puntos permanecen fijas. "
+            "Si a 500 Hz hay 60 dB y a 1000 Hz hay 57 dB, entre ambas bandas hay 3 dB de diferencia.",
             tone="orange",
         )
     with c2:
         _c2l2_card(
-            "La posición vertical",
-            "SÍ CAMBIA",
-            "Toda la referencia se desplaza la misma cantidad, en pasos enteros de 1 dB.",
+            "La posición",
+            "SE MUEVE COMPLETA",
+            "Si bajas la referencia 1 dB, todos sus puntos bajan 1 dB. "
+            "500 Hz pasa de 60 a 59 dB y 1000 Hz de 57 a 56 dB.",
             tone="green",
         )
+
+    st.markdown("#### Ejemplo")
+    st.markdown(
+        """
+        <div style="display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;margin:.45rem 0 .85rem">
+          <div style="padding:13px;border:1px solid #dbe4ee;border-radius:14px;background:#fff">
+            <b>Antes de mover</b><br>
+            500 Hz = 60 dB<br>
+            1000 Hz = 57 dB
+          </div>
+          <div style="padding:13px;border:1px solid #dbe4ee;border-radius:14px;background:#fff">
+            <b>Bajamos toda la curva 1 dB</b><br>
+            500 Hz = 59 dB<br>
+            1000 Hz = 56 dB
+          </div>
+          <div style="padding:13px;border:1px solid #bbf7d0;border-radius:14px;background:#f0fdf4">
+            <b>La forma no cambió</b><br>
+            60 − 57 = 3 dB<br>
+            59 − 56 = 3 dB
+          </div>
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
     st.markdown("### 3 · ¿Para qué hacemos esto?")
     st.write(
         "Porque Lₙ,w no se obtiene promediando la curva del piso. La posición final de esta plantilla será determinada "
@@ -12532,27 +12596,53 @@ def _c2l2_stage2(lab,saved):
             unsafe_allow_html=True,
         )
 
-    st.markdown("### 4.3 · ¿Por qué aparece el límite de 32 dB?")
+    st.markdown("### 4.3 · ¿Qué significa el límite de 32 dB?")
     st.write(
-        "Para las 16 bandas de tercio de octava entre 100 y 3150 Hz se suman únicamente "
-        "las desviaciones desfavorables."
+        "Después de calcular las desviaciones desfavorables de las 16 bandas, las sumamos. "
+        "La curva solo puede ocupar posiciones donde:"
     )
     st.latex(r"\boxed{\sum d_i\leq 32\ \mathrm{dB}}")
-    st.warning(
-        "**Cumplir Σdᵢ ≤ 32 dB no basta.** Debes encontrar la **posición límite**: "
-        "la posición más baja de la curva que todavía cumple el criterio. "
-        "Si bajas la referencia 1 dB adicional, la suma debe superar 32 dB."
+
+    st.markdown(
+        """
+        <div style="border:1px solid #fde68a;border-radius:15px;padding:14px 16px;background:#fffbeb;margin:.5rem 0 .9rem">
+          <b>Cómo encontrar la posición final:</b><br><br>
+          1. Parte con la curva relativamente alta.<br>
+          2. Bájala <b>1 dB</b>.<br>
+          3. Recalcula Σdᵢ.<br>
+          4. Si todavía es ≤ 32 dB, puedes intentar bajar otro 1 dB.<br>
+          5. Te detienes cuando la posición actual cumple, pero <b>1 dB más abajo ya supera 32 dB</b>.
+        </div>
+        """,
+        unsafe_allow_html=True,
     )
 
-    st.markdown("### 4.4 · ¿Cómo se reconoce la posición límite?")
-    st.latex(
-        r"\sum d_i\leq 32\ \mathrm{dB}"
-        r"\qquad\text{y}\qquad"
-        r"\sum d_i\big|_{\text{1 dB más abajo}}>32\ \mathrm{dB}"
+    st.markdown("### 4.4 · Ejemplo: ¿cuál es la posición límite?")
+    st.markdown(
+        """
+        <div style="display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;margin:.45rem 0 .9rem">
+          <div style="padding:13px;border:1px solid #fde68a;border-radius:14px;background:#fffbeb">
+            <b>Referencia 58 dB</b><br>
+            Σdᵢ = 25 dB<br><br>
+            Cumple, pero todavía puedes bajar.
+          </div>
+          <div style="padding:13px;border:1px solid #bbf7d0;border-radius:14px;background:#f0fdf4">
+            <b>Referencia 57 dB</b><br>
+            Σdᵢ = 31 dB<br><br>
+            <b>Cumple.</b>
+          </div>
+          <div style="padding:13px;border:1px solid #fecaca;border-radius:14px;background:#fff7f7">
+            <b>Referencia 56 dB</b><br>
+            Σdᵢ = 36 dB<br><br>
+            <b>No cumple.</b>
+          </div>
+        </div>
+        """,
+        unsafe_allow_html=True,
     )
-    st.write(
-        "Ese segundo chequeo es el que impide detenerse demasiado arriba. La curva debe desplazarse "
-        "hasta el último paso entero de 1 dB que todavía sea admisible."
+    st.success(
+        "**57 dB es la posición límite**: con 57 dB la suma todavía es ≤ 32 dB, "
+        "pero bajar un paso adicional a 56 dB haría superar el límite."
     )
 
     st.markdown("### 4.5 · ¿Cómo se obtiene finalmente Lₙ,w?")
@@ -12604,8 +12694,11 @@ def _c2l2_stage2(lab,saved):
         "Ahora mueve la referencia y observa simultáneamente su posición en 500 Hz, "
         "las desviaciones desfavorables y la suma Σdᵢ."
     )
-    shift,ref,dev,total=_c2l2_curve_control(saved,"c2l2_s2",curve,require_limit=False)
-    st.info("Observa que **la forma no cambia**: todos los puntos suben o bajan exactamente la misma cantidad.")
+    shift,ref,dev,total=_c2l2_curve_control(saved,"c2l2_s2",curve,require_limit=False,auto_limit_feedback=True)
+    st.info(
+        "La app compara automáticamente la posición actual con lo que ocurriría **1 dB más abajo**. "
+        "Cuando aparezca el mensaje verde **POSICIÓN CORRECTA**, habrás encontrado la posición límite y podrás leer Lₙ,w en 500 Hz."
+    )
     st.caption("Para continuar, selecciona la siguiente etapa desde la barra lateral.")
 
 
