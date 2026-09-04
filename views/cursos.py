@@ -11692,7 +11692,7 @@ _C2L2_STAGE_TITLES={
     2:"Conoce la curva de referencia",
     3:"Lee el problema antes de reducirlo a un número",
     4:"Interviene el espectro y observa qué pasa con Lₙ,w",
-    5:"Término de adaptación espectral C_I",
+    5:"C_I · información espectral complementaria",
     6:"Bajas frecuencias y C_I,50-2500",
     7:"¿Cuánto mejora realmente un revestimiento?",
     8:"Un número no es un sistema constructivo",
@@ -13696,60 +13696,302 @@ def _c2l2_stage4(lab,saved):
     st.caption("Continúa desde la barra lateral.")
 
 def _c2l2_stage5(lab,saved):
+    """Etapa 5 · C_I y lectura energética del espectro."""
+    import plotly.graph_objects as go
+
     curve,_=_c2l2_floor_curve()
     lnw,shift=_c2l2_lnw(curve)
-    _c2l2_stage_header(5,"TÉRMINO DE ADAPTACIÓN ESPECTRAL C_I","Construye una suma energética y úsala como información espectral complementaria.")
+    ci,lsum=_c2l2_ci(curve,lnw,False)
+    role=st.session_state.get("role","Alumno")
+    projection_mode=bool(st.session_state.get("projection_mode") or role=="Proyección")
+
+    _c2l2_stage_header(
+        5,
+        "C_I · INFORMACIÓN ESPECTRAL QUE Lₙ,w NO MUESTRA",
+        "Distingue Lₙ,w, Lₙ,sum y C_I; construye la suma energética y comprende por qué C_I complementa, pero no reemplaza, el número único."
+    )
     _c2l2_asset(stage=5)
-    st.markdown("### 1 · ¿Por qué hace falta algo además de Lₙ,w?")
+
+    # ------------------------------------------------------------------
+    # 1 · LOS TRES DESCRIPTORES / MAGNITUDES
+    # ------------------------------------------------------------------
+    st.markdown("## 1 · Primero: no confundas estas tres magnitudes")
     st.write(
-        "Al convertir 16 bandas en un único número perdemos parte de la forma espectral. "
-        "Dos pisos pueden terminar con Lₙ,w parecido y, sin embargo, uno concentrar mucha más energía en una región de frecuencia."
+        "En esta etapa aparecen tres valores que cumplen funciones distintas. "
+        "Antes de calcular, identifica **qué representa cada uno y de dónde proviene**."
     )
-    st.markdown("### 2 · La suma energética no es un promedio")
+
+    st.markdown(
+        f"""
+        <div style="display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px;margin:.65rem 0 1rem">
+          <div style="border:2px solid #bfdbfe;border-radius:18px;padding:18px;background:#eff6ff;min-height:220px">
+            <div style="font-size:.76rem;font-weight:900;letter-spacing:.06em;color:#075985">NÚMERO ÚNICO PONDERADO</div>
+            <div style="font-size:2rem;font-weight:950;color:#0f172a;margin:.35rem 0">Lₙ,w</div>
+            <div style="font-size:1.3rem;font-weight:850;color:#0f172a">{lnw} dB</div>
+            <div style="color:#475569;line-height:1.55;margin-top:.65rem">
+              Se obtiene desplazando la curva de referencia ISO 717-2 y leyendo su posición final en <b>500 Hz</b>.
+              Resume el espectro en un solo valor.
+            </div>
+          </div>
+          <div style="border:2px solid #ddd6fe;border-radius:18px;padding:18px;background:#f5f3ff;min-height:220px">
+            <div style="font-size:.76rem;font-weight:900;letter-spacing:.06em;color:#6d28d9">SUMA ENERGÉTICA INTERMEDIA</div>
+            <div style="font-size:2rem;font-weight:950;color:#0f172a;margin:.35rem 0">Lₙ,sum</div>
+            <div style="font-size:1.3rem;font-weight:850;color:#0f172a">{lsum:.1f} dB</div>
+            <div style="color:#475569;line-height:1.55;margin-top:.65rem">
+              Combina energéticamente las bandas de <b>100 a 2500 Hz</b>. No es un promedio y no sustituye a Lₙ,w.
+              Es la magnitud intermedia usada para construir Cᵢ.
+            </div>
+          </div>
+          <div style="border:2px solid #bbf7d0;border-radius:18px;padding:18px;background:#f0fdf4;min-height:220px">
+            <div style="font-size:.76rem;font-weight:900;letter-spacing:.06em;color:#166534">TÉRMINO DE ADAPTACIÓN ESPECTRAL</div>
+            <div style="font-size:2rem;font-weight:950;color:#0f172a;margin:.35rem 0">Cᵢ</div>
+            <div style="font-size:1.3rem;font-weight:850;color:#0f172a">{ci:+d} dB</div>
+            <div style="color:#475569;line-height:1.55;margin-top:.65rem">
+              Es un valor separado que complementa Lₙ,w para considerar el <b>nivel de impacto no ponderado</b>
+              y la forma espectral asociada al ruido de pasos.
+            </div>
+          </div>
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
+
+    st.warning(
+        "**Cᵢ no es una mejora del piso.** No significa que el sistema haya mejorado o empeorado Cᵢ dB, "
+        "y no debe confundirse con ΔLw. Es un **término de adaptación espectral** que se informa junto con el descriptor ponderado."
+    )
+
+    # ------------------------------------------------------------------
+    # 2 · POR QUÉ EXISTE C_I
+    # ------------------------------------------------------------------
+    st.markdown("## 2 · ¿Por qué ISO 717-2 introduce Cᵢ?")
     st.write(
-        "Los niveles en dB no se suman aritméticamente. Primero cada nivel se transforma a una cantidad proporcional a energía, "
-        "se suman esas contribuciones y después se vuelve a escala logarítmica."
+        "Al reducir 16 bandas a Lₙ,w se pierde parte de la forma del espectro. "
+        "El Anexo A de ISO 717-2 introduce Cᵢ como información adicional para representar mejor efectos que "
+        "el índice ponderado puede describir de forma insuficiente, especialmente **picos concentrados en bajas frecuencias**."
     )
-    st.latex(r"L_{n,\mathrm{sum}}=10\log_{10}\left(\sum_i10^{L_{n,i}/10}\right)")
+
     st.markdown(
         """
-        **¿Qué calcula?** Un nivel global energético a partir de las bandas consideradas.  
-        **¿Para qué lo necesitamos?** Para construir el término C_I.  
-        **¿Cómo lo interpreto?** C_I acompaña a Lₙ,w y ayuda a describir cómo está distribuido el contenido espectral.
-        """
+        <div style="display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;margin:.55rem 0 .9rem">
+          <div style="border:1px solid #dbe4ee;border-radius:15px;padding:14px;background:#fff">
+            <b>Lₙ,w responde:</b><br><br>
+            ¿Cuál es el resultado ponderado después del ajuste con la referencia ISO?
+          </div>
+          <div style="border:1px solid #dbe4ee;border-radius:15px;padding:14px;background:#fff">
+            <b>Lₙ,sum responde:</b><br><br>
+            ¿Cuál es el nivel global obtenido al sumar energéticamente las bandas consideradas?
+          </div>
+          <div style="border:1px solid #dbe4ee;border-radius:15px;padding:14px;background:#fff">
+            <b>Cᵢ responde:</b><br><br>
+            ¿Qué información adicional aporta el nivel no ponderado respecto del número único Lₙ,w?
+          </div>
+        </div>
+        """,
+        unsafe_allow_html=True,
     )
-    st.warning(
-        "C_I no significa «cuántos dB mejora el piso». Tampoco se debe confundir con ΔL_w. "
-        "Es un **término de adaptación espectral**."
+
+    st.info(
+        "En ISO 717-2:2013, el Anexo A indica que Cᵢ se entrega como un **número separado**. "
+        "Para pisos masivos con revestimientos eficaces suele estar alrededor de 0 dB; "
+        "en pisos de entramado con picos dominantes de baja frecuencia puede ser ligeramente positivo; "
+        "y en pisos de hormigón desnudo o con revestimientos poco eficaces puede situarse entre aproximadamente −15 y 0 dB."
     )
+
+    # ------------------------------------------------------------------
+    # 3 · SUMA ENERGÉTICA
+    # ------------------------------------------------------------------
+    st.markdown("## 3 · Construye Lₙ,sum: sumar dB no es sumar números")
     st.write(
-        "Dos pisos pueden tener Lₙ,w parecido y, sin embargo, distribuir la energía de forma distinta. "
-        "C_I añade información sobre la forma del espectro."
+        "Los decibeles son logarítmicos. Por eso no podemos sumar 61 + 62 + 63 dB. "
+        "Cada banda se transforma primero a una cantidad proporcional a energía, se suman esas contribuciones "
+        "y recién entonces se vuelve a escala de decibeles."
     )
-    st.latex(r"L_{n,\mathrm{sum}}=10\log_{10}\left(\sum_i10^{L_{n,i}/10}\right)")
-    st.latex(r"\boxed{C_I=L_{n,\mathrm{sum}}-15-L_{n,w}}")
-    st.markdown("### Laboratorio de suma energética")
+    st.latex(r"\boxed{L_{n,\mathrm{sum}}=10\log_{10}\left(\sum_{i=1}^{k}10^{L_{n,i}/10}\right)}")
+
+    st.markdown("### Lee la ecuación de izquierda a derecha")
+    st.markdown(
+        """
+        <div style="display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px;margin:.55rem 0 1rem">
+          <div style="padding:13px;border:1px solid #dbe4ee;border-radius:14px;background:#fff"><b>1</b><br>Toma cada Lₙ,i por banda.</div>
+          <div style="padding:13px;border:1px solid #dbe4ee;border-radius:14px;background:#fff"><b>2</b><br>Convierte con 10<sup>L/10</sup>.</div>
+          <div style="padding:13px;border:1px solid #dbe4ee;border-radius:14px;background:#fff"><b>3</b><br>Suma las contribuciones energéticas.</div>
+          <div style="padding:13px;border:1px solid #bbf7d0;border-radius:14px;background:#f0fdf4"><b>4</b><br>Vuelve a dB con 10 log₁₀.</div>
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
+
+    st.markdown("### ¿Promedio aritmético o suma energética?")
+    demo=[60.0,60.0]
+    demo_energy=_c2l2_energy_sum(demo)
+    a,b=st.columns(2)
+    a.metric("Promedio aritmético de 60 y 60 dB","60.0 dB")
+    b.metric("Suma energética de 60 y 60 dB",f"{demo_energy:.1f} dB")
+    st.success(
+        "Dos bandas iguales de 60 dB no producen 120 dB ni mantienen 60 dB al sumarlas energéticamente: "
+        f"el resultado es **{demo_energy:.1f} dB**. Esa es la lógica que usaremos para Lₙ,sum."
+    )
+
+    # ------------------------------------------------------------------
+    # 4 · LABORATORIO DE ENERGÍA
+    # ------------------------------------------------------------------
+    st.markdown("## 4 · Laboratorio · ¿qué bandas dominan la suma energética?")
+    st.write(
+        "Activa o desactiva bandas y observa cuánto aporta cada una al total. "
+        "Para el Cᵢ de esta etapa, el rango normativo utilizado es **100–2500 Hz** en tercios de octava."
+    )
+
+    ci_freqs=_C2L2_FREQS[:15]
     selected=st.multiselect(
-        "Activa bandas para observar su contribución energética",
-        _C2L2_FREQS[:15],default=[100,125,160],key="c2l2_s5_bands"
+        "Bandas incluidas en el experimento",
+        ci_freqs,
+        default=ci_freqs,
+        key="c2l2_s5_bands",
+        placeholder="Selecciona bandas",
     )
-    values=[curve[_C2L2_FREQS.index(f)] for f in selected]
+    values=[float(curve[_C2L2_FREQS.index(f)]) for f in selected]
+
     if values:
         partial=_c2l2_energy_sum(values)
-        st.metric("Suma energética de las bandas seleccionadas",f"{partial:.1f} dB")
-        shares=[10**(v/10)/sum(10**(x/10) for x in values)*100 for v in values]
-        st.dataframe(pd.DataFrame({"f (Hz)":selected,"Lₙ (dB)":values,"Aporte energético (%)":[round(x,1) for x in shares]}),hide_index=True)
-    ci,lsum=_c2l2_ci(curve,lnw,False)
-    st.caption("Para el cálculo normativo de este ejercicio se utilizan las bandas de 100 a 2500 Hz.")
-    ans=st.number_input("Calcula C_I [dB]",-30,30,0,1,key="c2l2_s5_ci")
-    if st.button("COMPROBAR C_I",key="c2l2_s5_check",type="primary"):
-        if int(ans)==ci:
-            st.success(f"Correcto. Lₙ,sum ≈ {lsum:.1f} dB → C_I = {ci:+d} dB.")
-            saved["c2l2_ci"]=ci
-            _c2l2_finish_stage(saved,5)
-        else: st.warning("Revisa la suma energética completa y luego aplica C_I = Lₙ,sum − 15 − Lₙ,w.")
-    st.info("C_I **no es una mejora**, no sustituye Lₙ,w y no es una corrección arbitraria.")
+        lin=[10**(v/10) for v in values]
+        total_lin=sum(lin)
+        shares=[x/total_lin*100 for x in lin]
 
+        m1,m2,m3=st.columns(3)
+        m1.metric("Bandas activas",str(len(selected)))
+        m2.metric("Lₙ,sum de la selección",f"{partial:.1f} dB")
+        dominant_idx=max(range(len(shares)),key=lambda j:shares[j])
+        m3.metric("Mayor aporte",f"{selected[dominant_idx]} Hz · {shares[dominant_idx]:.1f}%")
+
+        contrib_df=pd.DataFrame({
+            "Frecuencia (Hz)":selected,
+            "Lₙ,i (dB)":values,
+            "Aporte energético (%)":[round(x,1) for x in shares],
+        })
+        st.dataframe(contrib_df,hide_index=True,use_container_width=True)
+
+        fig=go.Figure(go.Bar(
+            x=[str(f) for f in selected],
+            y=shares,
+            text=[f"{x:.1f}%" for x in shares],
+            textposition="outside",
+            hovertemplate="%{x} Hz<br>Aporte energético %{y:.1f}%<extra></extra>",
+        ))
+        fig.update_layout(
+            height=340,
+            margin=dict(l=45,r=20,t=35,b=45),
+            xaxis_title="Frecuencia (Hz)",
+            yaxis_title="Aporte al total (%)",
+            showlegend=False,
+        )
+        st.plotly_chart(fig,use_container_width=True,key="c2l2_s5_energy_contrib")
+    else:
+        st.info("Selecciona al menos una banda para construir la suma energética.")
+
+    # ------------------------------------------------------------------
+    # 5 · DE L_n,sum A C_I
+    # ------------------------------------------------------------------
+    st.markdown("## 5 · De Lₙ,sum a Cᵢ")
+    st.write(
+        "Para el cálculo completo se utilizan las bandas de 100 a 2500 Hz, se obtiene Lₙ,sum, "
+        "se redondea según el procedimiento y luego se relaciona con Lₙ,w mediante:"
+    )
+    st.latex(r"\boxed{C_I=L_{n,\mathrm{sum}}-15-L_{n,w}}")
+
+    rounded_lsum=int(round(lsum))
+    st.markdown(
+        f"""
+        <div style="display:grid;grid-template-columns:1fr auto 1fr auto 1fr auto 1fr;gap:8px;align-items:center;margin:.7rem 0 1rem">
+          <div style="border:1px solid #ddd6fe;border-radius:15px;padding:14px;text-align:center;background:#f5f3ff"><small>Lₙ,sum redondeado</small><br><b style="font-size:1.55rem">{rounded_lsum} dB</b></div>
+          <div style="font-size:1.5rem;font-weight:900">−</div>
+          <div style="border:1px solid #dbe4ee;border-radius:15px;padding:14px;text-align:center;background:#fff"><small>Constante ISO</small><br><b style="font-size:1.55rem">15 dB</b></div>
+          <div style="font-size:1.5rem;font-weight:900">−</div>
+          <div style="border:1px solid #bfdbfe;border-radius:15px;padding:14px;text-align:center;background:#eff6ff"><small>Lₙ,w</small><br><b style="font-size:1.55rem">{lnw} dB</b></div>
+          <div style="font-size:1.5rem;font-weight:900">=</div>
+          <div style="border:2px solid #bbf7d0;border-radius:15px;padding:14px;text-align:center;background:#f0fdf4"><small>Cᵢ</small><br><b style="font-size:1.7rem">{ci:+d} dB</b></div>
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
+
+    st.markdown("### ¿Cómo leer el signo de Cᵢ?")
+    st.markdown(
+        """
+        - **Cᵢ cercano a 0 dB:** el nivel energético no ponderado queda relativamente próximo a lo que representa Lₙ,w en esta formulación.
+        - **Cᵢ positivo:** puede señalar una influencia adicional que Lₙ,w representa insuficientemente, especialmente cuando existen picos importantes en bajas frecuencias.
+        - **Cᵢ negativo:** no significa una «mejora negativa»; simplemente es el resultado del término de adaptación para esa forma espectral.
+        """
+    )
+
+    st.warning(
+        "No interpretes Cᵢ aislado como si fuera otro índice de aislamiento. **Se informa junto con Lₙ,w**. "
+        "Si un criterio decide considerar este efecto, ISO 717-2 señala que puede expresarse mediante la suma del descriptor ponderado y Cᵢ; "
+        "eso no significa que todos los reglamentos exijan hacerlo."
+    )
+
+    # ------------------------------------------------------------------
+    # 6 · ACTIVIDAD DE CÁLCULO
+    # ------------------------------------------------------------------
+    st.markdown("## 6 · Comprueba que puedes construir Cᵢ")
+    st.write(
+        "Usa los tres valores del bloque anterior. No necesitas volver a sumar banda por banda: "
+        "la tarea es demostrar que entiendes cómo se combinan Lₙ,sum, la constante 15 y Lₙ,w."
+    )
+
+    if role=="Docente" and not projection_mode:
+        st.info(
+            f"**Pauta docente:** Lₙ,sum = {lsum:.1f} dB → redondeado {rounded_lsum} dB; "
+            f"Lₙ,w = {lnw} dB; por tanto Cᵢ = {rounded_lsum} − 15 − {lnw} = **{ci:+d} dB**."
+        )
+    else:
+        ans=st.number_input(
+            "Tu resultado para Cᵢ [dB]",
+            min_value=-30,
+            max_value=30,
+            value=0,
+            step=1,
+            key="c2l2_s5_ci",
+        )
+        if st.button("COMPROBAR Cᵢ",key="c2l2_s5_check",type="primary",use_container_width=True):
+            result={"answer":int(ans),"correct":int(ans)==ci,"updated_at":_now()}
+            if projection_mode:
+                st.session_state["c2l2_s5_projection_result"]=result
+            else:
+                saved["c2l2_s5_result"]=result
+                saved["updated_5"]=_now()
+                _save_future_state(_C2L2_CLASS_ID,saved)
+            st.rerun()
+
+        result=(
+            st.session_state.get("c2l2_s5_projection_result")
+            if projection_mode
+            else saved.get("c2l2_s5_result")
+        )
+        if isinstance(result,dict):
+            if result.get("correct"):
+                st.success(
+                    f"✓ Correcto. Lₙ,sum ≈ {lsum:.1f} dB → {rounded_lsum} dB; "
+                    f"Cᵢ = {rounded_lsum} − 15 − {lnw} = **{ci:+d} dB**."
+                )
+                if role=="Alumno":
+                    saved["c2l2_ci"]=ci
+                    _c2l2_finish_stage(saved,5)
+            else:
+                st.warning(
+                    f"Revisa el orden: primero redondea Lₙ,sum a {rounded_lsum} dB y después calcula "
+                    f"Cᵢ = Lₙ,sum − 15 − Lₙ,w."
+                )
+
+    # ------------------------------------------------------------------
+    # 7 · PUENTE A BAJAS FRECUENCIAS
+    # ------------------------------------------------------------------
+    st.markdown("## 7 · Qué falta por mirar")
+    st.success(
+        "Cᵢ utiliza aquí 100–2500 Hz. En la Etapa 6 ampliaremos el análisis incorporando **50, 63 y 80 Hz** "
+        "para construir Cᵢ,50–2500 y observar cuánto pueden cambiar las conclusiones cuando incluimos las frecuencias más bajas."
+    )
+    st.caption("Continúa desde la barra lateral.")
 
 def _c2l2_stage6(lab,saved):
     curve,_=_c2l2_floor_curve()
