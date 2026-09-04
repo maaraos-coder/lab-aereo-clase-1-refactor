@@ -14480,8 +14480,10 @@ def _c2l2_stage7(lab,saved):
     # 3 · PISO PESADO DE REFERENCIA
     # ------------------------------------------------------------------
     st.markdown("## 3 · El piso pesado de referencia")
-    ref_floor=[78,78,78,78,78,78,77,76,75,74,73,70,67,64,61,58]
-    ref_lnw,ref_shift=_c2l2_lnw(ref_floor)
+    # ISO 717-2:2013, Table 4 · normalized impact sound pressure
+    # level of the massive reference floor. Its weighted value is defined as 78 dB.
+    ref_floor=[67.0,67.5,68.0,68.5,69.0,69.5,70.0,70.5,71.0,71.5,72.0,72.0,72.0,72.0,72.0,72.0]
+    ref_lnw=78
 
     st.markdown(
         f"""
@@ -14495,7 +14497,48 @@ def _c2l2_stage7(lab,saved):
     )
 
     st.latex(r"L_{n,r}(f)=L_{n,r,0}(f)-\Delta L(f)")
-    st.latex(r"\Delta L_w=L_{n,r,0,w}-L_{n,r,w}")
+    st.latex(r"\Delta L_w=L_{n,r,0,w}-L_{n,r,w}=78-L_{n,r,w}")
+
+    st.markdown("### ¿Qué significa cada símbolo?")
+    st.markdown(
+        """
+        <div style="display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;margin:.55rem 0 1rem">
+          <div style="border:1px solid #dbe4ee;border-radius:15px;padding:14px;background:#fff">
+            <b>Lₙ,r,0(f)</b><br><br>
+            Nivel normalizado de ruido de impacto del <b>piso pesado de referencia sin revestimiento</b>,
+            expresado banda por banda.
+          </div>
+          <div style="border:1px solid #dbe4ee;border-radius:15px;padding:14px;background:#fff">
+            <b>ΔL(f)</b><br><br>
+            Reducción del nivel de impacto que produce el <b>revestimiento</b> en cada banda de frecuencia.
+          </div>
+          <div style="border:1px solid #dbe4ee;border-radius:15px;padding:14px;background:#fff">
+            <b>Lₙ,r(f)</b><br><br>
+            Nivel calculado del <b>piso de referencia con el revestimiento</b>.
+            Se obtiene restando ΔL(f) al piso sin revestir.
+          </div>
+          <div style="border:1px solid #dbe4ee;border-radius:15px;padding:14px;background:#fff">
+            <b>Lₙ,r,w</b><br><br>
+            Valor ponderado de la curva Lₙ,r(f) después de aplicar el procedimiento ISO 717-2.
+          </div>
+          <div style="border:1px solid #bfdbfe;border-radius:15px;padding:14px;background:#eff6ff">
+            <b>Lₙ,r,0,w = 78 dB</b><br><br>
+            Valor ponderado definido para el piso pesado de referencia <b>sin revestimiento</b>.
+          </div>
+          <div style="border:1px solid #bbf7d0;border-radius:15px;padding:14px;background:#f0fdf4">
+            <b>ΔLw</b><br><br>
+            Reducción ponderada del revestimiento:
+            compara el piso de referencia sin revestimiento (78 dB) con el piso de referencia tratado.
+          </div>
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
+
+    st.info(
+        "Regla de lectura: **Lₙ,r,w es un nivel resultante; ΔLw es una reducción.** "
+        "Aunque ambos se expresan en dB, describen cosas distintas."
+    )
 
     # ------------------------------------------------------------------
     # 4 · CONSTRUYE TU CURVA ΔL(f)
@@ -14599,25 +14642,76 @@ def _c2l2_stage7(lab,saved):
     # 6 · LEER EL RESULTADO
     # ------------------------------------------------------------------
     st.markdown("## 6 · De la curva al número único ΔLw")
-    r1,r2,r3=st.columns(3)
-    r1.metric("Lₙ,r,0,w · sin revestimiento",f"{ref_lnw} dB")
-    r2.metric("Lₙ,r,w · con revestimiento",f"{treated_lnw} dB")
-    r3.metric("ΔLw",f"{delta_lw} dB")
-
-    st.success(
-        f"En este caso, el revestimiento transforma el piso de referencia de **{ref_lnw} dB** a **{treated_lnw} dB**. "
-        f"Por tanto, **ΔLw = {delta_lw} dB**."
-    )
-
-    st.markdown("### ¿Qué significa realmente ese ΔLw?")
     st.write(
-        f"Significa que, **bajo este procedimiento de referencia**, la curva ΔL(f) que diseñaste produce una "
-        f"reducción ponderada de **{delta_lw} dB**."
+        "Aquí ocurren **dos operaciones diferentes**. Primero obtenemos el nuevo nivel ponderado del piso de referencia "
+        "con revestimiento. Después comparamos ese valor con los 78 dB del piso de referencia sin revestir."
     )
+
+    st.markdown("### Paso A · ponderar el piso con revestimiento")
+    st.write(
+        "La curva Lₙ,r(f) que acabas de construir se trata exactamente como cualquier espectro de ruido de impacto: "
+        "se aplica el procedimiento de ISO 717-2 y se obtiene **Lₙ,r,w**."
+    )
+
+    r1,r2=st.columns(2)
+    r1.metric("Piso de referencia sin revestimiento","Lₙ,r,0,w = 78 dB")
+    r2.metric("Piso de referencia con revestimiento",f"Lₙ,r,w = {treated_lnw} dB")
+
+    st.markdown("### Paso B · calcular la reducción ponderada")
+    st.latex(r"\boxed{\Delta L_w=78-L_{n,r,w}}")
+    st.latex(fr"\Delta L_w=78-{treated_lnw}={delta_lw}\ \mathrm{{dB}}")
+
+    st.markdown(
+        f"""
+        <div style="border:2px solid #bbf7d0;border-radius:17px;padding:16px 18px;background:#f0fdf4;margin:.65rem 0 1rem">
+          <div style="font-size:.76rem;font-weight:900;letter-spacing:.05em;color:#166534">RESULTADO DEL REVESTIMIENTO</div>
+          <div style="font-size:2rem;font-weight:950;color:#14532d;margin:.25rem 0">ΔLw = {delta_lw} dB</div>
+          <div style="color:#3f6212;line-height:1.55">
+            Bajo el procedimiento de referencia, este revestimiento reduce el valor ponderado del piso pesado
+            desde <b>78 dB</b> hasta <b>{treated_lnw} dB</b>.
+          </div>
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
+
+    st.markdown("### ¿Cómo se lee para una persona no especialista?")
+    st.markdown(
+        f"""
+        > **“En el piso pesado de referencia, el revestimiento produce una reducción ponderada del ruido de impacto de {delta_lw} dB.”**
+        """
+    )
+
+    st.markdown("### Lo que NO significa")
     st.warning(
-        "No significa que cualquier piso real vaya a mejorar exactamente esa cantidad. "
-        "La transferencia depende del tipo de piso, su masa, montaje, resonancias y comportamiento espectral."
+        f"No significa que cualquier piso real vaya a bajar exactamente {delta_lw} dB. "
+        "ΔLw caracteriza el revestimiento bajo un piso de referencia normalizado. "
+        "Su efecto real depende del tipo de losa, masa, montaje, rigidez, resonancias y otras características del sistema."
     )
+
+    st.markdown("### Tres valores que no debes confundir")
+    a,b,c=st.columns(3)
+    with a:
+        _c2l2_card(
+            "78 dB",
+            "referencia sin revestimiento",
+            "Es Lₙ,r,0,w: el valor ponderado definido para el piso pesado de referencia.",
+            tone="blue",
+        )
+    with b:
+        _c2l2_card(
+            f"{treated_lnw} dB",
+            "nivel con revestimiento",
+            "Es Lₙ,r,w: el valor ponderado del piso de referencia después de aplicar ΔL(f).",
+            tone="orange",
+        )
+    with c:
+        _c2l2_card(
+            f"{delta_lw} dB",
+            "reducción del revestimiento",
+            "Es ΔLw: la diferencia ponderada entre ambos estados del piso de referencia.",
+            tone="green",
+        )
 
     # ------------------------------------------------------------------
     # 7 · MISMO ΔLw, DISTINTA FORMA ESPECTRAL
@@ -14784,7 +14878,8 @@ def _c2l2_stage8(lab,saved):
     )
 
     # Curva de losa desnuda / referencia pesada didáctica.
-    bare=[78,78,78,78,78,78,77,76,75,74,73,70,67,64,61,58]
+    # Same ISO 717-2 massive reference floor used in Etapa 7.
+    bare=[67.0,67.5,68.0,68.5,69.0,69.5,70.0,70.5,71.0,71.5,72.0,72.0,72.0,72.0,72.0,72.0]
     freqs=_C2L2_FREQS
 
     st.markdown("## 1 · Punto de partida · losa desnuda")
@@ -14793,7 +14888,8 @@ def _c2l2_stage8(lab,saved):
         "Su curva espectral representa el nivel normalizado de impacto antes de instalar el revestimiento."
     )
 
-    bare_lnw,bare_shift=_c2l2_lnw(bare)
+    bare_lnw=78
+    bare_shift=None
     bare_ci,bare_lsum=_c2l2_ci(bare,bare_lnw,False)
 
     c1,c2,c3=st.columns(3)
