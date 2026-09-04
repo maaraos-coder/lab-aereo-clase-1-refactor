@@ -13167,44 +13167,57 @@ def _c2l2_stage4(lab,saved):
     # --------------------------------------------------------------
     st.markdown("## 3 · Observa cómo cambia la forma del espectro")
 
+    # Usamos posiciones enteras 0..15 para evitar que Plotly colapse
+    # las bandas cuando interpreta las frecuencias como categorías/números.
+    x_pos=list(range(len(_C2L2_FREQS)))
     freq_labels=[str(f) for f in _C2L2_FREQS]
+
     fig=go.Figure()
     fig.add_trace(go.Scatter(
-        x=freq_labels,y=curve,
+        x=x_pos,y=curve,
         mode="lines+markers",
         name="Espectro original",
         line=dict(width=4,color="#64748b"),
         marker=dict(size=8),
+        customdata=freq_labels,
+        hovertemplate="Frecuencia %{customdata} Hz<br>Nivel %{y:.1f} dB<extra></extra>",
     ))
     fig.add_trace(go.Scatter(
-        x=freq_labels,y=modified,
+        x=x_pos,y=modified,
         mode="lines+markers",
         name="Espectro intervenido",
         line=dict(width=4,color="#0b69d1"),
         marker=dict(size=8),
+        customdata=freq_labels,
+        hovertemplate="Frecuencia %{customdata} Hz<br>Nivel %{y:.1f} dB<extra></extra>",
     ))
 
-    # El eje usa categorías de tercio de octava para que las 16 bandas
-    # queden espaciadas uniformemente y sean fáciles de comparar.
+    # Fondos por zona usando posiciones reales del gráfico.
+    fig.add_vrect(x0=-0.45,x1=5.45,fillcolor="#fef3c7",opacity=.16,line_width=0)
+    fig.add_vrect(x0=5.55,x1=9.45,fillcolor="#dbeafe",opacity=.16,line_width=0)
+    fig.add_vrect(x0=9.55,x1=15.45,fillcolor="#ede9fe",opacity=.16,line_width=0)
+
     fig.update_layout(
         height=470,
-        margin=dict(l=45,r=20,t=70,b=55),
+        margin=dict(l=45,r=20,t=78,b=60),
         xaxis=dict(
             title="Frecuencia (Hz)",
-            type="category",
-            categoryorder="array",
-            categoryarray=freq_labels,
+            type="linear",
+            tickmode="array",
+            tickvals=x_pos,
+            ticktext=freq_labels,
+            range=[-0.5,15.5],
             tickangle=0,
         ),
         yaxis=dict(title="Nivel de impacto (dB)"),
-        legend=dict(orientation="h",y=1.12,x=0),
+        legend=dict(orientation="h",y=1.14,x=0),
         hovermode="x unified",
     )
 
-    # Etiquetas de zonas sin deformar el eje.
-    fig.add_annotation(x="200",y=1.08,xref="x",yref="paper",text="<b>BAJAS</b><br>100–315 Hz",showarrow=False)
-    fig.add_annotation(x="630",y=1.08,xref="x",yref="paper",text="<b>MEDIAS</b><br>400–800 Hz",showarrow=False)
-    fig.add_annotation(x="1600",y=1.08,xref="x",yref="paper",text="<b>ALTAS</b><br>1000–3150 Hz",showarrow=False)
+    # Etiquetas de zona centradas sobre sus bandas.
+    fig.add_annotation(x=2.5,y=1.08,xref="x",yref="paper",text="<b>BAJAS</b><br>100–315 Hz",showarrow=False)
+    fig.add_annotation(x=7.5,y=1.08,xref="x",yref="paper",text="<b>MEDIAS</b><br>400–800 Hz",showarrow=False)
+    fig.add_annotation(x=12.5,y=1.08,xref="x",yref="paper",text="<b>ALTAS</b><br>1000–3150 Hz",showarrow=False)
     st.plotly_chart(fig,use_container_width=True,key="c2l2_s4_before_after")
 
     # --------------------------------------------------------------
