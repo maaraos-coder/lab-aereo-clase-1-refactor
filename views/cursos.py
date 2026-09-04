@@ -15219,6 +15219,87 @@ def _c2l2_stage8(lab,saved):
     treated_ext=low_ext+treated
     treated_ci50,treated_lsum50=_c2l2_ci(treated_ext,treated_lnw,True)
 
+    st.markdown("### Herramienta de apoyo · encuentra Lₙ,w sin salir de esta etapa")
+    st.write(
+        "Usa esta mini herramienta igual que en la Etapa 2: mueve la referencia, observa Σdᵢ y busca la **posición límite**. "
+        "La herramienta te ayuda a calcular, pero tú debes decidir cuándo la posición es correcta."
+    )
+
+    base500=_C2L2_REF[_C2L2_FREQS.index(500)]
+    helper_ref500=st.slider(
+        "Referencia ISO en 500 Hz [dB]",
+        min_value=40,
+        max_value=80,
+        value=int(base500),
+        step=1,
+        key="c2l2_s8_helper_ref500",
+    )
+    helper_shift=int(helper_ref500-base500)
+    helper_ref=_c2l2_ref_shift(helper_shift)
+    helper_dev=[max(0.0,float(ln)-float(rv)) for ln,rv in zip(treated,helper_ref)]
+    helper_sum=float(sum(helper_dev))
+
+    helper_ref_lower=_c2l2_ref_shift(helper_shift-1)
+    helper_dev_lower=[max(0.0,float(ln)-float(rv)) for ln,rv in zip(treated,helper_ref_lower)]
+    helper_sum_lower=float(sum(helper_dev_lower))
+
+    xh=list(range(len(freqs)))
+    helper_fig=go.Figure()
+    helper_fig.add_trace(go.Scatter(
+        x=xh,y=treated,mode="lines+markers",
+        name="Espectro tratado",
+        line=dict(width=4,color="#0b69d1"),
+        marker=dict(size=8),
+    ))
+    helper_fig.add_trace(go.Scatter(
+        x=xh,y=helper_ref,mode="lines+markers",
+        name="Referencia ISO 717-2",
+        line=dict(width=3,color="#111827"),
+        marker=dict(size=6),
+    ))
+    for xx,lnv,rv,dv in zip(xh,treated,helper_ref,helper_dev):
+        if dv>0:
+            helper_fig.add_trace(go.Scatter(
+                x=[xx,xx],y=[rv,lnv],mode="lines",
+                line=dict(width=4,color="#ef4444"),
+                showlegend=False,
+                hoverinfo="skip",
+            ))
+    helper_fig.update_layout(
+        height=390,
+        margin=dict(l=45,r=20,t=35,b=50),
+        xaxis=dict(
+            title="Frecuencia (Hz)",
+            tickmode="array",
+            tickvals=xh,
+            ticktext=[str(f) for f in freqs],
+            range=[-0.5,15.5],
+        ),
+        yaxis=dict(title="Nivel (dB)"),
+        legend=dict(orientation="h",y=1.08,x=0),
+        hovermode="x unified",
+    )
+    st.plotly_chart(helper_fig,use_container_width=True,key="c2l2_s8_helper_lnw_graph")
+
+    h1,h2,h3=st.columns(3)
+    h1.metric("Referencia en 500 Hz",f"{helper_ref500} dB")
+    h2.metric("Σdᵢ actual",f"{helper_sum:.1f} dB")
+    h3.metric("Σdᵢ si bajas 1 dB",f"{helper_sum_lower:.1f} dB")
+
+    if helper_sum>32:
+        st.error(
+            "Esta posición no cumple: Σdᵢ supera 32 dB. Sube la referencia."
+        )
+    elif helper_sum_lower<=32:
+        st.warning(
+            "Esta posición cumple, pero todavía puedes bajar 1 dB porque el paso siguiente también cumple."
+        )
+    else:
+        st.success(
+            "Has encontrado la **posición límite**: la posición actual cumple y 1 dB más abajo ya no cumple. "
+            "Ahora lee la referencia en 500 Hz y usa ese valor como tu Lₙ,w."
+        )
+
     if role=="Docente" and not projection_mode:
         st.info(
             f"**Pauta docente:** al ponderar el espectro tratado se obtiene **Lₙ,w = {treated_lnw} dB**."
@@ -15263,6 +15344,25 @@ def _c2l2_stage8(lab,saved):
         )
         st.latex(r"\Delta L_w=L_{n,r,0,w}-L_{n,r,w}=78-L_{n,r,w}")
 
+        st.markdown("### Herramienta de apoyo · calcula ΔLw")
+        st.write(
+            "Aquí no necesitas volver a ninguna etapa: usa el valor normativo del piso pesado de referencia y tu Lₙ,r,w."
+        )
+        dcalc1,dcalc2,dcalc3=st.columns(3)
+        dcalc1.metric("Lₙ,r,0,w","78 dB")
+        helper_lnrw=st.number_input(
+            "Lₙ,r,w que obtuviste [dB]",
+            min_value=0,max_value=120,value=0,step=1,
+            key="c2l2_s8_helper_lnrw",
+        )
+        dcalc2.metric("Tu Lₙ,r,w",f"{helper_lnrw} dB")
+        helper_dlw=78-int(helper_lnrw)
+        dcalc3.metric("78 − Lₙ,r,w",f"{helper_dlw} dB")
+        st.caption(
+            "Usa el resultado de esta resta para responder el ejercicio de ΔLw. "
+            "Recuerda que ΔLw es una **reducción**, no el nivel final del piso."
+        )
+
         if role=="Docente" and not projection_mode:
             st.success(
                 f"**Pauta docente:** ΔLw = 78 − {treated_lnw} = **{delta_lw} dB**."
@@ -15298,7 +15398,7 @@ def _c2l2_stage8(lab,saved):
 
     else:
         step2_ok=False
-        st.caption("Completa primero el cálculo de Lₙ,w para desbloquear ΔLw.")
+        st.info("Primero resuelve Lₙ,w con la herramienta de ponderación que aparece arriba. Al acertar se desbloqueará ΔLw.")
 
     if step1_ok and step2_ok:
         st.markdown("## 6 · Añade tú la información espectral")
@@ -15309,6 +15409,49 @@ def _c2l2_stage8(lab,saved):
 
         st.latex(r"C_I=L_{n,\mathrm{sum}(100-2500)}-15-L_{n,w}")
         st.latex(r"C_{I,50-2500}=L_{n,\mathrm{sum}(50-2500)}-15-L_{n,w}")
+
+        st.markdown("### Herramienta de apoyo · suma energética 100–2500 Hz")
+        st.write(
+            "Puedes reconstruir Lₙ,sum aquí mismo. Las bandas ya corresponden al espectro tratado."
+        )
+        ci_freqs=[f for f in freqs if 100<=f<=2500]
+        ci_vals=[float(treated[freqs.index(f)]) for f in ci_freqs]
+        ci_lin=[10**(v/10) for v in ci_vals]
+        ci_total_lin=sum(ci_lin)
+        ci_shares=[v/ci_total_lin*100 for v in ci_lin]
+        helper_lsum=_c2l2_energy_sum(ci_vals)
+
+        ci_df=pd.DataFrame({
+            "Frecuencia (Hz)":ci_freqs,
+            "Lₙ,i tratado [dB]":[round(v,1) for v in ci_vals],
+            "Aporte energético [%]":[round(v,1) for v in ci_shares],
+        })
+        st.dataframe(ci_df,hide_index=True,use_container_width=True)
+
+        ec1,ec2,ec3=st.columns(3)
+        ec1.metric("Bandas incluidas",str(len(ci_freqs)))
+        ec2.metric("Lₙ,sum 100–2500",f"{helper_lsum:.1f} dB")
+        ec3.metric("Lₙ,w que debes usar",f"{treated_lnw} dB")
+        st.latex(r"C_I=L_{n,\mathrm{sum}}-15-L_{n,w}")
+
+        st.markdown("### Herramienta de apoyo · amplía a 50–2500 Hz")
+        low_helper=pd.DataFrame({
+            "Frecuencia (Hz)":[50,63,80],
+            "Lₙ,i tratado [dB]":[round(v,1) for v in low_ext],
+        })
+        st.dataframe(low_helper,hide_index=True,use_container_width=True)
+
+        helper_lsum50=_c2l2_energy_sum(
+            [float(v) for v in low_ext] + [float(treated[freqs.index(f)]) for f in ci_freqs]
+        )
+        lf1,lf2,lf3=st.columns(3)
+        lf1.metric("Bandas nuevas","50 · 63 · 80 Hz")
+        lf2.metric("Lₙ,sum 50–2500",f"{helper_lsum50:.1f} dB")
+        lf3.metric("Lₙ,w",f"{treated_lnw} dB")
+        st.latex(r"C_{I,50-2500}=L_{n,\mathrm{sum}(50-2500)}-15-L_{n,w}")
+        st.caption(
+            "Con estos valores puedes calcular ambos términos sin volver a las Etapas 5 o 6."
+        )
 
         if role=="Docente" and not projection_mode:
             st.info(
@@ -15361,7 +15504,7 @@ def _c2l2_stage8(lab,saved):
     else:
         step3_ok=False
         step4_ok=False
-        st.caption("Completa primero Lₙ,w y ΔLw para desbloquear los términos espectrales.")
+        st.info("Completa Lₙ,w y ΔLw. Después aparecerán aquí mismo las herramientas de suma energética para Cᵢ y Cᵢ,50–2500.")
 
     if step1_ok and step2_ok and step3_ok and step4_ok:
         st.markdown("## 7 · Expresa tú el resultado como lo harías profesionalmente")
@@ -15451,7 +15594,7 @@ def _c2l2_stage8(lab,saved):
             )
     else:
         report_ok=False
-        st.caption("Completa los cálculos anteriores para desbloquear el reporte profesional.")
+        st.info("Cuando completes los cuatro cálculos, se habilitará en esta misma pantalla el reporte profesional final.")
 
     st.markdown("## 8 · Comprobación final del caso integrador")
     st.write(
