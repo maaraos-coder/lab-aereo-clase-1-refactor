@@ -14410,67 +14410,365 @@ def _c2l2_stage6(lab,saved):
     st.caption("Continúa desde la barra lateral.")
 
 def _c2l2_stage7(lab,saved):
-    _c2l2_stage_header(7,"¿CUÁNTO MEJORA REALMENTE UN REVESTIMIENTO?","Transforma ΔL(f) en la reducción ponderada ΔL_w.")
-    _c2l2_asset(stage=7)
-    st.markdown("### 1 · Recupera la diferencia fundamental")
-    st.write(
-        "En el Laboratorio 1 calculaste **ΔLₙ(f)**: una reducción que depende de la frecuencia. "
-        "Ahora queremos expresar el efecto del revestimiento mediante un único valor ponderado, **ΔL_w**."
+    """Etapa 7 · del ΔL(f) del revestimiento a ΔLw."""
+    import plotly.graph_objects as go
+
+    role=st.session_state.get("role","Alumno")
+    projection_mode=bool(st.session_state.get("projection_mode") or role=="Proyección")
+
+    _c2l2_stage_header(
+        7,
+        "DEL REVESTIMIENTO ESPECTRAL A ΔLw",
+        "Construye ΔL(f), aplícalo a un piso pesado de referencia y transforma esa curva en la reducción ponderada ΔLw."
     )
-    st.markdown("### 2 · No ponderamos directamente ΔL(f)")
+
+    # ------------------------------------------------------------------
+    # 1 · CONEXIÓN CON ETAPA 6
+    # ------------------------------------------------------------------
+    st.markdown("## 1 · Venimos de mirar el espectro; ahora aislamos el efecto del revestimiento")
     st.write(
-        "El procedimiento utiliza un **piso pesado de referencia**. Primero aplicamos la reducción espectral al piso de referencia, "
-        "obtenemos una nueva curva de niveles de impacto y esa curva resultante se pondera con el mismo método de Lₙ,w."
+        "En la Etapa 6 analizaste cómo cambia la lectura espectral cuando incorporamos 50, 63 y 80 Hz. "
+        "Ahora cambia la pregunta: **¿cuánto aporta el revestimiento por sí mismo dentro de un procedimiento de referencia?**"
     )
+
     st.markdown(
         """
-        **Cadena de cálculo**
+        <div style="display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;margin:.55rem 0 1rem">
+          <div style="border:1px solid #bfdbfe;border-radius:15px;padding:14px;background:#eff6ff">
+            <b>Etapa 6</b><br><br>
+            Miramos la <b>forma del espectro</b> y los términos Cᵢ / Cᵢ,50–2500.
+          </div>
+          <div style="border:1px solid #fed7aa;border-radius:15px;padding:14px;background:#fff7ed">
+            <b>Etapa 7</b><br><br>
+            Aislamos la <b>eficacia del revestimiento</b> mediante ΔL(f) y ΔLw.
+          </div>
+          <div style="border:1px solid #bbf7d0;border-radius:15px;padding:14px;background:#f0fdf4">
+            <b>Etapa 8</b><br><br>
+            Volveremos a reunir <b>losa + revestimiento + número único + términos espectrales</b>.
+          </div>
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
 
-        ΔL(f)  
-        ↓  
-        piso de referencia sin revestimiento  
-        ↓  
-        Lₙ,r(f) = Lₙ,r,0(f) − ΔL(f)  
-        ↓  
-        ponderación ISO 717-2  
-        ↓  
-        Lₙ,r,w  
-        ↓  
-        **ΔL_w = 78 − Lₙ,r,w**
-        """
+    # ------------------------------------------------------------------
+    # 2 · QUÉ ES ΔL(f) Y QUÉ ES ΔLw
+    # ------------------------------------------------------------------
+    st.markdown("## 2 · Dos descriptores distintos del mismo revestimiento")
+    c1,c2=st.columns(2)
+    with c1:
+        _c2l2_card(
+            "ΔL(f)",
+            "reducción por frecuencia",
+            "Describe cuántos dB reduce el revestimiento en cada banda. Conserva la forma espectral completa.",
+            tone="blue",
+        )
+    with c2:
+        _c2l2_card(
+            "ΔLw",
+            "reducción ponderada",
+            "Resume el comportamiento del revestimiento en un único valor obtenido mediante un piso pesado de referencia.",
+            tone="green",
+        )
+
+    st.warning(
+        "**ΔLw no se obtiene promediando ΔL(f).** Primero se aplica la curva ΔL(f) al piso de referencia, "
+        "después se pondera la curva resultante y recién entonces se calcula ΔLw."
+    )
+
+    # ------------------------------------------------------------------
+    # 3 · PISO PESADO DE REFERENCIA
+    # ------------------------------------------------------------------
+    st.markdown("## 3 · El piso pesado de referencia")
+    ref_floor=[78,78,78,78,78,78,77,76,75,74,73,70,67,64,61,58]
+    ref_lnw,ref_shift=_c2l2_lnw(ref_floor)
+
+    st.markdown(
+        f"""
+        <div style="border:1px solid #dbe4ee;border-radius:16px;padding:15px 17px;background:#f8fbff;margin:.55rem 0 .9rem">
+          <b>Dato de referencia del procedimiento</b><br><br>
+          El piso pesado sin revestimiento se toma con un valor ponderado de referencia
+          <b>Lₙ,r,0,w = {ref_lnw} dB</b>.
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
+
+    st.latex(r"L_{n,r}(f)=L_{n,r,0}(f)-\Delta L(f)")
+    st.latex(r"\Delta L_w=L_{n,r,0,w}-L_{n,r,w}")
+
+    # ------------------------------------------------------------------
+    # 4 · CONSTRUYE TU CURVA ΔL(f)
+    # ------------------------------------------------------------------
+    st.markdown("## 4 · Diseña la curva ΔL(f) del revestimiento")
+    st.write(
+        "Construye una mejora espectral idealizada por zonas. "
+        "Esta vez los controles representan directamente la **reducción del revestimiento por banda**, es decir, ΔL(f)."
+    )
+
+    z1,z2,z3=st.columns(3)
+    with z1:
+        dl_low=st.slider(
+            "ΔL en bajas · 100–315 Hz [dB]",
+            0,20,5,1,
+            key="c2l2_s7_low",
+        )
+        st.caption(f"Se aplican {dl_low} dB de reducción a 100–315 Hz.")
+    with z2:
+        dl_mid=st.slider(
+            "ΔL en medias · 400–800 Hz [dB]",
+            0,25,10,1,
+            key="c2l2_s7_mid",
+        )
+        st.caption(f"Se aplican {dl_mid} dB de reducción a 400–800 Hz.")
+    with z3:
+        dl_high=st.slider(
+            "ΔL en altas · 1000–3150 Hz [dB]",
+            0,30,15,1,
+            key="c2l2_s7_high",
+        )
+        st.caption(f"Se aplican {dl_high} dB de reducción a 1000–3150 Hz.")
+
+    delta=[]
+    for f in _C2L2_FREQS:
+        if 100<=f<=315:
+            delta.append(float(dl_low))
+        elif 400<=f<=800:
+            delta.append(float(dl_mid))
+        else:
+            delta.append(float(dl_high))
+
+    treated=[float(a)-float(b) for a,b in zip(ref_floor,delta)]
+    treated_lnw,treated_shift=_c2l2_lnw(treated)
+    delta_lw=int(ref_lnw-treated_lnw)
+
+    # ------------------------------------------------------------------
+    # 5 · VER LA TRANSFORMACIÓN
+    # ------------------------------------------------------------------
+    st.markdown("## 5 · Observa la transformación completa")
+    x=list(range(len(_C2L2_FREQS)))
+    labels=[str(f) for f in _C2L2_FREQS]
+
+    fig=go.Figure()
+    fig.add_trace(go.Scatter(
+        x=x,y=ref_floor,mode="lines+markers",
+        name="Piso pesado sin revestimiento",
+        line=dict(width=4,color="#64748b"),
+        marker=dict(size=8),
+    ))
+    fig.add_trace(go.Scatter(
+        x=x,y=treated,mode="lines+markers",
+        name="Piso de referencia + revestimiento",
+        line=dict(width=4,color="#0b69d1"),
+        marker=dict(size=8),
+    ))
+    fig.update_layout(
+        height=430,
+        margin=dict(l=45,r=20,t=40,b=55),
+        xaxis=dict(
+            title="Frecuencia (Hz)",
+            tickmode="array",
+            tickvals=x,
+            ticktext=labels,
+            range=[-0.5,15.5],
+        ),
+        yaxis=dict(title="Lₙ,r (dB)"),
+        legend=dict(orientation="h",y=1.08,x=0),
+        hovermode="x unified",
+    )
+    st.plotly_chart(fig,use_container_width=True,key="c2l2_s7_ref_vs_treated")
+
+    # mostrar también ΔL(f)
+    fig2=go.Figure(go.Bar(
+        x=labels,
+        y=delta,
+        text=[f"{d:.0f} dB" for d in delta],
+        textposition="outside",
+        hovertemplate="%{x} Hz<br>ΔL = %{y:.1f} dB<extra></extra>",
+    ))
+    fig2.update_layout(
+        height=320,
+        margin=dict(l=45,r=20,t=30,b=45),
+        xaxis_title="Frecuencia (Hz)",
+        yaxis_title="ΔL(f) [dB]",
+        showlegend=False,
+    )
+    st.plotly_chart(fig2,use_container_width=True,key="c2l2_s7_delta_curve")
+
+    # ------------------------------------------------------------------
+    # 6 · LEER EL RESULTADO
+    # ------------------------------------------------------------------
+    st.markdown("## 6 · De la curva al número único ΔLw")
+    r1,r2,r3=st.columns(3)
+    r1.metric("Lₙ,r,0,w · sin revestimiento",f"{ref_lnw} dB")
+    r2.metric("Lₙ,r,w · con revestimiento",f"{treated_lnw} dB")
+    r3.metric("ΔLw",f"{delta_lw} dB")
+
+    st.success(
+        f"En este caso, el revestimiento transforma el piso de referencia de **{ref_lnw} dB** a **{treated_lnw} dB**. "
+        f"Por tanto, **ΔLw = {delta_lw} dB**."
+    )
+
+    st.markdown("### ¿Qué significa realmente ese ΔLw?")
+    st.write(
+        f"Significa que, **bajo este procedimiento de referencia**, la curva ΔL(f) que diseñaste produce una "
+        f"reducción ponderada de **{delta_lw} dB**."
     )
     st.warning(
-        "ΔL_w caracteriza la reducción obtenida bajo un procedimiento de referencia. "
-        "No significa que cualquier piso real vaya a mejorar exactamente esa misma cantidad."
+        "No significa que cualquier piso real vaya a mejorar exactamente esa cantidad. "
+        "La transferencia depende del tipo de piso, su masa, montaje, resonancias y comportamiento espectral."
     )
-    st.write("En el Laboratorio 1 trabajaste con una reducción **por frecuencia**. Ahora veremos cómo se obtiene una reducción ponderada.")
-    c1,c2=st.columns(2)
-    with c1:_c2l2_card("ΔLₙ(f)","reducción por frecuencia","Conserva la información banda a banda.",tone="blue")
-    with c2:_c2l2_card("ΔL_w","reducción ponderada","Resume la reducción mediante el piso de referencia y el procedimiento ISO 717-2.",tone="green")
-    st.markdown("### Piso pesado de referencia")
-    st.write("Para el piso pesado de referencia: **Lₙ,r,0,w = 78 dB**.")
-    st.latex(r"L_{n,r}(f)=L_{n,r,0}(f)-\Delta L(f)")
-    treated=[a-b for a,b in zip(_C2L2_REF_FLOOR,_C2L2_DELTA)]
-    lnrw,shift=_c2l2_lnw(treated)
-    dlw=78-lnrw
-    step=st.slider("Construcción paso a paso",1,5,1,1,key="c2l2_s7_step")
-    if step>=1:
-        st.dataframe(pd.DataFrame({"f (Hz)":_C2L2_FREQS,"ΔL(f) (dB)":_C2L2_DELTA}),hide_index=True)
-    if step>=2:
-        st.dataframe(pd.DataFrame({"f (Hz)":_C2L2_FREQS,"Piso ref. Lₙ,r,0":_C2L2_REF_FLOOR}),hide_index=True)
-    if step>=3:
-        _c2l2_plot(treated,0,False,"Piso de referencia después de aplicar ΔL(f)",key="c2l2_s7_treated")
-    if step>=4:
-        st.info("Ahora la curva resultante se pondera con **el mismo procedimiento de referencia** usado para Lₙ,w.")
-    if step>=5:
-        ans=st.number_input("ΔL_w [dB]",0,60,0,1,key="c2l2_s7_dlw")
-        if st.button("COMPROBAR ΔL_w",key="c2l2_s7_check",type="primary"):
-            if int(ans)==int(dlw):
-                st.success(f"Correcto: Lₙ,r,w = {lnrw} dB → ΔL_w = 78 − {lnrw} = {dlw} dB.")
-                _c2l2_finish_stage(saved,7)
-            else: st.warning("Primero pondera la curva del piso de referencia tratado y luego resta su Lₙ,r,w a 78 dB.")
-    st.warning("Un ΔL_w obtenido sobre un piso pesado de referencia **no debe transferirse automáticamente** a cualquier sistema constructivo.")
 
+    # ------------------------------------------------------------------
+    # 7 · MISMO ΔLw, DISTINTA FORMA ESPECTRAL
+    # ------------------------------------------------------------------
+    st.markdown("## 7 · Dos revestimientos pueden tener el mismo ΔLw y no ser iguales")
+    st.write(
+        "Para enlazar con las Etapas 5 y 6, compara dos curvas espectrales distintas. "
+        "El número único puede coincidir aunque la distribución de la mejora sea diferente."
+    )
+
+    prof_a=[5,5,5,5,5,5,10,10,10,10,15,15,15,15,15,15]
+    prof_b=[2,2,3,3,4,5,8,10,12,14,16,18,20,22,24,26]
+
+    ta=[a-b for a,b in zip(ref_floor,prof_a)]
+    tb=[a-b for a,b in zip(ref_floor,prof_b)]
+    lnw_a,_=_c2l2_lnw(ta)
+    lnw_b,_=_c2l2_lnw(tb)
+    dlw_a=int(ref_lnw-lnw_a)
+    dlw_b=int(ref_lnw-lnw_b)
+
+    comp=st.segmented_control(
+        "Comparación",
+        ["Ver ΔL(f)","Ver pisos resultantes"],
+        default="Ver ΔL(f)",
+        key="c2l2_s7_compare",
+    )
+
+    figc=go.Figure()
+    if comp=="Ver ΔL(f)":
+        figc.add_trace(go.Scatter(x=x,y=prof_a,mode="lines+markers",name=f"Revestimiento A · ΔLw {dlw_a} dB"))
+        figc.add_trace(go.Scatter(x=x,y=prof_b,mode="lines+markers",name=f"Revestimiento B · ΔLw {dlw_b} dB"))
+        ylabel="ΔL(f) [dB]"
+    else:
+        figc.add_trace(go.Scatter(x=x,y=ta,mode="lines+markers",name="Piso + revestimiento A"))
+        figc.add_trace(go.Scatter(x=x,y=tb,mode="lines+markers",name="Piso + revestimiento B"))
+        ylabel="Lₙ,r (dB)"
+
+    figc.update_layout(
+        height=380,
+        margin=dict(l=45,r=20,t=35,b=50),
+        xaxis=dict(
+            title="Frecuencia (Hz)",
+            tickmode="array",
+            tickvals=x,
+            ticktext=labels,
+            range=[-0.5,15.5],
+        ),
+        yaxis=dict(title=ylabel),
+        legend=dict(orientation="h",y=1.08,x=0),
+    )
+    st.plotly_chart(figc,use_container_width=True,key="c2l2_s7_compare_graph")
+
+    if dlw_a==dlw_b:
+        st.info(
+            f"Ambos revestimientos entregan **ΔLw = {dlw_a} dB**, pero sus curvas ΔL(f) son distintas. "
+            "Eso significa que el mismo número único no describe toda la forma espectral de la mejora."
+        )
+    else:
+        st.info(
+            f"Los revestimientos producen ΔLw distintos ({dlw_a} y {dlw_b} dB) y, además, tienen formas espectrales diferentes."
+        )
+
+    # ------------------------------------------------------------------
+    # 8 · FICHA DEL REVESTIMIENTO
+    # ------------------------------------------------------------------
+    st.markdown("## 8 · Construye la ficha que llevarás a la Etapa 8")
+    st.write(
+        "Resume tu revestimiento como si fueras a entregarlo al siguiente cálculo."
+    )
+
+    st.markdown(
+        f"""
+        <div style="display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;margin:.55rem 0 1rem">
+          <div style="border:1px solid #dbe4ee;border-radius:15px;padding:14px;background:#fff;text-align:center">
+            <small>ΔL bajas</small><br><b style="font-size:1.45rem">{dl_low} dB</b>
+          </div>
+          <div style="border:1px solid #dbe4ee;border-radius:15px;padding:14px;background:#fff;text-align:center">
+            <small>ΔL medias</small><br><b style="font-size:1.45rem">{dl_mid} dB</b>
+          </div>
+          <div style="border:1px solid #dbe4ee;border-radius:15px;padding:14px;background:#fff;text-align:center">
+            <small>ΔL altas</small><br><b style="font-size:1.45rem">{dl_high} dB</b>
+          </div>
+          <div style="border:2px solid #bbf7d0;border-radius:15px;padding:14px;background:#f0fdf4;text-align:center">
+            <small>ΔLw resultante</small><br><b style="font-size:1.55rem">{delta_lw} dB</b>
+          </div>
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
+
+    if not projection_mode:
+        saved["c2l2_s7_profile"]={
+            "low":dl_low,
+            "mid":dl_mid,
+            "high":dl_high,
+            "delta_lw":delta_lw,
+            "treated_lnw":treated_lnw,
+            "updated_at":_now(),
+        }
+
+    # ------------------------------------------------------------------
+    # 9 · INTERPRETACIÓN
+    # ------------------------------------------------------------------
+    st.markdown("## 9 · Comprueba la interpretación")
+    q="¿Cuál afirmación describe correctamente ΔLw?"
+    opts=[
+        "Es la reducción ponderada obtenida al aplicar ΔL(f) a un piso de referencia y volver a ponderar la curva resultante.",
+        "Es el promedio aritmético de todos los valores ΔL(f).",
+        "Es la mejora que cualquier piso real tendrá exactamente al instalar el revestimiento.",
+    ]
+    correct=opts[0]
+
+    if role=="Docente" and not projection_mode:
+        st.success("Pauta docente: "+correct)
+    else:
+        prev=saved.get("c2l2_s7_interp",{}) if isinstance(saved.get("c2l2_s7_interp"),dict) else {}
+        prev_choice=prev.get("choice")
+        idx=opts.index(prev_choice) if prev_choice in opts else None
+        choice=st.radio(q,opts,index=idx,key="c2l2_s7_interp_choice")
+        if st.button("COMPROBAR INTERPRETACIÓN",key="c2l2_s7_check",use_container_width=True):
+            result={"choice":choice,"correct":choice==correct,"updated_at":_now()}
+            if projection_mode:
+                st.session_state["c2l2_s7_projection"]=result
+            else:
+                saved["c2l2_s7_interp"]=result
+                saved["updated_7"]=_now()
+                _save_future_state(_C2L2_CLASS_ID,saved)
+            st.rerun()
+
+        result=st.session_state.get("c2l2_s7_projection") if projection_mode else saved.get("c2l2_s7_interp")
+        if isinstance(result,dict):
+            if result.get("correct"):
+                st.success(
+                    "✓ Correcto. ΔLw resume una reducción espectral mediante un procedimiento de referencia; no es un promedio ni una promesa de mejora universal."
+                )
+                if role=="Alumno":
+                    _c2l2_finish_stage(saved,7)
+            else:
+                st.warning(
+                    "Revisa la cadena: ΔL(f) → piso de referencia tratado → ponderación → Lₙ,r,w → ΔLw."
+                )
+
+    # ------------------------------------------------------------------
+    # 10 · PUENTE A ETAPA 8
+    # ------------------------------------------------------------------
+    st.markdown("## 10 · Ahora estamos listos para integrar todo")
+    st.success(
+        "En la Etapa 8 usarás exactamente esta lógica dentro de un caso completo: "
+        "**losa desnuda → revestimiento ΔL(f) → espectro tratado → Lₙ,w → Cᵢ / Cᵢ,50–2500 → ΔLw → interpretación profesional.**"
+    )
+    st.caption("Continúa desde la barra lateral.")
 
 def _c2l2_stage8(lab,saved):
     """Etapa 8 · ejercicio guiado integrador del sistema de piso."""
