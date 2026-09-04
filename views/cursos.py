@@ -12277,6 +12277,47 @@ def _c2l2_stage1(lab,saved):
     st.latex(r"L_n(f)\rightarrow L_{n,w}\qquad L'_n(f)\rightarrow L'_{n,w}\qquad L'_{nT}(f)\rightarrow L'_{nT,w}")
     st.info("**w = weighted / ponderado.** No significa promedio ni 500 Hz.")
 
+
+    st.markdown(
+        """
+        <style>
+        /* SOLO alternativas de los tres casos de la Etapa 1.
+           Streamlit agrega una clase st-key-* a cada widget según su key.
+           No toca sidebar, navegación ni otros botones. */
+        [class*="st-key-"][class*="c2l2_s1_opt_"] button {
+            min-height: 58px !important;
+            height: auto !important;
+            padding: 12px 16px !important;
+            justify-content: flex-start !important;
+            text-align: left !important;
+            white-space: normal !important;
+            border-radius: 12px !important;
+            margin-bottom: 6px !important;
+        }
+
+        [class*="st-key-"][class*="c2l2_s1_opt_"] button p {
+            font-size: 1.08rem !important;
+            line-height: 1.35 !important;
+            font-weight: 650 !important;
+            text-align: left !important;
+            white-space: normal !important;
+            width: 100% !important;
+        }
+
+        [class*="st-key-"][class*="c2l2_s1_opt_"] button:hover {
+            transform: none !important;
+        }
+
+        @media (max-width: 700px) {
+            [class*="st-key-"][class*="c2l2_s1_opt_"] button p {
+                font-size: 1rem !important;
+            }
+        }
+        </style>
+        """,
+        unsafe_allow_html=True,
+    )
+
     st.markdown("## 7 · Tres decisiones de terreno")
     st.write(
         "Estas preguntas ya no buscan memorizar símbolos. Lee la situación y decide según **qué condición de referencia se quiere representar**."
