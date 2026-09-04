@@ -12146,6 +12146,8 @@ def _c2l2_stage1(lab,saved):
         "Conecta la predicción del Laboratorio 1 con una medición real y comprende por qué en terreno existen L′ₙ y L′ₙT."
     )
 
+    st.caption("Etapa 1 actualizada · versión casos reales de terreno")
+
     st.markdown(
         """
         <div style="border-left:5px solid #0284c7;background:linear-gradient(90deg,#e0f2fe,#f8fbff);
