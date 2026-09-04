@@ -12320,25 +12320,45 @@ def _c2l2_stage1(lab,saved):
     if not isinstance(stored,dict): stored={}
 
     # Estilo local: SOLO los radios de estos tres casos.
+    # Se apunta a la clase st-key-* generada por Streamlit para estas preguntas.
     st.markdown(
         """
         <style>
-        [class*="st-key-"][class*="c2l2_s1_real_"] [role="radiogroup"] {
-            gap: .65rem !important;
+        div[class*="st-key-"][class*="c2l2_s1_real_"] [role="radiogroup"] {
+            gap: .85rem !important;
         }
-        [class*="st-key-"][class*="c2l2_s1_real_"] [role="radiogroup"] label {
-            padding: .45rem .35rem !important;
+
+        div[class*="st-key-"][class*="c2l2_s1_real_"] [role="radiogroup"] > label {
+            padding: .58rem .45rem !important;
+            min-height: 42px !important;
             align-items: flex-start !important;
         }
-        [class*="st-key-"][class*="c2l2_s1_real_"] [role="radiogroup"] label p {
-            font-size: 1.08rem !important;
-            line-height: 1.38 !important;
-            font-weight: 600 !important;
+
+        /* Streamlit puede renderizar el texto dentro de p, div o span
+           según la versión. Aplicamos el tamaño a todos los descendientes
+           textuales, pero SOLO dentro de estas tres preguntas. */
+        div[class*="st-key-"][class*="c2l2_s1_real_"] [role="radiogroup"] label p,
+        div[class*="st-key-"][class*="c2l2_s1_real_"] [role="radiogroup"] label div,
+        div[class*="st-key-"][class*="c2l2_s1_real_"] [role="radiogroup"] label span {
+            font-size: 1.28rem !important;
+            line-height: 1.42 !important;
+            font-weight: 650 !important;
             white-space: normal !important;
         }
+
+        /* Agrandar también el círculo del radio para mantener proporción. */
+        div[class*="st-key-"][class*="c2l2_s1_real_"] [role="radiogroup"] label [data-baseweb="radio"] > div:first-child {
+            transform: scale(1.18);
+            transform-origin: center;
+            margin-top: .18rem;
+            margin-right: .32rem;
+        }
+
         @media (max-width: 700px) {
-            [class*="st-key-"][class*="c2l2_s1_real_"] [role="radiogroup"] label p {
-                font-size: 1rem !important;
+            div[class*="st-key-"][class*="c2l2_s1_real_"] [role="radiogroup"] label p,
+            div[class*="st-key-"][class*="c2l2_s1_real_"] [role="radiogroup"] label div,
+            div[class*="st-key-"][class*="c2l2_s1_real_"] [role="radiogroup"] label span {
+                font-size: 1.12rem !important;
             }
         }
         </style>
