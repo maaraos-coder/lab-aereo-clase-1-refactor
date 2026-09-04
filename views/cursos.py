@@ -11691,7 +11691,7 @@ _C2L2_STAGE_TITLES={
     1:"Laboratorio, terreno y cantidades ponderadas",
     2:"Conoce la curva de referencia",
     3:"Lee el problema antes de reducirlo a un número",
-    4:"Construye el número único Lₙ,w",
+    4:"Interviene el espectro y observa qué pasa con Lₙ,w",
     5:"Término de adaptación espectral C_I",
     6:"Bajas frecuencias y C_I,50-2500",
     7:"¿Cuánto mejora realmente un revestimiento?",
@@ -13069,101 +13069,121 @@ def _c2l2_stage3(lab,saved):
     st.caption("Continúa desde la barra lateral.")
 
 def _c2l2_stage4(lab,saved):
-    """Etapa 4 · construcción manual del número único Lₙ,w."""
-    curve,_=_c2l2_floor_curve()
+    """Etapa 4 · sensibilidad de Lₙ,w frente a intervenciones espectrales."""
+    import plotly.graph_objects as go
+
+    curve,curve_source=_c2l2_floor_curve()
     role=st.session_state.get("role","Alumno")
     projection_mode=bool(st.session_state.get("projection_mode") or role=="Proyección")
 
     _c2l2_stage_header(
         4,
-        "CONSTRUYE EL NÚMERO ÚNICO Lₙ,w",
-        "Ejecuta tú mismo el procedimiento ISO 717-2: desplaza, comprueba, encuentra la posición límite y realiza la lectura final."
+        "INTERVIENE EL ESPECTRO Y OBSERVA QUÉ PASA CON Lₙ,w",
+        "Modifica bajas, medias y altas frecuencias y descubre por qué una mejora espectral no se traduce necesariamente en la misma mejora del número único."
     )
 
-    st.markdown("## 1 · Tu misión")
-    st.markdown(
-        """
-        <div style="border:1px solid #dbe4ee;border-radius:17px;padding:16px 18px;background:#f8fbff;margin:.5rem 0 1rem">
-          Ya sabes qué representa la curva y qué información puede esconder un número único.
-          <br><br>
-          Ahora cambia la tarea: <b>dejas de interpretar y empiezas a ejecutar el procedimiento</b>.
-          <br><br>
-          <b>Objetivo:</b> encontrar la posición límite de la curva de referencia y obtener Lₙ,w sin que la app te entregue el resultado antes de tiempo.
-        </div>
-        """,
-        unsafe_allow_html=True,
-    )
+    # --------------------------------------------------------------
+    # 1 · CAMBIO DE PREGUNTA
+    # --------------------------------------------------------------
+    base_lnw,base_shift=_c2l2_lnw(curve)
 
-    st.markdown("## 2 · Ruta de trabajo")
-    st.markdown(
-        """
-        <div style="display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:8px;margin:.55rem 0 1rem">
-          <div style="padding:12px;border:1px solid #dbe4ee;border-radius:13px;background:#fff;text-align:center"><b>1 · MOVER</b><br><span style="color:#64748b">referencia</span></div>
-          <div style="padding:12px;border:1px solid #dbe4ee;border-radius:13px;background:#fff;text-align:center"><b>2 · OBSERVAR</b><br><span style="color:#64748b">Σdᵢ</span></div>
-          <div style="padding:12px;border:1px solid #dbe4ee;border-radius:13px;background:#fff;text-align:center"><b>3 · DECIDIR</b><br><span style="color:#64748b">¿cumple?</span></div>
-          <div style="padding:12px;border:1px solid #dbe4ee;border-radius:13px;background:#fff;text-align:center"><b>4 · PROBAR</b><br><span style="color:#64748b">−1 dB</span></div>
-          <div style="padding:12px;border:1px solid #dbe4ee;border-radius:13px;background:#fff;text-align:center"><b>5 · VALIDAR</b><br><span style="color:#64748b">posición límite</span></div>
-          <div style="padding:12px;border:1px solid #bbf7d0;border-radius:13px;background:#f0fdf4;text-align:center"><b>6 · LEER</b><br><span style="color:#64748b">500 Hz → Lₙ,w</span></div>
-        </div>
-        """,
-        unsafe_allow_html=True,
-    )
-
-    st.info(
-        "En esta etapa **la app no te dirá automáticamente cuál es la posición correcta**. "
-        "Primero debes formular tu decisión y luego comprobarla."
-    )
-
-    st.markdown("## 3 · Taller · mueve la referencia")
+    st.markdown("## 1 · Ahora no movemos la referencia: modificamos el piso")
     st.write(
-        "Desplaza la referencia en pasos enteros de 1 dB. "
-        "Observa simultáneamente la forma del espectro y la suma de desviaciones desfavorables."
+        "En la Etapa 2 aprendiste cómo funciona la curva ISO 717-2. "
+        "En esta etapa la referencia deja de ser el objeto de experimentación. "
+        "Mantendremos el procedimiento normativo y cambiaremos **la forma del espectro del piso**."
     )
 
-    base500=_C2L2_REF[_C2L2_FREQS.index(500)]
-    ref500=st.slider(
-        "Posición de la referencia en 500 Hz (dB)",
-        min_value=45,
-        max_value=75,
-        value=int(base500),
-        step=1,
-        key="c2l2_s4_ref500_slider",
+    st.markdown(
+        f"""
+        <div style="border:1px solid #bfdbfe;border-radius:17px;padding:16px 18px;background:#eff6ff;margin:.55rem 0 1rem">
+          <div style="font-size:.78rem;font-weight:850;letter-spacing:.05em;color:#075985">PUNTO DE PARTIDA</div>
+          <div style="font-size:1.75rem;font-weight:900;color:#0f172a;margin:.25rem 0">Lₙ,w original = {base_lnw} dB</div>
+          <div style="color:#475569">
+            Tu objetivo no es volver a encontrar la posición límite manualmente. La app hará ese cálculo en segundo plano
+            para que puedas concentrarte en una pregunta de diseño: <b>¿qué ocurre con Lₙ,w cuando intervengo distintas zonas del espectro?</b>
+          </div>
+        </div>
+        """,
+        unsafe_allow_html=True,
     )
 
-    current_shift=int(ref500-base500)
-    ref=_c2l2_ref_shift(current_shift)
-    dev=[max(0.0,float(ln)-float(rv)) for ln,rv in zip(curve,ref)]
-    total=float(sum(dev))
+    # --------------------------------------------------------------
+    # 2 · CONTROLES DE INTERVENCIÓN
+    # --------------------------------------------------------------
+    st.markdown("## 2 · Diseña una intervención")
+    st.write(
+        "Aplica una reducción idealizada por zona. Los controles representan una modificación del espectro, "
+        "no una solución constructiva específica."
+    )
 
-    ref_lower=_c2l2_ref_shift(current_shift-1)
-    dev_lower=[max(0.0,float(ln)-float(rv)) for ln,rv in zip(curve,ref_lower)]
-    total_lower=float(sum(dev_lower))
+    low,mid,high=st.columns(3)
+    with low:
+        red_low=st.slider(
+            "Reducción en bajas · 100–315 Hz",
+            0,10,0,1,
+            key="c2l2_s4_red_low",
+            help="Reduce por igual las bandas entre 100 y 315 Hz."
+        )
+    with mid:
+        red_mid=st.slider(
+            "Reducción en medias · 400–800 Hz",
+            0,10,0,1,
+            key="c2l2_s4_red_mid",
+            help="Reduce por igual las bandas entre 400 y 800 Hz."
+        )
+    with high:
+        red_high=st.slider(
+            "Reducción en altas · 1000–3150 Hz",
+            0,10,0,1,
+            key="c2l2_s4_red_high",
+            help="Reduce por igual las bandas entre 1000 y 3150 Hz."
+        )
 
-    import plotly.graph_objects as go
+    modified=[]
+    applied=[]
+    for f,v in zip(_C2L2_FREQS,curve):
+        if 100 <= f <= 315:
+            r=red_low
+        elif 400 <= f <= 800:
+            r=red_mid
+        else:
+            r=red_high
+        applied.append(r)
+        modified.append(float(v)-float(r))
+
+    new_lnw,new_shift=_c2l2_lnw(modified)
+    improvement=int(base_lnw-new_lnw)
+
+    # --------------------------------------------------------------
+    # 3 · GRÁFICO ANTES / DESPUÉS
+    # --------------------------------------------------------------
+    st.markdown("## 3 · Observa cómo cambia la forma del espectro")
+
     fig=go.Figure()
     fig.add_trace(go.Scatter(
-        x=_C2L2_FREQS,y=curve,mode="lines+markers",
-        name="Espectro del piso",
-        line=dict(width=4,color="#1689d8"),
+        x=_C2L2_FREQS,y=curve,
+        mode="lines+markers",
+        name="Espectro original",
+        line=dict(width=4,color="#64748b"),
         marker=dict(size=8),
     ))
     fig.add_trace(go.Scatter(
-        x=_C2L2_FREQS,y=ref,mode="lines+markers",
-        name="Referencia ISO 717-2",
-        line=dict(width=3,color="#111827"),
-        marker=dict(size=6),
+        x=_C2L2_FREQS,y=modified,
+        mode="lines+markers",
+        name="Espectro intervenido",
+        line=dict(width=4,color="#0b69d1"),
+        marker=dict(size=8),
     ))
-    for f,lnv,rv,dv in zip(_C2L2_FREQS,curve,ref,dev):
-        if dv>0:
-            fig.add_trace(go.Scatter(
-                x=[f,f],y=[rv,lnv],mode="lines",
-                line=dict(width=4,color="#ef4444"),
-                showlegend=False,
-                hoverinfo="skip",
-            ))
+
+    # Zonas espectrales como fondos suaves.
+    fig.add_vrect(x0=95,x1=350,fillcolor="#fef3c7",opacity=.22,line_width=0,annotation_text="Bajas",annotation_position="top left")
+    fig.add_vrect(x0=360,x1=900,fillcolor="#dbeafe",opacity=.20,line_width=0,annotation_text="Medias",annotation_position="top left")
+    fig.add_vrect(x0=920,x1=3400,fillcolor="#ede9fe",opacity=.20,line_width=0,annotation_text="Altas",annotation_position="top left")
+
     fig.update_layout(
-        height=460,
-        margin=dict(l=50,r=20,t=35,b=50),
+        height=470,
+        margin=dict(l=45,r=20,t=45,b=55),
         xaxis=dict(
             title="Frecuencia (Hz)",
             type="log",
@@ -13171,148 +13191,220 @@ def _c2l2_stage4(lab,saved):
             tickvals=_C2L2_FREQS,
             ticktext=[str(f) for f in _C2L2_FREQS],
         ),
-        yaxis=dict(title="Nivel (dB)"),
-        legend=dict(orientation="h",y=1.05,x=0),
+        yaxis=dict(title="Nivel de impacto (dB)"),
+        legend=dict(orientation="h",y=1.08,x=0),
         hovermode="x unified",
     )
-    st.plotly_chart(fig,use_container_width=True,key="c2l2_s4_manual_graph")
+    st.plotly_chart(fig,use_container_width=True,key="c2l2_s4_before_after")
 
-    m1,m2,m3=st.columns(3)
-    m1.metric("Referencia a 500 Hz",f"{ref500} dB")
-    m2.metric("Σdᵢ actual",f"{total:.1f} dB")
-    m3.metric("Bandas que penalizan",str(sum(1 for d in dev if d>0)))
+    # --------------------------------------------------------------
+    # 4 · RESULTADO AUTOMÁTICO
+    # --------------------------------------------------------------
+    st.markdown("## 4 · ¿Cuánto cambió realmente el número único?")
 
-    if total>32:
-        st.error("La posición actual **no cumple** porque Σdᵢ supera 32 dB.")
+    r1,r2,r3,r4=st.columns(4)
+    r1.metric("Lₙ,w original",f"{base_lnw} dB")
+    r2.metric("Lₙ,w intervenido",f"{new_lnw} dB")
+    r3.metric("Mejora del número único",f"{improvement:+d} dB")
+    total_intervention=red_low+red_mid+red_high
+    r4.metric("Intervención acumulada",f"{total_intervention} dB·zona")
+
+    if total_intervention==0:
+        st.info(
+            "Mueve uno o más controles. La app recalculará automáticamente Lₙ,w para el espectro modificado."
+        )
+    elif improvement==0:
+        st.warning(
+            "Has reducido parte del espectro, pero **Lₙ,w no cambió**. "
+            "Eso demuestra que una mejora local puede ser real y, aun así, no desplazar todavía el descriptor ponderado."
+        )
+    elif improvement < max(red_low,red_mid,red_high):
+        st.success(
+            f"El espectro mejoró, pero Lₙ,w solo cambió **{improvement} dB**. "
+            "La reducción aplicada en una zona no se transfiere 1:1 al número único porque el resultado depende de la forma completa del espectro frente a la referencia."
+        )
     else:
-        st.success("La posición actual **cumple Σdᵢ ≤ 32 dB**. Falta decidir si es realmente la posición límite.")
+        st.success(
+            f"La intervención consiguió mejorar Lₙ,w en **{improvement} dB**. "
+            "Observa qué zonas tuvieron que modificarse para lograr ese desplazamiento del número ponderado."
+        )
 
-    st.markdown("## 4 · Decide antes de comprobar")
-    decision=st.radio(
-        "¿Qué harías con la posición actual?",
-        [
-            "La curva está demasiado baja: debo subirla.",
-            "Todavía puedo bajar 1 dB más.",
-            "Creo que esta es la posición límite.",
-        ],
-        index=None,
-        key="c2l2_s4_decision",
+    # --------------------------------------------------------------
+    # 5 · MAPA DE SENSIBILIDAD
+    # --------------------------------------------------------------
+    st.markdown("## 5 · ¿Qué zona es más eficiente para este espectro?")
+    st.write(
+        "Ahora la app hace tres ensayos virtuales independientes: reduce **3 dB** solo una zona cada vez "
+        "y compara cuánto cambia Lₙ,w."
     )
 
-    if st.button(
-        "COMPROBAR MI DECISIÓN",
-        key="c2l2_s4_check_decision",
-        type="primary",
-        use_container_width=True,
-    ):
-        if decision is None:
-            st.warning("Selecciona primero qué harías con la posición actual.")
-        else:
-            if total>32:
-                correct_decision="La curva está demasiado baja: debo subirla."
-            elif total_lower<=32:
-                correct_decision="Todavía puedo bajar 1 dB más."
+    def _zone_test(zone):
+        test=[]
+        for f,v in zip(_C2L2_FREQS,curve):
+            if zone=="Bajas" and 100<=f<=315:
+                r=3
+            elif zone=="Medias" and 400<=f<=800:
+                r=3
+            elif zone=="Altas" and 1000<=f<=3150:
+                r=3
             else:
-                correct_decision="Creo que esta es la posición límite."
+                r=0
+            test.append(float(v)-r)
+        lnw_test,_=_c2l2_lnw(test)
+        return int(base_lnw-lnw_test)
 
-            st.session_state["c2l2_s4_decision_ok"]=decision==correct_decision
-            st.session_state["c2l2_s4_checked_shift"]=current_shift
+    sens={
+        "Bajas · 100–315 Hz":_zone_test("Bajas"),
+        "Medias · 400–800 Hz":_zone_test("Medias"),
+        "Altas · 1000–3150 Hz":_zone_test("Altas"),
+    }
 
-    if st.session_state.get("c2l2_s4_checked_shift")==current_shift:
-        if st.session_state.get("c2l2_s4_decision_ok") is True:
-            if total>32:
-                st.success(
-                    f"Correcto. Σdᵢ = {total:.1f} dB > 32 dB. "
-                    "La referencia está demasiado baja y debes subirla."
-                )
-            elif total_lower<=32:
-                st.success(
-                    f"Correcto. Ahora Σdᵢ = {total:.1f} dB, pero si bajas 1 dB más la suma sería "
-                    f"{total_lower:.1f} dB y todavía cumpliría. **Aún no estás en la posición límite.**"
-                )
-            else:
-                st.success(
-                    f"Correcto. Ahora Σdᵢ = {total:.1f} dB y cumple. "
-                    f"Si bajas 1 dB más, Σdᵢ = {total_lower:.1f} dB y ya supera 32 dB. "
-                    "**Encontraste la posición límite.**"
-                )
-                st.session_state["c2l2_s4_position_ok"]=True
-                st.session_state["c2l2_s4_limit_shift"]=current_shift
-                st.session_state["c2l2_s4_limit_ref500"]=int(ref500)
-        elif st.session_state.get("c2l2_s4_decision_ok") is False:
-            st.warning(
-                "Todavía no. Compara Σdᵢ actual con el criterio de 32 dB y piensa qué ocurriría si movieras la referencia 1 dB."
-            )
+    best=max(sens,key=sens.get)
+    s1,s2,s3=st.columns(3)
+    for col,(name,val) in zip([s1,s2,s3],sens.items()):
+        with col:
+            st.metric(name,f"{val} dB","cambio en Lₙ,w")
 
-    if (
-        st.session_state.get("c2l2_s4_position_ok")
-        and st.session_state.get("c2l2_s4_limit_shift") != current_shift
-    ):
-        st.session_state["c2l2_s4_position_ok"]=False
-        st.session_state["c2l2_s4_limit_verified"]=False
+    st.markdown(
+        f"""
+        <div style="border:1px solid #bbf7d0;border-radius:15px;padding:14px 16px;background:#f0fdf4;margin:.55rem 0 .9rem">
+          <b>Zona más sensible en este espectro:</b> {best}.<br>
+          Una reducción idéntica de 3 dB no produce necesariamente el mismo efecto sobre Lₙ,w en todas las regiones.
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
 
-    if st.session_state.get("c2l2_s4_position_ok"):
-        st.markdown("## 5 · Comprueba el paso adicional de −1 dB")
-        st.write(
-            "Ya declaraste una posición límite. Antes de leer Lₙ,w, comprueba numéricamente qué ocurriría al bajar 1 dB."
+    # --------------------------------------------------------------
+    # 6 · DESAFÍO DE DISEÑO
+    # --------------------------------------------------------------
+    st.markdown("## 6 · Desafío · mejora Lₙ,w con el menor costo")
+    st.write(
+        "Para representar que algunas intervenciones pueden ser más difíciles o costosas que otras, "
+        "asignaremos un costo didáctico por cada dB de reducción aplicado."
+    )
+
+    cost=3*red_low + 2*red_mid + 1*red_high
+    target=max(base_lnw-2,0)
+
+    st.markdown(
+        """
+        - Bajas frecuencias: **3 puntos por dB**
+        - Medias frecuencias: **2 puntos por dB**
+        - Altas frecuencias: **1 punto por dB**
+        """
+    )
+
+    d1,d2,d3=st.columns(3)
+    d1.metric("Meta",f"Lₙ,w ≤ {target} dB")
+    d2.metric("Resultado actual",f"{new_lnw} dB")
+    d3.metric("Costo de tu propuesta",f"{cost} puntos")
+
+    if total_intervention==0:
+        st.caption("Usa los tres controles de la sección 2 para construir tu propuesta.")
+    elif new_lnw<=target:
+        st.success(
+            f"✓ **Meta alcanzada.** Llegaste a Lₙ,w = {new_lnw} dB con un costo de {cost} puntos. "
+            "Prueba otras combinaciones para comprobar si puedes conseguir el mismo objetivo con menor costo."
         )
-        q1,q2=st.columns(2)
-        q1.metric("Σdᵢ en la posición elegida",f"{total:.1f} dB")
-        q2.metric("Σdᵢ con −1 dB adicional",f"{total_lower:.1f} dB")
-
-        if total<=32 and total_lower>32:
-            st.success(
-                "✓ Verificación correcta: la posición actual cumple y el paso siguiente no. "
-                "La posición límite queda confirmada."
-            )
-            st.session_state["c2l2_s4_limit_verified"]=True
-        else:
-            st.error("La condición límite no se cumple. Vuelve al ajuste.")
-
-    if st.session_state.get("c2l2_s4_limit_verified"):
-        st.markdown("## 6 · Realiza la lectura final")
+    else:
         st.warning(
-            "**No leas Lₙ del piso a 500 Hz.** Debes leer el valor de la **curva de referencia desplazada** en 500 Hz."
+            f"Aún no alcanzas la meta de {target} dB. Tu resultado actual es {new_lnw} dB. "
+            "Prueba redistribuir la intervención entre zonas."
         )
-        answer=st.number_input(
-            "¿Cuál es Lₙ,w? [dB]",
-            min_value=0,
-            max_value=120,
-            value=0,
-            step=1,
-            key="c2l2_s4_lnw_answer",
+
+    # --------------------------------------------------------------
+    # 7 · INTERPRETACIÓN PROFESIONAL
+    # --------------------------------------------------------------
+    st.markdown("## 7 · ¿Qué aprendimos?")
+    st.markdown(
+        """
+        <div style="display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;margin:.6rem 0 1rem">
+          <div style="border:1px solid #dbe4ee;border-radius:15px;padding:14px;background:#fff">
+            <b>1 · Mejorar una banda no garantiza cambiar Lₙ,w</b><br>
+            El descriptor depende del ajuste de la curva completa.
+          </div>
+          <div style="border:1px solid #dbe4ee;border-radius:15px;padding:14px;background:#fff">
+            <b>2 · No todas las zonas tienen la misma influencia</b><br>
+            La sensibilidad depende de la forma específica del espectro.
+          </div>
+          <div style="border:1px solid #dbe4ee;border-radius:15px;padding:14px;background:#fff">
+            <b>3 · El diseño exige mirar espectro + descriptor</b><br>
+            Un número único no reemplaza el diagnóstico por frecuencia.
+          </div>
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
+
+    # --------------------------------------------------------------
+    # 8 · COMPROBACIÓN CONCEPTUAL
+    # --------------------------------------------------------------
+    st.markdown("## 8 · Comprueba la idea central")
+
+    q="Si reduces 6 dB una zona del espectro, ¿qué puedes afirmar sobre Lₙ,w?"
+    opts=[
+        "Lₙ,w necesariamente mejorará exactamente 6 dB.",
+        "Lₙ,w puede mejorar menos, no cambiar o cambiar varios dB; depende de la forma completa del espectro y del ajuste ISO 717-2.",
+        "Lₙ,w deja de ser aplicable porque el espectro fue modificado.",
+    ]
+    correct=opts[1]
+
+    if role=="Docente" and not projection_mode:
+        st.markdown(f"### {q}")
+        st.success("Respuesta correcta: "+correct)
+        st.caption(
+            "La modificación espectral y el cambio del descriptor ponderado no tienen una relación necesariamente 1:1."
+        )
+    else:
+        prev=saved.get("c2l2_stage4_concept",{}) if isinstance(saved.get("c2l2_stage4_concept"),dict) else {}
+        prev_choice=prev.get("choice")
+        idx=opts.index(prev_choice) if prev_choice in opts else None
+        choice=st.radio(
+            q,opts,index=idx,
+            key="c2l2_s4_concept",
+            label_visibility="visible",
         )
         if st.button(
-            "COMPROBAR Lₙ,w",
-            key="c2l2_s4_check_lnw",
+            "COMPROBAR Y GUARDAR",
+            key="c2l2_s4_concept_check",
             type="primary",
             use_container_width=True,
         ):
-            expected=int(st.session_state.get("c2l2_s4_limit_ref500",ref500))
-            if int(answer)==expected:
+            if choice is None:
+                st.warning("Selecciona una alternativa.")
+            else:
+                result={"choice":choice,"correct":choice==correct,"updated_at":_now()}
+                if projection_mode:
+                    st.session_state["c2l2_stage4_projection_result"]=result
+                else:
+                    saved["c2l2_stage4_concept"]=result
+                    saved["updated_4"]=_now()
+                    _save_future_state(_C2L2_CLASS_ID,saved)
+                st.rerun()
+
+        result=(
+            st.session_state.get("c2l2_stage4_projection_result")
+            if projection_mode
+            else saved.get("c2l2_stage4_concept")
+        )
+        if isinstance(result,dict) and result.get("choice"):
+            if result.get("correct"):
                 st.success(
-                    f"✓ **Correcto. Lₙ,w = {expected} dB.** "
-                    "Ese valor corresponde a la referencia en 500 Hz una vez encontrada y verificada la posición límite."
+                    "✓ Correcto. La intervención cambia el espectro; el cambio final de Lₙ,w depende de cómo esa nueva curva se relaciona con la referencia ISO 717-2."
                 )
                 if role=="Alumno":
-                    saved["c2l2_lnw"]=expected
-                    saved["c2l2_lnw_shift"]=int(st.session_state.get("c2l2_s4_limit_shift",current_shift))
-                    saved["updated_4"]=_now()
                     _c2l2_finish_stage(saved,4)
             else:
                 st.warning(
-                    "Revisa el gráfico: debes leer **la curva de referencia**, no la curva del piso, exactamente en 500 Hz."
+                    "No hay una relación automática 1:1 entre la reducción aplicada a una zona y el cambio del número único."
                 )
 
-    if role=="Docente" and not projection_mode:
-        expected_lnw,expected_shift=_c2l2_lnw(curve)
-        st.markdown("---")
-        st.markdown("## Vista docente · pauta")
-        st.info(
-            f"Posición límite esperada: desplazamiento **{expected_shift:+d} dB**. "
-            f"Lectura final: **Lₙ,w = {expected_lnw} dB**."
-        )
-
+    st.markdown("## 9 · Puente hacia la Etapa 5")
+    st.success(
+        "Acabas de comprobar que Lₙ,w no describe por sí solo **dónde** está concentrada la energía del espectro. "
+        "En la Etapa 5 incorporaremos una información complementaria: el término de adaptación espectral C_I."
+    )
     st.caption("Continúa desde la barra lateral.")
 
 def _c2l2_stage5(lab,saved):
