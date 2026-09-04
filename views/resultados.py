@@ -17,7 +17,7 @@ _LOCAL_NAMES = {
     "_grade", "_answer_release_allowed",
     "_render_stage9_comparison", "_render_stage10_comparison",
     "_formative_progress_data", "_render_formative_progress", "_official_rows", "_official_summary",
-    "_course2_lab1_rows", "_render_course2_lab1_scores",
+    "_latest_response_by_key", "_course2_lab1_rows", "_course2_lab2_delivery_rows", "_render_course2_lab1_scores",
     "_future_progress_rows", "_future_progress_state", "_future_lab_progress",
     "_render_lab_progress_card", "_render_course1_official_evaluations",
     "_render_course1_block", "_render_course2_block", "_course2_lab2_official_summary",
@@ -30,6 +30,65 @@ def _bind_runtime(runtime):
     for name, value in runtime.items():
         if name not in _LOCAL_NAMES:
             module_globals[name] = value
+
+
+def _latest_response_by_key(rows, class_id, specs):
+    """Devuelve la entrega más reciente para cada (stage, question_key).
+
+    specs: dict {alias: (stage, question_key)}
+    """
+    out = {alias: None for alias in specs}
+
+    def _stamp(row):
+        return str(
+            row.get("updated_at")
+            or row.get("submitted_at")
+            or row.get("created_at")
+            or ""
+        )
+
+    for alias, (stage, question_key) in specs.items():
+        candidates = [
+            r for r in rows
+            if r.get("class_id") == class_id
+            and int(r.get("stage") or -1) == int(stage)
+            and r.get("question_key") == question_key
+        ]
+        if candidates:
+            out[alias] = max(candidates, key=_stamp)
+    return out
+
+
+def _course2_lab1_rows(rows):
+    """Entregas formativas oficiales del Curso 2 · Laboratorio 1.
+
+    Etapa 9  -> final_comprehension
+    Etapa 10 -> final_exam
+    """
+    return _latest_response_by_key(
+        rows,
+        "clase-03-impacto-instalaciones-lab-1",
+        {
+            "final_comprehension": (9, "final_comprehension"),
+            "final_exam": (10, "final_exam"),
+        },
+    )
+
+
+def _course2_lab2_delivery_rows(rows):
+    """Entregas evaluativas oficiales del Curso 2 · Laboratorio 2.
+
+    Etapa 9  -> final_comprehension
+    Etapa 10 -> final_integrated_design
+    """
+    return _latest_response_by_key(
+        rows,
+        "clase-04-impacto-instalaciones-lab-2",
+        {
+            "final_comprehension": (9, "final_comprehension"),
+            "final_integrated_design": (10, "final_integrated_design"),
+        },
+    )
 
 
 def _results_catalog():
@@ -428,18 +487,19 @@ def student_sidebar_summary(client, user_key):
     completed=sum(item["completed"] for item in progress_data.values())
     formative_percent=100.0*completed/expected if expected else 0.0
 
-    course2_lab1=_course2_lab1_rows(rows) if "_course2_lab1_rows" in globals() else {}
+    # Curso 2 · Lab 1: dos entregas formativas con puntaje.
+    course2_lab1=_course2_lab1_rows(rows)
     c2_lab1_delivered=sum(
         course2_lab1.get(k) is not None
         for k in ("final_comprehension","final_exam")
     )
 
-    c2_lab2_rows=[
-        r for r in rows
-        if r.get("class_id")=="clase-04-impacto-instalaciones-lab-2"
-        and r.get("question_key") in {"final_comprehension","final_integrated_design"}
-    ]
-    c2_lab2_delivered=len({r.get("question_key") for r in c2_lab2_rows})
+    # Curso 2 · Lab 2: dos evaluaciones oficiales.
+    course2_lab2=_course2_lab2_delivery_rows(rows)
+    c2_lab2_delivered=sum(
+        course2_lab2.get(k) is not None
+        for k in ("final_comprehension","final_integrated_design")
+    )
 
     st.markdown(
         f"""
@@ -712,15 +772,7 @@ def _render_course1_block(rows):
 
 
 def _course2_lab2_official_summary(rows):
-    class_id="clase-04-impacto-instalaciones-lab-2"
-    relevant=[
-        r for r in rows
-        if r.get("class_id")==class_id
-        and r.get("question_key") in {"final_comprehension","final_integrated_design"}
-    ]
-    by_key={}
-    for row in relevant:
-        by_key.setdefault(row.get("question_key"),row)
+    by_key=_course2_lab2_delivery_rows(rows)
     stage9=by_key.get("final_comprehension")
     stage10=by_key.get("final_integrated_design")
     completed=sum(x is not None for x in (stage9,stage10))
