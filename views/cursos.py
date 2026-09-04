@@ -16846,21 +16846,101 @@ def future_lab_view_impl(lab):
         st.caption("DIPLOMADO EN ACÚSTICA EN LA EDIFICACIÓN")
         st.markdown(f"**{st.session_state.name}**  \n{st.session_state.role}")
 
-        # Misma navegación principal utilizada en los laboratorios del Curso 1.
+        # Navegación principal por propósito.
+        # Evitamos radios pequeños y mantenemos intacta la navegación de etapas.
         future_view_key=f"future_main_view_{class_id}"
         future_options=["🏠 Mis clases", results_view_label, current_lab_label]
         if st.session_state.get(future_view_key) not in future_options:
             st.session_state[future_view_key]=current_lab_label
-        future_view=st.radio(
-            "Vista",
-            future_options,
-            key=future_view_key,
-            help="Selecciona Mis clases, tu desempeño/evaluaciones o la ruta del laboratorio.",
+
+        st.markdown(
+            """
+            <div style="margin:.45rem 0 .35rem">
+              <div style="font-size:.72rem;font-weight:850;letter-spacing:.08em;color:#8eddf2">
+                NAVEGACIÓN
+              </div>
+              <div style="font-size:.72rem;color:#b8d5e5;margin-top:.08rem">
+                Espacio del alumno
+              </div>
+            </div>
+            """,
+            unsafe_allow_html=True,
         )
-        if future_view != current_lab_label:
+
+        role_now=st.session_state.get("role","Alumno")
+
+        # Mis clases
+        if st.button(
+            "📚  Mis clases  ·  Cursos y laboratorios",
+            key=f"future_nav_classes_{class_id}",
+            use_container_width=True,
+            help="Volver al listado de cursos y laboratorios.",
+        ):
+            st.session_state[future_view_key]="🏠 Mis clases"
             st.session_state.pop("future_lab_id",None)
-            st.session_state["main_view"]=future_view
+            st.session_state["main_view"]="🏠 Mis clases"
             st.rerun()
+
+        # Mi desempeño / Evaluaciones entregadas
+        performance_title=(
+            "📝  Evaluaciones entregadas  ·  Respuestas y puntajes"
+            if role_now=="Docente"
+            else "📊  Mi desempeño  ·  Notas, evaluaciones y progreso"
+        )
+        if st.button(
+            performance_title,
+            key=f"future_nav_results_{class_id}",
+            use_container_width=True,
+            help=(
+                "Revisar entregas y puntajes de estudiantes."
+                if role_now=="Docente"
+                else "Revisar tus notas, evaluaciones y avance."
+            ),
+        ):
+            st.session_state[future_view_key]=results_view_label
+            st.session_state.pop("future_lab_id",None)
+            st.session_state["main_view"]=results_view_label
+            st.rerun()
+
+        # Vista actual: tarjeta activa, no botón.
+        active_title=(
+            f"Laboratorio {lab['number']} · actividades"
+            if role_now=="Docente"
+            else "Laboratorios y actividades"
+        )
+        active_subtitle=(
+            "Ruta, contenidos y actividades de este laboratorio"
+            if role_now=="Docente"
+            else "Actividades realizadas y pendientes"
+        )
+        st.markdown(
+            f"""
+            <div style="
+                border:1px solid #63daf2;
+                border-left:4px solid #63daf2;
+                border-radius:9px;
+                background:linear-gradient(90deg,#0b659c 0%,#0a527f 100%);
+                padding:.62rem .72rem;
+                margin:.35rem 0 .55rem;
+                box-shadow:0 2px 8px rgba(0,0,0,.08);
+            ">
+              <div style="display:flex;align-items:center;gap:.48rem">
+                <span style="font-size:1.05rem">🧪</span>
+                <div>
+                  <div style="font-size:.82rem;font-weight:850;color:#fff">
+                    {active_title}
+                  </div>
+                  <div style="font-size:.69rem;line-height:1.3;color:#cbeefa;margin-top:.08rem">
+                    {active_subtitle}
+                  </div>
+                </div>
+              </div>
+            </div>
+            """,
+            unsafe_allow_html=True,
+        )
+
+        st.session_state[future_view_key]=current_lab_label
 
         total_stages = len(lab["stages"])
         if st.session_state.get("role") == "Alumno":
