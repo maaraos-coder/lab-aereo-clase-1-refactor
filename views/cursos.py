@@ -11693,7 +11693,7 @@ _C2L2_STAGE_TITLES={
     3:"Lee el problema antes de reducirlo a un número",
     4:"Interviene el espectro y observa qué pasa con Lₙ,w",
     5:"C_I · información espectral complementaria",
-    6:"Bajas frecuencias y C_I,50-2500",
+    6:"C_I,50-2500 · qué aparece cuando miramos más abajo",
     7:"¿Cuánto mejora realmente un revestimiento?",
     8:"Un número no es un sistema constructivo",
     9:"Evaluación final · Preguntas de comprensión",
@@ -14194,62 +14194,220 @@ def _c2l2_stage5(lab,saved):
     st.caption("Continúa desde la barra lateral.")
 
 def _c2l2_stage6(lab,saved):
+    """Etapa 6 · C_I,50-2500 y sensibilidad a bajas frecuencias."""
+    import plotly.graph_objects as go
+
     curve,_=_c2l2_floor_curve()
     lnw,_=_c2l2_lnw(curve)
-    ci,_=_c2l2_ci(curve,lnw,False)
-    ci50,lsum50=_c2l2_ci(curve,lnw,True)
-    _c2l2_stage_header(6,"BAJAS FRECUENCIAS Y C_I,50-2500","Visualiza lo que cambia cuando ampliamos el rango hacia 50 Hz.")
-    _c2l2_asset(stage=6)
-    st.markdown("### 1 · Conexión con el Laboratorio 1")
-    st.write(
-        "En pisos flotantes aprendiste que masa, rigidez dinámica y masa reducida determinan una frecuencia natural f₀. "
-        "Cerca de esa región puede aparecer resonancia y el comportamiento de baja frecuencia puede ser especialmente relevante."
+    ci,lsum=_c2l2_ci(curve,lnw,False)
+
+    # Curva extendida didáctica 50–3150 Hz.
+    ext_freqs=[50,63,80]+_C2L2_FREQS
+    ext_curve=[64.0,63.0,62.0]+[float(v) for v in curve]
+    ci50,lsum50=_c2l2_ci(ext_curve,lnw,True)
+
+    role=st.session_state.get("role","Alumno")
+    projection_mode=bool(st.session_state.get("projection_mode") or role=="Proyección")
+
+    _c2l2_stage_header(
+        6,
+        "C_I,50-2500 · QUÉ APARECE CUANDO MIRAMOS MÁS ABAJO",
+        "Conecta el término espectral de la Etapa 5 con 50, 63 y 80 Hz y descubre cuándo las bajas frecuencias cambian la lectura."
     )
-    st.markdown("### 2 · ¿Qué cambia al ampliar el rango?")
+
+    st.markdown("## 1 · Conexión directa con la Etapa 5")
     st.write(
-        "El análisis habitual de C_I parte en 100 Hz. Al incorporar 50, 63 y 80 Hz añadimos información que antes no estaba participando "
-        "en la suma energética. Si esas bandas son elevadas, la lectura global puede cambiar de manera apreciable."
+        "En la Etapa 5 calculaste **Cᵢ usando 100–2500 Hz**. "
+        "Ahora mantendremos el mismo Lₙ,w, pero ampliaremos la suma energética para incluir **50, 63 y 80 Hz**."
     )
+
     c1,c2=st.columns(2)
     with c1:
-        _c2l2_card("Rango normal","100–2500 Hz","Describe el término C_I con el rango convencional utilizado en esta etapa.",tone="blue")
+        _c2l2_card(
+            "Rango convencional",
+            "Cᵢ · 100–2500 Hz",
+            "No incluye 50, 63 ni 80 Hz. Resume la adaptación espectral dentro del rango convencional del ejercicio.",
+            tone="blue",
+        )
     with c2:
-        _c2l2_card("Rango ampliado","50–2500 Hz","Añade 50, 63 y 80 Hz para observar la sensibilidad a bajas frecuencias.",tone="purple")
-    st.info(
-        "El objetivo no es concluir automáticamente que todo piso con energía grave sea deficiente. "
-        "Debes entender **qué información adicional aparece** cuando amplías el rango."
-    )
-    st.write(
-        "Los pisos flotantes y sistemas livianos pueden presentar comportamiento relevante cerca de resonancias "
-        "y en baja frecuencia. Un único número puede ocultar esa concentración."
-    )
-    mode=st.radio("Rango visible",["100–2500 Hz","50–2500 Hz"],horizontal=True,key="c2l2_s6_range")
-    import plotly.graph_objects as go
-    if mode=="100–2500 Hz":
-        freqs=_C2L2_FREQS[:15]; vals=curve[:15]
-    else:
-        freqs=[50,63,80]+_C2L2_FREQS[:15]; vals=list(_C2L2_LOW)+curve[:15]
-    fig=go.Figure(go.Bar(x=[str(f) for f in freqs],y=vals))
-    fig.update_layout(height=340,xaxis_title="Frecuencia (Hz)",yaxis_title="Lₙ (dB)")
-    st.plotly_chart(fig,use_container_width=True,key="c2l2_s6_plot")
-    c1,c2=st.columns(2)
-    c1.metric("C_I · 100–2500 Hz",f"{ci:+d} dB")
-    c2.metric("C_I,50-2500",f"{ci50:+d} dB")
-    interpretation=st.radio(
-        "¿Por qué puede ser importante ampliar el rango?",
-        [
-            "Porque un problema concentrado a 50–80 Hz puede quedar poco representado por Lₙ,w.",
-            "Porque Lₙ,w deja de existir sobre 100 Hz.",
-            "Porque se suman aritméticamente todos los dB.",
-        ],
-        index=None,key="c2l2_s6_interpret"
-    )
-    if st.button("COMPROBAR INTERPRETACIÓN",key="c2l2_s6_check"):
-        if interpretation and interpretation.startswith("Porque un problema"):
-            st.success("Correcto: el rango ampliado aporta contexto de baja frecuencia.")
-            _c2l2_finish_stage(saved,6)
-        else: st.warning("Piensa en qué información espectral puede esconder un único descriptor.")
+        _c2l2_card(
+            "Rango ampliado",
+            "Cᵢ,50–2500",
+            "Añade 50, 63 y 80 Hz para revelar si el comportamiento grave cambia de manera relevante la lectura energética.",
+            tone="purple",
+        )
 
+    st.markdown("## 2 · La lógica física: ¿por qué mirar 50–80 Hz?")
+    st.write(
+        "En el Laboratorio 1 viste que un piso flotante posee una **frecuencia natural f₀** determinada por la masa y la rigidez dinámica. "
+        "Cerca de esa región pueden aparecer resonancias y una concentración de energía en bajas frecuencias."
+    )
+    st.info(
+        "La idea no es afirmar que todo piso con energía grave sea deficiente. "
+        "La idea es detectar cuándo **el número único Lₙ,w y el Cᵢ convencional pueden ocultar una concentración importante por debajo de 100 Hz**."
+    )
+
+    st.markdown("### Una comparación muy simple")
+    st.markdown(
+        """
+        <div style="display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;margin:.6rem 0 1rem">
+          <div style="border:1px solid #dbe4ee;border-radius:15px;padding:14px;background:#fff">
+            <b>50 Hz</b><br><br>Información nueva al ampliar el rango.
+          </div>
+          <div style="border:1px solid #dbe4ee;border-radius:15px;padding:14px;background:#fff">
+            <b>63 Hz</b><br><br>Puede capturar parte de una zona cercana a resonancias estructurales.
+          </div>
+          <div style="border:1px solid #dbe4ee;border-radius:15px;padding:14px;background:#fff">
+            <b>80 Hz</b><br><br>Completa el puente hacia el rango que comienza en 100 Hz.
+          </div>
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
+
+    st.markdown("## 3 · Experimento · modifica solo 50, 63 y 80 Hz")
+    st.write(
+        "Mantendremos intactas todas las bandas desde 100 Hz. "
+        "Modifica únicamente las tres bandas nuevas y observa cómo cambia Cᵢ,50–2500."
+    )
+
+    b1,b2,b3=st.columns(3)
+    with b1:
+        l50=st.slider("Nivel a 50 Hz [dB]",40,80,int(ext_curve[0]),1,key="c2l2_s6_50")
+    with b2:
+        l63=st.slider("Nivel a 63 Hz [dB]",40,80,int(ext_curve[1]),1,key="c2l2_s6_63")
+    with b3:
+        l80=st.slider("Nivel a 80 Hz [dB]",40,80,int(ext_curve[2]),1,key="c2l2_s6_80")
+
+    ext_mod=[float(l50),float(l63),float(l80)]+[float(v) for v in curve]
+    ci50_mod,lsum50_mod=_c2l2_ci(ext_mod,lnw,True)
+
+    fig=go.Figure()
+    x=list(range(len(ext_freqs)))
+    labels=[str(f) for f in ext_freqs]
+    fig.add_trace(go.Scatter(
+        x=x,y=ext_mod,mode="lines+markers",
+        name="Espectro 50–3150 Hz",
+        line=dict(width=4,color="#0b69d1"),
+        marker=dict(size=8),
+    ))
+    fig.add_vrect(x0=-0.45,x1=2.45,fillcolor="#fee2e2",opacity=.22,line_width=0)
+    fig.add_annotation(
+        x=1,y=1.08,xref="x",yref="paper",
+        text="<b>NUEVAS BANDAS</b><br>50 · 63 · 80 Hz",
+        showarrow=False,
+    )
+    fig.update_layout(
+        height=400,
+        margin=dict(l=45,r=20,t=70,b=55),
+        xaxis=dict(
+            title="Frecuencia (Hz)",
+            tickmode="array",
+            tickvals=x,
+            ticktext=labels,
+            range=[-0.5,len(x)-0.5],
+        ),
+        yaxis=dict(title="Lₙ (dB)"),
+        showlegend=False,
+    )
+    st.plotly_chart(fig,use_container_width=True,key="c2l2_s6_lowfreq_graph")
+
+    m1,m2,m3,m4=st.columns(4)
+    m1.metric("Lₙ,w",f"{lnw} dB")
+    m2.metric("Cᵢ · 100–2500",f"{ci:+d} dB")
+    m3.metric("Cᵢ,50–2500",f"{ci50_mod:+d} dB")
+    m4.metric("Cambio por ampliar rango",f"{ci50_mod-ci:+d} dB")
+
+    if ci50_mod==ci:
+        st.info(
+            "En esta configuración, incluir 50, 63 y 80 Hz **no cambia Cᵢ**. "
+            "Las bajas frecuencias nuevas no dominan suficientemente la suma energética."
+        )
+    elif ci50_mod>ci:
+        st.warning(
+            f"Al incluir 50, 63 y 80 Hz, el término pasa de **{ci:+d} dB** a **{ci50_mod:+d} dB**. "
+            "La energía grave adicional está influyendo en la lectura espectral."
+        )
+    else:
+        st.info(
+            f"El término ampliado resulta **{ci50_mod:+d} dB**, distinto de Cᵢ = {ci:+d} dB. "
+            "Interpreta siempre la diferencia como información espectral adicional, no como una mejora directa."
+        )
+
+    st.markdown("## 4 · ¿Qué cambió matemáticamente?")
+    st.write(
+        "La fórmula conserva la misma estructura; lo que cambia es la **suma energética de entrada**."
+    )
+    st.latex(r"C_I=L_{n,\mathrm{sum}(100-2500)}-15-L_{n,w}")
+    st.latex(r"C_{I,50-2500}=L_{n,\mathrm{sum}(50-2500)}-15-L_{n,w}")
+
+    st.markdown(
+        f"""
+        <div style="display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px;margin:.6rem 0 1rem">
+          <div style="border:1px solid #bfdbfe;border-radius:16px;padding:15px;background:#eff6ff">
+            <b>100–2500 Hz</b><br><br>
+            Lₙ,sum = {lsum:.1f} dB<br>
+            Cᵢ = {ci:+d} dB
+          </div>
+          <div style="border:1px solid #ddd6fe;border-radius:16px;padding:15px;background:#f5f3ff">
+            <b>50–2500 Hz</b><br><br>
+            Lₙ,sum = {lsum50_mod:.1f} dB<br>
+            Cᵢ,50–2500 = {ci50_mod:+d} dB
+          </div>
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
+
+    st.markdown("## 5 · Interpretación profesional")
+    q="¿Cuándo aporta información útil Cᵢ,50–2500 respecto de Cᵢ?"
+    opts=[
+        "Cuando existe contenido importante en 50, 63 u 80 Hz que el rango 100–2500 Hz no estaba considerando.",
+        "Siempre, porque Cᵢ deja de ser válido cuando existe cualquier banda bajo 100 Hz.",
+        "Solo cuando Lₙ,w cambia de valor.",
+    ]
+    correct=opts[0]
+
+    if role=="Docente" and not projection_mode:
+        st.success("Pauta docente: "+correct)
+        st.caption(
+            "La ampliación de rango agrega información energética de 50–80 Hz; Lₙ,w se mantiene como descriptor ponderado principal."
+        )
+    else:
+        previous=saved.get("c2l2_s6_interp",{}) if isinstance(saved.get("c2l2_s6_interp"),dict) else {}
+        prev_choice=previous.get("choice")
+        idx=opts.index(prev_choice) if prev_choice in opts else None
+        choice=st.radio(q,opts,index=idx,key="c2l2_s6_interp_choice")
+        if st.button("COMPROBAR INTERPRETACIÓN",key="c2l2_s6_check",use_container_width=True):
+            result={"choice":choice,"correct":choice==correct,"updated_at":_now()}
+            if projection_mode:
+                st.session_state["c2l2_s6_projection"]=result
+            else:
+                saved["c2l2_s6_interp"]=result
+                saved["updated_6"]=_now()
+                _save_future_state(_C2L2_CLASS_ID,saved)
+            st.rerun()
+
+        result=st.session_state.get("c2l2_s6_projection") if projection_mode else saved.get("c2l2_s6_interp")
+        if isinstance(result,dict):
+            if result.get("correct"):
+                st.success(
+                    "✓ Correcto. El rango ampliado sirve para revelar información grave que el análisis desde 100 Hz no estaba incorporando."
+                )
+                if role=="Alumno":
+                    _c2l2_finish_stage(saved,6)
+            else:
+                st.warning(
+                    "Recuerda: lo que cambia es el rango de la suma energética, no la existencia de Lₙ,w."
+                )
+
+    st.markdown("## 6 · Puente hacia el ejercicio integrador")
+    st.success(
+        "Ya tienes las piezas principales: **Lₙ,w**, **Cᵢ** y **Cᵢ,50–2500**. "
+        "Después de trabajar la reducción del revestimiento en la Etapa 7, la Etapa 8 reunirá todo en un único caso: "
+        "losa desnuda → revestimiento → espectro tratado → número único → términos espectrales → interpretación profesional."
+    )
+    st.caption("Continúa desde la barra lateral.")
 
 def _c2l2_stage7(lab,saved):
     _c2l2_stage_header(7,"¿CUÁNTO MEJORA REALMENTE UN REVESTIMIENTO?","Transforma ΔL(f) en la reducción ponderada ΔL_w.")
@@ -14315,72 +14473,278 @@ def _c2l2_stage7(lab,saved):
 
 
 def _c2l2_stage8(lab,saved):
-    _c2l2_stage_header(8,"UN NÚMERO NO ES UN SISTEMA CONSTRUCTIVO","Interpreta profesionalmente Lₙ,w, C_I y ΔL_w.")
-    _c2l2_asset(stage=8)
-    st.markdown("### De calcular a especificar")
+    """Etapa 8 · ejercicio guiado integrador del sistema de piso."""
+    import plotly.graph_objects as go
+
+    role=st.session_state.get("role","Alumno")
+    projection_mode=bool(st.session_state.get("projection_mode") or role=="Proyección")
+
+    _c2l2_stage_header(
+        8,
+        "CASO INTEGRADOR · DE LA LOSA DESNUDA AL RESULTADO FINAL",
+        "Integra espectro base, revestimiento, Lₙ,w, ΔLw, Cᵢ y Cᵢ,50–2500 en una sola secuencia guiada."
+    )
+
+    # Curva de losa desnuda / referencia pesada didáctica.
+    bare=[78,78,78,78,78,78,77,76,75,74,73,70,67,64,61,58]
+    freqs=_C2L2_FREQS
+
+    st.markdown("## 1 · Punto de partida · losa desnuda")
     st.write(
-        "Hasta ahora obtuviste números. En práctica profesional debes preguntarte **qué describe cada número, bajo qué montaje se obtuvo "
-        "y hasta dónde puede transferirse a otro sistema constructivo**."
+        "Trabajaremos con una losa pesada de referencia. "
+        "Su curva espectral representa el nivel normalizado de impacto antes de instalar el revestimiento."
     )
-    st.info(
-        "Esta etapa no agrega otra fórmula principal. Su objetivo es evitar tres errores frecuentes: "
-        "confundir nivel con reducción, transferir resultados entre pisos incompatibles y leer una ficha técnica sin identificar la magnitud."
+
+    bare_lnw,bare_shift=_c2l2_lnw(bare)
+    bare_ci,bare_lsum=_c2l2_ci(bare,bare_lnw,False)
+
+    c1,c2,c3=st.columns(3)
+    c1.metric("Lₙ,w · losa desnuda",f"{bare_lnw} dB")
+    c2.metric("Cᵢ · losa desnuda",f"{bare_ci:+d} dB")
+    c3.metric("Rango", "100–3150 Hz")
+
+    st.markdown("## 2 · Elige un revestimiento")
+    st.write(
+        "El revestimiento se caracteriza aquí por una **curva de mejora ΔL(f)**. "
+        "No se resta un único ΔLw a cada banda: primero se aplica la mejora espectral y después se vuelve a ponderar el sistema."
     )
-    station=st.radio("Estación",["A · Lₙ,w vs ΔL_w","B · Piso pesado vs piso liviano","C · Lₙ,eq,0,w","D · Lee una ficha técnica"],horizontal=True,key="c2l2_s8_station")
-    if station.startswith("A"):
-        c1,c2=st.columns(2)
-        with c1:_c2l2_card("Lₙ,w","prestación ponderada","Describe el nivel de impacto ponderado del piso/sistema. Menor es mejor.",tone="blue")
-        with c2:_c2l2_card("ΔL_w","reducción ponderada","Describe cuánto reduce un revestimiento bajo el procedimiento de referencia.",tone="green")
-        st.warning("NO LOS CONFUNDAS: nivel resultante y reducción de revestimiento son magnitudes distintas.")
-    elif station.startswith("B"):
-        st.markdown("### Losa pesada vs piso liviano")
-        st.write(
-            "La ISO 717-2 contempla procedimientos específicos para revestimientos sobre pisos ligeros. "
-            "Un valor obtenido sobre una losa pesada no es universalmente transferible."
-        )
-        cols=st.columns(3)
-        for col,label in zip(cols,["ΔL_t1,w","ΔL_t2,w","ΔL_t3,w"]):
-            with col:_c2l2_card(label,"piso liviano","Descriptor de reducción asociado al procedimiento específico correspondiente.",tone="purple")
-    elif station.startswith("C"):
-        _c2l2_card("Lₙ,eq,0,w","bloque avanzado","Nivel normalizado ponderado equivalente de impactos de un piso pesado desnudo; ayuda a caracterizar el piso base.",tone="orange")
-        st.write("En este laboratorio se introduce para interpretación, sin exigir un desarrollo matemático extenso.")
+
+    profiles={
+        "Revestimiento A · mejora suave":[3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18],
+        "Revestimiento B · mayor efecto en medias-altas":[2,3,4,5,6,8,10,12,14,16,18,20,22,24,26,28],
+        "Revestimiento C · equilibrado":[5,5,6,6,7,8,9,10,11,12,13,14,15,16,17,18],
+    }
+    profile_name=st.selectbox(
+        "Revestimiento",
+        list(profiles),
+        key="c2l2_s8_profile",
+    )
+    delta=profiles[profile_name]
+
+    st.markdown("### Curva ΔL(f) del revestimiento")
+    df_delta=pd.DataFrame({
+        "Frecuencia (Hz)":freqs,
+        "ΔL(f) [dB]":delta,
+    })
+    st.dataframe(df_delta,hide_index=True,use_container_width=True)
+
+    st.markdown("## 3 · Construye el espectro tratado")
+    st.latex(r"L_{n,\mathrm{tratado}}(f)=L_{n,\mathrm{desnudo}}(f)-\Delta L(f)")
+
+    treated=[float(b)-float(d) for b,d in zip(bare,delta)]
+
+    fig=go.Figure()
+    x=list(range(len(freqs)))
+    labels=[str(f) for f in freqs]
+    fig.add_trace(go.Scatter(
+        x=x,y=bare,mode="lines+markers",
+        name="Losa desnuda",
+        line=dict(width=4,color="#64748b"),
+        marker=dict(size=8),
+    ))
+    fig.add_trace(go.Scatter(
+        x=x,y=treated,mode="lines+markers",
+        name="Con revestimiento",
+        line=dict(width=4,color="#0b69d1"),
+        marker=dict(size=8),
+    ))
+    fig.update_layout(
+        height=430,
+        margin=dict(l=45,r=20,t=40,b=55),
+        xaxis=dict(
+            title="Frecuencia (Hz)",
+            tickmode="array",
+            tickvals=x,
+            ticktext=labels,
+            range=[-0.5,15.5],
+        ),
+        yaxis=dict(title="Lₙ (dB)"),
+        legend=dict(orientation="h",y=1.08,x=0),
+        hovermode="x unified",
+    )
+    st.plotly_chart(fig,use_container_width=True,key="c2l2_s8_bare_treated")
+
+    st.markdown("## 4 · Calcula el número único antes y después")
+    treated_lnw,treated_shift=_c2l2_lnw(treated)
+
+    st.markdown(
+        """
+        El revestimiento modifica primero la **curva por frecuencia**.  
+        Después se aplica nuevamente ISO 717-2 para obtener el nuevo descriptor ponderado.
+        """
+    )
+
+    n1,n2,n3=st.columns(3)
+    n1.metric("Lₙ,w · desnudo",f"{bare_lnw} dB")
+    n2.metric("Lₙ,w · tratado",f"{treated_lnw} dB")
+    n3.metric("Mejora del sistema",f"{bare_lnw-treated_lnw} dB")
+
+    st.markdown("## 5 · Obtén ΔLw del revestimiento")
+    delta_lw=int(bare_lnw-treated_lnw)
+    st.latex(r"\Delta L_w=L_{n,r,0,w}-L_{n,r,w}")
+    st.success(
+        f"Para este caso de referencia: **ΔLw = {bare_lnw} − {treated_lnw} = {delta_lw} dB**."
+    )
+    st.warning(
+        "ΔLw describe la **reducción ponderada del revestimiento bajo este procedimiento de referencia**. "
+        "No es lo mismo que Lₙ,w y no debe trasladarse automáticamente a cualquier piso real."
+    )
+
+    st.markdown("## 6 · Añade la información espectral")
+    treated_ci,treated_lsum=_c2l2_ci(treated,treated_lnw,False)
+
+    # Extend treated curve with didactic low-frequency bands for CI50-2500.
+    low_ext=[treated[0]+4,treated[0]+3,treated[0]+2]
+    treated_ext=low_ext+treated
+    treated_ci50,treated_lsum50=_c2l2_ci(treated_ext,treated_lnw,True)
+
+    s1,s2,s3=st.columns(3)
+    s1.metric("Lₙ,w",f"{treated_lnw} dB")
+    s2.metric("Cᵢ",f"{treated_ci:+d} dB")
+    s3.metric("Cᵢ,50–2500",f"{treated_ci50:+d} dB")
+
+    st.markdown(
+        f"""
+        <div style="border:1px solid #dbe4ee;border-radius:16px;padding:15px 17px;background:#f8fbff;margin:.6rem 0 1rem">
+          <b>Lectura integrada del sistema tratado</b><br><br>
+          Resultado principal: <b>Lₙ,w = {treated_lnw} dB</b><br>
+          Adaptación espectral 100–2500 Hz: <b>Cᵢ = {treated_ci:+d} dB</b><br>
+          Adaptación espectral ampliada 50–2500 Hz: <b>Cᵢ,50–2500 = {treated_ci50:+d} dB</b><br>
+          Reducción ponderada del revestimiento: <b>ΔLw = {delta_lw} dB</b>
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
+
+    st.markdown("## 7 · Expresa el resultado como lo harías profesionalmente")
+    st.write(
+        "No mezcles magnitudes. El nivel final del sistema, los términos espectrales y la reducción del revestimiento "
+        "deben leerse como resultados relacionados, pero distintos."
+    )
+
+    st.markdown(
+        f"""
+        <div style="display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;margin:.6rem 0 1rem">
+          <div style="border:2px solid #bfdbfe;border-radius:15px;padding:14px;background:#eff6ff;text-align:center">
+            <small>NIVEL PONDERADO</small><br><b style="font-size:1.55rem">Lₙ,w = {treated_lnw} dB</b>
+          </div>
+          <div style="border:2px solid #bbf7d0;border-radius:15px;padding:14px;background:#f0fdf4;text-align:center">
+            <small>ADAPTACIÓN</small><br><b style="font-size:1.55rem">Cᵢ = {treated_ci:+d} dB</b>
+          </div>
+          <div style="border:2px solid #ddd6fe;border-radius:15px;padding:14px;background:#f5f3ff;text-align:center">
+            <small>BAJAS FRECUENCIAS</small><br><b style="font-size:1.55rem">Cᵢ,50–2500 = {treated_ci50:+d} dB</b>
+          </div>
+          <div style="border:2px solid #fed7aa;border-radius:15px;padding:14px;background:#fff7ed;text-align:center">
+            <small>REVESTIMIENTO</small><br><b style="font-size:1.55rem">ΔLw = {delta_lw} dB</b>
+          </div>
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
+
+    st.markdown("### Lectura para no especialistas")
+    st.markdown(
+        f"""
+        > **“La losa con el revestimiento {profile_name.split(' · ')[0]} presenta un nivel de impacto ponderado de {treated_lnw} dB. 
+        > El revestimiento aporta una reducción ponderada ΔLw de {delta_lw} dB bajo el procedimiento de referencia.
+        > Los términos Cᵢ = {treated_ci:+d} dB y Cᵢ,50–2500 = {treated_ci50:+d} dB entregan información adicional sobre la forma espectral.”**
+        """
+    )
+
+    st.markdown("## 8 · Ejercicio guiado integrador")
+    st.write(
+        "Ordena mentalmente la cadena completa y responde qué magnitud corresponde a cada paso."
+    )
+
+    questions=[
+        {
+            "id":"q1",
+            "q":"¿Qué magnitud describe el nivel ponderado final del piso tratado?",
+            "opts":["Lₙ,w","ΔLw","Cᵢ"],
+            "correct":"Lₙ,w",
+        },
+        {
+            "id":"q2",
+            "q":"¿Qué magnitud describe cuánto reduce ponderadamente el revestimiento en el sistema de referencia?",
+            "opts":["Cᵢ,50–2500","ΔLw","Lₙ,w"],
+            "correct":"ΔLw",
+        },
+        {
+            "id":"q3",
+            "q":"¿Qué término agrega información espectral usando 100–2500 Hz?",
+            "opts":["Cᵢ","Lₙ,w","ΔLw"],
+            "correct":"Cᵢ",
+        },
+        {
+            "id":"q4",
+            "q":"¿Qué término incorpora además 50, 63 y 80 Hz?",
+            "opts":["Cᵢ,50–2500","ΔLw","Lₙ,w"],
+            "correct":"Cᵢ,50–2500",
+        },
+    ]
+
+    answers=saved.get("c2l2_s8_integrator",{}) if isinstance(saved.get("c2l2_s8_integrator"),dict) else {}
+
+    if role=="Docente" and not projection_mode:
+        st.info("Vista docente · pauta del ejercicio integrador.")
+        for i,q in enumerate(questions,1):
+            with st.container(border=True):
+                st.markdown(f"### {i}. {q['q']}")
+                st.success("Respuesta correcta: "+q["correct"])
     else:
-        st.markdown("### Ficha técnica ficticia")
-        st.dataframe(pd.DataFrame([{"Lₙ,w":"52 dB","C_I":"−5 dB","ΔL_w":"18 dB"}]),hide_index=True)
-        q=st.multiselect(
-            "Asocia correctamente los valores",
-            [
-                "52 dB describe la prestación ponderada del piso/sistema.",
-                "−5 dB añade información espectral complementaria.",
-                "18 dB describe reducción ponderada del revestimiento bajo el procedimiento correspondiente.",
-                "18 dB es el nivel final del piso.",
-            ],key="c2l2_s8_sheet"
-        )
-        correct=set(q)=={
-            "52 dB describe la prestación ponderada del piso/sistema.",
-            "−5 dB añade información espectral complementaria.",
-            "18 dB describe reducción ponderada del revestimiento bajo el procedimiento correspondiente.",
-        }
-        if st.button("COMPROBAR FICHA",key="c2l2_s8_check"):
-            if correct:
-                st.success("Correcto: identificaste qué describe cada número.")
-                _c2l2_finish_stage(saved,8)
-            else: st.warning("No preguntes solo cuál es mayor: identifica primero qué magnitud describe cada valor.")
+        for i,q in enumerate(questions,1):
+            with st.container(border=True):
+                st.markdown(f"### {i}. {q['q']}")
+                prev=answers.get(q["id"],{}) if isinstance(answers.get(q["id"]),dict) else {}
+                prev_choice=prev.get("choice")
+                idx=q["opts"].index(prev_choice) if prev_choice in q["opts"] else None
+                choice=st.radio(
+                    f"Respuesta integradora {i}",
+                    q["opts"],
+                    index=idx,
+                    key=f"c2l2_s8_{q['id']}",
+                    label_visibility="collapsed",
+                )
+                if st.button(
+                    "Comprobar y guardar",
+                    key=f"c2l2_s8_check_{q['id']}",
+                    use_container_width=True,
+                ):
+                    result={"choice":choice,"correct":choice==q["correct"],"updated_at":_now()}
+                    if projection_mode:
+                        st.session_state[f"c2l2_s8_proj_{q['id']}"]=result
+                    else:
+                        answers[q["id"]]=result
+                        saved["c2l2_s8_integrator"]=answers
+                        saved["updated_8"]=_now()
+                        _save_future_state(_C2L2_CLASS_ID,saved)
+                    st.rerun()
 
+                result=(
+                    st.session_state.get(f"c2l2_s8_proj_{q['id']}")
+                    if projection_mode
+                    else answers.get(q["id"])
+                )
+                if isinstance(result,dict):
+                    if result.get("correct"):
+                        st.success("✓ Correcto.")
+                    else:
+                        st.warning("Revisa qué describe cada magnitud antes de elegir.")
 
-_C2L2_STAGE9_QUESTIONS=[
-    ("Significado de Lₙ,w","¿Qué representa Lₙ,w?",["Un promedio aritmético del espectro.","El valor a 500 Hz de la referencia desplazada según ISO 717-2.","El máximo de Lₙ(f).","Una reducción de revestimiento."],1,"Lₙ,w se lee a 500 Hz en la referencia después de encontrar su posición normativa."),
-    ("Sentido del resultado","Para ruido de impacto, ¿qué comparación es favorable?",["Mayor Lₙ,w es mejor.","Menor Lₙ,w es mejor.","Lₙ,w no permite comparar.","Solo importa 500 Hz medido."],1,"En niveles de impacto, un menor nivel ponderado representa mejor comportamiento."),
-    ("Desviaciones","¿Cuándo una banda aporta desviación desfavorable?",["Cuando Lₙ<L_ref.","Cuando Lₙ>L_ref.","Siempre.","Solo a 500 Hz."],1,"La desviación es max(0,Lₙ−L_ref)."),
-    ("Posición límite","Una posición da Σdᵢ=20 dB y al bajar 1 dB queda en 27 dB. ¿Es definitiva?",["Sí.","No, todavía puede acercarse sin superar 32 dB.","Solo si 500 Hz coincide.","Depende de C_I."],1,"Se busca la mayor suma posible sin superar 32 dB."),
-    ("C_I","¿Qué aporta C_I?",["Una mejora adicional que se suma al piso.","Información espectral complementaria a Lₙ,w.","La frecuencia natural.","La carga por apoyo."],1,"C_I complementa la lectura espectral; no es una mejora."),
-    ("Bajas frecuencias","¿Qué aporta C_I,50-2500?",["Extiende la información hacia 50, 63 y 80 Hz.","Elimina las bajas frecuencias.","Reemplaza Lₙ,w.","Convierte Hz a rpm."],0,"El rango ampliado revela contenido de baja frecuencia."),
-    ("ΔL_w","¿Qué diferencia principal existe entre ΔL(f) y ΔL_w?",["Son idénticos.","ΔL(f) es espectral y ΔL_w es una reducción ponderada.","ΔL_w es un nivel final.","ΔL(f) solo existe a 500 Hz."],1,"Uno conserva bandas; el otro resume la reducción mediante ponderación."),
-    ("Bomba rpm → Hz","Una bomba gira a 1450 rpm. ¿Cuál es aproximadamente su frecuencia fundamental?",["12,1 Hz","24,2 Hz","48,3 Hz","1450 Hz"],1,"1450/60≈24,17 Hz."),
-    ("Camino paralelo","La bomba tiene buenos aisladores pero la tubería está rígidamente conectada. ¿Qué queda?",["Nada.","Un camino estructural paralelo.","Solo ruido aéreo.","Un problema de C_I."],1,"La tubería puede puentear el aislamiento de la base."),
-    ("Cavitación","Si se detecta una condición compatible con cavitación, ¿qué enfoque es correcto?",["Solo instalar aisladores.","Corregir la condición hidráulica en la fuente y luego controlar caminos.","Agregar absorbente únicamente.","Aumentar Lₙ,w."],1,"La cavitación exige investigar y corregir la condición hidráulica, además de los caminos de transmisión."),
-]
+        done=sum(
+            1 for q in questions
+            if isinstance(answers.get(q["id"]),dict) and answers[q["id"]].get("correct") is True
+        ) if not projection_mode else 0
 
+        if role=="Alumno" and done==len(questions):
+            _c2l2_finish_stage(saved,8)
+
+    st.markdown("## 9 · La cadena completa")
+    st.success(
+        "**Losa desnuda → ΔL(f) del revestimiento → espectro tratado → Lₙ,w → Cᵢ / Cᵢ,50–2500 → ΔLw → interpretación profesional.** "
+        "Esa es la secuencia que debes dominar antes de pasar a la evaluación."
+    )
+    st.caption("Continúa desde la barra lateral.")
 
 def _c2l2_stage9_remote():
     user_key=st.session_state.get("user_key")
