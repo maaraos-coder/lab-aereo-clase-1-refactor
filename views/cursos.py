@@ -13970,7 +13970,7 @@ def future_lab_view_impl(lab):
                 help="Ábrela en otra ventana y comparte solo esa ventana en Zoom.",
             )
             future_projection_options = {
-                f"Etapa {i} · {(_c2l2_stage_title(lab,i) if class_id==_C2L2_CLASS_ID else lab['stages'][i][0])}": i
+                f"Etapa {i} · {(_future_stage_display_title(lab,i) if class_id==_C2L2_CLASS_ID else lab['stages'][i][0])}": i
                 for i in range(len(lab["stages"]))
             }
             future_projection_label = st.selectbox(
@@ -14009,7 +14009,7 @@ def future_lab_view_impl(lab):
             "Ruta de aprendizaje",
             _stage_options,
             format_func=lambda i:(
-                f"Etapa {i} · {_c2l2_stage_title(lab,i)}"
+                f"Etapa {i} · {_future_stage_display_title(lab,i)}"
                 if class_id==_C2L2_CLASS_ID
                 else f"Etapa {i} · {lab['stages'][i][0]}"
             ),
