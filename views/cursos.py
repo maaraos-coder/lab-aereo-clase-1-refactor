@@ -14982,30 +14982,192 @@ def _c2l2_stage8(lab,saved):
     c2.metric("Cᵢ · losa desnuda",f"{bare_ci:+d} dB")
     c3.metric("Rango", "100–3150 Hz")
 
-    st.markdown("## 2 · Elige un revestimiento")
+    st.markdown("## 2 · Elige una solución comercial real")
     st.write(
-        "El revestimiento se caracteriza aquí por una **curva de mejora ΔL(f)**. "
-        "No se resta un único ΔLw a cada banda: primero se aplica la mejora espectral y después se vuelve a ponderar el sistema."
+        "Ahora trabajaremos con productos reales de fabricantes reconocidos. "
+        "El **dato acústico declarado por el fabricante es real**; la curva ΔL(f) que usaremos después "
+        "es una **curva didáctica calibrada para el laboratorio**, salvo que el fabricante publique la curva completa del ensayo."
     )
 
-    profiles={
-        "Revestimiento A · mejora suave":[3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18],
-        "Revestimiento B · mayor efecto en medias-altas":[2,3,4,5,6,8,10,12,14,16,18,20,22,24,26,28],
-        "Revestimiento C · equilibrado":[5,5,6,6,7,8,9,10,11,12,13,14,15,16,17,18],
+    products={
+        "Tarkett iQ Optima Acoustic · vinílico acústico · 16 dB":{
+            "brand":"Tarkett",
+            "name":"iQ Optima Acoustic",
+            "type":"Vinílico acústico homogéneo con capa de espuma",
+            "declared_dlw":16,
+            "standard":"EN ISO 717-2",
+            "thickness":"3,7 mm",
+            "product_url":"https://professionals.tarkett.com/en_EU/collection-C000141-iq-optima-acoustic",
+            "datasheet_url":"https://media.tarkett.com/docs/DS_SP_iQ_Optima_Acoustic.pdf",
+            "catalog_url":"https://media.tarkett.com/docs/DS_SP_iQ_Optima_Acoustic.pdf",
+            "base_profile":[3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18],
+            "market_note":"Producto internacional con documentación técnica oficial disponible en español; útil como referencia para Chile y Latinoamérica.",
+        },
+        "Forbo Sarlon 19 dB · vinílico acústico · 19 dB":{
+            "brand":"Forbo",
+            "name":"Sarlon 19 dB",
+            "type":"Pavimento vinílico acústico",
+            "declared_dlw":19,
+            "standard":"EN ISO 717-2",
+            "thickness":"Producto acústico multicapa; revisar ficha oficial de la colección",
+            "product_url":"https://www.forbo.com/flooring/en-uk/commercial-products/sarlon-acoustic-flooring/sarlon-19-db-acoustic-vinyl-flooring/sarlon-19-db-material/bu3hke",
+            "datasheet_url":"https://www.forbo.com/flooring/en-uk/downloads",
+            "catalog_url":"https://www.forbo.com/flooring/en-uk/commercial-products/sarlon-acoustic-flooring/sarlon-19-db-acoustic-vinyl-flooring/sarlon-19-db-material/bu3hke",
+            "base_profile":[3,4,5,6,7,9,11,13,15,17,19,21,23,25,27,29],
+            "market_note":"Forbo tiene proyectos y presencia comercial en Chile; Sarlon 19 dB declara 19 dB de reducción de ruido de impacto.",
+        },
+        "Gerflor Taralay Impression Acoustic · vinílico acústico · 19 dB":{
+            "brand":"Gerflor",
+            "name":"Taralay Impression Acoustic",
+            "type":"Vinílico multicapa acústico",
+            "declared_dlw":19,
+            "standard":"EN ISO 717-2",
+            "thickness":"3,35 mm",
+            "product_url":"https://www.gerflor.com/products/taralay-impression-acoustic",
+            "datasheet_url":"https://www.gerflor.com/media/products/taralay/taralay-impression-acoustic/gerflor-tds-taralay-impression-acoustic-en-2023.pdf",
+            "catalog_url":"https://www.gerflor.com/products/taralay-impression-acoustic",
+            "base_profile":[2,3,4,5,6,8,10,12,14,16,18,20,22,24,26,28],
+            "market_note":"Gerflor comercializa soluciones para proyectos en Latinoamérica; la ficha técnica declara 19 dB de aislamiento al ruido de impacto.",
+        },
+        "Interface RMS 607 · alfombra modular · 26 dB":{
+            "brand":"Interface",
+            "name":"RMS 607",
+            "type":"Alfombra modular",
+            "declared_dlw":26,
+            "standard":"EN ISO 10140-3",
+            "thickness":"8,2 mm ± 0,5 mm",
+            "product_url":"https://www.interface.com/",
+            "datasheet_url":"https://www.interface.com/content/dam/interfaceinc/interface/publications/brochures-collateral/emea/workbook/workbook-2026-27/EU%20Workbook%202026_FR.pdf",
+            "catalog_url":"https://www.interface.com/content/dam/interfaceinc/interface/publications/brochures-collateral/emea/workbook/workbook-2026-27/EU%20Workbook%202026_FR.pdf",
+            "base_profile":[7,8,9,10,11,13,15,17,19,21,23,25,27,29,31,33],
+            "market_note":"Caso real de alfombra modular con ΔLw declarado de 26 dB en documentación oficial de Interface.",
+        },
     }
-    profile_name=st.selectbox(
-        "Revestimiento",
-        list(profiles),
-        key="c2l2_s8_profile",
-    )
-    delta=profiles[profile_name]
 
-    st.markdown("### Curva ΔL(f) del revestimiento")
+    product_key=st.selectbox(
+        "Solución de terminación",
+        list(products),
+        key="c2l2_s8_product",
+    )
+    product=products[product_key]
+
+    st.markdown(
+        f"""
+        <div style="border:1px solid #dbe4ee;border-radius:18px;padding:17px 18px;background:#fff;margin:.6rem 0 1rem">
+          <div style="font-size:.76rem;font-weight:900;letter-spacing:.05em;color:#075985">PRODUCTO REAL · FABRICANTE</div>
+          <div style="font-size:1.55rem;font-weight:950;color:#0f172a;margin:.25rem 0">{product['brand']} · {product['name']}</div>
+          <div style="display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px;margin-top:.8rem">
+            <div><small>Tipo</small><br><b>{product['type']}</b></div>
+            <div><small>Espesor</small><br><b>{product['thickness']}</b></div>
+            <div><small>Dato acústico declarado</small><br><b>ΔLw = {product['declared_dlw']} dB</b></div>
+            <div><small>Norma declarada</small><br><b>{product['standard']}</b></div>
+          </div>
+          <div style="color:#64748b;margin-top:.85rem">{product['market_note']}</div>
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
+
+    l1,l2,l3=st.columns(3)
+    with l1:
+        st.link_button("🌐 PRODUCTO OFICIAL",product["product_url"],use_container_width=True)
+    with l2:
+        st.link_button("📄 DATASHEET OFICIAL",product["datasheet_url"],use_container_width=True)
+    with l3:
+        st.link_button("📚 CATÁLOGO / DOCUMENTACIÓN",product["catalog_url"],use_container_width=True)
+
+    st.markdown("### Antes de calcular: distingue dato real y dato didáctico")
+    d1,d2=st.columns(2)
+    with d1:
+        st.markdown(
+            f"""
+            <div style="border:2px solid #bbf7d0;border-radius:16px;padding:15px;background:#f0fdf4;min-height:165px">
+              <div style="font-size:.76rem;font-weight:900;color:#166534">DATO REAL DEL FABRICANTE</div>
+              <div style="font-size:1.8rem;font-weight:950;margin:.35rem 0">ΔLw = {product['declared_dlw']} dB</div>
+              <div>Valor publicado en documentación oficial del producto.</div>
+            </div>
+            """,
+            unsafe_allow_html=True,
+        )
+    with d2:
+        st.markdown(
+            """
+            <div style="border:2px solid #fde68a;border-radius:16px;padding:15px;background:#fffbeb;min-height:165px">
+              <div style="font-size:.76rem;font-weight:900;color:#92400e">CURVA UTILIZADA EN EL LABORATORIO</div>
+              <div style="font-size:1.35rem;font-weight:900;margin:.35rem 0">ΔL(f) didáctica calibrada</div>
+              <div>No se atribuye al fabricante como curva de ensayo certificada. Se utiliza para practicar el procedimiento banda por banda.</div>
+            </div>
+            """,
+            unsafe_allow_html=True,
+        )
+
+    # Calibrate the didactic spectrum so its weighted ΔLw matches the declared
+    # manufacturer value while keeping the chosen product's spectral shape.
+    base_profile=[float(v) for v in product["base_profile"]]
+    target_dlw=int(product["declared_dlw"])
+    candidates=[]
+    for offset in range(-10,31):
+        prof=[max(0.0,v+offset) for v in base_profile]
+        treated_candidate=[float(b)-float(d) for b,d in zip(bare,prof)]
+        lnw_candidate,_=_c2l2_lnw(treated_candidate)
+        dlw_candidate=int(bare_lnw-lnw_candidate)
+        if dlw_candidate==target_dlw:
+            # prefer smallest absolute offset from the designed base profile
+            candidates.append((abs(offset),prof,treated_candidate,lnw_candidate))
+    if candidates:
+        _,delta,treated_preview,calibrated_lnw=min(candidates,key=lambda item:item[0])
+    else:
+        delta=base_profile
+
+    st.markdown("### Curva ΔL(f) didáctica utilizada en este ejercicio")
+    st.caption(
+        f"Esta curva se ha calibrado para que el procedimiento del laboratorio entregue aproximadamente "
+        f"el ΔLw declarado de **{product['declared_dlw']} dB**, pero no sustituye el informe de ensayo del fabricante."
+    )
     df_delta=pd.DataFrame({
         "Frecuencia (Hz)":freqs,
-        "ΔL(f) [dB]":delta,
+        "ΔL(f) didáctico [dB]":[round(v,1) for v in delta],
     })
     st.dataframe(df_delta,hide_index=True,use_container_width=True)
+
+    st.markdown("### Mini lectura de ficha técnica")
+    st.write(
+        "Antes de seguir con el cálculo, identifica qué dato acústico está declarando realmente el fabricante."
+    )
+    if role=="Docente" and not projection_mode:
+        st.success(
+            f"Pauta docente: el producto declara **ΔLw = {product['declared_dlw']} dB**. "
+            "Ese valor describe reducción ponderada de ruido de impacto bajo el ensayo/procedimiento declarado; "
+            "no es Lₙ,w del piso final."
+        )
+    else:
+        q_opts=["Lₙ,w del piso terminado","ΔLw del revestimiento","Cᵢ del sistema","L'ₙT,w del edificio"]
+        q_correct="ΔLw del revestimiento"
+        prev=saved.get("c2l2_s8_datasheet",{}) if isinstance(saved.get("c2l2_s8_datasheet"),dict) else {}
+        prev_choice=prev.get("choice")
+        idx=q_opts.index(prev_choice) if prev_choice in q_opts else None
+        q_choice=st.radio(
+            "El valor acústico declarado por esta ficha corresponde a:",
+            q_opts,index=idx,key="c2l2_s8_datasheet_choice",
+        )
+        if st.button("COMPROBAR LECTURA DE FICHA",key="c2l2_s8_datasheet_check",use_container_width=True):
+            result={"choice":q_choice,"correct":q_choice==q_correct,"updated_at":_now()}
+            if projection_mode:
+                st.session_state["c2l2_s8_datasheet_projection"]=result
+            else:
+                saved["c2l2_s8_datasheet"]=result
+                _save_future_state(_C2L2_CLASS_ID,saved)
+            st.rerun()
+        result=st.session_state.get("c2l2_s8_datasheet_projection") if projection_mode else saved.get("c2l2_s8_datasheet")
+        if isinstance(result,dict):
+            if result.get("correct"):
+                st.success(
+                    "✓ Correcto. La ficha está declarando la **reducción ponderada del revestimiento, ΔLw**."
+                )
+            else:
+                st.warning(
+                    "Revisa la magnitud: el fabricante está informando cuánto reduce el revestimiento bajo el procedimiento de ensayo, no el Lₙ,w final de tu losa."
+                )
 
     st.markdown("## 3 · Construye el espectro tratado")
     st.latex(r"L_{n,\mathrm{tratado}}(f)=L_{n,\mathrm{desnudo}}(f)-\Delta L(f)")
@@ -15124,7 +15286,7 @@ def _c2l2_stage8(lab,saved):
     st.markdown("### Lectura para no especialistas")
     st.markdown(
         f"""
-        > **“La losa con el revestimiento {profile_name.split(' · ')[0]} presenta un nivel de impacto ponderado de {treated_lnw} dB. 
+        > **“La losa con el revestimiento {product["name"]} presenta un nivel de impacto ponderado de {treated_lnw} dB. 
         > El revestimiento aporta una reducción ponderada ΔLw de {delta_lw} dB bajo el procedimiento de referencia.
         > Los términos Cᵢ = {treated_ci:+d} dB y Cᵢ,50–2500 = {treated_ci50:+d} dB entregan información adicional sobre la forma espectral.”**
         """
