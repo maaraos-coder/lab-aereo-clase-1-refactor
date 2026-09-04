@@ -11690,7 +11690,7 @@ _C2L2_STAGE_TITLES={
     0:"Del espectro al número único",
     1:"Laboratorio, terreno y cantidades ponderadas",
     2:"Conoce la curva de referencia",
-    3:"¿Qué bandas penalizan el resultado?",
+    3:"Lee el problema antes de reducirlo a un número",
     4:"Construye el número único Lₙ,w",
     5:"Término de adaptación espectral C_I",
     6:"Bajas frecuencias y C_I,50-2500",
@@ -12684,9 +12684,9 @@ def _c2l2_stage2(lab,saved):
     st.markdown(html,unsafe_allow_html=True)
 
     st.info(
-        "**En esta Etapa 2 debes comprender el mecanismo completo.** "
-        "La Etapa 3 se concentrará específicamente en reconocer qué bandas penalizan "
-        "y cuánto aporta cada desviación desfavorable."
+        "**En esta Etapa 2 debes comprender el mecanismo del ajuste.** "
+        "En la Etapa 3 dejarás de mover la referencia y aprenderás a **leer la forma del espectro**: "
+        "dos pisos pueden terminar con el mismo Lₙ,w y, sin embargo, esconder problemas espectrales muy distintos."
     )
 
     st.markdown("## 6 · Explora el procedimiento")
@@ -12703,109 +12703,464 @@ def _c2l2_stage2(lab,saved):
 
 
 def _c2l2_stage3(lab,saved):
-    curve,_=_c2l2_floor_curve()
-    _c2l2_stage_header(3,"¿QUÉ BANDAS PENALIZAN EL RESULTADO?","Identifica las desviaciones desfavorables y construye Σdᵢ.")
-    st.markdown("### 1 · Una banda no penaliza por ser alta o baja en frecuencia")
-    st.write(
-        "Lo que importa es la **posición relativa** entre el nivel de impacto del piso y la referencia desplazada. "
-        "Para ruido de impacto, un nivel mayor significa peor comportamiento; por eso la penalización aparece cuando Lₙ queda sobre la referencia."
-    )
-    st.markdown("### 2 · Lee la ecuación físicamente")
-    st.write(
-        "**Lₙ,i − Lref,i** responde una pregunta simple: ¿cuántos decibeles está el piso por encima de la referencia en esta banda? "
-        "Si el resultado es negativo o cero, esa banda no agrega penalización y se toma dᵢ = 0."
-    )
-    st.markdown("### 3 · ¿Por qué no se compensan las bandas?")
-    st.write(
-        "Una banda con comportamiento muy favorable no borra una banda problemática. "
-        "La suma considera únicamente los excesos desfavorables. Por eso el método conserva sensibilidad frente a valles o zonas espectrales débiles."
-    )
-    st.info(
-        "**Σdᵢ** es la suma de todos esos excesos. En 16 tercios de octava, la posición final de la referencia "
-        "se busca con una suma tan grande como sea posible, pero **sin superar 32 dB**."
-    )
-    st.write("Para ruido de impacto una banda penaliza cuando el nivel evaluado queda **por encima** de la referencia desplazada.")
-    st.latex(r"\boxed{d_i=\max\left(0,\;L_{n,i}-L_{\mathrm{ref},i}\right)}")
-    shift,ref,dev,total=_c2l2_curve_control(saved,"c2l2_s3",curve,require_limit=False)
-    selected=st.selectbox("Selecciona una banda para inspeccionarla",_C2L2_FREQS,index=7,key="c2l2_s3_band")
-    i=_C2L2_FREQS.index(selected)
-    c1,c2,c3,c4=st.columns(4)
-    c1.metric("Frecuencia",f"{selected} Hz")
-    c2.metric("Lₙ",f"{curve[i]:.1f} dB")
-    c3.metric("Referencia",f"{ref[i]:.1f} dB")
-    c4.metric("dᵢ",f"{dev[i]:.1f} dB")
-    with st.expander("Ver tabla dinámica de desviaciones"):
-        st.dataframe(pd.DataFrame({
-            "f (Hz)":_C2L2_FREQS,"Lₙ (dB)":curve,"L_ref (dB)":ref,
-            "dᵢ desfavorable (dB)":[round(x,1) for x in dev],
-        }),hide_index=True,use_container_width=True)
-    candidates=[f for f,d in zip(_C2L2_FREQS,dev) if d>0]
-    picked=st.multiselect("¿Cuáles bandas suman?",_C2L2_FREQS,key="c2l2_s3_picked")
-    if st.button("COMPROBAR BANDAS",key="c2l2_s3_check"):
-        if set(picked)==set(candidates):
-            st.success("Correcto: solo suman las bandas con Lₙ > L_ref.")
-            _c2l2_finish_stage(saved,3)
-        else: st.warning("Revisa los segmentos rojos: esas son las diferencias que contribuyen a Σdᵢ.")
+    """Etapa 3 · interpretación espectral antes de reducir el resultado a Lₙ,w."""
+    import plotly.graph_objects as go
 
+    role=st.session_state.get("role","Alumno")
+    projection_mode=bool(st.session_state.get("projection_mode") or role=="Proyección")
 
-def _c2l2_stage4(lab,saved):
-    curve,_=_c2l2_floor_curve()
-    _c2l2_stage_header(4,"CONSTRUYE EL NÚMERO ÚNICO Lₙ,w","Encuentra la posición límite y lee el valor de la referencia a 500 Hz.")
-    st.markdown("### Procedimiento completo")
+    _c2l2_stage_header(
+        3,
+        "LEE EL PROBLEMA ANTES DE REDUCIRLO A UN NÚMERO",
+        "Compara espectros, localiza dónde está el problema y descubre qué información puede ocultar un mismo Lₙ,w."
+    )
+
+    # ------------------------------------------------------------------
+    # 1 · PUNTO DE PARTIDA
+    # ------------------------------------------------------------------
+    st.markdown("## 1 · El número único resume, pero también comprime información")
+    st.write(
+        "ISO 717-2 permite representar una curva de 16 bandas mediante un único valor ponderado. "
+        "Eso es muy útil para comparar resultados, pero el número único **no conserva toda la forma del espectro**."
+    )
+
     st.markdown(
         """
-        1. Parte de los **16 valores de Lₙ(f)** entre 100 y 3150 Hz.
-        2. Superpone la curva de referencia ISO 717-2.
-        3. Calcula solo las desviaciones donde **Lₙ > Lref**.
-        4. Suma esas desviaciones: **Σdᵢ**.
-        5. Mueve la referencia en pasos de **1 dB** hasta encontrar la posición límite.
-        6. Una vez fijada esa posición, lee la referencia en **500 Hz**: ese valor es **Lₙ,w**.
-        """
+        <div style="border:1px solid #bfdbfe;border-radius:17px;padding:16px 18px;background:#eff6ff;margin:.6rem 0 1rem">
+          <b>Pregunta profesional de esta etapa:</b><br><br>
+          Si dos pisos tienen el mismo <b>Lₙ,w</b>, ¿podemos afirmar que se comportan igual en todas las frecuencias?
+          <br><br>
+          <b>No necesariamente.</b> El mismo descriptor ponderado puede corresponder a distribuciones espectrales diferentes.
+        </div>
+        """,
+        unsafe_allow_html=True,
     )
-    st.markdown("### ¿Qué significa posición límite?")
+
+    # Dos curvas didácticas construidas para entregar el MISMO L_n,w,
+    # pero con distribución espectral deliberadamente diferente.
+    floor_a=[67,67,66,65,64,63,61,59,57,55,53,50,47,44,42,40]
+    floor_b=[56,56,56,56,57,57,57,57,57,57,57,56,55,53,50,46]
+
+    lnw_a,shift_a=_c2l2_lnw(floor_a)
+    lnw_b,shift_b=_c2l2_lnw(floor_b)
+
+    # Seguridad pedagógica: las curvas deben mostrar exactamente el mismo descriptor.
+    if lnw_a != lnw_b:
+        raise RuntimeError("Las curvas didácticas de Etapa 3 deben tener el mismo Lₙ,w.")
+
+    common_lnw=lnw_a
+    ref_common=_c2l2_ref_shift(shift_a)
+
+    # ------------------------------------------------------------------
+    # 2 · EXPERIMENTO PRINCIPAL
+    # ------------------------------------------------------------------
+    st.markdown("## 2 · Experimento · dos pisos, el mismo Lₙ,w")
     st.write(
-        "No basta con obtener Σdᵢ ≤ 32 dB. Debes acercar la referencia hasta que un desplazamiento adicional de 1 dB "
-        "haga que la suma supere 32 dB. Esa comprobación evita aceptar una referencia demasiado alejada del espectro."
+        "Los dos pisos siguientes fueron diseñados didácticamente para entregar el **mismo número único**, "
+        "pero no tienen la misma forma espectral. Compara primero el número y luego abre el espectro."
     )
+
     c1,c2=st.columns(2)
     with c1:
         _c2l2_card(
-            "Lₙ(500 Hz)",
-            "dato medido/calculado del piso",
-            "Es el nivel real de la curva del piso en la banda de 500 Hz.",
-            tone="blue",
+            "Piso A",
+            f"Lₙ,w = {common_lnw} dB",
+            "Su exceso de nivel se concentra principalmente en la zona de bajas frecuencias.",
+            tone="orange",
         )
     with c2:
         _c2l2_card(
-            "Lₙ,w",
-            "lectura de la referencia",
-            "Es el valor que tiene la curva de referencia desplazada a 500 Hz después de completar el ajuste.",
+            "Piso B",
+            f"Lₙ,w = {common_lnw} dB",
+            "Su comportamiento desfavorable se desplaza hacia frecuencias medias-altas y altas.",
+            tone="purple",
+        )
+
+    view=st.segmented_control(
+        "¿Qué quieres comparar?",
+        ["Solo el número único","Abrir los espectros","Comparación directa A vs B"],
+        default="Abrir los espectros",
+        key="c2l2_s3_view",
+    )
+
+    if view=="Solo el número único":
+        st.markdown(
+            f"""
+            <div style="display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px;margin:.7rem 0 1rem">
+              <div style="border:2px solid #fed7aa;border-radius:18px;background:#fff7ed;padding:22px;text-align:center">
+                <div style="font-size:.78rem;font-weight:850;color:#9a3412">PISO A</div>
+                <div style="font-size:2.3rem;font-weight:900;color:#0f172a;margin:.25rem 0">{common_lnw} dB</div>
+                <div style="color:#64748b">Lₙ,w</div>
+              </div>
+              <div style="border:2px solid #ddd6fe;border-radius:18px;background:#f5f3ff;padding:22px;text-align:center">
+                <div style="font-size:.78rem;font-weight:850;color:#6d28d9">PISO B</div>
+                <div style="font-size:2.3rem;font-weight:900;color:#0f172a;margin:.25rem 0">{common_lnw} dB</div>
+                <div style="color:#64748b">Lₙ,w</div>
+              </div>
+            </div>
+            """,
+            unsafe_allow_html=True,
+        )
+        st.warning(
+            "Mirando solamente Lₙ,w, ambos pisos parecen equivalentes. "
+            "Todavía no sabes **en qué parte del espectro** está concentrado el problema."
+        )
+    else:
+        fig=go.Figure()
+        fig.add_trace(go.Scatter(
+            x=_C2L2_FREQS,y=floor_a,mode="lines+markers",
+            name="Piso A · problema hacia bajas frecuencias",
+            line=dict(width=4,color="#f97316"),marker=dict(size=8),
+        ))
+        fig.add_trace(go.Scatter(
+            x=_C2L2_FREQS,y=floor_b,mode="lines+markers",
+            name="Piso B · problema hacia frecuencias altas",
+            line=dict(width=4,color="#7c3aed"),marker=dict(size=8),
+        ))
+        if view=="Comparación directa A vs B":
+            fig.add_trace(go.Scatter(
+                x=_C2L2_FREQS,y=ref_common,mode="lines",
+                name=f"Referencia final común · Lₙ,w = {common_lnw} dB",
+                line=dict(width=3,color="#111827",dash="dash"),
+            ))
+        fig.update_layout(
+            height=465,
+            margin=dict(l=50,r=20,t=40,b=45),
+            xaxis=dict(
+                title="Frecuencia (Hz)",
+                type="log",
+                tickmode="array",
+                tickvals=_C2L2_FREQS,
+                ticktext=[str(f) for f in _C2L2_FREQS],
+            ),
+            yaxis=dict(title="Nivel de impacto (dB)"),
+            legend=dict(orientation="h",yanchor="bottom",y=1.02,x=0),
+            hovermode="x unified",
+        )
+        st.plotly_chart(fig,use_container_width=True,key="c2l2_s3_compare_spectra")
+        st.success(
+            f"Ambos entregan **Lₙ,w = {common_lnw} dB**, pero el Piso A tiene una huella más crítica hacia bajas frecuencias "
+            "y el Piso B concentra niveles relativamente mayores hacia frecuencias altas."
+        )
+
+    # ------------------------------------------------------------------
+    # 3 · LENTE ESPECTRAL
+    # ------------------------------------------------------------------
+    st.markdown("## 3 · Usa una lente espectral")
+    st.write(
+        "En vez de volver a calcular dᵢ banda por banda, ahora analizaremos **zonas del espectro**. "
+        "Selecciona una región y compara qué piso concentra allí más energía acústica."
+    )
+
+    zones={
+        "Bajas · 100–315 Hz": list(range(0,6)),
+        "Medias · 400–800 Hz": list(range(6,10)),
+        "Altas · 1000–3150 Hz": list(range(10,16)),
+    }
+    zone=st.segmented_control(
+        "Zona que quieres inspeccionar",
+        list(zones),
+        default="Bajas · 100–315 Hz",
+        key="c2l2_s3_zone",
+    )
+    idxs=zones[zone]
+    zone_freqs=[_C2L2_FREQS[i] for i in idxs]
+    vals_a=[floor_a[i] for i in idxs]
+    vals_b=[floor_b[i] for i in idxs]
+    sum_a=_c2l2_energy_sum(vals_a)
+    sum_b=_c2l2_energy_sum(vals_b)
+
+    z1,z2,z3=st.columns(3)
+    z1.metric("Zona analizada",f"{zone_freqs[0]}–{zone_freqs[-1]} Hz")
+    z2.metric("Piso A · suma energética",f"{sum_a:.1f} dB")
+    z3.metric("Piso B · suma energética",f"{sum_b:.1f} dB")
+
+    if abs(sum_a-sum_b)<0.5:
+        st.info("En esta zona ambos pisos presentan una magnitud energética similar.")
+    elif sum_a>sum_b:
+        st.warning(
+            f"En **{zone}**, el Piso A presenta aproximadamente **{sum_a-sum_b:.1f} dB** más en la suma energética de las bandas seleccionadas."
+        )
+    else:
+        st.warning(
+            f"En **{zone}**, el Piso B presenta aproximadamente **{sum_b-sum_a:.1f} dB** más en la suma energética de las bandas seleccionadas."
+        )
+
+    # gráfico local de la zona
+    figz=go.Figure()
+    figz.add_trace(go.Bar(
+        x=[str(f) for f in zone_freqs],y=vals_a,name="Piso A",
+        marker_color="#f97316",
+    ))
+    figz.add_trace(go.Bar(
+        x=[str(f) for f in zone_freqs],y=vals_b,name="Piso B",
+        marker_color="#7c3aed",
+    ))
+    figz.update_layout(
+        barmode="group",height=340,
+        margin=dict(l=40,r=20,t=30,b=45),
+        xaxis_title="Frecuencia (Hz)",
+        yaxis_title="Nivel (dB)",
+        legend=dict(orientation="h",y=1.08,x=0),
+    )
+    st.plotly_chart(figz,use_container_width=True,key=f"c2l2_s3_zone_{zone}")
+
+    # ------------------------------------------------------------------
+    # 4 · HUELLA ESPECTRAL
+    # ------------------------------------------------------------------
+    st.markdown("## 4 · Construye la huella espectral")
+    st.write(
+        "Un número único responde a «¿cuál es el resultado ponderado?». "
+        "La huella espectral responde a una pregunta distinta: **¿dónde está concentrado el problema?**"
+    )
+
+    groups=[
+        ("Bajas",list(range(0,6))),
+        ("Medias",list(range(6,10))),
+        ("Altas",list(range(10,16))),
+    ]
+    fingerprint=[]
+    for label,ids in groups:
+        fingerprint.append({
+            "Zona":label,
+            "Piso A":_c2l2_energy_sum([floor_a[i] for i in ids]),
+            "Piso B":_c2l2_energy_sum([floor_b[i] for i in ids]),
+        })
+    fp=pd.DataFrame(fingerprint)
+    st.dataframe(
+        fp.style.format({"Piso A":"{:.1f} dB","Piso B":"{:.1f} dB"}),
+        hide_index=True,use_container_width=True,
+    )
+
+    dominant_a=max(fingerprint,key=lambda r:r["Piso A"])["Zona"]
+    dominant_b=max(fingerprint,key=lambda r:r["Piso B"])["Zona"]
+
+    fa,fb=st.columns(2)
+    with fa:
+        _c2l2_card(
+            "Huella del Piso A",
+            f"Dominio: {dominant_a}",
+            "El descriptor único debe complementarse con una lectura del espectro cuando interesa diagnosticar dónde se concentra el comportamiento desfavorable.",
+            tone="orange",
+        )
+    with fb:
+        _c2l2_card(
+            "Huella del Piso B",
+            f"Dominio: {dominant_b}",
+            "Una misma cifra ponderada puede provenir de una distribución espectral diferente.",
+            tone="purple",
+        )
+
+    # ------------------------------------------------------------------
+    # 5 · DIAGNÓSTICO
+    # ------------------------------------------------------------------
+    st.markdown("## 5 · Diagnóstico · ¿son realmente equivalentes?")
+    st.write(
+        "Ahora responde como profesional. No te preguntamos cómo se calcula Lₙ,w; "
+        "te preguntamos **qué información debes conservar antes de reducir el espectro a un solo número**."
+    )
+
+    questions=[
+        {
+            "id":"same",
+            "q":"Dos pisos tienen el mismo Lₙ,w. ¿Qué conclusión es técnicamente más correcta?",
+            "opts":[
+                "Son acústicamente idénticos en todas las bandas.",
+                "Tienen el mismo descriptor ponderado, pero pueden presentar comportamientos espectrales distintos.",
+                "El piso con más nivel en 100 Hz siempre tendrá peor Lₙ,w.",
+            ],
+            "correct":"Tienen el mismo descriptor ponderado, pero pueden presentar comportamientos espectrales distintos.",
+            "feedback":"Exacto. Lₙ,w resume la curva, pero no conserva toda su distribución frecuencial.",
+        },
+        {
+            "id":"low",
+            "q":"Si quieres investigar un posible problema concentrado en bajas frecuencias, ¿qué información mirarías primero?",
+            "opts":[
+                "Solo el valor Lₙ,w.",
+                "La forma del espectro en las bandas bajas y su relación con el resto de la curva.",
+                "Únicamente el nivel a 500 Hz.",
+            ],
+            "correct":"La forma del espectro en las bandas bajas y su relación con el resto de la curva.",
+            "feedback":"Correcto. El diagnóstico espectral exige conservar la información por bandas.",
+        },
+        {
+            "id":"why_ci",
+            "q":"¿Qué aprendizaje de esta comparación prepara el camino para estudiar C_I más adelante?",
+            "opts":[
+                "Que el número único siempre describe completamente la percepción.",
+                "Que dos espectros con el mismo número ponderado pueden necesitar información adicional sobre su forma.",
+                "Que C_I reemplaza completamente a Lₙ,w.",
+            ],
+            "correct":"Que dos espectros con el mismo número ponderado pueden necesitar información adicional sobre su forma.",
+            "feedback":"Correcto. Esa limitación del número único explica por qué más adelante incorporaremos términos de adaptación espectral.",
+        },
+    ]
+
+    answers=saved.get("c2l2_stage3_diagnosis",{})
+    if not isinstance(answers,dict):
+        answers={}
+
+    if role=="Docente" and not projection_mode:
+        st.info("Vista docente · pauta de interpretación espectral.")
+        for i,q in enumerate(questions,1):
+            with st.container(border=True):
+                st.markdown(f"### {i}. {q['q']}")
+                st.success("Respuesta correcta: "+q["correct"])
+                st.caption(q["feedback"])
+    else:
+        for i,q in enumerate(questions,1):
+            with st.container(border=True):
+                st.markdown(f"### {i}. {q['q']}")
+                prev=answers.get(q["id"],{}) if isinstance(answers.get(q["id"]),dict) else {}
+                prev_choice=prev.get("choice")
+                index=q["opts"].index(prev_choice) if prev_choice in q["opts"] else None
+                choice=st.radio(
+                    f"Respuesta diagnóstico {i}",
+                    q["opts"],
+                    index=index,
+                    key=f"c2l2_s3_diag_{q['id']}",
+                    label_visibility="collapsed",
+                )
+                if st.button(
+                    "Comprobar y guardar",
+                    key=f"c2l2_s3_diag_check_{q['id']}",
+                    use_container_width=True,
+                ):
+                    if choice is None:
+                        st.warning("Selecciona una alternativa.")
+                    else:
+                        answers[q["id"]]={
+                            "choice":choice,
+                            "correct":choice==q["correct"],
+                            "updated_at":_now(),
+                        }
+                        if not projection_mode:
+                            saved["c2l2_stage3_diagnosis"]=answers
+                            saved["updated_3"]=_now()
+                            _save_future_state(_C2L2_CLASS_ID,saved)
+                        else:
+                            st.session_state["c2l2_stage3_projection_answers"]=answers
+                        st.rerun()
+
+                result=answers.get(q["id"])
+                if isinstance(result,dict) and result.get("choice"):
+                    if result.get("correct"):
+                        st.success(q["feedback"])
+                    else:
+                        st.warning("Revisa el espectro completo antes de interpretar únicamente el número ponderado.")
+
+        done=sum(
+            1 for q in questions
+            if isinstance(answers.get(q["id"]),dict) and answers[q["id"]].get("correct") is True
+        )
+        st.info(f"Diagnóstico completado correctamente: **{done}/3**.")
+        if done==3 and role=="Alumno":
+            _c2l2_finish_stage(saved,3)
+
+    # ------------------------------------------------------------------
+    # 6 · PUENTE HACIA ETAPA 4
+    # ------------------------------------------------------------------
+    st.markdown("## 6 · Ahora sí: reduce el espectro a un número")
+    st.success(
+        "Ya aprendiste a **leer el problema antes de resumirlo**. "
+        "En la Etapa 4 cambiará completamente la tarea: ya no interpretarás dos espectros, "
+        "sino que ejecutarás manualmente el procedimiento ISO 717-2 para construir Lₙ,w."
+    )
+    st.caption("Continúa desde la barra lateral.")
+
+def _c2l2_stage4(lab,saved):
+    """Etapa 4 · ejecución manual del ajuste ISO 717-2."""
+    curve,_=_c2l2_floor_curve()
+
+    _c2l2_stage_header(
+        4,
+        "CONSTRUYE EL NÚMERO ÚNICO Lₙ,w",
+        "Ahora tú ejecutas el ajuste completo: mueve la referencia, encuentra la posición límite y realiza la lectura final."
+    )
+
+    st.markdown("## 1 · Misión")
+    st.markdown(
+        """
+        <div style="border:1px solid #dbe4ee;border-radius:17px;padding:16px 18px;background:#f8fbff;margin:.5rem 0 1rem">
+          En las Etapas 2 y 3 ya comprendiste <b>qué representa la curva</b> y <b>qué información puede ocultar el número único</b>.
+          <br><br>
+          Aquí no volveremos a explicar la teoría: debes <b>ejecutar el procedimiento</b>.
+          <br><br>
+          <b>Tu objetivo:</b> encontrar por ti mismo la posición límite y determinar Lₙ,w.
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
+
+    st.markdown("## 2 · Checklist de trabajo")
+    st.markdown(
+        """
+        1. **Mueve** la referencia en pasos enteros de 1 dB.
+        2. **Observa** Σdᵢ.
+        3. **Busca** una posición que cumpla Σdᵢ ≤ 32 dB.
+        4. **Comprueba** que 1 dB más abajo ya no cumpla.
+        5. **Confirma** la posición límite.
+        6. **Lee** la referencia exactamente en 500 Hz.
+        """
+    )
+
+    c1,c2=st.columns(2)
+    with c1:
+        _c2l2_card(
+            "No debes leer",
+            "Lₙ(500 Hz)",
+            "Ese es un dato del espectro del piso y no es, por sí solo, el descriptor ponderado.",
+            tone="orange",
+        )
+    with c2:
+        _c2l2_card(
+            "Debes leer",
+            "Referencia a 500 Hz",
+            "Solo después de haber fijado correctamente la posición límite.",
             tone="green",
         )
-    st.warning(
-        "No buscamos cualquier posición con Σdᵢ ≤ 32 dB. Buscamos la **posición límite**: "
-        "la mayor suma posible sin superar 32 dB."
+
+    st.markdown("## 3 · Ajuste manual")
+    shift,ref,dev,total=_c2l2_curve_control(
+        saved,"c2l2_s4",curve,require_limit=True
     )
-    shift,ref,dev,total=_c2l2_curve_control(saved,"c2l2_s4",curve,require_limit=True)
+
     if st.session_state.get("c2l2_s4_position_ok"):
-        st.markdown("### Ahora lee el valor a 500 Hz")
+        st.markdown("## 4 · Lectura final")
         st.info(
-            "Lₙ,w no es Lₙ(500 Hz). Es el valor a 500 Hz de la **curva de referencia ya desplazada**."
+            "La posición límite ya está validada. Ahora lee el punto de la **curva de referencia desplazada** en 500 Hz."
         )
         idx=_C2L2_FREQS.index(500)
-        ans=st.number_input("Lₙ,w [dB]",0,120,0,1,key="c2l2_s4_lnw")
-        if st.button("COMPROBAR Lₙ,w",key="c2l2_s4_check_lnw",type="primary"):
+        ans=st.number_input(
+            "Lₙ,w [dB]",
+            0,120,0,1,
+            key="c2l2_s4_lnw",
+        )
+        if st.button(
+            "COMPROBAR Lₙ,w",
+            key="c2l2_s4_check_lnw",
+            type="primary",
+            use_container_width=True,
+        ):
             expected=int(round(ref[idx]))
             if int(ans)==expected:
-                st.success(f"Correcto: Lₙ,w = {expected} dB.")
+                st.success(
+                    f"✓ Correcto. La posición límite deja la referencia en **{expected} dB a 500 Hz**, "
+                    f"por lo tanto **Lₙ,w = {expected} dB**."
+                )
                 saved["c2l2_lnw"]=expected
                 saved["c2l2_lnw_shift"]=shift
                 _c2l2_finish_stage(saved,4)
             else:
-                st.warning("Lee el punto de la referencia desplazada exactamente en 500 Hz.")
+                st.warning(
+                    "No leas el nivel del piso a 500 Hz. Debes leer el valor de la **referencia desplazada** exactamente en esa banda."
+                )
     else:
-        st.caption("La lectura de Lₙ,w se habilita cuando compruebes correctamente la posición límite.")
+        st.caption(
+            "La lectura final se habilitará cuando hayas demostrado que encontraste la posición límite."
+        )
 
+    st.caption("Continúa desde la barra lateral.")
 
 def _c2l2_stage5(lab,saved):
     curve,_=_c2l2_floor_curve()
