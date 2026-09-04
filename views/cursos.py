@@ -15823,6 +15823,55 @@ def _c2l2_stage9(lab,saved):
         "EVALUACIÓN FINAL · PREGUNTAS DE COMPRENSIÓN",
         "Diez preguntas · 20 minutos · 40 puntos · un intento."
     )
+
+    # Estilo exclusivo de la Etapa 9:
+    # agranda solamente las alternativas del área principal, sin tocar sidebar,
+    # títulos, métricas ni radios de otras páginas.
+    st.markdown(
+        """
+        <style>
+        section.main div[data-testid="stRadio"] div[role="radiogroup"] {
+            gap: 0.52rem !important;
+        }
+
+        section.main div[data-testid="stRadio"] div[role="radiogroup"] > label {
+            min-height: 42px !important;
+            padding: 7px 10px !important;
+            border-radius: 10px !important;
+            align-items: center !important;
+        }
+
+        section.main div[data-testid="stRadio"] div[role="radiogroup"] > label:hover {
+            background: rgba(15, 105, 209, 0.055) !important;
+        }
+
+        section.main div[data-testid="stRadio"] div[role="radiogroup"] > label p,
+        section.main div[data-testid="stRadio"] div[role="radiogroup"] > label span {
+            font-size: 17px !important;
+            line-height: 1.42 !important;
+        }
+
+        section.main div[data-testid="stRadio"] div[role="radiogroup"] > label > div:first-child {
+            transform: scale(1.18);
+            transform-origin: center;
+            margin-right: 7px !important;
+        }
+
+        @media (max-width: 900px) {
+            section.main div[data-testid="stRadio"] div[role="radiogroup"] > label p,
+            section.main div[data-testid="stRadio"] div[role="radiogroup"] > label span {
+                font-size: 16px !important;
+            }
+
+            section.main div[data-testid="stRadio"] div[role="radiogroup"] > label {
+                min-height: 40px !important;
+                padding: 6px 8px !important;
+            }
+        }
+        </style>
+        """,
+        unsafe_allow_html=True,
+    )
     st.info(
         "10 preguntas · 4 puntos cada una · 20 minutos continuos. "
         "En Alumno las respuestas se guardan automáticamente mientras avanzas."
