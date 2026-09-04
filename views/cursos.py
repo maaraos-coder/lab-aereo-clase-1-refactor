@@ -16268,51 +16268,347 @@ def _c2l2_stage10(lab,saved):
     if fe_ok:st.success("Frecuencia fundamental coherente: ≈24,17 Hz.")
 
     st.markdown("## F · Diagnóstico espectral")
+
+    st.markdown("### ¿Qué estamos tratando de demostrar?")
+    st.write(
+        "La bomba gira a **1450 rpm**. Antes de hablar de aisladores, debemos comprobar si las vibraciones observadas "
+        "son compatibles con la excitación mecánica de la máquina y si existe evidencia de propagación hacia otros elementos."
+    )
+    st.latex(r"f_e=\frac{n}{60}=\frac{1450}{60}=24.17\ \mathrm{Hz}")
+    st.info(
+        "Por eso buscamos componentes cercanas a **24 Hz**. Si esa componente aparece en la bomba, en la tubería "
+        "y en la estructura, existe evidencia para investigar un camino de transmisión común. "
+        "**La coincidencia por sí sola no demuestra causalidad absoluta.**"
+    )
+
     import plotly.graph_objects as go
     fdiag=[12.5,16,20,25,31.5,40,50,63,80,100]
     pump_levels=[42,44,48,67,50,46,58,44,42,40]
     fig=go.Figure(go.Bar(x=[str(x) for x in fdiag],y=pump_levels))
-    fig.update_layout(height=320,xaxis_title="Banda (Hz)",yaxis_title="Nivel relativo")
+    fig.update_layout(
+        height=330,
+        xaxis_title="Banda (Hz)",
+        yaxis_title="Nivel relativo",
+        margin=dict(l=45,r=20,t=25,b=45),
+    )
     st.plotly_chart(fig,use_container_width=True,key="c2l2_s10_pump_spectrum")
-    path=st.radio(
-        "Bomba, tubería y estructura muestran componentes próximas a 24 Hz. ¿Qué interpretación es correcta?",
-        ["Existe evidencia para investigar un camino estructural común, sin afirmar causalidad absoluta.","La coincidencia demuestra causalidad absoluta.","Solo puede ser ruido aéreo."],
-        index=None,key="c2l2_s10_path"
+
+    st.markdown("### Lee el gráfico antes de responder")
+    st.write(
+        "La banda de 25 Hz presenta una componente destacada y es coherente con la frecuencia de giro calculada "
+        "de aproximadamente 24,17 Hz. El siguiente paso profesional es comprobar si esa misma firma aparece "
+        "en los posibles caminos de transmisión."
     )
 
+    path=st.radio(
+        "Bomba, tubería y estructura muestran componentes próximas a 24 Hz. ¿Qué interpretación es correcta?",
+        [
+            "Existe evidencia para investigar un camino estructural común, sin afirmar causalidad absoluta.",
+            "La coincidencia demuestra causalidad absoluta.",
+            "Solo puede ser ruido aéreo."
+        ],
+        index=None,
+        key="c2l2_s10_path"
+    )
+
+    if role=="Docente" and not projection_mode:
+        st.markdown("### Vista docente · pauta técnica de F")
+        st.success(
+            "Respuesta esperada: **evidencia para investigar un camino estructural común, sin afirmar causalidad absoluta**."
+        )
+        st.write(
+            "La coincidencia entre el 1× de giro y componentes observadas en bomba, tubería y estructura aporta coherencia espectral. "
+            "Para robustecer el diagnóstico profesional deberían revisarse simultaneidad temporal, amplitudes, armónicos, "
+            "condiciones de apoyo, conexiones rígidas y, cuando sea posible, fase/coherencia entre puntos."
+        )
+        st.warning(
+            "La idea pedagógica es diferenciar **indicio diagnóstico** de **prueba causal**."
+        )
+
     st.markdown("## G · Aislamiento vibratorio")
-    iso=st.selectbox("Montaje a evaluar",["","Montaje A · fₙ=12 Hz","Montaje B · fₙ=6 Hz","Montaje C · fₙ=3 Hz"],key="c2l2_s10_iso")
-    fn={"Montaje A · fₙ=12 Hz":12.0,"Montaje B · fₙ=6 Hz":6.0,"Montaje C · fₙ=3 Hz":3.0}.get(iso)
+
+    st.markdown("### Del diagnóstico a la selección del montaje")
+    st.write(
+        "Ahora evaluaremos únicamente el camino **bomba → base → estructura**. "
+        "La pregunta es si los aisladores de la base pueden separar suficientemente la frecuencia de excitación "
+        "de la frecuencia natural del montaje."
+    )
+
+    g1,g2,g3,g4=st.columns(4)
+    g1.metric("Velocidad","1450 rpm")
+    g2.metric("fₑ",f"{1450/60:.2f} Hz")
+    g3.metric("Masa total","600 kg")
+    g4.metric("Carga ideal por apoyo","150 kg/apoyo")
+
+    st.latex(r"r=\frac{f_e}{f_n}")
+
+    st.markdown(
+        """
+        <div style="display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;margin:.55rem 0 1rem">
+          <div style="border:1px solid #fecaca;border-radius:15px;padding:14px;background:#fef2f2">
+            <b>r ≈ 1 · resonancia</b><br><br>
+            La excitación se aproxima a la frecuencia natural y la respuesta puede amplificarse.
+          </div>
+          <div style="border:1px solid #fde68a;border-radius:15px;padding:14px;background:#fffbeb">
+            <b>1 &lt; r ≤ √2 · transición</b><br><br>
+            Todavía no se considera una región efectiva de aislamiento en el modelo ideal.
+          </div>
+          <div style="border:1px solid #bbf7d0;border-radius:15px;padding:14px;background:#f0fdf4">
+            <b>r &gt; √2 · aislamiento</b><br><br>
+            La transmisibilidad de fuerza puede caer por debajo de 1.
+          </div>
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
+
+    mounts={
+        "Montaje A · fₙ=12 Hz":12.0,
+        "Montaje B · fₙ=6 Hz":6.0,
+        "Montaje C · fₙ=3 Hz":3.0,
+    }
+    iso=st.selectbox(
+        "Selecciona un montaje candidato",
+        [""]+list(mounts),
+        key="c2l2_s10_iso"
+    )
+    fn=mounts.get(iso)
     r_value=(1450/60)/fn if fn else None
+
     if r_value:
-        st.metric("Razón de frecuencias r=fₑ/fₙ",f"{r_value:.2f}")
-        st.caption("Interpreta este valor junto con la transmisibilidad estudiada en el Laboratorio 1.")
+        st.markdown("### 1 · Calcula e interpreta la razón de frecuencias")
+        calc_r=st.number_input(
+            "Tu cálculo de r=fₑ/fₙ",
+            min_value=0.0,
+            max_value=30.0,
+            value=0.0,
+            step=0.01,
+            key="c2l2_s10_r_answer",
+        )
+        if st.button("COMPROBAR r",key="c2l2_s10_check_r",use_container_width=True):
+            st.session_state["c2l2_s10_r_ok"]=abs(float(calc_r)-r_value)<=0.05
+
+        if st.session_state.get("c2l2_s10_r_ok") is True:
+            st.success(f"✓ Correcto. Para {iso.split(' · ')[0]}, **r = {r_value:.2f}**.")
+        elif st.session_state.get("c2l2_s10_r_ok") is False:
+            st.warning("Revisa: divide la frecuencia de excitación 24,17 Hz por la frecuencia natural del montaje.")
+
+        st.markdown("### 2 · Estima la transmisibilidad")
+        st.write(
+            "Usaremos un amortiguamiento didáctico **ζ = 0,10** para comparar los tres montajes. "
+            "No representa necesariamente un aislador comercial específico."
+        )
+        zeta=0.10
+        tf=((1+(2*zeta*r_value)**2)/(((1-r_value**2)**2)+(2*zeta*r_value)**2))**0.5
+
+        st.latex(
+            r"T_F=\sqrt{\frac{1+(2\zeta r)^2}{(1-r^2)^2+(2\zeta r)^2}}"
+        )
+        t1,t2,t3=st.columns(3)
+        t1.metric("r",f"{r_value:.2f}")
+        t2.metric("T_F",f"{tf:.3f}")
+        t3.metric("Fuerza transmitida ideal",f"{tf*100:.1f}%")
+
+        if r_value<=1.0:
+            st.error("El montaje está próximo o por debajo de la resonancia: no es una elección adecuada para aislamiento.")
+        elif r_value<=2**0.5:
+            st.warning("El montaje está en transición; todavía no existe una condición clara de aislamiento.")
+        else:
+            st.success(
+                "El montaje se encuentra en región de aislamiento en el modelo ideal. "
+                "Cuanto menor sea T_F, menor fracción de la fuerza dinámica se transmite por la base."
+            )
+
+    if role=="Docente" and not projection_mode:
+        st.markdown("### Vista docente · comparación de los tres montajes")
+        rows=[]
+        for name,fn_i in mounts.items():
+            r_i=(1450/60)/fn_i
+            tf_i=((1+(2*0.10*r_i)**2)/(((1-r_i**2)**2)+(2*0.10*r_i)**2))**0.5
+            rows.append({
+                "Montaje":name.split(" · ")[0],
+                "fₙ [Hz]":fn_i,
+                "r=fₑ/fₙ":round(r_i,2),
+                "T_F (ζ=0,10)":round(tf_i,3),
+                "Fuerza transmitida [%]":round(tf_i*100,1),
+            })
+        st.dataframe(pd.DataFrame(rows),hide_index=True,use_container_width=True)
+        st.success(
+            "Con estos supuestos, **Montaje C (fₙ=3 Hz)** ofrece la mayor separación respecto de 24,17 Hz "
+            "y la menor transmisibilidad de los tres candidatos."
+        )
+        st.warning(
+            "Esta conclusión se refiere únicamente al camino a través de la **base**. "
+            "Todavía falta comprobar si existen puentes mecánicos paralelos."
+        )
 
     st.markdown("## H · El giro del caso")
     _c2l2_asset(name="tuberias")
-    st.warning("La tubería permanece rígidamente conectada y existe una abrazadera rígida a la estructura.")
-    parallel=st.radio("¿Está resuelto el problema?",["Sí.","No; existe un camino paralelo bomba → tubería → soporte → estructura."],index=None,key="c2l2_s10_parallel")
+
+    st.markdown("### La base puede estar bien aislada y el problema seguir existiendo")
+    st.write(
+        "Durante la inspección final descubres que la tubería de impulsión permanece rígidamente conectada a la bomba "
+        "y que una abrazadera fija esa tubería directamente a la estructura."
+    )
+    st.markdown(
+        """
+        <div style="border:1px solid #fde68a;border-radius:16px;padding:15px 17px;background:#fffbeb;margin:.55rem 0 1rem">
+          <b>Camino paralelo detectado</b><br><br>
+          BOMBA → TUBERÍA RÍGIDA → ABRAZADERA → ESTRUCTURA → RECINTO RECEPTOR
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
+    st.warning(
+        "Los aisladores de la base solo actúan sobre la transmisión que pasa por la base. "
+        "Una conexión rígida puede **puentear** ese aislamiento y transmitir vibración por otra ruta."
+    )
+
+    parallel=st.radio(
+        "Aunque la base tenga una buena razón r y baja transmisibilidad, ¿está resuelto el problema?",
+        [
+            "Sí.",
+            "No; existe un camino paralelo bomba → tubería → soporte → estructura."
+        ],
+        index=None,
+        key="c2l2_s10_parallel"
+    )
+
+    if role=="Docente" and not projection_mode:
+        st.markdown("### Vista docente · pauta técnica de H")
+        st.success(
+            "Respuesta esperada: **No; existe un camino paralelo bomba → tubería → soporte → estructura.**"
+        )
+        st.write(
+            "La selección correcta de aisladores es condición necesaria para controlar el camino por la base, "
+            "pero no suficiente cuando existen conexiones rígidas que derivan fuerza vibratoria hacia la estructura."
+        )
 
     st.markdown("## I · Control integral")
-    controls=st.multiselect(
-        "Construye una estrategia según mecanismo → medida",
-        [
-            "Aisladores correctamente seleccionados",
-            "Conexión flexible de tubería",
-            "Soportes resilientes",
-            "Corregir penetraciones rígidas",
-            "Corrección hidráulica si existe cavitación",
-            "Balanceo y alineación si corresponde",
-            "Absorbente como única medida",
-            "Silenciador de ducto para la tubería",
-        ],key="c2l2_s10_controls"
+
+    st.markdown("### Construye el plan de control por mecanismo")
+    st.write(
+        "Ya identificaste que el problema puede contener **más de un mecanismo simultáneo**. "
+        "Ahora debes asignar una medida coherente a cada mecanismo y ordenar la estrategia de intervención."
     )
-    required={
-        "Aisladores correctamente seleccionados","Conexión flexible de tubería",
-        "Soportes resilientes","Corregir penetraciones rígidas",
-        "Corrección hidráulica si existe cavitación",
-    }
-    controls_ok=required.issubset(set(controls)) and "Absorbente como única medida" not in controls
+
+    st.markdown(
+        """
+        <div style="border:1px solid #dbe4ee;border-radius:16px;padding:15px 17px;background:#f8fbff;margin:.55rem 0 .9rem">
+          <b>Regla de trabajo</b><br><br>
+          1. Controla primero problemas en la <b>fuente</b> si existen.<br>
+          2. Reduce la transmisión por el <b>camino principal</b>.<br>
+          3. Elimina <b>caminos paralelos</b>.<br>
+          4. Finalmente <b>verifica mediante medición</b> que la estrategia funcionó.
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
+
+    st.markdown("#### 1 · Fuente / condición hidráulica")
+    source_control=st.radio(
+        "Si existen indicios de cavitación o condición hidráulica anómala, ¿qué acción corresponde?",
+        [
+            "Revisar y corregir la condición hidráulica/NPSH antes de pretender resolverla solo con aisladores.",
+            "Agregar absorbente en el dormitorio.",
+            "Aumentar la rigidez de todas las abrazaderas."
+        ],
+        index=None,
+        key="c2l2_s10_source_control"
+    )
+
+    st.markdown("#### 2 · Camino por la base")
+    base_control=st.radio(
+        "¿Qué medida corresponde al camino bomba → base → estructura?",
+        [
+            "Seleccionar aisladores con frecuencia natural y transmisibilidad adecuadas para la excitación.",
+            "Instalar únicamente absorbente acústico.",
+            "Rigidizar la base sin revisar la frecuencia natural."
+        ],
+        index=None,
+        key="c2l2_s10_base_control"
+    )
+
+    st.markdown("#### 3 · Camino por tuberías")
+    pipe_control=st.radio(
+        "¿Cómo controlarías el puente mecánico por la tubería?",
+        [
+            "Incorporar una conexión flexible adecuada y revisar que no quede cortocircuitada por montaje rígido.",
+            "Aumentar la velocidad de la bomba.",
+            "Agregar un silenciador de ducto como única medida."
+        ],
+        index=None,
+        key="c2l2_s10_pipe_control"
+    )
+
+    st.markdown("#### 4 · Soportes y abrazaderas")
+    support_control=st.radio(
+        "¿Qué harías con una abrazadera rígida que transmite vibración a la estructura?",
+        [
+            "Reemplazar/reconfigurar por un soporte resiliente compatible con cargas y desplazamientos.",
+            "Apretarla aún más para transmitir mejor la carga.",
+            "Eliminar todos los soportes de la tubería."
+        ],
+        index=None,
+        key="c2l2_s10_support_control"
+    )
+
+    st.markdown("#### 5 · Verificación")
+    verification_control=st.radio(
+        "Después de implementar las medidas, ¿cómo cierras profesionalmente el control?",
+        [
+            "Repetir mediciones en bomba, tubería, estructura y recinto receptor y comparar con la condición inicial.",
+            "Dar por resuelto el problema sin medir.",
+            "Evaluar solamente el color de los aisladores."
+        ],
+        index=None,
+        key="c2l2_s10_verify_control"
+    )
+
+    controls=[
+        source_control,
+        base_control,
+        pipe_control,
+        support_control,
+        verification_control,
+    ]
+
+    correct_controls=[
+        "Revisar y corregir la condición hidráulica/NPSH antes de pretender resolverla solo con aisladores.",
+        "Seleccionar aisladores con frecuencia natural y transmisibilidad adecuadas para la excitación.",
+        "Incorporar una conexión flexible adecuada y revisar que no quede cortocircuitada por montaje rígido.",
+        "Reemplazar/reconfigurar por un soporte resiliente compatible con cargas y desplazamientos.",
+        "Repetir mediciones en bomba, tubería, estructura y recinto receptor y comparar con la condición inicial.",
+    ]
+    controls_ok=all(a==b for a,b in zip(controls,correct_controls))
+
+    if all(v is not None for v in controls):
+        if controls_ok:
+            st.success("✓ Estrategia integral coherente.")
+        else:
+            st.warning(
+                "La estrategia todavía contiene una medida que no corresponde al mecanismo identificado. "
+                "Revisa fuente → base → tuberías → soportes → verificación."
+            )
+
+    if role=="Docente" and not projection_mode:
+        st.markdown("### Vista docente · pauta del control integral")
+        control_rows=[
+            ["Fuente / hidráulica","Cavitación o condición hidráulica anómala","Corregir condición hidráulica/NPSH"],
+            ["Base","Transmisión bomba → base → estructura","Aisladores correctamente seleccionados"],
+            ["Tubería","Puente rígido bomba → tubería","Conexión flexible correctamente montada"],
+            ["Soportes","Abrazadera rígida → estructura","Soporte resiliente / eliminación de cortocircuito mecánico"],
+            ["Verificación","Confirmar eficacia del control","Repetir mediciones y comparar antes/después"],
+        ]
+        st.dataframe(
+            pd.DataFrame(control_rows,columns=["Frente","Mecanismo","Medida"]),
+            hide_index=True,
+            use_container_width=True,
+        )
+        st.info(
+            "La pauta no busca una única 'medida mágica'. El alumno debe comprender que el control eficaz actúa sobre "
+            "**fuente + camino principal + caminos paralelos + verificación**."
+        )
 
     st.markdown("## J · Conclusión profesional")
     conclusion=st.text_area(
@@ -16334,6 +16630,11 @@ def _c2l2_stage10(lab,saved):
         saved["c2l2_s10_draft_iso"]=iso
         saved["c2l2_s10_draft_parallel"]=parallel
         saved["c2l2_s10_draft_controls"]=controls
+        saved["c2l2_s10_draft_source_control"]=source_control
+        saved["c2l2_s10_draft_base_control"]=base_control
+        saved["c2l2_s10_draft_pipe_control"]=pipe_control
+        saved["c2l2_s10_draft_support_control"]=support_control
+        saved["c2l2_s10_draft_verification_control"]=verification_control
         saved["updated_10"]=_now()
         _save_future_state(_C2L2_CLASS_ID,saved)
         st.success("Borrador guardado. Puedes salir de la Etapa 10 y continuar después antes del envío definitivo.")
