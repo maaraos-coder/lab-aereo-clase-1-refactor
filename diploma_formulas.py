@@ -191,10 +191,56 @@ FORMULA_CATALOG: list[dict[str, Any]] = [
                 "title": "Magnitudes de impacto y normalización",
                 "formulas": [
                     {
-                        "title": "Predicción espectral del nivel de impacto",
+                        "title": "Predicción del nivel de impacto de la losa base",
+                        "latex": r"L_{n,0}(f)=43+30\log_{10}(f)-10\log_{10}(\sigma_{rad})-R(f)",
+                        "variables": [
+                            (r"L_{n,0}(f)", "nivel estimado de ruido de impacto de la losa base", "dB"),
+                            (r"f", "frecuencia de análisis", "Hz"),
+                            (r"\sigma_{rad}", "eficiencia de radiación adoptada por el modelo", "—"),
+                            (r"R(f)", "índice de reducción sonora de la losa en la banda f", "dB"),
+                        ],
+                        "use": "Modelo predictivo utilizado en el Curso 2 · Laboratorio 1 para estimar, por bandas, el nivel de impacto de la losa base dentro de las hipótesis del ejercicio.",
+                    },
+                    {
+                        "title": "Definición de mejora del tratamiento",
+                        "latex": r"\Delta L_n(f)=L_{n,0}(f)-L_n(f)",
+                        "variables": [
+                            (r"\Delta L_n(f)", "mejora del tratamiento en la banda f", "dB"),
+                            (r"L_{n,0}(f)", "nivel estimado de la losa base sin tratamiento", "dB"),
+                            (r"L_n(f)", "nivel estimado con el tratamiento aplicado", "dB"),
+                        ],
+                        "use": "Define la mejora espectral como diferencia de niveles respecto de la condición base. La mejora depende de la frecuencia.",
+                    },
+                    {
+                        "title": "Mejora de piso flotante · modelo continuo Cremer/Vigran",
+                        "latex": r"\Delta L_n(f)=20\log_{10}\!\left(\frac{(2\pi f)^2m'_1}{s'}\right)",
+                        "variables": [
+                            (r"\Delta L_n(f)", "mejora estimada del piso flotante", "dB"),
+                            (r"f", "frecuencia de banda", "Hz"),
+                            (r"m'_1", "masa superficial de la masa flotante o sobrelosa", "kg/m²"),
+                            (r"s'", "rigidez dinámica superficial de la capa resiliente", "N/m³"),
+                        ],
+                        "use": "Forma utilizada en el laboratorio para una capa resiliente continua idealizada. No debe confundirse con la transmisibilidad mecánica T_F.",
+                    },
+                    {
+                        "title": "Forma equivalente de la mejora usando la frecuencia natural",
+                        "latex": r"\Delta L_n(f)=40\log_{10}\!\left(\frac{f}{f_{0,\mathrm{cont}}}\right)",
+                        "variables": [
+                            (r"\Delta L_n(f)", "mejora estimada por banda", "dB"),
+                            (r"f", "frecuencia de análisis", "Hz"),
+                            (r"f_{0,\mathrm{cont}}", "frecuencia natural del modelo continuo idealizado", "Hz"),
+                        ],
+                        "use": "Forma equivalente del modelo continuo bajo sus hipótesis. Permite visualizar que la mejora aumenta al alejarse por encima de la región resonante.",
+                    },
+                    {
+                        "title": "Predicción espectral del piso terminado",
                         "latex": r"L_{n,\mathrm{final}}(f)=L_{n,0}(f)-\Delta L_n(f)",
-                        "variables": [(r"L_{n,0}(f)", "nivel base predicho por banda", "dB"), (r"\Delta L_n(f)", "mejora predicha por banda", "dB"), (r"L_{n,\mathrm{final}}(f)", "nivel final predicho", "dB")],
-                        "use": "Conecta la predicción espectral del Laboratorio 1 con la ponderación del Laboratorio 2.",
+                        "variables": [
+                            (r"L_{n,0}(f)", "nivel de impacto estimado de la losa base", "dB"),
+                            (r"\Delta L_n(f)", "mejora estimada del tratamiento", "dB"),
+                            (r"L_{n,\mathrm{final}}(f)", "nivel final estimado del sistema terminado", "dB"),
+                        ],
+                        "use": "Combina banda por banda la predicción de la losa base y la mejora del tratamiento. Sigue siendo una predicción espectral, no un número único.",
                     },
                     {
                         "title": "Área de absorción equivalente desde reverberación",
@@ -265,6 +311,36 @@ FORMULA_CATALOG: list[dict[str, Any]] = [
             {
                 "title": "Revestimientos y reducción ponderada",
                 "formulas": [
+                    {
+                        "title": "Masa superficial de una capa",
+                        "latex": r"m'=\rho h",
+                        "variables": [
+                            (r"m'", "masa superficial de la capa", "kg/m²"),
+                            (r"\rho", "densidad del material", "kg/m³"),
+                            (r"h", "espesor de la capa", "m"),
+                        ],
+                        "use": "Se utiliza para construir la masa superficial de la sobrelosa o de otras capas del sistema.",
+                    },
+                    {
+                        "title": "Masa reducida del piso flotante",
+                        "latex": r"m'_r=\frac{m'_1m'_2}{m'_1+m'_2}",
+                        "variables": [
+                            (r"m'_r", "masa superficial reducida", "kg/m²"),
+                            (r"m'_1", "masa superficial de la capa flotante", "kg/m²"),
+                            (r"m'_2", "masa superficial de la losa base", "kg/m²"),
+                        ],
+                        "use": "Representa la masa dinámica equivalente cuando ambas masas participan en el movimiento relativo.",
+                    },
+                    {
+                        "title": "Frecuencia natural del piso flotante",
+                        "latex": r"f_0=\frac{1}{2\pi}\sqrt{\frac{s'}{m'_r}}",
+                        "variables": [
+                            (r"f_0", "frecuencia natural aproximada del sistema", "Hz"),
+                            (r"s'", "rigidez dinámica superficial", "N/m³"),
+                            (r"m'_r", "masa superficial reducida", "kg/m²"),
+                        ],
+                        "use": "Ubica la región resonante del piso flotante idealizado antes de calcular la mejora acústica.",
+                    },
                     {
                         "title": "Piso pesado de referencia tratado",
                         "latex": r"L_{n,r}(f)=L_{n,r,0}(f)-\Delta L(f)",
