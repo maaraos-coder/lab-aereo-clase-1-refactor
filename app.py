@@ -1551,18 +1551,105 @@ with st.sidebar:
         if st.session_state.get("role")=="Docente"
         else "🎓 Mi desempeño"
     )
-    view_options=[
-        "🏠 Mis clases",
-        results_view_label,
-        f"📚 Laboratorio {ACTIVE_LAB} y actividades",
-    ]
+    current_lab_view=f"📚 Laboratorio {ACTIVE_LAB} y actividades"
+    view_options=["🏠 Mis clases",results_view_label,current_lab_view]
+
     if st.session_state.get("main_view") not in view_options:
         st.session_state["main_view"]="🏠 Mis clases"
-    view=st.radio(
-        "Vista",
-        view_options,
-        key="main_view",
-        help="Selecciona Mis clases o la ruta del laboratorio.",
+
+    view=st.session_state.get("main_view","🏠 Mis clases")
+
+    # Navegación principal del sidebar: tarjetas compactas en lugar de radio buttons.
+    st.markdown(
+        """
+        <div style="margin:.45rem 0 .35rem">
+          <div style="font-size:.70rem;font-weight:850;letter-spacing:.09em;color:#8eddf2">
+            NAVEGACIÓN
+          </div>
+          <div style="font-size:.68rem;color:#a9c9dc;margin-top:.08rem">
+            Accesos principales
+          </div>
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
+
+    def _sidebar_nav_card(label, subtitle, icon, target, key):
+        active=(view==target)
+
+        if active:
+            st.markdown(
+                f"""
+                <div style="
+                    border:1px solid #66d9f1;
+                    border-left:4px solid #66d9f1;
+                    border-radius:9px;
+                    padding:.58rem .65rem;
+                    margin:.28rem 0;
+                    background:linear-gradient(90deg,#0b659c 0%,#0b527e 100%);
+                    box-shadow:0 2px 7px rgba(0,0,0,.10);
+                ">
+                  <div style="display:flex;gap:.48rem;align-items:flex-start">
+                    <div style="font-size:1rem;line-height:1.2">{icon}</div>
+                    <div>
+                      <div style="font-size:.80rem;font-weight:850;color:#fff;line-height:1.2">
+                        {label}
+                      </div>
+                      <div style="font-size:.66rem;color:#c9ecf7;line-height:1.28;margin-top:.12rem">
+                        {subtitle}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                """,
+                unsafe_allow_html=True,
+            )
+        else:
+            if st.button(
+                f"{icon}  {label}",
+                key=key,
+                use_container_width=True,
+                help=subtitle,
+            ):
+                st.session_state["main_view"]=target
+                st.session_state.pop("future_lab_id",None)
+                st.rerun()
+            st.markdown(
+                f"""
+                <div style="
+                    font-size:.64rem;
+                    color:#9fc4d7;
+                    line-height:1.25;
+                    margin:-.22rem .45rem .32rem 2.05rem;
+                ">
+                  {subtitle}
+                </div>
+                """,
+                unsafe_allow_html=True,
+            )
+
+    _sidebar_nav_card(
+        "Mis clases",
+        "Cursos y laboratorios",
+        "📚",
+        "🏠 Mis clases",
+        "nav_main_classes",
+    )
+
+    _sidebar_nav_card(
+        "Evaluaciones entregadas" if st.session_state.get("role")=="Docente" else "Mi desempeño",
+        "Respuestas y puntajes" if st.session_state.get("role")=="Docente" else "Notas, evaluaciones y progreso",
+        "📝" if st.session_state.get("role")=="Docente" else "📊",
+        results_view_label,
+        "nav_main_results",
+    )
+
+    _sidebar_nav_card(
+        "Laboratorios y actividades",
+        f"Ruta y actividades del Laboratorio {ACTIVE_LAB}",
+        "🧪",
+        current_lab_view,
+        "nav_main_lab",
     )
     # Resumen académico del alumno: separa avance formativo de notas oficiales.
     # Las únicas calificaciones del curso provienen del Laboratorio 2,
