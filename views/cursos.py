@@ -13225,44 +13225,73 @@ def _c2l2_stage4(lab,saved):
     # --------------------------------------------------------------
     st.markdown("## 4 · ¿Cuánto cambió realmente el número único?")
     st.caption(
-        "Compara la reducción que aplicaste por zona con el cambio final de Lₙ,w. "
-        "No esperes necesariamente una relación 1:1."
+        "Compara tres cosas distintas: **qué reducción aplicaste**, **cómo cambió el espectro** "
+        "y **cuánto cambió finalmente Lₙ,w**."
     )
+
+    total_intervention=red_low+red_mid+red_high
 
     r1,r2,r3,r4=st.columns(4)
     r1.metric("Lₙ,w original",f"{base_lnw} dB")
     r2.metric("Lₙ,w intervenido",f"{new_lnw} dB")
     r3.metric("Mejora del número único",f"{improvement:+d} dB")
-    total_intervention=red_low+red_mid+red_high
-    r4.metric("Intervención acumulada",f"{total_intervention} dB·zona")
+    r4.metric("Intensidad total de la intervención didáctica",f"{total_intervention} dB·zona")
+
+    st.markdown(
+        """
+        <div style="border:1px solid #fde68a;border-radius:15px;padding:14px 16px;background:#fffbeb;margin:.55rem 0 .9rem">
+          <b>¿Qué significa “dB·zona”?</b><br>
+          Es solo un <b>indicador interno del simulador</b>: suma los valores de reducción que aplicaste en bajas, medias y altas.
+          No es una magnitud normativa, no corresponde a ΔLw y no debe compararse directamente con Lₙ,w.
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
+
+    st.markdown("### Lectura paso a paso")
+
+    what_done = (
+        f"Aplicaste **{red_low} dB** en bajas, **{red_mid} dB** en medias y "
+        f"**{red_high} dB** en altas frecuencias."
+    )
+    st.write("**1 · Qué hiciste:** " + what_done)
 
     if total_intervention==0:
         st.info(
-            "Mueve uno o más controles. La app recalculará automáticamente Lₙ,w para el espectro modificado."
-        )
-    elif improvement==0:
-        st.warning(
-            "Has reducido parte del espectro, pero **Lₙ,w no cambió**. "
-            "Eso demuestra que una mejora local puede ser real y, aun así, no desplazar todavía el descriptor ponderado."
-        )
-    elif improvement < max(red_low,red_mid,red_high):
-        st.success(
-            f"El espectro mejoró, pero Lₙ,w solo cambió **{improvement} dB**. "
-            "La reducción aplicada en una zona no se transfiere 1:1 al número único porque el resultado depende de la forma completa del espectro frente a la referencia."
+            "Todavía no has intervenido el espectro. Mueve uno o más controles para comparar antes y después."
         )
     else:
-        st.success(
-            f"La intervención consiguió mejorar Lₙ,w en **{improvement} dB**. "
-            "Observa qué zonas tuvieron que modificarse para lograr ese desplazamiento del número ponderado."
+        st.write(
+            "**2 · Qué ocurrió con el espectro:** las bandas de cada zona se redujeron según los valores seleccionados. "
+            "La nueva curva conserva la forma del piso original excepto en las zonas donde aplicaste la reducción."
         )
+
+        if improvement==0:
+            st.warning(
+                f"**3 · Qué ocurrió con Lₙ,w:** el espectro cambió, pero el descriptor siguió en **{base_lnw} dB**. "
+                "La mejora local todavía no fue suficiente para desplazar la posición final de la referencia ISO 717-2."
+            )
+        else:
+            st.success(
+                f"**3 · Qué ocurrió con Lₙ,w:** pasó de **{base_lnw} dB** a **{new_lnw} dB**, "
+                f"es decir, mejoró **{improvement} dB**. "
+                "La nueva forma espectral permitió que la curva de referencia alcanzara una posición más favorable."
+            )
+
+        max_applied=max(red_low,red_mid,red_high)
+        if max_applied>0 and improvement < max_applied:
+            st.info(
+                f"Aplicaste hasta **{max_applied} dB** de reducción en una zona, pero Lₙ,w cambió **{improvement} dB**. "
+                "Esto demuestra que la mejora espectral y la mejora del número único **no tienen una relación 1:1**."
+            )
 
     # --------------------------------------------------------------
     # 5 · MAPA DE SENSIBILIDAD
     # --------------------------------------------------------------
     st.markdown("## 5 · ¿Qué zona es más eficiente para este espectro?")
     st.write(
-        "Ahora la app hace tres ensayos virtuales independientes: reduce **3 dB** solo una zona cada vez "
-        "y compara cuánto cambia Lₙ,w."
+        "La app realiza tres ensayos virtuales independientes. En cada ensayo reduce **3 dB solo una zona** "
+        "y vuelve a calcular Lₙ,w. Así puedes comparar la sensibilidad del descriptor frente a cada región."
     )
 
     def _zone_test(zone):
@@ -13278,28 +13307,56 @@ def _c2l2_stage4(lab,saved):
                 r=0
             test.append(float(v)-r)
         lnw_test,_=_c2l2_lnw(test)
-        return int(base_lnw-lnw_test)
+        change=int(base_lnw-lnw_test)
+        efficiency=change/3.0
+        return lnw_test,change,efficiency
 
-    sens={
+    sensitivity={
         "Bajas · 100–315 Hz":_zone_test("Bajas"),
         "Medias · 400–800 Hz":_zone_test("Medias"),
         "Altas · 1000–3150 Hz":_zone_test("Altas"),
     }
 
-    best=max(sens,key=sens.get)
-    s1,s2,s3=st.columns(3)
-    for col,(name,val) in zip([s1,s2,s3],sens.items()):
+    cols=st.columns(3)
+    for col,(name,(lnw_after,change,eff)) in zip(cols,sensitivity.items()):
         with col:
-            st.metric(name,f"{val} dB","cambio en Lₙ,w")
+            st.markdown(
+                f"""
+                <div style="border:1px solid #dbe4ee;border-radius:15px;padding:14px;background:#fff;min-height:185px">
+                  <div style="font-size:.76rem;font-weight:850;color:#475569">{name}</div>
+                  <div style="margin-top:.55rem">Reducción aplicada: <b>3 dB</b></div>
+                  <div>Lₙ,w: <b>{base_lnw} → {lnw_after} dB</b></div>
+                  <div>Cambio obtenido: <b>{change} dB</b></div>
+                  <div style="margin-top:.35rem">Eficiencia η = ΔLₙ,w / reducción</div>
+                  <div style="font-size:1.35rem;font-weight:900;margin-top:.15rem">η = {eff:.2f}</div>
+                </div>
+                """,
+                unsafe_allow_html=True,
+            )
 
-    st.markdown(
-        f"""
-        <div style="border:1px solid #bbf7d0;border-radius:15px;padding:14px 16px;background:#f0fdf4;margin:.55rem 0 .9rem">
-          <b>Zona más sensible en este espectro:</b> {best}.<br>
-          Una reducción idéntica de 3 dB no produce necesariamente el mismo efecto sobre Lₙ,w en todas las regiones.
-        </div>
-        """,
-        unsafe_allow_html=True,
+    max_change=max(v[1] for v in sensitivity.values())
+    best=[name for name,(_,change,_) in sensitivity.items() if change==max_change]
+
+    if len(best)==1:
+        st.success(
+            f"**Zona más eficiente en este ensayo:** {best[0]}. "
+            f"Reducir 3 dB esa zona produjo una mejora de {max_change} dB en Lₙ,w."
+        )
+    else:
+        st.info(
+            "**No hay una zona claramente más eficiente en este ensayo.** "
+            + ", ".join(best)
+            + f" producen el mismo cambio de **{max_change} dB** en Lₙ,w cuando se reducen 3 dB."
+        )
+
+    st.markdown("### ¿Cómo interpretar la eficiencia?")
+    st.write(
+        "La eficiencia η indica cuántos decibeles cambia Lₙ,w por cada decibel de reducción aplicado en una zona. "
+        "Por ejemplo, η = 0,33 significa que una reducción de 3 dB en esa región produjo 1 dB de mejora en el número único."
+    )
+    st.warning(
+        "Esta eficiencia es **didáctica y específica de este espectro**. No es un parámetro normativo ni una propiedad universal "
+        "de las bajas, medias o altas frecuencias."
     )
 
     # --------------------------------------------------------------
@@ -13307,38 +13364,191 @@ def _c2l2_stage4(lab,saved):
     # --------------------------------------------------------------
     st.markdown("## 6 · Desafío · mejora Lₙ,w con el menor costo")
     st.write(
-        "Para representar que algunas intervenciones pueden ser más difíciles o costosas que otras, "
-        "asignaremos un costo didáctico por cada dB de reducción aplicado."
+        "Ahora construye una propuesta **directamente aquí**. "
+        "El objetivo es reducir Lₙ,w al valor meta usando la combinación más eficiente de intervenciones."
     )
-
-    cost=3*red_low + 2*red_mid + 1*red_high
-    target=max(base_lnw-2,0)
 
     st.markdown(
         """
-        - Bajas frecuencias: **3 puntos por dB**
-        - Medias frecuencias: **2 puntos por dB**
-        - Altas frecuencias: **1 punto por dB**
-        """
+        <div style="border:1px solid #dbe4ee;border-radius:16px;padding:14px 16px;background:#f8fbff;margin:.5rem 0 .9rem">
+          <b>Costos didácticos del desafío</b><br><br>
+          Bajas frecuencias: <b>3 puntos por cada dB</b> de reducción.<br>
+          Medias frecuencias: <b>2 puntos por cada dB</b> de reducción.<br>
+          Altas frecuencias: <b>1 punto por cada dB</b> de reducción.<br><br>
+          <span style="color:#64748b">Estos puntos son solo una herramienta pedagógica para comparar estrategias; no representan costos económicos reales.</span>
+        </div>
+        """,
+        unsafe_allow_html=True,
     )
 
-    d1,d2,d3=st.columns(3)
-    d1.metric("Meta",f"Lₙ,w ≤ {target} dB")
-    d2.metric("Resultado actual",f"{new_lnw} dB")
-    d3.metric("Costo de tu propuesta",f"{cost} puntos")
+    target=max(base_lnw-2,0)
 
-    if total_intervention==0:
-        st.caption("Usa los tres controles de la sección 2 para construir tu propuesta.")
-    elif new_lnw<=target:
+    # Estado propio del desafío, independiente de los sliders de la sección 2.
+    if "c2l2_s4_ch_low" not in st.session_state:
+        st.session_state["c2l2_s4_ch_low"]=0
+    if "c2l2_s4_ch_mid" not in st.session_state:
+        st.session_state["c2l2_s4_ch_mid"]=0
+    if "c2l2_s4_ch_high" not in st.session_state:
+        st.session_state["c2l2_s4_ch_high"]=0
+
+    st.markdown("### Construye tu propuesta")
+    dlow,dmid,dhigh=st.columns(3)
+
+    with dlow:
+        ch_low=st.slider(
+            "Bajas 100–315 Hz [dB]",
+            0,10,int(st.session_state["c2l2_s4_ch_low"]),1,
+            key="c2l2_s4_ch_low_slider",
+        )
+        st.session_state["c2l2_s4_ch_low"]=ch_low
+        st.caption(f"Costo parcial: **{3*ch_low} puntos**")
+
+    with dmid:
+        ch_mid=st.slider(
+            "Medias 400–800 Hz [dB]",
+            0,10,int(st.session_state["c2l2_s4_ch_mid"]),1,
+            key="c2l2_s4_ch_mid_slider",
+        )
+        st.session_state["c2l2_s4_ch_mid"]=ch_mid
+        st.caption(f"Costo parcial: **{2*ch_mid} puntos**")
+
+    with dhigh:
+        ch_high=st.slider(
+            "Altas 1000–3150 Hz [dB]",
+            0,10,int(st.session_state["c2l2_s4_ch_high"]),1,
+            key="c2l2_s4_ch_high_slider",
+        )
+        st.session_state["c2l2_s4_ch_high"]=ch_high
+        st.caption(f"Costo parcial: **{ch_high} puntos**")
+
+    challenge_curve=[]
+    for f,v in zip(_C2L2_FREQS,curve):
+        if 100<=f<=315:
+            r=ch_low
+        elif 400<=f<=800:
+            r=ch_mid
+        else:
+            r=ch_high
+        challenge_curve.append(float(v)-float(r))
+
+    challenge_lnw,_=_c2l2_lnw(challenge_curve)
+    challenge_improvement=int(base_lnw-challenge_lnw)
+    challenge_cost=3*ch_low + 2*ch_mid + ch_high
+    total_ch_reduction=ch_low+ch_mid+ch_high
+
+    st.markdown("### Resultado de tu propuesta")
+    c1,c2,c3,c4=st.columns(4)
+    c1.metric("Meta",f"Lₙ,w ≤ {target} dB")
+    c2.metric("Resultado actual",f"{challenge_lnw} dB")
+    c3.metric("Mejora obtenida",f"{challenge_improvement} dB")
+    c4.metric("Costo total",f"{challenge_cost} puntos")
+
+    # Barra visual simple de progreso hacia la meta.
+    required=max(base_lnw-target,1)
+    progress=min(max(challenge_improvement/required,0.0),1.0)
+    st.progress(progress)
+
+    if total_ch_reduction==0:
+        st.info(
+            "Empieza moviendo uno de los tres controles. "
+            "El resultado y el costo se actualizarán automáticamente."
+        )
+    elif challenge_lnw<=target:
+        efficiency = challenge_improvement/challenge_cost if challenge_cost>0 else 0.0
         st.success(
-            f"✓ **Meta alcanzada.** Llegaste a Lₙ,w = {new_lnw} dB con un costo de {cost} puntos. "
-            "Prueba otras combinaciones para comprobar si puedes conseguir el mismo objetivo con menor costo."
+            f"✓ **Meta alcanzada.** Tu propuesta logra **Lₙ,w = {challenge_lnw} dB** "
+            f"con un costo de **{challenge_cost} puntos**."
+        )
+        st.write(
+            f"**Eficiencia global de la propuesta:** {efficiency:.3f} dB de mejora en Lₙ,w por punto."
+        )
+        st.info(
+            "Ahora intenta mantener la misma meta reduciendo el costo. "
+            "No siempre la intervención más grande es la más eficiente."
         )
     else:
+        remaining=challenge_lnw-target
         st.warning(
-            f"Aún no alcanzas la meta de {target} dB. Tu resultado actual es {new_lnw} dB. "
-            "Prueba redistribuir la intervención entre zonas."
+            f"Aún faltan **{remaining} dB** para alcanzar la meta. "
+            "Prueba redistribuir la reducción entre las tres zonas."
         )
+
+    # Comparación rápida con la intervención del desafío.
+    st.markdown("### Antes vs. propuesta")
+    fig_ch=go.Figure()
+    x_ch=list(range(len(_C2L2_FREQS)))
+    labels_ch=[str(f) for f in _C2L2_FREQS]
+
+    fig_ch.add_trace(go.Scatter(
+        x=x_ch,y=curve,mode="lines+markers",
+        name="Original",
+        line=dict(width=3,color="#64748b"),
+        marker=dict(size=7),
+    ))
+    fig_ch.add_trace(go.Scatter(
+        x=x_ch,y=challenge_curve,mode="lines+markers",
+        name="Tu propuesta",
+        line=dict(width=4,color="#0b69d1"),
+        marker=dict(size=8),
+    ))
+    fig_ch.update_layout(
+        height=360,
+        margin=dict(l=45,r=20,t=35,b=50),
+        xaxis=dict(
+            title="Frecuencia (Hz)",
+            tickmode="array",
+            tickvals=x_ch,
+            ticktext=labels_ch,
+            range=[-0.5,15.5],
+        ),
+        yaxis=dict(title="Nivel de impacto (dB)"),
+        legend=dict(orientation="h",y=1.08,x=0),
+        hovermode="x unified",
+    )
+    st.plotly_chart(fig_ch,use_container_width=True,key="c2l2_s4_challenge_graph")
+
+    # Guardar la mejor propuesta de la sesión.
+    if challenge_lnw<=target and challenge_cost>0:
+        best=st.session_state.get("c2l2_s4_best_design")
+        candidate={
+            "low":ch_low,
+            "mid":ch_mid,
+            "high":ch_high,
+            "lnw":challenge_lnw,
+            "cost":challenge_cost,
+            "improvement":challenge_improvement,
+        }
+        if not isinstance(best,dict) or challenge_cost<best.get("cost",10**9):
+            st.session_state["c2l2_s4_best_design"]=candidate
+
+    best=st.session_state.get("c2l2_s4_best_design")
+    if isinstance(best,dict):
+        st.markdown("### Mejor propuesta encontrada en esta sesión")
+        b1,b2,b3,b4=st.columns(4)
+        b1.metric("Bajas",f"{best['low']} dB")
+        b2.metric("Medias",f"{best['mid']} dB")
+        b3.metric("Altas",f"{best['high']} dB")
+        b4.metric("Costo mínimo logrado",f"{best['cost']} puntos")
+        st.caption(
+            f"Resultado: Lₙ,w = {best['lnw']} dB · mejora = {best['improvement']} dB."
+        )
+
+    if st.button(
+        "REINICIAR DESAFÍO",
+        key="c2l2_s4_reset_challenge",
+        use_container_width=True,
+    ):
+        for k in [
+            "c2l2_s4_ch_low",
+            "c2l2_s4_ch_mid",
+            "c2l2_s4_ch_high",
+            "c2l2_s4_ch_low_slider",
+            "c2l2_s4_ch_mid_slider",
+            "c2l2_s4_ch_high_slider",
+            "c2l2_s4_best_design",
+        ]:
+            st.session_state.pop(k,None)
+        st.rerun()
 
     # --------------------------------------------------------------
     # 7 · INTERPRETACIÓN PROFESIONAL
