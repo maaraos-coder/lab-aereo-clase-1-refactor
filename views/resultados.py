@@ -1,5 +1,6 @@
 """Vista de desempeño y retroalimentación del alumno.
 
+import re
 Separa deliberadamente dos conceptos académicos:
 
 * progreso formativo: ejercicios y actividades que preparan al estudiante;
@@ -460,6 +461,38 @@ def _render_formative_progress(rows):
 
 
 
+def _course2_lab1_progress_percent(progress_rows):
+    """Calcula el avance formativo del Curso 2 · Lab 1 como porcentaje.
+
+    Cuenta etapas 0–10 completadas/visitadas en el estado persistido del laboratorio.
+    Si no hay datos, devuelve 0.
+    """
+    total_stages=11
+    done=set()
+
+    for row in progress_rows or []:
+        # Formatos posibles según el backend/estado guardado.
+        stage=row.get("stage")
+        completed=row.get("completed")
+        status=str(row.get("status") or "").lower()
+        key=str(row.get("key") or row.get("progress_key") or "")
+
+        if isinstance(stage,int) or (isinstance(stage,str) and stage.isdigit()):
+            s=int(stage)
+            if 0 <= s <= 10 and (completed is True or status in {"done","completed","complete"}):
+                done.add(s)
+
+        # También tolera claves tipo done_0, done_1...
+        m=re.fullmatch(r"done_(\d+)",key)
+        if m:
+            s=int(m.group(1))
+            value=row.get("value",row.get("done",row.get("completed")))
+            if 0 <= s <= 10 and bool(value):
+                done.add(s)
+
+    return int(round(100*len(done)/total_stages)) if total_stages else 0
+
+
 def student_sidebar_summary(client, user_key):
     """Tarjeta lateral compacta del diplomado, separando el avance por curso."""
     if not user_key or client is None:
@@ -493,6 +526,13 @@ def student_sidebar_summary(client, user_key):
         course2_lab1.get(k) is not None
         for k in ("final_comprehension","final_exam")
     )
+
+    # Avance formativo de Curso 2 = progreso real del Laboratorio 1 (Etapas 0–10),
+    # no cantidad de evaluaciones formativas entregadas.
+    c2_lab1_progress_rows=[
+        r for r in (_remote_rows("progress",class_id="clase-03-impacto-instalaciones-lab-1") or [])
+    ] if "_remote_rows" in globals() else []
+    c2_lab1_progress_pct=_course2_lab1_progress_percent(c2_lab1_progress_rows)
 
     # Curso 2 · Lab 2: dos evaluaciones oficiales.
     course2_lab2=_course2_lab2_delivery_rows(rows)
