@@ -12466,8 +12466,149 @@ def _c2l2_stage2(lab,saved):
         pd.DataFrame({"Frecuencia (Hz)":_C2L2_FREQS,"Referencia ISO 717-2 (dB)":_C2L2_REF}),
         hide_index=True,use_container_width=True,
     )
+
+    st.markdown("## 4 · Cómo se construye realmente el número único")
+    st.write(
+        "La curva de referencia no se usa solo para comparar visualmente. Su desplazamiento forma parte del procedimiento "
+        "que permite obtener el **nivel normalizado de presión sonora de impactos ponderado, Lₙ,w**."
+    )
+
+    st.markdown(
+        """
+        <div style="border:1px solid #dbe4ee;border-radius:16px;padding:15px 17px;background:#f8fbff;margin:.55rem 0 .9rem">
+          <b>Idea central:</b><br>
+          Lₙ,w <b>no es un promedio</b> del espectro. Se obtiene desplazando una curva de referencia normalizada
+          en pasos enteros de 1 dB, controlando las desviaciones desfavorables y leyendo finalmente la posición
+          de la referencia en 500 Hz.
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
+
+    st.markdown("### 4.1 · ¿Qué significa la posición de referencia en 500 Hz?")
+    st.write(
+        "La curva ISO 717-2 tiene una **forma fija**. Su posición vertical puede describirse mediante el nivel "
+        "que ocupa en 500 Hz. Si la referencia está en 60 dB a 500 Hz, toda la curva queda determinada. "
+        "Si la bajas 1 dB, todos los puntos bajan exactamente 1 dB."
+    )
+    st.latex(r"L_{\mathrm{ref}}(500\ \mathrm{Hz})")
+
+    a,b=st.columns(2)
+    with a:
+        _c2l2_card("Posición A","60 dB a 500 Hz","Forma fija de la referencia.",tone="blue")
+    with b:
+        _c2l2_card("Posición B","59 dB a 500 Hz","Misma forma; desplazada −1 dB.",tone="green")
+
+    st.markdown("### 4.2 · ¿Qué es una desviación desfavorable?")
+    st.write(
+        "Para ruido de impacto, una banda es desfavorable cuando el nivel del espectro evaluado queda "
+        "**por encima de la curva de referencia**."
+    )
+    st.latex(r"d_i=\max\left(0,\;L_{n,i}-L_{\mathrm{ref},i}\right)")
+
+    e1,e2=st.columns(2)
+    with e1:
+        st.markdown(
+            """
+            <div style="border:1px solid #fecaca;border-radius:14px;padding:14px;background:#fff7f7">
+              <b>Banda desfavorable</b><br>
+              Lₙ,i = 65 dB<br>
+              Lref,i = 62 dB<br><br>
+              <b>dᵢ = 3 dB</b>
+            </div>
+            """,
+            unsafe_allow_html=True,
+        )
+    with e2:
+        st.markdown(
+            """
+            <div style="border:1px solid #bbf7d0;border-radius:14px;padding:14px;background:#f0fdf4">
+              <b>Banda no desfavorable</b><br>
+              Lₙ,i = 59 dB<br>
+              Lref,i = 62 dB<br><br>
+              <b>dᵢ = 0 dB</b>
+            </div>
+            """,
+            unsafe_allow_html=True,
+        )
+
+    st.markdown("### 4.3 · ¿Por qué aparece el límite de 32 dB?")
+    st.write(
+        "Para las 16 bandas de tercio de octava entre 100 y 3150 Hz se suman únicamente "
+        "las desviaciones desfavorables."
+    )
+    st.latex(r"\boxed{\sum d_i\leq 32\ \mathrm{dB}}")
+    st.warning(
+        "**Cumplir Σdᵢ ≤ 32 dB no basta.** Debes encontrar la **posición límite**: "
+        "la posición más baja de la curva que todavía cumple el criterio. "
+        "Si bajas la referencia 1 dB adicional, la suma debe superar 32 dB."
+    )
+
+    st.markdown("### 4.4 · ¿Cómo se reconoce la posición límite?")
+    st.latex(
+        r"\sum d_i\leq 32\ \mathrm{dB}"
+        r"\qquad\text{y}\qquad"
+        r"\sum d_i\big|_{\text{1 dB más abajo}}>32\ \mathrm{dB}"
+    )
+    st.write(
+        "Ese segundo chequeo es el que impide detenerse demasiado arriba. La curva debe desplazarse "
+        "hasta el último paso entero de 1 dB que todavía sea admisible."
+    )
+
+    st.markdown("### 4.5 · ¿Cómo se obtiene finalmente Lₙ,w?")
+    st.write(
+        "Una vez encontrada la posición límite, el número único se obtiene leyendo el valor de la "
+        "curva desplazada en **500 Hz**."
+    )
+    st.latex(r"\boxed{L_{n,w}=L_{\mathrm{ref}}(500\ \mathrm{Hz})}")
+    st.success(
+        "Ejemplo: si la posición límite deja la referencia en 56 dB a 500 Hz, entonces **Lₙ,w = 56 dB**."
+    )
+
+    st.markdown("## 5 · Secuencia completa del procedimiento")
+    steps = [
+        ("1","Curva de referencia normalizada"),
+        ("2","Elige posición inicial en 500 Hz"),
+        ("3","Superpone espectro y referencia"),
+        ("4","Identifica bandas con Lₙ > Lref"),
+        ("5","Calcula dᵢ"),
+        ("6","Suma Σdᵢ"),
+        ("7","Mueve la curva en pasos de 1 dB"),
+        ("8","Encuentra la posición límite"),
+        ("9","Lee 500 Hz"),
+        ("10","Obtén Lₙ,w"),
+    ]
+    html='<div style="display:grid;grid-template-columns:1fr;gap:7px;margin:.6rem 0 1rem">'
+    for i,(num,label) in enumerate(steps):
+        final=i==len(steps)-1
+        bg="#f0fdf4" if final else "#fff"
+        border="#bbf7d0" if final else "#dbe4ee"
+        html += (
+            f'<div style="padding:12px 14px;border:1px solid {border};border-radius:12px;'
+            f'background:{bg};font-size:{"1.10rem" if final else ".96rem"}">'
+            f'<b>{num}.</b> {label}</div>'
+        )
+        if not final:
+            html += '<div style="text-align:center;color:#64748b;font-weight:800">↓</div>'
+    html += '</div>'
+    st.markdown(html,unsafe_allow_html=True)
+
+    st.info(
+        "**En esta Etapa 2 debes comprender el mecanismo completo.** "
+        "La Etapa 3 se concentrará específicamente en reconocer qué bandas penalizan "
+        "y cuánto aporta cada desviación desfavorable."
+    )
+
+    st.markdown("## 6 · Explora el procedimiento")
+    st.write(
+        "Ahora mueve la referencia y observa simultáneamente su posición en 500 Hz, "
+        "las desviaciones desfavorables y la suma Σdᵢ."
+    )
     shift,ref,dev,total=_c2l2_curve_control(saved,"c2l2_s2",curve,require_limit=False)
     st.info("Observa que **la forma no cambia**: todos los puntos suben o bajan exactamente la misma cantidad.")
+    st.caption("Para continuar, selecciona la siguiente etapa desde la barra lateral.")
+
+
 def _c2l2_stage3(lab,saved):
     curve,_=_c2l2_floor_curve()
     _c2l2_stage_header(3,"¿QUÉ BANDAS PENALIZAN EL RESULTADO?","Identifica las desviaciones desfavorables y construye Σdᵢ.")
