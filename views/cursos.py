@@ -13069,72 +13069,218 @@ def _c2l2_stage3(lab,saved):
     st.caption("Continúa desde la barra lateral.")
 
 def _c2l2_stage4(lab,saved):
-    """Etapa 4 · ejecución manual del ajuste ISO 717-2."""
+    """Etapa 4 · construcción manual del número único Lₙ,w."""
     curve,_=_c2l2_floor_curve()
+    role=st.session_state.get("role","Alumno")
+    projection_mode=bool(st.session_state.get("projection_mode") or role=="Proyección")
 
     _c2l2_stage_header(
         4,
         "CONSTRUYE EL NÚMERO ÚNICO Lₙ,w",
-        "Ahora tú ejecutas el ajuste completo: mueve la referencia, encuentra la posición límite y realiza la lectura final."
+        "Ejecuta tú mismo el procedimiento ISO 717-2: desplaza, comprueba, encuentra la posición límite y realiza la lectura final."
     )
 
-    st.markdown("## 1 · Misión")
+    st.markdown("## 1 · Tu misión")
     st.markdown(
         """
         <div style="border:1px solid #dbe4ee;border-radius:17px;padding:16px 18px;background:#f8fbff;margin:.5rem 0 1rem">
-          En las Etapas 2 y 3 ya comprendiste <b>qué representa la curva</b> y <b>qué información puede ocultar el número único</b>.
+          Ya sabes qué representa la curva y qué información puede esconder un número único.
           <br><br>
-          Aquí no volveremos a explicar la teoría: debes <b>ejecutar el procedimiento</b>.
+          Ahora cambia la tarea: <b>dejas de interpretar y empiezas a ejecutar el procedimiento</b>.
           <br><br>
-          <b>Tu objetivo:</b> encontrar por ti mismo la posición límite y determinar Lₙ,w.
+          <b>Objetivo:</b> encontrar la posición límite de la curva de referencia y obtener Lₙ,w sin que la app te entregue el resultado antes de tiempo.
         </div>
         """,
         unsafe_allow_html=True,
     )
 
-    st.markdown("## 2 · Checklist de trabajo")
+    st.markdown("## 2 · Ruta de trabajo")
     st.markdown(
         """
-        1. **Mueve** la referencia en pasos enteros de 1 dB.
-        2. **Observa** Σdᵢ.
-        3. **Busca** una posición que cumpla Σdᵢ ≤ 32 dB.
-        4. **Comprueba** que 1 dB más abajo ya no cumpla.
-        5. **Confirma** la posición límite.
-        6. **Lee** la referencia exactamente en 500 Hz.
-        """
+        <div style="display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:8px;margin:.55rem 0 1rem">
+          <div style="padding:12px;border:1px solid #dbe4ee;border-radius:13px;background:#fff;text-align:center"><b>1 · MOVER</b><br><span style="color:#64748b">referencia</span></div>
+          <div style="padding:12px;border:1px solid #dbe4ee;border-radius:13px;background:#fff;text-align:center"><b>2 · OBSERVAR</b><br><span style="color:#64748b">Σdᵢ</span></div>
+          <div style="padding:12px;border:1px solid #dbe4ee;border-radius:13px;background:#fff;text-align:center"><b>3 · DECIDIR</b><br><span style="color:#64748b">¿cumple?</span></div>
+          <div style="padding:12px;border:1px solid #dbe4ee;border-radius:13px;background:#fff;text-align:center"><b>4 · PROBAR</b><br><span style="color:#64748b">−1 dB</span></div>
+          <div style="padding:12px;border:1px solid #dbe4ee;border-radius:13px;background:#fff;text-align:center"><b>5 · VALIDAR</b><br><span style="color:#64748b">posición límite</span></div>
+          <div style="padding:12px;border:1px solid #bbf7d0;border-radius:13px;background:#f0fdf4;text-align:center"><b>6 · LEER</b><br><span style="color:#64748b">500 Hz → Lₙ,w</span></div>
+        </div>
+        """,
+        unsafe_allow_html=True,
     )
 
-    c1,c2=st.columns(2)
-    with c1:
-        _c2l2_card(
-            "No debes leer",
-            "Lₙ(500 Hz)",
-            "Ese es un dato del espectro del piso y no es, por sí solo, el descriptor ponderado.",
-            tone="orange",
-        )
-    with c2:
-        _c2l2_card(
-            "Debes leer",
-            "Referencia a 500 Hz",
-            "Solo después de haber fijado correctamente la posición límite.",
-            tone="green",
-        )
-
-    st.markdown("## 3 · Ajuste manual")
-    shift,ref,dev,total=_c2l2_curve_control(
-        saved,"c2l2_s4",curve,require_limit=True
+    st.info(
+        "En esta etapa **la app no te dirá automáticamente cuál es la posición correcta**. "
+        "Primero debes formular tu decisión y luego comprobarla."
     )
+
+    st.markdown("## 3 · Taller · mueve la referencia")
+    st.write(
+        "Desplaza la referencia en pasos enteros de 1 dB. "
+        "Observa simultáneamente la forma del espectro y la suma de desviaciones desfavorables."
+    )
+
+    base500=_C2L2_REF[_C2L2_FREQS.index(500)]
+    ref500=st.slider(
+        "Posición de la referencia en 500 Hz (dB)",
+        min_value=45,
+        max_value=75,
+        value=int(base500),
+        step=1,
+        key="c2l2_s4_ref500_slider",
+    )
+
+    current_shift=int(ref500-base500)
+    ref=_c2l2_ref_shift(current_shift)
+    dev=[max(0.0,float(ln)-float(rv)) for ln,rv in zip(curve,ref)]
+    total=float(sum(dev))
+
+    ref_lower=_c2l2_ref_shift(current_shift-1)
+    dev_lower=[max(0.0,float(ln)-float(rv)) for ln,rv in zip(curve,ref_lower)]
+    total_lower=float(sum(dev_lower))
+
+    import plotly.graph_objects as go
+    fig=go.Figure()
+    fig.add_trace(go.Scatter(
+        x=_C2L2_FREQS,y=curve,mode="lines+markers",
+        name="Espectro del piso",
+        line=dict(width=4,color="#1689d8"),
+        marker=dict(size=8),
+    ))
+    fig.add_trace(go.Scatter(
+        x=_C2L2_FREQS,y=ref,mode="lines+markers",
+        name="Referencia ISO 717-2",
+        line=dict(width=3,color="#111827"),
+        marker=dict(size=6),
+    ))
+    for f,lnv,rv,dv in zip(_C2L2_FREQS,curve,ref,dev):
+        if dv>0:
+            fig.add_trace(go.Scatter(
+                x=[f,f],y=[rv,lnv],mode="lines",
+                line=dict(width=4,color="#ef4444"),
+                showlegend=False,
+                hoverinfo="skip",
+            ))
+    fig.update_layout(
+        height=460,
+        margin=dict(l=50,r=20,t=35,b=50),
+        xaxis=dict(
+            title="Frecuencia (Hz)",
+            type="log",
+            tickmode="array",
+            tickvals=_C2L2_FREQS,
+            ticktext=[str(f) for f in _C2L2_FREQS],
+        ),
+        yaxis=dict(title="Nivel (dB)"),
+        legend=dict(orientation="h",y=1.05,x=0),
+        hovermode="x unified",
+    )
+    st.plotly_chart(fig,use_container_width=True,key="c2l2_s4_manual_graph")
+
+    m1,m2,m3=st.columns(3)
+    m1.metric("Referencia a 500 Hz",f"{ref500} dB")
+    m2.metric("Σdᵢ actual",f"{total:.1f} dB")
+    m3.metric("Bandas que penalizan",str(sum(1 for d in dev if d>0)))
+
+    if total>32:
+        st.error("La posición actual **no cumple** porque Σdᵢ supera 32 dB.")
+    else:
+        st.success("La posición actual **cumple Σdᵢ ≤ 32 dB**. Falta decidir si es realmente la posición límite.")
+
+    st.markdown("## 4 · Decide antes de comprobar")
+    decision=st.radio(
+        "¿Qué harías con la posición actual?",
+        [
+            "La curva está demasiado baja: debo subirla.",
+            "Todavía puedo bajar 1 dB más.",
+            "Creo que esta es la posición límite.",
+        ],
+        index=None,
+        key="c2l2_s4_decision",
+    )
+
+    if st.button(
+        "COMPROBAR MI DECISIÓN",
+        key="c2l2_s4_check_decision",
+        type="primary",
+        use_container_width=True,
+    ):
+        if decision is None:
+            st.warning("Selecciona primero qué harías con la posición actual.")
+        else:
+            if total>32:
+                correct_decision="La curva está demasiado baja: debo subirla."
+            elif total_lower<=32:
+                correct_decision="Todavía puedo bajar 1 dB más."
+            else:
+                correct_decision="Creo que esta es la posición límite."
+
+            st.session_state["c2l2_s4_decision_ok"]=decision==correct_decision
+            st.session_state["c2l2_s4_checked_shift"]=current_shift
+
+    if st.session_state.get("c2l2_s4_checked_shift")==current_shift:
+        if st.session_state.get("c2l2_s4_decision_ok") is True:
+            if total>32:
+                st.success(
+                    f"Correcto. Σdᵢ = {total:.1f} dB > 32 dB. "
+                    "La referencia está demasiado baja y debes subirla."
+                )
+            elif total_lower<=32:
+                st.success(
+                    f"Correcto. Ahora Σdᵢ = {total:.1f} dB, pero si bajas 1 dB más la suma sería "
+                    f"{total_lower:.1f} dB y todavía cumpliría. **Aún no estás en la posición límite.**"
+                )
+            else:
+                st.success(
+                    f"Correcto. Ahora Σdᵢ = {total:.1f} dB y cumple. "
+                    f"Si bajas 1 dB más, Σdᵢ = {total_lower:.1f} dB y ya supera 32 dB. "
+                    "**Encontraste la posición límite.**"
+                )
+                st.session_state["c2l2_s4_position_ok"]=True
+                st.session_state["c2l2_s4_limit_shift"]=current_shift
+                st.session_state["c2l2_s4_limit_ref500"]=int(ref500)
+        elif st.session_state.get("c2l2_s4_decision_ok") is False:
+            st.warning(
+                "Todavía no. Compara Σdᵢ actual con el criterio de 32 dB y piensa qué ocurriría si movieras la referencia 1 dB."
+            )
+
+    if (
+        st.session_state.get("c2l2_s4_position_ok")
+        and st.session_state.get("c2l2_s4_limit_shift") != current_shift
+    ):
+        st.session_state["c2l2_s4_position_ok"]=False
+        st.session_state["c2l2_s4_limit_verified"]=False
 
     if st.session_state.get("c2l2_s4_position_ok"):
-        st.markdown("## 4 · Lectura final")
-        st.info(
-            "La posición límite ya está validada. Ahora lee el punto de la **curva de referencia desplazada** en 500 Hz."
+        st.markdown("## 5 · Comprueba el paso adicional de −1 dB")
+        st.write(
+            "Ya declaraste una posición límite. Antes de leer Lₙ,w, comprueba numéricamente qué ocurriría al bajar 1 dB."
         )
-        idx=_C2L2_FREQS.index(500)
-        ans=st.number_input(
-            "Lₙ,w [dB]",
-            0,120,0,1,
-            key="c2l2_s4_lnw",
+        q1,q2=st.columns(2)
+        q1.metric("Σdᵢ en la posición elegida",f"{total:.1f} dB")
+        q2.metric("Σdᵢ con −1 dB adicional",f"{total_lower:.1f} dB")
+
+        if total<=32 and total_lower>32:
+            st.success(
+                "✓ Verificación correcta: la posición actual cumple y el paso siguiente no. "
+                "La posición límite queda confirmada."
+            )
+            st.session_state["c2l2_s4_limit_verified"]=True
+        else:
+            st.error("La condición límite no se cumple. Vuelve al ajuste.")
+
+    if st.session_state.get("c2l2_s4_limit_verified"):
+        st.markdown("## 6 · Realiza la lectura final")
+        st.warning(
+            "**No leas Lₙ del piso a 500 Hz.** Debes leer el valor de la **curva de referencia desplazada** en 500 Hz."
+        )
+        answer=st.number_input(
+            "¿Cuál es Lₙ,w? [dB]",
+            min_value=0,
+            max_value=120,
+            value=0,
+            step=1,
+            key="c2l2_s4_lnw_answer",
         )
         if st.button(
             "COMPROBAR Lₙ,w",
@@ -13142,22 +13288,29 @@ def _c2l2_stage4(lab,saved):
             type="primary",
             use_container_width=True,
         ):
-            expected=int(round(ref[idx]))
-            if int(ans)==expected:
+            expected=int(st.session_state.get("c2l2_s4_limit_ref500",ref500))
+            if int(answer)==expected:
                 st.success(
-                    f"✓ Correcto. La posición límite deja la referencia en **{expected} dB a 500 Hz**, "
-                    f"por lo tanto **Lₙ,w = {expected} dB**."
+                    f"✓ **Correcto. Lₙ,w = {expected} dB.** "
+                    "Ese valor corresponde a la referencia en 500 Hz una vez encontrada y verificada la posición límite."
                 )
-                saved["c2l2_lnw"]=expected
-                saved["c2l2_lnw_shift"]=shift
-                _c2l2_finish_stage(saved,4)
+                if role=="Alumno":
+                    saved["c2l2_lnw"]=expected
+                    saved["c2l2_lnw_shift"]=int(st.session_state.get("c2l2_s4_limit_shift",current_shift))
+                    saved["updated_4"]=_now()
+                    _c2l2_finish_stage(saved,4)
             else:
                 st.warning(
-                    "No leas el nivel del piso a 500 Hz. Debes leer el valor de la **referencia desplazada** exactamente en esa banda."
+                    "Revisa el gráfico: debes leer **la curva de referencia**, no la curva del piso, exactamente en 500 Hz."
                 )
-    else:
-        st.caption(
-            "La lectura final se habilitará cuando hayas demostrado que encontraste la posición límite."
+
+    if role=="Docente" and not projection_mode:
+        expected_lnw,expected_shift=_c2l2_lnw(curve)
+        st.markdown("---")
+        st.markdown("## Vista docente · pauta")
+        st.info(
+            f"Posición límite esperada: desplazamiento **{expected_shift:+d} dB**. "
+            f"Lectura final: **Lₙ,w = {expected_lnw} dB**."
         )
 
     st.caption("Continúa desde la barra lateral.")
@@ -13817,7 +13970,7 @@ def future_lab_view_impl(lab):
                 help="Ábrela en otra ventana y comparte solo esa ventana en Zoom.",
             )
             future_projection_options = {
-                f"Etapa {i} · {lab['stages'][i][0]}": i
+                f"Etapa {i} · {(_c2l2_stage_title(lab,i) if class_id==_C2L2_CLASS_ID else lab['stages'][i][0])}": i
                 for i in range(len(lab["stages"]))
             }
             future_projection_label = st.selectbox(
@@ -13855,7 +14008,11 @@ def future_lab_view_impl(lab):
         selected=st.radio(
             "Ruta de aprendizaje",
             _stage_options,
-            format_func=lambda i:f"Etapa {i} · {lab['stages'][i][0]}",
+            format_func=lambda i:(
+                f"Etapa {i} · {_c2l2_stage_title(lab,i)}"
+                if class_id==_C2L2_CLASS_ID
+                else f"Etapa {i} · {lab['stages'][i][0]}"
+            ),
             key=_stage_key,
         )
 
