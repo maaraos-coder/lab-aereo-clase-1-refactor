@@ -12468,10 +12468,6 @@ def _c2l2_stage2(lab,saved):
     )
     shift,ref,dev,total=_c2l2_curve_control(saved,"c2l2_s2",curve,require_limit=False)
     st.info("Observa que **la forma no cambia**: todos los puntos suben o bajan exactamente la misma cantidad.")
-    if st.button("COMPLETAR ETAPA 2",key="c2l2_s2_done",type="primary"):
-        _c2l2_finish_stage(saved,2); st.success("Etapa 2 completada.")
-
-
 def _c2l2_stage3(lab,saved):
     curve,_=_c2l2_floor_curve()
     _c2l2_stage_header(3,"¿QUÉ BANDAS PENALIZAN EL RESULTADO?","Identifica las desviaciones desfavorables y construye Σdᵢ.")
