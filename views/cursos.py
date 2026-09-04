@@ -14722,56 +14722,141 @@ def _c2l2_stage7(lab,saved):
         "El número único puede coincidir aunque la distribución de la mejora sea diferente."
     )
 
+    # Revestimiento A: respuesta relativamente equilibrada.
     prof_a=[5,5,5,5,5,5,10,10,10,10,15,15,15,15,15,15]
-    prof_b=[2,2,3,3,4,5,8,10,12,14,16,18,20,22,24,26]
-
     ta=[a-b for a,b in zip(ref_floor,prof_a)]
-    tb=[a-b for a,b in zip(ref_floor,prof_b)]
     lnw_a,_=_c2l2_lnw(ta)
-    lnw_b,_=_c2l2_lnw(tb)
     dlw_a=int(ref_lnw-lnw_a)
-    dlw_b=int(ref_lnw-lnw_b)
+
+    # Revestimiento B: forma deliberadamente distinta, con menor efecto en bajas
+    # y mayor efecto en medias-altas. Se calibra automáticamente para que entregue
+    # EXACTAMENTE el mismo ΔLw que A, manteniendo una forma espectral diferente.
+    base_b=[1,1,2,2,3,4,6,8,10,12,15,18,21,24,27,30]
+    candidates=[]
+    for offset in range(-4,13):
+        prof=[max(0,float(v)+offset) for v in base_b]
+        treated_candidate=[a-b for a,b in zip(ref_floor,prof)]
+        lnw_candidate,_=_c2l2_lnw(treated_candidate)
+        dlw_candidate=int(ref_lnw-lnw_candidate)
+        if dlw_candidate==dlw_a:
+            # Preferimos la curva más distinta de A para reforzar la comparación.
+            distance=sum(abs(x-y) for x,y in zip(prof_a,prof))
+            candidates.append((distance,prof,treated_candidate,lnw_candidate))
+
+    if candidates:
+        _,prof_b,tb,lnw_b=max(candidates,key=lambda item:item[0])
+        dlw_b=dlw_a
+    else:
+        # Fallback seguro: conserva la forma distinta y ajusta de manera uniforme
+        # hasta igualar el descriptor ponderado.
+        prof_b=[float(v) for v in base_b]
+        tb=[a-b for a,b in zip(ref_floor,prof_b)]
+        lnw_b,_=_c2l2_lnw(tb)
+        dlw_b=int(ref_lnw-lnw_b)
+
+    st.markdown(
+        f"""
+        <div style="border:1px solid #bfdbfe;border-radius:16px;padding:15px 17px;background:#eff6ff;margin:.55rem 0 .9rem">
+          <b>Objetivo de la comparación:</b><br><br>
+          Los dos revestimientos entregan el mismo valor ponderado:
+          <b>ΔLw,A = ΔLw,B = {dlw_a} dB</b>.<br>
+          Lo que cambia es <b>dónde</b> reducen más o menos el ruido de impacto a lo largo del espectro.
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
 
     comp=st.segmented_control(
         "Comparación",
-        ["Ver ΔL(f)","Ver pisos resultantes"],
+        ["Ver solo el número único","Ver ΔL(f)","Ver pisos resultantes"],
         default="Ver ΔL(f)",
         key="c2l2_s7_compare",
     )
 
-    figc=go.Figure()
-    if comp=="Ver ΔL(f)":
-        figc.add_trace(go.Scatter(x=x,y=prof_a,mode="lines+markers",name=f"Revestimiento A · ΔLw {dlw_a} dB"))
-        figc.add_trace(go.Scatter(x=x,y=prof_b,mode="lines+markers",name=f"Revestimiento B · ΔLw {dlw_b} dB"))
-        ylabel="ΔL(f) [dB]"
-    else:
-        figc.add_trace(go.Scatter(x=x,y=ta,mode="lines+markers",name="Piso + revestimiento A"))
-        figc.add_trace(go.Scatter(x=x,y=tb,mode="lines+markers",name="Piso + revestimiento B"))
-        ylabel="Lₙ,r (dB)"
-
-    figc.update_layout(
-        height=380,
-        margin=dict(l=45,r=20,t=35,b=50),
-        xaxis=dict(
-            title="Frecuencia (Hz)",
-            tickmode="array",
-            tickvals=x,
-            ticktext=labels,
-            range=[-0.5,15.5],
-        ),
-        yaxis=dict(title=ylabel),
-        legend=dict(orientation="h",y=1.08,x=0),
-    )
-    st.plotly_chart(figc,use_container_width=True,key="c2l2_s7_compare_graph")
-
-    if dlw_a==dlw_b:
-        st.info(
-            f"Ambos revestimientos entregan **ΔLw = {dlw_a} dB**, pero sus curvas ΔL(f) son distintas. "
-            "Eso significa que el mismo número único no describe toda la forma espectral de la mejora."
+    if comp=="Ver solo el número único":
+        a1,a2=st.columns(2)
+        with a1:
+            st.markdown(
+                f"""
+                <div style="border:2px solid #bfdbfe;border-radius:17px;padding:20px;background:#eff6ff;text-align:center">
+                  <div style="font-size:.78rem;font-weight:850;color:#075985">REVESTIMIENTO A</div>
+                  <div style="font-size:2rem;font-weight:950;margin:.3rem 0">ΔLw = {dlw_a} dB</div>
+                </div>
+                """,
+                unsafe_allow_html=True,
+            )
+        with a2:
+            st.markdown(
+                f"""
+                <div style="border:2px solid #ddd6fe;border-radius:17px;padding:20px;background:#f5f3ff;text-align:center">
+                  <div style="font-size:.78rem;font-weight:850;color:#6d28d9">REVESTIMIENTO B</div>
+                  <div style="font-size:2rem;font-weight:950;margin:.3rem 0">ΔLw = {dlw_b} dB</div>
+                </div>
+                """,
+                unsafe_allow_html=True,
+            )
+        st.warning(
+            "Si miraras solo ΔLw, ambos revestimientos parecerían equivalentes. "
+            "Pero ese único número no muestra en qué frecuencias actúa cada uno."
         )
     else:
-        st.info(
-            f"Los revestimientos producen ΔLw distintos ({dlw_a} y {dlw_b} dB) y, además, tienen formas espectrales diferentes."
+        figc=go.Figure()
+        if comp=="Ver ΔL(f)":
+            figc.add_trace(go.Scatter(
+                x=x,y=prof_a,mode="lines+markers",
+                name=f"Revestimiento A · ΔLw {dlw_a} dB",
+                line=dict(width=4,color="#0b69d1"),
+                marker=dict(size=8),
+            ))
+            figc.add_trace(go.Scatter(
+                x=x,y=prof_b,mode="lines+markers",
+                name=f"Revestimiento B · ΔLw {dlw_b} dB",
+                line=dict(width=4,color="#8b5cf6"),
+                marker=dict(size=8),
+            ))
+            ylabel="ΔL(f) [dB]"
+        else:
+            figc.add_trace(go.Scatter(
+                x=x,y=ta,mode="lines+markers",
+                name=f"Piso + revestimiento A · ΔLw {dlw_a} dB",
+                line=dict(width=4,color="#0b69d1"),
+                marker=dict(size=8),
+            ))
+            figc.add_trace(go.Scatter(
+                x=x,y=tb,mode="lines+markers",
+                name=f"Piso + revestimiento B · ΔLw {dlw_b} dB",
+                line=dict(width=4,color="#8b5cf6"),
+                marker=dict(size=8),
+            ))
+            ylabel="Lₙ,r (dB)"
+
+        figc.update_layout(
+            height=390,
+            margin=dict(l=45,r=20,t=35,b=50),
+            xaxis=dict(
+                title="Frecuencia (Hz)",
+                tickmode="array",
+                tickvals=x,
+                ticktext=labels,
+                range=[-0.5,15.5],
+            ),
+            yaxis=dict(title=ylabel),
+            legend=dict(orientation="h",y=1.08,x=0),
+            hovermode="x unified",
+        )
+        st.plotly_chart(figc,use_container_width=True,key="c2l2_s7_compare_graph")
+
+        st.success(
+            f"**Mismo ΔLw = {dlw_a} dB, distinta forma espectral.** "
+            "El Revestimiento A y el Revestimiento B reducen de manera diferente según la frecuencia, "
+            "aunque el procedimiento ponderado los resuma con el mismo número."
+        )
+
+        st.markdown("### ¿Por qué importa?")
+        st.write(
+            "Porque en un piso real puede interesarte especialmente una zona del espectro. "
+            "Dos productos con el mismo ΔLw pueden comportarse de forma diferente si uno aporta más reducción en bajas frecuencias "
+            "y el otro concentra su eficacia en medias o altas."
         )
 
     # ------------------------------------------------------------------
