@@ -13537,6 +13537,26 @@ def future_projection_stage_impl(lab, stage):
             _render_course2_lab1_stage10(lab, projection_saved)
             return
 
+    # Curso 2 · Laboratorio 2: Zoom debe utilizar exactamente los mismos
+    # renderizadores especializados que Alumno/Docente. El estado es efímero
+    # porque projection_mode=True impide persistir respuestas en Supabase.
+    if lab.get("id") == _C2L2_CLASS_ID:
+        renderers = [
+            _c2l2_stage0,
+            _c2l2_stage1,
+            _c2l2_stage2,
+            _c2l2_stage3,
+            _c2l2_stage4,
+            _c2l2_stage5,
+            _c2l2_stage6,
+            _c2l2_stage7,
+            _c2l2_stage8,
+            _c2l2_stage9,
+            _c2l2_stage10,
+        ]
+        renderers[stage](lab, projection_saved)
+        return
+
     title, objective, concept, activity = lab["stages"][stage]
     stage_minutes = 20 if stage not in (9, 10) else 35
     header(f"ETAPA {stage} · LABORATORIO {lab['number']}", title, objective)
