@@ -16869,11 +16869,17 @@ def future_lab_view_impl(lab):
 
         role_now=st.session_state.get("role","Alumno")
 
+        # Estado activo de la navegación. Dentro del laboratorio, la tercera
+        # opción permanece destacada; al cambiar de vista el estado se conserva
+        # mediante session_state y la siguiente pantalla marca su acceso activo.
+        active_view=st.session_state.get(future_view_key,current_lab_label)
+
         # Mis clases
         if st.button(
             "📚  Mis clases  ·  Cursos y laboratorios",
             key=f"future_nav_classes_{class_id}",
             use_container_width=True,
+            type="primary" if active_view=="🏠 Mis clases" else "secondary",
             help="Volver al listado de cursos y laboratorios.",
         ):
             st.session_state[future_view_key]="🏠 Mis clases"
@@ -16885,16 +16891,17 @@ def future_lab_view_impl(lab):
         performance_title=(
             "📝  Evaluaciones entregadas  ·  Respuestas y puntajes"
             if role_now=="Docente"
-            else "📊  Mi desempeño  ·  Notas, evaluaciones y progreso"
+            else "📊  Mi desempeño  ·  Evaluaciones, notas y avance formativo"
         )
         if st.button(
             performance_title,
             key=f"future_nav_results_{class_id}",
             use_container_width=True,
+            type="primary" if active_view==results_view_label else "secondary",
             help=(
                 "Revisar entregas y puntajes de estudiantes."
                 if role_now=="Docente"
-                else "Revisar tus notas, evaluaciones y avance."
+                else "Revisar tus evaluaciones, notas y avance formativo."
             ),
         ):
             st.session_state[future_view_key]=results_view_label
@@ -16902,62 +16909,38 @@ def future_lab_view_impl(lab):
             st.session_state["main_view"]=results_view_label
             st.rerun()
 
-        # Vista actual: tarjeta activa, no botón.
-        active_title=(
-            f"Laboratorio {lab['number']} · actividades"
+        lab_nav_title=(
+            f"🧪  Laboratorio {lab['number']}  ·  Ruta y actividades"
             if role_now=="Docente"
-            else "Laboratorios y actividades"
+            else "🧪  Laboratorios y actividades  ·  Ruta y progreso"
         )
-        active_subtitle=(
-            "Ruta, contenidos y actividades de este laboratorio"
-            if role_now=="Docente"
-            else "Actividades realizadas y pendientes"
-        )
-        st.markdown(
-            f"""
-            <div style="
-                border:1px solid #63daf2;
-                border-left:4px solid #63daf2;
-                border-radius:9px;
-                background:linear-gradient(90deg,#0b659c 0%,#0a527f 100%);
-                padding:.62rem .72rem;
-                margin:.35rem 0 .55rem;
-                box-shadow:0 2px 8px rgba(0,0,0,.08);
-            ">
-              <div style="display:flex;align-items:center;gap:.48rem">
-                <span style="font-size:1.05rem">🧪</span>
-                <div>
-                  <div style="font-size:.82rem;font-weight:850;color:#fff">
-                    {active_title}
-                  </div>
-                  <div style="font-size:.69rem;line-height:1.3;color:#cbeefa;margin-top:.08rem">
-                    {active_subtitle}
-                  </div>
-                </div>
-              </div>
-            </div>
-            """,
-            unsafe_allow_html=True,
-        )
+        if st.button(
+            lab_nav_title,
+            key=f"future_nav_lab_{class_id}",
+            use_container_width=True,
+            type="primary",
+            help="Estás en la ruta, contenidos y actividades de este laboratorio.",
+        ):
+            # Ya es la vista activa. El botón mantiene el feedback visual de
+            # pulsación sin alterar la etapa ni el progreso actual.
+            st.session_state[future_view_key]=current_lab_label
 
         st.session_state[future_view_key]=current_lab_label
 
-        total_stages = len(lab["stages"])
+        # La tarjeta global de progreso del diplomado debe estar siempre visible
+        # para el alumno, sin importar el curso o laboratorio que tenga abierto.
+        # Usa exactamente el mismo resumen académico que la navegación principal.
         if st.session_state.get("role") == "Alumno":
-            answered = sum(1 for i in range(total_stages) if saved.get(f"done_{i}"))
-            st.progress(answered / total_stages if total_stages else 0)
-            if class_id == "clase-03-impacto-instalaciones-lab-1":
-                content_completed = sum(1 for i in range(1, total_stages) if saved.get(f"done_{i}"))
-                st.caption(
-                    f"Avance: {answered}/{total_stages} etapas · "
-                    f"{content_completed*10}/100 puntos formativos"
-                )
-            else:
-                st.caption(
-                    f"Avance: {answered}/{total_stages} etapas · "
-                    f"{answered*10}/{total_stages*10} puntos formativos"
-                )
-        elif st.session_state.get("role") == "Docente":
+            student_sidebar_summary(
+                _supabase(),
+                st.session_state.get("user_key", ""),
+            )
+
+        # El avance del alumno se muestra exclusivamente en la tarjeta global
+        # “PROGRESO DEL DIPLOMADO”. Se elimina el indicador local del laboratorio
+        # para evitar duplicidad y métricas contradictorias en la barra lateral.
+        total_stages = len(lab["stages"])
+        if st.session_state.get("role") == "Docente":
             st.caption("Vista docente · el avance y los resultados se revisan desde ‘Evaluaciones entregadas’.")
 
         # Herramientas comunes del diplomado.
