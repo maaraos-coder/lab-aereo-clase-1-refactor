@@ -16096,9 +16096,70 @@ def _c2l2_stage10(lab,saved):
         st.write(f"Curva: {source}")
         st.write(f"Posición límite de referencia: {limit_shift:+d} dB · **Lₙ,w esperado = {expected_lnw} dB**.")
         st.write(f"**C_I esperado = {expected_ci:+d} dB**.")
-        st.write("Bomba: 1450 rpm → fₑ≈24,17 Hz; masa 600 kg; 4 apoyos → 150 kg por apoyo.")
-        st.write("Un aislamiento de base correcto puede ser puenteado por tubería y abrazadera rígidas.")
-        st.write("Cavitación: controlar primero la condición hidráulica/fuente, además de caminos de transmisión.")
+
+        st.markdown("### Bomba · desarrollo del aislamiento vibratorio")
+        st.write("Datos: **1450 rpm · masa 600 kg · 4 apoyos · 150 kg/apoyo**.")
+        st.latex(r"f_e=\frac{n}{60}=\frac{1450}{60}=24.17\ \mathrm{Hz}")
+        st.write(
+            "La componente próxima a 24 Hz es coherente con el **1× de giro** y se usa como frecuencia de excitación "
+            "para evaluar los montajes candidatos."
+        )
+
+        st.markdown("#### Razón de frecuencias")
+        st.latex(r"r=\frac{f_e}{f_n}")
+
+        mounts_doc=[("Montaje A",12.0),("Montaje B",6.0),("Montaje C",3.0)]
+        zeta_doc=0.10
+        rows_doc=[]
+        for name,fn_doc in mounts_doc:
+            r_doc=(1450/60)/fn_doc
+            tf_doc=((1+(2*zeta_doc*r_doc)**2)/(((1-r_doc**2)**2)+(2*zeta_doc*r_doc)**2))**0.5
+            if r_doc <= 1:
+                zone="Resonancia / no aislar"
+            elif r_doc <= 2**0.5:
+                zone="Transición"
+            else:
+                zone="Aislamiento"
+            rows_doc.append({
+                "Montaje":name,
+                "fₙ [Hz]":fn_doc,
+                "r=fₑ/fₙ":round(r_doc,2),
+                "Zona":zone,
+                "T_F (ζ=0,10)":round(tf_doc,3),
+                "Fuerza transmitida ideal [%]":round(tf_doc*100,1),
+            })
+        st.dataframe(pd.DataFrame(rows_doc),hide_index=True,use_container_width=True)
+
+        st.markdown("#### Transmisibilidad de fuerza")
+        st.latex(r"T_F=\sqrt{\frac{1+(2\zeta r)^2}{(1-r^2)^2+(2\zeta r)^2}}")
+        st.caption(
+            "Para comparar los candidatos se adopta ζ = 0,10 como valor didáctico. "
+            "No representa necesariamente el amortiguamiento real de un aislador comercial."
+        )
+        st.markdown(
+            """
+            - **r ≈ 1:** proximidad a resonancia; puede existir amplificación.
+            - **1 < r ≤ √2:** zona de transición.
+            - **r > √2:** comienza la región de aislamiento en el modelo ideal.
+            - **T_F < 1:** la fuerza transmitida por la base es menor que la fuerza excitadora idealizada.
+            """
+        )
+
+        r_c=(1450/60)/3.0
+        tf_c=((1+(2*zeta_doc*r_c)**2)/(((1-r_c**2)**2)+(2*zeta_doc*r_c)**2))**0.5
+        st.success(
+            f"**Montaje C:** r ≈ {r_c:.2f} y T_F ≈ {tf_c:.3f}. "
+            f"En el modelo ideal transmitiría aproximadamente **{tf_c*100:.1f}%** de la fuerza dinámica por la base; "
+            "es el mejor de los tres candidatos evaluados para ese camino."
+        )
+        st.warning(
+            "Esta conclusión solo controla el camino **bomba → base → estructura**. Una tubería rígida y una abrazadera "
+            "pueden puentear los aisladores mediante **bomba → tubería → abrazadera → estructura**."
+        )
+        st.write(
+            "Si existen indicios de cavitación o condición hidráulica anómala, debe controlarse primero la **fuente hidráulica/NPSH**, "
+            "además de los caminos de transmisión."
+        )
         st.markdown("### Pauta de comprensión · 20 puntos")
         for i,q in enumerate(_C2L2_S10_Q,1):
             with st.container(border=True):
