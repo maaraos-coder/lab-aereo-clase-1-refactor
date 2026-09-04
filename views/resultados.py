@@ -516,17 +516,17 @@ def student_sidebar_summary(client, user_key):
           </div>
 
           <div style="display:flex;justify-content:space-between;gap:.5rem;font-size:.82rem;margin-top:.35rem">
-            <span>Curso 2 · Lab 1 puntajes</span><b>{c2_lab1_delivered}/2</b>
+            <span>Curso 2 · avance formativo</span><b>{c2_lab1_delivered}/2</b>
           </div>
 
           <div style="display:flex;justify-content:space-between;gap:.5rem;font-size:.82rem;margin-top:.35rem">
-            <span>Curso 2 · Lab 2 evaluaciones</span><b>{c2_lab2_delivered}/2</b>
+            <span>Curso 2 · evaluaciones</span><b>{c2_lab2_delivered}/2</b>
           </div>
 
           <hr style="border:0;border-top:1px solid rgba(255,255,255,.25);margin:.6rem 0">
 
           <div style="font-size:.78rem;color:#d9f5ff">
-            Las notas oficiales se muestran dentro de cada curso.
+            Curso 1 y Curso 2 muestran la misma estructura: evaluaciones y avance formativo. Las notas oficiales se muestran dentro de cada curso.
           </div>
         </div>
         """,
