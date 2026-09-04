@@ -15784,7 +15784,7 @@ def _c2l2_stage9_save(saved):
     if projection_mode:
         return
     saved["c2l2_e9_started_at"]=st.session_state.get("c2l2_e9_started_at")
-    saved["c2l2_e9_deadline"]=st.session_state.get("c2l2_e9_deadline")
+    saved.pop("c2l2_e9_deadline",None)
     saved["c2l2_e9_answers"]={str(i):st.session_state.get(f"c2l2_e9_q{i}") for i in range(10)}
     saved["updated_9"]=_now()
     _save_future_state(_C2L2_CLASS_ID,saved)
@@ -15821,59 +15821,74 @@ def _c2l2_stage9(lab,saved):
     _c2l2_stage_header(
         9,
         "EVALUACIÓN FINAL · PREGUNTAS DE COMPRENSIÓN",
-        "Diez preguntas · 20 minutos · 40 puntos · un intento."
+        "Diez preguntas · 40 puntos · un envío definitivo."
     )
 
-    # Estilo exclusivo de la Etapa 9:
-    # agranda solamente las alternativas del área principal, sin tocar sidebar,
-    # títulos, métricas ni radios de otras páginas.
+    # Estilo exclusivo de la Etapa 9.
+    # Se limita al contenido principal (stMain) para no alterar el sidebar.
     st.markdown(
         """
         <style>
-        section.main div[data-testid="stRadio"] div[role="radiogroup"] {
-            gap: 0.52rem !important;
+        /* Separación entre alternativas */
+        [data-testid="stMain"] [data-testid="stRadio"] [role="radiogroup"] {
+            gap: 0.65rem !important;
         }
 
-        section.main div[data-testid="stRadio"] div[role="radiogroup"] > label {
-            min-height: 42px !important;
-            padding: 7px 10px !important;
-            border-radius: 10px !important;
+        /* Fila completa de cada alternativa */
+        [data-testid="stMain"] [data-testid="stRadio"] [role="radiogroup"] > label {
+            min-height: 48px !important;
+            padding: 9px 12px !important;
+            border-radius: 11px !important;
+            display: flex !important;
             align-items: center !important;
+            cursor: pointer !important;
         }
 
-        section.main div[data-testid="stRadio"] div[role="radiogroup"] > label:hover {
-            background: rgba(15, 105, 209, 0.055) !important;
+        [data-testid="stMain"] [data-testid="stRadio"] [role="radiogroup"] > label:hover {
+            background: rgba(15, 105, 209, 0.06) !important;
         }
 
-        section.main div[data-testid="stRadio"] div[role="radiogroup"] > label p,
-        section.main div[data-testid="stRadio"] div[role="radiogroup"] > label span {
-            font-size: 17px !important;
-            line-height: 1.42 !important;
+        /* Texto de las alternativas: cubre distintas versiones del DOM de Streamlit */
+        [data-testid="stMain"] [data-testid="stRadio"] [role="radiogroup"] label p,
+        [data-testid="stMain"] [data-testid="stRadio"] [role="radiogroup"] label span,
+        [data-testid="stMain"] [data-testid="stRadio"] [role="radiogroup"] label div {
+            font-size: 18px !important;
+            line-height: 1.48 !important;
         }
 
-        section.main div[data-testid="stRadio"] div[role="radiogroup"] > label > div:first-child {
-            transform: scale(1.18);
-            transform-origin: center;
-            margin-right: 7px !important;
+        /* Círculo del radio */
+        [data-testid="stMain"] [data-testid="stRadio"] [role="radiogroup"] label
+        [data-testid="stMarkdownContainer"] {
+            margin-left: 5px !important;
         }
 
+        [data-testid="stMain"] [data-testid="stRadio"] [role="radiogroup"] label
+        > div:first-child {
+            transform: scale(1.28) !important;
+            transform-origin: center !important;
+            margin-right: 9px !important;
+        }
+
+        /* Móvil/tablet */
         @media (max-width: 900px) {
-            section.main div[data-testid="stRadio"] div[role="radiogroup"] > label p,
-            section.main div[data-testid="stRadio"] div[role="radiogroup"] > label span {
-                font-size: 16px !important;
+            [data-testid="stMain"] [data-testid="stRadio"] [role="radiogroup"] > label {
+                min-height: 46px !important;
+                padding: 8px 9px !important;
             }
 
-            section.main div[data-testid="stRadio"] div[role="radiogroup"] > label {
-                min-height: 40px !important;
-                padding: 6px 8px !important;
+            [data-testid="stMain"] [data-testid="stRadio"] [role="radiogroup"] label p,
+            [data-testid="stMain"] [data-testid="stRadio"] [role="radiogroup"] label span,
+            [data-testid="stMain"] [data-testid="stRadio"] [role="radiogroup"] label div {
+                font-size: 17px !important;
             }
         }
         </style>
         """,
         unsafe_allow_html=True,
     )
+
     st.info(
-        "10 preguntas · 4 puntos cada una · 20 minutos continuos. "
+        "10 preguntas · 4 puntos cada una · 40 puntos en total. "
         "En Alumno las respuestas se guardan automáticamente mientras avanzas."
     )
 
@@ -15937,42 +15952,32 @@ def _c2l2_stage9(lab,saved):
     if not projection_mode and "c2l2_e9_started_at" not in st.session_state:
         if saved.get("c2l2_e9_started_at"):
             st.session_state["c2l2_e9_started_at"]=saved.get("c2l2_e9_started_at")
-            st.session_state["c2l2_e9_deadline"]=saved.get("c2l2_e9_deadline")
             for i,v in (saved.get("c2l2_e9_answers") or {}).items():
                 st.session_state.setdefault(f"c2l2_e9_q{i}",v)
 
-    # Abrir evaluación directamente: el reloj inicia al entrar por primera vez.
+    # La evaluación queda abierta directamente. No existe cronómetro ni caducidad.
     if not st.session_state.get("c2l2_e9_started_at"):
         now=dt.datetime.now(dt.timezone.utc)
         st.session_state["c2l2_e9_started_at"]=now.isoformat()
-        st.session_state["c2l2_e9_deadline"]=(now+dt.timedelta(minutes=20)).isoformat()
         if not projection_mode:
             _c2l2_stage9_save(saved)
 
-    deadline=dt.datetime.fromisoformat(str(st.session_state["c2l2_e9_deadline"]).replace("Z","+00:00"))
-    now=dt.datetime.now(dt.timezone.utc)
-    remaining=max(0,int((deadline-now).total_seconds()))
-
-    t1,t2,t3=st.columns(3)
-    t1.metric("Tiempo restante",f"{remaining//60:02d}:{remaining%60:02d}")
     answered=sum(st.session_state.get(f"c2l2_e9_q{i}") is not None for i in range(10))
-    t2.metric("Respondidas",f"{answered}/10")
-    t3.metric("Puntaje máximo","40 puntos")
+
+    t1,t2=st.columns(2)
+    t1.metric("Respondidas",f"{answered}/10")
+    t2.metric("Puntaje máximo","40 puntos")
 
     if not projection_mode:
         st.success(
-            "Tus respuestas se guardan automáticamente. Puedes salir de esta etapa y volver mientras queden minutos; "
-            "el cronómetro **no se reinicia**."
+            "Tus respuestas se guardan automáticamente. Puedes salir de esta etapa y continuar después "
+            "hasta realizar el **envío definitivo**."
         )
     else:
-        st.info("Vista Zoom: evaluación abierta para trabajo en clase. Esta vista no guarda respuestas en Supabase.")
-
-    if remaining<=0:
-        if projection_mode:
-            st.error("Tiempo finalizado en Vista Zoom.")
-            return
-        _c2l2_stage9_finish(saved,"timeout")
-        st.rerun()
+        st.info(
+            "Vista Zoom: evaluación abierta para trabajo en clase. "
+            "Esta vista no guarda respuestas en Supabase."
+        )
 
     for i,q in enumerate(_C2L2_STAGE9_QUESTIONS):
         with st.container(border=True):
