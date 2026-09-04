@@ -16068,6 +16068,8 @@ def _c2l2_s10_finish(saved,payload,score):
 
 
 def _c2l2_stage10(lab,saved):
+    role=st.session_state.get("role","Alumno")
+    projection_mode=bool(st.session_state.get("projection_mode") or role=="Proyección")
     curve,source=_c2l2_floor_curve()
     expected_lnw,limit_shift=_c2l2_lnw(curve)
     expected_ci,_=_c2l2_ci(curve,expected_lnw,False)
@@ -16652,13 +16654,87 @@ def _c2l2_stage10(lab,saved):
     design_score=sum(5 for x in design_checks if x)  # 8 x 5 = 40
 
     st.markdown("## Preguntas de comprensión · 20 puntos")
+    st.write(
+        "Estas cinco preguntas comprueban si puedes **interpretar el caso completo**, no solo repetir cálculos. "
+        "Cada pregunta vale 4 puntos."
+    )
+
+    # Estilo localizado al área principal de las preguntas de Etapa 10.
+    st.markdown(
+        """
+        <style>
+        [data-testid="stMain"] [data-testid="stRadio"] [role="radiogroup"] {
+            gap: .55rem !important;
+        }
+        [data-testid="stMain"] [data-testid="stRadio"] [role="radiogroup"] > label {
+            min-height: 46px !important;
+            padding: 8px 11px !important;
+            border-radius: 10px !important;
+            display: flex !important;
+            align-items: center !important;
+        }
+        [data-testid="stMain"] [data-testid="stRadio"] [role="radiogroup"] > label:hover {
+            background: rgba(15,105,209,.055) !important;
+        }
+        [data-testid="stMain"] [data-testid="stRadio"] [role="radiogroup"] label p,
+        [data-testid="stMain"] [data-testid="stRadio"] [role="radiogroup"] label span {
+            font-size: 17px !important;
+            line-height: 1.45 !important;
+        }
+        </style>
+        """,
+        unsafe_allow_html=True,
+    )
+
     answers={}
     correct_count=0
+
     for i,q in enumerate(_C2L2_S10_Q):
-        v=st.radio(f"{i+1}. {q[0]}",q[1],index=None,key=f"c2l2_s10_q{i}")
-        answers[str(i)]=v
-        correct_count+=int(v==q[1][q[2]])
+        with st.container(border=True):
+            h1,h2=st.columns([7,1])
+            with h1:
+                st.markdown(f"### {i+1}. {q[0]}")
+            with h2:
+                st.markdown(
+                    '<div style="text-align:center;border:1px solid #bfdbfe;'
+                    'border-radius:10px;padding:6px 8px;background:#eff6ff;'
+                    'font-weight:800;color:#075985">4 pts</div>',
+                    unsafe_allow_html=True
+                )
+
+            if role=="Docente" and not projection_mode:
+                for j,opt in enumerate(q[1]):
+                    if j==q[2]:
+                        st.success("✓ "+opt)
+                    else:
+                        st.write("○ "+opt)
+                st.caption(
+                    "Pauta: esta alternativa es la que mejor integra el concepto trabajado en el caso."
+                )
+                answers[str(i)]=q[1][q[2]]
+                correct_count+=1
+            else:
+                prev=saved.get("c2l2_s10_answers",{}) if isinstance(saved.get("c2l2_s10_answers"),dict) else {}
+                prev_choice=prev.get(str(i))
+                idx=q[1].index(prev_choice) if prev_choice in q[1] else None
+
+                v=st.radio(
+                    "Selecciona una alternativa",
+                    q[1],
+                    index=idx,
+                    key=f"c2l2_s10_q{i}",
+                    label_visibility="collapsed",
+                )
+                answers[str(i)]=v
+                correct_count+=int(v==q[1][q[2]])
+
     comprehension_score=correct_count*4
+
+    # Guardado automático del borrador de respuestas en Alumno.
+    if role=="Alumno":
+        saved["c2l2_s10_answers"]=answers
+        saved["updated_10"]=_now()
+        _save_future_state(_C2L2_CLASS_ID,saved)
     total=design_score+comprehension_score
     c1,c2,c3=st.columns(3)
     c1.metric("Desarrollo técnico",f"{design_score}/40")
