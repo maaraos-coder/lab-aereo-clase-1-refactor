@@ -13507,31 +13507,83 @@ def _c2l2_stage4(lab,saved):
     )
     st.plotly_chart(fig_ch,use_container_width=True,key="c2l2_s4_challenge_graph")
 
-    # Guardar la mejor propuesta de la sesión.
-    if challenge_lnw<=target and challenge_cost>0:
-        best=st.session_state.get("c2l2_s4_best_design")
-        candidate={
-            "low":ch_low,
-            "mid":ch_mid,
-            "high":ch_high,
-            "lnw":challenge_lnw,
-            "cost":challenge_cost,
-            "improvement":challenge_improvement,
-        }
-        if not isinstance(best,dict) or challenge_cost<best.get("cost",10**9):
-            st.session_state["c2l2_s4_best_design"]=candidate
+    # En Alumno/Zoom NO se muestra una solución óptima, para no revelar la respuesta.
+    # La pauta docente calcula exhaustivamente las 11×11×11 combinaciones posibles
+    # y muestra el costo mínimo real que alcanza la meta.
+    if role=="Docente" and not projection_mode:
+        st.markdown("---")
+        st.markdown("### Pauta docente · solución de menor costo")
 
-    best=st.session_state.get("c2l2_s4_best_design")
-    if isinstance(best,dict):
-        st.markdown("### Mejor propuesta encontrada en esta sesión")
-        b1,b2,b3,b4=st.columns(4)
-        b1.metric("Bajas",f"{best['low']} dB")
-        b2.metric("Medias",f"{best['mid']} dB")
-        b3.metric("Altas",f"{best['high']} dB")
-        b4.metric("Costo mínimo logrado",f"{best['cost']} puntos")
-        st.caption(
-            f"Resultado: Lₙ,w = {best['lnw']} dB · mejora = {best['improvement']} dB."
-        )
+        optimal=[]
+        min_cost=None
+
+        for low_db in range(0,11):
+            for mid_db in range(0,11):
+                for high_db in range(0,11):
+                    test_curve=[]
+                    for f,v in zip(_C2L2_FREQS,curve):
+                        if 100<=f<=315:
+                            r=low_db
+                        elif 400<=f<=800:
+                            r=mid_db
+                        else:
+                            r=high_db
+                        test_curve.append(float(v)-float(r))
+
+                    test_lnw,_=_c2l2_lnw(test_curve)
+                    test_cost=3*low_db + 2*mid_db + high_db
+
+                    if test_lnw<=target:
+                        candidate={
+                            "low":low_db,
+                            "mid":mid_db,
+                            "high":high_db,
+                            "lnw":test_lnw,
+                            "cost":test_cost,
+                            "improvement":int(base_lnw-test_lnw),
+                        }
+                        if min_cost is None or test_cost<min_cost:
+                            min_cost=test_cost
+                            optimal=[candidate]
+                        elif test_cost==min_cost:
+                            optimal.append(candidate)
+
+        if optimal:
+            best=optimal[0]
+            st.success(
+                f"**Costo mínimo para alcanzar Lₙ,w ≤ {target} dB: {best['cost']} puntos.**"
+            )
+
+            b1,b2,b3,b4=st.columns(4)
+            b1.metric("Bajas",f"{best['low']} dB")
+            b2.metric("Medias",f"{best['mid']} dB")
+            b3.metric("Altas",f"{best['high']} dB")
+            b4.metric("Resultado",f"Lₙ,w = {best['lnw']} dB")
+
+            if len(optimal)>1:
+                st.info(
+                    f"Existen **{len(optimal)} combinaciones** con el mismo costo mínimo. "
+                    "Puedes aceptar cualquiera de ellas como solución óptima."
+                )
+
+                rows=[
+                    {
+                        "Bajas [dB]":o["low"],
+                        "Medias [dB]":o["mid"],
+                        "Altas [dB]":o["high"],
+                        "Lₙ,w [dB]":o["lnw"],
+                        "Costo [puntos]":o["cost"],
+                    }
+                    for o in optimal
+                ]
+                st.dataframe(pd.DataFrame(rows),hide_index=True,use_container_width=True)
+
+            st.caption(
+                "Esta pauta solo aparece en Vista Docente. "
+                "Úsala para comparar las propuestas de los alumnos y preguntar quién logró la meta con menos puntos."
+            )
+        else:
+            st.warning("No se encontró una combinación dentro de 0–10 dB por zona que alcance la meta.")
 
     if st.button(
         "REINICIAR DESAFÍO",
@@ -13545,7 +13597,6 @@ def _c2l2_stage4(lab,saved):
             "c2l2_s4_ch_low_slider",
             "c2l2_s4_ch_mid_slider",
             "c2l2_s4_ch_high_slider",
-            "c2l2_s4_best_design",
         ]:
             st.session_state.pop(k,None)
         st.rerun()
