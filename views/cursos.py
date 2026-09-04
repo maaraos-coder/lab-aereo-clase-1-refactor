@@ -13931,29 +13931,87 @@ def _c2l2_stage5(lab,saved):
     )
 
     # ------------------------------------------------------------------
-    # 6 · ACTIVIDAD DE CÁLCULO
+    # 6 · ACTIVIDAD DE CÁLCULO E INTERPRETACIÓN
     # ------------------------------------------------------------------
-    st.markdown("## 6 · Comprueba que puedes construir Cᵢ")
+    st.markdown("## 6 · Construye Cᵢ paso a paso")
     st.write(
-        "Usa los tres valores del bloque anterior. No necesitas volver a sumar banda por banda: "
-        "la tarea es demostrar que entiendes cómo se combinan Lₙ,sum, la constante 15 y Lₙ,w."
+        "Ahora no basta con escribir el resultado final. La idea es que comprendas "
+        "**de dónde sale Cᵢ, cómo se combina con Lₙ,w y cómo se reporta correctamente**."
     )
+
+    st.markdown("### Paso 1 · Identifica los datos")
+    d1,d2,d3=st.columns(3)
+    d1.metric("Lₙ,sum",f"{lsum:.1f} dB")
+    d2.metric("Lₙ,w",f"{lnw} dB")
+    d3.metric("Constante ISO","15 dB")
+
+    st.caption(
+        f"Para este ejercicio, Lₙ,sum = {lsum:.1f} dB se redondea a {rounded_lsum} dB antes de construir Cᵢ."
+    )
+
+    st.markdown("### Paso 2 · Completa la expresión")
+    st.latex(r"C_I=L_{n,\mathrm{sum}}-15-L_{n,w}")
 
     if role=="Docente" and not projection_mode:
         st.info(
-            f"**Pauta docente:** Lₙ,sum = {lsum:.1f} dB → redondeado {rounded_lsum} dB; "
-            f"Lₙ,w = {lnw} dB; por tanto Cᵢ = {rounded_lsum} − 15 − {lnw} = **{ci:+d} dB**."
+            f"**Pauta docente:** Cᵢ = {rounded_lsum} − 15 − {lnw} = **{ci:+d} dB**."
+        )
+    else:
+        c1,c2=st.columns(2)
+        with c1:
+            val_lsum=st.number_input(
+                "Lₙ,sum redondeado [dB]",
+                min_value=0,max_value=120,value=0,step=1,
+                key="c2l2_s5_lsum_input",
+            )
+        with c2:
+            val_lnw=st.number_input(
+                "Lₙ,w [dB]",
+                min_value=0,max_value=120,value=0,step=1,
+                key="c2l2_s5_lnw_input",
+            )
+
+        if st.button(
+            "COMPROBAR DATOS",
+            key="c2l2_s5_check_inputs",
+            use_container_width=True,
+        ):
+            ok_inputs=(int(val_lsum)==rounded_lsum and int(val_lnw)==lnw)
+            st.session_state["c2l2_s5_inputs_ok"]=ok_inputs
+
+        if st.session_state.get("c2l2_s5_inputs_ok") is True:
+            st.success(
+                f"Correcto. Debes usar **{rounded_lsum} dB** para Lₙ,sum y **{lnw} dB** para Lₙ,w."
+            )
+        elif st.session_state.get("c2l2_s5_inputs_ok") is False:
+            st.warning(
+                "Revisa los datos del bloque anterior. Lₙ,sum debe usarse redondeado y Lₙ,w corresponde al descriptor ponderado."
+            )
+
+    st.markdown("### Paso 3 · Calcula Cᵢ")
+    if role=="Docente" and not projection_mode:
+        st.markdown(
+            f"""
+            <div style="border:2px solid #bbf7d0;border-radius:16px;padding:16px 18px;background:#f0fdf4;margin:.55rem 0 .9rem">
+              <div style="font-size:.78rem;font-weight:850;color:#166534">DESARROLLO</div>
+              <div style="font-size:1.25rem;margin-top:.35rem">Cᵢ = {rounded_lsum} − 15 − {lnw}</div>
+              <div style="font-size:1.85rem;font-weight:900;color:#14532d;margin-top:.25rem">Cᵢ = {ci:+d} dB</div>
+            </div>
+            """,
+            unsafe_allow_html=True,
         )
     else:
         ans=st.number_input(
             "Tu resultado para Cᵢ [dB]",
-            min_value=-30,
-            max_value=30,
-            value=0,
-            step=1,
+            min_value=-30,max_value=30,value=0,step=1,
             key="c2l2_s5_ci",
         )
-        if st.button("COMPROBAR Cᵢ",key="c2l2_s5_check",type="primary",use_container_width=True):
+        if st.button(
+            "COMPROBAR Cᵢ",
+            key="c2l2_s5_check",
+            type="primary",
+            use_container_width=True,
+        ):
             result={"answer":int(ans),"correct":int(ans)==ci,"updated_at":_now()}
             if projection_mode:
                 st.session_state["c2l2_s5_projection_result"]=result
@@ -13971,22 +14029,164 @@ def _c2l2_stage5(lab,saved):
         if isinstance(result,dict):
             if result.get("correct"):
                 st.success(
-                    f"✓ Correcto. Lₙ,sum ≈ {lsum:.1f} dB → {rounded_lsum} dB; "
-                    f"Cᵢ = {rounded_lsum} − 15 − {lnw} = **{ci:+d} dB**."
+                    f"✓ Correcto. Cᵢ = {rounded_lsum} − 15 − {lnw} = **{ci:+d} dB**."
                 )
-                if role=="Alumno":
+            else:
+                st.warning(
+                    f"Revisa el orden: Cᵢ = Lₙ,sum − 15 − Lₙ,w = {rounded_lsum} − 15 − {lnw}."
+                )
+
+    # ------------------------------------------------------------------
+    # 7 · CÓMO SE REPORTA EN LA PRÁCTICA
+    # ------------------------------------------------------------------
+    st.markdown("## 7 · ¿Cómo se reporta finalmente?")
+    st.write(
+        "El resultado principal y el término de adaptación se mantienen **separados pero asociados**. "
+        "La forma más clara de reportarlo es mostrar ambos valores juntos."
+    )
+
+    st.markdown(
+        f"""
+        <div style="display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px;margin:.65rem 0 1rem">
+          <div style="border:2px solid #bfdbfe;border-radius:17px;padding:17px;background:#eff6ff;text-align:center">
+            <div style="font-size:.76rem;font-weight:850;color:#075985">RESULTADO PRINCIPAL</div>
+            <div style="font-size:1.9rem;font-weight:900;margin:.3rem 0">Lₙ,w = {lnw} dB</div>
+          </div>
+          <div style="border:2px solid #bbf7d0;border-radius:17px;padding:17px;background:#f0fdf4;text-align:center">
+            <div style="font-size:.76rem;font-weight:850;color:#166534">ADAPTACIÓN ESPECTRAL</div>
+            <div style="font-size:1.9rem;font-weight:900;margin:.3rem 0">Cᵢ = {ci:+d} dB</div>
+          </div>
+          <div style="border:2px solid #dbe4ee;border-radius:17px;padding:17px;background:#fff;text-align:center">
+            <div style="font-size:.76rem;font-weight:850;color:#475569">EXPRESIÓN CONJUNTA</div>
+            <div style="font-size:1.9rem;font-weight:900;margin:.3rem 0">{lnw} ({ci:+d}) dB</div>
+          </div>
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
+
+    st.markdown("### Lectura para una persona no especialista")
+    st.markdown(
+        f"""
+        > **“El piso presenta un nivel de impacto ponderado de {lnw} dB y un término de adaptación espectral Cᵢ de {ci:+d} dB.”**
+        """
+    )
+
+    st.info(
+        f"Esto **no significa automáticamente** que el piso pase de {lnw} dB a {lnw+ci} dB. "
+        "Lₙ,w sigue siendo el descriptor principal y Cᵢ es información espectral complementaria."
+    )
+
+    st.markdown("### ¿Y cuándo podría aparecer una suma?")
+    st.write(
+        "Si un reglamento, especificación o criterio de evaluación decide considerar expresamente el término de adaptación, "
+        "puede trabajar con una combinación del tipo:"
+    )
+    st.latex(r"L_{n,w}+C_I")
+    st.write(
+        f"En este ejemplo numérico: **{lnw} + ({ci:+d}) = {lnw+ci} dB**. "
+        "Pero esa suma solo debe utilizarse cuando el criterio aplicable lo establezca; "
+        "no debes reemplazar por tu cuenta Lₙ,w por ese valor."
+    )
+
+    # ------------------------------------------------------------------
+    # 8 · INTERPRETACIÓN PARA NO INGENIEROS
+    # ------------------------------------------------------------------
+    st.markdown("## 8 · ¿Cómo interpretar Cᵢ sin ser ingeniero?")
+    st.markdown(
+        """
+        <div style="display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;margin:.55rem 0 .9rem">
+          <div style="border:1px solid #dbe4ee;border-radius:15px;padding:14px;background:#fff">
+            <b>Lₙ,w</b><br><br>
+            Es la “nota principal” del piso frente al ruido de impacto.
+          </div>
+          <div style="border:1px solid #dbe4ee;border-radius:15px;padding:14px;background:#fff">
+            <b>Cᵢ</b><br><br>
+            Es una “nota complementaria” sobre la forma del espectro que Lₙ,w no muestra por completo.
+          </div>
+          <div style="border:1px solid #dbe4ee;border-radius:15px;padding:14px;background:#fff">
+            <b>Juntos</b><br><br>
+            Permiten describir no solo cuánto vale el resultado ponderado, sino también cómo se comporta espectralmente.
+          </div>
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
+
+    st.warning(
+        "**No interpretes el signo como bueno o malo por sí solo.** "
+        "Un Cᵢ negativo no significa una mejora negativa y un Cᵢ positivo no significa una penalización automática. "
+        "Debe leerse como información adicional sobre la forma espectral."
+    )
+
+    # ------------------------------------------------------------------
+    # 9 · ACTIVIDAD DE REPORTE
+    # ------------------------------------------------------------------
+    st.markdown("## 9 · Elige la forma correcta de reportarlo")
+    q="¿Cuál es la forma más correcta de comunicar este resultado?"
+    opts=[
+        f"El piso tiene {lnw+ci} dB porque Cᵢ siempre debe sumarse a Lₙ,w.",
+        f"El piso presenta Lₙ,w = {lnw} dB y Cᵢ = {ci:+d} dB; ambos se informan asociados, y la suma solo se usa si el criterio aplicable lo exige.",
+        f"Cᵢ = {ci:+d} dB reemplaza a Lₙ,w porque contiene más información espectral.",
+    ]
+    correct=opts[1]
+
+    if role=="Docente" and not projection_mode:
+        st.success("Pauta docente: "+correct)
+    else:
+        previous=(
+            saved.get("c2l2_s5_report")
+            if isinstance(saved.get("c2l2_s5_report"),dict)
+            else {}
+        )
+        prev_choice=previous.get("choice")
+        idx=opts.index(prev_choice) if prev_choice in opts else None
+        choice=st.radio(
+            q,opts,index=idx,
+            key="c2l2_s5_report_choice",
+        )
+        if st.button(
+            "COMPROBAR REPORTE",
+            key="c2l2_s5_report_check",
+            use_container_width=True,
+        ):
+            report_result={"choice":choice,"correct":choice==correct,"updated_at":_now()}
+            if projection_mode:
+                st.session_state["c2l2_s5_report_projection"]=report_result
+            else:
+                saved["c2l2_s5_report"]=report_result
+                saved["updated_5"]=_now()
+                _save_future_state(_C2L2_CLASS_ID,saved)
+            st.rerun()
+
+        report_result=(
+            st.session_state.get("c2l2_s5_report_projection")
+            if projection_mode
+            else saved.get("c2l2_s5_report")
+        )
+        if isinstance(report_result,dict):
+            if report_result.get("correct"):
+                st.success(
+                    "✓ Correcto. El resultado principal y el término espectral se reportan asociados, "
+                    "sin interpretar Cᵢ como una mejora directa."
+                )
+                calc_result=(
+                    st.session_state.get("c2l2_s5_projection_result")
+                    if projection_mode
+                    else saved.get("c2l2_s5_result")
+                )
+                if role=="Alumno" and isinstance(calc_result,dict) and calc_result.get("correct"):
                     saved["c2l2_ci"]=ci
                     _c2l2_finish_stage(saved,5)
             else:
                 st.warning(
-                    f"Revisa el orden: primero redondea Lₙ,sum a {rounded_lsum} dB y después calcula "
-                    f"Cᵢ = Lₙ,sum − 15 − Lₙ,w."
+                    "Recuerda: Lₙ,w sigue siendo el descriptor principal. Cᵢ lo complementa; no lo reemplaza ni se suma automáticamente."
                 )
 
     # ------------------------------------------------------------------
-    # 7 · PUENTE A BAJAS FRECUENCIAS
+    # 10 · PUENTE A BAJAS FRECUENCIAS
     # ------------------------------------------------------------------
-    st.markdown("## 7 · Qué falta por mirar")
+    st.markdown("## 10 · Qué falta por mirar")
     st.success(
         "Cᵢ utiliza aquí 100–2500 Hz. En la Etapa 6 ampliaremos el análisis incorporando **50, 63 y 80 Hz** "
         "para construir Cᵢ,50–2500 y observar cuánto pueden cambiar las conclusiones cuando incluimos las frecuencias más bajas."
