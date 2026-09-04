@@ -13113,32 +13113,39 @@ def _c2l2_stage4(lab,saved):
     # --------------------------------------------------------------
     st.markdown("## 2 · Diseña una intervención")
     st.write(
-        "Aplica una reducción idealizada por zona. Los controles representan una modificación del espectro, "
-        "no una solución constructiva específica."
+        "Cada control representa una **reducción hipotética del nivel de impacto, en dB**, aplicada por igual "
+        "a todas las bandas de la zona seleccionada. No representa espesor, masa, ΔLw ni un material específico."
+    )
+    st.info(
+        "Ejemplo: si eliges **6 dB en bajas frecuencias**, la app resta 6 dB a cada banda entre 100 y 315 Hz "
+        "antes de volver a calcular Lₙ,w."
     )
 
     low,mid,high=st.columns(3)
     with low:
         red_low=st.slider(
-            "Reducción en bajas · 100–315 Hz",
+            "Mejora espectral aplicada en bajas [dB] · 100–315 Hz",
             0,10,0,1,
             key="c2l2_s4_red_low",
-            help="Reduce por igual las bandas entre 100 y 315 Hz."
+            help="Reducción hipotética aplicada a todas las bandas entre 100 y 315 Hz."
         )
+        st.caption(f"Se restan **{red_low} dB** a cada banda entre 100 y 315 Hz.")
     with mid:
         red_mid=st.slider(
-            "Reducción en medias · 400–800 Hz",
+            "Mejora espectral aplicada en medias [dB] · 400–800 Hz",
             0,10,0,1,
             key="c2l2_s4_red_mid",
-            help="Reduce por igual las bandas entre 400 y 800 Hz."
+            help="Reducción hipotética aplicada a todas las bandas entre 400 y 800 Hz."
         )
+        st.caption(f"Se restan **{red_mid} dB** a cada banda entre 400 y 800 Hz.")
     with high:
         red_high=st.slider(
-            "Reducción en altas · 1000–3150 Hz",
+            "Mejora espectral aplicada en altas [dB] · 1000–3150 Hz",
             0,10,0,1,
             key="c2l2_s4_red_high",
-            help="Reduce por igual las bandas entre 1000 y 3150 Hz."
+            help="Reducción hipotética aplicada a todas las bandas entre 1000 y 3150 Hz."
         )
+        st.caption(f"Se restan **{red_high} dB** a cada banda entre 1000 y 3150 Hz.")
 
     modified=[]
     applied=[]
@@ -13160,47 +13167,54 @@ def _c2l2_stage4(lab,saved):
     # --------------------------------------------------------------
     st.markdown("## 3 · Observa cómo cambia la forma del espectro")
 
+    freq_labels=[str(f) for f in _C2L2_FREQS]
     fig=go.Figure()
     fig.add_trace(go.Scatter(
-        x=_C2L2_FREQS,y=curve,
+        x=freq_labels,y=curve,
         mode="lines+markers",
         name="Espectro original",
         line=dict(width=4,color="#64748b"),
         marker=dict(size=8),
     ))
     fig.add_trace(go.Scatter(
-        x=_C2L2_FREQS,y=modified,
+        x=freq_labels,y=modified,
         mode="lines+markers",
         name="Espectro intervenido",
         line=dict(width=4,color="#0b69d1"),
         marker=dict(size=8),
     ))
 
-    # Zonas espectrales como fondos suaves.
-    fig.add_vrect(x0=95,x1=350,fillcolor="#fef3c7",opacity=.22,line_width=0,annotation_text="Bajas",annotation_position="top left")
-    fig.add_vrect(x0=360,x1=900,fillcolor="#dbeafe",opacity=.20,line_width=0,annotation_text="Medias",annotation_position="top left")
-    fig.add_vrect(x0=920,x1=3400,fillcolor="#ede9fe",opacity=.20,line_width=0,annotation_text="Altas",annotation_position="top left")
-
+    # El eje usa categorías de tercio de octava para que las 16 bandas
+    # queden espaciadas uniformemente y sean fáciles de comparar.
     fig.update_layout(
         height=470,
-        margin=dict(l=45,r=20,t=45,b=55),
+        margin=dict(l=45,r=20,t=70,b=55),
         xaxis=dict(
             title="Frecuencia (Hz)",
-            type="log",
-            tickmode="array",
-            tickvals=_C2L2_FREQS,
-            ticktext=[str(f) for f in _C2L2_FREQS],
+            type="category",
+            categoryorder="array",
+            categoryarray=freq_labels,
+            tickangle=0,
         ),
         yaxis=dict(title="Nivel de impacto (dB)"),
-        legend=dict(orientation="h",y=1.08,x=0),
+        legend=dict(orientation="h",y=1.12,x=0),
         hovermode="x unified",
     )
+
+    # Etiquetas de zonas sin deformar el eje.
+    fig.add_annotation(x="200",y=1.08,xref="x",yref="paper",text="<b>BAJAS</b><br>100–315 Hz",showarrow=False)
+    fig.add_annotation(x="630",y=1.08,xref="x",yref="paper",text="<b>MEDIAS</b><br>400–800 Hz",showarrow=False)
+    fig.add_annotation(x="1600",y=1.08,xref="x",yref="paper",text="<b>ALTAS</b><br>1000–3150 Hz",showarrow=False)
     st.plotly_chart(fig,use_container_width=True,key="c2l2_s4_before_after")
 
     # --------------------------------------------------------------
     # 4 · RESULTADO AUTOMÁTICO
     # --------------------------------------------------------------
     st.markdown("## 4 · ¿Cuánto cambió realmente el número único?")
+    st.caption(
+        "Compara la reducción que aplicaste por zona con el cambio final de Lₙ,w. "
+        "No esperes necesariamente una relación 1:1."
+    )
 
     r1,r2,r3,r4=st.columns(4)
     r1.metric("Lₙ,w original",f"{base_lnw} dB")
