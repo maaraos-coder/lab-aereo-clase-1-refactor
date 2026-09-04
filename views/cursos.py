@@ -11684,6 +11684,26 @@ def _c2l2_asset(stage=None,name=None,caption=None):
 
 
 _C2L2_CLASS_ID="clase-04-impacto-instalaciones-lab-2"
+
+# Títulos oficiales visibles del Curso 2 · Laboratorio 2.
+_C2L2_STAGE_TITLES={
+    0:"Del espectro al número único",
+    1:"Laboratorio, terreno y cantidades ponderadas",
+    2:"Conoce la curva de referencia",
+    3:"¿Qué bandas penalizan el resultado?",
+    4:"Construye el número único Lₙ,w",
+    5:"Término de adaptación espectral C_I",
+    6:"Bajas frecuencias y C_I,50-2500",
+    7:"¿Cuánto mejora realmente un revestimiento?",
+    8:"Un número no es un sistema constructivo",
+    9:"Evaluación final · Preguntas de comprensión",
+    10:"Evaluación integradora · Del espectro al diagnóstico profesional",
+}
+
+def _future_stage_display_title(lab,index):
+    if lab.get("id")==_C2L2_CLASS_ID:
+        return _C2L2_STAGE_TITLES.get(index,lab["stages"][index][0])
+    return lab["stages"][index][0]
 _C2L2_VERSION="iso7172_integral_v1"
 _C2L2_FREQS=[100,125,160,200,250,315,400,500,630,800,1000,1250,1600,2000,2500,3150]
 _C2L2_REF=[62,62,62,62,62,62,61,60,59,58,57,54,51,48,45,42]
@@ -11965,7 +11985,7 @@ def _c2l2_stage0(lab,saved):
 
     html='<div class="route-grid">'
     for stage in range(1,len(lab["stages"])):
-        title=lab["stages"][stage][0]
+        title=_future_stage_display_title(lab,stage)
         description=route_descriptions[stage-1]
         minutes=route_minutes[stage-1]
         html+=(
@@ -12312,6 +12332,69 @@ def _c2l2_stage1(lab,saved):
     st.latex(r"L'_{nT}=L'_i-10\log_{10}\left(\frac{T}{T_0}\right)")
     st.latex(r"T_0=0.5\;\mathrm{s}\quad\text{(referencia habitual para viviendas)}")
 
+    st.markdown("### ¿Cuál es la lógica física para escoger L′ₙ o L′ₙT?")
+    st.write(
+        "No se elige libremente entre absorción y reverberación porque una medición resulte más cómoda. "
+        "Ambos descriptores corrigen la influencia del recinto receptor, pero lo hacen respecto de "
+        "**condiciones de referencia diferentes**."
+    )
+
+    st.markdown(
+        """
+        <div style="display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;margin:.65rem 0 .9rem">
+          <div style="border:1px solid #bfdbfe;border-radius:17px;padding:16px;background:#eff6ff">
+            <div style="font-size:.72rem;font-weight:900;letter-spacing:.07em;color:#075985">L′ₙ · REFERENCIA DE ABSORCIÓN</div>
+            <div style="font-size:1.20rem;font-weight:900;color:#0f172a;margin:.4rem 0">A₀ = 10 m²</div>
+            <div style="color:#526174;line-height:1.5">
+              Pregunta conceptual: <b>¿qué nivel de impacto tendría el recinto si su absorción equivalente
+              fuese la absorción de referencia?</b><br><br>
+              Es una normalización física mediante una cantidad fija de absorción.
+            </div>
+          </div>
+          <div style="border:1px solid #ddd6fe;border-radius:17px;padding:16px;background:#f5f3ff">
+            <div style="font-size:.72rem;font-weight:900;letter-spacing:.07em;color:#6d28d9">L′ₙT · REFERENCIA DE REVERBERACIÓN</div>
+            <div style="font-size:1.20rem;font-weight:900;color:#0f172a;margin:.4rem 0">T₀ = 0,5 s</div>
+            <div style="color:#526174;line-height:1.5">
+              Pregunta conceptual: <b>¿qué nivel de impacto tendría el recinto si su tiempo de reverberación
+              fuese el de referencia?</b><br><br>
+              En vivienda tiene una lectura especialmente intuitiva porque aproxima una condición residencial amoblada comparable.
+            </div>
+          </div>
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
+
+    st.markdown("### Absorción y reverberación están relacionadas")
+    st.write(
+        "En un recinto aproximadamente difuso, el área de absorción equivalente puede estimarse a partir del volumen "
+        "y del tiempo de reverberación mediante la relación de Sabine:"
+    )
+    st.latex(r"A\approx\frac{0.16\,V}{T}")
+    st.info(
+        "**Consecuencia importante:** medir T puede servir para obtener A. Por eso L′ₙ y L′ₙT no representan "
+        "dos técnicas experimentales completamente independientes; la diferencia fundamental está en "
+        "**la condición a la que se referencia el resultado**."
+    )
+
+    st.markdown("### ¿Qué lógica hay detrás de cada descriptor?")
+    st.markdown(
+        """
+        - **L′ₙ** es útil cuando se quiere expresar el desempeño construido respecto de una **absorción equivalente fija**.
+          Como A depende también del volumen V, dos recintos con el mismo T pueden recibir correcciones diferentes si sus volúmenes son distintos.
+        - **L′ₙT** es especialmente intuitivo en **viviendas y recintos habitados**, porque lleva el resultado a un
+          **tiempo de reverberación de referencia**. Así puede compararse el aislamiento bajo una condición acústica residencial común.
+        - La elección final del descriptor no la decide el técnico mirando si hay alfombra o sillones:
+          la define el **método, reglamento o criterio de evaluación** que se esté verificando.
+        """
+    )
+
+    st.warning(
+        "**No cambies de descriptor para escapar de una medición difícil.** Si un dormitorio pequeño y muy absorbente "
+        "presenta un decaimiento demasiado rápido para obtener un T fiable, eso es una limitación de la campaña de medición. "
+        "No autoriza por sí solo a sustituir L′ₙT por L′ₙ, porque A normalmente también se obtiene a partir de T y V."
+    )
+
     st.warning(
         "**El apóstrofo importa:** L′ₙ y L′ₙT corresponden al edificio real, donde pueden intervenir transmisiones flanqueantes "
         "y detalles de ejecución que no están representados de la misma manera en el ensayo de un elemento aislado."
@@ -12345,32 +12428,94 @@ def _c2l2_stage1(lab,saved):
     )
 
     # ------------------------------------------------------------------
-    # 6 · TRES PREGUNTAS INDEPENDIENTES
+    # 6 · DECISIONES REALES DE TERRENO
     # ------------------------------------------------------------------
-    st.markdown("## 6 · Comprueba si distingues los tres contextos")
-    st.write("Responde las tres situaciones por separado. La clave está en identificar **dónde se mide** y **cómo se referencia el recinto**.")
+    st.markdown("## 6 · Decide el descriptor en situaciones reales")
+    st.write(
+        "Ahora no basta con reconocer símbolos. Lee cada situación como si estuvieras realizando una campaña de terreno "
+        "y decide qué descriptor tiene la lógica física más adecuada."
+    )
+
+    st.markdown(
+        """
+        <style>
+        div[role="radiogroup"] {
+            gap: 1rem !important;
+            margin-top: .55rem !important;
+            margin-bottom: .35rem !important;
+        }
+        div[role="radiogroup"] label {
+            padding: .56rem .78rem !important;
+            border-radius: 10px !important;
+        }
+        div[role="radiogroup"] label p {
+            font-size: 1.08rem !important;
+            font-weight: 720 !important;
+            line-height: 1.30 !important;
+            color: #0f172a !important;
+        }
+        div[role="radiogroup"] label:hover {
+            background: rgba(14,116,144,.06) !important;
+        }
+        </style>
+        """,
+        unsafe_allow_html=True,
+    )
 
     questions=[
         {
             "id":"q1",
-            "q":"1. Un fabricante ensaya una solución de piso en un laboratorio normalizado. ¿Qué magnitud espectral corresponde al elemento ensayado?",
-            "opts":["Lₙ(f)","L′ₙ(f)","L′ₙT(f)"],
-            "correct":"Lₙ(f)",
-            "why":"En laboratorio se caracteriza el elemento y la magnitud normalizada es Lₙ(f).",
+            "q":(
+                "1. Debes comparar el aislamiento a impactos de dos dormitorios terminados: uno de 22 m³ y otro de 45 m³. "
+                "Ambos, una vez amoblados, presentan un tiempo de reverberación cercano a 0,5 s. "
+                "Se busca expresar el resultado bajo una condición de reverberación residencial comparable. ¿Qué descriptor tiene la lógica más directa?"
+            ),
+            "opts":[
+                "L′ₙT(f) · estandarizar al tiempo de reverberación de referencia",
+                "L′ₙ(f) · normalizar a 10 m² de absorción equivalente",
+                "Lᵢ(f) · comparar directamente el nivel bruto medido",
+            ],
+            "correct":"L′ₙT(f) · estandarizar al tiempo de reverberación de referencia",
+            "why":(
+                "L′ₙT lleva ambos recintos a una misma condición T₀. En vivienda, esa referencia permite comparar "
+                "el desempeño bajo una condición de reverberación residencial común, sin hacer que el volumen sea la referencia principal."
+            ),
         },
         {
             "id":"q2",
-            "q":"2. Se mide un piso ya construido entre dos recintos y el resultado se normaliza mediante el área de absorción equivalente. ¿Qué magnitud corresponde?",
-            "opts":["Lₙ(f)","L′ₙ(f)","L′ₙT(f)"],
-            "correct":"L′ₙ(f)",
-            "why":"En terreno, al normalizar por absorción equivalente, corresponde L′ₙ(f).",
+            "q":(
+                "2. En otra evaluación el criterio técnico exige expresar el resultado respecto de una absorción equivalente "
+                "de referencia A₀ = 10 m². El volumen del recinto y su tiempo de reverberación se conocen. "
+                "¿Qué descriptor corresponde construir?"
+            ),
+            "opts":[
+                "L′ₙ(f) · normalizar mediante A/A₀",
+                "L′ₙT(f) · estandarizar mediante T/T₀",
+                "Lᵢ(f) · mantener el nivel sin corregir",
+            ],
+            "correct":"L′ₙ(f) · normalizar mediante A/A₀",
+            "why":(
+                "Cuando la condición de referencia está definida por A₀, corresponde L′ₙ. "
+                "El área de absorción equivalente puede obtenerse a partir de V y T cuando la relación de Sabine es aplicable."
+            ),
         },
         {
             "id":"q3",
-            "q":"3. Se mide entre recintos de un edificio y el resultado se estandariza a un tiempo de reverberación de referencia. ¿Qué magnitud corresponde?",
-            "opts":["Lₙ(f)","L′ₙ(f)","L′ₙT(f)"],
-            "correct":"L′ₙT(f)",
-            "why":"En terreno, cuando se utiliza una referencia de tiempo de reverberación, corresponde L′ₙT(f).",
+            "q":(
+                "3. Mides un dormitorio pequeño con cama, sillones, cortinas gruesas y alfombra. "
+                "El decaimiento es muy rápido y el ruido de fondo impide obtener un T20/T30 fiable. "
+                "El requisito que debes verificar está expresado como L′ₙT,w. ¿Cuál es la decisión profesional correcta?"
+            ),
+            "opts":[
+                "Cambiar automáticamente a L′ₙ,w porque el recinto es muy absorbente",
+                "Asignar T = 0,5 s y continuar sin medirlo",
+                "Mejorar la campaña de medición y obtener un T válido; si no es posible, documentar la limitación y no sustituir arbitrariamente el descriptor",
+            ],
+            "correct":"Mejorar la campaña de medición y obtener un T válido; si no es posible, documentar la limitación y no sustituir arbitrariamente el descriptor",
+            "why":(
+                "La dificultad para medir T no redefine el descriptor exigido. Además, cambiar a L′ₙ no resuelve necesariamente "
+                "el problema porque A suele estimarse precisamente a partir de T y del volumen del recinto."
+            ),
         },
     ]
 
@@ -12379,7 +12524,7 @@ def _c2l2_stage1(lab,saved):
         answer_state={}
 
     if role=="Docente" and not projection_mode:
-        st.info("Vista docente: las respuestas correctas se muestran como pauta de esta actividad formativa.")
+        st.info("Vista docente: las respuestas correctas y su fundamento físico se muestran como pauta.")
 
     all_correct=True
     answered=0
@@ -12396,11 +12541,11 @@ def _c2l2_stage1(lab,saved):
                 index=idx,
                 key=f"{class_id}_c2l2_s1_{item['id']}",
                 label_visibility="collapsed",
-                horizontal=True,
             )
 
             if role=="Docente" and not projection_mode:
-                st.success(f"Respuesta correcta: **{item['correct']}** · {item['why']}")
+                st.success(f"Respuesta correcta: **{item['correct']}**")
+                st.info(item["why"])
             else:
                 if st.button("Comprobar y guardar",key=f"{class_id}_c2l2_s1_check_{item['id']}"):
                     if choice is None:
@@ -12423,7 +12568,10 @@ def _c2l2_stage1(lab,saved):
                         st.success("Correcto. "+item["why"])
                     else:
                         all_correct=False
-                        st.warning("Aún no. Revisa si el caso corresponde a laboratorio o terreno y qué referencia utiliza el recinto receptor.")
+                        st.warning(
+                            "Aún no. No decidas solo por el mobiliario del recinto: identifica primero "
+                            "cuál es la condición de referencia del descriptor y qué requisito debes verificar."
+                        )
                 else:
                     all_correct=False
 
@@ -12439,12 +12587,16 @@ def _c2l2_stage1(lab,saved):
         )
         if answered==3 and all_correct:
             _c2l2_finish_stage(saved,1)
-            st.success("Etapa completada. Ya puedes distinguir el origen del espectro antes de aplicar la ponderación ISO 717-2.")
+            st.success(
+                "Etapa completada. Ya puedes distinguir no solo el símbolo, sino la lógica física "
+                "de normalizar por absorción o estandarizar por reverberación."
+            )
 
     st.markdown("### Regla técnica que debes llevarte a la Etapa 2")
     st.success(
-        "**Primero identifica el origen del espectro y la magnitud física; después construye el número único.** "
-        "En nuestro ejercicio: predicción Lₙ,final(f) → procedimiento ISO 717-2 → Lₙ,w estimado."
+        "**Primero identifica el origen del espectro; luego la condición de referencia del recinto y finalmente la ponderación.** "
+        "En terreno: A₀ → L′ₙ; T₀ → L′ₙT. En nuestro ejercicio didáctico: "
+        "predicción Lₙ,final(f) → procedimiento ISO 717-2 → Lₙ,w estimado."
     )
 
 
