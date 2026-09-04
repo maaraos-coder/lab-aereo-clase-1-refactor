@@ -15691,6 +15691,81 @@ def _c2l2_stage8(lab,saved):
     )
     st.caption("Continúa desde la barra lateral.")
 
+
+_C2L2_STAGE9_QUESTIONS=[
+    (
+        "Magnitudes de terreno",
+        "En una medición en edificio terminado, ¿qué descriptor corresponde cuando el resultado se normaliza mediante el área de absorción equivalente?",
+        ["Lₙ(f)","L'ₙ(f)","L'ₙT(f)","ΔLw"],
+        1,
+        "L'ₙ(f) corresponde al nivel normalizado de impactos en terreno cuando la referencia se expresa mediante absorción equivalente."
+    ),
+    (
+        "Curva ISO 717-2",
+        "Durante la ponderación de ruido de impacto, una banda presenta Lₙ,i mayor que la referencia. ¿Cómo se trata esa diferencia?",
+        ["Se resta a otra banda favorable.","Se considera una desviación desfavorable dᵢ.","Se elimina del cálculo.","Se promedia con las demás bandas."],
+        1,
+        "Para ruido de impacto, solo los excesos positivos sobre la referencia aportan a las desviaciones desfavorables."
+    ),
+    (
+        "Posición límite",
+        "¿Cuándo se ha encontrado correctamente la posición límite de la curva de referencia?",
+        ["Cuando Σdᵢ=0 dB.","Cuando la posición actual cumple Σdᵢ≤32 dB y 1 dB más abajo ya supera 32 dB.","Cuando la referencia coincide con el espectro en 500 Hz.","Cuando todas las bandas quedan bajo la referencia."],
+        1,
+        "La posición límite es el último desplazamiento entero que cumple; un paso adicional de −1 dB debe dejar de cumplir."
+    ),
+    (
+        "Lectura de Lₙ,w",
+        "Una vez encontrada la posición límite, ¿dónde se lee Lₙ,w?",
+        ["En el máximo del espectro.","En la referencia desplazada a 500 Hz.","En la banda de 100 Hz.","En el promedio de todas las bandas."],
+        1,
+        "Lₙ,w se obtiene leyendo la curva de referencia desplazada en 500 Hz."
+    ),
+    (
+        "Término Cᵢ",
+        "¿Qué función cumple Cᵢ respecto de Lₙ,w?",
+        ["Es una reducción física adicional del revestimiento.","Aporta información espectral complementaria al número único.","Sustituye siempre a Lₙ,w.","Indica la masa del piso."],
+        1,
+        "Cᵢ complementa Lₙ,w con información sobre la forma espectral; no representa una mejora física adicional."
+    ),
+    (
+        "Bajas frecuencias",
+        "¿Qué añade Cᵢ,50–2500 frente a Cᵢ?",
+        ["Elimina las bandas de 100–2500 Hz.","Incorpora además 50, 63 y 80 Hz a la suma energética.","Cambia el valor normativo de Lₙ,w.","Convierte el resultado en ΔLw."],
+        1,
+        "Cᵢ,50–2500 amplía la suma energética hacia 50 Hz para hacer visible información grave adicional."
+    ),
+    (
+        "Reducción de revestimiento",
+        "¿Cómo se obtiene ΔLw según el procedimiento con piso pesado de referencia?",
+        ["Promediando ΔL(f).","Aplicando ΔL(f) al piso de referencia, ponderando la curva tratada y calculando 78−Lₙ,r,w.","Restando Cᵢ a Lₙ,w.","Sumando todas las bandas de ΔL(f)."],
+        1,
+        "ΔLw no es el promedio de ΔL(f): requiere construir y ponderar el piso de referencia tratado."
+    ),
+    (
+        "Mismo ΔLw",
+        "Dos revestimientos tienen el mismo ΔLw. ¿Qué conclusión es correcta?",
+        ["Tienen necesariamente la misma curva ΔL(f).","Pueden tener formas espectrales de reducción diferentes.","Son idénticos en cualquier piso real.","Tienen el mismo Cᵢ obligatoriamente."],
+        1,
+        "Un mismo número único puede resumir curvas espectrales distintas."
+    ),
+    (
+        "Ficha técnica",
+        "Una ficha de revestimiento declara ΔLw=19 dB. ¿Qué significa?",
+        ["Que cualquier piso real reducirá exactamente 19 dB.","Que el revestimiento obtuvo una reducción ponderada de 19 dB bajo el procedimiento/ensayo declarado.","Que el piso final tendrá Lₙ,w=19 dB.","Que Cᵢ=19 dB."],
+        1,
+        "ΔLw es una propiedad declarada bajo un procedimiento de referencia y no una promesa de mejora universal en cualquier sistema."
+    ),
+    (
+        "Interpretación profesional",
+        "¿Cuál es la forma más correcta de reportar Lₙ,w y Cᵢ?",
+        ["Sumarlos siempre y reportar un único valor.","Informar Lₙ,w como descriptor principal y Cᵢ como término espectral asociado, usando la suma solo si el criterio aplicable lo exige.","Reportar solo Cᵢ.","Reemplazar Lₙ,w por ΔLw."],
+        1,
+        "Lₙ,w sigue siendo el descriptor principal; Cᵢ se informa asociado y no se suma automáticamente."
+    ),
+]
+
+
 def _c2l2_stage9_remote():
     user_key=st.session_state.get("user_key")
     if not user_key:return None
@@ -15705,9 +15780,13 @@ def _c2l2_stage9_remote():
 
 
 def _c2l2_stage9_save(saved):
+    projection_mode=bool(st.session_state.get("projection_mode") or st.session_state.get("role")=="Proyección")
+    if projection_mode:
+        return
     saved["c2l2_e9_started_at"]=st.session_state.get("c2l2_e9_started_at")
     saved["c2l2_e9_deadline"]=st.session_state.get("c2l2_e9_deadline")
     saved["c2l2_e9_answers"]={str(i):st.session_state.get(f"c2l2_e9_q{i}") for i in range(10)}
+    saved["updated_9"]=_now()
     _save_future_state(_C2L2_CLASS_ID,saved)
 
 
@@ -15736,76 +15815,160 @@ def _c2l2_stage9_finish(saved,reason):
 
 
 def _c2l2_stage9(lab,saved):
-    _c2l2_stage_header(9,"EVALUACIÓN FINAL · PREGUNTAS DE COMPRENSIÓN","Diez preguntas · 20 minutos · 40 puntos · un intento.")
-    st.info(
-        "Misma arquitectura evaluativa del Curso 1 · Laboratorio 2: 10 preguntas, 4 puntos cada una, "
-        "20 minutos continuos y un único intento."
+    role=st.session_state.get("role","Alumno")
+    projection_mode=bool(st.session_state.get("projection_mode") or role=="Proyección")
+
+    _c2l2_stage_header(
+        9,
+        "EVALUACIÓN FINAL · PREGUNTAS DE COMPRENSIÓN",
+        "Diez preguntas · 20 minutos · 40 puntos · un intento."
     )
-    if st.session_state.get("role")=="Docente":
-        st.markdown("### Pauta docente")
-        for i,q in enumerate(_C2L2_STAGE9_QUESTIONS):
-            with st.expander(f"Pregunta {i+1} · {q[0]}"):
-                st.write(q[1]); st.success(q[2][q[3]]); st.info(q[4])
-        st.markdown("### Respuestas de alumnos")
+    st.info(
+        "10 preguntas · 4 puntos cada una · 20 minutos continuos. "
+        "En Alumno las respuestas se guardan automáticamente mientras avanzas."
+    )
+
+    # DOCENTE: pauta abierta, no expanders.
+    if role=="Docente":
+        st.markdown("## Pauta docente")
+        st.caption("Las 10 preguntas se muestran abiertas para revisión y clase.")
+        for i,q in enumerate(_C2L2_STAGE9_QUESTIONS,1):
+            with st.container(border=True):
+                st.markdown(f"### {i}. {q[1]}")
+                for j,opt in enumerate(q[2]):
+                    prefix="✓" if j==q[3] else "○"
+                    st.write(f"{prefix} {opt}")
+                st.success("Respuesta correcta: "+q[2][q[3]])
+                st.caption(q[4])
+
+        st.markdown("## Respuestas de alumnos")
         rows=_remote_rows("responses",class_id=_C2L2_CLASS_ID) or []
         rows=[r for r in rows if int(r.get("stage") or -1)==9 and r.get("question_key")=="final_comprehension"]
         if rows:
-            st.dataframe(pd.DataFrame([{"Alumno":r.get("user_key"),"Puntaje":f"{float(r.get('teacher_score') if r.get('teacher_score') is not None else r.get('auto_score') or 0):g}/40","Estado":r.get("status")} for r in rows]),hide_index=True)
-        else: st.caption("Sin entregas todavía.")
+            st.dataframe(
+                pd.DataFrame([
+                    {
+                        "Alumno":r.get("user_key"),
+                        "Puntaje":f"{float(r.get('teacher_score') if r.get('teacher_score') is not None else r.get('auto_score') or 0):g}/40",
+                        "Estado":r.get("status"),
+                        "Actualizado":r.get("updated_at"),
+                    }
+                    for r in rows
+                ]),
+                hide_index=True,use_container_width=True
+            )
+        else:
+            st.caption("Sin entregas todavía.")
         return
 
     remote=_c2l2_stage9_remote()
     if remote or saved.get("c2l2_e9_submitted"):
         payload=(remote or {}).get("payload",{})
-        score=float((remote or {}).get("row",{}).get("teacher_score") if remote and (remote or {}).get("row",{}).get("teacher_score") is not None else payload.get("score",saved.get("c2l2_e9_score",0)) or 0)
+        row=(remote or {}).get("row",{})
+        score=float(
+            row.get("teacher_score")
+            if row and row.get("teacher_score") is not None
+            else payload.get("score",saved.get("c2l2_e9_score",0)) or 0
+        )
         answers=payload.get("answers",saved.get("c2l2_e9_answers",{}))
         st.success(f"Evaluación finalizada · Puntaje: {score:g}/40")
-        for i,q in enumerate(_C2L2_STAGE9_QUESTIONS):
-            chosen=answers.get(str(i)) if isinstance(answers,dict) else None
-            with st.expander(f"Pregunta {i+1} · {q[0]}",expanded=i==0):
-                st.write(q[1]); st.write(f"Tu respuesta: {chosen or 'Sin respuesta'}")
-                if chosen==q[2][q[3]]:st.success(f"Respuesta correcta: {q[2][q[3]]}")
-                else:st.error(f"Respuesta correcta: {q[2][q[3]]}")
-                st.info(q[4])
+        for i,q in enumerate(_C2L2_STAGE9_QUESTIONS,1):
+            chosen=answers.get(str(i-1)) if isinstance(answers,dict) else None
+            with st.container(border=True):
+                st.markdown(f"### {i}. {q[1]}")
+                st.write(f"Tu respuesta: **{chosen or 'Sin respuesta'}**")
+                if chosen==q[2][q[3]]:
+                    st.success("Correcta.")
+                else:
+                    st.error("Respuesta correcta: "+q[2][q[3]])
+                st.caption(q[4])
         return
 
-    if "c2l2_e9_started_at" not in st.session_state:
+    # Restaurar borrador del alumno.
+    if not projection_mode and "c2l2_e9_started_at" not in st.session_state:
         if saved.get("c2l2_e9_started_at"):
             st.session_state["c2l2_e9_started_at"]=saved.get("c2l2_e9_started_at")
             st.session_state["c2l2_e9_deadline"]=saved.get("c2l2_e9_deadline")
             for i,v in (saved.get("c2l2_e9_answers") or {}).items():
                 st.session_state.setdefault(f"c2l2_e9_q{i}",v)
+
+    # Abrir evaluación directamente: el reloj inicia al entrar por primera vez.
     if not st.session_state.get("c2l2_e9_started_at"):
-        st.markdown("### Antes de comenzar")
-        st.markdown("- **20 minutos continuos**.\n- **4 puntos por pregunta**.\n- Un solo intento.\n- Al enviar, el intento queda cerrado.")
-        if st.button("COMENZAR EVALUACIÓN",type="primary",use_container_width=True,key="c2l2_e9_start"):
-            now=dt.datetime.now(dt.timezone.utc)
-            st.session_state["c2l2_e9_started_at"]=now.isoformat()
-            st.session_state["c2l2_e9_deadline"]=(now+dt.timedelta(minutes=20)).isoformat()
-            _c2l2_stage9_save(saved); st.rerun()
-        return
+        now=dt.datetime.now(dt.timezone.utc)
+        st.session_state["c2l2_e9_started_at"]=now.isoformat()
+        st.session_state["c2l2_e9_deadline"]=(now+dt.timedelta(minutes=20)).isoformat()
+        if not projection_mode:
+            _c2l2_stage9_save(saved)
 
     deadline=dt.datetime.fromisoformat(str(st.session_state["c2l2_e9_deadline"]).replace("Z","+00:00"))
     now=dt.datetime.now(dt.timezone.utc)
     remaining=max(0,int((deadline-now).total_seconds()))
-    st.metric("Tiempo restante",f"{remaining//60:02d}:{remaining%60:02d}")
+
+    t1,t2,t3=st.columns(3)
+    t1.metric("Tiempo restante",f"{remaining//60:02d}:{remaining%60:02d}")
+    answered=sum(st.session_state.get(f"c2l2_e9_q{i}") is not None for i in range(10))
+    t2.metric("Respondidas",f"{answered}/10")
+    t3.metric("Puntaje máximo","40 puntos")
+
+    if not projection_mode:
+        st.success(
+            "Tus respuestas se guardan automáticamente. Puedes salir de esta etapa y volver mientras queden minutos; "
+            "el cronómetro **no se reinicia**."
+        )
+    else:
+        st.info("Vista Zoom: evaluación abierta para trabajo en clase. Esta vista no guarda respuestas en Supabase.")
+
     if remaining<=0:
-        _c2l2_stage9_finish(saved,"timeout"); st.rerun()
+        if projection_mode:
+            st.error("Tiempo finalizado en Vista Zoom.")
+            return
+        _c2l2_stage9_finish(saved,"timeout")
+        st.rerun()
 
     for i,q in enumerate(_C2L2_STAGE9_QUESTIONS):
-        st.markdown(f'<div class="question-box"><div class="question-label">PREGUNTA {i+1} DE 10 · 4 PUNTOS</div><div class="question-text">{q[1]}</div></div>',unsafe_allow_html=True)
-        st.radio("Selecciona una alternativa",q[2],index=None,key=f"c2l2_e9_q{i}",label_visibility="collapsed",on_change=_c2l2_stage9_save,args=(saved,))
+        with st.container(border=True):
+            st.markdown(f"### {i+1}. {q[1]}")
+            st.caption("4 puntos")
+            st.radio(
+                "Selecciona una alternativa",
+                q[2],
+                index=None,
+                key=f"c2l2_e9_q{i}",
+                label_visibility="collapsed",
+                on_change=_c2l2_stage9_save,
+                args=(saved,),
+            )
+
     answered=sum(st.session_state.get(f"c2l2_e9_q{i}") is not None for i in range(10))
-    st.progress(answered/10); st.caption(f"{answered} de 10 respuestas registradas.")
-    if st.button("ENVIAR EVALUACIÓN DEFINITIVA",type="primary",use_container_width=True,key="c2l2_e9_submit"):
+    st.progress(answered/10)
+    st.caption(f"{answered} de 10 respuestas registradas.")
+
+    if projection_mode:
+        return
+
+    if st.button(
+        "ENVIAR EVALUACIÓN DEFINITIVA",
+        type="primary",
+        use_container_width=True,
+        key="c2l2_e9_submit"
+    ):
         if answered<10:
             st.session_state["c2l2_e9_confirm"]=True
-            st.warning(f"Faltan {10-answered} respuestas. Puedes confirmar el envío con preguntas pendientes.")
+            st.warning(
+                f"Faltan {10-answered} respuestas. Puedes seguir respondiendo o confirmar el envío incompleto."
+            )
         else:
-            _c2l2_stage9_finish(saved,"submitted"); st.rerun()
+            _c2l2_stage9_finish(saved,"submitted")
+            st.rerun()
+
     if st.session_state.get("c2l2_e9_confirm") and answered<10:
-        if st.button("CONFIRMAR ENVÍO INCOMPLETO",key="c2l2_e9_submit_incomplete"):
-            _c2l2_stage9_finish(saved,"submitted_incomplete"); st.rerun()
+        if st.button(
+            "CONFIRMAR ENVÍO INCOMPLETO",
+            key="c2l2_e9_submit_incomplete",
+            use_container_width=True,
+        ):
+            _c2l2_stage9_finish(saved,"submitted_incomplete")
+            st.rerun()
 
 
 _C2L2_S10_Q=[
@@ -15856,7 +16019,21 @@ def _c2l2_stage10(lab,saved):
     expected_ci,_=_c2l2_ci(curve,expected_lnw,False)
     _c2l2_stage_header(10,"EVALUACIÓN INTEGRADORA · DEL ESPECTRO AL DIAGNÓSTICO PROFESIONAL","40 minutos · 60 puntos · ruido de impacto + instalaciones.")
     _c2l2_asset(stage=10)
-    st.info("Misma arquitectura de 60 puntos del Curso 1 · Laboratorio 2: desarrollo técnico + 5 preguntas de comprensión.")
+    st.info(
+        "Evaluación integradora oficial · **60 puntos**: 40 puntos de desarrollo técnico + 20 puntos de comprensión. "
+        "Integra ruido de impacto, lectura espectral y diagnóstico de instalaciones."
+    )
+    st.markdown(
+        """
+        <div style="display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px;margin:.6rem 0 1rem">
+          <div style="border:1px solid #dbe4ee;border-radius:14px;padding:13px;background:#fff"><b>PISO</b><br>Lₙ,w + Cᵢ</div>
+          <div style="border:1px solid #dbe4ee;border-radius:14px;padding:13px;background:#fff"><b>BOMBA</b><br>fₑ + espectro</div>
+          <div style="border:1px solid #dbe4ee;border-radius:14px;padding:13px;background:#fff"><b>CAMINOS</b><br>base + tuberías</div>
+          <div style="border:1px solid #bbf7d0;border-radius:14px;padding:13px;background:#f0fdf4"><b>CIERRE</b><br>control integral</div>
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
 
     if st.session_state.get("role")=="Docente":
         st.markdown("### Pauta desarrollada")
@@ -15866,6 +16043,13 @@ def _c2l2_stage10(lab,saved):
         st.write("Bomba: 1450 rpm → fₑ≈24,17 Hz; masa 600 kg; 4 apoyos → 150 kg por apoyo.")
         st.write("Un aislamiento de base correcto puede ser puenteado por tubería y abrazadera rígidas.")
         st.write("Cavitación: controlar primero la condición hidráulica/fuente, además de caminos de transmisión.")
+        st.markdown("### Pauta de comprensión · 20 puntos")
+        for i,q in enumerate(_C2L2_S10_Q,1):
+            with st.container(border=True):
+                st.markdown(f"**{i}. {q[0]}**")
+                for j,opt in enumerate(q[1]):
+                    st.write(("✓ " if j==q[2] else "○ ")+opt)
+                st.success("Respuesta correcta: "+q[1][q[2]])
         rows=_remote_rows("responses",class_id=_C2L2_CLASS_ID) or []
         rows=[r for r in rows if int(r.get("stage") or -1)==10 and r.get("question_key")=="final_integrated_design"]
         if rows:
@@ -15974,10 +16158,27 @@ def _c2l2_stage10(lab,saved):
 
     st.markdown("## J · Conclusión profesional")
     conclusion=st.text_area(
-        "Conclusión",
+        "Conclusión profesional",
+        value=saved.get("c2l2_s10_draft_conclusion",""),
         key="c2l2_s10_conclusion",
-        placeholder="Integra Lₙ,w, C_I, la interpretación del piso y el diagnóstico/control de la bomba."
+        height=150,
+        placeholder="Integra Lₙ,w, C_I, la interpretación del piso, frecuencia de excitación, caminos estructurales y estrategia de control."
     )
+
+    if st.button(
+        "GUARDAR BORRADOR",
+        key="c2l2_s10_save_draft",
+        use_container_width=True,
+    ):
+        saved["c2l2_s10_draft_conclusion"]=conclusion
+        saved["c2l2_s10_draft_interpretation"]=interpretation
+        saved["c2l2_s10_draft_path"]=path
+        saved["c2l2_s10_draft_iso"]=iso
+        saved["c2l2_s10_draft_parallel"]=parallel
+        saved["c2l2_s10_draft_controls"]=controls
+        saved["updated_10"]=_now()
+        _save_future_state(_C2L2_CLASS_ID,saved)
+        st.success("Borrador guardado. Puedes salir de la Etapa 10 y continuar después antes del envío definitivo.")
 
     # 40 puntos de desarrollo técnico
     design_checks=[
