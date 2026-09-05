@@ -6317,6 +6317,13 @@ def _render_course2_lab1_stage8(lab, saved):
         ax.set_xlim(float(freqs[0])*0.92, float(freqs[-1])*1.08)
         ax.tick_params(axis="x", which="minor", bottom=False, labelbottom=False)
 
+    def _safe_log_y_axis(ax):
+        """Eje Y logarítmico sin MathText automático, compatible con Streamlit Cloud."""
+        from matplotlib.ticker import FuncFormatter, NullFormatter
+        ax.set_yscale("log")
+        ax.yaxis.set_major_formatter(FuncFormatter(lambda y, _pos: f"{y:g}"))
+        ax.yaxis.set_minor_formatter(NullFormatter())
+
     header(
         "ETAPA 8 · LABORATORIO 1",
         "DIAGNÓSTICO Y CONTROL VIBROACÚSTICO DE UNA BOMBA CENTRÍFUGA",
@@ -6675,11 +6682,7 @@ def _render_course2_lab1_stage8(lab, saved):
         fig,ax=plt.subplots(figsize=(6.4,3.2))
         ax.plot(patt_f,patt_tonal,marker='o')
         _format_band_axis(ax,patt_f)
-        ax.set_yscale('log')
-        # Evita el formateador MathText automático de Matplotlib en Streamlit Cloud.
-        # Algunas versiones recientes pueden lanzar ValueError al calcular tight_layout().
-        ax.yaxis.set_major_formatter(plt.FuncFormatter(lambda y, _pos: f"{y:g}"))
-        ax.yaxis.set_minor_formatter(plt.NullFormatter())
+        _safe_log_y_axis(ax)
         ax.set_xlabel("Bandas de frecuencia (Hz)")
         ax.set_ylabel("Nivel vibratorio relativo")
         ax.set_title("Energía concentrada en una frecuencia")
@@ -6695,11 +6698,7 @@ def _render_course2_lab1_stage8(lab, saved):
         fig,ax=plt.subplots(figsize=(6.4,3.2))
         ax.plot(patt_f,patt_broad,marker='o')
         _format_band_axis(ax,patt_f)
-        ax.set_yscale('log')
-        # Evita el formateador MathText automático de Matplotlib en Streamlit Cloud.
-        # Algunas versiones recientes pueden lanzar ValueError al calcular tight_layout().
-        ax.yaxis.set_major_formatter(plt.FuncFormatter(lambda y, _pos: f"{y:g}"))
-        ax.yaxis.set_minor_formatter(plt.NullFormatter())
+        _safe_log_y_axis(ax)
         ax.set_xlabel("Bandas de frecuencia (Hz)")
         ax.set_ylabel("Nivel vibratorio relativo")
         ax.set_title("Energía distribuida en muchas frecuencias")
@@ -7335,7 +7334,7 @@ def _render_course2_lab1_stage8(lab, saved):
             fig,ax=plt.subplots(figsize=(8.5,3.8))
             ax.plot(freqs,carc,marker='o')
             _format_band_axis(ax,freqs)
-            ax.set_yscale('log')
+            _safe_log_y_axis(ax)
             ax.set_xlabel('Bandas de frecuencia (Hz)')
             ax.set_ylabel('Velocidad RMS (mm/s)')
             ax.grid(True,alpha=.25)
@@ -7357,7 +7356,7 @@ def _render_course2_lab1_stage8(lab, saved):
             fig,ax=plt.subplots(figsize=(8.5,3.8))
             ax.plot(freqs,base,marker='o')
             _format_band_axis(ax,freqs)
-            ax.set_yscale('log')
+            _safe_log_y_axis(ax)
             ax.set_xlabel('Bandas de frecuencia (Hz)')
             ax.set_ylabel('Velocidad RMS (mm/s)')
             ax.grid(True,alpha=.25)
@@ -7380,7 +7379,7 @@ def _render_course2_lab1_stage8(lab, saved):
             if "C · Tubería cercana" in selected_points: ax.plot(freqs,pipe_c,marker='o',label='C · cercana')
             if "D · Tubería alejada" in selected_points: ax.plot(freqs,pipe_d,marker='o',label='D · alejada')
             _format_band_axis(ax,freqs)
-            ax.set_yscale('log')
+            _safe_log_y_axis(ax)
             ax.set_xlabel('Bandas de frecuencia (Hz)')
             ax.set_ylabel('Velocidad RMS (mm/s)')
             ax.grid(True,alpha=.25)
@@ -7571,7 +7570,7 @@ def _render_course2_lab1_stage8(lab, saved):
                 ax.plot(cav_f,vib_ref,marker='o',label='Condición de referencia')
                 ax.plot(cav_f,vib_low,marker='o',label='Condición con margen NPSH insuficiente')
                 _format_band_axis(ax,cav_f)
-                ax.set_yscale('log')
+                _safe_log_y_axis(ax)
                 ax.set_xlabel("Bandas de frecuencia (Hz)")
                 ax.set_ylabel("Velocidad RMS relativa")
                 ax.set_title("Vibración en carcasa · comparación didáctica")
@@ -16771,11 +16770,56 @@ def _c2l2_stage10(lab,saved):
         placeholder="Integra Lₙ,w, C_I, la interpretación del piso, frecuencia de excitación, caminos estructurales y estrategia de control."
     )
 
-    if st.button(
-        "GUARDAR BORRADOR",
-        key="c2l2_s10_save_draft",
-        use_container_width=True,
-    ):
+    # Guardado manual visible y verificable del borrador. Además de la conclusión,
+    # conserva cálculos, posición de la curva, validaciones, decisiones y las
+    # respuestas de comprensión que ya existan en session_state.
+    st.markdown(
+        """
+        <style>
+        .st-key-c2l2_s10_save_box {
+            border:1px solid #b9d9ec;
+            border-radius:16px;
+            padding:14px 15px 13px;
+            background:linear-gradient(135deg,#f3fbff 0%,#eef8ff 100%);
+            margin:.65rem 0 1rem;
+            box-shadow:0 4px 14px rgba(15,74,120,.07);
+        }
+        .st-key-c2l2_s10_save_box button {
+            background:linear-gradient(90deg,#0b6fae,#1598c8) !important;
+            color:#fff !important;
+            border:1px solid #54c9e8 !important;
+            border-radius:11px !important;
+            min-height:46px !important;
+            font-weight:800 !important;
+            letter-spacing:.01em !important;
+            box-shadow:0 4px 12px rgba(11,111,174,.18) !important;
+        }
+        .st-key-c2l2_s10_save_box button:hover {
+            filter:brightness(1.05);
+            transform:translateY(-1px);
+        }
+        </style>
+        """,
+        unsafe_allow_html=True,
+    )
+
+    last_draft_save=saved.get("c2l2_s10_draft_saved_at")
+    with st.container(key="c2l2_s10_save_box"):
+        st.markdown("**💾 Conserva tu trabajo antes del envío definitivo**")
+        st.caption(
+            "Guarda la curva, cálculos, verificaciones, decisiones de control, conclusión "
+            "y respuestas que ya hayas contestado. Podrás continuar después desde el mismo punto."
+        )
+        if last_draft_save:
+            st.success(f"Borrador disponible · último guardado: {last_draft_save}")
+
+        save_draft_now=st.button(
+            "💾 Guardar borrador y continuar después",
+            key="c2l2_s10_save_draft",
+            use_container_width=True,
+        )
+
+    if save_draft_now:
         saved["c2l2_s10_draft_conclusion"]=conclusion
         saved["c2l2_s10_draft_interpretation"]=interpretation
         saved["c2l2_s10_draft_path"]=path
@@ -16787,8 +16831,8 @@ def _c2l2_stage10(lab,saved):
         saved["c2l2_s10_draft_pipe_control"]=pipe_control
         saved["c2l2_s10_draft_support_control"]=support_control
         saved["c2l2_s10_draft_verification_control"]=verification_control
-        # Datos técnicos y estados de comprobación: también forman parte del
-        # borrador para que el alumno continúe exactamente desde el mismo punto.
+
+        # Datos técnicos y comprobaciones.
         saved["c2l2_s10_draft_lnw"]=st.session_state.get("c2l2_s10_lnw")
         saved["c2l2_s10_draft_ci"]=st.session_state.get("c2l2_s10_ci")
         saved["c2l2_s10_draft_fe"]=st.session_state.get("c2l2_s10_fe")
@@ -16796,9 +16840,33 @@ def _c2l2_stage10(lab,saved):
         saved["c2l2_s10_draft_lnw_ok"]=bool(st.session_state.get("c2l2_s10_lnw_ok"))
         saved["c2l2_s10_draft_ci_ok"]=bool(st.session_state.get("c2l2_s10_ci_ok"))
         saved["c2l2_s10_draft_r_ok"]=bool(st.session_state.get("c2l2_s10_r_ok"))
-        saved["updated_10"]=_now()
+
+        # Curva ISO: guardar incluso si el alumno aún no pulsa COMPROBAR POSICIÓN.
+        curve_position_key="c2l2_s10_curve_ref500"
+        curve_ok_key="c2l2_s10_curve_position_ok"
+        if st.session_state.get(curve_position_key) is not None:
+            saved[curve_position_key]=int(st.session_state.get(curve_position_key))
+        if curve_ok_key in st.session_state:
+            saved[curve_ok_key]=bool(st.session_state.get(curve_ok_key))
+
+        # Las cinco respuestas están más abajo en la página, pero Streamlit mantiene
+        # sus valores en session_state entre reruns. Las capturamos también aquí.
+        draft_answers=(saved.get("c2l2_s10_answers",{}).copy()
+                       if isinstance(saved.get("c2l2_s10_answers"),dict) else {})
+        for i,q in enumerate(_C2L2_S10_Q):
+            widget_key=f"c2l2_s10_q{i}"
+            if st.session_state.get(widget_key) is not None:
+                draft_answers[str(i)]=st.session_state.get(widget_key)
+        saved["c2l2_s10_answers"]=draft_answers
+
+        saved_at=_now()
+        saved["c2l2_s10_draft_saved_at"]=saved_at
+        saved["updated_10"]=saved_at
         _save_future_state(_C2L2_CLASS_ID,saved)
-        st.success("Borrador guardado. Puedes salir de la Etapa 10 y continuar después antes del envío definitivo.")
+        st.success(
+            "✓ Borrador guardado correctamente. Puedes salir de la Etapa 10 y volver después; "
+            "tu avance quedará disponible antes del envío definitivo."
+        )
 
     # 40 puntos de desarrollo técnico
     design_checks=[
