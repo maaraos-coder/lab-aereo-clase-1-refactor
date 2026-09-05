@@ -6676,6 +6676,10 @@ def _render_course2_lab1_stage8(lab, saved):
         ax.plot(patt_f,patt_tonal,marker='o')
         _format_band_axis(ax,patt_f)
         ax.set_yscale('log')
+        # Evita el formateador MathText automático de Matplotlib en Streamlit Cloud.
+        # Algunas versiones recientes pueden lanzar ValueError al calcular tight_layout().
+        ax.yaxis.set_major_formatter(plt.FuncFormatter(lambda y, _pos: f"{y:g}"))
+        ax.yaxis.set_minor_formatter(plt.NullFormatter())
         ax.set_xlabel("Bandas de frecuencia (Hz)")
         ax.set_ylabel("Nivel vibratorio relativo")
         ax.set_title("Energía concentrada en una frecuencia")
@@ -6692,6 +6696,10 @@ def _render_course2_lab1_stage8(lab, saved):
         ax.plot(patt_f,patt_broad,marker='o')
         _format_band_axis(ax,patt_f)
         ax.set_yscale('log')
+        # Evita el formateador MathText automático de Matplotlib en Streamlit Cloud.
+        # Algunas versiones recientes pueden lanzar ValueError al calcular tight_layout().
+        ax.yaxis.set_major_formatter(plt.FuncFormatter(lambda y, _pos: f"{y:g}"))
+        ax.yaxis.set_minor_formatter(plt.NullFormatter())
         ax.set_xlabel("Bandas de frecuencia (Hz)")
         ax.set_ylabel("Nivel vibratorio relativo")
         ax.set_title("Energía distribuida en muchas frecuencias")
