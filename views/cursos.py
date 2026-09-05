@@ -16909,6 +16909,59 @@ def future_lab_view_impl(lab):
             unsafe_allow_html=True,
         )
 
+        # Ruta de aprendizaje: tarjetas-radio compactas para Alumno y Docente.
+        # Mantiene el mismo lenguaje visual de la navegación principal, sin
+        # modificar la lógica ni el estado guardado de cada etapa.
+        st.markdown(
+            """
+        <style>
+        section[data-testid="stSidebar"] div[class*="st-key-future_stage_"] [role="radiogroup"] {
+            gap: .34rem !important;
+        }
+        section[data-testid="stSidebar"] div[class*="st-key-future_stage_"] [role="radiogroup"] > label {
+            width: 100% !important;
+            margin: 0 !important;
+            padding: .48rem .56rem !important;
+            border: 1px solid rgba(142,221,242,.20) !important;
+            border-radius: 10px !important;
+            background: rgba(12,73,112,.22) !important;
+            transition: background .15s ease,border-color .15s ease,box-shadow .15s ease,transform .08s ease !important;
+            cursor: pointer !important;
+            align-items: flex-start !important;
+        }
+        section[data-testid="stSidebar"] div[class*="st-key-future_stage_"] [role="radiogroup"] > label:hover {
+            background: rgba(21,111,160,.30) !important;
+            border-color: rgba(89,212,239,.48) !important;
+        }
+        section[data-testid="stSidebar"] div[class*="st-key-future_stage_"] [role="radiogroup"] > label:active {
+            transform: translateY(1px);
+        }
+        section[data-testid="stSidebar"] div[class*="st-key-future_stage_"] [role="radiogroup"] > label:has(input:checked) {
+            background: linear-gradient(135deg,rgba(8,94,143,.62),rgba(12,125,166,.42)) !important;
+            border-color: #59d4ef !important;
+            box-shadow: inset 3px 0 0 #59d4ef,0 0 0 1px rgba(89,212,239,.06) !important;
+        }
+        section[data-testid="stSidebar"] div[class*="st-key-future_stage_"] [data-baseweb="radio"] {
+            display:flex !important;
+            opacity:1 !important;
+            visibility:visible !important;
+            flex:0 0 auto !important;
+            margin-top:.05rem !important;
+        }
+        section[data-testid="stSidebar"] div[class*="st-key-future_stage_"] input[type="radio"] {
+            accent-color:#59d4ef !important;
+        }
+        section[data-testid="stSidebar"] div[class*="st-key-future_stage_"] [data-testid="stMarkdownContainer"] p {
+            font-size:.75rem !important;
+            font-weight:650 !important;
+            line-height:1.28 !important;
+            text-align:left !important;
+        }
+        </style>
+        """,
+            unsafe_allow_html=True,
+        )
+
         nav_titles={
             "🏠 Mis clases":"📚  Mis clases",
             results_view_label:(
