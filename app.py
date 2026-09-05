@@ -1551,22 +1551,22 @@ with st.sidebar:
         if st.session_state.get("role")=="Docente"
         else "🎓 Mi desempeño"
     )
-    current_lab_view=f"📚 Laboratorio {ACTIVE_LAB} y actividades"
-    view_options=["🏠 Mis clases",results_view_label,current_lab_view]
-
+    lab_view_label=f"📚 Laboratorio {ACTIVE_LAB} y actividades"
+    view_options=[
+        "🏠 Mis clases",
+        results_view_label,
+        lab_view_label,
+    ]
     if st.session_state.get("main_view") not in view_options:
         st.session_state["main_view"]="🏠 Mis clases"
 
-    view=st.session_state.get("main_view","🏠 Mis clases")
-
-    # Navegación principal del sidebar: tarjetas compactas en lugar de radio buttons.
     st.markdown(
         """
         <div style="margin:.45rem 0 .35rem">
-          <div style="font-size:.70rem;font-weight:850;letter-spacing:.09em;color:#8eddf2">
+          <div style="font-size:.72rem;font-weight:850;letter-spacing:.08em;color:#8eddf2">
             NAVEGACIÓN
           </div>
-          <div style="font-size:.68rem;color:#a9c9dc;margin-top:.08rem">
+          <div style="font-size:.72rem;color:#b8d5e5;margin-top:.08rem">
             Accesos principales
           </div>
         </div>
@@ -1574,83 +1574,113 @@ with st.sidebar:
         unsafe_allow_html=True,
     )
 
-    def _sidebar_nav_card(label, subtitle, icon, target, key):
-        active=(view==target)
+    active_view=st.session_state.get("main_view")
 
-        if active:
-            st.markdown(
-                f"""
-                <div style="
-                    border:1px solid #66d9f1;
-                    border-left:4px solid #66d9f1;
-                    border-radius:9px;
-                    padding:.58rem .65rem;
-                    margin:.28rem 0;
-                    background:linear-gradient(90deg,#0b659c 0%,#0b527e 100%);
-                    box-shadow:0 2px 7px rgba(0,0,0,.10);
-                ">
-                  <div style="display:flex;gap:.48rem;align-items:flex-start">
-                    <div style="font-size:1rem;line-height:1.2">{icon}</div>
-                    <div>
-                      <div style="font-size:.80rem;font-weight:850;color:#fff;line-height:1.2">
-                        {label}
-                      </div>
-                      <div style="font-size:.66rem;color:#c9ecf7;line-height:1.28;margin-top:.12rem">
-                        {subtitle}
-                      </div>
-                    </div>
-                  </div>
-                </div>
-                """,
-                unsafe_allow_html=True,
-            )
-        else:
-            if st.button(
-                f"{icon}  {label}",
-                key=key,
-                use_container_width=True,
-                help=subtitle,
-            ):
-                st.session_state["main_view"]=target
-                st.session_state.pop("future_lab_id",None)
-                st.rerun()
-            st.markdown(
-                f"""
-                <div style="
-                    font-size:.64rem;
-                    color:#9fc4d7;
-                    line-height:1.25;
-                    margin:-.22rem .45rem .32rem 2.05rem;
-                ">
-                  {subtitle}
-                </div>
-                """,
-                unsafe_allow_html=True,
-            )
+    st.markdown(
+        """
+        <style>
+        /* Navegación principal inicial: mismas tarjetas-radio de los laboratorios.
+           Se apunta a la key del widget para no depender de :has()/aria-label,
+           cuyo DOM puede variar en el primer render de Streamlit. */
+        section[data-testid="stSidebar"] div[class*="st-key-main_nav_radio_"] [role="radiogroup"] {
+            gap: .44rem !important;
+        }
+        section[data-testid="stSidebar"] div[class*="st-key-main_nav_radio_"] [role="radiogroup"] > label {
+            width: 100% !important;
+            margin: 0 !important;
+            padding: .62rem .68rem !important;
+            border: 1px solid rgba(142, 221, 242, .28) !important;
+            border-radius: 12px !important;
+            background: rgba(12, 73, 112, .30) !important;
+            transition: background .16s ease, border-color .16s ease, box-shadow .16s ease, transform .08s ease !important;
+            cursor: pointer !important;
+            align-items: flex-start !important;
+            text-align: left !important;
+        }
+        section[data-testid="stSidebar"] div[class*="st-key-main_nav_radio_"] [role="radiogroup"] > label:hover {
+            background: rgba(21, 111, 160, .34) !important;
+            border-color: rgba(89, 212, 239, .58) !important;
+        }
+        section[data-testid="stSidebar"] div[class*="st-key-main_nav_radio_"] [role="radiogroup"] > label:active {
+            transform: translateY(1px);
+        }
+        section[data-testid="stSidebar"] div[class*="st-key-main_nav_radio_"] [role="radiogroup"] > label:has(input:checked) {
+            background: linear-gradient(135deg, rgba(8, 94, 143, .72), rgba(12, 125, 166, .52)) !important;
+            border-color: #59d4ef !important;
+            box-shadow: inset 3px 0 0 #59d4ef, 0 0 0 1px rgba(89, 212, 239, .08) !important;
+        }
+        /* Mantener visible el círculo del radio desde el primer render. */
+        section[data-testid="stSidebar"] div[class*="st-key-main_nav_radio_"] [data-baseweb="radio"] {
+            display: flex !important;
+            opacity: 1 !important;
+            visibility: visible !important;
+            flex: 0 0 auto !important;
+        }
+        section[data-testid="stSidebar"] div[class*="st-key-main_nav_radio_"] input[type="radio"] {
+            accent-color: #59d4ef !important;
+        }
+        section[data-testid="stSidebar"] div[class*="st-key-main_nav_radio_"] [data-testid="stMarkdownContainer"] p {
+            font-weight: 700 !important;
+            line-height: 1.22 !important;
+            text-align: left !important;
+        }
+        section[data-testid="stSidebar"] div[class*="st-key-main_nav_radio_"] [data-testid="stCaptionContainer"] {
+            color: #a9cada !important;
+            font-size: .69rem !important;
+            line-height: 1.18 !important;
+            margin-top: .12rem !important;
+            text-align: left !important;
+        }
+        </style>
+        """,
+        unsafe_allow_html=True,
+    )
 
-    _sidebar_nav_card(
-        "Mis clases",
+    nav_titles={
+        "🏠 Mis clases":"📚  Mis clases",
+        results_view_label:(
+            "📝  Evaluaciones entregadas"
+            if st.session_state.get("role")=="Docente"
+            else "📊  Mi desempeño"
+        ),
+        lab_view_label:(
+            f"🧪  Laboratorio {ACTIVE_LAB}"
+            if st.session_state.get("role")=="Docente"
+            else "🧪  Laboratorios y actividades"
+        ),
+    }
+    nav_captions=[
         "Cursos y laboratorios",
-        "📚",
-        "🏠 Mis clases",
-        "nav_main_classes",
-    )
+        (
+            "Respuestas y puntajes"
+            if st.session_state.get("role")=="Docente"
+            else "Evaluaciones, notas y avance formativo"
+        ),
+        (
+            "Ruta y actividades del laboratorio actual"
+            if st.session_state.get("role")=="Docente"
+            else "Ruta, ejercicios y progreso"
+        ),
+    ]
+    nav_key=f"main_nav_radio_{ACTIVE_LAB}"
+    if st.session_state.get(nav_key) not in view_options:
+        st.session_state[nav_key]=active_view
 
-    _sidebar_nav_card(
-        "Evaluaciones entregadas" if st.session_state.get("role")=="Docente" else "Mi desempeño",
-        "Respuestas y puntajes" if st.session_state.get("role")=="Docente" else "Notas, evaluaciones y progreso",
-        "📝" if st.session_state.get("role")=="Docente" else "📊",
-        results_view_label,
-        "nav_main_results",
+    selected_view=st.radio(
+        "Navegación principal",
+        view_options,
+        index=view_options.index(active_view),
+        format_func=lambda option: nav_titles[option],
+        captions=nav_captions,
+        key=nav_key,
+        label_visibility="collapsed",
+        help="Selecciona el espacio al que quieres ir.",
     )
+    if selected_view!=active_view:
+        st.session_state["main_view"]=selected_view
+        st.rerun()
 
-    _sidebar_nav_card(
-        "Laboratorios y actividades",
-        f"Ruta y actividades del Laboratorio {ACTIVE_LAB}",
-        "🧪",
-        current_lab_view,
-        "nav_main_lab",
-    )
+    view=st.session_state["main_view"]
     # Resumen académico del alumno: separa avance formativo de notas oficiales.
     # Las únicas calificaciones del curso provienen del Laboratorio 2,
     # etapas 9 y 10; el resto se muestra como progreso de aprendizaje.
