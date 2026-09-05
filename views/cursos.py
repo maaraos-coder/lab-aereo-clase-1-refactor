@@ -71,8 +71,8 @@ def course_dashboard_impl():
         html=(
             f'<div class="dashboard-lab-card">'
             f'<div class="dashboard-kicker">LABORATORIO {number}</div>'
-            f'<div class="dashboard-date">{meta}</div>'
-            f'<div class="dashboard-divider"></div>'
+            + (f'<div class="dashboard-date">{meta}</div>' if meta else '')
+            + f'<div class="dashboard-divider"></div>'
             f'<div class="dashboard-state">{state}</div>'
             f'<div class="dashboard-detail">{detail}</div>'
             f'</div>'
@@ -174,7 +174,7 @@ def course_dashboard_impl():
                 state=("Publicado para alumnos" if published else "Borrador · oculto para alumnos")
                 _dashboard_card(
                     lab["number"],
-                    f'Programado: {_opening_label(row.get("opens_at") or lab["opens_at"])}',
+                    '',
                     state,
                     lab["focus"],
                 )
@@ -16869,63 +16869,113 @@ def future_lab_view_impl(lab):
 
         role_now=st.session_state.get("role","Alumno")
 
-        # Estado activo de la navegación. Dentro del laboratorio, la tercera
-        # opción permanece destacada; al cambiar de vista el estado se conserva
-        # mediante session_state y la siguiente pantalla marca su acceso activo.
-        active_view=st.session_state.get(future_view_key,current_lab_label)
+        # Navegación principal con radio buttons dentro de tarjetas. Al estar
+        # dentro del laboratorio, la tercera opción se muestra seleccionada.
+        active_view=current_lab_label
 
-        # Mis clases
-        if st.button(
-            "📚  Mis clases  ·  Cursos y laboratorios",
-            key=f"future_nav_classes_{class_id}",
-            use_container_width=True,
-            type="primary" if active_view=="🏠 Mis clases" else "secondary",
-            help="Volver al listado de cursos y laboratorios.",
-        ):
+        st.markdown(
+            """
+        <style>
+        /* Navegación principal: radio buttons contenidos en tarjetas */
+        section[data-testid="stSidebar"] div[data-testid="stRadio"]:has(div[role="radiogroup"][aria-label="Navegación principal"]) > div[role="radiogroup"] {
+            gap: .44rem;
+        }
+        section[data-testid="stSidebar"] div[data-testid="stRadio"]:has(div[role="radiogroup"][aria-label="Navegación principal"]) > div[role="radiogroup"] > label {
+            width: 100%;
+            margin: 0;
+            padding: .62rem .68rem;
+            border: 1px solid rgba(142, 221, 242, .28);
+            border-radius: 12px;
+            background: rgba(12, 73, 112, .30);
+            transition: background .16s ease, border-color .16s ease, box-shadow .16s ease, transform .08s ease;
+            cursor: pointer;
+            align-items: flex-start;
+        }
+        section[data-testid="stSidebar"] div[data-testid="stRadio"]:has(div[role="radiogroup"][aria-label="Navegación principal"]) > div[role="radiogroup"] > label:hover {
+            background: rgba(21, 111, 160, .34);
+            border-color: rgba(89, 212, 239, .58);
+        }
+        section[data-testid="stSidebar"] div[data-testid="stRadio"]:has(div[role="radiogroup"][aria-label="Navegación principal"]) > div[role="radiogroup"] > label:active {
+            transform: translateY(1px);
+        }
+        section[data-testid="stSidebar"] div[data-testid="stRadio"]:has(div[role="radiogroup"][aria-label="Navegación principal"]) > div[role="radiogroup"] > label:has(input:checked) {
+            background: linear-gradient(135deg, rgba(8, 94, 143, .72), rgba(12, 125, 166, .52));
+            border-color: #59d4ef;
+            box-shadow: inset 3px 0 0 #59d4ef, 0 0 0 1px rgba(89, 212, 239, .08);
+        }
+        section[data-testid="stSidebar"] div[data-testid="stRadio"]:has(div[role="radiogroup"][aria-label="Navegación principal"]) input[type="radio"] {
+            accent-color: #59d4ef;
+        }
+        section[data-testid="stSidebar"] div[data-testid="stRadio"]:has(div[role="radiogroup"][aria-label="Navegación principal"]) [data-testid="stMarkdownContainer"] p {
+            font-weight: 700;
+            line-height: 1.22;
+        }
+        section[data-testid="stSidebar"] div[data-testid="stRadio"]:has(div[role="radiogroup"][aria-label="Navegación principal"]) [data-testid="stCaptionContainer"] {
+            color: #a9cada;
+            font-size: .69rem;
+            line-height: 1.18;
+            margin-top: .12rem;
+        }
+        </style>
+        """,
+            unsafe_allow_html=True,
+        )
+
+        nav_titles={
+            "🏠 Mis clases":"📚  Mis clases",
+            results_view_label:(
+                "📝  Evaluaciones entregadas"
+                if role_now=="Docente"
+                else "📊  Mi desempeño"
+            ),
+            current_lab_label:(
+                f"🧪  Laboratorio {lab['number']}"
+                if role_now=="Docente"
+                else "🧪  Laboratorios y actividades"
+            ),
+        }
+        nav_captions=[
+            "Cursos y laboratorios",
+            (
+                "Respuestas y puntajes"
+                if role_now=="Docente"
+                else "Evaluaciones, notas y avance formativo"
+            ),
+            (
+                "Ruta y actividades del laboratorio actual"
+                if role_now=="Docente"
+                else "Ruta, ejercicios y progreso"
+            ),
+        ]
+        nav_key=f"future_nav_radio_{class_id}"
+        if st.session_state.get(nav_key) not in future_options:
+            st.session_state[nav_key]=current_lab_label
+
+        selected_view=st.radio(
+            "Navegación principal",
+            future_options,
+            index=future_options.index(current_lab_label),
+            format_func=lambda option: nav_titles[option],
+            captions=nav_captions,
+            key=nav_key,
+            label_visibility="collapsed",
+            help="Selecciona el espacio al que quieres ir.",
+        )
+
+        if selected_view=="🏠 Mis clases":
             st.session_state[future_view_key]="🏠 Mis clases"
             st.session_state.pop("future_lab_id",None)
             st.session_state["main_view"]="🏠 Mis clases"
+            st.session_state.pop(nav_key,None)
             st.rerun()
-
-        # Mi desempeño / Evaluaciones entregadas
-        performance_title=(
-            "📝  Evaluaciones entregadas  ·  Respuestas y puntajes"
-            if role_now=="Docente"
-            else "📊  Mi desempeño  ·  Evaluaciones, notas y avance formativo"
-        )
-        if st.button(
-            performance_title,
-            key=f"future_nav_results_{class_id}",
-            use_container_width=True,
-            type="primary" if active_view==results_view_label else "secondary",
-            help=(
-                "Revisar entregas y puntajes de estudiantes."
-                if role_now=="Docente"
-                else "Revisar tus evaluaciones, notas y avance formativo."
-            ),
-        ):
+        elif selected_view==results_view_label:
             st.session_state[future_view_key]=results_view_label
             st.session_state.pop("future_lab_id",None)
             st.session_state["main_view"]=results_view_label
+            st.session_state.pop(nav_key,None)
             st.rerun()
-
-        lab_nav_title=(
-            f"🧪  Laboratorio {lab['number']}  ·  Ruta y actividades"
-            if role_now=="Docente"
-            else "🧪  Laboratorios y actividades  ·  Ruta y progreso"
-        )
-        if st.button(
-            lab_nav_title,
-            key=f"future_nav_lab_{class_id}",
-            use_container_width=True,
-            type="primary",
-            help="Estás en la ruta, contenidos y actividades de este laboratorio.",
-        ):
-            # Ya es la vista activa. El botón mantiene el feedback visual de
-            # pulsación sin alterar la etapa ni el progreso actual.
+        else:
             st.session_state[future_view_key]=current_lab_label
-
-        st.session_state[future_view_key]=current_lab_label
 
         # La tarjeta global de progreso del diplomado debe estar siempre visible
         # para el alumno, sin importar el curso o laboratorio que tenga abierto.
