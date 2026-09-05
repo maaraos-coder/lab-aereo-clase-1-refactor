@@ -6438,58 +6438,64 @@ def _render_course2_lab1_stage8(lab, saved):
     )
 
     if zone=="Fuente / bomba":
-        st.markdown("### Actuar en la fuente · reducir lo que nace en el equipo")
+        st.markdown("### Actuar en la fuente · generar menos vibración")
         st.write(
-            "Controlar en la fuente significa modificar la **selección, operación o condición física del equipo** para que "
-            "genere menos fuerza dinámica, turbulencia, pulsaciones o ruido antes de que la energía entre a los caminos de transmisión."
+            "En acústica no necesitamos diagnosticar cada componente mecánico de la bomba. Lo importante es reconocer "
+            "si el equipo está **generando una excitación excesiva** antes de que esa energía entre a la estructura."
         )
-        f1,f2,f3=st.columns(3)
-        with f1:
-            _card("Selección y punto de operación","Evitar generar de más",
-                  "Seleccionar equipos con datos acústicos adecuados; evitar sobredimensionamiento; operar bombas y ventiladores cerca de su zona eficiente; reducir RPM con variador cuando el proceso lo permita.",tone="blue")
-            _card("Condición mecánica","Rotor / eje / acoplamiento",
-                  "Balanceo dinámico, alineación motor–bomba, revisión de rodamientos, holguras, acoplamientos, correas y piezas sueltas. Un aislador no corrige un rotor desequilibrado.")
-        with f2:
-            _card("Condición hidráulica","Bombas",
-                  "Revisar caudal, presión de succión, NPSH, válvulas, obstrucciones y pérdidas en aspiración. Evitar cavitación y pulsaciones hidráulicas.",tone="green")
-            _card("Condición aerodinámica","Ventiladores / ductos",
-                  "Reducir velocidad excesiva, evitar entrada distorsionada, codos inmediatos, transiciones abruptas y grandes pérdidas de presión que regeneren ruido.")
-        with f3:
-            _card("Mantenimiento","Conservar la condición de diseño",
-                  "Lubricación, limpieza de impulsor/ventilador, tensión de correas, rodamientos, filtros, válvulas y aprietes. El deterioro puede aumentar ruido aunque el aislamiento sea correcto.",tone="orange")
-            st.markdown("**Ejemplo técnico**")
-            st.latex(r"f_{1\times}=\frac{\mathrm{RPM}}{60}")
-            st.caption(f"{CASE_RPM:.0f} RPM → {CASE_F_ROT:.1f} Hz. En los espectros por bandas, esta componente aparece principalmente en la banda central de {CASE_BAND_HZ:.0f} Hz.")
 
-        st.markdown("#### ¿Qué significan estas acciones en la práctica?")
-        source_terms=pd.DataFrame([
-            ["Balanceo", "Corregir la distribución de masa de una pieza giratoria para reducir fuerzas periódicas al rotar."],
-            ["Alineación", "Ajustar la posición relativa de los ejes del motor y de la bomba para evitar esfuerzos y vibraciones adicionales."],
-            ["Punto de operación", "Trabajar en una zona de caudal y presión adecuada para el equipo, evitando condiciones ineficientes o inestables."],
-            ["Condición hidráulica", "Revisar presión de succión, caudal, pérdidas y margen NPSH para evitar cavitación o pulsaciones."],
-            ["Mantenimiento", "Conservar rodamientos, acoplamientos, impulsor, válvulas y fijaciones en la condición prevista de diseño."],
-        ],columns=["Concepto","Qué significa"])
-        st.dataframe(source_terms,hide_index=True,use_container_width=True)
-
-        st.markdown("#### Fuente y camino no son lo mismo")
-        sf1,sf2=st.columns(2)
-        with sf1:
+        fa1,fa2,fa3=st.columns(3)
+        with fa1:
             _card(
-                "Actuar en la fuente",
-                "Generar menos",
-                "Ejemplos: corregir cavitación, balancear un conjunto giratorio, alinear motor–bomba o reducir una velocidad excesiva cuando el proceso lo permita.",
-                tone="green"
-            )
-        with sf2:
-            _card(
-                "Actuar en el camino",
-                "Transmitir menos",
-                "Ejemplos: resortes bajo la bomba, conexiones flexibles, soportes resilientes, silenciadores o tratamientos del recinto.",
+                "1 · Fuente",
+                "¿La máquina vibra más de lo esperado?",
+                "Comprueba si la bomba trabaja de forma estable y si aparece vibración o ruido anormal durante su funcionamiento.",
                 tone="blue"
             )
+        with fa2:
+            _card(
+                "2 · Condición de operación",
+                "Evitar excitaciones anormales",
+                "Una operación inestable, una velocidad inadecuada o una condición hidráulica desfavorable pueden aumentar la fuerza dinámica generada por la bomba.",
+                tone="green"
+            )
+        with fa3:
+            _card(
+                "3 · Control en la fuente",
+                "Reducir lo que nace en el equipo",
+                "La medida correcta depende de la causa. El objetivo acústico es simple: que la bomba genere menos vibración antes de intentar aislarla.",
+                tone="orange"
+            )
+
+        st.markdown("#### La idea acústica que debes conservar")
+        ac1,ac2=st.columns(2)
+        with ac1:
+            _card(
+                "Actuar en la fuente",
+                "Generar menos vibración",
+                "Ejemplos: corregir una condición de cavitación, estabilizar la operación o resolver una anomalía propia del equipo.",
+                tone="green"
+            )
+        with ac2:
+            _card(
+                "Actuar en el camino",
+                "Transmitir menos vibración",
+                "Ejemplos: aisladores bajo la bomba, conexiones flexibles y soportes resilientes que reduzcan la energía que entra a la estructura.",
+                tone="blue"
+            )
+
+        st.markdown(
+            """
+            <div style="margin:.7rem 0 1rem;padding:15px 18px;border-radius:14px;background:#eef6ff;border:1px solid #bfdbfe;text-align:center;font-size:1.03rem">
+              <b>Máquina</b> &nbsp;→&nbsp; <b>Vibración</b> &nbsp;→&nbsp; <b>Base / tuberías</b> &nbsp;→&nbsp; <b>Estructura</b> &nbsp;→&nbsp; <b>Ruido en el receptor</b>
+            </div>
+            """,
+            unsafe_allow_html=True
+        )
         st.info(
-            "En esta parte no necesitas memorizar términos de mecánica. Lo importante es distinguir si una medida "
-            "**reduce lo que genera el equipo** o si **reduce la energía que se transmite después**."
+            "**Idea clave:** controlar ruido estructural significa actuar sobre una de dos cosas: "
+            "**reducir lo que genera la máquina** o **reducir lo que logra transmitirse**. "
+            "En el Laboratorio A comprobaremos primero si existe una condición anormal en la fuente."
         )
 
     elif zone=="Base y losa":
@@ -6528,6 +6534,11 @@ def _render_course2_lab1_stage8(lab, saved):
     # 2 · LAB A: DIAGNÓSTICO
     # =========================================================
     st.markdown("## 2 · Laboratorio A — Diagnóstico de una bomba centrífuga")
+    st.info(
+        "**Nexo con lo anterior:** antes de seleccionar un aislador debemos comprobar si la bomba está generando "
+        "una excitación anormal. Una de las causas posibles es la **cavitación**. Por eso primero verificaremos si "
+        "esa hipótesis es hidráulicamente plausible y luego la contrastaremos con las mediciones de ruido y vibración."
+    )
     st.markdown(
         """
         **Caso profesional.** Los ocupantes del dormitorio ubicado sobre la sala técnica reportan un
@@ -6539,7 +6550,7 @@ def _render_course2_lab1_stage8(lab, saved):
         o la radiación aérea.
 
         **Objetivo:** diseñar una campaña de medición, interpretar los resultados y construir un diagnóstico sustentado
-        en evidencias. La app no entregará la conclusión al alumno antes de que analice los datos.
+        en evidencias. Las conclusiones deberán fundamentarse en el análisis de los datos medidos.
         """
     )
 
@@ -6601,20 +6612,44 @@ def _render_course2_lab1_stage8(lab, saved):
     # ---------------------------------------------------------
     # 2.1 Cavitación y NPSH: prerrequisito
     # ---------------------------------------------------------
-    st.markdown("### 2.1 · Antes de diagnosticar: ¿qué es la cavitación?")
+    st.markdown("### 2.1 · ¿Qué es la cavitación y por qué nos importa acústicamente?")
     st.write(
-        "La **cavitación** puede aparecer cuando la presión local del líquido cae hasta valores cercanos a su presión de vapor. "
-        "Se forman cavidades o burbujas de vapor que luego llegan a zonas de mayor presión y colapsan. Ese proceso puede generar ruido, vibración, pérdida de desempeño y, si persiste, erosión del impulsor."
+        "La **cavitación** ocurre cuando la presión local del líquido, normalmente cerca de la entrada del impulsor, "
+        "cae tanto que parte del líquido se transforma localmente en vapor. Se forman pequeñas cavidades que viajan "
+        "con el flujo y, al llegar a una zona de mayor presión, **colapsan rápidamente**."
     )
+    st.info(
+        "**No es aire que entra a la bomba.** Las cavidades contienen principalmente vapor del propio líquido, "
+        "generado por una caída local de presión."
+    )
+
+    _asset(
+        "curso2_lab1_etapa8_cavitacion_npsh_infografia.png",
+        "Cavitación en una bomba centrífuga: caída de presión, formación y colapso de cavidades, NPSH y conexión con ruido estructural."
+    )
+
+    st.markdown("#### El fenómeno en cuatro pasos")
+    cv1,cv2,cv3,cv4=st.columns(4)
+    with cv1:
+        _card("1 · Baja la presión","zona de succión","La presión local se aproxima a la presión de vapor del líquido.",tone="blue")
+    with cv2:
+        _card("2 · Se forma vapor","aparecen cavidades","Parte del líquido vaporiza localmente y aparecen pequeñas cavidades de vapor.",tone="green")
+    with cv3:
+        _card("3 · Viajan con el flujo","hacia mayor presión","El impulsor transporta las cavidades hacia regiones donde la presión aumenta.",tone="orange")
+    with cv4:
+        _card("4 · Colapsan","pulsos de presión","El colapso genera microimpactos y fuerzas impulsivas que pueden hacer vibrar la bomba.",tone="orange")
+
     st.markdown(
         """
-        <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin:.55rem 0 1rem">
-          <div style="border:1px solid #cfe0f1;border-radius:14px;padding:13px;background:#fff"><b>1 · Baja la presión local</b><br><span style="color:#64748b">Zona de succión/entrada del impulsor.</span></div>
-          <div style="border:1px solid #cfe0f1;border-radius:14px;padding:13px;background:#fff"><b>2 · Se forma vapor</b><br><span style="color:#64748b">Aparecen pequeñas cavidades de vapor.</span></div>
-          <div style="border:1px solid #cfe0f1;border-radius:14px;padding:13px;background:#fff"><b>3 · Viajan a mayor presión</b><br><span style="color:#64748b">Las burbujas salen de la zona de baja presión.</span></div>
-          <div style="border:1px solid #f3c7bf;border-radius:14px;padding:13px;background:#fff7f5"><b>4 · Colapsan</b><br><span style="color:#7c4a42">Generan impulsos, ruido, vibración y posible erosión.</span></div>
+        <div style="margin:.8rem 0 1rem;padding:15px 18px;border-radius:14px;background:#f4f0ff;border:1px solid #ddd6fe;text-align:center;font-size:1.03rem">
+          <b>Cavitación</b> → <b>fuerzas impulsivas</b> → <b>vibración de la bomba</b> → <b>base / tuberías</b> → <b>estructura</b> → <b>ruido radiado</b>
         </div>
-        """,unsafe_allow_html=True
+        """,
+        unsafe_allow_html=True
+    )
+    st.caption(
+        "La cavitación es una posible fuente de excitación adicional. En el diagnóstico no se demuestra con una sola señal: "
+        "debe existir coherencia entre evidencia hidráulica y evidencia vibroacústica."
     )
 
     st.markdown("#### Antes de seguir: tono y contenido de banda ancha no son lo mismo")
@@ -6695,27 +6730,41 @@ def _render_course2_lab1_stage8(lab, saved):
             tone="orange"
         )
 
-    st.markdown("#### ¿Qué es NPSH y por qué se usa?")
+    st.markdown("#### ¿Cómo comprobamos si la cavitación es hidráulicamente plausible?")
     st.write(
-        "El NPSH expresa el **margen de presión disponible en la succión antes de alcanzar condiciones favorables "
-        "para la vaporización del líquido**. Para diagnosticar cavitación debemos separar dos cantidades que provienen "
-        "de lugares distintos."
+        "Aquí aparece el **NPSH**. En este laboratorio lo utilizamos como una herramienta de diagnóstico: "
+        "nos indica si en la succión existe suficiente margen de presión antes de alcanzar condiciones favorables para la vaporización."
     )
+    st.markdown("##### Piensa en el NPSH como un margen de seguridad de presión")
     n1,n2=st.columns(2)
     with n1:
         _card(
             "NPSH disponible · NPSHₐ",
-            "lo determina la instalación",
-            "Depende de presión disponible, temperatura y presión de vapor, diferencia de altura y pérdidas del circuito de succión. No lo entrega el catálogo de la bomba.",
+            "lo que la instalación entrega",
+            "Es el margen realmente disponible en la succión. Depende de la presión, nivel del líquido, temperatura, presión de vapor y pérdidas de la línea de succión.",
             tone="green"
         )
     with n2:
         _card(
             "NPSH requerido · NPSHᵣ",
-            "lo determina la bomba",
-            "Se obtiene de la curva del fabricante para un caudal y una velocidad de giro determinados. Debe leerse en la ficha técnica.",
+            "lo que la bomba necesita",
+            "Es el valor requerido por la bomba para un caudal y velocidad de giro determinados. Se obtiene de la curva del fabricante.",
             tone="blue"
         )
+
+    st.markdown("##### La comparación que nos interesa")
+    mg1,mg2,mg3=st.columns(3)
+    with mg1:
+        _card("NPSHₐ > NPSHᵣ","margen favorable","La instalación entrega más margen que el requerido por la bomba. En diseño debe mantenerse además un margen suficiente.",tone="green")
+    with mg2:
+        _card("NPSHₐ ≈ NPSHᵣ","zona de precaución","El margen es pequeño y variaciones de operación pueden acercar el sistema a una condición crítica.",tone="orange")
+    with mg3:
+        _card("NPSHₐ < NPSHᵣ","condición desfavorable","La instalación entrega menos margen que el requerido. Es una condición compatible con riesgo de cavitación.",tone="orange")
+
+    st.info(
+        "**El NPSH no mide ruido ni vibración.** Nos permite comprobar si la cavitación es una explicación "
+        "**físicamente plausible** de lo que estamos observando. Después debemos contrastarla con las mediciones."
+    )
 
     st.markdown("##### ¿Cómo se calcula el NPSH disponible?")
     st.write(
@@ -6760,15 +6809,15 @@ def _render_course2_lab1_stage8(lab, saved):
     st.markdown("**Lectura física de la ecuación**")
     st.latex(
         r"\boxed{\text{presión disponible}"
-        r"+\text{altura estática}"
+        r"+\text{altura favorable}"
         r"-\text{pérdidas en succión}"
         r"-\text{presión de vapor}"
         r"\;\longrightarrow\;NPSH_A}"
     )
 
     st.info(
-        "El NPSHₐ aumenta cuando existe mayor presión disponible en la succión o mayor altura favorable, "
-        "y disminuye cuando aumentan las pérdidas de carga o la presión de vapor del líquido."
+        "En palabras simples: **ganamos margen** con más presión disponible o una altura favorable; "
+        "**perdemos margen** cuando aumentan las pérdidas de la succión o cuando el líquido tiene una mayor presión de vapor."
     )
     st.info(
         "Si se dispone de una medición de **presión absoluta directamente en la brida de succión**, el NPSHₐ también puede "
@@ -7054,7 +7103,7 @@ def _render_course2_lab1_stage8(lab, saved):
         with nn3:
             _card("Margen",f"{npsh_saved['margin_m']:+.2f} m","Diferencia disponible − requerido.",tone="orange" if npsh_saved["margin_m"]<=0 else "green")
 
-    st.markdown("#### ¿Qué tiene que ver el NPSH con el ruido y la vibración?")
+    st.markdown("#### Del cálculo hidráulico al diagnóstico acústico")
     st.write(
         "El cálculo de NPSH **no predice un nivel acústico en dB**. Su función en este laboratorio es distinta: "
         "indica si existe una condición hidráulica capaz de favorecer la formación y el colapso de burbujas. "
