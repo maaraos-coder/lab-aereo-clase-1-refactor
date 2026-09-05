@@ -6431,11 +6431,17 @@ def _render_course2_lab1_stage8(lab, saved):
         """
     )
 
-    zone=st.radio(
-        "Selecciona qué parte del problema quieres revisar",
-        ["Fuente / bomba","Base y losa","Tuberías y conexiones","Radiación aérea","Receptor"],
-        horizontal=True,key=f"{ns}_zone"
+    st.markdown("### ¿Dónde quieres revisar el problema?")
+    st.caption("Selecciona una parte del sistema para distinguir dónde se genera la excitación y por dónde puede transmitirse.")
+    zone=st.segmented_control(
+        "Parte del problema",
+        ["Fuente / bomba","Base y losa","Tuberías","Radiación aérea","Receptor"],
+        default="Fuente / bomba",
+        key=f"{ns}_zone",
+        label_visibility="collapsed",
     )
+    if zone is None:
+        zone="Fuente / bomba"
 
     if zone=="Fuente / bomba":
         st.markdown("### Actuar en la fuente · generar menos vibración")
@@ -6515,7 +6521,7 @@ def _render_course2_lab1_stage8(lab, saved):
         with c3:
             _card("Envolvente","transmisión aérea","Puertas, muros y penetraciones condicionan cuánto sonido aéreo llega a recintos vecinos.",tone="orange")
 
-    elif zone=="Tuberías y conexiones":
+    elif zone=="Tuberías":
         st.markdown("### Tuberías y conexiones · evitar caminos mecánicos paralelos")
         c1,c2,c3=st.columns(3)
         with c1: _card("Conectores flexibles","Bomba–tubería","Desacoplan movimientos y reducen transferencia mecánica cuando están correctamente dimensionados e instalados.",tone="green")
@@ -6534,11 +6540,6 @@ def _render_course2_lab1_stage8(lab, saved):
     # 2 · LAB A: DIAGNÓSTICO
     # =========================================================
     st.markdown("## 2 · Laboratorio A — Diagnóstico de una bomba centrífuga")
-    st.info(
-        "**Nexo con lo anterior:** antes de seleccionar un aislador debemos comprobar si la bomba está generando "
-        "una excitación anormal. Una de las causas posibles es la **cavitación**. Por eso primero verificaremos si "
-        "esa hipótesis es hidráulicamente plausible y luego la contrastaremos con las mediciones de ruido y vibración."
-    )
     st.markdown(
         """
         **Caso profesional.** Los ocupantes del dormitorio ubicado sobre la sala técnica reportan un
@@ -6614,9 +6615,15 @@ def _render_course2_lab1_stage8(lab, saved):
     # ---------------------------------------------------------
     st.markdown("### 2.1 · ¿Qué es la cavitación y por qué nos importa acústicamente?")
     st.write(
+        "Antes de seleccionar un aislador debemos comprobar si la bomba está **generando una excitación anormal**. "
+        "Una causa posible es la cavitación. Por eso primero revisaremos si la instalación presenta condiciones en las que "
+        "este fenómeno puede ocurrir y después contrastaremos esa información con las mediciones de ruido y vibración."
+    )
+    st.write(
         "La **cavitación** ocurre cuando la presión local del líquido, normalmente cerca de la entrada del impulsor, "
-        "cae tanto que parte del líquido se transforma localmente en vapor. Se forman pequeñas cavidades que viajan "
-        "con el flujo y, al llegar a una zona de mayor presión, **colapsan rápidamente**."
+        "disminuye tanto que parte del líquido se transforma localmente en vapor. Se forman pequeñas cavidades que viajan "
+        "con el flujo y, al llegar a una zona de mayor presión, **colapsan rápidamente**. Esos colapsos producen pulsos de "
+        "presión y fuerzas impulsivas capaces de hacer vibrar la bomba, su base y las tuberías."
     )
     st.info(
         "**No es aire que entra a la bomba.** Las cavidades contienen principalmente vapor del propio líquido, "
@@ -6701,39 +6708,11 @@ def _render_course2_lab1_stage8(lab, saved):
         "Un aumento de banda ancha puede ser compatible con cavitación, pero **no la demuestra por sí solo**."
     )
 
-    r1,r2,r3,r4=st.columns(4)
-    with r1:
-        _card(
-            "Ruido",
-            "irregular + banda ancha",
-            "Puede percibirse como grava, crepitación o golpeteo y acompañarse de energía distribuida en varias frecuencias.",
-            tone="blue"
-        )
-    with r2:
-        _card(
-            "Vibración",
-            "más que un tono",
-            "Puede aumentar en un rango de frecuencias. Un pico aislado a 1×RPM por sí solo no demuestra cavitación."
-        )
-    with r3:
-        _card(
-            "Hidráulica",
-            "presión + caudal + NPSH",
-            "La condición de succión permite evaluar si la hipótesis de cavitación es físicamente plausible.",
-            tone="green"
-        )
-    with r4:
-        _card(
-            "Daño",
-            "erosión / pitting",
-            "La cavitación persistente puede deteriorar el impulsor; es una consecuencia que refuerza el diagnóstico, no una condición necesaria para detectarlo.",
-            tone="orange"
-        )
-
-    st.markdown("#### ¿Cómo comprobamos si la cavitación es hidráulicamente plausible?")
+    st.markdown("#### ¿La bomba tiene condiciones para que ocurra cavitación?")
     st.write(
-        "Aquí aparece el **NPSH**. En este laboratorio lo utilizamos como una herramienta de diagnóstico: "
-        "nos indica si en la succión existe suficiente margen de presión antes de alcanzar condiciones favorables para la vaporización."
+        "Antes de atribuir el ruido o la vibración a cavitación necesitamos comprobar si la **condición de succión** permite que "
+        "el líquido se acerque a la vaporización. Para eso utilizamos el **NPSH**: comparamos el margen de presión que realmente "
+        "entrega la instalación con el margen que necesita la bomba."
     )
     st.markdown("##### Piensa en el NPSH como un margen de seguridad de presión")
     n1,n2=st.columns(2)
@@ -6760,11 +6739,6 @@ def _render_course2_lab1_stage8(lab, saved):
         _card("NPSHₐ ≈ NPSHᵣ","zona de precaución","El margen es pequeño y variaciones de operación pueden acercar el sistema a una condición crítica.",tone="orange")
     with mg3:
         _card("NPSHₐ < NPSHᵣ","condición desfavorable","La instalación entrega menos margen que el requerido. Es una condición compatible con riesgo de cavitación.",tone="orange")
-
-    st.info(
-        "**El NPSH no mide ruido ni vibración.** Nos permite comprobar si la cavitación es una explicación "
-        "**físicamente plausible** de lo que estamos observando. Después debemos contrastarla con las mediciones."
-    )
 
     st.markdown("##### ¿Cómo se calcula el NPSH disponible?")
     st.write(
@@ -7103,11 +7077,16 @@ def _render_course2_lab1_stage8(lab, saved):
         with nn3:
             _card("Margen",f"{npsh_saved['margin_m']:+.2f} m","Diferencia disponible − requerido.",tone="orange" if npsh_saved["margin_m"]<=0 else "green")
 
-    st.markdown("#### Del cálculo hidráulico al diagnóstico acústico")
+    st.markdown("#### ¿Qué nos indica el valor de NPSH que calculamos?")
     st.write(
-        "El cálculo de NPSH **no predice un nivel acústico en dB**. Su función en este laboratorio es distinta: "
-        "indica si existe una condición hidráulica capaz de favorecer la formación y el colapso de burbujas. "
-        "Después debemos buscar evidencia vibroacústica compatible."
+        "La comparación entre **NPSH disponible** y **NPSH requerido** nos indica si la bomba está trabajando con suficiente "
+        "margen de presión en la succión. Si el margen es insuficiente o muy pequeño, **puede producirse cavitación** y esa "
+        "condición puede convertirse en una fuente adicional de ruido y vibración."
+    )
+    st.write(
+        "El NPSH **no demuestra por sí solo** que el ruido observado sea cavitación y tampoco entrega un nivel en dB o mm/s. "
+        "Lo utilizamos para saber si esa causa es posible y luego la contrastamos con el comportamiento de la bomba y con las "
+        "mediciones de ruido y vibración."
     )
 
     st.markdown(
@@ -7144,6 +7123,38 @@ def _render_course2_lab1_stage8(lab, saved):
             "No existe una conversión universal desde el margen NPSH hacia un nivel acústico o vibratorio.",
             tone="orange"
         )
+
+    st.markdown("##### Si el NPSH indica riesgo, ¿cómo se controla el problema?")
+    st.write(
+        "Si la cavitación aparece como una causa probable, el control debe comenzar **en la fuente**. Antes de depender del "
+        "aislamiento vibratorio conviene corregir, de forma general, las condiciones que favorecen la cavitación."
+    )
+    ctl1,ctl2,ctl3=st.columns(3)
+    with ctl1:
+        _card(
+            "1 · Mejorar la succión",
+            "recuperar margen de presión",
+            "Revisar pérdidas excesivas, obstrucciones, filtros, válvulas y otras condiciones que reduzcan la presión disponible a la entrada de la bomba.",
+            tone="green"
+        )
+    with ctl2:
+        _card(
+            "2 · Revisar la operación",
+            "evitar condiciones desfavorables",
+            "Comprobar que el caudal y la condición de funcionamiento sean adecuados y que exista margen suficiente entre NPSH disponible y requerido.",
+            tone="blue"
+        )
+    with ctl3:
+        _card(
+            "3 · Verificar después",
+            "volver a medir",
+            "Tras corregir la fuente, comprobar si disminuyen el ruido y la vibración. Luego se evalúa cuánto control adicional necesita el camino de transmisión.",
+            tone="orange"
+        )
+    st.success(
+        "**Idea acústica clave:** si la cavitación genera la excitación, primero se controla **la fuente**. "
+        "El aislador se utiliza para reducir la vibración residual que todavía logra transmitirse a la estructura; no corrige la cavitación."
+    )
 
     st.markdown("##### Integración que buscaremos en la campaña")
     i1,i2,i3,i4=st.columns([1,1,1,1.1])
