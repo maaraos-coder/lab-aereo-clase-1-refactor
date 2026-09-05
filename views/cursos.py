@@ -16055,7 +16055,39 @@ def _c2l2_stage9(lab,saved):
             )
 
     answered=sum(st.session_state.get(f"c2l2_e9_q{i}") is not None for i in range(10))
-    st.progress(answered/10)
+
+    if not projection_mode:
+        st.markdown(
+            """
+            <style>
+            [data-testid="stMain"] div[data-testid="stButton"] button[kind="secondary"] {
+                border: 1px solid #189bc4 !important;
+                background: linear-gradient(135deg, #0b527f 0%, #087da3 100%) !important;
+                color: white !important;
+                border-radius: 11px !important;
+                min-height: 44px !important;
+                font-weight: 700 !important;
+                transition: transform .15s ease, filter .15s ease !important;
+            }
+            [data-testid="stMain"] div[data-testid="stButton"] button[kind="secondary"]:hover {
+                filter: brightness(1.08) !important;
+                transform: translateY(-1px) !important;
+            }
+            </style>
+            """,
+            unsafe_allow_html=True,
+        )
+        if st.button(
+            "💾 GUARDAR BORRADOR Y CONTINUAR DESPUÉS",
+            key="c2l2_e9_save_draft",
+            use_container_width=True,
+        ):
+            _c2l2_stage9_save(saved)
+            st.success(
+                f"Borrador guardado · {answered} de 10 respuestas registradas. "
+                "Puedes salir y continuar antes del envío definitivo."
+            )
+
     st.caption(f"{answered} de 10 respuestas registradas.")
 
     if projection_mode:
