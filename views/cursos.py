@@ -11854,6 +11854,12 @@ def _c2l2_curve_control(saved,prefix,curve,require_limit=False,unlock_reading=Fa
     default_position=int(saved.get(position_key,60) or 60)
     if position_key not in st.session_state:
         st.session_state[position_key]=default_position
+    # Restaurar también la validación de la posición límite. Sin esto, al volver
+    # a la etapa la curva reaparecía en su lugar, pero la lectura posterior podía
+    # quedar bloqueada hasta volver a pulsar "COMPROBAR POSICIÓN".
+    position_ok_key=f"{prefix}_position_ok"
+    if position_ok_key not in st.session_state and position_ok_key in saved:
+        st.session_state[position_ok_key]=bool(saved.get(position_ok_key))
 
     st.markdown("#### Mueve la curva de referencia")
     ref500=st.slider(
@@ -16170,6 +16176,33 @@ def _c2l2_stage10(lab,saved):
         st.write(payload.get("conclusion") or "")
         return
 
+    # Restauración integral del borrador de la Etapa 10.
+    # Los valores se cargan ANTES de crear los widgets para que Streamlit los
+    # muestre al regresar a la etapa, no solo para que queden guardados en disco.
+    if role=="Alumno" and not projection_mode:
+        draft_widget_map={
+            "c2l2_s10_interpret":"c2l2_s10_draft_interpretation",
+            "c2l2_s10_path":"c2l2_s10_draft_path",
+            "c2l2_s10_iso":"c2l2_s10_draft_iso",
+            "c2l2_s10_parallel":"c2l2_s10_draft_parallel",
+            "c2l2_s10_source_control":"c2l2_s10_draft_source_control",
+            "c2l2_s10_base_control":"c2l2_s10_draft_base_control",
+            "c2l2_s10_pipe_control":"c2l2_s10_draft_pipe_control",
+            "c2l2_s10_support_control":"c2l2_s10_draft_support_control",
+            "c2l2_s10_verify_control":"c2l2_s10_draft_verification_control",
+            "c2l2_s10_lnw":"c2l2_s10_draft_lnw",
+            "c2l2_s10_ci":"c2l2_s10_draft_ci",
+            "c2l2_s10_fe":"c2l2_s10_draft_fe",
+            "c2l2_s10_r_answer":"c2l2_s10_draft_r_answer",
+        }
+        for widget_key,saved_key in draft_widget_map.items():
+            if widget_key not in st.session_state and saved.get(saved_key) is not None:
+                st.session_state[widget_key]=saved.get(saved_key)
+        for state_key in ("c2l2_s10_lnw_ok","c2l2_s10_ci_ok","c2l2_s10_r_ok"):
+            saved_key=f"c2l2_s10_draft_{state_key.removeprefix('c2l2_s10_')}"
+            if state_key not in st.session_state and saved_key in saved:
+                st.session_state[state_key]=bool(saved.get(saved_key))
+
     st.markdown("## Encargo profesional")
     st.write(
         "Se recibe un reclamo nocturno en un edificio residencial. "
@@ -16686,6 +16719,15 @@ def _c2l2_stage10(lab,saved):
         saved["c2l2_s10_draft_pipe_control"]=pipe_control
         saved["c2l2_s10_draft_support_control"]=support_control
         saved["c2l2_s10_draft_verification_control"]=verification_control
+        # Datos técnicos y estados de comprobación: también forman parte del
+        # borrador para que el alumno continúe exactamente desde el mismo punto.
+        saved["c2l2_s10_draft_lnw"]=st.session_state.get("c2l2_s10_lnw")
+        saved["c2l2_s10_draft_ci"]=st.session_state.get("c2l2_s10_ci")
+        saved["c2l2_s10_draft_fe"]=st.session_state.get("c2l2_s10_fe")
+        saved["c2l2_s10_draft_r_answer"]=st.session_state.get("c2l2_s10_r_answer")
+        saved["c2l2_s10_draft_lnw_ok"]=bool(st.session_state.get("c2l2_s10_lnw_ok"))
+        saved["c2l2_s10_draft_ci_ok"]=bool(st.session_state.get("c2l2_s10_ci_ok"))
+        saved["c2l2_s10_draft_r_ok"]=bool(st.session_state.get("c2l2_s10_r_ok"))
         saved["updated_10"]=_now()
         _save_future_state(_C2L2_CLASS_ID,saved)
         st.success("Borrador guardado. Puedes salir de la Etapa 10 y continuar después antes del envío definitivo.")
