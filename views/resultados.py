@@ -488,35 +488,17 @@ def student_sidebar_summary(client, user_key):
     completed=sum(item["completed"] for item in progress_data.values())
     formative_percent=100.0*completed/expected if expected else 0.0
 
-    # Curso 2 · Lab 1: dos entregas formativas con puntaje.
+    # Curso 2 · avance formativo: EXCLUSIVAMENTE las Etapas 9 y 10
+    # del Laboratorio 1. Cada etapa aporta hasta 100 puntos formativos,
+    # por lo que el indicador corresponde a puntaje obtenido / 200.
+    # Las Etapas 0–8 no intervienen en este porcentaje.
     course2_lab1=_course2_lab1_rows(rows)
-    c2_lab1_delivered=sum(
-        course2_lab1.get(k) is not None
+    c2_lab1_score=sum(
+        _effective_row_score(course2_lab1.get(k))
+        if course2_lab1.get(k) is not None else 0.0
         for k in ("final_comprehension","final_exam")
     )
-
-    # Avance formativo de Curso 2 = progreso real del Laboratorio 1 (Etapas 0–10).
-    # La app ya persiste este progreso en user_progress.state_json.
-    # Usamos la misma fuente que el resto de la vista de resultados y evitamos
-    # consultar una tabla inexistente llamada "progress".
-    try:
-        c2_progress_rows=_future_progress_rows(client,user_key)
-        c2_lab1_state=_future_progress_state(
-            c2_progress_rows,
-            "clase-03-impacto-instalaciones-lab-1",
-        )
-        c2_total_stages=11
-        c2_completed_stages=sum(
-            1 for stage in range(c2_total_stages)
-            if bool(c2_lab1_state.get(f"done_{stage}"))
-        )
-        c2_lab1_progress_pct=(
-            100.0*c2_completed_stages/c2_total_stages
-            if c2_total_stages else 0.0
-        )
-    except Exception:
-        # El panel lateral nunca debe impedir cargar la aplicación.
-        c2_lab1_progress_pct=0.0
+    c2_lab1_progress_pct=max(0.0,min(100.0,100.0*c2_lab1_score/200.0))
 
     # Curso 2 · Lab 2: dos evaluaciones oficiales.
     course2_lab2=_course2_lab2_delivery_rows(rows)
@@ -831,17 +813,22 @@ def _render_course2_block(rows, progress_rows):
         f"{lab2_official['grade']:.1f}"
         if lab2_official["grade"] is not None else "Pendiente"
     )
-    overall_expected=p1["expected"]+p2["expected"]
-    overall_completed=p1["completed"]+p2["completed"]
-    overall_pct=(100*overall_completed/overall_expected) if overall_expected else 0.0
+    # El avance formativo del Curso 2 no es el recorrido de todas las etapas.
+    # Se construye únicamente con los puntajes de las Etapas 9 y 10 del Lab 1.
+    lab1_formative_score=sum(
+        _effective_row_score(lab1_scores.get(k))
+        if lab1_scores.get(k) is not None else 0.0
+        for k in ("final_comprehension","final_exam")
+    )
+    formative_pct=max(0.0,min(100.0,100.0*lab1_formative_score/200.0))
 
     label=(
         f"Curso 2 · Control de ruido de impacto y ruido de instalaciones · "
-        f"{overall_pct:.0f}% de avance · Nota {official_grade}"
+        f"{formative_pct:.0f}% de avance formativo · Nota {official_grade}"
     )
     with st.expander(label,expanded=True):
         a,b,c=st.columns(3)
-        a.metric("Avance del curso",f"{overall_pct:.0f} %")
+        a.metric("Avance formativo",f"{formative_pct:.0f} %")
         b.metric("Evaluaciones oficiales",f"{lab2_official['completed']} de 2")
         c.metric("Nota del curso",official_grade)
 
