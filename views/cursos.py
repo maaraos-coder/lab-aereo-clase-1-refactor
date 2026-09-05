@@ -17489,15 +17489,26 @@ def future_print_view_impl(lab):
         height=55,
     )
 
-    renderers = {
-        0: _render_course2_lab1_welcome, 1: _render_course2_lab1_stage1,
-        2: _render_course2_lab1_stage2, 3: _render_course2_lab1_stage3,
-        4: _render_course2_lab1_stage4, 5: _render_course2_lab1_stage5,
-        6: _render_course2_lab1_stage6, 7: _render_course2_lab1_stage7,
-        8: _render_course2_lab1_stage8, 9: _render_course2_lab1_stage9,
-        10: _render_course2_lab1_stage10,
-    }
-    if class_id != "clase-03-impacto-instalaciones-lab-1":
+    if class_id == "clase-03-impacto-instalaciones-lab-1":
+        renderers = {
+            0: _render_course2_lab1_welcome, 1: _render_course2_lab1_stage1,
+            2: _render_course2_lab1_stage2, 3: _render_course2_lab1_stage3,
+            4: _render_course2_lab1_stage4, 5: _render_course2_lab1_stage5,
+            6: _render_course2_lab1_stage6, 7: _render_course2_lab1_stage7,
+            8: _render_course2_lab1_stage8, 9: _render_course2_lab1_stage9,
+            10: _render_course2_lab1_stage10,
+        }
+    elif class_id == _C2L2_CLASS_ID:
+        # Curso 2 · Laboratorio 2: el apunte visual usa exactamente los
+        # renderizadores reales de las etapas 0 a 10. projection_mode=True
+        # evita guardar respuestas o modificar el progreso del alumno.
+        renderers = {
+            0: _c2l2_stage0, 1: _c2l2_stage1, 2: _c2l2_stage2,
+            3: _c2l2_stage3, 4: _c2l2_stage4, 5: _c2l2_stage5,
+            6: _c2l2_stage6, 7: _c2l2_stage7, 8: _c2l2_stage8,
+            9: _c2l2_stage9, 10: _c2l2_stage10,
+        }
+    else:
         st.warning("El apunte visual todavía no está integrado para este laboratorio.")
         return
     for stage in range(11):
