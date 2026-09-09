@@ -1804,6 +1804,13 @@ elif view==view_options[2]:
     idx=labels.index(selected)
     st.session_state["_current_stage"] = idx
     st.session_state["_current_lab"] = ACTIVE_LAB
+
+    # Rehidratar antes de construir los widgets de la etapa. Streamlit puede
+    # retirar del session_state los widgets de una etapa al visitar otra; la
+    # copia persistente evita que una respuesta guardada reaparezca vacía o sea
+    # recalculada como incorrecta al volver.
+    load_user_progress(st.session_state.get("user_key"))
+
     st.caption(f"Curso: Aislamiento a ruido aéreo · Laboratorio {ACTIVE_LAB} de 2")
     LAB_STAGE_FUNCTIONS[ACTIVE_LAB][idx]()
 
