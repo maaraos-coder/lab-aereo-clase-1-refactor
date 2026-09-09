@@ -451,6 +451,21 @@ def _lab1_final_submission_impl():
     payload=_stage9_answer_payload(row)
     return {'row':row,'payload':payload if isinstance(payload,dict) else {}}
 
+def _lab1_autosave_theory_answer_impl(question_index):
+    """Copy the visible radio value into the durable answer dictionary."""
+    qn=int(question_index)
+    visible_key=f"_lab1_visible_q{qn}"
+    answer=st.session_state.get(visible_key)
+    if answer is None:
+        return
+    draft=st.session_state.get("lab1_final_answers")
+    if not isinstance(draft,dict):
+        draft={}
+    draft[str(qn)]=answer
+    st.session_state["lab1_final_answers"]=draft
+    save_user_progress()
+
+
 def _lab1_case_score_impl(calc,diff,pct,bands,choice,justification):
     practical=0
     practical += 3 if abs(float(calc)-0.4025)<=0.03 else 0
@@ -580,7 +595,8 @@ def _stage10_impl():
         saved_answer=draft_answers.get(str(qn))
         radio_index=opts.index(saved_answer) if saved_answer in opts else None
         ans = st.radio('Selecciona una alternativa', opts, index=radio_index,
-                       key=f'_lab1_visible_q{qn}', label_visibility='collapsed')
+                       key=f'_lab1_visible_q{qn}', label_visibility='collapsed',
+                       on_change=_lab1_autosave_theory_answer_impl,args=(qn,))
         if st.button('Guardar respuesta', key=f'save{qn}'):
             if ans is None:
                 st.warning('Selecciona una alternativa.')
