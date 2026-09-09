@@ -224,6 +224,20 @@ def _is_answer_state(key):
              "projection_","review_","anon_","reveal_","teacher_")
     if key.startswith(blocked):
         return False
+
+    # Nunca persistir el estado efímero de botones/acciones. Restaurar un key de
+    # st.button desde session_state puede bloquear la interfaz y no representa
+    # una respuesta del alumno.
+    action_fragments=(
+        "_button","_submit","_pick_","_verify","_save_","_check_",
+        "_reveal","_reset","_open_","_close_",
+    )
+    if any(fragment in key for fragment in action_fragments):
+        # Estados semánticos sí persistentes, aunque contengan palabras parecidas.
+        semantic=("submitted","checked_","verified","confirm_incomplete")
+        if not any(token in key for token in semantic):
+            return False
+
     return (
         key.startswith(("ans_","checked_","sent_","exam_","q","lab1_","l2s10_","s3","s5","s7","s9","e9_","final_"))
         or key in {"case_V","case_A","case_calc","case_diff","case_pct",
@@ -236,7 +250,20 @@ def save_user_progress(class_id):
     user_key=st.session_state.get("user_key")
     if not user_key:
         return
-    state={str(k):_progress_value(v) for k,v in st.session_state.items() if _is_answer_state(k)}
+    current={str(k):_progress_value(v) for k,v in st.session_state.items() if _is_answer_state(k)}
+
+    # Streamlit elimina del session_state los keys de widgets que dejan de
+    # renderizarse al cambiar de etapa. Si reemplazáramos el JSON completo con
+    # solo `current`, se borrarían respuestas correctas ya guardadas. Conservamos
+    # una sombra por laboratorio y actualizamos únicamente los valores presentes.
+    shadow_key=f"_progress_shadow_{class_id}"
+    shadow=st.session_state.get(shadow_key,{})
+    if not isinstance(shadow,dict):
+        shadow={}
+    state=dict(shadow)
+    state.update(current)
+    st.session_state[shadow_key]=state
+
     serialized=json.dumps(state,ensure_ascii=False,sort_keys=True,separators=(",",":"))
     state_hash=hashlib.sha256(serialized.encode("utf-8")).hexdigest()
     hash_key=f"_last_saved_progress_hash_{class_id}"
@@ -252,6 +279,9 @@ def save_user_progress(class_id):
         },on_conflict="class_id,user_key").execute()
         st.session_state[hash_key]=state_hash
     else:
+        # En modo SQLite usamos una clave compuesta lógica para evitar que el
+        # progreso de un laboratorio sobrescriba al de otro laboratorio.
+        sqlite_user_key=f"{class_id}::{user_key}"
         with _activity_db() as con:
             con.execute(
             """INSERT INTO user_progress(user_key,role,display_name,state_json,updated_at)
@@ -259,7 +289,7 @@ def save_user_progress(class_id):
             ON CONFLICT(user_key) DO UPDATE SET role=excluded.role,
             display_name=excluded.display_name,state_json=excluded.state_json,
             updated_at=excluded.updated_at""",
-            (user_key,st.session_state.get("role","Alumno"),
+            (sqlite_user_key,st.session_state.get("role","Alumno"),
              st.session_state.get("name",""),serialized,
              dt.datetime.now().isoformat(timespec="seconds")),
             )
@@ -272,8 +302,13 @@ def load_user_progress(user_key, class_id):
         if not rows: return
         saved=rows[0].get("state_json") or {}
     else:
+        sqlite_user_key=f"{class_id}::{user_key}"
         with _activity_db() as con:
-            row=con.execute("SELECT state_json FROM user_progress WHERE user_key=?",(user_key,)).fetchone()
+            row=con.execute("SELECT state_json FROM user_progress WHERE user_key=?",(sqlite_user_key,)).fetchone()
+            # Compatibilidad con instalaciones locales antiguas: leer una sola
+            # vez el registro legacy si todavía no existe la clave por laboratorio.
+            if not row:
+                row=con.execute("SELECT state_json FROM user_progress WHERE user_key=?",(user_key,)).fetchone()
         if not row: return
         try:
             saved=json.loads(row[0])
@@ -283,6 +318,15 @@ def load_user_progress(user_key, class_id):
         if isinstance(saved,str): saved=json.loads(saved)
     except json.JSONDecodeError:
         return
+    # Conservar una copia durable aunque Streamlit retire temporalmente widgets
+    # al navegar a otra etapa.
+    if not isinstance(saved,dict):
+        saved={}
+    # Eliminar estados efímeros heredados de versiones anteriores (por ejemplo,
+    # keys de botones) antes de usarlos como sombra persistente.
+    saved={str(k):v for k,v in saved.items() if _is_answer_state(k)}
+    st.session_state[f"_progress_shadow_{class_id}"]=dict(saved)
+
     for key,value in saved.items():
         if key=="exam_answers" and isinstance(value,dict):
             value={int(k):v for k,v in value.items()}
