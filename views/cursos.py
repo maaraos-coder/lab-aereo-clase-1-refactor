@@ -9966,21 +9966,52 @@ def _c2l1_stage9_restore_draft(saved):
         return
     answers=draft.get("answers") if isinstance(draft.get("answers"),dict) else {}
     checked=draft.get("checked") if isinstance(draft.get("checked"),dict) else {}
+    locked=draft.get("locked_answers") if isinstance(draft.get("locked_answers"),dict) else {}
     for i,item in enumerate(_C2L1_STAGE9_QUESTIONS):
-        ans=answers.get(str(i))
+        key=str(i)
+        ans=answers.get(key)
+        locked_ans=locked.get(key)
+        is_checked=bool(checked.get(key,False))
         qkey=f"e9_q{i}"
         ckey=f"e9_checked_{i}"
-        if qkey not in st.session_state and ans in item["options"]:
-            st.session_state[qkey]=ans
-        if ckey not in st.session_state:
-            st.session_state[ckey]=bool(checked.get(str(i),False))
+
+        # Una pregunta ya comprobada conserva exactamente la alternativa que se
+        # comprobó. Si un borrador antiguo no tiene snapshot, migramos desde la
+        # respuesta guardada. Si el texto ya no existe en las opciones vigentes,
+        # desbloqueamos la pregunta en vez de marcarla falsamente como incorrecta.
+        canonical=locked_ans if locked_ans in item["options"] else ans if ans in item["options"] else None
+        if is_checked and canonical is None:
+            is_checked=False
+        if canonical is not None and (qkey not in st.session_state or is_checked):
+            st.session_state[qkey]=canonical
+        if ckey not in st.session_state or bool(st.session_state.get(ckey)) != is_checked:
+            st.session_state[ckey]=is_checked
 
 
 def _c2l1_stage9_save_draft(saved, status="in_progress"):
     """Guarda el avance completo de la Etapa 9 dentro del progreso individual del alumno."""
     total=len(_C2L1_STAGE9_QUESTIONS)
-    answers={str(i):st.session_state.get(f"e9_q{i}") for i in range(total)}
-    checked={str(i):bool(st.session_state.get(f"e9_checked_{i}")) for i in range(total)}
+    previous=saved.get("stage9_draft",{}) if isinstance(saved.get("stage9_draft"),dict) else {}
+    previous_locked=previous.get("locked_answers",{}) if isinstance(previous.get("locked_answers"),dict) else {}
+    answers={}
+    checked={}
+    locked_answers=dict(previous_locked)
+    for i,item in enumerate(_C2L1_STAGE9_QUESTIONS):
+        key=str(i)
+        is_checked=bool(st.session_state.get(f"e9_checked_{i}"))
+        live=st.session_state.get(f"e9_q{i}")
+        if is_checked:
+            old_locked=locked_answers.get(key)
+            if old_locked in item["options"]:
+                live=old_locked
+            elif live in item["options"]:
+                locked_answers[key]=live
+            else:
+                # Nunca conservar una pregunta bloqueada sin una respuesta válida.
+                is_checked=False
+                st.session_state[f"e9_checked_{i}"]=False
+        answers[key]=live if live in item["options"] else None
+        checked[key]=is_checked
     answered_count=sum(v is not None for v in answers.values())
     checked_count=sum(bool(v) for v in checked.values())
     saved["stage9_content_version"]=_C2L1_STAGE9_VERSION
@@ -9989,6 +10020,7 @@ def _c2l1_stage9_save_draft(saved, status="in_progress"):
         "status":status,
         "answers":answers,
         "checked":checked,
+        "locked_answers":locked_answers,
         "answered_count":answered_count,
         "checked_count":checked_count,
         "updated_at":_now(),
@@ -10004,8 +10036,14 @@ def _c2l1_stage9_autosave(saved):
 
 def _c2l1_finish_stage9(saved, reason="submitted"):
     total=len(_C2L1_STAGE9_QUESTIONS)
-    answers={str(i):st.session_state.get(f"e9_q{i}") for i in range(total)}
+    draft=saved.get("stage9_draft",{}) if isinstance(saved.get("stage9_draft"),dict) else {}
+    locked=draft.get("locked_answers",{}) if isinstance(draft.get("locked_answers"),dict) else {}
+    answers={}
     checked={str(i):bool(st.session_state.get(f"e9_checked_{i}")) for i in range(total)}
+    for i,item in enumerate(_C2L1_STAGE9_QUESTIONS):
+        key=str(i)
+        live=st.session_state.get(f"e9_q{i}")
+        answers[key]=locked.get(key) if checked[key] and locked.get(key) in item["options"] else live
     score=sum(
         4 for i,item in enumerate(_C2L1_STAGE9_QUESTIONS)
         if answers.get(str(i))==item["options"][item["correct"]]
@@ -16009,12 +16047,16 @@ def _c2l2_stage9(lab,saved):
                 st.caption(q[4])
         return
 
-    # Restaurar borrador del alumno.
-    if not projection_mode and "c2l2_e9_started_at" not in st.session_state:
-        if saved.get("c2l2_e9_started_at"):
+    # Restaurar borrador del alumno. Los radios pueden desaparecer del
+    # session_state al visitar otra etapa aunque el marcador started_at siga
+    # presente, por lo que cada respuesta faltante se rehidrata siempre.
+    if not projection_mode:
+        if saved.get("c2l2_e9_started_at") and "c2l2_e9_started_at" not in st.session_state:
             st.session_state["c2l2_e9_started_at"]=saved.get("c2l2_e9_started_at")
-            for i,v in (saved.get("c2l2_e9_answers") or {}).items():
-                st.session_state.setdefault(f"c2l2_e9_q{i}",v)
+        for i,v in (saved.get("c2l2_e9_answers") or {}).items():
+            qkey=f"c2l2_e9_q{i}"
+            if qkey not in st.session_state and v in _C2L2_STAGE9_QUESTIONS[int(i)][2]:
+                st.session_state[qkey]=v
 
     # La evaluación queda abierta directamente. No existe cronómetro ni caducidad.
     if not st.session_state.get("c2l2_e9_started_at"):
