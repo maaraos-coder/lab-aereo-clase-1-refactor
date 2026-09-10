@@ -604,15 +604,43 @@ def _teacher_course_results_impl(compact=False):
     config=evaluations[evaluation]
 
     try:
-        rows=(
-            client.table("responses")
-            .select("*,users(display_name,email)")
-            .eq("class_id",config["class_id"])
-            .eq("stage",config["stage"])
-            .eq("question_key",config["question_key"])
-            .order("updated_at",desc=True)
-            .execute().data or []
-        )
+        if config.get("reviewer")=="c2_stage9":
+            # La primera versión de esta evaluación pudo guardarse con un class_id
+            # heredado del Curso 1. La identificamos por su payload canónico.
+            candidate_rows=(
+                client.table("responses")
+                .select("*,users(display_name,email)")
+                .eq("stage",9)
+                .eq("question_key","final_comprehension")
+                .order("updated_at",desc=True)
+                .execute().data or []
+            )
+            rows=[]
+            for candidate in candidate_rows:
+                payload=candidate.get("answer") or {}
+                if isinstance(payload,str):
+                    try:
+                        payload=json.loads(payload)
+                    except Exception:
+                        payload={}
+                if (
+                    isinstance(payload,dict)
+                    and str(payload.get("version") or "").startswith("etapas_1_a_8")
+                    and int(payload.get("question_count") or 0)==25
+                    and int(payload.get("max_score") or 0)==100
+                    and payload.get("evaluation_mode")=="points_only"
+                ):
+                    rows.append(candidate)
+        else:
+            rows=(
+                client.table("responses")
+                .select("*,users(display_name,email)")
+                .eq("class_id",config["class_id"])
+                .eq("stage",config["stage"])
+                .eq("question_key",config["question_key"])
+                .order("updated_at",desc=True)
+                .execute().data or []
+            )
     except Exception as exc:
         st.warning(f"No fue posible consultar esta evaluación: {exc}")
         rows=[]
@@ -843,14 +871,68 @@ def _teacher_course_results_impl(compact=False):
                             if expected_lnw_teacher is not None:
                                 st.metric("Lₙ,w esperado",f"{expected_lnw_teacher} dB")
                             else:
-                                st.write("**Lₙ,w:** determinar desplazando la curva de referencia ISO hasta cumplir el criterio de desviaciones.")
+                                st.write("**Lₙ,w:** determinar desplazando la curva de referencia hasta cumplir el criterio de desviaciones.")
                         with p2:
                             if expected_ci_teacher is not None:
                                 st.metric("C_I esperado",f"{expected_ci_teacher:+d} dB")
                             else:
                                 st.write("**C_I:** calcular a partir de la suma energética de 100–2500 Hz y el Lₙ,w obtenido.")
                         st.caption(source_teacher)
+
+                        st.markdown("**Curva de referencia utilizada en el ejercicio**")
+                        ref_freqs_teacher=[100,125,160,200,250,315,400,500,630,800,1000,1250,1600,2000,2500,3150]
+                        ref_values_teacher=[62,62,62,62,62,62,61,60,59,58,57,54,51,48,45,42]
+                        st.dataframe(
+                            pd.DataFrame({
+                                "Frecuencia [Hz]":ref_freqs_teacher,
+                                "Curva de referencia [dB]":ref_values_teacher,
+                            }),
+                            hide_index=True,
+                            use_container_width=True,
+                        )
+
+                        st.markdown("**Procedimiento para obtener Lₙ,w**")
+                        st.write(
+                            "1. Superponer la curva de referencia al espectro Lₙ.  "
+                            "\n2. Considerar solo las desviaciones desfavorables, donde Lₙ queda por encima "
+                            "de la curva desplazada.  "
+                            "\n3. Sumar las desviaciones entre 100 y 3150 Hz.  "
+                            "\n4. Desplazar la curva en pasos de 1 dB hasta la posición límite que mantenga "
+                            "la suma **≤ 32 dB**.  "
+                            "\n5. Leer **Lₙ,w** como el valor de la curva desplazada en **500 Hz**."
+                        )
+                        st.latex(r"\sum_i \max\left[0,\;L_{n,i}-L_{ref,i}^{(desplazada)}\right]\leq 32\ \mathrm{dB}")
+                        st.latex(r"L_{n,w}=L_{ref,\,desplazada}(500\ \mathrm{Hz})")
+
+                        st.markdown("**Procedimiento para obtener C_I**")
+                        st.write(
+                            "Calcular primero la suma energética de Lₙ entre 100 y 2500 Hz y luego aplicar "
+                            "el término de adaptación espectral."
+                        )
+                        st.latex(
+                            r"L_{n,\mathrm{sum}}="
+                            r"10\log_{10}\left(\sum_{i=100\,Hz}^{2500\,Hz}10^{L_{n,i}/10}\right)"
+                        )
                         st.latex(r"C_I=L_{n,\mathrm{sum}}-15-L_{n,w}")
+
+                        st.markdown("**Ejemplo reproducible del laboratorio**")
+                        example_teacher=[61,62,63,64,64,64,63,62,61,59,57,54,52,50,48,46]
+                        d0_teacher=sum(max(0,y-r) for y,r in zip(example_teacher,ref_values_teacher))
+                        dm1_teacher=sum(max(0,y-(r-1)) for y,r in zip(example_teacher,ref_values_teacher))
+                        lsum_example_teacher=10.0*math.log10(
+                            sum(10.0**(float(v)/10.0) for v in example_teacher[:15])
+                        )
+                        ci_example_teacher=round(lsum_example_teacher)-15-60
+                        st.write(
+                            f"Espectro didáctico: suma de desviaciones en posición original = **{d0_teacher:g} dB**; "
+                            f"al bajar 1 dB la curva = **{dm1_teacher:g} dB**. "
+                            "Como supera el límite, la posición original es la válida."
+                        )
+                        st.write(
+                            f"Resultado del ejemplo: **Lₙ,w = 60 dB**; "
+                            f"Lₙ,sum(100–2500) = **{lsum_example_teacher:.1f} dB ≈ {round(lsum_example_teacher)} dB**; "
+                            f"por tanto **C_I = {ci_example_teacher} dB**."
+                        )
 
                         st.markdown("##### 2. Desarrollo técnico · 40 puntos")
                         st.write(

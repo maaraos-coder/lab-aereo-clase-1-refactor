@@ -1,3 +1,4 @@
+import math
 """Vista de desempeño y retroalimentación del alumno.
 
 import re
@@ -1612,6 +1613,72 @@ def _c2_render_lab2_stage10_tabs(row, reviewed):
                     st.success(correct)
 
             st.markdown("### Pauta técnica")
+
+            st.markdown("#### Curva de referencia utilizada para obtener Lₙ,w")
+            st.caption(
+                "Esta es la curva de referencia utilizada por el ejercicio. "
+                "Se desplaza verticalmente en pasos de 1 dB."
+            )
+            _c2_ref_freqs = [100,125,160,200,250,315,400,500,630,800,1000,1250,1600,2000,2500,3150]
+            _c2_ref_values = [62,62,62,62,62,62,61,60,59,58,57,54,51,48,45,42]
+            st.dataframe(
+                pd.DataFrame({
+                    "Frecuencia [Hz]": _c2_ref_freqs,
+                    "Curva de referencia [dB]": _c2_ref_values,
+                }),
+                hide_index=True,
+                width="stretch",
+            )
+
+            st.markdown("#### Procedimiento para obtener Lₙ,w")
+            st.write(
+                "1. Superpone la curva de referencia sobre el espectro medido de **Lₙ**.  "
+                "\n2. Calcula únicamente las **desviaciones desfavorables**, es decir, "
+                "en cada banda donde el nivel medido queda **por encima** de la curva desplazada.  "
+                "\n3. Suma esas desviaciones entre **100 y 3150 Hz**.  "
+                "\n4. Desplaza la curva en pasos de **1 dB** hasta encontrar la posición límite "
+                "en la que la suma de desviaciones desfavorables sea **≤ 32 dB**, y un desplazamiento "
+                "adicional de 1 dB en el sentido más exigente haría superar ese límite.  "
+                "\n5. El valor de la curva desplazada en **500 Hz** es el **Lₙ,w**."
+            )
+            st.latex(r"\sum_i \max\left[0,\;L_{n,i}-L_{ref,i}^{(desplazada)}\right]\leq 32\ \mathrm{dB}")
+            st.latex(r"L_{n,w}=L_{ref,\,desplazada}(500\ \mathrm{Hz})")
+
+            st.markdown("#### Procedimiento para obtener C_I")
+            st.write(
+                "Una vez obtenido **Lₙ,w**, se realiza la suma energética de los niveles de impacto "
+                "normalizados entre **100 y 2500 Hz**. No se suman los dB aritméticamente."
+            )
+            st.latex(
+                r"L_{n,\mathrm{sum}}="
+                r"10\log_{10}\left(\sum_{i=100\,Hz}^{2500\,Hz}10^{L_{n,i}/10}\right)"
+            )
+            st.write("Luego se calcula el término de adaptación espectral:")
+            st.latex(r"C_I=L_{n,\mathrm{sum}}-15-L_{n,w}")
+            st.info(
+                "**Interpretación:** C_I no reemplaza a Lₙ,w. Es un término complementario que "
+                "entrega información sobre la forma del espectro del ruido de impacto."
+            )
+
+            st.markdown("#### Ejemplo reproducible con el espectro didáctico")
+            _c2_example_ln = [61,62,63,64,64,64,63,62,61,59,57,54,52,50,48,46]
+            _c2_dev0 = sum(max(0, y-r) for y,r in zip(_c2_example_ln,_c2_ref_values))
+            _c2_dev_minus1 = sum(max(0, y-(r-1)) for y,r in zip(_c2_example_ln,_c2_ref_values))
+            _c2_lsum = 10.0*math.log10(sum(10.0**(v/10.0) for v in _c2_example_ln[:15]))
+            _c2_lnw = 60
+            _c2_ci = round(_c2_lsum)-15-_c2_lnw
+            st.write(
+                f"En la posición original, la suma de desviaciones desfavorables es "
+                f"**{_c2_dev0:g} dB**. Si la curva se baja 1 dB, la suma pasa a "
+                f"**{_c2_dev_minus1:g} dB**, por lo que esa nueva posición ya no cumple el límite de 32 dB."
+            )
+            st.write(
+                f"Así, **Lₙ,w = {_c2_lnw} dB**. La suma energética 100–2500 Hz es "
+                f"**{_c2_lsum:.1f} dB ≈ {round(_c2_lsum)} dB**; entonces:"
+            )
+            st.latex(rf"C_I={round(_c2_lsum)}-15-{_c2_lnw}={_c2_ci}\ \mathrm{{dB}}")
+
+            st.markdown("#### Resto de la pauta técnica")
             st.write(
                 "Los 40 puntos técnicos corresponden a ocho comprobaciones de 5 puntos: "
                 "Lₙ,w; C_I; interpretación espectral; frecuencia de excitación; interpretación "
