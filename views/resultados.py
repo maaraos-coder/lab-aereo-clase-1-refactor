@@ -1386,11 +1386,21 @@ def _c2_render_mcq_comparison(payload, questions, release_pauta):
             correct_idx = int(item.get("correct", 0))
             explanation = item.get("explanation") or ""
         else:
-            title = f"Pregunta {i+1}"
-            question = item[0]
-            options = item[1]
-            correct_idx = int(item[2])
-            explanation = item[3] if len(item) > 3 else ""
+            # Los bancos del Curso 2 utilizan dos formatos históricos:
+            # Etapa 9: (titulo, pregunta, opciones, indice_correcto, explicacion)
+            # Otros bloques: (pregunta, opciones, indice_correcto[, explicacion])
+            if len(item) >= 5 and isinstance(item[2], (list, tuple)):
+                title = str(item[0])
+                question = str(item[1])
+                options = list(item[2])
+                correct_idx = int(item[3])
+                explanation = str(item[4] or "")
+            else:
+                title = f"Pregunta {i+1}"
+                question = str(item[0]) if len(item) > 0 else ""
+                options = list(item[1]) if len(item) > 1 and isinstance(item[1], (list, tuple)) else []
+                correct_idx = int(item[2]) if len(item) > 2 else 0
+                explanation = str(item[3] or "") if len(item) > 3 else ""
 
         chosen = answers.get(str(i))
         correct = options[correct_idx] if 0 <= correct_idx < len(options) else "—"
@@ -1550,10 +1560,22 @@ def _c2_render_lab2_stage9_tabs(row, reviewed):
             rows_rubric = []
             for i, item in enumerate(_C2L2_STAGE9_QUESTIONS_RESULTS):
                 chosen = answers.get(str(i)) if isinstance(answers, dict) else None
-                correct = item[2][item[3]]
+                if isinstance(item, dict):
+                    options = item.get("options") or []
+                    correct_idx = int(item.get("correct", 0))
+                    title = item.get("title") or f"Pregunta {i+1}"
+                elif len(item) >= 5 and isinstance(item[2], (list, tuple)):
+                    title = str(item[0])
+                    options = list(item[2])
+                    correct_idx = int(item[3])
+                else:
+                    title = f"Pregunta {i+1}"
+                    options = list(item[1]) if len(item) > 1 and isinstance(item[1], (list, tuple)) else []
+                    correct_idx = int(item[2]) if len(item) > 2 else 0
+                correct = options[correct_idx] if 0 <= correct_idx < len(options) else None
                 points = 4.0 if chosen == correct else 0.0
                 rows_rubric.append({
-                    "Criterio": f"Pregunta {i+1} · {item[0]}",
+                    "Criterio": f"Pregunta {i+1} · {title}",
                     "Puntaje": f"{points:g}/4",
                     "Nivel": "Logrado" if points >= 4 else "No logrado",
                 })
