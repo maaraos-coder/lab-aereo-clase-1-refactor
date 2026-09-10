@@ -902,6 +902,10 @@ def _teacher_course_results_impl(compact=False):
                             "por bandas para evitar duplicar tablas."
                         )
 
+                        # Definiciones canónicas necesarias para la tabla comparativa.
+                        ref_freqs_teacher=[100,125,160,200,250,315,400,500,630,800,1000,1250,1600,2000,2500,3150]
+                        ref_values_teacher=[62,62,62,62,62,62,61,60,59,58,57,54,51,48,45,42]
+
                         if (
                             curve_teacher is not None
                             and teacher_ref_shifted is not None
