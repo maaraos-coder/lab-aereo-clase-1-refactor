@@ -796,6 +796,12 @@ def _teacher_course_results_impl(compact=False):
                         # reproducir el cálculo de Lₙ,w y C_I cuando sea posible.
                         expected_lnw_teacher=None
                         expected_ci_teacher=None
+                        teacher_shift_applied=None
+                        teacher_ref_shifted=None
+                        teacher_deviations=None
+                        teacher_dev_sum=None
+                        teacher_prev_dev_sum=None
+                        curve_teacher=None
                         source_teacher="No fue posible recuperar la curva previa del alumno."
 
                         def _find_teacher_curve(value):
@@ -855,6 +861,18 @@ def _teacher_course_results_impl(compact=False):
                                     expected_lnw_teacher=int(
                                         round(ref_teacher[freqs_teacher.index(500)]+limit_shift_teacher)
                                     )
+                                    teacher_shift_applied=int(limit_shift_teacher)
+                                    teacher_ref_shifted=[float(r)+teacher_shift_applied for r in ref_teacher]
+                                    teacher_deviations=[
+                                        max(0.0,float(y)-float(rs))
+                                        for y,rs in zip(curve_teacher,teacher_ref_shifted)
+                                    ]
+                                    teacher_dev_sum=sum(teacher_deviations)
+                                    teacher_prev_ref=[float(r)+teacher_shift_applied-1 for r in ref_teacher]
+                                    teacher_prev_dev_sum=sum(
+                                        max(0.0,float(y)-float(rs))
+                                        for y,rs in zip(curve_teacher,teacher_prev_ref)
+                                    )
                                     lsum_teacher=10.0*math.log10(
                                         sum(10.0**(float(v)/10.0) for v in curve_teacher[:15])
                                     )
@@ -890,6 +908,32 @@ def _teacher_course_results_impl(compact=False):
                             hide_index=True,
                             use_container_width=True,
                         )
+
+                        if (
+                            curve_teacher is not None
+                            and teacher_ref_shifted is not None
+                            and teacher_deviations is not None
+                        ):
+                            st.markdown("**Verificación con la curva Lₙ guardada de este alumno**")
+                            st.dataframe(
+                                pd.DataFrame({
+                                    "Frecuencia [Hz]":ref_freqs_teacher,
+                                    "Lₙ alumno [dB]":[round(float(v),2) for v in curve_teacher],
+                                    "Curva ref. desplazada [dB]":[round(float(v),2) for v in teacher_ref_shifted],
+                                    "Desviación desfavorable [dB]":[round(float(v),2) for v in teacher_deviations],
+                                }),
+                                hide_index=True,
+                                use_container_width=True,
+                            )
+                            st.write(
+                                f"**Desplazamiento aplicado:** {teacher_shift_applied:+d} dB  ·  "
+                                f"**Suma de desviaciones:** {teacher_dev_sum:.1f} dB  ·  "
+                                f"**Al bajar 1 dB más:** {teacher_prev_dev_sum:.1f} dB"
+                            )
+                            st.caption(
+                                "Así puedes comprobar fila por fila por qué la app obtiene el Lₙ,w esperado "
+                                "para esta entrega, en lugar de confiar solo en el resultado automático."
+                            )
 
                         st.markdown("**Procedimiento para obtener Lₙ,w**")
                         st.write(

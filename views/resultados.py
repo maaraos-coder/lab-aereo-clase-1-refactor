@@ -1667,6 +1667,23 @@ def _c2_render_lab2_stage10_tabs(row, reviewed):
             _c2_lsum = 10.0*math.log10(sum(10.0**(v/10.0) for v in _c2_example_ln[:15]))
             _c2_lnw = 60
             _c2_ci = round(_c2_lsum)-15-_c2_lnw
+            _c2_shift = _c2_lnw - 60
+            _c2_ref_shifted = [r + _c2_shift for r in _c2_ref_values]
+            _c2_devs = [max(0, y-rs) for y,rs in zip(_c2_example_ln,_c2_ref_shifted)]
+            st.dataframe(
+                pd.DataFrame({
+                    "Frecuencia [Hz]": _c2_ref_freqs,
+                    "Lₙ del ejercicio [dB]": _c2_example_ln,
+                    "Curva ref. desplazada [dB]": _c2_ref_shifted,
+                    "Desviación desfavorable [dB]": _c2_devs,
+                }),
+                hide_index=True,
+                width="stretch",
+            )
+            st.write(
+                f"**Desplazamiento aplicado:** {_c2_shift:+d} dB  ·  "
+                f"**Suma de desviaciones desfavorables:** {sum(_c2_devs):g} dB"
+            )
             st.write(
                 f"En la posición original, la suma de desviaciones desfavorables es "
                 f"**{_c2_dev0:g} dB**. Si la curva se baja 1 dB, la suma pasa a "
