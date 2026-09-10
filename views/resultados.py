@@ -1586,10 +1586,90 @@ def _c2_render_lab2_stage9_tabs(row, reviewed):
         _c2_render_feedback_tab(row, reviewed=reviewed, formative=False)
 
 
-def _c2_render_lab2_stage10_tabs(row, reviewed):
+def _c2_render_lab2_stage10_tabs(row, reviewed, progress_rows=None):
     payload = _student_result_payload(row.get("answer"))
     if not isinstance(payload, dict):
         payload = {}
+
+    # Recupera la curva Lₙ que el propio alumno dejó guardada en el Lab 1.
+    # Se usa la misma lógica de 16 bandas que la pauta docente.
+    _c2_student_curve = None
+    _c2_student_lnw_expected = None
+    _c2_student_ci_expected = None
+    _c2_student_shift = None
+    _c2_student_ref_shifted = None
+    _c2_student_deviations = None
+    _c2_student_dev_sum = None
+    _c2_student_next_dev_sum = None
+    _c2_student_lsum = None
+
+    def _c2_find_curve(value):
+        if isinstance(value, dict):
+            # Priorizar claves semánticas si existen.
+            preferred = (
+                "curve", "ln_curve", "ln_values", "spectrum", "spectral_curve",
+                "normalized_curve", "impact_curve",
+            )
+            for key in preferred:
+                if key in value:
+                    found = _c2_find_curve(value.get(key))
+                    if found is not None:
+                        return found
+            for candidate in value.values():
+                found = _c2_find_curve(candidate)
+                if found is not None:
+                    return found
+        elif isinstance(value, (list, tuple)) and len(value) == 16:
+            try:
+                vals = [float(x) for x in value]
+                if all(math.isfinite(x) for x in vals):
+                    return vals
+            except Exception:
+                return None
+        return None
+
+    _c2_lab1_state = _future_progress_state(
+        progress_rows or {},
+        "clase-03-impacto-instalaciones-lab-1",
+    )
+    _c2_student_curve = _c2_find_curve(_c2_lab1_state)
+
+    _c2_ref_freqs_actual = [100,125,160,200,250,315,400,500,630,800,1000,1250,1600,2000,2500,3150]
+    _c2_ref_values_actual = [62,62,62,62,62,62,61,60,59,58,57,54,51,48,45,42]
+
+    if _c2_student_curve is not None:
+        def _c2_dev_sum_for_shift(shift):
+            return sum(
+                max(0.0, float(y) - (float(r) + float(shift)))
+                for y, r in zip(_c2_student_curve, _c2_ref_values_actual)
+            )
+
+        # Misma regla usada en la corrección docente: posición límite <=32 dB.
+        for _shift in range(-40, 61):
+            if _c2_dev_sum_for_shift(_shift) <= 32.0 + 1e-9 and _c2_dev_sum_for_shift(_shift - 1) > 32.0 + 1e-9:
+                _c2_student_shift = int(_shift)
+                break
+
+        if _c2_student_shift is not None:
+            _c2_student_ref_shifted = [
+                float(r) + _c2_student_shift for r in _c2_ref_values_actual
+            ]
+            _c2_student_deviations = [
+                max(0.0, float(y) - float(rs))
+                for y, rs in zip(_c2_student_curve, _c2_student_ref_shifted)
+            ]
+            _c2_student_dev_sum = sum(_c2_student_deviations)
+            _c2_student_next_dev_sum = _c2_dev_sum_for_shift(_c2_student_shift - 1)
+            _c2_student_lnw_expected = int(
+                round(_c2_ref_values_actual[_c2_ref_freqs_actual.index(500)] + _c2_student_shift)
+            )
+            _c2_student_lsum = 10.0 * math.log10(
+                sum(10.0 ** (float(v) / 10.0) for v in _c2_student_curve[:15])
+            )
+            _c2_student_ci_expected = (
+                int(round(_c2_student_lsum)) - 15 - int(_c2_student_lnw_expected)
+            )
+
     tabs = st.tabs(["Tus respuestas y pauta", "Rúbrica", "Retroalimentación docente"])
 
     with tabs[0]:
@@ -1614,56 +1694,79 @@ def _c2_render_lab2_stage10_tabs(row, reviewed):
 
             st.markdown("### Pauta técnica")
 
-            st.markdown("#### Curva de referencia utilizada para obtener Lₙ,w")
-            st.caption(
-                "Esta es la curva de referencia utilizada por el ejercicio. "
-                "Se desplaza verticalmente en pasos de 1 dB."
-            )
-            _c2_ref_freqs = [100,125,160,200,250,315,400,500,630,800,1000,1250,1600,2000,2500,3150]
-            _c2_ref_values = [62,62,62,62,62,62,61,60,59,58,57,54,51,48,45,42]
-            st.dataframe(
-                pd.DataFrame({
-                    "Frecuencia [Hz]": _c2_ref_freqs,
-                    "Curva de referencia [dB]": _c2_ref_values,
-                }),
-                hide_index=True,
-                width="stretch",
-            )
+            if _c2_student_curve is not None and _c2_student_lnw_expected is not None:
+                st.markdown("#### Curva utilizada en tu ejercicio y obtención de Lₙ,w")
+                st.caption(
+                    "Esta tabla utiliza la curva Lₙ que quedó guardada en tu Laboratorio 1. "
+                    "La curva de referencia base se muestra en la misma tabla para que puedas reproducir el procedimiento."
+                )
+                st.dataframe(
+                    pd.DataFrame({
+                        "Frecuencia [Hz]": _c2_ref_freqs_actual,
+                        "Tu curva Lₙ [dB]": [round(float(v),2) for v in _c2_student_curve],
+                        "Curva ref. base [dB]": _c2_ref_values_actual,
+                        "Curva ref. desplazada [dB]": [round(float(v),2) for v in _c2_student_ref_shifted],
+                        "Desviación desfavorable [dB]": [round(float(v),2) for v in _c2_student_deviations],
+                    }),
+                    hide_index=True,
+                    width="stretch",
+                )
+                st.write(
+                    f"**Desplazamiento aplicado:** {_c2_student_shift:+d} dB  ·  "
+                    f"**Suma de desviaciones:** {_c2_student_dev_sum:.1f} dB  ·  "
+                    f"**Con 1 dB adicional en el sentido más exigente:** {_c2_student_next_dev_sum:.1f} dB"
+                )
+                st.latex(
+                    r"\sum_i \max\left[0,\;L_{n,i}-L_{ref,i}^{(desplazada)}\right]\leq 32\ \mathrm{dB}"
+                )
+                st.success(
+                    f"La posición válida deja **Lₙ,w = {_c2_student_lnw_expected} dB**, "
+                    "que corresponde al valor de la curva de referencia desplazada en 500 Hz."
+                )
 
-            st.markdown("#### Procedimiento para obtener Lₙ,w")
-            st.write(
-                "1. Superpone la curva de referencia sobre el espectro medido de **Lₙ**.  "
-                "\n2. Calcula únicamente las **desviaciones desfavorables**, es decir, "
-                "en cada banda donde el nivel medido queda **por encima** de la curva desplazada.  "
-                "\n3. Suma esas desviaciones entre **100 y 3150 Hz**.  "
-                "\n4. Desplaza la curva en pasos de **1 dB** hasta encontrar la posición límite "
-                "en la que la suma de desviaciones desfavorables sea **≤ 32 dB**, y un desplazamiento "
-                "adicional de 1 dB en el sentido más exigente haría superar ese límite.  "
-                "\n5. El valor de la curva desplazada en **500 Hz** es el **Lₙ,w**."
-            )
-            st.latex(r"\sum_i \max\left[0,\;L_{n,i}-L_{ref,i}^{(desplazada)}\right]\leq 32\ \mathrm{dB}")
-            st.latex(r"L_{n,w}=L_{ref,\,desplazada}(500\ \mathrm{Hz})")
+                st.markdown("#### Procedimiento para obtener C_I con tu curva")
+                st.write(
+                    "Para C_I se utilizan tus valores de Lₙ entre **100 y 2500 Hz**. "
+                    "Primero se realiza la suma energética:"
+                )
+                st.latex(
+                    r"L_{n,\mathrm{sum}}="
+                    r"10\log_{10}\left(\sum_{i=100\,Hz}^{2500\,Hz}10^{L_{n,i}/10}\right)"
+                )
+                st.dataframe(
+                    pd.DataFrame({
+                        "Frecuencia [Hz]": _c2_ref_freqs_actual[:15],
+                        "Lₙ usado para C_I [dB]": [round(float(v),2) for v in _c2_student_curve[:15]],
+                    }),
+                    hide_index=True,
+                    width="stretch",
+                )
+                st.write(
+                    f"Con esos datos, **Lₙ,sum = {_c2_student_lsum:.2f} dB**, "
+                    f"que en el procedimiento del ejercicio se redondea a **{int(round(_c2_student_lsum))} dB**."
+                )
+                st.latex(r"C_I=L_{n,\mathrm{sum}}-15-L_{n,w}")
+                st.latex(
+                    rf"C_I={int(round(_c2_student_lsum))}-15-{int(_c2_student_lnw_expected)}"
+                    rf"={int(_c2_student_ci_expected)}\ \mathrm{{dB}}"
+                )
 
-            st.markdown("#### Procedimiento para obtener C_I")
-            st.write(
-                "Una vez obtenido **Lₙ,w**, se realiza la suma energética de los niveles de impacto "
-                "normalizados entre **100 y 2500 Hz**. No se suman los dB aritméticamente."
-            )
-            st.latex(
-                r"L_{n,\mathrm{sum}}="
-                r"10\log_{10}\left(\sum_{i=100\,Hz}^{2500\,Hz}10^{L_{n,i}/10}\right)"
-            )
-            st.write("Luego se calcula el término de adaptación espectral:")
-            st.latex(r"C_I=L_{n,\mathrm{sum}}-15-L_{n,w}")
-            st.info(
-                "**Interpretación:** C_I no reemplaza a Lₙ,w. Es un término complementario que "
-                "entrega información sobre la forma del espectro del ruido de impacto."
-            )
-
-            st.info(
-                "En tu evaluación, la pauta debe aplicarse a la **curva Lₙ que quedó guardada en tu propio "
-                "Laboratorio 1**. Por eso el valor esperado de Lₙ,w y C_I puede ser distinto al de otros alumnos."
-            )
+                _sent_lnw = payload.get("lnw")
+                _sent_ci = payload.get("ci")
+                _ca, _cb = st.columns(2)
+                _ca.metric(
+                    "Lₙ,w · enviado / esperado",
+                    f"{_sent_lnw if _sent_lnw is not None else '—'} / {_c2_student_lnw_expected} dB",
+                )
+                _cb.metric(
+                    "C_I · enviado / esperado",
+                    f"{_sent_ci if _sent_ci is not None else '—'} / {_c2_student_ci_expected:+d} dB",
+                )
+            else:
+                st.warning(
+                    "No fue posible recuperar automáticamente la curva Lₙ de tu Laboratorio 1. "
+                    "Tu entrega permanece disponible, pero esta pauta no puede reconstruir el cálculo banda por banda."
+                )
 
             st.markdown("#### Resto de la pauta técnica")
             st.write(
@@ -1810,7 +1913,7 @@ def _render_course2_block(rows, progress_rows):
                         else:
                             st.write(f"Desarrollo técnico: {payload.get('design_score',0)}/40")
                             st.write(f"Comprensión: {payload.get('comprehension_score',0)}/20")
-                            _c2_render_lab2_stage10_tabs(row, reviewed)
+                            _c2_render_lab2_stage10_tabs(row, reviewed, progress_rows)
 
             if lab2_official["total"] is not None:
                 st.success(
