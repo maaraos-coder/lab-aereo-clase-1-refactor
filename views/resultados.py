@@ -22,6 +22,9 @@ _LOCAL_NAMES = {
     "_future_progress_rows", "_future_progress_state", "_future_lab_progress",
     "_render_lab_progress_card", "_render_course1_official_evaluations",
     "_render_course1_block", "_render_course2_block", "_course2_lab2_official_summary",
+    "_c2_answer_tabs_header", "_c2_render_mcq_comparison", "_c2_render_feedback_tab",
+    "_c2_render_lab1_stage9_tabs", "_c2_render_lab1_stage10_tabs",
+    "_c2_render_lab2_stage9_tabs", "_c2_render_lab2_stage10_tabs",
     "_render_readonly_answers_block", "_render_course2_lab1_submission",
     "_render_course2_lab2_stage9_submission", "_render_course2_lab2_stage10_submission",
     "_render_teacher_feedback",
@@ -64,12 +67,12 @@ def _latest_response_by_key(rows, class_id, specs):
 
 
 def _course2_lab1_rows(rows):
-    """Entregas formativas oficiales del Curso 2 · Laboratorio 1.
+    """Entregas formativas del Curso 2 · Laboratorio 1.
 
-    Etapa 9  -> final_comprehension
-    Etapa 10 -> final_exam
+    También reconoce la Etapa 9 de versiones antiguas que pudo quedar
+    asociada a otro class_id, identificándola por su payload canónico.
     """
-    return _latest_response_by_key(
+    out=_latest_response_by_key(
         rows,
         "clase-03-impacto-instalaciones-lab-1",
         {
@@ -77,6 +80,26 @@ def _course2_lab1_rows(rows):
             "final_exam": (10, "final_exam"),
         },
     )
+
+    if out.get("final_comprehension") is None:
+        legacy=[]
+        for row in rows:
+            if int(row.get("stage") or -1)!=9 or row.get("question_key")!="final_comprehension":
+                continue
+            payload=_student_result_payload(row.get("answer"))
+            if (
+                isinstance(payload,dict)
+                and str(payload.get("version") or "").startswith("etapas_1_a_8")
+                and int(payload.get("question_count") or 0)==25
+                and int(payload.get("max_score") or 0)==100
+                and payload.get("evaluation_mode")=="points_only"
+            ):
+                legacy.append(row)
+        if legacy:
+            def _stamp(row):
+                return str(row.get("updated_at") or row.get("submitted_at") or row.get("created_at") or "")
+            out["final_comprehension"]=max(legacy,key=_stamp)
+    return out
 
 
 def _course2_lab2_delivery_rows(rows):
@@ -799,6 +822,403 @@ def _course2_lab2_official_summary(rows):
 
 
 
+
+# Pautas canónicas del Curso 2, copiadas desde views/cursos.py al generar este parche.
+_C2L1_STAGE9_QUESTIONS_RESULTS = [{'stage': 1,
+  'title': 'Cadena vibroacústica',
+  'question': 'Una fuerza dinámica actúa sobre un elemento del edificio. ¿Cuál representa mejor la secuencia '
+              'física estudiada?',
+  'options': ['Fuerza → vibración de la estructura → propagación mecánica → radiación de sonido.',
+              'Sonido → masa → fuerza → desaparición de la vibración.',
+              'Vibración → fuerza estática → absorción → frecuencia.',
+              'Fuerza → sonido aéreo únicamente, sin participación de la estructura.'],
+  'correct': 0,
+  'explanation': 'Una excitación mecánica puede hacer vibrar la estructura; esa vibración se propaga por '
+                 'elementos sólidos y determinadas superficies pueden luego radiar sonido.'},
+ {'stage': 1,
+  'title': 'Fuente, mecanismo y camino',
+  'question': 'Al diagnosticar ruido producido por una bomba, ¿por qué no basta con identificar solamente la '
+              'bomba como fuente?',
+  'options': ['Porque toda bomba produce exactamente el mismo ruido.',
+              'Porque también debemos identificar qué mecanismo genera la excitación y por qué caminos llega '
+              'la energía al receptor.',
+              'Porque la fuente nunca participa en el problema.',
+              'Porque solo interesa medir el nivel acústico del dormitorio.'],
+  'correct': 1,
+  'explanation': 'El enfoque del laboratorio distingue fuente, mecanismo y caminos de transmisión. Una misma '
+                 'bomba puede transmitir energía por apoyos, tuberías y radiación aérea.'},
+ {'stage': 2,
+  'title': 'Movilidad mecánica',
+  'question': 'Dos estructuras reciben la misma fuerza dinámica F(f). Si la estructura A posee mayor '
+              'movilidad Y(f), ¿qué esperamos para su velocidad vibratoria v(f)?',
+  'options': ['Será menor, porque una mayor movilidad frena la vibración.',
+              'Será mayor, porque v(f) = Y(f) · F(f).',
+              'Será necesariamente cero.',
+              'No puede relacionarse con la movilidad.'],
+  'correct': 1,
+  'explanation': 'Para una misma fuerza, una mayor movilidad implica una mayor velocidad vibratoria. La '
+                 'movilidad es una propiedad dependiente de la estructura y de la frecuencia.'},
+ {'stage': 2,
+  'title': 'Frecuencia natural',
+  'question': 'En el modelo masa–resorte ideal, ¿qué ocurre generalmente con la frecuencia natural si '
+              'aumenta la rigidez k y la masa permanece constante?',
+  'options': ['Disminuye.',
+              'Aumenta.',
+              'Permanece siempre igual.',
+              'Se convierte en una frecuencia acústica de sala.'],
+  'correct': 1,
+  'explanation': 'En f₀ = (1/2π)√(k/m), aumentar la rigidez manteniendo la masa eleva la frecuencia '
+                 'natural.'},
+ {'stage': 2,
+  'title': 'Vibración y radiación',
+  'question': 'Una superficie presenta una velocidad vibratoria elevada. ¿Podemos concluir solamente con ese '
+              'dato que radiará mucho sonido?',
+  'options': ['Sí, siempre.',
+              'No. También intervienen el área, la frecuencia y la eficiencia de radiación, entre otros '
+              'factores.',
+              'Sí, pero únicamente bajo 100 Hz.',
+              'No, porque una superficie vibrante nunca puede radiar sonido.'],
+  'correct': 1,
+  'explanation': 'Vibrar mucho no equivale automáticamente a radiar mucho sonido. La potencia radiada '
+                 'depende también de la superficie y de su eficiencia de radiación.'},
+ {'stage': 3,
+  'title': 'Diseño de campaña',
+  'question': 'Antes de decidir una medida de control, ¿qué estrategia corresponde al enfoque de diagnóstico '
+              'de la Etapa 3?',
+  'options': ['Medir únicamente en el receptor y comprar la solución con mayor aislamiento.',
+              'Formular hipótesis, medir fuente y caminos candidatos, comparar resultados y realizar una '
+              'prueba de confirmación.',
+              'Instalar primero el tratamiento y medir solamente después.',
+              'Elegir el camino de transmisión solo por inspección visual.'],
+  'correct': 1,
+  'explanation': 'La Etapa 3 construye el diagnóstico mediante hipótesis, campaña de medición, comparación '
+                 'de caminos y pruebas de confirmación.'},
+ {'stage': 3,
+  'title': 'Comparación de caminos',
+  'question': 'Si dos caminos reciben una fuerza dinámica comparable y uno presenta mayor movilidad en la '
+              'frecuencia investigada, ¿qué indica el modelo v = Y·F?',
+  'options': ['Ese camino tenderá a desarrollar mayor velocidad vibratoria.',
+              'Ese camino necesariamente tendrá menor vibración.',
+              'La movilidad deja de ser relevante.',
+              'Ambos caminos tendrán siempre la misma respuesta.'],
+  'correct': 0,
+  'explanation': 'Con fuerzas comparables, el camino de mayor movilidad desarrolla mayor velocidad '
+                 'vibratoria y puede constituir un camino de transmisión relevante.'},
+ {'stage': 3,
+  'title': 'Prueba de confirmación',
+  'question': '¿Para qué sirve modificar temporalmente un camino sospechoso y observar qué ocurre en el '
+              'receptor?',
+  'options': ['Para demostrar que cualquier cambio de nivel es una coincidencia.',
+              'Para obtener evidencia adicional de si ese camino participa realmente en la transmisión.',
+              'Para reemplazar todas las demás mediciones.',
+              'Para determinar automáticamente la normativa aplicable.'],
+  'correct': 1,
+  'explanation': 'Una prueba de confirmación fortalece o debilita la hipótesis causal sobre un camino de '
+                 'transmisión.'},
+ {'stage': 4,
+  'title': 'Del tiempo a la frecuencia',
+  'question': '¿Por qué transformamos conceptualmente una fuerza de impacto F(t) a su representación F(f)?',
+  'options': ['Porque el impacto contiene energía distribuida en distintas frecuencias y queremos estudiar '
+              'cómo responde el piso en cada una.',
+              'Porque F(t) y F(f) son dos fuerzas físicas independientes.',
+              'Porque la representación temporal no contiene información.',
+              'Para eliminar la participación de la estructura.'],
+  'correct': 0,
+  'explanation': 'El impacto es transitorio y contiene contenido frecuencial. La representación F(f) permite '
+                 'relacionar la excitación con la respuesta dinámica del piso por frecuencia.'},
+ {'stage': 4,
+  'title': 'Mismo impacto, distinto piso',
+  'question': 'Dos pisos reciben la misma excitación F(f), pero poseen movilidades diferentes. ¿Qué explica '
+              'que sus respuestas vibratorias sean distintas?',
+  'options': ['La relación v(f) = Y(f) · F(f).',
+              'La fuerza cambia automáticamente de valor al tocar cada piso.',
+              'La movilidad solo sirve para ruido aéreo.',
+              'Todos los pisos deben responder igual a la misma excitación.'],
+  'correct': 0,
+  'explanation': 'Con la misma excitación, diferencias en Y(f) producen diferencias en v(f). Esa es la base '
+                 'de la comparación realizada en la Etapa 4.'},
+ {'stage': 4,
+  'title': 'De vibración a sonido',
+  'question': 'Después de calcular la velocidad vibratoria v(f), ¿qué idea adicional necesitamos antes de '
+              'interpretar el sonido radiado?',
+  'options': ['La capacidad de la superficie vibrante para radiar acústicamente.',
+              'Solo la temperatura interior del edificio.',
+              'La cantidad de preguntas del laboratorio.',
+              'Ninguna: v(f) es directamente Lₙ(f).'],
+  'correct': 0,
+  'explanation': 'La cadena continúa desde v(f) hacia potencia radiada y finalmente nivel de ruido de '
+                 'impacto. La respuesta vibratoria no es directamente un nivel acústico.'},
+ {'stage': 5,
+  'title': 'Curva base Lₙ,₀(f)',
+  'question': '¿Qué representa Lₙ,₀(f) en la Etapa 5?',
+  'options': ['La mejora del piso flotante.',
+              'La predicción por bandas del nivel de ruido de impacto de la losa base antes del tratamiento.',
+              'La frecuencia natural del elemento resiliente.',
+              'La transmisibilidad de una bomba.'],
+  'correct': 1,
+  'explanation': 'Lₙ,₀(f) es la referencia espectral de la losa sin el tratamiento que posteriormente se '
+                 'diseñará.'},
+ {'stage': 5,
+  'title': 'Frecuencia crítica',
+  'question': '¿Qué papel cumple la frecuencia crítica f_c en el modelo de predicción de la losa?',
+  'options': ['Separa dos regímenes de comportamiento/radiación que utilizan expresiones de cálculo '
+              'diferentes.',
+              'Es siempre igual a la frecuencia natural de un resorte.',
+              'Es el único nivel de ruido que debe calcularse.',
+              'Indica la masa total de la losa.'],
+  'correct': 0,
+  'explanation': 'La posición de cada banda respecto de f_c determina el régimen utilizado por el modelo y '
+                 'está vinculada al acoplamiento de las ondas de flexión con el aire.'},
+ {'stage': 5,
+  'title': 'Predicción por bandas',
+  'question': '¿Por qué la Etapa 5 construye Lₙ,₀(f) banda por banda en vez de entregar directamente un '
+              'único valor?',
+  'options': ['Porque el comportamiento de la losa cambia con la frecuencia y el modelo es espectral.',
+              'Porque todos los valores de las bandas son idénticos.',
+              'Porque la frecuencia no interviene en la respuesta de una placa.',
+              'Solo para aumentar la cantidad de cálculos.'],
+  'correct': 0,
+  'explanation': 'La respuesta y la radiación de la losa dependen de la frecuencia; por eso se construye una '
+                 'curva espectral.'},
+ {'stage': 6,
+  'title': 'Principio del piso flotante',
+  'question': '¿Cuál describe mejor el sistema físico estudiado como piso flotante?',
+  'options': ['Una masa superior desacoplada de la losa base mediante un elemento resiliente.',
+              'Una capa absorbente colocada únicamente en el cielo del recinto.',
+              'Una losa más gruesa sin ningún elemento resiliente.',
+              'Un sistema que elimina completamente cualquier vibración.'],
+  'correct': 0,
+  'explanation': 'El piso flotante introduce una masa desacoplada mediante una capa o apoyos resilientes, '
+                 'formando un sistema dinámico masa–resorte.'},
+ {'stage': 6,
+  'title': 'Rigidez dinámica y f₀',
+  'question': 'Manteniendo las masas, si el elemento resiliente es más flexible y disminuye su rigidez '
+              'dinámica superficial s′, ¿qué tendencia esperamos para f₀?',
+  'options': ['f₀ tiende a disminuir.',
+              'f₀ tiende a aumentar.',
+              'f₀ se hace necesariamente igual a f_c.',
+              'La rigidez no influye en f₀.'],
+  'correct': 0,
+  'explanation': 'En el modelo estudiado una menor rigidez dinámica, manteniendo las masas, reduce la '
+                 'frecuencia natural del sistema.'},
+ {'stage': 6,
+  'title': 'Mejora ΔLₙ(f)',
+  'question': '¿Qué representa ΔLₙ(f) en la Etapa 6?',
+  'options': ['El nivel final absoluto del piso terminado.',
+              'La mejora acústica por banda introducida por la solución respecto de la losa base.',
+              'La frecuencia crítica de la losa.',
+              'El ruido aéreo de la sala.'],
+  'correct': 1,
+  'explanation': 'ΔLₙ(f) es una diferencia de niveles que expresa la mejora del tratamiento por banda. '
+                 'Todavía no es Lₙ,final(f).'},
+ {'stage': 6,
+  'title': 'Puentes rígidos',
+  'question': '¿Qué efecto puede tener un contacto rígido accidental que puentea el elemento resiliente de '
+              'un piso flotante?',
+  'options': ['Puede crear un camino mecánico paralelo, aumentar la rigidez equivalente y degradar el '
+              'desacoplamiento.',
+              'Siempre mejora el aislamiento.',
+              'Solo modifica el color del acabado.',
+              'No tiene ningún efecto en la transmisión.'],
+  'correct': 0,
+  'explanation': 'Los puentes rígidos alteran el sistema ideal y pueden degradar fuertemente el desempeño '
+                 'previsto del piso flotante.'},
+ {'stage': 7,
+  'title': 'Curva final',
+  'question': 'Si ya conocemos Lₙ,₀(f) y la mejora ΔLₙ(f), ¿cómo construimos la predicción del piso '
+              'terminado?',
+  'options': ['Lₙ,final(f) = Lₙ,₀(f) − ΔLₙ(f).',
+              'Lₙ,final(f) = Lₙ,₀(f) + ΔLₙ(f).',
+              'Lₙ,final(f) = ΔLₙ(f) únicamente.',
+              'No existe relación entre las tres curvas.'],
+  'correct': 0,
+  'explanation': 'Como ΔLₙ(f) está definida como mejora en dB respecto de la condición base, se resta banda '
+                 'por banda de Lₙ,₀(f).'},
+ {'stage': 7,
+  'title': 'Selección profesional',
+  'question': 'Al seleccionar un sistema real desde catálogo, ¿por qué no basta con escoger el producto con '
+              'mayor ΔLw declarado?',
+  'options': ['Porque la decisión también debe considerar el desempeño espectral, masa añadida, carga '
+              'admisible, espesor y restricciones constructivas.',
+              'Porque ΔLw nunca entrega información acústica.',
+              'Porque el producto más pesado es siempre mejor.',
+              'Porque los catálogos no pueden utilizarse en ingeniería.'],
+  'correct': 0,
+  'explanation': 'La Etapa 7 combina desempeño acústico y viabilidad constructiva. Un índice ponderado no '
+                 'sustituye la evaluación espectral ni las restricciones del proyecto.'},
+ {'stage': 8,
+  'title': 'NPSH y cavitación',
+  'question': 'En el caso de la bomba, NPSH_A ≈ 3,41 m y NPSH_R ≈ 3,8 m. ¿Cuál es la interpretación más '
+              'correcta?',
+  'options': ['Existe un margen hidráulico negativo y una condición desfavorable compatible con riesgo de '
+              'cavitación; por sí sola no demuestra acústicamente que exista cavitación.',
+              'La bomba necesariamente produce exactamente 3,8 dB de ruido.',
+              'NPSH_A y NPSH_R son niveles acústicos que deben restarse en dB.',
+              'Un margen negativo demuestra que el problema es únicamente radiación aérea.'],
+  'correct': 0,
+  'explanation': 'NPSH_A pertenece a la instalación y NPSH_R a la bomba/catálogo. Un margen negativo es '
+                 'evidencia hidráulica desfavorable, pero el diagnóstico de cavitación se fortalece con '
+                 'evidencia vibroacústica y operacional.'},
+ {'stage': 8,
+  'title': 'RPM, Hz y banda de medición',
+  'question': 'La bomba gira a 2900 RPM. ¿Cuál relación es correcta para la componente 1×RPM estudiada?',
+  'options': ['2900 RPM → 48,33 Hz de frecuencia física → se representa principalmente en la banda de 50 Hz.',
+              '2900 RPM → 2900 Hz → banda de 3000 Hz.',
+              '2900 RPM → 50 Hz exactos de giro.',
+              '2900 RPM no puede convertirse a hertz.'],
+  'correct': 0,
+  'explanation': 'La frecuencia de giro es 2900/60 ≈ 48,33 Hz. En el espectro por bandas del laboratorio esa '
+                 'componente aparece representada principalmente en la banda central de 50 Hz.'},
+ {'stage': 8,
+  'title': 'Carga por aislador',
+  'question': 'La bomba considerada tiene una masa de 79 kg y se reparte uniformemente en 4 apoyos. ¿Cuál es '
+              'aproximadamente la carga que llevamos al catálogo por aislador?',
+  'options': ['19,75 kg de masa por apoyo, equivalentes a unos 194 N o 43,6 lb de carga.',
+              '79 kg y 194 lb por apoyo.',
+              '4 kg por apoyo.',
+              '2900 lb por apoyo.'],
+  'correct': 0,
+  'explanation': '79/4 = 19,75 kg por apoyo. El peso correspondiente es aproximadamente 194 N, equivalente a '
+                 'unos 43,6 lbf.'},
+ {'stage': 8,
+  'title': 'Deflexión y frecuencia natural',
+  'question': 'Para el ejercicio se adopta una deflexión estática mínima de 19 mm. ¿Qué significa '
+              'aproximadamente ese criterio?',
+  'options': ['19 mm ≈ 0,75 in y corresponde a una frecuencia natural de aproximadamente 3,62 Hz en el '
+              'modelo vertical idealizado.',
+              '19 mm = 19 in y corresponde a 48,33 Hz.',
+              '19 mm es la carga nominal del resorte.',
+              '19 mm es un nivel acústico.'],
+  'correct': 0,
+  'explanation': '19 mm = 0,019 m ≈ 0,75 in. Aplicando f_n = (1/2π)√(g/δ), se obtiene aproximadamente 3,62 '
+                 'Hz.'},
+ {'stage': 8,
+  'title': 'Catálogo y deflexión de operación',
+  'question': 'Un FDS 1-50 declara 50 lb y 0,97 in nominales. Si nuestra carga real es aproximadamente 43,6 '
+              'lb, ¿qué debemos comparar con el criterio de 19 mm?',
+  'options': ['La deflexión de operación estimada: aproximadamente 0,85 in ≈ 21,5 mm, que supera el criterio '
+              'de 19 mm.',
+              "Directamente el nombre 'familia de 1 pulgada', sin considerar la carga real.",
+              'Solo las 50 lb nominales, ignorando la deflexión.',
+              'La frecuencia de 50 Hz del espectro acústico.'],
+  'correct': 0,
+  'explanation': 'La denominación nominal no basta. Con la aproximación lineal δ_op ≈ δ_nom(F_op/F_nom), la '
+                 'carga real entrega alrededor de 0,85 in ≈ 21,5 mm de deflexión de operación.'}]
+
+_C2L2_STAGE9_QUESTIONS_RESULTS = [('Magnitudes de terreno',
+  'En una medición en edificio terminado, ¿qué descriptor corresponde cuando el resultado se normaliza '
+  'mediante el área de absorción equivalente?',
+  ['Lₙ(f)', "L'ₙ(f)", "L'ₙT(f)", 'ΔLw'],
+  1,
+  "L'ₙ(f) corresponde al nivel normalizado de impactos en terreno cuando la referencia se expresa mediante "
+  'absorción equivalente.'),
+ ('Curva ISO 717-2',
+  'Durante la ponderación de ruido de impacto, una banda presenta Lₙ,i mayor que la referencia. ¿Cómo se '
+  'trata esa diferencia?',
+  ['Se resta a otra banda favorable.',
+   'Se considera una desviación desfavorable dᵢ.',
+   'Se elimina del cálculo.',
+   'Se promedia con las demás bandas.'],
+  1,
+  'Para ruido de impacto, solo los excesos positivos sobre la referencia aportan a las desviaciones '
+  'desfavorables.'),
+ ('Posición límite',
+  '¿Cuándo se ha encontrado correctamente la posición límite de la curva de referencia?',
+  ['Cuando Σdᵢ=0 dB.',
+   'Cuando la posición actual cumple Σdᵢ≤32 dB y 1 dB más abajo ya supera 32 dB.',
+   'Cuando la referencia coincide con el espectro en 500 Hz.',
+   'Cuando todas las bandas quedan bajo la referencia.'],
+  1,
+  'La posición límite es el último desplazamiento entero que cumple; un paso adicional de −1 dB debe dejar '
+  'de cumplir.'),
+ ('Lectura de Lₙ,w',
+  'Una vez encontrada la posición límite, ¿dónde se lee Lₙ,w?',
+  ['En el máximo del espectro.',
+   'En la referencia desplazada a 500 Hz.',
+   'En la banda de 100 Hz.',
+   'En el promedio de todas las bandas.'],
+  1,
+  'Lₙ,w se obtiene leyendo la curva de referencia desplazada en 500 Hz.'),
+ ('Término Cᵢ',
+  '¿Qué función cumple Cᵢ respecto de Lₙ,w?',
+  ['Es una reducción física adicional del revestimiento.',
+   'Aporta información espectral complementaria al número único.',
+   'Sustituye siempre a Lₙ,w.',
+   'Indica la masa del piso.'],
+  1,
+  'Cᵢ complementa Lₙ,w con información sobre la forma espectral; no representa una mejora física adicional.'),
+ ('Bajas frecuencias',
+  '¿Qué añade Cᵢ,50–2500 frente a Cᵢ?',
+  ['Elimina las bandas de 100–2500 Hz.',
+   'Incorpora además 50, 63 y 80 Hz a la suma energética.',
+   'Cambia el valor normativo de Lₙ,w.',
+   'Convierte el resultado en ΔLw.'],
+  1,
+  'Cᵢ,50–2500 amplía la suma energética hacia 50 Hz para hacer visible información grave adicional.'),
+ ('Reducción de revestimiento',
+  '¿Cómo se obtiene ΔLw según el procedimiento con piso pesado de referencia?',
+  ['Promediando ΔL(f).',
+   'Aplicando ΔL(f) al piso de referencia, ponderando la curva tratada y calculando 78−Lₙ,r,w.',
+   'Restando Cᵢ a Lₙ,w.',
+   'Sumando todas las bandas de ΔL(f).'],
+  1,
+  'ΔLw no es el promedio de ΔL(f): requiere construir y ponderar el piso de referencia tratado.'),
+ ('Mismo ΔLw',
+  'Dos revestimientos tienen el mismo ΔLw. ¿Qué conclusión es correcta?',
+  ['Tienen necesariamente la misma curva ΔL(f).',
+   'Pueden tener formas espectrales de reducción diferentes.',
+   'Son idénticos en cualquier piso real.',
+   'Tienen el mismo Cᵢ obligatoriamente.'],
+  1,
+  'Un mismo número único puede resumir curvas espectrales distintas.'),
+ ('Ficha técnica',
+  'Una ficha de revestimiento declara ΔLw=19 dB. ¿Qué significa?',
+  ['Que cualquier piso real reducirá exactamente 19 dB.',
+   'Que el revestimiento obtuvo una reducción ponderada de 19 dB bajo el procedimiento/ensayo declarado.',
+   'Que el piso final tendrá Lₙ,w=19 dB.',
+   'Que Cᵢ=19 dB.'],
+  1,
+  'ΔLw es una propiedad declarada bajo un procedimiento de referencia y no una promesa de mejora universal '
+  'en cualquier sistema.'),
+ ('Interpretación profesional',
+  '¿Cuál es la forma más correcta de reportar Lₙ,w y Cᵢ?',
+  ['Sumarlos siempre y reportar un único valor.',
+   'Informar Lₙ,w como descriptor principal y Cᵢ como término espectral asociado, usando la suma solo si el '
+   'criterio aplicable lo exige.',
+   'Reportar solo Cᵢ.',
+   'Reemplazar Lₙ,w por ΔLw.'],
+  1,
+  'Lₙ,w sigue siendo el descriptor principal; Cᵢ se informa asociado y no se suma automáticamente.')]
+
+_C2L2_S10_Q_RESULTS = [('¿Qué información añade C_I frente a Lₙ,w?',
+  ['Una reducción física adicional.',
+   'Información sobre la distribución espectral.',
+   'La velocidad de giro de la bomba.',
+   'La carga del resorte.'],
+  1),
+ ('Si dos pisos tienen Lₙ,w parecido y C_I distinto, ¿son acústicamente idénticos?',
+  ['Sí.',
+   'No; la distribución espectral puede ser distinta.',
+   'Solo si pesan igual.',
+   'Siempre que tengan el mismo revestimiento.'],
+  1),
+ ('Una coincidencia de 24 Hz en bomba, tubería y estructura significa:',
+  ['Causalidad absoluta demostrada.',
+   'Evidencia para investigar un camino común, no prueba única de causalidad.',
+   'Que existe cavitación obligatoriamente.',
+   'Que el piso tiene Lₙ,w=24.'],
+  1),
+ ('Si la base está aislada pero la tubería es rígida, ¿está resuelto?',
+  ['Sí.', 'No; existe un camino paralelo.', 'Sí, si r>1.', 'Solo depende de C_I.'],
+  1),
+ ('Si existe cavitación, la primera prioridad es:',
+  ['Aislar solamente la base.',
+   'Investigar/corregir la condición hidráulica en la fuente.',
+   'Agregar absorbente al dormitorio.',
+   'Bajar Lₙ,w.'],
+  1)]
+
+
 def _render_readonly_answers_block(payload, expected_count=None):
     """Muestra exactamente las respuestas enviadas, sin permitir edición ni revelar pauta."""
     answers = payload.get("answers", {}) if isinstance(payload, dict) else {}
@@ -945,6 +1365,258 @@ def _render_teacher_feedback(row, maximum):
     if row.get("teacher_note"):
         st.info(f"Comentario docente: {row.get('teacher_note')}")
 
+
+def _c2_answer_tabs_header(row, formative=False):
+    reviewed = row.get("teacher_score") is not None or row.get("status") == "reviewed"
+    if formative:
+        return True
+    return bool(reviewed)
+
+
+def _c2_render_mcq_comparison(payload, questions, release_pauta):
+    answers = payload.get("answers", {}) if isinstance(payload, dict) else {}
+    if not isinstance(answers, dict):
+        answers = {}
+
+    for i, item in enumerate(questions):
+        if isinstance(item, dict):
+            title = item.get("title") or f"Pregunta {i+1}"
+            question = item.get("question") or ""
+            options = item.get("options") or []
+            correct_idx = int(item.get("correct", 0))
+            explanation = item.get("explanation") or ""
+        else:
+            title = f"Pregunta {i+1}"
+            question = item[0]
+            options = item[1]
+            correct_idx = int(item[2])
+            explanation = item[3] if len(item) > 3 else ""
+
+        chosen = answers.get(str(i))
+        correct = options[correct_idx] if 0 <= correct_idx < len(options) else "—"
+
+        with st.container(border=True):
+            st.markdown(f"**{i+1}. {title}**")
+            if question:
+                st.write(question)
+            st.markdown("**Tu respuesta**")
+            st.write(chosen if chosen not in (None, "") else "Sin respuesta registrada")
+
+            if release_pauta:
+                st.markdown("**Pauta**")
+                st.success(correct)
+                if explanation:
+                    st.caption(explanation)
+
+
+def _c2_render_feedback_tab(row, reviewed, formative=False):
+    note = row.get("teacher_note")
+    if note:
+        st.info(note)
+    elif reviewed:
+        st.caption("El docente no dejó una observación general.")
+    elif formative:
+        st.caption("Actividad formativa sin nota. No hay observación docente registrada.")
+    else:
+        st.info("La retroalimentación docente estará disponible cuando termine la revisión.")
+
+    if row.get("feedback"):
+        st.markdown("**Retroalimentación automática**")
+        st.write(row.get("feedback"))
+
+
+def _c2_render_lab1_stage9_tabs(row):
+    payload = _student_result_payload(row.get("answer"))
+    if not isinstance(payload, dict):
+        payload = {}
+    tabs = st.tabs(["Tus respuestas y pauta", "Rúbrica", "Retroalimentación docente"])
+
+    with tabs[0]:
+        st.info("Actividad formativa · sin nota. La pauta se muestra después del envío.")
+        _c2_render_mcq_comparison(
+            payload,
+            _C2L1_STAGE9_QUESTIONS_RESULTS,
+            release_pauta=True,
+        )
+
+    with tabs[1]:
+        rubric = payload.get("rubric_scores", [])
+        answers = payload.get("answers", {})
+        rows_rubric = []
+        for i, item in enumerate(_C2L1_STAGE9_QUESTIONS_RESULTS):
+            chosen = answers.get(str(i)) if isinstance(answers, dict) else None
+            correct = item["options"][item["correct"]]
+            points = (
+                float(rubric[i])
+                if isinstance(rubric, list) and i < len(rubric)
+                else (4.0 if chosen == correct else 0.0)
+            )
+            rows_rubric.append({
+                "Criterio": f"Pregunta {i+1} · {item['title']}",
+                "Puntaje": f"{points:g}/4",
+                "Nivel": "Logrado" if points >= 4 else ("En desarrollo" if points > 0 else "No logrado"),
+            })
+        st.dataframe(pd.DataFrame(rows_rubric), hide_index=True, width="stretch")
+
+    with tabs[2]:
+        _c2_render_feedback_tab(row, reviewed=True, formative=True)
+
+
+def _c2_render_lab1_stage10_tabs(row):
+    payload = _student_result_payload(row.get("answer"))
+    if not isinstance(payload, dict):
+        payload = {}
+    tabs = st.tabs(["Tus respuestas y pauta", "Rúbrica", "Retroalimentación docente"])
+
+    with tabs[0]:
+        st.info("Actividad formativa · sin nota. La pauta se muestra después del envío.")
+
+        impacto = payload.get("impacto", {}) if isinstance(payload.get("impacto"), dict) else {}
+        inst = payload.get("instalaciones", {}) if isinstance(payload.get("instalaciones"), dict) else {}
+        informe = payload.get("informe", {}) if isinstance(payload.get("informe"), dict) else {}
+
+        st.markdown("#### Tu desarrollo · ruido de impacto")
+        st.write(f"Secuencia: {' → '.join([x for x in impacto.get('secuencia', []) if x]) or 'Sin completar'}")
+        st.write(f"Lₙ,₀(500): {impacto.get('ln0_500','—')} dB")
+        st.write(f"m’ᵣ: {impacto.get('mr','—')} kg/m² · f₀: {impacto.get('f0','—')} Hz")
+        st.write(f"Solución seleccionada: {impacto.get('solucion') or '—'}")
+        if impacto.get("justificacion"):
+            st.write(f"Justificación: {impacto.get('justificacion')}")
+
+        st.markdown("#### Tu desarrollo · bomba e instalaciones")
+        st.write(f"fₑ: {inst.get('fe','—')} Hz")
+        st.write(f"NPSHₐ: {inst.get('npsha','—')} m · NPSHᵣ: {inst.get('npshr','—')} m")
+        st.write(f"Diagnóstico NPSH: {inst.get('diagnostico_npsh') or '—'}")
+        st.write(f"Aislador: {inst.get('aislador') or '—'}")
+        st.write(f"fₙ: {inst.get('fn_hz','—')} Hz · T_F: {inst.get('tf','—')}")
+        if inst.get("caminos"):
+            st.write(f"Caminos: {inst.get('caminos')}")
+        if inst.get("medidas"):
+            st.write(f"Medidas: {inst.get('medidas')}")
+
+        st.markdown("#### Tu informe")
+        st.write(f"Limitación: {informe.get('limitacion') or '—'}")
+        st.write(f"Conclusión: {informe.get('conclusion') or '—'}")
+
+        st.markdown("#### Pauta esperada")
+        st.success(
+            "Impacto: identificar la cadena física, estimar Lₙ,₀, masa reducida y frecuencia natural, "
+            "seleccionar una solución compatible con las restricciones y controlar puentes rígidos."
+        )
+        st.success(
+            "Instalaciones: usar 1×RPM como referencia, evaluar NPSH como evidencia hidráulica, "
+            "calcular la carga por apoyo, seleccionar el aislador por carga/deflexión y revisar "
+            "caminos paralelos por tuberías y soportes."
+        )
+        st.success(
+            "Cierre profesional: las predicciones deben verificarse con cargas reales, especificaciones, "
+            "montaje, continuidad resiliente y mediciones cuando corresponda."
+        )
+
+    with tabs[1]:
+        tech = float(payload.get("puntaje_tecnico", 0) or 0)
+        report = float(payload.get("puntaje_informe", 0) or 0)
+        st.dataframe(pd.DataFrame([
+            {"Criterio": "Desarrollo técnico integrado", "Puntaje": f"{tech:g}/80"},
+            {"Criterio": "Informe integrador", "Puntaje": f"{report:g}/20"},
+        ]), hide_index=True, width="stretch")
+
+    with tabs[2]:
+        _c2_render_feedback_tab(row, reviewed=True, formative=True)
+
+
+def _c2_render_lab2_stage9_tabs(row, reviewed):
+    payload = _student_result_payload(row.get("answer"))
+    if not isinstance(payload, dict):
+        payload = {}
+    tabs = st.tabs(["Tus respuestas y pauta", "Rúbrica", "Retroalimentación docente"])
+
+    with tabs[0]:
+        if not reviewed:
+            st.info(
+                "Tu entrega está registrada. La pauta se publicará cuando el docente termine la revisión."
+            )
+        _c2_render_mcq_comparison(
+            payload,
+            _C2L2_STAGE9_QUESTIONS_RESULTS,
+            release_pauta=reviewed,
+        )
+
+    with tabs[1]:
+        if not reviewed:
+            st.info("La rúbrica se habilitará cuando finalice la revisión docente.")
+        else:
+            answers = payload.get("answers", {})
+            rows_rubric = []
+            for i, item in enumerate(_C2L2_STAGE9_QUESTIONS_RESULTS):
+                chosen = answers.get(str(i)) if isinstance(answers, dict) else None
+                correct = item[2][item[3]]
+                points = 4.0 if chosen == correct else 0.0
+                rows_rubric.append({
+                    "Criterio": f"Pregunta {i+1} · {item[0]}",
+                    "Puntaje": f"{points:g}/4",
+                    "Nivel": "Logrado" if points >= 4 else "No logrado",
+                })
+            st.dataframe(pd.DataFrame(rows_rubric), hide_index=True, width="stretch")
+
+    with tabs[2]:
+        _c2_render_feedback_tab(row, reviewed=reviewed, formative=False)
+
+
+def _c2_render_lab2_stage10_tabs(row, reviewed):
+    payload = _student_result_payload(row.get("answer"))
+    if not isinstance(payload, dict):
+        payload = {}
+    tabs = st.tabs(["Tus respuestas y pauta", "Rúbrica", "Retroalimentación docente"])
+
+    with tabs[0]:
+        _render_course2_lab2_stage10_submission(row)
+
+        if not reviewed:
+            st.info(
+                "La pauta de la evaluación integradora se habilitará cuando finalice la revisión docente."
+            )
+        else:
+            st.markdown("### Pauta de comprensión")
+            answers = payload.get("answers", {}) if isinstance(payload.get("answers"), dict) else {}
+            for i, item in enumerate(_C2L2_S10_Q_RESULTS):
+                correct = item[1][item[2]]
+                with st.container(border=True):
+                    st.markdown(f"**Pregunta {i+1}**")
+                    st.write(item[0])
+                    st.markdown("**Tu respuesta**")
+                    st.write(answers.get(str(i)) or "Sin respuesta registrada")
+                    st.markdown("**Pauta**")
+                    st.success(correct)
+
+            st.markdown("### Pauta técnica")
+            st.write(
+                "Los 40 puntos técnicos corresponden a ocho comprobaciones de 5 puntos: "
+                "Lₙ,w; C_I; interpretación espectral; frecuencia de excitación; interpretación "
+                "del camino común; condición de aislamiento; reconocimiento de caminos paralelos; "
+                "y estrategia de control integral."
+            )
+            st.write(
+                "Para el caso de bomba: fₑ = 1450/60 = **24,17 Hz**. "
+                "El montaje debe satisfacer **r = fₑ/fₙ > √2** para estar en la región de aislamiento "
+                "del modelo ideal y deben revisarse tuberías/soportes como posibles caminos paralelos."
+            )
+
+    with tabs[1]:
+        if not reviewed:
+            st.info("La rúbrica se habilitará cuando finalice la revisión docente.")
+        else:
+            design = float(payload.get("design_score", 0) or 0)
+            comprehension = float(payload.get("comprehension_score", 0) or 0)
+            st.dataframe(pd.DataFrame([
+                {"Criterio": "Desarrollo técnico", "Puntaje": f"{design:g}/40"},
+                {"Criterio": "Comprensión e interpretación", "Puntaje": f"{comprehension:g}/20"},
+            ]), hide_index=True, width="stretch")
+
+    with tabs[2]:
+        _c2_render_feedback_tab(row, reviewed=reviewed, formative=False)
+
+
 def _render_course2_block(rows, progress_rows):
     lab1_scores=_course2_lab1_rows(rows)
     lab2_official=_course2_lab2_official_summary(rows)
@@ -1020,9 +1692,11 @@ def _render_course2_block(rows, progress_rows):
                     c1.metric("Puntaje",f"{score:g}/{maximum}")
                     c2.metric("Estado","Revisada" if reviewed else "Entregada")
                     c3.metric("Nota","No aplica")
-                    with st.popover("Ver mi evaluación enviada", use_container_width=True):
-                        _render_course2_lab1_submission(row, row.get("question_key"))
-                    _render_teacher_feedback(row, maximum)
+                    st.caption(f"Actividad formativa · sin nota · Entrega: {_result_date(row.get('submitted_at') or row.get('updated_at'))}")
+                    if row.get("question_key")=="final_comprehension":
+                        _c2_render_lab1_stage9_tabs(row)
+                    else:
+                        _c2_render_lab1_stage10_tabs(row)
 
         with tabs[2]:
             st.caption(
@@ -1047,24 +1721,20 @@ def _render_course2_block(rows, progress_rows):
                 )
                 with st.expander(summary):
                     c1,c2,c3=st.columns(3)
-                    c1.metric("Puntaje oficial",f"{score:g}/{maximum}" if reviewed else "Pendiente")
+                    c1.metric("Puntaje oficial",f"{score:g}/{maximum}" if reviewed else "Pendiente de revisión")
                     c2.metric("Nota",f"{grade:.1f}" if reviewed else "Pendiente")
-                    c3.metric("Estado","Revisada" if reviewed else "Pendiente")
+                    c3.metric("Estado","Revisada" if reviewed else "Entregada")
 
                     payload=_student_result_payload(row.get("answer"))
                     if isinstance(payload,dict):
                         if row.get("question_key")=="final_comprehension":
                             answers=payload.get("answers",{})
                             st.write(f"Respuestas registradas: {sum(v not in (None,'') for v in answers.values())}/10")
-                            with st.popover("Ver mi evaluación enviada", use_container_width=True):
-                                _render_course2_lab2_stage9_submission(row)
+                            _c2_render_lab2_stage9_tabs(row, reviewed)
                         else:
                             st.write(f"Desarrollo técnico: {payload.get('design_score',0)}/40")
                             st.write(f"Comprensión: {payload.get('comprehension_score',0)}/20")
-                            with st.popover("Ver mi evaluación enviada", use_container_width=True):
-                                _render_course2_lab2_stage10_submission(row)
-
-                    _render_teacher_feedback(row, maximum)
+                            _c2_render_lab2_stage10_tabs(row, reviewed)
 
             if lab2_official["total"] is not None:
                 st.success(
