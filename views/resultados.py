@@ -1660,40 +1660,10 @@ def _c2_render_lab2_stage10_tabs(row, reviewed):
                 "entrega información sobre la forma del espectro del ruido de impacto."
             )
 
-            st.markdown("#### Ejemplo reproducible con el espectro didáctico")
-            _c2_example_ln = [61,62,63,64,64,64,63,62,61,59,57,54,52,50,48,46]
-            _c2_dev0 = sum(max(0, y-r) for y,r in zip(_c2_example_ln,_c2_ref_values))
-            _c2_dev_minus1 = sum(max(0, y-(r-1)) for y,r in zip(_c2_example_ln,_c2_ref_values))
-            _c2_lsum = 10.0*math.log10(sum(10.0**(v/10.0) for v in _c2_example_ln[:15]))
-            _c2_lnw = 60
-            _c2_ci = round(_c2_lsum)-15-_c2_lnw
-            _c2_shift = _c2_lnw - 60
-            _c2_ref_shifted = [r + _c2_shift for r in _c2_ref_values]
-            _c2_devs = [max(0, y-rs) for y,rs in zip(_c2_example_ln,_c2_ref_shifted)]
-            st.dataframe(
-                pd.DataFrame({
-                    "Frecuencia [Hz]": _c2_ref_freqs,
-                    "Lₙ del ejercicio [dB]": _c2_example_ln,
-                    "Curva ref. desplazada [dB]": _c2_ref_shifted,
-                    "Desviación desfavorable [dB]": _c2_devs,
-                }),
-                hide_index=True,
-                width="stretch",
+            st.info(
+                "En tu evaluación, la pauta debe aplicarse a la **curva Lₙ que quedó guardada en tu propio "
+                "Laboratorio 1**. Por eso el valor esperado de Lₙ,w y C_I puede ser distinto al de otros alumnos."
             )
-            st.write(
-                f"**Desplazamiento aplicado:** {_c2_shift:+d} dB  ·  "
-                f"**Suma de desviaciones desfavorables:** {sum(_c2_devs):g} dB"
-            )
-            st.write(
-                f"En la posición original, la suma de desviaciones desfavorables es "
-                f"**{_c2_dev0:g} dB**. Si la curva se baja 1 dB, la suma pasa a "
-                f"**{_c2_dev_minus1:g} dB**, por lo que esa nueva posición ya no cumple el límite de 32 dB."
-            )
-            st.write(
-                f"Así, **Lₙ,w = {_c2_lnw} dB**. La suma energética 100–2500 Hz es "
-                f"**{_c2_lsum:.1f} dB ≈ {round(_c2_lsum)} dB**; entonces:"
-            )
-            st.latex(rf"C_I={round(_c2_lsum)}-15-{_c2_lnw}={_c2_ci}\ \mathrm{{dB}}")
 
             st.markdown("#### Resto de la pauta técnica")
             st.write(

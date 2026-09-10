@@ -897,16 +897,9 @@ def _teacher_course_results_impl(compact=False):
                                 st.write("**C_I:** calcular a partir de la suma energética de 100–2500 Hz y el Lₙ,w obtenido.")
                         st.caption(source_teacher)
 
-                        st.markdown("**Curva de referencia utilizada en el ejercicio**")
-                        ref_freqs_teacher=[100,125,160,200,250,315,400,500,630,800,1000,1250,1600,2000,2500,3150]
-                        ref_values_teacher=[62,62,62,62,62,62,61,60,59,58,57,54,51,48,45,42]
-                        st.dataframe(
-                            pd.DataFrame({
-                                "Frecuencia [Hz]":ref_freqs_teacher,
-                                "Curva de referencia [dB]":ref_values_teacher,
-                            }),
-                            hide_index=True,
-                            use_container_width=True,
+                        st.caption(
+                            "La curva de referencia base se incorpora directamente en la comparación "
+                            "por bandas para evitar duplicar tablas."
                         )
 
                         if (
@@ -914,11 +907,12 @@ def _teacher_course_results_impl(compact=False):
                             and teacher_ref_shifted is not None
                             and teacher_deviations is not None
                         ):
-                            st.markdown("**Verificación con la curva Lₙ guardada de este alumno**")
+                            st.markdown("**Datos utilizados y verificación del Lₙ,w de este alumno**")
                             st.dataframe(
                                 pd.DataFrame({
                                     "Frecuencia [Hz]":ref_freqs_teacher,
                                     "Lₙ alumno [dB]":[round(float(v),2) for v in curve_teacher],
+                                    "Curva ref. base [dB]":ref_values_teacher,
                                     "Curva ref. desplazada [dB]":[round(float(v),2) for v in teacher_ref_shifted],
                                     "Desviación desfavorable [dB]":[round(float(v),2) for v in teacher_deviations],
                                 }),
@@ -928,11 +922,12 @@ def _teacher_course_results_impl(compact=False):
                             st.write(
                                 f"**Desplazamiento aplicado:** {teacher_shift_applied:+d} dB  ·  "
                                 f"**Suma de desviaciones:** {teacher_dev_sum:.1f} dB  ·  "
-                                f"**Al bajar 1 dB más:** {teacher_prev_dev_sum:.1f} dB"
+                                f"**Con 1 dB adicional en el sentido más exigente:** {teacher_prev_dev_sum:.1f} dB"
                             )
-                            st.caption(
-                                "Así puedes comprobar fila por fila por qué la app obtiene el Lₙ,w esperado "
-                                "para esta entrega, en lugar de confiar solo en el resultado automático."
+                            st.success(
+                                f"Como la posición seleccionada cumple el límite de 32 dB y el siguiente "
+                                f"desplazamiento ya no lo cumple, el valor de la curva desplazada en 500 Hz es "
+                                f"**Lₙ,w = {expected_lnw_teacher} dB**."
                             )
 
                         st.markdown("**Procedimiento para obtener Lₙ,w**")
@@ -948,35 +943,68 @@ def _teacher_course_results_impl(compact=False):
                         st.latex(r"\sum_i \max\left[0,\;L_{n,i}-L_{ref,i}^{(desplazada)}\right]\leq 32\ \mathrm{dB}")
                         st.latex(r"L_{n,w}=L_{ref,\,desplazada}(500\ \mathrm{Hz})")
 
-                        st.markdown("**Procedimiento para obtener C_I**")
+                        st.markdown("**Procedimiento para obtener C_I con los datos de esta entrega**")
                         st.write(
-                            "Calcular primero la suma energética de Lₙ entre 100 y 2500 Hz y luego aplicar "
-                            "el término de adaptación espectral."
+                            "Se utilizan los valores Lₙ del alumno entre **100 y 2500 Hz**. "
+                            "Primero se realiza la suma energética:"
                         )
                         st.latex(
                             r"L_{n,\mathrm{sum}}="
                             r"10\log_{10}\left(\sum_{i=100\,Hz}^{2500\,Hz}10^{L_{n,i}/10}\right)"
                         )
-                        st.latex(r"C_I=L_{n,\mathrm{sum}}-15-L_{n,w}")
 
-                        st.markdown("**Ejemplo reproducible del laboratorio**")
-                        example_teacher=[61,62,63,64,64,64,63,62,61,59,57,54,52,50,48,46]
-                        d0_teacher=sum(max(0,y-r) for y,r in zip(example_teacher,ref_values_teacher))
-                        dm1_teacher=sum(max(0,y-(r-1)) for y,r in zip(example_teacher,ref_values_teacher))
-                        lsum_example_teacher=10.0*math.log10(
-                            sum(10.0**(float(v)/10.0) for v in example_teacher[:15])
-                        )
-                        ci_example_teacher=round(lsum_example_teacher)-15-60
-                        st.write(
-                            f"Espectro didáctico: suma de desviaciones en posición original = **{d0_teacher:g} dB**; "
-                            f"al bajar 1 dB la curva = **{dm1_teacher:g} dB**. "
-                            "Como supera el límite, la posición original es la válida."
-                        )
-                        st.write(
-                            f"Resultado del ejemplo: **Lₙ,w = 60 dB**; "
-                            f"Lₙ,sum(100–2500) = **{lsum_example_teacher:.1f} dB ≈ {round(lsum_example_teacher)} dB**; "
-                            f"por tanto **C_I = {ci_example_teacher} dB**."
-                        )
+                        if curve_teacher is not None and expected_lnw_teacher is not None and expected_ci_teacher is not None:
+                            ci_freqs_teacher=ref_freqs_teacher[:15]
+                            ci_vals_teacher=[float(v) for v in curve_teacher[:15]]
+                            ci_energy_terms=[10.0**(v/10.0) for v in ci_vals_teacher]
+                            st.dataframe(
+                                pd.DataFrame({
+                                    "Frecuencia [Hz]":ci_freqs_teacher,
+                                    "Lₙ usado para C_I [dB]":[round(v,2) for v in ci_vals_teacher],
+                                }),
+                                hide_index=True,
+                                use_container_width=True,
+                            )
+                            st.write(
+                                f"La suma energética de 100 a 2500 Hz da "
+                                f"**Lₙ,sum = {lsum_teacher:.2f} dB**, que para el cálculo del ejercicio "
+                                f"se redondea a **{int(round(lsum_teacher))} dB**."
+                            )
+                            st.latex(r"C_I=L_{n,\mathrm{sum}}-15-L_{n,w}")
+                            st.latex(
+                                rf"C_I={int(round(lsum_teacher))}-15-{int(round(expected_lnw_teacher))}"
+                                rf"={int(expected_ci_teacher)}\ \mathrm{{dB}}"
+                            )
+
+                            sent_lnw=payload.get("lnw")
+                            sent_ci=payload.get("ci")
+                            comp_a,comp_b=st.columns(2)
+                            comp_a.metric(
+                                "Lₙ,w · enviado / esperado",
+                                f"{sent_lnw if sent_lnw is not None else '—'} / {expected_lnw_teacher} dB"
+                            )
+                            comp_b.metric(
+                                "C_I · enviado / esperado",
+                                f"{sent_ci if sent_ci is not None else '—'} / {expected_ci_teacher:+d} dB"
+                            )
+                            if sent_ci is not None:
+                                try:
+                                    if int(round(float(sent_ci))) != int(expected_ci_teacher):
+                                        st.warning(
+                                            f"El alumno envió **C_I = {float(sent_ci):g} dB**, mientras que con "
+                                            f"la curva guardada y el Lₙ,w esperado el procedimiento da "
+                                            f"**C_I = {expected_ci_teacher:+d} dB**."
+                                        )
+                                    else:
+                                        st.success("El C_I enviado coincide con el valor esperado.")
+                                except Exception:
+                                    pass
+                        else:
+                            st.latex(r"C_I=L_{n,\mathrm{sum}}-15-L_{n,w}")
+                            st.info(
+                                "No fue posible recuperar la curva Lₙ previa de este alumno; "
+                                "por eso no se puede reconstruir numéricamente C_I en esta revisión."
+                            )
 
                         st.markdown("##### 2. Desarrollo técnico · 40 puntos")
                         st.write(
