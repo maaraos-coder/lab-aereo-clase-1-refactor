@@ -22,6 +22,9 @@ _LOCAL_NAMES = {
     "_future_progress_rows", "_future_progress_state", "_future_lab_progress",
     "_render_lab_progress_card", "_render_course1_official_evaluations",
     "_render_course1_block", "_render_course2_block", "_course2_lab2_official_summary",
+    "_render_readonly_answers_block", "_render_course2_lab1_submission",
+    "_render_course2_lab2_stage9_submission", "_render_course2_lab2_stage10_submission",
+    "_render_teacher_feedback",
     "student_sidebar_summary", "results_view",
 }
 
@@ -795,6 +798,153 @@ def _course2_lab2_official_summary(rows):
     }
 
 
+
+def _render_readonly_answers_block(payload, expected_count=None):
+    """Muestra exactamente las respuestas enviadas, sin permitir edición ni revelar pauta."""
+    answers = payload.get("answers", {}) if isinstance(payload, dict) else {}
+    if not isinstance(answers, dict):
+        answers = {}
+    if expected_count is None:
+        keys = sorted(
+            answers.keys(),
+            key=lambda x: int(x) if str(x).isdigit() else str(x),
+        )
+    else:
+        keys = [str(i) for i in range(int(expected_count))]
+
+    if not keys:
+        st.caption("No hay respuestas individuales registradas en esta entrega.")
+        return
+
+    for pos, key in enumerate(keys, start=1):
+        value = answers.get(key)
+        with st.container(border=True):
+            st.markdown(f"**Pregunta {pos}**")
+            st.write(value if value not in (None, "") else "Sin respuesta registrada")
+
+
+def _render_course2_lab1_submission(row, question_key):
+    """Detalle formativo del Lab 1 del Curso 2. No genera nota."""
+    payload = _student_result_payload(row.get("answer"))
+    if not isinstance(payload, dict):
+        payload = {}
+
+    st.info("Actividad formativa · **sin nota**. Se muestra en modo solo lectura.")
+
+    if question_key == "final_comprehension":
+        if payload.get("answers"):
+            _render_readonly_answers_block(payload)
+        elif payload.get("response"):
+            st.write(payload.get("response"))
+        else:
+            st.caption("La entrega no contiene un desglose individual de respuestas.")
+    else:
+        shown = False
+        for key, label in (
+            ("diagnosis", "Diagnóstico"),
+            ("analysis", "Análisis"),
+            ("solution", "Solución propuesta"),
+            ("conclusion", "Conclusión"),
+            ("response", "Respuesta enviada"),
+        ):
+            value = payload.get(key)
+            if value not in (None, "", [], {}):
+                st.markdown(f"**{label}**")
+                st.write(value)
+                shown = True
+        if not shown:
+            # Fallback seguro: mostrar campos simples realmente guardados.
+            simple = {
+                str(k): v for k, v in payload.items()
+                if k not in {"version", "score", "max_score", "finished_at", "rubric_scores"}
+                and isinstance(v, (str, int, float, bool))
+                and v not in ("", None)
+            }
+            if simple:
+                st.json(simple, expanded=False)
+            else:
+                st.caption("No hay más detalle legible almacenado en esta entrega.")
+
+
+def _render_course2_lab2_stage9_submission(row):
+    payload = _student_result_payload(row.get("answer"))
+    if not isinstance(payload, dict):
+        payload = {}
+    st.markdown("#### Mi evaluación enviada")
+    st.caption(
+        "Tus respuestas se muestran exactamente como quedaron registradas. "
+        "Esta vista es solo lectura."
+    )
+    _render_readonly_answers_block(payload, expected_count=10)
+    if payload.get("score") is not None:
+        st.caption(f"Puntaje automático registrado al enviar: {payload.get('score')}/40")
+
+
+def _render_course2_lab2_stage10_submission(row):
+    payload = _student_result_payload(row.get("answer"))
+    if not isinstance(payload, dict):
+        payload = {}
+
+    st.markdown("#### Mi evaluación enviada")
+    st.caption(
+        "Se muestra el desarrollo registrado en tu entrega. "
+        "No es posible modificarlo desde Mi desempeño."
+    )
+
+    c1, c2, c3 = st.columns(3)
+    c1.metric("Lₙ,w enviado", f"{payload.get('lnw', '—')} dB")
+    ci = payload.get("ci", "—")
+    c2.metric("C_I enviado", f"{ci} dB" if ci != "—" else "—")
+    c3.metric(
+        "Desarrollo / Comprensión",
+        f"{payload.get('design_score', 0)}/40 · {payload.get('comprehension_score', 0)}/20",
+    )
+
+    if payload.get("interpretation"):
+        st.markdown("**Interpretación del piso**")
+        st.write(payload.get("interpretation"))
+
+    pump = payload.get("pump", {}) if isinstance(payload.get("pump"), dict) else {}
+    if pump:
+        st.markdown("**Bomba y transmisión**")
+        st.write(
+            f"Frecuencia de excitación: **{pump.get('fe_hz', '—')} Hz** · "
+            f"Montaje: **{pump.get('isolator') or '—'}** · "
+            f"r: **{pump.get('r', '—')}**"
+        )
+        if pump.get("path"):
+            st.write(f"Camino analizado: {pump.get('path')}")
+        if pump.get("parallel_path"):
+            st.write(f"Camino paralelo: {pump.get('parallel_path')}")
+        controls = pump.get("controls")
+        if isinstance(controls, list) and controls:
+            st.markdown("**Medidas seleccionadas**")
+            for item in controls:
+                st.write("• " + str(item))
+
+    st.markdown("**Respuestas de comprensión**")
+    _render_readonly_answers_block(payload, expected_count=5)
+
+    st.markdown("**Conclusión profesional**")
+    st.write(payload.get("conclusion") or "Sin conclusión registrada.")
+
+
+def _render_teacher_feedback(row, maximum):
+    auto_score = row.get("auto_score")
+    teacher_score = row.get("teacher_score")
+    if teacher_score is not None:
+        cols = st.columns(2)
+        cols[0].metric(
+            "Puntaje automático",
+            f"{float(auto_score or 0):g}/{maximum}",
+        )
+        cols[1].metric(
+            "Puntaje vigente / docente",
+            f"{float(teacher_score):g}/{maximum}",
+        )
+    if row.get("teacher_note"):
+        st.info(f"Comentario docente: {row.get('teacher_note')}")
+
 def _render_course2_block(rows, progress_rows):
     lab1_scores=_course2_lab1_rows(rows)
     lab2_official=_course2_lab2_official_summary(rows)
@@ -870,8 +1020,9 @@ def _render_course2_block(rows, progress_rows):
                     c1.metric("Puntaje",f"{score:g}/{maximum}")
                     c2.metric("Estado","Revisada" if reviewed else "Entregada")
                     c3.metric("Nota","No aplica")
-                    if row.get("teacher_note"):
-                        st.info(f"Comentario docente: {row.get('teacher_note')}")
+                    with st.popover("Ver mi evaluación enviada", use_container_width=True):
+                        _render_course2_lab1_submission(row, row.get("question_key"))
+                    _render_teacher_feedback(row, maximum)
 
         with tabs[2]:
             st.caption(
@@ -899,17 +1050,21 @@ def _render_course2_block(rows, progress_rows):
                     c1.metric("Puntaje oficial",f"{score:g}/{maximum}" if reviewed else "Pendiente")
                     c2.metric("Nota",f"{grade:.1f}" if reviewed else "Pendiente")
                     c3.metric("Estado","Revisada" if reviewed else "Pendiente")
+
                     payload=_student_result_payload(row.get("answer"))
                     if isinstance(payload,dict):
                         if row.get("question_key")=="final_comprehension":
                             answers=payload.get("answers",{})
                             st.write(f"Respuestas registradas: {sum(v not in (None,'') for v in answers.values())}/10")
+                            with st.popover("Ver mi evaluación enviada", use_container_width=True):
+                                _render_course2_lab2_stage9_submission(row)
                         else:
                             st.write(f"Desarrollo técnico: {payload.get('design_score',0)}/40")
                             st.write(f"Comprensión: {payload.get('comprehension_score',0)}/20")
-                            st.write(payload.get("conclusion") or "")
-                    if row.get("teacher_note"):
-                        st.info(f"Comentario docente: {row.get('teacher_note')}")
+                            with st.popover("Ver mi evaluación enviada", use_container_width=True):
+                                _render_course2_lab2_stage10_submission(row)
+
+                    _render_teacher_feedback(row, maximum)
 
             if lab2_official["total"] is not None:
                 st.success(
