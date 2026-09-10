@@ -1,3 +1,4 @@
+import math
 """Vista docente y centro de resultados.
 
 Las funciones conservan su lógica original. ``app.py`` inyecta las
@@ -753,6 +754,157 @@ def _teacher_course_results_impl(compact=False):
                     st.write(f"**Medidas:** {', '.join(pump.get('controls') or []) or '—'}")
                     st.write(f"**Conclusión:** {payload.get('conclusion') or '—'}")
                     st.write(f"**Diseño automático:** {payload.get('design_score',0)}/40 · **Comprensión:** {payload.get('comprehension_score',0)}/20")
+
+                    # -------------------------------------------------------
+                    # Pauta docente integrada en el Centro de evaluaciones
+                    # -------------------------------------------------------
+                    with st.expander("📘 Pauta / solución esperada", expanded=False):
+                        st.caption(
+                            "Esta pauta es solo para la vista docente. Permite comparar la entrega "
+                            "seleccionada con los criterios usados por la Etapa 10."
+                        )
+
+                        # Recuperar la curva del Laboratorio 1 del alumno para
+                        # reproducir el cálculo de Lₙ,w y C_I cuando sea posible.
+                        expected_lnw_teacher=None
+                        expected_ci_teacher=None
+                        source_teacher="No fue posible recuperar la curva previa del alumno."
+
+                        def _find_teacher_curve(value):
+                            if isinstance(value, dict):
+                                for candidate in value.values():
+                                    found=_find_teacher_curve(candidate)
+                                    if found is not None:
+                                        return found
+                            elif isinstance(value, (list, tuple)):
+                                if len(value)==16:
+                                    try:
+                                        vals=[float(x) for x in value]
+                                        if all(math.isfinite(x) for x in vals):
+                                            return vals
+                                    except Exception:
+                                        pass
+                                for candidate in value:
+                                    found=_find_teacher_curve(candidate)
+                                    if found is not None:
+                                        return found
+                            return None
+
+                        try:
+                            prev_rows=(
+                                client.table("user_progress")
+                                .select("state_json")
+                                .eq("class_id","clase-03-impacto-instalaciones-lab-1")
+                                .eq("user_key",row.get("user_key"))
+                                .limit(1)
+                                .execute()
+                                .data or []
+                            )
+                            if prev_rows:
+                                prev_state=prev_rows[0].get("state_json") or {}
+                                if isinstance(prev_state,str):
+                                    try:
+                                        prev_state=json.loads(prev_state)
+                                    except Exception:
+                                        prev_state={}
+                                curve_teacher=_find_teacher_curve(prev_state)
+                                if curve_teacher is not None:
+                                    freqs_teacher=[100,125,160,200,250,315,400,500,630,800,1000,1250,1600,2000,2500,3150]
+                                    ref_teacher=[62,62,62,62,62,62,61,60,59,58,57,54,51,48,45,42]
+
+                                    def _dev_sum(shift):
+                                        return sum(
+                                            max(0.0,float(y)-(float(r)+float(shift)))
+                                            for y,r in zip(curve_teacher,ref_teacher)
+                                        )
+
+                                    limit_shift_teacher=0
+                                    for sh in range(-40,61):
+                                        if _dev_sum(sh)<=32.0+1e-9 and _dev_sum(sh-1)>32.0+1e-9:
+                                            limit_shift_teacher=sh
+                                            break
+
+                                    expected_lnw_teacher=int(
+                                        round(ref_teacher[freqs_teacher.index(500)]+limit_shift_teacher)
+                                    )
+                                    lsum_teacher=10.0*math.log10(
+                                        sum(10.0**(float(v)/10.0) for v in curve_teacher[:15])
+                                    )
+                                    expected_ci_teacher=(
+                                        int(round(lsum_teacher))-15-int(round(expected_lnw_teacher))
+                                    )
+                                    source_teacher="Calculado desde la curva guardada del Laboratorio 1 de este alumno."
+                        except Exception:
+                            pass
+
+                        st.markdown("##### 1. Piso · Lₙ,w y C_I")
+                        p1,p2=st.columns(2)
+                        with p1:
+                            if expected_lnw_teacher is not None:
+                                st.metric("Lₙ,w esperado",f"{expected_lnw_teacher} dB")
+                            else:
+                                st.write("**Lₙ,w:** determinar desplazando la curva de referencia ISO hasta cumplir el criterio de desviaciones.")
+                        with p2:
+                            if expected_ci_teacher is not None:
+                                st.metric("C_I esperado",f"{expected_ci_teacher:+d} dB")
+                            else:
+                                st.write("**C_I:** calcular a partir de la suma energética de 100–2500 Hz y el Lₙ,w obtenido.")
+                        st.caption(source_teacher)
+                        st.latex(r"C_I=L_{n,\mathrm{sum}}-15-L_{n,w}")
+
+                        st.markdown("##### 2. Desarrollo técnico · 40 puntos")
+                        st.write(
+                            "La corrección automática utiliza **8 criterios de 5 puntos cada uno**:"
+                        )
+                        rubric_rows=[
+                            ("1","Lₙ,w","Obtiene y verifica correctamente Lₙ,w."),
+                            ("2","C_I","Obtiene y verifica correctamente el término de adaptación espectral C_I."),
+                            ("3","Interpretación espectral","Reconoce que C_I aporta información sobre la distribución espectral."),
+                            ("4","Frecuencia de excitación","Calcula fₑ = n/60. Para 1450 rpm: 24,17 Hz."),
+                            ("5","Camino común","Interpreta la coincidencia espectral como evidencia para investigar un camino común, no causalidad absoluta."),
+                            ("6","Aislamiento","El montaje seleccionado debe quedar con r=fₑ/fₙ > √2."),
+                            ("7","Camino paralelo","Reconoce que una tubería rígida puede puentear el aislamiento de la base."),
+                            ("8","Control integral","Selecciona medidas coherentes sobre fuente, base, tuberías/soportes y verificación final."),
+                        ]
+                        st.dataframe(
+                            pd.DataFrame(rubric_rows,columns=["Criterio","Ítem","Pauta"]),
+                            hide_index=True,
+                            use_container_width=True,
+                        )
+
+                        st.markdown("##### 3. Bomba y aislamiento")
+                        st.write("Datos del caso: **1450 rpm · 600 kg · 4 apoyos · 150 kg/apoyo**.")
+                        st.latex(r"f_e=\frac{1450}{60}=24.17\ \mathrm{Hz}")
+                        st.latex(r"r=\frac{f_e}{f_n}")
+                        st.write(
+                            "**Montaje C (fₙ = 3 Hz)** es el candidato esperado en el ejercicio porque "
+                            "presenta la mayor separación respecto de la excitación y queda claramente "
+                            "en la región de aislamiento del modelo."
+                        )
+                        st.write(
+                            "Una tubería rígida o un soporte rígido conectado a la estructura constituye "
+                            "un **camino paralelo** y debe revisarse aunque la base esté aislada."
+                        )
+
+                        st.markdown("##### 4. Comprensión · 20 puntos")
+                        comprehension_key=[
+                            ("1","Información sobre la distribución espectral."),
+                            ("2","No; la distribución espectral puede ser distinta."),
+                            ("3","Evidencia para investigar un camino común, no prueba única de causalidad."),
+                            ("4","No; existe un camino paralelo."),
+                            ("5","Investigar/corregir la condición hidráulica en la fuente."),
+                        ]
+                        st.dataframe(
+                            pd.DataFrame(comprehension_key,columns=["Pregunta","Respuesta esperada"]),
+                            hide_index=True,
+                            use_container_width=True,
+                        )
+
+                        st.info(
+                            "La pauta sirve para comparar y justificar una eventual modificación del "
+                            "puntaje docente. La entrega del alumno permanece sin alteraciones hasta que "
+                            "presiones **Guardar revisión docente**."
+                        )
                 adjusted=st.number_input(
                     "Puntaje final otorgado por el docente",
                     0.0,float(config["maximum"]),score,0.5,
