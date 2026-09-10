@@ -1586,37 +1586,30 @@ def _c2_render_lab2_stage9_tabs(row, reviewed):
         _c2_render_feedback_tab(row, reviewed=reviewed, formative=False)
 
 
+
 def _c2_render_lab2_stage10_tabs(row, reviewed, progress_rows=None):
     payload = _student_result_payload(row.get("answer"))
     if not isinstance(payload, dict):
         payload = {}
 
-    # Recupera la curva Lₙ que el propio alumno dejó guardada en el Lab 1.
-    # Se usa la misma lógica de 16 bandas que la pauta docente.
-    _c2_student_curve = None
-    _c2_student_lnw_expected = None
-    _c2_student_ci_expected = None
-    _c2_student_shift = None
-    _c2_student_ref_shifted = None
-    _c2_student_deviations = None
-    _c2_student_dev_sum = None
-    _c2_student_next_dev_sum = None
-    _c2_student_lsum = None
+    # Recuperar la curva Lₙ asociada al alumno desde el Laboratorio 1.
+    _curve = None
+    _ref_freqs = [100,125,160,200,250,315,400,500,630,800,1000,1250,1600,2000,2500,3150]
+    _ref_vals = [62,62,62,62,62,62,61,60,59,58,57,54,51,48,45,42]
 
-    def _c2_find_curve(value):
+    def _find_curve(value):
         if isinstance(value, dict):
-            # Priorizar claves semánticas si existen.
             preferred = (
-                "curve", "ln_curve", "ln_values", "spectrum", "spectral_curve",
-                "normalized_curve", "impact_curve",
+                "curve", "ln_curve", "ln_values", "spectrum",
+                "spectral_curve", "normalized_curve", "impact_curve",
             )
             for key in preferred:
                 if key in value:
-                    found = _c2_find_curve(value.get(key))
+                    found = _find_curve(value.get(key))
                     if found is not None:
                         return found
             for candidate in value.values():
-                found = _c2_find_curve(candidate)
+                found = _find_curve(candidate)
                 if found is not None:
                     return found
         elif isinstance(value, (list, tuple)) and len(value) == 16:
@@ -1628,59 +1621,199 @@ def _c2_render_lab2_stage10_tabs(row, reviewed, progress_rows=None):
                 return None
         return None
 
-    _c2_lab1_state = _future_progress_state(
+    lab1_state = _future_progress_state(
         progress_rows or {},
         "clase-03-impacto-instalaciones-lab-1",
     )
-    _c2_student_curve = _c2_find_curve(_c2_lab1_state)
+    _curve = _find_curve(lab1_state)
 
-    _c2_ref_freqs_actual = [100,125,160,200,250,315,400,500,630,800,1000,1250,1600,2000,2500,3150]
-    _c2_ref_values_actual = [62,62,62,62,62,62,61,60,59,58,57,54,51,48,45,42]
+    # Reconstrucción del valor esperado, pero se mostrará SOLO en Rúbrica.
+    exp_lnw = None
+    exp_ci = None
+    exp_shift = None
+    ref_shifted = None
+    deviations = None
+    dev_sum = None
+    next_dev_sum = None
+    lsum = None
 
-    if _c2_student_curve is not None:
-        def _c2_dev_sum_for_shift(shift):
+    if _curve is not None:
+        def _dev_sum(shift):
             return sum(
                 max(0.0, float(y) - (float(r) + float(shift)))
-                for y, r in zip(_c2_student_curve, _c2_ref_values_actual)
+                for y, r in zip(_curve, _ref_vals)
             )
 
-        # Misma regla usada en la corrección docente: posición límite <=32 dB.
-        for _shift in range(-40, 61):
-            if _c2_dev_sum_for_shift(_shift) <= 32.0 + 1e-9 and _c2_dev_sum_for_shift(_shift - 1) > 32.0 + 1e-9:
-                _c2_student_shift = int(_shift)
+        for sh in range(-40, 61):
+            if _dev_sum(sh) <= 32.0 + 1e-9 and _dev_sum(sh - 1) > 32.0 + 1e-9:
+                exp_shift = int(sh)
                 break
 
-        if _c2_student_shift is not None:
-            _c2_student_ref_shifted = [
-                float(r) + _c2_student_shift for r in _c2_ref_values_actual
-            ]
-            _c2_student_deviations = [
+        if exp_shift is not None:
+            ref_shifted = [float(r) + exp_shift for r in _ref_vals]
+            deviations = [
                 max(0.0, float(y) - float(rs))
-                for y, rs in zip(_c2_student_curve, _c2_student_ref_shifted)
+                for y, rs in zip(_curve, ref_shifted)
             ]
-            _c2_student_dev_sum = sum(_c2_student_deviations)
-            _c2_student_next_dev_sum = _c2_dev_sum_for_shift(_c2_student_shift - 1)
-            _c2_student_lnw_expected = int(
-                round(_c2_ref_values_actual[_c2_ref_freqs_actual.index(500)] + _c2_student_shift)
+            dev_sum = sum(deviations)
+            next_dev_sum = _dev_sum(exp_shift - 1)
+            exp_lnw = int(round(_ref_vals[_ref_freqs.index(500)] + exp_shift))
+            lsum = 10.0 * math.log10(
+                sum(10.0 ** (float(v) / 10.0) for v in _curve[:15])
             )
-            _c2_student_lsum = 10.0 * math.log10(
-                sum(10.0 ** (float(v) / 10.0) for v in _c2_student_curve[:15])
-            )
-            _c2_student_ci_expected = (
-                int(round(_c2_student_lsum)) - 15 - int(_c2_student_lnw_expected)
-            )
+            exp_ci = int(round(lsum)) - 15 - exp_lnw
 
-    tabs = st.tabs(["Tus respuestas y pauta", "Rúbrica", "Retroalimentación docente"])
+    tabs = st.tabs(["Tus respuestas y desarrollo", "Rúbrica y pauta", "Retroalimentación docente"])
 
+    # ============================================================
+    # TAB 1 · SOLO LO QUE HIZO / ENVIÓ EL ALUMNO
+    # ============================================================
     with tabs[0]:
-        _render_course2_lab2_stage10_submission(row)
+        st.markdown("### Mi evaluación enviada")
+        st.caption(
+            "Aquí se muestra lo que quedó registrado en tu entrega. "
+            "Esta vista es solo lectura y no modifica tus respuestas ni tu puntaje."
+        )
 
-        if not reviewed:
-            st.info(
-                "La pauta de la evaluación integradora se habilitará cuando finalice la revisión docente."
+        c1, c2, c3 = st.columns(3)
+        c1.metric("Lₙ,w enviado", f"{payload.get('lnw', '—')} dB")
+        ci_sent = payload.get("ci", "—")
+        c2.metric("C_I enviado", f"{ci_sent} dB" if ci_sent != "—" else "—")
+        c3.metric(
+            "Desarrollo / Comprensión",
+            f"{payload.get('design_score', 0)}/40 · {payload.get('comprehension_score', 0)}/20",
+        )
+
+        if _curve is not None:
+            st.markdown("#### Curva Lₙ utilizada en tu ejercicio")
+            st.caption(
+                "Esta es la curva que quedó guardada en tu Laboratorio 1 y que se utilizó como base "
+                "para el desarrollo de la evaluación integradora."
+            )
+            st.dataframe(
+                pd.DataFrame({
+                    "Frecuencia [Hz]": _ref_freqs,
+                    "Tu Lₙ [dB]": [round(float(v), 2) for v in _curve],
+                }),
+                hide_index=True,
+                width="stretch",
             )
         else:
-            st.markdown("### Pauta de comprensión")
+            st.warning(
+                "No fue posible recuperar automáticamente la curva Lₙ previa. "
+                "El resto de tu entrega sí se mantiene disponible."
+            )
+
+        if payload.get("reference_shift") is not None:
+            st.markdown("#### Ajuste de la curva")
+            st.write(f"**Desplazamiento que quedó registrado:** {payload.get('reference_shift')} dB")
+
+        if payload.get("interpretation"):
+            st.markdown("#### Interpretación del piso")
+            st.write(payload.get("interpretation"))
+
+        pump = payload.get("pump", {}) if isinstance(payload.get("pump"), dict) else {}
+        if pump:
+            st.markdown("#### Bomba y transmisión")
+            st.write(
+                f"**RPM:** {pump.get('rpm','—')}  ·  "
+                f"**fₑ:** {pump.get('fe_hz','—')} Hz  ·  "
+                f"**Montaje:** {pump.get('isolator') or '—'}  ·  "
+                f"**fₙ:** {pump.get('fn_hz','—')} Hz  ·  "
+                f"**r:** {pump.get('r','—')}"
+            )
+            if pump.get("path"):
+                st.write(f"**Camino analizado:** {pump.get('path')}")
+            if pump.get("parallel_path"):
+                st.write(f"**Camino paralelo:** {pump.get('parallel_path')}")
+            controls = pump.get("controls")
+            if isinstance(controls, list) and controls:
+                st.markdown("**Medidas seleccionadas**")
+                for item in controls:
+                    st.write("• " + str(item))
+
+        st.markdown("#### Respuestas de comprensión")
+        _render_readonly_answers_block(payload, expected_count=5)
+
+        st.markdown("#### Conclusión profesional")
+        st.write(payload.get("conclusion") or "Sin conclusión registrada.")
+
+    # ============================================================
+    # TAB 2 · PAUTA / VALORES ESPERADOS / COMPARACIÓN
+    # ============================================================
+    with tabs[1]:
+        if not reviewed:
+            st.info(
+                "La pauta completa se habilitará cuando finalice la revisión docente. "
+                "Mientras tanto puedes revisar íntegramente lo que enviaste en la pestaña anterior."
+            )
+        else:
+            st.markdown("### Pauta y verificación")
+
+            if _curve is not None and exp_lnw is not None:
+                st.markdown("#### Verificación de Lₙ,w")
+                st.dataframe(
+                    pd.DataFrame({
+                        "Frecuencia [Hz]": _ref_freqs,
+                        "Lₙ alumno [dB]": [round(float(v),2) for v in _curve],
+                        "Curva ref. base [dB]": _ref_vals,
+                        "Curva ref. desplazada [dB]": [round(float(v),2) for v in ref_shifted],
+                        "Desviación desfavorable [dB]": [round(float(v),2) for v in deviations],
+                    }),
+                    hide_index=True,
+                    width="stretch",
+                )
+                st.write(
+                    f"**Desplazamiento válido:** {exp_shift:+d} dB  ·  "
+                    f"**Suma de desviaciones:** {dev_sum:.1f} dB  ·  "
+                    f"**Con 1 dB adicional:** {next_dev_sum:.1f} dB"
+                )
+                st.latex(
+                    r"\sum_i \max\left[0,\;L_{n,i}-L_{ref,i}^{(desplazada)}\right]\leq 32\ \mathrm{dB}"
+                )
+                st.success(f"**Lₙ,w esperado = {exp_lnw} dB**")
+
+                st.markdown("#### Verificación de C_I")
+                st.write(
+                    "Se realiza la suma energética de los valores Lₙ entre 100 y 2500 Hz:"
+                )
+                st.latex(
+                    r"L_{n,\mathrm{sum}}="
+                    r"10\log_{10}\left(\sum_{i=100\,Hz}^{2500\,Hz}10^{L_{n,i}/10}\right)"
+                )
+                st.write(
+                    f"Con esta curva: **Lₙ,sum = {lsum:.2f} dB ≈ {int(round(lsum))} dB**."
+                )
+                st.latex(r"C_I=L_{n,\mathrm{sum}}-15-L_{n,w}")
+                st.latex(
+                    rf"C_I={int(round(lsum))}-15-{exp_lnw}={exp_ci}\ \mathrm{{dB}}"
+                )
+
+                sent_lnw = payload.get("lnw")
+                sent_ci = payload.get("ci")
+                a,b = st.columns(2)
+                a.metric(
+                    "Lₙ,w · enviado / esperado",
+                    f"{sent_lnw if sent_lnw is not None else '—'} / {exp_lnw} dB",
+                )
+                b.metric(
+                    "C_I · enviado / esperado",
+                    f"{sent_ci if sent_ci is not None else '—'} / {exp_ci:+d} dB",
+                )
+
+            st.markdown("#### Rúbrica técnica")
+            design = float(payload.get("design_score", 0) or 0)
+            comprehension = float(payload.get("comprehension_score", 0) or 0)
+            st.dataframe(
+                pd.DataFrame([
+                    {"Criterio": "Desarrollo técnico", "Puntaje": f"{design:g}/40"},
+                    {"Criterio": "Comprensión e interpretación", "Puntaje": f"{comprehension:g}/20"},
+                ]),
+                hide_index=True,
+                width="stretch",
+            )
+
+            st.markdown("#### Respuestas esperadas de comprensión")
             answers = payload.get("answers", {}) if isinstance(payload.get("answers"), dict) else {}
             for i, item in enumerate(_C2L2_S10_Q_RESULTS):
                 correct = item[1][item[2]]
@@ -1692,109 +1825,11 @@ def _c2_render_lab2_stage10_tabs(row, reviewed, progress_rows=None):
                     st.markdown("**Pauta**")
                     st.success(correct)
 
-            st.markdown("### Pauta técnica")
-
-            if _c2_student_curve is not None and _c2_student_lnw_expected is not None:
-                st.markdown("#### Curva utilizada en tu ejercicio y obtención de Lₙ,w")
-                st.caption(
-                    "Esta tabla utiliza la curva Lₙ que quedó guardada en tu Laboratorio 1. "
-                    "La curva de referencia base se muestra en la misma tabla para que puedas reproducir el procedimiento."
-                )
-                st.dataframe(
-                    pd.DataFrame({
-                        "Frecuencia [Hz]": _c2_ref_freqs_actual,
-                        "Tu curva Lₙ [dB]": [round(float(v),2) for v in _c2_student_curve],
-                        "Curva ref. base [dB]": _c2_ref_values_actual,
-                        "Curva ref. desplazada [dB]": [round(float(v),2) for v in _c2_student_ref_shifted],
-                        "Desviación desfavorable [dB]": [round(float(v),2) for v in _c2_student_deviations],
-                    }),
-                    hide_index=True,
-                    width="stretch",
-                )
-                st.write(
-                    f"**Desplazamiento aplicado:** {_c2_student_shift:+d} dB  ·  "
-                    f"**Suma de desviaciones:** {_c2_student_dev_sum:.1f} dB  ·  "
-                    f"**Con 1 dB adicional en el sentido más exigente:** {_c2_student_next_dev_sum:.1f} dB"
-                )
-                st.latex(
-                    r"\sum_i \max\left[0,\;L_{n,i}-L_{ref,i}^{(desplazada)}\right]\leq 32\ \mathrm{dB}"
-                )
-                st.success(
-                    f"La posición válida deja **Lₙ,w = {_c2_student_lnw_expected} dB**, "
-                    "que corresponde al valor de la curva de referencia desplazada en 500 Hz."
-                )
-
-                st.markdown("#### Procedimiento para obtener C_I con tu curva")
-                st.write(
-                    "Para C_I se utilizan tus valores de Lₙ entre **100 y 2500 Hz**. "
-                    "Primero se realiza la suma energética:"
-                )
-                st.latex(
-                    r"L_{n,\mathrm{sum}}="
-                    r"10\log_{10}\left(\sum_{i=100\,Hz}^{2500\,Hz}10^{L_{n,i}/10}\right)"
-                )
-                st.dataframe(
-                    pd.DataFrame({
-                        "Frecuencia [Hz]": _c2_ref_freqs_actual[:15],
-                        "Lₙ usado para C_I [dB]": [round(float(v),2) for v in _c2_student_curve[:15]],
-                    }),
-                    hide_index=True,
-                    width="stretch",
-                )
-                st.write(
-                    f"Con esos datos, **Lₙ,sum = {_c2_student_lsum:.2f} dB**, "
-                    f"que en el procedimiento del ejercicio se redondea a **{int(round(_c2_student_lsum))} dB**."
-                )
-                st.latex(r"C_I=L_{n,\mathrm{sum}}-15-L_{n,w}")
-                st.latex(
-                    rf"C_I={int(round(_c2_student_lsum))}-15-{int(_c2_student_lnw_expected)}"
-                    rf"={int(_c2_student_ci_expected)}\ \mathrm{{dB}}"
-                )
-
-                _sent_lnw = payload.get("lnw")
-                _sent_ci = payload.get("ci")
-                _ca, _cb = st.columns(2)
-                _ca.metric(
-                    "Lₙ,w · enviado / esperado",
-                    f"{_sent_lnw if _sent_lnw is not None else '—'} / {_c2_student_lnw_expected} dB",
-                )
-                _cb.metric(
-                    "C_I · enviado / esperado",
-                    f"{_sent_ci if _sent_ci is not None else '—'} / {_c2_student_ci_expected:+d} dB",
-                )
-            else:
-                st.warning(
-                    "No fue posible recuperar automáticamente la curva Lₙ de tu Laboratorio 1. "
-                    "Tu entrega permanece disponible, pero esta pauta no puede reconstruir el cálculo banda por banda."
-                )
-
-            st.markdown("#### Resto de la pauta técnica")
-            st.write(
-                "Los 40 puntos técnicos corresponden a ocho comprobaciones de 5 puntos: "
-                "Lₙ,w; C_I; interpretación espectral; frecuencia de excitación; interpretación "
-                "del camino común; condición de aislamiento; reconocimiento de caminos paralelos; "
-                "y estrategia de control integral."
-            )
-            st.write(
-                "Para el caso de bomba: fₑ = 1450/60 = **24,17 Hz**. "
-                "El montaje debe satisfacer **r = fₑ/fₙ > √2** para estar en la región de aislamiento "
-                "del modelo ideal y deben revisarse tuberías/soportes como posibles caminos paralelos."
-            )
-
-    with tabs[1]:
-        if not reviewed:
-            st.info("La rúbrica se habilitará cuando finalice la revisión docente.")
-        else:
-            design = float(payload.get("design_score", 0) or 0)
-            comprehension = float(payload.get("comprehension_score", 0) or 0)
-            st.dataframe(pd.DataFrame([
-                {"Criterio": "Desarrollo técnico", "Puntaje": f"{design:g}/40"},
-                {"Criterio": "Comprensión e interpretación", "Puntaje": f"{comprehension:g}/20"},
-            ]), hide_index=True, width="stretch")
-
+    # ============================================================
+    # TAB 3 · FEEDBACK DOCENTE
+    # ============================================================
     with tabs[2]:
         _c2_render_feedback_tab(row, reviewed=reviewed, formative=False)
-
 
 def _render_course2_block(rows, progress_rows):
     lab1_scores=_course2_lab1_rows(rows)
