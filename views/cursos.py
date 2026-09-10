@@ -16198,7 +16198,10 @@ def _c2l2_s10_finish(saved,payload,score):
             "feedback":f"Resultado automático: {score:g}/60 puntos.","auto_score":score,"max_score":60,
             "status":"submitted","updated_at":_now(),"submitted_at":_now(),
         },on_conflict="class_id,user_key,question_key").execute()
-    saved["c2l2_s10_submitted"]=True;saved["c2l2_s10_score"]=score;saved["done_10"]=True
+    saved["c2l2_s10_submitted"]=True
+    saved["c2l2_s10_score"]=score
+    saved["c2l2_s10_submission_payload"]=payload
+    saved["done_10"]=True
     _save_future_state(_C2L2_CLASS_ID,saved)
 
 
@@ -16312,9 +16315,112 @@ def _c2l2_stage10(lab,saved):
     if remote or saved.get("c2l2_s10_submitted"):
         row=(remote or {}).get("row",{})
         payload=(remote or {}).get("payload",{})
-        score=float(row.get("teacher_score") if row and row.get("teacher_score") is not None else row.get("auto_score") if row else saved.get("c2l2_s10_score",0) or 0)
+        if not isinstance(payload,dict) or not payload:
+            payload=saved.get("c2l2_s10_submission_payload",{}) if isinstance(saved.get("c2l2_s10_submission_payload"),dict) else {}
+        score=float(
+            row.get("teacher_score")
+            if row and row.get("teacher_score") is not None
+            else row.get("auto_score")
+            if row
+            else saved.get("c2l2_s10_score",0) or 0
+        )
         st.success(f"Evaluación enviada · {score:g}/60 puntos.")
-        st.write(payload.get("conclusion") or "")
+        st.info(
+            "Tu entrega queda disponible en modo **solo lectura**. "
+            "Puedes revisar el desarrollo que enviaste sin modificar respuestas ni puntaje."
+        )
+
+        if payload:
+            st.markdown("## Mi evaluación enviada")
+
+            a,b,c=st.columns(3)
+            a.metric("Lₙ,w enviado",f"{payload.get('lnw','—')} dB")
+            ci_value=payload.get("ci","—")
+            b.metric("C_I enviado",f"{ci_value} dB" if ci_value != "—" else "—")
+            c.metric("Puntaje enviado",f"{score:g}/60")
+
+            st.markdown("### Desarrollo técnico")
+            st.write(f"**Posición de referencia:** {payload.get('reference_shift','—')} dB")
+            st.write(f"**Interpretación del piso:** {payload.get('interpretation') or '—'}")
+
+            pump=payload.get("pump",{}) if isinstance(payload.get("pump"),dict) else {}
+            st.write(
+                f"**Bomba:** {pump.get('rpm','—')} rpm · "
+                f"fₑ={pump.get('fe_hz','—')} Hz · "
+                f"montaje={pump.get('isolator') or '—'}"
+            )
+            st.write(f"**Interpretación del camino:** {pump.get('path') or '—'}")
+            st.write(f"**Camino paralelo:** {pump.get('parallel_path') or '—'}")
+            controls=pump.get("controls") or []
+            if controls:
+                st.write("**Medidas de control seleccionadas:**")
+                for item in controls:
+                    st.write("• "+str(item))
+
+            st.markdown("### Preguntas de comprensión")
+            submitted_answers=payload.get("answers",{}) if isinstance(payload.get("answers"),dict) else {}
+            for i,q in enumerate(_C2L2_S10_Q):
+                st.write(f"**{i+1}. {q[0]}**")
+                st.write(submitted_answers.get(str(i)) or "Sin respuesta registrada")
+
+            st.markdown("### Conclusión profesional")
+            st.write(payload.get("conclusion") or "Sin conclusión registrada.")
+
+            st.caption(
+                f"Desarrollo técnico registrado: {payload.get('design_score',0)}/40 · "
+                f"Comprensión registrada: {payload.get('comprehension_score',0)}/20"
+            )
+
+            # Archivo de estudio sencillo y portable con el contenido realmente enviado.
+            lines=[
+                "DIPLOMADO EN ACÚSTICA EN LA EDIFICACIÓN",
+                "Curso 2 · Laboratorio 2 · Etapa 10",
+                "EVALUACIÓN INTEGRADORA ENVIADA",
+                "",
+                f"Puntaje registrado: {score:g}/60",
+                f"Lₙ,w: {payload.get('lnw','—')} dB",
+                f"C_I: {payload.get('ci','—')} dB",
+                f"Posición de referencia: {payload.get('reference_shift','—')} dB",
+                f"Interpretación del piso: {payload.get('interpretation') or '—'}",
+                "",
+                "BOMBA Y TRANSMISIÓN",
+                f"RPM: {pump.get('rpm','—')}",
+                f"Frecuencia de excitación: {pump.get('fe_hz','—')} Hz",
+                f"Montaje: {pump.get('isolator') or '—'}",
+                f"Camino: {pump.get('path') or '—'}",
+                f"Camino paralelo: {pump.get('parallel_path') or '—'}",
+                "",
+                "MEDIDAS DE CONTROL",
+            ]
+            lines.extend([f"- {item}" for item in controls] or ["- —"])
+            lines.extend(["","PREGUNTAS DE COMPRENSIÓN"])
+            for i,q in enumerate(_C2L2_S10_Q):
+                lines.extend([
+                    f"{i+1}. {q[0]}",
+                    f"Respuesta: {submitted_answers.get(str(i)) or 'Sin respuesta registrada'}",
+                    "",
+                ])
+            lines.extend([
+                "CONCLUSIÓN PROFESIONAL",
+                payload.get("conclusion") or "Sin conclusión registrada.",
+                "",
+                f"Desarrollo técnico: {payload.get('design_score',0)}/40",
+                f"Comprensión: {payload.get('comprehension_score',0)}/20",
+            ])
+            export_text="\n".join(str(x) for x in lines)
+            st.download_button(
+                "⬇️ Descargar mi evaluación enviada",
+                data=export_text.encode("utf-8"),
+                file_name="Curso2_Lab2_Etapa10_Mi_Evaluacion.txt",
+                mime="text/plain",
+                use_container_width=True,
+                key="c2l2_s10_download_submission",
+            )
+        else:
+            st.warning(
+                "La entrega figura como enviada, pero esta versión local no dispone del detalle completo. "
+                "Si la evaluación fue enviada con Supabase activo, vuelve a cargar la página para recuperar el registro."
+            )
         return
 
     # Restauración integral del borrador de la Etapa 10.
@@ -16339,7 +16445,7 @@ def _c2l2_stage10(lab,saved):
         for widget_key,saved_key in draft_widget_map.items():
             if widget_key not in st.session_state and saved.get(saved_key) is not None:
                 st.session_state[widget_key]=saved.get(saved_key)
-        for state_key in ("c2l2_s10_lnw_ok","c2l2_s10_ci_ok","c2l2_s10_r_ok"):
+        for state_key in ("c2l2_s10_lnw_ok","c2l2_s10_ci_ok","c2l2_s10_ci_checked","c2l2_s10_r_ok"):
             saved_key=f"c2l2_s10_draft_{state_key.removeprefix('c2l2_s10_')}"
             if state_key not in st.session_state and saved_key in saved:
                 st.session_state[state_key]=bool(saved.get(saved_key))
@@ -16475,8 +16581,17 @@ def _c2l2_stage10(lab,saved):
     ans_ci=st.number_input("C_I [dB]",-30,30,0,1,key="c2l2_s10_ci")
     if st.button("VERIFICAR C_I",key="c2l2_s10_verify_ci"):
         st.session_state["c2l2_s10_ci_ok"]=int(ans_ci)==expected_ci
+        st.session_state["c2l2_s10_ci_checked"]=True
     ci_ok=bool(st.session_state.get("c2l2_s10_ci_ok"))
-    if ci_ok:st.success("C_I correcto.")
+    ci_checked=bool(st.session_state.get("c2l2_s10_ci_checked"))
+    if ci_ok:
+        st.success("✓ C_I correcto.")
+    elif ci_checked:
+        st.error(
+            "El valor ingresado de C_I no coincide con el resultado esperado. "
+            "Revisa la suma energética de 100 a 2500 Hz y vuelve a aplicar "
+            "C_I = Lₙ,sum − 15 − Lₙ,w. Puedes corregir el valor y comprobar nuevamente."
+        )
 
     st.markdown("## D · Interpreta dos soluciones")
     interpretation=st.radio(
@@ -16913,6 +17028,7 @@ def _c2l2_stage10(lab,saved):
         saved["c2l2_s10_draft_r_answer"]=st.session_state.get("c2l2_s10_r_answer")
         saved["c2l2_s10_draft_lnw_ok"]=bool(st.session_state.get("c2l2_s10_lnw_ok"))
         saved["c2l2_s10_draft_ci_ok"]=bool(st.session_state.get("c2l2_s10_ci_ok"))
+        saved["c2l2_s10_draft_ci_checked"]=bool(st.session_state.get("c2l2_s10_ci_checked"))
         saved["c2l2_s10_draft_r_ok"]=bool(st.session_state.get("c2l2_s10_r_ok"))
 
         # Curva ISO: guardar incluso si el alumno aún no pulsa COMPROBAR POSICIÓN.
