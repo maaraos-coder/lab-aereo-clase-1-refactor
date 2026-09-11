@@ -17383,6 +17383,9 @@ def _c3l1_stage0_impl(lab: dict, saved: dict, deps: Dict[str, Any]):
 def _c3l1_stage1_impl(lab: dict, saved: dict, deps: Dict[str, Any]):
     import matplotlib.pyplot as c3plt
     _c3l1_style()
+    role = st.session_state.get('role', 'Alumno')
+    projection = bool(st.session_state.get('projection_mode') or role == 'Proyección')
+    is_teacher = role == 'Docente' and not projection
     _c3l1_header(
         1,
         'Ruido ambiental: fuentes, caminos y receptores',
@@ -17626,19 +17629,34 @@ def _c3l1_stage1_impl(lab: dict, saved: dict, deps: Dict[str, Any]):
     </div>
     '''
     components.html(_source_visual_html, height=340, scrolling=False)
+    _classification_store = saved.get('c3_s1_classifications', {})
+    if not isinstance(_classification_store, dict):
+        _classification_store = {}
+    _revealed = is_teacher or selected in _classification_store
+
+    _tipo_display = info['tipo'] if _revealed else 'Por clasificar'
+    _temporal_display = info['temporal'] if _revealed else 'Por clasificar'
+
     st.markdown(
         f'''<div class="c3s1-grid4">
-        <div class="c3s1-mini"><div class="label">Tipo espacial</div><div class="value">{info['tipo']}</div></div>
-        <div class="c3s1-mini"><div class="label">Temporalidad</div><div class="value">{info['temporal']}</div></div>
+        <div class="c3s1-mini"><div class="label">Tipo espacial</div><div class="value">{_tipo_display}</div></div>
+        <div class="c3s1-mini"><div class="label">Temporalidad</div><div class="value">{_temporal_display}</div></div>
         <div class="c3s1-mini"><div class="label">Característica</div><div class="value">{info['caracteristica']}</div></div>
         <div class="c3s1-mini"><div class="label">Receptor potencial</div><div class="value">{info['receptor']}</div></div>
         </div>''',
         unsafe_allow_html=True,
     )
-    st.markdown(
-        f'<div class="c3s1-context"><b>Qué debes observar:</b> {info["idea"]}</div>',
-        unsafe_allow_html=True,
-    )
+    if _revealed:
+        st.markdown(
+            f'<div class="c3s1-context"><b>Qué debes observar:</b> {info["idea"]}</div>',
+            unsafe_allow_html=True,
+        )
+    else:
+        st.markdown(
+            '<div class="c3s1-context"><b>Tu tarea:</b> observa la ilustración y la historia temporal. '
+            'Clasifica la fuente antes de revelar la respuesta.</div>',
+            unsafe_allow_html=True,
+        )
 
     t=np.linspace(0,60,241)
     rng=np.random.default_rng(abs(hash(selected))%(2**32))
@@ -17667,15 +17685,84 @@ def _c3l1_stage1_impl(lab: dict, saved: dict, deps: Dict[str, Any]):
         f'<div class="c3s1-selected">🎯 Fuente activa para clasificar: <b>{q_source}</b></div>',
         unsafe_allow_html=True,
     )
-    q_kind=st.selectbox('Tipo espacial predominante',['Seleccionar','Puntual','Lineal','Móvil','Evento móvil','Área','Área / puntual'],key='c3_s1_kind')
-    q_time=st.selectbox('Comportamiento temporal predominante',['Seleccionar','Continua / cíclica','Continua / variable','Variable','Intermitente','Eventual'],key='c3_s1_time')
+
     expected_kind={'Automóvil':'Móvil','Bus urbano':'Móvil','Carretera':'Lineal','Obra en construcción':'Área / puntual','Sobrevuelo de avión':'Evento móvil','Equipo HVAC':'Puntual','Comercio y personas':'Área','Sirena de emergencia':'Evento móvil'}[q_source]
     expected_time={'Automóvil':'Variable','Bus urbano':'Variable','Carretera':'Continua / variable','Obra en construcción':'Intermitente','Sobrevuelo de avión':'Eventual','Equipo HVAC':'Continua / cíclica','Comercio y personas':'Variable','Sirena de emergencia':'Eventual'}[q_source]
+
+    _previous = _classification_store.get(q_source, {})
+    if not isinstance(_previous, dict):
+        _previous = {}
+
+    kind_options=['Seleccionar','Puntual','Lineal','Móvil','Evento móvil','Área','Área / puntual']
+    time_options=['Seleccionar','Continua / cíclica','Continua / variable','Variable','Intermitente','Eventual']
+
+    q_kind=st.selectbox(
+        'Tipo espacial predominante',
+        kind_options,
+        index=kind_options.index(_previous.get('kind','Seleccionar')) if _previous.get('kind','Seleccionar') in kind_options else 0,
+        key='c3_s1_kind'
+    )
+    q_time=st.selectbox(
+        'Comportamiento temporal predominante',
+        time_options,
+        index=time_options.index(_previous.get('time','Seleccionar')) if _previous.get('time','Seleccionar') in time_options else 0,
+        key='c3_s1_time'
+    )
+
+    if is_teacher:
+        st.markdown('### Pauta docente · clasificación esperada')
+        d1,d2=st.columns(2)
+        d1.success(f'**Tipo espacial:** {expected_kind}')
+        d2.success(f'**Comportamiento temporal:** {expected_time}')
+        st.caption('Esta pauta permanece oculta en Alumno y Zoom hasta comprobar la clasificación.')
+
     if st.button('Comprobar clasificación',key='c3_s1_check'):
-        ok=q_kind==expected_kind and q_time==expected_time
-        if ok: st.success('Clasificación coherente para este caso didáctico.')
-        else: st.warning(f'Revisa la historia temporal y el movimiento de la fuente. Para este ejercicio se espera: **{expected_kind} + {expected_time}**.')
-        _c3l1_mark_formative(saved,deps,'s1_classify',{'source':q_source,'kind':q_kind,'time':q_time,'ok':ok})
+        ok_kind=q_kind==expected_kind
+        ok_time=q_time==expected_time
+        ok=ok_kind and ok_time
+
+        payload={
+            'source':q_source,
+            'kind':q_kind,
+            'time':q_time,
+            'expected_kind':expected_kind,
+            'expected_time':expected_time,
+            'ok':ok,
+        }
+        _classification_store[q_source]=payload
+        saved['c3_s1_classifications']=_classification_store
+        _c3l1_mark_formative(saved,deps,'s1_classify',payload)
+
+        if ok:
+            st.success(f'✅ Clasificación correcta: **{expected_kind}** + **{expected_time}**.')
+        else:
+            st.warning('La clasificación necesita ajuste.')
+            r1,r2=st.columns(2)
+            if ok_kind:
+                r1.success(f'Tipo espacial correcto: **{expected_kind}**.')
+            else:
+                r1.error(f'Tipo espacial esperado: **{expected_kind}**.')
+            if ok_time:
+                r2.success(f'Temporalidad correcta: **{expected_time}**.')
+            else:
+                r2.error(f'Temporalidad esperada: **{expected_time}**.')
+        st.info(info['idea'])
+        st.rerun()
+
+    if not is_teacher and q_source in _classification_store:
+        _stored=_classification_store[q_source]
+        st.markdown('### Resultado de tu comprobación')
+        rr1,rr2=st.columns(2)
+        rr1.metric('Tipo espacial esperado',_stored.get('expected_kind',expected_kind))
+        rr2.metric('Temporalidad esperada',_stored.get('expected_time',expected_time))
+        if _stored.get('ok'):
+            st.success('Tu clasificación coincidió completamente con la pauta.')
+        else:
+            st.info(
+                f'Tu selección fue **{_stored.get("kind","—")} + {_stored.get("time","—")}**. '
+                f'La pauta corresponde a **{expected_kind} + {expected_time}**.'
+            )
+        st.caption(info['idea'])
 
     st.markdown('## 3. Fuente ≠ punto de medición')
     st.write(
