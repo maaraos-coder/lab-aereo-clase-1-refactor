@@ -17247,11 +17247,11 @@ _C3L1_NAV_STAGE_TITLES = {
     1: "Ruido ambiental: fuentes, caminos y receptores",
     2: "Del campo sonoro al sonómetro",
     3: "Del registro temporal a los descriptores",
-    4: "Construye LAeq, L10 y L90",
-    5: "De los datos al LAeq",
-    6: "Del evento a las 24 horas",
+    4: "Del evento sonoro a su exposición · SEL / LAE",
+    5: "Del evento al ciclo diario · LD, LE, LN y Lden",
+    6: "De la fuente al patrón acústico",
     7: "¿Dónde, cuándo y cuánto medir?",
-    8: "Introducción a los mapas de ruido",
+    8: "Del camino directo a la protección acústica",
     9: "Preguntas de comprensión",
     10: "Diagnóstico acústico de un barrio",
 }
@@ -20681,449 +20681,965 @@ def _c3l1_stage4_impl(lab: dict, saved: dict, deps: Dict[str, Any]):
     _c3l1_style()
     _c3l1_header(
         4,
-        'Construye LAeq, L10 y L90',
-        'Transformar una historia temporal en descriptores y comprobar qué cambia cuando aparece un evento.',
+        'Del evento sonoro a su exposición · SEL / LAE',
+        'Pasar del máximo instantáneo a la energía acústica de un evento completo y comprender el Nivel de Exposición Sonora.',
         deps,
         40,
     )
 
-    temporal=saved.get('c3_temporal',{}) if isinstance(saved.get('c3_temporal'),dict) else {}
-    base_signal=np.asarray(
-        temporal.get('signal') or _c3l1_synthetic_temporal(53,72),
-        dtype=float,
+    st.markdown(
+        """
+        <div class="c3-card blue">
+          <div class="c3-kicker">CONTINUIDAD DESDE LA ETAPA 3</div>
+          <b>Lmax dice qué tan alto llegó el evento. SEL/LAE incorpora además cuánto duró.</b>
+          <p>Dos eventos pueden alcanzar el mismo máximo y, sin embargo, contener distinta exposición acústica.</p>
+        </div>
+        """,
+        unsafe_allow_html=True,
     )
-    tt=np.arange(len(base_signal),dtype=float)
+
+    st.markdown('## 1. Del pico al evento completo')
+
+    st.markdown(
+        """
+        <div class="c3-grid-2">
+          <div class="c3-card orange">
+            <div class="c3-kicker">LMAX</div>
+            <b>Describe un extremo</b>
+            <p>Responde: ¿cuál fue el mayor nivel alcanzado?</p>
+          </div>
+          <div class="c3-card green">
+            <div class="c3-kicker">SEL / LAE</div>
+            <b>Describe exposición de un evento</b>
+            <p>Integra la energía acústica del evento y la normaliza a un tiempo de referencia de 1 s.</p>
+          </div>
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
+
+    st.latex(
+        r'L_{AE}=10\log_{10}\left[\frac{1}{T_0}\int_{t_1}^{t_2}10^{L_A(t)/10}\,dt\right],\qquad T_0=1\,s'
+    )
+    st.latex(
+        r'L_{AE}=L_{Aeq,T}+10\log_{10}\left(\frac{T}{T_0}\right)'
+    )
+
+    st.markdown(
+        """
+        <div class="c3-card">
+          <div class="c3-kicker">LEE LA ECUACIÓN</div>
+          <p><b>L<sub>Aeq,T</sub></b>: nivel equivalente del evento durante su duración real T.</p>
+          <p><b>T</b>: duración del evento en segundos.</p>
+          <p><b>T<sub>0</sub> = 1 s</b>: tiempo de referencia.</p>
+          <p><b>LAE / SEL</b>: nivel de exposición sonora del evento completo, expresado en dB.</p>
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
+
+    st.markdown('## 2. Simulador de un evento')
+
+    _event_names = ['Automóvil', 'Camión', 'Bocina', 'Sobrevuelo']
+    _event = st.segmented_control(
+        'Evento',
+        _event_names,
+        default='Sobrevuelo',
+        key='c3_s4_event',
+    )
+
+    _defaults = {
+        'Automóvil': (76, 4),
+        'Camión': (82, 7),
+        'Bocina': (88, 1),
+        'Sobrevuelo': (80, 18),
+    }
+    _dlevel, _ddur = _defaults[_event]
+
+    ec1, ec2 = st.columns(2)
+    with ec1:
+        _event_laeq = st.slider(
+            'LAeq del evento [dB(A)]',
+            55, 105, _dlevel,
+            key='c3_s4_event_laeq',
+        )
+    with ec2:
+        _event_duration = st.slider(
+            'Duración efectiva [s]',
+            1, 60, _ddur,
+            key='c3_s4_event_duration',
+        )
+
+    _event_sel = _c3l1_sel(float(_event_laeq), float(_event_duration))
+
+    # Construcción temporal didáctica
+    _t4 = np.linspace(0, max(20, _event_duration * 2.2), 300)
+    _center = float(_t4[-1]) / 2.0
+    _sigma = max(0.45, float(_event_duration) / 4.2)
+    _background = max(40.0, float(_event_laeq) - 24.0)
+    _shape = np.exp(-0.5 * ((_t4 - _center) / _sigma) ** 2)
+    _peak = float(_event_laeq) + 3.5
+    _signal4 = _background + (_peak - _background) * _shape
+
+    _fig4, _ax4 = c3plt.subplots(figsize=(10, 4.0))
+    _ax4.plot(_t4, _signal4, lw=1.7)
+    _ax4.axhline(float(_event_laeq), ls='--', lw=1.4, label=f'LAeq evento = {_event_laeq} dB(A)')
+    _ax4.fill_between(_t4, _background, _signal4, alpha=.12)
+    _ax4.set_title(f'Historia temporal didáctica · {_event}')
+    _ax4.set_xlabel('Tiempo [s]')
+    _ax4.set_ylabel('Nivel [dB(A)]')
+    _ax4.grid(alpha=.2)
+    _ax4.legend(fontsize=8)
+    st.pyplot(_fig4, use_container_width=True)
+    c3plt.close(_fig4)
+
+    mc1, mc2, mc3 = st.columns(3)
+    mc1.metric('LAeq del evento', f'{_event_laeq:.1f} dB(A)')
+    mc2.metric('Duración', f'{_event_duration:.0f} s')
+    mc3.metric('SEL / LAE', f'{_event_sel:.1f} dB')
+
+    st.markdown(
+        f"""
+        <div class="c3-key">
+          <b>Interpretación:</b> si un evento tiene LAeq = {_event_laeq:.1f} dB(A) durante {_event_duration:.0f} s,
+          su exposición sonora normalizada a 1 s es aproximadamente <b>{_event_sel:.1f} dB</b>.
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
+
+    st.markdown('## 3. Mismo nivel, distinta duración')
+
+    _compare_level = st.slider(
+        'Mantén fijo el LAeq de ambos eventos [dB(A)]',
+        60, 95, 80,
+        key='c3_s4_compare_level',
+    )
+    cc1, cc2 = st.columns(2)
+    with cc1:
+        _dur_a = st.slider('Duración evento A [s]', 1, 30, 1, key='c3_s4_dur_a')
+    with cc2:
+        _dur_b = st.slider('Duración evento B [s]', 1, 60, 10, key='c3_s4_dur_b')
+
+    _sel_a = _c3l1_sel(float(_compare_level), float(_dur_a))
+    _sel_b = _c3l1_sel(float(_compare_level), float(_dur_b))
+
+    rc1, rc2, rc3 = st.columns(3)
+    rc1.metric('SEL evento A', f'{_sel_a:.1f} dB')
+    rc2.metric('SEL evento B', f'{_sel_b:.1f} dB')
+    rc3.metric('Diferencia B − A', f'{_sel_b-_sel_a:+.1f} dB')
+
+    _q4 = st.radio(
+        'Si dos eventos tienen el mismo LAeq pero uno dura más, ¿pueden tener el mismo SEL?',
+        ['Sí, siempre', 'No necesariamente'],
+        index=None,
+        horizontal=True,
+        key='c3_s4_q_duration',
+    )
+    if _q4:
+        if _q4 == 'No necesariamente':
+            st.success('Correcto. La duración modifica la exposición acumulada y, por tanto, el SEL.')
+        else:
+            st.warning('Revisa la ecuación: SEL incorpora explícitamente la duración T del evento.')
+
+    st.markdown('## 4. Comparador de eventos')
+
+    _event_table = []
+    for _name, (_lev, _dur) in _defaults.items():
+        _event_table.append({
+            'Evento': _name,
+            'LAeq evento [dB(A)]': _lev,
+            'Duración [s]': _dur,
+            'SEL [dB]': round(_c3l1_sel(float(_lev), float(_dur)), 1),
+        })
+    st.dataframe(pd.DataFrame(_event_table), hide_index=True, use_container_width=True)
+
+    _choice = st.radio(
+        '¿Qué descriptor utilizarías para comparar la energía total de eventos individuales de distinta duración?',
+        ['Lmax', 'SEL / LAE', 'L90'],
+        index=None,
+        horizontal=True,
+        key='c3_s4_descriptor_choice',
+    )
+    if _choice:
+        if _choice == 'SEL / LAE':
+            st.success('Correcto. SEL/LAE está diseñado para describir la exposición energética de un evento.')
+        else:
+            st.warning('El máximo o un percentil describen otras propiedades. Para exposición de un evento individual, usa SEL/LAE.')
+
+    if st.button('Guardar resultados de Etapa 4', key='c3_s4_save', use_container_width=True):
+        saved['c3_stage4_sel'] = {
+            'event': _event,
+            'laeq_event': float(_event_laeq),
+            'duration_s': float(_event_duration),
+            'sel_db': float(_event_sel),
+            'compare_level': float(_compare_level),
+            'duration_a': float(_dur_a),
+            'duration_b': float(_dur_b),
+            'sel_a': float(_sel_a),
+            'sel_b': float(_sel_b),
+        }
+        _c3l1_save(saved, deps)
+        st.success('Resultados de la Etapa 4 guardados.')
+
+    if str(st.session_state.get('role','')).lower() == 'docente':
+        st.markdown('### Pauta docente · Etapa 4')
+        st.markdown(
+            """
+            **Idea central para explicar:** Lmax caracteriza un extremo; SEL caracteriza la exposición de un evento completo.
+            Si la duración aumenta y el nivel equivalente del evento se mantiene, SEL aumenta porque se acumula más energía.
+            El tiempo de referencia de 1 s no significa que el evento dure 1 s: es una normalización que permite comparar eventos.
+            """
+        )
+
+def _c3l1_stage5_impl(lab: dict, saved: dict, deps: Dict[str, Any]):
+    import matplotlib.pyplot as c3plt
+    _c3l1_style()
+    _c3l1_header(
+        5,
+        'Del evento al ciclo diario · LD, LE, LN y Lden',
+        'Escalar desde eventos individuales a descriptores de largo periodo y comprender por qué el horario modifica la valoración de la exposición.',
+        deps,
+        40,
+    )
 
     st.markdown(
         """
         <div class="c3-card blue">
-          <div class="c3-kicker">CONTINUIDAD DEL LABORATORIO</div>
-          <b>Esta etapa utiliza la historia temporal que guardaste en la Etapa 3.</b>
-          <p>No comenzamos con otro ejemplo aislado: ahora aprenderás a convertir ese mismo registro en LAeq,
-          percentiles y una curva de excedencia.</p>
+          <div class="c3-kicker">CONTINUIDAD</div>
+          <b>Etapa 4: energía de un evento. Etapa 5: energía de una jornada completa.</b>
+          <p>Ahora dividimos el día en periodos y combinamos energéticamente sus niveles equivalentes.</p>
         </div>
         """,
         unsafe_allow_html=True,
     )
 
-    st.markdown('## 1. Construye LAeq paso a paso')
-
-    st.latex(r'L_{Aeq,T}=10\log_{10}\left(\frac{1}{T}\int_0^T10^{L_A(t)/10}\,dt\right)')
-
-    st.markdown(
-        """
-        <div class="c3-flow">
-          <span class="c3-node">L(t) EN dB</span><span class="c3-arrow">→</span>
-          <span class="c3-node">10<sup>L/10</sup></span><span class="c3-arrow">→</span>
-          <span class="c3-node">PROMEDIO ENERGÉTICO</span><span class="c3-arrow">→</span>
-          <span class="c3-node">10 log<sub>10</sub></span><span class="c3-arrow">→</span>
-          <span class="c3-node">LAeq,T</span>
-        </div>
-        """,
-        unsafe_allow_html=True,
-    )
-
-    result=_c3l1_laeq(base_signal)
-    arithmetic=float(np.mean(base_signal))
-    r1,r2,r3=st.columns(3)
-    r1.metric('LAeq energético',f'{result:.2f} dB(A)')
-    r2.metric('Promedio aritmético',f'{arithmetic:.2f} dB(A)')
-    r3.metric('Diferencia',f'{result-arithmetic:+.2f} dB')
-
-    st.caption('La diferencia crece cuando el registro contiene eventos fuertes o una distribución muy variable.')
-
-    st.markdown('## 2. Del tiempo a la curva de excedencia')
-
-    ordered=np.sort(base_signal)[::-1]
-    exceed=100.0*np.arange(1,len(ordered)+1)/len(ordered)
-
-    p10=_c3l1_exceedance_percentile(base_signal,10)
-    p50=_c3l1_exceedance_percentile(base_signal,50)
-    p90=_c3l1_exceedance_percentile(base_signal,90)
-
-    left,right=st.columns(2)
-    with left:
-        tt_plot=np.asarray(tt,dtype=float).reshape(-1)
-        base_plot=np.asarray(base_signal,dtype=float).reshape(-1)
-        fig1,ax1=c3plt.subplots(figsize=(6,3.6))
-        ax1.plot(tt_plot,base_plot,lw=1.2)
-        ax1.axhline(p10,ls='--',label=f'L10 {p10:.1f}')
-        ax1.axhline(p90,ls=':',label=f'L90 {p90:.1f}')
-        ax1.set_xlabel('Tiempo [s]')
-        ax1.set_ylabel('dB(A)')
-        ax1.set_title('Historia temporal')
-        ax1.grid(alpha=.2)
-        ax1.legend()
-        st.pyplot(fig1,use_container_width=True)
-        c3plt.close(fig1)
-
-    with right:
-        fig2,ax2=c3plt.subplots(figsize=(6,3.6))
-        ax2.plot(exceed,ordered,lw=1.8)
-        ax2.axvline(10,ls='--')
-        ax2.axvline(50,ls=':')
-        ax2.axvline(90,ls='--')
-        ax2.scatter([10,50,90],[p10,p50,p90],zorder=4)
-        ax2.set_xlabel('Tiempo excedido [%]')
-        ax2.set_ylabel('Nivel [dB(A)]')
-        ax2.set_title('Curva de excedencia')
-        ax2.grid(alpha=.2)
-        st.pyplot(fig2,use_container_width=True)
-        c3plt.close(fig2)
-
-    pcols=st.columns(3)
-    pcols[0].metric('L10',f'{p10:.1f} dB(A)')
-    pcols[1].metric('L50',f'{p50:.1f} dB(A)')
-    pcols[2].metric('L90',f'{p90:.1f} dB(A)')
+    st.markdown('## 1. Divide el día acústico')
 
     st.markdown(
         """
         <div class="c3-grid">
-          <div class="c3-card orange"><div class="c3-kicker">L10</div><b>Zona alta</b>
-          <p>Solo 10 % del tiempo queda por encima de este nivel.</p></div>
-          <div class="c3-card blue"><div class="c3-kicker">L50</div><b>Centro temporal</b>
-          <p>El nivel se supera durante la mitad del periodo.</p></div>
-          <div class="c3-card green"><div class="c3-kicker">L90</div><b>Zona persistente/baja</b>
-          <p>El nivel se supera durante 90 % del periodo; puede ayudar a interpretar fondo, según contexto.</p></div>
+          <div class="c3-card blue"><div class="c3-kicker">LD</div><b>Día · 12 h</b><p>Periodo diurno didáctico del ejercicio.</p></div>
+          <div class="c3-card orange"><div class="c3-kicker">LE</div><b>Tarde · 4 h</b><p>Periodo vespertino con penalización +5 dB en Lden.</p></div>
+          <div class="c3-card purple"><div class="c3-kicker">LN</div><b>Noche · 8 h</b><p>Periodo nocturno con penalización +10 dB en Lden.</p></div>
         </div>
         """,
         unsafe_allow_html=True,
     )
 
-    st.markdown('## 3. Inyecta un evento y observa qué descriptor se mueve')
+    dc1, dc2, dc3 = st.columns(3)
+    with dc1:
+        _ld = st.slider('LD · día [dB(A)]', 40, 85, 62, key='c3_s5_ld')
+    with dc2:
+        _le = st.slider('LE · tarde [dB(A)]', 40, 85, 60, key='c3_s5_le')
+    with dc3:
+        _ln = st.slider('LN · noche [dB(A)]', 35, 80, 52, key='c3_s5_ln')
 
-    event_amp=st.slider('Incremento del evento [dB]',0,20,12,key='c3_s4_event_amp')
-    event_duration=st.slider('Duración del evento [s]',1,20,4,key='c3_s4_event_dur')
-    event_position=st.slider('Momento de aparición [% del registro]',10,90,55,key='c3_s4_event_pos')
+    _lden = _c3l1_lden(float(_ld), float(_le), float(_ln))
 
-    modified=base_signal.copy()
-    center=int(len(modified)*event_position/100)
-    half=max(1,event_duration//2)
-    lo=max(0,center-half)
-    hi=min(len(modified),center+half+1)
-    modified[lo:hi]+=event_amp
+    _hours = np.arange(24)
+    # Didactic segmentation: 07-19 day (12h), 19-23 evening (4h), 23-07 night (8h)
+    _levels24 = np.empty(24, dtype=float)
+    for _h in _hours:
+        if 7 <= _h < 19:
+            _levels24[_h] = _ld
+        elif 19 <= _h < 23:
+            _levels24[_h] = _le
+        else:
+            _levels24[_h] = _ln
 
-    before={
-        'LAeq':_c3l1_laeq(base_signal),
-        'Lmax':float(np.max(base_signal)),
-        'L10':_c3l1_exceedance_percentile(base_signal,10),
-        'L90':_c3l1_exceedance_percentile(base_signal,90),
-    }
-    after={
-        'LAeq':_c3l1_laeq(modified),
-        'Lmax':float(np.max(modified)),
-        'L10':_c3l1_exceedance_percentile(modified,10),
-        'L90':_c3l1_exceedance_percentile(modified,90),
-    }
+    _fig5, _ax5 = c3plt.subplots(figsize=(10, 3.9))
+    _ax5.step(np.r_[0,_hours+1], np.r_[_levels24[0],_levels24], where='pre', lw=2)
+    _ax5.axvspan(7,19,alpha=.06,label='Día')
+    _ax5.axvspan(19,23,alpha=.08,label='Tarde')
+    _ax5.axvspan(23,24,alpha=.08)
+    _ax5.axvspan(0,7,alpha=.08,label='Noche')
+    _ax5.set_xlim(0,24)
+    _ax5.set_xticks([0,3,6,9,12,15,18,21,24])
+    _ax5.set_xlabel('Hora')
+    _ax5.set_ylabel('Nivel equivalente [dB(A)]')
+    _ax5.set_title('Ciudad de 24 horas · niveles por periodo')
+    _ax5.grid(alpha=.2)
+    _ax5.legend(ncol=3, fontsize=8)
+    st.pyplot(_fig5, use_container_width=True)
+    c3plt.close(_fig5)
 
-    tt_evt=np.asarray(tt,dtype=float).reshape(-1)
-    base_evt=np.asarray(base_signal,dtype=float).reshape(-1)
-    mod_evt=np.asarray(modified,dtype=float).reshape(-1)
-    fig3,ax3=c3plt.subplots(figsize=(10,3.8))
-    ax3.plot(tt_evt,base_evt,lw=1,alpha=.55,label='Original')
-    ax3.plot(tt_evt,mod_evt,lw=1.4,label='Con evento')
-    ax3.axvspan(lo,hi,alpha=.12,label='Evento añadido')
-    ax3.set_xlabel('Tiempo [s]')
-    ax3.set_ylabel('dB(A)')
-    ax3.set_title('Impacto de un evento sobre la historia temporal')
-    ax3.grid(alpha=.2)
-    ax3.legend()
-    st.pyplot(fig3,use_container_width=True)
-    c3plt.close(fig3)
+    md1, md2, md3, md4 = st.columns(4)
+    md1.metric('LD', f'{_ld:.1f} dB(A)')
+    md2.metric('LE', f'{_le:.1f} dB(A)')
+    md3.metric('LN', f'{_ln:.1f} dB(A)')
+    md4.metric('Lden', f'{_lden:.1f} dB(A)')
 
-    rows=[]
-    for k in ['LAeq','Lmax','L10','L90']:
-        rows.append({
-            'Descriptor':k,
-            'Antes [dB]':round(before[k],2),
-            'Después [dB]':round(after[k],2),
-            'Cambio [dB]':round(after[k]-before[k],2),
-        })
-    st.dataframe(pd.DataFrame(rows),hide_index=True,use_container_width=True)
+    st.markdown('## 2. Construye Lden')
+
+    st.latex(
+        r'L_{den}=10\log_{10}\left[\frac{12\,10^{L_D/10}+4\,10^{(L_E+5)/10}+8\,10^{(L_N+10)/10}}{24}\right]'
+    )
+
+    _show_pen = st.checkbox('Mostrar el efecto de las penalizaciones', value=True, key='c3_s5_penalties')
+    if _show_pen:
+        pc1, pc2, pc3 = st.columns(3)
+        pc1.metric('Día', f'{_ld:.1f} dB', '0 dB')
+        pc2.metric('Tarde corregida', f'{_le+5:.1f} dB', '+5 dB')
+        pc3.metric('Noche corregida', f'{_ln+10:.1f} dB', '+10 dB')
+        st.markdown(
+            """
+            <div class="c3-key">
+              Las penalizaciones no cambian físicamente el sonido medido. Cambian su peso dentro del descriptor Lden
+              para reflejar una mayor sensibilidad de los periodos tarde/noche en la valoración de largo plazo.
+            </div>
+            """,
+            unsafe_allow_html=True,
+        )
+
+    st.markdown('## 3. Mueve el mismo evento por el día')
+
+    _event_saved = saved.get('c3_stage4_sel', {}) if isinstance(saved.get('c3_stage4_sel'), dict) else {}
+    _sel_from_s4 = float(_event_saved.get('sel_db', 88.0))
+    _event_hour = st.slider('Hora del evento', 0, 23, 14, key='c3_s5_event_hour')
+    _period = 'Día' if 7 <= _event_hour < 19 else 'Tarde' if 19 <= _event_hour < 23 else 'Noche'
+    _penalty = 0 if _period == 'Día' else 5 if _period == 'Tarde' else 10
+
+    eh1, eh2, eh3 = st.columns(3)
+    eh1.metric('SEL del evento', f'{_sel_from_s4:.1f} dB')
+    eh2.metric('Periodo', _period)
+    eh3.metric('Penalización asociada', f'+{_penalty} dB')
 
     st.markdown(
-        """
-        <div class="c3-key"><b>Qué deberías descubrir:</b> un evento breve suele modificar mucho Lmax;
-        puede incrementar LAeq dependiendo de su energía y duración; puede afectar L10 si ocupa suficiente tiempo;
-        y normalmente tiene menor efecto sobre L90 cuando el fondo persistente no cambia.</div>
+        f"""
+        <div class="c3-card green">
+          <div class="c3-kicker">MISMO EVENTO, DISTINTO HORARIO</div>
+          <b>La energía física del evento no cambia al moverlo de hora.</b>
+          <p>Lo que cambia es su contribución a un descriptor como Lden, porque el periodo {_period.lower()}
+          recibe una corrección de +{_penalty} dB en el cálculo.</p>
+        </div>
         """,
         unsafe_allow_html=True,
     )
 
-    st.markdown('## 4. ¿Duración o nivel? Compáralos')
+    _q5 = st.radio(
+        'Si un mismo evento ocurre de noche en vez de día, ¿su SEL cambia por el solo hecho de cambiar de horario?',
+        ['Sí', 'No'],
+        index=None,
+        horizontal=True,
+        key='c3_s5_q_sel_time',
+    )
+    if _q5:
+        if _q5 == 'No':
+            st.success('Correcto. SEL describe la exposición física del evento. La penalización aparece al construir descriptores de largo periodo como Lden.')
+        else:
+            st.warning('El SEL del evento no cambia por la hora; lo que cambia es el peso del periodo en Lden.')
 
-    col1,col2=st.columns(2)
-    with col1:
-        amp_case=st.slider('Caso A · incremento [dB]',1,20,10,key='c3_s4_ampcase')
-    with col2:
-        dur_case=st.slider('Caso B · duración [s]',1,40,10,key='c3_s4_durcase')
-
-    base0=np.full(60,55.0)
-    sigA=base0.copy()
-    sigA[28:32]+=amp_case
-    sigB=base0.copy()
-    sigB[20:min(60,20+dur_case)]+=6
-    ca=_c3l1_laeq(sigA)
-    cb=_c3l1_laeq(sigB)
-    ca1,ca2=st.columns(2)
-    ca1.metric('Caso A · evento corto más intenso',f'{ca:.1f} dB(A)')
-    ca2.metric('Caso B · evento moderado más largo',f'{cb:.1f} dB(A)')
-
-    st.caption('LAeq depende de la energía total: nivel y duración participan simultáneamente.')
-
-    st.markdown('## 5. Cierre formativo de la Etapa 4')
-
-    qs=[
-        ('L90 se obtiene mirando:',['El nivel excedido 90 % del tiempo','El 90 % del valor máximo'],'El nivel excedido 90 % del tiempo',
-         'Los percentiles acústicos son percentiles de excedencia temporal, no porcentajes del máximo.'),
-        ('Un evento de 2 s extremadamente alto puede cambiar mucho:',['Lmax','Siempre L90'],'Lmax',
-         'Un máximo breve puede disparar Lmax aunque represente una fracción pequeña del periodo.'),
-        ('Para aumentar LAeq, importa:',['Nivel y duración del evento','Solo el máximo'],'Nivel y duración del evento',
-         'LAeq representa energía integrada: una señal moderada pero larga también puede aportar mucha energía.'),
-    ]
-    answers={}
-    score=0
-    for i,(q,opts,correct,why) in enumerate(qs):
-        with st.container(border=True):
-            st.markdown(f'**{q}**')
-            a=st.radio('Selecciona',opts,index=None,key=f'c3_s4_auto_{i}',label_visibility='collapsed')
-            answers[str(i)]=a
-            if a:
-                if a==correct:
-                    score+=1
-                    st.success('Correcto. '+why)
-                else:
-                    st.warning('Revisa. '+why)
-
-    answered=sum(v is not None for v in answers.values())
-    if answered:
-        payload={'answers':answers,'score':score,'max_score':len(qs),'answered':answered}
-        saved['c3_s4_auto']=payload
-        if answered==len(qs):
-            _c3l1_mark_formative(saved,deps,'s4_comprehension',payload)
-
-    if st.button('💾 Guardar descriptores para continuar',key='c3_s4_save',use_container_width=True):
-        saved['c3_descriptors']={
-            'laeq':result,
-            'l10':p10,
-            'l50':p50,
-            'l90':p90,
-            'event_test':{'before':before,'after':after,'amp':event_amp,'duration':event_duration},
-            'signal':base_signal.tolist(),
+    if st.button('Guardar ciclo diario', key='c3_s5_save', use_container_width=True):
+        saved['c3_stage5_daycycle'] = {
+            'LD': float(_ld),
+            'LE': float(_le),
+            'LN': float(_ln),
+            'Lden': float(_lden),
+            'event_hour': int(_event_hour),
+            'event_period': _period,
+            'event_penalty': int(_penalty),
         }
-        _c3l1_mark_formative(saved,deps,'s4_descriptors',saved['c3_descriptors'])
-        st.success('Descriptores guardados para las etapas siguientes.')
+        _c3l1_save(saved, deps)
+        st.success('Ciclo diario guardado.')
 
-
-def _c3l1_stage5_impl(lab: dict, saved: dict, deps: Dict[str, Any]):
-    _c3l1_style()
-    _c3l1_header(5, 'De los datos al LAeq', 'Construir el nivel equivalente como promedio energético y visualizar de dónde salen los percentiles.', deps)
-    st.latex('L_{Aeq,T}=10\\log_{10}\\left[\\frac{1}{T}\\int_0^T10^{L_A(t)/10}\\,dt\\right]')
-    st.caption('Calcula el nivel constante que contiene la misma energía acústica que el registro variable durante T.')
-    st.latex('L_{eq}=10\\log_{10}\\left[\\frac{\\sum_i t_i10^{L_i/10}}{\\sum_i t_i}\\right]')
-    st.markdown('### Constructor energético de LAeq')
-    defaults = [65, 68, 70, 66]
-    cols = st.columns(4)
-    levels = []
-    durations = []
-    for i, col in enumerate(cols):
-        with col:
-            levels.append(st.slider(f'L{i + 1} [dB(A)]', 45, 90, defaults[i], key=f'c3_s5_l{i}'))
-            durations.append(st.number_input(f't{i + 1} [min]', 1, 60, 15, key=f'c3_s5_t{i}'))
-    result = _c3l1_laeq(levels, durations)
-    arithmetic = float(np.average(levels, weights=durations))
-    a, b = st.columns(2)
-    a.metric('LAeq energético', f'{result:.2f} dB(A)')
-    b.metric('Promedio aritmético (comparación)', f'{arithmetic:.2f} dB(A)')
-    energy = pd.DataFrame({'Nivel': levels, 'Duración': durations, 'Energía relativa': [10 ** (x / 10) for x in levels]})
-    st.dataframe(energy, hide_index=True, use_container_width=True)
-    st.info('El promedio aritmético de dB no conserva energía. Primero se pasa a escala energética, se pondera por tiempo y luego se vuelve a dB.')
-    st.markdown('### Constructor de percentiles')
-    temporal = saved.get('c3_temporal', {}) if isinstance(saved.get('c3_temporal'), dict) else {}
-    samples = np.asarray(temporal.get('signal') or [65, 67, 72, 69, 66, 71, 68, 70, 66, 67], dtype=float)
-    ordered = np.sort(samples)[::-1]
-    p10 = _c3l1_exceedance_percentile(samples, 10)
-    p50 = _c3l1_exceedance_percentile(samples, 50)
-    p90 = _c3l1_exceedance_percentile(samples, 90)
-    left, right = st.columns(2)
-    with left:
-        st.write('**Registro original**')
-        st.write(', '.join((f'{x:.1f}' for x in samples[:20])))
-    with right:
-        st.write('**Ordenado de mayor a menor**')
-        st.write(', '.join((f'{x:.1f}' for x in ordered[:20])))
-    st.write(f'**L10 = {p10:.1f} dB(A)** · **L50 = {p50:.1f} dB(A)** · **L90 = {p90:.1f} dB(A)**')
-    if st.button('Guardar descriptores', key='c3_s5_save'):
-        saved['c3_descriptors'] = {'laeq': result, 'levels': levels, 'durations': durations, 'l10': p10, 'l50': p50, 'l90': p90}
-        _c3l1_mark_formative(saved, deps, 's5_descriptors', saved['c3_descriptors'])
-        st.success('Descriptores guardados.')
-    with st.expander('Caso complementario 2025 · grupo electrógeno y fachada'):
-        st.caption('Aplicación de la base 2025: convertir niveles por banda Z a A y combinar energéticamente.')
-        ext = np.array([66, 63, 60, 58, 57, 55, 52], dtype=float)
-        p1 = np.array([53, 50, 47, 45, 44, 42, 39], dtype=float)
-        p2 = np.array([52, 49, 46, 44, 43, 41, 38], dtype=float)
-        p3 = np.array([51, 48, 45, 43, 42, 40, 37], dtype=float)
-        a_corr = np.array([_C3L1_A_OCTAVE[int(f)] for f in _C3L1_OCTAVES])
-        table = pd.DataFrame({'Banda [Hz]': _C3L1_OCTAVES.astype(int), 'A [dB]': a_corr, 'Exterior Z': ext, 'INT P1 Z': p1, 'INT P2 Z': p2, 'INT P3 Z': p3})
-        st.dataframe(table, hide_index=True, use_container_width=True)
-        if st.toggle('Ver conversión y totales A', key='c3_s5_case_show'):
-            totals = {'Exterior': _c3l1_energetic_total(ext + a_corr), 'INT P1': _c3l1_energetic_total(p1 + a_corr), 'INT P2': _c3l1_energetic_total(p2 + a_corr), 'INT P3': _c3l1_energetic_total(p3 + a_corr)}
-            st.write(' · '.join((f'**{k}:** {v:.1f} dB(A)' for k, v in totals.items())))
-            st.caption('El total A se obtiene corrigiendo cada banda y luego sumando energéticamente; no se suman directamente los dB por banda.')
+    if str(st.session_state.get('role','')).lower() == 'docente':
+        st.markdown('### Pauta docente · Etapa 5')
+        st.markdown(
+            """
+            **Punto clave:** LD, LE y LN son niveles equivalentes de periodos distintos.
+            Lden no es el promedio aritmético de esos tres valores: combina energía, duración de cada periodo y penalizaciones.
+            Las correcciones de +5 y +10 dB pertenecen al descriptor; no significan que el sonómetro haya medido físicamente más nivel.
+            """
+        )
 
 def _c3l1_stage6_impl(lab: dict, saved: dict, deps: Dict[str, Any]):
+    import matplotlib.pyplot as c3plt
     _c3l1_style()
-    _c3l1_header(6, 'Del evento a las 24 horas', 'Distinguir la energía de un evento individual (SEL) de la exposición integrada en períodos día, tarde y noche (Lden).', deps)
-    _c3l1_asset('curso3_lab1_etapa6_24h.webp')
-    st.markdown('### Parte A · SEL')
-    st.latex('SEL=L_{Aeq,T}+10\\log_{10}\\left(\\frac{T}{T_0}\\right),\\quad T_0=1\\,s')
-    c1, c2 = st.columns(2)
-    with c1:
-        event = st.selectbox('Evento', ['Automóvil', 'Camión', 'Bocina', 'Sobrevuelo'], key='c3_s6_event')
-        lev = st.slider('LAeq del evento [dB(A)]', 55, 105, 78, key='c3_s6_level')
-    with c2:
-        dur = st.slider('Duración [s]', 1, 120, 20, key='c3_s6_dur')
-        sval = _c3l1_sel(lev, dur)
-        st.metric('SEL', f'{sval:.1f} dB(A)·s (referencia 1 s)')
-    st.caption('SEL permite comparar energía de eventos de distinta duración; no es simplemente el nivel máximo del evento.')
-    st.markdown('### Parte B · Ciudad de 24 horas')
-    ld = st.slider('LD [dB(A)]', 40, 85, 66, key='c3_s6_ld')
-    le = st.slider('LE [dB(A)]', 40, 85, 63, key='c3_s6_le')
-    ln = st.slider('LN [dB(A)]', 35, 80, 57, key='c3_s6_ln')
-    val = _c3l1_lden(ld, le, ln)
-    st.metric('Lden', f'{val:.2f} dB')
-    st.latex('L_{den}=10\\log_{10}\\left[\\frac{12\\,10^{L_D/10}+4\\,10^{(L_E+5)/10}+8\\,10^{(L_N+10)/10}}{24}\\right]')
-    if st.toggle('Ver penalizaciones', key='c3_s6_penalties'):
-        st.info('Tarde: +5 dB en el descriptor. Noche: +10 dB. Son penalizaciones convencionales del descriptor Lden, no una modificación física del nivel medido.')
-    if st.button('Guardar evento y exposición', key='c3_s6_save'):
-        saved['c3_longterm'] = {'event': event, 'sel': sval, 'ld': ld, 'le': le, 'ln': ln, 'lden': val}
-        _c3l1_mark_formative(saved, deps, 's6_longterm', saved['c3_longterm'])
-        st.success('Resultados guardados.')
+    _c3l1_header(
+        6,
+        'De la fuente al patrón acústico',
+        'Reconocer cómo diferentes fuentes producen firmas temporales distintas y seleccionar descriptores según la pregunta profesional.',
+        deps,
+        35,
+    )
+
+    st.markdown(
+        """
+        <div class="c3-card blue">
+          <div class="c3-kicker">FUENTES DE RUIDO AMBIENTAL</div>
+          <b>La fuente condiciona el comportamiento temporal, espacial y el descriptor que conviene observar.</b>
+          <p>Tránsito vial, ferrocarril, aeronaves, construcción y fuentes técnicas no generan el mismo tipo de registro.</p>
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
+
+    _cases6 = {
+        'Tránsito urbano': {
+            'kind':'Fluctuante / cuasi continuo',
+            'mission':'Caracterizar la energía global del periodo',
+            'best':'LAeq',
+            'note':'LAeq integra la energía de todo el intervalo; L10 puede complementar la lectura de periodos altos.',
+        },
+        'Sobrevuelo': {
+            'kind':'Evento móvil',
+            'mission':'Comparar la exposición de un evento individual',
+            'best':'SEL / LAE',
+            'note':'SEL incorpora nivel y duración del evento; es más informativo que un máximo aislado para exposición de un sobrevuelo.',
+        },
+        'Construcción': {
+            'kind':'Intermitente / eventos',
+            'mission':'Identificar el nivel más alto de una operación breve',
+            'best':'Lmax',
+            'note':'Lmax identifica el máximo; LAeq por jornada y SEL de eventos pueden complementar según el objetivo.',
+        },
+        'HVAC nocturno': {
+            'kind':'Relativamente estable',
+            'mission':'Reconocer el componente persistente',
+            'best':'L90',
+            'note':'L90 se ubica en la zona baja/persistente y puede apoyar la interpretación del fondo, siempre con contexto.',
+        },
+    }
+
+    _case6 = st.segmented_control(
+        'Selecciona una fuente',
+        list(_cases6.keys()),
+        default='Tránsito urbano',
+        key='c3_s6_case',
+    )
+    _meta6 = _cases6[_case6]
+
+    _t6 = np.arange(0, 120, 1, dtype=float)
+    _rng6 = np.random.default_rng(42)
+
+    if _case6 == 'Tránsito urbano':
+        _y6 = 58 + 1.0*np.sin(_t6/8) + _rng6.normal(0,.6,len(_t6))
+        for _c,_a,_w in [(18,6,3),(45,8,4),(77,5,3),(103,7,3)]:
+            _y6 += _a*np.exp(-.5*((_t6-_c)/_w)**2)
+    elif _case6 == 'Sobrevuelo':
+        _y6 = 48 + _rng6.normal(0,.25,len(_t6))
+        _y6 += 31*np.exp(-.5*((_t6-60)/10)**2)
+    elif _case6 == 'Construcción':
+        _y6 = 54 + _rng6.normal(0,.7,len(_t6))
+        for _c,_a,_w in [(20,14,1.4),(55,18,1.2),(90,12,2.0)]:
+            _y6 += _a*np.exp(-.5*((_t6-_c)/_w)**2)
+    else:
+        _y6 = 51.5 + .35*np.sin(_t6/7) + _rng6.normal(0,.22,len(_t6))
+        _y6 += .9*((_t6>40)&(_t6<100))
+
+    _fig6, _ax6 = c3plt.subplots(figsize=(10,4.0))
+    _ax6.plot(_t6,_y6,lw=1.45)
+    _ax6.set_title(f'Firma temporal didáctica · {_case6}')
+    _ax6.set_xlabel('Tiempo [s]')
+    _ax6.set_ylabel('Nivel [dB(A)]')
+    _ax6.grid(alpha=.2)
+    st.pyplot(_fig6,use_container_width=True)
+    c3plt.close(_fig6)
+
+    v6 = {
+        'LAeq': _c3l1_laeq(_y6),
+        'Lmax': float(np.max(_y6)),
+        'L10': _c3l1_exceedance_percentile(_y6,10),
+        'L90': _c3l1_exceedance_percentile(_y6,90),
+    }
+    _range6 = v6['L10'] - v6['L90']
+
+    st.markdown(
+        f"""
+        <div class="c3-grid-2">
+          <div class="c3-card blue"><div class="c3-kicker">COMPORTAMIENTO</div><b>{_meta6["kind"]}</b><p>Observa la forma del registro antes de elegir un descriptor.</p></div>
+          <div class="c3-card green"><div class="c3-kicker">MISIÓN</div><b>{_meta6["mission"]}</b><p>La pregunta profesional determina qué descriptor priorizar.</p></div>
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
+
+    _ans6 = st.radio(
+        '¿Qué descriptor usarías como primera opción para esta misión?',
+        ['LAeq','Lmax','L10','L90','SEL / LAE'],
+        index=None,
+        horizontal=True,
+        key=f'c3_s6_ans_{_case6}',
+    )
+    if _ans6:
+        if _ans6 == _meta6['best']:
+            st.success(f'Correcto. {_meta6["note"]}')
+            z1,z2,z3,z4 = st.columns(4)
+            z1.metric('LAeq',f'{v6["LAeq"]:.1f}')
+            z2.metric('Lmax',f'{v6["Lmax"]:.1f}')
+            z3.metric('L10',f'{v6["L10"]:.1f}')
+            z4.metric('L90',f'{v6["L90"]:.1f}')
+        else:
+            st.warning('Revisa la misión: energía global, máximo, zona alta, zona persistente o exposición de un evento no son la misma pregunta.')
+
+    st.markdown('## 2. Mismo LAeq, distinta historia')
+
+    _tA = np.arange(120,dtype=float)
+    _a = 63 + .25*np.sin(_tA/8)
+    _b = 56 + np.zeros_like(_tA)
+    for _c in [15,35,58,81,104]:
+        _b += 15*np.exp(-.5*((_tA-_c)/2.0)**2)
+    # Ajustar B para aproximar el mismo LAeq que A
+    _targetA = _c3l1_laeq(_a)
+    _offsetB = _targetA - _c3l1_laeq(_b)
+    _b = _b + _offsetB
+
+    _fig62,_ax62 = c3plt.subplots(figsize=(10,3.7))
+    _ax62.plot(_tA,_a,label=f'A · estable · LAeq {_c3l1_laeq(_a):.1f}')
+    _ax62.plot(_tA,_b,label=f'B · eventos · LAeq {_c3l1_laeq(_b):.1f}')
+    _ax62.set_xlabel('Tiempo [s]')
+    _ax62.set_ylabel('Nivel [dB(A)]')
+    _ax62.set_title('Dos historias temporales con LAeq similar')
+    _ax62.grid(alpha=.2)
+    _ax62.legend(fontsize=8)
+    st.pyplot(_fig62,use_container_width=True)
+    c3plt.close(_fig62)
+
+    st.markdown(
+        """
+        <div class="c3-key">
+          Un LAeq semejante no implica una historia acústica semejante.
+          Para diagnosticar un ambiente debes mirar también temporalidad, extremos, percentiles y tipo de fuente.
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
+
+    if st.button('Guardar diagnóstico de fuente', key='c3_s6_save', use_container_width=True):
+        saved['c3_stage6_source'] = {
+            'source': _case6,
+            'kind': _meta6['kind'],
+            'mission': _meta6['mission'],
+            'best_descriptor': _meta6['best'],
+            'L10_minus_L90': float(_range6),
+        }
+        _c3l1_save(saved,deps)
+        st.success('Diagnóstico de fuente guardado.')
+
+    if str(st.session_state.get('role','')).lower() == 'docente':
+        st.markdown('### Pauta docente · Etapa 6')
+        st.markdown(
+            """
+            **Mensaje a transmitir:** no existe un descriptor universalmente superior.
+            La elección depende del tipo de fuente y de la pregunta: energía global, evento, máximo, persistencia o variabilidad.
+            El material del curso reconoce como fuentes principales tránsito vehicular, ferroviario y aéreo, construcción, obras y actividades productivas.
+            """
+        )
 
 def _c3l1_stage7_impl(lab: dict, saved: dict, deps: Dict[str, Any]):
     _c3l1_style()
-    _c3l1_header(7, '¿Dónde, cuándo y cuánto medir?', 'Diseñar una campaña con representatividad temporal y espacial en lugar de limitarse a encender el sonómetro.', deps)
-    _c3l1_asset('curso3_lab1_etapa7_campana.webp')
-    st.markdown('<div class="c3-grid-2"><div class="c3-card blue"><div class="c3-kicker">REPRESENTATIVIDAD TEMPORAL</div><b>¿Cuándo y cuánto?</b><p>La duración y el período deben representar el fenómeno que quieres caracterizar.</p></div><div class="c3-card green"><div class="c3-kicker">REPRESENTATIVIDAD ESPACIAL</div><b>¿Dónde?</b><p>Los puntos deben responder al objetivo, fuentes y receptores, no a la comodidad de medir.</p></div></div>', unsafe_allow_html=True)
-    candidates = ['Vivienda junto a avenida', 'Colegio', 'Parque interior', 'Comercio', 'Fondo residencial', 'Junto a fuente técnica', 'Bajo trayectoria aérea', 'Cruce de avenidas']
-    periods = ['AM punta', 'Día', 'PM punta', 'Tarde', 'Noche', 'Madrugada']
-    descriptors = ['LAeq', 'LAeq + L10/L90', 'SEL', 'Lden/periodos', 'Lmax + LAeq']
-    campaign = []
-    st.markdown('### Planificador de campaña · 5 sonómetros virtuales')
-    for i in range(5):
-        with st.container(border=True):
-            c1, c2, c3, c4 = st.columns([1.4, 1, 1, 1])
-            loc = c1.selectbox(f'Punto {i + 1}', candidates, key=f'c3_s7_loc_{i}')
-            period = c2.selectbox('Período', periods, key=f'c3_s7_period_{i}')
-            duration = c3.selectbox('Duración', [5, 15, 30, 60, 120], index=2, key=f'c3_s7_dur_{i}')
-            desc = c4.selectbox('Descriptor', descriptors, key=f'c3_s7_desc_{i}')
-            campaign.append({'name': f'P{i + 1}', 'location': loc, 'period': period, 'duration_min': duration, 'descriptor': desc})
-    if st.button('Evaluar campaña', key='c3_s7_eval', type='primary'):
-        feedback = []
-        locs = [p['location'] for p in campaign]
-        pers = [p['period'] for p in campaign]
-        feedback.append(('✓' if any(('Vivienda' in x or 'Colegio' in x for x in locs)) else '⚠', 'Existe un punto representativo de receptor sensible.' if any(('Vivienda' in x or 'Colegio' in x for x in locs)) else 'Falta un punto asociado a un receptor sensible.'))
-        feedback.append(('✓' if any((x in ('Noche', 'Madrugada') for x in pers)) else '⚠', 'Se consideró período nocturno.' if any((x in ('Noche', 'Madrugada') for x in pers)) else 'No hay punto nocturno; revisa si el objetivo requiere caracterizar la noche.'))
-        feedback.append(('⚠' if len(set(locs)) < 4 else '✓', 'Los puntos están demasiado concentrados.' if len(set(locs)) < 4 else 'La campaña tiene diversidad espacial básica.'))
-        feedback.append(('⚠' if max((p['duration_min'] for p in campaign)) < 30 else '✓', 'Todas las duraciones son muy cortas para fenómenos variables.' if max((p['duration_min'] for p in campaign)) < 30 else 'Existe al menos una medición de duración suficiente para observar variabilidad didáctica.'))
-        for icon, msg in feedback:
-            st.write(f'{icon} {msg}')
-        saved['c3_campaign'] = {'points': campaign, 'feedback': feedback}
-        _c3l1_mark_formative(saved, deps, 's7_campaign', saved['c3_campaign'])
-    st.markdown('### Comparador temporal')
-    hour = st.segmented_control('Mismo punto', ['08:00', '14:00', '19:00', '02:00'], default='14:00', key='c3_s7_hour')
-    profiles = {'08:00': 69, '14:00': 63, '19:00': 67, '02:00': 52}
-    st.metric('LAeq didáctico en el mismo punto', f'{profiles.get(hour, 63)} dB(A)')
-    st.info('Una medición a las 14:00 no representa necesariamente todo el día. La representatividad temporal depende del objetivo y de cómo varía la fuente.')
+    _c3l1_header(
+        7,
+        '¿Dónde, cuándo y cuánto medir?',
+        'Diseñar una campaña de medición con representatividad espacial y temporal, objetivos explícitos y reglas técnicas de retroalimentación.',
+        deps,
+        45,
+    )
 
-def _c3l1_idw_grid(points: np.ndarray, values: np.ndarray, resolution: int=80):
-    gx, gy = np.mgrid[0:100:complex(resolution), 0:70:complex(resolution)]
-    dx = gx[..., None] - points[:, 0]
-    dy = gy[..., None] - points[:, 1]
-    d2 = dx * dx + dy * dy + 1e-06
-    w = 1 / d2
-    z = (w * values).sum(axis=-1) / w.sum(axis=-1)
-    return (gx, gy, z)
+    st.markdown(
+        """
+        <div class="c3-card blue">
+          <div class="c3-kicker">IDEA CENTRAL</div>
+          <b>Medir bien no es solamente encender el sonómetro.</b>
+          <p>Debes definir objetivo, fuente, receptor, posición, altura, periodo, duración, condiciones y descriptor.</p>
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
+
+    st.markdown('## 1. Escenario de campaña')
+
+    _locations = {
+        'A · Borde de avenida': (16,68,'Tránsito dominante'),
+        'B · Fachada residencial': (44,58,'Receptor sensible'),
+        'C · Patio interior': (62,51,'Zona protegida'),
+        'D · Colegio': (78,55,'Receptor sensible diurno'),
+        'E · Fuente técnica': (55,64,'HVAC / fuente fija'),
+        'F · Parque': (84,52,'Ambiente comunitario'),
+        'G · Trayectoria aérea': (30,62,'Eventos de sobrevuelo'),
+    }
+
+    _svg_points = []
+    for _i, (_name, (_x,_lvl,_desc)) in enumerate(_locations.items()):
+        _cx = 60 + _x*7.8
+        _cy = 235 - ((_i % 3) * 48)
+        _label = _name.split('·')[0].strip()
+        _svg_points.append(
+            f'<circle cx="{_cx:.0f}" cy="{_cy:.0f}" r="10" fill="#1b8ccc" stroke="white" stroke-width="3"/>'
+            f'<text x="{_cx:.0f}" y="{_cy-16:.0f}" text-anchor="middle" font-size="12" font-weight="700" fill="#183247">{_label}</text>'
+        )
+
+    _campaign_svg = f"""
+    <div style="border:1px solid #d7e5ef;border-radius:18px;background:#f8fbfd;padding:10px">
+    <svg viewBox="0 0 900 310" xmlns="http://www.w3.org/2000/svg" style="width:100%;height:auto;display:block">
+      <rect x="20" y="20" width="860" height="270" rx="18" fill="#eaf4f8"/>
+      <rect x="20" y="205" width="860" height="65" fill="#657786"/>
+      <line x1="20" y1="238" x2="880" y2="238" stroke="#f5df72" stroke-width="4" stroke-dasharray="24 20"/>
+      <rect x="400" y="70" width="130" height="135" rx="8" fill="#bdcbd6"/>
+      <rect x="645" y="105" width="105" height="100" rx="8" fill="#d7c8a8"/>
+      <rect x="760" y="45" width="95" height="160" rx="8" fill="#c5d4df"/>
+      <rect x="540" y="30" width="85" height="70" rx="8" fill="#87b8b1"/>
+      <text x="465" y="62" text-anchor="middle" font-size="13" font-weight="700" fill="#183247">VIVIENDAS</text>
+      <text x="697" y="96" text-anchor="middle" font-size="13" font-weight="700" fill="#183247">COLEGIO</text>
+      <text x="807" y="36" text-anchor="middle" font-size="13" font-weight="700" fill="#183247">COMERCIO</text>
+      <text x="582" y="24" text-anchor="middle" font-size="13" font-weight="700" fill="#183247">PARQUE</text>
+      <text x="115" y="198" font-size="13" font-weight="700" fill="#183247">AVENIDA</text>
+      {''.join(_svg_points)}
+    </svg></div>
+    """
+    components.html(_campaign_svg, height=340, scrolling=False)
+
+    st.markdown('## 2. Coloca 5 sonómetros virtuales')
+
+    _rows7 = []
+    _default_locs = list(_locations.keys())[:5]
+    for _i in range(5):
+        with st.expander(f'📍 Punto P{_i+1}', expanded=(_i==0)):
+            _c1,_c2 = st.columns(2)
+            with _c1:
+                _loc = st.selectbox(
+                    'Ubicación',
+                    list(_locations.keys()),
+                    index=min(_i,len(_locations)-1),
+                    key=f'c3_s7_loc_{_i}',
+                )
+                _height = st.select_slider(
+                    'Altura del micrófono [m]',
+                    options=[1.2,1.5,2.0,4.0],
+                    value=1.5,
+                    key=f'c3_s7_height_{_i}',
+                )
+                _period = st.selectbox(
+                    'Periodo',
+                    ['Día','Tarde','Noche','24 h'],
+                    key=f'c3_s7_period_{_i}',
+                )
+            with _c2:
+                _duration = st.selectbox(
+                    'Duración',
+                    ['5 min','15 min','30 min','1 h','Continuo'],
+                    index=2,
+                    key=f'c3_s7_duration_{_i}',
+                )
+                _descriptor = st.selectbox(
+                    'Descriptor',
+                    ['LAeq','Lmax','L10/L90','SEL','Lden'],
+                    key=f'c3_s7_desc_{_i}',
+                )
+                _objective = st.selectbox(
+                    'Objetivo',
+                    ['Fuente dominante','Receptor sensible','Fondo/persistencia','Evento','Exposición de largo plazo'],
+                    key=f'c3_s7_obj_{_i}',
+                )
+            _rows7.append({
+                'Punto':f'P{_i+1}',
+                'Ubicación':_loc,
+                'Altura [m]':float(_height),
+                'Periodo':_period,
+                'Duración':_duration,
+                'Descriptor':_descriptor,
+                'Objetivo':_objective,
+            })
+
+    _df7 = pd.DataFrame(_rows7)
+    st.dataframe(_df7, hide_index=True, use_container_width=True)
+
+    st.markdown('## 3. Evaluación técnica de la campaña')
+
+    if st.button('Evaluar campaña', key='c3_s7_evaluate', use_container_width=True):
+        _feedback = []
+        _locs = [r['Ubicación'] for r in _rows7]
+        _periods = [r['Periodo'] for r in _rows7]
+        _durations = [r['Duración'] for r in _rows7]
+        _objectives = [r['Objetivo'] for r in _rows7]
+
+        if any('Fachada residencial' in x or 'Colegio' in x for x in _locs):
+            _feedback.append(('good','Existe al menos un punto asociado a un receptor sensible.'))
+        else:
+            _feedback.append(('warn','No existe un punto claramente asociado a vivienda o colegio; la campaña puede perder representatividad del receptor sensible.'))
+
+        if any(p in ('Noche','24 h') for p in _periods):
+            _feedback.append(('good','La campaña considera periodo nocturno o registro continuo.'))
+        else:
+            _feedback.append(('warn','No se consideró periodo nocturno. Si el problema incluye descanso o fuentes nocturnas, faltará representatividad temporal.'))
+
+        if len(set(_locs)) >= 4:
+            _feedback.append(('good','Los cinco puntos presentan una distribución espacial razonablemente diversa.'))
+        else:
+            _feedback.append(('warn','Varios puntos se concentran en las mismas ubicaciones; distribuir mejor los puntos puede aportar información espacial distinta.'))
+
+        if any('Fuente técnica' in x for x in _locs) and any('Fondo/persistencia' == o for o in _objectives):
+            _feedback.append(('good','Existe una estrategia para observar una fuente técnica/persistente.'))
+
+        if _durations.count('5 min') >= 3:
+            _feedback.append(('warn','Tres o más puntos usan solo 5 min. Para fuentes fluctuantes puede ser insuficiente; la duración debe justificarse por estabilidad y objetivo.'))
+        else:
+            _feedback.append(('good','La campaña no depende exclusivamente de mediciones muy breves.'))
+
+        for _kind,_msg in _feedback:
+            if _kind == 'good':
+                st.success('✓ ' + _msg)
+            else:
+                st.warning('⚠ ' + _msg)
+
+        saved['c3_stage7_campaign'] = {'points':_rows7,'feedback':[m for _,m in _feedback]}
+        _c3l1_save(saved,deps)
+
+    st.markdown('## 4. Representatividad temporal · mismo punto, distintas horas')
+
+    _time_case = st.segmented_control(
+        'Hora de medición',
+        ['08:00','14:00','19:00','02:00'],
+        default='14:00',
+        key='c3_s7_timecase',
+    )
+    _time_vals = {
+        '08:00': (68,'Punta AM · tránsito intenso'),
+        '14:00': (60,'Periodo medio · tránsito moderado'),
+        '19:00': (66,'Punta PM · actividad urbana'),
+        '02:00': (49,'Noche · fondo reducido con eventos ocasionales'),
+    }
+    _tv,_tdesc = _time_vals[_time_case]
+    tc1,tc2 = st.columns(2)
+    tc1.metric('LAeq ilustrativo',f'{_tv} dB(A)')
+    tc2.info(_tdesc)
+
+    _q7 = st.radio(
+        '¿Una medición realizada únicamente a las 14:00 representa necesariamente todo el día?',
+        ['Sí','No'],
+        index=None,
+        horizontal=True,
+        key='c3_s7_q_temporal',
+    )
+    if _q7:
+        if _q7 == 'No':
+            st.success('Correcto. La representatividad temporal exige relacionar horario y duración con el fenómeno que deseas caracterizar.')
+        else:
+            st.warning('Un solo periodo puede no representar puntas, noche o eventos que ocurren en otros horarios.')
+
+    if str(st.session_state.get('role','')).lower() == 'docente':
+        st.markdown('### Pauta docente · Etapa 7')
+        st.markdown(
+            """
+            **Puntos para explicar:** precisión instrumental y representatividad son conceptos diferentes.
+            Una campaña debe justificar por qué mide allí, a esa altura, en ese horario, durante ese tiempo y con ese descriptor.
+            Evitar calificaciones arbitrarias tipo “80 % buena”; la retroalimentación debe ser técnica y explicativa.
+            """
+        )
 
 def _c3l1_stage8_impl(lab: dict, saved: dict, deps: Dict[str, Any]):
+    import matplotlib.pyplot as c3plt
     _c3l1_style()
-    _c3l1_header(8, 'Introducción a los mapas de ruido', 'Comprender qué significa espacializar información acústica y distinguir medición, interpolación y modelación.', deps)
-    _c3l1_asset('curso3_lab1_etapa8_mapa.webp')
-    st.markdown('<div class="c3-flow"><span class="c3-node">MEDICIÓN</span><span class="c3-arrow">≠</span><span class="c3-node">INTERPOLACIÓN</span><span class="c3-arrow">≠</span><span class="c3-node">MODELACIÓN</span></div>', unsafe_allow_html=True)
-    st.markdown('<div class="c3-grid"><div class="c3-card blue"><b>Medición</b><p>Valor obtenido por un instrumento en una posición y período definidos.</p></div><div class="c3-card green"><b>Interpolación</b><p>Estimación matemática entre puntos medidos. No crea nuevas mediciones.</p></div><div class="c3-card purple"><b>Modelación</b><p>Predicción basada en fuentes, geometría, propagación y supuestos del modelo.</p></div></div>', unsafe_allow_html=True)
-    base_points = np.array([[20, 15], [75, 15], [25, 55], [78, 55], [50, 35], [10, 35], [90, 35], [50, 60], [50, 10], [35, 30], [65, 30], [35, 45], [65, 45], [15, 60], [85, 60], [50, 50]], dtype=float)
-    base_values = np.array([70, 63, 58, 61, 66, 72, 62, 57, 69, 67, 64, 60, 61, 55, 59, 58], dtype=float)
-    n = st.segmented_control('Densidad de mediciones', [4, 8, 16], default=4, key='c3_s8_n') or 4
-    pts = base_points[:int(n)]
-    vals = base_values[:int(n)]
-    represent = st.toggle('Representar espacialmente', key='c3_s8_interp')
-    fig, ax = plt.subplots(figsize=(9, 4.7))
-    ax.set_xlim(0, 100)
-    ax.set_ylim(0, 70)
-    ax.set_aspect('equal')
-    ax.set_xlabel('Este (escala didáctica)')
-    ax.set_ylabel('Norte')
-    if represent:
-        gx, gy, z = _c3l1_idw_grid(pts, vals)
-        cf = ax.contourf(gx, gy, z, levels=np.arange(50, 76, 2), alpha=0.75)
-        fig.colorbar(cf, ax=ax, label='LAeq interpolado [dB(A)]')
-    sc = ax.scatter(pts[:, 0], pts[:, 1], c=vals, s=70, edgecolors='k')
-    for i, (x, y) in enumerate(pts):
-        ax.text(x + 1, y + 1, f'P{i + 1}\n{vals[i]:.0f}', fontsize=8)
-    ax.grid(alpha=0.15)
-    st.pyplot(fig, use_container_width=True)
-    plt.close(fig)
-    st.info('Pregunta: el nivel mostrado entre P2 y P3, ¿fue medido directamente allí? **No.** Si activaste la representación, ese valor fue interpolado a partir de puntos medidos.')
-    layers = st.multiselect('Capas conceptuales', ['Puntos medidos', 'Interpolación', 'Modelo predictivo'], default=['Puntos medidos'], key='c3_s8_layers')
-    if 'Modelo predictivo' in layers:
-        st.warning("La capa 'Modelo predictivo' se muestra aquí solo como concepto. Este Laboratorio 1 no desarrolla todavía un modelo predictivo completo.")
-    _c3l1_external_tool_card('Noise Map Lab', 'Herramienta complementaria para explorar fuentes, receptores, grilla y barreras sin perder el progreso del laboratorio.', 'NOISE_MAP_LAB_URL', '🗺️ ABRIR NOISE MAP LAB')
-    if st.button('Guardar representación espacial', key='c3_s8_save'):
-        saved['c3_spatial'] = {'n_points': int(n), 'interpolation': bool(represent), 'layers': layers, 'points': [{'x': float(x), 'y': float(y), 'laeq': float(v)} for (x, y), v in zip(pts, vals)]}
-        _c3l1_mark_formative(saved, deps, 's8_spatial', saved['c3_spatial'])
-        st.success('Representación guardada.')
-_C3L1_STAGE9_QUESTIONS = [('Ruido ambiental', '¿Qué descripción es más completa de un ambiente acústico?', ['Un único valor en dB.', 'Fuente + propagación + receptor + tiempo + frecuencia + espacio.', 'Solo la fuente dominante.', 'Solo el nivel máximo.'], 1, 'El ambiente acústico es multidimensional.'), ('Instrumentación', '¿Qué hace principalmente el micrófono de un sonómetro?', ['Convierte presión acústica en señal eléctrica.', 'Calcula Lden.', 'Aplica la penalización nocturna.', 'Interpola mapas.'], 0, 'El micrófono es el transductor de entrada.'), ('Ponderaciones', '¿Cuál afirmación diferencia correctamente A/C/Z de Fast/Slow?', ['A/C/Z son temporales y Fast/Slow frecuenciales.', 'A/C/Z son ponderaciones frecuenciales y Fast/Slow respuestas temporales.', 'Son exactamente lo mismo.', 'Fast/Slow solo se usan en mapas.'], 1, 'Frecuencia y tiempo son dimensiones distintas.'), ('LAeq', 'Para combinar cuatro intervalos de nivel en dB, ¿qué procedimiento corresponde?', ['Promedio aritmético directo.', 'Suma de dB y resta 3 dB.', 'Promedio energético ponderado por duración.', 'Tomar el Lmax.'], 2, 'LAeq conserva energía acústica equivalente.'), ('Percentiles', 'Si L10=74 dB(A) y L90=55 dB(A), ¿qué lectura es razonable?', ['El ambiente es perfectamente estable.', 'Existe una diferencia temporal importante entre niveles altos y fondo.', 'L90 es siempre el máximo.', 'No se puede interpretar ninguna variabilidad.'], 1, 'L10−L90 aporta una lectura de variabilidad en el contexto de la medición.'), ('SEL', '¿Qué permite comparar SEL?', ['Eventos de distinta duración mediante su energía normalizada.', 'Solo niveles mínimos.', 'Únicamente ruido continuo de 24 h.', 'La ubicación espacial de receptores.'], 0, 'SEL resume energía de evento normalizada al tiempo de referencia.'), ('Lden', '¿Qué ocurre en Lden con tarde y noche?', ['Se ignoran.', 'Se promedian aritméticamente.', 'Se aplican penalizaciones convencionales antes de integrar energéticamente.', 'Se reemplazan por Lmax.'], 2, 'Lden integra día, tarde y noche con +5 y +10 dB en el descriptor.'), ('Campaña', 'Todos los puntos de una campaña están junto a la avenida. ¿Cuál es la principal limitación?', ['Tiene demasiada calibración.', 'Puede carecer de representatividad espacial para otros receptores/zonas.', 'No puede calcular LAeq.', 'El sonómetro se vuelve clase 2.'], 1, 'La distribución espacial debe responder al objetivo.'), ('Mapa', 'Un valor entre dos puntos medidos obtenido por interpolación es…', ['Una medición directa.', 'Una estimación espacial derivada de los puntos.', 'Un resultado reglamentario automático.', 'Siempre un modelo predictivo físico.'], 1, 'Interpolar no equivale a medir ni a modelar físicamente.'), ('Diagnóstico', '¿Cuál es una conclusión profesional correcta?', ['Un mapa interpolado demuestra exactamente el nivel en cada metro.', 'Un solo LAeq describe siempre todo el comportamiento temporal.', 'Las conclusiones deben respetar objetivo, representatividad, método e incertidumbres/limitaciones.', 'El teléfono sustituye automáticamente un sonómetro reglamentario.'], 2, 'El diagnóstico debe respetar los límites de la evidencia.')]
+    _c3l1_header(
+        8,
+        'Del camino directo a la protección acústica',
+        'Explorar cómo distancia, geometría, frecuencia y una barrera modifican el camino de propagación entre fuente y receptor.',
+        deps,
+        40,
+    )
 
-def _c3l1_stage9_remote(deps):
-    user = st.session_state.get('user_key')
-    if not user:
-        return None
-    rows = _c3l1_remote_rows(deps, class_id=_C3L1_CLASS_ID_INLINE, user_key=user)
-    row = next((r for r in rows if int(r.get('stage') or -1) == 9 and r.get('question_key') == 'final_comprehension'), None)
-    if not row:
-        return None
-    payload = row.get('answer') or {}
-    if isinstance(payload, str):
-        try:
-            payload = json.loads(payload)
-        except Exception:
-            payload = {}
-    return {'row': row, 'payload': payload if isinstance(payload, dict) else {}}
+    st.markdown(
+        """
+        <div class="c3-card blue">
+          <div class="c3-kicker">NUEVO PROBLEMA</div>
+          <b>La fuente puede ser la misma, pero el camino hasta el receptor puede cambiar.</b>
+          <p>La barrera no “borra” el sonido: modifica la geometría de propagación y obliga a considerar difracción.</p>
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
 
-def _c3l1_stage9_save(saved, deps):
-    answers = {str(i): st.session_state.get(f'c3_e9_q{i}') for i in range(10)}
-    saved['c3_e9_answers'] = answers
-    saved['c3_e9_started_at'] = saved.get('c3_e9_started_at') or _c3l1_now(deps)
-    _c3l1_save(saved, deps)
+    st.markdown('## 1. Geometría fuente · barrera · receptor')
 
-def _c3l1_stage9_finish(saved, deps):
-    answers = {str(i): st.session_state.get(f'c3_e9_q{i}') for i in range(10)}
-    score = sum((4 for i, q in enumerate(_C3L1_STAGE9_QUESTIONS) if answers.get(str(i)) == q[2][q[3]]))
-    payload = {'version': _C3L1_VERSION, 'answers': answers, 'score': score, 'max_score': 40, 'finished_at': _c3l1_now(deps)}
-    client = _c3l1_client(deps)
-    user = st.session_state.get('user_key')
-    if client is not None and user:
-        qid = f'{_C3L1_CLASS_ID_INLINE}-final_comprehension-v1'
-        try:
-            client.table('questions').upsert({'id': qid, 'class_id': _C3L1_CLASS_ID_INLINE, 'stage': 9, 'question_key': 'final_comprehension', 'question_text': 'Curso 3 · Laboratorio 1 · Evaluación de comprensión', 'correct_answer': 'Pauta de 10 preguntas', 'max_score': 40, 'content_version': 1, 'active': True, 'updated_at': _c3l1_now(deps)}, on_conflict='id').execute()
-            client.table('responses').upsert({'course_id': deps.get('course_id', 'diplomado-acustica-edificacion'), 'class_id': _C3L1_CLASS_ID_INLINE, 'user_key': user, 'stage': 9, 'question_key': 'final_comprehension', 'question_text': 'Evaluación de comprensión · Curso 3', 'correct_answer': 'Pauta de 10 preguntas', 'answer': payload, 'auto_level': 'Finalizada', 'feedback': f'Resultado automático: {score}/40 puntos.', 'auto_score': score, 'max_score': 40, 'status': 'submitted', 'updated_at': _c3l1_now(deps), 'submitted_at': _c3l1_now(deps)}, on_conflict='class_id,user_key,question_key').execute()
-        except Exception as exc:
-            st.warning(f'La entrega quedó guardada localmente, pero no fue posible sincronizarla con Supabase: {exc}')
-    saved['c3_e9_submitted'] = True
-    saved['c3_e9_score'] = score
-    saved['done_9'] = True
-    _c3l1_save(saved, deps)
-    return score
+    bc1,bc2,bc3 = st.columns(3)
+    with bc1:
+        _distance = st.slider('Distancia fuente–receptor [m]', 20, 100, 60, key='c3_s8_dist')
+        _source_h = st.slider('Altura fuente [m]', 0.2, 5.0, 1.0, .1, key='c3_s8_hs')
+    with bc2:
+        _barrier_x = st.slider('Posición barrera desde la fuente [m]', 2, _distance-2, min(18,_distance-2), key='c3_s8_xb')
+        _barrier_h = st.slider('Altura barrera [m]', 0.5, 8.0, 2.5, .1, key='c3_s8_hb')
+    with bc3:
+        _receiver_h = st.slider('Altura receptor [m]', 0.5, 6.0, 1.5, .1, key='c3_s8_hr')
+        _freq = st.select_slider(
+            'Frecuencia [Hz]',
+            options=[63,125,250,500,1000,2000,4000],
+            value=1000,
+            key='c3_s8_freq',
+        )
+
+    _direct = math.sqrt(float(_distance)**2 + float(_receiver_h-_source_h)**2)
+    _r1 = math.sqrt(float(_barrier_x)**2 + float(_barrier_h-_source_h)**2)
+    _r2 = math.sqrt(float(_distance-_barrier_x)**2 + float(_barrier_h-_receiver_h)**2)
+    _delta = max(0.0, (_r1 + _r2) - _direct)
+    _wavelength = 343.0 / float(_freq)
+    _fresnel = 2.0 * _delta / _wavelength if _wavelength > 0 else 0.0
+    _los_h = float(_source_h) + (float(_receiver_h-_source_h) * float(_barrier_x) / float(_distance))
+    _blocked = float(_barrier_h) > _los_h
+
+    # Simple educational diffraction estimate, deliberately capped and labelled.
+    _il_est = 0.0
+    if _blocked and _fresnel > 0:
+        _il_est = float(max(0.0, min(25.0, 10.0 * math.log10(3.0 + 20.0 * _fresnel))))
+
+    # SVG geometry
+    _W,_H = 900,360
+    _x0,_x1 = 90,820
+    _ground = 290
+    _sx = _x0
+    _rx = _x1
+    _bx = _x0 + (_x1-_x0) * (float(_barrier_x)/float(_distance))
+    _scale_h = 27.0
+    _sy = _ground - float(_source_h)*_scale_h
+    _ry = _ground - float(_receiver_h)*_scale_h
+    _by = _ground - float(_barrier_h)*_scale_h
+    _barrier_color = '#27a567' if _blocked else '#f59e0b'
+    _status = 'Línea de visión bloqueada' if _blocked else 'Línea de visión directa disponible'
+
+    _svg8 = f"""
+    <style>
+    body{{margin:0;background:transparent;font-family:Arial,Helvetica,sans-serif}}
+    .lbl{{font-size:14px;font-weight:700;fill:#183247}}
+    .small{{font-size:12px;fill:#587084}}
+    </style>
+    <div style="border:1px solid #d7e5ef;border-radius:18px;background:#f7fbfd;padding:10px">
+    <svg viewBox="0 0 {_W} {_H}" xmlns="http://www.w3.org/2000/svg" style="width:100%;height:auto;display:block">
+      <rect x="20" y="20" width="860" height="315" rx="18" fill="#eaf5fa"/>
+      <rect x="20" y="{_ground}" width="860" height="45" fill="#c8d9c1"/>
+      <line x1="{_sx}" y1="{_sy}" x2="{_rx}" y2="{_ry}" stroke="#788b98" stroke-width="2" stroke-dasharray="8 7"/>
+      <polyline points="{_sx},{_sy} {_bx},{_by} {_rx},{_ry}" fill="none" stroke="#1789c2" stroke-width="4"/>
+      <rect x="{_bx-9:.1f}" y="{_by:.1f}" width="18" height="{_ground-_by:.1f}" rx="3" fill="{_barrier_color}"/>
+      <circle cx="{_sx}" cy="{_sy}" r="13" fill="#e45745" stroke="white" stroke-width="3"/>
+      <circle cx="{_rx}" cy="{_ry}" r="13" fill="#2f9a63" stroke="white" stroke-width="3"/>
+      <text x="{_sx}" y="{_sy-24}" class="lbl" text-anchor="middle">FUENTE</text>
+      <text x="{_rx}" y="{_ry-24}" class="lbl" text-anchor="middle">RECEPTOR</text>
+      <text x="{_bx}" y="{_by-16}" class="lbl" text-anchor="middle">BARRERA</text>
+      <text x="450" y="52" class="lbl" text-anchor="middle">{_status}</text>
+      <text x="450" y="75" class="small" text-anchor="middle">línea gris = camino directo · línea azul = camino difractado</text>
+    </svg></div>
+    """
+    components.html(_svg8, height=390, scrolling=False)
+
+    gm1,gm2,gm3,gm4 = st.columns(4)
+    gm1.metric('Camino directo', f'{_direct:.2f} m')
+    gm2.metric('Camino difractado', f'{_r1+_r2:.2f} m')
+    gm3.metric('Diferencia δ', f'{_delta*100:.1f} cm')
+    gm4.metric('Línea de visión', 'Bloqueada' if _blocked else 'Libre')
+
+    st.markdown('## 2. De la geometría a la difracción')
+
+    st.latex(r'\delta=(r_1+r_2)-r')
+    st.latex(r'\lambda=\frac{c}{f},\qquad c\approx343\;m/s')
+    st.latex(r'N=\frac{2\delta}{\lambda}')
+
+    fm1,fm2,fm3 = st.columns(3)
+    fm1.metric('Longitud de onda λ', f'{_wavelength:.3f} m')
+    fm2.metric('Número de Fresnel N', f'{_fresnel:.2f}')
+    fm3.metric('Atenuación didáctica', f'{_il_est:.1f} dB' if _blocked else '≈ 0 dB')
+
+    st.markdown(
+        """
+        <div class="c3-warn">
+          <b>Importante:</b> la “atenuación didáctica” es una estimación simplificada para visualizar tendencias de difracción.
+          No reemplaza un método normativo, un modelo predictivo completo ni una verificación en terreno.
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
+
+    st.markdown('## 3. ¿La misma barrera funciona igual en todas las frecuencias?')
+
+    _bands = np.array([63,125,250,500,1000,2000,4000],dtype=float)
+    _ils = []
+    for _f in _bands:
+        _lam = 343.0/_f
+        _n = 2.0*_delta/_lam if _lam>0 else 0.0
+        _il = 0.0 if not _blocked else max(0.0,min(25.0,10.0*math.log10(3.0+20.0*_n))) if _n>0 else 0.0
+        _ils.append(_il)
+
+    _fig8,_ax8 = c3plt.subplots(figsize=(9.5,3.8))
+    _ax8.bar([str(int(x)) for x in _bands],_ils)
+    _ax8.set_xlabel('Frecuencia [Hz]')
+    _ax8.set_ylabel('Atenuación didáctica [dB]')
+    _ax8.set_title('Misma geometría · respuesta relativa por frecuencia')
+    _ax8.grid(axis='y',alpha=.2)
+    st.pyplot(_fig8,use_container_width=True)
+    c3plt.close(_fig8)
+
+    st.markdown(
+        """
+        <div class="c3-key">
+          Una misma geometría no produce el mismo efecto en todas las bandas.
+          Al cambiar la frecuencia cambia la longitud de onda y, por tanto, la relación entre geometría y difracción.
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
+
+    st.markdown('## 4. Diseña tu barrera')
+
+    _mission8 = st.radio(
+        '¿Qué acción tendería a aumentar la diferencia de camino, manteniendo fuente y receptor?',
+        [
+            'Subir la barrera y comprobar su posición',
+            'Bajar la barrera hasta dejar línea de visión libre',
+            'Cambiar L90 por LAeq',
+        ],
+        index=None,
+        key='c3_s8_q_design',
+    )
+    if _mission8:
+        if _mission8.startswith('Subir'):
+            st.success('Correcto. La geometría del borde superior y su posición controlan la diferencia de camino y el régimen de difracción.')
+        else:
+            st.warning('La pregunta es geométrica: modifica altura/posición de la barrera y observa δ.')
+
+    st.markdown('## 5. Cerca de la fuente, al centro o cerca del receptor')
+
+    _positions = np.linspace(2,float(_distance)-2,80)
+    _deltas = []
+    for _xb in _positions:
+        _a = math.sqrt(_xb**2 + float(_barrier_h-_source_h)**2)
+        _b = math.sqrt((float(_distance)-_xb)**2 + float(_barrier_h-_receiver_h)**2)
+        _deltas.append((_a+_b)-_direct)
+
+    _fig82,_ax82 = c3plt.subplots(figsize=(9.5,3.6))
+    _ax82.plot(_positions,np.array(_deltas)*100.0,lw=1.8)
+    _ax82.axvline(float(_barrier_x),ls='--',label='Posición actual')
+    _ax82.set_xlabel('Distancia de la barrera desde la fuente [m]')
+    _ax82.set_ylabel('Diferencia de camino δ [cm]')
+    _ax82.set_title('Efecto de la posición de la barrera sobre la geometría')
+    _ax82.grid(alpha=.2)
+    _ax82.legend(fontsize=8)
+    st.pyplot(_fig82,use_container_width=True)
+    c3plt.close(_fig82)
+
+    if st.button('Guardar diseño de barrera', key='c3_s8_save', use_container_width=True):
+        saved['c3_stage8_barrier'] = {
+            'distance_m': float(_distance),
+            'source_height_m': float(_source_h),
+            'receiver_height_m': float(_receiver_h),
+            'barrier_position_m': float(_barrier_x),
+            'barrier_height_m': float(_barrier_h),
+            'frequency_hz': int(_freq),
+            'line_of_sight_blocked': bool(_blocked),
+            'path_difference_m': float(_delta),
+            'wavelength_m': float(_wavelength),
+            'fresnel_number': float(_fresnel),
+            'didactic_attenuation_db': float(_il_est),
+        }
+        _c3l1_save(saved,deps)
+        st.success('Diseño de barrera guardado.')
+
+    if str(st.session_state.get('role','')).lower() == 'docente':
+        st.markdown('### Pauta docente · Etapa 8')
+        st.markdown(
+            """
+            **Puntos para enfatizar:** bloquear la línea de visión es una condición geométrica importante, pero no garantiza por sí sola un desempeño real.
+            La eficacia depende de altura, posición, frecuencia, longitud, transmisión a través del elemento, reflexiones y discontinuidades.
+            Esta etapa usa un modelo deliberadamente didáctico para enseñar diferencia de camino, longitud de onda y número de Fresnel.
+            """
+        )
 
 def _c3l1_stage9_impl(lab: dict, saved: dict, deps: Dict[str, Any]):
     _c3l1_style()
