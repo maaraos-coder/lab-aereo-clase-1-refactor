@@ -19606,21 +19606,281 @@ def _c3l1_stage3_impl(lab: dict, saved: dict, deps: Dict[str, Any]):
                 'El nivel equivalente debe conservar la energía acústica.'
             )
 
-    st.markdown('## 4. ¿Qué describen L10, L50 y L90?')
+    st.markdown('## 4. Construye L10, L50 y L90 desde una medición temporal')
 
     st.markdown(
         """
-        <div class="c3-grid">
-          <div class="c3-card orange"><div class="c3-kicker">L10</div><b>Nivel excedido 10 % del tiempo</b>
-          <p>Representa la zona alta de la distribución y es sensible a periodos de mayor nivel.</p></div>
-          <div class="c3-card blue"><div class="c3-kicker">L50</div><b>Nivel excedido 50 % del tiempo</b>
-          <p>Divide el registro en dos mitades temporales y funciona como una mediana de excedencia.</p></div>
-          <div class="c3-card green"><div class="c3-kicker">L90</div><b>Nivel excedido 90 % del tiempo</b>
-          <p>Se relaciona con la zona baja/persistente del ambiente y puede ayudar a interpretar el fondo, según contexto.</p></div>
+        <div class="c3-card blue">
+          <div class="c3-kicker">IDEA TÉCNICA</div>
+          <b>L10, L50 y L90 no se calculan como porcentajes del nivel máximo.</b>
+          <p>
+            Son <b>niveles de excedencia</b>. Primero registramos cómo cambia el nivel durante el tiempo;
+            después ordenamos todos los niveles desde el mayor al menor y preguntamos qué nivel fue superado
+            durante el 10 %, 50 % o 90 % del periodo.
+          </p>
         </div>
         """,
         unsafe_allow_html=True,
     )
+
+    st.markdown(
+        """
+        <div class="c3-flow">
+          <span class="c3-node">1 · MEDIR L(t)</span><span class="c3-arrow">→</span>
+          <span class="c3-node">2 · ACUMULAR DATOS</span><span class="c3-arrow">→</span>
+          <span class="c3-node">3 · ORDENAR DE MAYOR A MENOR</span><span class="c3-arrow">→</span>
+          <span class="c3-node">4 · % DE TIEMPO EXCEDIDO</span><span class="c3-arrow">→</span>
+          <span class="c3-node">L10 · L50 · L90</span>
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
+
+    st.markdown('### 4.1 Haz correr la medición')
+
+    st.write(
+        'El siguiente registro dura **180 s**. Mueve el control para simular que el sonómetro todavía está midiendo. '
+        'Los descriptores se recalculan usando **solo los datos disponibles hasta ese instante**.'
+    )
+
+    # Reutiliza el escenario ya seleccionado en la parte anterior.
+    _full_t = np.asarray(t, dtype=float).reshape(-1)
+    _full_y = np.asarray(y, dtype=float).reshape(-1)
+
+    elapsed = st.slider(
+        'Tiempo transcurrido de medición [s]',
+        min_value=10,
+        max_value=int(_full_t[-1]) + 1,
+        value=min(60, int(_full_t[-1]) + 1),
+        step=5,
+        key='c3_s3_percent_elapsed',
+    )
+
+    _mask = _full_t < float(elapsed)
+    _t_live = _full_t[_mask]
+    _y_live = _full_y[_mask]
+    if _y_live.size < 2:
+        _t_live = _full_t[:2]
+        _y_live = _full_y[:2]
+
+    _live_laeq = _c3l1_laeq(_y_live)
+    _live_lmax = float(np.max(_y_live))
+    _live_lmin = float(np.min(_y_live))
+    _live_l10 = _c3l1_exceedance_percentile(_y_live, 10)
+    _live_l50 = _c3l1_exceedance_percentile(_y_live, 50)
+    _live_l90 = _c3l1_exceedance_percentile(_y_live, 90)
+
+    fig_p1, ax_p1 = c3plt.subplots(figsize=(10,4.0))
+    ax_p1.plot(_full_t, _full_y, lw=1.0, alpha=.22, label='Registro aún no medido')
+    ax_p1.plot(_t_live, _y_live, lw=1.5, label='Datos ya medidos')
+    ax_p1.axvline(float(elapsed), ls='--', lw=1.4, label=f't = {elapsed} s')
+    ax_p1.axhline(_live_laeq, ls='--', lw=1.5, label=f'LAeq = {_live_laeq:.1f} dB(A)')
+    ax_p1.set_xlabel('Tiempo [s]')
+    ax_p1.set_ylabel('Nivel [dB(A)]')
+    ax_p1.set_title('Construcción progresiva de la historia temporal')
+    ax_p1.grid(alpha=.2)
+    ax_p1.legend(ncol=2, fontsize=8)
+    st.pyplot(fig_p1, use_container_width=True)
+    c3plt.close(fig_p1)
+
+    m1,m2,m3,m4 = st.columns(4)
+    m1.metric('Tiempo analizado', f'{elapsed} s')
+    m2.metric('LAeq acumulado', f'{_live_laeq:.1f} dB(A)')
+    m3.metric('Lmax', f'{_live_lmax:.1f} dB(A)')
+    m4.metric('Lmin', f'{_live_lmin:.1f} dB(A)')
+
+    st.markdown(
+        """
+        <div class="c3-key">
+          <b>Observa:</b> LAeq y los percentiles pueden variar mientras la medición todavía está en desarrollo.
+          Un descriptor se vuelve más representativo cuando el periodo medido representa adecuadamente
+          el comportamiento que queremos caracterizar.
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
+
+    st.markdown('### 4.2 Del orden cronológico al orden de excedencia')
+
+    st.write(
+        'Para obtener los niveles estadísticos ya no importa **cuándo** ocurrió cada valor. '
+        'Tomamos todos los niveles registrados hasta ahora y los ordenamos de mayor a menor.'
+    )
+
+    _ordered = np.sort(_y_live)[::-1]
+    _exceed = 100.0 * np.arange(1, len(_ordered)+1) / len(_ordered)
+
+    left_p, right_p = st.columns(2)
+
+    with left_p:
+        fig_p2, ax_p2 = c3plt.subplots(figsize=(6,3.8))
+        ax_p2.plot(_t_live, _y_live, lw=1.25)
+        ax_p2.axhline(_live_l10, ls='--', label=f'L10 = {_live_l10:.1f}')
+        ax_p2.axhline(_live_l50, ls='-.', label=f'L50 = {_live_l50:.1f}')
+        ax_p2.axhline(_live_l90, ls=':', label=f'L90 = {_live_l90:.1f}')
+        ax_p2.set_xlabel('Tiempo [s]')
+        ax_p2.set_ylabel('Nivel [dB(A)]')
+        ax_p2.set_title('A · Historia temporal')
+        ax_p2.grid(alpha=.2)
+        ax_p2.legend(fontsize=8)
+        st.pyplot(fig_p2, use_container_width=True)
+        c3plt.close(fig_p2)
+
+    with right_p:
+        fig_p3, ax_p3 = c3plt.subplots(figsize=(6,3.8))
+        ax_p3.plot(_exceed, _ordered, lw=1.8)
+        ax_p3.scatter(
+            [10,50,90],
+            [_live_l10,_live_l50,_live_l90],
+            s=45,
+            zorder=5,
+        )
+        ax_p3.axvline(10, ls='--', alpha=.6)
+        ax_p3.axvline(50, ls='-.', alpha=.6)
+        ax_p3.axvline(90, ls=':', alpha=.6)
+        ax_p3.set_xlabel('Tiempo durante el cual el nivel es excedido [%]')
+        ax_p3.set_ylabel('Nivel [dB(A)]')
+        ax_p3.set_title('B · Curva de excedencia')
+        ax_p3.grid(alpha=.2)
+        st.pyplot(fig_p3, use_container_width=True)
+        c3plt.close(fig_p3)
+
+    st.markdown(
+        """
+        <div class="c3-grid-2">
+          <div class="c3-card blue">
+            <div class="c3-kicker">GRÁFICO A · TIEMPO</div>
+            <b>Conserva el orden real de la medición</b>
+            <p>Permite identificar eventos, ciclos, cambios y duración.</p>
+          </div>
+          <div class="c3-card green">
+            <div class="c3-kicker">GRÁFICO B · EXCEDENCIA</div>
+            <b>Ordena los niveles de mayor a menor</b>
+            <p>Permite leer directamente qué nivel fue excedido durante una determinada fracción del tiempo.</p>
+          </div>
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
+
+    st.markdown('### 4.3 Construye cada descriptor')
+
+    descriptor_to_build = st.segmented_control(
+        'Descriptor que quieres construir',
+        ['L10','L50','L90'],
+        default='L10',
+        key='c3_s3_percent_descriptor',
+    )
+
+    _target_map = {
+        'L10': (10, _live_l10),
+        'L50': (50, _live_l50),
+        'L90': (90, _live_l90),
+    }
+    _target_pct, _target_level = _target_map[descriptor_to_build]
+
+    st.markdown(
+        f"""
+        <div class="c3-card orange">
+          <div class="c3-kicker">{descriptor_to_build}</div>
+          <b>Busca el {_target_pct} % en el eje horizontal de la curva de excedencia.</b>
+          <p>
+            Sube desde {_target_pct} % hasta cortar la curva y luego lee el nivel en el eje vertical.
+            Con los datos medidos hasta t = {elapsed} s, el resultado es
+            <b>{_target_level:.1f} dB(A)</b>.
+          </p>
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
+
+    fig_p4, ax_p4 = c3plt.subplots(figsize=(9.5,4.0))
+    ax_p4.plot(_exceed, _ordered, lw=2)
+    ax_p4.axvline(_target_pct, ls='--', lw=1.5)
+    ax_p4.axhline(_target_level, ls='--', lw=1.5)
+    ax_p4.scatter([_target_pct], [_target_level], s=70, zorder=6)
+    ax_p4.annotate(
+        f'{descriptor_to_build} = {_target_level:.1f} dB(A)',
+        xy=(_target_pct,_target_level),
+        xytext=(min(72,_target_pct+8),_target_level+1.2),
+        arrowprops={'arrowstyle':'->'},
+    )
+    ax_p4.set_xlabel('Tiempo excedido [%]')
+    ax_p4.set_ylabel('Nivel [dB(A)]')
+    ax_p4.set_title(f'Construcción gráfica de {descriptor_to_build}')
+    ax_p4.grid(alpha=.2)
+    st.pyplot(fig_p4, use_container_width=True)
+    c3plt.close(fig_p4)
+
+    st.markdown('### 4.4 Resultados actuales de la medición')
+
+    p1,p2,p3,p4 = st.columns(4)
+    p1.metric('LAeq', f'{_live_laeq:.1f} dB(A)')
+    p2.metric('L10', f'{_live_l10:.1f} dB(A)')
+    p3.metric('L50', f'{_live_l50:.1f} dB(A)')
+    p4.metric('L90', f'{_live_l90:.1f} dB(A)')
+
+    st.markdown(
+        """
+        <div class="c3-grid">
+          <div class="c3-card orange">
+            <div class="c3-kicker">L10</div>
+            <b>Nivel excedido durante 10 % del tiempo</b>
+            <p>Describe la zona alta de la distribución. Solo una fracción relativamente pequeña del periodo presenta niveles superiores.</p>
+          </div>
+          <div class="c3-card blue">
+            <div class="c3-kicker">L50</div>
+            <b>Nivel excedido durante 50 % del tiempo</b>
+            <p>Es la mediana de excedencia: la mitad de los datos queda por encima y la otra mitad por debajo.</p>
+          </div>
+          <div class="c3-card green">
+            <div class="c3-kicker">L90</div>
+            <b>Nivel excedido durante 90 % del tiempo</b>
+            <p>Se ubica en la zona baja y persistente de la distribución. Puede apoyar la interpretación del fondo, siempre considerando el contexto.</p>
+          </div>
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
+
+    st.markdown('### 4.5 Comprueba cómo se calculan')
+
+    _manual_pct = st.slider(
+        'Elige un porcentaje de excedencia',
+        1, 99, 10,
+        key='c3_s3_manual_pct',
+    )
+    _manual_level = _c3l1_exceedance_percentile(_y_live, _manual_pct)
+
+    st.metric(
+        f'Nivel excedido {_manual_pct} % del tiempo',
+        f'{_manual_level:.1f} dB(A)'
+    )
+
+    st.caption(
+        f'Si eliges 10 %, estás calculando L10; con 50 %, L50; con 90 %, L90. '
+        f'El mismo procedimiento permite construir otros niveles estadísticos Lₙ.'
+    )
+
+    q_percent=st.radio(
+        'Si L90 = 52 dB(A), ¿qué significa?',
+        [
+            'Que el 90 % de los niveles vale exactamente 52 dB(A)',
+            'Que durante el 90 % del tiempo el nivel fue igual o superior a 52 dB(A)',
+            'Que 52 dB(A) corresponde al 90 % del nivel máximo',
+        ],
+        index=None,
+        key='c3_s3_percent_q',
+    )
+    if q_percent:
+        if q_percent.startswith('Que durante'):
+            st.success(
+                'Correcto. L90 es un nivel de excedencia: fue igualado o superado durante el 90 % del periodo.'
+            )
+        else:
+            st.warning(
+                'Revisa la curva de excedencia. El porcentaje se refiere al tiempo durante el cual ese nivel fue igualado o superado.'
+            )
 
     st.markdown('## 5. Generador de ambiente sonoro')
 
