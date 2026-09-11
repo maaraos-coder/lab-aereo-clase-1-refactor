@@ -21065,15 +21065,85 @@ def _c3l1_stage4_impl(lab: dict, saved: dict, deps: Dict[str, Any]):
 
     st.markdown('## 4. Comparador de eventos')
 
+    st.write(
+        'Compara cuatro eventos con distinta combinación de nivel y duración. '
+        'El objetivo es observar que un evento con menor LAeq puede acumular un SEL mayor si dura más tiempo.'
+    )
+
     _event_table = []
     for _name, (_lev, _dur) in _defaults.items():
+        _sel_val = _c3l1_sel(float(_lev), float(_dur))
         _event_table.append({
             'Evento': _name,
-            'LAeq evento [dB(A)]': _lev,
-            'Duración [s]': _dur,
-            'SEL [dB]': round(_c3l1_sel(float(_lev), float(_dur)), 1),
+            'LAeq': float(_lev),
+            'Duración': float(_dur),
+            'SEL': float(_sel_val),
         })
-    st.dataframe(pd.DataFrame(_event_table), hide_index=True, use_container_width=True)
+
+    _max_sel = max(r['SEL'] for r in _event_table)
+
+    _cards_html = []
+    _icons = {
+        'Automóvil':'🚗',
+        'Camión':'🚚',
+        'Bocina':'📣',
+        'Sobrevuelo':'✈️',
+    }
+    for _row in _event_table:
+        _is_max = abs(_row['SEL'] - _max_sel) < 1e-9
+        _border = '#2a9d68' if _is_max else '#d8e6ef'
+        _bg = 'linear-gradient(135deg,#f1fbf5,#ffffff)' if _is_max else 'linear-gradient(135deg,#ffffff,#f7fafc)'
+        _badge = '<div style="font-size:.7rem;font-weight:800;color:#2a9d68;margin-bottom:.25rem">MAYOR SEL</div>' if _is_max else ''
+        _cards_html.append(
+            f"""
+            <div style="
+                border:1px solid {_border};
+                border-radius:16px;
+                padding:1rem;
+                background:{_bg};
+                min-height:165px;
+            ">
+              {_badge}
+              <div style="font-size:1.05rem;font-weight:800;color:#183247;margin-bottom:.55rem">
+                {_icons.get(_row['Evento'],'🔊')} {_row['Evento']}
+              </div>
+              <div style="display:grid;grid-template-columns:1fr 1fr;gap:.6rem">
+                <div>
+                  <div style="font-size:.7rem;color:#748696">LAeq,T</div>
+                  <div style="font-size:1.15rem;font-weight:800;color:#183247">{_row['LAeq']:.0f} dB(A)</div>
+                </div>
+                <div>
+                  <div style="font-size:.7rem;color:#748696">Duración</div>
+                  <div style="font-size:1.15rem;font-weight:800;color:#183247">{_row['Duración']:.0f} s</div>
+                </div>
+              </div>
+              <div style="margin-top:.85rem;padding-top:.7rem;border-top:1px solid #e4edf2">
+                <div style="font-size:.7rem;color:#748696">SEL / LAE</div>
+                <div style="font-size:1.55rem;font-weight:900;color:#0e6fa8">{_row['SEL']:.1f} dB</div>
+              </div>
+            </div>
+            """
+        )
+
+    st.markdown(
+        '<div style="display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:.8rem">'
+        + ''.join(_cards_html) +
+        '</div>',
+        unsafe_allow_html=True,
+    )
+
+    st.markdown(
+        """
+        <div class="c3-key" style="margin-top:1rem">
+          <b>Qué debes observar:</b> el SEL depende de la energía acumulada del evento.
+          Por eso no basta con mirar únicamente cuál tiene el LAeq,T más alto o cuál alcanza el mayor pico.
+          La duración modifica la exposición total.
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
+
+    st.markdown('### 4.1 Elige el descriptor correcto')
 
     _choice = st.radio(
         '¿Qué descriptor utilizarías para comparar la energía total de eventos individuales de distinta duración?',
@@ -21082,13 +21152,55 @@ def _c3l1_stage4_impl(lab: dict, saved: dict, deps: Dict[str, Any]):
         horizontal=True,
         key='c3_s4_descriptor_choice',
     )
-    if _choice:
-        if _choice == 'SEL / LAE':
-            st.success('Correcto. SEL/LAE está diseñado para describir la exposición energética de un evento.')
-        else:
-            st.warning('El máximo o un percentil describen otras propiedades. Para exposición de un evento individual, usa SEL/LAE.')
 
-    if st.button('Guardar resultados de Etapa 4', key='c3_s4_save', use_container_width=True):
+    if _choice:
+        _correct4 = (_choice == 'SEL / LAE')
+        if _correct4:
+            st.markdown(
+                """
+                <div style="
+                    margin:.8rem 0;
+                    padding:1rem 1.1rem;
+                    border-radius:14px;
+                    border:1px solid #bfe5ce;
+                    background:#f2fbf6;
+                ">
+                  <div style="font-size:.72rem;font-weight:800;letter-spacing:.06em;color:#278552">
+                    RESPUESTA CORRECTA
+                  </div>
+                  <div style="font-size:1.05rem;font-weight:800;color:#183247;margin:.3rem 0">
+                    SEL / LAE
+                  </div>
+                  <div style="color:#40586b;line-height:1.5">
+                    Es el descriptor diseñado para comparar la exposición energética de eventos individuales,
+                    porque combina el nivel energético del evento con su duración.
+                  </div>
+                </div>
+                """,
+                unsafe_allow_html=True,
+            )
+        else:
+            st.markdown(
+                """
+                <div style="
+                    margin:.8rem 0;
+                    padding:1rem 1.1rem;
+                    border-radius:14px;
+                    border:1px solid #f0cf9d;
+                    background:#fff9ef;
+                ">
+                  <div style="font-size:.72rem;font-weight:800;letter-spacing:.06em;color:#b56b14">
+                    REVISA EL OBJETIVO
+                  </div>
+                  <div style="color:#40586b;line-height:1.5;margin-top:.3rem">
+                    Lmax describe un máximo y L90 una zona persistente de la distribución.
+                    Para comparar la energía total de eventos con distinta duración necesitas un descriptor de exposición.
+                  </div>
+                </div>
+                """,
+                unsafe_allow_html=True,
+            )
+
         saved['c3_stage4_sel'] = {
             'event': _event,
             'laeq_event': float(_event_laeq),
@@ -21099,19 +21211,49 @@ def _c3l1_stage4_impl(lab: dict, saved: dict, deps: Dict[str, Any]):
             'duration_b': float(_dur_b),
             'sel_a': float(_sel_a),
             'sel_b': float(_sel_b),
+            'descriptor_answer': _choice,
+            'descriptor_correct': bool(_correct4),
         }
         _c3l1_save(saved, deps)
-        st.success('Resultados de la Etapa 4 guardados.')
 
-    if str(st.session_state.get('role','')).lower() == 'docente':
+    _viewer_role = (
+        st.session_state.get('role')
+        or st.session_state.get('user_role')
+        or st.session_state.get('modo')
+        or st.session_state.get('view_mode')
+        or ''
+    )
+    _is_teacher_view = str(_viewer_role).lower() in {
+        'docente','teacher','profesor','profesora','instructor'
+    } or bool(
+        st.session_state.get('is_teacher')
+        or st.session_state.get('teacher_mode')
+        or st.session_state.get('vista_docente')
+    )
+
+    if _is_teacher_view:
         st.markdown('### Pauta docente · Etapa 4')
+
         st.markdown(
             """
-            **Idea central para explicar:** Lmax caracteriza un extremo; SEL caracteriza la exposición de un evento completo.
-            Si la duración aumenta y el nivel equivalente del evento se mantiene, SEL aumenta porque se acumula más energía.
-            El tiempo de referencia de 1 s no significa que el evento dure 1 s: es una normalización que permite comparar eventos.
+            **Cómo cerrar esta etapa con los alumnos**
+
+            El punto central es diferenciar tres preguntas:
+
+            - **Lmax:** ¿cuál fue el nivel más alto alcanzado?
+            - **LAeq,T:** ¿cuál fue el nivel energético medio durante la duración real T del evento?
+            - **SEL / LAE:** ¿cuánta exposición energética total contiene ese evento, referida a 1 s?
+
+            Dos eventos pueden tener el mismo Lmax y distinto SEL si duran distinto.
+            Del mismo modo, un evento con LAeq,T algo menor puede terminar con SEL mayor si su duración es suficientemente mayor.
+
+            **Mensaje clave:** SEL/LAE no mide “qué tan fuerte fue el pico”, sino la exposición energética del evento completo.
+
+            **Sobre T₀ = 1 s:** no significa que el evento dure un segundo. Es una referencia matemática que permite comparar eventos de distinta duración sobre una base común.
             """
         )
+
+
 
 def _c3l1_stage5_impl(lab: dict, saved: dict, deps: Dict[str, Any]):
     import matplotlib.pyplot as c3plt
