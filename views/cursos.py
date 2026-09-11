@@ -20394,45 +20394,123 @@ def _c3l1_stage3_impl(lab: dict, saved: dict, deps: Dict[str, Any]):
         label_visibility='collapsed',
     )
 
+    _diag_saved = saved.get('c3_s3_diag_results', {})
+    if not isinstance(_diag_saved, dict):
+        _diag_saved = {}
+
     if _diag_answer is not None:
-        if _diag_answer == _case['best']:
-            st.success(f'Correcto. {_case["why"]}')
-        else:
-            st.warning(
-                f'Para esta misión, revisa el objetivo. La opción más directa es {_case["best"]}. '
-                f'{_case["why"]}'
+        _is_correct = (_diag_answer == _case['best'])
+
+        _diag_saved[_diag_case] = {
+            'answer': _diag_answer,
+            'expected': _case['best'],
+            'correct': bool(_is_correct),
+            'objective': _case['objective'],
+            'explanation': _case['why'],
+            'values': {k: float(v) for k,v in _diag_vals.items()},
+        }
+        saved['c3_s3_diag_results'] = _diag_saved
+
+        if _is_correct:
+            st.success(f'Correcto: {_case["best"]} es el descriptor más directo para esta misión.')
+
+            st.markdown(
+                f"""
+                <div style="
+                    margin:.8rem 0 1rem;
+                    padding:1.05rem 1.15rem;
+                    border-radius:16px;
+                    border:1px solid #bfe6cf;
+                    background:linear-gradient(135deg,#f2fbf6,#ffffff);
+                ">
+                  <div style="font-size:.72rem;font-weight:800;letter-spacing:.08em;color:#258552;margin-bottom:.35rem">
+                    ¿POR QUÉ CORRESPONDE {_case["best"]}?
+                  </div>
+                  <div style="font-size:1.15rem;font-weight:800;color:#183247;margin-bottom:.5rem">
+                    {_case["objective"]}
+                  </div>
+                  <div style="line-height:1.55;color:#40586b">
+                    {_case["why"]}
+                  </div>
+                </div>
+                """,
+                unsafe_allow_html=True,
             )
 
-        _dcols=st.columns(4)
-        for _col,_k in zip(_dcols,['LAeq','Lmax','L10','L90']):
-            _col.metric(_k,f'{_diag_vals[_k]:.1f} dB(A)')
+            _dcols=st.columns(4)
+            for _col,_k in zip(_dcols,['LAeq','Lmax','L10','L90']):
+                _col.metric(_k,f'{_diag_vals[_k]:.1f} dB(A)')
 
-        st.markdown(
-            f"""
-            <div class="c3-key">
-              <b>Aprendizaje:</b> los cuatro valores son correctos, pero responden preguntas distintas.
-              En este caso, <b>{_case["best"]}</b> es el descriptor que se relaciona de forma más directa
-              con la misión planteada.
-            </div>
-            """,
-            unsafe_allow_html=True,
+        else:
+            st.warning(
+                'Revisa la misión y piensa qué propiedad del ambiente necesitas describir: '
+                'energía global, máximo, zona alta o componente persistente.'
+            )
+
+    # Vista docente
+    _viewer_role = (
+        st.session_state.get('role')
+        or st.session_state.get('user_role')
+        or st.session_state.get('modo')
+        or st.session_state.get('view_mode')
+        or ''
+    )
+    _is_teacher_view = str(_viewer_role).lower() in {
+        'docente','teacher','profesor','profesora','instructor'
+    }
+    _is_teacher_view = _is_teacher_view or bool(
+        st.session_state.get('is_teacher')
+        or st.session_state.get('teacher_mode')
+        or st.session_state.get('vista_docente')
+    )
+
+    if _is_teacher_view:
+        st.markdown('### Resultados del alumno · Mesa de diagnóstico')
+
+        _teacher_rows=[]
+        for _name,_meta in _diag_cases.items():
+            _res=_diag_saved.get(_name,{})
+            _teacher_rows.append({
+                'Caso': _name,
+                'Respuesta alumno': _res.get('answer','Sin responder'),
+                'Esperado': _meta['best'],
+                'Resultado': (
+                    'Correcto' if _res.get('correct') is True
+                    else 'Incorrecto' if _res.get('answer')
+                    else 'Pendiente'
+                ),
+            })
+
+        st.dataframe(
+            pd.DataFrame(_teacher_rows),
+            hide_index=True,
+            use_container_width=True,
         )
 
-    st.markdown('### Compara rápidamente los cuatro casos')
+        for _name,_meta in _diag_cases.items():
+            _res=_diag_saved.get(_name,{})
+            with st.container(border=True):
+                st.markdown(f'**{_meta["icon"]} {_name}**')
+                st.caption(_meta['objective'])
 
-    _summary_rows=[]
-    for _name,_meta in _diag_cases.items():
-        _summary_rows.append({
-            'Caso': _name,
-            'Objetivo principal': _meta['objective'],
-            'Descriptor más directo': _meta['best'],
-        })
+                _tc1,_tc2,_tc3=st.columns(3)
+                _tc1.metric('Respuesta alumno', _res.get('answer','—'))
+                _tc2.metric('Descriptor esperado', _meta['best'])
+                _tc3.metric(
+                    'Estado',
+                    'Correcto' if _res.get('correct') is True
+                    else 'Incorrecto' if _res.get('answer')
+                    else 'Pendiente'
+                )
 
-    st.dataframe(
-        pd.DataFrame(_summary_rows),
-        hide_index=True,
-        use_container_width=True,
-    )
+                st.markdown(
+                    f"""
+                    <div class="c3-key">
+                      <b>Explicación técnica:</b> {_meta["why"]}
+                    </div>
+                    """,
+                    unsafe_allow_html=True,
+                )
 
     st.markdown('## 6. Cierre formativo de la Etapa 3')
 
