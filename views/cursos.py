@@ -19711,19 +19711,44 @@ def _c3l1_stage3_impl(lab: dict, saved: dict, deps: Dict[str, Any]):
         unsafe_allow_html=True,
     )
 
-    st.markdown('### 4.2 Del mismo registro salen LAeq y los percentiles')
+    st.markdown('### 4.2 ¿Qué significan L10, L50 y L90?')
+
+    st.write(
+        'Los tres son **niveles de excedencia**. El número indica qué porcentaje del tiempo '
+        'el nivel sonoro fue **igual o superior** a ese valor.'
+    )
 
     st.markdown(
         """
-        <div class="c3-card blue" style="margin-bottom:1rem">
-          <div class="c3-kicker">UNA MISMA MEDICIÓN · DOS FORMAS DE RESUMIRLA</div>
-          <b>LAeq y L10/L50/L90 parten del mismo registro temporal, pero describen cosas distintas.</b>
-          <p style="margin-bottom:.35rem">
-            <b>LAeq</b> resume la energía acústica acumulada durante el periodo.
-            <b>L10, L50 y L90</b> indican qué niveles fueron igualados o superados durante una determinada fracción del tiempo.
-          </p>
-          <div style="color:#52687d">
-            No se calcula L10, L50 o L90 a partir de LAeq. Todos se obtienen directamente de la misma historia temporal.
+        <div class="c3-grid">
+          <div class="c3-card orange">
+            <div class="c3-kicker">L10</div>
+            <b>Nivel excedido durante el 10 % del tiempo</b>
+            <p>Si L10 = 65 dB(A), significa que durante aproximadamente el <b>10 % del periodo</b>
+            el nivel fue igual o superior a 65 dB(A).</p>
+            <div style="color:#52687d">
+              <b>Interpretación:</b> representa la zona alta de la distribución y suele estar influido por los periodos más ruidosos.
+            </div>
+          </div>
+
+          <div class="c3-card blue">
+            <div class="c3-kicker">L50</div>
+            <b>Nivel excedido durante el 50 % del tiempo</b>
+            <p>Si L50 = 59 dB(A), significa que durante aproximadamente la <b>mitad del periodo</b>
+            el nivel fue igual o superior a 59 dB(A).</p>
+            <div style="color:#52687d">
+              <b>Interpretación:</b> corresponde a la mediana de la distribución temporal de niveles.
+            </div>
+          </div>
+
+          <div class="c3-card green">
+            <div class="c3-kicker">L90</div>
+            <b>Nivel excedido durante el 90 % del tiempo</b>
+            <p>Si L90 = 56 dB(A), significa que durante aproximadamente el <b>90 % del periodo</b>
+            el nivel fue igual o superior a 56 dB(A).</p>
+            <div style="color:#52687d">
+              <b>Interpretación:</b> se ubica en la zona baja y persistente del registro y puede ayudar a caracterizar el fondo, según contexto.
+            </div>
           </div>
         </div>
         """,
@@ -19732,17 +19757,10 @@ def _c3l1_stage3_impl(lab: dict, saved: dict, deps: Dict[str, Any]):
 
     st.markdown(
         """
-        <div class="c3-grid-2" style="margin-bottom:1rem">
-          <div class="c3-card blue">
-            <div class="c3-kicker">CAMINO ENERGÉTICO</div>
-            <b>L(t) → energía → LAeq</b>
-            <p>Responde: ¿qué nivel constante tendría la misma energía que todo el periodo?</p>
-          </div>
-          <div class="c3-card green">
-            <div class="c3-kicker">CAMINO ESTADÍSTICO</div>
-            <b>L(t) → tiempo excedido → Ln</b>
-            <p>Responde: ¿qué nivel fue igualado o superado durante n % del tiempo?</p>
-          </div>
+        <div class="c3-key">
+          <b>Regla visual:</b> normalmente L10 &gt; L50 &gt; L90.
+          Para superar un nivel durante casi todo el tiempo (90 %), ese nivel necesariamente debe ser más bajo
+          que el que solo se supera durante una pequeña fracción del periodo (10 %).
         </div>
         """,
         unsafe_allow_html=True,
@@ -19961,82 +19979,12 @@ def _c3l1_stage3_impl(lab: dict, saved: dict, deps: Dict[str, Any]):
         unsafe_allow_html=True,
     )
 
-    st.markdown('### 4.2.2 Ahora ordena exactamente los mismos datos')
-
-    st.write(
-        'Hasta aquí mantuvimos el orden cronológico. Ahora quitamos la información de “cuándo ocurrió” cada nivel '
-        'y ordenamos esas mismas muestras de mayor a menor. Así aparece la curva de excedencia.'
-    )
-
-    _ordered = np.sort(_y_live)[::-1]
-    _exceed = 100.0 * np.arange(1, len(_ordered)+1) / len(_ordered)
-
-    left_ex, right_ex = st.columns(2)
-
-    with left_ex:
-        fig_ex2, ax_ex2 = c3plt.subplots(figsize=(6,4.0))
-        ax_ex2.plot(_t_live, _y_live, lw=1.25)
-        ax_ex2.axhline(
-            _target_level,
-            ls='--',
-            lw=1.7,
-            label=f'{descriptor_to_build} = {_target_level:.1f}'
-        )
-        ax_ex2.fill_between(
-            _t_live,
-            _target_level,
-            _y_live,
-            where=_above_mask,
-            interpolate=True,
-            alpha=.15,
-        )
-        ax_ex2.set_xlabel('Tiempo [s]')
-        ax_ex2.set_ylabel('Nivel [dB(A)]')
-        ax_ex2.set_title('A · Mismos datos en orden temporal')
-        ax_ex2.grid(alpha=.2)
-        ax_ex2.legend(fontsize=8)
-        st.pyplot(fig_ex2, use_container_width=True)
-        c3plt.close(fig_ex2)
-
-    with right_ex:
-        fig_ex3, ax_ex3 = c3plt.subplots(figsize=(6,4.0))
-        ax_ex3.plot(_exceed, _ordered, lw=1.9)
-        ax_ex3.axvline(_target_pct, ls='--', lw=1.7)
-        ax_ex3.axhline(_target_level, ls='--', lw=1.7)
-        ax_ex3.scatter([_target_pct], [_target_level], s=65, zorder=5)
-        ax_ex3.annotate(
-            f'{descriptor_to_build}\n{_target_pct}% → {_target_level:.1f} dB(A)',
-            xy=(_target_pct, _target_level),
-            xytext=(min(72, _target_pct+8), _target_level+1.0),
-            arrowprops={'arrowstyle':'->'},
-        )
-        ax_ex3.set_xlabel('Porcentaje del tiempo en que el nivel fue igualado o superado [%]')
-        ax_ex3.set_ylabel('Nivel [dB(A)]')
-        ax_ex3.set_title('B · Mismos datos ordenados por excedencia')
-        ax_ex3.grid(alpha=.2)
-        st.pyplot(fig_ex3, use_container_width=True)
-        c3plt.close(fig_ex3)
-
-    st.markdown(
-        f"""
-        <div class="c3-card green">
-          <div class="c3-kicker">MISMO CONCEPTO, DOS VISTAS</div>
-          <b>{descriptor_to_build} = {_target_level:.1f} dB(A)</b>
-          <p>
-            En el gráfico temporal ves <b>cuándo</b> el nivel supera ese valor.
-            En la curva de excedencia ves <b>qué porcentaje del tiempo</b> ocurre esa superación.
-            El punto {_target_pct} % → {_target_level:.1f} dB(A) representa exactamente la misma información.
-          </p>
-        </div>
-        """,
-        unsafe_allow_html=True,
-    )
-
     st.markdown('### 4.3 Construye el descriptor seleccionado')
 
+
     st.write(
-        f'Ahora que ya viste qué significa “exceder” directamente en el tiempo, '
-        f'podemos construir formalmente **{descriptor_to_build}** usando el mismo registro 0–{elapsed} s.'
+        f'Ahora que ya viste en la historia temporal qué significa exceder un nivel, '
+        f'construiremos formalmente **{descriptor_to_build}** usando exactamente el mismo registro 0–{elapsed} s.'
     )
 
     st.markdown(
