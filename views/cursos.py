@@ -17633,33 +17633,20 @@ def _c3l1_stage1_impl(lab: dict, saved: dict, deps: Dict[str, Any]):
     if not isinstance(_classification_store, dict):
         _classification_store = {}
 
-    if is_teacher:
-        st.markdown(
-            f'''<div class="c3s1-grid4">
-            <div class="c3s1-mini"><div class="label">Tipo espacial · pauta</div><div class="value">{info['tipo']}</div></div>
-            <div class="c3s1-mini"><div class="label">Temporalidad · pauta</div><div class="value">{info['temporal']}</div></div>
-            <div class="c3s1-mini"><div class="label">Característica</div><div class="value">{info['caracteristica']}</div></div>
-            <div class="c3s1-mini"><div class="label">Receptor potencial</div><div class="value">{info['receptor']}</div></div>
-            </div>''',
-            unsafe_allow_html=True,
-        )
-        st.markdown(
-            f'<div class="c3s1-context"><b>Qué debe observar el alumno:</b> {info["idea"]}</div>',
-            unsafe_allow_html=True,
-        )
-    else:
-        st.markdown(
-            f'''<div class="c3-grid-2">
-            <div class="c3s1-mini"><div class="label">Característica de la fuente</div><div class="value">{info['caracteristica']}</div></div>
-            <div class="c3s1-mini"><div class="label">Receptor potencial</div><div class="value">{info['receptor']}</div></div>
-            </div>''',
-            unsafe_allow_html=True,
-        )
-        st.markdown(
-            '<div class="c3s1-context"><b>Antes de clasificar:</b> observa la ilustración y la historia temporal. '
-            'El tipo espacial, la temporalidad y la explicación se revelarán después de comprobar tu respuesta.</div>',
-            unsafe_allow_html=True,
-        )
+    # Antes de la actividad no se revela la clasificación en ninguna vista.
+    # Esto evita adelantar la respuesta incluso en la vista docente.
+    st.markdown(
+        f'''<div class="c3-grid-2">
+        <div class="c3s1-mini"><div class="label">Característica de la fuente</div><div class="value">{info['caracteristica']}</div></div>
+        <div class="c3s1-mini"><div class="label">Receptor potencial</div><div class="value">{info['receptor']}</div></div>
+        </div>''',
+        unsafe_allow_html=True,
+    )
+    st.markdown(
+        '<div class="c3s1-context"><b>Antes de clasificar:</b> observa la ilustración y la historia temporal. '
+        'El tipo espacial, la temporalidad y la explicación se trabajan en la actividad siguiente.</div>',
+        unsafe_allow_html=True,
+    )
 
     t=np.linspace(0,60,241)
     rng=np.random.default_rng(abs(hash(selected))%(2**32))
@@ -17713,11 +17700,15 @@ def _c3l1_stage1_impl(lab: dict, saved: dict, deps: Dict[str, Any]):
     )
 
     if is_teacher:
-        st.markdown('### Pauta docente · clasificación esperada')
+        st.markdown('### Pauta docente · resultado esperado')
         d1,d2=st.columns(2)
         d1.success(f'**Tipo espacial:** {expected_kind}')
         d2.success(f'**Comportamiento temporal:** {expected_time}')
-        st.caption('Esta pauta permanece oculta en Alumno y Zoom hasta comprobar la clasificación.')
+        st.info(f'**Fundamento:** {info["idea"]}')
+        st.caption(
+            'Esta pauta se muestra aquí —dentro de la actividad— y permanece oculta en Alumno y Zoom '
+            'hasta que el estudiante presiona “Comprobar clasificación”.'
+        )
 
     if st.button('Comprobar clasificación',key='c3_s1_check'):
         ok_kind=q_kind==expected_kind
