@@ -17242,23 +17242,6 @@ def _c2l2_stage10(lab,saved):
 
 _C3L1_CLASS_ID = "clase-05-ruido-ambiental-lab-1"
 
-# Títulos visibles de navegación que ya no deben depender del catálogo histórico
-# de FUTURE_LABS. Sólo se sobreescriben las etapas cuyo contenido fue rediseñado.
-_C3L1_NAV_STAGE_TITLES = {
-    3: "Del registro temporal a los descriptores",
-    4: "Construye LAeq, L10 y L90",
-}
-
-def _c3l1_nav_stage_title(lab, stage):
-    """Título visible en barra lateral y selector de Zoom para Curso 3 · Lab 1."""
-    stage = int(stage)
-    if stage in _C3L1_NAV_STAGE_TITLES:
-        return _C3L1_NAV_STAGE_TITLES[stage]
-    try:
-        return lab["stages"][stage][0]
-    except Exception:
-        return f"Etapa {stage}"
-
 def _course3_lab1_deps():
     """Dependencias del Curso 3 reutilizando exactamente los servicios globales existentes."""
     return {
@@ -19412,33 +19395,203 @@ def _c3l1_stage3_impl(lab: dict, saved: dict, deps: Dict[str, Any]):
         unsafe_allow_html=True,
     )
 
-    st.markdown('## 3. LAeq: energía equivalente, no promedio de dB')
-    st.latex(r'L_{Aeq,T}=10\log_{10}\left(\frac{1}{T}\int_0^T10^{L_A(t)/10}\,dt\right)')
+    st.markdown('## 3. LAeq: ¿qué significa realmente “nivel equivalente”?')
 
     st.markdown(
         """
-        <div class="c3-grid-2">
-          <div class="c3-card blue"><div class="c3-kicker">PROMEDIO ARITMÉTICO</div><b>No conserva energía</b>
-          <p>Promediar directamente 50 dB y 70 dB como (50+70)/2 = 60 dB no representa la energía acústica equivalente.</p></div>
-          <div class="c3-card green"><div class="c3-kicker">PROMEDIO ENERGÉTICO</div><b>Convierte → suma/promedia → vuelve a dB</b>
-          <p>Los niveles se transforman a escala energética antes de combinarlos.</p></div>
+        <div class="c3-card blue">
+          <div class="c3-kicker">IDEA FÍSICA</div>
+          <b>LAeq reemplaza un ruido variable por un nivel constante que contiene la misma energía acústica durante el mismo tiempo.</b>
+          <p>
+            Imagina un registro que sube y baja durante varios minutos. En lugar de describir cada segundo por separado,
+            podemos buscar un único nivel constante que, mantenido durante todo el intervalo <b>T</b>, entregue exactamente
+            la misma energía acústica total que el registro real.
+          </p>
         </div>
         """,
         unsafe_allow_html=True,
     )
 
+    _laeq_svg = """
+    <style>
+      html,body{margin:0;padding:0;background:transparent;font-family:Arial,Helvetica,sans-serif}
+      .box{border:1px solid #d8e6ef;border-radius:18px;background:linear-gradient(180deg,#ffffff,#f4f9fc);padding:12px}
+      svg{width:100%;height:auto;display:block}
+      .wave{fill:none;stroke:#2086bc;stroke-width:4;stroke-linecap:round}
+      .eqline{stroke:#16a34a;stroke-width:5;stroke-dasharray:12 8}
+      .label{font-size:15px;fill:#33495b;font-weight:700}
+      .small{font-size:13px;fill:#60798c}
+    </style>
+    <div class="box">
+      <svg viewBox="0 0 900 300" xmlns="http://www.w3.org/2000/svg" aria-label="Concepto de nivel equivalente">
+        <rect x="20" y="30" width="360" height="210" rx="18" fill="#eef8ff" stroke="#c9dfec"/>
+        <rect x="520" y="30" width="360" height="210" rx="18" fill="#eefbf2" stroke="#cce8d3"/>
+        <text x="200" y="60" text-anchor="middle" class="label">Ruido real variable</text>
+        <text x="700" y="60" text-anchor="middle" class="label">Nivel constante equivalente</text>
+        <line x1="55" y1="205" x2="350" y2="205" stroke="#78909c" stroke-width="2"/>
+        <line x1="55" y1="85" x2="55" y2="205" stroke="#78909c" stroke-width="2"/>
+        <path class="wave" d="M55 175 C80 125 100 185 125 150 S170 95 195 145 S240 190 265 135 S315 100 350 155"/>
+        <text x="200" y="228" text-anchor="middle" class="small">nivel cambia con el tiempo</text>
+        <line x1="555" y1="205" x2="850" y2="205" stroke="#78909c" stroke-width="2"/>
+        <line x1="555" y1="85" x2="555" y2="205" stroke="#78909c" stroke-width="2"/>
+        <line x1="555" y1="145" x2="850" y2="145" class="eqline"/>
+        <text x="700" y="128" text-anchor="middle" class="label">LAeq,T</text>
+        <text x="700" y="228" text-anchor="middle" class="small">misma energía total durante T</text>
+        <path d="M405 135 H490" stroke="#64748b" stroke-width="5" stroke-linecap="round"/>
+        <polygon points="490,135 470,122 470,148" fill="#64748b"/>
+        <text x="448" y="112" text-anchor="middle" class="small">equivalencia energética</text>
+      </svg>
+    </div>
+    """
+    components.html(_laeq_svg, height=345, scrolling=False)
+
+    st.markdown(
+        """
+        <div class="c3-grid">
+          <div class="c3-card blue">
+            <div class="c3-kicker">NO ES</div>
+            <b>El promedio simple de los números en dB</b>
+            <p>La escala decibélica es logarítmica, por lo que sumar niveles y dividir por la cantidad de datos no conserva energía.</p>
+          </div>
+          <div class="c3-card orange">
+            <div class="c3-kicker">TAMPOCO ES</div>
+            <b>El máximo ni el mínimo</b>
+            <p>Lmax y Lmin describen extremos. LAeq integra todo lo ocurrido durante el periodo.</p>
+          </div>
+          <div class="c3-card green">
+            <div class="c3-kicker">SÍ ES</div>
+            <b>Una equivalencia energética</b>
+            <p>Resume en un único nivel constante la energía acústica acumulada durante el intervalo T.</p>
+          </div>
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
+
+    st.markdown('### Del registro temporal a LAeq')
+
+    st.markdown(
+        """
+        <div class="c3-flow">
+          <span class="c3-node">1 · NIVEL VARIABLE L(t)</span><span class="c3-arrow">→</span>
+          <span class="c3-node">2 · CONVERTIR dB A ENERGÍA</span><span class="c3-arrow">→</span>
+          <span class="c3-node">3 · INTEGRAR / PROMEDIAR EN T</span><span class="c3-arrow">→</span>
+          <span class="c3-node">4 · VOLVER A dB</span><span class="c3-arrow">→</span>
+          <span class="c3-node">LAeq,T</span>
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
+
+    st.latex(r'L_{Aeq,T}=10\log_{10}\left(\frac{1}{T}\int_0^T10^{L_A(t)/10}\,dt\right)')
+
+    st.markdown(
+        """
+        <div class="c3-card">
+          <div class="c3-kicker">LEE LA ECUACIÓN SIN MIEDO</div>
+          <p><b>L<sub>A</sub>(t)</b>: nivel sonoro ponderado A que cambia con el tiempo.</p>
+          <p><b>10<sup>L/10</sup></b>: transforma cada nivel en una magnitud proporcional a energía.</p>
+          <p><b>1/T · ∫</b>: acumula toda esa energía y obtiene su valor medio durante el intervalo T.</p>
+          <p><b>10 log<sub>10</sub></b>: devuelve el resultado a la escala de decibelios.</p>
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
+
+    st.markdown('### ¿Por qué no podemos hacer un promedio aritmético de los dB?')
+
+    st.write(
+        'Porque **20 dB de diferencia no significan “20 unidades más de energía”**. '
+        'La escala es logarítmica: un nivel alto aporta desproporcionadamente más energía que uno bajo. '
+        'Por eso, antes de promediar, debemos volver temporalmente a una escala energética.'
+    )
+
+    st.markdown(
+        """
+        <div class="c3-grid-2">
+          <div class="c3-card blue">
+            <div class="c3-kicker">PROMEDIO ARITMÉTICO</div>
+            <b>Opera directamente con los números en dB</b>
+            <p>Ejemplo: (50 + 70) / 2 = 60 dB.</p>
+            <div style="color:#52687d"><b>Problema:</b> no conserva la energía acústica.</div>
+          </div>
+          <div class="c3-card green">
+            <div class="c3-kicker">PROMEDIO ENERGÉTICO</div>
+            <b>Respeta la naturaleza logarítmica del sonido</b>
+            <p>Convierte 50 y 70 dB a energía, promedia esa energía y luego vuelve a dB.</p>
+            <div style="color:#52687d"><b>Resultado correcto para LAeq:</b> el nivel alto pesa mucho más.</div>
+          </div>
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
+
+    st.markdown('### Experimento: combina dos niveles')
+
+    st.write(
+        'Supongamos que durante la mitad del tiempo tienes el **Nivel 1** y durante la otra mitad el **Nivel 2**. '
+        'Mueve ambos controles y compara el promedio simple con el equivalente energético.'
+    )
+
     a,b = st.columns(2)
     L1=a.slider('Nivel 1 [dB]',40,90,50,key='c3_s3_l1')
     L2=b.slider('Nivel 2 [dB]',40,90,70,key='c3_s3_l2')
+
     arithmetic=(L1+L2)/2
     energetic=_c3l1_laeq([L1,L2])
+
     e1,e2,e3=st.columns(3)
     e1.metric('Promedio aritmético',f'{arithmetic:.1f} dB')
-    e2.metric('Promedio energético',f'{energetic:.1f} dB')
+    e2.metric('LAeq energético',f'{energetic:.1f} dB')
     e3.metric('Diferencia',f'{energetic-arithmetic:+.1f} dB')
 
+    if abs(L1-L2) < 1:
+        st.info('Cuando ambos niveles son prácticamente iguales, el promedio aritmético y el energético se aproximan.')
+    elif abs(L1-L2) >= 15:
+        st.info(
+            'Observa cómo el nivel más alto domina el resultado energético. '
+            'Mientras mayor sea la diferencia entre ambos niveles, menos representativo resulta el promedio aritmético.'
+        )
+    else:
+        st.info('El LAeq se desplaza hacia el nivel más alto porque ese intervalo aporta más energía acústica.')
+
+    st.markdown(
+        """
+        <div class="c3-key">
+          <b>Ejemplo inicial 50 / 70 dB:</b> aunque el promedio aritmético es 60 dB, el equivalente energético
+          es aproximadamente 67 dB. El periodo de 70 dB domina la energía total.
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
+
+    st.markdown('### Interpretación profesional')
+
+    st.markdown(
+        """
+        <div class="c3-grid">
+          <div class="c3-card blue">
+            <div class="c3-kicker">LAeq ALTO</div>
+            <b>Mayor energía acústica acumulada</b>
+            <p>Puede originarse por niveles altos, por una exposición prolongada o por ambas condiciones.</p>
+          </div>
+          <div class="c3-card orange">
+            <div class="c3-kicker">UN PICO AISLADO</div>
+            <b>No necesariamente domina LAeq</b>
+            <p>Su efecto depende de cuán intenso sea y de cuánto dure respecto del periodo total.</p>
+          </div>
+          <div class="c3-card green">
+            <div class="c3-kicker">PERIODO T</div>
+            <b>Siempre forma parte del descriptor</b>
+            <p>LAeq debe interpretarse junto con el intervalo de integración: LAeq,1min no describe exactamente lo mismo que LAeq,1h.</p>
+          </div>
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
+
     q_avg=st.radio(
-        'Si un periodo tiene 50 dB y otro 70 dB durante el mismo tiempo, ¿el LAeq es 60 dB?',
+        'Si un periodo tiene 50 dB durante la mitad del tiempo y 70 dB durante la otra mitad, ¿el LAeq es 60 dB?',
         ['Sí','No'],
         index=None,
         horizontal=True,
@@ -19446,9 +19599,12 @@ def _c3l1_stage3_impl(lab: dict, saved: dict, deps: Dict[str, Any]):
     )
     if q_avg:
         if q_avg=='No':
-            st.success('Correcto. Los dB no se promedian aritméticamente; la combinación debe hacerse en energía.')
+            st.success('Correcto. LAeq debe obtenerse a partir de la energía. En este ejemplo resulta aproximadamente 67 dB.')
         else:
-            st.warning('Revisa los dos resultados anteriores: la escala dB es logarítmica.')
+            st.warning(
+                'No. 60 dB es solamente el promedio aritmético de los dos números. '
+                'El nivel equivalente debe conservar la energía acústica.'
+            )
 
     st.markdown('## 4. ¿Qué describen L10, L50 y L90?')
 
@@ -20466,13 +20622,7 @@ def future_lab_view_impl(lab):
                 help="Ábrela en otra ventana y comparte solo esa ventana en Zoom.",
             )
             future_projection_options = {
-                f"Etapa {i} · {(
-                    _future_stage_display_title(lab,i)
-                    if class_id==_C2L2_CLASS_ID
-                    else _c3l1_nav_stage_title(lab,i)
-                    if class_id==_C3L1_CLASS_ID
-                    else lab['stages'][i][0]
-                )}": i
+                f"Etapa {i} · {(_future_stage_display_title(lab,i) if class_id==_C2L2_CLASS_ID else lab['stages'][i][0])}": i
                 for i in range(len(lab["stages"]))
             }
             future_projection_label = st.selectbox(
@@ -20513,8 +20663,6 @@ def future_lab_view_impl(lab):
             format_func=lambda i:(
                 f"Etapa {i} · {_future_stage_display_title(lab,i)}"
                 if class_id==_C2L2_CLASS_ID
-                else f"Etapa {i} · {_c3l1_nav_stage_title(lab,i)}"
-                if class_id==_C3L1_CLASS_ID
                 else f"Etapa {i} · {lab['stages'][i][0]}"
             ),
             key=_stage_key,
