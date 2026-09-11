@@ -20702,20 +20702,114 @@ def _c3l1_stage4_impl(lab: dict, saved: dict, deps: Dict[str, Any]):
 
     st.markdown(
         """
-        <div class="c3-grid-2">
+        <div class="c3-card blue">
+          <div class="c3-kicker">PRIMERO: ¿QUÉ LLAMAMOS EVENTO?</div>
+          <b>Un evento sonoro es una variación acústica delimitable en el tiempo.</b>
+          <p>
+            Tiene un comienzo, una evolución y un término. Puede ser un sobrevuelo, un paso de camión,
+            una bocina, un golpe o una operación breve de maquinaria. Para describirlo correctamente
+            no basta con saber cuál fue su nivel máximo: también importa <b>cuánto tiempo aportó energía</b>.
+          </p>
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
+
+    st.markdown('### 1.1 Tres preguntas distintas sobre el mismo evento')
+
+    st.markdown(
+        """
+        <div class="c3-grid">
           <div class="c3-card orange">
             <div class="c3-kicker">LMAX</div>
-            <b>Describe un extremo</b>
-            <p>Responde: ¿cuál fue el mayor nivel alcanzado?</p>
+            <b>¿Cuál fue el mayor nivel alcanzado?</b>
+            <p>Describe un extremo del registro.</p>
+          </div>
+          <div class="c3-card blue">
+            <div class="c3-kicker">LAeq,T</div>
+            <b>¿Cuál fue el nivel energético medio durante el evento?</b>
+            <p>Resume la energía durante la duración real T del evento.</p>
           </div>
           <div class="c3-card green">
             <div class="c3-kicker">SEL / LAE</div>
-            <b>Describe exposición de un evento</b>
-            <p>Integra la energía acústica del evento y la normaliza a un tiempo de referencia de 1 s.</p>
+            <b>¿Cuánta exposición energética contiene el evento completo?</b>
+            <p>Acumula su energía y la expresa respecto de un tiempo de referencia de 1 s.</p>
           </div>
         </div>
         """,
         unsafe_allow_html=True,
+    )
+
+    st.markdown(
+        """
+        <div class="c3-key">
+          <b>Idea clave:</b> Lmax, LAeq,T y SEL pueden describir el mismo evento,
+          pero responden preguntas diferentes. SEL incorpora explícitamente el efecto de la duración.
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
+
+    st.markdown('### 1.2 ¿Por qué Lmax no basta?')
+
+    _t_cmp = np.linspace(0, 20, 400)
+    _bg_cmp = 50.0
+    _peak_cmp = 80.0
+    _evt_short = _bg_cmp + (_peak_cmp-_bg_cmp)*np.exp(-0.5*((_t_cmp-7.0)/0.7)**2)
+    _evt_long = _bg_cmp + (_peak_cmp-_bg_cmp)*np.exp(-0.5*((_t_cmp-12.0)/2.4)**2)
+
+    _fig_cmp, _ax_cmp = c3plt.subplots(figsize=(10, 3.9))
+    _ax_cmp.plot(_t_cmp, _evt_short, lw=1.7, label='Evento A · breve')
+    _ax_cmp.plot(_t_cmp, _evt_long, lw=1.7, label='Evento B · prolongado')
+    _ax_cmp.axhline(_peak_cmp, ls='--', lw=1.0, alpha=.7, label='Mismo Lmax ≈ 80 dB(A)')
+    _ax_cmp.set_xlabel('Tiempo [s]')
+    _ax_cmp.set_ylabel('Nivel [dB(A)]')
+    _ax_cmp.set_title('Mismo máximo, distinta duración')
+    _ax_cmp.grid(alpha=.2)
+    _ax_cmp.legend(fontsize=8)
+    st.pyplot(_fig_cmp, use_container_width=True)
+    c3plt.close(_fig_cmp)
+
+    st.markdown(
+        """
+        <div class="c3-grid-2">
+          <div class="c3-card orange">
+            <div class="c3-kicker">EVENTO A</div>
+            <b>Pico alto y breve</b>
+            <p>Puede alcanzar 80 dB(A), pero aportar energía solo durante pocos segundos.</p>
+          </div>
+          <div class="c3-card green">
+            <div class="c3-kicker">EVENTO B</div>
+            <b>Mismo pico, mayor duración</b>
+            <p>Puede tener prácticamente el mismo Lmax y, sin embargo, acumular mayor exposición.</p>
+          </div>
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
+
+    _q_same_peak = st.radio(
+        'Si dos eventos tienen el mismo Lmax, ¿necesariamente tienen la misma exposición sonora?',
+        ['Sí', 'No'],
+        index=None,
+        horizontal=True,
+        key='c3_s4_q_same_peak',
+    )
+    if _q_same_peak:
+        if _q_same_peak == 'No':
+            st.success(
+                'Correcto. El máximo solo informa el nivel más alto. '
+                'La exposición depende también de la duración y de cómo evoluciona el nivel durante el evento.'
+            )
+        else:
+            st.warning('Dos eventos pueden alcanzar el mismo máximo y contener distinta energía total.')
+
+    st.markdown('### 1.3 Del LAeq del evento al SEL')
+
+    st.write(
+        'Una vez delimitado el evento entre **t₁** y **t₂**, calculamos su duración '
+        '**T = t₂ − t₁** y su **LAeq,T**. Ese LAeq representa el nivel energético medio durante '
+        'la duración real del evento. SEL/LAE expresa toda esa energía respecto de un tiempo de referencia de 1 segundo.'
     )
 
     st.latex(
@@ -20728,11 +20822,69 @@ def _c3l1_stage4_impl(lab: dict, saved: dict, deps: Dict[str, Any]):
     st.markdown(
         """
         <div class="c3-card">
-          <div class="c3-kicker">LEE LA ECUACIÓN</div>
-          <p><b>L<sub>Aeq,T</sub></b>: nivel equivalente del evento durante su duración real T.</p>
-          <p><b>T</b>: duración del evento en segundos.</p>
-          <p><b>T<sub>0</sub> = 1 s</b>: tiempo de referencia.</p>
-          <p><b>LAE / SEL</b>: nivel de exposición sonora del evento completo, expresado en dB.</p>
+          <div class="c3-kicker">LEE LA RELACIÓN PASO A PASO</div>
+          <p><b>1.</b> Delimita el evento: t₁ → t₂.</p>
+          <p><b>2.</b> Calcula su duración: T = t₂ − t₁.</p>
+          <p><b>3.</b> Obtén LAeq,T durante exactamente ese intervalo.</p>
+          <p><b>4.</b> Corrige por duración mediante 10·log₁₀(T/T₀).</p>
+          <p><b>5.</b> El resultado es SEL / LAE: exposición energética del evento referida a 1 s.</p>
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
+
+    st.markdown('### 1.4 ¿Qué significa “normalizar a 1 segundo”?')
+
+    st.markdown(
+        """
+        <div class="c3-card green">
+          <div class="c3-kicker">NO SIGNIFICA QUE EL EVENTO DURE 1 s</div>
+          <b>El tiempo de referencia permite comparar eventos de distinta duración sobre una base común.</b>
+          <p>
+            La energía total del evento real se conserva. Conceptualmente preguntamos:
+            <em>¿qué nivel concentrado en 1 segundo contendría la misma energía total?</em>
+          </p>
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
+
+    _ex_level = 75.0
+    _durations_demo = [1, 2, 5, 10, 30]
+    _sel_demo = [_c3l1_sel(_ex_level, float(d)) for d in _durations_demo]
+
+    st.dataframe(
+        pd.DataFrame({
+            'LAeq,T [dB(A)]': [_ex_level]*len(_durations_demo),
+            'Duración T [s]': _durations_demo,
+            '10·log10(T/T0) [dB]': [round(10*math.log10(float(d)),1) for d in _durations_demo],
+            'SEL / LAE [dB]': [round(v,1) for v in _sel_demo],
+        }),
+        hide_index=True,
+        use_container_width=True,
+    )
+
+    st.markdown(
+        """
+        <div class="c3-key">
+          <b>Reglas rápidas:</b> si LAeq,T se mantiene constante,
+          duplicar la duración aumenta SEL aproximadamente <b>3 dB</b>;
+          multiplicarla por 10 aumenta SEL aproximadamente <b>10 dB</b>.
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
+
+    st.markdown('### 1.5 Cadena conceptual de la Etapa 4')
+
+    st.markdown(
+        """
+        <div class="c3-flow">
+          <span class="c3-node">EVENTO L(t)</span><span class="c3-arrow">→</span>
+          <span class="c3-node">DELIMITAR t₁–t₂</span><span class="c3-arrow">→</span>
+          <span class="c3-node">DURACIÓN T</span><span class="c3-arrow">→</span>
+          <span class="c3-node">LAeq,T</span><span class="c3-arrow">→</span>
+          <span class="c3-node">SEL / LAE</span>
         </div>
         """,
         unsafe_allow_html=True,
