@@ -19306,6 +19306,65 @@ def _c3l1_stage3_impl(lab: dict, saved: dict, deps: Dict[str, Any]):
         key='c3_s3_show',
     )
 
+    descriptor_info = {
+        'LAeq': {
+            'title': 'Nivel equivalente',
+            'text': 'Resume la energía acústica de todo el periodo en un único nivel constante equivalente.',
+            'read': 'Úsalo para representar la exposición energética global del intervalo.'
+        },
+        'Lmax': {
+            'title': 'Nivel máximo',
+            'text': 'Es el mayor nivel registrado durante el periodo observado.',
+            'read': 'Es especialmente sensible a eventos breves e intensos.'
+        },
+        'Lmin': {
+            'title': 'Nivel mínimo',
+            'text': 'Es el menor nivel registrado durante el periodo.',
+            'read': 'Ayuda a observar los momentos de menor exposición, pero no representa por sí solo el fondo.'
+        },
+        'L10': {
+            'title': 'Nivel excedido 10 % del tiempo',
+            'text': 'Solo durante el 10 % del periodo el nivel estuvo por encima de este valor.',
+            'read': 'Representa la zona alta de la distribución y responde a periodos de mayor nivel.'
+        },
+        'L50': {
+            'title': 'Nivel excedido 50 % del tiempo',
+            'text': 'Durante la mitad del periodo el nivel fue superior a este valor y durante la otra mitad fue inferior.',
+            'read': 'Funciona como una mediana temporal de excedencia.'
+        },
+        'L90': {
+            'title': 'Nivel excedido 90 % del tiempo',
+            'text': 'Durante el 90 % del periodo el nivel estuvo por encima de este valor.',
+            'read': 'Se asocia a la zona baja y persistente del ambiente y puede ayudar a interpretar el ruido de fondo según el contexto.'
+        },
+    }
+
+    if show:
+        st.markdown('### ¿Qué significa cada descriptor seleccionado?')
+        cards = []
+        color_map = {
+            'LAeq':'blue',
+            'Lmax':'orange',
+            'Lmin':'blue',
+            'L10':'orange',
+            'L50':'blue',
+            'L90':'green',
+        }
+        for descriptor in show:
+            info_d = descriptor_info[descriptor]
+            cards.append(
+                f'''<div class="c3-card {color_map.get(descriptor,'blue')}">
+                  <div class="c3-kicker">{descriptor}</div>
+                  <b>{info_d["title"]}</b>
+                  <p>{info_d["text"]}</p>
+                  <div style="color:#52687d"><b>Cómo leerlo:</b> {info_d["read"]}</div>
+                </div>'''
+            )
+        st.markdown(
+            '<div class="c3-grid">' + ''.join(cards) + '</div>',
+            unsafe_allow_html=True,
+        )
+
     t_plot=np.asarray(t,dtype=float).reshape(-1)
     y_plot=np.asarray(y,dtype=float).reshape(-1)
     fig,ax=c3plt.subplots(figsize=(10,4.2))
