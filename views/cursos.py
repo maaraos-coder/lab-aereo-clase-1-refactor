@@ -19218,6 +19218,7 @@ def _c3l1_stage2_impl(lab: dict, saved: dict, deps: Dict[str, Any]):
             else:
                 st.info('Cierre completado. Puedes corregir las respuestas que aún no coinciden con la pauta.')
 def _c3l1_stage3_impl(lab: dict, saved: dict, deps: Dict[str, Any]):
+    import matplotlib.pyplot as c3plt
     _c3l1_style()
     _c3l1_header(
         3,
@@ -19305,9 +19306,10 @@ def _c3l1_stage3_impl(lab: dict, saved: dict, deps: Dict[str, Any]):
         key='c3_s3_show',
     )
 
-    fig,ax=plt.subplots(figsize=(10,4.2))
-    ax.plot(t,y,lw=1.35,label='Nivel temporal')
-    ax.fill_between(t,np.min(y)-2,y,alpha=.06)
+    t_plot=np.asarray(t,dtype=float).reshape(-1)
+    y_plot=np.asarray(y,dtype=float).reshape(-1)
+    fig,ax=c3plt.subplots(figsize=(10,4.2))
+    ax.plot(t_plot,y_plot,lw=1.35,label='Nivel temporal')
     ax.set_xlabel('Tiempo [s]')
     ax.set_ylabel('Nivel [dB(A)]')
     ax.set_title(f'Historia temporal · {scenario}')
@@ -19318,7 +19320,7 @@ def _c3l1_stage3_impl(lab: dict, saved: dict, deps: Dict[str, Any]):
     if show:
         ax.legend(ncol=min(3,len(show)+1),fontsize=8)
     st.pyplot(fig,use_container_width=True)
-    plt.close(fig)
+    c3plt.close(fig)
 
     c1,c2,c3=st.columns(3)
     c1.metric('LAeq',f'{vals["LAeq"]:.1f} dB(A)')
@@ -19412,8 +19414,9 @@ def _c3l1_stage3_impl(lab: dict, saved: dict, deps: Dict[str, Any]):
         'L90':_c3l1_exceedance_percentile(sig,90),
     }
 
-    fig2,ax2=plt.subplots(figsize=(10,3.3))
-    ax2.plot(np.arange(len(sig)),sig,lw=1.25)
+    sig_plot=np.asarray(sig,dtype=float).reshape(-1)
+    fig2,ax2=c3plt.subplots(figsize=(10,3.3))
+    ax2.plot(np.arange(len(sig_plot),dtype=float),sig_plot,lw=1.25)
     ax2.axhline(gen['LAeq'],ls='--',label=f'LAeq {gen["LAeq"]:.1f}')
     ax2.axhline(gen['L90'],ls=':',label=f'L90 {gen["L90"]:.1f}')
     ax2.set_xlabel('Tiempo [s]')
@@ -19422,7 +19425,7 @@ def _c3l1_stage3_impl(lab: dict, saved: dict, deps: Dict[str, Any]):
     ax2.grid(alpha=.2)
     ax2.legend()
     st.pyplot(fig2,use_container_width=True)
-    plt.close(fig2)
+    c3plt.close(fig2)
 
     gcols=st.columns(5)
     for col,k in zip(gcols,['LAeq','Lmax','L10','L50','L90']):
@@ -19478,6 +19481,7 @@ def _c3l1_stage3_impl(lab: dict, saved: dict, deps: Dict[str, Any]):
 
 
 def _c3l1_stage4_impl(lab: dict, saved: dict, deps: Dict[str, Any]):
+    import matplotlib.pyplot as c3plt
     _c3l1_style()
     _c3l1_header(
         4,
@@ -19543,8 +19547,10 @@ def _c3l1_stage4_impl(lab: dict, saved: dict, deps: Dict[str, Any]):
 
     left,right=st.columns(2)
     with left:
-        fig1,ax1=plt.subplots(figsize=(6,3.6))
-        ax1.plot(tt,base_signal,lw=1.2)
+        tt_plot=np.asarray(tt,dtype=float).reshape(-1)
+        base_plot=np.asarray(base_signal,dtype=float).reshape(-1)
+        fig1,ax1=c3plt.subplots(figsize=(6,3.6))
+        ax1.plot(tt_plot,base_plot,lw=1.2)
         ax1.axhline(p10,ls='--',label=f'L10 {p10:.1f}')
         ax1.axhline(p90,ls=':',label=f'L90 {p90:.1f}')
         ax1.set_xlabel('Tiempo [s]')
@@ -19553,10 +19559,10 @@ def _c3l1_stage4_impl(lab: dict, saved: dict, deps: Dict[str, Any]):
         ax1.grid(alpha=.2)
         ax1.legend()
         st.pyplot(fig1,use_container_width=True)
-        plt.close(fig1)
+        c3plt.close(fig1)
 
     with right:
-        fig2,ax2=plt.subplots(figsize=(6,3.6))
+        fig2,ax2=c3plt.subplots(figsize=(6,3.6))
         ax2.plot(exceed,ordered,lw=1.8)
         ax2.axvline(10,ls='--')
         ax2.axvline(50,ls=':')
@@ -19567,7 +19573,7 @@ def _c3l1_stage4_impl(lab: dict, saved: dict, deps: Dict[str, Any]):
         ax2.set_title('Curva de excedencia')
         ax2.grid(alpha=.2)
         st.pyplot(fig2,use_container_width=True)
-        plt.close(fig2)
+        c3plt.close(fig2)
 
     pcols=st.columns(3)
     pcols[0].metric('L10',f'{p10:.1f} dB(A)')
@@ -19614,9 +19620,12 @@ def _c3l1_stage4_impl(lab: dict, saved: dict, deps: Dict[str, Any]):
         'L90':_c3l1_exceedance_percentile(modified,90),
     }
 
-    fig3,ax3=plt.subplots(figsize=(10,3.8))
-    ax3.plot(tt,base_signal,lw=1,alpha=.55,label='Original')
-    ax3.plot(tt,modified,lw=1.4,label='Con evento')
+    tt_evt=np.asarray(tt,dtype=float).reshape(-1)
+    base_evt=np.asarray(base_signal,dtype=float).reshape(-1)
+    mod_evt=np.asarray(modified,dtype=float).reshape(-1)
+    fig3,ax3=c3plt.subplots(figsize=(10,3.8))
+    ax3.plot(tt_evt,base_evt,lw=1,alpha=.55,label='Original')
+    ax3.plot(tt_evt,mod_evt,lw=1.4,label='Con evento')
     ax3.axvspan(lo,hi,alpha=.12,label='Evento añadido')
     ax3.set_xlabel('Tiempo [s]')
     ax3.set_ylabel('dB(A)')
@@ -19624,7 +19633,7 @@ def _c3l1_stage4_impl(lab: dict, saved: dict, deps: Dict[str, Any]):
     ax3.grid(alpha=.2)
     ax3.legend()
     st.pyplot(fig3,use_container_width=True)
-    plt.close(fig3)
+    c3plt.close(fig3)
 
     rows=[]
     for k in ['LAeq','Lmax','L10','L90']:
