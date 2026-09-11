@@ -19711,16 +19711,20 @@ def _c3l1_stage3_impl(lab: dict, saved: dict, deps: Dict[str, Any]):
         unsafe_allow_html=True,
     )
 
-    st.markdown('### 4.2 Del mismo registro salen LAeq y los percentiles, pero por caminos distintos')
+    st.markdown('### 4.2 Del mismo registro salen LAeq y los percentiles')
 
     st.markdown(
         """
-        <div class="c3-card blue">
-          <div class="c3-kicker">PUNTO CLAVE</div>
-          <b>No se convierte LAeq en L10, L50 o L90.</b>
-          <p>Todos parten del mismo registro temporal <b>L(t)</b>, pero resumen propiedades distintas.
-          LAeq resume la <b>energía acústica</b>; los niveles L<sub>n</sub> describen la
-          <b>distribución temporal</b> de los niveles.</p>
+        <div class="c3-card blue" style="margin-bottom:1rem">
+          <div class="c3-kicker">UNA MISMA MEDICIÓN · DOS FORMAS DE RESUMIRLA</div>
+          <b>LAeq y L10/L50/L90 parten del mismo registro temporal, pero describen cosas distintas.</b>
+          <p style="margin-bottom:.35rem">
+            <b>LAeq</b> resume la energía acústica acumulada durante el periodo.
+            <b>L10, L50 y L90</b> indican qué niveles fueron igualados o superados durante una determinada fracción del tiempo.
+          </p>
+          <div style="color:#52687d">
+            No se calcula L10, L50 o L90 a partir de LAeq. Todos se obtienen directamente de la misma historia temporal.
+          </div>
         </div>
         """,
         unsafe_allow_html=True,
@@ -19728,86 +19732,17 @@ def _c3l1_stage3_impl(lab: dict, saved: dict, deps: Dict[str, Any]):
 
     st.markdown(
         """
-        <div class="c3-flow">
-          <span class="c3-node">REGISTRO L(t)</span><span class="c3-arrow">→</span>
-          <span class="c3-node">RAMA ENERGÉTICA</span><span class="c3-arrow">→</span>
-          <span class="c3-node">LAeq</span>
-        </div>
-        <div class="c3-flow" style="margin-top:.55rem">
-          <span class="c3-node">REGISTRO L(t)</span><span class="c3-arrow">→</span>
-          <span class="c3-node">ORDENAR NIVELES</span><span class="c3-arrow">→</span>
-          <span class="c3-node">% DE EXCEDENCIA</span><span class="c3-arrow">→</span>
-          <span class="c3-node">L10 · L50 · L90</span>
-        </div>
-        """,
-        unsafe_allow_html=True,
-    )
-
-    st.markdown('#### Rama 1 · LAeq: promedio energético del periodo')
-    st.latex(r'L_{Aeq,T}=10\log_{10}\left(\frac{1}{N}\sum_{i=1}^{N}10^{L_{A,i}/10}\right)')
-    st.write(
-        'Para datos discretos, cada nivel medido se transforma a escala energética, '
-        'se promedian esas contribuciones y luego se vuelve a decibelios.'
-    )
-
-    st.markdown('#### Rama 2 · Lₙ: nivel excedido durante n % del tiempo')
-    st.latex(r'L_n = L \;\; \mathrm{tal\ que} \;\; P(L_A \geq L_n)=\frac{n}{100}')
-    st.write(
-        'Esto significa que **L10** es el nivel que fue igualado o superado durante el 10 % del tiempo; '
-        '**L50**, durante el 50 %; y **L90**, durante el 90 %.'
-    )
-
-    st.markdown(
-        """
-        <div class="c3-grid-2">
+        <div class="c3-grid-2" style="margin-bottom:1rem">
           <div class="c3-card blue">
-            <div class="c3-kicker">LAeq</div>
-            <b>¿Qué pregunta responde?</b>
-            <p>¿Qué nivel constante tendría la misma energía acústica total que todo el registro?</p>
+            <div class="c3-kicker">CAMINO ENERGÉTICO</div>
+            <b>L(t) → energía → LAeq</b>
+            <p>Responde: ¿qué nivel constante tendría la misma energía que todo el periodo?</p>
           </div>
           <div class="c3-card green">
-            <div class="c3-kicker">L10 / L50 / L90</div>
-            <b>¿Qué pregunta responden?</b>
-            <p>¿Qué nivel fue igualado o superado durante una determinada fracción del tiempo?</p>
+            <div class="c3-kicker">CAMINO ESTADÍSTICO</div>
+            <b>L(t) → tiempo excedido → Ln</b>
+            <p>Responde: ¿qué nivel fue igualado o superado durante n % del tiempo?</p>
           </div>
-        </div>
-        """,
-        unsafe_allow_html=True,
-    )
-
-    st.markdown('#### Ejemplo corto con 10 mediciones')
-
-    _demo = np.array([70,68,66,64,62,60,58,56,54,52], dtype=float)
-    _demo_sorted = np.sort(_demo)[::-1]
-    _demo_exceed = 100.0*np.arange(1,len(_demo_sorted)+1)/len(_demo_sorted)
-    _demo_laeq = _c3l1_laeq(_demo)
-    _demo_l10 = _c3l1_exceedance_percentile(_demo,10)
-    _demo_l50 = _c3l1_exceedance_percentile(_demo,50)
-    _demo_l90 = _c3l1_exceedance_percentile(_demo,90)
-
-    st.dataframe(
-        pd.DataFrame({
-            'Muestra': np.arange(1,len(_demo)+1),
-            'Nivel original [dB]': _demo,
-            'Nivel ordenado ↓ [dB]': _demo_sorted,
-            'Tiempo excedido [%]': _demo_exceed,
-        }),
-        hide_index=True,
-        use_container_width=True,
-    )
-
-    d1,d2,d3,d4 = st.columns(4)
-    d1.metric('LAeq', f'{_demo_laeq:.1f} dB')
-    d2.metric('L10', f'{_demo_l10:.1f} dB')
-    d3.metric('L50', f'{_demo_l50:.1f} dB')
-    d4.metric('L90', f'{_demo_l90:.1f} dB')
-
-    st.markdown(
-        """
-        <div class="c3-key">
-          <b>Observa:</b> con exactamente los mismos datos obtenemos un LAeq por energía y,
-          separadamente, L10/L50/L90 por posición dentro de la distribución de excedencia.
-          Ninguno se calcula a partir del otro.
         </div>
         """,
         unsafe_allow_html=True,
@@ -19848,15 +19783,45 @@ def _c3l1_stage3_impl(lab: dict, saved: dict, deps: Dict[str, Any]):
 
     st.markdown(
         f"""
-        <div class="c3-card orange">
-          <div class="c3-kicker">¿QUÉ SIGNIFICA EXCEDER?</div>
-          <b>Igualar o superar un determinado nivel durante una fracción del tiempo.</b>
-          <p>
-            En este registro, <b>{descriptor_to_build} = {_target_level:.1f} dB(A)</b>.
-            Eso significa que el nivel fue <b>igual o superior a {_target_level:.1f} dB(A)</b>
-            durante aproximadamente <b>{_above_seconds:.0f} s de {_total_seconds:.0f} s</b>,
-            es decir, cerca del <b>{_above_pct:.0f} % del tiempo</b>.
-          </p>
+        <div style="
+            margin:1rem 0 1.1rem;
+            padding:1.15rem 1.25rem;
+            border:1px solid #ffd1bd;
+            border-radius:18px;
+            background:linear-gradient(135deg,#fff8f2,#fffdf9);
+        ">
+          <div style="font-size:.72rem;font-weight:800;letter-spacing:.08em;color:#d25b2a;margin-bottom:.35rem">
+            ¿QUÉ SIGNIFICA EXCEDER?
+          </div>
+          <div style="font-size:1.18rem;font-weight:800;color:#193247;margin-bottom:.55rem">
+            Igualar o superar un nivel durante una fracción del tiempo.
+          </div>
+          <div style="font-size:1rem;line-height:1.55;color:#40586b">
+            Para esta medición:
+            <b>{descriptor_to_build} = {_target_level:.1f} dB(A)</b>.
+            El nivel estuvo <b>en o sobre {_target_level:.1f} dB(A)</b>
+            durante aproximadamente <b>{_above_seconds:.0f} s</b> de un total de
+            <b>{_total_seconds:.0f} s</b>.
+          </div>
+          <div style="
+              display:grid;
+              grid-template-columns:repeat(3,minmax(0,1fr));
+              gap:.7rem;
+              margin-top:1rem;
+          ">
+            <div style="padding:.75rem;border-radius:12px;background:#ffffff;border:1px solid #eadfd8">
+              <div style="font-size:.72rem;color:#718394">NIVEL</div>
+              <div style="font-size:1.35rem;font-weight:800;color:#193247">{_target_level:.1f} dB(A)</div>
+            </div>
+            <div style="padding:.75rem;border-radius:12px;background:#ffffff;border:1px solid #eadfd8">
+              <div style="font-size:.72rem;color:#718394">TIEMPO EXCEDIDO</div>
+              <div style="font-size:1.35rem;font-weight:800;color:#193247">{_above_seconds:.0f} s</div>
+            </div>
+            <div style="padding:.75rem;border-radius:12px;background:#ffffff;border:1px solid #eadfd8">
+              <div style="font-size:.72rem;color:#718394">PORCENTAJE</div>
+              <div style="font-size:1.35rem;font-weight:800;color:#193247">{_above_pct:.0f} %</div>
+            </div>
+          </div>
         </div>
         """,
         unsafe_allow_html=True,
@@ -19912,10 +19877,20 @@ def _c3l1_stage3_impl(lab: dict, saved: dict, deps: Dict[str, Any]):
 
     st.markdown(
         f"""
-        <div class="c3-key">
-          <b>Lee el gráfico así:</b> todo lo resaltado representa tiempo durante el cual
-          <b>L(t) ≥ {_target_level:.1f} dB(A)</b>. La suma de esos intervalos equivale aproximadamente
-          al <b>{_target_pct} % del periodo</b> para {descriptor_to_build}.
+        <div style="
+            margin:.8rem 0;
+            padding:.85rem 1rem;
+            border-left:4px solid #2796d6;
+            border-radius:10px;
+            background:#eef8fd;
+            color:#29465a;
+        ">
+          <b>Cómo leer el gráfico:</b>
+          las zonas resaltadas son los momentos en que
+          <b>L(t) ≥ {_target_level:.1f} dB(A)</b>.
+          Sumando esos intervalos obtenemos aproximadamente
+          <b>{_above_seconds:.0f} s</b>, equivalentes a
+          <b>{_above_pct:.0f} % del periodo</b>.
         </div>
         """,
         unsafe_allow_html=True,
@@ -19925,13 +19900,38 @@ def _c3l1_stage3_impl(lab: dict, saved: dict, deps: Dict[str, Any]):
     _bar_pct = max(0.0, min(100.0, _above_pct))
     st.markdown(
         f"""
-        <div style="margin:.7rem 0 1rem">
-          <div style="display:flex;justify-content:space-between;font-size:.9rem;color:#52687d;margin-bottom:.35rem">
-            <span>Tiempo en o sobre {descriptor_to_build}</span>
-            <span><b>{_above_seconds:.0f} s / {_total_seconds:.0f} s ≈ {_above_pct:.0f} %</b></span>
+        <div style="margin:1rem 0 1.1rem">
+          <div style="display:flex;justify-content:space-between;align-items:end;margin-bottom:.45rem">
+            <div>
+              <div style="font-size:.72rem;font-weight:800;letter-spacing:.06em;color:#61798b">
+                PROPORCIÓN DEL TIEMPO EXCEDIDO
+              </div>
+              <div style="font-size:.95rem;color:#40586b">
+                L(t) ≥ {_target_level:.1f} dB(A)
+              </div>
+            </div>
+            <div style="font-size:1.15rem;font-weight:800;color:#193247">
+              {_above_seconds:.0f} / {_total_seconds:.0f} s
+              <span style="color:#e45845">· {_above_pct:.0f} %</span>
+            </div>
           </div>
-          <div style="height:18px;background:#e8eef3;border-radius:999px;overflow:hidden;border:1px solid #d6e1e8">
-            <div style="width:{_bar_pct:.1f}%;height:100%;background:linear-gradient(90deg,#ff8a65,#ff5252)"></div>
+          <div style="
+              height:22px;
+              background:#e7edf2;
+              border-radius:999px;
+              overflow:hidden;
+              box-shadow:inset 0 0 0 1px #d6e1e8;
+          ">
+            <div style="
+                width:{_bar_pct:.1f}%;
+                height:100%;
+                background:linear-gradient(90deg,#ff966f,#ff564f);
+                border-radius:999px;
+            "></div>
+          </div>
+          <div style="display:flex;justify-content:space-between;font-size:.72rem;color:#7a8d9a;margin-top:.3rem">
+            <span>0 %</span>
+            <span>100 % del periodo medido</span>
           </div>
         </div>
         """,
@@ -19943,18 +19943,18 @@ def _c3l1_stage3_impl(lab: dict, saved: dict, deps: Dict[str, Any]):
         <div class="c3-grid">
           <div class="c3-card orange">
             <div class="c3-kicker">L10</div>
-            <b>Pocos intervalos, nivel relativamente alto</b>
-            <p>Solo alrededor del 10 % del tiempo el registro se encuentra en o sobre L10.</p>
+            <b>Zona alta</b>
+            <p><b>10 % del tiempo</b> está en o sobre este nivel.</p>
           </div>
           <div class="c3-card blue">
             <div class="c3-kicker">L50</div>
-            <b>Aproximadamente la mitad del tiempo</b>
-            <p>El nivel está en o sobre L50 durante aproximadamente el 50 % del periodo.</p>
+            <b>Mitad del periodo</b>
+            <p><b>50 % del tiempo</b> está en o sobre este nivel.</p>
           </div>
           <div class="c3-card green">
             <div class="c3-kicker">L90</div>
-            <b>Casi todo el periodo</b>
-            <p>El nivel está en o sobre L90 durante aproximadamente el 90 % del tiempo.</p>
+            <b>Zona baja/persistente</b>
+            <p><b>90 % del tiempo</b> está en o sobre este nivel.</p>
           </div>
         </div>
         """,
