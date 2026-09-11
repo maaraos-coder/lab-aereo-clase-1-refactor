@@ -20447,7 +20447,7 @@ def _c3l1_stage3_impl(lab: dict, saved: dict, deps: Dict[str, Any]):
                 'energía global, máximo, zona alta o componente persistente.'
             )
 
-    # Vista docente
+    # Vista docente: mostrar únicamente la pauta técnica correcta.
     _viewer_role = (
         st.session_state.get('role')
         or st.session_state.get('user_role')
@@ -20465,52 +20465,54 @@ def _c3l1_stage3_impl(lab: dict, saved: dict, deps: Dict[str, Any]):
     )
 
     if _is_teacher_view:
-        st.markdown('### Resultados del alumno · Mesa de diagnóstico')
+        st.markdown('### Pauta docente · Mesa de diagnóstico')
 
-        _teacher_rows=[]
-        for _name,_meta in _diag_cases.items():
-            _res=_diag_saved.get(_name,{})
-            _teacher_rows.append({
-                'Caso': _name,
-                'Respuesta alumno': _res.get('answer','Sin responder'),
-                'Esperado': _meta['best'],
-                'Resultado': (
-                    'Correcto' if _res.get('correct') is True
-                    else 'Incorrecto' if _res.get('answer')
-                    else 'Pendiente'
-                ),
-            })
-
-        st.dataframe(
-            pd.DataFrame(_teacher_rows),
-            hide_index=True,
-            use_container_width=True,
+        st.markdown(
+            """
+            <div class="c3-key">
+              Esta pauta muestra directamente el descriptor técnicamente más adecuado para cada misión
+              y la justificación que debe manejar el docente. No depende de si el alumno respondió o no.
+            </div>
+            """,
+            unsafe_allow_html=True,
         )
 
         for _name,_meta in _diag_cases.items():
-            _res=_diag_saved.get(_name,{})
             with st.container(border=True):
                 st.markdown(f'**{_meta["icon"]} {_name}**')
-                st.caption(_meta['objective'])
+                st.caption(_meta['subtitle'])
 
-                _tc1,_tc2,_tc3=st.columns(3)
-                _tc1.metric('Respuesta alumno', _res.get('answer','—'))
-                _tc2.metric('Descriptor esperado', _meta['best'])
-                _tc3.metric(
-                    'Estado',
-                    'Correcto' if _res.get('correct') is True
-                    else 'Incorrecto' if _res.get('answer')
-                    else 'Pendiente'
-                )
+                _pc1,_pc2 = st.columns([1.15, 1.85])
 
-                st.markdown(
-                    f"""
-                    <div class="c3-key">
-                      <b>Explicación técnica:</b> {_meta["why"]}
-                    </div>
-                    """,
-                    unsafe_allow_html=True,
-                )
+                with _pc1:
+                    st.metric('Descriptor correcto', _meta['best'])
+
+                with _pc2:
+                    st.markdown(
+                        f"""
+                        <div style="
+                            height:100%;
+                            padding:.85rem 1rem;
+                            border-radius:12px;
+                            background:#eef8fd;
+                            border-left:4px solid #1596d2;
+                        ">
+                          <div style="font-size:.72rem;font-weight:800;letter-spacing:.06em;color:#157bb0">
+                            OBJETIVO DEL CASO
+                          </div>
+                          <div style="font-weight:700;color:#29465a;margin:.25rem 0 .5rem">
+                            {_meta["objective"]}
+                          </div>
+                          <div style="font-size:.72rem;font-weight:800;letter-spacing:.06em;color:#157bb0">
+                            EXPLICACIÓN TÉCNICA
+                          </div>
+                          <div style="color:#40586b;margin-top:.25rem">
+                            {_meta["why"]}
+                          </div>
+                        </div>
+                        """,
+                        unsafe_allow_html=True,
+                    )
 
     st.markdown('## 6. Cierre formativo de la Etapa 3')
 
