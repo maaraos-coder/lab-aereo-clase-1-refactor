@@ -17458,6 +17458,174 @@ def _c3l1_stage1_impl(lab: dict, saved: dict, deps: Dict[str, Any]):
 
     selected = st.selectbox('Selecciona una fuente del escenario', list(sources), key='c3_s1_source')
     info = sources[selected]
+
+    _source_visuals = {
+        'Automóvil': {
+            'accent': '#2563eb',
+            'title': 'Automóvil en vía urbana',
+            'subtitle': 'Fuente móvil · tránsito vial',
+            'svg': '''
+                <rect x="78" y="150" width="220" height="58" rx="20" fill="#2563eb"/>
+                <rect x="118" y="118" width="110" height="50" rx="18" fill="#8ec5ff"/>
+                <circle cx="125" cy="214" r="23" fill="#263238"/>
+                <circle cx="250" cy="214" r="23" fill="#263238"/>
+                <circle cx="125" cy="214" r="10" fill="#b8c4cc"/>
+                <circle cx="250" cy="214" r="10" fill="#b8c4cc"/>
+                <path class="sv-wave" d="M315 165 C355 145 385 145 420 165"/>
+                <path class="sv-wave sv2" d="M315 165 C370 120 415 120 462 165"/>
+                <path class="sv-wave sv3" d="M315 165 C390 92 450 92 515 165"/>
+            ''',
+        },
+        'Bus urbano': {
+            'accent': '#0f766e',
+            'title': 'Bus urbano',
+            'subtitle': 'Fuente móvil · tránsito pesado',
+            'svg': '''
+                <rect x="60" y="102" width="310" height="112" rx="20" fill="#0f766e"/>
+                <rect x="88" y="120" width="78" height="48" rx="7" fill="#c9f3ee"/>
+                <rect x="178" y="120" width="78" height="48" rx="7" fill="#c9f3ee"/>
+                <rect x="268" y="120" width="70" height="48" rx="7" fill="#c9f3ee"/>
+                <circle cx="125" cy="220" r="24" fill="#263238"/>
+                <circle cx="315" cy="220" r="24" fill="#263238"/>
+                <path class="sv-wave" d="M386 155 C430 138 465 138 500 155"/>
+                <path class="sv-wave sv2" d="M386 155 C446 115 494 115 542 155"/>
+            ''',
+        },
+        'Carretera': {
+            'accent': '#334155',
+            'title': 'Carretera / flujo vehicular',
+            'subtitle': 'Fuente lineal · exposición persistente',
+            'svg': '''
+                <polygon points="40,250 215,72 365,72 610,250" fill="#475569"/>
+                <line x1="325" y1="86" x2="325" y2="242" stroke="#f7e27e" stroke-width="8" stroke-dasharray="28 22"/>
+                <rect x="215" y="145" width="76" height="30" rx="9" fill="#ef4444"/>
+                <circle cx="232" cy="180" r="10" fill="#1f2937"/>
+                <circle cx="275" cy="180" r="10" fill="#1f2937"/>
+                <rect x="354" y="105" width="92" height="36" rx="10" fill="#2563eb"/>
+                <circle cx="375" cy="146" r="11" fill="#1f2937"/>
+                <circle cx="426" cy="146" r="11" fill="#1f2937"/>
+                <path class="sv-wave" d="M465 128 C505 110 540 110 575 128"/>
+                <path class="sv-wave sv2" d="M455 145 C515 100 560 100 607 145"/>
+            ''',
+        },
+        'Obra en construcción': {
+            'accent': '#d97706',
+            'title': 'Obra en construcción',
+            'subtitle': 'Fuente de área / puntual · actividad intermitente',
+            'svg': '''
+                <rect x="118" y="138" width="250" height="88" rx="8" fill="#f3c677"/>
+                <rect x="145" y="105" width="190" height="40" rx="4" fill="#e5a33a"/>
+                <line x1="420" y1="52" x2="420" y2="230" stroke="#d97706" stroke-width="12"/>
+                <line x1="420" y1="62" x2="570" y2="62" stroke="#d97706" stroke-width="10"/>
+                <line x1="420" y1="62" x2="355" y2="95" stroke="#d97706" stroke-width="8"/>
+                <line x1="540" y1="62" x2="540" y2="135" stroke="#d97706" stroke-width="5"/>
+                <rect x="522" y="135" width="36" height="18" rx="4" fill="#805c2c"/>
+                <path class="sv-wave" d="M370 175 C415 155 455 155 490 175"/>
+                <path class="sv-wave sv2" d="M360 190 C430 140 480 140 535 190"/>
+            ''',
+        },
+        'Sobrevuelo de avión': {
+            'accent': '#7c3aed',
+            'title': 'Sobrevuelo de avión',
+            'subtitle': 'Evento móvil · aparición y desaparición',
+            'svg': '''
+                <path d="M100 150 L265 118 L345 66 L375 76 L330 122 L515 132 L532 151 L326 160 L375 213 L345 222 L260 166 L100 178 Z" fill="#7c3aed"/>
+                <path class="sv-wave" d="M245 190 C280 220 320 226 360 210"/>
+                <path class="sv-wave sv2" d="M210 198 C270 250 340 260 410 225"/>
+                <path class="sv-wave sv3" d="M180 205 C270 280 375 285 470 240"/>
+            ''',
+        },
+        'Equipo HVAC': {
+            'accent': '#0891b2',
+            'title': 'Equipo HVAC',
+            'subtitle': 'Fuente fija · operación continua / cíclica',
+            'svg': '''
+                <rect x="130" y="94" width="300" height="145" rx="18" fill="#dbe8ee" stroke="#7596a8" stroke-width="5"/>
+                <circle cx="280" cy="166" r="62" fill="#f7fbfd" stroke="#7596a8" stroke-width="7"/>
+                <circle cx="280" cy="166" r="11" fill="#7596a8"/>
+                <g transform="translate(280,166)" fill="#90aeba">
+                  <ellipse cx="0" cy="-32" rx="12" ry="34"/>
+                  <ellipse cx="0" cy="32" rx="12" ry="34"/>
+                  <ellipse cx="-32" cy="0" rx="34" ry="12"/>
+                  <ellipse cx="32" cy="0" rx="34" ry="12"/>
+                </g>
+                <rect x="455" y="125" width="54" height="86" rx="8" fill="#b7ccd6"/>
+                <path class="sv-wave" d="M438 140 C475 122 510 122 545 140"/>
+                <path class="sv-wave sv2" d="M438 166 C495 126 538 126 580 166"/>
+                <path class="sv-wave sv3" d="M438 192 C512 135 565 135 615 192"/>
+            ''',
+        },
+        'Comercio y personas': {
+            'accent': '#db2777',
+            'title': 'Comercio y actividad humana',
+            'subtitle': 'Fuente de área · comportamiento variable',
+            'svg': '''
+                <rect x="105" y="92" width="320" height="155" rx="12" fill="#f7d3e5"/>
+                <rect x="135" y="125" width="260" height="58" rx="6" fill="#fff"/>
+                <rect x="152" y="195" width="58" height="52" rx="5" fill="#d9a8c0"/>
+                <rect x="250" y="195" width="58" height="52" rx="5" fill="#d9a8c0"/>
+                <circle cx="468" cy="154" r="22" fill="#f0b18a"/>
+                <rect x="450" y="176" width="36" height="58" rx="12" fill="#db2777"/>
+                <circle cx="525" cy="165" r="20" fill="#f0b18a"/>
+                <rect x="509" y="185" width="34" height="52" rx="12" fill="#7c3aed"/>
+                <path class="sv-wave" d="M548 165 C575 150 595 150 615 165"/>
+                <path class="sv-wave sv2" d="M548 190 C585 162 612 162 638 190"/>
+            ''',
+        },
+        'Sirena de emergencia': {
+            'accent': '#dc2626',
+            'title': 'Sirena de emergencia',
+            'subtitle': 'Evento móvil · nivel máximo destacado',
+            'svg': '''
+                <rect x="118" y="145" width="280" height="80" rx="20" fill="#f8fafc" stroke="#94a3b8" stroke-width="4"/>
+                <rect x="160" y="110" width="130" height="54" rx="14" fill="#cfe2ff"/>
+                <circle cx="180" cy="232" r="25" fill="#263238"/>
+                <circle cx="340" cy="232" r="25" fill="#263238"/>
+                <rect x="220" y="128" width="72" height="18" rx="8" fill="#dc2626"/>
+                <circle cx="256" cy="137" r="7" fill="#fef2f2"/>
+                <path class="sv-wave" d="M410 150 C450 125 485 125 520 150"/>
+                <path class="sv-wave sv2" d="M410 180 C468 138 510 138 552 180"/>
+                <path class="sv-wave sv3" d="M410 208 C487 150 540 150 590 208"/>
+            ''',
+        },
+    }
+
+    _vis = _source_visuals[selected]
+    _source_visual_html = f'''
+    <style>
+      html,body{{margin:0;padding:0;background:transparent;font-family:Arial,Helvetica,sans-serif}}
+      .c3src-card{{border:1px solid #d8e6ef;border-radius:18px;background:linear-gradient(180deg,#ffffff,#f5f9fc);padding:14px 16px;overflow:hidden}}
+      .c3src-head{{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-bottom:4px}}
+      .c3src-title{{font-weight:900;font-size:18px;color:#102f4d}}
+      .c3src-sub{{font-size:13px;color:#627b8d}}
+      .c3src-svg{{width:100%;height:auto;max-height:270px;display:block}}
+      .c3src-svg .sv-wave{{fill:none;stroke:{_vis["accent"]};stroke-width:5;stroke-linecap:round;stroke-dasharray:13 10;animation:c3srcMove 1.7s linear infinite;opacity:.8}}
+      .c3src-svg .sv2{{animation-delay:-.55s;opacity:.58}}
+      .c3src-svg .sv3{{animation-delay:-1.0s;opacity:.38}}
+      @keyframes c3srcMove{{to{{stroke-dashoffset:-46}}}}
+    </style>
+    <div class="c3src-card">
+      <div class="c3src-head">
+        <div>
+          <div class="c3src-title">{_vis["title"]}</div>
+          <div class="c3src-sub">{_vis["subtitle"]}</div>
+        </div>
+        <div style="font-weight:800;color:{_vis["accent"]}">Fuente activa</div>
+      </div>
+      <svg class="c3src-svg" viewBox="0 0 680 280" xmlns="http://www.w3.org/2000/svg">
+        <defs>
+          <linearGradient id="c3srcBg" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stop-color="#eef8ff"/>
+            <stop offset="100%" stop-color="#fbfdff"/>
+          </linearGradient>
+        </defs>
+        <rect x="0" y="0" width="680" height="280" rx="18" fill="url(#c3srcBg)"/>
+        <rect x="0" y="236" width="680" height="44" fill="#dfe8dc"/>
+        {_vis["svg"]}
+      </svg>
+    </div>
+    '''
+    components.html(_source_visual_html, height=340, scrolling=False)
     st.markdown(
         f'''<div class="c3s1-grid4">
         <div class="c3s1-mini"><div class="label">Tipo espacial</div><div class="value">{info['tipo']}</div></div>
@@ -17570,68 +17738,72 @@ def _c3l1_stage1_impl(lab: dict, saved: dict, deps: Dict[str, Any]):
 
     receiver_offset = receiver_x - 650
 
-    st.markdown(
-        f'''
-        <style>
-        .c3sim{{border:1px solid #d8e6ef;border-radius:18px;background:linear-gradient(180deg,#f7fbfe,#edf5f9);padding:12px;margin:.8rem 0 1rem}}
-        .c3sim-top{{display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap;font-size:.82rem;color:#527088;margin:0 4px 8px}}
-        .c3sim svg{{width:100%;height:auto;display:block}}
-        .c3w,.c3wd{{fill:none;stroke:#49a6d4;stroke-width:5;stroke-linecap:round;stroke-dasharray:13 10;animation:c3move 1.7s linear infinite;opacity:.85}}
-        .c3wd{{opacity:.48}} .c3w2{{animation-delay:-.55s;opacity:.62}} .c3w3{{animation-delay:-1.05s;opacity:.4}}
-        .c3pulseS{{transform-origin:145px 190px;animation:c3pulseS 1.5s ease-in-out infinite}}
-        .c3pulseR{{animation:c3pulseR 1.8s ease-in-out infinite}}
-        @keyframes c3move{{to{{stroke-dashoffset:-46}}}}
-        @keyframes c3pulseS{{0%,100%{{opacity:.55}}50%{{opacity:1}}}}
-        @keyframes c3pulseR{{0%,100%{{opacity:.55}}50%{{opacity:1}}}}
-        </style>
-        <div class="c3sim">
-          <div class="c3sim-top">
-            <span><b>Fuente:</b> {sim_source}</span>
-            <span><b>Propagación:</b> {'con obstáculo' if barrier else 'camino directo'}</span>
-            <span><b>Receptor:</b> {receptor_place}</span>
-          </div>
-          <svg viewBox="0 0 820 300" aria-label="Esquema dinámico de fuente, propagación y receptor">
-            <defs>
-              <linearGradient id="c3sky" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="0%" stop-color="#e8f6ff"/>
-                <stop offset="100%" stop-color="#fbfdff"/>
-              </linearGradient>
-            </defs>
-            <rect x="0" y="0" width="820" height="300" rx="18" fill="url(#c3sky)"/>
-            <rect x="0" y="232" width="820" height="68" fill="#dce9d6"/>
-            <rect x="0" y="250" width="820" height="50" fill="#7e8993"/>
-            <line x1="0" y1="274" x2="820" y2="274" stroke="#f6e791" stroke-width="4" stroke-dasharray="28 22"/>
+    _c3_scene_html = f'''
+    <style>
+      html,body{{margin:0;padding:0;background:transparent;font-family:Arial,Helvetica,sans-serif}}
+      .c3sim{{border:1px solid #d8e6ef;border-radius:18px;background:linear-gradient(180deg,#f7fbfe,#edf5f9);padding:12px;overflow:hidden}}
+      .c3sim-top{{display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap;font-size:13px;color:#527088;margin:0 4px 8px}}
+      .c3sim svg{{width:100%;height:auto;display:block}}
+      .c3w,.c3wd{{fill:none;stroke:#49a6d4;stroke-width:5;stroke-linecap:round;stroke-dasharray:13 10;animation:c3move 1.7s linear infinite;opacity:.85}}
+      .c3wd{{opacity:.48}}
+      .c3w2{{animation-delay:-.55s;opacity:.62}}
+      .c3w3{{animation-delay:-1.05s;opacity:.4}}
+      .c3pulseS{{transform-origin:145px 190px;animation:c3pulseS 1.5s ease-in-out infinite}}
+      .c3pulseR{{animation:c3pulseR 1.8s ease-in-out infinite}}
+      @keyframes c3move{{to{{stroke-dashoffset:-46}}}}
+      @keyframes c3pulseS{{0%,100%{{opacity:.55}}50%{{opacity:1}}}}
+      @keyframes c3pulseR{{0%,100%{{opacity:.55}}50%{{opacity:1}}}}
+    </style>
 
-            <g class="c3pulseS">
-              <circle cx="145" cy="190" r="28" fill="#ff5b5b"/>
-              <circle cx="145" cy="190" r="39" fill="none" stroke="#ff5b5b" stroke-width="4" opacity=".23"/>
-              <text x="145" y="147" text-anchor="middle" font-size="14" font-weight="800" fill="#8a1d1d">FUENTE</text>
-              <text x="145" y="197" text-anchor="middle" font-size="23" fill="white">🔊</text>
-            </g>
+    <div class="c3sim">
+      <div class="c3sim-top">
+        <span><b>Fuente:</b> {sim_source}</span>
+        <span><b>Propagación:</b> {'con obstáculo' if barrier else 'camino directo'}</span>
+        <span><b>Receptor:</b> {receptor_place}</span>
+      </div>
 
-            {waves}
-            {barrier_svg}
+      <svg viewBox="0 0 820 300" xmlns="http://www.w3.org/2000/svg" aria-label="Esquema dinámico de fuente, propagación y receptor">
+        <defs>
+          <linearGradient id="c3sky" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stop-color="#e8f6ff"/>
+            <stop offset="100%" stop-color="#fbfdff"/>
+          </linearGradient>
+        </defs>
 
-            <g transform="translate({receiver_offset},0)">
-              <rect x="618" y="100" width="150" height="150" rx="9" fill="#c9d7e0"/>
-              <rect x="638" y="126" width="36" height="40" rx="4" fill="#f2f9fd"/>
-              <rect x="692" y="126" width="36" height="40" rx="4" fill="#f2f9fd"/>
-              <rect x="671" y="188" width="42" height="62" rx="4" fill="#99acb8"/>
-              <circle class="c3pulseR" cx="650" cy="190" r="16" fill="#43b979"/>
-              <circle cx="650" cy="190" r="24" fill="none" stroke="#43b979" stroke-width="4" opacity=".24"/>
-              <text x="693" y="82" text-anchor="middle" font-size="14" font-weight="800" fill="#1c6643">RECEPTOR</text>
-              <text x="693" y="99" text-anchor="middle" font-size="12" fill="#36596c">{receptor_place}</text>
-            </g>
+        <rect x="0" y="0" width="820" height="300" rx="18" fill="url(#c3sky)"/>
+        <rect x="0" y="232" width="820" height="68" fill="#dce9d6"/>
+        <rect x="0" y="250" width="820" height="50" fill="#7e8993"/>
+        <line x1="0" y1="274" x2="820" y2="274" stroke="#f6e791" stroke-width="4" stroke-dasharray="28 22"/>
 
-            <line x1="145" y1="54" x2="{receiver_x}" y2="54" stroke="#315d78" stroke-width="2"/>
-            <line x1="145" y1="47" x2="145" y2="62" stroke="#315d78" stroke-width="2"/>
-            <line x1="{receiver_x}" y1="47" x2="{receiver_x}" y2="62" stroke="#315d78" stroke-width="2"/>
-            <text x="{(145+receiver_x)//2}" y="41" text-anchor="middle" font-size="15" font-weight="800" fill="#315d78">{distance} m</text>
-          </svg>
-        </div>
-        ''',
-        unsafe_allow_html=True,
-    )
+        <g class="c3pulseS">
+          <circle cx="145" cy="190" r="28" fill="#ff5b5b"/>
+          <circle cx="145" cy="190" r="39" fill="none" stroke="#ff5b5b" stroke-width="4" opacity=".23"/>
+          <text x="145" y="147" text-anchor="middle" font-size="14" font-weight="800" fill="#8a1d1d">FUENTE</text>
+          <text x="145" y="196" text-anchor="middle" font-size="20" fill="white">●</text>
+        </g>
+
+        {waves}
+        {barrier_svg}
+
+        <g transform="translate({receiver_offset},0)">
+          <rect x="618" y="100" width="150" height="150" rx="9" fill="#c9d7e0"/>
+          <rect x="638" y="126" width="36" height="40" rx="4" fill="#f2f9fd"/>
+          <rect x="692" y="126" width="36" height="40" rx="4" fill="#f2f9fd"/>
+          <rect x="671" y="188" width="42" height="62" rx="4" fill="#99acb8"/>
+          <circle class="c3pulseR" cx="650" cy="190" r="16" fill="#43b979"/>
+          <circle cx="650" cy="190" r="24" fill="none" stroke="#43b979" stroke-width="4" opacity=".24"/>
+          <text x="693" y="82" text-anchor="middle" font-size="14" font-weight="800" fill="#1c6643">RECEPTOR</text>
+          <text x="693" y="99" text-anchor="middle" font-size="12" fill="#36596c">{receptor_place}</text>
+        </g>
+
+        <line x1="145" y1="54" x2="{receiver_x}" y2="54" stroke="#315d78" stroke-width="2"/>
+        <line x1="145" y1="47" x2="145" y2="62" stroke="#315d78" stroke-width="2"/>
+        <line x1="{receiver_x}" y1="47" x2="{receiver_x}" y2="62" stroke="#315d78" stroke-width="2"/>
+        <text x="{(145+receiver_x)//2}" y="41" text-anchor="middle" font-size="15" font-weight="800" fill="#315d78">{distance} m</text>
+      </svg>
+    </div>
+    '''
+    components.html(_c3_scene_html, height=360, scrolling=False)
 
     st.markdown(
         f'''<div class="c3-grid">
