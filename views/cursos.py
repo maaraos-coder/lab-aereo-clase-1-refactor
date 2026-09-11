@@ -16080,24 +16080,10 @@ def _c2l2_stage9(lab,saved):
                 st.success("Respuesta correcta: "+q[2][q[3]])
                 st.caption(q[4])
 
-        st.markdown("## Respuestas de alumnos")
-        rows=_remote_rows("responses",class_id=_C2L2_CLASS_ID) or []
-        rows=[r for r in rows if int(r.get("stage") or -1)==9 and r.get("question_key")=="final_comprehension"]
-        if rows:
-            st.dataframe(
-                pd.DataFrame([
-                    {
-                        "Alumno":r.get("user_key"),
-                        "Puntaje":f"{float(r.get('teacher_score') if r.get('teacher_score') is not None else r.get('auto_score') or 0):g}/40",
-                        "Estado":r.get("status"),
-                        "Actualizado":r.get("updated_at"),
-                    }
-                    for r in rows
-                ]),
-                hide_index=True,use_container_width=True
-            )
-        else:
-            st.caption("Sin entregas todavía.")
+        st.info(
+            "Las entregas de los alumnos se revisan en **Evaluaciones entregadas**. "
+            "Esta vista se mantiene enfocada únicamente en la pauta docente de la etapa."
+        )
         return
 
     remote=_c2l2_stage9_remote()
@@ -16381,10 +16367,10 @@ def _c2l2_stage10(lab,saved):
                 for j,opt in enumerate(q[1]):
                     st.write(("✓ " if j==q[2] else "○ ")+opt)
                 st.success("Respuesta correcta: "+q[1][q[2]])
-        rows=_remote_rows("responses",class_id=_C2L2_CLASS_ID) or []
-        rows=[r for r in rows if int(r.get("stage") or -1)==10 and r.get("question_key")=="final_integrated_design"]
-        if rows:
-            st.dataframe(pd.DataFrame([{"Alumno":r.get("user_key"),"Puntaje":f"{float(r.get('teacher_score') if r.get('teacher_score') is not None else r.get('auto_score') or 0):g}/60","Estado":r.get("status")} for r in rows]),hide_index=True)
+        st.info(
+            "Las entregas y puntajes de los alumnos se revisan en **Evaluaciones entregadas**. "
+            "Aquí se muestra únicamente la pauta docente de la evaluación integradora."
+        )
         return
 
     remote=_c2l2_s10_remote()
