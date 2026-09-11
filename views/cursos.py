@@ -4753,7 +4753,7 @@ def _render_course2_lab1_stage6(lab, saved):
         bd="#dbe4ee" if tone=="white" else "#bfdbfe"
         st.markdown(
             f"""<div style="border:1px solid {bd};border-radius:16px;padding:15px 16px;
-            background:{bg};min-height:165px;box-sizing:border-box;margin-bottom:6px">
+            background:{bg};min-height:150px;box-sizing:border-box;margin-bottom:6px">
               <div style="font-weight:800;color:#0f172a">{title}</div>
               <div style="font-size:1.55rem;font-weight:850;color:#0f172a;margin:.35rem 0">{value}</div>
               <div style="color:#64748b;line-height:1.45">{text}</div>
@@ -21101,7 +21101,7 @@ def _c3l1_stage4_impl(lab: dict, saved: dict, deps: Dict[str, Any]):
                 border-radius:16px;
                 padding:1rem;
                 background:{_bg};
-                min-height:165px;
+                min-height:150px;
             ">
               {_badge}
               <div style="font-size:1.05rem;font-weight:800;color:#183247;margin-bottom:.55rem">
@@ -21125,11 +21125,35 @@ def _c3l1_stage4_impl(lab: dict, saved: dict, deps: Dict[str, Any]):
             """
         )
 
-    st.markdown(
-        '<div style="display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:.8rem">'
-        + ''.join(_cards_html) +
-        '</div>',
-        unsafe_allow_html=True,
+    _cards_doc = '''
+    <style>
+      html,body{
+        margin:0;
+        padding:0;
+        background:transparent;
+        font-family:Arial,Helvetica,sans-serif;
+      }
+      .event-grid{
+        display:grid;
+        grid-template-columns:repeat(4,minmax(0,1fr));
+        gap:12px;
+        width:100%;
+        box-sizing:border-box;
+      }
+      @media (max-width:900px){
+        .event-grid{grid-template-columns:repeat(2,minmax(0,1fr));}
+      }
+      @media (max-width:540px){
+        .event-grid{grid-template-columns:1fr;}
+      }
+    </style>
+    <div class="event-grid">
+    ''' + ''.join(_cards_html) + '</div>'
+
+    components.html(
+        _cards_doc,
+        height=225,
+        scrolling=False,
     )
 
     st.markdown(
