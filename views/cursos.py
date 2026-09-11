@@ -20254,51 +20254,184 @@ def _c3l1_stage3_impl(lab: dict, saved: dict, deps: Dict[str, Any]):
                 'Revisa la curva de excedencia. El porcentaje se refiere al tiempo durante el cual ese nivel fue igualado o superado.'
             )
 
-    st.markdown('## 5. Generador de ambiente sonoro')
-
-    traffic=st.slider('Tráfico continuo',0,10,5,key='c3_s3_traffic')
-    trucks=st.slider('Pasos de camiones',0,10,2,key='c3_s3_trucks')
-    horns=st.slider('Bocinas / eventos breves',0,10,1,key='c3_s3_horns')
-    people=st.slider('Actividad de personas',0,10,3,key='c3_s3_people')
-    bg=st.slider('Fondo base [dB(A)]',35,65,48,key='c3_s3_bg')
-
-    grng=np.random.default_rng(7)
-    sig=bg+grng.normal(0,.7,180)+traffic*.50+people*.18
-    centers=np.linspace(15,165,max(1,trucks+horns)).astype(int)
-    for j,c in enumerate(centers):
-        amp=(3.5+trucks*.85) if j%2==0 else (2.5+horns*1.25)
-        width=2 if j%2==0 else 1
-        sig += amp*np.exp(-.5*((np.arange(len(sig))-c)/width)**2)
-
-    gen={
-        'LAeq':_c3l1_laeq(sig),
-        'Lmax':float(np.max(sig)),
-        'L10':_c3l1_exceedance_percentile(sig,10),
-        'L50':_c3l1_exceedance_percentile(sig,50),
-        'L90':_c3l1_exceedance_percentile(sig,90),
-    }
-
-    sig_plot=np.asarray(sig,dtype=float).reshape(-1)
-    fig2,ax2=c3plt.subplots(figsize=(10,3.3))
-    ax2.plot(np.arange(len(sig_plot),dtype=float),sig_plot,lw=1.25)
-    ax2.axhline(gen['LAeq'],ls='--',label=f'LAeq {gen["LAeq"]:.1f}')
-    ax2.axhline(gen['L90'],ls=':',label=f'L90 {gen["L90"]:.1f}')
-    ax2.set_xlabel('Tiempo [s]')
-    ax2.set_ylabel('dB(A)')
-    ax2.set_title('Ambiente generado por el alumno')
-    ax2.grid(alpha=.2)
-    ax2.legend()
-    st.pyplot(fig2,use_container_width=True)
-    c3plt.close(fig2)
-
-    gcols=st.columns(5)
-    for col,k in zip(gcols,['LAeq','Lmax','L10','L50','L90']):
-        col.metric(k,f'{gen[k]:.1f}')
+    st.markdown('## 5. Mesa de diagnóstico acústico')
 
     st.markdown(
-        '<div class="c3-key"><b>Experimenta:</b> aumenta solo “Bocinas / eventos breves”. '
-        'Observa qué descriptor cambia más y cuál permanece relativamente estable.</div>',
+        """
+        <div class="c3-card blue">
+          <div class="c3-kicker">APLICA LO APRENDIDO</div>
+          <b>No existe un descriptor “mejor” para todos los problemas.</b>
+          <p>
+            El descriptor útil depende de qué quieres conocer del ambiente:
+            energía global, máximos, periodos altos o componente persistente.
+            Selecciona un caso y decide qué información utilizarías.
+          </p>
+        </div>
+        """,
         unsafe_allow_html=True,
+    )
+
+    _diag_cases = {
+        'Avenida urbana': {
+            'icon':'🚗',
+            'subtitle':'Tránsito continuo con pasos de vehículos pesados',
+            'objective':'Caracterizar la exposición acústica global durante el periodo.',
+            'best':'LAeq',
+            'why':'LAeq resume la energía acústica acumulada durante todo el intervalo.',
+        },
+        'Equipo HVAC nocturno': {
+            'icon':'❄️',
+            'subtitle':'Fuente técnica relativamente estable durante la noche',
+            'objective':'Reconocer el componente persistente del ambiente.',
+            'best':'L90',
+            'why':'L90 se ubica en la zona baja y persistente de la distribución y puede apoyar la interpretación del fondo, según el contexto.',
+        },
+        'Bocinazo / evento breve': {
+            'icon':'📣',
+            'subtitle':'Evento corto e intenso sobre un ambiente moderado',
+            'objective':'Identificar el nivel más alto alcanzado durante el evento.',
+            'best':'Lmax',
+            'why':'Lmax identifica directamente el máximo registrado durante el intervalo.',
+        },
+        'Corredor vial fluctuante': {
+            'icon':'🚌',
+            'subtitle':'Tránsito con periodos de mayor intensidad y pausas',
+            'objective':'Representar la zona alta de niveles que ocurre durante una fracción limitada del tiempo.',
+            'best':'L10',
+            'why':'L10 representa el nivel igualado o superado aproximadamente durante el 10 % del tiempo y caracteriza la zona alta de la distribución.',
+        },
+    }
+
+    _diag_case = st.segmented_control(
+        'Selecciona un caso',
+        list(_diag_cases),
+        default='Avenida urbana',
+        key='c3_s3_diag_case',
+    )
+
+    _case = _diag_cases[_diag_case]
+
+    st.markdown(
+        f"""
+        <div style="
+            margin:.8rem 0 1rem;
+            padding:1rem 1.15rem;
+            border:1px solid #d8e6ef;
+            border-radius:18px;
+            background:linear-gradient(135deg,#ffffff,#f5f9fc);
+        ">
+          <div style="display:flex;justify-content:space-between;gap:1rem;align-items:start">
+            <div>
+              <div style="font-size:.72rem;font-weight:800;letter-spacing:.08em;color:#1777b5">
+                CASO ACTIVO
+              </div>
+              <div style="font-size:1.3rem;font-weight:800;color:#183247;margin:.2rem 0">
+                {_case["icon"]} {_diag_case}
+              </div>
+              <div style="color:#52687d">{_case["subtitle"]}</div>
+            </div>
+            <div style="
+                min-width:260px;
+                padding:.75rem .9rem;
+                border-radius:12px;
+                background:#eef8fd;
+                border:1px solid #cfe6f3;
+            ">
+              <div style="font-size:.72rem;font-weight:800;color:#1777b5">MISIÓN</div>
+              <div style="font-weight:700;color:#29465a">{_case["objective"]}</div>
+            </div>
+          </div>
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
+
+    _diag_t = np.arange(0, 120, 1, dtype=float)
+    _drng = np.random.default_rng(21)
+
+    if _diag_case == 'Avenida urbana':
+        _diag_y = 59 + 1.0*np.sin(_diag_t/9) + _drng.normal(0,.7,len(_diag_t))
+        for _c,_a,_w in [(18,6,3),(48,8,3),(78,5,4),(104,7,3)]:
+            _diag_y += _a*np.exp(-.5*((_diag_t-_c)/_w)**2)
+
+    elif _diag_case == 'Equipo HVAC nocturno':
+        _diag_y = 52.5 + .35*np.sin(_diag_t/7) + _drng.normal(0,.22,len(_diag_t))
+        _diag_y += .8*((_diag_t>45)&(_diag_t<90))
+
+    elif _diag_case == 'Bocinazo / evento breve':
+        _diag_y = 53 + _drng.normal(0,.45,len(_diag_t))
+        _diag_y += 17*np.exp(-.5*((_diag_t-62)/1.3)**2)
+
+    else:
+        _diag_y = 56 + 1.2*np.sin(_diag_t/8) + _drng.normal(0,.65,len(_diag_t))
+        for _c,_a,_w in [(22,7,3),(55,9,4),(88,8,3)]:
+            _diag_y += _a*np.exp(-.5*((_diag_t-_c)/_w)**2)
+
+    _diag_vals = {
+        'LAeq':_c3l1_laeq(_diag_y),
+        'Lmax':float(np.max(_diag_y)),
+        'L10':_c3l1_exceedance_percentile(_diag_y,10),
+        'L90':_c3l1_exceedance_percentile(_diag_y,90),
+    }
+
+    _fig_diag,_ax_diag=c3plt.subplots(figsize=(10,4.0))
+    _ax_diag.plot(_diag_t,_diag_y,lw=1.4)
+    _ax_diag.set_xlabel('Tiempo [s]')
+    _ax_diag.set_ylabel('Nivel [dB(A)]')
+    _ax_diag.set_title(f'Historia temporal · {_diag_case}')
+    _ax_diag.grid(alpha=.2)
+    st.pyplot(_fig_diag,use_container_width=True)
+    c3plt.close(_fig_diag)
+
+    st.markdown('### ¿Qué descriptor elegirías?')
+
+    _diag_answer = st.radio(
+        _case['objective'],
+        ['LAeq','Lmax','L10','L90'],
+        index=None,
+        horizontal=True,
+        key=f'c3_s3_diag_answer_{_diag_case}',
+        label_visibility='collapsed',
+    )
+
+    if _diag_answer is not None:
+        if _diag_answer == _case['best']:
+            st.success(f'Correcto. {_case["why"]}')
+        else:
+            st.warning(
+                f'Para esta misión, revisa el objetivo. La opción más directa es {_case["best"]}. '
+                f'{_case["why"]}'
+            )
+
+        _dcols=st.columns(4)
+        for _col,_k in zip(_dcols,['LAeq','Lmax','L10','L90']):
+            _col.metric(_k,f'{_diag_vals[_k]:.1f} dB(A)')
+
+        st.markdown(
+            f"""
+            <div class="c3-key">
+              <b>Aprendizaje:</b> los cuatro valores son correctos, pero responden preguntas distintas.
+              En este caso, <b>{_case["best"]}</b> es el descriptor que se relaciona de forma más directa
+              con la misión planteada.
+            </div>
+            """,
+            unsafe_allow_html=True,
+        )
+
+    st.markdown('### Compara rápidamente los cuatro casos')
+
+    _summary_rows=[]
+    for _name,_meta in _diag_cases.items():
+        _summary_rows.append({
+            'Caso': _name,
+            'Objetivo principal': _meta['objective'],
+            'Descriptor más directo': _meta['best'],
+        })
+
+    st.dataframe(
+        pd.DataFrame(_summary_rows),
+        hide_index=True,
+        use_container_width=True,
     )
 
     st.markdown('## 6. Cierre formativo de la Etapa 3')
