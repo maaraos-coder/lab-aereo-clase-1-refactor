@@ -582,6 +582,26 @@ def _teacher_course_results_impl(compact=False):
                 },
             },
         },
+        "Curso 3 · Control de ruido ambiental":{
+            "Laboratorio 1 · Evaluaciones oficiales":{
+                "Etapa 9 · Preguntas de comprensión":{
+                    "class_id":"clase-05-ruido-ambiental-lab-1",
+                    "question_key":"final_comprehension",
+                    "stage":9,
+                    "maximum":40,
+                    "with_grade":True,
+                    "reviewer":"c3l1_generic",
+                },
+                "Etapa 10 · Diagnóstico acústico de un barrio":{
+                    "class_id":"clase-05-ruido-ambiental-lab-1",
+                    "question_key":"final_integrated_design",
+                    "stage":10,
+                    "maximum":60,
+                    "with_grade":True,
+                    "reviewer":"c3l1_generic",
+                },
+            },
+        },
     }
 
     course=st.selectbox(

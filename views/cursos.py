@@ -1,6 +1,13 @@
 import streamlit.components.v1 as components
 from pathlib import Path
 import math
+import json
+import os
+from typing import Any, Dict, Iterable, List, Tuple
+import numpy as np
+import pandas as pd
+import matplotlib.pyplot as plt
+
 
 MODULE_DIR = Path(__file__).resolve().parent
 PROJECT_ROOT = MODULE_DIR.parent
@@ -10059,17 +10066,54 @@ def _c2l1_finish_stage9(saved, reason="submitted"):
         "max_score":100,
         "evaluation_mode":"points_only",
     }
-    _save_formative(
-        9,
-        "final_comprehension",
-        "Etapa 9 · Preguntas de comprensión",
-        json.dumps(payload,ensure_ascii=False),
-        "Finalizada",
-        f"Resultado automático: {score}/100 puntos. Laboratorio 1: puntaje sin nota.",
-        score=score,
-        max_score=100,
-        correct_answer="Pauta automática de las 25 preguntas disponible después del cierre.",
-    )
+    # Guardado explícito: esta evaluación pertenece siempre al Curso 2 · Laboratorio 1.
+    # No usar CLASS_ID global, porque puede corresponder al laboratorio activo del Curso 1.
+    client=_supabase()
+    user_key=st.session_state.get("user_key")
+    if client is not None and user_key:
+        qid=f"{_C2L1_STAGE9_CLASS_ID}-final_comprehension-v2"
+        client.table("questions").upsert({
+            "id":qid,
+            "class_id":_C2L1_STAGE9_CLASS_ID,
+            "stage":9,
+            "question_key":"final_comprehension",
+            "question_text":"Etapa 9 · Preguntas de comprensión",
+            "correct_answer":"Pauta automática de las 25 preguntas disponible después del cierre.",
+            "max_score":100,
+            "content_version":2,
+            "active":True,
+            "updated_at":_now(),
+        },on_conflict="id").execute()
+        client.table("responses").upsert({
+            "course_id":COURSE_ID,
+            "class_id":_C2L1_STAGE9_CLASS_ID,
+            "user_key":user_key,
+            "stage":9,
+            "question_key":"final_comprehension",
+            "question_text":"Etapa 9 · Preguntas de comprensión",
+            "correct_answer":"Pauta automática de las 25 preguntas disponible después del cierre.",
+            "answer":payload,
+            "auto_level":"Finalizada",
+            "feedback":f"Resultado automático: {score}/100 puntos. Laboratorio 1: puntaje sin nota.",
+            "auto_score":score,
+            "max_score":100,
+            "status":"submitted",
+            "updated_at":_now(),
+            "submitted_at":_now(),
+        },on_conflict="class_id,user_key,question_key").execute()
+    else:
+        # Respaldo local: conserva el mecanismo existente si Supabase no está disponible.
+        _save_formative(
+            9,
+            "final_comprehension",
+            "Etapa 9 · Preguntas de comprensión",
+            json.dumps(payload,ensure_ascii=False),
+            "Finalizada",
+            f"Resultado automático: {score}/100 puntos. Laboratorio 1: puntaje sin nota.",
+            score=score,
+            max_score=100,
+            correct_answer="Pauta automática de las 25 preguntas disponible después del cierre.",
+        )
     st.session_state["e9_submitted"]=True
     st.session_state["e9_score"]=score
     st.session_state["e9_saved_answers"]=answers
@@ -10103,13 +10147,17 @@ def _c2l1_stage9_teacher_view():
     if client is None:
         return
     try:
+        # Recupera tanto las entregas correctamente clasificadas como las antiguas
+        # que pudieron quedar bajo otro class_id por el guardador genérico.
         raw=(client.table("responses").select("*,users(display_name,email)")
-             .eq("class_id","clase-03-impacto-instalaciones-lab-1").eq("stage",9)
-             .eq("question_key","final_comprehension").order("updated_at",desc=True).execute().data or [])
+             .eq("stage",9)
+             .eq("question_key","final_comprehension")
+             .order("updated_at",desc=True).execute().data or [])
     except Exception as exc:
         st.warning(f"No fue posible cargar resultados: {exc}")
         return
     filtered=[]
+    seen_users=set()
     for _row in raw:
         _payload=_row.get("answer") or {}
         if isinstance(_payload,str):
@@ -10117,8 +10165,20 @@ def _c2l1_stage9_teacher_view():
                 _payload=json.loads(_payload)
             except Exception:
                 _payload={}
-        if isinstance(_payload,dict) and _payload.get("version")==_C2L1_STAGE9_VERSION:
-            filtered.append(_row)
+        is_c2l1=(
+            isinstance(_payload,dict)
+            and _payload.get("version")==_C2L1_STAGE9_VERSION
+            and int(_payload.get("question_count") or 0)==25
+            and int(_payload.get("max_score") or 0)==100
+            and _payload.get("evaluation_mode")=="points_only"
+        )
+        if not is_c2l1:
+            continue
+        user_id=_row.get("user_key") or str(_row.get("id"))
+        if user_id in seen_users:
+            continue
+        seen_users.add(user_id)
+        filtered.append(_row)
     raw=filtered
     if not raw:
         st.caption("Todavía no hay evaluaciones enviadas con la versión actual de la Etapa 9.")
@@ -17178,6 +17238,728 @@ def _c2l2_stage10(lab,saved):
             _c2l2_s10_finish(saved,payload,total); st.success(f"Evaluación enviada · {total}/60 puntos."); st.rerun()
 
 
+_C3L1_CLASS_ID = "clase-05-ruido-ambiental-lab-1"
+
+def _course3_lab1_deps():
+    """Dependencias del Curso 3 reutilizando exactamente los servicios globales existentes."""
+    return {
+        "header": globals().get("header"),
+        "save_state": globals().get("_save_future_state"),
+        "remote_rows": globals().get("_remote_rows"),
+        "supabase": globals().get("_supabase"),
+        "now": globals().get("_now"),
+        "course_id": globals().get("COURSE_ID", "diplomado-acustica-edificacion"),
+    }
+
+
+
+# ============================================================================
+# CURSO 3 · LABORATORIO 1 · CONTROL DE RUIDO AMBIENTAL
+# Implementación nativa dentro de views/cursos.py, siguiendo la misma
+# arquitectura de renderizadores por etapa usada por los laboratorios previos.
+# ============================================================================
+_C3L1_CLASS_ID_INLINE = 'clase-05-ruido-ambiental-lab-1'
+_C3L1_VERSION = 1
+_C3L1_ROOT = Path(__file__).resolve().parent.parent
+_C3L1_ASSET_DIR = _C3L1_ROOT / 'assets'
+_C3L1_A_OCTAVE = {63: -26.2, 125: -16.1, 250: -8.6, 500: -3.2, 1000: 0.0, 2000: 1.2, 4000: 1.0}
+_C3L1_OCTAVES = np.array(list(_C3L1_A_OCTAVE), dtype=float)
+
+def _c3l1_laeq(levels: Iterable[float], durations: Iterable[float] | None=None) -> float:
+    vals = np.asarray(list(levels), dtype=float)
+    if vals.size == 0:
+        return float('nan')
+    if durations is None:
+        weights = np.ones_like(vals)
+    else:
+        weights = np.asarray(list(durations), dtype=float)
+    weights = np.maximum(weights, 0)
+    if float(np.sum(weights)) <= 0:
+        return float('nan')
+    return float(10 * np.log10(np.sum(weights * 10 ** (vals / 10)) / np.sum(weights)))
+
+def _c3l1_sel(laeq_event: float, duration_s: float, t0: float=1.0) -> float:
+    return float(laeq_event + 10 * np.log10(max(duration_s, 1e-12) / t0))
+
+def _c3l1_lden(ld: float, le: float, ln: float) -> float:
+    return float(10 * np.log10((12 * 10 ** (ld / 10) + 4 * 10 ** ((le + 5) / 10) + 8 * 10 ** ((ln + 10) / 10)) / 24))
+
+def _c3l1_exceedance_percentile(levels: Iterable[float], exceedance_percent: float) -> float:
+    """Nivel excedido durante p% del tiempo: Lp = percentil (100-p)."""
+    vals = np.asarray(list(levels), dtype=float)
+    return float(np.percentile(vals, 100 - exceedance_percent))
+
+def _c3l1_energetic_total(levels: Iterable[float]) -> float:
+    vals = np.asarray(list(levels), dtype=float)
+    return float(10 * np.log10(np.sum(10 ** (vals / 10))))
+
+def _c3l1_now(deps: Dict[str, Any]) -> str:
+    fn = deps.get('now')
+    return fn() if callable(fn) else pd.Timestamp.now(tz='America/Santiago').isoformat()
+
+def _c3l1_save(saved: dict, deps: Dict[str, Any]) -> None:
+    if st.session_state.get('projection_mode') or st.session_state.get('role') == 'Proyección':
+        return
+    saved['updated_at'] = _c3l1_now(deps)
+    fn = deps.get('save_state')
+    if callable(fn):
+        fn(_C3L1_CLASS_ID_INLINE, saved)
+
+def _c3l1_client(deps: Dict[str, Any]):
+    fn = deps.get('supabase')
+    return fn() if callable(fn) else None
+
+def _c3l1_remote_rows(deps: Dict[str, Any], **kwargs):
+    fn = deps.get('remote_rows')
+    if callable(fn):
+        try:
+            return fn('responses', **kwargs) or []
+        except Exception:
+            return []
+    return []
+
+def _c3l1_header(stage: int, title: str, purpose: str, deps: Dict[str, Any], minutes: int | None=None):
+    fn = deps.get('header')
+    if callable(fn):
+        fn(f'ETAPA {stage} · LABORATORIO 1', title, purpose, show_overview=False, duration_minutes=minutes or (10 if stage == 0 else 20 if stage not in (9, 10) else 20 if stage == 9 else 40))
+    else:
+        st.caption(f'ETAPA {stage} · LABORATORIO 1')
+        st.title(title)
+        st.write(purpose)
+
+def _c3l1_asset(name: str, caption: str | None=None):
+    path = _C3L1_ASSET_DIR / name
+    if path.exists():
+        st.image(str(path), use_container_width=True, caption=caption)
+        return True
+    return False
+
+def _c3l1_style():
+    st.markdown('\n        <style>\n        .c3-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;margin:.7rem 0 1rem}\n        .c3-grid-2{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;margin:.7rem 0 1rem}\n        .c3-card{border:1px solid #d9e4ef;border-radius:16px;padding:15px 16px;background:#fff;box-shadow:0 2px 10px rgba(15,23,42,.03)}\n        .c3-card.blue{background:#eff7ff;border-color:#bfdbfe}.c3-card.green{background:#effcf5;border-color:#bbf7d0}\n        .c3-card.orange{background:#fff8ed;border-color:#fed7aa}.c3-card.purple{background:#f7f5ff;border-color:#ddd6fe}\n        .c3-card b{color:#0f2742}.c3-kicker{font-size:.72rem;font-weight:850;letter-spacing:.08em;color:#0877b8;text-transform:uppercase}\n        .c3-flow{display:flex;flex-wrap:wrap;align-items:center;gap:8px;margin:.7rem 0 1rem}.c3-node{border:1px solid #cddcea;border-radius:999px;background:#fff;padding:8px 12px;font-weight:750}.c3-arrow{color:#0b8fc5;font-weight:900}\n        .c3-key{border-left:4px solid #0b8fc5;background:#eef8ff;border-radius:10px;padding:12px 14px;margin:.8rem 0;color:#17324d}\n        .c3-warn{border-left:4px solid #f59e0b;background:#fffbeb;border-radius:10px;padding:12px 14px;margin:.8rem 0;color:#4b3b13}\n        .c3-good{border-left:4px solid #16a34a;background:#f0fdf4;border-radius:10px;padding:12px 14px;margin:.8rem 0;color:#174328}\n        .c3-route{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}.c3-route-card{display:flex;gap:12px;border:1px solid #d9e4ef;border-radius:15px;padding:14px;background:#fff}.c3-step{width:34px;height:34px;border-radius:50%;background:#0b8fc5;color:white;display:flex;align-items:center;justify-content:center;font-weight:850;flex:0 0 auto}\n        @media(max-width:850px){.c3-grid,.c3-grid-2,.c3-route{grid-template-columns:1fr}.c3-card{padding:13px}.c3-flow{gap:6px}.c3-node{font-size:.85rem}}\n        </style>\n        ', unsafe_allow_html=True)
+
+def _c3l1_mark_formative(saved: dict, deps: Dict[str, Any], key: str, payload: Any=True):
+    saved.setdefault('c3_formative', {})[key] = payload
+    saved[f'done_{key}'] = True
+    if key.startswith('s') and len(key) > 1 and key[1].isdigit():
+        try:
+            stage_num = int(key[1:key.find('_')]) if '_' in key else int(key[1:])
+            saved[f'done_{stage_num}'] = True
+        except Exception:
+            pass
+    _c3l1_save(saved, deps)
+
+def _c3l1_source_url(name: str) -> str:
+    try:
+        if name in st.secrets:
+            return str(st.secrets[name]).strip()
+    except Exception:
+        pass
+    return str(os.environ.get(name, '')).strip()
+
+def _c3l1_external_tool_card(title: str, description: str, secret_name: str, button_label: str):
+    url = _c3l1_source_url(secret_name)
+    with st.container(border=True):
+        st.markdown(f'### {title}')
+        st.write(description)
+        if url:
+            st.link_button(button_label, url, use_container_width=True)
+        else:
+            st.info(f'La integración está preparada. Configura `{secret_name}` en Streamlit Secrets con la URL de la herramienta ya desarrollada.')
+
+def _c3l1_stage0_impl(lab: dict, saved: dict, deps: Dict[str, Any]):
+    _c3l1_style()
+    _c3l1_header(0, 'Laboratorio 1 · Medición y diagnóstico del ruido ambiental', 'Una experiencia aplicada para escuchar, medir, describir, analizar, representar y diagnosticar el ambiente sonoro.', deps, 10)
+    _c3l1_asset('curso3_lab1_etapa0_ciudad.webp')
+    st.markdown('<div class="c3-key"><b>Desafío:</b> ¿Cómo transformamos el ruido cambiante de una ciudad en información objetiva que permita medir, describir y diagnosticar su ambiente sonoro?</div>', unsafe_allow_html=True)
+    route = [(1, 'Reconocer', 'Fuente, camino, receptor, tiempo, frecuencia y espacio.'), (2, 'Medir', 'Cadena del sonómetro, ponderaciones y calibración.'), (3, 'Medir tu ambiente', 'Registro real/educativo con LAeq, Lmax y Lmin.'), (4, 'Describir en el tiempo', 'L(t), LAeq, Lmax, Lmin, L10, L50 y L90.'), (5, 'Construir descriptores', 'Promedio energético y percentiles.'), (6, 'Integrar eventos y 24 h', 'SEL, LD, LE, LN y Lden.'), (7, 'Diseñar campaña', 'Representatividad temporal y espacial.'), (8, 'Representar territorio', 'Puntos medidos, interpolación y modelación.'), (9, 'Comprobar', 'Preguntas de comprensión.'), (10, 'Diagnosticar', 'Caso profesional completo de un barrio.')]
+    html = '<div class="c3-route">'
+    for n, title, desc in route:
+        html += f'<div class="c3-route-card"><div class="c3-step">{n}</div><div><b>{title}</b><div style="color:#607287;margin-top:3px">{desc}</div></div></div>'
+    st.markdown(html + '</div>', unsafe_allow_html=True)
+    st.markdown('<div class="c3-good"><b>Ruta mental:</b> ESCUCHAR → MEDIR → DESCRIBIR → ANALIZAR → REPRESENTAR → DIAGNOSTICAR.</div>', unsafe_allow_html=True)
+
+def _c3l1_stage1_impl(lab: dict, saved: dict, deps: Dict[str, Any]):
+    _c3l1_style()
+    _c3l1_header(1, 'Ruido ambiental: fuentes, caminos y receptores', 'Comprender físicamente qué constituye el ambiente acústico y por qué un valor en dB nunca es toda la historia.', deps)
+    _c3l1_asset('curso3_lab1_etapa1_fuentes.webp')
+    st.markdown('<div class="c3-flow"><span class="c3-node">FUENTE</span><span class="c3-arrow">→</span><span class="c3-node">PROPAGACIÓN</span><span class="c3-arrow">→</span><span class="c3-node">RECEPTOR</span><span class="c3-arrow">+</span><span class="c3-node">TIEMPO</span><span class="c3-arrow">+</span><span class="c3-node">FRECUENCIA</span><span class="c3-arrow">+</span><span class="c3-node">ESPACIO</span></div>', unsafe_allow_html=True)
+    st.markdown('<div class="c3-grid"><div class="c3-card blue"><div class="c3-kicker">SONIDO</div><b>Fenómeno físico</b><p>Variaciones de presión que se propagan como ondas acústicas.</p></div><div class="c3-card orange"><div class="c3-kicker">RUIDO</div><b>Sonido en contexto</b><p>Su valoración depende de fuente, actividad, tiempo, receptor y objetivo.</p></div><div class="c3-card green"><div class="c3-kicker">RUIDO AMBIENTAL</div><b>Ambiente sonoro exterior</b><p>Integra múltiples fuentes y cambia temporal y espacialmente.</p></div></div>', unsafe_allow_html=True)
+    st.markdown('### Ciudad acústica interactiva')
+    sources = {'Automóvil': ('Móvil', 'Variable', 'Tránsito vial', 'Vivienda / peatón'), 'Carretera': ('Lineal', 'Continua/variable', 'Flujo vehicular', 'Fachadas / colegio'), 'Construcción': ('Puntual/área', 'Intermitente', 'Maquinaria y faenas', 'Vecindario'), 'Avión': ('Móvil / evento', 'Eventual', 'Sobrevuelo', 'Barrio / colegio'), 'Equipo industrial': ('Puntual', 'Continua o cíclica', 'Instalación técnica', 'Receptor sensible'), 'Comercio/personas': ('Área', 'Variable', 'Actividad humana', 'Entorno inmediato')}
+    selected = st.selectbox('Selecciona una fuente', list(sources), key='c3_s1_source')
+    t, temporal, characteristic, receptor = sources[selected]
+    a, b, c, d = st.columns(4)
+    a.metric('Tipo', t)
+    b.metric('Temporalidad', temporal)
+    c.metric('Característica', characteristic)
+    d.metric('Receptor potencial', receptor)
+    st.markdown('### Actividad · Clasifica la ciudad')
+    q_source = st.selectbox('Fuente a clasificar', list(sources), key='c3_s1_quiz_source')
+    q_kind = st.selectbox('Tipo espacial', ['Seleccionar', 'Puntual', 'Lineal', 'Móvil', 'Evento', 'Área'], key='c3_s1_kind')
+    q_time = st.selectbox('Comportamiento temporal', ['Seleccionar', 'Continua', 'Variable', 'Intermitente', 'Eventual'], key='c3_s1_time')
+    if st.button('Comprobar clasificación', key='c3_s1_check'):
+        expected_kind = {'Automóvil': 'Móvil', 'Carretera': 'Lineal', 'Construcción': 'Puntual', 'Avión': 'Evento', 'Equipo industrial': 'Puntual', 'Comercio/personas': 'Área'}[q_source]
+        expected_time = {'Automóvil': 'Variable', 'Carretera': 'Variable', 'Construcción': 'Intermitente', 'Avión': 'Eventual', 'Equipo industrial': 'Continua', 'Comercio/personas': 'Variable'}[q_source]
+        ok = q_kind == expected_kind and q_time == expected_time
+        st.success('Clasificación coherente para este caso didáctico.') if ok else st.warning(f'Revisa: una clasificación razonable aquí es {expected_kind} + {expected_time}.')
+        _c3l1_mark_formative(saved, deps, 's1_classify', {'source': q_source, 'kind': q_kind, 'time': q_time, 'ok': ok})
+    st.info('Pregunta clave: una carretera continua y un sobrevuelo de avión no tienen necesariamente el mismo descriptor dominante: uno describe exposición continua; el otro puede requerir caracterización de evento.')
+
+def _c3l1_stage2_impl(lab: dict, saved: dict, deps: Dict[str, Any]):
+    _c3l1_style()
+    _c3l1_header(2, 'Del campo sonoro al sonómetro', 'Comprender qué hace cada bloque de la cadena de medición y diferenciar ponderación frecuencial de ponderación temporal.', deps)
+    _c3l1_asset('curso3_lab1_etapa2_sonometro.webp')
+    st.markdown('<div class="c3-flow"><span class="c3-node">p(t)</span><span class="c3-arrow">→</span><span class="c3-node">MICRÓFONO</span><span class="c3-arrow">→</span><span class="c3-node">PREAMPLIFICADOR</span><span class="c3-arrow">→</span><span class="c3-node">PONDERACIÓN</span><span class="c3-arrow">→</span><span class="c3-node">PROCESAMIENTO</span><span class="c3-arrow">→</span><span class="c3-node">INTEGRACIÓN</span><span class="c3-arrow">→</span><span class="c3-node">ALMACENAMIENTO</span></div>', unsafe_allow_html=True)
+    components_map = {'Micrófono': 'Convierte presión acústica en señal eléctrica.', 'Preamplificador': 'Adapta la señal del micrófono con bajo ruido.', 'Filtros / ponderación': 'Modifican la respuesta en frecuencia según A, C o Z.', 'Procesador RMS/integrador': 'Calcula niveles eficaces e integra energía en el tiempo.', 'Memoria': 'Conserva niveles, historia temporal y metadatos.', 'Calibrador': 'Aplica una señal acústica de referencia para comprobar la cadena de medición.'}
+    part = st.segmented_control('Sonómetro virtual desarmable', list(components_map), default='Micrófono', key='c3_s2_part')
+    st.info(components_map.get(part, ''))
+    st.markdown('### Simulador A / C / Z')
+    freqs = np.array([31.5, 63, 125, 250, 500, 1000, 2000, 4000, 8000])
+    base = np.array([69, 68, 67, 66, 65, 65, 64, 62, 59], dtype=float)
+    wa = np.array([-39.4, -26.2, -16.1, -8.6, -3.2, 0, 1.2, 1.0, -1.1])
+    wc = np.array([-3.0, -0.8, -0.2, 0, 0, 0, -0.2, -0.8, -3.0])
+    weighting = st.radio('Ponderación frecuencial', ['A', 'C', 'Z'], horizontal=True, key='c3_s2_weight')
+    corr = wa if weighting == 'A' else wc if weighting == 'C' else np.zeros_like(base)
+    fig, ax = plt.subplots(figsize=(8, 3.3))
+    ax.semilogx(freqs, base, marker='o', label='Espectro original')
+    ax.semilogx(freqs, base + corr, marker='o', label=f'Espectro ponderado {weighting}')
+    ax.set_xlabel('Frecuencia [Hz]')
+    ax.set_ylabel('Nivel [dB]')
+    ax.grid(True, which='both', alpha=0.2)
+    ax.legend()
+    st.pyplot(fig, use_container_width=True)
+    plt.close(fig)
+    st.caption('A/C/Z modifican la contribución de las frecuencias. No son lo mismo que Fast/Slow/Impulse, que describen la respuesta temporal del indicador.')
+    st.markdown('### Ponderación temporal')
+    temporal = st.segmented_control('Respuesta temporal', ['Fast', 'Slow', 'Impulse'], default='Fast', key='c3_s2_temporal')
+    explanations = {'Fast': 'Respuesta más rápida; útil para seguir variaciones relativamente rápidas.', 'Slow': 'Mayor suavizado temporal; estabiliza la lectura visual.', 'Impulse': 'Respuesta diseñada para fenómenos impulsivos según la instrumentación/procedimiento aplicable.'}
+    st.info(explanations.get(temporal, ''))
+    st.markdown('### Secuencia de verificación con calibrador')
+    order = st.multiselect('Selecciona en el orden que aplicarías', ['Verificación antes', 'Medición', 'Verificación después'], key='c3_s2_cal_order')
+    if st.button('Comprobar secuencia', key='c3_s2_cal_check'):
+        ok = order == ['Verificación antes', 'Medición', 'Verificación después']
+        st.success('Correcto: comprobar antes → medir → comprobar después.') if ok else st.warning('La lógica esperada es: verificación antes → medición → verificación después.')
+        _c3l1_mark_formative(saved, deps, 's2_calibration', {'order': order, 'ok': ok})
+
+def _c3l1_stage3_impl(lab: dict, saved: dict, deps: Dict[str, Any]):
+    _c3l1_style()
+    _c3l1_header(3, 'Laboratorio de medición real', 'Obtener dos registros ambientales y conservar sus descriptores y contexto para analizarlos en las etapas siguientes.', deps)
+    _c3l1_asset('curso3_lab1_etapa3_medicion.webp')
+    st.warning('Herramienta con finalidad educativa. La respuesta del micrófono depende del dispositivo y no sustituye instrumentación ni procedimientos requeridos para mediciones reglamentarias.')
+    _c3l1_external_tool_card('Sonómetro Online', 'Reutiliza el sonómetro del Diplomado para medir nivel instantáneo, LAeq,T, Lmax, Lmin y tiempo.', 'SONOMETRO_ONLINE_URL', '🎙️ ABRIR SONÓMETRO ONLINE')
+    st.markdown('### Mi registro ambiental')
+    records = saved.get('c3_measurements', {}) if isinstance(saved.get('c3_measurements'), dict) else {}
+    for code, label, hint in [('A', 'MEDICIÓN A', 'Ambiente relativamente tranquilo'), ('B', 'MEDICIÓN B', 'Fuente claramente audible')]:
+        with st.container(border=True):
+            st.markdown(f'#### {label} · {hint}')
+            old = records.get(code, {}) if isinstance(records.get(code), dict) else {}
+            c1, c2, c3, c4 = st.columns(4)
+            laeq = c1.number_input('LAeq [dB(A)]', 20.0, 130.0, float(old.get('laeq', 55 if code == 'A' else 68)), 0.1, key=f'c3_s3_{code}_laeq')
+            lmax = c2.number_input('Lmax [dB(A)]', 20.0, 140.0, float(old.get('lmax', 62 if code == 'A' else 80)), 0.1, key=f'c3_s3_{code}_lmax')
+            lmin = c3.number_input('Lmin [dB(A)]', 10.0, 130.0, float(old.get('lmin', 48 if code == 'A' else 53)), 0.1, key=f'c3_s3_{code}_lmin')
+            duration = c4.number_input('Duración [s]', 10, 3600, int(old.get('duration', 60)), 10, key=f'c3_s3_{code}_dur')
+            context = st.multiselect('Contexto', ['INTERIOR', 'EXTERIOR', 'TRÁFICO', 'PERSONAS', 'MÚSICA', 'EQUIPO', 'CONSTRUCCIÓN', 'NATURALEZA', 'OTRO'], default=old.get('context', []), key=f'c3_s3_{code}_context')
+            notes = st.text_input('Observaciones', value=old.get('notes', ''), key=f'c3_s3_{code}_notes')
+            if st.button(f'💾 Guardar {label.lower()}', key=f'c3_s3_{code}_save', use_container_width=True):
+                records[code] = {'laeq': laeq, 'lmax': lmax, 'lmin': lmin, 'duration': duration, 'context': context, 'notes': notes, 'saved_at': _c3l1_now(deps)}
+                saved['c3_measurements'] = records
+                _c3l1_mark_formative(saved, deps, f's3_measurement_{code}', records[code])
+                st.success(f'{label} guardada. Queda disponible para Etapas 4 y 5.')
+    if records:
+        st.dataframe(pd.DataFrame(records).T.reset_index(names='Registro'), hide_index=True, use_container_width=True)
+
+def _c3l1_synthetic_temporal(base: float, event: float, n: int=60, seed: int=42):
+    rng = np.random.default_rng(seed)
+    y = base + rng.normal(0, 1.7, n)
+    for center in (15, 35, 48):
+        width = 2 if center != 35 else 4
+        idx = np.arange(n)
+        y += (event - base) * np.exp(-0.5 * ((idx - center) / width) ** 2)
+    return y
+
+def _c3l1_stage4_impl(lab: dict, saved: dict, deps: Dict[str, Any]):
+    _c3l1_style()
+    _c3l1_header(4, 'Del registro temporal a los descriptores', 'Ver cómo cambia el nivel con el tiempo y relacionar LAeq, extremos y percentiles con la historia temporal.', deps)
+    _c3l1_asset('curso3_lab1_etapa4_registro.webp')
+    records = saved.get('c3_measurements', {}) if isinstance(saved.get('c3_measurements'), dict) else {}
+    source = st.radio('Registro a explorar', ['Medición A', 'Medición B', 'Caso didáctico'], horizontal=True, key='c3_s4_source')
+    if source == 'Medición A' and records.get('A'):
+        base = records['A']['lmin'] + 2
+        event = records['A']['lmax']
+        target_eq = records['A']['laeq']
+    elif source == 'Medición B' and records.get('B'):
+        base = records['B']['lmin'] + 2
+        event = records['B']['lmax']
+        target_eq = records['B']['laeq']
+    else:
+        base, event, target_eq = (54, 76, None)
+    y = _c3l1_synthetic_temporal(base, event)
+    if target_eq is not None:
+        y += target_eq - _c3l1_laeq(y)
+    t = np.arange(len(y))
+    vals = {'LAeq': _c3l1_laeq(y), 'Lmax': float(np.max(y)), 'Lmin': float(np.min(y)), 'L10': _c3l1_exceedance_percentile(y, 10), 'L50': _c3l1_exceedance_percentile(y, 50), 'L90': _c3l1_exceedance_percentile(y, 90)}
+    show = st.multiselect('Mostrar sobre el gráfico', list(vals), default=['LAeq', 'L10', 'L90'], key='c3_s4_show')
+    fig, ax = plt.subplots(figsize=(9, 4))
+    ax.plot(t, y, lw=1.5)
+    ax.set_xlabel('Tiempo [s]')
+    ax.set_ylabel('Nivel [dB(A)]')
+    ax.grid(alpha=0.2)
+    for k in show:
+        ax.axhline(vals[k], label=f'{k} = {vals[k]:.1f}', ls='--')
+    if show:
+        ax.legend(ncol=min(3, len(show)), fontsize=8)
+    st.pyplot(fig, use_container_width=True)
+    plt.close(fig)
+    cols = st.columns(6)
+    for col, (k, v) in zip(cols, vals.items()):
+        col.metric(k, f'{v:.1f} dB(A)')
+    st.info('L10 es el nivel excedido durante el 10 % del tiempo; L90 el excedido durante el 90 %. Una diferencia L10−L90 grande indica un ambiente temporalmente variable, dentro del contexto de esta medición.')
+    st.markdown('### Generador de ambiente sonoro')
+    traffic = st.slider('Tráfico', 0, 10, 5, key='c3_s4_traffic')
+    trucks = st.slider('Camiones', 0, 10, 2, key='c3_s4_trucks')
+    horns = st.slider('Bocinas/eventos', 0, 10, 1, key='c3_s4_horns')
+    people = st.slider('Personas', 0, 10, 3, key='c3_s4_people')
+    bg = st.slider('Ruido de fondo [dB(A)]', 35, 65, 48, key='c3_s4_bg')
+    rng = np.random.default_rng(7)
+    sig = bg + rng.normal(0, 1, 120) + traffic * 0.55 + people * 0.18
+    event_idx = rng.choice(np.arange(10, 110), size=max(1, trucks + horns), replace=False)
+    sig[event_idx] += trucks * 1.1 + horns * 1.6
+    gen = {'LAeq': _c3l1_laeq(sig), 'L10': _c3l1_exceedance_percentile(sig, 10), 'L50': _c3l1_exceedance_percentile(sig, 50), 'L90': _c3l1_exceedance_percentile(sig, 90), 'Lmax': float(np.max(sig))}
+    st.write(' · '.join((f'**{k}:** {v:.1f} dB(A)' for k, v in gen.items())))
+    if st.button('Guardar análisis temporal', key='c3_s4_save'):
+        saved['c3_temporal'] = {'source': source, 'descriptors': vals, 'generated': gen, 'signal': y.tolist()}
+        _c3l1_mark_formative(saved, deps, 's4_temporal', saved['c3_temporal'])
+        st.success('Análisis guardado para continuar en Etapa 5.')
+
+def _c3l1_stage5_impl(lab: dict, saved: dict, deps: Dict[str, Any]):
+    _c3l1_style()
+    _c3l1_header(5, 'De los datos al LAeq', 'Construir el nivel equivalente como promedio energético y visualizar de dónde salen los percentiles.', deps)
+    st.latex('L_{Aeq,T}=10\\log_{10}\\left[\\frac{1}{T}\\int_0^T10^{L_A(t)/10}\\,dt\\right]')
+    st.caption('Calcula el nivel constante que contiene la misma energía acústica que el registro variable durante T.')
+    st.latex('L_{eq}=10\\log_{10}\\left[\\frac{\\sum_i t_i10^{L_i/10}}{\\sum_i t_i}\\right]')
+    st.markdown('### Constructor energético de LAeq')
+    defaults = [65, 68, 70, 66]
+    cols = st.columns(4)
+    levels = []
+    durations = []
+    for i, col in enumerate(cols):
+        with col:
+            levels.append(st.slider(f'L{i + 1} [dB(A)]', 45, 90, defaults[i], key=f'c3_s5_l{i}'))
+            durations.append(st.number_input(f't{i + 1} [min]', 1, 60, 15, key=f'c3_s5_t{i}'))
+    result = _c3l1_laeq(levels, durations)
+    arithmetic = float(np.average(levels, weights=durations))
+    a, b = st.columns(2)
+    a.metric('LAeq energético', f'{result:.2f} dB(A)')
+    b.metric('Promedio aritmético (comparación)', f'{arithmetic:.2f} dB(A)')
+    energy = pd.DataFrame({'Nivel': levels, 'Duración': durations, 'Energía relativa': [10 ** (x / 10) for x in levels]})
+    st.dataframe(energy, hide_index=True, use_container_width=True)
+    st.info('El promedio aritmético de dB no conserva energía. Primero se pasa a escala energética, se pondera por tiempo y luego se vuelve a dB.')
+    st.markdown('### Constructor de percentiles')
+    temporal = saved.get('c3_temporal', {}) if isinstance(saved.get('c3_temporal'), dict) else {}
+    samples = np.asarray(temporal.get('signal') or [65, 67, 72, 69, 66, 71, 68, 70, 66, 67], dtype=float)
+    ordered = np.sort(samples)[::-1]
+    p10 = _c3l1_exceedance_percentile(samples, 10)
+    p50 = _c3l1_exceedance_percentile(samples, 50)
+    p90 = _c3l1_exceedance_percentile(samples, 90)
+    left, right = st.columns(2)
+    with left:
+        st.write('**Registro original**')
+        st.write(', '.join((f'{x:.1f}' for x in samples[:20])))
+    with right:
+        st.write('**Ordenado de mayor a menor**')
+        st.write(', '.join((f'{x:.1f}' for x in ordered[:20])))
+    st.write(f'**L10 = {p10:.1f} dB(A)** · **L50 = {p50:.1f} dB(A)** · **L90 = {p90:.1f} dB(A)**')
+    if st.button('Guardar descriptores', key='c3_s5_save'):
+        saved['c3_descriptors'] = {'laeq': result, 'levels': levels, 'durations': durations, 'l10': p10, 'l50': p50, 'l90': p90}
+        _c3l1_mark_formative(saved, deps, 's5_descriptors', saved['c3_descriptors'])
+        st.success('Descriptores guardados.')
+    with st.expander('Caso complementario 2025 · grupo electrógeno y fachada'):
+        st.caption('Aplicación de la base 2025: convertir niveles por banda Z a A y combinar energéticamente.')
+        ext = np.array([66, 63, 60, 58, 57, 55, 52], dtype=float)
+        p1 = np.array([53, 50, 47, 45, 44, 42, 39], dtype=float)
+        p2 = np.array([52, 49, 46, 44, 43, 41, 38], dtype=float)
+        p3 = np.array([51, 48, 45, 43, 42, 40, 37], dtype=float)
+        a_corr = np.array([_C3L1_A_OCTAVE[int(f)] for f in _C3L1_OCTAVES])
+        table = pd.DataFrame({'Banda [Hz]': _C3L1_OCTAVES.astype(int), 'A [dB]': a_corr, 'Exterior Z': ext, 'INT P1 Z': p1, 'INT P2 Z': p2, 'INT P3 Z': p3})
+        st.dataframe(table, hide_index=True, use_container_width=True)
+        if st.toggle('Ver conversión y totales A', key='c3_s5_case_show'):
+            totals = {'Exterior': _c3l1_energetic_total(ext + a_corr), 'INT P1': _c3l1_energetic_total(p1 + a_corr), 'INT P2': _c3l1_energetic_total(p2 + a_corr), 'INT P3': _c3l1_energetic_total(p3 + a_corr)}
+            st.write(' · '.join((f'**{k}:** {v:.1f} dB(A)' for k, v in totals.items())))
+            st.caption('El total A se obtiene corrigiendo cada banda y luego sumando energéticamente; no se suman directamente los dB por banda.')
+
+def _c3l1_stage6_impl(lab: dict, saved: dict, deps: Dict[str, Any]):
+    _c3l1_style()
+    _c3l1_header(6, 'Del evento a las 24 horas', 'Distinguir la energía de un evento individual (SEL) de la exposición integrada en períodos día, tarde y noche (Lden).', deps)
+    _c3l1_asset('curso3_lab1_etapa6_24h.webp')
+    st.markdown('### Parte A · SEL')
+    st.latex('SEL=L_{Aeq,T}+10\\log_{10}\\left(\\frac{T}{T_0}\\right),\\quad T_0=1\\,s')
+    c1, c2 = st.columns(2)
+    with c1:
+        event = st.selectbox('Evento', ['Automóvil', 'Camión', 'Bocina', 'Sobrevuelo'], key='c3_s6_event')
+        lev = st.slider('LAeq del evento [dB(A)]', 55, 105, 78, key='c3_s6_level')
+    with c2:
+        dur = st.slider('Duración [s]', 1, 120, 20, key='c3_s6_dur')
+        sval = _c3l1_sel(lev, dur)
+        st.metric('SEL', f'{sval:.1f} dB(A)·s (referencia 1 s)')
+    st.caption('SEL permite comparar energía de eventos de distinta duración; no es simplemente el nivel máximo del evento.')
+    st.markdown('### Parte B · Ciudad de 24 horas')
+    ld = st.slider('LD [dB(A)]', 40, 85, 66, key='c3_s6_ld')
+    le = st.slider('LE [dB(A)]', 40, 85, 63, key='c3_s6_le')
+    ln = st.slider('LN [dB(A)]', 35, 80, 57, key='c3_s6_ln')
+    val = _c3l1_lden(ld, le, ln)
+    st.metric('Lden', f'{val:.2f} dB')
+    st.latex('L_{den}=10\\log_{10}\\left[\\frac{12\\,10^{L_D/10}+4\\,10^{(L_E+5)/10}+8\\,10^{(L_N+10)/10}}{24}\\right]')
+    if st.toggle('Ver penalizaciones', key='c3_s6_penalties'):
+        st.info('Tarde: +5 dB en el descriptor. Noche: +10 dB. Son penalizaciones convencionales del descriptor Lden, no una modificación física del nivel medido.')
+    if st.button('Guardar evento y exposición', key='c3_s6_save'):
+        saved['c3_longterm'] = {'event': event, 'sel': sval, 'ld': ld, 'le': le, 'ln': ln, 'lden': val}
+        _c3l1_mark_formative(saved, deps, 's6_longterm', saved['c3_longterm'])
+        st.success('Resultados guardados.')
+
+def _c3l1_stage7_impl(lab: dict, saved: dict, deps: Dict[str, Any]):
+    _c3l1_style()
+    _c3l1_header(7, '¿Dónde, cuándo y cuánto medir?', 'Diseñar una campaña con representatividad temporal y espacial en lugar de limitarse a encender el sonómetro.', deps)
+    _c3l1_asset('curso3_lab1_etapa7_campana.webp')
+    st.markdown('<div class="c3-grid-2"><div class="c3-card blue"><div class="c3-kicker">REPRESENTATIVIDAD TEMPORAL</div><b>¿Cuándo y cuánto?</b><p>La duración y el período deben representar el fenómeno que quieres caracterizar.</p></div><div class="c3-card green"><div class="c3-kicker">REPRESENTATIVIDAD ESPACIAL</div><b>¿Dónde?</b><p>Los puntos deben responder al objetivo, fuentes y receptores, no a la comodidad de medir.</p></div></div>', unsafe_allow_html=True)
+    candidates = ['Vivienda junto a avenida', 'Colegio', 'Parque interior', 'Comercio', 'Fondo residencial', 'Junto a fuente técnica', 'Bajo trayectoria aérea', 'Cruce de avenidas']
+    periods = ['AM punta', 'Día', 'PM punta', 'Tarde', 'Noche', 'Madrugada']
+    descriptors = ['LAeq', 'LAeq + L10/L90', 'SEL', 'Lden/periodos', 'Lmax + LAeq']
+    campaign = []
+    st.markdown('### Planificador de campaña · 5 sonómetros virtuales')
+    for i in range(5):
+        with st.container(border=True):
+            c1, c2, c3, c4 = st.columns([1.4, 1, 1, 1])
+            loc = c1.selectbox(f'Punto {i + 1}', candidates, key=f'c3_s7_loc_{i}')
+            period = c2.selectbox('Período', periods, key=f'c3_s7_period_{i}')
+            duration = c3.selectbox('Duración', [5, 15, 30, 60, 120], index=2, key=f'c3_s7_dur_{i}')
+            desc = c4.selectbox('Descriptor', descriptors, key=f'c3_s7_desc_{i}')
+            campaign.append({'name': f'P{i + 1}', 'location': loc, 'period': period, 'duration_min': duration, 'descriptor': desc})
+    if st.button('Evaluar campaña', key='c3_s7_eval', type='primary'):
+        feedback = []
+        locs = [p['location'] for p in campaign]
+        pers = [p['period'] for p in campaign]
+        feedback.append(('✓' if any(('Vivienda' in x or 'Colegio' in x for x in locs)) else '⚠', 'Existe un punto representativo de receptor sensible.' if any(('Vivienda' in x or 'Colegio' in x for x in locs)) else 'Falta un punto asociado a un receptor sensible.'))
+        feedback.append(('✓' if any((x in ('Noche', 'Madrugada') for x in pers)) else '⚠', 'Se consideró período nocturno.' if any((x in ('Noche', 'Madrugada') for x in pers)) else 'No hay punto nocturno; revisa si el objetivo requiere caracterizar la noche.'))
+        feedback.append(('⚠' if len(set(locs)) < 4 else '✓', 'Los puntos están demasiado concentrados.' if len(set(locs)) < 4 else 'La campaña tiene diversidad espacial básica.'))
+        feedback.append(('⚠' if max((p['duration_min'] for p in campaign)) < 30 else '✓', 'Todas las duraciones son muy cortas para fenómenos variables.' if max((p['duration_min'] for p in campaign)) < 30 else 'Existe al menos una medición de duración suficiente para observar variabilidad didáctica.'))
+        for icon, msg in feedback:
+            st.write(f'{icon} {msg}')
+        saved['c3_campaign'] = {'points': campaign, 'feedback': feedback}
+        _c3l1_mark_formative(saved, deps, 's7_campaign', saved['c3_campaign'])
+    st.markdown('### Comparador temporal')
+    hour = st.segmented_control('Mismo punto', ['08:00', '14:00', '19:00', '02:00'], default='14:00', key='c3_s7_hour')
+    profiles = {'08:00': 69, '14:00': 63, '19:00': 67, '02:00': 52}
+    st.metric('LAeq didáctico en el mismo punto', f'{profiles.get(hour, 63)} dB(A)')
+    st.info('Una medición a las 14:00 no representa necesariamente todo el día. La representatividad temporal depende del objetivo y de cómo varía la fuente.')
+
+def _c3l1_idw_grid(points: np.ndarray, values: np.ndarray, resolution: int=80):
+    gx, gy = np.mgrid[0:100:complex(resolution), 0:70:complex(resolution)]
+    dx = gx[..., None] - points[:, 0]
+    dy = gy[..., None] - points[:, 1]
+    d2 = dx * dx + dy * dy + 1e-06
+    w = 1 / d2
+    z = (w * values).sum(axis=-1) / w.sum(axis=-1)
+    return (gx, gy, z)
+
+def _c3l1_stage8_impl(lab: dict, saved: dict, deps: Dict[str, Any]):
+    _c3l1_style()
+    _c3l1_header(8, 'Introducción a los mapas de ruido', 'Comprender qué significa espacializar información acústica y distinguir medición, interpolación y modelación.', deps)
+    _c3l1_asset('curso3_lab1_etapa8_mapa.webp')
+    st.markdown('<div class="c3-flow"><span class="c3-node">MEDICIÓN</span><span class="c3-arrow">≠</span><span class="c3-node">INTERPOLACIÓN</span><span class="c3-arrow">≠</span><span class="c3-node">MODELACIÓN</span></div>', unsafe_allow_html=True)
+    st.markdown('<div class="c3-grid"><div class="c3-card blue"><b>Medición</b><p>Valor obtenido por un instrumento en una posición y período definidos.</p></div><div class="c3-card green"><b>Interpolación</b><p>Estimación matemática entre puntos medidos. No crea nuevas mediciones.</p></div><div class="c3-card purple"><b>Modelación</b><p>Predicción basada en fuentes, geometría, propagación y supuestos del modelo.</p></div></div>', unsafe_allow_html=True)
+    base_points = np.array([[20, 15], [75, 15], [25, 55], [78, 55], [50, 35], [10, 35], [90, 35], [50, 60], [50, 10], [35, 30], [65, 30], [35, 45], [65, 45], [15, 60], [85, 60], [50, 50]], dtype=float)
+    base_values = np.array([70, 63, 58, 61, 66, 72, 62, 57, 69, 67, 64, 60, 61, 55, 59, 58], dtype=float)
+    n = st.segmented_control('Densidad de mediciones', [4, 8, 16], default=4, key='c3_s8_n') or 4
+    pts = base_points[:int(n)]
+    vals = base_values[:int(n)]
+    represent = st.toggle('Representar espacialmente', key='c3_s8_interp')
+    fig, ax = plt.subplots(figsize=(9, 4.7))
+    ax.set_xlim(0, 100)
+    ax.set_ylim(0, 70)
+    ax.set_aspect('equal')
+    ax.set_xlabel('Este (escala didáctica)')
+    ax.set_ylabel('Norte')
+    if represent:
+        gx, gy, z = _c3l1_idw_grid(pts, vals)
+        cf = ax.contourf(gx, gy, z, levels=np.arange(50, 76, 2), alpha=0.75)
+        fig.colorbar(cf, ax=ax, label='LAeq interpolado [dB(A)]')
+    sc = ax.scatter(pts[:, 0], pts[:, 1], c=vals, s=70, edgecolors='k')
+    for i, (x, y) in enumerate(pts):
+        ax.text(x + 1, y + 1, f'P{i + 1}\n{vals[i]:.0f}', fontsize=8)
+    ax.grid(alpha=0.15)
+    st.pyplot(fig, use_container_width=True)
+    plt.close(fig)
+    st.info('Pregunta: el nivel mostrado entre P2 y P3, ¿fue medido directamente allí? **No.** Si activaste la representación, ese valor fue interpolado a partir de puntos medidos.')
+    layers = st.multiselect('Capas conceptuales', ['Puntos medidos', 'Interpolación', 'Modelo predictivo'], default=['Puntos medidos'], key='c3_s8_layers')
+    if 'Modelo predictivo' in layers:
+        st.warning("La capa 'Modelo predictivo' se muestra aquí solo como concepto. Este Laboratorio 1 no desarrolla todavía un modelo predictivo completo.")
+    _c3l1_external_tool_card('Noise Map Lab', 'Herramienta complementaria para explorar fuentes, receptores, grilla y barreras sin perder el progreso del laboratorio.', 'NOISE_MAP_LAB_URL', '🗺️ ABRIR NOISE MAP LAB')
+    if st.button('Guardar representación espacial', key='c3_s8_save'):
+        saved['c3_spatial'] = {'n_points': int(n), 'interpolation': bool(represent), 'layers': layers, 'points': [{'x': float(x), 'y': float(y), 'laeq': float(v)} for (x, y), v in zip(pts, vals)]}
+        _c3l1_mark_formative(saved, deps, 's8_spatial', saved['c3_spatial'])
+        st.success('Representación guardada.')
+_C3L1_STAGE9_QUESTIONS = [('Ruido ambiental', '¿Qué descripción es más completa de un ambiente acústico?', ['Un único valor en dB.', 'Fuente + propagación + receptor + tiempo + frecuencia + espacio.', 'Solo la fuente dominante.', 'Solo el nivel máximo.'], 1, 'El ambiente acústico es multidimensional.'), ('Instrumentación', '¿Qué hace principalmente el micrófono de un sonómetro?', ['Convierte presión acústica en señal eléctrica.', 'Calcula Lden.', 'Aplica la penalización nocturna.', 'Interpola mapas.'], 0, 'El micrófono es el transductor de entrada.'), ('Ponderaciones', '¿Cuál afirmación diferencia correctamente A/C/Z de Fast/Slow?', ['A/C/Z son temporales y Fast/Slow frecuenciales.', 'A/C/Z son ponderaciones frecuenciales y Fast/Slow respuestas temporales.', 'Son exactamente lo mismo.', 'Fast/Slow solo se usan en mapas.'], 1, 'Frecuencia y tiempo son dimensiones distintas.'), ('LAeq', 'Para combinar cuatro intervalos de nivel en dB, ¿qué procedimiento corresponde?', ['Promedio aritmético directo.', 'Suma de dB y resta 3 dB.', 'Promedio energético ponderado por duración.', 'Tomar el Lmax.'], 2, 'LAeq conserva energía acústica equivalente.'), ('Percentiles', 'Si L10=74 dB(A) y L90=55 dB(A), ¿qué lectura es razonable?', ['El ambiente es perfectamente estable.', 'Existe una diferencia temporal importante entre niveles altos y fondo.', 'L90 es siempre el máximo.', 'No se puede interpretar ninguna variabilidad.'], 1, 'L10−L90 aporta una lectura de variabilidad en el contexto de la medición.'), ('SEL', '¿Qué permite comparar SEL?', ['Eventos de distinta duración mediante su energía normalizada.', 'Solo niveles mínimos.', 'Únicamente ruido continuo de 24 h.', 'La ubicación espacial de receptores.'], 0, 'SEL resume energía de evento normalizada al tiempo de referencia.'), ('Lden', '¿Qué ocurre en Lden con tarde y noche?', ['Se ignoran.', 'Se promedian aritméticamente.', 'Se aplican penalizaciones convencionales antes de integrar energéticamente.', 'Se reemplazan por Lmax.'], 2, 'Lden integra día, tarde y noche con +5 y +10 dB en el descriptor.'), ('Campaña', 'Todos los puntos de una campaña están junto a la avenida. ¿Cuál es la principal limitación?', ['Tiene demasiada calibración.', 'Puede carecer de representatividad espacial para otros receptores/zonas.', 'No puede calcular LAeq.', 'El sonómetro se vuelve clase 2.'], 1, 'La distribución espacial debe responder al objetivo.'), ('Mapa', 'Un valor entre dos puntos medidos obtenido por interpolación es…', ['Una medición directa.', 'Una estimación espacial derivada de los puntos.', 'Un resultado reglamentario automático.', 'Siempre un modelo predictivo físico.'], 1, 'Interpolar no equivale a medir ni a modelar físicamente.'), ('Diagnóstico', '¿Cuál es una conclusión profesional correcta?', ['Un mapa interpolado demuestra exactamente el nivel en cada metro.', 'Un solo LAeq describe siempre todo el comportamiento temporal.', 'Las conclusiones deben respetar objetivo, representatividad, método e incertidumbres/limitaciones.', 'El teléfono sustituye automáticamente un sonómetro reglamentario.'], 2, 'El diagnóstico debe respetar los límites de la evidencia.')]
+
+def _c3l1_stage9_remote(deps):
+    user = st.session_state.get('user_key')
+    if not user:
+        return None
+    rows = _c3l1_remote_rows(deps, class_id=_C3L1_CLASS_ID_INLINE, user_key=user)
+    row = next((r for r in rows if int(r.get('stage') or -1) == 9 and r.get('question_key') == 'final_comprehension'), None)
+    if not row:
+        return None
+    payload = row.get('answer') or {}
+    if isinstance(payload, str):
+        try:
+            payload = json.loads(payload)
+        except Exception:
+            payload = {}
+    return {'row': row, 'payload': payload if isinstance(payload, dict) else {}}
+
+def _c3l1_stage9_save(saved, deps):
+    answers = {str(i): st.session_state.get(f'c3_e9_q{i}') for i in range(10)}
+    saved['c3_e9_answers'] = answers
+    saved['c3_e9_started_at'] = saved.get('c3_e9_started_at') or _c3l1_now(deps)
+    _c3l1_save(saved, deps)
+
+def _c3l1_stage9_finish(saved, deps):
+    answers = {str(i): st.session_state.get(f'c3_e9_q{i}') for i in range(10)}
+    score = sum((4 for i, q in enumerate(_C3L1_STAGE9_QUESTIONS) if answers.get(str(i)) == q[2][q[3]]))
+    payload = {'version': _C3L1_VERSION, 'answers': answers, 'score': score, 'max_score': 40, 'finished_at': _c3l1_now(deps)}
+    client = _c3l1_client(deps)
+    user = st.session_state.get('user_key')
+    if client is not None and user:
+        qid = f'{_C3L1_CLASS_ID_INLINE}-final_comprehension-v1'
+        try:
+            client.table('questions').upsert({'id': qid, 'class_id': _C3L1_CLASS_ID_INLINE, 'stage': 9, 'question_key': 'final_comprehension', 'question_text': 'Curso 3 · Laboratorio 1 · Evaluación de comprensión', 'correct_answer': 'Pauta de 10 preguntas', 'max_score': 40, 'content_version': 1, 'active': True, 'updated_at': _c3l1_now(deps)}, on_conflict='id').execute()
+            client.table('responses').upsert({'course_id': deps.get('course_id', 'diplomado-acustica-edificacion'), 'class_id': _C3L1_CLASS_ID_INLINE, 'user_key': user, 'stage': 9, 'question_key': 'final_comprehension', 'question_text': 'Evaluación de comprensión · Curso 3', 'correct_answer': 'Pauta de 10 preguntas', 'answer': payload, 'auto_level': 'Finalizada', 'feedback': f'Resultado automático: {score}/40 puntos.', 'auto_score': score, 'max_score': 40, 'status': 'submitted', 'updated_at': _c3l1_now(deps), 'submitted_at': _c3l1_now(deps)}, on_conflict='class_id,user_key,question_key').execute()
+        except Exception as exc:
+            st.warning(f'La entrega quedó guardada localmente, pero no fue posible sincronizarla con Supabase: {exc}')
+    saved['c3_e9_submitted'] = True
+    saved['c3_e9_score'] = score
+    saved['done_9'] = True
+    _c3l1_save(saved, deps)
+    return score
+
+def _c3l1_stage9_impl(lab: dict, saved: dict, deps: Dict[str, Any]):
+    _c3l1_style()
+    _c3l1_header(9, 'Preguntas de comprensión', 'Diez preguntas · 40 puntos · mismas reglas de envío definitivo y persistencia del motor evaluativo estándar.', deps, 20)
+    role = st.session_state.get('role', 'Alumno')
+    projection = bool(st.session_state.get('projection_mode') or role == 'Proyección')
+    if role == 'Docente':
+        st.markdown('## Pauta docente')
+        for i, q in enumerate(_C3L1_STAGE9_QUESTIONS, 1):
+            with st.container(border=True):
+                st.markdown(f'### {i}. {q[1]}')
+                for j, opt in enumerate(q[2]):
+                    st.write(('✓ ' if j == q[3] else '○ ') + opt)
+                st.success('Respuesta correcta: ' + q[2][q[3]])
+                st.caption(q[4])
+        return
+    remote = _c3l1_stage9_remote(deps)
+    if remote or saved.get('c3_e9_submitted'):
+        row = (remote or {}).get('row', {})
+        payload = (remote or {}).get('payload', {})
+        score = float(row.get('teacher_score') if row and row.get('teacher_score') is not None else payload.get('score', saved.get('c3_e9_score', 0)) or 0)
+        st.success(f'Evaluación enviada · {score:g}/40 puntos.')
+        return
+    old = saved.get('c3_e9_answers', {}) if isinstance(saved.get('c3_e9_answers'), dict) else {}
+    for i, val in old.items():
+        key = f'c3_e9_q{i}'
+        if key not in st.session_state and val is not None:
+            st.session_state[key] = val
+    st.info('Las respuestas se guardan como borrador. El envío definitivo bloquea esta evaluación para revisión docente.')
+    for i, q in enumerate(_C3L1_STAGE9_QUESTIONS):
+        with st.container(border=True):
+            st.markdown(f'### {i + 1}. {q[1]}')
+            st.caption('4 puntos')
+            st.radio('Respuesta', q[2], index=None, key=f'c3_e9_q{i}', label_visibility='collapsed')
+    answered = sum((st.session_state.get(f'c3_e9_q{i}') is not None for i in range(10)))
+    st.caption(f'{answered} de 10 respuestas registradas.')
+    if not projection:
+        c1, c2 = st.columns([1, 1])
+        if c1.button('💾 Guardar borrador y continuar después', key='c3_e9_save', use_container_width=True):
+            _c3l1_stage9_save(saved, deps)
+            st.success('Borrador guardado.')
+        if c2.button('ENVIAR EVALUACIÓN DEFINITIVA', key='c3_e9_submit', type='primary', use_container_width=True):
+            if answered < 10:
+                st.warning('Completa las 10 preguntas antes del envío definitivo.')
+            else:
+                score = _c3l1_stage9_finish(saved, deps)
+                st.success(f'Evaluación enviada · {score}/40 puntos.')
+                st.rerun()
+_C3L1_CASE_INTERVALS = {'P1': [67, 70, 69, 65], 'P2': [62, 64, 63, 61], 'P3': [58, 60, 59, 57]}
+_C3L1_CASE_PERIODS = {'P1': (66, 63, 57), 'P2': (62, 60, 54), 'P3': (58, 55, 50)}
+_C3L1_CASE_SAMPLES = [65, 67, 72, 69, 66, 71, 68, 70, 66, 67]
+_C3L1_S10_Q = [('¿Qué punto parece más expuesto durante la hora punta diurna?', ['P1', 'P2', 'P3', 'No se puede comparar'], 0), ('¿Qué representa L90 en este caso?', ['El máximo', 'Un nivel asociado al fondo/condición excedida 90% del tiempo', 'La suma energética', 'El SEL'], 1), ('¿Qué afirmación sobre el mapa interpolado es correcta?', ['Todos sus píxeles fueron medidos', 'Entre puntos hay estimaciones derivadas de datos', 'Es automáticamente un modelo predictivo', 'No depende de los puntos'], 1), ('Para el sobrevuelo, ¿qué descriptor del laboratorio está orientado a energía de evento?', ['SEL', 'L90', 'Lmin', 'LD'], 0), ('¿Qué debe incluir una conclusión profesional?', ['Solo el mayor dB', 'Fuente principal, receptor crítico, descriptor, limitaciones e información faltante', 'Solo una norma', 'Solo el mapa'], 1)]
+
+def _c3l1_stage10_remote(deps):
+    user = st.session_state.get('user_key')
+    if not user:
+        return None
+    rows = _c3l1_remote_rows(deps, class_id=_C3L1_CLASS_ID_INLINE, user_key=user)
+    row = next((r for r in rows if int(r.get('stage') or -1) == 10 and r.get('question_key') == 'final_integrated_design'), None)
+    if not row:
+        return None
+    payload = row.get('answer') or {}
+    if isinstance(payload, str):
+        try:
+            payload = json.loads(payload)
+        except Exception:
+            payload = {}
+    return {'row': row, 'payload': payload if isinstance(payload, dict) else {}}
+
+def _c3l1_stage10_draft(saved, deps, payload):
+    saved['c3_s10_draft'] = payload
+    saved['c3_s10_draft_at'] = _c3l1_now(deps)
+    _c3l1_save(saved, deps)
+
+def _c3l1_stage10_finish(saved, deps, payload, score):
+    client = _c3l1_client(deps)
+    user = st.session_state.get('user_key')
+    payload = {**payload, 'version': _C3L1_VERSION, 'score': score, 'max_score': 60, 'finished_at': _c3l1_now(deps)}
+    if client is not None and user:
+        qid = f'{_C3L1_CLASS_ID_INLINE}-final_integrated_design-v1'
+        try:
+            client.table('questions').upsert({'id': qid, 'class_id': _C3L1_CLASS_ID_INLINE, 'stage': 10, 'question_key': 'final_integrated_design', 'question_text': 'Curso 3 · Laboratorio 1 · Diagnóstico acústico de un barrio', 'correct_answer': 'Pauta docente del caso integrado', 'max_score': 60, 'content_version': 1, 'active': True, 'updated_at': _c3l1_now(deps)}, on_conflict='id').execute()
+            client.table('responses').upsert({'course_id': deps.get('course_id', 'diplomado-acustica-edificacion'), 'class_id': _C3L1_CLASS_ID_INLINE, 'user_key': user, 'stage': 10, 'question_key': 'final_integrated_design', 'question_text': 'Evaluación integradora · Curso 3', 'correct_answer': 'Pauta docente del caso integrado', 'answer': payload, 'auto_level': 'Finalizada', 'feedback': f'Resultado automático: {score}/60 puntos.', 'auto_score': score, 'max_score': 60, 'status': 'submitted', 'updated_at': _c3l1_now(deps), 'submitted_at': _c3l1_now(deps)}, on_conflict='class_id,user_key,question_key').execute()
+        except Exception as exc:
+            st.warning(f'La entrega quedó guardada localmente, pero no fue posible sincronizarla con Supabase: {exc}')
+    saved['c3_s10_submitted'] = True
+    saved['c3_s10_score'] = score
+    saved['done_10'] = True
+    _c3l1_save(saved, deps)
+
+def _c3l1_stage10_impl(lab: dict, saved: dict, deps: Dict[str, Any]):
+    _c3l1_style()
+    _c3l1_header(10, 'Diagnóstico acústico de un barrio', 'Caso profesional integrador · 60 puntos · campaña, descriptores, eventos, representación espacial y diagnóstico.', deps, 40)
+    _c3l1_asset('curso3_lab1_etapa10_barrio.webp')
+    role = st.session_state.get('role', 'Alumno')
+    projection = bool(st.session_state.get('projection_mode') or role == 'Proyección')
+    if role == 'Docente':
+        st.markdown('## Pauta desarrollada')
+        st.write('**LAeq,1h:** ' + ' · '.join((f'{p}={_c3l1_laeq(v):.2f} dB(A)' for p, v in _C3L1_CASE_INTERVALS.items())))
+        l10 = _c3l1_exceedance_percentile(_C3L1_CASE_SAMPLES, 10)
+        l50 = _c3l1_exceedance_percentile(_C3L1_CASE_SAMPLES, 50)
+        l90 = _c3l1_exceedance_percentile(_C3L1_CASE_SAMPLES, 90)
+        st.write(f'**P1 percentiles (método de percentil numérico del laboratorio):** L10≈{l10:.1f}, L50≈{l50:.1f}, L90≈{l90:.1f} dB(A).')
+        st.write(f'**SEL vehículo pesado:** {_c3l1_sel(78, 20):.2f} dB · **SEL bocina:** {_c3l1_sel(85, 5):.2f} dB.')
+        st.write('**Lden:** ' + ' · '.join((f'{p}={_c3l1_lden(*vals):.2f} dB' for p, vals in _C3L1_CASE_PERIODS.items())))
+        st.markdown('### Criterio docente')
+        st.write('La conclusión debe identificar fuente principal/secundarias, receptor crítico, descriptor pertinente, limitaciones, información faltante y punto adicional recomendado. No aceptar afirmaciones absolutas donde solo existe interpolación o una campaña preliminar.')
+        st.markdown('### Pauta de comprensión')
+        for i, q in enumerate(_C3L1_S10_Q, 1):
+            with st.container(border=True):
+                st.markdown(f'**{i}. {q[0]}**')
+                [st.write(('✓ ' if j == q[2] else '○ ') + opt) for j, opt in enumerate(q[1])]
+        return
+    remote = _c3l1_stage10_remote(deps)
+    if remote or saved.get('c3_s10_submitted'):
+        row = (remote or {}).get('row', {})
+        payload = (remote or {}).get('payload', {})
+        score = float(row.get('teacher_score') if row and row.get('teacher_score') is not None else row.get('auto_score') if row else saved.get('c3_s10_score', 0) or 0)
+        st.success(f'Evaluación enviada · {score:g}/60 puntos.')
+        st.write(payload.get('conclusion') or '')
+        return
+    draft = saved.get('c3_s10_draft', {}) if isinstance(saved.get('c3_s10_draft'), dict) else {}
+    st.markdown('## Encargo profesional')
+    st.write('Diseñar y ejecutar una evaluación acústica preliminar de un barrio urbano mixto con viviendas, colegio, avenida, comercio, parque, una fuente técnica y trayectoria de sobrevuelo. Debes interpretar resultados y declarar las limitaciones del diagnóstico.')
+    st.markdown('### 1 · Reconocimiento')
+    main_source = st.selectbox('Fuente principal', ['Seleccionar', 'Avenida / tráfico', 'Fuente técnica', 'Comercio', 'Sobrevuelos'], index=['Seleccionar', 'Avenida / tráfico', 'Fuente técnica', 'Comercio', 'Sobrevuelos'].index(draft.get('main_source', 'Seleccionar')) if draft.get('main_source', 'Seleccionar') in ['Seleccionar', 'Avenida / tráfico', 'Fuente técnica', 'Comercio', 'Sobrevuelos'] else 0, key='c3_s10_main_source')
+    receptor = st.selectbox('Receptor crítico', ['Seleccionar', 'Vivienda P1', 'Colegio', 'Parque', 'Comercio'], index=['Seleccionar', 'Vivienda P1', 'Colegio', 'Parque', 'Comercio'].index(draft.get('receptor', 'Seleccionar')) if draft.get('receptor', 'Seleccionar') in ['Seleccionar', 'Vivienda P1', 'Colegio', 'Parque', 'Comercio'] else 0, key='c3_s10_receptor')
+    st.markdown('### 2 · Diseño de campaña')
+    p1 = st.selectbox('Punto adicional recomendado', ['Seleccionar', 'Fondo residencial', 'Junto a avenida', 'Junto a fuente técnica', 'Bajo trayectoria aérea', 'Fachada del colegio'], index=0, key='c3_s10_extra_point')
+    period = st.multiselect('Períodos', ['AM punta', 'Día', 'PM punta', 'Tarde', 'Noche'], default=draft.get('periods', ['AM punta', 'Noche']), key='c3_s10_periods')
+    st.markdown('### 3 · Instrumentación')
+    instrument = st.selectbox('Instrumentación', ['Seleccionar', 'Sonómetro integrador clase 1 + calibrador + antiviento + registro', 'Aplicación de teléfono sin verificación', 'Solo dosímetro personal'], index=0, key='c3_s10_instrument')
+    weighting = st.selectbox('Ponderación/configuración principal', ['Seleccionar', 'A + registro temporal', 'C solamente', 'Z sin registro'], key='c3_s10_weighting')
+    st.markdown('### 4 · Mediciones virtuales')
+    df = pd.DataFrame(_C3L1_CASE_INTERVALS, index=['15 min 1', '15 min 2', '15 min 3', '15 min 4']).T
+    st.dataframe(df, use_container_width=True)
+    st.markdown('### 5 · LAeq')
+    expected_p1 = _c3l1_laeq(_C3L1_CASE_INTERVALS['P1'])
+    ans_laeq = st.number_input('Calcula LAeq,1h de P1 [dB(A)]', 40.0, 90.0, float(draft.get('ans_laeq', 65.0)), 0.1, key='c3_s10_laeq')
+    st.markdown('### 6 · Percentiles')
+    st.write('P1 · muestras Fast: ' + ', '.join(map(str, _C3L1_CASE_SAMPLES)))
+    ans_l10 = st.number_input('L10 [dB(A)]', 40.0, 90.0, float(draft.get('ans_l10', 70.0)), 0.1, key='c3_s10_l10')
+    ans_l90 = st.number_input('L90 [dB(A)]', 40.0, 90.0, float(draft.get('ans_l90', 60.0)), 0.1, key='c3_s10_l90')
+    variability = st.text_input('Interpreta L10−L90', value=draft.get('variability', ''), key='c3_s10_var')
+    st.markdown('### 7 · Evento')
+    ans_sel = st.number_input('SEL de vehículo pesado: LAeq,20s=78 dB [dB]', 60.0, 120.0, float(draft.get('ans_sel', 88.0)), 0.1, key='c3_s10_sel')
+    st.markdown('### 8 · 24 horas')
+    st.write('P1: LD=66 dB · LE=63 dB · LN=57 dB')
+    ans_lden = st.number_input('Lden P1 [dB]', 40.0, 100.0, float(draft.get('ans_lden', 66.0)), 0.1, key='c3_s10_lden')
+    st.markdown('### 9 · Representación espacial')
+    map_answer = st.radio('Entre dos puntos medidos, un valor interpolado…', ['Fue medido directamente allí', 'Es una estimación derivada de puntos medidos', 'Es necesariamente un modelo predictivo físico'], index=None, key='c3_s10_map')
+    st.markdown('### 10 · Diagnóstico profesional')
+    limitations = st.text_area('Limitaciones de la campaña', value=draft.get('limitations', ''), height=90, key='c3_s10_limits')
+    missing = st.text_area('Información faltante', value=draft.get('missing', ''), height=90, key='c3_s10_missing')
+    conclusion = st.text_area('Conclusión profesional', value=draft.get('conclusion', ''), height=140, key='c3_s10_conclusion', placeholder='Integra fuente principal, receptor crítico, descriptores, representatividad, información faltante y alcance de la conclusión.')
+    st.markdown('### Preguntas de comprensión · 20 puntos')
+    for i, q in enumerate(_C3L1_S10_Q):
+        with st.container(border=True):
+            st.markdown(f'**{i + 1}. {q[0]}**')
+            st.radio('Respuesta', q[1], index=None, key=f'c3_s10_q{i}', label_visibility='collapsed')
+    payload = {'main_source': main_source, 'receptor': receptor, 'extra_point': p1, 'periods': period, 'instrument': instrument, 'weighting': weighting, 'ans_laeq': ans_laeq, 'ans_l10': ans_l10, 'ans_l90': ans_l90, 'variability': variability, 'ans_sel': ans_sel, 'ans_lden': ans_lden, 'map_answer': map_answer, 'limitations': limitations, 'missing': missing, 'conclusion': conclusion, 'answers': {str(i): st.session_state.get(f'c3_s10_q{i}') for i in range(5)}}
+    if not projection:
+        if st.button('💾 Guardar borrador y continuar después', key='c3_s10_save', use_container_width=True):
+            _c3l1_stage10_draft(saved, deps, payload)
+            st.success('Borrador guardado.')
+        if st.button('ENVIAR EVALUACIÓN DEFINITIVA', key='c3_s10_submit', type='primary', use_container_width=True):
+            technical = 0
+            technical += 5 if main_source == 'Avenida / tráfico' else 0
+            technical += 5 if receptor == 'Vivienda P1' else 0
+            technical += 5 if instrument.startswith('Sonómetro integrador clase 1') else 0
+            technical += 5 if weighting == 'A + registro temporal' else 0
+            technical += 5 if abs(ans_laeq - expected_p1) <= 0.25 else 0
+            technical += 5 if abs(ans_l10 - _c3l1_exceedance_percentile(_C3L1_CASE_SAMPLES, 10)) <= 0.6 and abs(ans_l90 - _c3l1_exceedance_percentile(_C3L1_CASE_SAMPLES, 90)) <= 0.6 else 0
+            technical += 5 if abs(ans_sel - _c3l1_sel(78, 20)) <= 0.25 else 0
+            technical += 5 if abs(ans_lden - _c3l1_lden(66, 63, 57)) <= 0.25 and map_answer == 'Es una estimación derivada de puntos medidos' else 0
+            comprehension = sum((4 for i, q in enumerate(_C3L1_S10_Q) if st.session_state.get(f'c3_s10_q{i}') == q[1][q[2]]))
+            score = technical + comprehension
+            payload.update({'technical_score': technical, 'comprehension_score': comprehension, 'expected': {'laeq_p1': expected_p1, 'l10': _c3l1_exceedance_percentile(_C3L1_CASE_SAMPLES, 10), 'l90': _c3l1_exceedance_percentile(_C3L1_CASE_SAMPLES, 90), 'sel': _c3l1_sel(78, 20), 'lden': _c3l1_lden(66, 63, 57)}})
+            required = [main_source != 'Seleccionar', receptor != 'Seleccionar', instrument != 'Seleccionar', weighting != 'Seleccionar', len(conclusion.strip()) >= 80, len(limitations.strip()) >= 30, len(missing.strip()) >= 20, all((st.session_state.get(f'c3_s10_q{i}') is not None for i in range(5)))]
+            if not all(required):
+                st.warning('Completa selección de fuente/receptor/instrumentación, diagnóstico y las 5 preguntas antes del envío definitivo.')
+            else:
+                _c3l1_stage10_finish(saved, deps, payload, score)
+                st.success(f'Evaluación enviada · {score}/60 puntos.')
+                st.rerun()
+
+def _render_course3_lab1_stage0(lab, saved):
+    return _c3l1_stage0_impl(lab, saved, _course3_lab1_deps())
+
+def _render_course3_lab1_stage1(lab, saved):
+    return _c3l1_stage1_impl(lab, saved, _course3_lab1_deps())
+
+def _render_course3_lab1_stage2(lab, saved):
+    return _c3l1_stage2_impl(lab, saved, _course3_lab1_deps())
+
+def _render_course3_lab1_stage3(lab, saved):
+    return _c3l1_stage3_impl(lab, saved, _course3_lab1_deps())
+
+def _render_course3_lab1_stage4(lab, saved):
+    return _c3l1_stage4_impl(lab, saved, _course3_lab1_deps())
+
+def _render_course3_lab1_stage5(lab, saved):
+    return _c3l1_stage5_impl(lab, saved, _course3_lab1_deps())
+
+def _render_course3_lab1_stage6(lab, saved):
+    return _c3l1_stage6_impl(lab, saved, _course3_lab1_deps())
+
+def _render_course3_lab1_stage7(lab, saved):
+    return _c3l1_stage7_impl(lab, saved, _course3_lab1_deps())
+
+def _render_course3_lab1_stage8(lab, saved):
+    return _c3l1_stage8_impl(lab, saved, _course3_lab1_deps())
+
+def _render_course3_lab1_stage9(lab, saved):
+    return _c3l1_stage9_impl(lab, saved, _course3_lab1_deps())
+
+def _render_course3_lab1_stage10(lab, saved):
+    return _c3l1_stage10_impl(lab, saved, _course3_lab1_deps())
+
+
 def future_lab_view_impl(lab):
     """Renderer de los laboratorios posteriores manteniendo la navegación institucional."""
     class_id=lab["id"]
@@ -17536,6 +18318,23 @@ def future_lab_view_impl(lab):
         renderers[selected](lab,saved)
         return
 
+    if class_id == _C3L1_CLASS_ID:
+        renderers = [
+            _render_course3_lab1_stage0,
+            _render_course3_lab1_stage1,
+            _render_course3_lab1_stage2,
+            _render_course3_lab1_stage3,
+            _render_course3_lab1_stage4,
+            _render_course3_lab1_stage5,
+            _render_course3_lab1_stage6,
+            _render_course3_lab1_stage7,
+            _render_course3_lab1_stage8,
+            _render_course3_lab1_stage9,
+            _render_course3_lab1_stage10,
+        ]
+        renderers[selected](lab, saved)
+        return
+
     title,objective,concept,activity=lab["stages"][selected]
     stage_minutes=20 if selected not in (9,10) else 35
     header(f"ETAPA {selected} · LABORATORIO {lab['number']}",title,objective)
@@ -17666,6 +18465,20 @@ def future_print_view_impl(lab):
             6: _c2l2_stage6, 7: _c2l2_stage7, 8: _c2l2_stage8,
             9: _c2l2_stage9, 10: _c2l2_stage10,
         }
+    elif class_id == _C3L1_CLASS_ID:
+        renderers = {
+            0: _render_course3_lab1_stage0,
+            1: _render_course3_lab1_stage1,
+            2: _render_course3_lab1_stage2,
+            3: _render_course3_lab1_stage3,
+            4: _render_course3_lab1_stage4,
+            5: _render_course3_lab1_stage5,
+            6: _render_course3_lab1_stage6,
+            7: _render_course3_lab1_stage7,
+            8: _render_course3_lab1_stage8,
+            9: _render_course3_lab1_stage9,
+            10: _render_course3_lab1_stage10,
+        }
     else:
         st.warning("El apunte visual todavía no está integrado para este laboratorio.")
         return
@@ -17756,6 +18569,23 @@ def future_projection_stage_impl(lab, stage):
             _c2l2_stage8,
             _c2l2_stage9,
             _c2l2_stage10,
+        ]
+        renderers[stage](lab, projection_saved)
+        return
+
+    if lab.get("id") == _C3L1_CLASS_ID:
+        renderers = [
+            _render_course3_lab1_stage0,
+            _render_course3_lab1_stage1,
+            _render_course3_lab1_stage2,
+            _render_course3_lab1_stage3,
+            _render_course3_lab1_stage4,
+            _render_course3_lab1_stage5,
+            _render_course3_lab1_stage6,
+            _render_course3_lab1_stage7,
+            _render_course3_lab1_stage8,
+            _render_course3_lab1_stage9,
+            _render_course3_lab1_stage10,
         ]
         renderers[stage](lab, projection_saved)
         return

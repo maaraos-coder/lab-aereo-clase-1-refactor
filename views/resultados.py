@@ -498,6 +498,7 @@ def student_sidebar_summary(client, user_key):
         LABORATORIES[2]["id"],
         "clase-03-impacto-instalaciones-lab-1",
         "clase-04-impacto-instalaciones-lab-2",
+        "clase-05-ruido-ambiental-lab-1",
     ]
     try:
         rows=(
@@ -1958,6 +1959,63 @@ def _render_course2_block(rows, progress_rows):
 
 
 
+
+def _render_course3_block(rows, progress_rows):
+    course3_labs=[lab for lab in FUTURE_LABS.values() if lab.get("course")=="Control de ruido ambiental"]
+    lab1=next((lab for lab in course3_labs if int(lab.get("number") or 0)==1),None)
+    progress=_future_lab_progress(lab1,progress_rows) if lab1 else {"completed":0,"expected":0,"percent":0.0,"stage_rows":[]}
+    c3_rows=[r for r in rows if r.get("class_id")=="clase-05-ruido-ambiental-lab-1"]
+    by_key={r.get("question_key"):r for r in _official_rows(c3_rows)}
+    stage9=by_key.get("final_comprehension"); stage10=by_key.get("final_integrated_design")
+    completed=sum(x is not None for x in (stage9,stage10))
+    reviewed=sum(bool(x and (x.get("teacher_score") is not None or x.get("status")=="reviewed")) for x in (stage9,stage10))
+    total=None; grade=None
+    if stage9 and stage10 and reviewed==2:
+        total=_effective_row_score(stage9)+_effective_row_score(stage10)
+        grade=_grade(total,100)
+    grade_text=f"{grade:.1f}" if grade is not None else "Pendiente"
+    label=f"Curso 3 · Control de ruido ambiental · {progress['percent']:.0f}% de recorrido · Nota {grade_text}"
+    with st.expander(label,expanded=True):
+        a,b,c=st.columns(3)
+        a.metric("Avance del Laboratorio 1",f"{progress['percent']:.0f} %")
+        b.metric("Evaluaciones oficiales",f"{completed} de 2")
+        c.metric("Nota del curso",grade_text)
+        tabs=st.tabs(["Laboratorio 1","Evaluaciones oficiales"])
+        with tabs[0]:
+            _render_lab_progress_card(
+                "Laboratorio 1 · Medición y diagnóstico del ruido ambiental",
+                "Etapas 1–8 formativas · Etapas 9 y 10 evaluadas",
+                progress["completed"],progress["expected"],progress["percent"],progress.get("stage_rows"),
+            )
+        with tabs[1]:
+            st.caption("Etapa 9: 40 puntos · Etapa 10: 60 puntos. La nota se publica después de la revisión docente.")
+            for title,row,maximum in [("Etapa 9 · Preguntas de comprensión",stage9,40),("Etapa 10 · Diagnóstico acústico de un barrio",stage10,60)]:
+                if row is None:
+                    with st.expander(f"⏳ {title} · Pendiente"):
+                        st.caption("Aún no existe una entrega.")
+                    continue
+                reviewed_row=row.get("teacher_score") is not None or row.get("status")=="reviewed"
+                score=_effective_row_score(row) if reviewed_row else None
+                g=_grade(score,maximum) if reviewed_row else None
+                summary=f"✅ {title} · {score:g}/{maximum} · Nota {g:.1f}" if reviewed_row else f"🕒 {title} · Entregada · Pendiente de revisión"
+                with st.expander(summary):
+                    x,y,z=st.columns(3)
+                    x.metric("Puntaje",f"{score:g}/{maximum}" if reviewed_row else "Pendiente")
+                    y.metric("Nota",f"{g:.1f}" if reviewed_row else "Pendiente")
+                    z.metric("Estado","Revisada" if reviewed_row else "Pendiente")
+                    payload=_student_result_payload(row.get("answer"))
+                    if isinstance(payload,dict):
+                        if row.get("question_key")=="final_comprehension":
+                            answers=payload.get("answers",{}) if isinstance(payload.get("answers",{}),dict) else {}
+                            st.write(f"Respuestas registradas: {sum(v not in (None,'') for v in answers.values())}/10")
+                        else:
+                            st.write(f"Desarrollo técnico automático: {payload.get('technical_score',0)}/40")
+                            st.write(f"Comprensión: {payload.get('comprehension_score',0)}/20")
+                            if payload.get("conclusion"): st.write(payload.get("conclusion"))
+                    if row.get("teacher_note"): st.info(f"Comentario docente: {row.get('teacher_note')}")
+            if total is not None:
+                st.success(f"Curso 3 · Puntaje final: {total:.1f}/100 · Nota final: {grade:.1f}")
+
 def results_view(client, catalog, user_key):
     """Mi desempeño organizado por curso y preparado para incorporar nuevos laboratorios."""
     header(
@@ -2015,8 +2073,18 @@ def results_view(client, catalog, user_key):
     if c2_prog["completed"] or c2_delivered:
         courses_with_progress+=1
 
+    c3_lab=next((lab for lab in FUTURE_LABS.values() if lab.get("id")=="clase-05-ruido-ambiental-lab-1"),None)
+    c3_prog=_future_lab_progress(c3_lab,progress_rows) if c3_lab else {"completed":0,"expected":0,"percent":0.0}
+    c3_rows=[r for r in rows if r.get("class_id")=="clase-05-ruido-ambiental-lab-1"]
+    c3_by_key={r.get("question_key"):r for r in _official_rows(c3_rows)}
+    c3_delivered=sum(c3_by_key.get(k) is not None for k in ("final_comprehension","final_integrated_design"))
+    if c3_prog["completed"] or c3_delivered:
+        courses_with_progress+=1
+
     labs_with_progress=sum(1 for item in course1_progress.values() if item["completed"])
     if c2_prog["completed"]:
+        labs_with_progress+=1
+    if c3_prog["completed"]:
         labs_with_progress+=1
 
     st.markdown("## Resumen del Diplomado")
@@ -2038,6 +2106,7 @@ def results_view(client, catalog, user_key):
 
     _render_course1_block(rows)
     _render_course2_block(rows,progress_rows)
+    _render_course3_block(rows,progress_rows)
 
 
 
