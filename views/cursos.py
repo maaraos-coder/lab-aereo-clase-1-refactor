@@ -20215,65 +20215,6 @@ def _c3l1_stage3_impl(lab: dict, saved: dict, deps: Dict[str, Any]):
         unsafe_allow_html=True,
     )
 
-    st.markdown('### 4.3 Construye el descriptor seleccionado')
-
-    st.write(
-        f'El cálculo siguiente sigue utilizando el mismo tramo **0–{elapsed} s** y el mismo descriptor '
-        f'**{descriptor_to_build}** seleccionado arriba.'
-    )
-
-    st.markdown(
-        f"""
-        <div class="c3-card orange">
-          <div class="c3-kicker">{descriptor_to_build}</div>
-          <b>1. Ordena los {len(_y_live)} niveles registrados de mayor a menor.</b>
-          <p>2. Calcula el porcentaje de tiempo excedido de cada muestra.</p>
-          <p>3. Busca {_target_pct} % en el eje horizontal.</p>
-          <p>4. Lee el nivel correspondiente: <b>{_target_level:.1f} dB(A)</b>.</p>
-        </div>
-        """,
-        unsafe_allow_html=True,
-    )
-
-    fig_p4, ax_p4 = c3plt.subplots(figsize=(9.5,4.1))
-    ax_p4.plot(_exceed, _ordered, lw=2)
-    ax_p4.axvline(_target_pct, ls='--', lw=1.6)
-    ax_p4.axhline(_target_level, ls='--', lw=1.6)
-    ax_p4.scatter([_target_pct], [_target_level], s=75, zorder=6)
-    ax_p4.annotate(
-        f'{descriptor_to_build} = {_target_level:.1f} dB(A)',
-        xy=(_target_pct,_target_level),
-        xytext=(min(72,_target_pct+8),_target_level+1.2),
-        arrowprops={'arrowstyle':'->'},
-    )
-    ax_p4.set_xlabel('Tiempo excedido [%]')
-    ax_p4.set_ylabel('Nivel [dB(A)]')
-    ax_p4.set_title(
-        f'Construcción gráfica de {descriptor_to_build} · datos medidos entre 0 y {elapsed} s'
-    )
-    ax_p4.grid(alpha=.2)
-    st.pyplot(fig_p4, use_container_width=True)
-    c3plt.close(fig_p4)
-
-    st.markdown('### 4.4 Resultado de la misma medición')
-
-    p1,p2,p3,p4 = st.columns(4)
-    p1.metric('LAeq', f'{_live_laeq:.1f} dB(A)')
-    p2.metric('L10', f'{_live_l10:.1f} dB(A)')
-    p3.metric('L50', f'{_live_l50:.1f} dB(A)')
-    p4.metric('L90', f'{_live_l90:.1f} dB(A)')
-
-    st.markdown(
-        f"""
-        <div class="c3-key">
-          <b>Todos estos resultados pertenecen al mismo tramo 0–{elapsed} s.</b>
-          Si vuelves arriba y cambias el tiempo de medición, se reconstruyen LAeq, L10, L50 y L90
-          utilizando el nuevo conjunto de muestras.
-        </div>
-        """,
-        unsafe_allow_html=True,
-    )
-
     st.markdown('### 4.5 Comprueba cómo se calculan')
 
     _manual_pct = st.slider(
