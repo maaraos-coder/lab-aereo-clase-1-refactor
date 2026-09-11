@@ -18432,135 +18432,29 @@ def _c3l1_stage2_impl(lab: dict, saved: dict, deps: Dict[str, Any]):
 
     title, description, idea, accent = components_map.get(part, components_map['Micrófono'])
 
-    render_svg = {
-        'Micrófono': """
-            <g transform='translate(255,38)'>
-              <rect x='70' y='30' width='110' height='180' rx='52' fill='#dce8ef' stroke='#69879a' stroke-width='5'/>
-              <ellipse cx='125' cy='62' rx='37' ry='24' fill='#f7fafc' stroke='#69879a' stroke-width='5'/>
-              <g stroke='#93a9b7' stroke-width='3'>
-                <line x1='98' y1='52' x2='152' y2='52'/><line x1='94' y1='62' x2='156' y2='62'/><line x1='98' y1='72' x2='152' y2='72'/>
-              </g>
-              <rect x='106' y='210' width='38' height='48' rx='9' fill='#69879a'/>
-              <path class='sigwave' d='M-125 100 C-85 62 -45 62 -5 100'/>
-              <path class='sigwave s2' d='M-160 100 C-100 40 -45 40 8 100'/>
-              <text x='-92' y='166' text-anchor='middle' class='smalllabel'>presión acústica</text>
-              <path class='signal' d='M190 120 C235 85 275 155 320 120 S395 85 440 120'/>
-              <text x='320' y='166' text-anchor='middle' class='smalllabel'>señal eléctrica</text>
-            </g>
-        """,
-        'Preamplificador': """
-            <g transform='translate(135,55)'>
-              <rect x='155' y='35' width='275' height='160' rx='22' fill='#f0eafd' stroke='#7c3aed' stroke-width='5'/>
-              <circle cx='188' cy='115' r='12' fill='#7c3aed'/>
-              <circle cx='398' cy='115' r='12' fill='#7c3aed'/>
-              <path d='M220 115 L355 62 L355 168 Z' fill='#c4b5fd' stroke='#7c3aed' stroke-width='4'/>
-              <text x='288' y='123' text-anchor='middle' font-size='25' font-weight='900' fill='#5b21b6'>AMP</text>
-              <path class='signal low' d='M0 115 C38 100 70 130 108 115 S165 100 220 115'/>
-              <path class='signal strong' d='M430 115 C475 70 520 160 565 115 S650 70 695 115'/>
-              <text x='80' y='170' text-anchor='middle' class='smalllabel'>señal pequeña</text>
-              <text x='565' y='170' text-anchor='middle' class='smalllabel'>señal acondicionada</text>
-            </g>
-        """,
-        'Filtros / ponderación': """
-            <g transform='translate(95,35)'>
-              <rect x='170' y='35' width='335' height='205' rx='22' fill='#fce7f3' stroke='#db2777' stroke-width='5'/>
-              <text x='338' y='73' text-anchor='middle' font-size='20' font-weight='900' fill='#9d174d'>FILTROS / PONDERACIÓN</text>
-              <line x1='215' y1='190' x2='455' y2='190' stroke='#64748b' stroke-width='3'/>
-              <line x1='215' y1='96' x2='215' y2='190' stroke='#64748b' stroke-width='3'/>
-              <path d='M215 172 C260 170 292 155 320 135 C352 112 390 106 455 104' fill='none' stroke='#db2777' stroke-width='6'/>
-              <path d='M215 135 C280 124 348 120 455 120' fill='none' stroke='#9333ea' stroke-width='5' stroke-dasharray='10 7'/>
-              <text x='415' y='96' class='smalllabel'>A</text>
-              <text x='415' y='143' class='smalllabel'>C / Z</text>
-              <path class='signal' d='M0 145 C45 105 88 185 130 145 S195 105 230 145'/>
-              <path class='signal' d='M505 145 C550 120 585 170 630 145'/>
-            </g>
-        """,
-        'Procesador RMS / integrador': """
-            <g transform='translate(85,38)'>
-              <rect x='180' y='30' width='330' height='215' rx='22' fill='#fff0d8' stroke='#d97706' stroke-width='5'/>
-              <text x='345' y='68' text-anchor='middle' font-size='20' font-weight='900' fill='#9a5a04'>RMS / INTEGRADOR</text>
-              <path class='signal' d='M220 128 C240 78 260 178 280 128 S320 78 340 128 S380 178 400 128'/>
-              <line x1='220' y1='185' x2='470' y2='185' stroke='#9a6b29' stroke-width='3'/>
-              <rect x='242' y='150' width='26' height='35' rx='3' fill='#f2b85c'/>
-              <rect x='280' y='137' width='26' height='48' rx='3' fill='#eda93e'/>
-              <rect x='318' y='120' width='26' height='65' rx='3' fill='#e99b25'/>
-              <rect x='356' y='103' width='26' height='82' rx='3' fill='#dc850c'/>
-              <text x='345' y='220' text-anchor='middle' class='smalllabel'>energía acumulada</text>
-              <path class='signal low' d='M0 138 C45 103 85 173 130 138 S195 103 230 138'/>
-              <rect x='535' y='95' width='125' height='88' rx='14' fill='#fff8eb' stroke='#d97706' stroke-width='4'/>
-              <text x='598' y='128' text-anchor='middle' font-size='15' font-weight='800' fill='#9a5a04'>RESULTADO</text>
-              <text x='598' y='160' text-anchor='middle' font-size='28' font-weight='900' fill='#7c4702'>L</text>
-            </g>
-        """,
-        'Memoria': """
-            <g transform='translate(115,45)'>
-              <rect x='180' y='25' width='300' height='200' rx='22' fill='#e9f9ee' stroke='#16a34a' stroke-width='5'/>
-              <rect x='225' y='62' width='210' height='86' rx='10' fill='#f7fff9' stroke='#74c68b' stroke-width='3'/>
-              <polyline points='240,122 264,106 288,114 316,90 345,101 374,78 420,95' fill='none' stroke='#16a34a' stroke-width='5'/>
-              <rect x='225' y='162' width='58' height='28' rx='6' fill='#bbf7d0'/>
-              <rect x='294' y='162' width='58' height='28' rx='6' fill='#bbf7d0'/>
-              <rect x='363' y='162' width='65' height='28' rx='6' fill='#bbf7d0'/>
-              <text x='330' y='211' text-anchor='middle' class='smalllabel'>historia temporal + configuración + metadatos</text>
-              <path class='signal low' d='M0 128 C40 98 80 158 120 128 S175 98 215 128'/>
-              <path d='M485 128 H635' stroke='#16a34a' stroke-width='7' stroke-linecap='round'/>
-              <polygon points='635,128 611,113 611,143' fill='#16a34a'/>
-            </g>
-        """,
-        'Calibrador': """
-            <g transform='translate(120,34)'>
-              <rect x='230' y='25' width='165' height='220' rx='38' fill='#fee2e2' stroke='#dc2626' stroke-width='5'/>
-              <rect x='265' y='60' width='95' height='72' rx='12' fill='#fff7f7' stroke='#e78b8b' stroke-width='3'/>
-              <text x='312' y='90' text-anchor='middle' font-size='17' font-weight='900' fill='#991b1b'>94 dB</text>
-              <text x='312' y='114' text-anchor='middle' font-size='14' fill='#991b1b'>1 kHz</text>
-              <circle cx='312' cy='174' r='26' fill='#dc2626'/>
-              <circle cx='312' cy='174' r='10' fill='#fff'/>
-              <rect x='283' y='245' width='58' height='48' rx='10' fill='#6b7280'/>
-              <rect x='294' y='293' width='36' height='72' rx='18' fill='#dce8ef' stroke='#69879a' stroke-width='4'/>
-              <path class='sigwave' d='M430 138 C468 110 500 110 532 138'/>
-              <path class='sigwave s2' d='M430 160 C485 120 525 120 565 160'/>
-              <text x='520' y='205' text-anchor='middle' class='smalllabel'>señal acústica de referencia</text>
-            </g>
-        """,
-    }[part]
+    render_assets = {
+        'Micrófono': 'curso3_sonometro_microfono.webp',
+        'Preamplificador': 'curso3_sonometro_preamplificador.webp',
+        'Filtros / ponderación': 'curso3_sonometro_filtros.webp',
+        'Procesador RMS / integrador': 'curso3_sonometro_rms.webp',
+        'Memoria': 'curso3_sonometro_memoria.webp',
+        'Calibrador': 'curso3_sonometro_calibrador.webp',
+    }
 
-    component_html = f"""
-    <style>
-      html,body{{margin:0;padding:0;background:transparent;font-family:Arial,Helvetica,sans-serif}}
-      .sonobox{{border:1px solid #d8e6ef;border-radius:18px;background:linear-gradient(180deg,#ffffff,#f4f9fc);padding:14px 16px;overflow:hidden}}
-      .sonohead{{display:flex;justify-content:space-between;gap:12px;align-items:center;flex-wrap:wrap;margin-bottom:6px}}
-      .sonotitle{{font-size:18px;font-weight:900;color:#102f4d}}
-      .sonosub{{font-size:13px;color:#60798c}}
-      svg{{width:100%;height:auto;display:block;max-height:330px}}
-      .smalllabel{{font-size:13px;fill:#526f82}}
-      .signal{{fill:none;stroke:{accent};stroke-width:5;stroke-linecap:round}}
-      .signal.low{{stroke-width:3;opacity:.55}}
-      .signal.strong{{stroke-width:7}}
-      .sigwave{{fill:none;stroke:{accent};stroke-width:5;stroke-linecap:round;stroke-dasharray:13 10;animation:sgmove 1.8s linear infinite;opacity:.8}}
-      .sigwave.s2{{animation-delay:-.55s;opacity:.56}}
-      @keyframes sgmove{{to{{stroke-dashoffset:-46}}}}
-    </style>
-    <div class='sonobox'>
-      <div class='sonohead'>
-        <div>
-          <div class='sonotitle'>{part}</div>
-          <div class='sonosub'>{title}</div>
-        </div>
-        <div style='font-weight:900;color:{accent}'>Bloque activo</div>
-      </div>
-      <svg viewBox='0 0 760 330' xmlns='http://www.w3.org/2000/svg' aria-label='Render técnico de {part}'>
-        <defs>
-          <linearGradient id='bgSono' x1='0' y1='0' x2='0' y2='1'>
-            <stop offset='0%' stop-color='#eef8ff'/>
-            <stop offset='100%' stop-color='#fbfdff'/>
-          </linearGradient>
-        </defs>
-        <rect x='0' y='0' width='760' height='330' rx='18' fill='url(#bgSono)'/>
-        {render_svg}
-      </svg>
-    </div>
-    """
+    render_captions = {
+        'Micrófono': 'Render del conjunto de micrófono y cápsula del sonómetro.',
+        'Preamplificador': 'Render del módulo electrónico de preamplificación y acondicionamiento de señal.',
+        'Filtros / ponderación': 'Render del módulo electrónico encargado del filtrado y ponderación frecuencial.',
+        'Procesador RMS / integrador': 'Render del módulo de procesamiento digital e integración.',
+        'Memoria': 'Render del medio de almacenamiento donde se conservan datos y configuración.',
+        'Calibrador': 'Render de un calibrador acústico de referencia para comprobación de campo.',
+    }
 
-    components.html(component_html, height=390, scrolling=False)
+    _c3l1_asset(
+        render_assets[part],
+        render_captions[part],
+    )
+
 
     st.markdown(
         f'''<div class="c3-card blue">
