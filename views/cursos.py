@@ -18852,57 +18852,371 @@ def _c3l1_stage2_impl(lab: dict, saved: dict, deps: Dict[str, Any]):
             )
 
     st.markdown('## 4. Verificación con calibrador')
-    st.write('El material del curso utiliza como referencia didáctica un calibrador de **94 dB a 1 kHz**. La actividad enseña la lógica de comprobación y no fija por sí sola tolerancias reglamentarias.')
-    cal_result=st.select_slider('Resultado mostrado durante la comprobación',options=[93.9,94.0,94.1,94.4,95.2,96.4],value=94.1,key='c3_s2_cal_result')
-    cal_decision=st.radio('¿Qué harías?',['Continuar: el valor es coherente con la referencia del ejercicio','Detener y revisar el sistema antes de medir'],index=None,key='c3_s2_cal_decision')
-    large_difference=abs(float(cal_result)-94.0)>=1.0
-    if cal_decision:
-        expected='Detener y revisar el sistema antes de medir' if large_difference else 'Continuar: el valor es coherente con la referencia del ejercicio'
-        if cal_decision==expected: st.success('Decisión coherente para este ejercicio didáctico.')
-        else: st.warning('Observa la diferencia respecto de 94 dB. Una discrepancia importante debe investigarse antes de confiar en la campaña.')
+
+    st.write(
+        'Un calibrador acústico aplica una señal de referencia conocida directamente sobre el micrófono. '
+        'En este laboratorio utilizamos como referencia didáctica **94 dB a 1 kHz** para comprender la lógica '
+        'de la comprobación antes y después de una campaña.'
+    )
+
+    st.markdown(
+        '''
+        <div class="c3-card blue" style="margin:.7rem 0 1rem">
+          <div class="c3-kicker">SEÑAL DE REFERENCIA</div>
+          <b>94 dB SPL · 1 kHz</b>
+          <p>El calibrador genera un tono sinusoidal estable dentro de una cavidad acoplada al micrófono. '
+          'El objetivo es comprobar que la cadena de medición responde de manera coherente antes de comenzar.</p>
+        </div>
+        ''',
+        unsafe_allow_html=True,
+    )
+
+    # Esquema gráfico SVG: calibrador + micrófono/sonómetro + senoide
+    _cal_svg = '''
+    <style>
+      html,body{margin:0;padding:0;background:transparent;font-family:Arial,Helvetica,sans-serif}
+      .wrap{border:1px solid #d8e6ef;border-radius:18px;background:linear-gradient(180deg,#f9fcfe,#eef6fa);padding:12px;overflow:hidden}
+      svg{width:100%;height:auto;display:block}
+      .wave{fill:none;stroke:#ef4444;stroke-width:5;stroke-linecap:round;stroke-dasharray:12 8;animation:move 1.6s linear infinite}
+      .pulse{animation:pulse 1.6s ease-in-out infinite;transform-origin:392px 153px}
+      @keyframes move{to{stroke-dashoffset:-40}}
+      @keyframes pulse{0%,100%{opacity:.45}50%{opacity:1}}
+    </style>
+    <div class="wrap">
+      <svg viewBox="0 0 820 330" xmlns="http://www.w3.org/2000/svg" aria-label="Calibrador acústico de 94 dB a 1 kHz acoplado al micrófono">
+        <defs>
+          <linearGradient id="bg" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stop-color="#eaf7ff"/>
+            <stop offset="100%" stop-color="#fbfdff"/>
+          </linearGradient>
+        </defs>
+        <rect x="0" y="0" width="820" height="330" rx="18" fill="url(#bg)"/>
+
+        <!-- Calibrador -->
+        <g transform="translate(90,58)">
+          <rect x="0" y="35" width="180" height="150" rx="34" fill="#3f4852"/>
+          <rect x="18" y="52" width="144" height="112" rx="28" fill="#65717d"/>
+          <circle cx="90" cy="108" r="34" fill="#111827"/>
+          <circle cx="90" cy="108" r="18" fill="#0b1016"/>
+          <text x="90" y="16" text-anchor="middle" font-size="17" font-weight="900" fill="#26384a">CALIBRADOR</text>
+          <text x="90" y="218" text-anchor="middle" font-size="15" font-weight="800" fill="#33495b">94 dB · 1 kHz</text>
+        </g>
+
+        <!-- onda senoidal -->
+        <path class="wave" d="M285 165 C310 120 335 210 360 165 S410 120 435 165 S485 210 510 165"/>
+
+        <!-- micrófono -->
+        <g transform="translate(490,58)">
+          <rect x="45" y="18" width="88" height="182" rx="44" fill="#dbe6ed" stroke="#6b8799" stroke-width="5"/>
+          <ellipse cx="89" cy="50" rx="31" ry="21" fill="#f7fafc" stroke="#6b8799" stroke-width="4"/>
+          <line x1="66" y1="42" x2="112" y2="42" stroke="#98aebc" stroke-width="3"/>
+          <line x1="62" y1="50" x2="116" y2="50" stroke="#98aebc" stroke-width="3"/>
+          <line x1="66" y1="58" x2="112" y2="58" stroke="#98aebc" stroke-width="3"/>
+          <rect x="74" y="200" width="30" height="45" rx="8" fill="#6b8799"/>
+          <circle class="pulse" cx="-98" cy="107" r="23" fill="none" stroke="#ef4444" stroke-width="5"/>
+          <text x="89" y="278" text-anchor="middle" font-size="15" font-weight="800" fill="#33495b">MICRÓFONO</text>
+        </g>
+
+        <!-- resultado -->
+        <g transform="translate(660,95)">
+          <rect x="0" y="0" width="120" height="105" rx="16" fill="#ffffff" stroke="#cbdbe5" stroke-width="3"/>
+          <text x="60" y="30" text-anchor="middle" font-size="13" fill="#587184">LECTURA</text>
+          <text x="60" y="62" text-anchor="middle" font-size="25" font-weight="900" fill="#0f3556">94.0</text>
+          <text x="60" y="86" text-anchor="middle" font-size="14" fill="#587184">dB</text>
+        </g>
+
+        <text x="405" y="288" text-anchor="middle" font-size="14" fill="#50697b">
+          señal sinusoidal de referencia
+        </text>
+      </svg>
+    </div>
+    '''
+    components.html(_cal_svg, height=385, scrolling=False)
+
+    st.markdown(
+        '''
+        <div class="c3-key">
+          <b>Idea clave:</b> el calibrador no “mide” el ruido ambiental. Entrega una referencia conocida al micrófono '
+          'para comprobar que el sistema responde de manera coherente antes o después de la campaña.
+        </div>
+        ''',
+        unsafe_allow_html=True,
+    )
 
     st.markdown('### Secuencia de comprobación')
-    first=st.selectbox('Paso 1',['Seleccionar','Verificación antes','Medición','Verificación después'],key='c3_s2_cal_1')
-    second=st.selectbox('Paso 2',['Seleccionar','Verificación antes','Medición','Verificación después'],key='c3_s2_cal_2')
-    third=st.selectbox('Paso 3',['Seleccionar','Verificación antes','Medición','Verificación después'],key='c3_s2_cal_3')
-    if st.button('Comprobar secuencia',key='c3_s2_cal_check'):
-        order=[first,second,third]; ok=order==['Verificación antes','Medición','Verificación después']
-        if ok: st.success('Correcto: verificar antes → medir → verificar después.')
-        else: st.warning('La secuencia esperada es: verificación antes → medición → verificación después.')
-        _c3l1_mark_formative(saved,deps,'s2_calibration',{'order':order,'ok':ok})
 
-    st.markdown('## 5. Configura el instrumento para una misión')
-    mission=st.radio('Misión',['Caracterizar tránsito urbano','Observar un sobrevuelo','Examinar un equipo HVAC relativamente estable'],key='c3_s2_mission')
+    st.markdown(
+        '''
+        <div class="c3-grid">
+          <div class="c3-card blue">
+            <div class="c3-kicker">PASO 1 · ANTES</div>
+            <b>Verificación inicial</b>
+            <p>Acopla el calibrador al micrófono y comprueba que la lectura sea coherente con la referencia de 94 dB a 1 kHz.</p>
+          </div>
+
+          <div class="c3-card orange">
+            <div class="c3-kicker">PASO 2 · CAMPAÑA</div>
+            <b>Realiza la medición</b>
+            <p>Retira el calibrador y ejecuta la campaña con la configuración definida para el procedimiento.</p>
+          </div>
+
+          <div class="c3-card green">
+            <div class="c3-kicker">PASO 3 · DESPUÉS</div>
+            <b>Verificación final</b>
+            <p>Al terminar, vuelve a comprobar el sistema para verificar que no haya ocurrido una desviación relevante durante la campaña.</p>
+          </div>
+        </div>
+        ''',
+        unsafe_allow_html=True,
+    )
+
+    st.markdown(
+        '''
+        <div class="c3-card" style="margin:.8rem 0 1rem">
+          <div class="c3-kicker">¿QUÉ BUSCAMOS?</div>
+          <b>Consistencia antes y después</b>
+          <p>La comprobación permite detectar si la cadena de medición pudo haber cambiado durante la campaña. '
+          'Las tolerancias aceptables deben definirse según el instrumento, la norma y el procedimiento aplicable.</p>
+        </div>
+        ''',
+        unsafe_allow_html=True,
+    )
+
+    st.markdown('### Comprueba el concepto')
+    q_cal=st.radio(
+        'Si la comprobación inicial es coherente con la referencia del ejercicio, ¿qué corresponde hacer?',
+        [
+            'Continuar con la medición y repetir la verificación al finalizar',
+            'Omitir la verificación final porque ya se comprobó al inicio',
+            'Modificar arbitrariamente la lectura hasta obtener 94,0 dB exactos',
+        ],
+        index=None,
+        key='c3_s2_cal_q'
+    )
+    if q_cal:
+        if q_cal.startswith('Continuar'):
+            st.success(
+                'Correcto. La lógica es comprobar antes, medir y volver a comprobar al finalizar.'
+            )
+        else:
+            st.warning(
+                'Revisa la secuencia: la comprobación inicial no elimina la necesidad de verificar nuevamente al final.'
+            )
+
+
+    st.markdown('## 5. Configura el instrumento para tres misiones')
+
+    st.write(
+        'Configura las tres situaciones por separado. Cada misión guarda su propia ponderación, respuesta temporal, '
+        'registro de contexto y justificación. Puedes completar una, cambiar de misión y volver después sin perder lo anterior.'
+    )
+
+    mission_specs = {
+        'Caracterizar tránsito urbano': {
+            'icon': '🚗',
+            'subtitle': 'Fuente móvil y fluctuante',
+            'hint': 'Piensa en una campaña donde interesa caracterizar exposición vial durante un periodo representativo.',
+        },
+        'Observar un sobrevuelo': {
+            'icon': '✈️',
+            'subtitle': 'Evento breve y claramente temporal',
+            'hint': 'Piensa en una situación donde interesa seguir la evolución rápida de un evento aislado.',
+        },
+        'Examinar un equipo HVAC relativamente estable': {
+            'icon': '❄️',
+            'subtitle': 'Fuente fija y relativamente estable',
+            'hint': 'Piensa en una fuente técnica continua o cíclica, con posible contenido de baja frecuencia.',
+        },
+    }
+
+    _mission_store = saved.get('c3_s2_configurations', {})
+    if not isinstance(_mission_store, dict):
+        _mission_store = {}
+
+    mission = st.segmented_control(
+        'Selecciona la misión que quieres configurar',
+        list(mission_specs),
+        default=list(mission_specs)[0],
+        key='c3_s2_mission_tabs',
+    )
+    mspec = mission_specs[mission]
+
+    st.markdown(
+        f'''<div class="c3-card blue" style="margin:.7rem 0 1rem">
+          <div class="c3-kicker">MISIÓN ACTIVA</div>
+          <b>{mspec["icon"]} {mission}</b>
+          <p>{mspec["subtitle"]}</p>
+          <div style="color:#52687d">{mspec["hint"]}</div>
+        </div>''',
+        unsafe_allow_html=True,
+    )
+
+    previous_cfg = _mission_store.get(mission, {})
+    if not isinstance(previous_cfg, dict):
+        previous_cfg = {}
+
+    weight_options = ['Seleccionar','A','C','Z']
+    time_options = ['Seleccionar','Fast','Slow']
+    context_options = ['Seleccionar','Sí','No']
+
     cc1,cc2,cc3=st.columns(3)
-    chosen_weight=cc1.selectbox('Ponderación',['Seleccionar','A','C','Z'],key='c3_s2_cfg_weight')
-    chosen_time=cc2.selectbox('Respuesta temporal',['Seleccionar','Fast','Slow'],key='c3_s2_cfg_time')
-    chosen_meta=cc3.selectbox('¿Registrar contexto?',['Seleccionar','Sí','No'],key='c3_s2_cfg_context')
-    cfg_note=st.text_area('Justifica tu configuración',placeholder='Explica qué quieres observar y por qué elegiste esa configuración.',key='c3_s2_cfg_note')
-    if st.button('💾 Guardar configuración de campaña',key='c3_s2_cfg_save',use_container_width=True):
-        cfg={'mission':mission,'weighting':chosen_weight,'temporal':chosen_time,'context':chosen_meta,'note':cfg_note.strip(),'cal_reference_db':float(cal_result)}
-        saved['c3_s2_configuration']=cfg; _c3l1_mark_formative(saved,deps,'s2_configuration',cfg)
-        st.success('Configuración guardada. La Etapa 3 utilizará esta lógica para iniciar la medición.')
+    chosen_weight=cc1.selectbox(
+        'Ponderación',
+        weight_options,
+        index=weight_options.index(previous_cfg.get('weighting','Seleccionar'))
+        if previous_cfg.get('weighting','Seleccionar') in weight_options else 0,
+        key=f'c3_s2_cfg_weight_{mission}',
+    )
+    chosen_time=cc2.selectbox(
+        'Respuesta temporal',
+        time_options,
+        index=time_options.index(previous_cfg.get('temporal','Seleccionar'))
+        if previous_cfg.get('temporal','Seleccionar') in time_options else 0,
+        key=f'c3_s2_cfg_time_{mission}',
+    )
+    chosen_meta=cc3.selectbox(
+        '¿Registrar contexto?',
+        context_options,
+        index=context_options.index(previous_cfg.get('context','Seleccionar'))
+        if previous_cfg.get('context','Seleccionar') in context_options else 0,
+        key=f'c3_s2_cfg_context_{mission}',
+    )
+
+    cfg_note=st.text_area(
+        'Justifica tu configuración',
+        value=str(previous_cfg.get('note','')),
+        placeholder='Explica qué quieres observar y por qué elegiste esta ponderación y respuesta temporal.',
+        key=f'c3_s2_cfg_note_{mission}',
+        height=110,
+    )
+
+    if st.button(
+        f'💾 Guardar configuración · {mission}',
+        key=f'c3_s2_cfg_save_{mission}',
+        use_container_width=True,
+    ):
+        cfg={
+            'mission':mission,
+            'weighting':chosen_weight,
+            'temporal':chosen_time,
+            'context':chosen_meta,
+            'note':cfg_note.strip(),
+            'cal_reference_db':94.0,
+        }
+        _mission_store[mission]=cfg
+        saved['c3_s2_configurations']=_mission_store
+        _c3l1_mark_formative(saved,deps,f's2_configuration_{mission}',cfg)
+        st.success(f'Configuración guardada para: {mission}')
+
+    st.markdown('### Estado de tus tres configuraciones')
+    _cards = []
+    for _name,_meta in mission_specs.items():
+        _cfg = _mission_store.get(_name)
+        _done = isinstance(_cfg,dict) and _cfg.get('weighting') not in (None,'Seleccionar') and _cfg.get('temporal') not in (None,'Seleccionar')
+        _status = 'Guardada' if _done else 'Pendiente'
+        _detail = (
+            f'{_cfg.get("weighting","—")} · {_cfg.get("temporal","—")} · Contexto: {_cfg.get("context","—")}'
+            if isinstance(_cfg,dict) else 'Aún no configurada'
+        )
+        _cls = 'green' if _done else 'blue'
+        _cards.append(
+            f'''<div class="c3-card {_cls}">
+              <div class="c3-kicker">{_status.upper()}</div>
+              <b>{_meta["icon"]} {_name}</b>
+              <p>{_detail}</p>
+            </div>'''
+        )
+
+    st.markdown(
+        '<div class="c3-grid">' + ''.join(_cards) + '</div>',
+        unsafe_allow_html=True,
+    )
 
     st.markdown('## 6. ¿Qué puede invalidar o debilitar un dato?')
     issues={'Saturación / overload':'La señal supera el rango útil y la lectura puede dejar de representar correctamente el fenómeno.','Configuración no documentada':'Después no puedes reconstruir cómo se obtuvo el valor.','Sin verificación previa/posterior':'Pierdes una comprobación básica de consistencia de la cadena de medición.','Micrófono mal ubicado':'Puedes medir un punto que no representa al receptor o al fenómeno que deseas caracterizar.'}
     issue=st.selectbox('Selecciona una situación',list(issues),key='c3_s2_issue'); st.info(issues[issue])
 
-    st.markdown('## 7. Comprueba lo esencial')
+    st.markdown('## 7. Cierre formativo · comprueba lo esencial')
+
+    st.markdown(
+        '''
+        <div class="c3s1-context">
+          Responde cada pregunta. La retroalimentación aparece inmediatamente y el avance se guarda sin un botón global de comprobación.
+        </div>
+        ''',
+        unsafe_allow_html=True,
+    )
+
     qs=[
-        ('¿Qué bloque transforma presión acústica en señal eléctrica?',['Micrófono','Memoria','Pantalla'],'Micrófono'),
-        ('¿Qué diferencia A/C/Z de Fast/Slow?',['A/C/Z son frecuenciales y Fast/Slow temporales','Son exactamente lo mismo','Solo cambia el color de pantalla'],'A/C/Z son frecuenciales y Fast/Slow temporales'),
-        ('¿Qué respuesta sigue más rápidamente un evento breve?',['Fast','Slow'],'Fast'),
-        ('¿Cuál es la secuencia didáctica correcta?',['Medir → verificar → medir','Verificar antes → medir → verificar después','Guardar → medir → calibrar'],'Verificar antes → medir → verificar después'),
+        (
+            '1. ¿Qué bloque transforma presión acústica en señal eléctrica?',
+            ['Micrófono','Memoria','Pantalla'],
+            'Micrófono',
+            'El micrófono convierte la presión acústica en una señal eléctrica proporcional.'
+        ),
+        (
+            '2. ¿Qué diferencia A/C/Z de Fast/Slow?',
+            ['A/C/Z son frecuenciales y Fast/Slow temporales','Son exactamente lo mismo','Solo cambia el color de pantalla'],
+            'A/C/Z son frecuenciales y Fast/Slow temporales',
+            'A/C/Z modifican la contribución por frecuencia; Fast/Slow modifican la respuesta temporal del detector.'
+        ),
+        (
+            '3. ¿Qué respuesta sigue más rápidamente un evento breve?',
+            ['Fast','Slow'],
+            'Fast',
+            'Fast utiliza una constante de tiempo menor y sigue más rápidamente las variaciones.'
+        ),
+        (
+            '4. ¿Cuál es la secuencia didáctica correcta?',
+            ['Medir → verificar → medir','Verificar antes → medir → verificar después','Guardar → medir → calibrar'],
+            'Verificar antes → medir → verificar después',
+            'La lógica es comprobar la cadena antes, medir y volver a comprobar al finalizar.'
+        ),
     ]
-    answers=[]
-    for i,(question,options,_) in enumerate(qs): answers.append(st.radio(question,options,index=None,key=f'c3_s2_q{i}'))
-    if st.button('Comprobar Etapa 2',key='c3_s2_questions_check',use_container_width=True):
-        score=sum(a==correct for a,(_,_,correct) in zip(answers,qs))
-        if score==len(qs): st.success('4/4. Ya tienes la lógica mínima para entrar a terreno con el instrumento.')
-        else: st.warning(f'{score}/4 correctas. Revisa ponderación frecuencial, respuesta temporal y secuencia de verificación.')
-        _c3l1_mark_formative(saved,deps,'s2_comprehension',{'answers':answers,'score':score,'max_score':len(qs)})
 
+    current_answers={}
+    score=0
 
+    for i,(question,options,correct,explanation) in enumerate(qs):
+        with st.container(border=True):
+            st.markdown(f'**{question}**')
+            answer=st.radio(
+                'Selecciona una alternativa',
+                options,
+                index=None,
+                key=f'c3_s2_auto_q{i}',
+                label_visibility='collapsed',
+            )
+            current_answers[str(i)]=answer
+            if answer is not None:
+                if answer==correct:
+                    score+=1
+                    st.success(f'Correcto. {explanation}')
+                else:
+                    st.warning(f'Revisa este concepto. {explanation}')
+
+    answered=sum(v is not None for v in current_answers.values())
+
+    if answered:
+        payload={
+            'answers':current_answers,
+            'score':score,
+            'max_score':len(qs),
+            'answered':answered,
+        }
+        saved['c3_s2_comprehension_auto']=payload
+
+        st.markdown('### Tu avance en el cierre')
+        a1,a2=st.columns(2)
+        a1.metric('Preguntas respondidas',f'{answered}/{len(qs)}')
+        a2.metric('Correctas hasta ahora',f'{score}/{len(qs)}')
+
+        if answered==len(qs):
+            _c3l1_mark_formative(saved,deps,'s2_comprehension',payload)
+            if score==len(qs):
+                st.success('Cierre completado: ya tienes la lógica mínima de configuración, ponderación, respuesta temporal y verificación.')
+            else:
+                st.info('Cierre completado. Puedes corregir las respuestas que aún no coinciden con la pauta.')
 def _c3l1_stage3_impl(lab: dict, saved: dict, deps: Dict[str, Any]):
     _c3l1_style()
     _c3l1_header(3, 'Laboratorio de medición real', 'Obtener dos registros ambientales y conservar sus descriptores y contexto para analizarlos en las etapas siguientes.', deps)
