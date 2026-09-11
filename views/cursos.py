@@ -18433,12 +18433,12 @@ def _c3l1_stage2_impl(lab: dict, saved: dict, deps: Dict[str, Any]):
     title, description, idea, accent = components_map.get(part, components_map['Micrófono'])
 
     render_assets = {
-        'Micrófono': 'curso3_sonometro_microfono.webp',
-        'Preamplificador': 'curso3_sonometro_preamplificador.webp',
-        'Filtros / ponderación': 'curso3_sonometro_filtros.webp',
-        'Procesador RMS / integrador': 'curso3_sonometro_rms.webp',
-        'Memoria': 'curso3_sonometro_memoria.webp',
-        'Calibrador': 'curso3_sonometro_calibrador.webp',
+        'Micrófono': 'curso3_sonometro_microfono_clean.webp',
+        'Preamplificador': 'curso3_sonometro_preamplificador_clean.webp',
+        'Filtros / ponderación': 'curso3_sonometro_filtros_clean.webp',
+        'Procesador RMS / integrador': 'curso3_sonometro_rms_clean.webp',
+        'Memoria': 'curso3_sonometro_memoria_clean.webp',
+        'Calibrador': 'curso3_sonometro_calibrador_clean.webp',
     }
 
     render_captions = {
@@ -18450,10 +18450,14 @@ def _c3l1_stage2_impl(lab: dict, saved: dict, deps: Dict[str, Any]):
         'Calibrador': 'Render de un calibrador acústico de referencia para comprobación de campo.',
     }
 
-    _c3l1_asset(
-        render_assets[part],
-        render_captions[part],
-    )
+    _render_file = Path(__file__).resolve().parents[1] / 'assets' / render_assets[part]
+    if _render_file.exists():
+        left, center, right = st.columns([1, 3, 1])
+        with center:
+            st.image(str(_render_file), use_container_width=True)
+            st.caption(render_captions[part])
+    else:
+        _c3l1_asset(render_assets[part], render_captions[part])
 
 
     st.markdown(
