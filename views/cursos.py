@@ -17391,6 +17391,25 @@ def _c3l1_stage1_impl(lab: dict, saved: dict, deps: Dict[str, Any]):
         30,
     )
 
+    st.markdown(
+        '''
+        <style>
+        .c3s1-grid4{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;margin:.7rem 0 1rem}
+        .c3s1-mini{border:1px solid #d8e5ef;border-radius:16px;background:#fff;padding:13px 14px;min-height:92px;box-shadow:0 5px 18px rgba(15,23,42,.035)}
+        .c3s1-mini .label{font-size:.73rem;color:#657d91;margin-bottom:6px}
+        .c3s1-mini .value{font-size:1.18rem;font-weight:850;color:#102b47;line-height:1.2}
+        .c3s1-context{border-radius:16px;padding:16px 18px;background:#eef7ff;border:1px solid #c9e3f6;color:#17324d;margin:.7rem 0}
+        .c3s1-versus{display:grid;grid-template-columns:1fr auto 1fr;align-items:stretch;gap:12px;margin:.8rem 0 1rem}
+        .c3s1-case{border:1px solid #d9e5ef;border-radius:16px;background:#fff;padding:15px}
+        .c3s1-case strong{display:block;color:#0f3152;margin-bottom:6px}
+        .c3s1-vs{display:flex;align-items:center;justify-content:center;font-weight:900;color:#0b8fc5;font-size:1.1rem}
+        .c3s1-selected{display:flex;align-items:center;gap:8px;background:#eef8ff;border:1px solid #c6e6f7;border-radius:12px;padding:10px 12px;margin:.4rem 0 .8rem;color:#17324d;font-weight:750}
+        @media(max-width:850px){.c3s1-grid4,.c3s1-versus{grid-template-columns:1fr}.c3s1-vs{min-height:24px}}
+        </style>
+        ''',
+        unsafe_allow_html=True,
+    )
+
     _c3l1_asset(
         'curso3_lab1_etapa1_fuentes.webp',
         'Escenario urbano del laboratorio: una misma ciudad puede contener fuentes móviles, fijas, continuas, variables y eventos.'
@@ -17439,12 +17458,19 @@ def _c3l1_stage1_impl(lab: dict, saved: dict, deps: Dict[str, Any]):
 
     selected = st.selectbox('Selecciona una fuente del escenario', list(sources), key='c3_s1_source')
     info = sources[selected]
-    c1,c2,c3,c4 = st.columns(4)
-    c1.metric('Tipo espacial', info['tipo'])
-    c2.metric('Temporalidad', info['temporal'])
-    c3.metric('Característica', info['caracteristica'])
-    c4.metric('Receptor potencial', info['receptor'])
-    st.info(info['idea'])
+    st.markdown(
+        f'''<div class="c3s1-grid4">
+        <div class="c3s1-mini"><div class="label">Tipo espacial</div><div class="value">{info['tipo']}</div></div>
+        <div class="c3s1-mini"><div class="label">Temporalidad</div><div class="value">{info['temporal']}</div></div>
+        <div class="c3s1-mini"><div class="label">Característica</div><div class="value">{info['caracteristica']}</div></div>
+        <div class="c3s1-mini"><div class="label">Receptor potencial</div><div class="value">{info['receptor']}</div></div>
+        </div>''',
+        unsafe_allow_html=True,
+    )
+    st.markdown(
+        f'<div class="c3s1-context"><b>Qué debes observar:</b> {info["idea"]}</div>',
+        unsafe_allow_html=True,
+    )
 
     t=np.linspace(0,60,241)
     rng=np.random.default_rng(abs(hash(selected))%(2**32))
@@ -17468,7 +17494,11 @@ def _c3l1_stage1_impl(lab: dict, saved: dict, deps: Dict[str, Any]):
     st.caption('Gráfica didáctica: ilustra la estructura temporal del caso y no corresponde a una medición reglamentaria.')
 
     st.markdown('## 2. Actividad · Clasifica lo que observaste')
-    q_source=st.selectbox('Fuente a clasificar',list(sources),key='c3_s1_quiz_source')
+    q_source = selected
+    st.markdown(
+        f'<div class="c3s1-selected">🎯 Fuente activa para clasificar: <b>{q_source}</b></div>',
+        unsafe_allow_html=True,
+    )
     q_kind=st.selectbox('Tipo espacial predominante',['Seleccionar','Puntual','Lineal','Móvil','Evento móvil','Área','Área / puntual'],key='c3_s1_kind')
     q_time=st.selectbox('Comportamiento temporal predominante',['Seleccionar','Continua / cíclica','Continua / variable','Variable','Intermitente','Eventual'],key='c3_s1_time')
     expected_kind={'Automóvil':'Móvil','Bus urbano':'Móvil','Carretera':'Lineal','Obra en construcción':'Área / puntual','Sobrevuelo de avión':'Evento móvil','Equipo HVAC':'Puntual','Comercio y personas':'Área','Sirena de emergencia':'Evento móvil'}[q_source]
@@ -17480,8 +17510,22 @@ def _c3l1_stage1_impl(lab: dict, saved: dict, deps: Dict[str, Any]):
         _c3l1_mark_formative(saved,deps,'s1_classify',{'source':q_source,'kind':q_kind,'time':q_time,'ok':ok})
 
     st.markdown('## 3. Fuente ≠ punto de medición')
-    st.write('Mantén la misma fuente y cambia el lugar de observación. El objetivo es visualizar por qué distancia, camino y receptor cambian el dato observado.')
-    sim_source=st.selectbox('Fuente para el simulador',['Carretera','Equipo HVAC','Obra en construcción'],key='c3_s1_sim_source')
+    st.write(
+        'Mantén una fuente y modifica el camino hasta el receptor. El render ayuda a leer físicamente '
+        'el problema antes de interpretar el número.'
+    )
+    _c3l1_asset(
+        'curso3_lab1_etapa1_fuente_barrera_receptor.webp',
+        'Fuente → propagación → barrera/obstáculo → receptor.'
+    )
+    sim_options=['Carretera','Equipo HVAC','Obra en construcción']
+    sim_default = selected if selected in sim_options else sim_options[0]
+    sim_source=st.selectbox(
+        'Fuente para el simulador',
+        sim_options,
+        index=sim_options.index(sim_default),
+        key='c3_s1_sim_source'
+    )
     distance=st.slider('Distancia fuente–receptor [m]',5,120,25,5,key='c3_s1_distance')
     barrier=st.toggle('Existe una barrera/obstáculo relevante entre fuente y receptor',key='c3_s1_barrier')
     receptor_place=st.segmented_control('Posición del receptor',['Borde de vía','Fachada','Patio interior'],default='Fachada',key='c3_s1_receptor_place')
@@ -17490,58 +17534,269 @@ def _c3l1_stage1_impl(lab: dict, saved: dict, deps: Dict[str, Any]):
     place_corr={'Borde de vía':0.0,'Fachada':-2.0,'Patio interior':-7.0}[receptor_place]
     barrier_corr=-7.0 if barrier else 0.0
     illustrative=source_level-distance_loss+place_corr+barrier_corr
-    s1,s2,s3=st.columns(3)
-    s1.metric('Distancia',f'{distance} m'); s2.metric('Condición de camino','Con obstáculo' if barrier else 'Directo'); s3.metric('Nivel ilustrativo',f'{illustrative:.1f} dB')
+    st.markdown(
+        f'''<div class="c3-grid">
+        <div class="c3s1-mini"><div class="label">Distancia fuente–receptor</div><div class="value">{distance} m</div></div>
+        <div class="c3s1-mini"><div class="label">Condición de propagación</div><div class="value">{'Con obstáculo' if barrier else 'Camino directo'}</div></div>
+        <div class="c3s1-mini"><div class="label">Nivel ilustrativo en receptor</div><div class="value">{illustrative:.1f} dB</div></div>
+        </div>''',
+        unsafe_allow_html=True,
+    )
     st.markdown('<div class="c3-key"><b>Idea clave:</b> la fuente puede ser la misma, pero el dato cambia con la distancia, el camino y el lugar del receptor. Observar el terreno es parte de medir.</div>',unsafe_allow_html=True)
 
     st.markdown('## 4. Mismo nivel, distinto contexto')
-    st.write('Los tres escenarios siguientes tienen, deliberadamente, el mismo valor hipotético: **55 dBA**.')
-    context=st.radio('Selecciona el escenario',['Parque · 14:00','Oficina · 14:00','Dormitorio · 03:00'],horizontal=True,key='c3_s1_context')
-    context_desc={'Parque · 14:00':'Actividad recreativa diurna; sonidos de personas y ambiente exterior.','Oficina · 14:00':'Actividad que puede requerir concentración y comunicación.','Dormitorio · 03:00':'Periodo destinado al descanso; el contexto temporal cambia la interpretación.'}[context]
-    st.info(context_desc)
+    st.markdown(
+        '<div class="c3s1-context"><b>Experimento:</b> los tres escenarios tienen exactamente el mismo valor hipotético: '
+        '<b>55 dBA</b>. Cambia únicamente el lugar, la actividad y el horario.</div>',
+        unsafe_allow_html=True,
+    )
+    context=st.segmented_control(
+        'Selecciona el escenario',
+        ['🌳 Parque · 14:00','💻 Oficina · 14:00','🌙 Dormitorio · 03:00'],
+        default='🌳 Parque · 14:00',
+        key='c3_s1_context'
+    )
+    context_desc={
+        '🌳 Parque · 14:00':'Actividad recreativa diurna; sonidos de personas y ambiente exterior.',
+        '💻 Oficina · 14:00':'Actividad que puede requerir concentración, comunicación y menor interferencia.',
+        '🌙 Dormitorio · 03:00':'Periodo destinado al descanso; el horario y la actividad cambian completamente la interpretación.',
+    }[context]
+    st.markdown(
+        f'<div class="c3-card blue"><div class="c3-kicker">55 dBA · mismo número</div><b>{context}</b><p>{context_desc}</p></div>',
+        unsafe_allow_html=True,
+    )
     same_response=st.radio('¿El mismo valor de 55 dBA implica necesariamente la misma situación acústica para el receptor?',['Sí','No'],index=None,horizontal=True,key='c3_s1_same_level')
     if same_response:
         if same_response=='No': st.success('Correcto. El instrumento mide una magnitud física; la interpretación requiere actividad, horario, receptor y objetivo.')
         else: st.warning('Revisa el contexto: un mismo nivel no describe por sí solo la situación acústica.')
 
     st.markdown('## 5. Carretera continua vs. evento de sobrevuelo')
+    st.markdown(
+        '''<div class="c3s1-versus">
+        <div class="c3s1-case"><strong>🛣️ Carretera</strong>Exposición persistente, con fluctuaciones y muchos vehículos durante el periodo.</div>
+        <div class="c3s1-vs">VS.</div>
+        <div class="c3s1-case"><strong>✈️ Sobrevuelo</strong>Evento delimitado: aparece, crece, alcanza un máximo y desaparece dentro de un fondo menor.</div>
+        </div>''',
+        unsafe_allow_html=True,
+    )
     choice=st.radio('¿Qué afirmación es más adecuada?',['Un único valor máximo describe igualmente bien ambos casos.','La estructura temporal importa: una exposición continua y un evento pueden requerir descriptores complementarios.','Si ambos alcanzan el mismo máximo, son acústicamente equivalentes.'],index=None,key='c3_s1_descriptor_reasoning')
     if choice:
         if choice.startswith('La estructura temporal'): st.success('Correcto. En las etapas siguientes comprobarás esta idea con LAeq, percentiles y SEL.')
         else: st.warning('No basta con comparar máximos: observa duración, recurrencia y estructura temporal.')
 
     st.markdown('## 6. Antes de medir: formula tu hipótesis de terreno')
-    old_hyp=saved.get('c3_s1_hypothesis',{}) if isinstance(saved.get('c3_s1_hypothesis'),dict) else {}
-    with st.form('c3_s1_hypothesis_form'):
-        h1,h2=st.columns(2)
-        dominant=h1.selectbox('Fuente que esperas que domine',['Seleccionar']+list(sources),key='c3_s1_h_dominant')
-        point_high=h2.selectbox('Punto donde esperarías mayor nivel',['Seleccionar','A · borde de avenida','B · fachada residencial','C · patio interior'],key='c3_s1_h_high')
-        h3,h4=st.columns(2)
-        point_low=h3.selectbox('Punto donde esperarías menor nivel',['Seleccionar','A · borde de avenida','B · fachada residencial','C · patio interior'],key='c3_s1_h_low')
-        behavior=h4.selectbox('Comportamiento temporal esperado',['Seleccionar','Relativamente estable','Fluctuante','Intermitente','Dominado por eventos'],key='c3_s1_h_behavior')
-        interferences=st.multiselect('¿Qué podría interferir o sesgar tu medición?',['Viento','Lluvia','Sirena/evento ajeno','Conversación junto al micrófono','Manipulación del equipo','Otra fuente no representativa'],default=old_hyp.get('interferences',[]),key='c3_s1_h_interferences')
-        note=st.text_area('Justifica brevemente tu hipótesis',value=str(old_hyp.get('note','')),placeholder='Ej.: espero mayor nivel junto a la avenida porque el tránsito será la fuente dominante...',key='c3_s1_h_note')
-        save_hyp=st.form_submit_button('💾 Guardar hipótesis de campaña',use_container_width=True)
-    if save_hyp:
-        payload={'dominant':dominant,'point_high':point_high,'point_low':point_low,'behavior':behavior,'interferences':interferences,'note':note.strip()}
-        saved['c3_s1_hypothesis']=payload
-        _c3l1_mark_formative(saved,deps,'s1_hypothesis',payload)
-        st.success('Hipótesis guardada. La reutilizaremos cuando diseñes y analices tu campaña.')
 
-    st.markdown('## 7. Comprueba lo esencial')
-    qs=[
-        ('Dos puntos de una misma calle necesariamente entregan el mismo nivel porque la fuente es la misma.',['Verdadero','Falso'],'Falso'),
-        ('Antes de interpretar un valor medido, ¿qué conjunto de información es más importante?',['Solo el número en dB','Fuente + camino + receptor + contexto','Solo la distancia'],'Fuente + camino + receptor + contexto'),
-        ('¿Qué diferencia mejor un ruido continuo de un evento?',['Su estructura temporal y duración','Solo el color del equipo','Siempre la frecuencia de 1 kHz'],'Su estructura temporal y duración'),
-        ('¿Por qué conviene observar el terreno antes de medir?',['Para identificar fuentes, receptores e interferencias','Porque reemplaza la medición','Solo para elegir una fotografía'],'Para identificar fuentes, receptores e interferencias'),
+    st.markdown(
+        """
+        <div class="c3-card blue" style="padding:18px 20px;margin:.5rem 0 1rem">
+          <div class="c3-kicker">MISIÓN DE TERRENO</div>
+          <b>Primera inspección acústica del sector</b>
+          <p style="margin:.45rem 0 0">
+            Son las <b>18:30 h</b>. Vecinos de un edificio residencial indican que el ambiente acústico
+            del sector ha cambiado durante los últimos meses. Antes de encender el sonómetro debes
+            recorrer el lugar, identificar las fuentes probables y decidir qué esperas encontrar.
+          </p>
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
+
+    st.markdown(
+        """
+        <div class="c3s1-versus">
+          <div class="c3s1-case">
+            <strong>📍 Punto A · borde de avenida</strong>
+            Tránsito cercano, buses, automóviles y eventos puntuales.
+          </div>
+          <div class="c3s1-vs">→</div>
+          <div class="c3s1-case">
+            <strong>🏢 Punto B · fachada residencial</strong>
+            Recibe el ruido de la avenida, pero con una posición distinta respecto de la fuente.
+          </div>
+        </div>
+        <div class="c3s1-versus">
+          <div class="c3s1-case">
+            <strong>🌿 Punto C · patio interior</strong>
+            Mayor protección geométrica y menor exposición directa al tránsito.
+          </div>
+          <div class="c3s1-vs">+</div>
+          <div class="c3s1-case">
+            <strong>🎯 Tu tarea</strong>
+            Antes de medir, registra una hipótesis que luego compararás con los resultados reales.
+          </div>
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
+
+    st.markdown(
+        '<div class="c3-key"><b>No buscamos adivinar el resultado.</b> '
+        'La hipótesis sirve para justificar qué fuente, punto y comportamiento esperas observar. '
+        'Más adelante volveremos a ella para contrastarla con la campaña.</div>',
+        unsafe_allow_html=True,
+    )
+
+    old_hyp = saved.get('c3_s1_hypothesis', {}) if isinstance(saved.get('c3_s1_hypothesis'), dict) else {}
+
+    with st.form('c3_s1_hypothesis_form'):
+        st.markdown('### Tu hipótesis de campaña')
+
+        h1, h2 = st.columns(2)
+        dominant = h1.selectbox(
+            'Fuente que esperas que domine',
+            ['Seleccionar'] + list(sources),
+            index=(['Seleccionar'] + list(sources)).index(old_hyp.get('dominant', 'Seleccionar'))
+            if old_hyp.get('dominant', 'Seleccionar') in ['Seleccionar'] + list(sources) else 0,
+            key='c3_s1_h_dominant',
+        )
+        points = ['Seleccionar', 'A · borde de avenida', 'B · fachada residencial', 'C · patio interior']
+        point_high = h2.selectbox(
+            '¿Dónde esperarías el mayor nivel?',
+            points,
+            index=points.index(old_hyp.get('point_high', 'Seleccionar'))
+            if old_hyp.get('point_high', 'Seleccionar') in points else 0,
+            key='c3_s1_h_high',
+        )
+
+        h3, h4 = st.columns(2)
+        point_low = h3.selectbox(
+            '¿Dónde esperarías el menor nivel?',
+            points,
+            index=points.index(old_hyp.get('point_low', 'Seleccionar'))
+            if old_hyp.get('point_low', 'Seleccionar') in points else 0,
+            key='c3_s1_h_low',
+        )
+        temporal_opts = ['Seleccionar', 'Relativamente estable', 'Fluctuante', 'Intermitente', 'Dominado por eventos']
+        behavior = h4.selectbox(
+            '¿Cómo esperas que se comporte temporalmente?',
+            temporal_opts,
+            index=temporal_opts.index(old_hyp.get('behavior', 'Seleccionar'))
+            if old_hyp.get('behavior', 'Seleccionar') in temporal_opts else 0,
+            key='c3_s1_h_behavior',
+        )
+
+        st.markdown('#### Condiciones que pueden alterar la lectura')
+        interferences = st.multiselect(
+            'Selecciona todas las que debieras vigilar durante la campaña',
+            [
+                'Viento',
+                'Lluvia',
+                'Sirena/evento ajeno',
+                'Conversación junto al micrófono',
+                'Manipulación del equipo',
+                'Otra fuente no representativa',
+            ],
+            default=old_hyp.get('interferences', []),
+            placeholder='Selecciona una o más condiciones',
+            key='c3_s1_h_interferences',
+        )
+
+        note = st.text_area(
+            'Justifica tu hipótesis en 2–4 líneas',
+            value=str(old_hyp.get('note', '')),
+            placeholder='Ej.: espero mayor nivel en el borde de la avenida porque el tránsito será la fuente dominante...',
+            height=120,
+            key='c3_s1_h_note',
+        )
+
+        save_hyp = st.form_submit_button('💾 Guardar hipótesis de terreno', use_container_width=True)
+
+    if save_hyp:
+        payload = {
+            'dominant': dominant,
+            'point_high': point_high,
+            'point_low': point_low,
+            'behavior': behavior,
+            'interferences': interferences,
+            'note': note.strip(),
+        }
+        saved['c3_s1_hypothesis'] = payload
+        _c3l1_mark_formative(saved, deps, 's1_hypothesis', payload)
+        st.success('Hipótesis guardada. Más adelante podrás compararla con los resultados obtenidos en la campaña.')
+
+    st.markdown('## 7. Cierre formativo · ¿qué te llevas de esta etapa?')
+
+    st.markdown(
+        """
+        <div class="c3s1-context">
+        <b>Objetivo del cierre:</b> comprobar que puedes leer un problema de ruido ambiental antes de medirlo.
+        Responde cada pregunta; la retroalimentación aparece inmediatamente.
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
+
+    qs = [
+        (
+            '1. Dos puntos de una misma calle necesariamente entregan el mismo nivel porque la fuente es la misma.',
+            ['Verdadero', 'Falso'],
+            'Falso',
+            'La fuente puede ser la misma, pero cambian distancia, camino de propagación y posición del receptor.'
+        ),
+        (
+            '2. Antes de interpretar un valor medido, ¿qué conjunto de información es más importante?',
+            ['Solo el número en dB', 'Fuente + camino + receptor + contexto', 'Solo la distancia'],
+            'Fuente + camino + receptor + contexto',
+            'El número adquiere significado cuando sabes qué se midió, dónde, cuándo y respecto de qué receptor.'
+        ),
+        (
+            '3. ¿Qué diferencia mejor un ruido continuo de un evento?',
+            ['Su estructura temporal y duración', 'Solo el color del equipo', 'Siempre la frecuencia de 1 kHz'],
+            'Su estructura temporal y duración',
+            'Un evento aparece y desaparece dentro de un periodo; una exposición continua persiste durante gran parte de él.'
+        ),
+        (
+            '4. ¿Por qué conviene observar el terreno antes de medir?',
+            ['Para identificar fuentes, receptores e interferencias', 'Porque reemplaza la medición', 'Solo para elegir una fotografía'],
+            'Para identificar fuentes, receptores e interferencias',
+            'La inspección previa permite decidir qué medir y detectar condiciones que podrían sesgar la campaña.'
+        ),
     ]
-    answers=[]
-    for i,(question,options,_) in enumerate(qs): answers.append(st.radio(question,options,index=None,key=f'c3_s1_q{i}'))
-    if st.button('Comprobar Etapa 1',key='c3_s1_questions_check',use_container_width=True):
-        score=sum(a==correct for a,(_,_,correct) in zip(answers,qs))
-        if score==len(qs): st.success('4/4. Ya puedes pasar del entorno al instrumento.')
-        else: st.warning(f'{score}/4 correctas. Revisa la relación fuente–camino–receptor y el papel del contexto.')
-        _c3l1_mark_formative(saved,deps,'s1_comprehension',{'answers':answers,'score':score,'max_score':len(qs)})
+
+    current_answers = {}
+    current_score = 0
+
+    for i, (question, options, correct, explanation) in enumerate(qs):
+        with st.container(border=True):
+            st.markdown(f'**{question}**')
+            answer = st.radio(
+                'Selecciona una alternativa',
+                options,
+                index=None,
+                key=f'c3_s1_auto_q{i}',
+                label_visibility='collapsed',
+            )
+            current_answers[str(i)] = answer
+
+            if answer is not None:
+                if answer == correct:
+                    current_score += 1
+                    st.success(f'Correcto. {explanation}')
+                else:
+                    st.warning(f'Revisa este concepto. {explanation}')
+
+    answered_count = sum(v is not None for v in current_answers.values())
+
+    if answered_count:
+        payload = {
+            'answers': current_answers,
+            'score': current_score,
+            'max_score': len(qs),
+            'answered': answered_count,
+        }
+        saved['c3_s1_formative_auto'] = payload
+
+        st.markdown('### Tu avance en este cierre')
+        a1, a2 = st.columns(2)
+        a1.metric('Preguntas respondidas', f'{answered_count}/{len(qs)}')
+        a2.metric('Correctas hasta ahora', f'{current_score}/{len(qs)}')
+
+        if answered_count == len(qs):
+            _c3l1_mark_formative(saved, deps, 's1_comprehension', payload)
+            if current_score == len(qs):
+                st.success('Cierre completado: ya puedes pasar del análisis del entorno a la instrumentación.')
+            else:
+                st.info('Cierre completado. Puedes corregir tus respuestas antes de continuar.')
 
 
 def _c3l1_stage2_impl(lab: dict, saved: dict, deps: Dict[str, Any]):
