@@ -18436,9 +18436,9 @@ def _c3l1_stage2_impl(lab: dict, saved: dict, deps: Dict[str, Any]):
         'Micrófono': 'curso3_sonometro_microfono_clean.webp',
         'Preamplificador': 'curso3_sonometro_preamplificador_clean.webp',
         'Filtros / ponderación': 'curso3_sonometro_filtros_clean.webp',
-        'Procesador RMS / integrador': 'curso3_sonometro_rms_clean.webp',
-        'Memoria': 'curso3_sonometro_memoria_clean.webp',
-        'Calibrador': 'curso3_sonometro_calibrador_clean.webp',
+        'Procesador RMS / integrador': 'curso3_sonometro_rms_hires.webp',
+        'Memoria': 'curso3_sonometro_memoria_hires.webp',
+        'Calibrador': 'curso3_sonometro_calibrador_hires.webp',
     }
 
     render_captions = {
