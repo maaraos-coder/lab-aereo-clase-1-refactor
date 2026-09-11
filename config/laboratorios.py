@@ -24,7 +24,7 @@ ACADEMIC_COURSES = [
     {
         "title": "Control de ruido ambiental",
         "labs": [
-            {"number": 1, "opens_at": "2026-09-12T00:00:00-03:00", "implemented": False},
+            {"number": 1, "opens_at": "2026-09-12T00:00:00-03:00", "implemented": True},
             {"number": 2, "opens_at": "2026-09-26T00:00:00-03:00", "implemented": False},
         ],
     },
