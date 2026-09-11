@@ -19979,48 +19979,222 @@ def _c3l1_stage3_impl(lab: dict, saved: dict, deps: Dict[str, Any]):
         unsafe_allow_html=True,
     )
 
-    st.markdown('### 4.3 Construye el descriptor seleccionado')
-
-
-    st.write(
-        f'Ahora que ya viste en la historia temporal qué significa exceder un nivel, '
-        f'construiremos formalmente **{descriptor_to_build}** usando exactamente el mismo registro 0–{elapsed} s.'
-    )
+    st.markdown('### 4.3 Construye tú mismo el percentil sobre el gráfico temporal')
 
     st.markdown(
         f"""
         <div class="c3-card blue">
-          <div class="c3-kicker">PROCEDIMIENTO</div>
-          <b>Para obtener {descriptor_to_build}:</b>
-          <p>1. Usa todas las muestras del tramo 0–{elapsed} s.</p>
-          <p>2. Ordénalas desde el nivel más alto al más bajo.</p>
-          <p>3. Asigna a cada nivel el porcentaje acumulado de tiempo excedido.</p>
-          <p>4. Busca {_target_pct} %.</p>
-          <p>5. Lee el nivel correspondiente: <b>{_target_level:.1f} dB(A)</b>.</p>
+          <div class="c3-kicker">TU TAREA</div>
+          <b>Encuentra {descriptor_to_build} usando únicamente la historia temporal.</b>
+          <p>
+            Ya sabes que {descriptor_to_build} corresponde al nivel que fue igualado o superado
+            durante aproximadamente el <b>{_target_pct} % del tiempo</b>.
+            Ahora debes encontrar ese nivel moviendo una línea horizontal sobre el registro 0–{elapsed} s.
+          </p>
         </div>
         """,
         unsafe_allow_html=True,
     )
 
-    fig_ex4, ax_ex4 = c3plt.subplots(figsize=(9.5,4.2))
-    ax_ex4.plot(_exceed, _ordered, lw=2)
-    ax_ex4.axvline(_target_pct, ls='--', lw=1.6)
-    ax_ex4.axhline(_target_level, ls='--', lw=1.6)
-    ax_ex4.scatter([_target_pct], [_target_level], s=80, zorder=6)
-    ax_ex4.annotate(
-        f'{descriptor_to_build} = {_target_level:.1f} dB(A)',
-        xy=(_target_pct,_target_level),
-        xytext=(min(72,_target_pct+8),_target_level+1.2),
-        arrowprops={'arrowstyle':'->'},
+    _guess_min = int(np.floor(np.min(_y_live))) - 2
+    _guess_max = int(np.ceil(np.max(_y_live))) + 2
+    _guess_default = int(round(np.median(_y_live)))
+
+    _guess_level = st.slider(
+        f'Ajusta tu nivel candidato para {descriptor_to_build} [dB(A)]',
+        min_value=_guess_min,
+        max_value=_guess_max,
+        value=max(_guess_min, min(_guess_max, _guess_default)),
+        step=1,
+        key=f'c3_s3_build_guess_{descriptor_to_build}',
     )
-    ax_ex4.set_xlabel('Porcentaje del tiempo en que el nivel fue igualado o superado [%]')
-    ax_ex4.set_ylabel('Nivel [dB(A)]')
-    ax_ex4.set_title(
-        f'Construcción de {descriptor_to_build} con el registro 0–{elapsed} s'
+
+    _guess_mask = _y_live >= float(_guess_level)
+    _guess_count = int(np.sum(_guess_mask))
+    _guess_pct = 100.0 * _guess_count / max(1, len(_y_live))
+    _guess_seconds = _guess_count * _dt
+
+    fig_build, ax_build = c3plt.subplots(figsize=(10,4.4))
+    ax_build.plot(
+        _t_live,
+        _y_live,
+        lw=1.45,
+        label=f'Registro 0–{elapsed} s'
     )
-    ax_ex4.grid(alpha=.2)
-    st.pyplot(fig_ex4, use_container_width=True)
-    c3plt.close(fig_ex4)
+    ax_build.axhline(
+        float(_guess_level),
+        ls='--',
+        lw=1.8,
+        label=f'Tu nivel = {_guess_level:.1f} dB(A)'
+    )
+    ax_build.fill_between(
+        _t_live,
+        float(_guess_level),
+        _y_live,
+        where=_guess_mask,
+        interpolate=True,
+        alpha=.20,
+    )
+    ax_build.scatter(
+        _t_live[_guess_mask],
+        _y_live[_guess_mask],
+        s=15,
+        alpha=.7,
+        zorder=4,
+    )
+    ax_build.set_xlabel('Tiempo [s]')
+    ax_build.set_ylabel('Nivel [dB(A)]')
+    ax_build.set_title(
+        f'Construye {descriptor_to_build}: ajusta la línea hasta alcanzar aproximadamente {_target_pct} %'
+    )
+    ax_build.grid(alpha=.2)
+    ax_build.legend(fontsize=8)
+    st.pyplot(fig_build, use_container_width=True)
+    c3plt.close(fig_build)
+
+    c1,c2,c3 = st.columns(3)
+    c1.metric('Tu nivel candidato', f'{_guess_level:.1f} dB(A)')
+    c2.metric('Tiempo en o sobre tu nivel', f'{_guess_seconds:.0f} s')
+    c3.metric('Porcentaje excedido', f'{_guess_pct:.1f} %')
+
+    _target_diff_pct = abs(_guess_pct - _target_pct)
+
+    if _target_diff_pct <= 2:
+        st.success(
+            f'Vas muy bien: tu línea produce aproximadamente {_guess_pct:.1f} % de excedencia. '
+            f'Estás muy cerca del {_target_pct} % buscado.'
+        )
+    elif _guess_pct > _target_pct:
+        st.info(
+            f'Tu nivel es demasiado bajo para {descriptor_to_build}: se supera durante {_guess_pct:.1f} % del tiempo. '
+            f'Necesitas subir la línea hasta acercarte a {_target_pct} %.'
+        )
+    else:
+        st.info(
+            f'Tu nivel es demasiado alto para {descriptor_to_build}: se supera durante solo {_guess_pct:.1f} % del tiempo. '
+            f'Necesitas bajar la línea hasta acercarte a {_target_pct} %.'
+        )
+
+    # Visual progress bar toward target percentage
+    st.markdown(
+        f"""
+        <div style="margin:1rem 0">
+          <div style="display:flex;justify-content:space-between;font-size:.85rem;color:#52687d;margin-bottom:.35rem">
+            <span>Tu excedencia: <b>{_guess_pct:.1f} %</b></span>
+            <span>Objetivo {descriptor_to_build}: <b>{_target_pct} %</b></span>
+          </div>
+          <div style="height:20px;background:#e7edf2;border-radius:999px;overflow:hidden;position:relative">
+            <div style="width:{min(100,max(0,_guess_pct)):.1f}%;height:100%;background:linear-gradient(90deg,#5caee6,#2d89c7);border-radius:999px"></div>
+            <div style="position:absolute;left:{_target_pct}%;top:-4px;width:3px;height:28px;background:#ef5350"></div>
+          </div>
+          <div style="font-size:.72rem;color:#718394;margin-top:.3rem">
+            La marca roja indica el porcentaje que debes alcanzar.
+          </div>
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
+
+    _check_key = f'c3_s3_build_checked_{descriptor_to_build}'
+    if st.button(
+        f'Comprobar mi construcción de {descriptor_to_build}',
+        key=f'c3_s3_build_check_btn_{descriptor_to_build}',
+        use_container_width=True,
+    ):
+        st.session_state[_check_key] = True
+
+    if st.session_state.get(_check_key, False):
+        _level_error = float(_guess_level) - float(_target_level)
+        _abs_error = abs(_level_error)
+
+        st.markdown('#### Resultado de tu construcción')
+
+        r1,r2,r3 = st.columns(3)
+        r1.metric('Tu resultado', f'{_guess_level:.1f} dB(A)')
+        r2.metric(
+            f'{descriptor_to_build} calculado',
+            f'{_target_level:.1f} dB(A)'
+        )
+        r3.metric(
+            'Error',
+            f'{_level_error:+.1f} dB'
+        )
+
+        if _abs_error <= 1.0:
+            st.success(
+                f'Excelente. Construiste {descriptor_to_build} con un error de solo {_abs_error:.1f} dB.'
+            )
+        elif _abs_error <= 2.0:
+            st.info(
+                f'Estás cerca. Tu resultado difiere {_abs_error:.1f} dB del valor calculado.'
+            )
+        else:
+            st.warning(
+                f'Revisa la línea: tu resultado difiere {_abs_error:.1f} dB del valor calculado.'
+            )
+
+        fig_solution, ax_solution = c3plt.subplots(figsize=(10,4.4))
+        ax_solution.plot(
+            _t_live,
+            _y_live,
+            lw=1.3,
+            label=f'Registro 0–{elapsed} s'
+        )
+        ax_solution.axhline(
+            float(_guess_level),
+            ls=':',
+            lw=1.5,
+            label=f'Tu línea = {_guess_level:.1f} dB(A)'
+        )
+        ax_solution.axhline(
+            float(_target_level),
+            ls='--',
+            lw=2.0,
+            label=f'{descriptor_to_build} correcto = {_target_level:.1f} dB(A)'
+        )
+
+        _target_mask_solution = _y_live >= float(_target_level)
+        ax_solution.fill_between(
+            _t_live,
+            float(_target_level),
+            _y_live,
+            where=_target_mask_solution,
+            interpolate=True,
+            alpha=.18,
+        )
+
+        ax_solution.set_xlabel('Tiempo [s]')
+        ax_solution.set_ylabel('Nivel [dB(A)]')
+        ax_solution.set_title(
+            f'Solución de {descriptor_to_build}: nivel excedido durante {_target_pct} % del tiempo'
+        )
+        ax_solution.grid(alpha=.2)
+        ax_solution.legend(fontsize=8)
+        st.pyplot(fig_solution, use_container_width=True)
+        c3plt.close(fig_solution)
+
+        st.markdown(
+            f"""
+            <div class="c3-key">
+              <b>{descriptor_to_build} = {_target_level:.1f} dB(A)</b> porque,
+              dentro del registro 0–{elapsed} s, aproximadamente el
+              <b>{_target_pct} % del tiempo</b> el nivel fue igual o superior a ese valor.
+              Esta es la construcción física del percentil directamente desde la historia temporal.
+            </div>
+            """,
+            unsafe_allow_html=True,
+        )
+
+        _build_payload = {
+            'descriptor': descriptor_to_build,
+            'elapsed_s': elapsed,
+            'student_level': float(_guess_level),
+            'expected_level': float(_target_level),
+            'student_exceedance_pct': float(_guess_pct),
+            'target_exceedance_pct': int(_target_pct),
+            'error_db': float(_level_error),
+        }
+        saved['c3_s3_percentile_build'] = _build_payload
 
     st.markdown('### 4.4 Resultado de la misma medición')
 
