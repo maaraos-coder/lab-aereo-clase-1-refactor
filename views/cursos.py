@@ -18452,10 +18452,27 @@ def _c3l1_stage2_impl(lab: dict, saved: dict, deps: Dict[str, Any]):
 
     _render_file = Path(__file__).resolve().parents[1] / 'assets' / render_assets[part]
     if _render_file.exists():
-        left, center, right = st.columns([1, 3, 1])
+        st.markdown(
+            '''
+            <style>
+            .c3-render-note{
+                text-align:center;
+                color:#66788a;
+                font-size:.82rem;
+                margin-top:-.25rem;
+                margin-bottom:.6rem;
+            }
+            </style>
+            ''',
+            unsafe_allow_html=True,
+        )
+        left, center, right = st.columns([1.6, 1.0, 1.6])
         with center:
-            st.image(str(_render_file), use_container_width=True)
-            st.caption(render_captions[part])
+            st.image(str(_render_file), width=420)
+        st.markdown(
+            f'<div class="c3-render-note">{render_captions[part]}</div>',
+            unsafe_allow_html=True,
+        )
     else:
         _c3l1_asset(render_assets[part], render_captions[part])
 
