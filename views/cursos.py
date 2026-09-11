@@ -17382,66 +17382,311 @@ def _c3l1_stage0_impl(lab: dict, saved: dict, deps: Dict[str, Any]):
 
 def _c3l1_stage1_impl(lab: dict, saved: dict, deps: Dict[str, Any]):
     _c3l1_style()
-    _c3l1_header(1, 'Ruido ambiental: fuentes, caminos y receptores', 'Comprender físicamente qué constituye el ambiente acústico y por qué un valor en dB nunca es toda la historia.', deps)
-    _c3l1_asset('curso3_lab1_etapa1_fuentes.webp')
-    st.markdown('<div class="c3-flow"><span class="c3-node">FUENTE</span><span class="c3-arrow">→</span><span class="c3-node">PROPAGACIÓN</span><span class="c3-arrow">→</span><span class="c3-node">RECEPTOR</span><span class="c3-arrow">+</span><span class="c3-node">TIEMPO</span><span class="c3-arrow">+</span><span class="c3-node">FRECUENCIA</span><span class="c3-arrow">+</span><span class="c3-node">ESPACIO</span></div>', unsafe_allow_html=True)
-    st.markdown('<div class="c3-grid"><div class="c3-card blue"><div class="c3-kicker">SONIDO</div><b>Fenómeno físico</b><p>Variaciones de presión que se propagan como ondas acústicas.</p></div><div class="c3-card orange"><div class="c3-kicker">RUIDO</div><b>Sonido en contexto</b><p>Su valoración depende de fuente, actividad, tiempo, receptor y objetivo.</p></div><div class="c3-card green"><div class="c3-kicker">RUIDO AMBIENTAL</div><b>Ambiente sonoro exterior</b><p>Integra múltiples fuentes y cambia temporal y espacialmente.</p></div></div>', unsafe_allow_html=True)
-    st.markdown('### Ciudad acústica interactiva')
-    sources = {'Automóvil': ('Móvil', 'Variable', 'Tránsito vial', 'Vivienda / peatón'), 'Carretera': ('Lineal', 'Continua/variable', 'Flujo vehicular', 'Fachadas / colegio'), 'Construcción': ('Puntual/área', 'Intermitente', 'Maquinaria y faenas', 'Vecindario'), 'Avión': ('Móvil / evento', 'Eventual', 'Sobrevuelo', 'Barrio / colegio'), 'Equipo industrial': ('Puntual', 'Continua o cíclica', 'Instalación técnica', 'Receptor sensible'), 'Comercio/personas': ('Área', 'Variable', 'Actividad humana', 'Entorno inmediato')}
-    selected = st.selectbox('Selecciona una fuente', list(sources), key='c3_s1_source')
-    t, temporal, characteristic, receptor = sources[selected]
-    a, b, c, d = st.columns(4)
-    a.metric('Tipo', t)
-    b.metric('Temporalidad', temporal)
-    c.metric('Característica', characteristic)
-    d.metric('Receptor potencial', receptor)
-    st.markdown('### Actividad · Clasifica la ciudad')
-    q_source = st.selectbox('Fuente a clasificar', list(sources), key='c3_s1_quiz_source')
-    q_kind = st.selectbox('Tipo espacial', ['Seleccionar', 'Puntual', 'Lineal', 'Móvil', 'Evento', 'Área'], key='c3_s1_kind')
-    q_time = st.selectbox('Comportamiento temporal', ['Seleccionar', 'Continua', 'Variable', 'Intermitente', 'Eventual'], key='c3_s1_time')
-    if st.button('Comprobar clasificación', key='c3_s1_check'):
-        expected_kind = {'Automóvil': 'Móvil', 'Carretera': 'Lineal', 'Construcción': 'Puntual', 'Avión': 'Evento', 'Equipo industrial': 'Puntual', 'Comercio/personas': 'Área'}[q_source]
-        expected_time = {'Automóvil': 'Variable', 'Carretera': 'Variable', 'Construcción': 'Intermitente', 'Avión': 'Eventual', 'Equipo industrial': 'Continua', 'Comercio/personas': 'Variable'}[q_source]
-        ok = q_kind == expected_kind and q_time == expected_time
-        st.success('Clasificación coherente para este caso didáctico.') if ok else st.warning(f'Revisa: una clasificación razonable aquí es {expected_kind} + {expected_time}.')
-        _c3l1_mark_formative(saved, deps, 's1_classify', {'source': q_source, 'kind': q_kind, 'time': q_time, 'ok': ok})
-    st.info('Pregunta clave: una carretera continua y un sobrevuelo de avión no tienen necesariamente el mismo descriptor dominante: uno describe exposición continua; el otro puede requerir caracterización de evento.')
+    _c3l1_header(
+        1,
+        'Ruido ambiental: fuentes, caminos y receptores',
+        'Observar acústicamente un territorio antes de transformarlo en números: identificar fuentes, propagación, receptor, tiempo y contexto.',
+        deps,
+        30,
+    )
+
+    _c3l1_asset(
+        'curso3_lab1_etapa1_fuentes.webp',
+        'Escenario urbano del laboratorio: una misma ciudad puede contener fuentes móviles, fijas, continuas, variables y eventos.'
+    )
+
+    st.markdown(
+        '<div class="c3-flow">'
+        '<span class="c3-node">FUENTE</span><span class="c3-arrow">→</span>'
+        '<span class="c3-node">PROPAGACIÓN</span><span class="c3-arrow">→</span>'
+        '<span class="c3-node">RECEPTOR</span><span class="c3-arrow">+</span>'
+        '<span class="c3-node">TIEMPO</span><span class="c3-arrow">+</span>'
+        '<span class="c3-node">FRECUENCIA</span><span class="c3-arrow">+</span>'
+        '<span class="c3-node">ESPACIO</span>'
+        '</div>',
+        unsafe_allow_html=True,
+    )
+
+    st.markdown(
+        '<div class="c3-grid">'
+        '<div class="c3-card blue"><div class="c3-kicker">SONIDO</div>'
+        '<b>Fenómeno físico</b><p>Variaciones de presión que se propagan como ondas acústicas y pueden medirse.</p></div>'
+        '<div class="c3-card orange"><div class="c3-kicker">RUIDO</div>'
+        '<b>Sonido en contexto</b><p>Su interpretación depende de la actividad, horario, receptor y objetivo de evaluación.</p></div>'
+        '<div class="c3-card green"><div class="c3-kicker">RUIDO AMBIENTAL</div>'
+        '<b>Ambiente exterior variable</b><p>Integra múltiples fuentes y cambia con el tiempo y la posición de observación.</p></div>'
+        '</div>',
+        unsafe_allow_html=True,
+    )
+
+    st.markdown('## 1. Ciudad acústica interactiva')
+    st.write(
+        'Explora distintas fuentes urbanas. No memorices etiquetas: observa cómo cambia su comportamiento '
+        'espacial y temporal y qué receptor podría verse afectado.'
+    )
+
+    sources = {
+        'Automóvil': {'tipo':'Móvil','temporal':'Variable','caracteristica':'Tránsito vial','receptor':'Vivienda / peatón','base':73.0,'pattern':'passby','idea':'Su contribución crece al aproximarse y disminuye al alejarse del receptor.'},
+        'Bus urbano': {'tipo':'Móvil','temporal':'Variable','caracteristica':'Tránsito pesado','receptor':'Vivienda / paradero','base':78.0,'pattern':'passby','idea':'Puede aportar mayor energía de baja frecuencia y eventos de aceleración/frenado.'},
+        'Carretera': {'tipo':'Lineal','temporal':'Continua / variable','caracteristica':'Flujo vehicular','receptor':'Fachadas / colegio','base':70.0,'pattern':'traffic','idea':'El flujo conjunto puede comportarse como una fuente extendida a lo largo de la vía.'},
+        'Obra en construcción': {'tipo':'Área / puntual','temporal':'Intermitente','caracteristica':'Maquinaria y faenas','receptor':'Vecindario','base':76.0,'pattern':'intermittent','idea':'Distintas máquinas entran y salen de operación y generan periodos muy diferentes.'},
+        'Sobrevuelo de avión': {'tipo':'Evento móvil','temporal':'Eventual','caracteristica':'Evento de sobrevuelo','receptor':'Barrio / colegio','base':84.0,'pattern':'event','idea':'La señal está dominada por un evento claramente delimitado dentro de un ruido de fondo menor.'},
+        'Equipo HVAC': {'tipo':'Puntual','temporal':'Continua / cíclica','caracteristica':'Instalación técnica','receptor':'Dormitorio / fachada','base':66.0,'pattern':'steady','idea':'Puede permanecer estable durante largos periodos o entrar en ciclos de encendido/apagado.'},
+        'Comercio y personas': {'tipo':'Área','temporal':'Variable','caracteristica':'Actividad humana','receptor':'Entorno inmediato','base':68.0,'pattern':'crowd','idea':'La contribución depende de ocupación, horario y actividad.'},
+        'Sirena de emergencia': {'tipo':'Evento móvil','temporal':'Eventual','caracteristica':'Señal de emergencia','receptor':'Múltiples receptores','base':88.0,'pattern':'event','idea':'Es un evento breve que puede dominar Lmax sin representar por sí solo todo el periodo.'},
+    }
+
+    selected = st.selectbox('Selecciona una fuente del escenario', list(sources), key='c3_s1_source')
+    info = sources[selected]
+    c1,c2,c3,c4 = st.columns(4)
+    c1.metric('Tipo espacial', info['tipo'])
+    c2.metric('Temporalidad', info['temporal'])
+    c3.metric('Característica', info['caracteristica'])
+    c4.metric('Receptor potencial', info['receptor'])
+    st.info(info['idea'])
+
+    t=np.linspace(0,60,241)
+    rng=np.random.default_rng(abs(hash(selected))%(2**32))
+    noise=rng.normal(0,.8,len(t))
+    pattern=info['pattern']; base=float(info['base'])
+    if pattern=='passby': y=base-12+13*np.exp(-.5*((t-30)/8)**2)+noise
+    elif pattern=='traffic': y=base+2.2*np.sin(t/3.0)+1.2*np.sin(t/.9)+noise
+    elif pattern=='intermittent':
+        y=base-13+noise
+        y+=np.where(((t>8)&(t<19))|((t>31)&(t<47)),12.0,0.0)
+        y+=np.where((t>37)&(t<40),5.0,0.0)
+    elif pattern=='event': y=base-24+24*np.exp(-.5*((t-33)/5.5)**2)+noise
+    elif pattern=='steady': y=base+.8*np.sin(t/4.0)+.4*noise
+    else: y=base-4+3*np.sin(t/5.0)+2*np.sin(t/1.7)+noise
+    fig,ax=plt.subplots(figsize=(9,3.1))
+    ax.plot(t,y,linewidth=2)
+    ax.set_xlabel('Tiempo [s]'); ax.set_ylabel('Nivel ilustrativo [dB]')
+    ax.set_title(f'Historia temporal didáctica · {selected}')
+    ax.grid(True,alpha=.2)
+    st.pyplot(fig,use_container_width=True); plt.close(fig)
+    st.caption('Gráfica didáctica: ilustra la estructura temporal del caso y no corresponde a una medición reglamentaria.')
+
+    st.markdown('## 2. Actividad · Clasifica lo que observaste')
+    q_source=st.selectbox('Fuente a clasificar',list(sources),key='c3_s1_quiz_source')
+    q_kind=st.selectbox('Tipo espacial predominante',['Seleccionar','Puntual','Lineal','Móvil','Evento móvil','Área','Área / puntual'],key='c3_s1_kind')
+    q_time=st.selectbox('Comportamiento temporal predominante',['Seleccionar','Continua / cíclica','Continua / variable','Variable','Intermitente','Eventual'],key='c3_s1_time')
+    expected_kind={'Automóvil':'Móvil','Bus urbano':'Móvil','Carretera':'Lineal','Obra en construcción':'Área / puntual','Sobrevuelo de avión':'Evento móvil','Equipo HVAC':'Puntual','Comercio y personas':'Área','Sirena de emergencia':'Evento móvil'}[q_source]
+    expected_time={'Automóvil':'Variable','Bus urbano':'Variable','Carretera':'Continua / variable','Obra en construcción':'Intermitente','Sobrevuelo de avión':'Eventual','Equipo HVAC':'Continua / cíclica','Comercio y personas':'Variable','Sirena de emergencia':'Eventual'}[q_source]
+    if st.button('Comprobar clasificación',key='c3_s1_check'):
+        ok=q_kind==expected_kind and q_time==expected_time
+        if ok: st.success('Clasificación coherente para este caso didáctico.')
+        else: st.warning(f'Revisa la historia temporal y el movimiento de la fuente. Para este ejercicio se espera: **{expected_kind} + {expected_time}**.')
+        _c3l1_mark_formative(saved,deps,'s1_classify',{'source':q_source,'kind':q_kind,'time':q_time,'ok':ok})
+
+    st.markdown('## 3. Fuente ≠ punto de medición')
+    st.write('Mantén la misma fuente y cambia el lugar de observación. El objetivo es visualizar por qué distancia, camino y receptor cambian el dato observado.')
+    sim_source=st.selectbox('Fuente para el simulador',['Carretera','Equipo HVAC','Obra en construcción'],key='c3_s1_sim_source')
+    distance=st.slider('Distancia fuente–receptor [m]',5,120,25,5,key='c3_s1_distance')
+    barrier=st.toggle('Existe una barrera/obstáculo relevante entre fuente y receptor',key='c3_s1_barrier')
+    receptor_place=st.segmented_control('Posición del receptor',['Borde de vía','Fachada','Patio interior'],default='Fachada',key='c3_s1_receptor_place')
+    source_level={'Carretera':82.0,'Equipo HVAC':78.0,'Obra en construcción':86.0}[sim_source]
+    distance_loss=20.0*np.log10(max(distance,1)/5.0)
+    place_corr={'Borde de vía':0.0,'Fachada':-2.0,'Patio interior':-7.0}[receptor_place]
+    barrier_corr=-7.0 if barrier else 0.0
+    illustrative=source_level-distance_loss+place_corr+barrier_corr
+    s1,s2,s3=st.columns(3)
+    s1.metric('Distancia',f'{distance} m'); s2.metric('Condición de camino','Con obstáculo' if barrier else 'Directo'); s3.metric('Nivel ilustrativo',f'{illustrative:.1f} dB')
+    st.markdown('<div class="c3-key"><b>Idea clave:</b> la fuente puede ser la misma, pero el dato cambia con la distancia, el camino y el lugar del receptor. Observar el terreno es parte de medir.</div>',unsafe_allow_html=True)
+
+    st.markdown('## 4. Mismo nivel, distinto contexto')
+    st.write('Los tres escenarios siguientes tienen, deliberadamente, el mismo valor hipotético: **55 dBA**.')
+    context=st.radio('Selecciona el escenario',['Parque · 14:00','Oficina · 14:00','Dormitorio · 03:00'],horizontal=True,key='c3_s1_context')
+    context_desc={'Parque · 14:00':'Actividad recreativa diurna; sonidos de personas y ambiente exterior.','Oficina · 14:00':'Actividad que puede requerir concentración y comunicación.','Dormitorio · 03:00':'Periodo destinado al descanso; el contexto temporal cambia la interpretación.'}[context]
+    st.info(context_desc)
+    same_response=st.radio('¿El mismo valor de 55 dBA implica necesariamente la misma situación acústica para el receptor?',['Sí','No'],index=None,horizontal=True,key='c3_s1_same_level')
+    if same_response:
+        if same_response=='No': st.success('Correcto. El instrumento mide una magnitud física; la interpretación requiere actividad, horario, receptor y objetivo.')
+        else: st.warning('Revisa el contexto: un mismo nivel no describe por sí solo la situación acústica.')
+
+    st.markdown('## 5. Carretera continua vs. evento de sobrevuelo')
+    choice=st.radio('¿Qué afirmación es más adecuada?',['Un único valor máximo describe igualmente bien ambos casos.','La estructura temporal importa: una exposición continua y un evento pueden requerir descriptores complementarios.','Si ambos alcanzan el mismo máximo, son acústicamente equivalentes.'],index=None,key='c3_s1_descriptor_reasoning')
+    if choice:
+        if choice.startswith('La estructura temporal'): st.success('Correcto. En las etapas siguientes comprobarás esta idea con LAeq, percentiles y SEL.')
+        else: st.warning('No basta con comparar máximos: observa duración, recurrencia y estructura temporal.')
+
+    st.markdown('## 6. Antes de medir: formula tu hipótesis de terreno')
+    old_hyp=saved.get('c3_s1_hypothesis',{}) if isinstance(saved.get('c3_s1_hypothesis'),dict) else {}
+    with st.form('c3_s1_hypothesis_form'):
+        h1,h2=st.columns(2)
+        dominant=h1.selectbox('Fuente que esperas que domine',['Seleccionar']+list(sources),key='c3_s1_h_dominant')
+        point_high=h2.selectbox('Punto donde esperarías mayor nivel',['Seleccionar','A · borde de avenida','B · fachada residencial','C · patio interior'],key='c3_s1_h_high')
+        h3,h4=st.columns(2)
+        point_low=h3.selectbox('Punto donde esperarías menor nivel',['Seleccionar','A · borde de avenida','B · fachada residencial','C · patio interior'],key='c3_s1_h_low')
+        behavior=h4.selectbox('Comportamiento temporal esperado',['Seleccionar','Relativamente estable','Fluctuante','Intermitente','Dominado por eventos'],key='c3_s1_h_behavior')
+        interferences=st.multiselect('¿Qué podría interferir o sesgar tu medición?',['Viento','Lluvia','Sirena/evento ajeno','Conversación junto al micrófono','Manipulación del equipo','Otra fuente no representativa'],default=old_hyp.get('interferences',[]),key='c3_s1_h_interferences')
+        note=st.text_area('Justifica brevemente tu hipótesis',value=str(old_hyp.get('note','')),placeholder='Ej.: espero mayor nivel junto a la avenida porque el tránsito será la fuente dominante...',key='c3_s1_h_note')
+        save_hyp=st.form_submit_button('💾 Guardar hipótesis de campaña',use_container_width=True)
+    if save_hyp:
+        payload={'dominant':dominant,'point_high':point_high,'point_low':point_low,'behavior':behavior,'interferences':interferences,'note':note.strip()}
+        saved['c3_s1_hypothesis']=payload
+        _c3l1_mark_formative(saved,deps,'s1_hypothesis',payload)
+        st.success('Hipótesis guardada. La reutilizaremos cuando diseñes y analices tu campaña.')
+
+    st.markdown('## 7. Comprueba lo esencial')
+    qs=[
+        ('Dos puntos de una misma calle necesariamente entregan el mismo nivel porque la fuente es la misma.',['Verdadero','Falso'],'Falso'),
+        ('Antes de interpretar un valor medido, ¿qué conjunto de información es más importante?',['Solo el número en dB','Fuente + camino + receptor + contexto','Solo la distancia'],'Fuente + camino + receptor + contexto'),
+        ('¿Qué diferencia mejor un ruido continuo de un evento?',['Su estructura temporal y duración','Solo el color del equipo','Siempre la frecuencia de 1 kHz'],'Su estructura temporal y duración'),
+        ('¿Por qué conviene observar el terreno antes de medir?',['Para identificar fuentes, receptores e interferencias','Porque reemplaza la medición','Solo para elegir una fotografía'],'Para identificar fuentes, receptores e interferencias'),
+    ]
+    answers=[]
+    for i,(question,options,_) in enumerate(qs): answers.append(st.radio(question,options,index=None,key=f'c3_s1_q{i}'))
+    if st.button('Comprobar Etapa 1',key='c3_s1_questions_check',use_container_width=True):
+        score=sum(a==correct for a,(_,_,correct) in zip(answers,qs))
+        if score==len(qs): st.success('4/4. Ya puedes pasar del entorno al instrumento.')
+        else: st.warning(f'{score}/4 correctas. Revisa la relación fuente–camino–receptor y el papel del contexto.')
+        _c3l1_mark_formative(saved,deps,'s1_comprehension',{'answers':answers,'score':score,'max_score':len(qs)})
+
 
 def _c3l1_stage2_impl(lab: dict, saved: dict, deps: Dict[str, Any]):
     _c3l1_style()
-    _c3l1_header(2, 'Del campo sonoro al sonómetro', 'Comprender qué hace cada bloque de la cadena de medición y diferenciar ponderación frecuencial de ponderación temporal.', deps)
-    _c3l1_asset('curso3_lab1_etapa2_sonometro.webp')
-    st.markdown('<div class="c3-flow"><span class="c3-node">p(t)</span><span class="c3-arrow">→</span><span class="c3-node">MICRÓFONO</span><span class="c3-arrow">→</span><span class="c3-node">PREAMPLIFICADOR</span><span class="c3-arrow">→</span><span class="c3-node">PONDERACIÓN</span><span class="c3-arrow">→</span><span class="c3-node">PROCESAMIENTO</span><span class="c3-arrow">→</span><span class="c3-node">INTEGRACIÓN</span><span class="c3-arrow">→</span><span class="c3-node">ALMACENAMIENTO</span></div>', unsafe_allow_html=True)
-    components_map = {'Micrófono': 'Convierte presión acústica en señal eléctrica.', 'Preamplificador': 'Adapta la señal del micrófono con bajo ruido.', 'Filtros / ponderación': 'Modifican la respuesta en frecuencia según A, C o Z.', 'Procesador RMS/integrador': 'Calcula niveles eficaces e integra energía en el tiempo.', 'Memoria': 'Conserva niveles, historia temporal y metadatos.', 'Calibrador': 'Aplica una señal acústica de referencia para comprobar la cadena de medición.'}
-    part = st.segmented_control('Sonómetro virtual desarmable', list(components_map), default='Micrófono', key='c3_s2_part')
-    st.info(components_map.get(part, ''))
-    st.markdown('### Simulador A / C / Z')
-    freqs = np.array([31.5, 63, 125, 250, 500, 1000, 2000, 4000, 8000])
-    base = np.array([69, 68, 67, 66, 65, 65, 64, 62, 59], dtype=float)
-    wa = np.array([-39.4, -26.2, -16.1, -8.6, -3.2, 0, 1.2, 1.0, -1.1])
-    wc = np.array([-3.0, -0.8, -0.2, 0, 0, 0, -0.2, -0.8, -3.0])
-    weighting = st.radio('Ponderación frecuencial', ['A', 'C', 'Z'], horizontal=True, key='c3_s2_weight')
-    corr = wa if weighting == 'A' else wc if weighting == 'C' else np.zeros_like(base)
-    fig, ax = plt.subplots(figsize=(8, 3.3))
-    ax.semilogx(freqs, base, marker='o', label='Espectro original')
-    ax.semilogx(freqs, base + corr, marker='o', label=f'Espectro ponderado {weighting}')
-    ax.set_xlabel('Frecuencia [Hz]')
-    ax.set_ylabel('Nivel [dB]')
-    ax.grid(True, which='both', alpha=0.2)
-    ax.legend()
-    st.pyplot(fig, use_container_width=True)
-    plt.close(fig)
-    st.caption('A/C/Z modifican la contribución de las frecuencias. No son lo mismo que Fast/Slow/Impulse, que describen la respuesta temporal del indicador.')
-    st.markdown('### Ponderación temporal')
-    temporal = st.segmented_control('Respuesta temporal', ['Fast', 'Slow', 'Impulse'], default='Fast', key='c3_s2_temporal')
-    explanations = {'Fast': 'Respuesta más rápida; útil para seguir variaciones relativamente rápidas.', 'Slow': 'Mayor suavizado temporal; estabiliza la lectura visual.', 'Impulse': 'Respuesta diseñada para fenómenos impulsivos según la instrumentación/procedimiento aplicable.'}
-    st.info(explanations.get(temporal, ''))
-    st.markdown('### Secuencia de verificación con calibrador')
-    order = st.multiselect('Selecciona en el orden que aplicarías', ['Verificación antes', 'Medición', 'Verificación después'], key='c3_s2_cal_order')
-    if st.button('Comprobar secuencia', key='c3_s2_cal_check'):
-        ok = order == ['Verificación antes', 'Medición', 'Verificación después']
-        st.success('Correcto: comprobar antes → medir → comprobar después.') if ok else st.warning('La lógica esperada es: verificación antes → medición → verificación después.')
-        _c3l1_mark_formative(saved, deps, 's2_calibration', {'order': order, 'ok': ok})
+    _c3l1_header(
+        2,
+        'Del campo sonoro al sonómetro',
+        'Comprender cómo el instrumento transforma presión acústica en datos y tomar decisiones correctas de ponderación, respuesta temporal y verificación.',
+        deps,
+        30,
+    )
+
+    _c3l1_asset('curso3_lab1_etapa2_sonometro.webp','Cadena de medición: el instrumento recibe presión acústica, la transforma y la procesa.')
+    st.markdown('<div class="c3-flow"><span class="c3-node">p(t)</span><span class="c3-arrow">→</span><span class="c3-node">MICRÓFONO</span><span class="c3-arrow">→</span><span class="c3-node">PREAMPLIFICADOR</span><span class="c3-arrow">→</span><span class="c3-node">PONDERACIÓN</span><span class="c3-arrow">→</span><span class="c3-node">PROCESAMIENTO</span><span class="c3-arrow">→</span><span class="c3-node">INTEGRACIÓN</span><span class="c3-arrow">→</span><span class="c3-node">ALMACENAMIENTO</span></div>',unsafe_allow_html=True)
+
+    st.markdown('## 1. Sonómetro virtual desarmable')
+    components_map={
+        'Micrófono':('Presión acústica → señal eléctrica','Convierte las variaciones de presión acústica en una señal eléctrica proporcional.','No interpreta molestia ni normativa: transforma el fenómeno físico.'),
+        'Preamplificador':('Acondicionamiento de señal','Adapta la señal del micrófono para que pueda ser procesada con bajo ruido añadido.','Una cadena es tan confiable como sus componentes y configuración.'),
+        'Filtros / ponderación':('Respuesta en frecuencia','Modifican la contribución de las distintas frecuencias mediante A, C o Z.','Ponderación frecuencial no es lo mismo que respuesta temporal.'),
+        'Procesador RMS / integrador':('Nivel eficaz e integración','Procesa la señal para obtener niveles y acumular energía a lo largo del tiempo.','Aquí aparecen descriptores que desarrollarás después.'),
+        'Memoria':('Historia temporal + metadatos','Conserva niveles, evolución temporal y parámetros necesarios para reconstruir la medición.','Un valor sin contexto y sin configuración puede ser insuficiente.'),
+        'Calibrador':('Comprobación de la cadena','Aplica una señal acústica de referencia al micrófono para comprobar la respuesta antes y después de medir.','La verificación no reemplaza la calibración metrológica.'),
+    }
+    part=st.segmented_control('Explora los bloques del instrumento',list(components_map),default='Micrófono',key='c3_s2_part')
+    title,description,idea=components_map.get(part,components_map['Micrófono'])
+    st.markdown(f'<div class="c3-card blue"><div class="c3-kicker">{part}</div><b>{title}</b><p>{description}</p><div style="color:#52687d">{idea}</div></div>',unsafe_allow_html=True)
+    st.markdown('''
+    <style>
+    @keyframes c3pulse2 {0%{left:2%;opacity:.15}50%{opacity:1}100%{left:94%;opacity:.15}}
+    .c3-signal-track{position:relative;height:42px;border-radius:12px;background:#eef6fb;overflow:hidden;margin:.7rem 0 1rem}
+    .c3-signal-dot{position:absolute;left:2%;top:13px;width:16px;height:16px;border-radius:50%;background:#0b8fc5;animation:c3pulse2 3.2s linear infinite}
+    </style>
+    <div class="c3-signal-track"><div class="c3-signal-dot"></div></div>
+    ''',unsafe_allow_html=True)
+    st.caption('Animación conceptual: la señal atraviesa sucesivamente los bloques de la cadena de medición.')
+
+    st.markdown('## 2. Laboratorio de ponderación A / C / Z')
+    st.write('La ponderación frecuencial cambia cuánto aporta cada banda al valor global. Compara fuentes con distinta distribución espectral.')
+    profile=st.radio('Fuente de prueba',['Tráfico pesado','Herramienta urbana','Ventilación/HVAC'],horizontal=True,key='c3_s2_profile')
+    freqs=np.array([31.5,63,125,250,500,1000,2000,4000,8000],dtype=float)
+    profiles={
+        'Tráfico pesado':np.array([76,75,73,70,67,65,62,58,54],dtype=float),
+        'Herramienta urbana':np.array([57,59,62,67,72,75,76,74,69],dtype=float),
+        'Ventilación/HVAC':np.array([70,72,71,68,64,60,56,51,47],dtype=float),
+    }
+    base=profiles[profile]
+    wa=np.array([-39.4,-26.2,-16.1,-8.6,-3.2,0,1.2,1.0,-1.1])
+    wc=np.array([-3.0,-0.8,-0.2,0,0,0,-0.2,-0.8,-3.0])
+    weighting=st.radio('Ponderación frecuencial',['A','C','Z'],horizontal=True,key='c3_s2_weight')
+    corr=wa if weighting=='A' else wc if weighting=='C' else np.zeros_like(base)
+    weighted=base+corr
+    def _global_level(levels):
+        arr=np.asarray(levels,dtype=float)
+        return float(10*np.log10(np.sum(10**(arr/10))))
+    base_global=_global_level(base); weighted_global=_global_level(weighted)
+    m1,m2,m3=st.columns(3)
+    m1.metric('Nivel global sin ponderación',f'{base_global:.1f} dB')
+    m2.metric(f'Nivel global {weighting}',f'{weighted_global:.1f} dB')
+    m3.metric('Diferencia',f'{weighted_global-base_global:+.1f} dB')
+    fig,ax=plt.subplots(figsize=(9,3.4))
+    ax.semilogx(freqs,base,marker='o',linewidth=2,label='Espectro original')
+    ax.semilogx(freqs,weighted,marker='o',linewidth=2,label=f'Con ponderación {weighting}')
+    ax.set_xlabel('Frecuencia [Hz]'); ax.set_ylabel('Nivel por banda [dB]'); ax.set_title(f'{profile} · efecto de la ponderación {weighting}')
+    ax.grid(True,which='both',alpha=.2); ax.legend(); st.pyplot(fig,use_container_width=True); plt.close(fig)
+    if profile in ('Tráfico pesado','Ventilación/HVAC') and weighting=='A': st.info('Observa cómo la ponderación A reduce fuertemente la contribución de las bandas graves.')
+    elif weighting=='Z': st.info('Z conserva prácticamente la forma espectral original dentro del rango de interés del instrumento.')
+    else: st.info('La señal física es la misma; cambia la ponderación aplicada.')
+    q_acz=st.radio('Una misma señal física, ¿debe entregar necesariamente el mismo valor global en A, C y Z?',['Sí','No'],index=None,horizontal=True,key='c3_s2_acz_q')
+    if q_acz:
+        if q_acz=='No': st.success('Correcto. Cambia la ponderación frecuencial aplicada a la misma señal.')
+        else: st.warning('Revisa las curvas: las ponderaciones alteran la contribución de las bandas.')
+
+    st.markdown('## 3. Fast y Slow: misma señal, distinta respuesta temporal')
+    temporal_case=st.radio('Señal para comparar',['Evento breve','Tráfico fluctuante','Ruido relativamente estable'],horizontal=True,key='c3_s2_temporal_case')
+    tt=np.linspace(0,20,401)
+    if temporal_case=='Evento breve': raw=55+18*np.exp(-.5*((tt-10)/.45)**2)+1.0*np.sin(tt*8)
+    elif temporal_case=='Tráfico fluctuante': raw=62+4*np.sin(tt*.9)+2*np.sin(tt*3.2)+1.2*np.sin(tt*8)
+    else: raw=60+.8*np.sin(tt*.8)+.5*np.sin(tt*5)
+    dt=float(tt[1]-tt[0])
+    def _smooth(signal,tau):
+        alpha=dt/(tau+dt); out=np.empty_like(signal); out[0]=signal[0]
+        for j in range(1,len(signal)): out[j]=out[j-1]+alpha*(signal[j]-out[j-1])
+        return out
+    fast=_smooth(raw,.125); slow=_smooth(raw,1.0)
+    fig,ax=plt.subplots(figsize=(9,3.4))
+    ax.plot(tt,raw,linewidth=1,alpha=.45,label='Señal ilustrativa'); ax.plot(tt,fast,linewidth=2,label='Fast'); ax.plot(tt,slow,linewidth=2,label='Slow')
+    ax.set_xlabel('Tiempo [s]'); ax.set_ylabel('Nivel ilustrativo [dB]'); ax.set_title('Respuesta temporal'); ax.grid(True,alpha=.2); ax.legend()
+    st.pyplot(fig,use_container_width=True); plt.close(fig)
+    q_fast=st.radio('Ante un evento breve, ¿qué respuesta sigue más rápidamente la variación?',['Fast','Slow'],index=None,horizontal=True,key='c3_s2_fast_q')
+    if q_fast:
+        if q_fast=='Fast': st.success('Correcto. Fast responde más rápidamente a las variaciones.')
+        else: st.warning('Slow suaviza más la lectura; observa la curva del evento breve.')
+    st.markdown('<div class="c3-key"><b>Idea clave:</b> A/C/Z son ponderaciones <b>frecuenciales</b>. Fast/Slow describen la respuesta <b>temporal</b>. Son decisiones distintas.</div>',unsafe_allow_html=True)
+
+    st.markdown('## 4. Verificación con calibrador')
+    st.write('El material del curso utiliza como referencia didáctica un calibrador de **94 dB a 1 kHz**. La actividad enseña la lógica de comprobación y no fija por sí sola tolerancias reglamentarias.')
+    cal_result=st.select_slider('Resultado mostrado durante la comprobación',options=[93.9,94.0,94.1,94.4,95.2,96.4],value=94.1,key='c3_s2_cal_result')
+    cal_decision=st.radio('¿Qué harías?',['Continuar: el valor es coherente con la referencia del ejercicio','Detener y revisar el sistema antes de medir'],index=None,key='c3_s2_cal_decision')
+    large_difference=abs(float(cal_result)-94.0)>=1.0
+    if cal_decision:
+        expected='Detener y revisar el sistema antes de medir' if large_difference else 'Continuar: el valor es coherente con la referencia del ejercicio'
+        if cal_decision==expected: st.success('Decisión coherente para este ejercicio didáctico.')
+        else: st.warning('Observa la diferencia respecto de 94 dB. Una discrepancia importante debe investigarse antes de confiar en la campaña.')
+
+    st.markdown('### Secuencia de comprobación')
+    first=st.selectbox('Paso 1',['Seleccionar','Verificación antes','Medición','Verificación después'],key='c3_s2_cal_1')
+    second=st.selectbox('Paso 2',['Seleccionar','Verificación antes','Medición','Verificación después'],key='c3_s2_cal_2')
+    third=st.selectbox('Paso 3',['Seleccionar','Verificación antes','Medición','Verificación después'],key='c3_s2_cal_3')
+    if st.button('Comprobar secuencia',key='c3_s2_cal_check'):
+        order=[first,second,third]; ok=order==['Verificación antes','Medición','Verificación después']
+        if ok: st.success('Correcto: verificar antes → medir → verificar después.')
+        else: st.warning('La secuencia esperada es: verificación antes → medición → verificación después.')
+        _c3l1_mark_formative(saved,deps,'s2_calibration',{'order':order,'ok':ok})
+
+    st.markdown('## 5. Configura el instrumento para una misión')
+    mission=st.radio('Misión',['Caracterizar tránsito urbano','Observar un sobrevuelo','Examinar un equipo HVAC relativamente estable'],key='c3_s2_mission')
+    cc1,cc2,cc3=st.columns(3)
+    chosen_weight=cc1.selectbox('Ponderación',['Seleccionar','A','C','Z'],key='c3_s2_cfg_weight')
+    chosen_time=cc2.selectbox('Respuesta temporal',['Seleccionar','Fast','Slow'],key='c3_s2_cfg_time')
+    chosen_meta=cc3.selectbox('¿Registrar contexto?',['Seleccionar','Sí','No'],key='c3_s2_cfg_context')
+    cfg_note=st.text_area('Justifica tu configuración',placeholder='Explica qué quieres observar y por qué elegiste esa configuración.',key='c3_s2_cfg_note')
+    if st.button('💾 Guardar configuración de campaña',key='c3_s2_cfg_save',use_container_width=True):
+        cfg={'mission':mission,'weighting':chosen_weight,'temporal':chosen_time,'context':chosen_meta,'note':cfg_note.strip(),'cal_reference_db':float(cal_result)}
+        saved['c3_s2_configuration']=cfg; _c3l1_mark_formative(saved,deps,'s2_configuration',cfg)
+        st.success('Configuración guardada. La Etapa 3 utilizará esta lógica para iniciar la medición.')
+
+    st.markdown('## 6. ¿Qué puede invalidar o debilitar un dato?')
+    issues={'Saturación / overload':'La señal supera el rango útil y la lectura puede dejar de representar correctamente el fenómeno.','Configuración no documentada':'Después no puedes reconstruir cómo se obtuvo el valor.','Sin verificación previa/posterior':'Pierdes una comprobación básica de consistencia de la cadena de medición.','Micrófono mal ubicado':'Puedes medir un punto que no representa al receptor o al fenómeno que deseas caracterizar.'}
+    issue=st.selectbox('Selecciona una situación',list(issues),key='c3_s2_issue'); st.info(issues[issue])
+
+    st.markdown('## 7. Comprueba lo esencial')
+    qs=[
+        ('¿Qué bloque transforma presión acústica en señal eléctrica?',['Micrófono','Memoria','Pantalla'],'Micrófono'),
+        ('¿Qué diferencia A/C/Z de Fast/Slow?',['A/C/Z son frecuenciales y Fast/Slow temporales','Son exactamente lo mismo','Solo cambia el color de pantalla'],'A/C/Z son frecuenciales y Fast/Slow temporales'),
+        ('¿Qué respuesta sigue más rápidamente un evento breve?',['Fast','Slow'],'Fast'),
+        ('¿Cuál es la secuencia didáctica correcta?',['Medir → verificar → medir','Verificar antes → medir → verificar después','Guardar → medir → calibrar'],'Verificar antes → medir → verificar después'),
+    ]
+    answers=[]
+    for i,(question,options,_) in enumerate(qs): answers.append(st.radio(question,options,index=None,key=f'c3_s2_q{i}'))
+    if st.button('Comprobar Etapa 2',key='c3_s2_questions_check',use_container_width=True):
+        score=sum(a==correct for a,(_,_,correct) in zip(answers,qs))
+        if score==len(qs): st.success('4/4. Ya tienes la lógica mínima para entrar a terreno con el instrumento.')
+        else: st.warning(f'{score}/4 correctas. Revisa ponderación frecuencial, respuesta temporal y secuencia de verificación.')
+        _c3l1_mark_formative(saved,deps,'s2_comprehension',{'answers':answers,'score':score,'max_score':len(qs)})
+
 
 def _c3l1_stage3_impl(lab: dict, saved: dict, deps: Dict[str, Any]):
     _c3l1_style()
