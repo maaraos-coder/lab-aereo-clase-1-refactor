@@ -19219,44 +19219,8 @@ def _c3l1_stage2_impl(lab: dict, saved: dict, deps: Dict[str, Any]):
                 st.info('Cierre completado. Puedes corregir las respuestas que aún no coinciden con la pauta.')
 def _c3l1_stage3_impl(lab: dict, saved: dict, deps: Dict[str, Any]):
     _c3l1_style()
-    _c3l1_header(3, 'Laboratorio de medición real', 'Obtener dos registros ambientales y conservar sus descriptores y contexto para analizarlos en las etapas siguientes.', deps)
-    _c3l1_asset('curso3_lab1_etapa3_medicion.webp')
-    st.warning('Herramienta con finalidad educativa. La respuesta del micrófono depende del dispositivo y no sustituye instrumentación ni procedimientos requeridos para mediciones reglamentarias.')
-    _c3l1_external_tool_card('Sonómetro Online', 'Reutiliza el sonómetro del Diplomado para medir nivel instantáneo, LAeq,T, Lmax, Lmin y tiempo.', 'SONOMETRO_ONLINE_URL', '🎙️ ABRIR SONÓMETRO ONLINE')
-    st.markdown('### Mi registro ambiental')
-    records = saved.get('c3_measurements', {}) if isinstance(saved.get('c3_measurements'), dict) else {}
-    for code, label, hint in [('A', 'MEDICIÓN A', 'Ambiente relativamente tranquilo'), ('B', 'MEDICIÓN B', 'Fuente claramente audible')]:
-        with st.container(border=True):
-            st.markdown(f'#### {label} · {hint}')
-            old = records.get(code, {}) if isinstance(records.get(code), dict) else {}
-            c1, c2, c3, c4 = st.columns(4)
-            laeq = c1.number_input('LAeq [dB(A)]', 20.0, 130.0, float(old.get('laeq', 55 if code == 'A' else 68)), 0.1, key=f'c3_s3_{code}_laeq')
-            lmax = c2.number_input('Lmax [dB(A)]', 20.0, 140.0, float(old.get('lmax', 62 if code == 'A' else 80)), 0.1, key=f'c3_s3_{code}_lmax')
-            lmin = c3.number_input('Lmin [dB(A)]', 10.0, 130.0, float(old.get('lmin', 48 if code == 'A' else 53)), 0.1, key=f'c3_s3_{code}_lmin')
-            duration = c4.number_input('Duración [s]', 10, 3600, int(old.get('duration', 60)), 10, key=f'c3_s3_{code}_dur')
-            context = st.multiselect('Contexto', ['INTERIOR', 'EXTERIOR', 'TRÁFICO', 'PERSONAS', 'MÚSICA', 'EQUIPO', 'CONSTRUCCIÓN', 'NATURALEZA', 'OTRO'], default=old.get('context', []), key=f'c3_s3_{code}_context')
-            notes = st.text_input('Observaciones', value=old.get('notes', ''), key=f'c3_s3_{code}_notes')
-            if st.button(f'💾 Guardar {label.lower()}', key=f'c3_s3_{code}_save', use_container_width=True):
-                records[code] = {'laeq': laeq, 'lmax': lmax, 'lmin': lmin, 'duration': duration, 'context': context, 'notes': notes, 'saved_at': _c3l1_now(deps)}
-                saved['c3_measurements'] = records
-                _c3l1_mark_formative(saved, deps, f's3_measurement_{code}', records[code])
-                st.success(f'{label} guardada. Queda disponible para Etapas 4 y 5.')
-    if records:
-        st.dataframe(pd.DataFrame(records).T.reset_index(names='Registro'), hide_index=True, use_container_width=True)
-
-def _c3l1_synthetic_temporal(base: float, event: float, n: int=60, seed: int=42):
-    rng = np.random.default_rng(seed)
-    y = base + rng.normal(0, 1.7, n)
-    for center in (15, 35, 48):
-        width = 2 if center != 35 else 4
-        idx = np.arange(n)
-        y += (event - base) * np.exp(-0.5 * ((idx - center) / width) ** 2)
-    return y
-
-def _c3l1_stage4_impl(lab: dict, saved: dict, deps: Dict[str, Any]):
-    _c3l1_style()
     _c3l1_header(
-        4,
+        3,
         'Del registro temporal a los descriptores',
         'Aprender a leer una historia temporal antes de resumirla: fondo, eventos, extremos, LAeq y percentiles.',
         deps,
@@ -19264,26 +19228,26 @@ def _c3l1_stage4_impl(lab: dict, saved: dict, deps: Dict[str, Any]):
     )
 
     st.markdown(
-        '''
+        """
         <div class="c3-card blue">
           <div class="c3-kicker">OBJETIVO DE LA ETAPA</div>
           <b>Dejar de mirar “un número en dB” y empezar a leer una historia acústica.</b>
           <p>Un registro temporal contiene información sobre estabilidad, eventos, fondo, máximos y exposición acumulada.
           Antes de calcular descriptores, primero debes reconocer qué está ocurriendo en el tiempo.</p>
         </div>
-        ''',
+        """,
         unsafe_allow_html=True,
     )
 
     st.markdown('## 1. Lee primero la historia temporal')
 
-    _gif_file = Path(__file__).resolve().parents[1] / 'assets' / 'curso3_lab1_etapa4_evento_temporal.gif'
+    _gif_file = Path(__file__).resolve().parents[1] / 'assets' / 'curso3_lab1_etapa3_evento_temporal.gif'
     if _gif_file.exists():
         st.image(str(_gif_file), use_container_width=True)
         st.caption('GIF didáctico: un evento breve aparece sobre un ambiente relativamente estable.')
 
     st.markdown(
-        '''
+        """
         <div class="c3-grid">
           <div class="c3-card blue"><div class="c3-kicker">FONDO</div><b>Componente persistente</b>
           <p>Nivel que permanece gran parte del tiempo y sobre el cual aparecen otras fuentes o eventos.</p></div>
@@ -19292,7 +19256,7 @@ def _c3l1_stage4_impl(lab: dict, saved: dict, deps: Dict[str, Any]):
           <div class="c3-card green"><div class="c3-kicker">HISTORIA TEMPORAL</div><b>No es un único valor</b>
           <p>Permite ver cómo se distribuye la energía acústica y qué tan variable es el ambiente.</p></div>
         </div>
-        ''',
+        """,
         unsafe_allow_html=True,
     )
 
@@ -19302,7 +19266,7 @@ def _c3l1_stage4_impl(lab: dict, saved: dict, deps: Dict[str, Any]):
         'Selecciona el escenario',
         ['Tránsito urbano','Obra con eventos','HVAC relativamente estable'],
         default='Tránsito urbano',
-        key='c3_s4_scenario',
+        key='c3_s3_scenario',
     )
 
     rng = np.random.default_rng(12)
@@ -19338,7 +19302,7 @@ def _c3l1_stage4_impl(lab: dict, saved: dict, deps: Dict[str, Any]):
         'Superpone descriptores sobre la historia temporal',
         ['LAeq','Lmax','Lmin','L10','L50','L90'],
         default=['LAeq','L10','L90'],
-        key='c3_s4_show',
+        key='c3_s3_show',
     )
 
     fig,ax=plt.subplots(figsize=(10,4.2))
@@ -19362,11 +19326,11 @@ def _c3l1_stage4_impl(lab: dict, saved: dict, deps: Dict[str, Any]):
     c3.metric('L10 − L90',f'{vals["L10"]-vals["L90"]:.1f} dB')
 
     st.markdown(
-        '''
+        """
         <div class="c3-key"><b>Lectura profesional:</b> un descriptor no reemplaza la historia temporal.
         El descriptor resume una propiedad de ella. Por eso primero se observa el registro y después se decide
         qué número es útil para describirlo.</div>
-        ''',
+        """,
         unsafe_allow_html=True,
     )
 
@@ -19374,20 +19338,20 @@ def _c3l1_stage4_impl(lab: dict, saved: dict, deps: Dict[str, Any]):
     st.latex(r'L_{Aeq,T}=10\log_{10}\left(\frac{1}{T}\int_0^T10^{L_A(t)/10}\,dt\right)')
 
     st.markdown(
-        '''
+        """
         <div class="c3-grid-2">
           <div class="c3-card blue"><div class="c3-kicker">PROMEDIO ARITMÉTICO</div><b>No conserva energía</b>
           <p>Promediar directamente 50 dB y 70 dB como (50+70)/2 = 60 dB no representa la energía acústica equivalente.</p></div>
           <div class="c3-card green"><div class="c3-kicker">PROMEDIO ENERGÉTICO</div><b>Convierte → suma/promedia → vuelve a dB</b>
           <p>Los niveles se transforman a escala energética antes de combinarlos.</p></div>
         </div>
-        ''',
+        """,
         unsafe_allow_html=True,
     )
 
     a,b = st.columns(2)
-    L1=a.slider('Nivel 1 [dB]',40,90,50,key='c3_s4_l1')
-    L2=b.slider('Nivel 2 [dB]',40,90,70,key='c3_s4_l2')
+    L1=a.slider('Nivel 1 [dB]',40,90,50,key='c3_s3_l1')
+    L2=b.slider('Nivel 2 [dB]',40,90,70,key='c3_s3_l2')
     arithmetic=(L1+L2)/2
     energetic=_c3l1_laeq([L1,L2])
     e1,e2,e3=st.columns(3)
@@ -19400,7 +19364,7 @@ def _c3l1_stage4_impl(lab: dict, saved: dict, deps: Dict[str, Any]):
         ['Sí','No'],
         index=None,
         horizontal=True,
-        key='c3_s4_qavg',
+        key='c3_s3_qavg',
     )
     if q_avg:
         if q_avg=='No':
@@ -19411,7 +19375,7 @@ def _c3l1_stage4_impl(lab: dict, saved: dict, deps: Dict[str, Any]):
     st.markdown('## 4. ¿Qué describen L10, L50 y L90?')
 
     st.markdown(
-        '''
+        """
         <div class="c3-grid">
           <div class="c3-card orange"><div class="c3-kicker">L10</div><b>Nivel excedido 10 % del tiempo</b>
           <p>Representa la zona alta de la distribución y es sensible a periodos de mayor nivel.</p></div>
@@ -19420,17 +19384,17 @@ def _c3l1_stage4_impl(lab: dict, saved: dict, deps: Dict[str, Any]):
           <div class="c3-card green"><div class="c3-kicker">L90</div><b>Nivel excedido 90 % del tiempo</b>
           <p>Se relaciona con la zona baja/persistente del ambiente y puede ayudar a interpretar el fondo, según contexto.</p></div>
         </div>
-        ''',
+        """,
         unsafe_allow_html=True,
     )
 
     st.markdown('## 5. Generador de ambiente sonoro')
 
-    traffic=st.slider('Tráfico continuo',0,10,5,key='c3_s4_traffic')
-    trucks=st.slider('Pasos de camiones',0,10,2,key='c3_s4_trucks')
-    horns=st.slider('Bocinas / eventos breves',0,10,1,key='c3_s4_horns')
-    people=st.slider('Actividad de personas',0,10,3,key='c3_s4_people')
-    bg=st.slider('Fondo base [dB(A)]',35,65,48,key='c3_s4_bg')
+    traffic=st.slider('Tráfico continuo',0,10,5,key='c3_s3_traffic')
+    trucks=st.slider('Pasos de camiones',0,10,2,key='c3_s3_trucks')
+    horns=st.slider('Bocinas / eventos breves',0,10,1,key='c3_s3_horns')
+    people=st.slider('Actividad de personas',0,10,3,key='c3_s3_people')
+    bg=st.slider('Fondo base [dB(A)]',35,65,48,key='c3_s3_bg')
 
     grng=np.random.default_rng(7)
     sig=bg+grng.normal(0,.7,180)+traffic*.50+people*.18
@@ -19470,9 +19434,9 @@ def _c3l1_stage4_impl(lab: dict, saved: dict, deps: Dict[str, Any]):
         unsafe_allow_html=True,
     )
 
-    st.markdown('## 6. Cierre formativo de la Etapa 4')
+    st.markdown('## 6. Cierre formativo de la Etapa 3')
 
-    q4=[
+    q3=[
         ('Un evento muy breve suele afectar especialmente a:',['Lmax','L90'],'Lmax',
          'Lmax responde directamente al máximo registrado; L90 representa la zona baja/persistente de la distribución.'),
         ('Una diferencia L10−L90 grande sugiere:',['Ambiente más variable','Ambiente necesariamente silencioso'],'Ambiente más variable',
@@ -19482,10 +19446,10 @@ def _c3l1_stage4_impl(lab: dict, saved: dict, deps: Dict[str, Any]):
     ]
     ans={}
     score=0
-    for i,(q,opts,correct,why) in enumerate(q4):
+    for i,(q,opts,correct,why) in enumerate(q3):
         with st.container(border=True):
             st.markdown(f'**{q}**')
-            a=st.radio('Selecciona',opts,index=None,key=f'c3_s4_auto_{i}',label_visibility='collapsed')
+            a=st.radio('Selecciona',opts,index=None,key=f'c3_s3_auto_{i}',label_visibility='collapsed')
             ans[str(i)]=a
             if a:
                 if a==correct:
@@ -19496,12 +19460,12 @@ def _c3l1_stage4_impl(lab: dict, saved: dict, deps: Dict[str, Any]):
 
     answered=sum(v is not None for v in ans.values())
     if answered:
-        payload={'answers':ans,'score':score,'max_score':len(q4),'answered':answered}
-        saved['c3_s4_auto']=payload
-        if answered==len(q4):
-            _c3l1_mark_formative(saved,deps,'s4_comprehension',payload)
+        payload={'answers':ans,'score':score,'max_score':len(q3),'answered':answered}
+        saved['c3_s3_auto']=payload
+        if answered==len(q3):
+            _c3l1_mark_formative(saved,deps,'s3_comprehension',payload)
 
-    if st.button('💾 Guardar registro para la Etapa 5',key='c3_s4_save',use_container_width=True):
+    if st.button('💾 Guardar registro para la Etapa 4',key='c3_s3_save',use_container_width=True):
         saved['c3_temporal']={
             'source':scenario,
             'descriptors':vals,
@@ -19509,14 +19473,14 @@ def _c3l1_stage4_impl(lab: dict, saved: dict, deps: Dict[str, Any]):
             'signal':sig.tolist(),
             'time':np.arange(len(sig)).tolist(),
         }
-        _c3l1_mark_formative(saved,deps,'s4_temporal',saved['c3_temporal'])
-        st.success('Registro temporal guardado. La Etapa 5 utilizará exactamente esta señal.')
+        _c3l1_mark_formative(saved,deps,'s3_temporal',saved['c3_temporal'])
+        st.success('Registro temporal guardado. La Etapa 4 utilizará exactamente esta señal.')
 
 
-def _c3l1_stage5_impl(lab: dict, saved: dict, deps: Dict[str, Any]):
+def _c3l1_stage4_impl(lab: dict, saved: dict, deps: Dict[str, Any]):
     _c3l1_style()
     _c3l1_header(
-        5,
+        4,
         'Construye LAeq, L10 y L90',
         'Transformar una historia temporal en descriptores y comprobar qué cambia cuando aparece un evento.',
         deps,
@@ -19531,14 +19495,14 @@ def _c3l1_stage5_impl(lab: dict, saved: dict, deps: Dict[str, Any]):
     tt=np.arange(len(base_signal),dtype=float)
 
     st.markdown(
-        '''
+        """
         <div class="c3-card blue">
           <div class="c3-kicker">CONTINUIDAD DEL LABORATORIO</div>
-          <b>Esta etapa utiliza la historia temporal que guardaste en la Etapa 4.</b>
+          <b>Esta etapa utiliza la historia temporal que guardaste en la Etapa 3.</b>
           <p>No comenzamos con otro ejemplo aislado: ahora aprenderás a convertir ese mismo registro en LAeq,
           percentiles y una curva de excedencia.</p>
         </div>
-        ''',
+        """,
         unsafe_allow_html=True,
     )
 
@@ -19547,7 +19511,7 @@ def _c3l1_stage5_impl(lab: dict, saved: dict, deps: Dict[str, Any]):
     st.latex(r'L_{Aeq,T}=10\log_{10}\left(\frac{1}{T}\int_0^T10^{L_A(t)/10}\,dt\right)')
 
     st.markdown(
-        '''
+        """
         <div class="c3-flow">
           <span class="c3-node">L(t) EN dB</span><span class="c3-arrow">→</span>
           <span class="c3-node">10<sup>L/10</sup></span><span class="c3-arrow">→</span>
@@ -19555,7 +19519,7 @@ def _c3l1_stage5_impl(lab: dict, saved: dict, deps: Dict[str, Any]):
           <span class="c3-node">10 log<sub>10</sub></span><span class="c3-arrow">→</span>
           <span class="c3-node">LAeq,T</span>
         </div>
-        ''',
+        """,
         unsafe_allow_html=True,
     )
 
@@ -19611,7 +19575,7 @@ def _c3l1_stage5_impl(lab: dict, saved: dict, deps: Dict[str, Any]):
     pcols[2].metric('L90',f'{p90:.1f} dB(A)')
 
     st.markdown(
-        '''
+        """
         <div class="c3-grid">
           <div class="c3-card orange"><div class="c3-kicker">L10</div><b>Zona alta</b>
           <p>Solo 10 % del tiempo queda por encima de este nivel.</p></div>
@@ -19620,15 +19584,15 @@ def _c3l1_stage5_impl(lab: dict, saved: dict, deps: Dict[str, Any]):
           <div class="c3-card green"><div class="c3-kicker">L90</div><b>Zona persistente/baja</b>
           <p>El nivel se supera durante 90 % del periodo; puede ayudar a interpretar fondo, según contexto.</p></div>
         </div>
-        ''',
+        """,
         unsafe_allow_html=True,
     )
 
     st.markdown('## 3. Inyecta un evento y observa qué descriptor se mueve')
 
-    event_amp=st.slider('Incremento del evento [dB]',0,20,12,key='c3_s5_event_amp')
-    event_duration=st.slider('Duración del evento [s]',1,20,4,key='c3_s5_event_dur')
-    event_position=st.slider('Momento de aparición [% del registro]',10,90,55,key='c3_s5_event_pos')
+    event_amp=st.slider('Incremento del evento [dB]',0,20,12,key='c3_s4_event_amp')
+    event_duration=st.slider('Duración del evento [s]',1,20,4,key='c3_s4_event_dur')
+    event_position=st.slider('Momento de aparición [% del registro]',10,90,55,key='c3_s4_event_pos')
 
     modified=base_signal.copy()
     center=int(len(modified)*event_position/100)
@@ -19673,11 +19637,11 @@ def _c3l1_stage5_impl(lab: dict, saved: dict, deps: Dict[str, Any]):
     st.dataframe(pd.DataFrame(rows),hide_index=True,use_container_width=True)
 
     st.markdown(
-        '''
+        """
         <div class="c3-key"><b>Qué deberías descubrir:</b> un evento breve suele modificar mucho Lmax;
         puede incrementar LAeq dependiendo de su energía y duración; puede afectar L10 si ocupa suficiente tiempo;
         y normalmente tiene menor efecto sobre L90 cuando el fondo persistente no cambia.</div>
-        ''',
+        """,
         unsafe_allow_html=True,
     )
 
@@ -19685,9 +19649,9 @@ def _c3l1_stage5_impl(lab: dict, saved: dict, deps: Dict[str, Any]):
 
     col1,col2=st.columns(2)
     with col1:
-        amp_case=st.slider('Caso A · incremento [dB]',1,20,10,key='c3_s5_ampcase')
+        amp_case=st.slider('Caso A · incremento [dB]',1,20,10,key='c3_s4_ampcase')
     with col2:
-        dur_case=st.slider('Caso B · duración [s]',1,40,10,key='c3_s5_durcase')
+        dur_case=st.slider('Caso B · duración [s]',1,40,10,key='c3_s4_durcase')
 
     base0=np.full(60,55.0)
     sigA=base0.copy()
@@ -19702,7 +19666,7 @@ def _c3l1_stage5_impl(lab: dict, saved: dict, deps: Dict[str, Any]):
 
     st.caption('LAeq depende de la energía total: nivel y duración participan simultáneamente.')
 
-    st.markdown('## 5. Cierre formativo de la Etapa 5')
+    st.markdown('## 5. Cierre formativo de la Etapa 4')
 
     qs=[
         ('L90 se obtiene mirando:',['El nivel excedido 90 % del tiempo','El 90 % del valor máximo'],'El nivel excedido 90 % del tiempo',
@@ -19717,7 +19681,7 @@ def _c3l1_stage5_impl(lab: dict, saved: dict, deps: Dict[str, Any]):
     for i,(q,opts,correct,why) in enumerate(qs):
         with st.container(border=True):
             st.markdown(f'**{q}**')
-            a=st.radio('Selecciona',opts,index=None,key=f'c3_s5_auto_{i}',label_visibility='collapsed')
+            a=st.radio('Selecciona',opts,index=None,key=f'c3_s4_auto_{i}',label_visibility='collapsed')
             answers[str(i)]=a
             if a:
                 if a==correct:
@@ -19729,11 +19693,11 @@ def _c3l1_stage5_impl(lab: dict, saved: dict, deps: Dict[str, Any]):
     answered=sum(v is not None for v in answers.values())
     if answered:
         payload={'answers':answers,'score':score,'max_score':len(qs),'answered':answered}
-        saved['c3_s5_auto']=payload
+        saved['c3_s4_auto']=payload
         if answered==len(qs):
-            _c3l1_mark_formative(saved,deps,'s5_comprehension',payload)
+            _c3l1_mark_formative(saved,deps,'s4_comprehension',payload)
 
-    if st.button('💾 Guardar descriptores para continuar',key='c3_s5_save',use_container_width=True):
+    if st.button('💾 Guardar descriptores para continuar',key='c3_s4_save',use_container_width=True):
         saved['c3_descriptors']={
             'laeq':result,
             'l10':p10,
@@ -19742,9 +19706,65 @@ def _c3l1_stage5_impl(lab: dict, saved: dict, deps: Dict[str, Any]):
             'event_test':{'before':before,'after':after,'amp':event_amp,'duration':event_duration},
             'signal':base_signal.tolist(),
         }
-        _c3l1_mark_formative(saved,deps,'s5_descriptors',saved['c3_descriptors'])
+        _c3l1_mark_formative(saved,deps,'s4_descriptors',saved['c3_descriptors'])
         st.success('Descriptores guardados para las etapas siguientes.')
 
+
+def _c3l1_stage5_impl(lab: dict, saved: dict, deps: Dict[str, Any]):
+    _c3l1_style()
+    _c3l1_header(5, 'De los datos al LAeq', 'Construir el nivel equivalente como promedio energético y visualizar de dónde salen los percentiles.', deps)
+    st.latex('L_{Aeq,T}=10\\log_{10}\\left[\\frac{1}{T}\\int_0^T10^{L_A(t)/10}\\,dt\\right]')
+    st.caption('Calcula el nivel constante que contiene la misma energía acústica que el registro variable durante T.')
+    st.latex('L_{eq}=10\\log_{10}\\left[\\frac{\\sum_i t_i10^{L_i/10}}{\\sum_i t_i}\\right]')
+    st.markdown('### Constructor energético de LAeq')
+    defaults = [65, 68, 70, 66]
+    cols = st.columns(4)
+    levels = []
+    durations = []
+    for i, col in enumerate(cols):
+        with col:
+            levels.append(st.slider(f'L{i + 1} [dB(A)]', 45, 90, defaults[i], key=f'c3_s5_l{i}'))
+            durations.append(st.number_input(f't{i + 1} [min]', 1, 60, 15, key=f'c3_s5_t{i}'))
+    result = _c3l1_laeq(levels, durations)
+    arithmetic = float(np.average(levels, weights=durations))
+    a, b = st.columns(2)
+    a.metric('LAeq energético', f'{result:.2f} dB(A)')
+    b.metric('Promedio aritmético (comparación)', f'{arithmetic:.2f} dB(A)')
+    energy = pd.DataFrame({'Nivel': levels, 'Duración': durations, 'Energía relativa': [10 ** (x / 10) for x in levels]})
+    st.dataframe(energy, hide_index=True, use_container_width=True)
+    st.info('El promedio aritmético de dB no conserva energía. Primero se pasa a escala energética, se pondera por tiempo y luego se vuelve a dB.')
+    st.markdown('### Constructor de percentiles')
+    temporal = saved.get('c3_temporal', {}) if isinstance(saved.get('c3_temporal'), dict) else {}
+    samples = np.asarray(temporal.get('signal') or [65, 67, 72, 69, 66, 71, 68, 70, 66, 67], dtype=float)
+    ordered = np.sort(samples)[::-1]
+    p10 = _c3l1_exceedance_percentile(samples, 10)
+    p50 = _c3l1_exceedance_percentile(samples, 50)
+    p90 = _c3l1_exceedance_percentile(samples, 90)
+    left, right = st.columns(2)
+    with left:
+        st.write('**Registro original**')
+        st.write(', '.join((f'{x:.1f}' for x in samples[:20])))
+    with right:
+        st.write('**Ordenado de mayor a menor**')
+        st.write(', '.join((f'{x:.1f}' for x in ordered[:20])))
+    st.write(f'**L10 = {p10:.1f} dB(A)** · **L50 = {p50:.1f} dB(A)** · **L90 = {p90:.1f} dB(A)**')
+    if st.button('Guardar descriptores', key='c3_s5_save'):
+        saved['c3_descriptors'] = {'laeq': result, 'levels': levels, 'durations': durations, 'l10': p10, 'l50': p50, 'l90': p90}
+        _c3l1_mark_formative(saved, deps, 's5_descriptors', saved['c3_descriptors'])
+        st.success('Descriptores guardados.')
+    with st.expander('Caso complementario 2025 · grupo electrógeno y fachada'):
+        st.caption('Aplicación de la base 2025: convertir niveles por banda Z a A y combinar energéticamente.')
+        ext = np.array([66, 63, 60, 58, 57, 55, 52], dtype=float)
+        p1 = np.array([53, 50, 47, 45, 44, 42, 39], dtype=float)
+        p2 = np.array([52, 49, 46, 44, 43, 41, 38], dtype=float)
+        p3 = np.array([51, 48, 45, 43, 42, 40, 37], dtype=float)
+        a_corr = np.array([_C3L1_A_OCTAVE[int(f)] for f in _C3L1_OCTAVES])
+        table = pd.DataFrame({'Banda [Hz]': _C3L1_OCTAVES.astype(int), 'A [dB]': a_corr, 'Exterior Z': ext, 'INT P1 Z': p1, 'INT P2 Z': p2, 'INT P3 Z': p3})
+        st.dataframe(table, hide_index=True, use_container_width=True)
+        if st.toggle('Ver conversión y totales A', key='c3_s5_case_show'):
+            totals = {'Exterior': _c3l1_energetic_total(ext + a_corr), 'INT P1': _c3l1_energetic_total(p1 + a_corr), 'INT P2': _c3l1_energetic_total(p2 + a_corr), 'INT P3': _c3l1_energetic_total(p3 + a_corr)}
+            st.write(' · '.join((f'**{k}:** {v:.1f} dB(A)' for k, v in totals.items())))
+            st.caption('El total A se obtiene corrigiendo cada banda y luego sumando energéticamente; no se suman directamente los dB por banda.')
 
 def _c3l1_stage6_impl(lab: dict, saved: dict, deps: Dict[str, Any]):
     _c3l1_style()
