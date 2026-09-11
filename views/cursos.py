@@ -18748,6 +18748,89 @@ def _c3l1_stage2_impl(lab: dict, saved: dict, deps: Dict[str, Any]):
             'La diferencia entre ambas aumenta cuando la señal cambia más rápidamente.'
         )
 
+    st.markdown(
+        '''
+        <div class="c3-card orange" style="margin:1rem 0">
+          <div class="c3-kicker">¿POR QUÉ SLOW PUEDE APARECER EN PROCEDIMIENTOS NORMATIVOS?</div>
+          <b>Porque una medición reglamentaria no siempre busca seguir cada fluctuación instantánea.</b>
+          <p>
+            Fast reproduce con mayor detalle los cambios rápidos del nivel. Sin embargo, una lectura que fluctúa mucho
+            puede ser más difícil de registrar de forma consistente, especialmente cuando el objetivo es obtener una
+            indicación estable, repetible y comparable entre mediciones u operadores.
+          </p>
+          <p>
+            Slow aplica una respuesta temporal más lenta y suaviza las variaciones rápidas. Esto facilita observar una
+            lectura estable y reduce la influencia visual de cambios muy breves sobre una indicación instantánea.
+            Históricamente, esta estabilidad también era especialmente útil en instrumentos analógicos, donde el operador
+            debía leer una aguja en movimiento.
+          </p>
+          <div style="padding:.8rem .9rem;border-radius:10px;background:#fff8ea;color:#5b6672">
+            <b>Conclusión:</b> Slow no es “más exacto” que Fast. Es simplemente una respuesta temporal distinta que puede
+            ser más adecuada para ciertos objetivos de medición. En una evaluación reglamentaria se debe utilizar la
+            respuesta temporal que establezca el método, norma o procedimiento aplicable.
+          </div>
+        </div>
+        ''',
+        unsafe_allow_html=True,
+    )
+
+    st.markdown('### Fast y Slow comparados')
+
+    st.markdown(
+        '''
+        <div style="overflow-x:auto;margin:.5rem 0 1rem">
+          <table style="width:100%;border-collapse:collapse;background:white;border:1px solid #d9e5ee;border-radius:14px;overflow:hidden">
+            <thead>
+              <tr style="background:#eef6fb">
+                <th style="padding:10px;text-align:left">Criterio</th>
+                <th style="padding:10px;text-align:left">Fast</th>
+                <th style="padding:10px;text-align:left">Slow</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr><td style="padding:9px;border-top:1px solid #e4edf3">Constante temporal</td><td style="padding:9px;border-top:1px solid #e4edf3">≈ 0,125 s</td><td style="padding:9px;border-top:1px solid #e4edf3">≈ 1 s</td></tr>
+              <tr><td style="padding:9px;border-top:1px solid #e4edf3">Cambios rápidos</td><td style="padding:9px;border-top:1px solid #e4edf3"><b>Los sigue mejor</b></td><td style="padding:9px;border-top:1px solid #e4edf3">Los suaviza</td></tr>
+              <tr><td style="padding:9px;border-top:1px solid #e4edf3">Lectura visual</td><td style="padding:9px;border-top:1px solid #e4edf3">Más fluctuante</td><td style="padding:9px;border-top:1px solid #e4edf3"><b>Más estable</b></td></tr>
+              <tr><td style="padding:9px;border-top:1px solid #e4edf3">Eventos breves</td><td style="padding:9px;border-top:1px solid #e4edf3"><b>Muestra mejor su dinámica</b></td><td style="padding:9px;border-top:1px solid #e4edf3">Puede reducir el pico mostrado</td></tr>
+              <tr><td style="padding:9px;border-top:1px solid #e4edf3">Lectura manual repetible</td><td style="padding:9px;border-top:1px solid #e4edf3">Menor estabilidad</td><td style="padding:9px;border-top:1px solid #e4edf3"><b>Mayor estabilidad</b></td></tr>
+              <tr><td style="padding:9px;border-top:1px solid #e4edf3">¿Cuál es más exacto?</td><td style="padding:9px;border-top:1px solid #e4edf3" colspan="2"><b>Ninguno por sí mismo.</b> Son respuestas temporales distintas.</td></tr>
+              <tr><td style="padding:9px;border-top:1px solid #e4edf3">¿Cuál usar?</td><td style="padding:9px;border-top:1px solid #e4edf3" colspan="2"><b>El que establezca el método o norma aplicable.</b></td></tr>
+            </tbody>
+          </table>
+        </div>
+        ''',
+        unsafe_allow_html=True,
+    )
+
+    st.markdown(
+        '''
+        <div class="c3-grid">
+          <div class="c3-card blue">
+            <div class="c3-kicker">A / C / Z</div>
+            <b>¿Qué frecuencias pesan?</b>
+            <p>Modifican la contribución de las distintas frecuencias al resultado.</p>
+          </div>
+          <div class="c3-card orange">
+            <div class="c3-kicker">FAST / SLOW</div>
+            <b>¿Qué tan rápido responde el detector?</b>
+            <p>Controlan la rapidez con que la indicación sigue las variaciones temporales.</p>
+          </div>
+          <div class="c3-card green">
+            <div class="c3-kicker">L<sub>eq</sub></div>
+            <b>¿Cuánta energía se acumuló?</b>
+            <p>Es un descriptor obtenido mediante integración energética durante un periodo definido.</p>
+          </div>
+        </div>
+        ''',
+        unsafe_allow_html=True,
+    )
+
+    st.markdown(
+        '<div class="c3-key"><b>Regla profesional:</b> no elijas Fast o Slow porque uno “se vea mejor”. '
+        'Configura el instrumento de acuerdo con el descriptor que necesitas y con el procedimiento normativo aplicable.</div>',
+        unsafe_allow_html=True,
+    )
+
     st.markdown('### Comprueba el concepto')
     q_fast=st.radio(
         'Ante un evento breve, ¿qué respuesta temporal sigue más rápidamente la variación del nivel?',
