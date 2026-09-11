@@ -18488,7 +18488,95 @@ def _c3l1_stage2_impl(lab: dict, saved: dict, deps: Dict[str, Any]):
     )
 
     st.markdown('## 2. Laboratorio de ponderación A / C / Z')
-    st.write('La ponderación frecuencial cambia cuánto aporta cada banda al valor global. Compara fuentes con distinta distribución espectral.')
+    st.write(
+        'Antes de aplicar una ponderación a una fuente, observa cómo cada curva modifica la contribución '
+        'de las distintas frecuencias. Luego usarás esa misma lógica sobre tránsito, herramientas y HVAC.'
+    )
+
+    st.markdown('### Curvas de ponderación frecuencial')
+
+    weight_freqs=np.array(
+        [10,12.5,16,20,25,31.5,40,50,63,80,100,125,160,200,250,315,400,500,
+         630,800,1000,1250,1600,2000,2500,3150,4000,5000,6300,8000,10000,
+         12500,16000,20000],
+        dtype=float,
+    )
+
+    f2=weight_freqs**2
+    ra_num=(12200.0**2)*(weight_freqs**4)
+    ra_den=(
+        (f2+20.6**2)
+        *np.sqrt((f2+107.7**2)*(f2+737.9**2))
+        *(f2+12200.0**2)
+    )
+    A_curve=20.0*np.log10(ra_num/ra_den)+2.0
+
+    rc_num=(12200.0**2)*f2
+    rc_den=(f2+20.6**2)*(f2+12200.0**2)
+    C_curve=20.0*np.log10(rc_num/rc_den)+0.06
+    Z_curve=np.zeros_like(weight_freqs)
+
+    figw,axw=c3plt.subplots(figsize=(9.5,4.0))
+    axw.semilogx(weight_freqs,A_curve,linewidth=2.5,label='Ponderación A')
+    axw.semilogx(weight_freqs,C_curve,linewidth=2.5,label='Ponderación C')
+    axw.semilogx(weight_freqs,Z_curve,linewidth=2.5,label='Ponderación Z')
+    axw.axhline(0,linewidth=1,alpha=.35)
+    axw.set_xlim(10,20000)
+    axw.set_ylim(-75,8)
+    axw.set_xlabel('Frecuencia [Hz]')
+    axw.set_ylabel('Corrección [dB]')
+    axw.set_title('Curvas de ponderación A / C / Z')
+    axw.grid(True,which='both',alpha=.22)
+    axw.legend(ncol=3)
+    st.pyplot(figw,use_container_width=True)
+    c3plt.close(figw)
+
+    st.caption(
+        'Cómo leer el gráfico: una corrección negativa significa que esa banda aporta menos al nivel final. '
+        'A reduce fuertemente los graves; C los conserva mucho más; Z mantiene una respuesta prácticamente plana.'
+    )
+
+    st.markdown(
+        '''
+        <div class="c3-grid">
+          <div class="c3-card blue">
+            <div class="c3-kicker">PONDERACIÓN A</div>
+            <b>La más usada en evaluación general de ruido</b>
+            <p>Atenúa con fuerza las bajas frecuencias y también parte de las muy altas. Se utiliza cuando interesa
+            aproximar la sensibilidad del oído humano en muchas evaluaciones de ruido ambiental y ocupacional.</p>
+            <div style="color:#52687d"><b>Observa:</b> un ruido con mucho contenido grave puede bajar varios dB al expresarlo como dBA.</div>
+          </div>
+          <div class="c3-card orange">
+            <div class="c3-kicker">PONDERACIÓN C</div>
+            <b>Conserva mucho más el contenido grave</b>
+            <p>Su respuesta es bastante más plana que A. Resulta útil para examinar señales con energía importante
+            en bajas frecuencias o para comparar cuánto contenido grave está reduciendo la ponderación A.</p>
+            <div style="color:#52687d"><b>Observa:</b> la diferencia entre dBC y dBA entrega información sobre la distribución espectral.</div>
+          </div>
+          <div class="c3-card green">
+            <div class="c3-kicker">PONDERACIÓN Z</div>
+            <b>Respuesta prácticamente plana</b>
+            <p>No aplica una corrección perceptual significativa dentro del rango nominal del instrumento.
+            Es útil para conservar la forma física del espectro antes de aplicar una ponderación.</p>
+            <div style="color:#52687d"><b>Observa:</b> funciona como referencia para ver qué está modificando A o C.</div>
+          </div>
+        </div>
+        ''',
+        unsafe_allow_html=True,
+    )
+
+    st.markdown(
+        '<div class="c3-key"><b>Idea clave:</b> A, C y Z no son tres mediciones distintas. '
+        'La señal física puede ser la misma; cambia cuánto contribuye cada frecuencia al resultado global.</div>',
+        unsafe_allow_html=True,
+    )
+
+    st.markdown('### Ahora experimenta con una fuente')
+    st.write(
+        'Selecciona una fuente y cambia solo la ponderación. Compara el nivel global y la forma del espectro '
+        'para comprobar en la práctica lo que muestran las curvas anteriores.'
+    )
+
     profile=st.radio('Fuente de prueba',['Tráfico pesado','Herramienta urbana','Ventilación/HVAC'],horizontal=True,key='c3_s2_profile')
     freqs=np.array([31.5,63,125,250,500,1000,2000,4000,8000],dtype=float)
     profiles={
@@ -18524,26 +18612,161 @@ def _c3l1_stage2_impl(lab: dict, saved: dict, deps: Dict[str, Any]):
         else: st.warning('Revisa las curvas: las ponderaciones alteran la contribución de las bandas.')
 
     st.markdown('## 3. Fast y Slow: misma señal, distinta respuesta temporal')
-    temporal_case=st.radio('Señal para comparar',['Evento breve','Tráfico fluctuante','Ruido relativamente estable'],horizontal=True,key='c3_s2_temporal_case')
+
+    st.write(
+        'A diferencia de A, C y Z —que modifican la contribución de las frecuencias— Fast y Slow actúan '
+        'sobre la **respuesta temporal del detector**. La señal acústica puede ser exactamente la misma, '
+        'pero el sonómetro puede seguir sus variaciones con distinta rapidez.'
+    )
+
+    st.markdown(
+        '''
+        <div class="c3-card blue" style="margin:.7rem 0 1rem">
+          <div class="c3-kicker">RELACIÓN CON EL SONÓMETRO</div>
+          <b>Fast y Slow se aplican en el Procesador RMS / integrador</b>
+          <p>Después de que el micrófono transforma la presión acústica, el preamplificador acondiciona la señal '
+          'y se aplica la ponderación A, C o Z, el procesador calcula el nivel y utiliza una constante de tiempo '
+          'para decidir cuánto seguirá o suavizará las variaciones rápidas.</p>
+        </div>
+        ''',
+        unsafe_allow_html=True,
+    )
+
+    st.markdown(
+        '''
+        <div class="c3-flow" style="margin:.7rem 0 1rem">
+          <span class="c3-node">MICRÓFONO</span><span class="c3-arrow">→</span>
+          <span class="c3-node">PREAMPLIFICADOR</span><span class="c3-arrow">→</span>
+          <span class="c3-node">A / C / Z</span><span class="c3-arrow">→</span>
+          <span class="c3-node" style="border-color:#ff5757;background:#fff0f0">RMS / INTEGRADOR · FAST / SLOW</span>
+          <span class="c3-arrow">→</span>
+          <span class="c3-node">LECTURA</span>
+        </div>
+        ''',
+        unsafe_allow_html=True,
+    )
+
+    st.markdown('### ¿Para qué se utiliza cada respuesta temporal?')
+
+    st.markdown(
+        '''
+        <div class="c3-grid-2">
+          <div class="c3-card orange">
+            <div class="c3-kicker">FAST · τ ≈ 125 ms</div>
+            <b>Responde más rápido a los cambios</b>
+            <p>La indicación del sonómetro sigue con mayor rapidez las variaciones de nivel. '
+            'Permite observar mejor eventos breves, pasos de vehículos, golpes o fluctuaciones rápidas.</p>
+            <div style="color:#52687d">
+              <b>Útil cuando:</b> interesa visualizar la dinámica temporal y no suavizar demasiado los cambios.
+            </div>
+          </div>
+
+          <div class="c3-card green">
+            <div class="c3-kicker">SLOW · τ ≈ 1 s</div>
+            <b>Entrega una lectura más estable</b>
+            <p>Suaviza más las variaciones rápidas. La lectura cambia lentamente y resulta más fácil de seguir '
+            'cuando el ruido presenta oscilaciones pequeñas o frecuentes.</p>
+            <div style="color:#52687d">
+              <b>Útil cuando:</b> interesa estabilizar visualmente una lectura fluctuante.
+            </div>
+          </div>
+        </div>
+        ''',
+        unsafe_allow_html=True,
+    )
+
+    st.markdown(
+        '''
+        <div class="c3-key">
+          <b>No confundas los ajustes:</b> A/C/Z = <b>ponderación frecuencial</b>. '
+          'Fast/Slow = <b>respuesta temporal</b>. Por eso un instrumento puede configurarse, por ejemplo, '
+          'como <b>dBA Fast</b> o <b>dBA Slow</b>: ambas decisiones actúan sobre aspectos diferentes de la señal.
+        </div>
+        ''',
+        unsafe_allow_html=True,
+    )
+
+    st.markdown('### Observa el efecto sobre la misma señal')
+    st.write(
+        'Selecciona un comportamiento temporal. La línea clara representa una misma señal de entrada; '
+        'Fast y Slow muestran cómo el detector del sonómetro responde a ella.'
+    )
+
+    temporal_case=st.radio(
+        'Señal para comparar',
+        ['Evento breve','Tráfico fluctuante','Ruido relativamente estable'],
+        horizontal=True,
+        key='c3_s2_temporal_case'
+    )
+
     tt=np.linspace(0,20,401)
-    if temporal_case=='Evento breve': raw=55+18*np.exp(-.5*((tt-10)/.45)**2)+1.0*np.sin(tt*8)
-    elif temporal_case=='Tráfico fluctuante': raw=62+4*np.sin(tt*.9)+2*np.sin(tt*3.2)+1.2*np.sin(tt*8)
-    else: raw=60+.8*np.sin(tt*.8)+.5*np.sin(tt*5)
+    if temporal_case=='Evento breve':
+        raw=55+18*np.exp(-.5*((tt-10)/.45)**2)+1.0*np.sin(tt*8)
+    elif temporal_case=='Tráfico fluctuante':
+        raw=62+4*np.sin(tt*.9)+2*np.sin(tt*3.2)+1.2*np.sin(tt*8)
+    else:
+        raw=60+.8*np.sin(tt*.8)+.5*np.sin(tt*5)
+
     dt=float(tt[1]-tt[0])
+
     def _smooth(signal,tau):
-        alpha=dt/(tau+dt); out=np.empty_like(signal); out[0]=signal[0]
-        for j in range(1,len(signal)): out[j]=out[j-1]+alpha*(signal[j]-out[j-1])
+        alpha=dt/(tau+dt)
+        out=np.empty_like(signal)
+        out[0]=signal[0]
+        for j in range(1,len(signal)):
+            out[j]=out[j-1]+alpha*(signal[j]-out[j-1])
         return out
-    fast=_smooth(raw,.125); slow=_smooth(raw,1.0)
+
+    fast=_smooth(raw,.125)
+    slow=_smooth(raw,1.0)
+
     fig,ax=c3plt.subplots(figsize=(9,3.4))
-    ax.plot(tt,raw,linewidth=1,alpha=.45,label='Señal ilustrativa'); ax.plot(tt,fast,linewidth=2,label='Fast'); ax.plot(tt,slow,linewidth=2,label='Slow')
-    ax.set_xlabel('Tiempo [s]'); ax.set_ylabel('Nivel ilustrativo [dB]'); ax.set_title('Respuesta temporal'); ax.grid(True,alpha=.2); ax.legend()
-    st.pyplot(fig,use_container_width=True); c3plt.close(fig)
-    q_fast=st.radio('Ante un evento breve, ¿qué respuesta sigue más rápidamente la variación?',['Fast','Slow'],index=None,horizontal=True,key='c3_s2_fast_q')
+    ax.plot(tt,raw,linewidth=1,alpha=.45,label='Señal ilustrativa')
+    ax.plot(tt,fast,linewidth=2,label='Fast · τ≈125 ms')
+    ax.plot(tt,slow,linewidth=2,label='Slow · τ≈1 s')
+    ax.set_xlabel('Tiempo [s]')
+    ax.set_ylabel('Nivel ilustrativo [dB]')
+    ax.set_title('Respuesta temporal del detector')
+    ax.grid(True,alpha=.2)
+    ax.legend()
+    st.pyplot(fig,use_container_width=True)
+    c3plt.close(fig)
+
+    if temporal_case=='Evento breve':
+        st.info(
+            '**Evento breve:** Fast alcanza y abandona el máximo con mayor rapidez. '
+            'Slow suaviza el pico y tarda más en volver al nivel anterior.'
+        )
+    elif temporal_case=='Tráfico fluctuante':
+        st.info(
+            '**Tráfico fluctuante:** Fast reproduce con mayor detalle aceleraciones, pasos y cambios rápidos; '
+            'Slow entrega una indicación visualmente más estable.'
+        )
+    else:
+        st.info(
+            '**Ruido relativamente estable:** las respuestas Fast y Slow se aproximan. '
+            'La diferencia entre ambas aumenta cuando la señal cambia más rápidamente.'
+        )
+
+    st.markdown('### Comprueba el concepto')
+    q_fast=st.radio(
+        'Ante un evento breve, ¿qué respuesta temporal sigue más rápidamente la variación del nivel?',
+        ['Fast','Slow'],
+        index=None,
+        horizontal=True,
+        key='c3_s2_fast_q'
+    )
     if q_fast:
-        if q_fast=='Fast': st.success('Correcto. Fast responde más rápidamente a las variaciones.')
-        else: st.warning('Slow suaviza más la lectura; observa la curva del evento breve.')
-    st.markdown('<div class="c3-key"><b>Idea clave:</b> A/C/Z son ponderaciones <b>frecuenciales</b>. Fast/Slow describen la respuesta <b>temporal</b>. Son decisiones distintas.</div>',unsafe_allow_html=True)
+        if q_fast=='Fast':
+            st.success(
+                'Correcto. Fast utiliza una constante de tiempo menor y por eso sigue con mayor rapidez '
+                'los cambios de nivel.'
+            )
+        else:
+            st.warning(
+                'Slow utiliza una constante de tiempo mayor y suaviza más la señal. '
+                'Para seguir rápidamente un evento breve corresponde Fast.'
+            )
 
     st.markdown('## 4. Verificación con calibrador')
     st.write('El material del curso utiliza como referencia didáctica un calibrador de **94 dB a 1 kHz**. La actividad enseña la lógica de comprobación y no fija por sí sola tolerancias reglamentarias.')
