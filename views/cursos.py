@@ -17965,6 +17965,141 @@ def _c3l1_stage1_impl(lab: dict, saved: dict, deps: Dict[str, Any]):
         unsafe_allow_html=True,
     )
 
+    # Escena interactiva de los tres puntos de medición.
+    _point_selected = st.segmented_control(
+        'Explora los puntos antes de formular tu hipótesis',
+        ['A · borde de avenida', 'B · fachada residencial', 'C · patio interior'],
+        default='A · borde de avenida',
+        key='c3_s1_point_explorer',
+    )
+
+    _point_meta = {
+        'A · borde de avenida': {
+            'letter': 'A',
+            'title': 'Borde de avenida',
+            'desc': 'Punto con exposición directa al tránsito. Sirve para observar la condición más cercana a la fuente vial.',
+            'color': '#dc2626',
+            'cx': 215,
+            'cy': 205,
+        },
+        'B · fachada residencial': {
+            'letter': 'B',
+            'title': 'Fachada residencial',
+            'desc': 'Representa la exposición exterior de la vivienda. La fuente sigue siendo visible, pero cambia la geometría respecto del borde de vía.',
+            'color': '#2563eb',
+            'cx': 525,
+            'cy': 170,
+        },
+        'C · patio interior': {
+            'letter': 'C',
+            'title': 'Patio interior',
+            'desc': 'Punto más protegido respecto de la avenida. La edificación interrumpe parcialmente la propagación directa.',
+            'color': '#16a34a',
+            'cx': 680,
+            'cy': 205,
+        },
+    }
+    _pm = _point_meta[_point_selected]
+
+    _abc_html = f'''
+    <style>
+      html,body{{margin:0;padding:0;background:transparent;font-family:Arial,Helvetica,sans-serif}}
+      .abc-wrap{{border:1px solid #d8e6ef;border-radius:18px;background:linear-gradient(180deg,#f8fbfd,#eef5f9);padding:12px;overflow:hidden}}
+      .abc-top{{display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap;font-size:13px;color:#557185;margin:0 5px 8px}}
+      .abc-title{{font-weight:900;color:#102f4d}}
+      svg{{width:100%;height:auto;display:block}}
+      .wave{{fill:none;stroke:#5aa9d3;stroke-width:4;stroke-linecap:round;stroke-dasharray:12 9;animation:abcMove 1.8s linear infinite;opacity:.72}}
+      .wave2{{animation-delay:-.6s;opacity:.48}}
+      .selectedPulse{{animation:abcPulse 1.8s ease-in-out infinite;transform-origin:{_pm["cx"]}px {_pm["cy"]}px}}
+      @keyframes abcMove{{to{{stroke-dashoffset:-42}}}}
+      @keyframes abcPulse{{0%,100%{{opacity:.45}}50%{{opacity:1}}}}
+    </style>
+
+    <div class="abc-wrap">
+      <div class="abc-top">
+        <span class="abc-title">Escenario de medición A–B–C</span>
+        <span><b>Punto activo:</b> {_point_selected}</span>
+      </div>
+
+      <svg viewBox="0 0 820 330" xmlns="http://www.w3.org/2000/svg" aria-label="Escena de puntos de medición A B C">
+        <defs>
+          <linearGradient id="abcSky" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stop-color="#eaf7ff"/>
+            <stop offset="100%" stop-color="#fbfdff"/>
+          </linearGradient>
+        </defs>
+
+        <!-- Fondo -->
+        <rect x="0" y="0" width="820" height="330" rx="18" fill="url(#abcSky)"/>
+        <rect x="0" y="245" width="820" height="85" fill="#dfe9da"/>
+
+        <!-- Avenida -->
+        <rect x="0" y="220" width="370" height="110" fill="#7d8791"/>
+        <line x1="0" y1="270" x2="370" y2="270" stroke="#f6e58d" stroke-width="5" stroke-dasharray="30 24"/>
+
+        <!-- Autos -->
+        <g transform="translate(60,235)">
+          <rect x="0" y="0" width="90" height="34" rx="10" fill="#2563eb"/>
+          <rect x="18" y="-18" width="48" height="25" rx="8" fill="#9bc7f5"/>
+          <circle cx="20" cy="38" r="12" fill="#263238"/>
+          <circle cx="70" cy="38" r="12" fill="#263238"/>
+        </g>
+        <g transform="translate(190,247)">
+          <rect x="0" y="0" width="105" height="36" rx="10" fill="#ef4444"/>
+          <circle cx="22" cy="40" r="12" fill="#263238"/>
+          <circle cx="82" cy="40" r="12" fill="#263238"/>
+        </g>
+
+        <!-- Ondas hacia edificio -->
+        <path class="wave" d="M145 235 C225 185 300 180 390 205"/>
+        <path class="wave wave2" d="M145 235 C245 150 335 150 430 200"/>
+
+        <!-- Edificio residencial -->
+        <rect x="430" y="70" width="180" height="205" rx="10" fill="#c9d6df"/>
+        <rect x="450" y="95" width="38" height="45" rx="4" fill="#eff8ff"/>
+        <rect x="505" y="95" width="38" height="45" rx="4" fill="#eff8ff"/>
+        <rect x="450" y="155" width="38" height="45" rx="4" fill="#eff8ff"/>
+        <rect x="505" y="155" width="38" height="45" rx="4" fill="#eff8ff"/>
+        <rect x="520" y="215" width="48" height="60" rx="5" fill="#99aab5"/>
+
+        <!-- Patio interior -->
+        <rect x="610" y="165" width="190" height="110" rx="14" fill="#cde7c6"/>
+        <circle cx="745" cy="205" r="28" fill="#79b96b"/>
+        <rect x="739" y="205" width="12" height="48" fill="#8c6b49"/>
+        <path d="M635 246 Q685 210 730 246" fill="none" stroke="#9bc88d" stroke-width="7"/>
+
+        <!-- Punto A -->
+        <circle cx="215" cy="205" r="15" fill="#dc2626"/>
+        <circle cx="215" cy="205" r="25" fill="none" stroke="#dc2626" stroke-width="4" opacity=".25"/>
+        <text x="215" y="177" text-anchor="middle" font-size="17" font-weight="900" fill="#8f1d1d">A</text>
+
+        <!-- Punto B -->
+        <circle cx="525" cy="170" r="15" fill="#2563eb"/>
+        <circle cx="525" cy="170" r="25" fill="none" stroke="#2563eb" stroke-width="4" opacity=".25"/>
+        <text x="525" y="142" text-anchor="middle" font-size="17" font-weight="900" fill="#174ea6">B</text>
+
+        <!-- Punto C -->
+        <circle cx="680" cy="205" r="15" fill="#16a34a"/>
+        <circle cx="680" cy="205" r="25" fill="none" stroke="#16a34a" stroke-width="4" opacity=".25"/>
+        <text x="680" y="177" text-anchor="middle" font-size="17" font-weight="900" fill="#0f6d31">C</text>
+
+        <!-- Resaltado del punto seleccionado -->
+        <circle class="selectedPulse" cx="{_pm["cx"]}" cy="{_pm["cy"]}" r="36" fill="none" stroke="{_pm["color"]}" stroke-width="7"/>
+
+        <!-- Etiquetas funcionales -->
+        <text x="145" y="52" text-anchor="middle" font-size="14" font-weight="800" fill="#314d61">FUENTE VIAL</text>
+        <text x="520" y="52" text-anchor="middle" font-size="14" font-weight="800" fill="#314d61">EDIFICIO RESIDENCIAL</text>
+        <text x="690" y="305" text-anchor="middle" font-size="14" font-weight="800" fill="#31593d">PATIO INTERIOR</text>
+      </svg>
+
+      <div style="padding:10px 6px 2px">
+        <div style="font-weight:900;color:{_pm["color"]};margin-bottom:4px">Punto {_pm["letter"]} · {_pm["title"]}</div>
+        <div style="font-size:13px;line-height:1.45;color:#496477">{_pm["desc"]}</div>
+      </div>
+    </div>
+    '''
+    components.html(_abc_html, height=455, scrolling=False)
+
     st.markdown(
         """
         <div class="c3s1-versus">
@@ -17995,8 +18130,8 @@ def _c3l1_stage1_impl(lab: dict, saved: dict, deps: Dict[str, Any]):
 
     st.markdown(
         '<div class="c3-key"><b>No buscamos adivinar el resultado.</b> '
-        'La hipótesis sirve para justificar qué fuente, punto y comportamiento esperas observar. '
-        'Más adelante volveremos a ella para contrastarla con la campaña.</div>',
+        'Usa los mismos puntos A, B y C del esquema anterior para justificar qué fuente, punto y comportamiento esperas observar. '
+        'Más adelante recuperaremos esta hipótesis y la compararemos con los niveles realmente obtenidos en A, B y C.</div>',
         unsafe_allow_html=True,
     )
 
