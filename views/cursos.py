@@ -17381,6 +17381,7 @@ def _c3l1_stage0_impl(lab: dict, saved: dict, deps: Dict[str, Any]):
     st.markdown('<div class="c3-good"><b>Ruta mental:</b> ESCUCHAR → MEDIR → DESCRIBIR → ANALIZAR → REPRESENTAR → DIAGNOSTICAR.</div>', unsafe_allow_html=True)
 
 def _c3l1_stage1_impl(lab: dict, saved: dict, deps: Dict[str, Any]):
+    import matplotlib.pyplot as c3plt
     _c3l1_style()
     _c3l1_header(
         1,
@@ -17458,12 +17459,12 @@ def _c3l1_stage1_impl(lab: dict, saved: dict, deps: Dict[str, Any]):
     elif pattern=='event': y=base-24+24*np.exp(-.5*((t-33)/5.5)**2)+noise
     elif pattern=='steady': y=base+.8*np.sin(t/4.0)+.4*noise
     else: y=base-4+3*np.sin(t/5.0)+2*np.sin(t/1.7)+noise
-    fig,ax=plt.subplots(figsize=(9,3.1))
+    fig,ax=c3plt.subplots(figsize=(9,3.1))
     ax.plot(t,y,linewidth=2)
     ax.set_xlabel('Tiempo [s]'); ax.set_ylabel('Nivel ilustrativo [dB]')
     ax.set_title(f'Historia temporal didáctica · {selected}')
     ax.grid(True,alpha=.2)
-    st.pyplot(fig,use_container_width=True); plt.close(fig)
+    st.pyplot(fig,use_container_width=True); c3plt.close(fig)
     st.caption('Gráfica didáctica: ilustra la estructura temporal del caso y no corresponde a una medición reglamentaria.')
 
     st.markdown('## 2. Actividad · Clasifica lo que observaste')
@@ -17544,6 +17545,7 @@ def _c3l1_stage1_impl(lab: dict, saved: dict, deps: Dict[str, Any]):
 
 
 def _c3l1_stage2_impl(lab: dict, saved: dict, deps: Dict[str, Any]):
+    import matplotlib.pyplot as c3plt
     _c3l1_style()
     _c3l1_header(
         2,
@@ -17601,11 +17603,11 @@ def _c3l1_stage2_impl(lab: dict, saved: dict, deps: Dict[str, Any]):
     m1.metric('Nivel global sin ponderación',f'{base_global:.1f} dB')
     m2.metric(f'Nivel global {weighting}',f'{weighted_global:.1f} dB')
     m3.metric('Diferencia',f'{weighted_global-base_global:+.1f} dB')
-    fig,ax=plt.subplots(figsize=(9,3.4))
+    fig,ax=c3plt.subplots(figsize=(9,3.4))
     ax.semilogx(freqs,base,marker='o',linewidth=2,label='Espectro original')
     ax.semilogx(freqs,weighted,marker='o',linewidth=2,label=f'Con ponderación {weighting}')
     ax.set_xlabel('Frecuencia [Hz]'); ax.set_ylabel('Nivel por banda [dB]'); ax.set_title(f'{profile} · efecto de la ponderación {weighting}')
-    ax.grid(True,which='both',alpha=.2); ax.legend(); st.pyplot(fig,use_container_width=True); plt.close(fig)
+    ax.grid(True,which='both',alpha=.2); ax.legend(); st.pyplot(fig,use_container_width=True); c3plt.close(fig)
     if profile in ('Tráfico pesado','Ventilación/HVAC') and weighting=='A': st.info('Observa cómo la ponderación A reduce fuertemente la contribución de las bandas graves.')
     elif weighting=='Z': st.info('Z conserva prácticamente la forma espectral original dentro del rango de interés del instrumento.')
     else: st.info('La señal física es la misma; cambia la ponderación aplicada.')
@@ -17626,10 +17628,10 @@ def _c3l1_stage2_impl(lab: dict, saved: dict, deps: Dict[str, Any]):
         for j in range(1,len(signal)): out[j]=out[j-1]+alpha*(signal[j]-out[j-1])
         return out
     fast=_smooth(raw,.125); slow=_smooth(raw,1.0)
-    fig,ax=plt.subplots(figsize=(9,3.4))
+    fig,ax=c3plt.subplots(figsize=(9,3.4))
     ax.plot(tt,raw,linewidth=1,alpha=.45,label='Señal ilustrativa'); ax.plot(tt,fast,linewidth=2,label='Fast'); ax.plot(tt,slow,linewidth=2,label='Slow')
     ax.set_xlabel('Tiempo [s]'); ax.set_ylabel('Nivel ilustrativo [dB]'); ax.set_title('Respuesta temporal'); ax.grid(True,alpha=.2); ax.legend()
-    st.pyplot(fig,use_container_width=True); plt.close(fig)
+    st.pyplot(fig,use_container_width=True); c3plt.close(fig)
     q_fast=st.radio('Ante un evento breve, ¿qué respuesta sigue más rápidamente la variación?',['Fast','Slow'],index=None,horizontal=True,key='c3_s2_fast_q')
     if q_fast:
         if q_fast=='Fast': st.success('Correcto. Fast responde más rápidamente a las variaciones.')
