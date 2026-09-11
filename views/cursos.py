@@ -12027,14 +12027,23 @@ def _c2l2_curve_control(saved,prefix,curve,require_limit=False,unlock_reading=Fa
         st.session_state[position_ok_key]=bool(saved.get(position_ok_key))
 
     st.markdown("#### Mueve la curva de referencia")
+    def _reset_curve_position():
+        # El callback se ejecuta antes del rerun de Streamlit, por lo que
+        # podemos modificar con seguridad el estado asociado al slider.
+        st.session_state[position_key]=60
+        st.session_state[position_ok_key]=False
+
     ref500=st.slider(
         "Posición de la referencia en 500 Hz (dB)",
         30,90,int(st.session_state[position_key]),1,
         key=position_key,
     )
-    if st.button("REINICIAR CURVA",key=f"{prefix}_reset",use_container_width=True):
-        st.session_state[position_key]=60
-        st.rerun()
+    st.button(
+        "REINICIAR CURVA",
+        key=f"{prefix}_reset",
+        use_container_width=True,
+        on_click=_reset_curve_position,
+    )
 
     shift=int(ref500)-60
     ref,dev,total=_c2l2_plot(
