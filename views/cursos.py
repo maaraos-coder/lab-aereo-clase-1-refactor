@@ -17242,6 +17242,23 @@ def _c2l2_stage10(lab,saved):
 
 _C3L1_CLASS_ID = "clase-05-ruido-ambiental-lab-1"
 
+# Títulos visibles de navegación que ya no deben depender del catálogo histórico
+# de FUTURE_LABS. Sólo se sobreescriben las etapas cuyo contenido fue rediseñado.
+_C3L1_NAV_STAGE_TITLES = {
+    3: "Del registro temporal a los descriptores",
+    4: "Construye LAeq, L10 y L90",
+}
+
+def _c3l1_nav_stage_title(lab, stage):
+    """Título visible en barra lateral y selector de Zoom para Curso 3 · Lab 1."""
+    stage = int(stage)
+    if stage in _C3L1_NAV_STAGE_TITLES:
+        return _C3L1_NAV_STAGE_TITLES[stage]
+    try:
+        return lab["stages"][stage][0]
+    except Exception:
+        return f"Etapa {stage}"
+
 def _course3_lab1_deps():
     """Dependencias del Curso 3 reutilizando exactamente los servicios globales existentes."""
     return {
@@ -20449,7 +20466,13 @@ def future_lab_view_impl(lab):
                 help="Ábrela en otra ventana y comparte solo esa ventana en Zoom.",
             )
             future_projection_options = {
-                f"Etapa {i} · {(_future_stage_display_title(lab,i) if class_id==_C2L2_CLASS_ID else lab['stages'][i][0])}": i
+                f"Etapa {i} · {(
+                    _future_stage_display_title(lab,i)
+                    if class_id==_C2L2_CLASS_ID
+                    else _c3l1_nav_stage_title(lab,i)
+                    if class_id==_C3L1_CLASS_ID
+                    else lab['stages'][i][0]
+                )}": i
                 for i in range(len(lab["stages"]))
             }
             future_projection_label = st.selectbox(
@@ -20490,6 +20513,8 @@ def future_lab_view_impl(lab):
             format_func=lambda i:(
                 f"Etapa {i} · {_future_stage_display_title(lab,i)}"
                 if class_id==_C2L2_CLASS_ID
+                else f"Etapa {i} · {_c3l1_nav_stage_title(lab,i)}"
+                if class_id==_C3L1_CLASS_ID
                 else f"Etapa {i} · {lab['stages'][i][0]}"
             ),
             key=_stage_key,
