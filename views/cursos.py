@@ -17632,29 +17632,32 @@ def _c3l1_stage1_impl(lab: dict, saved: dict, deps: Dict[str, Any]):
     _classification_store = saved.get('c3_s1_classifications', {})
     if not isinstance(_classification_store, dict):
         _classification_store = {}
-    _revealed = is_teacher or selected in _classification_store
 
-    _tipo_display = info['tipo'] if _revealed else 'Por clasificar'
-    _temporal_display = info['temporal'] if _revealed else 'Por clasificar'
-
-    st.markdown(
-        f'''<div class="c3s1-grid4">
-        <div class="c3s1-mini"><div class="label">Tipo espacial</div><div class="value">{_tipo_display}</div></div>
-        <div class="c3s1-mini"><div class="label">Temporalidad</div><div class="value">{_temporal_display}</div></div>
-        <div class="c3s1-mini"><div class="label">Característica</div><div class="value">{info['caracteristica']}</div></div>
-        <div class="c3s1-mini"><div class="label">Receptor potencial</div><div class="value">{info['receptor']}</div></div>
-        </div>''',
-        unsafe_allow_html=True,
-    )
-    if _revealed:
+    if is_teacher:
         st.markdown(
-            f'<div class="c3s1-context"><b>Qué debes observar:</b> {info["idea"]}</div>',
+            f'''<div class="c3s1-grid4">
+            <div class="c3s1-mini"><div class="label">Tipo espacial · pauta</div><div class="value">{info['tipo']}</div></div>
+            <div class="c3s1-mini"><div class="label">Temporalidad · pauta</div><div class="value">{info['temporal']}</div></div>
+            <div class="c3s1-mini"><div class="label">Característica</div><div class="value">{info['caracteristica']}</div></div>
+            <div class="c3s1-mini"><div class="label">Receptor potencial</div><div class="value">{info['receptor']}</div></div>
+            </div>''',
+            unsafe_allow_html=True,
+        )
+        st.markdown(
+            f'<div class="c3s1-context"><b>Qué debe observar el alumno:</b> {info["idea"]}</div>',
             unsafe_allow_html=True,
         )
     else:
         st.markdown(
-            '<div class="c3s1-context"><b>Tu tarea:</b> observa la ilustración y la historia temporal. '
-            'Clasifica la fuente antes de revelar la respuesta.</div>',
+            f'''<div class="c3-grid-2">
+            <div class="c3s1-mini"><div class="label">Característica de la fuente</div><div class="value">{info['caracteristica']}</div></div>
+            <div class="c3s1-mini"><div class="label">Receptor potencial</div><div class="value">{info['receptor']}</div></div>
+            </div>''',
+            unsafe_allow_html=True,
+        )
+        st.markdown(
+            '<div class="c3s1-context"><b>Antes de clasificar:</b> observa la ilustración y la historia temporal. '
+            'El tipo espacial, la temporalidad y la explicación se revelarán después de comprobar tu respuesta.</div>',
             unsafe_allow_html=True,
         )
 
@@ -17752,17 +17755,24 @@ def _c3l1_stage1_impl(lab: dict, saved: dict, deps: Dict[str, Any]):
     if not is_teacher and q_source in _classification_store:
         _stored=_classification_store[q_source]
         st.markdown('### Resultado de tu comprobación')
-        rr1,rr2=st.columns(2)
-        rr1.metric('Tipo espacial esperado',_stored.get('expected_kind',expected_kind))
-        rr2.metric('Temporalidad esperada',_stored.get('expected_time',expected_time))
+        st.markdown(
+            f'''<div class="c3-grid-2">
+            <div class="c3s1-mini"><div class="label">Tipo espacial esperado</div><div class="value">{_stored.get('expected_kind',expected_kind)}</div></div>
+            <div class="c3s1-mini"><div class="label">Temporalidad esperada</div><div class="value">{_stored.get('expected_time',expected_time)}</div></div>
+            </div>''',
+            unsafe_allow_html=True,
+        )
         if _stored.get('ok'):
-            st.success('Tu clasificación coincidió completamente con la pauta.')
+            st.success('✅ Tu clasificación coincidió completamente con la pauta.')
         else:
             st.info(
-                f'Tu selección fue **{_stored.get("kind","—")} + {_stored.get("time","—")}**. '
-                f'La pauta corresponde a **{expected_kind} + {expected_time}**.'
+                f'**Tu respuesta:** {_stored.get("kind","—")} + {_stored.get("time","—")}  \n\n'
+                f'**Pauta:** {expected_kind} + {expected_time}'
             )
-        st.caption(info['idea'])
+        st.markdown(
+            f'<div class="c3s1-context"><b>Qué debes observar:</b> {info["idea"]}</div>',
+            unsafe_allow_html=True,
+        )
 
     st.markdown('## 3. Fuente ≠ punto de medición')
     st.write(
