@@ -17511,13 +17511,10 @@ def _c3l1_stage1_impl(lab: dict, saved: dict, deps: Dict[str, Any]):
 
     st.markdown('## 3. Fuente ≠ punto de medición')
     st.write(
-        'Mantén una fuente y modifica el camino hasta el receptor. El render ayuda a leer físicamente '
-        'el problema antes de interpretar el número.'
+        'Mantén una fuente y modifica el camino hasta el receptor. La escena se actualiza en tiempo real '
+        'para que barrera, distancia y posición del receptor coincidan con lo que seleccionas.'
     )
-    _c3l1_asset(
-        'curso3_lab1_etapa1_fuente_barrera_receptor.webp',
-        'Fuente → propagación → barrera/obstáculo → receptor.'
-    )
+
     sim_options=['Carretera','Equipo HVAC','Obra en construcción']
     sim_default = selected if selected in sim_options else sim_options[0]
     sim_source=st.selectbox(
@@ -17527,13 +17524,115 @@ def _c3l1_stage1_impl(lab: dict, saved: dict, deps: Dict[str, Any]):
         key='c3_s1_sim_source'
     )
     distance=st.slider('Distancia fuente–receptor [m]',5,120,25,5,key='c3_s1_distance')
-    barrier=st.toggle('Existe una barrera/obstáculo relevante entre fuente y receptor',key='c3_s1_barrier')
-    receptor_place=st.segmented_control('Posición del receptor',['Borde de vía','Fachada','Patio interior'],default='Fachada',key='c3_s1_receptor_place')
+    barrier=st.toggle(
+        'Existe una barrera/obstáculo relevante entre fuente y receptor',
+        key='c3_s1_barrier'
+    )
+    receptor_place=st.segmented_control(
+        'Posición del receptor',
+        ['Borde de vía','Fachada','Patio interior'],
+        default='Fachada',
+        key='c3_s1_receptor_place'
+    )
+
     source_level={'Carretera':82.0,'Equipo HVAC':78.0,'Obra en construcción':86.0}[sim_source]
     distance_loss=20.0*np.log10(max(distance,1)/5.0)
     place_corr={'Borde de vía':0.0,'Fachada':-2.0,'Patio interior':-7.0}[receptor_place]
     barrier_corr=-7.0 if barrier else 0.0
     illustrative=source_level-distance_loss+place_corr+barrier_corr
+
+    # Escena técnica animada y sincronizada con los controles.
+    receiver_x = 560 + int((distance-5)/115*160)
+    barrier_svg = (
+        '''
+        <g>
+          <rect x="385" y="95" width="58" height="150" rx="5" fill="#8a765d"/>
+          <rect x="378" y="88" width="72" height="11" rx="4" fill="#6f604e"/>
+          <text x="414" y="74" text-anchor="middle" font-size="14" font-weight="800" fill="#3f5565">BARRERA</text>
+        </g>
+        '''
+        if barrier else ''
+    )
+    waves = (
+        '''
+        <path class="c3w" d="M145 190 C230 135 315 125 385 160"/>
+        <path class="c3w c3w2" d="M145 190 C235 165 315 160 385 185"/>
+        <path class="c3wd" d="M443 160 C500 115 565 120 RECV 180"/>
+        <path class="c3wd c3w2" d="M443 185 C505 155 565 155 RECV 195"/>
+        '''
+        if barrier else
+        '''
+        <path class="c3w" d="M145 190 C270 145 430 145 RECV 190"/>
+        <path class="c3w c3w2" d="M145 190 C275 115 430 115 RECV 190"/>
+        <path class="c3w c3w3" d="M145 190 C280 85 430 85 RECV 190"/>
+        '''
+    ).replace('RECV', str(receiver_x))
+
+    receiver_offset = receiver_x - 650
+
+    st.markdown(
+        f'''
+        <style>
+        .c3sim{{border:1px solid #d8e6ef;border-radius:18px;background:linear-gradient(180deg,#f7fbfe,#edf5f9);padding:12px;margin:.8rem 0 1rem}}
+        .c3sim-top{{display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap;font-size:.82rem;color:#527088;margin:0 4px 8px}}
+        .c3sim svg{{width:100%;height:auto;display:block}}
+        .c3w,.c3wd{{fill:none;stroke:#49a6d4;stroke-width:5;stroke-linecap:round;stroke-dasharray:13 10;animation:c3move 1.7s linear infinite;opacity:.85}}
+        .c3wd{{opacity:.48}} .c3w2{{animation-delay:-.55s;opacity:.62}} .c3w3{{animation-delay:-1.05s;opacity:.4}}
+        .c3pulseS{{transform-origin:145px 190px;animation:c3pulseS 1.5s ease-in-out infinite}}
+        .c3pulseR{{animation:c3pulseR 1.8s ease-in-out infinite}}
+        @keyframes c3move{{to{{stroke-dashoffset:-46}}}}
+        @keyframes c3pulseS{{0%,100%{{opacity:.55}}50%{{opacity:1}}}}
+        @keyframes c3pulseR{{0%,100%{{opacity:.55}}50%{{opacity:1}}}}
+        </style>
+        <div class="c3sim">
+          <div class="c3sim-top">
+            <span><b>Fuente:</b> {sim_source}</span>
+            <span><b>Propagación:</b> {'con obstáculo' if barrier else 'camino directo'}</span>
+            <span><b>Receptor:</b> {receptor_place}</span>
+          </div>
+          <svg viewBox="0 0 820 300" aria-label="Esquema dinámico de fuente, propagación y receptor">
+            <defs>
+              <linearGradient id="c3sky" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0%" stop-color="#e8f6ff"/>
+                <stop offset="100%" stop-color="#fbfdff"/>
+              </linearGradient>
+            </defs>
+            <rect x="0" y="0" width="820" height="300" rx="18" fill="url(#c3sky)"/>
+            <rect x="0" y="232" width="820" height="68" fill="#dce9d6"/>
+            <rect x="0" y="250" width="820" height="50" fill="#7e8993"/>
+            <line x1="0" y1="274" x2="820" y2="274" stroke="#f6e791" stroke-width="4" stroke-dasharray="28 22"/>
+
+            <g class="c3pulseS">
+              <circle cx="145" cy="190" r="28" fill="#ff5b5b"/>
+              <circle cx="145" cy="190" r="39" fill="none" stroke="#ff5b5b" stroke-width="4" opacity=".23"/>
+              <text x="145" y="147" text-anchor="middle" font-size="14" font-weight="800" fill="#8a1d1d">FUENTE</text>
+              <text x="145" y="197" text-anchor="middle" font-size="23" fill="white">🔊</text>
+            </g>
+
+            {waves}
+            {barrier_svg}
+
+            <g transform="translate({receiver_offset},0)">
+              <rect x="618" y="100" width="150" height="150" rx="9" fill="#c9d7e0"/>
+              <rect x="638" y="126" width="36" height="40" rx="4" fill="#f2f9fd"/>
+              <rect x="692" y="126" width="36" height="40" rx="4" fill="#f2f9fd"/>
+              <rect x="671" y="188" width="42" height="62" rx="4" fill="#99acb8"/>
+              <circle class="c3pulseR" cx="650" cy="190" r="16" fill="#43b979"/>
+              <circle cx="650" cy="190" r="24" fill="none" stroke="#43b979" stroke-width="4" opacity=".24"/>
+              <text x="693" y="82" text-anchor="middle" font-size="14" font-weight="800" fill="#1c6643">RECEPTOR</text>
+              <text x="693" y="99" text-anchor="middle" font-size="12" fill="#36596c">{receptor_place}</text>
+            </g>
+
+            <line x1="145" y1="54" x2="{receiver_x}" y2="54" stroke="#315d78" stroke-width="2"/>
+            <line x1="145" y1="47" x2="145" y2="62" stroke="#315d78" stroke-width="2"/>
+            <line x1="{receiver_x}" y1="47" x2="{receiver_x}" y2="62" stroke="#315d78" stroke-width="2"/>
+            <text x="{(145+receiver_x)//2}" y="41" text-anchor="middle" font-size="15" font-weight="800" fill="#315d78">{distance} m</text>
+          </svg>
+        </div>
+        ''',
+        unsafe_allow_html=True,
+    )
+
     st.markdown(
         f'''<div class="c3-grid">
         <div class="c3s1-mini"><div class="label">Distancia fuente–receptor</div><div class="value">{distance} m</div></div>
@@ -17542,7 +17641,12 @@ def _c3l1_stage1_impl(lab: dict, saved: dict, deps: Dict[str, Any]):
         </div>''',
         unsafe_allow_html=True,
     )
-    st.markdown('<div class="c3-key"><b>Idea clave:</b> la fuente puede ser la misma, pero el dato cambia con la distancia, el camino y el lugar del receptor. Observar el terreno es parte de medir.</div>',unsafe_allow_html=True)
+    st.markdown(
+        '<div class="c3-key"><b>Idea clave:</b> la fuente puede ser la misma, pero el dato cambia con la distancia, '
+        'el camino de propagación y la posición del receptor. La escena se actualiza para que la representación '
+        'visual coincida con el escenario que estás probando.</div>',
+        unsafe_allow_html=True,
+    )
 
     st.markdown('## 4. Mismo nivel, distinto contexto')
     st.markdown(
@@ -17712,7 +17816,45 @@ def _c3l1_stage1_impl(lab: dict, saved: dict, deps: Dict[str, Any]):
         }
         saved['c3_s1_hypothesis'] = payload
         _c3l1_mark_formative(saved, deps, 's1_hypothesis', payload)
-        st.success('Hipótesis guardada. Más adelante podrás compararla con los resultados obtenidos en la campaña.')
+
+        coherence_notes = []
+        coherence_ok = True
+
+        if dominant == 'Seleccionar':
+            coherence_ok = False
+            coherence_notes.append('Define una fuente dominante probable para que la hipótesis pueda comprobarse después.')
+        if point_high == 'Seleccionar' or point_low == 'Seleccionar':
+            coherence_ok = False
+            coherence_notes.append('Selecciona los puntos de mayor y menor exposición esperada.')
+        if point_high == point_low and point_high != 'Seleccionar':
+            coherence_ok = False
+            coherence_notes.append('Elegiste el mismo punto como máximo y mínimo; revisa si eso representa realmente tu hipótesis espacial.')
+        if point_high == 'C · patio interior' and point_low == 'A · borde de avenida':
+            coherence_ok = False
+            coherence_notes.append(
+                'Tu selección invierte el patrón esperado del escenario base. Puede ser válida, pero debes justificar qué condición física haría que el patio interior supere al borde de avenida.'
+            )
+        if behavior == 'Seleccionar':
+            coherence_ok = False
+            coherence_notes.append('Define el comportamiento temporal que esperas observar.')
+        if not note.strip():
+            coherence_ok = False
+            coherence_notes.append('Agrega una breve justificación para que la hipótesis pueda contrastarse después.')
+
+        if coherence_ok:
+            st.success(
+                '✅ Hipótesis técnicamente coherente. Quedó guardada y se retomará más adelante para compararla '
+                'con los resultados reales de la campaña.'
+            )
+        else:
+            st.warning('⚠️ Hipótesis guardada, pero conviene revisarla antes de continuar.')
+            for _note in coherence_notes:
+                st.write('• ' + _note)
+
+        st.caption(
+            'Esta hipótesis no se califica como correcta o incorrecta en esta etapa. '
+            'Se utilizará posteriormente en el contraste predicción vs. medición.'
+        )
 
     st.markdown('## 7. Cierre formativo · ¿qué te llevas de esta etapa?')
 
