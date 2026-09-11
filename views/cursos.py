@@ -17956,9 +17956,10 @@ def _c3l1_stage1_impl(lab: dict, saved: dict, deps: Dict[str, Any]):
           <div class="c3-kicker">MISIÓN DE TERRENO</div>
           <b>Primera inspección acústica del sector</b>
           <p style="margin:.45rem 0 0">
-            Son las <b>18:30 h</b>. Vecinos de un edificio residencial indican que el ambiente acústico
-            del sector ha cambiado durante los últimos meses. Antes de encender el sonómetro debes
-            recorrer el lugar, identificar las fuentes probables y decidir qué esperas encontrar.
+            Son las <b>18:30 h</b>. Vecinos de un edificio residencial indican que el ruido proveniente de la
+            <b>avenida frente al edificio</b> ha aumentado durante los últimos meses. Para esta misión dejaremos
+            la ciudad general de la actividad anterior y trabajaremos un caso específico de <b>tránsito vial</b>.
+            Antes de encender el sonómetro debes recorrer A, B y C y decidir qué esperas encontrar.
           </p>
         </div>
         """,
@@ -17966,6 +17967,10 @@ def _c3l1_stage1_impl(lab: dict, saved: dict, deps: Dict[str, Any]):
     )
 
     # Escena interactiva de los tres puntos de medición.
+    st.caption(
+        'Este selector solo sirve para explorar físicamente cada posición. '
+        'No define todavía cuál será tu punto de mayor o menor nivel.'
+    )
     _point_selected = st.segmented_control(
         'Explora los puntos antes de formular tu hipótesis',
         ['A · borde de avenida', 'B · fachada residencial', 'C · patio interior'],
@@ -18137,20 +18142,43 @@ def _c3l1_stage1_impl(lab: dict, saved: dict, deps: Dict[str, Any]):
 
     old_hyp = saved.get('c3_s1_hypothesis', {}) if isinstance(saved.get('c3_s1_hypothesis'), dict) else {}
 
+    st.markdown(
+        '''
+        <div class="c3-card green" style="margin:.8rem 0 1rem">
+          <div class="c3-kicker">CASO QUE ESTÁS HIPOTETIZANDO</div>
+          <b>Avenida frente a edificio residencial</b>
+          <p style="margin:.35rem 0 0">
+            A = borde de avenida · B = fachada residencial · C = patio interior.
+            Tu hipótesis debe referirse únicamente a este escenario.
+          </p>
+        </div>
+        ''',
+        unsafe_allow_html=True,
+    )
+
     with st.form('c3_s1_hypothesis_form'):
         st.markdown('### Tu hipótesis de campaña')
 
         h1, h2 = st.columns(2)
+        campaign_sources = [
+            'Seleccionar',
+            'Flujo vehicular de la avenida',
+            'Automóviles',
+            'Buses urbanos',
+            'Motocicletas',
+            'Evento puntual de tránsito (sirena/bocina)',
+        ]
+        _old_dom = old_hyp.get('dominant', 'Seleccionar')
         dominant = h1.selectbox(
-            'Fuente que esperas que domine',
-            ['Seleccionar'] + list(sources),
-            index=(['Seleccionar'] + list(sources)).index(old_hyp.get('dominant', 'Seleccionar'))
-            if old_hyp.get('dominant', 'Seleccionar') in ['Seleccionar'] + list(sources) else 0,
+            'Fuente dominante prevista en esta campaña vial',
+            campaign_sources,
+            index=campaign_sources.index(_old_dom) if _old_dom in campaign_sources else 0,
             key='c3_s1_h_dominant',
+            help='El escenario A–B–C corresponde específicamente a la avenida frente a la vivienda.',
         )
         points = ['Seleccionar', 'A · borde de avenida', 'B · fachada residencial', 'C · patio interior']
         point_high = h2.selectbox(
-            '¿Dónde esperarías el mayor nivel?',
+            'Según el esquema A–B–C, ¿dónde esperarías el mayor nivel?',
             points,
             index=points.index(old_hyp.get('point_high', 'Seleccionar'))
             if old_hyp.get('point_high', 'Seleccionar') in points else 0,
@@ -18159,7 +18187,7 @@ def _c3l1_stage1_impl(lab: dict, saved: dict, deps: Dict[str, Any]):
 
         h3, h4 = st.columns(2)
         point_low = h3.selectbox(
-            '¿Dónde esperarías el menor nivel?',
+            'Según el esquema A–B–C, ¿dónde esperarías el menor nivel?',
             points,
             index=points.index(old_hyp.get('point_low', 'Seleccionar'))
             if old_hyp.get('point_low', 'Seleccionar') in points else 0,
@@ -18193,7 +18221,7 @@ def _c3l1_stage1_impl(lab: dict, saved: dict, deps: Dict[str, Any]):
         note = st.text_area(
             'Justifica tu hipótesis en 2–4 líneas',
             value=str(old_hyp.get('note', '')),
-            placeholder='Ej.: espero mayor nivel en el borde de la avenida porque el tránsito será la fuente dominante...',
+            placeholder='Ej.: espero mayor nivel en A por la exposición directa al flujo vehicular y menor nivel en C por la protección del edificio...',
             height=120,
             key='c3_s1_h_note',
         )
@@ -18217,7 +18245,7 @@ def _c3l1_stage1_impl(lab: dict, saved: dict, deps: Dict[str, Any]):
 
         if dominant == 'Seleccionar':
             coherence_ok = False
-            coherence_notes.append('Define una fuente dominante probable para que la hipótesis pueda comprobarse después.')
+            coherence_notes.append('Selecciona qué componente del tránsito vial esperas que domine en esta campaña.')
         if point_high == 'Seleccionar' or point_low == 'Seleccionar':
             coherence_ok = False
             coherence_notes.append('Selecciona los puntos de mayor y menor exposición esperada.')
