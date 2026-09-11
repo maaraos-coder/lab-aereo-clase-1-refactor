@@ -20447,7 +20447,7 @@ def _c3l1_stage3_impl(lab: dict, saved: dict, deps: Dict[str, Any]):
                 'energía global, máximo, zona alta o componente persistente.'
             )
 
-    # Vista docente: mostrar únicamente la pauta técnica correcta.
+    # Vista docente: pauta técnica ampliada para explicación en clases.
     _viewer_role = (
         st.session_state.get('role')
         or st.session_state.get('user_role')
@@ -20465,54 +20465,149 @@ def _c3l1_stage3_impl(lab: dict, saved: dict, deps: Dict[str, Any]):
     )
 
     if _is_teacher_view:
-        st.markdown('### Pauta docente · Mesa de diagnóstico')
+        st.markdown('### Pauta docente · cómo explicar cada descriptor')
 
-        st.markdown(
-            """
-            <div class="c3-key">
-              Esta pauta muestra directamente el descriptor técnicamente más adecuado para cada misión
-              y la justificación que debe manejar el docente. No depende de si el alumno respondió o no.
-            </div>
-            """,
-            unsafe_allow_html=True,
+        st.write(
+            'Esta sección es una **pauta de apoyo para la explicación oral**. '
+            'No muestra si el alumno respondió o no; presenta directamente el criterio técnico, '
+            'la interpretación y los puntos que conviene enfatizar en clase.'
         )
 
-        for _name,_meta in _diag_cases.items():
-            with st.container(border=True):
-                st.markdown(f'**{_meta["icon"]} {_name}**')
-                st.caption(_meta['subtitle'])
+        st.markdown('#### 🚗 Avenida urbana · descriptor principal: LAeq')
+        st.markdown(
+            """
+            **Objetivo del caso:** caracterizar la exposición acústica global durante un periodo en el que
+            el tránsito cambia continuamente: aparecen automóviles, buses, vehículos pesados y pausas.
 
-                _pc1,_pc2 = st.columns([1.15, 1.85])
+            **Por qué corresponde LAeq:** el nivel equivalente integra energéticamente todo lo ocurrido
+            durante el intervalo de medición. No se limita a un máximo puntual ni a una fracción del tiempo,
+            sino que responde a la pregunta: *¿qué nivel constante habría producido la misma energía acústica
+            total que este ruido variable durante el mismo periodo?*
 
-                with _pc1:
-                    st.metric('Descriptor correcto', _meta['best'])
+            Para datos discretos puede expresarse como:
+            """
+        )
+        st.latex(r'L_{Aeq,T}=10\log_{10}\left(\frac{1}{N}\sum_{i=1}^{N}10^{L_{A,i}/10}\right)')
+        st.markdown(
+            """
+            **Qué conviene explicar a los alumnos:** el LAeq no es un promedio aritmético de dB.
+            Los niveles altos pesan más porque la escala decibélica es logarítmica. Por eso un paso de bus
+            o camión puede aumentar el LAeq aunque dure menos que los periodos de menor nivel.
 
-                with _pc2:
-                    st.markdown(
-                        f"""
-                        <div style="
-                            height:100%;
-                            padding:.85rem 1rem;
-                            border-radius:12px;
-                            background:#eef8fd;
-                            border-left:4px solid #1596d2;
-                        ">
-                          <div style="font-size:.72rem;font-weight:800;letter-spacing:.06em;color:#157bb0">
-                            OBJETIVO DEL CASO
-                          </div>
-                          <div style="font-weight:700;color:#29465a;margin:.25rem 0 .5rem">
-                            {_meta["objective"]}
-                          </div>
-                          <div style="font-size:.72rem;font-weight:800;letter-spacing:.06em;color:#157bb0">
-                            EXPLICACIÓN TÉCNICA
-                          </div>
-                          <div style="color:#40586b;margin-top:.25rem">
-                            {_meta["why"]}
-                          </div>
-                        </div>
-                        """,
-                        unsafe_allow_html=True,
-                    )
+            **Qué no describe por sí solo:** no dice cuándo ocurrieron los eventos, ni cuál fue el máximo,
+            ni si el ambiente fue estable o muy fluctuante. Dos historias temporales diferentes pueden tener
+            el mismo LAeq.
+
+            **Idea clave para transmitir:** LAeq es un descriptor de **energía global del periodo**.
+            """
+        )
+
+        st.divider()
+
+        st.markdown('#### ❄️ Equipo HVAC nocturno · descriptor principal: L90')
+        st.markdown(
+            """
+            **Objetivo del caso:** reconocer un componente relativamente persistente del ambiente acústico,
+            por ejemplo un equipo HVAC que permanece funcionando durante gran parte de la noche.
+
+            **Por qué puede ser útil L90:** L90 es el nivel que fue igualado o superado durante aproximadamente
+            el 90 % del tiempo. Al estar asociado a una gran fracción del periodo, se ubica normalmente en la
+            zona baja y persistente de la distribución de niveles.
+            """
+        )
+        st.latex(r'P\!\left(L_A \geq L_{90}\right)\approx 0.90')
+        st.markdown(
+            """
+            **Cómo interpretarlo:** si L90 = 48 dB(A), significa que durante aproximadamente el 90 % del tiempo
+            el nivel fue igual o superior a 48 dB(A). Solo durante cerca del 10 % del periodo estuvo por debajo.
+
+            **Qué conviene explicar a los alumnos:** por esta razón L90 puede ayudar a aproximarse al componente
+            de fondo o persistente de un ambiente, pero **no debe afirmarse automáticamente que L90 es “el ruido
+            de fondo”**. Eso depende del tipo de fuente, duración del registro, interferencias y contexto de medición.
+
+            **Limitación importante:** si la fuente que se intenta estudiar es justamente la fuente persistente,
+            L90 puede incluirla. Si existen otras fuentes permanentes, también formarán parte de ese nivel.
+
+            **Idea clave para transmitir:** L90 describe la **zona baja y persistente de la distribución temporal**,
+            no necesariamente una fuente específica.
+            """
+        )
+
+        st.divider()
+
+        st.markdown('#### 📣 Bocinazo / evento breve · descriptor principal: Lmax')
+        st.markdown(
+            """
+            **Objetivo del caso:** identificar el nivel más alto alcanzado durante un evento corto e intenso.
+
+            **Por qué corresponde Lmax:** Lmax es simplemente el mayor nivel registrado por el instrumento
+            durante el intervalo considerado.
+            """
+        )
+        st.latex(r'L_{\max}=\max\{L_A(t)\}')
+        st.markdown(
+            """
+            **Qué conviene explicar a los alumnos:** para un evento breve, como una bocina, un golpe o un paso
+            muy cercano de un vehículo pesado, el LAeq puede diluir el evento porque integra todo el periodo.
+            Lmax, en cambio, conserva el valor máximo alcanzado.
+
+            **Qué no informa Lmax:** no indica cuánto duró el evento, cuánta energía total aportó ni cuántas veces
+            ocurrió. Dos eventos con el mismo Lmax pueden tener duraciones y consecuencias energéticas muy distintas.
+
+            **Relación con Fast/Slow:** el máximo registrado también depende de la respuesta temporal seleccionada
+            en el instrumento. Una respuesta más rápida puede seguir mejor cambios bruscos; por eso Lmax siempre debe
+            interpretarse junto con la configuración de medición.
+
+            **Idea clave para transmitir:** Lmax responde a la pregunta **“¿cuál fue el mayor nivel alcanzado?”**,
+            no “¿cuánta exposición total hubo?”.
+            """
+        )
+
+        st.divider()
+
+        st.markdown('#### 🚌 Corredor vial fluctuante · descriptor principal: L10')
+        st.markdown(
+            """
+            **Objetivo del caso:** representar la zona alta de niveles que aparece durante una fracción limitada
+            del periodo, por ejemplo cuando pasan buses o grupos de vehículos y luego el nivel vuelve a disminuir.
+
+            **Por qué corresponde L10:** L10 es el nivel que fue igualado o superado durante aproximadamente
+            el 10 % del tiempo.
+            """
+        )
+        st.latex(r'P\!\left(L_A \geq L_{10}\right)\approx 0.10')
+        st.markdown(
+            """
+            **Cómo interpretarlo:** si L10 = 67 dB(A), significa que durante aproximadamente el 10 % del periodo
+            el nivel fue igual o superior a 67 dB(A). Por eso L10 se ubica en la parte alta de la distribución
+            y es sensible a los periodos de mayor nivel.
+
+            **Qué conviene explicar a los alumnos:** L10 no es “el 10 % del máximo” ni significa que el sonido
+            valga 10 % menos. El número 10 se refiere exclusivamente a **tiempo de excedencia**.
+
+            **Diferencia respecto de Lmax:** Lmax depende de un solo máximo; L10 representa una fracción completa
+            de los niveles altos. Por ello puede ser más representativo que Lmax cuando interesa caracterizar
+            periodos altos recurrentes y no un único pico aislado.
+
+            **Idea clave para transmitir:** L10 representa la **zona alta pero recurrente** de la distribución temporal.
+            """
+        )
+
+        st.divider()
+
+        st.markdown('#### Comparación técnica para cerrar la explicación')
+        st.markdown(
+            """
+            - **LAeq:** energía acústica equivalente acumulada durante todo el periodo.
+            - **Lmax:** máximo nivel registrado; sensible a eventos breves.
+            - **L10:** nivel igualado o superado durante 10 % del tiempo; zona alta de la distribución.
+            - **L90:** nivel igualado o superado durante 90 % del tiempo; zona baja/persistente de la distribución.
+
+            **Mensaje final para los alumnos:** ningún descriptor es universalmente “mejor”.
+            La elección depende de la pregunta acústica que queremos responder. Antes de calcular un descriptor,
+            primero debemos definir **qué fenómeno queremos caracterizar**.
+            """
+        )
 
     st.markdown('## 6. Cierre formativo de la Etapa 3')
 
