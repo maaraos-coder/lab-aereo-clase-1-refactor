@@ -20740,17 +20740,86 @@ def _c3l1_stage4_impl(lab: dict, saved: dict, deps: Dict[str, Any]):
         unsafe_allow_html=True,
     )
 
+    st.markdown('### 1.2 SEL y LAE: ¿son lo mismo?')
+
     st.markdown(
         """
-        <div class="c3-key">
-          <b>Idea clave:</b> Lmax, LAeq,T y SEL pueden describir el mismo evento,
-          pero responden preguntas diferentes. SEL incorpora explícitamente el efecto de la duración.
+        <div class="c3-card green">
+          <div class="c3-kicker">RESPUESTA CORTA</div>
+          <b>En este laboratorio, sí: SEL y LAE representan el mismo concepto físico.</b>
+          <p>
+            <b>SEL</b> es el nombre general del descriptor: <em>Sound Exposure Level</em>.
+            <b>LAE</b> es la notación utilizada cuando queremos dejar explícito que el nivel está
+            <b>ponderado A</b>.
+          </p>
         </div>
         """,
         unsafe_allow_html=True,
     )
 
-    st.markdown('### 1.2 ¿Por qué Lmax no basta?')
+    st.markdown(
+        """
+        <div class="c3-grid-2">
+          <div class="c3-card blue">
+            <div class="c3-kicker">SEL</div>
+            <b>Nombre general del descriptor</b>
+            <p>
+              Describe la exposición sonora total de un evento, expresada respecto de un tiempo de referencia de 1 s.
+            </p>
+          </div>
+          <div class="c3-card green">
+            <div class="c3-kicker">LAE</div>
+            <b>SEL con ponderación A explícita</b>
+            <p>
+              La letra <b>A</b> indica que el nivel utilizado en el cálculo está ponderado A, es decir, expresado en dB(A).
+            </p>
+          </div>
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
+
+    st.markdown(
+        """
+        <div class="c3-key">
+          <b>Para no confundirnos:</b> cuando en este laboratorio aparezca
+          <b>SEL / LAE</b>, no estamos hablando de dos cálculos diferentes.
+          Estamos hablando del mismo descriptor de exposición sonora del evento.
+          Como trabajaremos con niveles ponderados A, podemos escribirlo técnicamente como <b>LAE</b>.
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
+
+    st.markdown(
+        """
+        <div class="c3-card orange">
+          <div class="c3-kicker">NO CONFUNDIR CON</div>
+          <b>LAeq,T</b>
+          <p>
+            LAeq,T representa el nivel energético medio durante la duración real T del evento.
+            LAE/SEL toma esa energía total y la expresa respecto de una referencia temporal de 1 s.
+            Por eso están relacionados, pero <b>no son el mismo descriptor</b>.
+          </p>
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
+
+    st.markdown(
+        """
+        <div class="c3-key">
+          <b>Idea clave:</b> Lmax, LAeq,T y SEL/LAE pueden describir el mismo evento,
+          pero responden preguntas diferentes:
+          <b>Lmax</b> = máximo,
+          <b>LAeq,T</b> = nivel equivalente durante T,
+          <b>SEL/LAE</b> = exposición total del evento referida a 1 s.
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
+
+    st.markdown('### 1.3 ¿Por qué Lmax no basta?')
 
     _t_cmp = np.linspace(0, 20, 400)
     _bg_cmp = 50.0
@@ -20804,7 +20873,7 @@ def _c3l1_stage4_impl(lab: dict, saved: dict, deps: Dict[str, Any]):
         else:
             st.warning('Dos eventos pueden alcanzar el mismo máximo y contener distinta energía total.')
 
-    st.markdown('### 1.3 Del LAeq del evento al SEL')
+    st.markdown('### 1.4 Del LAeq del evento al SEL / LAE')
 
     st.write(
         'Una vez delimitado el evento entre **t₁** y **t₂**, calculamos su duración '
@@ -20833,7 +20902,7 @@ def _c3l1_stage4_impl(lab: dict, saved: dict, deps: Dict[str, Any]):
         unsafe_allow_html=True,
     )
 
-    st.markdown('### 1.4 ¿Qué significa “normalizar a 1 segundo”?')
+    st.markdown('### 1.5 ¿Qué significa “normalizar a 1 segundo”?')
 
     st.markdown(
         """
@@ -20875,7 +20944,7 @@ def _c3l1_stage4_impl(lab: dict, saved: dict, deps: Dict[str, Any]):
         unsafe_allow_html=True,
     )
 
-    st.markdown('### 1.5 Cadena conceptual de la Etapa 4')
+    st.markdown('### 1.6 Cadena conceptual de la Etapa 4')
 
     st.markdown(
         """
