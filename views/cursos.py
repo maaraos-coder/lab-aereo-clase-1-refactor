@@ -21311,8 +21311,8 @@ def _c3l1_stage5_impl(lab: dict, saved: dict, deps: Dict[str, Any]):
     _c3l1_style()
     _c3l1_header(
         5,
-        'Del evento al ciclo diario · LD, LE, LN y Lden',
-        'Construir una jornada acústica completa y comprobar cómo horario, duración y repetición de eventos modifican los descriptores de largo periodo.',
+        'De tres mediciones al ciclo diario · LD, LE, LN y Lden',
+        'Medir una misma carretera en día, tarde y noche; construir los niveles de periodo y combinarlos energéticamente en Lden.',
         deps,
         45,
     )
@@ -21320,331 +21320,419 @@ def _c3l1_stage5_impl(lab: dict, saved: dict, deps: Dict[str, Any]):
     st.markdown(
         """
         <div class="c3-card blue">
-          <div class="c3-kicker">MISIÓN DE LA ETAPA</div>
-          <b>Diseña y diagnostica una jornada acústica de 24 horas.</b>
+          <div class="c3-kicker">MISIÓN DE TERRENO</div>
+          <b>Caracteriza acústicamente una carretera durante un ciclo de 24 horas.</b>
           <p>
-            Ya sabes describir un evento con SEL/LAE. Ahora deberás integrar varios eventos dentro de una jornada
-            y decidir cómo cambian <b>LD, LE, LN y Lden</b> según el horario en que ocurren.
+            Realizarás tres mediciones representativas en el mismo punto:
+            <b>día, tarde y noche</b>. Cada medición entregará un LAeq.
+            Luego usarás esos resultados para construir <b>LD, LE y LN</b> y finalmente calcular <b>Lden</b>.
           </p>
         </div>
         """,
         unsafe_allow_html=True,
     )
 
-    st.markdown('## 1. Construye el ambiente base de la jornada')
+    st.markdown('## 1. Mismo punto, tres periodos')
 
-    st.write(
-        'Primero define el nivel equivalente de fondo de cada periodo. '
-        'Estos valores representan el ambiente base antes de agregar eventos.'
-    )
-
-    bc1, bc2, bc3 = st.columns(3)
-    with bc1:
-        _ld_base = st.slider('LD base · día [dB(A)]', 40, 80, 58, key='c3_s5_ld_base')
-    with bc2:
-        _le_base = st.slider('LE base · tarde [dB(A)]', 40, 80, 55, key='c3_s5_le_base')
-    with bc3:
-        _ln_base = st.slider('LN base · noche [dB(A)]', 35, 75, 48, key='c3_s5_ln_base')
-
-    st.markdown(
-        """
-        <div class="c3-grid">
-          <div class="c3-card blue">
-            <div class="c3-kicker">DÍA</div>
-            <b>07:00–19:00</b>
-            <p>12 horas · sin penalización en el ejercicio.</p>
-          </div>
-          <div class="c3-card orange">
-            <div class="c3-kicker">TARDE</div>
-            <b>19:00–23:00</b>
-            <p>4 horas · +5 dB en Lden.</p>
-          </div>
-          <div class="c3-card purple">
-            <div class="c3-kicker">NOCHE</div>
-            <b>23:00–07:00</b>
-            <p>8 horas · +10 dB en Lden.</p>
+    _scene_html = """
+    <div style="border:1px solid #d8e6ef;border-radius:18px;background:linear-gradient(180deg,#eaf7fd,#f8fbfd);padding:18px">
+      <div style="display:grid;grid-template-columns:1fr 1.2fr 1fr;gap:14px;align-items:center">
+        <div style="text-align:center">
+          <div style="font-size:38px">🏠</div>
+          <div style="font-weight:800;color:#183247">Receptor</div>
+          <div style="font-size:12px;color:#657a8b">Fachada residencial</div>
+        </div>
+        <div style="position:relative;height:120px;background:#697985;border-radius:12px;overflow:hidden">
+          <div style="position:absolute;left:0;right:0;top:57px;border-top:4px dashed #f4de75"></div>
+          <div style="position:absolute;left:13%;top:22px;font-size:34px">🚗</div>
+          <div style="position:absolute;left:42%;top:62px;font-size:36px">🚚</div>
+          <div style="position:absolute;left:73%;top:18px;font-size:34px">🚙</div>
+          <div style="position:absolute;bottom:6px;left:0;right:0;text-align:center;color:white;font-weight:700;font-size:12px">
+            CARRETERA · MISMO PUNTO DE MEDICIÓN
           </div>
         </div>
-        """,
-        unsafe_allow_html=True,
-    )
-
-    st.markdown('## 2. Programa los eventos del día')
-
-    _saved4 = saved.get('c3_stage4_sel', {}) if isinstance(saved.get('c3_stage4_sel'), dict) else {}
-    _sel_default = float(_saved4.get('sel_db', 92.6))
-
-    st.write(
-        'Agrega hasta cuatro eventos. Cada evento conserva su SEL físico; lo que cambia al moverlo de hora '
-        'es el periodo al que aporta dentro del descriptor de largo plazo.'
-    )
-
-    _event_rows = []
-    _event_names = ['Sobrevuelo', 'Camión', 'Bocina', 'Operación industrial']
-    _default_hours = [14, 20, 2, 9]
-    _default_sels = [_sel_default, 90.5, 88.0, 91.0]
-
-    for _i in range(4):
-        with st.expander(f'Evento {_i+1} · {_event_names[_i]}', expanded=(_i < 2)):
-            c1,c2,c3 = st.columns([1.3,1,1])
-            with c1:
-                _hour = st.select_slider(
-                    'Hora de ocurrencia',
-                    options=list(range(24)),
-                    value=_default_hours[_i],
-                    format_func=lambda h: f'{h:02d}:00',
-                    key=f'c3_s5_event_hour_{_i}',
-                )
-            with c2:
-                _sel = st.slider(
-                    'SEL / LAE [dB]',
-                    70.0, 110.0, float(_default_sels[_i]), .5,
-                    key=f'c3_s5_event_sel_{_i}',
-                )
-            with c3:
-                _count = st.slider(
-                    'N° de eventos iguales',
-                    0, 20, 1,
-                    key=f'c3_s5_event_count_{_i}',
-                )
-
-            _period = 'Día' if 7 <= _hour < 19 else 'Tarde' if 19 <= _hour < 23 else 'Noche'
-            _penalty = 0 if _period == 'Día' else 5 if _period == 'Tarde' else 10
-
-            st.caption(
-                f'Periodo: {_period} · Penalización Lden: +{_penalty} dB · '
-                f'SEL físico del evento: {_sel:.1f} dB'
-            )
-
-            _event_rows.append({
-                'Evento': _event_names[_i],
-                'Hora': int(_hour),
-                'SEL': float(_sel),
-                'Cantidad': int(_count),
-                'Periodo': _period,
-                'Penalización': int(_penalty),
-            })
-
-    _event_df = pd.DataFrame(_event_rows)
-    st.dataframe(_event_df, hide_index=True, use_container_width=True)
-
-    st.markdown('## 3. Observa tu jornada completa')
-
-    # Build energy contributions by period.
-    _hours = np.arange(24)
-    _base_levels = np.zeros(24, dtype=float)
-    for h in _hours:
-        if 7 <= h < 19:
-            _base_levels[h] = _ld_base
-        elif 19 <= h < 23:
-            _base_levels[h] = _le_base
-        else:
-            _base_levels[h] = _ln_base
-
-    _hour_energy = 10**(_base_levels/10.0)
-
-    # Treat SEL as event energy normalized to 1s and add to hour energy budget.
-    # Educational integration: equivalent hourly energy = base 1h energy + event exposure / 3600.
-    for ev in _event_rows:
-        if ev['Cantidad'] <= 0:
-            continue
-        h = ev['Hora']
-        event_energy_1s = ev['Cantidad'] * (10**(ev['SEL']/10.0))
-        _hour_energy[h] += event_energy_1s / 3600.0
-
-    _hour_levels = 10*np.log10(_hour_energy)
-
-    _fig_day, _ax_day = c3plt.subplots(figsize=(10,4.2))
-    _ax_day.step(np.arange(25), np.r_[_hour_levels, _hour_levels[-1]], where='post', lw=1.8)
-    _ax_day.axvspan(7,19,alpha=.06,label='Día')
-    _ax_day.axvspan(19,23,alpha=.08,label='Tarde')
-    _ax_day.axvspan(23,24,alpha=.08)
-    _ax_day.axvspan(0,7,alpha=.08,label='Noche')
-    for ev in _event_rows:
-        if ev['Cantidad'] > 0:
-            _ax_day.scatter(ev['Hora']+.5, _hour_levels[ev['Hora']], s=45, zorder=5)
-            _ax_day.text(
-                ev['Hora']+.5,
-                _hour_levels[ev['Hora']]+.7,
-                ev['Evento'],
-                rotation=45,
-                ha='left',
-                va='bottom',
-                fontsize=7,
-            )
-    _ax_day.set_xlim(0,24)
-    _ax_day.set_xticks([0,3,6,9,12,15,18,21,24])
-    _ax_day.set_xlabel('Hora')
-    _ax_day.set_ylabel('Nivel equivalente horario [dB(A)]')
-    _ax_day.set_title('Jornada acústica construida por el alumno')
-    _ax_day.grid(alpha=.2)
-    _ax_day.legend(ncol=3, fontsize=8)
-    st.pyplot(_fig_day, use_container_width=True)
-    c3plt.close(_fig_day)
-
-    # Energetic period means from hourly levels.
-    _day_vals = _hour_levels[7:19]
-    _eve_vals = _hour_levels[19:23]
-    _night_vals = np.r_[_hour_levels[23:24], _hour_levels[0:7]]
-
-    _ld = _c3l1_laeq(_day_vals)
-    _le = _c3l1_laeq(_eve_vals)
-    _ln = _c3l1_laeq(_night_vals)
-    _lden = _c3l1_lden(float(_ld), float(_le), float(_ln))
-
-    m1,m2,m3,m4 = st.columns(4)
-    m1.metric('LD resultante', f'{_ld:.1f} dB(A)')
-    m2.metric('LE resultante', f'{_le:.1f} dB(A)')
-    m3.metric('LN resultante', f'{_ln:.1f} dB(A)')
-    m4.metric('Lden', f'{_lden:.1f} dB(A)')
-
-    st.markdown('## 4. ¿Por qué importa la hora?')
-
-    st.latex(
-        r'L_{den}=10\log_{10}\left[\frac{12\,10^{L_D/10}+4\,10^{(L_E+5)/10}+8\,10^{(L_N+10)/10}}{24}\right]'
-    )
-
-    st.markdown(
-        """
-        <div class="c3-grid">
-          <div class="c3-card blue">
-            <div class="c3-kicker">DÍA</div>
-            <b>0 dB</b>
-            <p>La energía del periodo entra sin corrección adicional.</p>
-          </div>
-          <div class="c3-card orange">
-            <div class="c3-kicker">TARDE</div>
-            <b>+5 dB</b>
-            <p>El mismo nivel recibe mayor peso dentro del descriptor Lden.</p>
-          </div>
-          <div class="c3-card purple">
-            <div class="c3-kicker">NOCHE</div>
-            <b>+10 dB</b>
-            <p>El mismo nivel recibe todavía mayor peso dentro del descriptor Lden.</p>
-          </div>
+        <div style="text-align:center">
+          <div style="font-size:38px">🎙️</div>
+          <div style="font-weight:800;color:#183247">Sonómetro</div>
+          <div style="font-size:12px;color:#657a8b">Posición fija durante las 3 campañas</div>
         </div>
-        """,
-        unsafe_allow_html=True,
-    )
-
-    st.markdown('## 5. Desafío práctico · mueve un mismo evento')
-
-    st.write(
-        'Selecciona uno de tus eventos y muévelo entre día, tarde y noche. '
-        'El SEL físico del evento se mantiene; observa qué cambia en la jornada y en Lden.'
-    )
-
-    _challenge_event = st.selectbox(
-        'Evento a desplazar',
-        [r['Evento'] for r in _event_rows],
-        key='c3_s5_challenge_event',
-    )
-    _selected_ev = next(r for r in _event_rows if r['Evento'] == _challenge_event)
-
-    _challenge_hour = st.segmented_control(
-        'Nuevo horario',
-        ['10:00 · Día','20:00 · Tarde','02:00 · Noche'],
-        default='10:00 · Día',
-        key='c3_s5_challenge_hour',
-    )
-    _hour_map = {
-        '10:00 · Día':10,
-        '20:00 · Tarde':20,
-        '02:00 · Noche':2,
-    }
-    _new_hour = _hour_map[_challenge_hour]
-    _new_period = 'Día' if _new_hour == 10 else 'Tarde' if _new_hour == 20 else 'Noche'
-    _new_pen = 0 if _new_period == 'Día' else 5 if _new_period == 'Tarde' else 10
-
-    # Compute three alternative Lden values with the same event moved.
-    _scenario_results = {}
-    for _label,_hnew in _hour_map.items():
-        _energy_alt = 10**(_base_levels/10.0)
-
-        for ev in _event_rows:
-            if ev['Cantidad'] <= 0:
-                continue
-            _h_use = _hnew if ev['Evento'] == _challenge_event else ev['Hora']
-            _event_energy = ev['Cantidad'] * 10**(ev['SEL']/10.0)
-            _energy_alt[_h_use] += _event_energy/3600.0
-
-        _lvl_alt = 10*np.log10(_energy_alt)
-        _ld_alt = _c3l1_laeq(_lvl_alt[7:19])
-        _le_alt = _c3l1_laeq(_lvl_alt[19:23])
-        _ln_alt = _c3l1_laeq(np.r_[_lvl_alt[23:24],_lvl_alt[0:7]])
-        _scenario_results[_label] = _c3l1_lden(_ld_alt,_le_alt,_ln_alt)
-
-    sc1,sc2,sc3 = st.columns(3)
-    sc1.metric('Mismo evento a las 10:00', f'{_scenario_results["10:00 · Día"]:.1f} dB(A)', 'Día')
-    sc2.metric('Mismo evento a las 20:00', f'{_scenario_results["20:00 · Tarde"]:.1f} dB(A)', 'Tarde')
-    sc3.metric('Mismo evento a las 02:00', f'{_scenario_results["02:00 · Noche"]:.1f} dB(A)', 'Noche')
-
-    st.markdown(
-        f"""
-        <div class="c3-card green">
-          <div class="c3-kicker">MISMO EVENTO · MISMO SEL</div>
-          <b>{_challenge_event}: {_selected_ev["SEL"]:.1f} dB de SEL</b>
-          <p>
-            Al moverlo a {_new_period.lower()}, su SEL físico no cambia.
-            Lo que cambia es el periodo al que aporta y la penalización de largo plazo asociada:
-            <b>+{_new_pen} dB</b> dentro del cálculo de Lden.
-          </p>
-        </div>
-        """,
-        unsafe_allow_html=True,
-    )
-
-    _q5 = st.radio(
-        '¿Qué cambia al mover exactamente el mismo evento desde el día hacia la noche?',
-        [
-            'Cambia su SEL físico',
-            'Cambia su contribución al descriptor Lden',
-            'Cambian ambas cosas por igual',
-        ],
-        index=None,
-        key='c3_s5_q_practical',
-    )
-    if _q5:
-        if _q5 == 'Cambia su contribución al descriptor Lden':
-            st.success(
-                'Correcto. El evento conserva su exposición física; cambia el peso que recibe en el descriptor de largo plazo.'
-            )
-        else:
-            st.warning(
-                'Recuerda: el SEL describe el evento físico. La penalización pertenece al cálculo de Lden.'
-            )
-
-    st.markdown('## 6. Cierre de la misión')
+      </div>
+    </div>
+    """
+    components.html(_scene_html, height=180, scrolling=False)
 
     st.markdown(
         """
         <div class="c3-key">
-          <b>Cadena conceptual:</b>
-          evento individual → SEL/LAE → ubicación horaria → LD/LE/LN → penalizaciones → Lden.
-          Así pasamos desde segundos de exposición hasta una descripción de 24 horas.
+          Para comparar periodos, mantenemos constante la posición del sonómetro.
+          Lo que cambia es el comportamiento del tránsito según la hora.
         </div>
         """,
         unsafe_allow_html=True,
     )
 
-    # Auto-save, no manual save button.
-    saved['c3_stage5_daycycle'] = {
-        'LD_base': float(_ld_base),
-        'LE_base': float(_le_base),
-        'LN_base': float(_ln_base),
-        'events': _event_rows,
-        'LD': float(_ld),
-        'LE': float(_le),
-        'LN': float(_ln),
-        'Lden': float(_lden),
-        'challenge_event': _challenge_event,
-        'challenge_hour': _new_hour,
-        'challenge_period': _new_period,
-        'challenge_penalty': _new_pen,
-        'scenario_lden': {k: float(v) for k,v in _scenario_results.items()},
-        'answer': _q5,
+    # deterministic synthetic traffic records
+    _t = np.arange(0, 180, 1, dtype=float)
+
+    def _traffic_record(period):
+        _seed = {'Día':21, 'Tarde':37, 'Noche':59}[period]
+        _rng = np.random.default_rng(_seed)
+
+        if period == 'Día':
+            _y = 64.0 + 1.0*np.sin(_t/8.0) + _rng.normal(0,.65,len(_t))
+            _events = [(18,4.5,3),(42,5.0,4),(66,3.7,3),(90,5.4,4),(116,4.1,3),(143,5.0,4),(165,3.8,3)]
+        elif period == 'Tarde':
+            _y = 60.5 + .9*np.sin(_t/10.0) + _rng.normal(0,.58,len(_t))
+            _events = [(26,4.0,4),(58,4.7,4),(96,3.7,3),(132,4.6,4),(160,3.5,3)]
+        else:
+            _y = 49.5 + .45*np.sin(_t/13.0) + _rng.normal(0,.38,len(_t))
+            _events = [(34,10.5,2.0),(92,8.0,2.4),(151,11.5,1.8)]
+
+        for _c,_a,_w in _events:
+            _y += _a*np.exp(-.5*((_t-_c)/_w)**2)
+        return _y
+
+    _records = {
+        'Día': _traffic_record('Día'),
+        'Tarde': _traffic_record('Tarde'),
+        'Noche': _traffic_record('Noche'),
     }
-    _c3l1_save(saved,deps)
+    _leqs = {k: float(_c3l1_laeq(v)) for k,v in _records.items()}
+
+    if 'c3_s5_measured_periods' not in st.session_state:
+        st.session_state['c3_s5_measured_periods'] = []
+
+    _measured = st.session_state['c3_s5_measured_periods']
+
+    st.markdown('## 2. Campaña 1 · Medición diurna')
+
+    st.markdown(
+        """
+        <div class="c3-card blue">
+          <div class="c3-kicker">PERIODO DÍA</div>
+          <b>Tránsito alto y relativamente continuo</b>
+          <p>Observa el registro temporal y realiza la medición para obtener el LAeq representativo del periodo.</p>
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
+
+    _fig_d,_ax_d=c3plt.subplots(figsize=(10,3.5))
+    _ax_d.plot(_t,_records['Día'],lw=1.35)
+    _ax_d.set_title('Historia temporal · carretera · periodo día')
+    _ax_d.set_xlabel('Tiempo de medición [s]')
+    _ax_d.set_ylabel('Nivel [dB(A)]')
+    _ax_d.grid(alpha=.2)
+    st.pyplot(_fig_d,use_container_width=True)
+    c3plt.close(_fig_d)
+
+    if 'Día' not in _measured:
+        if st.button('▶ Realizar medición diurna', key='c3_s5_measure_day', use_container_width=True):
+            _measured.append('Día')
+            st.session_state['c3_s5_measured_periods'] = _measured
+            st.rerun()
+    else:
+        d1,d2,d3 = st.columns(3)
+        d1.metric('Duración', '180 s')
+        d2.metric('Descriptor obtenido', 'LAeq,D')
+        d3.metric('Resultado', f'{_leqs["Día"]:.1f} dB(A)')
+        st.success(
+            f'Medición diurna completada: LAeq,D = {_leqs["Día"]:.1f} dB(A). '
+            'Este valor será el candidato para construir LD.'
+        )
+
+    if 'Día' in _measured:
+        st.markdown('## 3. Campaña 2 · Medición de tarde')
+
+        st.markdown(
+            """
+            <div class="c3-card orange">
+              <div class="c3-kicker">PERIODO TARDE</div>
+              <b>Tránsito moderado con variaciones de flujo</b>
+              <p>Mantén el mismo punto de medición y observa cómo cambia la historia temporal.</p>
+            </div>
+            """,
+            unsafe_allow_html=True,
+        )
+
+        _fig_e,_ax_e=c3plt.subplots(figsize=(10,3.5))
+        _ax_e.plot(_t,_records['Tarde'],lw=1.35)
+        _ax_e.set_title('Historia temporal · carretera · periodo tarde')
+        _ax_e.set_xlabel('Tiempo de medición [s]')
+        _ax_e.set_ylabel('Nivel [dB(A)]')
+        _ax_e.grid(alpha=.2)
+        st.pyplot(_fig_e,use_container_width=True)
+        c3plt.close(_fig_e)
+
+        if 'Tarde' not in _measured:
+            if st.button('▶ Realizar medición de tarde', key='c3_s5_measure_evening', use_container_width=True):
+                _measured.append('Tarde')
+                st.session_state['c3_s5_measured_periods'] = _measured
+                st.rerun()
+        else:
+            e1,e2,e3 = st.columns(3)
+            e1.metric('Duración', '180 s')
+            e2.metric('Descriptor obtenido', 'LAeq,E')
+            e3.metric('Resultado', f'{_leqs["Tarde"]:.1f} dB(A)')
+            st.success(
+                f'Medición de tarde completada: LAeq,E = {_leqs["Tarde"]:.1f} dB(A). '
+                'Este valor será el candidato para construir LE.'
+            )
+
+    if 'Tarde' in _measured:
+        st.markdown('## 4. Campaña 3 · Medición nocturna')
+
+        st.markdown(
+            """
+            <div class="c3-card purple">
+              <div class="c3-kicker">PERIODO NOCHE</div>
+              <b>Fondo más bajo y eventos vehiculares aislados</b>
+              <p>En la noche disminuye el flujo continuo, pero los pasos individuales pueden destacar con mayor claridad.</p>
+            </div>
+            """,
+            unsafe_allow_html=True,
+        )
+
+        _fig_n,_ax_n=c3plt.subplots(figsize=(10,3.5))
+        _ax_n.plot(_t,_records['Noche'],lw=1.35)
+        _ax_n.set_title('Historia temporal · carretera · periodo noche')
+        _ax_n.set_xlabel('Tiempo de medición [s]')
+        _ax_n.set_ylabel('Nivel [dB(A)]')
+        _ax_n.grid(alpha=.2)
+        st.pyplot(_fig_n,use_container_width=True)
+        c3plt.close(_fig_n)
+
+        if 'Noche' not in _measured:
+            if st.button('▶ Realizar medición nocturna', key='c3_s5_measure_night', use_container_width=True):
+                _measured.append('Noche')
+                st.session_state['c3_s5_measured_periods'] = _measured
+                st.rerun()
+        else:
+            n1,n2,n3 = st.columns(3)
+            n1.metric('Duración', '180 s')
+            n2.metric('Descriptor obtenido', 'LAeq,N')
+            n3.metric('Resultado', f'{_leqs["Noche"]:.1f} dB(A)')
+            st.success(
+                f'Medición nocturna completada: LAeq,N = {_leqs["Noche"]:.1f} dB(A). '
+                'Este valor será el candidato para construir LN.'
+            )
+
+    if all(p in _measured for p in ['Día','Tarde','Noche']):
+        st.markdown('## 5. Ya mediste los tres periodos')
+
+        c1,c2,c3 = st.columns(3)
+        c1.metric('LAeq,D medido', f'{_leqs["Día"]:.1f} dB(A)')
+        c2.metric('LAeq,E medido', f'{_leqs["Tarde"]:.1f} dB(A)')
+        c3.metric('LAeq,N medido', f'{_leqs["Noche"]:.1f} dB(A)')
+
+        st.markdown(
+            """
+            <div class="c3-card green">
+              <div class="c3-kicker">AHORA CONSTRUYE LOS DESCRIPTORES DE PERIODO</div>
+              <b>Una medición representativa entrega el LAeq observado en ese periodo.</b>
+              <p>
+                En este ejercicio asumimos que cada registro es representativo del periodo correspondiente.
+                Por ello, el alumno debe asociar correctamente:
+                LAeq,D → LD · LAeq,E → LE · LAeq,N → LN.
+              </p>
+            </div>
+            """,
+            unsafe_allow_html=True,
+        )
+
+        st.markdown('## 6. Construye LD, LE y LN')
+
+        _options = [
+            f'{_leqs["Día"]:.1f} dB(A)',
+            f'{_leqs["Tarde"]:.1f} dB(A)',
+            f'{_leqs["Noche"]:.1f} dB(A)',
+        ]
+
+        a1,a2,a3 = st.columns(3)
+        with a1:
+            _ld_choice = st.selectbox(
+                'LD · nivel día',
+                ['Seleccionar'] + _options,
+                key='c3_s5_ld_choice',
+            )
+        with a2:
+            _le_choice = st.selectbox(
+                'LE · nivel tarde',
+                ['Seleccionar'] + _options,
+                key='c3_s5_le_choice',
+            )
+        with a3:
+            _ln_choice = st.selectbox(
+                'LN · nivel noche',
+                ['Seleccionar'] + _options,
+                key='c3_s5_ln_choice',
+            )
+
+        _expected_ld = f'{_leqs["Día"]:.1f} dB(A)'
+        _expected_le = f'{_leqs["Tarde"]:.1f} dB(A)'
+        _expected_ln = f'{_leqs["Noche"]:.1f} dB(A)'
+
+        _all_selected = all(x != 'Seleccionar' for x in [_ld_choice,_le_choice,_ln_choice])
+
+        if _all_selected:
+            _period_correct = (
+                _ld_choice == _expected_ld and
+                _le_choice == _expected_le and
+                _ln_choice == _expected_ln
+            )
+            if _period_correct:
+                st.success(
+                    'Correcto. Construiste LD, LE y LN a partir de las tres mediciones representativas.'
+                )
+            else:
+                st.warning(
+                    'Revisa la correspondencia temporal: cada nivel debe conservar el periodo en que fue medido.'
+                )
+        else:
+            _period_correct = False
+
+        if _period_correct:
+            _ld = _leqs['Día']
+            _le = _leqs['Tarde']
+            _ln = _leqs['Noche']
+
+            st.markdown('## 7. Lleva los tres resultados a una jornada de 24 horas')
+
+            _hours = np.arange(24)
+            _day_curve = np.zeros(24)
+            for _h in _hours:
+                if 7 <= _h < 19:
+                    _day_curve[_h] = _ld
+                elif 19 <= _h < 23:
+                    _day_curve[_h] = _le
+                else:
+                    _day_curve[_h] = _ln
+
+            _fig24,_ax24=c3plt.subplots(figsize=(10,4.0))
+            _ax24.step(
+                np.arange(25),
+                np.r_[_day_curve,_day_curve[-1]],
+                where='post',
+                lw=2,
+            )
+            _ax24.axvspan(7,19,alpha=.06,label='Día · LD')
+            _ax24.axvspan(19,23,alpha=.09,label='Tarde · LE')
+            _ax24.axvspan(23,24,alpha=.08)
+            _ax24.axvspan(0,7,alpha=.08,label='Noche · LN')
+            _ax24.set_xlim(0,24)
+            _ax24.set_xticks([0,3,6,9,12,15,18,21,24])
+            _ax24.set_xlabel('Hora del día')
+            _ax24.set_ylabel('Nivel equivalente del periodo [dB(A)]')
+            _ax24.set_title('Ciclo acústico de 24 horas construido por el alumno')
+            _ax24.grid(alpha=.2)
+            _ax24.legend(ncol=3,fontsize=8)
+            st.pyplot(_fig24,use_container_width=True)
+            c3plt.close(_fig24)
+
+            r1,r2,r3 = st.columns(3)
+            r1.metric('LD',f'{_ld:.1f} dB(A)')
+            r2.metric('LE',f'{_le:.1f} dB(A)')
+            r3.metric('LN',f'{_ln:.1f} dB(A)')
+
+            st.markdown(
+                """
+                <div class="c3-key">
+                  <b>Hasta aquí todavía no hemos calculado Lden.</b>
+                  Primero construimos correctamente los tres niveles de periodo.
+                  El siguiente paso es combinar esos niveles energéticamente y aplicar las penalizaciones correspondientes.
+                </div>
+                """,
+                unsafe_allow_html=True,
+            )
+
+            st.markdown('## 8. Construye Lden')
+
+            st.latex(
+                r'L_{den}=10\log_{10}\left[\frac{12\,10^{L_D/10}+4\,10^{(L_E+5)/10}+8\,10^{(L_N+10)/10}}{24}\right]'
+            )
+
+            st.markdown(
+                """
+                <div class="c3-grid">
+                  <div class="c3-card blue">
+                    <div class="c3-kicker">DÍA</div>
+                    <b>LD · 12 h</b>
+                    <p>Entra al cálculo sin penalización adicional.</p>
+                  </div>
+                  <div class="c3-card orange">
+                    <div class="c3-kicker">TARDE</div>
+                    <b>LE + 5 dB · 4 h</b>
+                    <p>El periodo tarde recibe una corrección de +5 dB.</p>
+                  </div>
+                  <div class="c3-card purple">
+                    <div class="c3-kicker">NOCHE</div>
+                    <b>LN + 10 dB · 8 h</b>
+                    <p>El periodo noche recibe una corrección de +10 dB.</p>
+                  </div>
+                </div>
+                """,
+                unsafe_allow_html=True,
+            )
+
+            _lden = _c3l1_lden(float(_ld),float(_le),float(_ln))
+
+            st.markdown('### 8.1 Antes de revelar el resultado')
+
+            _prediction = st.radio(
+                '¿Qué periodo crees que puede aumentar más su peso relativo dentro de Lden?',
+                [
+                    'Día, porque dura más horas',
+                    'Tarde, por la corrección de +5 dB',
+                    'Noche, por la corrección de +10 dB',
+                ],
+                index=None,
+                key='c3_s5_lden_prediction',
+            )
+
+            if _prediction:
+                if _prediction == 'Noche, por la corrección de +10 dB':
+                    st.success(
+                        'Correcto. Aunque el nivel nocturno medido sea menor, la penalización de +10 dB aumenta fuertemente su peso energético dentro de Lden.'
+                    )
+                else:
+                    st.info(
+                        'La duración influye, pero observa también la magnitud de las correcciones energéticas de tarde y noche.'
+                    )
+
+                st.markdown(
+                    f"""
+                    <div style="
+                        margin:1rem 0;
+                        padding:1.1rem 1.2rem;
+                        border-radius:16px;
+                        border:1px solid #bfe4cf;
+                        background:linear-gradient(135deg,#f2fbf6,#ffffff);
+                    ">
+                      <div style="font-size:.72rem;font-weight:800;letter-spacing:.07em;color:#248552">
+                        RESULTADO DEL CICLO DE 24 HORAS
+                      </div>
+                      <div style="font-size:2rem;font-weight:900;color:#183247;margin:.25rem 0">
+                        Lden = {_lden:.1f} dB(A)
+                      </div>
+                      <div style="color:#40586b">
+                        Construido a partir de las tres mediciones de tráfico vehicular realizadas por el alumno.
+                      </div>
+                    </div>
+                    """,
+                    unsafe_allow_html=True,
+                )
+
+            saved['c3_stage5_daycycle'] = {
+                'LAeq_D_measurement': float(_leqs['Día']),
+                'LAeq_E_measurement': float(_leqs['Tarde']),
+                'LAeq_N_measurement': float(_leqs['Noche']),
+                'LD': float(_ld),
+                'LE': float(_le),
+                'LN': float(_ln),
+                'Lden': float(_lden),
+                'prediction': _prediction,
+            }
+            _c3l1_save(saved,deps)
 
     _viewer_role = (
         st.session_state.get('role')
@@ -21665,14 +21753,18 @@ def _c3l1_stage5_impl(lab: dict, saved: dict, deps: Dict[str, Any]):
         st.markdown('### Pauta docente · Etapa 5')
         st.markdown(
             """
-            **Objetivo didáctico:** que el alumno descubra que SEL describe un evento,
-            mientras que Lden describe exposición de largo periodo considerando además el horario.
+            **Secuencia que conviene explicar:**
 
-            Conviene enfatizar que las penalizaciones no alteran físicamente el evento medido.
-            Son correcciones incorporadas al descriptor para aumentar el peso de periodos más sensibles.
+            1. El alumno no recibe LD, LE y LN como números dados: primero realiza tres mediciones.
+            2. Cada campaña entrega un LAeq representativo del periodo observado.
+            3. Bajo la hipótesis didáctica de representatividad del ejercicio, esos resultados se utilizan para construir LD, LE y LN.
+            4. Solo después se presenta la ecuación de Lden.
+            5. La combinación es energética, no aritmética.
+            6. Las correcciones +5 y +10 dB pertenecen a Lden; no son aumentos físicos del ruido medido.
 
-            El ejercicio también permite discutir que una jornada con el mismo número de eventos puede
-            producir resultados distintos si cambia su distribución horaria.
+            **Discusión importante:** en una campaña real, una medición corta no representa automáticamente un periodo completo.
+            Aquí se asume representatividad para enseñar el procedimiento. En la Etapa 7 se trabaja precisamente cómo justificar
+            dónde, cuándo y cuánto medir.
             """
         )
 
