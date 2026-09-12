@@ -25033,6 +25033,10 @@ def _c3l1_stage9_impl(lab: dict, saved: dict, deps: Dict[str, Any]):
         return
 
     previous = saved.get('c3_s9_formative', {}) if isinstance(saved.get('c3_s9_formative'), dict) else {}
+    if not previous:
+        previous = (saved.get('c3_formative', {}) or {}).get('s9_comprehension_draft', {}) or {}
+    if not previous:
+        previous = (saved.get('c3_formative', {}) or {}).get('s9_comprehension', {}) or {}
     old_answers = previous.get('answers', {}) if isinstance(previous.get('answers'), dict) else {}
     old_checked = previous.get('checked', {}) if isinstance(previous.get('checked'), dict) else {}
 
@@ -25085,6 +25089,10 @@ def _c3l1_stage9_impl(lab: dict, saved: dict, deps: Dict[str, Any]):
         'total_questions': len(_C3L1_STAGE9_QUESTIONS),
     }
     saved['c3_s9_formative'] = payload
+    # Guardado automático del borrador: cada respuesta/comprobación queda persistida
+    # aunque el alumno cambie de etapa antes de completar la actividad.
+    saved.setdefault('c3_formative', {})['s9_comprehension_draft'] = payload
+    _c3l1_save(saved, deps)
 
     all_checked = all(checked.get(str(i), False) for i in range(len(_C3L1_STAGE9_QUESTIONS)))
     if all_checked:
@@ -25194,6 +25202,10 @@ def _c3l1_stage10_impl(lab: dict, saved: dict, deps: Dict[str, Any]):
         return
 
     draft = saved.get('c3_s10_formative', {}) if isinstance(saved.get('c3_s10_formative'), dict) else {}
+    if not draft:
+        draft = (saved.get('c3_formative', {}) or {}).get('s10_integrated_case_draft', {}) or {}
+    if not draft:
+        draft = (saved.get('c3_formative', {}) or {}).get('s10_integrated_case', {}) or {}
 
     st.markdown('## Encargo profesional')
     st.write(
@@ -25391,6 +25403,11 @@ def _c3l1_stage10_impl(lab: dict, saved: dict, deps: Dict[str, Any]):
     }
 
     saved['c3_s10_formative'] = payload
+    # Guardado automático del borrador: mantiene cálculos, selecciones, textos y
+    # respuestas aunque el alumno navegue a otra etapa y regrese posteriormente.
+    saved.setdefault('c3_formative', {})['s10_integrated_case_draft'] = payload
+    _c3l1_save(saved, deps)
+
     ready = all([
         main_source != 'Seleccionar',
         receptor != 'Seleccionar',

@@ -11,6 +11,7 @@ Separa deliberadamente dos conceptos académicos:
 """
 
 from core.activities import formative_progress_snapshot
+import json
 
 _LOCAL_NAMES = {
     "run_view", "_bind_runtime", "_VIEWS", "_LOCAL_NAMES",
@@ -1832,6 +1833,125 @@ def _c2_render_lab2_stage10_tabs(row, reviewed, progress_rows=None):
         _c2_render_feedback_tab(row, reviewed=reviewed, formative=False)
 
 
+
+def _c3_extract_saved_payload(progress_rows):
+    """Obtiene el objeto saved del Curso 3 desde las filas de progreso disponibles.
+
+    Tolera distintas formas históricas de almacenamiento del registro.
+    """
+    candidates = []
+    for row in progress_rows or []:
+        if not isinstance(row, dict):
+            continue
+        # Filtrar Curso 3 cuando hay identificadores disponibles.
+        blob = " ".join(str(row.get(k, "")) for k in (
+            "class_id", "lab_id", "course", "course_name", "lab_name", "title"
+        )).lower()
+        if blob and not any(x in blob for x in ("curso3", "curso 3", "control de ruido ambiental", "c3")):
+            # No descartar si no hay ninguna señal identificadora.
+            if any(row.get(k) for k in ("class_id", "lab_id", "course", "course_name", "lab_name")):
+                continue
+
+        for key in ("saved", "payload", "data", "progress", "state", "answers", "value"):
+            val = row.get(key)
+            if isinstance(val, dict):
+                candidates.append(val)
+            elif isinstance(val, str):
+                try:
+                    parsed = json.loads(val)
+                    if isinstance(parsed, dict):
+                        candidates.append(parsed)
+                except Exception:
+                    pass
+
+        # A veces la propia fila ya contiene las claves saved.
+        if any(k in row for k in ("c3_s9_formative", "c3_s10_formative", "c3_formative")):
+            candidates.append(row)
+
+    # Preferir el candidato que realmente tenga datos de etapas 9/10.
+    for obj in reversed(candidates):
+        if any(k in obj for k in ("c3_s9_formative", "c3_s10_formative", "c3_formative")):
+            return obj
+    return candidates[-1] if candidates else {}
+
+
+def _render_c3_stage_work(saved_obj, stage):
+    """Muestra al alumno su propio borrador/trabajo formativo guardado."""
+    if not isinstance(saved_obj, dict):
+        saved_obj = {}
+
+    formative = saved_obj.get("c3_formative", {}) if isinstance(saved_obj.get("c3_formative"), dict) else {}
+
+    if stage == 9:
+        payload = saved_obj.get("c3_s9_formative")
+        if not isinstance(payload, dict) or not payload:
+            payload = formative.get("s9_comprehension_draft") or formative.get("s9_comprehension") or {}
+        st.markdown("#### Mi trabajo · Etapa 9")
+        if not payload:
+            st.caption("Aún no hay respuestas guardadas en esta etapa.")
+            return
+        answers = payload.get("answers", {}) if isinstance(payload.get("answers"), dict) else {}
+        checked = payload.get("checked", {}) if isinstance(payload.get("checked"), dict) else {}
+        total = int(payload.get("total_questions") or max(len(answers), 10))
+        completed = int(payload.get("completed_questions") or sum(1 for v in checked.values() if v))
+        st.caption(f"{completed} de {total} preguntas comprobadas.")
+        for i in range(total):
+            with st.container(border=True):
+                st.markdown(f"**Pregunta {i+1}**")
+                ans = answers.get(str(i))
+                st.write(ans if ans not in (None, "") else "Sin respuesta todavía.")
+                if checked.get(str(i)):
+                    st.caption("Respuesta comprobada.")
+        return
+
+    if stage == 10:
+        payload = saved_obj.get("c3_s10_formative")
+        if not isinstance(payload, dict) or not payload:
+            payload = formative.get("s10_integrated_case_draft") or formative.get("s10_integrated_case") or {}
+        st.markdown("#### Mi trabajo · Etapa 10")
+        if not payload:
+            st.caption("Aún no hay trabajo guardado en esta etapa.")
+            return
+
+        summary = [
+            ("Fuente principal", payload.get("main_source")),
+            ("Receptor crítico", payload.get("receptor")),
+            ("Punto adicional", payload.get("extra_point")),
+            ("Cobertura temporal", payload.get("periods")),
+            ("Instrumentación", payload.get("instrument")),
+            ("Configuración", payload.get("weighting")),
+            ("LAeq P1", payload.get("ans_laeq")),
+            ("L10", payload.get("ans_l10")),
+            ("L90", payload.get("ans_l90")),
+            ("SEL", payload.get("ans_sel")),
+            ("Lden", payload.get("ans_lden")),
+        ]
+        for label, value in summary:
+            if value not in (None, "", "Seleccionar"):
+                st.markdown(f"**{label}:** {value}")
+
+        if payload.get("variability"):
+            st.markdown("**Interpretación L10−L90**")
+            st.write(payload.get("variability"))
+        if payload.get("limitations"):
+            st.markdown("**Limitaciones**")
+            st.write(payload.get("limitations"))
+        if payload.get("missing"):
+            st.markdown("**Información faltante**")
+            st.write(payload.get("missing"))
+        if payload.get("conclusion"):
+            st.markdown("**Conclusión profesional**")
+            st.write(payload.get("conclusion"))
+
+        answers = payload.get("answers", {}) if isinstance(payload.get("answers"), dict) else {}
+        if answers:
+            st.markdown("**Preguntas de comprensión**")
+            for key in sorted(answers, key=lambda x: int(x) if str(x).isdigit() else 999):
+                with st.container(border=True):
+                    st.markdown(f"Pregunta {int(key)+1 if str(key).isdigit() else key}")
+                    st.write(answers.get(key) or "Sin respuesta todavía.")
+        return
+
 _C3_LAB1_STAGE_TITLES_RESULTS = {
     0: "Introducción al laboratorio",
     1: "Ruido ambiental: fuentes, caminos y receptores",
@@ -1920,6 +2040,17 @@ def _render_course3_block(rows, progress_rows):
                         p1["percent"],
                         p1.get("stage_rows"),
                     )
+
+                    _c3_saved = _c3_extract_saved_payload(progress_rows)
+                    with st.expander("Revisar mi trabajo guardado · Etapas 9 y 10", expanded=False):
+                        _work_tab9, _work_tab10 = st.tabs([
+                            "Etapa 9 · Comprensión",
+                            "Etapa 10 · Integrador",
+                        ])
+                        with _work_tab9:
+                            _render_c3_stage_work(_c3_saved, 9)
+                        with _work_tab10:
+                            _render_c3_stage_work(_c3_saved, 10)
                 # Mantener la segunda columna libre permite incorporar Lab 2
                 # posteriormente sin alterar la arquitectura del curso.
                 with cols[1]:
