@@ -25265,6 +25265,139 @@ def _c3l1_stage10_finish(saved, deps, payload, score):
 
 def _c3l1_stage10_impl(lab: dict, saved: dict, deps: Dict[str, Any]):
     _c3l1_style()
+
+    st.markdown(
+        '''
+        <style>
+        .s10-hero {
+            border:1px solid #cfe1ed;
+            border-radius:22px;
+            background:linear-gradient(135deg,#0e426b 0%,#119dc4 100%);
+            padding:1.25rem 1.35rem;
+            color:white;
+            margin:.6rem 0 1.2rem;
+            box-shadow:0 10px 30px rgba(12,68,104,.12);
+        }
+        .s10-hero .eyebrow {
+            font-size:.68rem;
+            font-weight:850;
+            letter-spacing:.11em;
+            opacity:.86;
+            margin-bottom:.35rem;
+        }
+        .s10-hero .title {
+            font-size:1.3rem;
+            font-weight:900;
+            line-height:1.22;
+            margin-bottom:.45rem;
+        }
+        .s10-hero .text {
+            font-size:.94rem;
+            line-height:1.6;
+            opacity:.96;
+        }
+        .s10-scene {
+            border:1px solid #d7e6ef;
+            border-radius:20px;
+            background:linear-gradient(180deg,#eef8fc,#ffffff);
+            padding:.8rem;
+            margin:.7rem 0 1.2rem;
+        }
+        .s10-section {
+            border:1px solid #d9e6ef;
+            border-radius:18px;
+            background:linear-gradient(135deg,#ffffff,#f8fbfd);
+            padding:1rem 1.1rem;
+            margin:1.05rem 0 .65rem;
+            box-shadow:0 5px 18px rgba(24,72,102,.045);
+        }
+        .s10-section-blue {
+            border-color:#bddded;
+            background:linear-gradient(135deg,#f1f9fd,#ffffff);
+        }
+        .s10-section-green {
+            border-color:#c3e4d0;
+            background:linear-gradient(135deg,#f3fbf6,#ffffff);
+        }
+        .s10-section-orange {
+            border-color:#efd4be;
+            background:linear-gradient(135deg,#fff8f2,#ffffff);
+        }
+        .s10-kicker {
+            color:#1784b8;
+            font-size:.68rem;
+            font-weight:850;
+            letter-spacing:.09em;
+            margin-bottom:.22rem;
+        }
+        .s10-heading {
+            color:#102d49;
+            font-size:1.08rem;
+            font-weight:900;
+            line-height:1.25;
+            margin-bottom:.3rem;
+        }
+        .s10-copy {
+            color:#50687b;
+            font-size:.92rem;
+            line-height:1.58;
+        }
+        .s10-metrics {
+            display:grid;
+            grid-template-columns:repeat(4,minmax(0,1fr));
+            gap:.7rem;
+            margin:.7rem 0 1rem;
+        }
+        .s10-metric {
+            background:#fff;
+            border:1px solid #d8e6ef;
+            border-radius:14px;
+            padding:.8rem .85rem;
+        }
+        .s10-metric .label {
+            font-size:.66rem;
+            font-weight:850;
+            letter-spacing:.07em;
+            color:#6b8192;
+        }
+        .s10-metric .value {
+            margin-top:.15rem;
+            font-size:1.15rem;
+            font-weight:900;
+            color:#17324c;
+        }
+        .s10-qcard {
+            border:1px solid #d9e6ef;
+            border-radius:16px;
+            padding:.9rem 1rem;
+            background:#fff;
+            margin:.75rem 0 .4rem;
+        }
+        .s10-qnum {
+            color:#1784b8;
+            font-size:.67rem;
+            font-weight:850;
+            letter-spacing:.08em;
+            margin-bottom:.25rem;
+        }
+        .s10-qtext {
+            color:#153149;
+            font-weight:780;
+            line-height:1.45;
+        }
+        .s10-divider {
+            height:1px;
+            background:linear-gradient(90deg,transparent,#d5e5ef 20%,#d5e5ef 80%,transparent);
+            margin:1.5rem 0;
+        }
+        @media (max-width:800px) {
+            .s10-metrics { grid-template-columns:repeat(2,minmax(0,1fr)); }
+        }
+        </style>
+        ''',
+        unsafe_allow_html=True,
+    )
+
     _c3l1_header(
         10,
         'Diagnóstico acústico de un barrio',
@@ -25274,18 +25407,32 @@ def _c3l1_stage10_impl(lab: dict, saved: dict, deps: Dict[str, Any]):
     )
     _c3l1_asset('curso3_lab1_etapa10_barrio.webp')
 
+    st.markdown(
+        '''
+        <div class="s10-hero">
+          <div class="eyebrow">CASO INTEGRADOR FORMATIVO · SIN NOTA</div>
+          <div class="title">Diagnostica un barrio como si estuvieras frente a un encargo profesional real</div>
+          <div class="text">
+            Integra fuentes, receptores, campaña, instrumentación, descriptores, representatividad y criterio técnico.
+            Tu trabajo se guarda automáticamente y puedes volver a corregirlo cuando quieras.
+          </div>
+        </div>
+        ''',
+        unsafe_allow_html=True,
+    )
+
     role = st.session_state.get('role', 'Alumno')
     projection = bool(st.session_state.get('projection_mode') or role == 'Proyección')
 
     st.markdown(
         """
-        <div class="c3-card blue">
-          <div class="c3-kicker">ETAPA INTEGRADORA FORMATIVA · SIN NOTA</div>
-          <b>El objetivo es integrar lo aprendido, no obtener una calificación.</b>
-          <p>
-            Tu diagnóstico se guarda como parte del avance del Laboratorio 1. Puedes volver, corregirlo
-            y completar el caso sin generar una evaluación oficial.
-          </p>
+        <div class="s10-section s10-section-blue">
+          <div class="s10-kicker">TRABAJO PERSISTENTE</div>
+          <div class="s10-heading">Puedes avanzar por partes</div>
+          <div class="s10-copy">
+            Cada selección, cálculo y texto se guarda como borrador. Si vuelves a otra etapa y regresas,
+            encontrarás tu trabajo exactamente donde lo dejaste.
+          </div>
         </div>
         """,
         unsafe_allow_html=True,
@@ -25321,6 +25468,38 @@ def _c3l1_stage10_impl(lab: dict, saved: dict, deps: Dict[str, Any]):
     if not draft:
         draft = (saved.get('c3_formative', {}) or {}).get('s10_integrated_case', {}) or {}
 
+    st.markdown(
+        '''
+        <div class="s10-scene">
+          <svg viewBox="0 0 1100 360" xmlns="http://www.w3.org/2000/svg" style="width:100%;height:auto;display:block">
+            <rect x="12" y="12" width="1076" height="336" rx="22" fill="#edf7fb"/>
+            <rect x="12" y="245" width="1076" height="74" fill="#6c7f8b"/>
+            <line x1="20" y1="282" x2="1080" y2="282" stroke="#f2dc71" stroke-width="4" stroke-dasharray="24 18"/>
+            <text x="72" y="234" font-size="15" font-weight="800" fill="#17324c">AVENIDA</text>
+            <text x="75" y="282" font-size="34">🚗</text>
+            <text x="305" y="293" font-size="38">🚚</text>
+            <text x="535" y="275" font-size="34">🚌</text>
+            <rect x="135" y="125" width="170" height="120" rx="8" fill="#d8c9aa"/>
+            <polygon points="120,125 220,82 320,125" fill="#b7956f"/>
+            <text x="220" y="108" text-anchor="middle" font-size="15" font-weight="800" fill="#17324c">VIVIENDAS</text>
+            <rect x="410" y="145" width="180" height="100" rx="8" fill="#c8d8df"/>
+            <rect x="455" y="115" width="90" height="35" rx="6" fill="#8198a4"/>
+            <text x="500" y="102" text-anchor="middle" font-size="15" font-weight="800" fill="#17324c">SUPERMERCADO + HVAC</text>
+            <rect x="735" y="130" width="160" height="115" rx="8" fill="#dbc8aa"/>
+            <text x="815" y="115" text-anchor="middle" font-size="15" font-weight="800" fill="#17324c">COLEGIO</text>
+            <circle cx="360" cy="195" r="11" fill="#1498c4" stroke="white" stroke-width="3"/>
+            <text x="360" y="174" text-anchor="middle" font-size="12" font-weight="800" fill="#17324c">P1</text>
+            <circle cx="660" cy="195" r="11" fill="#1498c4" stroke="white" stroke-width="3"/>
+            <text x="660" y="174" text-anchor="middle" font-size="12" font-weight="800" fill="#17324c">P2</text>
+            <path d="M700 58 C820 15 955 28 1045 80" fill="none" stroke="#7b94a5" stroke-width="3" stroke-dasharray="10 8"/>
+            <text x="895" y="45" text-anchor="middle" font-size="14" font-weight="800" fill="#17324c">TRAYECTORIA DE SOBREVUELO</text>
+            <text x="970" y="92" font-size="30">✈️</text>
+          </svg>
+        </div>
+        ''',
+        unsafe_allow_html=True,
+    )
+
     st.markdown('## Encargo profesional')
     st.write(
         'Realiza una evaluación acústica preliminar de un barrio urbano mixto con viviendas, colegio, avenida, '
@@ -25328,7 +25507,16 @@ def _c3l1_stage10_impl(lab: dict, saved: dict, deps: Dict[str, Any]):
         'y declarar explícitamente las limitaciones del diagnóstico.'
     )
 
-    st.markdown('### 1 · Reconocimiento')
+    st.markdown(
+        '''
+        <div class="s10-section s10-section-blue">
+          <div class="s10-kicker">MISIÓN 1 · RECONOCER</div>
+          <div class="s10-heading">¿Qué fuente domina y qué receptor es más sensible?</div>
+          <div class="s10-copy">Parte por leer el territorio antes de calcular. Selecciona la fuente principal probable y el receptor que merece mayor atención.</div>
+        </div>
+        ''',
+        unsafe_allow_html=True,
+    )
     source_opts = ['Seleccionar', 'Avenida / tráfico', 'Fuente técnica', 'Comercio', 'Sobrevuelos']
     receptor_opts = ['Seleccionar', 'Vivienda P1', 'Colegio', 'Parque', 'Comercio']
     main_source = st.selectbox(
@@ -25344,7 +25532,16 @@ def _c3l1_stage10_impl(lab: dict, saved: dict, deps: Dict[str, Any]):
         key='c3_s10f_receptor',
     )
 
-    st.markdown('### 2 · Diseño de campaña')
+    st.markdown(
+        '''
+        <div class="s10-section s10-section-green">
+          <div class="s10-kicker">MISIÓN 2 · DISEÑAR</div>
+          <div class="s10-heading">Construye una campaña que responda al problema</div>
+          <div class="s10-copy">Define un punto adicional y una cobertura temporal coherente con las fuentes y receptores seleccionados.</div>
+        </div>
+        ''',
+        unsafe_allow_html=True,
+    )
     extra_opts = ['Seleccionar', 'Fondo residencial', 'Junto a avenida', 'Junto a fuente técnica', 'Colegio']
     extra_point = st.selectbox(
         'Punto adicional recomendado',
@@ -25360,7 +25557,16 @@ def _c3l1_stage10_impl(lab: dict, saved: dict, deps: Dict[str, Any]):
         key='c3_s10f_periods',
     )
 
-    st.markdown('### 3 · Instrumentación')
+    st.markdown(
+        '''
+        <div class="s10-section">
+          <div class="s10-kicker">MISIÓN 3 · INSTRUMENTAR</div>
+          <div class="s10-heading">Elige cómo medirías profesionalmente</div>
+          <div class="s10-copy">Selecciona instrumentación y configuración adecuadas al objetivo de la campaña.</div>
+        </div>
+        ''',
+        unsafe_allow_html=True,
+    )
     instrument_opts = [
         'Seleccionar',
         'Sonómetro integrador clase 1 + calibrador + antiviento + registro',
@@ -25381,14 +25587,32 @@ def _c3l1_stage10_impl(lab: dict, saved: dict, deps: Dict[str, Any]):
         key='c3_s10f_weighting',
     )
 
-    st.markdown('### 4 · Mediciones virtuales')
+    st.markdown(
+        '''
+        <div class="s10-section s10-section-orange">
+          <div class="s10-kicker">MISIÓN 4 · OBSERVAR</div>
+          <div class="s10-heading">Lee los datos antes de interpretar</div>
+          <div class="s10-copy">Las mediciones virtuales representan distintos puntos y condiciones. Busca diferencias, patrones y posibles fuentes dominantes.</div>
+        </div>
+        ''',
+        unsafe_allow_html=True,
+    )
     df = pd.DataFrame(
         _C3L1_CASE_INTERVALS,
         index=['15 min 1', '15 min 2', '15 min 3', '15 min 4'],
     ).T
     st.dataframe(df, use_container_width=True)
 
-    st.markdown('### 5 · LAeq')
+    st.markdown(
+        '''
+        <div class="s10-section">
+          <div class="s10-kicker">MISIÓN 5 · INTEGRAR ENERGÍA</div>
+          <div class="s10-heading">Obtén el LAeq del punto P1</div>
+          <div class="s10-copy">Integra energéticamente los intervalos de medición; no uses promedio aritmético de decibeles.</div>
+        </div>
+        ''',
+        unsafe_allow_html=True,
+    )
     expected_p1 = _c3l1_laeq(_C3L1_CASE_INTERVALS['P1'])
     ans_laeq = st.number_input(
         'Calcula LAeq,1h de P1 [dB(A)]',
@@ -25396,7 +25620,16 @@ def _c3l1_stage10_impl(lab: dict, saved: dict, deps: Dict[str, Any]):
         key='c3_s10f_laeq',
     )
 
-    st.markdown('### 6 · Percentiles')
+    st.markdown(
+        '''
+        <div class="s10-section s10-section-blue">
+          <div class="s10-kicker">MISIÓN 6 · DESCRIBIR LA VARIABILIDAD</div>
+          <div class="s10-heading">Interpreta L10, L50 y L90</div>
+          <div class="s10-copy">Usa los percentiles para separar niveles altos frecuentes, zona central y componente persistente del registro.</div>
+        </div>
+        ''',
+        unsafe_allow_html=True,
+    )
     st.write('P1 · muestras Fast: ' + ', '.join(map(str, _C3L1_CASE_SAMPLES)))
     ans_l10 = st.number_input(
         'L10 [dB(A)]', 40.0, 90.0, float(draft.get('ans_l10',70.0)), 0.1,
@@ -25412,22 +25645,58 @@ def _c3l1_stage10_impl(lab: dict, saved: dict, deps: Dict[str, Any]):
         key='c3_s10f_var',
     )
 
-    st.markdown('### 7 · Evento')
+    st.markdown(
+        '''
+        <div class="s10-section s10-section-orange">
+          <div class="s10-kicker">MISIÓN 7 · EVENTO SONORO</div>
+          <div class="s10-heading">Caracteriza el vehículo pesado con SEL</div>
+          <div class="s10-copy">Convierte un evento delimitado en una medida de exposición energética comparable.</div>
+        </div>
+        ''',
+        unsafe_allow_html=True,
+    )
     ans_sel = st.number_input(
         'SEL de vehículo pesado: LAeq,20s=78 dB [dB]',
         60.0, 120.0, float(draft.get('ans_sel',88.0)), 0.1,
         key='c3_s10f_sel',
     )
 
-    st.markdown('### 8 · 24 horas')
-    st.write('P1: LD=66 dB · LE=63 dB · LN=57 dB')
+    st.markdown(
+        '''
+        <div class="s10-section s10-section-green">
+          <div class="s10-kicker">MISIÓN 8 · CICLO DIARIO</div>
+          <div class="s10-heading">Integra día, tarde y noche</div>
+          <div class="s10-copy">A partir de LD, LE y LN, interpreta el ciclo completo mediante Lden.</div>
+        </div>
+        ''',
+        unsafe_allow_html=True,
+    )
+    st.markdown(
+        '''
+        <div class="s10-metrics" style="grid-template-columns:repeat(3,minmax(0,1fr))">
+          <div class="s10-metric"><div class="label">LD</div><div class="value">66 dB(A)</div></div>
+          <div class="s10-metric"><div class="label">LE</div><div class="value">63 dB(A)</div></div>
+          <div class="s10-metric"><div class="label">LN</div><div class="value">57 dB(A)</div></div>
+        </div>
+        ''',
+        unsafe_allow_html=True,
+    )
     ans_lden = st.number_input(
         'Lden P1 [dB]',
         40.0, 100.0, float(draft.get('ans_lden',66.0)), 0.1,
         key='c3_s10f_lden',
     )
 
-    st.markdown('### 9 · Representación espacial')
+    st.markdown(
+        '''
+        <div class="s10-section">
+          <div class="s10-kicker">MISIÓN 9 · REPRESENTAR</div>
+          <div class="s10-heading">Distingue medición de estimación espacial</div>
+          <div class="s10-copy">Un mapa puede contener valores interpolados entre puntos; eso no significa que hayan sido medidos directamente allí.</div>
+        </div>
+        ''',
+        unsafe_allow_html=True,
+    )
     map_opts = [
         'Fue medido directamente allí',
         'Es una estimación derivada de puntos medidos',
@@ -25440,7 +25709,16 @@ def _c3l1_stage10_impl(lab: dict, saved: dict, deps: Dict[str, Any]):
         key='c3_s10f_map',
     )
 
-    st.markdown('### 10 · Diagnóstico profesional')
+    st.markdown(
+        '''
+        <div class="s10-section s10-section-blue">
+          <div class="s10-kicker">MISIÓN 10 · DIAGNOSTICAR</div>
+          <div class="s10-heading">Redacta una conclusión profesional defendible</div>
+          <div class="s10-copy">Integra fuente principal, receptor crítico, descriptores, limitaciones, información faltante y alcance real de la conclusión.</div>
+        </div>
+        ''',
+        unsafe_allow_html=True,
+    )
     limitations = st.text_area(
         'Limitaciones de la campaña',
         value=draft.get('limitations',''),
@@ -25456,7 +25734,7 @@ def _c3l1_stage10_impl(lab: dict, saved: dict, deps: Dict[str, Any]):
     conclusion = st.text_area(
         'Conclusión profesional',
         value=draft.get('conclusion',''),
-        height=140,
+        height=190,
         key='c3_s10f_conclusion',
         placeholder='Integra fuente principal, receptor crítico, descriptores, representatividad, información faltante y alcance de la conclusión.',
     )
@@ -25467,7 +25745,15 @@ def _c3l1_stage10_impl(lab: dict, saved: dict, deps: Dict[str, Any]):
     reveal = {}
     for i, q in enumerate(_C3L1_S10_Q):
         with st.container(border=True):
-            st.markdown(f'**{i + 1}. {q[0]}**')
+            st.markdown(
+                f'''
+                <div class="s10-qcard">
+                  <div class="s10-qnum">PREGUNTA {i + 1}</div>
+                  <div class="s10-qtext">{q[0]}</div>
+                </div>
+                ''',
+                unsafe_allow_html=True,
+            )
             key = f'c3_s10f_q{i}'
             if key not in st.session_state and str(i) in previous_answers:
                 st.session_state[key] = previous_answers.get(str(i))
@@ -25515,6 +25801,22 @@ def _c3l1_stage10_impl(lab: dict, saved: dict, deps: Dict[str, Any]):
         'answers': answers,
         'revealed': reveal,
     }
+
+    st.markdown('<div class="s10-divider"></div>', unsafe_allow_html=True)
+    st.markdown(
+        '''
+        <div class="s10-section s10-section-green">
+          <div class="s10-kicker">CIERRE DEL CASO</div>
+          <div class="s10-heading">Tu diagnóstico se construye paso a paso</div>
+          <div class="s10-copy">
+            No necesitas terminar todo en una sola sesión. Cada parte se guarda automáticamente.
+            Cuando completes reconocimiento, instrumentación, cálculos, diagnóstico y preguntas,
+            la Etapa 10 quedará marcada como completada en Mi desempeño.
+          </div>
+        </div>
+        ''',
+        unsafe_allow_html=True,
+    )
 
     saved['c3_s10_formative'] = payload
     # Guardado automático del borrador: mantiene cálculos, selecciones, textos y
