@@ -17395,15 +17395,36 @@ def _c3l1_external_tool_card(title: str, description: str, secret_name: str, but
 
 def _c3l1_stage0_impl(lab: dict, saved: dict, deps: Dict[str, Any]):
     _c3l1_style()
-    _c3l1_header(0, 'Laboratorio 1 · Medición y diagnóstico del ruido ambiental', 'Una experiencia aplicada para escuchar, medir, describir, analizar, representar y diagnosticar el ambiente sonoro.', deps, 10)
+    _c3l1_header(0, 'Laboratorio 1 · Medición y diagnóstico del ruido ambiental', 'Una experiencia aplicada para reconocer fuentes, medir, interpretar descriptores, diseñar campañas, medir en terreno y diagnosticar el ambiente sonoro.', deps, 10)
     _c3l1_asset('curso3_lab1_etapa0_ciudad.webp')
     st.markdown('<div class="c3-key"><b>Desafío:</b> ¿Cómo transformamos el ruido cambiante de una ciudad en información objetiva que permita medir, describir y diagnosticar su ambiente sonoro?</div>', unsafe_allow_html=True)
-    route = [(1, 'Reconocer', 'Fuente, camino, receptor, tiempo, frecuencia y espacio.'), (2, 'Medir', 'Cadena del sonómetro, ponderaciones y calibración.'), (3, 'Medir tu ambiente', 'Registro real/educativo con LAeq, Lmax y Lmin.'), (4, 'Describir en el tiempo', 'L(t), LAeq, Lmax, Lmin, L10, L50 y L90.'), (5, 'Construir descriptores', 'Promedio energético y percentiles.'), (6, 'Integrar eventos y 24 h', 'SEL, LD, LE, LN y Lden.'), (7, 'Diseñar campaña', 'Representatividad temporal y espacial.'), (8, 'Representar territorio', 'Puntos medidos, interpolación y modelación.'), (9, 'Comprobar', 'Preguntas de comprensión.'), (10, 'Diagnosticar', 'Caso profesional completo de un barrio.')]
+    route = [
+        (1, 'Ruido ambiental: fuentes, caminos y receptores',
+         'Reconocer fuentes, caminos de propagación, receptores y comportamiento temporal de un ambiente urbano.'),
+        (2, 'Del campo sonoro al sonómetro',
+         'Comprender qué mide el sonómetro, su cadena de medición, ponderaciones A/C/Z, respuesta temporal y calibración.'),
+        (3, 'Del registro temporal a los descriptores',
+         'Pasar de L(t) a LAeq, Lmax, Lmin y percentiles L10, L50 y L90 e interpretar qué describe cada uno.'),
+        (4, 'Del evento sonoro a su exposición · SEL / LAE',
+         'Caracterizar eventos individuales y distinguir su exposición energética respecto del nivel equivalente.'),
+        (5, 'Del monitoreo continuo al ciclo diario · LD, LE, LN y Lden',
+         'Interpretar un registro de 24 h, construir los periodos día–tarde–noche y comprender Lden.'),
+        (6, 'Del monitoreo a las fuentes de ruido ambiental',
+         'Relacionar firmas temporales, geometría y descriptores con carretera, ferrocarril, aeronaves, HVAC y obras.'),
+        (7, 'Diseño de campañas · HVAC y autopista',
+         'Resolver separación de fuentes y representatividad temporal mediante campañas de medición justificadas.'),
+        (8, 'Medición real con sonómetro online',
+         'Realizar una medición educativa real, comparar fuente ON/OFF, interpretar descriptores y elaborar un informe breve.'),
+        (9, 'Preguntas de comprensión',
+         'Comprobar conceptos clave del laboratorio mediante retroalimentación formativa, sin nota.'),
+        (10, 'Diagnóstico acústico de un barrio',
+         'Integrar fuentes, receptores, campaña, descriptores y diagnóstico profesional en un caso final formativo.'),
+    ]
     html = '<div class="c3-route">'
     for n, title, desc in route:
         html += f'<div class="c3-route-card"><div class="c3-step">{n}</div><div><b>{title}</b><div style="color:#607287;margin-top:3px">{desc}</div></div></div>'
     st.markdown(html + '</div>', unsafe_allow_html=True)
-    st.markdown('<div class="c3-good"><b>Ruta mental:</b> ESCUCHAR → MEDIR → DESCRIBIR → ANALIZAR → REPRESENTAR → DIAGNOSTICAR.</div>', unsafe_allow_html=True)
+    st.markdown('<div class="c3-good"><b>Ruta mental:</b> RECONOCER → MEDIR → DESCRIBIR → INTERPRETAR → DISEÑAR → MEDIR EN TERRENO → DIAGNOSTICAR.</div>', unsafe_allow_html=True)
 
 def _c3l1_stage1_impl(lab: dict, saved: dict, deps: Dict[str, Any]):
     import matplotlib.pyplot as c3plt
