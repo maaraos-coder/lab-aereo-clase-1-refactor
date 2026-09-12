@@ -21312,158 +21312,367 @@ def _c3l1_stage5_impl(lab: dict, saved: dict, deps: Dict[str, Any]):
     _c3l1_header(
         5,
         'Del evento al ciclo diario · LD, LE, LN y Lden',
-        'Escalar desde eventos individuales a descriptores de largo periodo y comprender por qué el horario modifica la valoración de la exposición.',
+        'Construir una jornada acústica completa y comprobar cómo horario, duración y repetición de eventos modifican los descriptores de largo periodo.',
         deps,
-        40,
+        45,
     )
 
     st.markdown(
         """
         <div class="c3-card blue">
-          <div class="c3-kicker">CONTINUIDAD</div>
-          <b>Etapa 4: energía de un evento. Etapa 5: energía de una jornada completa.</b>
-          <p>Ahora dividimos el día en periodos y combinamos energéticamente sus niveles equivalentes.</p>
+          <div class="c3-kicker">MISIÓN DE LA ETAPA</div>
+          <b>Diseña y diagnostica una jornada acústica de 24 horas.</b>
+          <p>
+            Ya sabes describir un evento con SEL/LAE. Ahora deberás integrar varios eventos dentro de una jornada
+            y decidir cómo cambian <b>LD, LE, LN y Lden</b> según el horario en que ocurren.
+          </p>
         </div>
         """,
         unsafe_allow_html=True,
     )
 
-    st.markdown('## 1. Divide el día acústico')
+    st.markdown('## 1. Construye el ambiente base de la jornada')
+
+    st.write(
+        'Primero define el nivel equivalente de fondo de cada periodo. '
+        'Estos valores representan el ambiente base antes de agregar eventos.'
+    )
+
+    bc1, bc2, bc3 = st.columns(3)
+    with bc1:
+        _ld_base = st.slider('LD base · día [dB(A)]', 40, 80, 58, key='c3_s5_ld_base')
+    with bc2:
+        _le_base = st.slider('LE base · tarde [dB(A)]', 40, 80, 55, key='c3_s5_le_base')
+    with bc3:
+        _ln_base = st.slider('LN base · noche [dB(A)]', 35, 75, 48, key='c3_s5_ln_base')
 
     st.markdown(
         """
         <div class="c3-grid">
-          <div class="c3-card blue"><div class="c3-kicker">LD</div><b>Día · 12 h</b><p>Periodo diurno didáctico del ejercicio.</p></div>
-          <div class="c3-card orange"><div class="c3-kicker">LE</div><b>Tarde · 4 h</b><p>Periodo vespertino con penalización +5 dB en Lden.</p></div>
-          <div class="c3-card purple"><div class="c3-kicker">LN</div><b>Noche · 8 h</b><p>Periodo nocturno con penalización +10 dB en Lden.</p></div>
+          <div class="c3-card blue">
+            <div class="c3-kicker">DÍA</div>
+            <b>07:00–19:00</b>
+            <p>12 horas · sin penalización en el ejercicio.</p>
+          </div>
+          <div class="c3-card orange">
+            <div class="c3-kicker">TARDE</div>
+            <b>19:00–23:00</b>
+            <p>4 horas · +5 dB en Lden.</p>
+          </div>
+          <div class="c3-card purple">
+            <div class="c3-kicker">NOCHE</div>
+            <b>23:00–07:00</b>
+            <p>8 horas · +10 dB en Lden.</p>
+          </div>
         </div>
         """,
         unsafe_allow_html=True,
     )
 
-    dc1, dc2, dc3 = st.columns(3)
-    with dc1:
-        _ld = st.slider('LD · día [dB(A)]', 40, 85, 62, key='c3_s5_ld')
-    with dc2:
-        _le = st.slider('LE · tarde [dB(A)]', 40, 85, 60, key='c3_s5_le')
-    with dc3:
-        _ln = st.slider('LN · noche [dB(A)]', 35, 80, 52, key='c3_s5_ln')
+    st.markdown('## 2. Programa los eventos del día')
 
+    _saved4 = saved.get('c3_stage4_sel', {}) if isinstance(saved.get('c3_stage4_sel'), dict) else {}
+    _sel_default = float(_saved4.get('sel_db', 92.6))
+
+    st.write(
+        'Agrega hasta cuatro eventos. Cada evento conserva su SEL físico; lo que cambia al moverlo de hora '
+        'es el periodo al que aporta dentro del descriptor de largo plazo.'
+    )
+
+    _event_rows = []
+    _event_names = ['Sobrevuelo', 'Camión', 'Bocina', 'Operación industrial']
+    _default_hours = [14, 20, 2, 9]
+    _default_sels = [_sel_default, 90.5, 88.0, 91.0]
+
+    for _i in range(4):
+        with st.expander(f'Evento {_i+1} · {_event_names[_i]}', expanded=(_i < 2)):
+            c1,c2,c3 = st.columns([1.3,1,1])
+            with c1:
+                _hour = st.select_slider(
+                    'Hora de ocurrencia',
+                    options=list(range(24)),
+                    value=_default_hours[_i],
+                    format_func=lambda h: f'{h:02d}:00',
+                    key=f'c3_s5_event_hour_{_i}',
+                )
+            with c2:
+                _sel = st.slider(
+                    'SEL / LAE [dB]',
+                    70.0, 110.0, float(_default_sels[_i]), .5,
+                    key=f'c3_s5_event_sel_{_i}',
+                )
+            with c3:
+                _count = st.slider(
+                    'N° de eventos iguales',
+                    0, 20, 1,
+                    key=f'c3_s5_event_count_{_i}',
+                )
+
+            _period = 'Día' if 7 <= _hour < 19 else 'Tarde' if 19 <= _hour < 23 else 'Noche'
+            _penalty = 0 if _period == 'Día' else 5 if _period == 'Tarde' else 10
+
+            st.caption(
+                f'Periodo: {_period} · Penalización Lden: +{_penalty} dB · '
+                f'SEL físico del evento: {_sel:.1f} dB'
+            )
+
+            _event_rows.append({
+                'Evento': _event_names[_i],
+                'Hora': int(_hour),
+                'SEL': float(_sel),
+                'Cantidad': int(_count),
+                'Periodo': _period,
+                'Penalización': int(_penalty),
+            })
+
+    _event_df = pd.DataFrame(_event_rows)
+    st.dataframe(_event_df, hide_index=True, use_container_width=True)
+
+    st.markdown('## 3. Observa tu jornada completa')
+
+    # Build energy contributions by period.
+    _hours = np.arange(24)
+    _base_levels = np.zeros(24, dtype=float)
+    for h in _hours:
+        if 7 <= h < 19:
+            _base_levels[h] = _ld_base
+        elif 19 <= h < 23:
+            _base_levels[h] = _le_base
+        else:
+            _base_levels[h] = _ln_base
+
+    _hour_energy = 10**(_base_levels/10.0)
+
+    # Treat SEL as event energy normalized to 1s and add to hour energy budget.
+    # Educational integration: equivalent hourly energy = base 1h energy + event exposure / 3600.
+    for ev in _event_rows:
+        if ev['Cantidad'] <= 0:
+            continue
+        h = ev['Hora']
+        event_energy_1s = ev['Cantidad'] * (10**(ev['SEL']/10.0))
+        _hour_energy[h] += event_energy_1s / 3600.0
+
+    _hour_levels = 10*np.log10(_hour_energy)
+
+    _fig_day, _ax_day = c3plt.subplots(figsize=(10,4.2))
+    _ax_day.step(np.arange(25), np.r_[_hour_levels, _hour_levels[-1]], where='post', lw=1.8)
+    _ax_day.axvspan(7,19,alpha=.06,label='Día')
+    _ax_day.axvspan(19,23,alpha=.08,label='Tarde')
+    _ax_day.axvspan(23,24,alpha=.08)
+    _ax_day.axvspan(0,7,alpha=.08,label='Noche')
+    for ev in _event_rows:
+        if ev['Cantidad'] > 0:
+            _ax_day.scatter(ev['Hora']+.5, _hour_levels[ev['Hora']], s=45, zorder=5)
+            _ax_day.text(
+                ev['Hora']+.5,
+                _hour_levels[ev['Hora']]+.7,
+                ev['Evento'],
+                rotation=45,
+                ha='left',
+                va='bottom',
+                fontsize=7,
+            )
+    _ax_day.set_xlim(0,24)
+    _ax_day.set_xticks([0,3,6,9,12,15,18,21,24])
+    _ax_day.set_xlabel('Hora')
+    _ax_day.set_ylabel('Nivel equivalente horario [dB(A)]')
+    _ax_day.set_title('Jornada acústica construida por el alumno')
+    _ax_day.grid(alpha=.2)
+    _ax_day.legend(ncol=3, fontsize=8)
+    st.pyplot(_fig_day, use_container_width=True)
+    c3plt.close(_fig_day)
+
+    # Energetic period means from hourly levels.
+    _day_vals = _hour_levels[7:19]
+    _eve_vals = _hour_levels[19:23]
+    _night_vals = np.r_[_hour_levels[23:24], _hour_levels[0:7]]
+
+    _ld = _c3l1_laeq(_day_vals)
+    _le = _c3l1_laeq(_eve_vals)
+    _ln = _c3l1_laeq(_night_vals)
     _lden = _c3l1_lden(float(_ld), float(_le), float(_ln))
 
-    _hours = np.arange(24)
-    # Didactic segmentation: 07-19 day (12h), 19-23 evening (4h), 23-07 night (8h)
-    _levels24 = np.empty(24, dtype=float)
-    for _h in _hours:
-        if 7 <= _h < 19:
-            _levels24[_h] = _ld
-        elif 19 <= _h < 23:
-            _levels24[_h] = _le
-        else:
-            _levels24[_h] = _ln
+    m1,m2,m3,m4 = st.columns(4)
+    m1.metric('LD resultante', f'{_ld:.1f} dB(A)')
+    m2.metric('LE resultante', f'{_le:.1f} dB(A)')
+    m3.metric('LN resultante', f'{_ln:.1f} dB(A)')
+    m4.metric('Lden', f'{_lden:.1f} dB(A)')
 
-    _fig5, _ax5 = c3plt.subplots(figsize=(10, 3.9))
-    _ax5.step(np.r_[0,_hours+1], np.r_[_levels24[0],_levels24], where='pre', lw=2)
-    _ax5.axvspan(7,19,alpha=.06,label='Día')
-    _ax5.axvspan(19,23,alpha=.08,label='Tarde')
-    _ax5.axvspan(23,24,alpha=.08)
-    _ax5.axvspan(0,7,alpha=.08,label='Noche')
-    _ax5.set_xlim(0,24)
-    _ax5.set_xticks([0,3,6,9,12,15,18,21,24])
-    _ax5.set_xlabel('Hora')
-    _ax5.set_ylabel('Nivel equivalente [dB(A)]')
-    _ax5.set_title('Ciudad de 24 horas · niveles por periodo')
-    _ax5.grid(alpha=.2)
-    _ax5.legend(ncol=3, fontsize=8)
-    st.pyplot(_fig5, use_container_width=True)
-    c3plt.close(_fig5)
-
-    md1, md2, md3, md4 = st.columns(4)
-    md1.metric('LD', f'{_ld:.1f} dB(A)')
-    md2.metric('LE', f'{_le:.1f} dB(A)')
-    md3.metric('LN', f'{_ln:.1f} dB(A)')
-    md4.metric('Lden', f'{_lden:.1f} dB(A)')
-
-    st.markdown('## 2. Construye Lden')
+    st.markdown('## 4. ¿Por qué importa la hora?')
 
     st.latex(
         r'L_{den}=10\log_{10}\left[\frac{12\,10^{L_D/10}+4\,10^{(L_E+5)/10}+8\,10^{(L_N+10)/10}}{24}\right]'
     )
 
-    _show_pen = st.checkbox('Mostrar el efecto de las penalizaciones', value=True, key='c3_s5_penalties')
-    if _show_pen:
-        pc1, pc2, pc3 = st.columns(3)
-        pc1.metric('Día', f'{_ld:.1f} dB', '0 dB')
-        pc2.metric('Tarde corregida', f'{_le+5:.1f} dB', '+5 dB')
-        pc3.metric('Noche corregida', f'{_ln+10:.1f} dB', '+10 dB')
-        st.markdown(
-            """
-            <div class="c3-key">
-              Las penalizaciones no cambian físicamente el sonido medido. Cambian su peso dentro del descriptor Lden
-              para reflejar una mayor sensibilidad de los periodos tarde/noche en la valoración de largo plazo.
-            </div>
-            """,
-            unsafe_allow_html=True,
-        )
+    st.markdown(
+        """
+        <div class="c3-grid">
+          <div class="c3-card blue">
+            <div class="c3-kicker">DÍA</div>
+            <b>0 dB</b>
+            <p>La energía del periodo entra sin corrección adicional.</p>
+          </div>
+          <div class="c3-card orange">
+            <div class="c3-kicker">TARDE</div>
+            <b>+5 dB</b>
+            <p>El mismo nivel recibe mayor peso dentro del descriptor Lden.</p>
+          </div>
+          <div class="c3-card purple">
+            <div class="c3-kicker">NOCHE</div>
+            <b>+10 dB</b>
+            <p>El mismo nivel recibe todavía mayor peso dentro del descriptor Lden.</p>
+          </div>
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
 
-    st.markdown('## 3. Mueve el mismo evento por el día')
+    st.markdown('## 5. Desafío práctico · mueve un mismo evento')
 
-    _event_saved = saved.get('c3_stage4_sel', {}) if isinstance(saved.get('c3_stage4_sel'), dict) else {}
-    _sel_from_s4 = float(_event_saved.get('sel_db', 88.0))
-    _event_hour = st.slider('Hora del evento', 0, 23, 14, key='c3_s5_event_hour')
-    _period = 'Día' if 7 <= _event_hour < 19 else 'Tarde' if 19 <= _event_hour < 23 else 'Noche'
-    _penalty = 0 if _period == 'Día' else 5 if _period == 'Tarde' else 10
+    st.write(
+        'Selecciona uno de tus eventos y muévelo entre día, tarde y noche. '
+        'El SEL físico del evento se mantiene; observa qué cambia en la jornada y en Lden.'
+    )
 
-    eh1, eh2, eh3 = st.columns(3)
-    eh1.metric('SEL del evento', f'{_sel_from_s4:.1f} dB')
-    eh2.metric('Periodo', _period)
-    eh3.metric('Penalización asociada', f'+{_penalty} dB')
+    _challenge_event = st.selectbox(
+        'Evento a desplazar',
+        [r['Evento'] for r in _event_rows],
+        key='c3_s5_challenge_event',
+    )
+    _selected_ev = next(r for r in _event_rows if r['Evento'] == _challenge_event)
+
+    _challenge_hour = st.segmented_control(
+        'Nuevo horario',
+        ['10:00 · Día','20:00 · Tarde','02:00 · Noche'],
+        default='10:00 · Día',
+        key='c3_s5_challenge_hour',
+    )
+    _hour_map = {
+        '10:00 · Día':10,
+        '20:00 · Tarde':20,
+        '02:00 · Noche':2,
+    }
+    _new_hour = _hour_map[_challenge_hour]
+    _new_period = 'Día' if _new_hour == 10 else 'Tarde' if _new_hour == 20 else 'Noche'
+    _new_pen = 0 if _new_period == 'Día' else 5 if _new_period == 'Tarde' else 10
+
+    # Compute three alternative Lden values with the same event moved.
+    _scenario_results = {}
+    for _label,_hnew in _hour_map.items():
+        _energy_alt = 10**(_base_levels/10.0)
+
+        for ev in _event_rows:
+            if ev['Cantidad'] <= 0:
+                continue
+            _h_use = _hnew if ev['Evento'] == _challenge_event else ev['Hora']
+            _event_energy = ev['Cantidad'] * 10**(ev['SEL']/10.0)
+            _energy_alt[_h_use] += _event_energy/3600.0
+
+        _lvl_alt = 10*np.log10(_energy_alt)
+        _ld_alt = _c3l1_laeq(_lvl_alt[7:19])
+        _le_alt = _c3l1_laeq(_lvl_alt[19:23])
+        _ln_alt = _c3l1_laeq(np.r_[_lvl_alt[23:24],_lvl_alt[0:7]])
+        _scenario_results[_label] = _c3l1_lden(_ld_alt,_le_alt,_ln_alt)
+
+    sc1,sc2,sc3 = st.columns(3)
+    sc1.metric('Mismo evento a las 10:00', f'{_scenario_results["10:00 · Día"]:.1f} dB(A)', 'Día')
+    sc2.metric('Mismo evento a las 20:00', f'{_scenario_results["20:00 · Tarde"]:.1f} dB(A)', 'Tarde')
+    sc3.metric('Mismo evento a las 02:00', f'{_scenario_results["02:00 · Noche"]:.1f} dB(A)', 'Noche')
 
     st.markdown(
         f"""
         <div class="c3-card green">
-          <div class="c3-kicker">MISMO EVENTO, DISTINTO HORARIO</div>
-          <b>La energía física del evento no cambia al moverlo de hora.</b>
-          <p>Lo que cambia es su contribución a un descriptor como Lden, porque el periodo {_period.lower()}
-          recibe una corrección de +{_penalty} dB en el cálculo.</p>
+          <div class="c3-kicker">MISMO EVENTO · MISMO SEL</div>
+          <b>{_challenge_event}: {_selected_ev["SEL"]:.1f} dB de SEL</b>
+          <p>
+            Al moverlo a {_new_period.lower()}, su SEL físico no cambia.
+            Lo que cambia es el periodo al que aporta y la penalización de largo plazo asociada:
+            <b>+{_new_pen} dB</b> dentro del cálculo de Lden.
+          </p>
         </div>
         """,
         unsafe_allow_html=True,
     )
 
     _q5 = st.radio(
-        'Si un mismo evento ocurre de noche en vez de día, ¿su SEL cambia por el solo hecho de cambiar de horario?',
-        ['Sí', 'No'],
+        '¿Qué cambia al mover exactamente el mismo evento desde el día hacia la noche?',
+        [
+            'Cambia su SEL físico',
+            'Cambia su contribución al descriptor Lden',
+            'Cambian ambas cosas por igual',
+        ],
         index=None,
-        horizontal=True,
-        key='c3_s5_q_sel_time',
+        key='c3_s5_q_practical',
     )
     if _q5:
-        if _q5 == 'No':
-            st.success('Correcto. SEL describe la exposición física del evento. La penalización aparece al construir descriptores de largo periodo como Lden.')
+        if _q5 == 'Cambia su contribución al descriptor Lden':
+            st.success(
+                'Correcto. El evento conserva su exposición física; cambia el peso que recibe en el descriptor de largo plazo.'
+            )
         else:
-            st.warning('El SEL del evento no cambia por la hora; lo que cambia es el peso del periodo en Lden.')
+            st.warning(
+                'Recuerda: el SEL describe el evento físico. La penalización pertenece al cálculo de Lden.'
+            )
 
-    if st.button('Guardar ciclo diario', key='c3_s5_save', use_container_width=True):
-        saved['c3_stage5_daycycle'] = {
-            'LD': float(_ld),
-            'LE': float(_le),
-            'LN': float(_ln),
-            'Lden': float(_lden),
-            'event_hour': int(_event_hour),
-            'event_period': _period,
-            'event_penalty': int(_penalty),
-        }
-        _c3l1_save(saved, deps)
-        st.success('Ciclo diario guardado.')
+    st.markdown('## 6. Cierre de la misión')
 
-    if str(st.session_state.get('role','')).lower() == 'docente':
+    st.markdown(
+        """
+        <div class="c3-key">
+          <b>Cadena conceptual:</b>
+          evento individual → SEL/LAE → ubicación horaria → LD/LE/LN → penalizaciones → Lden.
+          Así pasamos desde segundos de exposición hasta una descripción de 24 horas.
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
+
+    # Auto-save, no manual save button.
+    saved['c3_stage5_daycycle'] = {
+        'LD_base': float(_ld_base),
+        'LE_base': float(_le_base),
+        'LN_base': float(_ln_base),
+        'events': _event_rows,
+        'LD': float(_ld),
+        'LE': float(_le),
+        'LN': float(_ln),
+        'Lden': float(_lden),
+        'challenge_event': _challenge_event,
+        'challenge_hour': _new_hour,
+        'challenge_period': _new_period,
+        'challenge_penalty': _new_pen,
+        'scenario_lden': {k: float(v) for k,v in _scenario_results.items()},
+        'answer': _q5,
+    }
+    _c3l1_save(saved,deps)
+
+    _viewer_role = (
+        st.session_state.get('role')
+        or st.session_state.get('user_role')
+        or st.session_state.get('modo')
+        or st.session_state.get('view_mode')
+        or ''
+    )
+    _is_teacher_view = str(_viewer_role).lower() in {
+        'docente','teacher','profesor','profesora','instructor'
+    } or bool(
+        st.session_state.get('is_teacher')
+        or st.session_state.get('teacher_mode')
+        or st.session_state.get('vista_docente')
+    )
+
+    if _is_teacher_view:
         st.markdown('### Pauta docente · Etapa 5')
         st.markdown(
             """
-            **Punto clave:** LD, LE y LN son niveles equivalentes de periodos distintos.
-            Lden no es el promedio aritmético de esos tres valores: combina energía, duración de cada periodo y penalizaciones.
-            Las correcciones de +5 y +10 dB pertenecen al descriptor; no significan que el sonómetro haya medido físicamente más nivel.
+            **Objetivo didáctico:** que el alumno descubra que SEL describe un evento,
+            mientras que Lden describe exposición de largo periodo considerando además el horario.
+
+            Conviene enfatizar que las penalizaciones no alteran físicamente el evento medido.
+            Son correcciones incorporadas al descriptor para aumentar el peso de periodos más sensibles.
+
+            El ejercicio también permite discutir que una jornada con el mismo número de eventos puede
+            producir resultados distintos si cambia su distribución horaria.
             """
         )
 
@@ -21620,16 +21829,16 @@ def _c3l1_stage6_impl(lab: dict, saved: dict, deps: Dict[str, Any]):
         unsafe_allow_html=True,
     )
 
-    if st.button('Guardar diagnóstico de fuente', key='c3_s6_save', use_container_width=True):
-        saved['c3_stage6_source'] = {
-            'source': _case6,
-            'kind': _meta6['kind'],
-            'mission': _meta6['mission'],
-            'best_descriptor': _meta6['best'],
-            'L10_minus_L90': float(_range6),
-        }
-        _c3l1_save(saved,deps)
-        st.success('Diagnóstico de fuente guardado.')
+    saved['c3_stage6_source'] = {
+        'source': _case6,
+        'kind': _meta6['kind'],
+        'mission': _meta6['mission'],
+        'best_descriptor': _meta6['best'],
+        'L10_minus_L90': float(_range6),
+        'answer': _ans6,
+    }
+    _c3l1_save(saved,deps)
+
 
     if str(st.session_state.get('role','')).lower() == 'docente':
         st.markdown('### Pauta docente · Etapa 6')
@@ -22028,22 +22237,22 @@ def _c3l1_stage8_impl(lab: dict, saved: dict, deps: Dict[str, Any]):
     st.pyplot(_fig82,use_container_width=True)
     c3plt.close(_fig82)
 
-    if st.button('Guardar diseño de barrera', key='c3_s8_save', use_container_width=True):
-        saved['c3_stage8_barrier'] = {
-            'distance_m': float(_distance),
-            'source_height_m': float(_source_h),
-            'receiver_height_m': float(_receiver_h),
-            'barrier_position_m': float(_barrier_x),
-            'barrier_height_m': float(_barrier_h),
-            'frequency_hz': int(_freq),
-            'line_of_sight_blocked': bool(_blocked),
-            'path_difference_m': float(_delta),
-            'wavelength_m': float(_wavelength),
-            'fresnel_number': float(_fresnel),
-            'didactic_attenuation_db': float(_il_est),
-        }
-        _c3l1_save(saved,deps)
-        st.success('Diseño de barrera guardado.')
+    saved['c3_stage8_barrier'] = {
+        'distance_m': float(_distance),
+        'source_height_m': float(_source_h),
+        'receiver_height_m': float(_receiver_h),
+        'barrier_position_m': float(_barrier_x),
+        'barrier_height_m': float(_barrier_h),
+        'frequency_hz': int(_freq),
+        'line_of_sight_blocked': bool(_blocked),
+        'path_difference_m': float(_delta),
+        'wavelength_m': float(_wavelength),
+        'fresnel_number': float(_fresnel),
+        'didactic_attenuation_db': float(_il_est),
+        'design_answer': _mission8,
+    }
+    _c3l1_save(saved,deps)
+
 
     if str(st.session_state.get('role','')).lower() == 'docente':
         st.markdown('### Pauta docente · Etapa 8')
