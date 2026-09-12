@@ -17249,7 +17249,7 @@ _C3L1_NAV_STAGE_TITLES = {
     3: "Del registro temporal a los descriptores",
     4: "Del evento sonoro a su exposición · SEL / LAE",
     5: "Del evento al ciclo diario · LD, LE, LN y Lden",
-    6: "De la fuente al patrón acústico",
+    6: "Del monitoreo a las fuentes de ruido ambiental",
     7: "¿Dónde, cuándo y cuánto medir?",
     8: "Del camino directo a la protección acústica",
     9: "Preguntas de comprensión",
@@ -22400,172 +22400,514 @@ def _c3l1_stage6_impl(lab: dict, saved: dict, deps: Dict[str, Any]):
     _c3l1_style()
     _c3l1_header(
         6,
-        'De la fuente al patrón acústico',
-        'Reconocer cómo diferentes fuentes producen firmas temporales distintas y seleccionar descriptores según la pregunta profesional.',
+        'Del monitoreo a las fuentes de ruido ambiental',
+        'Pasar de los descriptores obtenidos en la estación de monitoreo a la identificación de las fuentes que construyen el ambiente acústico.',
         deps,
-        35,
+        45,
     )
 
-    st.markdown(
-        """
-        <div class="c3-card blue">
-          <div class="c3-kicker">FUENTES DE RUIDO AMBIENTAL</div>
-          <b>La fuente condiciona el comportamiento temporal, espacial y el descriptor que conviene observar.</b>
-          <p>Tránsito vial, ferrocarril, aeronaves, construcción y fuentes técnicas no generan el mismo tipo de registro.</p>
-        </div>
-        """,
-        unsafe_allow_html=True,
-    )
-
-    _cases6 = {
-        'Tránsito urbano': {
-            'kind':'Fluctuante / cuasi continuo',
-            'mission':'Caracterizar la energía global del periodo',
-            'best':'LAeq',
-            'note':'LAeq integra la energía de todo el intervalo; L10 puede complementar la lectura de periodos altos.',
-        },
-        'Sobrevuelo': {
-            'kind':'Evento móvil',
-            'mission':'Comparar la exposición de un evento individual',
-            'best':'SEL / LAE',
-            'note':'SEL incorpora nivel y duración del evento; es más informativo que un máximo aislado para exposición de un sobrevuelo.',
-        },
-        'Construcción': {
-            'kind':'Intermitente / eventos',
-            'mission':'Identificar el nivel más alto de una operación breve',
-            'best':'Lmax',
-            'note':'Lmax identifica el máximo; LAeq por jornada y SEL de eventos pueden complementar según el objetivo.',
-        },
-        'HVAC nocturno': {
-            'kind':'Relativamente estable',
-            'mission':'Reconocer el componente persistente',
-            'best':'L90',
-            'note':'L90 se ubica en la zona baja/persistente y puede apoyar la interpretación del fondo, siempre con contexto.',
-        },
-    }
-
-    _case6 = st.segmented_control(
-        'Selecciona una fuente',
-        list(_cases6.keys()),
-        default='Tránsito urbano',
-        key='c3_s6_case',
-    )
-    _meta6 = _cases6[_case6]
-
-    _t6 = np.arange(0, 120, 1, dtype=float)
-    _rng6 = np.random.default_rng(42)
-
-    if _case6 == 'Tránsito urbano':
-        _y6 = 58 + 1.0*np.sin(_t6/8) + _rng6.normal(0,.6,len(_t6))
-        for _c,_a,_w in [(18,6,3),(45,8,4),(77,5,3),(103,7,3)]:
-            _y6 += _a*np.exp(-.5*((_t6-_c)/_w)**2)
-    elif _case6 == 'Sobrevuelo':
-        _y6 = 48 + _rng6.normal(0,.25,len(_t6))
-        _y6 += 31*np.exp(-.5*((_t6-60)/10)**2)
-    elif _case6 == 'Construcción':
-        _y6 = 54 + _rng6.normal(0,.7,len(_t6))
-        for _c,_a,_w in [(20,14,1.4),(55,18,1.2),(90,12,2.0)]:
-            _y6 += _a*np.exp(-.5*((_t6-_c)/_w)**2)
-    else:
-        _y6 = 51.5 + .35*np.sin(_t6/7) + _rng6.normal(0,.22,len(_t6))
-        _y6 += .9*((_t6>40)&(_t6<100))
-
-    _fig6, _ax6 = c3plt.subplots(figsize=(10,4.0))
-    _ax6.plot(_t6,_y6,lw=1.45)
-    _ax6.set_title(f'Firma temporal didáctica · {_case6}')
-    _ax6.set_xlabel('Tiempo [s]')
-    _ax6.set_ylabel('Nivel [dB(A)]')
-    _ax6.grid(alpha=.2)
-    st.pyplot(_fig6,use_container_width=True)
-    c3plt.close(_fig6)
-
-    v6 = {
-        'LAeq': _c3l1_laeq(_y6),
-        'Lmax': float(np.max(_y6)),
-        'L10': _c3l1_exceedance_percentile(_y6,10),
-        'L90': _c3l1_exceedance_percentile(_y6,90),
-    }
-    _range6 = v6['L10'] - v6['L90']
+    _stage5 = saved.get('c3_stage5_daycycle', {}) if isinstance(saved.get('c3_stage5_daycycle'), dict) else {}
+    _ld_prev = float(_stage5.get('LD', 65.7))
+    _le_prev = float(_stage5.get('LE', 62.3))
+    _ln_prev = float(_stage5.get('LN', 50.5))
+    _lden_prev = float(_stage5.get('Lden', _c3l1_lden(_ld_prev, _le_prev, _ln_prev)))
 
     st.markdown(
         f"""
-        <div class="c3-grid-2">
-          <div class="c3-card blue"><div class="c3-kicker">COMPORTAMIENTO</div><b>{_meta6["kind"]}</b><p>Observa la forma del registro antes de elegir un descriptor.</p></div>
-          <div class="c3-card green"><div class="c3-kicker">MISIÓN</div><b>{_meta6["mission"]}</b><p>La pregunta profesional determina qué descriptor priorizar.</p></div>
+        <div class="c3-card blue">
+          <div class="c3-kicker">CONTINUIDAD DESDE LA ETAPA 5</div>
+          <b>La estación ya nos dijo cuánto ruido existe. Ahora debemos descubrir quién lo genera.</b>
+          <p>
+            Del monitoreo anterior obtuvimos aproximadamente:
+            <b>LD = {_ld_prev:.1f} dB(A)</b>,
+            <b>LE = {_le_prev:.1f} dB(A)</b>,
+            <b>LN = {_ln_prev:.1f} dB(A)</b> y
+            <b>Lden = {_lden_prev:.1f} dB(A)</b>.
+          </p>
+          <p>
+            Esos descriptores resumen el ambiente, pero por sí solos no identifican la fuente.
+            Dos lugares pueden tener el mismo LAeq o Lden y estar dominados por fenómenos completamente diferentes.
+          </p>
         </div>
         """,
         unsafe_allow_html=True,
     )
 
-    _ans6 = st.radio(
-        '¿Qué descriptor usarías como primera opción para esta misión?',
-        ['LAeq','Lmax','L10','L90','SEL / LAE'],
-        index=None,
-        horizontal=True,
-        key=f'c3_s6_ans_{_case6}',
+    st.markdown('## 1. Del número a la causa')
+
+    st.markdown(
+        """
+        <div class="c3-grid-2">
+          <div class="c3-card blue">
+            <div class="c3-kicker">DESCRIPTOR</div>
+            <b>Responde “cuánto” y “cómo se distribuye”</b>
+            <p>LAeq, Lmax, L10, L90, SEL, LD, LE, LN y Lden resumen propiedades del registro.</p>
+          </div>
+          <div class="c3-card green">
+            <div class="c3-kicker">FUENTE</div>
+            <b>Responde “quién produce la energía acústica”</b>
+            <p>Tránsito, ferrocarril, aeronaves, construcción, instalaciones y actividades urbanas generan firmas distintas.</p>
+          </div>
+        </div>
+        """,
+        unsafe_allow_html=True,
     )
-    if _ans6:
-        if _ans6 == _meta6['best']:
-            st.success(f'Correcto. {_meta6["note"]}')
-            z1,z2,z3,z4 = st.columns(4)
-            z1.metric('LAeq',f'{v6["LAeq"]:.1f}')
-            z2.metric('Lmax',f'{v6["Lmax"]:.1f}')
-            z3.metric('L10',f'{v6["L10"]:.1f}')
-            z4.metric('L90',f'{v6["L90"]:.1f}')
-        else:
-            st.warning('Revisa la misión: energía global, máximo, zona alta, zona persistente o exposición de un evento no son la misma pregunta.')
-
-    st.markdown('## 2. Mismo LAeq, distinta historia')
-
-    _tA = np.arange(120,dtype=float)
-    _a = 63 + .25*np.sin(_tA/8)
-    _b = 56 + np.zeros_like(_tA)
-    for _c in [15,35,58,81,104]:
-        _b += 15*np.exp(-.5*((_tA-_c)/2.0)**2)
-    # Ajustar B para aproximar el mismo LAeq que A
-    _targetA = _c3l1_laeq(_a)
-    _offsetB = _targetA - _c3l1_laeq(_b)
-    _b = _b + _offsetB
-
-    _fig62,_ax62 = c3plt.subplots(figsize=(10,3.7))
-    _ax62.plot(_tA,_a,label=f'A · estable · LAeq {_c3l1_laeq(_a):.1f}')
-    _ax62.plot(_tA,_b,label=f'B · eventos · LAeq {_c3l1_laeq(_b):.1f}')
-    _ax62.set_xlabel('Tiempo [s]')
-    _ax62.set_ylabel('Nivel [dB(A)]')
-    _ax62.set_title('Dos historias temporales con LAeq similar')
-    _ax62.grid(alpha=.2)
-    _ax62.legend(fontsize=8)
-    st.pyplot(_fig62,use_container_width=True)
-    c3plt.close(_fig62)
 
     st.markdown(
         """
         <div class="c3-key">
-          Un LAeq semejante no implica una historia acústica semejante.
-          Para diagnosticar un ambiente debes mirar también temporalidad, extremos, percentiles y tipo de fuente.
+          <b>Idea profesional:</b> antes de controlar ruido debemos identificar la fuente,
+          su comportamiento temporal, su geometría, su movilidad y el receptor expuesto.
+          El descriptor correcto depende de la pregunta que hagamos sobre esa fuente.
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
+
+    st.markdown('## 2. Clasifica las principales fuentes urbanas')
+
+    _source_catalog = {
+        'Carretera / autopista': {
+            'icon':'🛣️',
+            'family':'Móvil distribuida',
+            'geometry':'Lineal / corredor',
+            'time':'Continua o fluctuante',
+            'movement':'Vehículos móviles; corredor espacial relativamente fijo',
+            'signature':'Fondo relativamente continuo + pasos individuales + puntas de flujo',
+            'use':'LAeq / LD-LE-LN / Lden; L10 puede complementar periodos altos',
+        },
+        'Ferrocarril': {
+            'icon':'🚆',
+            'family':'Móvil guiada',
+            'geometry':'Lineal con eventos',
+            'time':'Intermitente / programada',
+            'movement':'Convoy en trayectoria fija',
+            'signature':'Crecimiento, máximo, paso y decaimiento con intervalos de menor nivel',
+            'use':'SEL/LAE por paso, Lmax y LAeq del periodo según objetivo',
+        },
+        'Aeronave': {
+            'icon':'✈️',
+            'family':'Móvil',
+            'geometry':'Trayectoria aérea',
+            'time':'Evento',
+            'movement':'Fuente móvil tridimensional',
+            'signature':'Evento claramente delimitado; ascenso y descenso progresivo del nivel',
+            'use':'SEL/LAE por evento; descriptores acumulados para múltiples operaciones',
+        },
+        'Instalación / HVAC': {
+            'icon':'❄️',
+            'family':'Fija',
+            'geometry':'Puntual / superficie',
+            'time':'Continua, cíclica o estable',
+            'movement':'Sin desplazamiento de la fuente',
+            'signature':'Nivel relativamente estable; posibles ciclos de encendido y apagado',
+            'use':'LAeq del periodo; L90 puede apoyar lectura de componente persistente',
+        },
+        'Construcción / obra': {
+            'icon':'🏗️',
+            'family':'Fija temporal',
+            'geometry':'Área / múltiples puntos',
+            'time':'Intermitente y variable',
+            'movement':'Equipos pueden cambiar de posición dentro de la faena',
+            'signature':'Secuencia de operaciones, impulsos, maquinaria estable y eventos intensos',
+            'use':'LAeq de jornada + Lmax o SEL para operaciones específicas',
+        },
+    }
+
+    _src = st.segmented_control(
+        'Fuente a explorar',
+        list(_source_catalog.keys()),
+        default='Carretera / autopista',
+        key='c3_s6_source_select',
+    )
+    _meta = _source_catalog[_src]
+
+    # Scene
+    _scene_symbol = {
+        'Carretera / autopista':'🚗   🚚   🚌',
+        'Ferrocarril':'🚆━━━━━━',
+        'Aeronave':'✈️',
+        'Instalación / HVAC':'🏢  ❄️',
+        'Construcción / obra':'🏗️  🚜',
+    }[_src]
+
+    _scene = f"""
+    <div style="border:1px solid #d8e6ef;border-radius:18px;background:linear-gradient(180deg,#eef8fd,#ffffff);padding:18px">
+      <div style="display:grid;grid-template-columns:1fr 1.6fr 1fr;align-items:center;gap:16px">
+        <div style="text-align:center">
+          <div style="font-size:42px">🎙️</div>
+          <div style="font-weight:800;color:#183247">Estación</div>
+          <div style="font-size:12px;color:#6c8190">Registra el ambiente</div>
+        </div>
+        <div style="text-align:center;padding:20px;border-radius:14px;background:#e5f0f5">
+          <div style="font-size:42px;letter-spacing:10px">{_scene_symbol}</div>
+          <div style="font-weight:900;color:#183247;margin-top:10px">{_src}</div>
+          <div style="font-size:12px;color:#607687;margin-top:4px">{_meta['family']} · {_meta['geometry']}</div>
+        </div>
+        <div style="text-align:center">
+          <div style="font-size:42px">🏠</div>
+          <div style="font-weight:800;color:#183247">Receptor</div>
+          <div style="font-size:12px;color:#6c8190">Persona / vivienda / uso sensible</div>
+        </div>
+      </div>
+    </div>
+    """
+    components.html(_scene, height=220, scrolling=False)
+
+    st.markdown(
+        f"""
+        <div class="c3-grid">
+          <div class="c3-card blue">
+            <div class="c3-kicker">GEOMETRÍA</div>
+            <b>{_meta['geometry']}</b>
+            <p>{_meta['movement']}</p>
+          </div>
+          <div class="c3-card orange">
+            <div class="c3-kicker">TEMPORALIDAD</div>
+            <b>{_meta['time']}</b>
+            <p>{_meta['signature']}</p>
+          </div>
+          <div class="c3-card green">
+            <div class="c3-kicker">DESCRIPTORES ÚTILES</div>
+            <b>Dependen del objetivo</b>
+            <p>{_meta['use']}</p>
+          </div>
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
+
+    st.markdown('## 3. Aprende a reconocer la firma temporal')
+
+    _t6 = np.arange(0, 180, 1, dtype=float)
+    _rng6 = np.random.default_rng(610)
+
+    def _signature_for_source(name):
+        if name == 'Carretera / autopista':
+            y = 59.0 + .8*np.sin(_t6/10) + _rng6.normal(0,.55,len(_t6))
+            for c,a,w in [(20,5,3),(43,7,4),(70,4,3),(101,6,4),(128,5,3),(158,6,4)]:
+                y += a*np.exp(-.5*((_t6-c)/w)**2)
+            return y
+        if name == 'Ferrocarril':
+            y = 48.5 + _rng6.normal(0,.25,len(_t6))
+            y += 28*np.exp(-.5*((_t6-85)/9.0)**2)
+            y += 10*np.exp(-.5*((_t6-105)/5.5)**2)
+            return y
+        if name == 'Aeronave':
+            y = 47.0 + _rng6.normal(0,.22,len(_t6))
+            y += 32*np.exp(-.5*((_t6-92)/15.0)**2)
+            return y
+        if name == 'Instalación / HVAC':
+            y = 51.5 + .25*np.sin(_t6/8) + _rng6.normal(0,.18,len(_t6))
+            y += 4.5*((_t6>=45)&(_t6<=145))
+            return y
+        y = 52 + _rng6.normal(0,.55,len(_t6))
+        for c,a,w in [(22,14,2),(39,7,5),(72,16,1.5),(108,9,6),(135,18,2),(160,8,4)]:
+            y += a*np.exp(-.5*((_t6-c)/w)**2)
+        return y
+
+    _sig = _signature_for_source(_src)
+    _sig_laeq = _c3l1_laeq(_sig)
+    _sig_lmax = float(np.max(_sig))
+    _sig_l10 = _c3l1_exceedance_percentile(_sig,10)
+    _sig_l90 = _c3l1_exceedance_percentile(_sig,90)
+
+    _fig6,_ax6=c3plt.subplots(figsize=(10.5,4.0))
+    _ax6.plot(_t6,_sig,lw=1.45)
+    _ax6.axhline(_sig_laeq,ls='--',lw=1.3,label=f'LAeq = {_sig_laeq:.1f}')
+    _ax6.axhline(_sig_l90,ls=':',lw=1.1,label=f'L90 = {_sig_l90:.1f}')
+    _ax6.set_title(f'Firma temporal didáctica · {_src}')
+    _ax6.set_xlabel('Tiempo [s]')
+    _ax6.set_ylabel('Nivel [dB(A)]')
+    _ax6.grid(alpha=.2)
+    _ax6.legend(fontsize=8)
+    st.pyplot(_fig6,use_container_width=True)
+    c3plt.close(_fig6)
+
+    g1,g2,g3,g4 = st.columns(4)
+    g1.metric('LAeq',f'{_sig_laeq:.1f}')
+    g2.metric('Lmax',f'{_sig_lmax:.1f}')
+    g3.metric('L10',f'{_sig_l10:.1f}')
+    g4.metric('L90',f'{_sig_l90:.1f}')
+
+    st.markdown(
+        f"""
+        <div class="c3-key">
+          <b>Lee primero la forma del registro:</b> {_meta['signature']}.
+          Después interpreta los números. La firma temporal ayuda a formular hipótesis sobre la fuente,
+          pero un gráfico por sí solo no sustituye la observación de terreno.
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
+
+    st.markdown('## 4. Mismo LAeq, fuentes completamente distintas')
+
+    _tcmp = np.arange(0,120,dtype=float)
+    _stable = np.full_like(_tcmp,63.0) + .3*np.sin(_tcmp/9)
+    _events = np.full_like(_tcmp,55.0)
+    for c in [12,35,59,83,107]:
+        _events += 15*np.exp(-.5*((_tcmp-c)/2.2)**2)
+    _events += _c3l1_laeq(_stable) - _c3l1_laeq(_events)
+
+    _figcmp,_axcmp=c3plt.subplots(figsize=(10.5,3.8))
+    _axcmp.plot(_tcmp,_stable,label=f'Fuente fija estable · LAeq {_c3l1_laeq(_stable):.1f}')
+    _axcmp.plot(_tcmp,_events,label=f'Eventos móviles · LAeq {_c3l1_laeq(_events):.1f}')
+    _axcmp.set_xlabel('Tiempo [s]')
+    _axcmp.set_ylabel('Nivel [dB(A)]')
+    _axcmp.set_title('El mismo LAeq no identifica la fuente')
+    _axcmp.grid(alpha=.2)
+    _axcmp.legend(fontsize=8)
+    st.pyplot(_figcmp,use_container_width=True)
+    c3plt.close(_figcmp)
+
+    st.markdown(
+        """
+        <div class="c3-card orange">
+          <div class="c3-kicker">DIAGNÓSTICO</div>
+          <b>Dos registros con LAeq semejante pueden requerir estrategias completamente distintas.</b>
+          <p>
+            En el primero domina una fuente relativamente estable.
+            En el segundo dominan eventos repetidos. El descriptor global se parece,
+            pero la fuente, la temporalidad y las medidas de control no son equivalentes.
+          </p>
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
+
+    st.markdown('## 5. Laboratorio de mezcla urbana')
+
+    st.write(
+        'Ahora construye un ambiente acústico mixto. Activa y desactiva fuentes y observa '
+        'cómo cambia el registro total de la estación.'
+    )
+
+    c1,c2,c3 = st.columns(3)
+    with c1:
+        _on_road = st.checkbox('🛣️ Tránsito vial', value=True, key='c3_s6_mix_road')
+        _on_rail = st.checkbox('🚆 Ferrocarril', value=False, key='c3_s6_mix_rail')
+    with c2:
+        _on_air = st.checkbox('✈️ Aeronave', value=False, key='c3_s6_mix_air')
+        _on_hvac = st.checkbox('❄️ HVAC', value=True, key='c3_s6_mix_hvac')
+    with c3:
+        _on_const = st.checkbox('🏗️ Construcción', value=False, key='c3_s6_mix_const')
+
+    _mix_sources = {
+        'Tránsito vial': _signature_for_source('Carretera / autopista'),
+        'Ferrocarril': _signature_for_source('Ferrocarril'),
+        'Aeronave': _signature_for_source('Aeronave'),
+        'HVAC': _signature_for_source('Instalación / HVAC'),
+        'Construcción': _signature_for_source('Construcción / obra'),
+    }
+    _enabled = {
+        'Tránsito vial':_on_road,
+        'Ferrocarril':_on_rail,
+        'Aeronave':_on_air,
+        'HVAC':_on_hvac,
+        'Construcción':_on_const,
+    }
+
+    _active = [k for k,v in _enabled.items() if v]
+    if not _active:
+        _mix = np.full(len(_t6),40.0)
+    else:
+        _energies = np.vstack([10**(_mix_sources[k]/10.0) for k in _active])
+        _mix = 10*np.log10(np.sum(_energies,axis=0))
+
+    _mix_laeq = _c3l1_laeq(_mix)
+    _mix_lmax = float(np.max(_mix))
+    _mix_l10 = _c3l1_exceedance_percentile(_mix,10)
+    _mix_l90 = _c3l1_exceedance_percentile(_mix,90)
+
+    _figmix,_axmix=c3plt.subplots(figsize=(10.5,4.0))
+    _axmix.plot(_t6,_mix,lw=1.5,label='Registro total')
+    _axmix.axhline(_mix_laeq,ls='--',label=f'LAeq total = {_mix_laeq:.1f}')
+    _axmix.set_title('Ambiente urbano construido por el alumno')
+    _axmix.set_xlabel('Tiempo [s]')
+    _axmix.set_ylabel('Nivel total [dB(A)]')
+    _axmix.grid(alpha=.2)
+    _axmix.legend(fontsize=8)
+    st.pyplot(_figmix,use_container_width=True)
+    c3plt.close(_figmix)
+
+    m1,m2,m3,m4 = st.columns(4)
+    m1.metric('LAeq total',f'{_mix_laeq:.1f}')
+    m2.metric('Lmax total',f'{_mix_lmax:.1f}')
+    m3.metric('L10',f'{_mix_l10:.1f}')
+    m4.metric('L90',f'{_mix_l90:.1f}')
+
+    if _active:
+        _contrib_rows = []
+        for k in _active:
+            _l = _c3l1_laeq(_mix_sources[k])
+            _share = 100.0*(10**(_l/10.0))/(sum(10**(_c3l1_laeq(_mix_sources[j])/10.0) for j in _active))
+            _contrib_rows.append({
+                'Fuente activa':k,
+                'LAeq individual [dB(A)]':round(_l,1),
+                'Aporte energético relativo [%]':round(_share,1),
+            })
+        st.dataframe(pd.DataFrame(_contrib_rows),hide_index=True,use_container_width=True)
+
+        _dominant = max(_contrib_rows,key=lambda r:r['Aporte energético relativo [%]'])['Fuente activa']
+        st.markdown(
+            f"""
+            <div class="c3-card green">
+              <div class="c3-kicker">FUENTE DOMINANTE EN ESTE ESCENARIO</div>
+              <b>{_dominant}</b>
+              <p>
+                Dominante significa que aporta la mayor fracción de energía en este ejercicio.
+                No significa que sea la única fuente audible ni la única relevante para el receptor.
+              </p>
+            </div>
+            """,
+            unsafe_allow_html=True,
+        )
+
+    st.markdown('## 6. Diagnóstico profesional · ¿qué mirarías primero?')
+
+    _mission6 = st.segmented_control(
+        'Misión',
+        [
+            'Exposición global de carretera',
+            'Paso individual de aeronave',
+            'Máximo de una operación de obra',
+            'Componente persistente de HVAC',
+        ],
+        default='Exposición global de carretera',
+        key='c3_s6_mission',
+    )
+
+    _answers6 = {
+        'Exposición global de carretera':'LAeq / LD-LE-LN / Lden',
+        'Paso individual de aeronave':'SEL / LAE',
+        'Máximo de una operación de obra':'Lmax',
+        'Componente persistente de HVAC':'L90',
+    }
+    _correct6 = _answers6[_mission6]
+
+    _choice6 = st.segmented_control(
+        'Descriptor que priorizarías',
+        ['LAeq / LD-LE-LN / Lden','SEL / LAE','Lmax','L90'],
+        default=None,
+        key='c3_s6_descriptor',
+    )
+
+    if _choice6:
+        if _choice6 == _correct6:
+            st.success(f'Correcto. Para esta misión, el descriptor prioritario es {_correct6}.')
+        else:
+            st.warning(
+                'Revisa qué pregunta quieres responder: energía global, exposición de un evento, máximo o componente persistente.'
+            )
+
+    st.markdown('## 7. Caso integrado · interpreta la estación de la Etapa 5')
+
+    st.markdown(
+        f"""
+        <div class="c3-card">
+          <div class="c3-kicker">DATOS HEREDADOS DEL MONITOREO</div>
+          <b>LD {_ld_prev:.1f} · LE {_le_prev:.1f} · LN {_ln_prev:.1f} · Lden {_lden_prev:.1f} dB(A)</b>
+          <p>
+            Durante el terreno se confirma que el punto está junto a una carretera,
+            existe un equipo HVAC en una cubierta cercana y ocurren sobrevuelos ocasionales.
+          </p>
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
+
+    _q_case = st.radio(
+        '¿Cuál conclusión es técnicamente más adecuada?',
+        [
+            'Lden permite afirmar por sí solo que la carretera es la única fuente.',
+            'Los descriptores cuantifican el ambiente, pero para atribuirlo a fuentes debemos combinar registro temporal y observación de terreno.',
+            'Como existe HVAC, Lden deja de ser válido.',
+        ],
+        index=None,
+        key='c3_s6_integrated_case',
+    )
+    if _q_case:
+        if _q_case.startswith('Los descriptores'):
+            st.success(
+                'Correcto. La atribución de una fuente requiere contexto: temporalidad, geometría, observación y, cuando corresponda, mediciones específicas.'
+            )
+        else:
+            st.warning(
+                'Un descriptor global no identifica automáticamente quién produjo toda la energía acústica.'
+            )
+
+    st.markdown('## 8. Cierre · de la Etapa 5 a la Etapa 7')
+
+    st.markdown(
+        """
+        <div class="c3-card blue">
+          <div class="c3-kicker">CADENA DE APRENDIZAJE</div>
+          <b>Monitorear → describir → identificar fuentes → diseñar una campaña representativa</b>
+          <p>
+            Ya sabemos que distintos tipos de fuente cambian la historia temporal y la interpretación.
+            La siguiente pregunta será: <b>¿dónde, cuándo y cuánto debemos medir para que el resultado sea representativo?</b>
+          </p>
         </div>
         """,
         unsafe_allow_html=True,
     )
 
     saved['c3_stage6_source'] = {
-        'source': _case6,
-        'kind': _meta6['kind'],
-        'mission': _meta6['mission'],
-        'best_descriptor': _meta6['best'],
-        'L10_minus_L90': float(_range6),
-        'answer': _ans6,
+        'explored_source': _src,
+        'mix_active_sources': _active,
+        'mix_LAeq': float(_mix_laeq),
+        'mix_Lmax': float(_mix_lmax),
+        'mix_L10': float(_mix_l10),
+        'mix_L90': float(_mix_l90),
+        'mission': _mission6,
+        'descriptor_answer': _choice6,
+        'descriptor_correct': bool(_choice6 == _correct6) if _choice6 else None,
+        'integrated_case_answer': _q_case,
     }
     _c3l1_save(saved,deps)
 
+    _viewer_role = (
+        st.session_state.get('role')
+        or st.session_state.get('user_role')
+        or st.session_state.get('modo')
+        or st.session_state.get('view_mode')
+        or ''
+    )
+    _is_teacher_view = str(_viewer_role).lower() in {
+        'docente','teacher','profesor','profesora','instructor'
+    } or bool(
+        st.session_state.get('is_teacher')
+        or st.session_state.get('teacher_mode')
+        or st.session_state.get('vista_docente')
+    )
 
-    if str(st.session_state.get('role','')).lower() == 'docente':
+    if _is_teacher_view:
         st.markdown('### Pauta docente · Etapa 6')
         st.markdown(
             """
-            **Mensaje a transmitir:** no existe un descriptor universalmente superior.
-            La elección depende del tipo de fuente y de la pregunta: energía global, evento, máximo, persistencia o variabilidad.
-            El material del curso reconoce como fuentes principales tránsito vehicular, ferroviario y aéreo, construcción, obras y actividades productivas.
+            **Objetivo docente:** evitar que el alumno confunda descriptor con fuente.
+
+            La Etapa 5 entregó LD, LE, LN y Lden a partir de un monitoreo continuo.
+            La Etapa 6 debe mostrar que esos números no atribuyen por sí solos la energía a una fuente específica.
+
+            **Fuentes principales trabajadas:**
+            - carreteras/autopistas;
+            - ferrocarril;
+            - aeronaves;
+            - instalaciones fijas;
+            - construcción/obras.
+
+            **Puntos para enfatizar:**
+            1. una fuente puede ser móvil o fija;
+            2. su geometría puede ser puntual, lineal, superficial o asociada a una trayectoria;
+            3. su comportamiento puede ser continuo, fluctuante, intermitente o eventual;
+            4. la firma temporal ayuda a formular hipótesis, pero la atribución exige contexto de terreno;
+            5. el descriptor prioritario cambia con la misión profesional;
+            6. varias fuentes se combinan energéticamente en el nivel total.
+
+            **Puente hacia Etapa 7:** una vez identificadas las fuentes relevantes, debemos decidir
+            posiciones, horarios y duraciones de medición que realmente representen el fenómeno.
             """
         )
 
