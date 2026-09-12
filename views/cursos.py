@@ -23152,72 +23152,116 @@ def _c3l1_stage6_impl(lab: dict, saved: dict, deps: Dict[str, Any]):
             unsafe_allow_html=True,
         )
 
-    st.markdown('## 7. Caso integrado · interpreta la estación de la Etapa 5')
-
-    st.markdown(
-        f"""
-        <div class="c3-card">
-          <div class="c3-kicker">DATOS HEREDADOS DEL MONITOREO</div>
-          <b>LD {_ld_prev:.1f} · LE {_le_prev:.1f} · LN {_ln_prev:.1f} · Lden {_lden_prev:.1f} dB(A)</b>
-          <p>
-            Durante la inspección de terreno se confirma que el punto de monitoreo está junto a una carretera,
-            existe un equipo HVAC en una cubierta cercana y ocurren sobrevuelos ocasionales.
-          </p>
-        </div>
-        """,
-        unsafe_allow_html=True,
-    )
+    st.markdown('## 7. Analiza el escenario que construiste en el laboratorio de mezcla urbana')
 
     st.markdown(
         """
         <div class="c3-card blue">
-          <div class="c3-kicker">MISIÓN DE ANÁLISIS</div>
-          <b>No basta con mirar un único descriptor.</b>
+          <div class="c3-kicker">APLICA LO QUE ACABAS DE HACER</div>
+          <b>Las preguntas siguientes se refieren al escenario que construiste en el punto 6.</b>
           <p>
-            Usa todo lo aprendido en la Etapa 6 para interpretar qué fuentes podrían explicar el registro
-            y qué información adicional necesitarías antes de atribuir responsabilidades.
+            No cambies las fuentes todavía. Observa tu gráfico, los descriptores obtenidos
+            y la tabla de aportes energéticos antes de responder.
           </p>
         </div>
         """,
         unsafe_allow_html=True,
     )
 
-    _dev_questions = [
+    _mix_active_label = ', '.join(_active) if _active else 'ninguna fuente activa'
+    _mix_dominant = None
+    if _active:
+        _mix_contrib = []
+        for _k in _active:
+            _l = _c3l1_laeq(_mix_sources[_k])
+            _share = 100.0*(10**(_l/10.0))/(sum(10**(_c3l1_laeq(_mix_sources[_j])/10.0) for _j in _active))
+            _mix_contrib.append((_k, _l, _share))
+        _mix_dominant = max(_mix_contrib, key=lambda x: x[2])[0]
+    else:
+        _mix_contrib = []
+
+    st.markdown(
+        f"""
+        <div style="
+            margin:.7rem 0 1rem;
+            padding:.9rem 1rem;
+            border:1px solid #d8e6ef;
+            border-radius:15px;
+            background:#f8fbfd;
+        ">
+          <div style="font-size:.7rem;font-weight:800;letter-spacing:.07em;color:#167db4">
+            TU ESCENARIO ACTUAL
+          </div>
+          <div style="color:#40586b;line-height:1.6;margin-top:.3rem">
+            <b>Fuentes activas:</b> {_mix_active_label}<br>
+            <b>LAeq total:</b> {_mix_laeq:.1f} dB(A) ·
+            <b>Lmax:</b> {_mix_lmax:.1f} dB(A) ·
+            <b>L10:</b> {_mix_l10:.1f} dB(A) ·
+            <b>L90:</b> {_mix_l90:.1f} dB(A)
+          </div>
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
+
+    _mix_questions = [
         {
             'n':1,
-            'title':'Fuente dominante probable',
-            'q':'A partir de los valores LD, LE, LN y Lden, ¿puedes afirmar que la carretera es la fuente dominante durante todo el ciclo? Justifica.',
-            'guide':'No se puede afirmar solo con los descriptores globales. Es necesario combinar el patrón temporal, observación de terreno y, si corresponde, mediciones o análisis específicos de cada fuente.'
+            'title':'Fuente dominante',
+            'q':'Según la tabla de aporte energético del punto 6, ¿qué fuente domina tu escenario y qué dato del laboratorio respalda esa conclusión?',
+            'guide':(
+                f'En este escenario, la fuente dominante es {_mix_dominant}. '
+                'La justificación debe apoyarse en que presenta el mayor aporte energético relativo del conjunto.'
+                if _mix_dominant else
+                'No hay una fuente dominante porque no hay fuentes activas. Activa al menos una fuente en el punto 6 para poder analizarla.'
+            )
         },
         {
             'n':2,
-            'title':'Rol del HVAC',
-            'q':'Si el HVAC opera de forma relativamente estable durante la noche, ¿qué comportamiento esperarías observar y qué descriptor podría ayudarte a analizar su componente persistente?',
-            'guide':'Se esperaría una contribución relativamente estable o cíclica. L90 puede apoyar la interpretación del componente persistente, complementado con LAeq y observación de ciclos de encendido/apagado.'
+            'title':'Lectura del registro temporal',
+            'q':'Observa la forma del gráfico total. ¿Qué rasgos del registro puedes asociar a las fuentes que activaste?',
+            'guide':(
+                'La respuesta debe relacionar la forma del registro con las fuentes activas: '
+                'tránsito vial produce fondo fluctuante con pasos; ferrocarril y aeronave generan eventos delimitados; '
+                'HVAC aporta una componente relativamente estable; construcción genera operaciones intensas separadas por pausas.'
+            )
         },
         {
             'n':3,
-            'title':'Sobrevuelos',
-            'q':'Si durante la noche ocurre un sobrevuelo aislado, ¿qué descriptor usarías para caracterizar ese evento individual y por qué no bastaría con mirar solo LN?',
-            'guide':'SEL/LAE es adecuado para la exposición de un evento individual. LN resume energéticamente todo el periodo nocturno y no conserva por sí solo la información específica de un sobrevuelo.'
+            'title':'LAeq versus Lmax',
+            'q':'Compara LAeq total y Lmax. ¿Qué te dice la diferencia entre ambos sobre el comportamiento de tu escenario?',
+            'guide':(
+                f'En tu escenario, LAeq = {_mix_laeq:.1f} dB(A) y Lmax = {_mix_lmax:.1f} dB(A). '
+                'Una diferencia grande sugiere eventos o picos destacados sobre el nivel energético medio; '
+                'una diferencia pequeña sugiere un comportamiento más estable.'
+            )
         },
         {
             'n':4,
-            'title':'Firma temporal',
-            'q':'¿Qué diferencias esperarías ver en la historia temporal entre una carretera con flujo continuo, un HVAC estable y un sobrevuelo?',
-            'guide':'Carretera: fondo fluctuante con múltiples pasos; HVAC: nivel relativamente estable o cíclico; sobrevuelo: evento con crecimiento, máximo y decaimiento.'
+            'title':'L10 y L90',
+            'q':'¿Qué información adicional obtienes al comparar L10 y L90 en tu mezcla? ¿Qué podría indicar una separación grande entre ambos?',
+            'guide':(
+                f'En tu mezcla, L10 = {_mix_l10:.1f} dB(A) y L90 = {_mix_l90:.1f} dB(A). '
+                'L10 representa la zona alta de la distribución y L90 la zona baja/persistente. '
+                'Una separación grande indica mayor variabilidad entre periodos altos y el componente persistente.'
+            )
         },
         {
             'n':5,
-            'title':'Información adicional',
-            'q':'Antes de concluir cuál fuente explica principalmente el Lden, ¿qué información adicional recopilarías en terreno?',
-            'guide':'Posición y distancia de fuentes/receptores, horarios de operación, registros temporales, correlación con eventos, condiciones meteorológicas relevantes, funcionamiento del HVAC, flujo vehicular, sobrevuelos y, si es necesario, mediciones específicas por fuente.'
+            'title':'Qué cambiarías para comprobar una hipótesis',
+            'q':'Si quisieras comprobar qué fuente está controlando el LAeq total, ¿qué fuente desactivarías o aislarías primero y qué esperarías observar en el gráfico?',
+            'guide':(
+                (f'Una estrategia razonable es retirar primero {_mix_dominant}, porque actualmente presenta el mayor aporte energético. '
+                 'Si realmente controla el LAeq total, al desactivarla debería disminuir de forma apreciable el LAeq y cambiar la forma temporal del registro.')
+                if _mix_dominant else
+                'Primero debes activar fuentes y generar una mezcla. Luego conviene retirar la fuente con mayor aporte energético y comparar el cambio de LAeq.'
+            )
         },
     ]
 
-    _dev_answers = {}
+    _mix_dev_answers = {}
 
-    for _item in _dev_questions:
+    for _item in _mix_questions:
         st.markdown(
             f"""
             <div style="
@@ -23243,15 +23287,59 @@ def _c3l1_stage6_impl(lab: dict, saved: dict, deps: Dict[str, Any]):
 
         _ans = st.text_area(
             f"Respuesta {_item['n']}",
-            key=f"c3_s6_dev_q_{_item['n']}",
+            key=f"c3_s6_mix_q_{_item['n']}",
             placeholder="Desarrolla tu respuesta en 3–5 líneas...",
             label_visibility='collapsed',
             height=110,
         )
-        _dev_answers[str(_item['n'])] = _ans.strip()
+        _answer_clean = _ans.strip()
+        _mix_dev_answers[str(_item['n'])] = _answer_clean
 
-    saved['c3_stage6_integrated_case'] = {
-        'answers': _dev_answers,
+        _reveal_key = f"c3_s6_mix_reveal_{_item['n']}"
+
+        if not _answer_clean:
+            st.caption("Escribe primero tu análisis para poder comparar con la respuesta esperada.")
+        else:
+            if st.button(
+                f"👁️ Ver respuesta esperada · Pregunta {_item['n']}",
+                key=f"c3_s6_mix_btn_{_item['n']}",
+                use_container_width=True,
+            ):
+                st.session_state[_reveal_key] = True
+
+        if st.session_state.get(_reveal_key, False):
+            st.markdown(
+                f"""
+                <div style="
+                    margin:.5rem 0 1rem;
+                    padding:.9rem 1rem;
+                    border-radius:14px;
+                    border:1px solid #bfe5ce;
+                    background:linear-gradient(135deg,#f2fbf6,#ffffff);
+                ">
+                  <div style="font-size:.7rem;font-weight:800;letter-spacing:.07em;color:#278552;margin-bottom:.3rem">
+                    RESPUESTA ESPERADA
+                  </div>
+                  <div style="color:#40586b;line-height:1.55">
+                    {_item['guide']}
+                  </div>
+                </div>
+                """,
+                unsafe_allow_html=True,
+            )
+
+    saved['c3_stage6_mix_analysis'] = {
+        'active_sources': list(_active),
+        'dominant_source': _mix_dominant,
+        'LAeq': float(_mix_laeq),
+        'Lmax': float(_mix_lmax),
+        'L10': float(_mix_l10),
+        'L90': float(_mix_l90),
+        'answers': _mix_dev_answers,
+        'revealed': {
+            str(_item['n']): bool(st.session_state.get(f"c3_s6_mix_reveal_{_item['n']}", False))
+            for _item in _mix_questions
+        },
     }
     _c3l1_save(saved, deps)
 
@@ -23300,9 +23388,16 @@ def _c3l1_stage6_impl(lab: dict, saved: dict, deps: Dict[str, Any]):
         )
 
 
-        st.markdown('#### Pauta docente · caso integrado')
+        st.markdown('#### Pauta docente · análisis del laboratorio de mezcla urbana')
 
-        for _item in _dev_questions:
+        st.markdown(
+            """
+            Las cinco preguntas del punto 7 deben revisarse usando el escenario que el alumno construyó en el punto 6.
+            La pauta cambia parcialmente según las fuentes activas y cuál de ellas domina energéticamente.
+            """
+        )
+
+        for _item in _mix_questions:
             st.markdown(
                 f"""
                 **Pregunta {_item['n']} · {_item['title']}**
