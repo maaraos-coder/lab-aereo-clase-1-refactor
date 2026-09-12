@@ -24200,6 +24200,118 @@ def _c3l1_stage8_impl(lab: dict, saved: dict, deps: Dict[str, Any]):
     import pandas as pd
 
     _c3l1_style()
+
+    st.markdown(
+        '''
+        <style>
+        .s8-step {
+            border: 1px solid #d7e5ef;
+            border-radius: 18px;
+            background: linear-gradient(135deg,#ffffff 0%,#f7fbfd 100%);
+            padding: 1.05rem 1.15rem;
+            margin: .65rem 0 1rem;
+            box-shadow: 0 5px 18px rgba(22,72,103,.055);
+        }
+        .s8-step-blue {
+            border-color:#b9dcef;
+            background:linear-gradient(135deg,#f0f9fd 0%,#ffffff 100%);
+        }
+        .s8-step-orange {
+            border-color:#f1d2bc;
+            background:linear-gradient(135deg,#fff8f2 0%,#ffffff 100%);
+        }
+        .s8-step-green {
+            border-color:#bee4cf;
+            background:linear-gradient(135deg,#f2fbf6 0%,#ffffff 100%);
+        }
+        .s8-kicker {
+            font-size:.68rem;
+            font-weight:850;
+            letter-spacing:.09em;
+            color:#1784b8;
+            margin-bottom:.25rem;
+        }
+        .s8-title {
+            font-size:1.05rem;
+            font-weight:850;
+            color:#102d49;
+            line-height:1.25;
+            margin-bottom:.35rem;
+        }
+        .s8-text {
+            color:#50677b;
+            font-size:.91rem;
+            line-height:1.55;
+        }
+        .s8-mini-grid {
+            display:grid;
+            grid-template-columns:repeat(4,minmax(0,1fr));
+            gap:.7rem;
+            margin:.7rem 0 1rem;
+        }
+        .s8-mini {
+            border:1px solid #d8e6ef;
+            border-radius:14px;
+            background:#fff;
+            padding:.8rem .85rem;
+        }
+        .s8-mini .lab {
+            font-size:.66rem;
+            font-weight:800;
+            color:#6a8194;
+            letter-spacing:.06em;
+        }
+        .s8-mini .val {
+            font-size:1.12rem;
+            font-weight:850;
+            color:#17324d;
+            margin-top:.15rem;
+        }
+        .s8-divider {
+            height:1px;
+            background:linear-gradient(90deg,transparent,#d7e5ef 20%,#d7e5ef 80%,transparent);
+            margin:1.5rem 0;
+        }
+        .s8-question {
+            border:1px solid #d9e7ef;
+            border-radius:16px;
+            background:#fff;
+            padding:.9rem 1rem;
+            margin:.9rem 0 .45rem;
+        }
+        .s8-qnum {
+            color:#1784b8;
+            font-size:.67rem;
+            font-weight:850;
+            letter-spacing:.08em;
+            margin-bottom:.25rem;
+        }
+        .s8-qtext {
+            color:#153149;
+            font-weight:750;
+            line-height:1.45;
+        }
+        .s8-report {
+            border:1px solid #c6dceb;
+            border-radius:20px;
+            background:linear-gradient(145deg,#ffffff,#f5fafc);
+            padding:1.15rem 1.2rem;
+            box-shadow:0 8px 24px rgba(28,75,105,.06);
+        }
+        .s8-report-title {
+            font-size:1.08rem;
+            font-weight:850;
+            color:#102d49;
+            margin-bottom:.8rem;
+        }
+        @media (max-width: 800px) {
+            .s8-mini-grid { grid-template-columns:repeat(2,minmax(0,1fr)); }
+        }
+        </style>
+        ''',
+        unsafe_allow_html=True,
+    )
+
     _c3l1_header(
         8,
         'Medición real con sonómetro online',
@@ -24229,7 +24341,17 @@ def _c3l1_stage8_impl(lab: dict, saved: dict, deps: Dict[str, Any]):
     # ============================================================
     # 1. HYPOTHESIS
     # ============================================================
-    st.markdown('## 1. Antes de medir · formula tu hipótesis')
+    st.markdown(
+        '''
+        <div class="s8-step s8-step-blue">
+          <div class="s8-kicker">FASE 1 · PREDICCIÓN</div>
+          <div class="s8-title">Antes de medir, piensa qué esperas encontrar</div>
+          <div class="s8-text">Selecciona una fuente, anticipa su comportamiento y define qué descriptor crees que será más útil. La hipótesis no tiene que ser correcta: después la contrastarás con tus propios datos.</div>
+        </div>
+        ''',
+        unsafe_allow_html=True,
+    )
+    st.markdown('## 1. Formula tu hipótesis')
 
     _source_options = [
         'Juguera / licuadora',
@@ -24297,21 +24419,32 @@ def _c3l1_stage8_impl(lab: dict, saved: dict, deps: Dict[str, Any]):
     # ============================================================
     # 2. PREPARATION
     # ============================================================
+    st.markdown(
+        '''
+        <div class="s8-step">
+          <div class="s8-kicker">FASE 2 · PREPARACIÓN</div>
+          <div class="s8-title">Deja el montaje listo antes de iniciar</div>
+          <div class="s8-text">La calidad de la actividad depende de mantener posición, distancia y condiciones lo más constantes posible.</div>
+        </div>
+        ''',
+        unsafe_allow_html=True,
+    )
+    st.markdown('<div class="s8-divider"></div>', unsafe_allow_html=True)
     st.markdown('## 2. Prepara la medición')
 
     st.markdown(
         """
-        <div class="c3-card">
-          <div class="c3-kicker">PROTOCOLO DE MEDICIÓN</div>
-          <b>Fuente ON · medición principal</b>
-          <p>
-            1. Usa preferentemente Chrome.<br>
-            2. Mantén el dispositivo y el micrófono en una posición fija.<br>
-            3. No tapes el micrófono ni hables durante la medición.<br>
-            4. Mantén aproximadamente constante la distancia a la fuente.<br>
-            5. Para esta actividad utiliza ponderación <b>A</b> y respuesta temporal <b>FAST</b>.<br>
-            6. Intenta registrar <b>5 minutos</b>, siempre que la fuente pueda operar de forma segura durante ese tiempo.
-          </p>
+        <div class="s8-step">
+          <div class="s8-kicker">PROTOCOLO RÁPIDO</div>
+          <div class="s8-title">Fuente ON · medición principal</div>
+          <div class="s8-text">
+            <b>01.</b> Usa preferentemente Chrome &nbsp;·&nbsp;
+            <b>02.</b> fija el dispositivo &nbsp;·&nbsp;
+            <b>03.</b> no tapes el micrófono &nbsp;·&nbsp;
+            <b>04.</b> mantén la distancia &nbsp;·&nbsp;
+            <b>05.</b> usa <b>A + FAST</b> &nbsp;·&nbsp;
+            <b>06.</b> registra idealmente <b>5 min</b>.
+          </div>
         </div>
         """,
         unsafe_allow_html=True,
@@ -24331,7 +24464,18 @@ def _c3l1_stage8_impl(lab: dict, saved: dict, deps: Dict[str, Any]):
     # ============================================================
     # 3. REGISTER SOURCE-ON MEASUREMENT
     # ============================================================
-    st.markdown('## 3. Registra tu medición · fuente encendida')
+    st.markdown(
+        '''
+        <div class="s8-step s8-step-green">
+          <div class="s8-kicker">FASE 3 · FUENTE ON</div>
+          <div class="s8-title">Mide la fuente funcionando</div>
+          <div class="s8-text">Registra el contexto de la medición y copia los descriptores obtenidos por el sonómetro. Estos serán tus datos de trabajo.</div>
+        </div>
+        ''',
+        unsafe_allow_html=True,
+    )
+    st.markdown('<div class="s8-divider"></div>', unsafe_allow_html=True)
+    st.markdown('## 3. Medición principal · fuente encendida')
 
     c1,c2,c3 = st.columns(3)
     with c1:
@@ -24410,11 +24554,17 @@ def _c3l1_stage8_impl(lab: dict, saved: dict, deps: Dict[str, Any]):
         _spread = _lafmax_on - _lafmin_on
         _peak_to_eq = _lafmax_on - _laeq_on
 
-        r1,r2,r3,r4 = st.columns(4)
-        r1.metric('LAeq,T', f'{_laeq_on:.1f} dB(A)')
-        r2.metric('LAFmax', f'{_lafmax_on:.1f} dB(A)')
-        r3.metric('LAFmin', f'{_lafmin_on:.1f} dB(A)')
-        r4.metric('Max − Min', f'{_spread:.1f} dB')
+        st.markdown(
+            f'''
+            <div class="s8-mini-grid">
+              <div class="s8-mini"><div class="lab">LAeq,T</div><div class="val">{_laeq_on:.1f} dB(A)</div></div>
+              <div class="s8-mini"><div class="lab">LAFmax</div><div class="val">{_lafmax_on:.1f} dB(A)</div></div>
+              <div class="s8-mini"><div class="lab">LAFmin</div><div class="val">{_lafmin_on:.1f} dB(A)</div></div>
+              <div class="s8-mini"><div class="lab">MAX − MIN</div><div class="val">{_spread:.1f} dB</div></div>
+            </div>
+            ''',
+            unsafe_allow_html=True,
+        )
 
         st.markdown(
             f"""
@@ -24445,17 +24595,28 @@ def _c3l1_stage8_impl(lab: dict, saved: dict, deps: Dict[str, Any]):
     # ============================================================
     # 4. SOURCE OFF / RESIDUAL
     # ============================================================
-    st.markdown('## 4. Segunda medición · fuente apagada')
+    st.markdown(
+        '''
+        <div class="s8-step s8-step-orange">
+          <div class="s8-kicker">FASE 4 · FUENTE OFF</div>
+          <div class="s8-title">Mide el ambiente sin la fuente específica</div>
+          <div class="s8-text">Mantén el micrófono en la misma posición y obtén una condición residual comparable. Luego podrás contrastar ON versus OFF.</div>
+        </div>
+        ''',
+        unsafe_allow_html=True,
+    )
+    st.markdown('<div class="s8-divider"></div>', unsafe_allow_html=True)
+    st.markdown('## 4. Medición residual · fuente apagada')
 
     st.markdown(
         """
-        <div class="c3-card orange">
-          <div class="c3-kicker">CONDICIÓN RESIDUAL</div>
-          <b>Apaga la fuente y mantén el micrófono exactamente en la misma posición.</b>
-          <p>
-            Realiza una segunda medición breve, idealmente de al menos 1 minuto, procurando mantener
-            condiciones ambientales comparables. Esta medición representa el ambiente sin la fuente específica.
-          </p>
+        <div class="s8-step s8-step-orange">
+          <div class="s8-kicker">CONDICIÓN RESIDUAL</div>
+          <div class="s8-title">Misma posición · misma geometría · fuente apagada</div>
+          <div class="s8-text">
+            Realiza una segunda medición breve, idealmente de al menos 1 minuto. Intenta mantener las demás
+            condiciones lo más parecidas posible para que la comparación ON/OFF tenga sentido.
+          </div>
         </div>
         """,
         unsafe_allow_html=True,
@@ -24489,10 +24650,16 @@ def _c3l1_stage8_impl(lab: dict, saved: dict, deps: Dict[str, Any]):
                 _specific_level = 10*math.log10(_energy_diff)
 
         st.markdown('### Comparación ON/OFF')
-        cc1,cc2,cc3 = st.columns(3)
-        cc1.metric('Fuente ON', f'{_laeq_on:.1f} dB(A)')
-        cc2.metric('Fuente OFF', f'{_laeq_off:.1f} dB(A)')
-        cc3.metric('Diferencia directa', f'{(_laeq_on-_laeq_off):.1f} dB')
+        st.markdown(
+            f'''
+            <div class="s8-mini-grid" style="grid-template-columns:repeat(3,minmax(0,1fr))">
+              <div class="s8-mini"><div class="lab">FUENTE ON</div><div class="val">{_laeq_on:.1f} dB(A)</div></div>
+              <div class="s8-mini"><div class="lab">FUENTE OFF</div><div class="val">{_laeq_off:.1f} dB(A)</div></div>
+              <div class="s8-mini"><div class="lab">DIFERENCIA</div><div class="val">{(_laeq_on-_laeq_off):.1f} dB</div></div>
+            </div>
+            ''',
+            unsafe_allow_html=True,
+        )
 
         if _specific_level is not None:
             st.latex(
@@ -24511,7 +24678,18 @@ def _c3l1_stage8_impl(lab: dict, saved: dict, deps: Dict[str, Any]):
     # ============================================================
     # 5. QUESTIONS
     # ============================================================
-    st.markdown('## 5. Interpreta tus propios resultados')
+    st.markdown(
+        '''
+        <div class="s8-step s8-step-blue">
+          <div class="s8-kicker">FASE 5 · INTERPRETACIÓN</div>
+          <div class="s8-title">Convierte números en una explicación acústica</div>
+          <div class="s8-text">Responde usando lo que realmente observaste. Primero razona; después podrás comparar con la pauta técnica.</div>
+        </div>
+        ''',
+        unsafe_allow_html=True,
+    )
+    st.markdown('<div class="s8-divider"></div>', unsafe_allow_html=True)
+    st.markdown('## 5. Interpreta tus resultados')
 
     _q_data = [
         (
@@ -24543,7 +24721,15 @@ def _c3l1_stage8_impl(lab: dict, saved: dict, deps: Dict[str, Any]):
     _answers = {}
     _revealed = {}
     for _i,(_q,_guide) in enumerate(_q_data,1):
-        st.markdown(f'**Pregunta {_i}.** {_q}')
+        st.markdown(
+            f'''
+            <div class="s8-question">
+              <div class="s8-qnum">PREGUNTA {_i}</div>
+              <div class="s8-qtext">{_q}</div>
+            </div>
+            ''',
+            unsafe_allow_html=True,
+        )
         _answer = st.text_area(
             f'Etapa 8 · respuesta {_i}',
             value=(_prev.get('answers',{}) or {}).get(str(_i),''),
@@ -24586,6 +24772,17 @@ def _c3l1_stage8_impl(lab: dict, saved: dict, deps: Dict[str, Any]):
     # ============================================================
     # 6. MINI REPORT
     # ============================================================
+    st.markdown(
+        '''
+        <div class="s8-step s8-step-green">
+          <div class="s8-kicker">FASE 6 · CIERRE PROFESIONAL</div>
+          <div class="s8-title">Redacta un informe breve de lo que mediste</div>
+          <div class="s8-text">Resume la fuente, los resultados, tu interpretación y las principales limitaciones de la experiencia.</div>
+        </div>
+        ''',
+        unsafe_allow_html=True,
+    )
+    st.markdown('<div class="s8-divider"></div>', unsafe_allow_html=True)
     st.markdown('## 6. Informe breve de tu medición')
 
     _description = st.text_area(
@@ -24612,7 +24809,16 @@ def _c3l1_stage8_impl(lab: dict, saved: dict, deps: Dict[str, Any]):
 
     _source_label = _other_source.strip() if _source == 'Otro equipo' and _other_source.strip() else _source
 
-    st.markdown('### Vista previa del informe')
+    st.markdown(
+        '''
+        <div class="s8-report">
+          <div class="s8-kicker">VISTA PREVIA</div>
+          <div class="s8-report-title">Informe breve de medición acústica</div>
+          <div class="s8-text">La información que ves a continuación se construye automáticamente con los datos ingresados durante la actividad.</div>
+        </div>
+        ''',
+        unsafe_allow_html=True,
+    )
 
     _report_rows = [
         {'Descriptor / dato':'Fuente evaluada','Resultado':_source_label},
