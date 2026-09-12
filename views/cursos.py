@@ -23923,12 +23923,12 @@ def _c3l1_stage7_impl(lab: dict, saved: dict, deps: Dict[str, Any]):
         height=120,
     )
 
-    _campaign_ready = abs(_htotal-4.0) < 1e-9 and bool(_campaign_reason.strip())
+    _campaign_ready = bool(_campaign_reason.strip())
     _campaign_reveal_key = 'c3_s7_motorway_campaign_feedback_revealed'
 
     if not _campaign_ready:
         st.caption(
-            'Distribuye exactamente las 4,0 horas y escribe tu justificación para habilitar la comparación técnica.'
+            'Escribe tu justificación para habilitar la comparación técnica.'
         )
     else:
         if st.button(
@@ -23955,6 +23955,13 @@ def _c3l1_stage7_impl(lab: dict, saved: dict, deps: Dict[str, Any]):
         if _hnight <= 0:
             _missing.append('noche')
 
+        _hours_ok = abs(_htotal-4.0) < 1e-9
+        _hours_feedback = (
+            'La restricción de tiempo fue respetada: distribuiste exactamente 4,0 h.'
+            if _hours_ok
+            else f'La propuesta aún no cumple la restricción: asignaste {_htotal:.1f} h y debes distribuir exactamente 4,0 h.'
+        )
+
         st.markdown(
             f'''
             <div style="
@@ -23968,7 +23975,8 @@ def _c3l1_stage7_impl(lab: dict, saved: dict, deps: Dict[str, Any]):
                 COMPARACIÓN TÉCNICA
               </div>
               <div style="color:#344f60;line-height:1.62">
-                <b>Tu distribución:</b> día {_hday:.1f} h · tarde {_heve:.1f} h · noche {_hnight:.1f} h.<br><br>
+                <b>Tu distribución:</b> día {_hday:.1f} h · tarde {_heve:.1f} h · noche {_hnight:.1f} h.<br>
+                <b>Control de la restricción:</b> {_hours_feedback}<br><br>
                 Una campaña de 4 horas <b>no reproduce un monitoreo continuo de 24 h</b>, por lo que debe
                 diseñarse como una campaña de muestreo representativo. Lo más importante es que las ventanas
                 seleccionadas cubran condiciones acústicamente distintas y estén justificadas por el comportamiento
@@ -23983,6 +23991,12 @@ def _c3l1_stage7_impl(lab: dict, saved: dict, deps: Dict[str, Any]):
             ''',
             unsafe_allow_html=True,
         )
+
+        if not _hours_ok:
+            st.warning(
+                f'Antes de cerrar la campaña debes corregir la asignación de tiempo: actualmente sumas {_htotal:.1f} h '
+                'y la restricción del problema es exactamente 4,0 h.'
+            )
 
         if _missing:
             st.warning(
