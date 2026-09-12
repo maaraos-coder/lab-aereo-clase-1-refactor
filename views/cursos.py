@@ -24998,7 +24998,7 @@ def _c3l1_stage9_impl(lab: dict, saved: dict, deps: Dict[str, Any]):
     _c3l1_header(
         9,
         'Preguntas de comprensión',
-        'Actividad formativa · comprueba lo aprendido sin puntaje ni nota.',
+        'Actividad formativa · 10 preguntas para integrar lo aprendido en las Etapas 1–8.',
         deps,
         20,
     )
@@ -25010,27 +25010,95 @@ def _c3l1_stage9_impl(lab: dict, saved: dict, deps: Dict[str, Any]):
         """
         <div class="c3-card blue">
           <div class="c3-kicker">ETAPA FORMATIVA · SIN NOTA</div>
-          <b>Estas preguntas sirven para comprobar comprensión antes del caso integrador.</b>
+          <b>Comprueba lo aprendido antes del ejercicio integrador.</b>
           <p>
-            Puedes revisar tus respuestas y utilizar la retroalimentación para corregir conceptos.
-            Esta etapa aumenta el avance del laboratorio, pero no genera una evaluación oficial.
+            Son 10 preguntas de distintos tipos. Tus respuestas se guardan automáticamente y puedes
+            salir de la etapa y volver después sin perder el avance. No existe puntaje ni calificación.
           </p>
         </div>
         """,
         unsafe_allow_html=True,
     )
 
-    if role == 'Docente' and not projection:
-        st.markdown('## Pauta docente')
-        st.caption('Pauta conceptual de la actividad formativa. No existe puntaje ni calificación.')
-        for i, q in enumerate(_C3L1_STAGE9_QUESTIONS, 1):
-            with st.container(border=True):
-                st.markdown(f'### {i}. {q[1]}')
-                for j, opt in enumerate(q[2]):
-                    st.write(('✓ ' if j == q[3] else '○ ') + opt)
-                st.success('Respuesta esperada: ' + q[2][q[3]])
-                st.info(q[4])
-        return
+    questions = [
+        {
+            'type':'radio',
+            'title':'Fuente persistente',
+            'q':'En una vivienda se perciben una avenida, un HVAC y sobrevuelos ocasionales. ¿Qué fuente es más compatible con una componente acústica relativamente persistente?',
+            'opts':['Avenida','Sistema HVAC','Sobrevuelo','Todas necesariamente por igual'],
+            'correct':'Sistema HVAC',
+            'guide':'Un HVAC que opera de manera continua o cíclica puede elevar el piso acústico durante periodos prolongados. La avenida fluctúa con el tránsito y los sobrevuelos son eventos.'
+        },
+        {
+            'type':'radio',
+            'title':'LAeq,T versus LAFmax',
+            'q':'¿Cuál es la diferencia fundamental entre LAeq,T y LAFmax?',
+            'opts':['Son exactamente el mismo descriptor','LAeq,T integra energía durante T y LAFmax corresponde al mayor nivel registrado con FAST','LAFmax siempre representa el ruido residual','LAeq,T solo sirve para eventos de menos de 1 s'],
+            'correct':'LAeq,T integra energía durante T y LAFmax corresponde al mayor nivel registrado con FAST',
+            'guide':'LAeq,T resume energéticamente todo el intervalo; LAFmax conserva información del máximo registrado con la respuesta temporal FAST.'
+        },
+        {
+            'type':'multi',
+            'title':'Descriptor de un sobrevuelo',
+            'q':'Selecciona los descriptores especialmente útiles para caracterizar un sobrevuelo individual.',
+            'opts':['SEL / LAE','LAFmax','L90','LD'],
+            'correct':['SEL / LAE','LAFmax'],
+            'guide':'SEL/LAE caracteriza la energía del evento y LAFmax permite describir su máximo. L90 y LD responden a otras preguntas acústicas.'
+        },
+        {
+            'type':'text',
+            'title':'L90, fondo y residual',
+            'q':'Explica por qué L90 puede aproximarse al ruido de fondo en algunos escenarios, pero no es sinónimo de ruido residual.',
+            'guide':'L90 representa la zona baja/persistente del registro. Puede aproximarse al fondo cuando éste es estable y los eventos altos ocupan poco tiempo. El residual, en cambio, es una condición física medida sin la fuente específica de interés.'
+        },
+        {
+            'type':'radio',
+            'title':'Separación energética',
+            'q':'HVAC ON = 58 dB(A) y HVAC OFF = 56 dB(A). ¿Cómo debe estimarse la contribución específica del HVAC?',
+            'opts':['Restando 58 − 56 y concluyendo que el HVAC es 2 dB(A)','Mediante resta energética entre el nivel total y el residual','Usando únicamente LAFmin','No es necesario comparar ON/OFF'],
+            'correct':'Mediante resta energética entre el nivel total y el residual',
+            'guide':'Los decibeles son logarítmicos. Para aislar una contribución se trabaja con energías y luego se vuelve a dB.'
+        },
+        {
+            'type':'radio',
+            'title':'Secuencia ON/OFF',
+            'q':'¿Cuál es la secuencia metodológica más adecuada para estudiar una fuente específica mediante comparación ON/OFF?',
+            'opts':[
+                'Medir total → medir residual en condiciones comparables → comprobar comparabilidad → resta energética → interpretar',
+                'Restar dB → medir residual → elegir el máximo → interpretar',
+                'Medir LAFmin → asumir que es residual → restar aritméticamente',
+                'Medir una sola vez y atribuir todo a la fuente'
+            ],
+            'correct':'Medir total → medir residual en condiciones comparables → comprobar comparabilidad → resta energética → interpretar',
+            'guide':'La comparación solo tiene sentido si ambas condiciones son suficientemente comparables en geometría y ambiente.'
+        },
+        {
+            'type':'text',
+            'title':'Representatividad temporal',
+            'q':'Una autopista se mide durante 30 minutos a las 08:00 y se obtiene 68 dB(A). ¿Por qué no puedes asumir automáticamente que ese valor corresponde a LD?',
+            'guide':'Porque esa ventana puede coincidir con una hora punta y no representar energéticamente todo el periodo día. La representatividad temporal debe justificarse.'
+        },
+        {
+            'type':'radio',
+            'title':'Correcciones de Lden',
+            'q':'¿Dónde se incorporan las correcciones de +5 dB para tarde y +10 dB para noche?',
+            'opts':['En el sonómetro antes de medir','Dentro del cálculo de Lden','Sumándolas físicamente a cada medición de terreno','Solo al LAFmax'],
+            'correct':'Dentro del cálculo de Lden',
+            'guide':'LE y LN son niveles medidos/calculados de sus periodos. Las correcciones se aplican dentro de la expresión de Lden; no significan que el sonómetro haya medido más.'
+        },
+        {
+            'type':'text',
+            'title':'Interpretación de descriptores',
+            'q':'Una medición entrega LAFmax = 82 dB(A), LAeq,T = 69 dB(A) y LAFmin = 52 dB(A). ¿Qué te sugieren esos valores sobre el comportamiento temporal de la fuente?',
+            'guide':'La separación entre máximo, equivalente y mínimo sugiere variabilidad importante y presencia de niveles altos que no se mantienen durante todo el registro. La interpretación debe relacionarse con lo observado físicamente.'
+        },
+        {
+            'type':'text',
+            'title':'Diseño de campaña',
+            'q':'¿Qué información mínima debería contener una campaña para defender técnicamente una conclusión sobre una fuente de ruido ambiental?',
+            'guide':'Debe relacionar objetivo, fuente y receptor, posición y geometría de medición, periodos y duración, descriptores, condiciones operacionales/ambientales, interferencias, representatividad y limitaciones.'
+        },
+    ]
 
     previous = saved.get('c3_s9_formative', {}) if isinstance(saved.get('c3_s9_formative'), dict) else {}
     if not previous:
@@ -25040,72 +25108,118 @@ def _c3l1_stage9_impl(lab: dict, saved: dict, deps: Dict[str, Any]):
     old_answers = previous.get('answers', {}) if isinstance(previous.get('answers'), dict) else {}
     old_checked = previous.get('checked', {}) if isinstance(previous.get('checked'), dict) else {}
 
-    for i in range(len(_C3L1_STAGE9_QUESTIONS)):
-        qkey = f'c3_s9f_q{i}'
+    # Restaurar estado antes de crear widgets para que al volver a la etapa nada se pierda.
+    for i, item in enumerate(questions):
+        key = f'c3_s9f_q{i}'
+        if key not in st.session_state and str(i) in old_answers:
+            st.session_state[key] = old_answers.get(str(i))
         ckey = f'c3_s9f_checked_{i}'
-        if qkey not in st.session_state and str(i) in old_answers:
-            st.session_state[qkey] = old_answers.get(str(i))
         if ckey not in st.session_state:
             st.session_state[ckey] = bool(old_checked.get(str(i), False))
+
+    # Vista docente: pauta completa, sin datos individuales del alumno.
+    if role == 'Docente' and not projection:
+        st.markdown('## Pauta docente')
+        st.caption('Pauta conceptual de la actividad formativa. No existe puntaje ni calificación.')
+        for i, item in enumerate(questions, 1):
+            with st.container(border=True):
+                st.markdown(f'### {i}. {item["title"]}')
+                st.write(item['q'])
+                if item['type'] in ('radio','multi'):
+                    correct = item['correct']
+                    if isinstance(correct, list):
+                        st.success('Respuesta esperada: ' + ' + '.join(correct))
+                    else:
+                        st.success('Respuesta esperada: ' + correct)
+                else:
+                    st.success('Criterio esperado: ' + item['guide'])
+                if item['type'] != 'text':
+                    st.info(item['guide'])
+        return
 
     answers = {}
     checked = {}
 
-    for i, q in enumerate(_C3L1_STAGE9_QUESTIONS):
+    for i, item in enumerate(questions):
         with st.container(border=True):
-            st.markdown(f'### {i + 1}. {q[1]}')
-            choice = st.radio(
-                'Respuesta',
-                q[2],
-                index=None,
-                key=f'c3_s9f_q{i}',
-                label_visibility='collapsed',
-            )
-            answers[str(i)] = choice
+            st.markdown(f'### {i+1}. {item["title"]}')
+            st.write(item['q'])
+            key = f'c3_s9f_q{i}'
 
-            if not projection and choice is not None and not st.session_state.get(f'c3_s9f_checked_{i}', False):
+            if item['type'] == 'radio':
+                answer = st.radio(
+                    'Respuesta', item['opts'], index=None, key=key,
+                    label_visibility='collapsed'
+                )
+            elif item['type'] == 'multi':
+                answer = st.multiselect(
+                    'Selecciona todas las que correspondan', item['opts'], key=key
+                )
+            else:
+                answer = st.text_area(
+                    'Desarrolla tu respuesta', key=key,
+                    placeholder='Escribe tu razonamiento en 3–5 líneas...',
+                    height=105,
+                    label_visibility='collapsed'
+                )
+
+            answers[str(i)] = answer
+            has_answer = bool(answer) if item['type'] != 'multi' else len(answer) > 0
+            ckey = f'c3_s9f_checked_{i}'
+
+            if has_answer and not projection and not st.session_state.get(ckey, False):
+                label = 'Ver pauta' if item['type'] == 'text' else 'Comprobar respuesta'
                 if st.button(
-                    f'Comprobar respuesta {i + 1}',
-                    key=f'c3_s9f_check_btn_{i}',
-                    use_container_width=True,
+                    f'{label} {i+1}', key=f'c3_s9f_check_btn_{i}',
+                    use_container_width=True
                 ):
-                    st.session_state[f'c3_s9f_checked_{i}'] = True
+                    st.session_state[ckey] = True
 
-            is_checked = bool(st.session_state.get(f'c3_s9f_checked_{i}', False))
+            if not has_answer:
+                st.caption('Responde primero para habilitar la retroalimentación.')
+
+            is_checked = bool(st.session_state.get(ckey, False))
             checked[str(i)] = is_checked
 
-            if is_checked and choice is not None:
-                if choice == q[2][q[3]]:
-                    st.success('✓ Correcto')
+            if is_checked and has_answer:
+                if item['type'] == 'radio':
+                    if answer == item['correct']:
+                        st.success('✓ Correcto')
+                    else:
+                        st.warning('Revisa el concepto')
+                        st.write(f'**Respuesta esperada:** {item["correct"]}')
+                    st.info(item['guide'])
+                elif item['type'] == 'multi':
+                    if set(answer) == set(item['correct']):
+                        st.success('✓ Correcto')
+                    else:
+                        st.warning('Revisa la selección')
+                        st.write('**Respuesta esperada:** ' + ' + '.join(item['correct']))
+                    st.info(item['guide'])
                 else:
-                    st.warning('✗ Revisa el concepto')
-                    st.write(f'**Respuesta esperada:** {q[2][q[3]]}')
-                st.info(q[4])
+                    st.info('**Pauta para comparar tu respuesta:** ' + item['guide'])
 
     payload = {
         'answers': answers,
         'checked': checked,
         'completed_questions': sum(1 for v in checked.values() if v),
-        'total_questions': len(_C3L1_STAGE9_QUESTIONS),
+        'total_questions': len(questions),
     }
     saved['c3_s9_formative'] = payload
-    # Guardado automático del borrador: cada respuesta/comprobación queda persistida
-    # aunque el alumno cambie de etapa antes de completar la actividad.
     saved.setdefault('c3_formative', {})['s9_comprehension_draft'] = payload
     _c3l1_save(saved, deps)
 
-    all_checked = all(checked.get(str(i), False) for i in range(len(_C3L1_STAGE9_QUESTIONS)))
+    all_checked = all(checked.get(str(i), False) for i in range(len(questions)))
     if all_checked:
         saved['done_9'] = True
         saved.setdefault('c3_formative', {})['s9_comprehension'] = payload
-        st.success('Etapa 9 completada · actividad formativa sin nota.')
+        _c3l1_save(saved, deps)
+        st.success('Etapa 9 completada · 10 de 10 actividades revisadas · actividad formativa sin nota.')
     else:
         st.caption(
-            f"{payload['completed_questions']} de {payload['total_questions']} preguntas comprobadas. "
-            "El avance se conserva automáticamente."
+            f"{payload['completed_questions']} de {payload['total_questions']} actividades revisadas. "
+            "Tus respuestas se guardan automáticamente."
         )
-
-    _c3l1_save(saved, deps)
 
 _C3L1_CASE_INTERVALS = {'P1': [67, 70, 69, 65], 'P2': [62, 64, 63, 61], 'P3': [58, 60, 59, 57]}
 _C3L1_CASE_PERIODS = {'P1': (66, 63, 57), 'P2': (62, 60, 54), 'P3': (58, 55, 50)}
