@@ -22,7 +22,7 @@ _LOCAL_NAMES = {
     "_latest_response_by_key", "_course2_lab1_rows", "_course2_lab2_delivery_rows", "_render_course2_lab1_scores",
     "_future_progress_rows", "_future_progress_state", "_future_lab_progress",
     "_render_lab_progress_card", "_render_course1_official_evaluations",
-    "_render_course1_block", "_render_course2_block", "_course2_lab2_official_summary",
+    "_render_course1_block", "_render_course2_block", "_render_course3_block", "_course2_lab2_official_summary",
     "_c2_answer_tabs_header", "_c2_render_mcq_comparison", "_c2_render_feedback_tab",
     "_c2_render_lab1_stage9_tabs", "_c2_render_lab1_stage10_tabs",
     "_c2_render_lab2_stage9_tabs", "_c2_render_lab2_stage10_tabs",
@@ -498,7 +498,6 @@ def student_sidebar_summary(client, user_key):
         LABORATORIES[2]["id"],
         "clase-03-impacto-instalaciones-lab-1",
         "clase-04-impacto-instalaciones-lab-2",
-        "clase-05-ruido-ambiental-lab-1",
     ]
     try:
         rows=(
@@ -1832,6 +1831,113 @@ def _c2_render_lab2_stage10_tabs(row, reviewed, progress_rows=None):
     with tabs[2]:
         _c2_render_feedback_tab(row, reviewed=reviewed, formative=False)
 
+
+_C3_LAB1_STAGE_TITLES_RESULTS = {
+    0: "Introducción al laboratorio",
+    1: "Ruido ambiental: fuentes, caminos y receptores",
+    2: "Del campo sonoro al sonómetro",
+    3: "Del registro temporal a los descriptores",
+    4: "Del evento sonoro a su exposición · SEL / LAE",
+    5: "Del monitoreo continuo al ciclo diario · LD, LE, LN y Lden",
+    6: "Del monitoreo a las fuentes de ruido ambiental",
+    7: "Diseño de campañas · HVAC y autopista",
+    8: "Medición real con sonómetro online",
+    9: "Preguntas de comprensión",
+    10: "Diagnóstico acústico de un barrio",
+}
+
+
+def _render_course3_block(rows, progress_rows):
+    """Curso 3 con la misma arquitectura visual del Curso 2.
+
+    Laboratorio 1:
+    - etapas 0–10 formativas;
+    - sin puntaje;
+    - sin nota;
+    - no alimenta evaluaciones oficiales.
+    """
+    course3_labs = [
+        lab for lab in FUTURE_LABS.values()
+        if lab.get("course") == "Control de ruido ambiental"
+    ]
+    lab1 = next(
+        (lab for lab in course3_labs if int(lab.get("number") or 0) == 1),
+        None,
+    )
+
+    if lab1:
+        p1 = _future_lab_progress(lab1, progress_rows)
+        # El catálogo futuro todavía conserva títulos antiguos.
+        # Para Mi desempeño mostramos los títulos reales vigentes del laboratorio.
+        for item in p1.get("stage_rows", []):
+            stage = int(item.get("stage") or 0)
+            item["title"] = _C3_LAB1_STAGE_TITLES_RESULTS.get(
+                stage,
+                item.get("title", f"Etapa {stage}"),
+            )
+    else:
+        p1 = {
+            "completed": 0,
+            "expected": 11,
+            "percent": 0.0,
+            "stage_rows": [],
+        }
+
+    formative_pct = float(p1.get("percent") or 0.0)
+
+    # Las etapas de este laboratorio no crean evaluaciones oficiales.
+    official_completed = 0
+    official_expected = 2
+    official_grade = "Pendiente"
+
+    label = (
+        f"Curso 3 · Control de ruido ambiental · "
+        f"{formative_pct:.0f}% de avance formativo · Nota {official_grade}"
+    )
+
+    with st.expander(label, expanded=True):
+        a, b, c = st.columns(3)
+        a.metric("Avance formativo", f"{formative_pct:.0f} %")
+        b.metric(
+            "Evaluaciones oficiales",
+            f"{official_completed} de {official_expected}",
+        )
+        c.metric("Nota del curso", official_grade)
+
+        tabs = st.tabs(["Laboratorios", "Evaluaciones oficiales"])
+
+        with tabs[0]:
+            # Igual arquitectura visual que Curso 2:
+            # tarjeta de laboratorio + avance + porcentaje + estado + detalle.
+            if lab1:
+                cols = st.columns(2)
+                with cols[0]:
+                    _render_lab_progress_card(
+                        "Laboratorio 1 · Medición y diagnóstico del ruido ambiental",
+                        "Práctica y aplicación · Etapas 0–10 formativas · Laboratorio sin nota",
+                        p1["completed"],
+                        p1["expected"],
+                        p1["percent"],
+                        p1.get("stage_rows"),
+                    )
+                # Mantener la segunda columna libre permite incorporar Lab 2
+                # posteriormente sin alterar la arquitectura del curso.
+                with cols[1]:
+                    st.empty()
+            else:
+                st.info("El Laboratorio 1 todavía no está disponible en el catálogo.")
+
+        with tabs[1]:
+            st.caption(
+                "El Laboratorio 1 no genera evaluaciones oficiales ni calificación. "
+                "Las Etapas 0–10 son actividades formativas y solo alimentan el avance del laboratorio."
+            )
+            st.info(
+                "Las evaluaciones oficiales del Curso 3 aparecerán aquí cuando sean definidas "
+                "fuera del Laboratorio 1."
+            )
+
+
 def _render_course2_block(rows, progress_rows):
     lab1_scores=_course2_lab1_rows(rows)
     lab2_official=_course2_lab2_official_summary(rows)
@@ -1959,63 +2065,6 @@ def _render_course2_block(rows, progress_rows):
 
 
 
-
-def _render_course3_block(rows, progress_rows):
-    course3_labs=[lab for lab in FUTURE_LABS.values() if lab.get("course")=="Control de ruido ambiental"]
-    lab1=next((lab for lab in course3_labs if int(lab.get("number") or 0)==1),None)
-    progress=_future_lab_progress(lab1,progress_rows) if lab1 else {"completed":0,"expected":0,"percent":0.0,"stage_rows":[]}
-    c3_rows=[r for r in rows if r.get("class_id")=="clase-05-ruido-ambiental-lab-1"]
-    by_key={r.get("question_key"):r for r in _official_rows(c3_rows)}
-    stage9=by_key.get("final_comprehension"); stage10=by_key.get("final_integrated_design")
-    completed=sum(x is not None for x in (stage9,stage10))
-    reviewed=sum(bool(x and (x.get("teacher_score") is not None or x.get("status")=="reviewed")) for x in (stage9,stage10))
-    total=None; grade=None
-    if stage9 and stage10 and reviewed==2:
-        total=_effective_row_score(stage9)+_effective_row_score(stage10)
-        grade=_grade(total,100)
-    grade_text=f"{grade:.1f}" if grade is not None else "Pendiente"
-    label=f"Curso 3 · Control de ruido ambiental · {progress['percent']:.0f}% de recorrido · Nota {grade_text}"
-    with st.expander(label,expanded=True):
-        a,b,c=st.columns(3)
-        a.metric("Avance del Laboratorio 1",f"{progress['percent']:.0f} %")
-        b.metric("Evaluaciones oficiales",f"{completed} de 2")
-        c.metric("Nota del curso",grade_text)
-        tabs=st.tabs(["Laboratorio 1","Evaluaciones oficiales"])
-        with tabs[0]:
-            _render_lab_progress_card(
-                "Laboratorio 1 · Medición y diagnóstico del ruido ambiental",
-                "Etapas 1–8 formativas · Etapas 9 y 10 evaluadas",
-                progress["completed"],progress["expected"],progress["percent"],progress.get("stage_rows"),
-            )
-        with tabs[1]:
-            st.caption("Etapa 9: 40 puntos · Etapa 10: 60 puntos. La nota se publica después de la revisión docente.")
-            for title,row,maximum in [("Etapa 9 · Preguntas de comprensión",stage9,40),("Etapa 10 · Diagnóstico acústico de un barrio",stage10,60)]:
-                if row is None:
-                    with st.expander(f"⏳ {title} · Pendiente"):
-                        st.caption("Aún no existe una entrega.")
-                    continue
-                reviewed_row=row.get("teacher_score") is not None or row.get("status")=="reviewed"
-                score=_effective_row_score(row) if reviewed_row else None
-                g=_grade(score,maximum) if reviewed_row else None
-                summary=f"✅ {title} · {score:g}/{maximum} · Nota {g:.1f}" if reviewed_row else f"🕒 {title} · Entregada · Pendiente de revisión"
-                with st.expander(summary):
-                    x,y,z=st.columns(3)
-                    x.metric("Puntaje",f"{score:g}/{maximum}" if reviewed_row else "Pendiente")
-                    y.metric("Nota",f"{g:.1f}" if reviewed_row else "Pendiente")
-                    z.metric("Estado","Revisada" if reviewed_row else "Pendiente")
-                    payload=_student_result_payload(row.get("answer"))
-                    if isinstance(payload,dict):
-                        if row.get("question_key")=="final_comprehension":
-                            answers=payload.get("answers",{}) if isinstance(payload.get("answers",{}),dict) else {}
-                            st.write(f"Respuestas registradas: {sum(v not in (None,'') for v in answers.values())}/10")
-                        else:
-                            st.write(f"Desarrollo técnico automático: {payload.get('technical_score',0)}/40")
-                            st.write(f"Comprensión: {payload.get('comprehension_score',0)}/20")
-                            if payload.get("conclusion"): st.write(payload.get("conclusion"))
-                    if row.get("teacher_note"): st.info(f"Comentario docente: {row.get('teacher_note')}")
-            if total is not None:
-                st.success(f"Curso 3 · Puntaje final: {total:.1f}/100 · Nota final: {grade:.1f}")
-
 def results_view(client, catalog, user_key):
     """Mi desempeño organizado por curso y preparado para incorporar nuevos laboratorios."""
     header(
@@ -2067,18 +2116,21 @@ def results_view(client, catalog, user_key):
         "completed":0,"expected":0,"percent":0.0
     }
 
+    course3_labs=[
+        lab for lab in FUTURE_LABS.values()
+        if lab.get("course")=="Control de ruido ambiental"
+    ]
+    c3_lab1=next((lab for lab in course3_labs if int(lab.get("number") or 0)==1),None)
+    c3_prog=_future_lab_progress(c3_lab1,progress_rows) if c3_lab1 else {
+        "completed":0,"expected":0,"percent":0.0
+    }
+
     courses_with_progress=0
     if c1_completed or official["completed"]:
         courses_with_progress+=1
     if c2_prog["completed"] or c2_delivered:
         courses_with_progress+=1
-
-    c3_lab=next((lab for lab in FUTURE_LABS.values() if lab.get("id")=="clase-05-ruido-ambiental-lab-1"),None)
-    c3_prog=_future_lab_progress(c3_lab,progress_rows) if c3_lab else {"completed":0,"expected":0,"percent":0.0}
-    c3_rows=[r for r in rows if r.get("class_id")=="clase-05-ruido-ambiental-lab-1"]
-    c3_by_key={r.get("question_key"):r for r in _official_rows(c3_rows)}
-    c3_delivered=sum(c3_by_key.get(k) is not None for k in ("final_comprehension","final_integrated_design"))
-    if c3_prog["completed"] or c3_delivered:
+    if c3_prog["completed"]:
         courses_with_progress+=1
 
     labs_with_progress=sum(1 for item in course1_progress.values() if item["completed"])
