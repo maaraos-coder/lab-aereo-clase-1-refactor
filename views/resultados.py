@@ -535,6 +535,22 @@ def student_sidebar_summary(client, user_key):
         for k in ("final_comprehension","final_integrated_design")
     )
 
+    # Curso 3 · Laboratorio 1: las 11 etapas (0–10) son formativas.
+    # Su progreso se guarda en user_progress, no en responses.
+    future_progress=_future_progress_rows(client,user_key)
+    course3_labs=[
+        lab for lab in FUTURE_LABS.values()
+        if lab.get("course")=="Control de ruido ambiental"
+    ]
+    c3_lab1=next(
+        (lab for lab in course3_labs if int(lab.get("number") or 0)==1),
+        None,
+    )
+    c3_prog=_future_lab_progress(c3_lab1,future_progress) if c3_lab1 else {
+        "completed":0,"expected":11,"percent":0.0
+    }
+    c3_formative_pct=float(c3_prog.get("percent") or 0.0)
+
     st.markdown(
         f"""
         <div style="background:linear-gradient(145deg,#0b5b91,#0e91c7);border:1px solid #59d4ef;
@@ -555,6 +571,12 @@ def student_sidebar_summary(client, user_key):
 
           <div style="display:flex;justify-content:space-between;gap:.5rem;font-size:.82rem;margin-top:.35rem">
             <span>Curso 2 · evaluaciones</span><b>{c2_lab2_delivered}/2</b>
+          </div>
+
+          <div style="height:1px;background:rgba(255,255,255,.22);margin:.55rem 0 .45rem"></div>
+
+          <div style="display:flex;justify-content:space-between;gap:.5rem;font-size:.82rem">
+            <span>Curso 3 · avance formativo</span><b>{c3_formative_pct:.0f}%</b>
           </div>
 
         </div>
