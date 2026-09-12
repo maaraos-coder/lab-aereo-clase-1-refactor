@@ -21803,134 +21803,250 @@ def _c3l1_stage5_impl(lab: dict, saved: dict, deps: Dict[str, Any]):
 
 
 
+
     st.markdown('## 7. Desafío final · resuelve situaciones reales')
 
     st.markdown(
         """
-        <div class="c3-card blue">
-          <div class="c3-kicker">EJERCICIOS DE APLICACIÓN</div>
-          <b>Ahora debes usar los descriptores, los horarios y la ecuación.</b>
-          <p>
-            No se trata de recordar definiciones: debes identificar periodos,
-            aplicar penalizaciones, calcular términos energéticos y reconstruir
-            información faltante.
-          </p>
+        <div style="
+            margin:.4rem 0 1.1rem;
+            padding:1rem 1.15rem;
+            border-radius:16px;
+            border:1px solid #c9e1f1;
+            background:linear-gradient(135deg,#eef8fd,#ffffff);
+        ">
+          <div style="font-size:.72rem;font-weight:800;letter-spacing:.08em;color:#167db4;margin-bottom:.35rem">
+            APLICA LO APRENDIDO
+          </div>
+          <div style="font-size:1.12rem;font-weight:800;color:#183247;margin-bottom:.35rem">
+            Ocho situaciones para interpretar horarios, penalizaciones y descriptores.
+          </div>
+          <div style="color:#52687d;line-height:1.5">
+            No necesitas memorizar respuestas. Usa los periodos del monitoreo, las ecuaciones
+            y el razonamiento energético desarrollado en esta etapa.
+          </div>
         </div>
         """,
         unsafe_allow_html=True,
     )
 
-    # ---------- Exercise 1 ----------
-    st.markdown('### Ejercicio 1 · ¿Qué periodo estás midiendo?')
-    _q1 = st.radio(
-        'La estación registra continuamente entre las 20:00 y las 22:00. ¿A qué descriptor de periodo aporta ese intervalo?',
-        ['LD', 'LE', 'LN'],
-        index=None,
-        horizontal=True,
+    _viewer_role_quiz = (
+        st.session_state.get('role')
+        or st.session_state.get('user_role')
+        or st.session_state.get('modo')
+        or st.session_state.get('view_mode')
+        or ''
+    )
+    _is_teacher_quiz = str(_viewer_role_quiz).lower() in {
+        'docente','teacher','profesor','profesora','instructor'
+    } or bool(
+        st.session_state.get('is_teacher')
+        or st.session_state.get('teacher_mode')
+        or st.session_state.get('vista_docente')
+    )
+
+    _is_zoom_quiz = (
+        str(_viewer_role_quiz).lower() in {'zoom','projection','proyeccion','proyección'}
+        or bool(
+            st.session_state.get('zoom_mode')
+            or st.session_state.get('vista_zoom')
+            or st.session_state.get('projection_mode')
+            or st.session_state.get('is_projection')
+        )
+    )
+
+    def _c3s5_exercise_card(number, title, body=None):
+        _body_html = f'<div style="color:#536b7c;line-height:1.45;margin-top:.25rem">{body}</div>' if body else ''
+        st.markdown(
+            f"""
+            <div style="
+                margin:1.15rem 0 .55rem;
+                padding:.9rem 1rem;
+                border:1px solid #d8e6ef;
+                border-radius:15px;
+                background:linear-gradient(135deg,#ffffff,#f8fbfd);
+            ">
+              <div style="font-size:.7rem;font-weight:800;letter-spacing:.07em;color:#1781ba">
+                EJERCICIO {number}
+              </div>
+              <div style="font-size:1.05rem;font-weight:800;color:#183247;margin-top:.18rem">
+                {title}
+              </div>
+              {_body_html}
+            </div>
+            """,
+            unsafe_allow_html=True,
+        )
+
+    def _c3s5_feedback(answer, correct, explanation, hint):
+        if answer is None:
+            return
+        if answer == correct:
+            st.markdown(
+                f"""
+                <div style="
+                    margin:.55rem 0 .85rem;
+                    padding:.8rem 1rem;
+                    border-radius:13px;
+                    border:1px solid #bfe5ce;
+                    background:#f2fbf6;
+                    color:#315948;
+                    line-height:1.5;
+                ">
+                  <b>✓ Correcto.</b> {explanation}
+                </div>
+                """,
+                unsafe_allow_html=True,
+            )
+        else:
+            # In normal student view give a hint; in Zoom show the correct answer after responding.
+            if _is_zoom_quiz:
+                st.markdown(
+                    f"""
+                    <div style="
+                        margin:.55rem 0 .85rem;
+                        padding:.8rem 1rem;
+                        border-radius:13px;
+                        border:1px solid #f0cf9d;
+                        background:#fff9ef;
+                        color:#6b5736;
+                        line-height:1.5;
+                    ">
+                      <b>Respuesta correcta: {correct}.</b><br>
+                      {explanation}
+                    </div>
+                    """,
+                    unsafe_allow_html=True,
+                )
+            else:
+                st.markdown(
+                    f"""
+                    <div style="
+                        margin:.55rem 0 .85rem;
+                        padding:.8rem 1rem;
+                        border-radius:13px;
+                        border:1px solid #f0cf9d;
+                        background:#fff9ef;
+                        color:#6b5736;
+                        line-height:1.5;
+                    ">
+                      <b>Revisa el razonamiento.</b> {hint}
+                    </div>
+                    """,
+                    unsafe_allow_html=True,
+                )
+
+    _exercise_results = {}
+
+    # 1
+    _c3s5_exercise_card(
+        1,
+        '¿Qué periodo estás midiendo?',
+        'La estación registra continuamente entre las 20:00 y las 22:00.'
+    )
+    _q1 = st.segmented_control(
+        'Periodo 20:00–22:00',
+        ['LD','LE','LN'],
+        default=None,
         key='c3_s5_app_q1',
+        label_visibility='collapsed',
     )
-    if _q1:
-        if _q1 == 'LE':
-            st.success('Correcto. Entre 19:00 y 23:00 estamos en el periodo tarde, por lo que aporta a LE.')
-        else:
-            st.warning('Revisa los límites horarios del ejercicio: día 07–19, tarde 19–23, noche 23–07.')
+    _c3s5_feedback(
+        _q1, 'LE',
+        'El intervalo 20:00–22:00 pertenece completamente al periodo tarde (19:00–23:00), por lo que aporta a LE.',
+        'Ubica primero el intervalo entre los límites 07–19, 19–23 y 23–07.'
+    )
+    _exercise_results['1'] = {'answer':_q1,'correct':'LE'}
 
-    # ---------- Exercise 2 ----------
-    st.markdown('### Ejercicio 2 · Cruce de medianoche')
-    _q2 = st.radio(
-        'Una campaña se extiende desde las 23:30 hasta las 05:30. ¿Qué descriptor de periodo caracteriza ese tramo?',
-        ['LD', 'LE', 'LN'],
-        index=None,
-        horizontal=True,
+    # 2
+    _c3s5_exercise_card(
+        2,
+        'Cruce de medianoche',
+        'Una campaña se extiende desde las 23:30 hasta las 05:30.'
+    )
+    _q2 = st.segmented_control(
+        'Periodo 23:30–05:30',
+        ['LD','LE','LN'],
+        default=None,
         key='c3_s5_app_q2',
+        label_visibility='collapsed',
     )
-    if _q2:
-        if _q2 == 'LN':
-            st.success('Correcto. Todo ese intervalo pertenece al periodo nocturno.')
-        else:
-            st.warning('Aunque el intervalo cruza medianoche, sigue perteneciendo al mismo periodo nocturno.')
+    _c3s5_feedback(
+        _q2, 'LN',
+        'Aunque el intervalo cruza las 00:00, sigue completamente dentro del periodo nocturno 23:00–07:00.',
+        'Medianoche no cambia por sí sola el descriptor: mira el intervalo completo del periodo noche.'
+    )
+    _exercise_results['2'] = {'answer':_q2,'correct':'LN'}
 
-    # ---------- Exercise 3 ----------
-    st.markdown('### Ejercicio 3 · Aplica la penalización correcta')
-    _q3 = st.radio(
-        'Si LE = 61 dB(A), ¿qué nivel se utiliza dentro del término energético de tarde en la ecuación de Lden?',
-        ['61 dB(A)', '66 dB(A)', '71 dB(A)'],
-        index=None,
-        horizontal=True,
+    # 3
+    _c3s5_exercise_card(
+        3,
+        'Aplica la penalización de tarde',
+        'Si LE = 61 dB(A), determina qué nivel aparece dentro del exponente del término de tarde en Lden.'
+    )
+    _q3 = st.segmented_control(
+        'LE corregido',
+        ['61 dB(A)','66 dB(A)','71 dB(A)'],
+        default=None,
         key='c3_s5_app_q3',
+        label_visibility='collapsed',
     )
-    if _q3:
-        if _q3 == '66 dB(A)':
-            st.success('Correcto. En Lden se utiliza LE + 5 dB = 66 dB(A).')
-        else:
-            st.warning('La tarde recibe +5 dB dentro del cálculo de Lden.')
+    _c3s5_feedback(
+        _q3, '66 dB(A)',
+        'En Lden, el periodo tarde utiliza LE + 5 dB. Por tanto: 61 + 5 = 66 dB(A).',
+        'La corrección de tarde es +5 dB y se aplica solo dentro del cálculo de Lden.'
+    )
+    _exercise_results['3'] = {'answer':_q3,'correct':'66 dB(A)'}
 
-    # ---------- Exercise 4 ----------
-    st.markdown('### Ejercicio 4 · Penalización nocturna')
-    _q4 = st.radio(
-        'La estación obtiene LN = 52 dB(A). ¿Qué valor entra al exponente del término nocturno de Lden?',
-        ['52 dB(A)', '57 dB(A)', '62 dB(A)'],
-        index=None,
-        horizontal=True,
+    # 4
+    _c3s5_exercise_card(
+        4,
+        'Penalización nocturna',
+        'La estación obtiene LN = 52 dB(A). Determina el valor que entra al exponente nocturno de Lden.'
+    )
+    _q4 = st.segmented_control(
+        'LN corregido',
+        ['52 dB(A)','57 dB(A)','62 dB(A)'],
+        default=None,
         key='c3_s5_app_q4',
+        label_visibility='collapsed',
     )
-    if _q4:
-        if _q4 == '62 dB(A)':
-            st.success('Correcto. LN + 10 dB = 62 dB(A).')
-        else:
-            st.warning('En Lden, el periodo nocturno recibe +10 dB.')
+    _c3s5_feedback(
+        _q4, '62 dB(A)',
+        'El término nocturno utiliza LN + 10 dB. Entonces: 52 + 10 = 62 dB(A).',
+        'La corrección nocturna del descriptor Lden es +10 dB.'
+    )
+    _exercise_results['4'] = {'answer':_q4,'correct':'62 dB(A)'}
 
-    # ---------- Exercise 5 ----------
-    st.markdown('### Ejercicio 5 · Encuentra el LN faltante')
-
+    # 5
     _ld_ex = 64.0
     _le_ex = 60.0
     _ln_true = 50.0
     _lden_ex = _c3l1_lden(_ld_ex, _le_ex, _ln_true)
-
-    st.markdown(
-        f"""
-        <div class="c3-card">
-          <div class="c3-kicker">DATOS</div>
-          <b>LD = {_ld_ex:.1f} dB(A) · LE = {_le_ex:.1f} dB(A) · Lden = {_lden_ex:.1f} dB(A)</b>
-          <p>¿Qué valor de LN produce ese Lden?</p>
-        </div>
-        """,
-        unsafe_allow_html=True,
+    _c3s5_exercise_card(
+        5,
+        'Encuentra el LN faltante',
+        f'LD = {_ld_ex:.1f} dB(A) · LE = {_le_ex:.1f} dB(A) · Lden = {_lden_ex:.1f} dB(A). ¿Qué LN reproduce ese resultado?'
     )
-
-    _q5 = st.radio(
-        'Selecciona LN',
-        ['46 dB(A)', '50 dB(A)', '54 dB(A)', '58 dB(A)'],
-        index=None,
-        horizontal=True,
+    _q5 = st.segmented_control(
+        'LN faltante',
+        ['46 dB(A)','50 dB(A)','54 dB(A)','58 dB(A)'],
+        default=None,
         key='c3_s5_app_q5',
+        label_visibility='collapsed',
     )
-    if _q5:
-        if _q5 == '50 dB(A)':
-            st.success('Correcto. LN = 50 dB(A) reproduce el Lden indicado.')
-        else:
-            st.warning('Prueba cada alternativa en el término nocturno: 8·10^((LN+10)/10).')
+    _c3s5_feedback(
+        _q5, '50 dB(A)',
+        'LN = 50 dB(A) reproduce el Lden indicado cuando se incorpora como LN + 10 dentro del término nocturno.',
+        'Sustituye cada alternativa en 8·10^((LN+10)/10) y compara el resultado.'
+    )
+    _exercise_results['5'] = {'answer':_q5,'correct':'50 dB(A)'}
 
-    # ---------- Exercise 6 ----------
-    st.markdown('### Ejercicio 6 · Despeja LN paso a paso')
-
+    # 6
     _ld6 = 62.0
     _le6 = 58.0
     _ln6 = 48.0
     _lden6 = _c3l1_lden(_ld6, _le6, _ln6)
-
-    st.markdown(
-        f"""
-        <div class="c3-card">
-          <div class="c3-kicker">PROBLEMA</div>
-          <b>LD = {_ld6:.1f} dB(A), LE = {_le6:.1f} dB(A), Lden = {_lden6:.1f} dB(A)</b>
-          <p>Calcula primero el término energético nocturno que falta y luego determina LN.</p>
-        </div>
-        """,
-        unsafe_allow_html=True,
-    )
-
     _night_term_true = 8.0 * 10.0**((_ln6 + 10.0)/10.0)
     _night_term_opts = [
         f'{_night_term_true/10:.2e}',
@@ -21938,157 +22054,115 @@ def _c3l1_stage5_impl(lab: dict, saved: dict, deps: Dict[str, Any]):
         f'{_night_term_true*10:.2e}',
     ]
 
-    _q6a = st.radio(
-        '¿Cuál es aproximadamente el término nocturno 8·10^((LN+10)/10)?',
+    _c3s5_exercise_card(
+        6,
+        'Despeja LN paso a paso',
+        f'LD = {_ld6:.1f} dB(A) · LE = {_le6:.1f} dB(A) · Lden = {_lden6:.1f} dB(A). Primero identifica el término nocturno faltante.'
+    )
+    _q6a = st.segmented_control(
+        'Término nocturno',
         _night_term_opts,
-        index=None,
-        horizontal=True,
+        default=None,
         key='c3_s5_app_q6a',
+        label_visibility='collapsed',
+    )
+    _c3s5_feedback(
+        _q6a, _night_term_opts[1],
+        'Ese valor corresponde al término 8·10^((LN+10)/10). Ahora puedes invertir la operación para obtener LN.',
+        'Aísla primero el aporte nocturno antes de aplicar logaritmos.'
     )
 
-    if _q6a:
-        if _q6a == _night_term_opts[1]:
-            st.success('Correcto. Ese es el término energético nocturno.')
-        else:
-            st.warning('Revisa el orden de magnitud del término energético.')
-
-    if _q6a == _night_term_opts[1]:
-        _q6b = st.radio(
-            'A partir de ese término, ¿cuál es LN?',
-            ['44 dB(A)', '48 dB(A)', '52 dB(A)'],
-            index=None,
-            horizontal=True,
+    _q6b = None
+    if _q6a == _night_term_opts[1] or (_is_zoom_quiz and _q6a is not None):
+        st.caption('Segundo paso · determina LN a partir del término nocturno.')
+        _q6b = st.segmented_control(
+            'LN despejado',
+            ['44 dB(A)','48 dB(A)','52 dB(A)'],
+            default=None,
             key='c3_s5_app_q6b',
+            label_visibility='collapsed',
         )
-        if _q6b:
-            if _q6b == '48 dB(A)':
-                st.success('Correcto. LN = 48 dB(A).')
-            else:
-                st.warning('Recuerda retirar primero la penalización de +10 dB.')
+        _c3s5_feedback(
+            _q6b, '48 dB(A)',
+            'Al invertir el término energético y retirar la penalización de +10 dB se obtiene LN = 48 dB(A).',
+            'Después de obtener LN + 10, recuerda restar la penalización nocturna.'
+        )
+    _exercise_results['6'] = {
+        'answer_step1':_q6a,'correct_step1':_night_term_opts[1],
+        'answer_step2':_q6b,'correct_step2':'48 dB(A)'
+    }
 
-    # ---------- Exercise 7 ----------
-    st.markdown('### Ejercicio 7 · ¿Cuál escenario produce mayor Lden?')
-
+    # 7
     _A = {'LD':64.0,'LE':60.0,'LN':48.0}
     _B = {'LD':62.0,'LE':59.0,'LN':54.0}
     _lden_A = _c3l1_lden(_A['LD'],_A['LE'],_A['LN'])
     _lden_B = _c3l1_lden(_B['LD'],_B['LE'],_B['LN'])
+    _correct7 = 'Escenario A' if _lden_A > _lden_B else 'Escenario B'
 
-    st.markdown(
-        f"""
-        <div class="c3-grid-2">
-          <div class="c3-card blue">
-            <div class="c3-kicker">ESCENARIO A</div>
-            <b>LD 64 · LE 60 · LN 48 dB(A)</b>
-          </div>
-          <div class="c3-card orange">
-            <div class="c3-kicker">ESCENARIO B</div>
-            <b>LD 62 · LE 59 · LN 54 dB(A)</b>
-          </div>
-        </div>
-        """,
-        unsafe_allow_html=True,
+    _c3s5_exercise_card(
+        7,
+        '¿Cuál escenario produce mayor Lden?',
+        'Compara los dos ciclos completos. No decidas mirando únicamente LD.'
     )
-
-    _q7 = st.radio(
-        '¿Cuál escenario tendrá mayor Lden?',
-        ['Escenario A', 'Escenario B', 'Serán iguales'],
-        index=None,
-        horizontal=True,
-        key='c3_s5_app_q7',
-    )
-    if _q7:
-        _correct7 = 'Escenario A' if _lden_A > _lden_B else 'Escenario B'
-        if _q7 == _correct7:
-            st.success(
-                f'Correcto. Lden A = {_lden_A:.1f} dB(A) y Lden B = {_lden_B:.1f} dB(A). '
-                'Observa cómo LN puede cambiar mucho el resultado por la penalización nocturna.'
-            )
-        else:
-            st.warning('No compares solo LD: calcula o estima también el peso de LE+5 y LN+10.')
-
-    # ---------- Exercise 8 ----------
-    st.markdown('### Ejercicio 8 · Reconstruye el periodo faltante desde el monitoreo')
 
     st.markdown(
         """
-        <div class="c3-card">
-          <div class="c3-kicker">ESTACIÓN DE MONITOREO</div>
-          <p>
-            La estación reporta:
-            <b>LD = 65 dB(A)</b>,
-            <b>LE = 61 dB(A)</b> y
-            <b>Lden = 66.3 dB(A)</b>.
-            El valor de LN se perdió del informe.
-          </p>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:.8rem;margin:.35rem 0 .65rem">
+          <div style="padding:.85rem 1rem;border:1px solid #cce0ef;border-radius:13px;background:#f4faff">
+            <div style="font-size:.7rem;font-weight:800;color:#167db4">ESCENARIO A</div>
+            <div style="font-weight:800;color:#183247;margin-top:.2rem">LD 64 · LE 60 · LN 48 dB(A)</div>
+          </div>
+          <div style="padding:.85rem 1rem;border:1px solid #f0d2aa;border-radius:13px;background:#fff9f1">
+            <div style="font-size:.7rem;font-weight:800;color:#b56b14">ESCENARIO B</div>
+            <div style="font-weight:800;color:#183247;margin-top:.2rem">LD 62 · LE 59 · LN 54 dB(A)</div>
+          </div>
         </div>
         """,
         unsafe_allow_html=True,
     )
 
-    _q8 = st.radio(
-        '¿Cuál LN es más compatible con esos datos?',
-        ['45 dB(A)', '50 dB(A)', '55 dB(A)', '60 dB(A)'],
-        index=None,
-        horizontal=True,
-        key='c3_s5_app_q8',
+    _q7 = st.segmented_control(
+        'Escenario con mayor Lden',
+        ['Escenario A','Escenario B','Serán iguales'],
+        default=None,
+        key='c3_s5_app_q7',
+        label_visibility='collapsed',
     )
+    _c3s5_feedback(
+        _q7, _correct7,
+        f'Lden A = {_lden_A:.1f} dB(A) y Lden B = {_lden_B:.1f} dB(A). La comparación debe considerar simultáneamente LD, LE+5 y LN+10.',
+        'Calcula o compara los tres términos energéticos; un LD mayor no garantiza por sí solo el mayor Lden.'
+    )
+    _exercise_results['7'] = {'answer':_q7,'correct':_correct7}
 
-    # choose the option with Lden nearest to 66.3
-    _cand8 = [45.0,50.0,55.0,60.0]
+    # 8
     _target8 = 66.3
+    _cand8 = [45.0,50.0,55.0,60.0]
     _best8 = min(_cand8, key=lambda x: abs(_c3l1_lden(65.0,61.0,x)-_target8))
     _best8_label = f'{int(_best8)} dB(A)'
 
-    if _q8:
-        if _q8 == _best8_label:
-            st.success(
-                f'Correcto. LN ≈ {_best8:.0f} dB(A) entrega el Lden más cercano a {_target8:.1f} dB(A).'
-            )
-        else:
-            st.warning(
-                'Sustituye cada alternativa en el término nocturno y compara el Lden resultante.'
-            )
-
-    # ---------- Progress ----------
-    _answers_app = {
-        'q1':_q1,'q2':_q2,'q3':_q3,'q4':_q4,'q5':_q5,
-        'q6a':_q6a,'q6b':st.session_state.get('c3_s5_app_q6b'),
-        'q7':_q7,'q8':_q8
-    }
-
-    _correct_map = {
-        'q1':'LE',
-        'q2':'LN',
-        'q3':'66 dB(A)',
-        'q4':'62 dB(A)',
-        'q5':'50 dB(A)',
-        'q6a':_night_term_opts[1],
-        'q6b':'48 dB(A)',
-        'q7':'Escenario A' if _lden_A > _lden_B else 'Escenario B',
-        'q8':_best8_label,
-    }
-
-    _answered_app = sum(v is not None for v in _answers_app.values())
-    _correct_app = sum(
-        1 for k,v in _answers_app.items()
-        if v is not None and v == _correct_map.get(k)
+    _c3s5_exercise_card(
+        8,
+        'Reconstruye el periodo faltante del informe',
+        'La estación reporta LD = 65 dB(A), LE = 61 dB(A) y Lden = 66.3 dB(A), pero LN se perdió del informe.'
     )
-
-    st.markdown('### Resultado del desafío')
-
-    r1,r2,r3 = st.columns(3)
-    r1.metric('Respuestas realizadas', f'{_answered_app}/9')
-    r2.metric('Correctas', f'{_correct_app}/9')
-    r3.metric(
-        'Desempeño',
-        f'{(_correct_app/_answered_app*100):.0f} %' if _answered_app else '—'
+    _q8 = st.segmented_control(
+        'LN más compatible',
+        ['45 dB(A)','50 dB(A)','55 dB(A)','60 dB(A)'],
+        default=None,
+        key='c3_s5_app_q8',
+        label_visibility='collapsed',
     )
+    _c3s5_feedback(
+        _q8, _best8_label,
+        f'LN ≈ {_best8:.0f} dB(A) produce el Lden más próximo a 66.3 dB(A) entre las alternativas disponibles.',
+        'Prueba cada LN en el término nocturno y compara el Lden calculado con 66.3 dB(A).'
+    )
+    _exercise_results['8'] = {'answer':_q8,'correct':_best8_label}
 
+    # Persist each student's individual answers, no score/result panel.
     saved['c3_stage5_application_quiz'] = {
-        'answers': _answers_app,
-        'correct': int(_correct_app),
-        'answered': int(_answered_app),
+        'exercises': _exercise_results,
     }
     _c3l1_save(saved, deps)
 
@@ -22135,21 +22209,37 @@ def _c3l1_stage5_impl(lab: dict, saved: dict, deps: Dict[str, Any]):
         )
 
 
-        st.markdown('#### Pauta de ejercicios de aplicación')
+        st.markdown('#### Pauta docente · respuestas de los ejercicios')
 
         st.markdown(
             """
-            **Ejercicio 1:** 20:00–22:00 → LE.  
-            **Ejercicio 2:** 23:30–05:30 → LN.  
-            **Ejercicio 3:** LE = 61 dB(A) → LE + 5 = 66 dB(A).  
-            **Ejercicio 4:** LN = 52 dB(A) → LN + 10 = 62 dB(A).  
-            **Ejercicio 5:** con LD = 64, LE = 60 y Lden indicado, LN = 50 dB(A).  
-            **Ejercicio 6:** el alumno reconstruye primero el término nocturno y luego LN = 48 dB(A).  
-            **Ejercicio 7:** comparar los dos escenarios mediante Lden, no solo por LD.  
-            **Ejercicio 8:** probar alternativas de LN hasta reproducir el Lden reportado.
+            Esta pauta es independiente de las respuestas del alumno. Sirve para proyectar o explicar
+            la resolución correcta durante la revisión docente.
+            """
+        )
 
-            **Uso recomendado:** pedir al alumno que escriba la ecuación o al menos el término energético
-            que está utilizando antes de seleccionar la alternativa.
+        _teacher_app_rows = [
+            {'Ejercicio':'1','Respuesta correcta':'LE','Fundamento':'20:00–22:00 pertenece al periodo tarde 19:00–23:00.'},
+            {'Ejercicio':'2','Respuesta correcta':'LN','Fundamento':'23:30–05:30 permanece dentro del periodo nocturno 23:00–07:00 aunque cruce medianoche.'},
+            {'Ejercicio':'3','Respuesta correcta':'66 dB(A)','Fundamento':'LE + 5 = 61 + 5 = 66 dB(A).'},
+            {'Ejercicio':'4','Respuesta correcta':'62 dB(A)','Fundamento':'LN + 10 = 52 + 10 = 62 dB(A).'},
+            {'Ejercicio':'5','Respuesta correcta':'LN = 50 dB(A)','Fundamento':'Al sustituir LN = 50 en el término nocturno se reproduce el Lden indicado.'},
+            {'Ejercicio':'6','Respuesta correcta':'Término nocturno correcto → LN = 48 dB(A)','Fundamento':'Se aísla primero 8·10^((LN+10)/10), luego se aplica log10 y finalmente se resta la penalización de 10 dB.'},
+            {'Ejercicio':'7','Respuesta correcta':_correct7,'Fundamento':f'Lden A = {_lden_A:.1f} dB(A); Lden B = {_lden_B:.1f} dB(A).'},
+            {'Ejercicio':'8','Respuesta correcta':f'LN ≈ {_best8:.0f} dB(A)','Fundamento':'Es la alternativa que reproduce con menor error el Lden = 66.3 dB(A).'},
+        ]
+
+        st.dataframe(
+            pd.DataFrame(_teacher_app_rows),
+            hide_index=True,
+            use_container_width=True,
+        )
+
+        st.markdown(
+            """
+            **Sugerencia para la explicación:** en los ejercicios 5, 6 y 8, pida que el alumno identifique
+            primero qué término de la ecuación contiene LN. El objetivo no es que memorice un despeje,
+            sino que entienda cómo aislar una contribución energética dentro de Lden.
             """
         )
 
