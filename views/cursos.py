@@ -22058,25 +22058,50 @@ def _c3l1_stage5_impl(lab: dict, saved: dict, deps: Dict[str, Any]):
     _c3s5_exercise_card(
         6,
         'Despeja LN paso a paso',
-        f'LD = {_ld6:.1f} dB(A) · LE = {_le6:.1f} dB(A) · Lden = {_lden6:.1f} dB(A). El objetivo es encontrar LN.'
+        'Usa la ecuación de Lden para reconstruir el nivel nocturno que falta.'
+    )
+
+    _d61,_d62,_d63,_d64 = st.columns(4)
+    _d61.metric('LD conocido', f'{_ld6:.1f} dB(A)')
+    _d62.metric('LE conocido', f'{_le6:.1f} dB(A)')
+    _d63.metric('Lden conocido', f'{_lden6:.1f} dB(A)')
+    _d64.metric('Incógnita', 'LN')
+
+    st.markdown(
+        """
+        <div style="
+            margin:.55rem 0 .75rem;
+            padding:.85rem 1rem;
+            border-radius:13px;
+            border:1px solid #d8e6ef;
+            background:#f8fbfd;
+            color:#40586b;
+            line-height:1.5;
+        ">
+          <b>Partimos de la ecuación de Lden.</b><br>
+          Conocemos LD, LE y Lden; el único descriptor desconocido es <b>LN</b>.
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
+
+    st.latex(
+        r"24\cdot 10^{L_{den}/10}"
+        r"="
+        r"12\cdot 10^{L_D/10}"
+        r"+4\cdot 10^{(L_E+5)/10}"
+        r"+8\cdot 10^{(L_N+10)/10}"
     )
 
     st.markdown(
-        r"""
-        Partimos de:
-
-        \[
-        24\cdot10^{L_{den}/10}
-        =
-        12\cdot10^{L_D/10}
-        +
-        4\cdot10^{(L_E+5)/10}
-        +
-        8\cdot10^{(L_N+10)/10}
-        \]
-
-        Para encontrar \(L_N\), primero debemos **aislar el término nocturno**.
         """
+        <div class="c3-key">
+          Para encontrar <b>LN</b>, primero debemos aislar completamente
+          la contribución energética nocturna:
+          <b>8 · 10<sup>(LN+10)/10</sup></b>.
+        </div>
+        """,
+        unsafe_allow_html=True,
     )
 
     st.markdown(
