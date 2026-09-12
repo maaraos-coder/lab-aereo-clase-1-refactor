@@ -22695,7 +22695,8 @@ def _c3l1_stage6_impl(lab: dict, saved: dict, deps: Dict[str, Any]):
           <div class="c3-kicker">PREDICCIÓN</div>
           <b>Antes de ver una historia temporal, formula qué esperarías encontrar.</b>
           <p>
-            Esa hipótesis se contrastará inmediatamente con los gráficos de la actividad siguiente.
+            Selecciona una fuente, anticipa su forma temporal y decide qué descriptor revisarías primero.
+            Después contrastaremos tu hipótesis con el comportamiento esperado de esa fuente.
           </p>
         </div>
         """,
@@ -22743,18 +22744,107 @@ def _c3l1_stage6_impl(lab: dict, saved: dict, deps: Dict[str, Any]):
         key='c3_s6_intro_hyp_why',
     )
 
-    if _hyp_why.strip():
+    _hyp_expected = {
+        'Carretera / autopista': {
+            'shape':'Fondo fluctuante con múltiples eventos',
+            'descriptor':'LAeq',
+            'why':'El corredor vial produce una contribución relativamente continua, modulada por variaciones de flujo y pasos individuales.'
+        },
+        'Ferrocarril': {
+            'shape':'Un evento principal con crecimiento y decaimiento',
+            'descriptor':'SEL / LAE',
+            'why':'El paso de un tren es un evento delimitable: el nivel crece al aproximarse, alcanza un máximo y disminuye al alejarse.'
+        },
+        'Aeronave': {
+            'shape':'Un evento principal con crecimiento y decaimiento',
+            'descriptor':'SEL / LAE',
+            'why':'Un sobrevuelo individual se comporta como un evento móvil cuya exposición energética puede resumirse mediante SEL/LAE.'
+        },
+        'Instalación / HVAC': {
+            'shape':'Nivel relativamente estable',
+            'descriptor':'L90',
+            'why':'Una instalación técnica estable puede constituir un componente persistente; L90 puede ayudar a interpretar esa zona baja/persistente del registro.'
+        },
+        'Construcción / obra': {
+            'shape':'Serie de operaciones intensas separadas por pausas',
+            'descriptor':'LAeq',
+            'why':'Una obra suele combinar distintas operaciones y pausas; LAeq resume la energía global del periodo, aunque Lmax o SEL pueden complementar operaciones específicas.'
+        },
+    }
+
+    if st.button(
+        '🔎 Contrastar mi hipótesis',
+        key='c3_s6_check_hypothesis',
+        use_container_width=True,
+    ):
+        _exp = _hyp_expected[_hyp_source]
+        _shape_ok = (_hyp_shape == _exp['shape'])
+        _desc_ok = (_hyp_descriptor == _exp['descriptor'])
+
         saved['c3_stage6_hypothesis'] = {
             'source': _hyp_source,
             'expected_shape': _hyp_shape,
             'first_descriptor': _hyp_descriptor,
             'justification': _hyp_why.strip(),
+            'shape_correct': bool(_shape_ok),
+            'descriptor_correct': bool(_desc_ok),
         }
         _c3l1_save(saved, deps)
+
+        # Lleva la misma fuente a la actividad siguiente.
+        st.session_state['c3_s6_source_select'] = _hyp_source
+        st.session_state['c3_s6_hyp_checked'] = True
+        st.session_state['c3_s6_hyp_checked_source'] = _hyp_source
+
+    if st.session_state.get('c3_s6_hyp_checked'):
+        _checked_source = st.session_state.get('c3_s6_hyp_checked_source', _hyp_source)
+        _exp = _hyp_expected[_checked_source]
+
+        _saved_hyp = saved.get('c3_stage6_hypothesis', {}) if isinstance(saved.get('c3_stage6_hypothesis'), dict) else {}
+        _shape_answer = _saved_hyp.get('expected_shape', _hyp_shape)
+        _desc_answer = _saved_hyp.get('first_descriptor', _hyp_descriptor)
+        _shape_ok = bool(_saved_hyp.get('shape_correct', _shape_answer == _exp['shape']))
+        _desc_ok = bool(_saved_hyp.get('descriptor_correct', _desc_answer == _exp['descriptor']))
+
+        if _shape_ok and _desc_ok:
+            st.success(
+                'Tu hipótesis coincide con la pauta esperada en forma temporal y descriptor prioritario.'
+            )
+        else:
+            _parts = []
+            if not _shape_ok:
+                _parts.append(f'Forma esperada: {_exp["shape"]}.')
+            if not _desc_ok:
+                _parts.append(f'Descriptor prioritario: {_exp["descriptor"]}.')
+            st.warning('Revisa tu hipótesis. ' + ' '.join(_parts))
+
+        st.markdown(
+            f"""
+            <div style="
+                margin:.75rem 0 1rem;
+                padding:1rem 1.1rem;
+                border-radius:15px;
+                border:1px solid #cce4d6;
+                background:linear-gradient(135deg,#f3fbf6,#ffffff);
+            ">
+              <div style="font-size:.72rem;font-weight:800;letter-spacing:.07em;color:#278552;margin-bottom:.35rem">
+                CONTRASTE PRELIMINAR · {_checked_source.upper()}
+              </div>
+              <div style="color:#40586b;line-height:1.55">
+                <b>Forma temporal esperada:</b> {_exp['shape']}<br>
+                <b>Descriptor para revisar primero:</b> {_exp['descriptor']}<br>
+                <b>Fundamento:</b> {_exp['why']}
+              </div>
+            </div>
+            """,
+            unsafe_allow_html=True,
+        )
+
         st.markdown(
             """
             <div class="c3-key">
-              Hipótesis registrada. En la siguiente actividad podrás contrastarla con la firma temporal simulada de la fuente.
+              <b>Siguiente paso:</b> la fuente que elegiste quedó seleccionada automáticamente en la actividad siguiente.
+              Ahora baja a <b>“Clasifica las principales fuentes urbanas”</b> y compara tu predicción con su firma temporal.
             </div>
             """,
             unsafe_allow_html=True,
@@ -23062,44 +23152,7 @@ def _c3l1_stage6_impl(lab: dict, saved: dict, deps: Dict[str, Any]):
             unsafe_allow_html=True,
         )
 
-    st.markdown('## 7. Diagnóstico profesional · ¿qué mirarías primero?')
-
-    _mission6 = st.segmented_control(
-        'Misión',
-        [
-            'Exposición global de carretera',
-            'Paso individual de aeronave',
-            'Máximo de una operación de obra',
-            'Componente persistente de HVAC',
-        ],
-        default='Exposición global de carretera',
-        key='c3_s6_mission',
-    )
-
-    _answers6 = {
-        'Exposición global de carretera':'LAeq / LD-LE-LN / Lden',
-        'Paso individual de aeronave':'SEL / LAE',
-        'Máximo de una operación de obra':'Lmax',
-        'Componente persistente de HVAC':'L90',
-    }
-    _correct6 = _answers6[_mission6]
-
-    _choice6 = st.segmented_control(
-        'Descriptor que priorizarías',
-        ['LAeq / LD-LE-LN / Lden','SEL / LAE','Lmax','L90'],
-        default=None,
-        key='c3_s6_descriptor',
-    )
-
-    if _choice6:
-        if _choice6 == _correct6:
-            st.success(f'Correcto. Para esta misión, el descriptor prioritario es {_correct6}.')
-        else:
-            st.warning(
-                'Revisa qué pregunta quieres responder: energía global, exposición de un evento, máximo o componente persistente.'
-            )
-
-    st.markdown('## 8. Caso integrado · interpreta la estación de la Etapa 5')
+    st.markdown('## 7. Caso integrado · interpreta la estación de la Etapa 5')
 
     st.markdown(
         f"""
@@ -23107,7 +23160,7 @@ def _c3l1_stage6_impl(lab: dict, saved: dict, deps: Dict[str, Any]):
           <div class="c3-kicker">DATOS HEREDADOS DEL MONITOREO</div>
           <b>LD {_ld_prev:.1f} · LE {_le_prev:.1f} · LN {_ln_prev:.1f} · Lden {_lden_prev:.1f} dB(A)</b>
           <p>
-            Durante el terreno se confirma que el punto está junto a una carretera,
+            Durante la inspección de terreno se confirma que el punto de monitoreo está junto a una carretera,
             existe un equipo HVAC en una cubierta cercana y ocurren sobrevuelos ocasionales.
           </p>
         </div>
@@ -23115,55 +23168,92 @@ def _c3l1_stage6_impl(lab: dict, saved: dict, deps: Dict[str, Any]):
         unsafe_allow_html=True,
     )
 
-    _q_case = st.radio(
-        '¿Cuál conclusión es técnicamente más adecuada?',
-        [
-            'Lden permite afirmar por sí solo que la carretera es la única fuente.',
-            'Los descriptores cuantifican el ambiente, pero para atribuirlo a fuentes debemos combinar registro temporal y observación de terreno.',
-            'Como existe HVAC, Lden deja de ser válido.',
-        ],
-        index=None,
-        key='c3_s6_integrated_case',
-    )
-    if _q_case:
-        if _q_case.startswith('Los descriptores'):
-            st.success(
-                'Correcto. La atribución de una fuente requiere contexto: temporalidad, geometría, observación y, cuando corresponda, mediciones específicas.'
-            )
-        else:
-            st.warning(
-                'Un descriptor global no identifica automáticamente quién produjo toda la energía acústica.'
-            )
-
-    st.markdown('## 9. Cierre · de la Etapa 5 a la Etapa 7')
-
     st.markdown(
         """
         <div class="c3-card blue">
-          <div class="c3-kicker">CADENA DE APRENDIZAJE</div>
-          <b>Monitorear → describir → identificar fuentes → diseñar una campaña representativa</b>
+          <div class="c3-kicker">MISIÓN DE ANÁLISIS</div>
+          <b>No basta con mirar un único descriptor.</b>
           <p>
-            Ya sabemos que distintos tipos de fuente cambian la historia temporal y la interpretación.
-            La siguiente pregunta será: <b>¿dónde, cuándo y cuánto debemos medir para que el resultado sea representativo?</b>
+            Usa todo lo aprendido en la Etapa 6 para interpretar qué fuentes podrían explicar el registro
+            y qué información adicional necesitarías antes de atribuir responsabilidades.
           </p>
         </div>
         """,
         unsafe_allow_html=True,
     )
 
-    saved['c3_stage6_source'] = {
-        'explored_source': _src,
-        'mix_active_sources': _active,
-        'mix_LAeq': float(_mix_laeq),
-        'mix_Lmax': float(_mix_lmax),
-        'mix_L10': float(_mix_l10),
-        'mix_L90': float(_mix_l90),
-        'mission': _mission6,
-        'descriptor_answer': _choice6,
-        'descriptor_correct': bool(_choice6 == _correct6) if _choice6 else None,
-        'integrated_case_answer': _q_case,
+    _dev_questions = [
+        {
+            'n':1,
+            'title':'Fuente dominante probable',
+            'q':'A partir de los valores LD, LE, LN y Lden, ¿puedes afirmar que la carretera es la fuente dominante durante todo el ciclo? Justifica.',
+            'guide':'No se puede afirmar solo con los descriptores globales. Es necesario combinar el patrón temporal, observación de terreno y, si corresponde, mediciones o análisis específicos de cada fuente.'
+        },
+        {
+            'n':2,
+            'title':'Rol del HVAC',
+            'q':'Si el HVAC opera de forma relativamente estable durante la noche, ¿qué comportamiento esperarías observar y qué descriptor podría ayudarte a analizar su componente persistente?',
+            'guide':'Se esperaría una contribución relativamente estable o cíclica. L90 puede apoyar la interpretación del componente persistente, complementado con LAeq y observación de ciclos de encendido/apagado.'
+        },
+        {
+            'n':3,
+            'title':'Sobrevuelos',
+            'q':'Si durante la noche ocurre un sobrevuelo aislado, ¿qué descriptor usarías para caracterizar ese evento individual y por qué no bastaría con mirar solo LN?',
+            'guide':'SEL/LAE es adecuado para la exposición de un evento individual. LN resume energéticamente todo el periodo nocturno y no conserva por sí solo la información específica de un sobrevuelo.'
+        },
+        {
+            'n':4,
+            'title':'Firma temporal',
+            'q':'¿Qué diferencias esperarías ver en la historia temporal entre una carretera con flujo continuo, un HVAC estable y un sobrevuelo?',
+            'guide':'Carretera: fondo fluctuante con múltiples pasos; HVAC: nivel relativamente estable o cíclico; sobrevuelo: evento con crecimiento, máximo y decaimiento.'
+        },
+        {
+            'n':5,
+            'title':'Información adicional',
+            'q':'Antes de concluir cuál fuente explica principalmente el Lden, ¿qué información adicional recopilarías en terreno?',
+            'guide':'Posición y distancia de fuentes/receptores, horarios de operación, registros temporales, correlación con eventos, condiciones meteorológicas relevantes, funcionamiento del HVAC, flujo vehicular, sobrevuelos y, si es necesario, mediciones específicas por fuente.'
+        },
+    ]
+
+    _dev_answers = {}
+
+    for _item in _dev_questions:
+        st.markdown(
+            f"""
+            <div style="
+                margin:1rem 0 .45rem;
+                padding:.9rem 1rem;
+                border:1px solid #d8e6ef;
+                border-radius:15px;
+                background:linear-gradient(135deg,#ffffff,#f8fbfd);
+            ">
+              <div style="font-size:.7rem;font-weight:800;letter-spacing:.07em;color:#167db4">
+                PREGUNTA {_item['n']}
+              </div>
+              <div style="font-size:1.05rem;font-weight:800;color:#183247;margin:.2rem 0 .35rem">
+                {_item['title']}
+              </div>
+              <div style="color:#52687d;line-height:1.5">
+                {_item['q']}
+              </div>
+            </div>
+            """,
+            unsafe_allow_html=True,
+        )
+
+        _ans = st.text_area(
+            f"Respuesta {_item['n']}",
+            key=f"c3_s6_dev_q_{_item['n']}",
+            placeholder="Desarrolla tu respuesta en 3–5 líneas...",
+            label_visibility='collapsed',
+            height=110,
+        )
+        _dev_answers[str(_item['n'])] = _ans.strip()
+
+    saved['c3_stage6_integrated_case'] = {
+        'answers': _dev_answers,
     }
-    _c3l1_save(saved,deps)
+    _c3l1_save(saved, deps)
 
     _viewer_role = (
         st.session_state.get('role')
@@ -23208,6 +23298,19 @@ def _c3l1_stage6_impl(lab: dict, saved: dict, deps: Dict[str, Any]):
             posiciones, horarios y duraciones de medición que realmente representen el fenómeno.
             """
         )
+
+
+        st.markdown('#### Pauta docente · caso integrado')
+
+        for _item in _dev_questions:
+            st.markdown(
+                f"""
+                **Pregunta {_item['n']} · {_item['title']}**
+
+                {_item['guide']}
+                """
+            )
+
 
 def _c3l1_stage7_impl(lab: dict, saved: dict, deps: Dict[str, Any]):
     _c3l1_style()
