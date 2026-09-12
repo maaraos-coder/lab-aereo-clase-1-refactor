@@ -21641,6 +21641,57 @@ def _c3l1_stage5_impl(lab: dict, saved: dict, deps: Dict[str, Any]):
             unsafe_allow_html=True,
         )
 
+        st.markdown(
+            """
+            <div style="
+                margin:1rem 0 1.2rem;
+                padding:1.1rem 1.2rem;
+                border:1px solid #d8c9f3;
+                border-radius:16px;
+                background:linear-gradient(135deg,#faf7ff,#ffffff);
+            ">
+              <div style="font-size:.72rem;font-weight:800;letter-spacing:.07em;color:#7253a3;margin-bottom:.35rem">
+                ¿POR QUÉ EXISTEN LAS PENALIZACIONES?
+              </div>
+              <div style="font-size:1.08rem;font-weight:800;color:#183247;margin-bottom:.55rem">
+                Porque el mismo ruido no tiene la misma relevancia comunitaria a cualquier hora del día.
+              </div>
+              <div style="color:#40586b;line-height:1.6">
+                Durante la <b>tarde</b> y especialmente durante la <b>noche</b>, las personas desarrollan
+                actividades que requieren mayor tranquilidad, descanso y sueño. Por eso, el descriptor
+                <b>Lden</b> aumenta artificialmente el peso energético de esos periodos mediante
+                <b>+5 dB para la tarde</b> y <b>+10 dB para la noche</b>.
+              </div>
+              <div style="
+                  margin-top:.85rem;
+                  padding:.8rem .9rem;
+                  border-radius:12px;
+                  background:#eef8fd;
+                  border-left:4px solid #1596d2;
+                  color:#29465a;
+                  line-height:1.5;
+              ">
+                <b>Importante:</b> la estación de monitoreo no mide 5 o 10 dB adicionales.
+                El nivel físico registrado permanece exactamente igual.
+                La penalización se incorpora <b>solo durante el cálculo de Lden</b> para dar mayor peso
+                a los periodos considerados más sensibles.
+              </div>
+            </div>
+            """,
+            unsafe_allow_html=True,
+        )
+
+        st.markdown(
+            """
+            <div class="c3-key">
+              <b>Ejemplo conceptual:</b> un mismo nivel de 55 dB(A) registrado de día y de noche
+              sigue siendo físicamente 55 dB(A). Sin embargo, al construir Lden, el valor nocturno
+              entra al cálculo como si fuera <b>65 dB(A)</b> debido a la penalización de +10 dB.
+            </div>
+            """,
+            unsafe_allow_html=True,
+        )
+
         st.markdown('### 5.1 Construye la ecuación paso a paso')
 
         _show_day = st.checkbox('1 · Incorporar energía del periodo día', key='c3_s5_eq_day')
