@@ -22464,7 +22464,305 @@ def _c3l1_stage6_impl(lab: dict, saved: dict, deps: Dict[str, Any]):
         unsafe_allow_html=True,
     )
 
-    st.markdown('## 2. Clasifica las principales fuentes urbanas')
+
+    st.markdown('## 2. Antes de clasificar: aprende a leer una fuente')
+
+    st.markdown(
+        """
+        <div class="c3-card blue">
+          <div class="c3-kicker">MÉTODO DE LECTURA</div>
+          <b>No empieces preguntando “¿qué nivel tiene?”. Empieza preguntando “¿qué fenómeno estoy observando?”.</b>
+          <p>
+            Para caracterizar una fuente ambiental conviene responder, en este orden:
+          </p>
+          <p>
+            <b>1.</b> ¿Dónde está y qué geometría tiene? &nbsp;→&nbsp;
+            <b>2.</b> ¿Se mueve? &nbsp;→&nbsp;
+            <b>3.</b> ¿Cómo cambia en el tiempo? &nbsp;→&nbsp;
+            <b>4.</b> ¿Qué pregunta quiero responder con la medición?
+          </p>
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
+
+    st.markdown('### 2.1 Geometría de la fuente')
+
+    st.markdown(
+        """
+        <div class="c3-grid">
+          <div class="c3-card blue">
+            <div class="c3-kicker">PUNTUAL</div>
+            <b>Fuente localizada</b>
+            <p>Ej.: ventilador, extractor, equipo técnico. Su posición puede representarse aproximadamente como un punto o área pequeña.</p>
+          </div>
+          <div class="c3-card orange">
+            <div class="c3-kicker">LINEAL</div>
+            <b>Fuente distribuida a lo largo de un corredor</b>
+            <p>Ej.: carretera o vía férrea. La energía proviene de múltiples emisores distribuidos espacialmente.</p>
+          </div>
+          <div class="c3-card green">
+            <div class="c3-kicker">MÓVIL / TRAYECTORIA</div>
+            <b>La fuente cambia de posición</b>
+            <p>Ej.: vehículo, tren o aeronave. La distancia fuente–receptor cambia durante el evento.</p>
+          </div>
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
+
+    _geo_q = st.radio(
+        'Una autopista con flujo continuo de vehículos se representa mejor, a escala ambiental, como:',
+        [
+            'Una fuente puntual fija',
+            'Una fuente lineal/corredor con emisores móviles',
+            'Una fuente impulsiva aislada',
+        ],
+        index=None,
+        key='c3_s6_intro_geo',
+    )
+    if _geo_q:
+        if _geo_q == 'Una fuente lineal/corredor con emisores móviles':
+            st.success(
+                'Correcto. Los vehículos son móviles, pero el conjunto del tráfico se distribuye a lo largo de un corredor vial.'
+            )
+        else:
+            st.warning(
+                'Piensa en la escala del problema: no analizamos un solo automóvil, sino el comportamiento acústico del corredor completo.'
+            )
+
+    st.markdown('### 2.2 Movilidad y distancia al receptor')
+
+    st.markdown(
+        """
+        <div class="c3-card">
+          <div class="c3-kicker">POR QUÉ IMPORTA LA MOVILIDAD</div>
+          <b>Cuando una fuente se mueve, también cambia su geometría respecto del receptor.</b>
+          <p>
+            Durante el paso de un automóvil, tren o aeronave, la distancia disminuye,
+            alcanza un mínimo y luego vuelve a aumentar. Por eso el registro temporal suele
+            mostrar una fase de crecimiento, un máximo y una fase de decaimiento.
+          </p>
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
+
+    _move_q = st.segmented_control(
+        'Si una aeronave se aproxima, sobrevuela y se aleja del receptor, ¿qué esperarías observar?',
+        [
+            'Nivel prácticamente constante',
+            'Crecimiento → máximo → disminución',
+            'Solo un valor máximo sin evolución temporal',
+        ],
+        default=None,
+        key='c3_s6_intro_move',
+    )
+    if _move_q:
+        if _move_q == 'Crecimiento → máximo → disminución':
+            st.success(
+                'Correcto. La evolución temporal refleja, entre otros factores, el cambio de distancia y orientación durante el sobrevuelo.'
+            )
+        else:
+            st.warning(
+                'Una fuente móvil normalmente deja una firma temporal porque su relación geométrica con el receptor cambia.'
+            )
+
+    st.markdown('### 2.3 Comportamiento temporal')
+
+    st.markdown(
+        """
+        <div class="c3-grid">
+          <div class="c3-card blue">
+            <div class="c3-kicker">CONTINUO / ESTABLE</div>
+            <b>Poca variación relativa</b>
+            <p>Ej.: HVAC operando de manera estable.</p>
+          </div>
+          <div class="c3-card orange">
+            <div class="c3-kicker">FLUCTUANTE</div>
+            <b>El nivel cambia constantemente</b>
+            <p>Ej.: tráfico vial con variaciones de flujo y pasos individuales.</p>
+          </div>
+          <div class="c3-card green">
+            <div class="c3-kicker">EVENTUAL / INTERMITENTE</div>
+            <b>Existe un inicio y término reconocible</b>
+            <p>Ej.: sobrevuelo, tren o algunas operaciones de construcción.</p>
+          </div>
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
+
+    _temp_case = st.segmented_control(
+        'Caso para clasificar',
+        [
+            'Equipo HVAC encendido toda la noche',
+            'Flujo vehicular de una avenida',
+            'Paso de un tren',
+        ],
+        default='Equipo HVAC encendido toda la noche',
+        key='c3_s6_intro_temp_case',
+    )
+
+    _temp_expected = {
+        'Equipo HVAC encendido toda la noche':'Continuo / relativamente estable',
+        'Flujo vehicular de una avenida':'Fluctuante',
+        'Paso de un tren':'Evento / intermitente',
+    }
+
+    _temp_ans = st.segmented_control(
+        'Comportamiento temporal predominante',
+        [
+            'Continuo / relativamente estable',
+            'Fluctuante',
+            'Evento / intermitente',
+        ],
+        default=None,
+        key='c3_s6_intro_temp_ans',
+    )
+
+    if _temp_ans:
+        if _temp_ans == _temp_expected[_temp_case]:
+            st.success(
+                f'Correcto. Para este ejercicio, {_temp_case.lower()} se interpreta como {_temp_expected[_temp_case].lower()}.'
+            )
+        else:
+            st.warning(
+                'Observa si la energía permanece, fluctúa durante todo el intervalo o aparece como un evento delimitable.'
+            )
+
+    st.markdown('### 2.4 El descriptor depende de la pregunta')
+
+    st.markdown(
+        """
+        <div class="c3-card green">
+          <div class="c3-kicker">NO EXISTE “EL MEJOR DESCRIPTOR”</div>
+          <b>Primero define qué quieres saber.</b>
+          <p>
+            Una misma fuente puede requerir distintos descriptores según la misión.
+            Por ejemplo, de un sobrevuelo puedes querer conocer su máximo, su exposición energética
+            individual o su aporte acumulado durante una jornada.
+          </p>
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
+
+    _mission_intro = st.segmented_control(
+        'Selecciona una misión',
+        [
+            'Energía global de una carretera durante el periodo',
+            'Exposición de un único sobrevuelo',
+            'Componente persistente de una instalación',
+        ],
+        default='Energía global de una carretera durante el periodo',
+        key='c3_s6_intro_mission',
+    )
+
+    _mission_expected = {
+        'Energía global de una carretera durante el periodo':'LAeq / LD-LE-LN / Lden',
+        'Exposición de un único sobrevuelo':'SEL / LAE',
+        'Componente persistente de una instalación':'L90',
+    }
+
+    _mission_ans = st.segmented_control(
+        'Descriptor que usarías primero',
+        [
+            'LAeq / LD-LE-LN / Lden',
+            'SEL / LAE',
+            'Lmax',
+            'L90',
+        ],
+        default=None,
+        key='c3_s6_intro_mission_ans',
+    )
+
+    if _mission_ans:
+        if _mission_ans == _mission_expected[_mission_intro]:
+            st.success(
+                f'Correcto. Para esta misión, {_mission_expected[_mission_intro]} responde de manera más directa a la pregunta.'
+            )
+        else:
+            st.warning(
+                'No elijas por costumbre. Pregunta primero si quieres energía acumulada, exposición de un evento, máximo o componente persistente.'
+            )
+
+    st.markdown('### 2.5 Construye una hipótesis antes de mirar el gráfico')
+
+    st.markdown(
+        """
+        <div class="c3-card orange">
+          <div class="c3-kicker">PREDICCIÓN</div>
+          <b>Antes de ver una historia temporal, formula qué esperarías encontrar.</b>
+          <p>
+            Esa hipótesis se contrastará inmediatamente con los gráficos de la actividad siguiente.
+          </p>
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
+
+    _hyp_source = st.selectbox(
+        'Fuente',
+        [
+            'Carretera / autopista',
+            'Ferrocarril',
+            'Aeronave',
+            'Instalación / HVAC',
+            'Construcción / obra',
+        ],
+        key='c3_s6_intro_hyp_source',
+    )
+
+    _hyp_shape = st.selectbox(
+        '¿Qué forma temporal esperas?',
+        [
+            'Nivel relativamente estable',
+            'Fondo fluctuante con múltiples eventos',
+            'Un evento principal con crecimiento y decaimiento',
+            'Serie de operaciones intensas separadas por pausas',
+        ],
+        key='c3_s6_intro_hyp_shape',
+    )
+
+    _hyp_descriptor = st.selectbox(
+        '¿Qué descriptor revisarías primero?',
+        [
+            'LAeq',
+            'SEL / LAE',
+            'Lmax',
+            'L90',
+            'Lden',
+        ],
+        key='c3_s6_intro_hyp_descriptor',
+    )
+
+    _hyp_why = st.text_area(
+        'Justifica tu hipótesis en 2–3 líneas',
+        placeholder='Ej.: espero una historia fluctuante porque el flujo vehicular está formado por múltiples fuentes móviles...',
+        key='c3_s6_intro_hyp_why',
+    )
+
+    if _hyp_why.strip():
+        saved['c3_stage6_hypothesis'] = {
+            'source': _hyp_source,
+            'expected_shape': _hyp_shape,
+            'first_descriptor': _hyp_descriptor,
+            'justification': _hyp_why.strip(),
+        }
+        _c3l1_save(saved, deps)
+        st.markdown(
+            """
+            <div class="c3-key">
+              Hipótesis registrada. En la siguiente actividad podrás contrastarla con la firma temporal simulada de la fuente.
+            </div>
+            """,
+            unsafe_allow_html=True,
+        )
+
+    st.markdown('## 3. Ahora sí: clasifica las principales fuentes urbanas')
+
+
 
     _source_catalog = {
         'Carretera / autopista': {
@@ -22577,7 +22875,7 @@ def _c3l1_stage6_impl(lab: dict, saved: dict, deps: Dict[str, Any]):
         unsafe_allow_html=True,
     )
 
-    st.markdown('## 3. Aprende a reconocer la firma temporal')
+    st.markdown('## 4. Aprende a reconocer la firma temporal')
 
     _t6 = np.arange(0, 180, 1, dtype=float)
     _rng6 = np.random.default_rng(610)
@@ -22641,7 +22939,7 @@ def _c3l1_stage6_impl(lab: dict, saved: dict, deps: Dict[str, Any]):
         unsafe_allow_html=True,
     )
 
-    st.markdown('## 4. Mismo LAeq, fuentes completamente distintas')
+    st.markdown('## 5. Mismo LAeq, fuentes completamente distintas')
 
     _tcmp = np.arange(0,120,dtype=float)
     _stable = np.full_like(_tcmp,63.0) + .3*np.sin(_tcmp/9)
@@ -22676,7 +22974,7 @@ def _c3l1_stage6_impl(lab: dict, saved: dict, deps: Dict[str, Any]):
         unsafe_allow_html=True,
     )
 
-    st.markdown('## 5. Laboratorio de mezcla urbana')
+    st.markdown('## 6. Laboratorio de mezcla urbana')
 
     st.write(
         'Ahora construye un ambiente acústico mixto. Activa y desactiva fuentes y observa '
@@ -22764,7 +23062,7 @@ def _c3l1_stage6_impl(lab: dict, saved: dict, deps: Dict[str, Any]):
             unsafe_allow_html=True,
         )
 
-    st.markdown('## 6. Diagnóstico profesional · ¿qué mirarías primero?')
+    st.markdown('## 7. Diagnóstico profesional · ¿qué mirarías primero?')
 
     _mission6 = st.segmented_control(
         'Misión',
@@ -22801,7 +23099,7 @@ def _c3l1_stage6_impl(lab: dict, saved: dict, deps: Dict[str, Any]):
                 'Revisa qué pregunta quieres responder: energía global, exposición de un evento, máximo o componente persistente.'
             )
 
-    st.markdown('## 7. Caso integrado · interpreta la estación de la Etapa 5')
+    st.markdown('## 8. Caso integrado · interpreta la estación de la Etapa 5')
 
     st.markdown(
         f"""
@@ -22837,7 +23135,7 @@ def _c3l1_stage6_impl(lab: dict, saved: dict, deps: Dict[str, Any]):
                 'Un descriptor global no identifica automáticamente quién produjo toda la energía acústica.'
             )
 
-    st.markdown('## 8. Cierre · de la Etapa 5 a la Etapa 7')
+    st.markdown('## 9. Cierre · de la Etapa 5 a la Etapa 7')
 
     st.markdown(
         """
