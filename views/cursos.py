@@ -25224,7 +25224,7 @@ def _c3l1_stage9_impl(lab: dict, saved: dict, deps: Dict[str, Any]):
 _C3L1_CASE_INTERVALS = {'P1 · Vivienda': [67, 70, 69, 65], 'P2 · Colegio': [62, 64, 63, 61]}
 _C3L1_CASE_PERIODS = {'P1 · Vivienda': (66, 63, 57), 'P2 · Colegio': (62, 60, 54)}
 _C3L1_CASE_SAMPLES = [65, 67, 72, 69, 66, 71, 68, 70, 66, 67]
-_C3L1_S10_Q = [('¿Qué receptor parece más expuesto durante la hora punta diurna?', ['P1 · Vivienda', 'P2 · Colegio', 'No se puede comparar'], 0), ('¿Qué representa L90 en este caso?', ['El máximo', 'Un nivel asociado al fondo/condición excedida 90% del tiempo', 'La suma energética', 'El SEL'], 1), ('¿Qué afirmación sobre una representación espacial interpolada es correcta?', ['Todos sus puntos fueron medidos', 'Entre puntos medidos existen estimaciones derivadas de los datos', 'Es automáticamente un modelo predictivo físico', 'No depende de los puntos medidos'], 1), ('Para los sobrevuelos, ¿qué descriptor del laboratorio está orientado a la energía de un evento individual?', ['SEL / LAE', 'L90', 'LAFmin', 'LD'], 0), ('¿Qué debe incluir una conclusión profesional?', ['Solo el mayor nivel medido', 'Fuente principal, receptor crítico, descriptor, limitaciones e información faltante', 'Solo una norma', 'Solo el mapa'], 1)]
+_C3L1_S10_Q = [('¿Qué receptor parece más expuesto durante la hora punta diurna?', ['P1 · Vivienda', 'P2 · Colegio', 'No se puede comparar'], 0), ('¿Qué representa L90 en este caso?', ['El máximo', 'Un nivel asociado al fondo/condición excedida 90% del tiempo', 'La suma energética', 'El SEL'], 1), ('Para los sobrevuelos, ¿qué descriptor del laboratorio está orientado a la energía de un evento individual?', ['SEL / LAE', 'L90', 'LAFmin', 'LD'], 0), ('¿Qué debe incluir una conclusión profesional?', ['Solo el mayor nivel medido', 'Fuente principal, receptor crítico, descriptor, limitaciones e información faltante', 'Solo una norma', 'Solo el mapa'], 1)]
 
 def _c3l1_stage10_remote(deps):
     user = st.session_state.get('user_key')
@@ -25984,30 +25984,8 @@ def _c3l1_stage10_impl(lab: dict, saved: dict, deps: Dict[str, Any]):
 
     st.markdown(
         '''
-        <div class="s10-section">
-          <div class="s10-kicker">MISIÓN 9 · REPRESENTAR</div>
-          <div class="s10-heading">Distingue medición de estimación espacial</div>
-          <div class="s10-copy">Un mapa puede contener valores interpolados entre puntos; eso no significa que hayan sido medidos directamente allí.</div>
-        </div>
-        ''',
-        unsafe_allow_html=True,
-    )
-    map_opts = [
-        'Fue medido directamente allí',
-        'Es una estimación derivada de puntos medidos',
-        'Es necesariamente un modelo predictivo físico',
-    ]
-    map_answer = st.radio(
-        'Entre dos puntos medidos, un valor interpolado…',
-        map_opts,
-        index=map_opts.index(draft.get('map_answer')) if draft.get('map_answer') in map_opts else None,
-        key='c3_s10f_map',
-    )
-
-    st.markdown(
-        '''
         <div class="s10-section s10-section-blue">
-          <div class="s10-kicker">MISIÓN 10 · DIAGNOSTICAR</div>
+          <div class="s10-kicker">MISIÓN 9 · DIAGNOSTICAR</div>
           <div class="s10-heading">Redacta una conclusión profesional defendible</div>
           <div class="s10-copy">Integra fuente principal, receptor crítico, descriptores, limitaciones, información faltante y alcance real de la conclusión.</div>
         </div>
@@ -26033,6 +26011,46 @@ def _c3l1_stage10_impl(lab: dict, saved: dict, deps: Dict[str, Any]):
         key='c3_s10f_conclusion',
         placeholder='Integra fuente principal, receptor crítico, descriptores, representatividad, información faltante y alcance de la conclusión.',
     )
+
+    st.markdown(
+        '''
+        <div class="s10-section s10-section-green">
+          <div class="s10-kicker">CIERRE DEL DIAGNÓSTICO</div>
+          <div class="s10-heading">Guarda tu análisis profesional</div>
+          <div class="s10-copy">
+            El borrador se conserva automáticamente mientras trabajas. Cuando estés conforme con tu diagnóstico,
+            usa el botón de guardado para cerrar esta parte de la etapa.
+          </div>
+        </div>
+        ''',
+        unsafe_allow_html=True,
+    )
+
+    _diagnosis_minimum = all([
+        len(limitations.strip()) >= 30,
+        len(missing.strip()) >= 20,
+        len(conclusion.strip()) >= 80,
+    ])
+
+    if st.button(
+        '💾 Guardar mi diagnóstico',
+        key='c3_s10f_save_diagnosis_btn',
+        use_container_width=True,
+        type='primary',
+    ):
+        if not _diagnosis_minimum:
+            st.warning(
+                'Antes de guardar como diagnóstico completado, desarrolla un poco más las limitaciones, '
+                'la información faltante y la conclusión profesional.'
+            )
+        else:
+            st.session_state['c3_s10_diagnosis_saved'] = True
+            st.success(
+                '✓ Diagnóstico guardado. Puedes seguir revisándolo o continuar con las preguntas de comprensión.'
+            )
+
+    if st.session_state.get('c3_s10_diagnosis_saved', False):
+        st.caption('Diagnóstico guardado como parte de tu trabajo formativo.')
 
     st.markdown('### Preguntas de comprensión')
     previous_answers = draft.get('answers',{}) if isinstance(draft.get('answers'),dict) else {}
@@ -26076,6 +26094,50 @@ def _c3l1_stage10_impl(lab: dict, saved: dict, deps: Dict[str, Any]):
                 st.info(f'Respuesta esperada: {q[1][q[2]]}')
             reveal[str(i)] = bool(st.session_state.get(reveal_key, False))
 
+    st.markdown(
+        """
+        <div class="s10-section s10-section-green">
+          <div class="s10-kicker">CIERRE DE COMPRENSIÓN</div>
+          <div class="s10-heading">Guarda tus respuestas antes de cerrar la etapa</div>
+          <div class="s10-copy">
+            Tus respuestas se conservan como borrador mientras avanzas. Cuando hayas contestado todas,
+            usa el botón para confirmar esta parte del trabajo.
+          </div>
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
+
+    _answered_count = sum(
+        1 for i in range(len(_C3L1_S10_Q))
+        if answers.get(str(i)) is not None
+    )
+    _all_comprehension_answered = _answered_count == len(_C3L1_S10_Q)
+
+    st.caption(
+        f'Has respondido {_answered_count} de {len(_C3L1_S10_Q)} preguntas de comprensión.'
+    )
+
+    if st.button(
+        '💾 Guardar mis respuestas de comprensión',
+        key='c3_s10f_save_comprehension_btn',
+        use_container_width=True,
+        type='primary',
+    ):
+        if not _all_comprehension_answered:
+            st.warning(
+                'Antes de guardar esta sección como completada, responde todas las preguntas de comprensión.'
+            )
+        else:
+            st.session_state['c3_s10_comprehension_saved'] = True
+            st.success(
+                '✓ Respuestas guardadas. Puedes volver a revisarlas más adelante desde esta etapa o desde Mi desempeño.'
+            )
+
+    if st.session_state.get('c3_s10_comprehension_saved', False):
+        st.caption('Preguntas de comprensión guardadas como parte de tu trabajo formativo.')
+
+
     payload = {
         'main_source': main_source,
         'receptor': receptor,
@@ -26089,10 +26151,11 @@ def _c3l1_stage10_impl(lab: dict, saved: dict, deps: Dict[str, Any]):
         'variability': variability,
         'ans_sel': float(ans_sel),
         'ans_lden': float(ans_lden),
-        'map_answer': map_answer,
         'limitations': limitations,
         'missing': missing,
         'conclusion': conclusion,
+        'diagnosis_saved': bool(st.session_state.get('c3_s10_diagnosis_saved', False)),
+        'comprehension_saved': bool(st.session_state.get('c3_s10_comprehension_saved', False)),
         'answers': answers,
         'revealed': reveal,
     }
@@ -26124,6 +26187,8 @@ def _c3l1_stage10_impl(lab: dict, saved: dict, deps: Dict[str, Any]):
         receptor != 'Seleccionar',
         instrument != 'Seleccionar',
         weighting != 'Seleccionar',
+        bool(st.session_state.get('c3_s10_diagnosis_saved', False)),
+        bool(st.session_state.get('c3_s10_comprehension_saved', False)),
         len(conclusion.strip()) >= 80,
         len(limitations.strip()) >= 30,
         len(missing.strip()) >= 20,
@@ -26136,7 +26201,7 @@ def _c3l1_stage10_impl(lab: dict, saved: dict, deps: Dict[str, Any]):
         st.success('Etapa 10 completada · caso integrador formativo sin nota.')
     else:
         st.caption(
-            'Tu trabajo se guarda automáticamente. Completa fuente/receptor, instrumentación, diagnóstico '
+            'Tu borrador se guarda automáticamente. Completa fuente/receptor, instrumentación, guarda el diagnóstico '
             'y las preguntas para cerrar la Etapa 10.'
         )
 
