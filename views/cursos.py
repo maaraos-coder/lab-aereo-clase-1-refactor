@@ -22047,49 +22047,175 @@ def _c3l1_stage5_impl(lab: dict, saved: dict, deps: Dict[str, Any]):
     _le6 = 58.0
     _ln6 = 48.0
     _lden6 = _c3l1_lden(_ld6, _le6, _ln6)
-    _night_term_true = 8.0 * 10.0**((_ln6 + 10.0)/10.0)
-    _night_term_opts = [
-        f'{_night_term_true/10:.2e}',
-        f'{_night_term_true:.2e}',
-        f'{_night_term_true*10:.2e}',
-    ]
+
+    _total_term6 = 24.0 * 10.0**(_lden6/10.0)
+    _day_term6 = 12.0 * 10.0**(_ld6/10.0)
+    _eve_term6 = 4.0 * 10.0**((_le6+5.0)/10.0)
+    _night_term6 = _total_term6 - _day_term6 - _eve_term6
+    _night_unit6 = _night_term6 / 8.0
+    _ln_plus_10_6 = 10.0 * math.log10(_night_unit6)
 
     _c3s5_exercise_card(
         6,
         'Despeja LN paso a paso',
-        f'LD = {_ld6:.1f} dB(A) · LE = {_le6:.1f} dB(A) · Lden = {_lden6:.1f} dB(A). Primero identifica el término nocturno faltante.'
-    )
-    _q6a = st.segmented_control(
-        'Término nocturno',
-        _night_term_opts,
-        default=None,
-        key='c3_s5_app_q6a',
-        label_visibility='collapsed',
-    )
-    _c3s5_feedback(
-        _q6a, _night_term_opts[1],
-        'Ese valor corresponde al término 8·10^((LN+10)/10). Ahora puedes invertir la operación para obtener LN.',
-        'Aísla primero el aporte nocturno antes de aplicar logaritmos.'
+        f'LD = {_ld6:.1f} dB(A) · LE = {_le6:.1f} dB(A) · Lden = {_lden6:.1f} dB(A). El objetivo es encontrar LN.'
     )
 
+    st.markdown(
+        r"""
+        Partimos de:
+
+        \[
+        24\cdot10^{L_{den}/10}
+        =
+        12\cdot10^{L_D/10}
+        +
+        4\cdot10^{(L_E+5)/10}
+        +
+        8\cdot10^{(L_N+10)/10}
+        \]
+
+        Para encontrar \(L_N\), primero debemos **aislar el término nocturno**.
+        """
+    )
+
+    st.markdown(
+        f"""
+        <div style="
+            margin:.55rem 0 .8rem;
+            padding:.9rem 1rem;
+            border-radius:13px;
+            border:1px solid #d8e6ef;
+            background:#f8fbfd;
+        ">
+          <div style="font-size:.7rem;font-weight:800;letter-spacing:.06em;color:#167db4">
+            PASO 1 · AISLAR LA CONTRIBUCIÓN NOCTURNA
+          </div>
+          <div style="margin-top:.35rem;color:#40586b;line-height:1.55">
+            Al reemplazar LD, LE y Lden y restar las contribuciones de día y tarde obtenemos:
+          </div>
+          <div style="font-size:1.2rem;font-weight:800;color:#183247;margin-top:.45rem">
+            8 · 10<sup>(LN+10)/10</sup> ≈ {_night_term6:,.0f}
+          </div>
+          <div style="font-size:.8rem;color:#748696;margin-top:.2rem">
+            Este número es una magnitud energética intermedia; todavía no está expresado en dB.
+          </div>
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
+
+    _q6a = st.segmented_control(
+        '¿Qué operación corresponde hacer ahora para eliminar el factor 8?',
+        [
+            'Dividir por 8',
+            'Restar 8 dB',
+            'Multiplicar por 8',
+        ],
+        default=None,
+        key='c3_s5_app_q6a',
+        label_visibility='visible',
+    )
+
+    if _q6a:
+        _c3s5_feedback(
+            _q6a,
+            'Dividir por 8',
+            'Correcto. El 8 representa las horas del periodo nocturno en la ecuación; algebraicamente debemos dividir ambos lados por 8.',
+            'El 8 está multiplicando al término energético nocturno, por lo tanto se elimina dividiendo.'
+        )
+
     _q6b = None
-    if _q6a == _night_term_opts[1] or (_is_zoom_quiz and _q6a is not None):
-        st.caption('Segundo paso · determina LN a partir del término nocturno.')
+    _q6c = None
+
+    if _q6a == 'Dividir por 8' or (_is_zoom_quiz and _q6a is not None):
+        st.markdown(
+            f"""
+            <div style="
+                margin:.65rem 0 .8rem;
+                padding:.9rem 1rem;
+                border-radius:13px;
+                border:1px solid #cbe4d4;
+                background:#f4fbf7;
+            ">
+              <div style="font-size:.7rem;font-weight:800;letter-spacing:.06em;color:#278552">
+                PASO 2 · QUEDA UNA POTENCIA DE BASE 10
+              </div>
+              <div style="font-size:1.15rem;font-weight:800;color:#183247;margin-top:.4rem">
+                10<sup>(LN+10)/10</sup> ≈ {_night_unit6:,.0f}
+              </div>
+            </div>
+            """,
+            unsafe_allow_html=True,
+        )
+
         _q6b = st.segmented_control(
-            'LN despejado',
-            ['44 dB(A)','48 dB(A)','52 dB(A)'],
+            '¿Qué operación permite volver desde esta escala energética a decibeles?',
+            [
+                'Aplicar 10·log₁₀',
+                'Dividir por 10',
+                'Restar 10 directamente',
+            ],
             default=None,
             key='c3_s5_app_q6b',
-            label_visibility='collapsed',
+            label_visibility='visible',
         )
-        _c3s5_feedback(
-            _q6b, '48 dB(A)',
-            'Al invertir el término energético y retirar la penalización de +10 dB se obtiene LN = 48 dB(A).',
-            'Después de obtener LN + 10, recuerda restar la penalización nocturna.'
+
+        if _q6b:
+            _c3s5_feedback(
+                _q6b,
+                'Aplicar 10·log₁₀',
+                f'Correcto. 10·log₁₀({_night_unit6:,.0f}) ≈ {_ln_plus_10_6:.1f} dB. Ese resultado corresponde a LN + 10.',
+                'Para deshacer una potencia 10^(L/10) debemos aplicar 10·log10.'
+            )
+
+    if _q6b == 'Aplicar 10·log₁₀' or (_is_zoom_quiz and _q6b is not None):
+        st.markdown(
+            f"""
+            <div style="
+                margin:.65rem 0 .8rem;
+                padding:.9rem 1rem;
+                border-radius:13px;
+                border:1px solid #d8e6ef;
+                background:#f8fbfd;
+            ">
+              <div style="font-size:.7rem;font-weight:800;letter-spacing:.06em;color:#167db4">
+                PASO 3 · RETIRA LA PENALIZACIÓN NOCTURNA
+              </div>
+              <div style="font-size:1.15rem;font-weight:800;color:#183247;margin-top:.4rem">
+                LN + 10 ≈ {_ln_plus_10_6:.1f} dB
+              </div>
+              <div style="color:#52687d;margin-top:.3rem">
+                Recuerda que esos +10 dB pertenecen a Lden; no forman parte del nivel físico nocturno.
+              </div>
+            </div>
+            """,
+            unsafe_allow_html=True,
         )
+
+        _q6c = st.segmented_control(
+            'Entonces, ¿cuál es LN?',
+            ['44 dB(A)', '48 dB(A)', '58 dB(A)'],
+            default=None,
+            key='c3_s5_app_q6c',
+            label_visibility='visible',
+        )
+
+        if _q6c:
+            _c3s5_feedback(
+                _q6c,
+                '48 dB(A)',
+                'Correcto. LN + 10 = 58 dB; al retirar la penalización nocturna: LN = 58 − 10 = 48 dB(A).',
+                'El último paso es retirar los +10 dB que solo se utilizan dentro de Lden.'
+            )
+
     _exercise_results['6'] = {
-        'answer_step1':_q6a,'correct_step1':_night_term_opts[1],
-        'answer_step2':_q6b,'correct_step2':'48 dB(A)'
+        'answer_step1': _q6a,
+        'correct_step1': 'Dividir por 8',
+        'answer_step2': _q6b,
+        'correct_step2': 'Aplicar 10·log₁₀',
+        'answer_step3': _q6c,
+        'correct_step3': '48 dB(A)',
     }
 
     # 7
@@ -22224,7 +22350,7 @@ def _c3l1_stage5_impl(lab: dict, saved: dict, deps: Dict[str, Any]):
             {'Ejercicio':'3','Respuesta correcta':'66 dB(A)','Fundamento':'LE + 5 = 61 + 5 = 66 dB(A).'},
             {'Ejercicio':'4','Respuesta correcta':'62 dB(A)','Fundamento':'LN + 10 = 52 + 10 = 62 dB(A).'},
             {'Ejercicio':'5','Respuesta correcta':'LN = 50 dB(A)','Fundamento':'Al sustituir LN = 50 en el término nocturno se reproduce el Lden indicado.'},
-            {'Ejercicio':'6','Respuesta correcta':'Término nocturno correcto → LN = 48 dB(A)','Fundamento':'Se aísla primero 8·10^((LN+10)/10), luego se aplica log10 y finalmente se resta la penalización de 10 dB.'},
+            {'Ejercicio':'6','Respuesta correcta':'Dividir por 8 → aplicar 10·log₁₀ → obtener LN+10 = 58 dB → restar 10 → LN = 48 dB(A)','Fundamento':'Se aísla 8·10^((LN+10)/10), se divide por 8, se aplica 10·log₁₀ para obtener LN+10 y finalmente se restan los 10 dB de penalización.'},
             {'Ejercicio':'7','Respuesta correcta':_correct7,'Fundamento':f'Lden A = {_lden_A:.1f} dB(A); Lden B = {_lden_B:.1f} dB(A).'},
             {'Ejercicio':'8','Respuesta correcta':f'LN ≈ {_best8:.0f} dB(A)','Fundamento':'Es la alternativa que reproduce con menor error el Lden = 66.3 dB(A).'},
         ]
