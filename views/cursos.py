@@ -21169,12 +21169,39 @@ def _c3l1_stage4_impl(lab: dict, saved: dict, deps: Dict[str, Any]):
 
     st.markdown('### 4.1 Elige el descriptor correcto')
 
-    _choice = st.radio(
-        '¿Qué descriptor utilizarías para comparar la energía total de eventos individuales de distinta duración?',
+    st.markdown(
+        """
+        <div style="
+            margin:.45rem 0 .9rem;
+            padding:1rem 1.1rem;
+            border:1px solid #d7e6ef;
+            border-radius:16px;
+            background:linear-gradient(135deg,#f7fbfd,#ffffff);
+        ">
+          <div style="font-size:.72rem;font-weight:800;letter-spacing:.07em;color:#167db4;margin-bottom:.3rem">
+            MISIÓN
+          </div>
+          <div style="font-size:1.08rem;font-weight:800;color:#183247;margin-bottom:.35rem">
+            Compara la energía total de eventos individuales con distinta duración.
+          </div>
+          <div style="color:#52687d;line-height:1.45">
+            Elige el descriptor que responde de forma más directa a esa pregunta.
+          </div>
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
+
+    _choice = st.segmented_control(
+        'Descriptor',
         ['Lmax', 'SEL / LAE', 'L90'],
-        index=None,
-        horizontal=True,
+        default=None,
         key='c3_s4_descriptor_choice',
+        label_visibility='collapsed',
+    )
+
+    st.caption(
+        'Lmax = máximo · SEL/LAE = exposición energética del evento · L90 = zona baja/persistente'
     )
 
     if _choice:
