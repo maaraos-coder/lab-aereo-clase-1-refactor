@@ -17251,7 +17251,7 @@ _C3L1_NAV_STAGE_TITLES = {
     5: "Del evento al ciclo diario · LD, LE, LN y Lden",
     6: "Del monitoreo a las fuentes de ruido ambiental",
     7: "Diseño de campañas · HVAC y autopista",
-    8: "Del camino directo a la protección acústica",
+    8: "Medición real con sonómetro online",
     9: "Preguntas de comprensión",
     10: "Diagnóstico acústico de un barrio",
 }
@@ -24196,217 +24196,591 @@ def _c3l1_stage7_impl(lab: dict, saved: dict, deps: Dict[str, Any]):
         )
 
 def _c3l1_stage8_impl(lab: dict, saved: dict, deps: Dict[str, Any]):
-    import matplotlib.pyplot as c3plt
+    import math
+    import pandas as pd
+
     _c3l1_style()
     _c3l1_header(
         8,
-        'Del camino directo a la protección acústica',
-        'Explorar cómo distancia, geometría, frecuencia y una barrera modifican el camino de propagación entre fuente y receptor.',
+        'Medición real con sonómetro online',
+        'Realiza una medición acústica con una fuente cotidiana, interpreta los descriptores obtenidos y elabora un informe breve basado en tus propios datos.',
         deps,
-        40,
+        65,
     )
 
     st.markdown(
         """
         <div class="c3-card blue">
-          <div class="c3-kicker">NUEVO PROBLEMA</div>
-          <b>La fuente puede ser la misma, pero el camino hasta el receptor puede cambiar.</b>
-          <p>La barrera no “borra” el sonido: modifica la geometría de propagación y obliga a considerar difracción.</p>
+          <div class="c3-kicker">ETAPA 8 · TRABAJO PRÁCTICO</div>
+          <b>Ahora debes medir una fuente real.</b>
+          <p>
+            Utilizarás el sonómetro online del diplomado para registrar una fuente doméstica o cotidiana,
+            interpretar sus descriptores y comparar la condición <b>fuente encendida</b> con una condición
+            <b>fuente apagada</b>.
+          </p>
         </div>
         """,
         unsafe_allow_html=True,
     )
 
-    st.markdown('## 1. Geometría fuente · barrera · receptor')
+    # Restore previously saved values when available.
+    _prev = saved.get('c3_stage8_real_measurement', {}) or {}
 
-    bc1,bc2,bc3 = st.columns(3)
-    with bc1:
-        _distance = st.slider('Distancia fuente–receptor [m]', 20, 100, 60, key='c3_s8_dist')
-        _source_h = st.slider('Altura fuente [m]', 0.2, 5.0, 1.0, .1, key='c3_s8_hs')
-    with bc2:
-        _barrier_x = st.slider('Posición barrera desde la fuente [m]', 2, _distance-2, min(18,_distance-2), key='c3_s8_xb')
-        _barrier_h = st.slider('Altura barrera [m]', 0.5, 8.0, 2.5, .1, key='c3_s8_hb')
-    with bc3:
-        _receiver_h = st.slider('Altura receptor [m]', 0.5, 6.0, 1.5, .1, key='c3_s8_hr')
-        _freq = st.select_slider(
-            'Frecuencia [Hz]',
-            options=[63,125,250,500,1000,2000,4000],
-            value=1000,
-            key='c3_s8_freq',
+    # ============================================================
+    # 1. HYPOTHESIS
+    # ============================================================
+    st.markdown('## 1. Antes de medir · formula tu hipótesis')
+
+    _source_options = [
+        'Juguera / licuadora',
+        'Aspiradora',
+        'Secador de pelo',
+        'Ventilador',
+        'Campana / extractor de cocina',
+        'Otro equipo',
+    ]
+    _default_source = _prev.get('source', _source_options[0])
+    if _default_source not in _source_options:
+        _default_source = _source_options[0]
+
+    _source = st.selectbox(
+        'Fuente que medirás',
+        _source_options,
+        index=_source_options.index(_default_source),
+        key='c3_s8_source',
+    )
+
+    _other_source = ''
+    if _source == 'Otro equipo':
+        _other_source = st.text_input(
+            'Indica la fuente',
+            value=_prev.get('other_source', ''),
+            key='c3_s8_other_source',
         )
 
-    _direct = math.sqrt(float(_distance)**2 + float(_receiver_h-_source_h)**2)
-    _r1 = math.sqrt(float(_barrier_x)**2 + float(_barrier_h-_source_h)**2)
-    _r2 = math.sqrt(float(_distance-_barrier_x)**2 + float(_barrier_h-_receiver_h)**2)
-    _delta = max(0.0, (_r1 + _r2) - _direct)
-    _wavelength = 343.0 / float(_freq)
-    _fresnel = 2.0 * _delta / _wavelength if _wavelength > 0 else 0.0
-    _los_h = float(_source_h) + (float(_receiver_h-_source_h) * float(_barrier_x) / float(_distance))
-    _blocked = float(_barrier_h) > _los_h
+    _behavior_options = [
+        'Relativamente estable',
+        'Fluctuante',
+        'Con eventos o cambios notorios',
+        'No estoy seguro',
+    ]
+    _behavior = st.selectbox(
+        '¿Qué comportamiento esperas observar?',
+        _behavior_options,
+        index=_behavior_options.index(_prev.get('expected_behavior', 'No estoy seguro'))
+        if _prev.get('expected_behavior', 'No estoy seguro') in _behavior_options else 3,
+        key='c3_s8_expected_behavior',
+    )
 
-    # Simple educational diffraction estimate, deliberately capped and labelled.
-    _il_est = 0.0
-    if _blocked and _fresnel > 0:
-        _il_est = float(max(0.0, min(25.0, 10.0 * math.log10(3.0 + 20.0 * _fresnel))))
+    _descriptor_options = [
+        'LAeq,T',
+        'LAFmax',
+        'LAFmin',
+        'Combinación de LAeq,T, LAFmax y LAFmin',
+    ]
+    _descriptor = st.selectbox(
+        '¿Qué descriptor crees que será más útil?',
+        _descriptor_options,
+        index=_descriptor_options.index(_prev.get('expected_descriptor', 'Combinación de LAeq,T, LAFmax y LAFmin'))
+        if _prev.get('expected_descriptor', 'Combinación de LAeq,T, LAFmax y LAFmin') in _descriptor_options else 3,
+        key='c3_s8_expected_descriptor',
+    )
 
-    # SVG geometry
-    _W,_H = 900,360
-    _x0,_x1 = 90,820
-    _ground = 290
-    _sx = _x0
-    _rx = _x1
-    _bx = _x0 + (_x1-_x0) * (float(_barrier_x)/float(_distance))
-    _scale_h = 27.0
-    _sy = _ground - float(_source_h)*_scale_h
-    _ry = _ground - float(_receiver_h)*_scale_h
-    _by = _ground - float(_barrier_h)*_scale_h
-    _barrier_color = '#27a567' if _blocked else '#f59e0b'
-    _status = 'Línea de visión bloqueada' if _blocked else 'Línea de visión directa disponible'
+    _hypothesis = st.text_area(
+        'Antes de medir, escribe tu hipótesis',
+        value=_prev.get('hypothesis', ''),
+        placeholder='Ej.: espero que la aspiradora produzca un nivel relativamente estable y que LAeq,T quede cercano al nivel predominante...',
+        height=100,
+        key='c3_s8_hypothesis',
+    )
 
-    _svg8 = f"""
-    <style>
-    body{{margin:0;background:transparent;font-family:Arial,Helvetica,sans-serif}}
-    .lbl{{font-size:14px;font-weight:700;fill:#183247}}
-    .small{{font-size:12px;fill:#587084}}
-    </style>
-    <div style="border:1px solid #d7e5ef;border-radius:18px;background:#f7fbfd;padding:10px">
-    <svg viewBox="0 0 {_W} {_H}" xmlns="http://www.w3.org/2000/svg" style="width:100%;height:auto;display:block">
-      <rect x="20" y="20" width="860" height="315" rx="18" fill="#eaf5fa"/>
-      <rect x="20" y="{_ground}" width="860" height="45" fill="#c8d9c1"/>
-      <line x1="{_sx}" y1="{_sy}" x2="{_rx}" y2="{_ry}" stroke="#788b98" stroke-width="2" stroke-dasharray="8 7"/>
-      <polyline points="{_sx},{_sy} {_bx},{_by} {_rx},{_ry}" fill="none" stroke="#1789c2" stroke-width="4"/>
-      <rect x="{_bx-9:.1f}" y="{_by:.1f}" width="18" height="{_ground-_by:.1f}" rx="3" fill="{_barrier_color}"/>
-      <circle cx="{_sx}" cy="{_sy}" r="13" fill="#e45745" stroke="white" stroke-width="3"/>
-      <circle cx="{_rx}" cy="{_ry}" r="13" fill="#2f9a63" stroke="white" stroke-width="3"/>
-      <text x="{_sx}" y="{_sy-24}" class="lbl" text-anchor="middle">FUENTE</text>
-      <text x="{_rx}" y="{_ry-24}" class="lbl" text-anchor="middle">RECEPTOR</text>
-      <text x="{_bx}" y="{_by-16}" class="lbl" text-anchor="middle">BARRERA</text>
-      <text x="450" y="52" class="lbl" text-anchor="middle">{_status}</text>
-      <text x="450" y="75" class="small" text-anchor="middle">línea gris = camino directo · línea azul = camino difractado</text>
-    </svg></div>
-    """
-    components.html(_svg8, height=390, scrolling=False)
-
-    gm1,gm2,gm3,gm4 = st.columns(4)
-    gm1.metric('Camino directo', f'{_direct:.2f} m')
-    gm2.metric('Camino difractado', f'{_r1+_r2:.2f} m')
-    gm3.metric('Diferencia δ', f'{_delta*100:.1f} cm')
-    gm4.metric('Línea de visión', 'Bloqueada' if _blocked else 'Libre')
-
-    st.markdown('## 2. De la geometría a la difracción')
-
-    st.latex(r'\delta=(r_1+r_2)-r')
-    st.latex(r'\lambda=\frac{c}{f},\qquad c\approx343\;m/s')
-    st.latex(r'N=\frac{2\delta}{\lambda}')
-
-    fm1,fm2,fm3 = st.columns(3)
-    fm1.metric('Longitud de onda λ', f'{_wavelength:.3f} m')
-    fm2.metric('Número de Fresnel N', f'{_fresnel:.2f}')
-    fm3.metric('Atenuación didáctica', f'{_il_est:.1f} dB' if _blocked else '≈ 0 dB')
+    # ============================================================
+    # 2. PREPARATION
+    # ============================================================
+    st.markdown('## 2. Prepara la medición')
 
     st.markdown(
         """
-        <div class="c3-warn">
-          <b>Importante:</b> la “atenuación didáctica” es una estimación simplificada para visualizar tendencias de difracción.
-          No reemplaza un método normativo, un modelo predictivo completo ni una verificación en terreno.
+        <div class="c3-card">
+          <div class="c3-kicker">PROTOCOLO DE MEDICIÓN</div>
+          <b>Fuente ON · medición principal</b>
+          <p>
+            1. Usa preferentemente Chrome.<br>
+            2. Mantén el dispositivo y el micrófono en una posición fija.<br>
+            3. No tapes el micrófono ni hables durante la medición.<br>
+            4. Mantén aproximadamente constante la distancia a la fuente.<br>
+            5. Para esta actividad utiliza ponderación <b>A</b> y respuesta temporal <b>FAST</b>.<br>
+            6. Intenta registrar <b>5 minutos</b>, siempre que la fuente pueda operar de forma segura durante ese tiempo.
+          </p>
         </div>
         """,
         unsafe_allow_html=True,
     )
 
-    st.markdown('## 3. ¿La misma barrera funciona igual en todas las frecuencias?')
+    st.link_button(
+        '🎙️ Abrir sonómetro online en otra pestaña',
+        'https://soundlevelmeteruc.vercel.app/',
+        use_container_width=True,
+    )
 
-    _bands = np.array([63,125,250,500,1000,2000,4000],dtype=float)
-    _ils = []
-    for _f in _bands:
-        _lam = 343.0/_f
-        _n = 2.0*_delta/_lam if _lam>0 else 0.0
-        _il = 0.0 if not _blocked else max(0.0,min(25.0,10.0*math.log10(3.0+20.0*_n))) if _n>0 else 0.0
-        _ils.append(_il)
+    st.info(
+        'Esta actividad es educativa. El micrófono del dispositivo no reemplaza un sonómetro calibrado '
+        'ni una medición reglamentaria.'
+    )
 
-    _fig8,_ax8 = c3plt.subplots(figsize=(9.5,3.8))
-    _ax8.bar([str(int(x)) for x in _bands],_ils)
-    _ax8.set_xlabel('Frecuencia [Hz]')
-    _ax8.set_ylabel('Atenuación didáctica [dB]')
-    _ax8.set_title('Misma geometría · respuesta relativa por frecuencia')
-    _ax8.grid(axis='y',alpha=.2)
-    st.pyplot(_fig8,use_container_width=True)
-    c3plt.close(_fig8)
+    # ============================================================
+    # 3. REGISTER SOURCE-ON MEASUREMENT
+    # ============================================================
+    st.markdown('## 3. Registra tu medición · fuente encendida')
+
+    c1,c2,c3 = st.columns(3)
+    with c1:
+        _duration = st.number_input(
+            'Duración real [min]',
+            min_value=0.5,
+            max_value=30.0,
+            value=float(_prev.get('duration_min', 5.0)),
+            step=0.5,
+            key='c3_s8_duration',
+        )
+    with c2:
+        _distance = st.number_input(
+            'Distancia fuente–micrófono [m]',
+            min_value=0.1,
+            max_value=20.0,
+            value=float(_prev.get('distance_m', 1.0)),
+            step=0.1,
+            key='c3_s8_distance',
+        )
+    with c3:
+        _place_opts = ['Cocina','Sala / living','Dormitorio','Exterior','Otro']
+        _place = st.selectbox(
+            'Lugar',
+            _place_opts,
+            index=_place_opts.index(_prev.get('place','Cocina')) if _prev.get('place','Cocina') in _place_opts else 0,
+            key='c3_s8_place',
+        )
+
+    _interference_opts = [
+        'Sin interferencias relevantes',
+        'Conversación',
+        'Tránsito exterior',
+        'TV / música',
+        'Otra fuente sonora',
+    ]
+    _interference = st.multiselect(
+        '¿Hubo ruido ajeno durante la medición?',
+        _interference_opts,
+        default=[x for x in _prev.get('interferences', []) if x in _interference_opts],
+        key='c3_s8_interferences',
+    )
+
+    m1,m2,m3 = st.columns(3)
+    with m1:
+        _laeq_on = st.number_input(
+            'LAeq,T [dB(A)]',
+            min_value=0.0,
+            max_value=140.0,
+            value=float(_prev.get('LAeq_on', 0.0)),
+            step=0.1,
+            key='c3_s8_laeq_on',
+        )
+    with m2:
+        _lafmax_on = st.number_input(
+            'LAFmax [dB(A)]',
+            min_value=0.0,
+            max_value=160.0,
+            value=float(_prev.get('LAFmax_on', 0.0)),
+            step=0.1,
+            key='c3_s8_lafmax_on',
+        )
+    with m3:
+        _lafmin_on = st.number_input(
+            'LAFmin [dB(A)]',
+            min_value=0.0,
+            max_value=140.0,
+            value=float(_prev.get('LAFmin_on', 0.0)),
+            step=0.1,
+            key='c3_s8_lafmin_on',
+        )
+
+    _on_complete = all(v > 0 for v in [_laeq_on,_lafmax_on,_lafmin_on])
+
+    if _on_complete:
+        _spread = _lafmax_on - _lafmin_on
+        _peak_to_eq = _lafmax_on - _laeq_on
+
+        r1,r2,r3,r4 = st.columns(4)
+        r1.metric('LAeq,T', f'{_laeq_on:.1f} dB(A)')
+        r2.metric('LAFmax', f'{_lafmax_on:.1f} dB(A)')
+        r3.metric('LAFmin', f'{_lafmin_on:.1f} dB(A)')
+        r4.metric('Max − Min', f'{_spread:.1f} dB')
+
+        st.markdown(
+            f"""
+            <div class="c3-key">
+              Tu registro presenta una diferencia <b>LAFmax − LAFmin = {_spread:.1f} dB</b> y
+              <b>LAFmax − LAeq,T = {_peak_to_eq:.1f} dB</b>.
+              Estos valores sirven para describir la variabilidad observada, pero no constituyen por sí solos
+              una clasificación normativa de estabilidad.
+            </div>
+            """,
+            unsafe_allow_html=True,
+        )
+
+        _stability = st.radio(
+            'A partir de tu registro, ¿cómo describirías cualitativamente la fuente?',
+            ['Relativamente estable','Moderadamente variable','Muy variable','No puedo concluirlo solo con estos valores'],
+            index=None,
+            key='c3_s8_stability_answer',
+        )
+        _stability_why = st.text_area(
+            'Justifica usando tus propios resultados',
+            value=_prev.get('stability_justification',''),
+            placeholder='Relaciona LAeq,T, LAFmax, LAFmin y lo que observaste durante la medición.',
+            height=90,
+            key='c3_s8_stability_justification',
+        )
+
+    # ============================================================
+    # 4. SOURCE OFF / RESIDUAL
+    # ============================================================
+    st.markdown('## 4. Segunda medición · fuente apagada')
 
     st.markdown(
         """
-        <div class="c3-key">
-          Una misma geometría no produce el mismo efecto en todas las bandas.
-          Al cambiar la frecuencia cambia la longitud de onda y, por tanto, la relación entre geometría y difracción.
+        <div class="c3-card orange">
+          <div class="c3-kicker">CONDICIÓN RESIDUAL</div>
+          <b>Apaga la fuente y mantén el micrófono exactamente en la misma posición.</b>
+          <p>
+            Realiza una segunda medición breve, idealmente de al menos 1 minuto, procurando mantener
+            condiciones ambientales comparables. Esta medición representa el ambiente sin la fuente específica.
+          </p>
         </div>
         """,
         unsafe_allow_html=True,
     )
 
-    st.markdown('## 4. Diseña tu barrera')
+    d1,d2 = st.columns(2)
+    with d1:
+        _duration_off = st.number_input(
+            'Duración residual [min]',
+            min_value=0.5,
+            max_value=15.0,
+            value=float(_prev.get('duration_off_min', 1.0)),
+            step=0.5,
+            key='c3_s8_duration_off',
+        )
+    with d2:
+        _laeq_off = st.number_input(
+            'LAeq residual [dB(A)]',
+            min_value=0.0,
+            max_value=140.0,
+            value=float(_prev.get('LAeq_off', 0.0)),
+            step=0.1,
+            key='c3_s8_laeq_off',
+        )
 
-    _mission8 = st.radio(
-        '¿Qué acción tendería a aumentar la diferencia de camino, manteniendo fuente y receptor?',
-        [
-            'Subir la barrera y comprobar su posición',
-            'Bajar la barrera hasta dejar línea de visión libre',
-            'Cambiar L90 por LAeq',
-        ],
-        index=None,
-        key='c3_s8_q_design',
-    )
-    if _mission8:
-        if _mission8.startswith('Subir'):
-            st.success('Correcto. La geometría del borde superior y su posición controlan la diferencia de camino y el régimen de difracción.')
+    _specific_level = None
+    if _laeq_on > 0 and _laeq_off > 0:
+        if _laeq_on > _laeq_off:
+            _energy_diff = 10**(_laeq_on/10.0) - 10**(_laeq_off/10.0)
+            if _energy_diff > 0:
+                _specific_level = 10*math.log10(_energy_diff)
+
+        st.markdown('### Comparación ON/OFF')
+        cc1,cc2,cc3 = st.columns(3)
+        cc1.metric('Fuente ON', f'{_laeq_on:.1f} dB(A)')
+        cc2.metric('Fuente OFF', f'{_laeq_off:.1f} dB(A)')
+        cc3.metric('Diferencia directa', f'{(_laeq_on-_laeq_off):.1f} dB')
+
+        if _specific_level is not None:
+            st.latex(
+                r'L_{fuente}=10\log_{10}\left(10^{L_{total}/10}-10^{L_{residual}/10}\right)'
+            )
+            st.metric(
+                'Contribución energética estimada de la fuente',
+                f'{_specific_level:.1f} dB(A)',
+            )
         else:
-            st.warning('La pregunta es geométrica: modifica altura/posición de la barrera y observa δ.')
+            st.warning(
+                'Con estos valores no puede obtenerse una contribución energética positiva de la fuente. '
+                'Revisa las condiciones de medición y los datos ingresados.'
+            )
 
-    st.markdown('## 5. Cerca de la fuente, al centro o cerca del receptor')
+    # ============================================================
+    # 5. QUESTIONS
+    # ============================================================
+    st.markdown('## 5. Interpreta tus propios resultados')
 
-    _positions = np.linspace(2,float(_distance)-2,80)
-    _deltas = []
-    for _xb in _positions:
-        _a = math.sqrt(_xb**2 + float(_barrier_h-_source_h)**2)
-        _b = math.sqrt((float(_distance)-_xb)**2 + float(_barrier_h-_receiver_h)**2)
-        _deltas.append((_a+_b)-_direct)
+    _q_data = [
+        (
+            '¿Qué representa el LAeq,T que registraste?',
+            'Representa el nivel continuo equivalente que contiene la misma energía acústica que el registro variable durante el tiempo T de tu medición.'
+        ),
+        (
+            '¿Por qué LAFmax y LAeq,T no representan lo mismo?',
+            'LAFmax corresponde al mayor nivel registrado con respuesta temporal FAST, mientras LAeq,T integra energéticamente todo el intervalo de medición.'
+        ),
+        (
+            '¿Qué fenómeno observado durante tu medición pudo producir el LAFmax?',
+            'La respuesta debe relacionarse con lo ocurrido realmente: arranque del equipo, cambio de velocidad, contacto mecánico, paso de una fuente ajena, manipulación u otro evento breve de mayor nivel.'
+        ),
+        (
+            '¿LAFmin puede considerarse automáticamente ruido residual? Justifica.',
+            'No. LAFmin es solamente el menor nivel registrado durante la medición ON. El residual corresponde a una condición medida con la fuente específica ausente o detenida.'
+        ),
+        (
+            'Compara la condición ON y OFF. ¿La fuente seleccionada domina claramente el ambiente acústico?',
+            'Debe justificarse usando la diferencia entre LAeq ON y LAeq residual. Una diferencia grande sugiere mayor dominancia; si son cercanos, separar la contribución resulta más incierto.'
+        ),
+        (
+            '¿Qué mejorarías si tuvieras que repetir esta medición con criterio profesional?',
+            'Deberían mencionarse aspectos como calibración, instrumentación adecuada, posición y distancia controladas, duración representativa, condiciones ambientales, repetibilidad, registro de interferencias y caracterización más robusta del residual.'
+        ),
+    ]
 
-    _fig82,_ax82 = c3plt.subplots(figsize=(9.5,3.6))
-    _ax82.plot(_positions,np.array(_deltas)*100.0,lw=1.8)
-    _ax82.axvline(float(_barrier_x),ls='--',label='Posición actual')
-    _ax82.set_xlabel('Distancia de la barrera desde la fuente [m]')
-    _ax82.set_ylabel('Diferencia de camino δ [cm]')
-    _ax82.set_title('Efecto de la posición de la barrera sobre la geometría')
-    _ax82.grid(alpha=.2)
-    _ax82.legend(fontsize=8)
-    st.pyplot(_fig82,use_container_width=True)
-    c3plt.close(_fig82)
+    _answers = {}
+    _revealed = {}
+    for _i,(_q,_guide) in enumerate(_q_data,1):
+        st.markdown(f'**Pregunta {_i}.** {_q}')
+        _answer = st.text_area(
+            f'Etapa 8 · respuesta {_i}',
+            value=(_prev.get('answers',{}) or {}).get(str(_i),''),
+            placeholder='Desarrolla tu respuesta...',
+            height=95,
+            key=f'c3_s8_q_{_i}',
+            label_visibility='collapsed',
+        )
+        _answers[str(_i)] = _answer.strip()
+        _rev_key = f'c3_s8_q_reveal_{_i}'
 
-    saved['c3_stage8_barrier'] = {
+        if _answer.strip():
+            if st.button(
+                f'👁️ Ver respuesta esperada · Pregunta {_i}',
+                key=f'c3_s8_q_btn_{_i}',
+                use_container_width=True,
+            ):
+                st.session_state[_rev_key] = True
+        else:
+            st.caption('Responde primero para habilitar la pauta.')
+
+        if st.session_state.get(_rev_key, False):
+            # Dynamic enrichment for questions that depend on entered data.
+            _extra = ''
+            if _i == 2 and _on_complete:
+                _extra = (
+                    f' En tu registro: LAFmax = {_lafmax_on:.1f} dB(A) y '
+                    f'LAeq,T = {_laeq_on:.1f} dB(A).'
+                )
+            elif _i == 5 and _laeq_on > 0 and _laeq_off > 0:
+                _extra = (
+                    f' En tu medición: ON = {_laeq_on:.1f} dB(A), '
+                    f'OFF = {_laeq_off:.1f} dB(A), diferencia = {_laeq_on-_laeq_off:.1f} dB.'
+                )
+
+            st.success(_guide + _extra)
+
+        _revealed[str(_i)] = bool(st.session_state.get(_rev_key, False))
+
+    # ============================================================
+    # 6. MINI REPORT
+    # ============================================================
+    st.markdown('## 6. Informe breve de tu medición')
+
+    _description = st.text_area(
+        'Descripción de la fuente y de su funcionamiento',
+        value=_prev.get('source_description',''),
+        placeholder='Describe cómo funcionó la fuente durante la medición, si hubo cambios de velocidad, pausas, arranque, etc.',
+        height=100,
+        key='c3_s8_source_description',
+    )
+    _interpretation = st.text_area(
+        'Interpretación acústica',
+        value=_prev.get('interpretation',''),
+        placeholder='Interpreta LAeq,T, LAFmax, LAFmin y la comparación ON/OFF.',
+        height=120,
+        key='c3_s8_interpretation',
+    )
+    _limitations = st.text_area(
+        'Limitaciones de la medición',
+        value=_prev.get('limitations',''),
+        placeholder='Ej.: micrófono sin calibración externa, duración breve, interferencias, distancia estimada...',
+        height=100,
+        key='c3_s8_limitations',
+    )
+
+    _source_label = _other_source.strip() if _source == 'Otro equipo' and _other_source.strip() else _source
+
+    st.markdown('### Vista previa del informe')
+
+    _report_rows = [
+        {'Descriptor / dato':'Fuente evaluada','Resultado':_source_label},
+        {'Descriptor / dato':'Lugar','Resultado':_place},
+        {'Descriptor / dato':'Duración ON','Resultado':f'{_duration:.1f} min'},
+        {'Descriptor / dato':'Distancia aproximada','Resultado':f'{_distance:.1f} m'},
+        {'Descriptor / dato':'LAeq,T ON','Resultado':f'{_laeq_on:.1f} dB(A)' if _laeq_on > 0 else '—'},
+        {'Descriptor / dato':'LAFmax','Resultado':f'{_lafmax_on:.1f} dB(A)' if _lafmax_on > 0 else '—'},
+        {'Descriptor / dato':'LAFmin','Resultado':f'{_lafmin_on:.1f} dB(A)' if _lafmin_on > 0 else '—'},
+        {'Descriptor / dato':'LAeq residual OFF','Resultado':f'{_laeq_off:.1f} dB(A)' if _laeq_off > 0 else '—'},
+        {
+            'Descriptor / dato':'Contribución energética estimada',
+            'Resultado':f'{_specific_level:.1f} dB(A)' if _specific_level is not None else 'No calculada'
+        },
+    ]
+    st.dataframe(pd.DataFrame(_report_rows), hide_index=True, use_container_width=True)
+
+    st.markdown(
+        f"""
+        <div class="c3-card">
+          <div class="c3-kicker">INFORME BREVE · INTERPRETACIÓN DEL ALUMNO</div>
+          <b>Descripción de la fuente</b>
+          <p>{_description.strip() if _description.strip() else 'Pendiente.'}</p>
+          <b>Interpretación acústica</b>
+          <p>{_interpretation.strip() if _interpretation.strip() else 'Pendiente.'}</p>
+          <b>Limitaciones declaradas</b>
+          <p>{_limitations.strip() if _limitations.strip() else 'Pendiente.'}</p>
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
+
+    st.caption(
+        'El informe se guarda automáticamente junto con tus respuestas. '
+        'No necesitas presionar un botón de guardado.'
+    )
+
+    # ============================================================
+    # SAVE ALL STUDENT DATA
+    # ============================================================
+    saved['c3_stage8_real_measurement'] = {
+        'source': _source,
+        'other_source': _other_source.strip(),
+        'source_label': _source_label,
+        'expected_behavior': _behavior,
+        'expected_descriptor': _descriptor,
+        'hypothesis': _hypothesis.strip(),
+        'duration_min': float(_duration),
         'distance_m': float(_distance),
-        'source_height_m': float(_source_h),
-        'receiver_height_m': float(_receiver_h),
-        'barrier_position_m': float(_barrier_x),
-        'barrier_height_m': float(_barrier_h),
-        'frequency_hz': int(_freq),
-        'line_of_sight_blocked': bool(_blocked),
-        'path_difference_m': float(_delta),
-        'wavelength_m': float(_wavelength),
-        'fresnel_number': float(_fresnel),
-        'didactic_attenuation_db': float(_il_est),
-        'design_answer': _mission8,
+        'place': _place,
+        'interferences': list(_interference),
+        'LAeq_on': float(_laeq_on),
+        'LAFmax_on': float(_lafmax_on),
+        'LAFmin_on': float(_lafmin_on),
+        'stability_answer': st.session_state.get('c3_s8_stability_answer'),
+        'stability_justification': st.session_state.get('c3_s8_stability_justification','').strip(),
+        'duration_off_min': float(_duration_off),
+        'LAeq_off': float(_laeq_off),
+        'specific_level_estimated': float(_specific_level) if _specific_level is not None else None,
+        'answers': _answers,
+        'revealed_answers': _revealed,
+        'source_description': _description.strip(),
+        'interpretation': _interpretation.strip(),
+        'limitations': _limitations.strip(),
     }
-    _c3l1_save(saved,deps)
+    _c3l1_save(saved, deps)
 
+    # ============================================================
+    # TEACHER VIEW
+    # ============================================================
+    _viewer_role = (
+        st.session_state.get('role')
+        or st.session_state.get('user_role')
+        or st.session_state.get('modo')
+        or st.session_state.get('view_mode')
+        or ''
+    )
+    _is_teacher_view = str(_viewer_role).lower() in {
+        'docente','teacher','profesor','profesora','instructor'
+    } or bool(
+        st.session_state.get('is_teacher')
+        or st.session_state.get('teacher_mode')
+        or st.session_state.get('vista_docente')
+    )
 
-    if str(st.session_state.get('role','')).lower() == 'docente':
-        st.markdown('### Pauta docente · Etapa 8')
+    if _is_teacher_view:
+        st.markdown('---')
+        st.markdown('## Pauta docente · Etapa 8')
+
         st.markdown(
             """
-            **Puntos para enfatizar:** bloquear la línea de visión es una condición geométrica importante, pero no garantiza por sí sola un desempeño real.
-            La eficacia depende de altura, posición, frecuencia, longitud, transmisión a través del elemento, reflexiones y discontinuidades.
-            Esta etapa usa un modelo deliberadamente didáctico para enseñar diferencia de camino, longitud de onda y número de Fresnel.
+            <div class="c3-card blue">
+              <div class="c3-kicker">OBJETIVO DOCENTE</div>
+              <b>Evaluar si el alumno es capaz de pasar de la lectura de números a una interpretación acústica básica.</b>
+              <p>
+                La actividad no busca validar metrológicamente el dispositivo, sino comprobar comprensión de
+                LAeq,T, LAFmax, LAFmin, residual, separación energética y limitaciones de una medición no reglamentaria.
+              </p>
+            </div>
+            """,
+            unsafe_allow_html=True,
+        )
+
+        st.markdown('### Datos registrados por el alumno')
+        _teacher_rows = [
+            {'Campo':'Fuente','Dato':_source_label},
+            {'Campo':'Hipótesis','Dato':_hypothesis.strip() or '—'},
+            {'Campo':'Comportamiento esperado','Dato':_behavior},
+            {'Campo':'Descriptor priorizado','Dato':_descriptor},
+            {'Campo':'Lugar','Dato':_place},
+            {'Campo':'Distancia','Dato':f'{_distance:.1f} m'},
+            {'Campo':'Duración ON','Dato':f'{_duration:.1f} min'},
+            {'Campo':'Interferencias','Dato':', '.join(_interference) if _interference else 'No declaradas'},
+            {'Campo':'LAeq,T ON','Dato':f'{_laeq_on:.1f} dB(A)' if _laeq_on > 0 else '—'},
+            {'Campo':'LAFmax','Dato':f'{_lafmax_on:.1f} dB(A)' if _lafmax_on > 0 else '—'},
+            {'Campo':'LAFmin','Dato':f'{_lafmin_on:.1f} dB(A)' if _lafmin_on > 0 else '—'},
+            {'Campo':'LAeq residual','Dato':f'{_laeq_off:.1f} dB(A)' if _laeq_off > 0 else '—'},
+            {
+                'Campo':'Contribución específica estimada',
+                'Dato':f'{_specific_level:.1f} dB(A)' if _specific_level is not None else '—'
+            },
+        ]
+        st.dataframe(pd.DataFrame(_teacher_rows), hide_index=True, use_container_width=True)
+
+        st.markdown('### Criterios técnicos de revisión')
+        st.markdown(
+            """
+            **1. Hipótesis previa**  
+            Debe existir una expectativa razonada sobre estabilidad, variabilidad o descriptor relevante.
+            No se exige acertar: interesa contrastar la hipótesis con el resultado real.
+
+            **2. Registro ON**  
+            El alumno debe distinguir correctamente:
+            - LAeq,T: integración energética durante T;
+            - LAFmax: máximo registrado con FAST;
+            - LAFmin: mínimo registrado con FAST.
+
+            **3. Residual**  
+            El alumno debe comprender que el residual corresponde a la condición sin la fuente específica,
+            manteniendo idealmente la misma geometría y condiciones comparables. LAFmin no es sinónimo de residual.
+
+            **4. Comparación ON/OFF**  
+            La diferencia aritmética entre niveles sirve para comparar, pero la contribución específica se obtiene
+            mediante resta energética cuando el nivel total es mayor que el residual.
+
+            **5. Interpretación**  
+            Debe relacionar los números con lo que ocurrió físicamente durante la medición: arranque, cambios de velocidad,
+            interferencias, estabilidad o eventos.
+
+            **6. Limitaciones**  
+            Una buena respuesta debería reconocer varias de las siguientes:
+            micrófono no calibrado externamente, equipo no certificado para uso reglamentario, duración limitada,
+            distancia aproximada, ambiente doméstico, interferencias, ausencia de control meteorológico,
+            falta de repetibilidad o incertidumbre metrológica.
             """
         )
+
+        st.markdown('### Respuestas de desarrollo del alumno')
+        for _i,(_q,_guide) in enumerate(_q_data,1):
+            st.markdown(f'**Pregunta {_i}. {_q}**')
+            st.write(_answers.get(str(_i)) or 'Sin respuesta.')
+            st.caption('Pauta técnica esperada:')
+            st.write(_guide)
+
+        st.markdown('### Informe breve del alumno')
+        st.markdown(f'**Descripción:** {_description.strip() or "Pendiente."}')
+        st.markdown(f'**Interpretación:** {_interpretation.strip() or "Pendiente."}')
+        st.markdown(f'**Limitaciones:** {_limitations.strip() or "Pendiente."}')
 
 def _c3l1_stage9_impl(lab: dict, saved: dict, deps: Dict[str, Any]):
     _c3l1_style()
