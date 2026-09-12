@@ -25221,10 +25221,10 @@ def _c3l1_stage9_impl(lab: dict, saved: dict, deps: Dict[str, Any]):
             "Tus respuestas se guardan automáticamente."
         )
 
-_C3L1_CASE_INTERVALS = {'P1': [67, 70, 69, 65], 'P2': [62, 64, 63, 61], 'P3': [58, 60, 59, 57]}
-_C3L1_CASE_PERIODS = {'P1': (66, 63, 57), 'P2': (62, 60, 54), 'P3': (58, 55, 50)}
+_C3L1_CASE_INTERVALS = {'P1 · Vivienda': [67, 70, 69, 65], 'P2 · Colegio': [62, 64, 63, 61]}
+_C3L1_CASE_PERIODS = {'P1 · Vivienda': (66, 63, 57), 'P2 · Colegio': (62, 60, 54)}
 _C3L1_CASE_SAMPLES = [65, 67, 72, 69, 66, 71, 68, 70, 66, 67]
-_C3L1_S10_Q = [('¿Qué punto parece más expuesto durante la hora punta diurna?', ['P1', 'P2', 'P3', 'No se puede comparar'], 0), ('¿Qué representa L90 en este caso?', ['El máximo', 'Un nivel asociado al fondo/condición excedida 90% del tiempo', 'La suma energética', 'El SEL'], 1), ('¿Qué afirmación sobre el mapa interpolado es correcta?', ['Todos sus píxeles fueron medidos', 'Entre puntos hay estimaciones derivadas de datos', 'Es automáticamente un modelo predictivo', 'No depende de los puntos'], 1), ('Para el sobrevuelo, ¿qué descriptor del laboratorio está orientado a energía de evento?', ['SEL', 'L90', 'Lmin', 'LD'], 0), ('¿Qué debe incluir una conclusión profesional?', ['Solo el mayor dB', 'Fuente principal, receptor crítico, descriptor, limitaciones e información faltante', 'Solo una norma', 'Solo el mapa'], 1)]
+_C3L1_S10_Q = [('¿Qué receptor parece más expuesto durante la hora punta diurna?', ['P1 · Vivienda', 'P2 · Colegio', 'No se puede comparar'], 0), ('¿Qué representa L90 en este caso?', ['El máximo', 'Un nivel asociado al fondo/condición excedida 90% del tiempo', 'La suma energética', 'El SEL'], 1), ('¿Qué afirmación sobre una representación espacial interpolada es correcta?', ['Todos sus puntos fueron medidos', 'Entre puntos medidos existen estimaciones derivadas de los datos', 'Es automáticamente un modelo predictivo físico', 'No depende de los puntos medidos'], 1), ('Para los sobrevuelos, ¿qué descriptor del laboratorio está orientado a la energía de un evento individual?', ['SEL / LAE', 'L90', 'LAFmin', 'LD'], 0), ('¿Qué debe incluir una conclusión profesional?', ['Solo el mayor nivel medido', 'Fuente principal, receptor crítico, descriptor, limitaciones e información faltante', 'Solo una norma', 'Solo el mapa'], 1)]
 
 def _c3l1_stage10_remote(deps):
     user = st.session_state.get('user_key')
@@ -25445,7 +25445,7 @@ def _c3l1_stage10_impl(lab: dict, saved: dict, deps: Dict[str, Any]):
         l10 = _c3l1_exceedance_percentile(_C3L1_CASE_SAMPLES, 10)
         l50 = _c3l1_exceedance_percentile(_C3L1_CASE_SAMPLES, 50)
         l90 = _c3l1_exceedance_percentile(_C3L1_CASE_SAMPLES, 90)
-        st.write(f'**P1 percentiles:** L10≈{l10:.1f}, L50≈{l50:.1f}, L90≈{l90:.1f} dB(A).')
+        st.write(f'**P1 · Vivienda · percentiles:** L10≈{l10:.1f}, L50≈{l50:.1f}, L90≈{l90:.1f} dB(A).')
         st.write(f'**SEL vehículo pesado:** {_c3l1_sel(78, 20):.2f} dB · **SEL bocina:** {_c3l1_sel(85, 5):.2f} dB.')
         st.write('**Lden:** ' + ' · '.join((f'{p}={_c3l1_lden(*vals):.2f} dB' for p, vals in _C3L1_CASE_PERIODS.items())))
         st.markdown('### Criterio técnico esperado')
@@ -25475,7 +25475,7 @@ def _c3l1_stage10_impl(lab: dict, saved: dict, deps: Dict[str, Any]):
             <rect x="12" y="12" width="1076" height="336" rx="22" fill="#edf7fb"/>
             <rect x="12" y="245" width="1076" height="74" fill="#6c7f8b"/>
             <line x1="20" y1="282" x2="1080" y2="282" stroke="#f2dc71" stroke-width="4" stroke-dasharray="24 18"/>
-            <text x="72" y="234" font-size="15" font-weight="800" fill="#17324c">AVENIDA</text>
+            <text x="72" y="234" font-size="15" font-weight="800" fill="#17324c">FUENTE: AVENIDA · TRÁNSITO VEHICULAR</text>
             <text x="75" y="282" font-size="34">🚗</text>
             <text x="305" y="293" font-size="38">🚚</text>
             <text x="535" y="275" font-size="34">🚌</text>
@@ -25484,17 +25484,32 @@ def _c3l1_stage10_impl(lab: dict, saved: dict, deps: Dict[str, Any]):
             <text x="220" y="108" text-anchor="middle" font-size="15" font-weight="800" fill="#17324c">VIVIENDAS</text>
             <rect x="410" y="145" width="180" height="100" rx="8" fill="#c8d8df"/>
             <rect x="455" y="115" width="90" height="35" rx="6" fill="#8198a4"/>
-            <text x="500" y="102" text-anchor="middle" font-size="15" font-weight="800" fill="#17324c">SUPERMERCADO + HVAC</text>
+            <text x="500" y="102" text-anchor="middle" font-size="15" font-weight="800" fill="#17324c">SUPERMERCADO</text>
+            <text x="500" y="122" text-anchor="middle" font-size="12" font-weight="800" fill="#5d7486">FUENTE: HVAC EN CUBIERTA</text>
             <rect x="735" y="130" width="160" height="115" rx="8" fill="#dbc8aa"/>
             <text x="815" y="115" text-anchor="middle" font-size="15" font-weight="800" fill="#17324c">COLEGIO</text>
-            <circle cx="360" cy="195" r="11" fill="#1498c4" stroke="white" stroke-width="3"/>
-            <text x="360" y="174" text-anchor="middle" font-size="12" font-weight="800" fill="#17324c">P1</text>
-            <circle cx="660" cy="195" r="11" fill="#1498c4" stroke="white" stroke-width="3"/>
-            <text x="660" y="174" text-anchor="middle" font-size="12" font-weight="800" fill="#17324c">P2</text>
+            <circle cx="315" cy="205" r="11" fill="#1498c4" stroke="white" stroke-width="3"/>
+            <text x="315" y="184" text-anchor="middle" font-size="12" font-weight="800" fill="#17324c">P1 · VIVIENDA</text>
+            <circle cx="720" cy="205" r="11" fill="#1498c4" stroke="white" stroke-width="3"/>
+            <text x="720" y="184" text-anchor="middle" font-size="12" font-weight="800" fill="#17324c">P2 · COLEGIO</text>
             <path d="M700 58 C820 15 955 28 1045 80" fill="none" stroke="#7b94a5" stroke-width="3" stroke-dasharray="10 8"/>
-            <text x="895" y="45" text-anchor="middle" font-size="14" font-weight="800" fill="#17324c">TRAYECTORIA DE SOBREVUELO</text>
+            <text x="895" y="45" text-anchor="middle" font-size="14" font-weight="800" fill="#17324c">FUENTE: SOBREVUELOS</text>
             <text x="970" y="92" font-size="30">✈️</text>
           </svg>
+        </div>
+        ''',
+        unsafe_allow_html=True,
+    )
+
+    st.markdown(
+        '''
+        <div class="s10-section">
+          <div class="s10-kicker">LECTURA DEL ESCENARIO</div>
+          <div class="s10-copy">
+            <b>P1 · Vivienda</b> y <b>P2 · Colegio</b> son los dos receptores medidos.
+            La avenida, el HVAC del supermercado y los sobrevuelos son las tres fuentes del caso.
+            En la Misión 2 deberás proponer un <b>P3</b> adicional para mejorar el diagnóstico.
+          </div>
         </div>
         ''',
         unsafe_allow_html=True,
@@ -25517,8 +25532,39 @@ def _c3l1_stage10_impl(lab: dict, saved: dict, deps: Dict[str, Any]):
         ''',
         unsafe_allow_html=True,
     )
-    source_opts = ['Seleccionar', 'Avenida / tráfico', 'Fuente técnica', 'Comercio', 'Sobrevuelos']
-    receptor_opts = ['Seleccionar', 'Vivienda P1', 'Colegio', 'Parque', 'Comercio']
+    source_opts = [
+        'Seleccionar',
+        'Avenida · tránsito vehicular',
+        'HVAC del supermercado',
+        'Sobrevuelos',
+    ]
+    receptor_opts = [
+        'Seleccionar',
+        'P1 · Vivienda receptora',
+        'P2 · Colegio receptor',
+    ]
+    _source_alias = {
+        'Avenida / tráfico': 'Avenida · tránsito vehicular',
+        'Fuente técnica': 'HVAC del supermercado',
+        'Comercio': 'HVAC del supermercado',
+    }
+    _receptor_alias = {
+        'Vivienda P1': 'P1 · Vivienda receptora',
+        'Colegio': 'P2 · Colegio receptor',
+    }
+    _extra_alias = {
+        'Fondo residencial': 'P3 · Fondo residencial protegido',
+        'Junto a avenida': 'P3 · Borde de la avenida',
+        'Junto a fuente técnica': 'P3 · Junto al HVAC del supermercado',
+        'Colegio': 'P3 · Patio / fachada secundaria del colegio',
+    }
+    if draft.get('main_source') in _source_alias:
+        draft['main_source'] = _source_alias[draft.get('main_source')]
+    if draft.get('receptor') in _receptor_alias:
+        draft['receptor'] = _receptor_alias[draft.get('receptor')]
+    if draft.get('extra_point') in _extra_alias:
+        draft['extra_point'] = _extra_alias[draft.get('extra_point')]
+
     main_source = st.selectbox(
         'Fuente principal',
         source_opts,
@@ -25542,7 +25588,13 @@ def _c3l1_stage10_impl(lab: dict, saved: dict, deps: Dict[str, Any]):
         ''',
         unsafe_allow_html=True,
     )
-    extra_opts = ['Seleccionar', 'Fondo residencial', 'Junto a avenida', 'Junto a fuente técnica', 'Colegio']
+    extra_opts = [
+        'Seleccionar',
+        'P3 · Junto al HVAC del supermercado',
+        'P3 · Borde de la avenida',
+        'P3 · Fondo residencial protegido',
+        'P3 · Patio / fachada secundaria del colegio',
+    ]
     extra_point = st.selectbox(
         'Punto adicional recomendado',
         extra_opts,
@@ -25601,7 +25653,12 @@ def _c3l1_stage10_impl(lab: dict, saved: dict, deps: Dict[str, Any]):
         _C3L1_CASE_INTERVALS,
         index=['15 min 1', '15 min 2', '15 min 3', '15 min 4'],
     ).T
+    df.index.name = 'Receptor medido'
     st.dataframe(df, use_container_width=True)
+    st.caption(
+        'P1 corresponde a la vivienda receptora y P2 al colegio receptor. '
+        'P3 todavía no está medido: será propuesto por el alumno como punto adicional.'
+    )
 
     st.markdown(
         '''
@@ -25613,9 +25670,9 @@ def _c3l1_stage10_impl(lab: dict, saved: dict, deps: Dict[str, Any]):
         ''',
         unsafe_allow_html=True,
     )
-    expected_p1 = _c3l1_laeq(_C3L1_CASE_INTERVALS['P1'])
+    expected_p1 = _c3l1_laeq(_C3L1_CASE_INTERVALS['P1 · Vivienda'])
     ans_laeq = st.number_input(
-        'Calcula LAeq,1h de P1 [dB(A)]',
+        'Calcula LAeq,1h de P1 · Vivienda [dB(A)]',
         40.0, 90.0, float(draft.get('ans_laeq',65.0)), 0.1,
         key='c3_s10f_laeq',
     )
@@ -25630,7 +25687,7 @@ def _c3l1_stage10_impl(lab: dict, saved: dict, deps: Dict[str, Any]):
         ''',
         unsafe_allow_html=True,
     )
-    st.write('P1 · muestras Fast: ' + ', '.join(map(str, _C3L1_CASE_SAMPLES)))
+    st.write('P1 · Vivienda · muestras Fast: ' + ', '.join(map(str, _C3L1_CASE_SAMPLES)))
     ans_l10 = st.number_input(
         'L10 [dB(A)]', 40.0, 90.0, float(draft.get('ans_l10',70.0)), 0.1,
         key='c3_s10f_l10',
@@ -25682,7 +25739,7 @@ def _c3l1_stage10_impl(lab: dict, saved: dict, deps: Dict[str, Any]):
         unsafe_allow_html=True,
     )
     ans_lden = st.number_input(
-        'Lden P1 [dB]',
+        'Lden de P1 · Vivienda [dB]',
         40.0, 100.0, float(draft.get('ans_lden',66.0)), 0.1,
         key='c3_s10f_lden',
     )
