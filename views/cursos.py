@@ -17286,6 +17286,7 @@ def _course3_lab1_deps():
 # ============================================================================
 _C3L1_CLASS_ID_INLINE = 'clase-05-ruido-ambiental-lab-1'
 _C3L1_VERSION = 1
+_C3L1_ALL_STAGES_FORMATIVE = True  # Etapas 0–10: progreso formativo, sin nota
 _C3L1_ROOT = Path(__file__).resolve().parent.parent
 _C3L1_ASSET_DIR = _C3L1_ROOT / 'assets'
 _C3L1_A_OCTAVE = {63: -26.2, 125: -16.1, 250: -8.6, 500: -3.2, 1000: 0.0, 2000: 1.2, 4000: 1.0}
@@ -24911,130 +24912,172 @@ def _c3l1_stage8_impl(lab: dict, saved: dict, deps: Dict[str, Any]):
         st.markdown(
             """
             <div class="c3-card blue">
-              <div class="c3-kicker">OBJETIVO DOCENTE</div>
-              <b>Evaluar si el alumno es capaz de pasar de la lectura de números a una interpretación acústica básica.</b>
+              <div class="c3-kicker">ACTIVIDAD FORMATIVA · SIN NOTA</div>
+              <b>La vista docente muestra la pauta técnica, no una revisión individual del alumno.</b>
               <p>
-                La actividad no busca validar metrológicamente el dispositivo, sino comprobar comprensión de
-                LAeq,T, LAFmax, LAFmin, residual, separación energética y limitaciones de una medición no reglamentaria.
+                Los datos de cada estudiante se guardan para su avance formativo y su consulta en
+                <b>Mi desempeño</b>. Esta etapa no genera una evaluación oficial ni una calificación.
               </p>
             </div>
             """,
             unsafe_allow_html=True,
         )
 
-        st.markdown('### Datos registrados por el alumno')
-        _teacher_rows = [
-            {'Campo':'Fuente','Dato':_source_label},
-            {'Campo':'Hipótesis','Dato':_hypothesis.strip() or '—'},
-            {'Campo':'Comportamiento esperado','Dato':_behavior},
-            {'Campo':'Descriptor priorizado','Dato':_descriptor},
-            {'Campo':'Lugar','Dato':_place},
-            {'Campo':'Distancia','Dato':f'{_distance:.1f} m'},
-            {'Campo':'Duración ON','Dato':f'{_duration:.1f} min'},
-            {'Campo':'Interferencias','Dato':', '.join(_interference) if _interference else 'No declaradas'},
-            {'Campo':'LAeq,T ON','Dato':f'{_laeq_on:.1f} dB(A)' if _laeq_on > 0 else '—'},
-            {'Campo':'LAFmax','Dato':f'{_lafmax_on:.1f} dB(A)' if _lafmax_on > 0 else '—'},
-            {'Campo':'LAFmin','Dato':f'{_lafmin_on:.1f} dB(A)' if _lafmin_on > 0 else '—'},
-            {'Campo':'LAeq residual','Dato':f'{_laeq_off:.1f} dB(A)' if _laeq_off > 0 else '—'},
-            {
-                'Campo':'Contribución específica estimada',
-                'Dato':f'{_specific_level:.1f} dB(A)' if _specific_level is not None else '—'
-            },
-        ]
-        st.dataframe(pd.DataFrame(_teacher_rows), hide_index=True, use_container_width=True)
+        st.markdown('### Objetivo de la actividad')
+        st.write(
+            'Comprobar que el estudiante puede realizar una medición educativa, distinguir LAeq,T, '
+            'LAFmax, LAFmin y nivel residual, comparar fuente ON/OFF y reconocer las limitaciones '
+            'de una medición realizada con un dispositivo no calibrado metrológicamente.'
+        )
 
-        st.markdown('### Criterios técnicos de revisión')
+        st.markdown('### Pauta técnica esperada')
         st.markdown(
             """
             **1. Hipótesis previa**  
-            Debe existir una expectativa razonada sobre estabilidad, variabilidad o descriptor relevante.
-            No se exige acertar: interesa contrastar la hipótesis con el resultado real.
+            El estudiante formula una expectativa razonada sobre estabilidad, variabilidad y descriptor útil.
+            No se exige que la hipótesis sea correcta; debe poder contrastarla con su medición.
 
-            **2. Registro ON**  
-            El alumno debe distinguir correctamente:
-            - LAeq,T: integración energética durante T;
-            - LAFmax: máximo registrado con FAST;
-            - LAFmin: mínimo registrado con FAST.
+            **2. Montaje y trazabilidad**  
+            Debe registrar fuente, duración, distancia aproximada, lugar e interferencias. La posición del
+            micrófono debería mantenerse estable durante la comparación ON/OFF.
 
-            **3. Residual**  
-            El alumno debe comprender que el residual corresponde a la condición sin la fuente específica,
-            manteniendo idealmente la misma geometría y condiciones comparables. LAFmin no es sinónimo de residual.
+            **3. Descriptores de la condición ON**  
+            - **LAeq,T:** integración energética durante el intervalo T.  
+            - **LAFmax:** mayor nivel registrado con respuesta FAST.  
+            - **LAFmin:** menor nivel registrado con respuesta FAST.
 
-            **4. Comparación ON/OFF**  
-            La diferencia aritmética entre niveles sirve para comparar, pero la contribución específica se obtiene
-            mediante resta energética cuando el nivel total es mayor que el residual.
+            **4. Condición residual**  
+            El residual corresponde al ambiente medido con la fuente específica apagada. LAFmin no es,
+            por definición, el ruido residual.
 
-            **5. Interpretación**  
-            Debe relacionar los números con lo que ocurrió físicamente durante la medición: arranque, cambios de velocidad,
-            interferencias, estabilidad o eventos.
+            **5. Comparación ON/OFF**  
+            Si se estima la contribución específica de la fuente, debe utilizarse resta energética de
+            niveles equivalentes comparables; no corresponde restar directamente los dB para obtener
+            el nivel de la fuente.
 
-            **6. Limitaciones**  
-            Una buena respuesta debería reconocer varias de las siguientes:
-            micrófono no calibrado externamente, equipo no certificado para uso reglamentario, duración limitada,
-            distancia aproximada, ambiente doméstico, interferencias, ausencia de control meteorológico,
-            falta de repetibilidad o incertidumbre metrológica.
+            **6. Interpretación**  
+            El estudiante debe relacionar los valores obtenidos con hechos observados durante la medición:
+            arranque, cambios de velocidad, estabilidad, eventos ajenos o interferencias.
+
+            **7. Limitaciones esperables**  
+            Una respuesta sólida debería reconocer varias de estas limitaciones:
+            micrófono sin calibración acústica externa, equipo no certificado para uso reglamentario,
+            duración acotada, distancia aproximada, ambiente no controlado, interferencias y ausencia
+            de una estimación formal de incertidumbre.
             """
         )
 
-        st.markdown('### Respuestas de desarrollo del alumno')
+        st.markdown('### Pauta de las preguntas de desarrollo')
         for _i,(_q,_guide) in enumerate(_q_data,1):
-            st.markdown(f'**Pregunta {_i}. {_q}**')
-            st.write(_answers.get(str(_i)) or 'Sin respuesta.')
-            st.caption('Pauta técnica esperada:')
-            st.write(_guide)
-
-        st.markdown('### Informe breve del alumno')
-        st.markdown(f'**Descripción:** {_description.strip() or "Pendiente."}')
-        st.markdown(f'**Interpretación:** {_interpretation.strip() or "Pendiente."}')
-        st.markdown(f'**Limitaciones:** {_limitations.strip() or "Pendiente."}')
-
+            with st.container(border=True):
+                st.markdown(f'**Pregunta {_i}. {_q}**')
+                st.success(_guide)
 def _c3l1_stage9_impl(lab: dict, saved: dict, deps: Dict[str, Any]):
     _c3l1_style()
-    _c3l1_header(9, 'Preguntas de comprensión', 'Diez preguntas · 40 puntos · mismas reglas de envío definitivo y persistencia del motor evaluativo estándar.', deps, 20)
+    _c3l1_header(
+        9,
+        'Preguntas de comprensión',
+        'Actividad formativa · comprueba lo aprendido sin puntaje ni nota.',
+        deps,
+        20,
+    )
+
     role = st.session_state.get('role', 'Alumno')
     projection = bool(st.session_state.get('projection_mode') or role == 'Proyección')
-    if role == 'Docente':
+
+    st.markdown(
+        """
+        <div class="c3-card blue">
+          <div class="c3-kicker">ETAPA FORMATIVA · SIN NOTA</div>
+          <b>Estas preguntas sirven para comprobar comprensión antes del caso integrador.</b>
+          <p>
+            Puedes revisar tus respuestas y utilizar la retroalimentación para corregir conceptos.
+            Esta etapa aumenta el avance del laboratorio, pero no genera una evaluación oficial.
+          </p>
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
+
+    if role == 'Docente' and not projection:
         st.markdown('## Pauta docente')
+        st.caption('Pauta conceptual de la actividad formativa. No existe puntaje ni calificación.')
         for i, q in enumerate(_C3L1_STAGE9_QUESTIONS, 1):
             with st.container(border=True):
                 st.markdown(f'### {i}. {q[1]}')
                 for j, opt in enumerate(q[2]):
                     st.write(('✓ ' if j == q[3] else '○ ') + opt)
-                st.success('Respuesta correcta: ' + q[2][q[3]])
-                st.caption(q[4])
+                st.success('Respuesta esperada: ' + q[2][q[3]])
+                st.info(q[4])
         return
-    remote = _c3l1_stage9_remote(deps)
-    if remote or saved.get('c3_e9_submitted'):
-        row = (remote or {}).get('row', {})
-        payload = (remote or {}).get('payload', {})
-        score = float(row.get('teacher_score') if row and row.get('teacher_score') is not None else payload.get('score', saved.get('c3_e9_score', 0)) or 0)
-        st.success(f'Evaluación enviada · {score:g}/40 puntos.')
-        return
-    old = saved.get('c3_e9_answers', {}) if isinstance(saved.get('c3_e9_answers'), dict) else {}
-    for i, val in old.items():
-        key = f'c3_e9_q{i}'
-        if key not in st.session_state and val is not None:
-            st.session_state[key] = val
-    st.info('Las respuestas se guardan como borrador. El envío definitivo bloquea esta evaluación para revisión docente.')
+
+    previous = saved.get('c3_s9_formative', {}) if isinstance(saved.get('c3_s9_formative'), dict) else {}
+    old_answers = previous.get('answers', {}) if isinstance(previous.get('answers'), dict) else {}
+    old_checked = previous.get('checked', {}) if isinstance(previous.get('checked'), dict) else {}
+
+    for i in range(len(_C3L1_STAGE9_QUESTIONS)):
+        qkey = f'c3_s9f_q{i}'
+        ckey = f'c3_s9f_checked_{i}'
+        if qkey not in st.session_state and str(i) in old_answers:
+            st.session_state[qkey] = old_answers.get(str(i))
+        if ckey not in st.session_state:
+            st.session_state[ckey] = bool(old_checked.get(str(i), False))
+
+    answers = {}
+    checked = {}
+
     for i, q in enumerate(_C3L1_STAGE9_QUESTIONS):
         with st.container(border=True):
             st.markdown(f'### {i + 1}. {q[1]}')
-            st.caption('4 puntos')
-            st.radio('Respuesta', q[2], index=None, key=f'c3_e9_q{i}', label_visibility='collapsed')
-    answered = sum((st.session_state.get(f'c3_e9_q{i}') is not None for i in range(10)))
-    st.caption(f'{answered} de 10 respuestas registradas.')
-    if not projection:
-        c1, c2 = st.columns([1, 1])
-        if c1.button('💾 Guardar borrador y continuar después', key='c3_e9_save', use_container_width=True):
-            _c3l1_stage9_save(saved, deps)
-            st.success('Borrador guardado.')
-        if c2.button('ENVIAR EVALUACIÓN DEFINITIVA', key='c3_e9_submit', type='primary', use_container_width=True):
-            if answered < 10:
-                st.warning('Completa las 10 preguntas antes del envío definitivo.')
-            else:
-                score = _c3l1_stage9_finish(saved, deps)
-                st.success(f'Evaluación enviada · {score}/40 puntos.')
-                st.rerun()
+            choice = st.radio(
+                'Respuesta',
+                q[2],
+                index=None,
+                key=f'c3_s9f_q{i}',
+                label_visibility='collapsed',
+            )
+            answers[str(i)] = choice
+
+            if not projection and choice is not None and not st.session_state.get(f'c3_s9f_checked_{i}', False):
+                if st.button(
+                    f'Comprobar respuesta {i + 1}',
+                    key=f'c3_s9f_check_btn_{i}',
+                    use_container_width=True,
+                ):
+                    st.session_state[f'c3_s9f_checked_{i}'] = True
+
+            is_checked = bool(st.session_state.get(f'c3_s9f_checked_{i}', False))
+            checked[str(i)] = is_checked
+
+            if is_checked and choice is not None:
+                if choice == q[2][q[3]]:
+                    st.success('✓ Correcto')
+                else:
+                    st.warning('✗ Revisa el concepto')
+                    st.write(f'**Respuesta esperada:** {q[2][q[3]]}')
+                st.info(q[4])
+
+    payload = {
+        'answers': answers,
+        'checked': checked,
+        'completed_questions': sum(1 for v in checked.values() if v),
+        'total_questions': len(_C3L1_STAGE9_QUESTIONS),
+    }
+    saved['c3_s9_formative'] = payload
+
+    all_checked = all(checked.get(str(i), False) for i in range(len(_C3L1_STAGE9_QUESTIONS)))
+    if all_checked:
+        saved['done_9'] = True
+        saved.setdefault('c3_formative', {})['s9_comprehension'] = payload
+        st.success('Etapa 9 completada · actividad formativa sin nota.')
+    else:
+        st.caption(
+            f"{payload['completed_questions']} de {payload['total_questions']} preguntas comprobadas. "
+            "El avance se conserva automáticamente."
+        )
+
+    _c3l1_save(saved, deps)
+
 _C3L1_CASE_INTERVALS = {'P1': [67, 70, 69, 65], 'P2': [62, 64, 63, 61], 'P3': [58, 60, 59, 57]}
 _C3L1_CASE_PERIODS = {'P1': (66, 63, 57), 'P2': (62, 60, 54), 'P3': (58, 55, 50)}
 _C3L1_CASE_SAMPLES = [65, 67, 72, 69, 66, 71, 68, 70, 66, 67]
@@ -25079,99 +25122,276 @@ def _c3l1_stage10_finish(saved, deps, payload, score):
 
 def _c3l1_stage10_impl(lab: dict, saved: dict, deps: Dict[str, Any]):
     _c3l1_style()
-    _c3l1_header(10, 'Diagnóstico acústico de un barrio', 'Caso profesional integrador · 60 puntos · campaña, descriptores, eventos, representación espacial y diagnóstico.', deps, 40)
+    _c3l1_header(
+        10,
+        'Diagnóstico acústico de un barrio',
+        'Caso integrador formativo · aplica campaña, descriptores, eventos, representación espacial y diagnóstico sin nota.',
+        deps,
+        40,
+    )
     _c3l1_asset('curso3_lab1_etapa10_barrio.webp')
+
     role = st.session_state.get('role', 'Alumno')
     projection = bool(st.session_state.get('projection_mode') or role == 'Proyección')
-    if role == 'Docente':
+
+    st.markdown(
+        """
+        <div class="c3-card blue">
+          <div class="c3-kicker">ETAPA INTEGRADORA FORMATIVA · SIN NOTA</div>
+          <b>El objetivo es integrar lo aprendido, no obtener una calificación.</b>
+          <p>
+            Tu diagnóstico se guarda como parte del avance del Laboratorio 1. Puedes volver, corregirlo
+            y completar el caso sin generar una evaluación oficial.
+          </p>
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
+
+    if role == 'Docente' and not projection:
         st.markdown('## Pauta desarrollada')
+        st.caption('Pauta técnica del caso integrador formativo. No existe puntaje ni nota.')
         st.write('**LAeq,1h:** ' + ' · '.join((f'{p}={_c3l1_laeq(v):.2f} dB(A)' for p, v in _C3L1_CASE_INTERVALS.items())))
         l10 = _c3l1_exceedance_percentile(_C3L1_CASE_SAMPLES, 10)
         l50 = _c3l1_exceedance_percentile(_C3L1_CASE_SAMPLES, 50)
         l90 = _c3l1_exceedance_percentile(_C3L1_CASE_SAMPLES, 90)
-        st.write(f'**P1 percentiles (método de percentil numérico del laboratorio):** L10≈{l10:.1f}, L50≈{l50:.1f}, L90≈{l90:.1f} dB(A).')
+        st.write(f'**P1 percentiles:** L10≈{l10:.1f}, L50≈{l50:.1f}, L90≈{l90:.1f} dB(A).')
         st.write(f'**SEL vehículo pesado:** {_c3l1_sel(78, 20):.2f} dB · **SEL bocina:** {_c3l1_sel(85, 5):.2f} dB.')
         st.write('**Lden:** ' + ' · '.join((f'{p}={_c3l1_lden(*vals):.2f} dB' for p, vals in _C3L1_CASE_PERIODS.items())))
-        st.markdown('### Criterio docente')
-        st.write('La conclusión debe identificar fuente principal/secundarias, receptor crítico, descriptor pertinente, limitaciones, información faltante y punto adicional recomendado. No aceptar afirmaciones absolutas donde solo existe interpolación o una campaña preliminar.')
+        st.markdown('### Criterio técnico esperado')
+        st.write(
+            'La conclusión debe identificar fuente principal y secundarias, receptor crítico, descriptor pertinente, '
+            'limitaciones, información faltante y un punto adicional recomendado. No corresponde afirmar como medido '
+            'un valor que proviene de interpolación ni extrapolar una campaña preliminar sin justificar representatividad.'
+        )
         st.markdown('### Pauta de comprensión')
         for i, q in enumerate(_C3L1_S10_Q, 1):
             with st.container(border=True):
                 st.markdown(f'**{i}. {q[0]}**')
-                [st.write(('✓ ' if j == q[2] else '○ ') + opt) for j, opt in enumerate(q[1])]
+                for j, opt in enumerate(q[1]):
+                    st.write(('✓ ' if j == q[2] else '○ ') + opt)
         return
-    remote = _c3l1_stage10_remote(deps)
-    if remote or saved.get('c3_s10_submitted'):
-        row = (remote or {}).get('row', {})
-        payload = (remote or {}).get('payload', {})
-        score = float(row.get('teacher_score') if row and row.get('teacher_score') is not None else row.get('auto_score') if row else saved.get('c3_s10_score', 0) or 0)
-        st.success(f'Evaluación enviada · {score:g}/60 puntos.')
-        st.write(payload.get('conclusion') or '')
-        return
-    draft = saved.get('c3_s10_draft', {}) if isinstance(saved.get('c3_s10_draft'), dict) else {}
+
+    draft = saved.get('c3_s10_formative', {}) if isinstance(saved.get('c3_s10_formative'), dict) else {}
+
     st.markdown('## Encargo profesional')
-    st.write('Diseñar y ejecutar una evaluación acústica preliminar de un barrio urbano mixto con viviendas, colegio, avenida, comercio, parque, una fuente técnica y trayectoria de sobrevuelo. Debes interpretar resultados y declarar las limitaciones del diagnóstico.')
+    st.write(
+        'Realiza una evaluación acústica preliminar de un barrio urbano mixto con viviendas, colegio, avenida, '
+        'comercio, parque, una fuente técnica y trayectoria de sobrevuelo. Debes interpretar los resultados '
+        'y declarar explícitamente las limitaciones del diagnóstico.'
+    )
+
     st.markdown('### 1 · Reconocimiento')
-    main_source = st.selectbox('Fuente principal', ['Seleccionar', 'Avenida / tráfico', 'Fuente técnica', 'Comercio', 'Sobrevuelos'], index=['Seleccionar', 'Avenida / tráfico', 'Fuente técnica', 'Comercio', 'Sobrevuelos'].index(draft.get('main_source', 'Seleccionar')) if draft.get('main_source', 'Seleccionar') in ['Seleccionar', 'Avenida / tráfico', 'Fuente técnica', 'Comercio', 'Sobrevuelos'] else 0, key='c3_s10_main_source')
-    receptor = st.selectbox('Receptor crítico', ['Seleccionar', 'Vivienda P1', 'Colegio', 'Parque', 'Comercio'], index=['Seleccionar', 'Vivienda P1', 'Colegio', 'Parque', 'Comercio'].index(draft.get('receptor', 'Seleccionar')) if draft.get('receptor', 'Seleccionar') in ['Seleccionar', 'Vivienda P1', 'Colegio', 'Parque', 'Comercio'] else 0, key='c3_s10_receptor')
+    source_opts = ['Seleccionar', 'Avenida / tráfico', 'Fuente técnica', 'Comercio', 'Sobrevuelos']
+    receptor_opts = ['Seleccionar', 'Vivienda P1', 'Colegio', 'Parque', 'Comercio']
+    main_source = st.selectbox(
+        'Fuente principal',
+        source_opts,
+        index=source_opts.index(draft.get('main_source','Seleccionar')) if draft.get('main_source','Seleccionar') in source_opts else 0,
+        key='c3_s10f_main_source',
+    )
+    receptor = st.selectbox(
+        'Receptor crítico',
+        receptor_opts,
+        index=receptor_opts.index(draft.get('receptor','Seleccionar')) if draft.get('receptor','Seleccionar') in receptor_opts else 0,
+        key='c3_s10f_receptor',
+    )
+
     st.markdown('### 2 · Diseño de campaña')
-    p1 = st.selectbox('Punto adicional recomendado', ['Seleccionar', 'Fondo residencial', 'Junto a avenida', 'Junto a fuente técnica', 'Bajo trayectoria aérea', 'Fachada del colegio'], index=0, key='c3_s10_extra_point')
-    period = st.multiselect('Períodos', ['AM punta', 'Día', 'PM punta', 'Tarde', 'Noche'], default=draft.get('periods', ['AM punta', 'Noche']), key='c3_s10_periods')
+    extra_opts = ['Seleccionar', 'Fondo residencial', 'Junto a avenida', 'Junto a fuente técnica', 'Colegio']
+    extra_point = st.selectbox(
+        'Punto adicional recomendado',
+        extra_opts,
+        index=extra_opts.index(draft.get('extra_point','Seleccionar')) if draft.get('extra_point','Seleccionar') in extra_opts else 0,
+        key='c3_s10f_extra_point',
+    )
+    period_opts = ['Seleccionar', 'Solo día', 'Día + tarde', 'Día + tarde + noche']
+    periods = st.selectbox(
+        'Cobertura temporal',
+        period_opts,
+        index=period_opts.index(draft.get('periods','Seleccionar')) if draft.get('periods','Seleccionar') in period_opts else 0,
+        key='c3_s10f_periods',
+    )
+
     st.markdown('### 3 · Instrumentación')
-    instrument = st.selectbox('Instrumentación', ['Seleccionar', 'Sonómetro integrador clase 1 + calibrador + antiviento + registro', 'Aplicación de teléfono sin verificación', 'Solo dosímetro personal'], index=0, key='c3_s10_instrument')
-    weighting = st.selectbox('Ponderación/configuración principal', ['Seleccionar', 'A + registro temporal', 'C solamente', 'Z sin registro'], key='c3_s10_weighting')
+    instrument_opts = [
+        'Seleccionar',
+        'Sonómetro integrador clase 1 + calibrador + antiviento + registro',
+        'Aplicación de teléfono sin verificación',
+        'Solo dosímetro personal',
+    ]
+    instrument = st.selectbox(
+        'Instrumentación',
+        instrument_opts,
+        index=instrument_opts.index(draft.get('instrument','Seleccionar')) if draft.get('instrument','Seleccionar') in instrument_opts else 0,
+        key='c3_s10f_instrument',
+    )
+    weighting_opts = ['Seleccionar', 'A + registro temporal', 'C solamente', 'Z sin registro']
+    weighting = st.selectbox(
+        'Ponderación/configuración principal',
+        weighting_opts,
+        index=weighting_opts.index(draft.get('weighting','Seleccionar')) if draft.get('weighting','Seleccionar') in weighting_opts else 0,
+        key='c3_s10f_weighting',
+    )
+
     st.markdown('### 4 · Mediciones virtuales')
-    df = pd.DataFrame(_C3L1_CASE_INTERVALS, index=['15 min 1', '15 min 2', '15 min 3', '15 min 4']).T
+    df = pd.DataFrame(
+        _C3L1_CASE_INTERVALS,
+        index=['15 min 1', '15 min 2', '15 min 3', '15 min 4'],
+    ).T
     st.dataframe(df, use_container_width=True)
+
     st.markdown('### 5 · LAeq')
     expected_p1 = _c3l1_laeq(_C3L1_CASE_INTERVALS['P1'])
-    ans_laeq = st.number_input('Calcula LAeq,1h de P1 [dB(A)]', 40.0, 90.0, float(draft.get('ans_laeq', 65.0)), 0.1, key='c3_s10_laeq')
+    ans_laeq = st.number_input(
+        'Calcula LAeq,1h de P1 [dB(A)]',
+        40.0, 90.0, float(draft.get('ans_laeq',65.0)), 0.1,
+        key='c3_s10f_laeq',
+    )
+
     st.markdown('### 6 · Percentiles')
     st.write('P1 · muestras Fast: ' + ', '.join(map(str, _C3L1_CASE_SAMPLES)))
-    ans_l10 = st.number_input('L10 [dB(A)]', 40.0, 90.0, float(draft.get('ans_l10', 70.0)), 0.1, key='c3_s10_l10')
-    ans_l90 = st.number_input('L90 [dB(A)]', 40.0, 90.0, float(draft.get('ans_l90', 60.0)), 0.1, key='c3_s10_l90')
-    variability = st.text_input('Interpreta L10−L90', value=draft.get('variability', ''), key='c3_s10_var')
+    ans_l10 = st.number_input(
+        'L10 [dB(A)]', 40.0, 90.0, float(draft.get('ans_l10',70.0)), 0.1,
+        key='c3_s10f_l10',
+    )
+    ans_l90 = st.number_input(
+        'L90 [dB(A)]', 40.0, 90.0, float(draft.get('ans_l90',60.0)), 0.1,
+        key='c3_s10f_l90',
+    )
+    variability = st.text_input(
+        'Interpreta L10−L90',
+        value=draft.get('variability',''),
+        key='c3_s10f_var',
+    )
+
     st.markdown('### 7 · Evento')
-    ans_sel = st.number_input('SEL de vehículo pesado: LAeq,20s=78 dB [dB]', 60.0, 120.0, float(draft.get('ans_sel', 88.0)), 0.1, key='c3_s10_sel')
+    ans_sel = st.number_input(
+        'SEL de vehículo pesado: LAeq,20s=78 dB [dB]',
+        60.0, 120.0, float(draft.get('ans_sel',88.0)), 0.1,
+        key='c3_s10f_sel',
+    )
+
     st.markdown('### 8 · 24 horas')
     st.write('P1: LD=66 dB · LE=63 dB · LN=57 dB')
-    ans_lden = st.number_input('Lden P1 [dB]', 40.0, 100.0, float(draft.get('ans_lden', 66.0)), 0.1, key='c3_s10_lden')
+    ans_lden = st.number_input(
+        'Lden P1 [dB]',
+        40.0, 100.0, float(draft.get('ans_lden',66.0)), 0.1,
+        key='c3_s10f_lden',
+    )
+
     st.markdown('### 9 · Representación espacial')
-    map_answer = st.radio('Entre dos puntos medidos, un valor interpolado…', ['Fue medido directamente allí', 'Es una estimación derivada de puntos medidos', 'Es necesariamente un modelo predictivo físico'], index=None, key='c3_s10_map')
+    map_opts = [
+        'Fue medido directamente allí',
+        'Es una estimación derivada de puntos medidos',
+        'Es necesariamente un modelo predictivo físico',
+    ]
+    map_answer = st.radio(
+        'Entre dos puntos medidos, un valor interpolado…',
+        map_opts,
+        index=map_opts.index(draft.get('map_answer')) if draft.get('map_answer') in map_opts else None,
+        key='c3_s10f_map',
+    )
+
     st.markdown('### 10 · Diagnóstico profesional')
-    limitations = st.text_area('Limitaciones de la campaña', value=draft.get('limitations', ''), height=90, key='c3_s10_limits')
-    missing = st.text_area('Información faltante', value=draft.get('missing', ''), height=90, key='c3_s10_missing')
-    conclusion = st.text_area('Conclusión profesional', value=draft.get('conclusion', ''), height=140, key='c3_s10_conclusion', placeholder='Integra fuente principal, receptor crítico, descriptores, representatividad, información faltante y alcance de la conclusión.')
-    st.markdown('### Preguntas de comprensión · 20 puntos')
+    limitations = st.text_area(
+        'Limitaciones de la campaña',
+        value=draft.get('limitations',''),
+        height=90,
+        key='c3_s10f_limits',
+    )
+    missing = st.text_area(
+        'Información faltante',
+        value=draft.get('missing',''),
+        height=90,
+        key='c3_s10f_missing',
+    )
+    conclusion = st.text_area(
+        'Conclusión profesional',
+        value=draft.get('conclusion',''),
+        height=140,
+        key='c3_s10f_conclusion',
+        placeholder='Integra fuente principal, receptor crítico, descriptores, representatividad, información faltante y alcance de la conclusión.',
+    )
+
+    st.markdown('### Preguntas de comprensión')
+    previous_answers = draft.get('answers',{}) if isinstance(draft.get('answers'),dict) else {}
+    answers = {}
+    reveal = {}
     for i, q in enumerate(_C3L1_S10_Q):
         with st.container(border=True):
             st.markdown(f'**{i + 1}. {q[0]}**')
-            st.radio('Respuesta', q[1], index=None, key=f'c3_s10_q{i}', label_visibility='collapsed')
-    payload = {'main_source': main_source, 'receptor': receptor, 'extra_point': p1, 'periods': period, 'instrument': instrument, 'weighting': weighting, 'ans_laeq': ans_laeq, 'ans_l10': ans_l10, 'ans_l90': ans_l90, 'variability': variability, 'ans_sel': ans_sel, 'ans_lden': ans_lden, 'map_answer': map_answer, 'limitations': limitations, 'missing': missing, 'conclusion': conclusion, 'answers': {str(i): st.session_state.get(f'c3_s10_q{i}') for i in range(5)}}
-    if not projection:
-        if st.button('💾 Guardar borrador y continuar después', key='c3_s10_save', use_container_width=True):
-            _c3l1_stage10_draft(saved, deps, payload)
-            st.success('Borrador guardado.')
-        if st.button('ENVIAR EVALUACIÓN DEFINITIVA', key='c3_s10_submit', type='primary', use_container_width=True):
-            technical = 0
-            technical += 5 if main_source == 'Avenida / tráfico' else 0
-            technical += 5 if receptor == 'Vivienda P1' else 0
-            technical += 5 if instrument.startswith('Sonómetro integrador clase 1') else 0
-            technical += 5 if weighting == 'A + registro temporal' else 0
-            technical += 5 if abs(ans_laeq - expected_p1) <= 0.25 else 0
-            technical += 5 if abs(ans_l10 - _c3l1_exceedance_percentile(_C3L1_CASE_SAMPLES, 10)) <= 0.6 and abs(ans_l90 - _c3l1_exceedance_percentile(_C3L1_CASE_SAMPLES, 90)) <= 0.6 else 0
-            technical += 5 if abs(ans_sel - _c3l1_sel(78, 20)) <= 0.25 else 0
-            technical += 5 if abs(ans_lden - _c3l1_lden(66, 63, 57)) <= 0.25 and map_answer == 'Es una estimación derivada de puntos medidos' else 0
-            comprehension = sum((4 for i, q in enumerate(_C3L1_S10_Q) if st.session_state.get(f'c3_s10_q{i}') == q[1][q[2]]))
-            score = technical + comprehension
-            payload.update({'technical_score': technical, 'comprehension_score': comprehension, 'expected': {'laeq_p1': expected_p1, 'l10': _c3l1_exceedance_percentile(_C3L1_CASE_SAMPLES, 10), 'l90': _c3l1_exceedance_percentile(_C3L1_CASE_SAMPLES, 90), 'sel': _c3l1_sel(78, 20), 'lden': _c3l1_lden(66, 63, 57)}})
-            required = [main_source != 'Seleccionar', receptor != 'Seleccionar', instrument != 'Seleccionar', weighting != 'Seleccionar', len(conclusion.strip()) >= 80, len(limitations.strip()) >= 30, len(missing.strip()) >= 20, all((st.session_state.get(f'c3_s10_q{i}') is not None for i in range(5)))]
-            if not all(required):
-                st.warning('Completa selección de fuente/receptor/instrumentación, diagnóstico y las 5 preguntas antes del envío definitivo.')
-            else:
-                _c3l1_stage10_finish(saved, deps, payload, score)
-                st.success(f'Evaluación enviada · {score}/60 puntos.')
-                st.rerun()
+            key = f'c3_s10f_q{i}'
+            if key not in st.session_state and str(i) in previous_answers:
+                st.session_state[key] = previous_answers.get(str(i))
+            choice = st.radio(
+                'Respuesta',
+                q[1],
+                index=None,
+                key=key,
+                label_visibility='collapsed',
+            )
+            answers[str(i)] = choice
+            reveal_key = f'c3_s10f_reveal_{i}'
+            if choice is not None and not projection:
+                if st.button(
+                    f'Ver pauta · pregunta {i + 1}',
+                    key=f'c3_s10f_reveal_btn_{i}',
+                    use_container_width=True,
+                ):
+                    st.session_state[reveal_key] = True
+            if st.session_state.get(reveal_key, False):
+                if choice == q[1][q[2]]:
+                    st.success('✓ Correcto')
+                else:
+                    st.warning('Revisa el concepto')
+                st.info(f'Respuesta esperada: {q[1][q[2]]}')
+            reveal[str(i)] = bool(st.session_state.get(reveal_key, False))
+
+    payload = {
+        'main_source': main_source,
+        'receptor': receptor,
+        'extra_point': extra_point,
+        'periods': periods,
+        'instrument': instrument,
+        'weighting': weighting,
+        'ans_laeq': float(ans_laeq),
+        'ans_l10': float(ans_l10),
+        'ans_l90': float(ans_l90),
+        'variability': variability,
+        'ans_sel': float(ans_sel),
+        'ans_lden': float(ans_lden),
+        'map_answer': map_answer,
+        'limitations': limitations,
+        'missing': missing,
+        'conclusion': conclusion,
+        'answers': answers,
+        'revealed': reveal,
+    }
+
+    saved['c3_s10_formative'] = payload
+    ready = all([
+        main_source != 'Seleccionar',
+        receptor != 'Seleccionar',
+        instrument != 'Seleccionar',
+        weighting != 'Seleccionar',
+        len(conclusion.strip()) >= 80,
+        len(limitations.strip()) >= 30,
+        len(missing.strip()) >= 20,
+        all(answers.get(str(i)) is not None for i in range(len(_C3L1_S10_Q))),
+    ])
+
+    if ready:
+        saved['done_10'] = True
+        saved.setdefault('c3_formative', {})['s10_integrated_case'] = payload
+        st.success('Etapa 10 completada · caso integrador formativo sin nota.')
+    else:
+        st.caption(
+            'Tu trabajo se guarda automáticamente. Completa fuente/receptor, instrumentación, diagnóstico '
+            'y las preguntas para cerrar la Etapa 10.'
+        )
+
+    _c3l1_save(saved, deps)
 
 def _render_course3_lab1_stage0(lab, saved):
     return _c3l1_stage0_impl(lab, saved, _course3_lab1_deps())
@@ -25429,7 +25649,10 @@ def future_lab_view_impl(lab):
         # para evitar duplicidad y métricas contradictorias en la barra lateral.
         total_stages = len(lab["stages"])
         if st.session_state.get("role") == "Docente":
-            st.caption("Vista docente · el avance y los resultados se revisan desde ‘Evaluaciones entregadas’.")
+            if class_id == _C3L1_CLASS_ID:
+                st.caption("Vista docente · Laboratorio 1 del Curso 3 completamente formativo, sin nota.")
+            else:
+                st.caption("Vista docente · el avance y los resultados se revisan desde ‘Evaluaciones entregadas’.")
 
         # Herramientas comunes del diplomado.
         formula_popup_button()
@@ -25524,7 +25747,10 @@ def future_lab_view_impl(lab):
                         }).eq("id",class_id).execute()
                         _clear_course_cache()
                         st.rerun()
-            st.caption("Las evaluaciones de los alumnos se revisan en la vista ‘Evaluaciones entregadas’.")
+            if class_id == _C3L1_CLASS_ID:
+                st.caption("Curso 3 · Laboratorio 1: las Etapas 0–10 son formativas y sin nota. La vista docente muestra pautas técnicas dentro de cada etapa.")
+            else:
+                st.caption("Las evaluaciones de los alumnos se revisan en la vista ‘Evaluaciones entregadas’.")
 
         if st.button("Cerrar sesión",width="stretch"):
             st.session_state.clear(); st.rerun()
