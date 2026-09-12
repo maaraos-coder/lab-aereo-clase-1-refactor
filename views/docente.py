@@ -179,11 +179,24 @@ def _teacher_student_management_impl():
     client=_supabase()
     remote=client is not None
     if remote:
-        response_users=client.table("responses").select("user_key").eq("class_id",CLASS_ID).execute().data or []
-        keys=sorted({r["user_key"] for r in response_users})
-        users=client.table("users").select("user_key,display_name").in_("user_key",keys).execute().data if keys else []
-        student_map={u["display_name"]:u["user_key"] for u in users}
-        students=sorted(student_map)
+        try:
+            response_users=client.table("responses").select("user_key").eq("class_id",CLASS_ID).execute().data or []
+            keys=sorted({r.get("user_key") for r in response_users if r.get("user_key")})
+            users=client.table("users").select("user_key,display_name").in_("user_key",keys).execute().data if keys else []
+            student_map={
+                (u.get("display_name") or u.get("user_key") or "Alumno"):u.get("user_key")
+                for u in users if u.get("user_key")
+            }
+            students=sorted(student_map)
+        except Exception as exc:
+            # Este panel es auxiliar. Una falla de PostgREST/Supabase no debe
+            # derribar la clase ni las actividades al producirse un rerun.
+            st.warning(
+                "Gestión de alumnos no pudo conectarse temporalmente a la base de datos. "
+                "El laboratorio puede seguir utilizándose con normalidad. "
+                "Vuelve a abrir este panel más tarde."
+            )
+            return
     else:
         with _activity_db() as con:
             students=[r[0] for r in con.execute(
@@ -579,26 +592,6 @@ def _teacher_course_results_impl(compact=False):
                     "maximum":60,
                     "with_grade":True,
                     "reviewer":"c2l2_stage10",
-                },
-            },
-        },
-        "Curso 3 · Control de ruido ambiental":{
-            "Laboratorio 1 · Evaluaciones oficiales":{
-                "Etapa 9 · Preguntas de comprensión":{
-                    "class_id":"clase-05-ruido-ambiental-lab-1",
-                    "question_key":"final_comprehension",
-                    "stage":9,
-                    "maximum":40,
-                    "with_grade":True,
-                    "reviewer":"c3l1_generic",
-                },
-                "Etapa 10 · Diagnóstico acústico de un barrio":{
-                    "class_id":"clase-05-ruido-ambiental-lab-1",
-                    "question_key":"final_integrated_design",
-                    "stage":10,
-                    "maximum":60,
-                    "with_grade":True,
-                    "reviewer":"c3l1_generic",
                 },
             },
         },
