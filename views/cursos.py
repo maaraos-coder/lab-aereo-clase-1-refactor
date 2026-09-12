@@ -23923,6 +23923,91 @@ def _c3l1_stage7_impl(lab: dict, saved: dict, deps: Dict[str, Any]):
         height=120,
     )
 
+    _campaign_ready = abs(_htotal-4.0) < 1e-9 and bool(_campaign_reason.strip())
+    _campaign_reveal_key = 'c3_s7_motorway_campaign_feedback_revealed'
+
+    if not _campaign_ready:
+        st.caption(
+            'Distribuye exactamente las 4,0 horas y escribe tu justificación para habilitar la comparación técnica.'
+        )
+    else:
+        if st.button(
+            '🔎 Comparar mi campaña con una propuesta técnica',
+            key='c3_s7_motorway_campaign_feedback_btn',
+            use_container_width=True,
+        ):
+            st.session_state[_campaign_reveal_key] = True
+
+    if st.session_state.get(_campaign_reveal_key, False):
+        _coverage = []
+        if _hday > 0:
+            _coverage.append('día')
+        if _heve > 0:
+            _coverage.append('tarde')
+        if _hnight > 0:
+            _coverage.append('noche')
+
+        _missing = []
+        if _hday <= 0:
+            _missing.append('día')
+        if _heve <= 0:
+            _missing.append('tarde')
+        if _hnight <= 0:
+            _missing.append('noche')
+
+        st.markdown(
+            f'''
+            <div style="
+                margin:.7rem 0 1rem;
+                padding:1rem 1.1rem;
+                border-radius:16px;
+                border:1px solid #b8dcc8;
+                background:linear-gradient(135deg,#f1faf5,#ffffff);
+            ">
+              <div style="font-size:.72rem;font-weight:800;letter-spacing:.08em;color:#267b4d;margin-bottom:.4rem">
+                COMPARACIÓN TÉCNICA
+              </div>
+              <div style="color:#344f60;line-height:1.62">
+                <b>Tu distribución:</b> día {_hday:.1f} h · tarde {_heve:.1f} h · noche {_hnight:.1f} h.<br><br>
+                Una campaña de 4 horas <b>no reproduce un monitoreo continuo de 24 h</b>, por lo que debe
+                diseñarse como una campaña de muestreo representativo. Lo más importante es que las ventanas
+                seleccionadas cubran condiciones acústicamente distintas y estén justificadas por el comportamiento
+                esperado del tránsito.<br><br>
+                <b>Ubicación:</b> el micrófono debe mantenerse en un punto receptor representativo de la exposición
+                que se desea caracterizar, evitando cambios de posición entre periodos que impidan comparar los resultados.<br><br>
+                <b>Limitación principal:</b> con solo 4 h existe incertidumbre de representatividad. La campaña puede
+                describir ventanas seleccionadas, pero no debe presentarse automáticamente como equivalente a un registro
+                continuo de todo el ciclo diario.
+              </div>
+            </div>
+            ''',
+            unsafe_allow_html=True,
+        )
+
+        if _missing:
+            st.warning(
+                'Tu propuesta deja sin medición directa el periodo: '
+                + ', '.join(_missing)
+                + '. Esto limita la posibilidad de caracterizar directamente todo el ciclo día–tarde–noche.'
+            )
+        else:
+            st.success(
+                'Tu propuesta cubre los tres periodos. La siguiente pregunta es si los horarios elegidos dentro de cada periodo '
+                'son realmente representativos y no corresponden solo a una condición extrema.'
+            )
+
+        st.markdown(
+            '''
+            <div class="c3-key">
+              <b>Ejemplo de estrategia defendible:</b> distribuir las 4 h entre los tres periodos y, dentro del día,
+              evitar concentrar toda la medición en una sola hora punta. Por ejemplo, una parte del tiempo puede ubicarse
+              en una condición de mayor flujo y otra en una condición intermedia; tarde y noche deberían incluir ventanas
+              coherentes con el objetivo de caracterización. La distribución exacta no es única: debe justificarse técnicamente.
+            </div>
+            ''',
+            unsafe_allow_html=True,
+        )
+
     st.markdown('### 2.7 Preguntas de desarrollo')
 
     _p2_questions = [
@@ -23978,6 +24063,7 @@ def _c3l1_stage7_impl(lab: dict, saved: dict, deps: Dict[str, Any]):
         'hours_evening': float(_heve),
         'hours_night': float(_hnight),
         'justification': _campaign_reason.strip(),
+        'campaign_feedback_revealed': bool(st.session_state.get(_campaign_reveal_key, False)),
         'answers': _p2_answers,
     }
     _c3l1_save(saved,deps)
@@ -24028,6 +24114,70 @@ def _c3l1_stage7_impl(lab: dict, saved: dict, deps: Dict[str, Any]):
             **Mensaje docente:** el foco no es volver a enseñar Lden, sino mostrar que esos descriptores
             dependen de una campaña temporalmente representativa. Una ventana breve puede ser válida para
             un objetivo específico, pero no debe extrapolarse automáticamente a un periodo completo.
+            """
+        )
+
+        st.markdown('##### Pauta técnica detallada · campaña limitada a 4 horas')
+
+        st.markdown(
+            """
+            **Qué debería contener una respuesta técnicamente sólida**
+
+            **1. Reconocer la limitación del diseño.**  
+            Cuatro horas de medición no equivalen a un monitoreo continuo de 24 h. El alumno debe declarar que
+            su propuesta es una estrategia de muestreo y que cualquier extrapolación a LD, LE, LN o Lden requiere
+            demostrar representatividad.
+
+            **2. Cubrir más de una condición temporal.**  
+            Una propuesta robusta debería distribuir tiempo entre día, tarde y noche cuando el objetivo es describir
+            el ciclo completo. Concentrar las 4 h únicamente en el periodo día deja sin caracterización directa los
+            otros periodos.
+
+            **3. Evitar representar todo el día con una sola hora punta.**  
+            Si se mide únicamente durante máxima congestión, el resultado puede sobreestimar el comportamiento típico
+            del periodo. Es preferible distribuir las ventanas para incluir al menos una condición de flujo elevado y
+            otra condición más representativa/intermedia.
+
+            **4. Mantener un punto receptor comparable.**  
+            El sonómetro debería permanecer en una ubicación representativa de la exposición que se quiere caracterizar.
+            Cambiar distancia, altura o relación geométrica fuente–receptor entre periodos puede introducir diferencias
+            que no provienen del comportamiento temporal de la autopista.
+
+            **5. Registrar contexto operacional.**  
+            La justificación debería mencionar, cuando corresponda, flujo vehicular, composición del tránsito,
+            presencia de vehículos pesados, condiciones de operación de la vía y cualquier evento anómalo que pueda
+            alterar la muestra.
+
+            **6. Declarar las limitaciones.**  
+            Debe quedar explícito que una campaña corta puede no capturar variaciones intraperiodo, variaciones entre
+            días, cambios de flujo, eventos poco frecuentes ni condiciones nocturnas atípicas.
+
+            **Ejemplo de propuesta defendible, no única:**  
+            2 h durante el día, idealmente separadas en dos ventanas con condiciones de tránsito diferentes;
+            1 h durante la tarde; 1 h durante la noche. Otra distribución puede ser válida si está bien justificada
+            respecto del objetivo y del patrón temporal esperado.
+
+            **Errores conceptuales que conviene marcar**
+            - afirmar que 30 min siempre representan LD;
+            - asumir que una hora punta equivale al periodo completo;
+            - no medir de noche pero reportar LN como si hubiese sido medido;
+            - modificar la posición del receptor entre periodos sin justificarlo;
+            - presentar una campaña corta como equivalente a monitoreo continuo;
+            - justificar solo por disponibilidad de tiempo y no por representatividad acústica.
+            """
+        )
+
+        st.markdown(
+            f"""
+            **Propuesta actual del alumno**
+
+            - Día: {_hday:.1f} h
+            - Tarde: {_heve:.1f} h
+            - Noche: {_hnight:.1f} h
+            - Total: {_htotal:.1f} h
+
+            **Justificación registrada:**  
+            {_campaign_reason.strip() if _campaign_reason.strip() else 'El alumno aún no ha ingresado una justificación.'}
             """
         )
 
