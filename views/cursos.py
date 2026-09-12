@@ -25264,6 +25264,7 @@ def _c3l1_stage10_finish(saved, deps, payload, score):
     _c3l1_save(saved, deps)
 
 def _c3l1_stage10_impl(lab: dict, saved: dict, deps: Dict[str, Any]):
+    import matplotlib.pyplot as c3plt
     _c3l1_style()
 
     st.markdown(
@@ -25442,10 +25443,58 @@ def _c3l1_stage10_impl(lab: dict, saved: dict, deps: Dict[str, Any]):
         st.markdown('## Pauta desarrollada')
         st.caption('Pauta técnica del caso integrador formativo. No existe puntaje ni nota.')
         st.write('**LAeq,1h:** ' + ' · '.join((f'{p}={_c3l1_laeq(v):.2f} dB(A)' for p, v in _C3L1_CASE_INTERVALS.items())))
+
+        st.markdown('### Desarrollo docente · LAeq,1h de P1 · Vivienda')
+        st.write(
+            'P1 contiene cuatro intervalos de 15 minutos: 67, 70, 69 y 65 dB(A). '
+            'Como todos tienen igual duración, se usa promedio energético con ponderación 1/4.'
+        )
+        st.latex(
+            r'L_{Aeq,1h}=10\log_{10}\left[\frac{1}{4}\left('
+            r'10^{67/10}+10^{70/10}+10^{69/10}+10^{65/10}\right)\right]'
+        )
+        st.markdown('**Resolución paso a paso**')
+        st.latex(r'E_1=10^{67/10},\;E_2=10^{70/10},\;E_3=10^{69/10},\;E_4=10^{65/10}')
+        st.latex(r'\bar E=\frac{E_1+E_2+E_3+E_4}{4}')
+        st.latex(r'L_{Aeq,1h}=10\log_{10}(\bar E)')
+        st.success('Resultado esperado: 68.15 dB(A) ≈ 68.1 dB(A).')
+        st.info(
+            'Criterio docente: no aceptar promedio aritmético directo de 67, 70, 69 y 65 dB. '
+            'El alumno debe reconocer que los niveles se integran energéticamente.'
+        )
         l10 = _c3l1_exceedance_percentile(_C3L1_CASE_SAMPLES, 10)
         l50 = _c3l1_exceedance_percentile(_C3L1_CASE_SAMPLES, 50)
         l90 = _c3l1_exceedance_percentile(_C3L1_CASE_SAMPLES, 90)
         st.write(f'**P1 · Vivienda · percentiles:** L10≈{l10:.1f}, L50≈{l50:.1f}, L90≈{l90:.1f} dB(A).')
+
+        st.markdown('### Desarrollo docente · percentiles P1')
+        st.write(
+            'Las 10 muestras FAST son un registro temporal simplificado y didáctico. '
+            'No representan la tasa real de muestreo de un sonómetro, sino una pequeña distribución '
+            'para enseñar L10, L50 y L90.'
+        )
+        st.write('Muestras: ' + ', '.join(map(str, _C3L1_CASE_SAMPLES)) + ' dB(A)')
+        st.write('Orden descendente: ' + ' > '.join(map(str, sorted(_C3L1_CASE_SAMPLES, reverse=True))) + ' dB(A)')
+        st.success(
+            f'Resultados esperados: L10≈{l10:.1f} dB(A), L50≈{l50:.1f} dB(A), '
+            f'L90≈{l90:.1f} dB(A).'
+        )
+        st.info(
+            'Criterio docente: L10 debe interpretarse como zona alta/frecuente y L90 como zona baja/persistente. '
+            'La diferencia L10−L90 se usa aquí descriptivamente para discutir variabilidad.'
+        )
+
+        st.markdown('### Desarrollo docente · SEL / LAE del vehículo pesado')
+        st.write('Datos: LAeq,20s = 78 dB(A), T = 20 s, T₀ = 1 s.')
+        st.latex(r'SEL=78+10\log_{10}\left(\frac{20}{1}\right)')
+        st.latex(r'10\log_{10}(20)\approx13.01\ \mathrm{dB}')
+        st.latex(r'SEL\approx78+13.01=91.01\ \mathrm{dB}')
+        st.success('Resultado esperado: SEL / LAE ≈ 91.0 dB.')
+        st.info(
+            'T₀ = 1 s es un tiempo de referencia de normalización; no corresponde a la duración del evento. '
+            'Como el evento se expresa con ponderación A, puede denominarse LAE.'
+        )
+
         st.write(f'**SEL vehículo pesado:** {_c3l1_sel(78, 20):.2f} dB · **SEL bocina:** {_c3l1_sel(85, 5):.2f} dB.')
         st.write('**Lden:** ' + ' · '.join((f'{p}={_c3l1_lden(*vals):.2f} dB' for p, vals in _C3L1_CASE_PERIODS.items())))
         st.markdown('### Criterio técnico esperado')
@@ -25671,11 +25720,66 @@ def _c3l1_stage10_impl(lab: dict, saved: dict, deps: Dict[str, Any]):
         unsafe_allow_html=True,
     )
     expected_p1 = _c3l1_laeq(_C3L1_CASE_INTERVALS['P1 · Vivienda'])
+
+    st.markdown(
+        '''
+        <div class="s10-section s10-section-blue">
+          <div class="s10-kicker">¿CÓMO SE CALCULA?</div>
+          <div class="s10-heading">Promedia energía, no decibeles</div>
+          <div class="s10-copy">
+            P1 tiene cuatro intervalos consecutivos de 15 minutos. Como todos tienen la misma duración,
+            el LAeq de la hora se obtiene promediando sus energías acústicas equivalentes y volviendo a dB.
+          </div>
+        </div>
+        ''',
+        unsafe_allow_html=True,
+    )
+
+    st.latex(
+        r'L_{Aeq,1h}=10\log_{10}\left[\frac{1}{4}\left('
+        r'10^{L_1/10}+10^{L_2/10}+10^{L_3/10}+10^{L_4/10}\right)\right]'
+    )
+
+    st.markdown(
+        '''
+        <div class="c3-key">
+          <b>Datos de P1 · Vivienda:</b><br>
+          L₁ = 67 dB(A) · L₂ = 70 dB(A) · L₃ = 69 dB(A) · L₄ = 65 dB(A)<br><br>
+          Sustituye esos cuatro valores en la ecuación. No calcules (67+70+69+65)/4,
+          porque los niveles en dB están en escala logarítmica.
+        </div>
+        ''',
+        unsafe_allow_html=True,
+    )
+
+    with st.expander('Ver procedimiento guiado', expanded=False):
+        st.markdown('**Paso 1.** Convierte cada nivel a energía relativa:')
+        st.latex(
+            r'10^{67/10},\quad 10^{70/10},\quad 10^{69/10},\quad 10^{65/10}'
+        )
+        st.markdown('**Paso 2.** Suma las cuatro energías y divide por 4:')
+        st.latex(
+            r'\frac{10^{67/10}+10^{70/10}+10^{69/10}+10^{65/10}}{4}'
+        )
+        st.markdown('**Paso 3.** Regresa a decibeles:')
+        st.latex(
+            r'L_{Aeq,1h}=10\log_{10}(\text{promedio energético})'
+        )
+        st.info('Ahora calcula el resultado y escríbelo en el campo inferior.')
+
     ans_laeq = st.number_input(
         'Calcula LAeq,1h de P1 · Vivienda [dB(A)]',
         40.0, 90.0, float(draft.get('ans_laeq',65.0)), 0.1,
         key='c3_s10f_laeq',
     )
+
+    if abs(ans_laeq - expected_p1) <= 0.2:
+        st.success(f'✓ Correcto. LAeq,1h de P1 ≈ {expected_p1:.1f} dB(A).')
+    elif ans_laeq > 0:
+        st.caption(
+            'Revisa el promedio energético. Una pista: el resultado debe quedar influido más por '
+            'los intervalos de mayor nivel que por los de menor nivel.'
+        )
 
     st.markdown(
         '''
@@ -25687,18 +25791,106 @@ def _c3l1_stage10_impl(lab: dict, saved: dict, deps: Dict[str, Any]):
         ''',
         unsafe_allow_html=True,
     )
-    st.write('P1 · Vivienda · muestras Fast: ' + ', '.join(map(str, _C3L1_CASE_SAMPLES)))
-    ans_l10 = st.number_input(
-        'L10 [dB(A)]', 40.0, 90.0, float(draft.get('ans_l10',70.0)), 0.1,
-        key='c3_s10f_l10',
+    st.markdown(
+        '''
+        <div class="s10-section s10-section-blue">
+          <div class="s10-kicker">REGISTRO TEMPORAL SIMPLIFICADO</div>
+          <div class="s10-heading">¿Qué significan estas 10 muestras?</div>
+          <div class="s10-copy">
+            Durante una ventana breve de observación en <b>P1 · Vivienda</b> se tomaron
+            10 lecturas sucesivas del nivel sonoro con respuesta FAST. Cada número representa
+            el nivel registrado en un instante consecutivo del mismo registro.
+          </div>
+        </div>
+        ''',
+        unsafe_allow_html=True,
     )
-    ans_l90 = st.number_input(
-        'L90 [dB(A)]', 40.0, 90.0, float(draft.get('ans_l90',60.0)), 0.1,
-        key='c3_s10f_l90',
+
+    _samples = np.array(_C3L1_CASE_SAMPLES, dtype=float)
+    _fig_samp, _ax_samp = c3plt.subplots(figsize=(10,3.5))
+    _ax_samp.plot(np.arange(1, len(_samples)+1), _samples, marker='o', lw=1.7)
+    _ax_samp.set_xticks(np.arange(1, len(_samples)+1))
+    _ax_samp.set_xlabel('Muestra sucesiva')
+    _ax_samp.set_ylabel('Nivel [dB(A)]')
+    _ax_samp.set_title('P1 · Vivienda · registro FAST simplificado')
+    _ax_samp.grid(alpha=.2)
+    st.pyplot(_fig_samp, use_container_width=True)
+    c3plt.close(_fig_samp)
+
+    st.markdown(
+        '<div class="c3-key"><b>Importante:</b> en una medición real el sonómetro registra muchas más muestras. '
+        'Aquí utilizamos solo 10 valores para comprender visualmente cómo se construyen los percentiles.</div>',
+        unsafe_allow_html=True,
     )
-    variability = st.text_input(
+
+    st.markdown(
+        '**Valores registrados:** ' + ' · '.join(f'{v:.0f} dB(A)' for v in _samples)
+    )
+
+    st.markdown(
+        '''
+        <div class="s10-section">
+          <div class="s10-kicker">¿CÓMO SE INTERPRETAN?</div>
+          <div class="s10-copy">
+            <b>L10</b> es el nivel que se iguala o supera durante el 10 % del tiempo y representa la zona alta del registro.<br>
+            <b>L50</b> representa la zona central de la distribución.<br>
+            <b>L90</b> es el nivel que se iguala o supera durante el 90 % del tiempo y representa la zona baja/persistente.
+          </div>
+        </div>
+        ''',
+        unsafe_allow_html=True,
+    )
+
+    with st.expander('Ver procedimiento guiado para percentiles', expanded=False):
+        _sorted_desc = sorted(_C3L1_CASE_SAMPLES, reverse=True)
+        st.markdown('**Paso 1.** Ordena los valores de mayor a menor:')
+        st.write(' > '.join(str(v) for v in _sorted_desc) + ' dB(A)')
+        st.markdown(
+            '**Paso 2.** Piensa el percentil como una posición dentro de la distribución. '
+            'Con solo 10 muestras esta actividad utiliza una aproximación didáctica.'
+        )
+        st.markdown(
+            '**Paso 3.** Interpreta el resultado: L10 describe la zona alta; L90 la zona baja/persistente.'
+        )
+        st.info('Ahora ingresa L10 y L90 y luego explica qué te dice la diferencia L10−L90.')
+
+    _expected_l10 = float(_c3l1_exceedance_percentile(_C3L1_CASE_SAMPLES, 10))
+    _expected_l50 = float(_c3l1_exceedance_percentile(_C3L1_CASE_SAMPLES, 50))
+    _expected_l90 = float(_c3l1_exceedance_percentile(_C3L1_CASE_SAMPLES, 90))
+
+    pcol1,pcol2,pcol3 = st.columns(3)
+    with pcol1:
+        ans_l10 = st.number_input(
+            'L10 [dB(A)]', 40.0, 90.0, float(draft.get('ans_l10',70.0)), 0.1,
+            key='c3_s10f_l10',
+        )
+    with pcol2:
+        st.metric('L50 de referencia', f'{_expected_l50:.1f} dB(A)')
+    with pcol3:
+        ans_l90 = st.number_input(
+            'L90 [dB(A)]', 40.0, 90.0, float(draft.get('ans_l90',60.0)), 0.1,
+            key='c3_s10f_l90',
+        )
+
+    if abs(ans_l10-_expected_l10) <= 0.2 and abs(ans_l90-_expected_l90) <= 0.2:
+        st.success(
+            f'✓ Correcto. L10 ≈ {_expected_l10:.1f} dB(A) y L90 ≈ {_expected_l90:.1f} dB(A).'
+        )
+    else:
+        st.caption(
+            'Revisa el orden de las muestras y recuerda: L10 corresponde a la zona alta de la distribución '
+            'y L90 a la zona baja/persistente.'
+        )
+
+    _spread_percentiles = _expected_l10 - _expected_l90
+    variability = st.text_area(
         'Interpreta L10−L90',
         value=draft.get('variability',''),
+        placeholder=(
+            f'En este registro, L10−L90 es aproximadamente {_spread_percentiles:.1f} dB. '
+            'Explica qué te dice sobre la variabilidad del ambiente sonoro.'
+        ),
+        height=95,
         key='c3_s10f_var',
     )
 
@@ -25706,17 +25898,63 @@ def _c3l1_stage10_impl(lab: dict, saved: dict, deps: Dict[str, Any]):
         '''
         <div class="s10-section s10-section-orange">
           <div class="s10-kicker">MISIÓN 7 · EVENTO SONORO</div>
-          <div class="s10-heading">Caracteriza el vehículo pesado con SEL</div>
-          <div class="s10-copy">Convierte un evento delimitado en una medida de exposición energética comparable.</div>
+          <div class="s10-heading">Caracteriza el vehículo pesado con SEL / LAE</div>
+          <div class="s10-copy">Convierte un evento delimitado en una medida de exposición energética comparable. Como trabajamos con ponderación A, el SEL puede expresarse como LAE.</div>
         </div>
         ''',
         unsafe_allow_html=True,
     )
+    st.markdown(
+        '''
+        <div class="s10-section s10-section-orange">
+          <div class="s10-kicker">¿CÓMO SE CALCULA?</div>
+          <div class="s10-heading">SEL / LAE normaliza la energía del evento a 1 segundo</div>
+          <div class="s10-copy">
+            El vehículo pesado produjo un <b>LAeq,T = 78 dB(A)</b> durante <b>T = 20 s</b>.
+            Para obtener SEL / LAE debemos incorporar la duración del evento.
+          </div>
+        </div>
+        ''',
+        unsafe_allow_html=True,
+    )
+
+    st.latex(
+        r'SEL=L_{Aeq,T}+10\log_{10}\left(\frac{T}{T_0}\right)'
+    )
+    st.latex(r'T_0=1\ \mathrm{s}')
+
+    st.markdown(
+        '''
+        <div class="c3-key">
+          <b>T₀ = 1 s</b> es únicamente el tiempo de referencia de normalización.
+          No significa que el evento haya durado 1 segundo.
+        </div>
+        ''',
+        unsafe_allow_html=True,
+    )
+
+    with st.expander('Ver procedimiento guiado', expanded=False):
+        st.markdown('**Paso 1.** Sustituye LAeq,T = 78 dB(A), T = 20 s y T₀ = 1 s:')
+        st.latex(
+            r'SEL=78+10\log_{10}\left(\frac{20}{1}\right)'
+        )
+        st.markdown('**Paso 2.** Calcula la corrección temporal:')
+        st.latex(r'10\log_{10}(20)\approx 13.0\ \mathrm{dB}')
+        st.markdown('**Paso 3.** Súmala al nivel equivalente del evento.')
+        st.info('Ahora ingresa el resultado final en el campo inferior.')
+
     ans_sel = st.number_input(
-        'SEL de vehículo pesado: LAeq,20s=78 dB [dB]',
-        60.0, 120.0, float(draft.get('ans_sel',88.0)), 0.1,
+        'SEL / LAE del vehículo pesado [dB]',
+        60.0, 120.0, float(draft.get('ans_sel',91.0)), 0.1,
         key='c3_s10f_sel',
     )
+
+    if abs(ans_sel - 91.010299956640) <= 0.2:
+        st.success('✓ Correcto. SEL / LAE ≈ 91.0 dB.')
+    elif ans_sel > 0:
+        st.caption(
+            'Revisa la corrección 10·log10(T/T₀). Para 20 s debe aportar aproximadamente 13 dB.'
+        )
 
     st.markdown(
         '''
