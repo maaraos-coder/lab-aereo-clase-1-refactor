@@ -17250,7 +17250,7 @@ _C3L1_NAV_STAGE_TITLES = {
     4: "Del evento sonoro a su exposición · SEL / LAE",
     5: "Del evento al ciclo diario · LD, LE, LN y Lden",
     6: "Del monitoreo a las fuentes de ruido ambiental",
-    7: "¿Dónde, cuándo y cuánto medir?",
+    7: "Diseño de campañas · HVAC y autopista",
     8: "Del camino directo a la protección acústica",
     9: "Preguntas de comprensión",
     10: "Diagnóstico acústico de un barrio",
@@ -23408,203 +23408,626 @@ def _c3l1_stage6_impl(lab: dict, saved: dict, deps: Dict[str, Any]):
 
 
 def _c3l1_stage7_impl(lab: dict, saved: dict, deps: Dict[str, Any]):
+    import matplotlib.pyplot as c3plt
     _c3l1_style()
     _c3l1_header(
         7,
-        '¿Dónde, cuándo y cuánto medir?',
-        'Diseñar una campaña de medición con representatividad espacial y temporal, objetivos explícitos y reglas técnicas de retroalimentación.',
+        'Diseño de campañas · HVAC y autopista',
+        'Resolver dos problemas profesionales: aislar una fuente específica en presencia de ruido interferente y diseñar una campaña temporal representativa para tránsito vehicular.',
         deps,
-        45,
+        55,
     )
 
     st.markdown(
         """
         <div class="c3-card blue">
-          <div class="c3-kicker">IDEA CENTRAL</div>
-          <b>Medir bien no es solamente encender el sonómetro.</b>
-          <p>Debes definir objetivo, fuente, receptor, posición, altura, periodo, duración, condiciones y descriptor.</p>
+          <div class="c3-kicker">ETAPA 7 · APLICACIÓN PROFESIONAL</div>
+          <b>Ahora el problema ya no es solo calcular descriptores: debes diseñar una medición que responda una pregunta real.</b>
+          <p>
+            Trabajarás dos situaciones distintas:
+            <b>separación de fuentes</b> y <b>representatividad temporal</b>.
+          </p>
         </div>
         """,
         unsafe_allow_html=True,
     )
 
-    st.markdown('## 1. Escenario de campaña')
+    # ============================================================
+    # PROBLEMA 1
+    # ============================================================
+    st.markdown('## Problema 1 · ¿Cuánto ruido aporta realmente el HVAC?')
 
-    _locations = {
-        'A · Borde de avenida': (16,68,'Tránsito dominante'),
-        'B · Fachada residencial': (44,58,'Receptor sensible'),
-        'C · Patio interior': (62,51,'Zona protegida'),
-        'D · Colegio': (78,55,'Receptor sensible diurno'),
-        'E · Fuente técnica': (55,64,'HVAC / fuente fija'),
-        'F · Parque': (84,52,'Ambiente comunitario'),
-        'G · Trayectoria aérea': (30,62,'Eventos de sobrevuelo'),
+    st.markdown(
+        """
+        <div class="c3-card">
+          <div class="c3-kicker">ESCENARIO</div>
+          <b>Una vivienda recibe ruido desde un sistema HVAC, pero una avenida cercana contamina la medición.</b>
+          <p>
+            El objetivo es estimar la contribución acústica específica del HVAC en la fachada de la vivienda
+            sin confundirla con el ruido residual producido principalmente por el tránsito.
+          </p>
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
+
+    _hvac_scene = """
+    <div style="border:1px solid #d7e5ef;border-radius:18px;background:linear-gradient(180deg,#eef8fd,#ffffff);padding:14px">
+      <svg viewBox="0 0 980 330" xmlns="http://www.w3.org/2000/svg" style="width:100%;height:auto;display:block">
+        <rect x="20" y="20" width="940" height="285" rx="20" fill="#edf7fb"/>
+        <rect x="20" y="225" width="940" height="55" fill="#647884"/>
+        <line x1="20" y1="252" x2="960" y2="252" stroke="#f3dd73" stroke-width="4" stroke-dasharray="22 18"/>
+        <rect x="650" y="105" width="190" height="120" rx="8" fill="#d8c9aa"/>
+        <polygon points="635,105 745,55 855,105" fill="#b7956f"/>
+        <rect x="775" y="145" width="35" height="80" fill="#78909c"/>
+        <rect x="165" y="95" width="220" height="130" rx="8" fill="#c6d6df"/>
+        <rect x="220" y="55" width="110" height="45" rx="8" fill="#9eb5c4"/>
+        <rect x="245" y="45" width="60" height="30" rx="5" fill="#546e7a"/>
+        <text x="275" y="38" text-anchor="middle" font-size="15" font-weight="800" fill="#183247">HVAC</text>
+        <text x="745" y="92" text-anchor="middle" font-size="15" font-weight="800" fill="#183247">VIVIENDA</text>
+        <circle cx="640" cy="185" r="11" fill="#168ac3" stroke="white" stroke-width="3"/>
+        <text x="640" y="165" text-anchor="middle" font-size="13" font-weight="800" fill="#183247">SONÓMETRO</text>
+        <text x="80" y="217" font-size="14" font-weight="800" fill="#183247">AVENIDA</text>
+        <text x="90" y="250" font-size="34">🚗</text>
+        <text x="440" y="250" font-size="34">🚚</text>
+        <text x="860" y="250" font-size="34">🚙</text>
+        <path d="M310 85 C430 70 525 95 625 175" fill="none" stroke="#ef7b45" stroke-width="4" stroke-dasharray="8 7"/>
+        <text x="455" y="67" font-size="13" font-weight="700" fill="#b6532b">aporte HVAC</text>
+        <path d="M180 230 C310 200 480 215 625 190" fill="none" stroke="#71879a" stroke-width="3" stroke-dasharray="7 7"/>
+        <text x="370" y="202" font-size="13" font-weight="700" fill="#566b7b">ruido residual de tránsito</text>
+      </svg>
+    </div>
+    """
+    components.html(_hvac_scene, height=365, scrolling=False)
+
+    st.markdown(
+        """
+        <div class="c3-grid-2">
+          <div class="c3-card orange">
+            <div class="c3-kicker">FUENTE ESPECÍFICA</div>
+            <b>Sistema HVAC</b>
+            <p>Es la fuente cuya contribución queremos estimar.</p>
+          </div>
+          <div class="c3-card blue">
+            <div class="c3-kicker">RUIDO RESIDUAL</div>
+            <b>Avenida + ambiente existente</b>
+            <p>Es el ambiente que permanece cuando el HVAC está detenido.</p>
+          </div>
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
+
+    st.markdown('### 1.1 Condición residual · HVAC apagado')
+
+    # Synthetic residual record designed so L90 ~= residual LAeq.
+    _t1 = np.arange(0, 600, 1, dtype=float)
+    _rng1 = np.random.default_rng(701)
+    _res = 49.7 + _rng1.normal(0, .22, len(_t1))
+    for _c,_a,_w in [(75,5.0,7),(165,4.0,6),(280,6.0,8),(405,4.5,6),(535,5.5,7)]:
+        _res += _a*np.exp(-.5*((_t1-_c)/_w)**2)
+
+    _res_laeq = float(_c3l1_laeq(_res))
+    _res_l10 = float(_c3l1_exceedance_percentile(_res,10))
+    _res_l50 = float(_c3l1_exceedance_percentile(_res,50))
+    _res_l90 = float(_c3l1_exceedance_percentile(_res,90))
+
+    _fig_r,_ax_r = c3plt.subplots(figsize=(10.5,3.8))
+    _ax_r.plot(_t1/60.0,_res,lw=1.2)
+    _ax_r.axhline(_res_l90,ls='--',label=f'L90 = {_res_l90:.1f}')
+    _ax_r.axhline(_res_laeq,ls=':',label=f'LAeq residual = {_res_laeq:.1f}')
+    _ax_r.set_xlabel('Tiempo [min]')
+    _ax_r.set_ylabel('Nivel [dB(A)]')
+    _ax_r.set_title('HVAC OFF · ruido residual de la avenida')
+    _ax_r.grid(alpha=.2)
+    _ax_r.legend(fontsize=8)
+    st.pyplot(_fig_r,use_container_width=True)
+    c3plt.close(_fig_r)
+
+    rr1,rr2,rr3,rr4 = st.columns(4)
+    rr1.metric('LAeq residual',f'{_res_laeq:.1f} dB(A)')
+    rr2.metric('L10',f'{_res_l10:.1f}')
+    rr3.metric('L50',f'{_res_l50:.1f}')
+    rr4.metric('L90',f'{_res_l90:.1f}')
+
+    st.markdown(
+        f"""
+        <div class="c3-key">
+          En este escenario didáctico, <b>L90 = {_res_l90:.1f} dB(A)</b> y
+          <b>LAeq residual = {_res_laeq:.1f} dB(A)</b>.
+          La proximidad de ambos indica que el ambiente residual es relativamente estable durante gran parte del registro
+          y que los vehículos más ruidosos ocupan una fracción pequeña del tiempo.
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
+
+    _q_res = st.radio(
+        '¿Qué conclusión es más razonable en este caso?',
+        [
+            'L90 puede aproximar bien el componente de fondo residual de este registro',
+            'L10 representa mejor el fondo persistente',
+            'L90 y residual siempre son idénticos por definición',
+        ],
+        index=None,
+        key='c3_s7_hvac_q_residual',
+    )
+    if _q_res:
+        if _q_res.startswith('L90 puede'):
+            st.success(
+                'Correcto. Aquí L90 funciona como buen indicador del fondo porque el residual fue diseñado como relativamente estable.'
+            )
+        else:
+            st.warning(
+                'L90 puede aproximar el fondo en este escenario, pero no es sinónimo universal de nivel residual.'
+            )
+
+    st.markdown('### 1.2 Condición total · HVAC encendido')
+
+    # Add stable HVAC energetic component roughly around 54.5 dB
+    _hvac_specific_target = 54.6
+    _hvac_energy = 10**(_hvac_specific_target/10.0)
+    _total_energy = 10**(_res/10.0) + _hvac_energy
+    _tot = 10*np.log10(_total_energy)
+
+    _tot_laeq = float(_c3l1_laeq(_tot))
+    _tot_l10 = float(_c3l1_exceedance_percentile(_tot,10))
+    _tot_l50 = float(_c3l1_exceedance_percentile(_tot,50))
+    _tot_l90 = float(_c3l1_exceedance_percentile(_tot,90))
+
+    _fig_on,_ax_on = c3plt.subplots(figsize=(10.5,3.8))
+    _ax_on.plot(_t1/60.0,_res,lw=1.0,label='HVAC OFF · residual')
+    _ax_on.plot(_t1/60.0,_tot,lw=1.25,label='HVAC ON · total')
+    _ax_on.set_xlabel('Tiempo [min]')
+    _ax_on.set_ylabel('Nivel [dB(A)]')
+    _ax_on.set_title('Comparación ON/OFF en la misma posición')
+    _ax_on.grid(alpha=.2)
+    _ax_on.legend(fontsize=8)
+    st.pyplot(_fig_on,use_container_width=True)
+    c3plt.close(_fig_on)
+
+    st.dataframe(
+        pd.DataFrame([
+            {'Condición':'HVAC OFF','LAeq [dB(A)]':round(_res_laeq,1),'L10':round(_res_l10,1),'L50':round(_res_l50,1),'L90':round(_res_l90,1)},
+            {'Condición':'HVAC ON','LAeq [dB(A)]':round(_tot_laeq,1),'L10':round(_tot_l10,1),'L50':round(_tot_l50,1),'L90':round(_tot_l90,1)},
+        ]),
+        hide_index=True,
+        use_container_width=True,
+    )
+
+    st.markdown(
+        f"""
+        <div class="c3-card green">
+          <div class="c3-kicker">OBSERVA EL PISO ACÚSTICO</div>
+          <b>L90 aumenta de {_res_l90:.1f} a {_tot_l90:.1f} dB(A).</b>
+          <p>
+            El tránsito sigue produciendo puntas en ambos registros, pero con el HVAC encendido
+            aparece una componente más persistente que eleva la zona baja de la distribución.
+          </p>
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
+
+    st.markdown('### 1.3 Estima la contribución específica del HVAC')
+
+    st.markdown(
+        """
+        <div class="c3-card orange">
+          <div class="c3-kicker">DOS FUNCIONES DIFERENTES</div>
+          <b>L90 ayuda a reconocer una componente persistente; la resta energética estima la contribución específica.</b>
+          <p>
+            Para estimar el HVAC utilizaremos LAeq total y LAeq residual medidos en condiciones comparables.
+          </p>
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
+
+    st.latex(
+        r'L_{HVAC}=10\log_{10}\left(10^{L_{total}/10}-10^{L_{residual}/10}\right)'
+    )
+
+    _hvac_calc = 10*math.log10(
+        max(1e-12,10**(_tot_laeq/10.0)-10**(_res_laeq/10.0))
+    )
+
+    _q_sub = st.segmented_control(
+        '¿Qué operación corresponde?',
+        [
+            'Restar directamente los dB',
+            'Realizar una resta energética',
+            'Usar solamente L90 ON − L90 OFF',
+        ],
+        default=None,
+        key='c3_s7_hvac_subtraction',
+    )
+    if _q_sub:
+        if _q_sub == 'Realizar una resta energética':
+            st.success('Correcto. Los niveles en dB no se restan aritméticamente para aislar contribuciones energéticas.')
+            st.metric('Contribución estimada del HVAC',f'{_hvac_calc:.1f} dB(A)')
+        else:
+            st.warning('Para estimar una contribución específica debes trabajar en energía, no restar directamente decibeles.')
+
+    st.markdown('### 1.4 ¿Qué pasa si aumenta el tránsito?')
+
+    _traffic_level = st.segmented_control(
+        'Condición de tránsito',
+        ['Bajo','Moderado','Alto'],
+        default='Bajo',
+        key='c3_s7_hvac_traffic_condition',
+    )
+    _traffic_offset = {'Bajo':0.0,'Moderado':3.0,'Alto':6.0}[_traffic_level]
+    _res_mod = _res + _traffic_offset
+    _res_mod_laeq = float(_c3l1_laeq(_res_mod))
+    _res_mod_l90 = float(_c3l1_exceedance_percentile(_res_mod,90))
+
+    tr1,tr2 = st.columns(2)
+    tr1.metric('LAeq residual',f'{_res_mod_laeq:.1f} dB(A)')
+    tr2.metric('L90 residual',f'{_res_mod_l90:.1f} dB(A)')
+
+    st.markdown(
+        """
+        <div class="c3-key">
+          Si el tránsito empieza a dominar de manera continua, L90 puede dejar de representar de forma útil
+          el “fondo sin HVAC” y la separación entre fuentes se vuelve más difícil.
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
+
+    st.markdown('### 1.5 Preguntas de desarrollo')
+
+    _p1_questions = [
+        ('¿Por qué L90 y LAeq residual resultan tan próximos en este escenario?',
+         f'Porque el residual es relativamente estable durante gran parte del tiempo. L90 = {_res_l90:.1f} y LAeq residual = {_res_laeq:.1f} dB(A), por lo que los eventos más altos no dominan energéticamente el registro.'),
+        ('¿Qué evidencia del registro ON/OFF respalda que el HVAC aporta una componente persistente?',
+         f'El aumento de L90 desde {_res_l90:.1f} a {_tot_l90:.1f} dB(A) muestra que se elevó la zona baja/persistente de la distribución con el HVAC encendido.'),
+        ('¿Por qué no debemos estimar el HVAC restando directamente LAeq total − LAeq residual?',
+         'Porque el decibel es logarítmico. Para separar contribuciones debemos convertir implícitamente a energía, restar energías y volver a dB.'),
+        ('¿Qué ocurriría con la confiabilidad de la estimación si LAeq total y residual fueran casi iguales?',
+         'La contribución específica sería pequeña respecto del residual y la incertidumbre relativa aumentaría; la separación de fuentes sería menos robusta.'),
+        ('Si el tránsito se vuelve intenso y prácticamente continuo, ¿seguirías usando automáticamente L90 como aproximación del residual? Justifica.',
+         'No automáticamente. L90 describe la zona baja/persistente del registro, pero si el tráfico domina también esa zona, deja de ser una aproximación independiente del ruido residual que interesa aislar.'),
+    ]
+
+    _p1_answers = {}
+    for _i,(_q,_guide) in enumerate(_p1_questions,1):
+        st.markdown(f'**Pregunta {_i}.** {_q}')
+        _ans = st.text_area(
+            f'Problema 1 · respuesta {_i}',
+            key=f'c3_s7_p1_q_{_i}',
+            placeholder='Desarrolla tu respuesta...',
+            label_visibility='collapsed',
+            height=95,
+        )
+        _p1_answers[str(_i)] = _ans.strip()
+        _rev_key = f'c3_s7_p1_reveal_{_i}'
+        if _ans.strip():
+            if st.button(f'👁️ Ver respuesta esperada · P1-{_i}',key=f'c3_s7_p1_btn_{_i}',use_container_width=True):
+                st.session_state[_rev_key] = True
+        else:
+            st.caption('Responde primero para habilitar la pauta.')
+        if st.session_state.get(_rev_key):
+            st.success(_guide)
+
+    # ============================================================
+    # PROBLEMA 2
+    # ============================================================
+    st.markdown('---')
+    st.markdown('## Problema 2 · ¿Cómo caracterizar acústicamente una autopista durante 24 horas?')
+
+    st.markdown(
+        """
+        <div class="c3-card">
+          <div class="c3-kicker">ESCENARIO</div>
+          <b>Una autopista pasa frente a un conjunto habitacional.</b>
+          <p>
+            El objetivo es diseñar una campaña que represente correctamente la exposición acústica
+            durante día, tarde y noche. Aquí el desafío no es separar fuentes, sino asegurar
+            <b>representatividad temporal</b>.
+          </p>
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
+
+    _motorway_scene = """
+    <div style="border:1px solid #d7e5ef;border-radius:18px;background:#f5fafc;padding:12px">
+      <svg viewBox="0 0 980 300" xmlns="http://www.w3.org/2000/svg" style="width:100%;height:auto;display:block">
+        <rect x="20" y="20" width="940" height="250" rx="18" fill="#eaf5f9"/>
+        <rect x="20" y="170" width="940" height="80" fill="#687985"/>
+        <line x1="20" y1="210" x2="960" y2="210" stroke="#f0db70" stroke-width="4" stroke-dasharray="24 20"/>
+        <rect x="700" y="65" width="95" height="105" rx="7" fill="#d6c4a3"/>
+        <rect x="815" y="85" width="90" height="85" rx="7" fill="#c8d7df"/>
+        <text x="800" y="55" text-anchor="middle" font-size="15" font-weight="800" fill="#183247">VIVIENDAS</text>
+        <circle cx="665" cy="135" r="11" fill="#168ac3" stroke="white" stroke-width="3"/>
+        <text x="665" y="115" text-anchor="middle" font-size="13" font-weight="800" fill="#183247">ESTACIÓN</text>
+        <text x="95" y="205" font-size="34">🚗</text>
+        <text x="350" y="220" font-size="36">🚚</text>
+        <text x="540" y="195" font-size="34">🚌</text>
+        <text x="90" y="160" font-size="14" font-weight="800" fill="#183247">AUTOPISTA</text>
+      </svg>
+    </div>
+    """
+    components.html(_motorway_scene,height=330,scrolling=False)
+
+    st.markdown('### 2.1 Una medición puntual no es automáticamente representativa')
+
+    st.markdown(
+        """
+        <div class="c3-card orange">
+          <div class="c3-kicker">CAMPAÑA PROPUESTA</div>
+          <b>11:00–11:30 · LAeq = 63 dB(A)</b>
+          <p>¿Podemos usar directamente esos 30 minutos como LD del periodo día?</p>
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
+
+    _q_short = st.radio(
+        '¿Es suficiente?',
+        [
+            'Sí, 30 minutos siempre representan todo el periodo día',
+            'No necesariamente; debe demostrarse representatividad temporal',
+        ],
+        index=None,
+        key='c3_s7_motorway_short',
+    )
+    if _q_short:
+        if _q_short.startswith('No necesariamente'):
+            st.success('Correcto. La duración por sí sola no garantiza representatividad.')
+        else:
+            st.warning('Una ventana breve puede coincidir con una condición atípica o no incluir puntas y valles del tráfico.')
+
+    st.markdown('### 2.2 Monitoreo continuo de 24 horas')
+
+    _hours2 = np.arange(24)
+    _levels2 = np.array([
+        49,48,48,47,48,51,57,
+        63,67,68,66,65,64,63,
+        64,65,66,67,66,
+        63,62,61,59,52
+    ],dtype=float)
+
+    _fig24,_ax24=c3plt.subplots(figsize=(10.5,4.2))
+    _ax24.plot(_hours2+.5,_levels2,marker='o',ms=4,lw=1.7)
+    _ax24.axvspan(7,19,alpha=.07,label='Día')
+    _ax24.axvspan(19,23,alpha=.10,label='Tarde')
+    _ax24.axvspan(23,24,alpha=.09)
+    _ax24.axvspan(0,7,alpha=.09,label='Noche')
+    _ax24.set_xlim(0,24)
+    _ax24.set_xticks(np.arange(0,25,2))
+    _ax24.set_xlabel('Hora')
+    _ax24.set_ylabel('LAeq horario [dB(A)]')
+    _ax24.set_title('Autopista · variación horaria durante 24 horas')
+    _ax24.grid(alpha=.2)
+    _ax24.legend(ncol=3,fontsize=8)
+    st.pyplot(_fig24,use_container_width=True)
+    c3plt.close(_fig24)
+
+    _day2 = _levels2[7:19]
+    _eve2 = _levels2[19:23]
+    _night2 = np.r_[_levels2[23:24],_levels2[0:7]]
+    _ld2 = float(_c3l1_laeq(_day2))
+    _le2 = float(_c3l1_laeq(_eve2))
+    _ln2 = float(_c3l1_laeq(_night2))
+    _lden2 = float(_c3l1_lden(_ld2,_le2,_ln2))
+
+    st.markdown('### 2.3 Construye los periodos')
+
+    _period_task = st.multiselect(
+        'Selecciona los tres intervalos que corresponden al ejercicio',
+        [
+            'Día 07:00–19:00',
+            'Tarde 19:00–23:00',
+            'Noche 23:00–07:00',
+            'Día 08:00–18:00',
+            'Noche 22:00–06:00',
+        ],
+        key='c3_s7_motorway_periods',
+    )
+    _period_expected = {
+        'Día 07:00–19:00',
+        'Tarde 19:00–23:00',
+        'Noche 23:00–07:00',
     }
+    if len(_period_task) >= 3:
+        if set(_period_task) == _period_expected:
+            st.success('Correcto. Esos son los tres periodos usados en este laboratorio.')
+        else:
+            st.warning('Revisa los límites horarios trabajados anteriormente.')
 
-    _svg_points = []
-    for _i, (_name, (_x,_lvl,_desc)) in enumerate(_locations.items()):
-        _cx = 60 + _x*7.8
-        _cy = 235 - ((_i % 3) * 48)
-        _label = _name.split('·')[0].strip()
-        _svg_points.append(
-            f'<circle cx="{_cx:.0f}" cy="{_cy:.0f}" r="10" fill="#1b8ccc" stroke="white" stroke-width="3"/>'
-            f'<text x="{_cx:.0f}" y="{_cy-16:.0f}" text-anchor="middle" font-size="12" font-weight="700" fill="#183247">{_label}</text>'
+    st.markdown('### 2.4 Observa cómo se construyen LD, LE y LN')
+
+    _period2 = st.segmented_control(
+        'Periodo',
+        ['Día','Tarde','Noche'],
+        default='Día',
+        key='c3_s7_motorway_period_view',
+    )
+    if _period2 == 'Día':
+        _pv,_ph,_pr,_pn = _day2,np.arange(7,19),_ld2,'LD'
+    elif _period2 == 'Tarde':
+        _pv,_ph,_pr,_pn = _eve2,np.arange(19,23),_le2,'LE'
+    else:
+        _pv,_ph,_pr,_pn = _night2,np.array([23,0,1,2,3,4,5,6]),_ln2,'LN'
+
+    _figp,_axp=c3plt.subplots(figsize=(10,3.5))
+    _axp.bar(np.arange(len(_pv)),_pv)
+    _axp.axhline(_pr,ls='--',label=f'{_pn} = {_pr:.1f}')
+    _axp.set_xticks(np.arange(len(_pv)))
+    _axp.set_xticklabels([f'{int(h):02d}:00' for h in _ph])
+    _axp.set_ylabel('LAeq horario [dB(A)]')
+    _axp.set_title(f'Construcción energética de {_pn}')
+    _axp.grid(axis='y',alpha=.2)
+    _axp.legend(fontsize=8)
+    st.pyplot(_figp,use_container_width=True)
+    c3plt.close(_figp)
+
+    pp1,pp2,pp3,pp4 = st.columns(4)
+    pp1.metric('LD',f'{_ld2:.1f}')
+    pp2.metric('LE',f'{_le2:.1f}')
+    pp3.metric('LN',f'{_ln2:.1f}')
+    pp4.metric('Lden',f'{_lden2:.1f}')
+
+    st.markdown('### 2.5 ¿Cuánto tiempo medir?')
+
+    _campaign_window = st.segmented_control(
+        'Ventana de observación',
+        ['30 min mediodía','1 h punta AM','3 h distribuidas','24 h continuo'],
+        default='30 min mediodía',
+        key='c3_s7_motorway_window',
+    )
+
+    _campaign_info = {
+        '30 min mediodía':('Baja','Una sola ventana corta puede no capturar puntas ni variación nocturna.'),
+        '1 h punta AM':('Baja-media','Describe bien una punta, pero puede sobreestimar el periodo día si se generaliza.'),
+        '3 h distribuidas':('Media','Puede aportar mejor cobertura si las ventanas están justificadamente distribuidas entre condiciones representativas.'),
+        '24 h continuo':('Alta','Entrega la mayor información temporal del ciclo completo, aunque implica mayor costo y recursos.'),
+    }
+    _qual,_desc = _campaign_info[_campaign_window]
+    st.info(f'Representatividad potencial: {_qual}. {_desc}')
+
+    st.markdown('### 2.6 Diseña una campaña con recursos limitados')
+
+    st.markdown(
+        """
+        <div class="c3-card green">
+          <div class="c3-kicker">RESTRICCIÓN</div>
+          <b>Solo dispones de 4 horas de sonómetro.</b>
+          <p>Distribuye esas horas para caracterizar lo mejor posible la autopista y explica las limitaciones de tu propuesta.</p>
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
+
+    cA,cB,cC = st.columns(3)
+    with cA:
+        _hday = st.number_input('Horas destinadas al día',min_value=0.0,max_value=4.0,value=2.0,step=.5,key='c3_s7_hday')
+    with cB:
+        _heve = st.number_input('Horas destinadas a tarde',min_value=0.0,max_value=4.0,value=1.0,step=.5,key='c3_s7_heve')
+    with cC:
+        _hnight = st.number_input('Horas destinadas a noche',min_value=0.0,max_value=4.0,value=1.0,step=.5,key='c3_s7_hnight')
+
+    _htotal = _hday + _heve + _hnight
+    if abs(_htotal-4.0) < 1e-9:
+        st.success('Distribución completa: 4,0 horas.')
+    else:
+        st.warning(f'Actualmente asignaste {_htotal:.1f} h. Debes distribuir exactamente 4,0 h.')
+
+    _campaign_reason = st.text_area(
+        'Justifica horarios, ubicación del sonómetro y principales limitaciones',
+        key='c3_s7_motorway_reason',
+        placeholder='Ej.: mediría dos ventanas diurnas separadas para evitar representar solo la hora punta...',
+        height=120,
+    )
+
+    st.markdown('### 2.7 Preguntas de desarrollo')
+
+    _p2_questions = [
+        ('¿Por qué una medición de 30 minutos a las 08:00 no debería asumirse automáticamente como LD?',
+         'Porque puede representar una hora punta y no el comportamiento energético de todo el periodo día. Debe demostrarse que la ventana seleccionada es representativa.'),
+        ('Si solo dispones de pocas horas de medición, ¿qué criterio usarías para distribuirlas entre día, tarde y noche?',
+         'Conviene cubrir los periodos relevantes y seleccionar ventanas que representen condiciones distintas, evitando concentrar toda la campaña en un único horario.'),
+        ('¿Qué consecuencia tendría no medir de noche?',
+         'No podrías caracterizar directamente LN y perderías información crítica para construir Lden y evaluar condiciones de descanso.'),
+        ('Si una hora punta entrega 68 dB(A) pero LD resulta 64 dB(A), ¿por qué ambos valores pueden ser correctos?',
+         'Porque 68 dB(A) puede representar una condición horaria específica de alta actividad, mientras LD resume energéticamente todo el periodo día.'),
+        ('¿Qué información adicional revisarías antes de declarar representativa una campaña corta?',
+         'Flujo vehicular, variación diaria/semanal, horarios punta, meteorología relevante, condiciones operacionales, estabilidad temporal y correspondencia entre la ventana medida y el objetivo de evaluación.'),
+    ]
+
+    _p2_answers = {}
+    for _i,(_q,_guide) in enumerate(_p2_questions,1):
+        st.markdown(f'**Pregunta {_i}.** {_q}')
+        _ans = st.text_area(
+            f'Problema 2 · respuesta {_i}',
+            key=f'c3_s7_p2_q_{_i}',
+            placeholder='Desarrolla tu respuesta...',
+            label_visibility='collapsed',
+            height=95,
+        )
+        _p2_answers[str(_i)] = _ans.strip()
+        _rev_key = f'c3_s7_p2_reveal_{_i}'
+        if _ans.strip():
+            if st.button(f'👁️ Ver respuesta esperada · P2-{_i}',key=f'c3_s7_p2_btn_{_i}',use_container_width=True):
+                st.session_state[_rev_key] = True
+        else:
+            st.caption('Responde primero para habilitar la pauta.')
+        if st.session_state.get(_rev_key):
+            st.success(_guide)
+
+    # Persist work automatically.
+    saved['c3_stage7_problem1_hvac'] = {
+        'LAeq_residual': float(_res_laeq),
+        'L90_residual': float(_res_l90),
+        'LAeq_total': float(_tot_laeq),
+        'L90_total': float(_tot_l90),
+        'HVAC_estimated': float(_hvac_calc),
+        'traffic_condition': _traffic_level,
+        'answers': _p1_answers,
+    }
+    saved['c3_stage7_problem2_motorway'] = {
+        'LD': float(_ld2),
+        'LE': float(_le2),
+        'LN': float(_ln2),
+        'Lden': float(_lden2),
+        'campaign_window': _campaign_window,
+        'hours_day': float(_hday),
+        'hours_evening': float(_heve),
+        'hours_night': float(_hnight),
+        'justification': _campaign_reason.strip(),
+        'answers': _p2_answers,
+    }
+    _c3l1_save(saved,deps)
+
+    _viewer_role = (
+        st.session_state.get('role')
+        or st.session_state.get('user_role')
+        or st.session_state.get('modo')
+        or st.session_state.get('view_mode')
+        or ''
+    )
+    _is_teacher_view = str(_viewer_role).lower() in {
+        'docente','teacher','profesor','profesora','instructor'
+    } or bool(
+        st.session_state.get('is_teacher')
+        or st.session_state.get('teacher_mode')
+        or st.session_state.get('vista_docente')
+    )
+
+    if _is_teacher_view:
+        st.markdown('### Pauta docente · Etapa 7')
+
+        st.markdown('#### Problema 1 · HVAC + avenida')
+        st.markdown(
+            f"""
+            **Resultados didácticos del escenario**
+            - LAeq residual ≈ {_res_laeq:.1f} dB(A)
+            - L90 residual ≈ {_res_l90:.1f} dB(A)
+            - LAeq total ≈ {_tot_laeq:.1f} dB(A)
+            - L90 total ≈ {_tot_l90:.1f} dB(A)
+            - contribución HVAC estimada ≈ {_hvac_calc:.1f} dB(A)
+
+            **Mensaje docente:** L90 se utiliza aquí para reconocer una componente persistente y mostrar
+            por qué puede aproximarse al fondo residual cuando éste es estable. La contribución específica
+            se estima con resta energética de niveles equivalentes comparables.
+            """
         )
 
-    _campaign_svg = f"""
-    <div style="border:1px solid #d7e5ef;border-radius:18px;background:#f8fbfd;padding:10px">
-    <svg viewBox="0 0 900 310" xmlns="http://www.w3.org/2000/svg" style="width:100%;height:auto;display:block">
-      <rect x="20" y="20" width="860" height="270" rx="18" fill="#eaf4f8"/>
-      <rect x="20" y="205" width="860" height="65" fill="#657786"/>
-      <line x1="20" y1="238" x2="880" y2="238" stroke="#f5df72" stroke-width="4" stroke-dasharray="24 20"/>
-      <rect x="400" y="70" width="130" height="135" rx="8" fill="#bdcbd6"/>
-      <rect x="645" y="105" width="105" height="100" rx="8" fill="#d7c8a8"/>
-      <rect x="760" y="45" width="95" height="160" rx="8" fill="#c5d4df"/>
-      <rect x="540" y="30" width="85" height="70" rx="8" fill="#87b8b1"/>
-      <text x="465" y="62" text-anchor="middle" font-size="13" font-weight="700" fill="#183247">VIVIENDAS</text>
-      <text x="697" y="96" text-anchor="middle" font-size="13" font-weight="700" fill="#183247">COLEGIO</text>
-      <text x="807" y="36" text-anchor="middle" font-size="13" font-weight="700" fill="#183247">COMERCIO</text>
-      <text x="582" y="24" text-anchor="middle" font-size="13" font-weight="700" fill="#183247">PARQUE</text>
-      <text x="115" y="198" font-size="13" font-weight="700" fill="#183247">AVENIDA</text>
-      {''.join(_svg_points)}
-    </svg></div>
-    """
-    components.html(_campaign_svg, height=340, scrolling=False)
-
-    st.markdown('## 2. Coloca 5 sonómetros virtuales')
-
-    _rows7 = []
-    _default_locs = list(_locations.keys())[:5]
-    for _i in range(5):
-        with st.expander(f'📍 Punto P{_i+1}', expanded=(_i==0)):
-            _c1,_c2 = st.columns(2)
-            with _c1:
-                _loc = st.selectbox(
-                    'Ubicación',
-                    list(_locations.keys()),
-                    index=min(_i,len(_locations)-1),
-                    key=f'c3_s7_loc_{_i}',
-                )
-                _height = st.select_slider(
-                    'Altura del micrófono [m]',
-                    options=[1.2,1.5,2.0,4.0],
-                    value=1.5,
-                    key=f'c3_s7_height_{_i}',
-                )
-                _period = st.selectbox(
-                    'Periodo',
-                    ['Día','Tarde','Noche','24 h'],
-                    key=f'c3_s7_period_{_i}',
-                )
-            with _c2:
-                _duration = st.selectbox(
-                    'Duración',
-                    ['5 min','15 min','30 min','1 h','Continuo'],
-                    index=2,
-                    key=f'c3_s7_duration_{_i}',
-                )
-                _descriptor = st.selectbox(
-                    'Descriptor',
-                    ['LAeq','Lmax','L10/L90','SEL','Lden'],
-                    key=f'c3_s7_desc_{_i}',
-                )
-                _objective = st.selectbox(
-                    'Objetivo',
-                    ['Fuente dominante','Receptor sensible','Fondo/persistencia','Evento','Exposición de largo plazo'],
-                    key=f'c3_s7_obj_{_i}',
-                )
-            _rows7.append({
-                'Punto':f'P{_i+1}',
-                'Ubicación':_loc,
-                'Altura [m]':float(_height),
-                'Periodo':_period,
-                'Duración':_duration,
-                'Descriptor':_descriptor,
-                'Objetivo':_objective,
-            })
-
-    _df7 = pd.DataFrame(_rows7)
-    st.dataframe(_df7, hide_index=True, use_container_width=True)
-
-    st.markdown('## 3. Evaluación técnica de la campaña')
-
-    if st.button('Evaluar campaña', key='c3_s7_evaluate', use_container_width=True):
-        _feedback = []
-        _locs = [r['Ubicación'] for r in _rows7]
-        _periods = [r['Periodo'] for r in _rows7]
-        _durations = [r['Duración'] for r in _rows7]
-        _objectives = [r['Objetivo'] for r in _rows7]
-
-        if any('Fachada residencial' in x or 'Colegio' in x for x in _locs):
-            _feedback.append(('good','Existe al menos un punto asociado a un receptor sensible.'))
-        else:
-            _feedback.append(('warn','No existe un punto claramente asociado a vivienda o colegio; la campaña puede perder representatividad del receptor sensible.'))
-
-        if any(p in ('Noche','24 h') for p in _periods):
-            _feedback.append(('good','La campaña considera periodo nocturno o registro continuo.'))
-        else:
-            _feedback.append(('warn','No se consideró periodo nocturno. Si el problema incluye descanso o fuentes nocturnas, faltará representatividad temporal.'))
-
-        if len(set(_locs)) >= 4:
-            _feedback.append(('good','Los cinco puntos presentan una distribución espacial razonablemente diversa.'))
-        else:
-            _feedback.append(('warn','Varios puntos se concentran en las mismas ubicaciones; distribuir mejor los puntos puede aportar información espacial distinta.'))
-
-        if any('Fuente técnica' in x for x in _locs) and any('Fondo/persistencia' == o for o in _objectives):
-            _feedback.append(('good','Existe una estrategia para observar una fuente técnica/persistente.'))
-
-        if _durations.count('5 min') >= 3:
-            _feedback.append(('warn','Tres o más puntos usan solo 5 min. Para fuentes fluctuantes puede ser insuficiente; la duración debe justificarse por estabilidad y objetivo.'))
-        else:
-            _feedback.append(('good','La campaña no depende exclusivamente de mediciones muy breves.'))
-
-        for _kind,_msg in _feedback:
-            if _kind == 'good':
-                st.success('✓ ' + _msg)
-            else:
-                st.warning('⚠ ' + _msg)
-
-        saved['c3_stage7_campaign'] = {'points':_rows7,'feedback':[m for _,m in _feedback]}
-        _c3l1_save(saved,deps)
-
-    st.markdown('## 4. Representatividad temporal · mismo punto, distintas horas')
-
-    _time_case = st.segmented_control(
-        'Hora de medición',
-        ['08:00','14:00','19:00','02:00'],
-        default='14:00',
-        key='c3_s7_timecase',
-    )
-    _time_vals = {
-        '08:00': (68,'Punta AM · tránsito intenso'),
-        '14:00': (60,'Periodo medio · tránsito moderado'),
-        '19:00': (66,'Punta PM · actividad urbana'),
-        '02:00': (49,'Noche · fondo reducido con eventos ocasionales'),
-    }
-    _tv,_tdesc = _time_vals[_time_case]
-    tc1,tc2 = st.columns(2)
-    tc1.metric('LAeq ilustrativo',f'{_tv} dB(A)')
-    tc2.info(_tdesc)
-
-    _q7 = st.radio(
-        '¿Una medición realizada únicamente a las 14:00 representa necesariamente todo el día?',
-        ['Sí','No'],
-        index=None,
-        horizontal=True,
-        key='c3_s7_q_temporal',
-    )
-    if _q7:
-        if _q7 == 'No':
-            st.success('Correcto. La representatividad temporal exige relacionar horario y duración con el fenómeno que deseas caracterizar.')
-        else:
-            st.warning('Un solo periodo puede no representar puntas, noche o eventos que ocurren en otros horarios.')
-
-    if str(st.session_state.get('role','')).lower() == 'docente':
-        st.markdown('### Pauta docente · Etapa 7')
+        st.markdown('#### Problema 2 · Autopista')
         st.markdown(
-            """
-            **Puntos para explicar:** precisión instrumental y representatividad son conceptos diferentes.
-            Una campaña debe justificar por qué mide allí, a esa altura, en ese horario, durante ese tiempo y con ese descriptor.
-            Evitar calificaciones arbitrarias tipo “80 % buena”; la retroalimentación debe ser técnica y explicativa.
+            f"""
+            **Resultados del monitoreo**
+            - LD ≈ {_ld2:.1f} dB(A)
+            - LE ≈ {_le2:.1f} dB(A)
+            - LN ≈ {_ln2:.1f} dB(A)
+            - Lden ≈ {_lden2:.1f} dB(A)
+
+            **Mensaje docente:** el foco no es volver a enseñar Lden, sino mostrar que esos descriptores
+            dependen de una campaña temporalmente representativa. Una ventana breve puede ser válida para
+            un objetivo específico, pero no debe extrapolarse automáticamente a un periodo completo.
             """
         )
 
