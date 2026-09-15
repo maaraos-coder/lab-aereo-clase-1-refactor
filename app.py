@@ -1688,6 +1688,134 @@ with st.sidebar:
         unsafe_allow_html=True,
     )
 
+
+    # Override robusto de tarjetas del sidebar.
+    # Streamlit ha cambiado la estructura/clases del widget Radio en distintas versiones;
+    # por eso se estiliza directamente cualquier radiogroup dentro del sidebar.
+    st.markdown(
+        """
+        <style>
+        /* ===== TARJETAS DE NAVEGACIÓN DEL SIDEBAR ===== */
+        section[data-testid="stSidebar"] [role="radiogroup"] {
+            display: flex !important;
+            flex-direction: column !important;
+            gap: .42rem !important;
+            width: 100% !important;
+        }
+
+        section[data-testid="stSidebar"] [role="radiogroup"] > label {
+            box-sizing: border-box !important;
+            width: 100% !important;
+            min-height: 44px !important;
+            margin: 0 !important;
+            padding: .56rem .62rem !important;
+
+            border: 1px solid rgba(142,221,242,.34) !important;
+            border-radius: 10px !important;
+            background: rgba(10,66,102,.42) !important;
+
+            display: flex !important;
+            align-items: flex-start !important;
+            gap: .42rem !important;
+
+            transition:
+                background .15s ease,
+                border-color .15s ease,
+                box-shadow .15s ease,
+                transform .08s ease !important;
+        }
+
+        section[data-testid="stSidebar"] [role="radiogroup"] > label:hover {
+            background: rgba(19,112,159,.42) !important;
+            border-color: rgba(89,212,239,.72) !important;
+        }
+
+        section[data-testid="stSidebar"] [role="radiogroup"] > label:has(input:checked) {
+            background: linear-gradient(
+                135deg,
+                rgba(7,93,141,.82),
+                rgba(10,139,178,.58)
+            ) !important;
+            border-color: #59d4ef !important;
+            box-shadow:
+                inset 3px 0 0 #59d4ef,
+                0 0 0 1px rgba(89,212,239,.12) !important;
+        }
+
+        /* Fallback para navegadores/DOM donde :has() no alcance al input */
+        section[data-testid="stSidebar"] [role="radiogroup"] > label[data-checked="true"] {
+            background: linear-gradient(
+                135deg,
+                rgba(7,93,141,.82),
+                rgba(10,139,178,.58)
+            ) !important;
+            border-color: #59d4ef !important;
+            box-shadow:
+                inset 3px 0 0 #59d4ef,
+                0 0 0 1px rgba(89,212,239,.12) !important;
+        }
+
+        section[data-testid="stSidebar"] [role="radiogroup"] > label:active {
+            transform: translateY(1px) !important;
+        }
+
+        /* Radio visible y alineado */
+        section[data-testid="stSidebar"] [role="radiogroup"] [data-baseweb="radio"] {
+            display: flex !important;
+            flex: 0 0 auto !important;
+            opacity: 1 !important;
+            visibility: visible !important;
+            margin-top: .05rem !important;
+        }
+
+        section[data-testid="stSidebar"] [role="radiogroup"] input[type="radio"] {
+            accent-color: #59d4ef !important;
+        }
+
+        /* Texto dentro de las tarjetas */
+        section[data-testid="stSidebar"] [role="radiogroup"]
+        [data-testid="stMarkdownContainer"] {
+            flex: 1 1 auto !important;
+            min-width: 0 !important;
+        }
+
+        section[data-testid="stSidebar"] [role="radiogroup"]
+        [data-testid="stMarkdownContainer"] p {
+            margin: 0 !important;
+            font-size: .77rem !important;
+            font-weight: 700 !important;
+            line-height: 1.26 !important;
+            text-align: left !important;
+        }
+
+        /* El selector de etapas es más compacto para que entren 0–10 */
+        section[data-testid="stSidebar"]
+        div[class*="st-key-selected_stage_lab_"] [role="radiogroup"] > label {
+            min-height: 36px !important;
+            padding: .43rem .52rem !important;
+            border-radius: 9px !important;
+        }
+
+        section[data-testid="stSidebar"]
+        div[class*="st-key-selected_stage_lab_"] [role="radiogroup"]
+        [data-testid="stMarkdownContainer"] p {
+            font-size: .73rem !important;
+            line-height: 1.22 !important;
+            font-weight: 650 !important;
+        }
+
+        /* Accesos principales un poco más altos */
+        section[data-testid="stSidebar"]
+        div[class*="st-key-main_nav_radio_"] [role="radiogroup"] > label {
+            min-height: 50px !important;
+            padding: .60rem .64rem !important;
+            border-radius: 11px !important;
+        }
+        </style>
+        """,
+        unsafe_allow_html=True,
+    )
+
     nav_titles={
         "🏠 Mis clases":"📚  Mis clases",
         results_view_label:(
