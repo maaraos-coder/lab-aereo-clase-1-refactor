@@ -26423,60 +26423,163 @@ def future_lab_view_impl(lab):
         if st.session_state.get(nav_key) not in future_options:
             st.session_state[nav_key]=current_lab_label
 
-        # Navegación principal con botones-tarjeta reales.
-        # No depende del DOM interno de st.radio.
-        _nav_state_key=f"future_nav_cards_{class_id}"
-        if st.session_state.get(_nav_state_key) not in future_options:
-            st.session_state[_nav_state_key]=current_lab_label
-
+        # Navegación principal mediante radio buttons dentro de tarjetas.
         st.markdown(
             """
             <style>
-            section[data-testid="stSidebar"] .stButton > button {
+            /* =====================================================
+               RADIO CARDS · NAVEGACIÓN Y RUTA DE APRENDIZAJE
+               ===================================================== */
+            section[data-testid="stSidebar"] div[role="radiogroup"] {
+                display:flex !important;
+                flex-direction:column !important;
+                gap:.48rem !important;
                 width:100% !important;
-                justify-content:flex-start !important;
+            }
+
+            /* Cada opción completa se transforma visualmente en tarjeta */
+            section[data-testid="stSidebar"] div[role="radiogroup"] label {
+                box-sizing:border-box !important;
+                width:100% !important;
+                min-height:48px !important;
+                margin:0 !important;
+                padding:.62rem .72rem !important;
+
+                border:1px solid rgba(94,194,225,.46) !important;
+                border-radius:11px !important;
+                background:linear-gradient(
+                    135deg,
+                    rgba(8,58,92,.62),
+                    rgba(10,79,117,.42)
+                ) !important;
+
+                display:flex !important;
+                align-items:flex-start !important;
+                gap:.48rem !important;
+                cursor:pointer !important;
+
+                box-shadow:0 2px 7px rgba(0,0,0,.08) !important;
+                transition:
+                    background .16s ease,
+                    border-color .16s ease,
+                    box-shadow .16s ease,
+                    transform .10s ease !important;
+            }
+
+            section[data-testid="stSidebar"] div[role="radiogroup"] label:hover {
+                background:linear-gradient(
+                    135deg,
+                    rgba(13,85,128,.76),
+                    rgba(15,111,151,.52)
+                ) !important;
+                border-color:rgba(89,212,239,.88) !important;
+                box-shadow:0 4px 12px rgba(0,0,0,.12) !important;
+                transform:translateY(-1px) !important;
+            }
+
+            /* Seleccionado */
+            section[data-testid="stSidebar"] div[role="radiogroup"] label:has(input:checked) {
+                background:linear-gradient(
+                    135deg,
+                    rgba(4,104,154,.95),
+                    rgba(13,140,179,.72)
+                ) !important;
+                border-color:#69ddf3 !important;
+                box-shadow:
+                    inset 4px 0 0 #69ddf3,
+                    0 4px 13px rgba(0,0,0,.13) !important;
+            }
+
+            /* Radio visible */
+            section[data-testid="stSidebar"] div[role="radiogroup"] input[type="radio"] {
+                accent-color:#69ddf3 !important;
+                transform:scale(1.10) !important;
+                margin-top:.12rem !important;
+                flex:0 0 auto !important;
+            }
+
+            /* Texto */
+            section[data-testid="stSidebar"] div[role="radiogroup"]
+            [data-testid="stMarkdownContainer"] {
+                flex:1 1 auto !important;
+                min-width:0 !important;
+            }
+
+            section[data-testid="stSidebar"] div[role="radiogroup"]
+            [data-testid="stMarkdownContainer"] p {
+                margin:0 !important;
+                color:#fff !important;
+                font-size:.79rem !important;
+                font-weight:720 !important;
+                line-height:1.30 !important;
                 text-align:left !important;
-                white-space:normal !important;
-                line-height:1.24 !important;
-                font-weight:700 !important;
+            }
+
+            section[data-testid="stSidebar"] div[role="radiogroup"]
+            [data-testid="stCaptionContainer"] {
+                color:#b8d9e8 !important;
+                font-size:.69rem !important;
+                line-height:1.20 !important;
+                margin-top:.14rem !important;
+            }
+
+            /* Navegación principal: tarjetas más altas */
+            section[data-testid="stSidebar"]
+            div[class*="st-key-future_nav_radio_"] div[role="radiogroup"] label {
+                min-height:58px !important;
+                padding:.72rem .78rem !important;
+                border-radius:12px !important;
+            }
+
+            section[data-testid="stSidebar"]
+            div[class*="st-key-future_nav_radio_"] div[role="radiogroup"]
+            [data-testid="stMarkdownContainer"] p {
+                font-size:.82rem !important;
+                font-weight:760 !important;
+            }
+
+            /* Etapas: compactas pero claramente enmarcadas */
+            section[data-testid="stSidebar"]
+            div[class*="st-key-future_stage_"] div[role="radiogroup"] {
+                gap:.42rem !important;
+            }
+
+            section[data-testid="stSidebar"]
+            div[class*="st-key-future_stage_"] div[role="radiogroup"] label {
+                min-height:46px !important;
+                padding:.58rem .66rem !important;
                 border-radius:10px !important;
-                min-height:42px !important;
-                padding:.52rem .62rem !important;
-                margin:.05rem 0 !important;
             }
-            section[data-testid="stSidebar"] .stButton > button[kind="secondary"] {
-                background:rgba(12,73,112,.28) !important;
-                border:1px solid rgba(142,221,242,.32) !important;
-                color:#fff !important;
+
+            section[data-testid="stSidebar"]
+            div[class*="st-key-future_stage_"] div[role="radiogroup"]
+            [data-testid="stMarkdownContainer"] p {
+                font-size:.77rem !important;
+                font-weight:680 !important;
+                line-height:1.28 !important;
             }
-            section[data-testid="stSidebar"] .stButton > button[kind="secondary"]:hover {
-                background:rgba(21,111,160,.40) !important;
-                border-color:rgba(89,212,239,.68) !important;
-            }
-            section[data-testid="stSidebar"] .stButton > button[kind="primary"] {
-                background:linear-gradient(135deg,rgba(8,94,143,.84),rgba(12,125,166,.62)) !important;
-                border:1px solid #59d4ef !important;
-                color:#fff !important;
-                box-shadow:inset 3px 0 0 #59d4ef !important;
+
+            /* Fallback amplio: Streamlit puede no conservar st-key en ciertas versiones */
+            section[data-testid="stSidebar"]
+            div[data-testid="stRadio"] div[role="radiogroup"] label {
+                border:1px solid rgba(94,194,225,.46) !important;
+                border-radius:11px !important;
             }
             </style>
             """,
             unsafe_allow_html=True,
         )
 
-        for _nav_i,_nav_option in enumerate(future_options):
-            _nav_active=st.session_state.get(_nav_state_key)==_nav_option
-            if st.button(
-                nav_titles[_nav_option],
-                key=f"future_nav_card_btn_{class_id}_{_nav_i}",
-                use_container_width=True,
-                type="primary" if _nav_active else "secondary",
-                help=nav_captions[_nav_i],
-            ):
-                st.session_state[_nav_state_key]=_nav_option
-                st.rerun()
-
-        selected_view=st.session_state.get(_nav_state_key,current_lab_label)
+        selected_view=st.radio(
+            "Navegación principal",
+            future_options,
+            index=future_options.index(current_lab_label),
+            format_func=lambda option: nav_titles[option],
+            captions=nav_captions,
+            key=nav_key,
+            label_visibility="collapsed",
+            help="Selecciona el espacio al que quieres ir.",
+        )
 
         if selected_view=="🏠 Mis clases":
             st.session_state[future_view_key]="🏠 Mis clases"
@@ -26571,29 +26674,18 @@ def future_lab_view_impl(lab):
                 _saved_stage = max(_stage_options) if _stage_options else 0
             st.session_state[_stage_key] = _saved_stage
 
-        # Ruta de aprendizaje con botones-tarjeta reales.
-        # Mantiene la misma variable `selected` que usa el resto de la vista.
-        st.markdown("**Ruta de aprendizaje**")
-
-        def _future_stage_card_label(i):
-            if class_id==_C2L2_CLASS_ID:
-                return f"Etapa {i} · {_future_stage_display_title(lab,i)}"
-            if class_id==_C3L1_CLASS_ID:
-                return f"Etapa {i} · {_c3l1_nav_stage_title(lab,i)}"
-            return f"Etapa {i} · {lab['stages'][i][0]}"
-
-        for _stage_i in _stage_options:
-            _stage_active=st.session_state.get(_stage_key)==_stage_i
-            if st.button(
-                _future_stage_card_label(_stage_i),
-                key=f"future_stage_card_btn_{class_id}_{_stage_i}",
-                use_container_width=True,
-                type="primary" if _stage_active else "secondary",
-            ):
-                st.session_state[_stage_key]=_stage_i
-                st.rerun()
-
-        selected=st.session_state.get(_stage_key,0)
+        selected=st.radio(
+            "Ruta de aprendizaje",
+            _stage_options,
+            format_func=lambda i:(
+                f"Etapa {i} · {_future_stage_display_title(lab,i)}"
+                if class_id==_C2L2_CLASS_ID
+                else f"Etapa {i} · {_c3l1_nav_stage_title(lab,i)}"
+                if class_id==_C3L1_CLASS_ID
+                else f"Etapa {i} · {lab['stages'][i][0]}"
+            ),
+            key=_stage_key,
+        )
 
         if st.session_state.get("role")=="Docente":
             # Mantiene los controles docentes con la misma organización visual del Curso 1.
