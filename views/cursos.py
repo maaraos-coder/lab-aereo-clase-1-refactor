@@ -26565,6 +26565,97 @@ def future_lab_view_impl(lab):
                 border:1px solid rgba(94,194,225,.46) !important;
                 border-radius:11px !important;
             }
+
+            /* =====================================================
+               AJUSTE DE ALINEACIÓN · MISMO ANCHO EN TODAS LAS TARJETAS
+               ===================================================== */
+            section[data-testid="stSidebar"] div[data-testid="stRadio"],
+            section[data-testid="stSidebar"] div[data-testid="stRadio"] > div,
+            section[data-testid="stSidebar"] div[data-testid="stRadio"] div[role="radiogroup"] {
+                width:100% !important;
+                max-width:100% !important;
+                box-sizing:border-box !important;
+            }
+
+            section[data-testid="stSidebar"] div[data-testid="stRadio"] div[role="radiogroup"] > label {
+                width:100% !important;
+                max-width:100% !important;
+                flex:0 0 100% !important;
+                box-sizing:border-box !important;
+            }
+
+            /* Texto ocupa el espacio disponible sin achicar la tarjeta */
+            section[data-testid="stSidebar"] div[data-testid="stRadio"] div[role="radiogroup"] > label
+            [data-testid="stMarkdownContainer"] {
+                width:100% !important;
+                max-width:100% !important;
+                flex:1 1 auto !important;
+            }
+
+            /* =====================================================
+               BLOQUE COMPLETO · RUTA DE APRENDIZAJE
+               ===================================================== */
+            section[data-testid="stSidebar"]
+            div[class*="st-key-future_stage_"] {
+                width:100% !important;
+                box-sizing:border-box !important;
+                padding:.72rem .62rem .78rem !important;
+                margin-top:.52rem !important;
+                border:1px solid rgba(89,212,239,.28) !important;
+                border-radius:14px !important;
+                background:linear-gradient(
+                    180deg,
+                    rgba(7,48,77,.46),
+                    rgba(7,43,70,.26)
+                ) !important;
+                box-shadow:0 5px 16px rgba(0,0,0,.08) !important;
+            }
+
+            /* Título Ruta de aprendizaje dentro del marco */
+            section[data-testid="stSidebar"]
+            div[class*="st-key-future_stage_"] > label,
+            section[data-testid="stSidebar"]
+            div[class*="st-key-future_stage_"] > div:first-child {
+                width:100% !important;
+            }
+
+            section[data-testid="stSidebar"]
+            div[class*="st-key-future_stage_"] [data-testid="stWidgetLabel"] {
+                margin-bottom:.52rem !important;
+                padding:.12rem .10rem .34rem !important;
+                border-bottom:1px solid rgba(89,212,239,.20) !important;
+            }
+
+            section[data-testid="stSidebar"]
+            div[class*="st-key-future_stage_"] [data-testid="stWidgetLabel"] p {
+                margin:0 !important;
+                color:#e9f8ff !important;
+                font-size:.80rem !important;
+                font-weight:800 !important;
+                letter-spacing:.01em !important;
+            }
+
+            /* Todas las etapas con misma altura mínima y alineación */
+            section[data-testid="stSidebar"]
+            div[class*="st-key-future_stage_"] div[role="radiogroup"] > label {
+                min-height:48px !important;
+                width:100% !important;
+                padding:.59rem .66rem !important;
+                display:flex !important;
+                align-items:center !important;
+            }
+
+            /* Navegación principal alineada al mismo ancho */
+            section[data-testid="stSidebar"]
+            div[class*="st-key-future_nav_radio_"] {
+                width:100% !important;
+            }
+
+            section[data-testid="stSidebar"]
+            div[class*="st-key-future_nav_radio_"] div[role="radiogroup"] > label {
+                width:100% !important;
+                min-height:58px !important;
+            }
             </style>
             """,
             unsafe_allow_html=True,
