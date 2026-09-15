@@ -594,6 +594,7 @@ def _teacher_course_results_impl(compact=False):
                     "reviewer":"c2l2_stage10",
                 },
             },
+        },
         "Curso 3 · Control de ruido ambiental":{
             "Laboratorio 1 · Actividades formativas":{
                 "Etapa 9 · Preguntas de comprensión":{
@@ -613,7 +614,6 @@ def _teacher_course_results_impl(compact=False):
                     "reviewer":"c3_stage10_formative",
                 },
             },
-        },
         },
     }
 
@@ -637,39 +637,17 @@ def _teacher_course_results_impl(compact=False):
     config=evaluations[evaluation]
 
     try:
-        if config.get("reviewer") in ("c3_stage9_formative","c3_stage10_formative"):
-            # Curso 3 · Lab 1 es completamente formativo.
-            # Las Etapas 9 y 10 se guardan en user_progress, no en responses.
-            progress_rows=(
+        if config.get("formative_only"):
+            raw_progress=(
                 client.table("user_progress")
-                .select("user_key,state_json,updated_at")
+                .select("user_key,display_name,state_json,updated_at")
                 .eq("class_id",config["class_id"])
                 .order("updated_at",desc=True)
                 .execute().data or []
             )
-
-            user_keys=sorted({
-                r.get("user_key") for r in progress_rows if r.get("user_key")
-            })
-            user_map={}
-            if user_keys:
-                try:
-                    user_rows=(
-                        client.table("users")
-                        .select("user_key,display_name,email")
-                        .in_("user_key",user_keys)
-                        .execute().data or []
-                    )
-                    user_map={
-                        u.get("user_key"):u
-                        for u in user_rows if u.get("user_key")
-                    }
-                except Exception:
-                    user_map={}
-
             rows=[]
-            for pr in progress_rows:
-                state=pr.get("state_json") or {}
+            for progress in raw_progress:
+                state=progress.get("state_json") or {}
                 if isinstance(state,str):
                     try:
                         state=json.loads(state)
@@ -677,7 +655,6 @@ def _teacher_course_results_impl(compact=False):
                         state={}
                 if not isinstance(state,dict):
                     state={}
-
                 formative=state.get("c3_formative") or {}
                 if not isinstance(formative,dict):
                     formative={}
@@ -685,45 +662,32 @@ def _teacher_course_results_impl(compact=False):
                 if config["stage"]==9:
                     payload=state.get("c3_s9_formative")
                     if not isinstance(payload,dict) or not payload:
-                        payload=(
-                            formative.get("s9_comprehension_draft")
-                            or formative.get("s9_comprehension")
-                            or {}
-                        )
-                    done=bool(state.get("done_9"))
-                    question_key="c3_stage9_formative"
+                        payload=(formative.get("s9_comprehension_draft") or
+                                 formative.get("s9_comprehension") or {})
+                    completed=bool(state.get("done_9"))
                 else:
                     payload=state.get("c3_s10_formative")
                     if not isinstance(payload,dict) or not payload:
-                        payload=(
-                            formative.get("s10_integrated_case_draft")
-                            or formative.get("s10_integrated_case")
-                            or {}
-                        )
-                    done=bool(state.get("done_10"))
-                    question_key="c3_stage10_formative"
+                        payload=(formative.get("s10_integrated_case_draft") or
+                                 formative.get("s10_integrated_case") or {})
+                    completed=bool(state.get("done_10"))
 
-                # Mostrar solo alumnos que efectivamente hayan iniciado esta etapa.
+                # Solo listar alumnos que hayan iniciado efectivamente la etapa.
                 if not isinstance(payload,dict) or not payload:
                     continue
-
-                user_key=pr.get("user_key")
                 rows.append({
-                    "id":f"{user_key}_{config['stage']}",
-                    "user_key":user_key,
-                    "users":user_map.get(user_key,{}) or {},
+                    "id":f"c3_{config['stage']}_{progress.get('user_key','')}",
+                    "user_key":progress.get("user_key"),
+                    "users":{
+                        "display_name":progress.get("display_name") or progress.get("user_key") or "Alumno",
+                        "email":"",
+                    },
                     "answer":payload,
-                    "stage":config["stage"],
-                    "question_key":question_key,
-                    "status":"completed" if done else "draft",
-                    "submitted_at":pr.get("updated_at"),
-                    "updated_at":pr.get("updated_at"),
-                    "teacher_score":None,
-                    "auto_score":None,
-                    "max_score":None,
-                    "_formative_done":done,
+                    "updated_at":progress.get("updated_at"),
+                    "submitted_at":progress.get("updated_at"),
+                    "status":"completed" if completed else "draft",
+                    "_formative_done":completed,
                 })
-
         elif config.get("reviewer")=="c2_stage9":
             # La primera versión de esta evaluación pudo guardarse con un class_id
             # heredado del Curso 1. La identificamos por su payload canónico.
@@ -811,8 +775,8 @@ def _teacher_course_results_impl(compact=False):
         )
     elif config.get("formative_only"):
         st.info(
-            "**Actividad formativa sin nota.** Aquí puedes revisar el trabajo guardado por los alumnos. "
-            "No existe puntaje, calificación ni corrección docente obligatoria."
+            "**Actividad formativa sin nota.** Esta vista permite consultar el trabajo guardado "
+            "por cada alumno. No existe puntaje ni calificación docente."
         )
     else:
         st.info(
@@ -843,9 +807,7 @@ def _teacher_course_results_impl(compact=False):
                     item={
                         "Alumno":name,
                         "Estado":"Completada" if row.get("_formative_done") else "En desarrollo",
-                        "Última actualización":str(
-                            row.get("submitted_at") or row.get("updated_at") or ""
-                        ).replace("T"," ")[:16],
+                        "Última actualización":str(row.get("submitted_at") or row.get("updated_at") or "").replace("T"," ")[:16],
                     }
                 else:
                     item={
@@ -887,7 +849,6 @@ def _teacher_course_results_impl(compact=False):
                     range(len(rows)),
                     format_func=lambda i: (
                         (rows[i].get("users") or {}).get("display_name")
-                        or (rows[i].get("users") or {}).get("email")
                         or rows[i].get("user_key","Alumno")
                     ),
                     key=f"teacher_c3_student_{config['stage']}_{'c' if compact else 'f'}",
@@ -904,92 +865,61 @@ def _teacher_course_results_impl(compact=False):
 
                 st.markdown("#### Trabajo formativo del alumno")
                 st.caption(
-                    "Vista de consulta. Esta actividad no tiene puntaje ni nota y no requiere corrección docente."
+                    "Consulta solamente. El Laboratorio 1 del Curso 3 es formativo, sin puntaje ni nota."
                 )
-                s1,s2=st.columns(2)
-                s1.metric(
-                    "Estado",
-                    "Completada" if row.get("_formative_done") else "En desarrollo",
-                )
-                s2.metric(
-                    "Última actualización",
-                    str(row.get("updated_at") or "").replace("T"," ")[:16] or "—",
-                )
+                a,b=st.columns(2)
+                a.metric("Estado","Completada" if row.get("_formative_done") else "En desarrollo")
+                b.metric("Última actualización",str(row.get("updated_at") or "").replace("T"," ")[:16] or "—")
 
                 if reviewer=="c3_stage9_formative":
                     answers=payload.get("answers",{}) if isinstance(payload.get("answers"),dict) else {}
                     checked=payload.get("checked",{}) if isinstance(payload.get("checked"),dict) else {}
                     total=int(payload.get("total_questions") or 10)
-                    completed=int(
-                        payload.get("completed_questions")
-                        or sum(1 for v in checked.values() if v)
-                    )
+                    completed=int(payload.get("completed_questions") or sum(1 for v in checked.values() if v))
                     st.markdown("##### Etapa 9 · Preguntas de comprensión")
-                    st.write(f"**Avance:** {completed} de {total} preguntas comprobadas")
+                    st.write(f"**Avance registrado:** {completed} de {total} actividades revisadas")
                     for i in range(total):
                         with st.container(border=True):
                             st.markdown(f"**Pregunta {i+1}**")
-                            ans=answers.get(str(i))
-                            if isinstance(ans,list):
-                                st.write(", ".join(str(x) for x in ans) if ans else "Sin respuesta")
+                            answer=answers.get(str(i))
+                            if isinstance(answer,list):
+                                st.write(", ".join(map(str,answer)) if answer else "Sin respuesta")
                             else:
-                                st.write(ans if ans not in (None,"") else "Sin respuesta")
-                            if checked.get(str(i)):
-                                st.caption("✓ Respuesta comprobada por el alumno")
+                                st.write(answer if answer not in (None,"") else "Sin respuesta")
+                            st.caption("✓ Comprobada por el alumno" if checked.get(str(i)) else "Aún no comprobada")
                 else:
                     st.markdown("##### Etapa 10 · Diagnóstico acústico de un barrio")
-                    summary_fields=[
-                        ("Fuente principal","main_source"),
-                        ("Receptor crítico","receptor"),
-                        ("Punto adicional","extra_point"),
-                        ("Cobertura temporal","periods"),
-                        ("Instrumentación","instrument"),
-                        ("Configuración","weighting"),
-                        ("LAeq P1","ans_laeq"),
-                        ("L10","ans_l10"),
-                        ("L90","ans_l90"),
-                        ("SEL / LAE","ans_sel"),
-                        ("Lden","ans_lden"),
+                    fields=[
+                        ("Fuente principal","main_source"),("Receptor crítico","receptor"),
+                        ("Punto adicional","extra_point"),("Cobertura temporal","periods"),
+                        ("Instrumentación","instrument"),("Configuración","weighting"),
+                        ("LAeq P1","ans_laeq"),("L10","ans_l10"),("L90","ans_l90"),
+                        ("SEL / LAE","ans_sel"),("Lden","ans_lden"),
                     ]
-                    for label,key in summary_fields:
+                    for label,key in fields:
                         value=payload.get(key)
                         if value not in (None,"","Seleccionar"):
                             st.markdown(f"**{label}:** {value}")
-
-                    if payload.get("variability"):
-                        st.markdown("**Interpretación L10−L90**")
-                        st.write(payload.get("variability"))
-                    if payload.get("limitations"):
-                        st.markdown("**Limitaciones de la campaña**")
-                        st.write(payload.get("limitations"))
-                    if payload.get("missing"):
-                        st.markdown("**Información faltante**")
-                        st.write(payload.get("missing"))
-                    if payload.get("conclusion"):
-                        st.markdown("**Conclusión profesional**")
-                        st.write(payload.get("conclusion"))
-
+                    for title,key in [
+                        ("Interpretación L10−L90","variability"),
+                        ("Limitaciones de la campaña","limitations"),
+                        ("Información faltante","missing"),
+                        ("Conclusión profesional","conclusion"),
+                    ]:
+                        if payload.get(key):
+                            st.markdown(f"**{title}**")
+                            st.write(payload.get(key))
                     answers=payload.get("answers",{}) if isinstance(payload.get("answers"),dict) else {}
                     if answers:
                         st.markdown("##### Preguntas de comprensión")
-                        for key in sorted(
-                            answers,
-                            key=lambda x:int(x) if str(x).isdigit() else 999,
-                        ):
+                        for key in sorted(answers,key=lambda x:int(x) if str(x).isdigit() else 999):
                             with st.container(border=True):
-                                label=(
-                                    f"Pregunta {int(key)+1}"
-                                    if str(key).isdigit()
-                                    else f"Pregunta {key}"
-                                )
+                                label=f"Pregunta {int(key)+1}" if str(key).isdigit() else f"Pregunta {key}"
                                 st.markdown(f"**{label}**")
                                 st.write(answers.get(key) or "Sin respuesta")
-
                     st.caption(
-                        "Diagnóstico guardado: "
-                        + ("Sí" if payload.get("diagnosis_saved") else "No")
-                        + " · Comprensión guardada: "
-                        + ("Sí" if payload.get("comprehension_saved") else "No")
+                        "Diagnóstico guardado: " + ("Sí" if payload.get("diagnosis_saved") else "No") +
+                        " · Comprensión guardada: " + ("Sí" if payload.get("comprehension_saved") else "No")
                     )
 
         elif reviewer in ("c2l2_stage9","c2l2_stage10"):
@@ -1350,10 +1280,6 @@ def _teacher_course_results_impl(compact=False):
     # TAB 3 · CONSOLIDADO
     # ---------------------------------------------------------------
     with tabs[2]:
-        if config.get("formative_only"):
-            st.caption(
-                "Consolidado formativo: muestra quién inició o completó la actividad, sin puntaje ni nota."
-            )
         if not rows:
             st.caption("No hay datos para consolidar.")
         else:
@@ -1361,21 +1287,28 @@ def _teacher_course_results_impl(compact=False):
             for row in rows:
                 user=row.get("users") or {}
                 name=user.get("display_name") or user.get("email") or row.get("user_key","Alumno")
-                auto=float(row.get("auto_score") or 0)
-                teacher=row.get("teacher_score")
-                effective=float(teacher if teacher is not None else auto)
-                reviewed_row=teacher is not None or row.get("status")=="reviewed"
-                item={
-                    "Alumno":name,
-                    "Automático":f"{auto:g}/{config['maximum']}",
-                    "Docente":f"{effective:g}/{config['maximum']}",
-                    "Estado":"Revisada" if reviewed_row else "Pendiente",
-                }
-                if config["with_grade"]:
-                    item["Nota vigente"]=(
-                        f"{_grade_from_percent(effective/config['maximum']*100):.1f}"
-                        if reviewed_row else "Pendiente"
-                    )
+                if config.get("formative_only"):
+                    item={
+                        "Alumno":name,
+                        "Estado":"Completada" if row.get("_formative_done") else "En desarrollo",
+                        "Última actualización":str(row.get("updated_at") or "").replace("T"," ")[:16],
+                    }
+                else:
+                    auto=float(row.get("auto_score") or 0)
+                    teacher=row.get("teacher_score")
+                    effective=float(teacher if teacher is not None else auto)
+                    reviewed_row=teacher is not None or row.get("status")=="reviewed"
+                    item={
+                        "Alumno":name,
+                        "Automático":f"{auto:g}/{config['maximum']}",
+                        "Docente":f"{effective:g}/{config['maximum']}",
+                        "Estado":"Revisada" if reviewed_row else "Pendiente",
+                    }
+                    if config["with_grade"]:
+                        item["Nota vigente"]=(
+                            f"{_grade_from_percent(effective/config['maximum']*100):.1f}"
+                            if reviewed_row else "Pendiente"
+                        )
                 summary.append(item)
             frame=pd.DataFrame(summary)
             st.dataframe(frame,hide_index=True,use_container_width=True)
