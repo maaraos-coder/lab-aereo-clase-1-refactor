@@ -525,58 +525,6 @@ def _teacher_course_results_impl(compact=False):
     if st.session_state.get("role")!="Docente":
         return
 
-    # Mantener el lenguaje visual de tarjetas de la barra lateral también
-    # mientras el docente está dentro de "Evaluaciones entregadas".
-    # Se usan selectores amplios y estables para no depender de la key
-    # específica del laboratorio ni del DOM de una sola versión de Streamlit.
-    st.markdown(
-        """
-        <style>
-        section[data-testid="stSidebar"] div[data-testid="stRadio"] > div[role="radiogroup"] {
-            gap: .36rem !important;
-        }
-        section[data-testid="stSidebar"] div[data-testid="stRadio"] > div[role="radiogroup"] > label {
-            width: 100% !important;
-            margin: 0 !important;
-            padding: .50rem .58rem !important;
-            border: 1px solid rgba(142,221,242,.24) !important;
-            border-radius: 10px !important;
-            background: rgba(12,73,112,.24) !important;
-            transition: background .15s ease,border-color .15s ease,box-shadow .15s ease,transform .08s ease !important;
-            cursor: pointer !important;
-            align-items: flex-start !important;
-            text-align: left !important;
-        }
-        section[data-testid="stSidebar"] div[data-testid="stRadio"] > div[role="radiogroup"] > label:hover {
-            background: rgba(21,111,160,.31) !important;
-            border-color: rgba(89,212,239,.52) !important;
-        }
-        section[data-testid="stSidebar"] div[data-testid="stRadio"] > div[role="radiogroup"] > label:has(input:checked) {
-            background: linear-gradient(135deg,rgba(8,94,143,.66),rgba(12,125,166,.44)) !important;
-            border-color: #59d4ef !important;
-            box-shadow: inset 3px 0 0 #59d4ef,0 0 0 1px rgba(89,212,239,.07) !important;
-        }
-        section[data-testid="stSidebar"] div[data-testid="stRadio"] [data-baseweb="radio"] {
-            display:flex !important;
-            opacity:1 !important;
-            visibility:visible !important;
-            flex:0 0 auto !important;
-            margin-top:.05rem !important;
-        }
-        section[data-testid="stSidebar"] div[data-testid="stRadio"] input[type="radio"] {
-            accent-color:#59d4ef !important;
-        }
-        section[data-testid="stSidebar"] div[data-testid="stRadio"] [data-testid="stMarkdownContainer"] p {
-            font-size:.76rem !important;
-            font-weight:650 !important;
-            line-height:1.28 !important;
-            text-align:left !important;
-        }
-        </style>
-        """,
-        unsafe_allow_html=True,
-    )
-
     st.markdown("## Gestión de evaluaciones")
     st.caption(
         "Selecciona primero el curso y el laboratorio. "
@@ -646,6 +594,7 @@ def _teacher_course_results_impl(compact=False):
                     "reviewer":"c2l2_stage10",
                 },
             },
+        },
         "Curso 3 · Control de ruido ambiental":{
             "Laboratorio 1 · Actividades formativas":{
                 "Etapa 8 · Medición real con sonómetro online":{
@@ -655,7 +604,6 @@ def _teacher_course_results_impl(compact=False):
                     "with_grade":False,
                     "formative_only":True,
                     "reviewer":"c3_stage8_formative",
-                    "saved_key":"c3_stage8_real_measurement",
                 },
                 "Etapa 9 · Preguntas de comprensión":{
                     "class_id":"clase-05-ruido-ambiental-lab-1",
@@ -664,7 +612,6 @@ def _teacher_course_results_impl(compact=False):
                     "with_grade":False,
                     "formative_only":True,
                     "reviewer":"c3_stage9_formative",
-                    "saved_key":"c3_s9_formative",
                 },
                 "Etapa 10 · Diagnóstico acústico de un barrio":{
                     "class_id":"clase-05-ruido-ambiental-lab-1",
@@ -673,10 +620,8 @@ def _teacher_course_results_impl(compact=False):
                     "with_grade":False,
                     "formative_only":True,
                     "reviewer":"c3_stage10_formative",
-                    "saved_key":"c3_s10_formative",
                 },
             },
-        },
         },
     }
 
@@ -701,7 +646,7 @@ def _teacher_course_results_impl(compact=False):
 
     try:
         if config.get("formative_only"):
-            raw_progress=(
+            progress_rows=(
                 client.table("user_progress")
                 .select("user_key,state_json,updated_at")
                 .eq("class_id",config["class_id"])
@@ -709,17 +654,16 @@ def _teacher_course_results_impl(compact=False):
                 .execute().data or []
             )
 
-            # Resolver nombres de alumnos sin asumir que user_progress expone display_name.
-            progress_user_keys=sorted({
-                r.get("user_key") for r in raw_progress if r.get("user_key")
+            user_keys=sorted({
+                r.get("user_key") for r in progress_rows if r.get("user_key")
             })
             user_map={}
-            if progress_user_keys:
+            if user_keys:
                 try:
                     user_rows=(
                         client.table("users")
                         .select("user_key,display_name,email")
-                        .in_("user_key",progress_user_keys)
+                        .in_("user_key",user_keys)
                         .execute().data or []
                     )
                     user_map={
@@ -730,7 +674,7 @@ def _teacher_course_results_impl(compact=False):
                     user_map={}
 
             rows=[]
-            for progress in raw_progress:
+            for progress in progress_rows:
                 state=progress.get("state_json") or {}
                 if isinstance(state,str):
                     try:
@@ -746,7 +690,7 @@ def _teacher_course_results_impl(compact=False):
 
                 if config["stage"]==8:
                     payload=state.get("c3_stage8_real_measurement") or {}
-                    completed=bool(state.get("done_8"))
+                    done=bool(state.get("done_8"))
                 elif config["stage"]==9:
                     payload=state.get("c3_s9_formative")
                     if not isinstance(payload,dict) or not payload:
@@ -755,7 +699,7 @@ def _teacher_course_results_impl(compact=False):
                             or formative.get("s9_comprehension")
                             or {}
                         )
-                    completed=bool(state.get("done_9"))
+                    done=bool(state.get("done_9"))
                 else:
                     payload=state.get("c3_s10_formative")
                     if not isinstance(payload,dict) or not payload:
@@ -764,24 +708,22 @@ def _teacher_course_results_impl(compact=False):
                             or formative.get("s10_integrated_case")
                             or {}
                         )
-                    completed=bool(state.get("done_10"))
+                    done=bool(state.get("done_10"))
 
-                # Solo aparecen alumnos que efectivamente hayan iniciado la actividad.
                 if not isinstance(payload,dict) or not payload:
                     continue
 
                 user_key=progress.get("user_key")
-                user_info=user_map.get(user_key,{}) or {}
                 rows.append({
                     "id":f"c3_{config['stage']}_{user_key or ''}",
                     "user_key":user_key,
-                    "users":user_info,
+                    "users":user_map.get(user_key,{}) or {},
                     "answer":payload,
                     "stage":config["stage"],
-                    "status":"completed" if completed else "draft",
-                    "updated_at":progress.get("updated_at"),
+                    "status":"completed" if done else "draft",
                     "submitted_at":progress.get("updated_at"),
-                    "_formative_done":completed,
+                    "updated_at":progress.get("updated_at"),
+                    "_formative_done":done,
                 })
 
         elif config.get("reviewer")=="c2_stage9":
@@ -871,8 +813,8 @@ def _teacher_course_results_impl(compact=False):
         )
     elif config.get("formative_only"):
         st.info(
-            "**Actividad formativa sin nota.** Puedes revisar el trabajo que cada alumno ha guardado "
-            "en esta etapa. No existe puntaje ni calificación docente."
+            "**Actividad formativa sin nota.** Esta vista permite consultar el trabajo guardado "
+            "por cada alumno, sin puntaje ni calificación docente."
         )
     else:
         st.info(
@@ -964,7 +906,7 @@ def _teacher_course_results_impl(compact=False):
 
                 st.markdown("#### Trabajo formativo del alumno")
                 st.caption(
-                    "Vista de consulta. El Laboratorio 1 del Curso 3 es formativo, sin puntaje ni nota."
+                    "Consulta individual. El Laboratorio 1 del Curso 3 no tiene puntaje ni nota."
                 )
                 c1,c2=st.columns(2)
                 c1.metric(
@@ -993,25 +935,20 @@ def _teacher_course_results_impl(compact=False):
                     for label,key in fields:
                         value=payload.get(key)
                         if value not in (None,""):
-                            suffix=""
-                            if key in ("duration_min","duration_off_min"):
-                                suffix=" min"
-                            elif key=="distance_m":
-                                suffix=" m"
-                            elif key in ("LAeq_on","LAFmax_on","LAFmin_on","LAeq_off","specific_level_estimated"):
-                                suffix=" dB(A)"
-                            st.markdown(f"**{label}:** {value}{suffix}")
+                            st.markdown(f"**{label}:** {value}")
 
-                    interferences=payload.get("interferences") or []
-                    if interferences:
-                        st.markdown("**Interferencias declaradas:** " + ", ".join(map(str,interferences)))
+                    if payload.get("interferences"):
+                        st.markdown(
+                            "**Interferencias:** "
+                            + ", ".join(map(str,payload.get("interferences") or []))
+                        )
 
                     for title,key in [
-                        ("Hipótesis previa","hypothesis"),
+                        ("Hipótesis","hypothesis"),
                         ("Justificación de estabilidad","stability_justification"),
                         ("Descripción de la fuente","source_description"),
                         ("Interpretación acústica","interpretation"),
-                        ("Limitaciones declaradas","limitations"),
+                        ("Limitaciones","limitations"),
                     ]:
                         if payload.get(key):
                             st.markdown(f"**{title}**")
@@ -1022,7 +959,12 @@ def _teacher_course_results_impl(compact=False):
                         st.markdown("##### Respuestas de interpretación")
                         for key,value in answers.items():
                             with st.container(border=True):
-                                st.markdown(f"**Pregunta {int(key)+1 if str(key).isdigit() else key}**")
+                                qlabel=(
+                                    f"Pregunta {int(key)+1}"
+                                    if str(key).isdigit()
+                                    else f"Pregunta {key}"
+                                )
+                                st.markdown(f"**{qlabel}**")
                                 st.write(value if value not in (None,"") else "Sin respuesta")
 
                 elif reviewer=="c3_stage9_formative":
@@ -1034,7 +976,7 @@ def _teacher_course_results_impl(compact=False):
                         payload.get("completed_questions")
                         or sum(1 for v in checked.values() if v)
                     )
-                    st.write(f"**Avance registrado:** {completed} de {total} preguntas comprobadas")
+                    st.write(f"**Avance:** {completed} de {total} preguntas comprobadas.")
                     for i in range(total):
                         with st.container(border=True):
                             st.markdown(f"**Pregunta {i+1}**")
@@ -1043,7 +985,11 @@ def _teacher_course_results_impl(compact=False):
                                 st.write(", ".join(map(str,answer)) if answer else "Sin respuesta")
                             else:
                                 st.write(answer if answer not in (None,"") else "Sin respuesta")
-                            st.caption("✓ Comprobada por el alumno" if checked.get(str(i)) else "Aún no comprobada")
+                            st.caption(
+                                "✓ Comprobada por el alumno"
+                                if checked.get(str(i))
+                                else "Aún no comprobada"
+                            )
 
                 else:
                     st.markdown("##### Etapa 10 · Diagnóstico acústico de un barrio")
@@ -1083,12 +1029,12 @@ def _teacher_course_results_impl(compact=False):
                             key=lambda x:int(x) if str(x).isdigit() else 999,
                         ):
                             with st.container(border=True):
-                                label=(
+                                qlabel=(
                                     f"Pregunta {int(key)+1}"
                                     if str(key).isdigit()
                                     else f"Pregunta {key}"
                                 )
-                                st.markdown(f"**{label}**")
+                                st.markdown(f"**{qlabel}**")
                                 st.write(answers.get(key) or "Sin respuesta")
 
                     if "diagnosis_saved" in payload or "comprehension_saved" in payload:
@@ -1459,6 +1405,27 @@ def _teacher_course_results_impl(compact=False):
     with tabs[2]:
         if not rows:
             st.caption("No hay datos para consolidar.")
+        elif config.get("formative_only"):
+            summary=[]
+            for row in rows:
+                user=row.get("users") or {}
+                name=user.get("display_name") or user.get("email") or row.get("user_key","Alumno")
+                summary.append({
+                    "Alumno":name,
+                    "Estado":"Completada" if row.get("_formative_done") else "En desarrollo",
+                    "Última actualización":str(
+                        row.get("updated_at") or ""
+                    ).replace("T"," ")[:16],
+                })
+            frame=pd.DataFrame(summary)
+            st.dataframe(frame,hide_index=True,use_container_width=True)
+            st.download_button(
+                "Descargar consolidado CSV",
+                frame.to_csv(index=False).encode("utf-8-sig"),
+                f"{safe_filename(course)}_{safe_filename(lab)}_{config['stage']}.csv",
+                "text/csv",
+                key=f"teacher_eval_csv_{config['class_id']}_{config['stage']}_{'c' if compact else 'f'}",
+            )
         else:
             summary=[]
             for row in rows:
