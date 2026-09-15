@@ -26379,6 +26379,174 @@ def future_lab_view_impl(lab):
             unsafe_allow_html=True,
         )
 
+        st.markdown(
+            r"""
+    <style>
+    /* =========================================================
+       SIDEBAR · ANCHO Y ALTO REALMENTE UNIFORMES
+       Fuerza también wrappers internos de BaseWeb/Streamlit.
+       ========================================================= */
+
+    section[data-testid="stSidebar"] {
+        --future-card-height: 64px;
+    }
+
+    /* Todo el árbol del radio ocupa el ancho disponible */
+    section[data-testid="stSidebar"] div[data-testid="stRadio"],
+    section[data-testid="stSidebar"] div[data-testid="stRadio"] > div,
+    section[data-testid="stSidebar"] div[data-testid="stRadio"] div[role="radiogroup"],
+    section[data-testid="stSidebar"] div[data-testid="stRadio"] div[role="radiogroup"] > div,
+    section[data-testid="stSidebar"] div[data-testid="stRadio"] label,
+    section[data-testid="stSidebar"] div[data-testid="stRadio"] label[data-baseweb="radio"],
+    section[data-testid="stSidebar"] div[data-testid="stRadio"] [data-baseweb="radio"] {
+        width:100% !important;
+        max-width:100% !important;
+        min-width:0 !important;
+        box-sizing:border-box !important;
+        align-self:stretch !important;
+    }
+
+    section[data-testid="stSidebar"] div[data-testid="stRadio"] div[role="radiogroup"] {
+        display:flex !important;
+        flex-direction:column !important;
+        align-items:stretch !important;
+        gap:.48rem !important;
+    }
+
+    /* La tarjeta real es el componente BaseWeb del radio */
+    section[data-testid="stSidebar"]
+    div[data-testid="stRadio"] label[data-baseweb="radio"],
+    section[data-testid="stSidebar"]
+    div[data-testid="stRadio"] div[role="radiogroup"] > label,
+    section[data-testid="stSidebar"]
+    div[data-testid="stRadio"] div[role="radiogroup"] > div > label {
+        width:100% !important;
+        max-width:100% !important;
+        min-width:100% !important;
+        flex:0 0 100% !important;
+
+        height:var(--future-card-height) !important;
+        min-height:var(--future-card-height) !important;
+        max-height:var(--future-card-height) !important;
+
+        margin:0 !important;
+        padding:.60rem .70rem !important;
+        box-sizing:border-box !important;
+
+        display:flex !important;
+        align-items:center !important;
+        justify-content:flex-start !important;
+        gap:.50rem !important;
+
+        border:1px solid rgba(94,194,225,.52) !important;
+        border-radius:11px !important;
+        background:linear-gradient(
+            135deg,
+            rgba(8,58,92,.70),
+            rgba(10,79,117,.48)
+        ) !important;
+        box-shadow:0 2px 7px rgba(0,0,0,.08) !important;
+        overflow:hidden !important;
+    }
+
+    /* Hover */
+    section[data-testid="stSidebar"]
+    div[data-testid="stRadio"] label[data-baseweb="radio"]:hover,
+    section[data-testid="stSidebar"]
+    div[data-testid="stRadio"] div[role="radiogroup"] > label:hover,
+    section[data-testid="stSidebar"]
+    div[data-testid="stRadio"] div[role="radiogroup"] > div > label:hover {
+        background:linear-gradient(
+            135deg,
+            rgba(13,85,128,.82),
+            rgba(15,111,151,.58)
+        ) !important;
+        border-color:rgba(89,212,239,.90) !important;
+    }
+
+    /* Seleccionado */
+    section[data-testid="stSidebar"]
+    div[data-testid="stRadio"] label[data-baseweb="radio"]:has(input:checked),
+    section[data-testid="stSidebar"]
+    div[data-testid="stRadio"] div[role="radiogroup"] > label:has(input:checked),
+    section[data-testid="stSidebar"]
+    div[data-testid="stRadio"] div[role="radiogroup"] > div > label:has(input:checked) {
+        background:linear-gradient(
+            135deg,
+            rgba(4,104,154,.96),
+            rgba(13,140,179,.76)
+        ) !important;
+        border-color:#69ddf3 !important;
+        box-shadow:
+            inset 4px 0 0 #69ddf3,
+            0 4px 12px rgba(0,0,0,.12) !important;
+    }
+
+    /* Contenido textual: siempre usa todo el espacio restante */
+    section[data-testid="stSidebar"]
+    div[data-testid="stRadio"] [data-testid="stMarkdownContainer"] {
+        width:100% !important;
+        max-width:100% !important;
+        min-width:0 !important;
+        flex:1 1 0 !important;
+        display:flex !important;
+        align-items:center !important;
+        box-sizing:border-box !important;
+    }
+
+    section[data-testid="stSidebar"]
+    div[data-testid="stRadio"] [data-testid="stMarkdownContainer"] p {
+        width:100% !important;
+        max-width:100% !important;
+        min-width:0 !important;
+        margin:0 !important;
+        color:#fff !important;
+        font-size:.75rem !important;
+        font-weight:700 !important;
+        line-height:1.22 !important;
+        white-space:normal !important;
+        overflow-wrap:anywhere !important;
+        text-align:left !important;
+    }
+
+    /* Radio visible con ancho reservado idéntico */
+    section[data-testid="stSidebar"] div[data-testid="stRadio"] input[type="radio"] {
+        flex:0 0 16px !important;
+        width:16px !important;
+        height:16px !important;
+        margin:0 !important;
+        accent-color:#69ddf3 !important;
+    }
+
+    /* Ambos paneles exteriores ocupan el mismo ancho */
+    section[data-testid="stSidebar"]
+    div[data-testid="stVerticalBlockBorderWrapper"] {
+        width:100% !important;
+        max-width:100% !important;
+        min-width:0 !important;
+        box-sizing:border-box !important;
+    }
+
+    section[data-testid="stSidebar"]
+    div[data-testid="stVerticalBlockBorderWrapper"] > div {
+        width:100% !important;
+        max-width:100% !important;
+        min-width:0 !important;
+        box-sizing:border-box !important;
+    }
+
+    /* Captions no alteran el ancho de la tarjeta */
+    section[data-testid="stSidebar"]
+    div[data-testid="stRadio"] [data-testid="stCaptionContainer"] {
+        width:100% !important;
+        max-width:100% !important;
+        box-sizing:border-box !important;
+    }
+    </style>
+""",
+            unsafe_allow_html=True,
+        )
+
         nav_titles={
             "🏠 Mis clases":"📚  Mis clases",
             results_view_label:(
