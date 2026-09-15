@@ -26295,98 +26295,146 @@ def future_lab_view_impl(lab):
         st.markdown(
             """
         <style>
-        /* Navegación principal: radio buttons contenidos en tarjetas */
-        section[data-testid="stSidebar"] div[data-testid="stRadio"]:has(div[role="radiogroup"][aria-label="Navegación principal"]) > div[role="radiogroup"] {
-            gap: .44rem;
-        }
-        section[data-testid="stSidebar"] div[data-testid="stRadio"]:has(div[role="radiogroup"][aria-label="Navegación principal"]) > div[role="radiogroup"] > label {
-            width: 100%;
-            margin: 0;
-            padding: .62rem .68rem;
-            border: 1px solid rgba(142, 221, 242, .28);
-            border-radius: 12px;
-            background: rgba(12, 73, 112, .30);
-            transition: background .16s ease, border-color .16s ease, box-shadow .16s ease, transform .08s ease;
-            cursor: pointer;
-            align-items: flex-start;
-        }
-        section[data-testid="stSidebar"] div[data-testid="stRadio"]:has(div[role="radiogroup"][aria-label="Navegación principal"]) > div[role="radiogroup"] > label:hover {
-            background: rgba(21, 111, 160, .34);
-            border-color: rgba(89, 212, 239, .58);
-        }
-        section[data-testid="stSidebar"] div[data-testid="stRadio"]:has(div[role="radiogroup"][aria-label="Navegación principal"]) > div[role="radiogroup"] > label:active {
-            transform: translateY(1px);
-        }
-        section[data-testid="stSidebar"] div[data-testid="stRadio"]:has(div[role="radiogroup"][aria-label="Navegación principal"]) > div[role="radiogroup"] > label:has(input:checked) {
-            background: linear-gradient(135deg, rgba(8, 94, 143, .72), rgba(12, 125, 166, .52));
-            border-color: #59d4ef;
-            box-shadow: inset 3px 0 0 #59d4ef, 0 0 0 1px rgba(89, 212, 239, .08);
-        }
-        section[data-testid="stSidebar"] div[data-testid="stRadio"]:has(div[role="radiogroup"][aria-label="Navegación principal"]) input[type="radio"] {
-            accent-color: #59d4ef;
-        }
-        section[data-testid="stSidebar"] div[data-testid="stRadio"]:has(div[role="radiogroup"][aria-label="Navegación principal"]) [data-testid="stMarkdownContainer"] p {
-            font-weight: 700;
-            line-height: 1.22;
-        }
-        section[data-testid="stSidebar"] div[data-testid="stRadio"]:has(div[role="radiogroup"][aria-label="Navegación principal"]) [data-testid="stCaptionContainer"] {
-            color: #a9cada;
-            font-size: .69rem;
-            line-height: 1.18;
-            margin-top: .12rem;
-        }
-        </style>
-        """,
-            unsafe_allow_html=True,
-        )
+        /* ==========================================================
+           SIDEBAR FUTURE LABS · TARJETAS ROBUSTAS
+           Compatible con distintas estructuras DOM de Streamlit.
+           ========================================================== */
 
-        # Ruta de aprendizaje: tarjetas-radio compactas para Alumno y Docente.
-        # Mantiene el mismo lenguaje visual de la navegación principal, sin
-        # modificar la lógica ni el estado guardado de cada etapa.
-        st.markdown(
-            """
-        <style>
-        section[data-testid="stSidebar"] div[class*="st-key-future_stage_"] [role="radiogroup"] {
-            gap: .34rem !important;
-        }
-        section[data-testid="stSidebar"] div[class*="st-key-future_stage_"] [role="radiogroup"] > label {
-            width: 100% !important;
-            margin: 0 !important;
-            padding: .48rem .56rem !important;
-            border: 1px solid rgba(142,221,242,.20) !important;
-            border-radius: 10px !important;
-            background: rgba(12,73,112,.22) !important;
-            transition: background .15s ease,border-color .15s ease,box-shadow .15s ease,transform .08s ease !important;
-            cursor: pointer !important;
-            align-items: flex-start !important;
-        }
-        section[data-testid="stSidebar"] div[class*="st-key-future_stage_"] [role="radiogroup"] > label:hover {
-            background: rgba(21,111,160,.30) !important;
-            border-color: rgba(89,212,239,.48) !important;
-        }
-        section[data-testid="stSidebar"] div[class*="st-key-future_stage_"] [role="radiogroup"] > label:active {
-            transform: translateY(1px);
-        }
-        section[data-testid="stSidebar"] div[class*="st-key-future_stage_"] [role="radiogroup"] > label:has(input:checked) {
-            background: linear-gradient(135deg,rgba(8,94,143,.62),rgba(12,125,166,.42)) !important;
-            border-color: #59d4ef !important;
-            box-shadow: inset 3px 0 0 #59d4ef,0 0 0 1px rgba(89,212,239,.06) !important;
-        }
-        section[data-testid="stSidebar"] div[class*="st-key-future_stage_"] [data-baseweb="radio"] {
+        /* Espaciado de todos los grupos radio dentro del sidebar */
+        section[data-testid="stSidebar"] div[data-testid="stRadio"] [role="radiogroup"] {
             display:flex !important;
-            opacity:1 !important;
-            visibility:visible !important;
-            flex:0 0 auto !important;
-            margin-top:.05rem !important;
+            flex-direction:column !important;
+            gap:.42rem !important;
+            width:100% !important;
         }
-        section[data-testid="stSidebar"] div[class*="st-key-future_stage_"] input[type="radio"] {
+
+        /* Caso A: Streamlit renderiza cada opción como <label> */
+        section[data-testid="stSidebar"] div[data-testid="stRadio"] [role="radiogroup"] > label,
+        section[data-testid="stSidebar"] div[data-testid="stRadio"] label[data-baseweb="radio"] {
+            box-sizing:border-box !important;
+            width:100% !important;
+            min-height:42px !important;
+            margin:0 !important;
+            padding:.52rem .60rem !important;
+            border:1px solid rgba(142,221,242,.34) !important;
+            border-radius:10px !important;
+            background:rgba(12,73,112,.34) !important;
+            display:flex !important;
+            align-items:flex-start !important;
+            cursor:pointer !important;
+            transition:
+                background .15s ease,
+                border-color .15s ease,
+                box-shadow .15s ease,
+                transform .08s ease !important;
+        }
+
+        /* Caso B: algunas versiones envuelven el radio en un div BaseWeb */
+        section[data-testid="stSidebar"] div[data-testid="stRadio"] [data-baseweb="radio"] {
+            box-sizing:border-box !important;
+            width:100% !important;
+        }
+
+        section[data-testid="stSidebar"] div[data-testid="stRadio"] [role="radiogroup"] > label:hover,
+        section[data-testid="stSidebar"] div[data-testid="stRadio"] label[data-baseweb="radio"]:hover {
+            background:rgba(21,111,160,.40) !important;
+            border-color:rgba(89,212,239,.72) !important;
+        }
+
+        section[data-testid="stSidebar"] div[data-testid="stRadio"] [role="radiogroup"] > label:active,
+        section[data-testid="stSidebar"] div[data-testid="stRadio"] label[data-baseweb="radio"]:active {
+            transform:translateY(1px) !important;
+        }
+
+        /* Selección activa */
+        section[data-testid="stSidebar"] div[data-testid="stRadio"] [role="radiogroup"] > label:has(input:checked),
+        section[data-testid="stSidebar"] div[data-testid="stRadio"] label[data-baseweb="radio"]:has(input:checked) {
+            background:linear-gradient(
+                135deg,
+                rgba(8,94,143,.80),
+                rgba(12,125,166,.58)
+            ) !important;
+            border-color:#59d4ef !important;
+            box-shadow:
+                inset 3px 0 0 #59d4ef,
+                0 0 0 1px rgba(89,212,239,.12) !important;
+        }
+
+        /* Fallback por atributo en versiones sin :has() */
+        section[data-testid="stSidebar"] div[data-testid="stRadio"] label[aria-checked="true"],
+        section[data-testid="stSidebar"] div[data-testid="stRadio"] [data-checked="true"] {
+            background:linear-gradient(
+                135deg,
+                rgba(8,94,143,.80),
+                rgba(12,125,166,.58)
+            ) !important;
+            border-color:#59d4ef !important;
+            box-shadow:
+                inset 3px 0 0 #59d4ef,
+                0 0 0 1px rgba(89,212,239,.12) !important;
+        }
+
+        /* Radio visible */
+        section[data-testid="stSidebar"] div[data-testid="stRadio"] input[type="radio"] {
             accent-color:#59d4ef !important;
         }
-        section[data-testid="stSidebar"] div[class*="st-key-future_stage_"] [data-testid="stMarkdownContainer"] p {
-            font-size:.75rem !important;
-            font-weight:650 !important;
-            line-height:1.28 !important;
+
+        /* Tipografía */
+        section[data-testid="stSidebar"] div[data-testid="stRadio"]
+        [data-testid="stMarkdownContainer"] p {
+            margin:0 !important;
+            font-weight:700 !important;
+            font-size:.76rem !important;
+            line-height:1.25 !important;
             text-align:left !important;
+        }
+
+        section[data-testid="stSidebar"] div[data-testid="stRadio"]
+        [data-testid="stCaptionContainer"] {
+            color:#a9cada !important;
+            font-size:.69rem !important;
+            line-height:1.18 !important;
+            margin-top:.12rem !important;
+            text-align:left !important;
+        }
+
+        /* Navegación principal del future lab: tarjetas más altas */
+        section[data-testid="stSidebar"]
+        div[class*="st-key-future_nav_radio_"] [role="radiogroup"] > label,
+        section[data-testid="stSidebar"]
+        div[class*="st-key-future_nav_radio_"] label[data-baseweb="radio"] {
+            min-height:50px !important;
+            padding:.62rem .68rem !important;
+            border-radius:12px !important;
+        }
+
+        /* Ruta de aprendizaje: tarjetas más compactas */
+        section[data-testid="stSidebar"]
+        div[class*="st-key-future_stage_"] [role="radiogroup"] > label,
+        section[data-testid="stSidebar"]
+        div[class*="st-key-future_stage_"] label[data-baseweb="radio"] {
+            min-height:37px !important;
+            padding:.44rem .54rem !important;
+            border-radius:9px !important;
+        }
+
+        section[data-testid="stSidebar"]
+        div[class*="st-key-future_stage_"] [data-testid="stMarkdownContainer"] p {
+            font-size:.74rem !important;
+            font-weight:650 !important;
+            line-height:1.24 !important;
+        }
+
+        /* Refuerzo específico por aria-label en caso de que Streamlit no
+           exponga la clase st-key-* en el contenedor. */
+        section[data-testid="stSidebar"]
+        div[data-testid="stRadio"]:has([role="radiogroup"][aria-label="Navegación principal"])
+        [role="radiogroup"] > label,
+        section[data-testid="stSidebar"]
+        div[data-testid="stRadio"]:has([role="radiogroup"][aria-label="Ruta de aprendizaje"])
+        [role="radiogroup"] > label {
+            border:1px solid rgba(142,221,242,.34) !important;
+            background:rgba(12,73,112,.34) !important;
         }
         </style>
         """,
