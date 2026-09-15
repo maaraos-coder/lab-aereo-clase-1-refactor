@@ -594,6 +594,26 @@ def _teacher_course_results_impl(compact=False):
                     "reviewer":"c2l2_stage10",
                 },
             },
+        "Curso 3 · Control de ruido ambiental":{
+            "Laboratorio 1 · Actividades formativas":{
+                "Etapa 9 · Preguntas de comprensión":{
+                    "class_id":"clase-05-ruido-ambiental-lab-1",
+                    "stage":9,
+                    "maximum":None,
+                    "with_grade":False,
+                    "formative_only":True,
+                    "reviewer":"c3_stage9_formative",
+                },
+                "Etapa 10 · Diagnóstico acústico de un barrio":{
+                    "class_id":"clase-05-ruido-ambiental-lab-1",
+                    "stage":10,
+                    "maximum":None,
+                    "with_grade":False,
+                    "formative_only":True,
+                    "reviewer":"c3_stage10_formative",
+                },
+            },
+        },
         },
     }
 
@@ -617,7 +637,94 @@ def _teacher_course_results_impl(compact=False):
     config=evaluations[evaluation]
 
     try:
-        if config.get("reviewer")=="c2_stage9":
+        if config.get("reviewer") in ("c3_stage9_formative","c3_stage10_formative"):
+            # Curso 3 · Lab 1 es completamente formativo.
+            # Las Etapas 9 y 10 se guardan en user_progress, no en responses.
+            progress_rows=(
+                client.table("user_progress")
+                .select("user_key,state_json,updated_at")
+                .eq("class_id",config["class_id"])
+                .order("updated_at",desc=True)
+                .execute().data or []
+            )
+
+            user_keys=sorted({
+                r.get("user_key") for r in progress_rows if r.get("user_key")
+            })
+            user_map={}
+            if user_keys:
+                try:
+                    user_rows=(
+                        client.table("users")
+                        .select("user_key,display_name,email")
+                        .in_("user_key",user_keys)
+                        .execute().data or []
+                    )
+                    user_map={
+                        u.get("user_key"):u
+                        for u in user_rows if u.get("user_key")
+                    }
+                except Exception:
+                    user_map={}
+
+            rows=[]
+            for pr in progress_rows:
+                state=pr.get("state_json") or {}
+                if isinstance(state,str):
+                    try:
+                        state=json.loads(state)
+                    except Exception:
+                        state={}
+                if not isinstance(state,dict):
+                    state={}
+
+                formative=state.get("c3_formative") or {}
+                if not isinstance(formative,dict):
+                    formative={}
+
+                if config["stage"]==9:
+                    payload=state.get("c3_s9_formative")
+                    if not isinstance(payload,dict) or not payload:
+                        payload=(
+                            formative.get("s9_comprehension_draft")
+                            or formative.get("s9_comprehension")
+                            or {}
+                        )
+                    done=bool(state.get("done_9"))
+                    question_key="c3_stage9_formative"
+                else:
+                    payload=state.get("c3_s10_formative")
+                    if not isinstance(payload,dict) or not payload:
+                        payload=(
+                            formative.get("s10_integrated_case_draft")
+                            or formative.get("s10_integrated_case")
+                            or {}
+                        )
+                    done=bool(state.get("done_10"))
+                    question_key="c3_stage10_formative"
+
+                # Mostrar solo alumnos que efectivamente hayan iniciado esta etapa.
+                if not isinstance(payload,dict) or not payload:
+                    continue
+
+                user_key=pr.get("user_key")
+                rows.append({
+                    "id":f"{user_key}_{config['stage']}",
+                    "user_key":user_key,
+                    "users":user_map.get(user_key,{}) or {},
+                    "answer":payload,
+                    "stage":config["stage"],
+                    "question_key":question_key,
+                    "status":"completed" if done else "draft",
+                    "submitted_at":pr.get("updated_at"),
+                    "updated_at":pr.get("updated_at"),
+                    "teacher_score":None,
+                    "auto_score":None,
+                    "max_score":None,
+                    "_formative_done":done,
+                })
+
+        elif config.get("reviewer")=="c2_stage9":
             # La primera versión de esta evaluación pudo guardarse con un class_id
             # heredado del Curso 1. La identificamos por su payload canónico.
             candidate_rows=(
@@ -671,11 +778,15 @@ def _teacher_course_results_impl(compact=False):
     rows=latest
 
     delivered=len(rows)
-    reviewed=sum(
-        bool(r.get("teacher_score") is not None or r.get("status")=="reviewed")
-        for r in rows
-    )
-    pending=delivered-reviewed
+    if config.get("formative_only"):
+        reviewed=sum(bool(r.get("_formative_done")) for r in rows)
+        pending=delivered-reviewed
+    else:
+        reviewed=sum(
+            bool(r.get("teacher_score") is not None or r.get("status")=="reviewed")
+            for r in rows
+        )
+        pending=delivered-reviewed
     students=len({
         (r.get("user_key") or (r.get("users") or {}).get("email") or str(r.get("id")))
         for r in rows
@@ -683,14 +794,25 @@ def _teacher_course_results_impl(compact=False):
 
     st.markdown("### Resumen de la evaluación")
     m1,m2,m3,m4=st.columns(4)
-    m1.metric("Entregas",delivered)
-    m2.metric("Revisadas",reviewed)
-    m3.metric("Pendientes",pending)
-    m4.metric("Alumnos",students)
+    if config.get("formative_only"):
+        m1.metric("Registros",delivered)
+        m2.metric("Completadas",reviewed)
+        m3.metric("En desarrollo",pending)
+        m4.metric("Alumnos",students)
+    else:
+        m1.metric("Entregas",delivered)
+        m2.metric("Revisadas",reviewed)
+        m3.metric("Pendientes",pending)
+        m4.metric("Alumnos",students)
 
     if config["with_grade"]:
         st.info(
             f"**Evaluación oficial con nota.** Puntaje máximo: {config['maximum']} puntos."
+        )
+    elif config.get("formative_only"):
+        st.info(
+            "**Actividad formativa sin nota.** Aquí puedes revisar el trabajo guardado por los alumnos. "
+            "No existe puntaje, calificación ni corrección docente obligatoria."
         )
     else:
         st.info(
@@ -717,12 +839,21 @@ def _teacher_course_results_impl(compact=False):
                     else row.get("auto_score") or 0
                 )
                 is_reviewed=row.get("teacher_score") is not None or row.get("status")=="reviewed"
-                item={
-                    "Alumno":name,
-                    "Puntaje":f"{score:g}/{config['maximum']}",
-                    "Estado":"Revisada" if is_reviewed else "Pendiente de revisión",
-                    "Entrega":str(row.get("submitted_at") or row.get("updated_at") or "").replace("T"," ")[:16],
-                }
+                if config.get("formative_only"):
+                    item={
+                        "Alumno":name,
+                        "Estado":"Completada" if row.get("_formative_done") else "En desarrollo",
+                        "Última actualización":str(
+                            row.get("submitted_at") or row.get("updated_at") or ""
+                        ).replace("T"," ")[:16],
+                    }
+                else:
+                    item={
+                        "Alumno":name,
+                        "Puntaje":f"{score:g}/{config['maximum']}",
+                        "Estado":"Revisada" if is_reviewed else "Pendiente de revisión",
+                        "Entrega":str(row.get("submitted_at") or row.get("updated_at") or "").replace("T"," ")[:16],
+                    }
                 if config["with_grade"] and is_reviewed:
                     item["Nota"]=f"{_grade_from_percent(score/config['maximum']*100):.1f}"
                 elif config["with_grade"]:
@@ -747,6 +878,120 @@ def _teacher_course_results_impl(compact=False):
             _course_views.run_view("c2l1_stage9_teacher_view",globals())
         elif reviewer=="c2_stage10":
             _course_views.run_view("c2l1_stage10_teacher_view",globals())
+        elif reviewer in ("c3_stage9_formative","c3_stage10_formative"):
+            if not rows:
+                st.caption("Todavía no hay alumnos con trabajo guardado en esta etapa.")
+            else:
+                selected_idx=st.selectbox(
+                    "Alumno",
+                    range(len(rows)),
+                    format_func=lambda i: (
+                        (rows[i].get("users") or {}).get("display_name")
+                        or (rows[i].get("users") or {}).get("email")
+                        or rows[i].get("user_key","Alumno")
+                    ),
+                    key=f"teacher_c3_student_{config['stage']}_{'c' if compact else 'f'}",
+                )
+                row=rows[selected_idx]
+                payload=row.get("answer") or {}
+                if isinstance(payload,str):
+                    try:
+                        payload=json.loads(payload)
+                    except Exception:
+                        payload={}
+                if not isinstance(payload,dict):
+                    payload={}
+
+                st.markdown("#### Trabajo formativo del alumno")
+                st.caption(
+                    "Vista de consulta. Esta actividad no tiene puntaje ni nota y no requiere corrección docente."
+                )
+                s1,s2=st.columns(2)
+                s1.metric(
+                    "Estado",
+                    "Completada" if row.get("_formative_done") else "En desarrollo",
+                )
+                s2.metric(
+                    "Última actualización",
+                    str(row.get("updated_at") or "").replace("T"," ")[:16] or "—",
+                )
+
+                if reviewer=="c3_stage9_formative":
+                    answers=payload.get("answers",{}) if isinstance(payload.get("answers"),dict) else {}
+                    checked=payload.get("checked",{}) if isinstance(payload.get("checked"),dict) else {}
+                    total=int(payload.get("total_questions") or 10)
+                    completed=int(
+                        payload.get("completed_questions")
+                        or sum(1 for v in checked.values() if v)
+                    )
+                    st.markdown("##### Etapa 9 · Preguntas de comprensión")
+                    st.write(f"**Avance:** {completed} de {total} preguntas comprobadas")
+                    for i in range(total):
+                        with st.container(border=True):
+                            st.markdown(f"**Pregunta {i+1}**")
+                            ans=answers.get(str(i))
+                            if isinstance(ans,list):
+                                st.write(", ".join(str(x) for x in ans) if ans else "Sin respuesta")
+                            else:
+                                st.write(ans if ans not in (None,"") else "Sin respuesta")
+                            if checked.get(str(i)):
+                                st.caption("✓ Respuesta comprobada por el alumno")
+                else:
+                    st.markdown("##### Etapa 10 · Diagnóstico acústico de un barrio")
+                    summary_fields=[
+                        ("Fuente principal","main_source"),
+                        ("Receptor crítico","receptor"),
+                        ("Punto adicional","extra_point"),
+                        ("Cobertura temporal","periods"),
+                        ("Instrumentación","instrument"),
+                        ("Configuración","weighting"),
+                        ("LAeq P1","ans_laeq"),
+                        ("L10","ans_l10"),
+                        ("L90","ans_l90"),
+                        ("SEL / LAE","ans_sel"),
+                        ("Lden","ans_lden"),
+                    ]
+                    for label,key in summary_fields:
+                        value=payload.get(key)
+                        if value not in (None,"","Seleccionar"):
+                            st.markdown(f"**{label}:** {value}")
+
+                    if payload.get("variability"):
+                        st.markdown("**Interpretación L10−L90**")
+                        st.write(payload.get("variability"))
+                    if payload.get("limitations"):
+                        st.markdown("**Limitaciones de la campaña**")
+                        st.write(payload.get("limitations"))
+                    if payload.get("missing"):
+                        st.markdown("**Información faltante**")
+                        st.write(payload.get("missing"))
+                    if payload.get("conclusion"):
+                        st.markdown("**Conclusión profesional**")
+                        st.write(payload.get("conclusion"))
+
+                    answers=payload.get("answers",{}) if isinstance(payload.get("answers"),dict) else {}
+                    if answers:
+                        st.markdown("##### Preguntas de comprensión")
+                        for key in sorted(
+                            answers,
+                            key=lambda x:int(x) if str(x).isdigit() else 999,
+                        ):
+                            with st.container(border=True):
+                                label=(
+                                    f"Pregunta {int(key)+1}"
+                                    if str(key).isdigit()
+                                    else f"Pregunta {key}"
+                                )
+                                st.markdown(f"**{label}**")
+                                st.write(answers.get(key) or "Sin respuesta")
+
+                    st.caption(
+                        "Diagnóstico guardado: "
+                        + ("Sí" if payload.get("diagnosis_saved") else "No")
+                        + " · Comprensión guardada: "
+                        + ("Sí" if payload.get("comprehension_saved") else "No")
+                    )
+
         elif reviewer in ("c2l2_stage9","c2l2_stage10"):
             if not rows:
                 st.caption("Todavía no hay entregas para revisar.")
@@ -1105,6 +1350,10 @@ def _teacher_course_results_impl(compact=False):
     # TAB 3 · CONSOLIDADO
     # ---------------------------------------------------------------
     with tabs[2]:
+        if config.get("formative_only"):
+            st.caption(
+                "Consolidado formativo: muestra quién inició o completó la actividad, sin puntaje ni nota."
+            )
         if not rows:
             st.caption("No hay datos para consolidar.")
         else:
