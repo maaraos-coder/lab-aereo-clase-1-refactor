@@ -27147,6 +27147,206 @@ def future_lab_view_impl(lab):
                         f"{future_projection_label} enviada a Zoom. "
                         "Pulsa ‘Actualizar pantalla’ en la ventana de Zoom."
                     )
+        # Refuerzo visual final de los módulos del sidebar.
+        st.markdown(
+            """
+            <style>
+            /* ===============================
+               PANEL EXTERIOR DE CADA MÓDULO
+               =============================== */
+            section[data-testid="stSidebar"]
+            div[data-testid="stVerticalBlockBorderWrapper"] {
+                width:100% !important;
+                max-width:100% !important;
+                box-sizing:border-box !important;
+                border:1px solid rgba(77,190,225,.46) !important;
+                border-radius:15px !important;
+                background:linear-gradient(
+                    180deg,
+                    rgba(4,42,68,.88),
+                    rgba(5,35,58,.72)
+                ) !important;
+                box-shadow:
+                    0 7px 20px rgba(0,0,0,.11),
+                    inset 0 1px 0 rgba(255,255,255,.025) !important;
+                overflow:hidden !important;
+                margin:.30rem 0 .92rem !important;
+            }
+
+            section[data-testid="stSidebar"]
+            div[data-testid="stVerticalBlockBorderWrapper"] > div {
+                width:100% !important;
+                max-width:100% !important;
+                box-sizing:border-box !important;
+                padding:.90rem !important;
+            }
+
+            /* ===============================
+               ENCABEZADO DENTRO DEL CUADRO
+               =============================== */
+            section[data-testid="stSidebar"] .future-side-head {
+                width:100% !important;
+                box-sizing:border-box !important;
+                padding:.08rem .08rem .70rem !important;
+                margin:0 0 .70rem !important;
+                border-bottom:1px solid rgba(105,221,243,.30) !important;
+            }
+
+            section[data-testid="stSidebar"] .future-side-kicker {
+                color:#f5fcff !important;
+                font-size:1.00rem !important;
+                font-weight:900 !important;
+                letter-spacing:.045em !important;
+                line-height:1.12 !important;
+            }
+
+            section[data-testid="stSidebar"] .future-side-sub {
+                color:#a9cedd !important;
+                font-size:.72rem !important;
+                font-weight:600 !important;
+                line-height:1.18 !important;
+                margin-top:.22rem !important;
+            }
+
+            /* ===============================
+               RADIO CARDS DENTRO DEL PANEL
+               =============================== */
+            section[data-testid="stSidebar"]
+            div[data-testid="stVerticalBlockBorderWrapper"]
+            div[data-testid="stRadio"],
+            section[data-testid="stSidebar"]
+            div[data-testid="stVerticalBlockBorderWrapper"]
+            div[data-testid="stRadio"] > div,
+            section[data-testid="stSidebar"]
+            div[data-testid="stVerticalBlockBorderWrapper"]
+            div[data-testid="stRadio"] [role="radiogroup"] {
+                width:100% !important;
+                max-width:100% !important;
+                min-width:0 !important;
+                box-sizing:border-box !important;
+            }
+
+            section[data-testid="stSidebar"]
+            div[data-testid="stVerticalBlockBorderWrapper"]
+            div[data-testid="stRadio"] [role="radiogroup"] {
+                display:flex !important;
+                flex-direction:column !important;
+                align-items:stretch !important;
+                gap:.52rem !important;
+            }
+
+            section[data-testid="stSidebar"]
+            div[data-testid="stVerticalBlockBorderWrapper"]
+            div[data-testid="stRadio"] [role="radiogroup"] > label,
+            section[data-testid="stSidebar"]
+            div[data-testid="stVerticalBlockBorderWrapper"]
+            div[data-testid="stRadio"] label[data-baseweb="radio"] {
+                width:100% !important;
+                min-width:100% !important;
+                max-width:100% !important;
+                height:60px !important;
+                min-height:60px !important;
+                max-height:60px !important;
+                box-sizing:border-box !important;
+
+                margin:0 !important;
+                padding:.56rem .68rem !important;
+
+                display:flex !important;
+                align-items:center !important;
+                gap:.50rem !important;
+
+                border:1px solid rgba(79,183,216,.45) !important;
+                border-radius:10px !important;
+                background:rgba(8,61,94,.62) !important;
+                box-shadow:none !important;
+                transform:none !important;
+                overflow:hidden !important;
+            }
+
+            section[data-testid="stSidebar"]
+            div[data-testid="stVerticalBlockBorderWrapper"]
+            div[data-testid="stRadio"] [role="radiogroup"] > label:hover,
+            section[data-testid="stSidebar"]
+            div[data-testid="stVerticalBlockBorderWrapper"]
+            div[data-testid="stRadio"] label[data-baseweb="radio"]:hover {
+                background:rgba(10,89,130,.76) !important;
+                border-color:rgba(89,212,239,.80) !important;
+                transform:none !important;
+            }
+
+            section[data-testid="stSidebar"]
+            div[data-testid="stVerticalBlockBorderWrapper"]
+            div[data-testid="stRadio"] [role="radiogroup"] > label:has(input:checked),
+            section[data-testid="stSidebar"]
+            div[data-testid="stVerticalBlockBorderWrapper"]
+            div[data-testid="stRadio"] label[data-baseweb="radio"]:has(input:checked) {
+                width:100% !important;
+                min-width:100% !important;
+                max-width:100% !important;
+                height:60px !important;
+                min-height:60px !important;
+                max-height:60px !important;
+                padding:.56rem .68rem !important;
+
+                background:linear-gradient(
+                    135deg,
+                    rgba(5,107,154,.98),
+                    rgba(12,138,176,.80)
+                ) !important;
+                border:1px solid #69ddf3 !important;
+                box-shadow:inset 4px 0 0 #69ddf3 !important;
+                transform:none !important;
+            }
+
+            /* Texto uniforme */
+            section[data-testid="stSidebar"]
+            div[data-testid="stVerticalBlockBorderWrapper"]
+            div[data-testid="stRadio"] [data-testid="stMarkdownContainer"] {
+                width:100% !important;
+                min-width:0 !important;
+                max-width:100% !important;
+                flex:1 1 auto !important;
+            }
+
+            section[data-testid="stSidebar"]
+            div[data-testid="stVerticalBlockBorderWrapper"]
+            div[data-testid="stRadio"] [data-testid="stMarkdownContainer"] p {
+                width:100% !important;
+                margin:0 !important;
+                color:#fff !important;
+                font-size:.76rem !important;
+                font-weight:700 !important;
+                line-height:1.22 !important;
+                text-align:left !important;
+                white-space:normal !important;
+                overflow-wrap:anywhere !important;
+            }
+
+            section[data-testid="stSidebar"]
+            div[data-testid="stVerticalBlockBorderWrapper"]
+            div[data-testid="stRadio"] input[type="radio"] {
+                width:15px !important;
+                height:15px !important;
+                flex:0 0 15px !important;
+                margin:0 !important;
+                accent-color:#69ddf3 !important;
+            }
+
+            /* Caption de navegación: más integrado al módulo */
+            section[data-testid="stSidebar"]
+            div[data-testid="stVerticalBlockBorderWrapper"]
+            div[data-testid="stRadio"] [data-testid="stCaptionContainer"] {
+                color:#91b9ca !important;
+                font-size:.63rem !important;
+                line-height:1.12 !important;
+                margin:.08rem .10rem 0 !important;
+            }
+            </style>
+            """,
+            unsafe_allow_html=True,
+        )
+
         # Normaliza la etapa guardada antes de construir el selector.
         # Evita ValueError cuando session_state conserva una etapa de una versión
         # anterior del laboratorio que ya no existe en la lista actual.
