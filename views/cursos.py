@@ -26923,6 +26923,143 @@ def future_lab_view_impl(lab):
             unsafe_allow_html=True,
         )
 
+
+        # Geometría fija del módulo NAVEGACIÓN:
+        # normal, hover y seleccionado conservan exactamente las mismas dimensiones.
+        st.markdown(
+            """
+            <style>
+            /* --- NAVEGACIÓN PRINCIPAL: UNA SOLA GEOMETRÍA --- */
+            section[data-testid="stSidebar"]
+            div[class*="st-key-future_nav_radio_"] div[role="radiogroup"] {
+                width:100% !important;
+                display:flex !important;
+                flex-direction:column !important;
+                align-items:stretch !important;
+                gap:.48rem !important;
+            }
+
+            section[data-testid="stSidebar"]
+            div[class*="st-key-future_nav_radio_"] div[role="radiogroup"] > label,
+            section[data-testid="stSidebar"]
+            div[class*="st-key-future_nav_radio_"] label[data-baseweb="radio"] {
+                width:100% !important;
+                min-width:100% !important;
+                max-width:100% !important;
+
+                height:58px !important;
+                min-height:58px !important;
+                max-height:58px !important;
+
+                margin:0 !important;
+                padding:.55rem .70rem !important;
+                box-sizing:border-box !important;
+
+                display:flex !important;
+                align-items:center !important;
+                gap:.48rem !important;
+
+                border:1px solid rgba(94,194,225,.52) !important;
+                border-radius:11px !important;
+
+                background:linear-gradient(
+                    135deg,
+                    rgba(8,58,92,.70),
+                    rgba(10,79,117,.48)
+                ) !important;
+
+                box-shadow:none !important;
+                transform:none !important;
+                overflow:hidden !important;
+            }
+
+            /* Hover: SOLO cambia color */
+            section[data-testid="stSidebar"]
+            div[class*="st-key-future_nav_radio_"] div[role="radiogroup"] > label:hover,
+            section[data-testid="stSidebar"]
+            div[class*="st-key-future_nav_radio_"] label[data-baseweb="radio"]:hover {
+                width:100% !important;
+                min-width:100% !important;
+                max-width:100% !important;
+                height:58px !important;
+                min-height:58px !important;
+                max-height:58px !important;
+                padding:.55rem .70rem !important;
+                border-width:1px !important;
+                transform:none !important;
+
+                background:linear-gradient(
+                    135deg,
+                    rgba(13,85,128,.82),
+                    rgba(15,111,151,.58)
+                ) !important;
+                border-color:rgba(89,212,239,.90) !important;
+            }
+
+            /* Seleccionado: MISMA geometría; solo fondo, borde y acento interno */
+            section[data-testid="stSidebar"]
+            div[class*="st-key-future_nav_radio_"] div[role="radiogroup"] > label:has(input:checked),
+            section[data-testid="stSidebar"]
+            div[class*="st-key-future_nav_radio_"] label[data-baseweb="radio"]:has(input:checked) {
+                width:100% !important;
+                min-width:100% !important;
+                max-width:100% !important;
+
+                height:58px !important;
+                min-height:58px !important;
+                max-height:58px !important;
+
+                margin:0 !important;
+                padding:.55rem .70rem !important;
+                box-sizing:border-box !important;
+
+                border-width:1px !important;
+                border-color:#69ddf3 !important;
+                border-radius:11px !important;
+
+                background:linear-gradient(
+                    135deg,
+                    rgba(4,104,154,.96),
+                    rgba(13,140,179,.76)
+                ) !important;
+
+                box-shadow:inset 4px 0 0 #69ddf3 !important;
+                transform:none !important;
+            }
+
+            /* Fallback si Streamlit marca selección con atributos */
+            section[data-testid="stSidebar"]
+            div[class*="st-key-future_nav_radio_"] label[aria-checked="true"],
+            section[data-testid="stSidebar"]
+            div[class*="st-key-future_nav_radio_"] [data-checked="true"] {
+                width:100% !important;
+                min-width:100% !important;
+                max-width:100% !important;
+                height:58px !important;
+                min-height:58px !important;
+                max-height:58px !important;
+                padding:.55rem .70rem !important;
+                border-width:1px !important;
+                border-color:#69ddf3 !important;
+                box-shadow:inset 4px 0 0 #69ddf3 !important;
+                transform:none !important;
+            }
+
+            /* El wrapper interno tampoco puede crecer/encogerse */
+            section[data-testid="stSidebar"]
+            div[class*="st-key-future_nav_radio_"] [data-baseweb="radio"],
+            section[data-testid="stSidebar"]
+            div[class*="st-key-future_nav_radio_"] [data-testid="stMarkdownContainer"] {
+                width:100% !important;
+                max-width:100% !important;
+                min-width:0 !important;
+                box-sizing:border-box !important;
+            }
+            </style>
+            """,
+            unsafe_allow_html=True,
+        )
+
         if selected_view=="🏠 Mis clases":
             st.session_state[future_view_key]="🏠 Mis clases"
             st.session_state.pop("future_lab_id",None)
