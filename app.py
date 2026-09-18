@@ -258,6 +258,212 @@ st.markdown(
     unsafe_allow_html=True,
 )
 
+st.markdown(r"""
+<style>
+/* ============================================================
+   NAVEGACIÓN PRINCIPAL · MISMA GEOMETRÍA EN TODAS LAS VISTAS
+   ============================================================ */
+section[data-testid="stSidebar"] .main-nav-panel-head {
+    width:100% !important;
+    box-sizing:border-box !important;
+    padding:.04rem .02rem .72rem !important;
+    margin:0 0 .72rem !important;
+    border-bottom:1px solid rgba(105,221,243,.34) !important;
+}
+section[data-testid="stSidebar"] .main-nav-panel-title {
+    color:#f6fdff !important;
+    font-size:1.02rem !important;
+    font-weight:900 !important;
+    letter-spacing:.045em !important;
+    line-height:1.15 !important;
+}
+section[data-testid="stSidebar"] .main-nav-panel-subtitle {
+    color:#a9d0df !important;
+    font-size:.72rem !important;
+    font-weight:600 !important;
+    margin-top:.22rem !important;
+    line-height:1.18 !important;
+}
+
+/* Ambos contenedores: app.py y cursos.py */
+section[data-testid="stSidebar"] div[class*="st-key-main_navigation_panel"],
+section[data-testid="stSidebar"] div[class*="st-key-future_nav_panel_"] {
+    width:100% !important;
+    max-width:100% !important;
+    box-sizing:border-box !important;
+    padding:.95rem !important;
+    margin:.45rem 0 1rem !important;
+    border:2px solid rgba(80,200,232,.62) !important;
+    border-radius:16px !important;
+    background:linear-gradient(
+        180deg,
+        rgba(7,53,84,.94),
+        rgba(5,38,63,.90)
+    ) !important;
+    box-shadow:
+        0 8px 22px rgba(0,0,0,.16),
+        inset 0 1px 0 rgba(255,255,255,.035) !important;
+}
+
+/* Quitar doble marco interno */
+section[data-testid="stSidebar"] div[class*="st-key-main_navigation_panel"]
+div[data-testid="stVerticalBlockBorderWrapper"],
+section[data-testid="stSidebar"] div[class*="st-key-future_nav_panel_"]
+div[data-testid="stVerticalBlockBorderWrapper"] {
+    border:none !important;
+    background:transparent !important;
+    box-shadow:none !important;
+    padding:0 !important;
+    margin:0 !important;
+}
+
+/* Radio widgets y wrappers internos */
+section[data-testid="stSidebar"] div[class*="st-key-main_navigation_panel"]
+div[data-testid="stRadio"],
+section[data-testid="stSidebar"] div[class*="st-key-main_navigation_panel"]
+div[data-testid="stRadio"] > div,
+section[data-testid="stSidebar"] div[class*="st-key-main_navigation_panel"]
+[role="radiogroup"],
+section[data-testid="stSidebar"] div[class*="st-key-future_nav_panel_"]
+div[data-testid="stRadio"],
+section[data-testid="stSidebar"] div[class*="st-key-future_nav_panel_"]
+div[data-testid="stRadio"] > div,
+section[data-testid="stSidebar"] div[class*="st-key-future_nav_panel_"]
+[role="radiogroup"] {
+    width:100% !important;
+    max-width:100% !important;
+    min-width:0 !important;
+    box-sizing:border-box !important;
+}
+
+section[data-testid="stSidebar"] div[class*="st-key-main_navigation_panel"]
+[role="radiogroup"],
+section[data-testid="stSidebar"] div[class*="st-key-future_nav_panel_"]
+[role="radiogroup"] {
+    display:flex !important;
+    flex-direction:column !important;
+    align-items:stretch !important;
+    gap:.52rem !important;
+}
+
+/* Tarjetas: geometría IDÉNTICA normal / hover / activo */
+section[data-testid="stSidebar"] div[class*="st-key-main_navigation_panel"]
+[role="radiogroup"] > label,
+section[data-testid="stSidebar"] div[class*="st-key-main_navigation_panel"]
+label[data-baseweb="radio"],
+section[data-testid="stSidebar"] div[class*="st-key-future_nav_panel_"]
+[role="radiogroup"] > label,
+section[data-testid="stSidebar"] div[class*="st-key-future_nav_panel_"]
+label[data-baseweb="radio"] {
+    width:100% !important;
+    min-width:100% !important;
+    max-width:100% !important;
+    height:64px !important;
+    min-height:64px !important;
+    max-height:64px !important;
+    margin:0 !important;
+    padding:.56rem .68rem !important;
+    box-sizing:border-box !important;
+    display:flex !important;
+    align-items:center !important;
+    gap:.50rem !important;
+    border:1px solid rgba(79,183,216,.45) !important;
+    border-radius:10px !important;
+    background:rgba(8,61,94,.62) !important;
+    box-shadow:none !important;
+    transform:none !important;
+    overflow:hidden !important;
+}
+
+section[data-testid="stSidebar"] div[class*="st-key-main_navigation_panel"]
+[role="radiogroup"] > label:hover,
+section[data-testid="stSidebar"] div[class*="st-key-main_navigation_panel"]
+label[data-baseweb="radio"]:hover,
+section[data-testid="stSidebar"] div[class*="st-key-future_nav_panel_"]
+[role="radiogroup"] > label:hover,
+section[data-testid="stSidebar"] div[class*="st-key-future_nav_panel_"]
+label[data-baseweb="radio"]:hover {
+    width:100% !important;
+    height:64px !important;
+    padding:.56rem .68rem !important;
+    background:rgba(10,89,130,.76) !important;
+    border-color:rgba(89,212,239,.80) !important;
+    transform:none !important;
+}
+
+section[data-testid="stSidebar"] div[class*="st-key-main_navigation_panel"]
+[role="radiogroup"] > label:has(input:checked),
+section[data-testid="stSidebar"] div[class*="st-key-main_navigation_panel"]
+label[data-baseweb="radio"]:has(input:checked),
+section[data-testid="stSidebar"] div[class*="st-key-future_nav_panel_"]
+[role="radiogroup"] > label:has(input:checked),
+section[data-testid="stSidebar"] div[class*="st-key-future_nav_panel_"]
+label[data-baseweb="radio"]:has(input:checked) {
+    width:100% !important;
+    min-width:100% !important;
+    max-width:100% !important;
+    height:64px !important;
+    min-height:64px !important;
+    max-height:64px !important;
+    padding:.56rem .68rem !important;
+    background:linear-gradient(
+        135deg,
+        rgba(5,107,154,.98),
+        rgba(12,138,176,.80)
+    ) !important;
+    border:1px solid #69ddf3 !important;
+    box-shadow:inset 4px 0 0 #69ddf3 !important;
+    transform:none !important;
+}
+
+/* Radio y texto */
+section[data-testid="stSidebar"] div[class*="st-key-main_navigation_panel"]
+input[type="radio"],
+section[data-testid="stSidebar"] div[class*="st-key-future_nav_panel_"]
+input[type="radio"] {
+    width:15px !important;
+    height:15px !important;
+    flex:0 0 15px !important;
+    margin:0 !important;
+    accent-color:#69ddf3 !important;
+}
+
+section[data-testid="stSidebar"] div[class*="st-key-main_navigation_panel"]
+[data-testid="stMarkdownContainer"],
+section[data-testid="stSidebar"] div[class*="st-key-future_nav_panel_"]
+[data-testid="stMarkdownContainer"] {
+    width:100% !important;
+    min-width:0 !important;
+    flex:1 1 auto !important;
+}
+
+section[data-testid="stSidebar"] div[class*="st-key-main_navigation_panel"]
+[data-testid="stMarkdownContainer"] p,
+section[data-testid="stSidebar"] div[class*="st-key-future_nav_panel_"]
+[data-testid="stMarkdownContainer"] p {
+    width:100% !important;
+    margin:0 !important;
+    color:#fff !important;
+    font-size:.78rem !important;
+    font-weight:720 !important;
+    line-height:1.20 !important;
+    text-align:left !important;
+    white-space:normal !important;
+}
+
+/* Captions: mismo estilo en ambas vistas */
+section[data-testid="stSidebar"] div[class*="st-key-main_navigation_panel"]
+[data-testid="stCaptionContainer"],
+section[data-testid="stSidebar"] div[class*="st-key-future_nav_panel_"]
+[data-testid="stCaptionContainer"] {
+    color:#9fc2d2 !important;
+    font-size:.63rem !important;
+    line-height:1.10 !important;
+    margin:.08rem .10rem 0 !important;
+}
+</style>
+""", unsafe_allow_html=True)
+
 
 # ---------------------------------------------------------------------
 # ESTILO GLOBAL DEL SIDEBAR
