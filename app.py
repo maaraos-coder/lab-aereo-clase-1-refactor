@@ -115,6 +115,150 @@ st.set_page_config(
     initial_sidebar_state="expanded",
 )
 
+
+# Navegación principal global: conserva el mismo panel al cambiar de vista.
+st.markdown(
+    """
+    <style>
+    section[data-testid="stSidebar"] div[class*="st-key-main_navigation_panel"] {
+        width:100% !important;
+        max-width:100% !important;
+        box-sizing:border-box !important;
+        padding:.95rem !important;
+        margin:.45rem 0 1rem !important;
+
+        border:2px solid rgba(80,200,232,.62) !important;
+        border-radius:16px !important;
+        background:linear-gradient(
+            180deg,
+            rgba(7,53,84,.94),
+            rgba(5,38,63,.90)
+        ) !important;
+        box-shadow:
+            0 8px 22px rgba(0,0,0,.16),
+            inset 0 1px 0 rgba(255,255,255,.035) !important;
+    }
+
+    section[data-testid="stSidebar"]
+    div[class*="st-key-main_navigation_panel"]
+    div[data-testid="stVerticalBlockBorderWrapper"] {
+        border:none !important;
+        background:transparent !important;
+        box-shadow:none !important;
+        padding:0 !important;
+        margin:0 !important;
+    }
+
+    section[data-testid="stSidebar"] .main-nav-panel-head {
+        padding:.04rem .02rem .72rem !important;
+        margin:0 0 .72rem !important;
+        border-bottom:1px solid rgba(105,221,243,.34) !important;
+    }
+
+    section[data-testid="stSidebar"] .main-nav-panel-title {
+        color:#f6fdff !important;
+        font-size:1.02rem !important;
+        font-weight:900 !important;
+        letter-spacing:.045em !important;
+        line-height:1.15 !important;
+    }
+
+    section[data-testid="stSidebar"] .main-nav-panel-subtitle {
+        color:#a9d0df !important;
+        font-size:.72rem !important;
+        font-weight:600 !important;
+        margin-top:.22rem !important;
+        line-height:1.18 !important;
+    }
+
+    section[data-testid="stSidebar"]
+    div[class*="st-key-main_navigation_panel"]
+    div[data-testid="stRadio"],
+    section[data-testid="stSidebar"]
+    div[class*="st-key-main_navigation_panel"]
+    div[data-testid="stRadio"] > div,
+    section[data-testid="stSidebar"]
+    div[class*="st-key-main_navigation_panel"]
+    [role="radiogroup"] {
+        width:100% !important;
+        max-width:100% !important;
+        box-sizing:border-box !important;
+    }
+
+    section[data-testid="stSidebar"]
+    div[class*="st-key-main_navigation_panel"]
+    [role="radiogroup"] {
+        display:flex !important;
+        flex-direction:column !important;
+        align-items:stretch !important;
+        gap:.52rem !important;
+    }
+
+    section[data-testid="stSidebar"]
+    div[class*="st-key-main_navigation_panel"]
+    [role="radiogroup"] > label,
+    section[data-testid="stSidebar"]
+    div[class*="st-key-main_navigation_panel"]
+    label[data-baseweb="radio"] {
+        width:100% !important;
+        min-width:100% !important;
+        max-width:100% !important;
+        height:60px !important;
+        min-height:60px !important;
+        max-height:60px !important;
+        margin:0 !important;
+        padding:.56rem .68rem !important;
+        box-sizing:border-box !important;
+        display:flex !important;
+        align-items:center !important;
+        gap:.50rem !important;
+        border:1px solid rgba(79,183,216,.45) !important;
+        border-radius:10px !important;
+        background:rgba(8,61,94,.62) !important;
+        box-shadow:none !important;
+        transform:none !important;
+        overflow:hidden !important;
+    }
+
+    section[data-testid="stSidebar"]
+    div[class*="st-key-main_navigation_panel"]
+    [role="radiogroup"] > label:hover,
+    section[data-testid="stSidebar"]
+    div[class*="st-key-main_navigation_panel"]
+    label[data-baseweb="radio"]:hover {
+        background:rgba(10,89,130,.76) !important;
+        border-color:rgba(89,212,239,.80) !important;
+        transform:none !important;
+    }
+
+    section[data-testid="stSidebar"]
+    div[class*="st-key-main_navigation_panel"]
+    [role="radiogroup"] > label:has(input:checked),
+    section[data-testid="stSidebar"]
+    div[class*="st-key-main_navigation_panel"]
+    label[data-baseweb="radio"]:has(input:checked) {
+        width:100% !important;
+        min-width:100% !important;
+        max-width:100% !important;
+        height:60px !important;
+        min-height:60px !important;
+        max-height:60px !important;
+        padding:.56rem .68rem !important;
+        background:linear-gradient(
+            135deg,
+            rgba(5,107,154,.98),
+            rgba(12,138,176,.80)
+        ) !important;
+        border:1px solid #69ddf3 !important;
+        box-shadow:inset 4px 0 0 #69ddf3 !important;
+        transform:none !important;
+    }
+    </style>
+    """,
+    unsafe_allow_html=True,
+)
+
+
 # ---------------------------------------------------------------------
 # ESTILO GLOBAL DEL SIDEBAR
 # Se carga desde app.py para que la navegación conserve la misma
@@ -1924,20 +2068,6 @@ with st.sidebar:
     if st.session_state.get("main_view") not in view_options:
         st.session_state["main_view"]="🏠 Mis clases"
 
-    st.markdown(
-        """
-        <div style="margin:.45rem 0 .35rem">
-          <div style="font-size:.72rem;font-weight:850;letter-spacing:.08em;color:#8eddf2">
-            NAVEGACIÓN
-          </div>
-          <div style="font-size:.72rem;color:#b8d5e5;margin-top:.08rem">
-            Accesos principales
-          </div>
-        </div>
-        """,
-        unsafe_allow_html=True,
-    )
-
     active_view=st.session_state.get("main_view")
 
     st.markdown(
@@ -2082,16 +2212,29 @@ with st.sidebar:
     if st.session_state.get(nav_key) not in view_options:
         st.session_state[nav_key]=active_view
 
-    selected_view=st.radio(
-        "Navegación principal",
-        view_options,
-        index=view_options.index(active_view),
-        format_func=lambda option: nav_titles[option],
-        captions=nav_captions,
-        key=nav_key,
-        label_visibility="collapsed",
-        help="Selecciona el espacio al que quieres ir.",
-    )
+    with st.container(
+        border=True,
+        key="main_navigation_panel",
+    ):
+        st.markdown(
+            """
+            <div class="main-nav-panel-head">
+                <div class="main-nav-panel-title">NAVEGACIÓN</div>
+                <div class="main-nav-panel-subtitle">Accesos principales</div>
+            </div>
+            """,
+            unsafe_allow_html=True,
+        )
+        selected_view=st.radio(
+            "Navegación principal",
+            view_options,
+            index=view_options.index(active_view),
+            format_func=lambda option: nav_titles[option],
+            captions=nav_captions,
+            key=nav_key,
+            label_visibility="collapsed",
+            help="Selecciona el espacio al que quieres ir.",
+        )
     if selected_view!=active_view:
         st.session_state["main_view"]=selected_view
         st.rerun()
