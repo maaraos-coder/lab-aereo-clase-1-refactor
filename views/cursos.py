@@ -26719,7 +26719,10 @@ def future_lab_view_impl(lab):
             unsafe_allow_html=True,
         )
 
-        with st.container(border=True):
+        with st.container(
+            border=True,
+            key=f"future_nav_panel_{class_id}",
+        ):
             st.markdown(
                 """
                 <div class="future-side-head">
@@ -27347,6 +27350,112 @@ def future_lab_view_impl(lab):
             unsafe_allow_html=True,
         )
 
+        # Paneles explícitos: Navegación y Ruta.
+        st.markdown(
+            """
+            <style>
+            /* CUADRO REAL DE NAVEGACIÓN */
+            section[data-testid="stSidebar"]
+            div[class*="st-key-future_nav_panel_"] {
+                width:100% !important;
+                box-sizing:border-box !important;
+                padding:.95rem !important;
+                margin:.45rem 0 1rem !important;
+
+                border:2px solid rgba(80,200,232,.62) !important;
+                border-radius:16px !important;
+
+                background:
+                    linear-gradient(
+                        180deg,
+                        rgba(7,53,84,.94),
+                        rgba(5,38,63,.90)
+                    ) !important;
+
+                box-shadow:
+                    0 8px 22px rgba(0,0,0,.16),
+                    inset 0 1px 0 rgba(255,255,255,.035) !important;
+            }
+
+            /* CUADRO REAL DE RUTA */
+            section[data-testid="stSidebar"]
+            div[class*="st-key-future_route_panel_"] {
+                width:100% !important;
+                box-sizing:border-box !important;
+                padding:.95rem !important;
+                margin:.45rem 0 1rem !important;
+
+                border:2px solid rgba(80,200,232,.62) !important;
+                border-radius:16px !important;
+
+                background:
+                    linear-gradient(
+                        180deg,
+                        rgba(7,53,84,.94),
+                        rgba(5,38,63,.90)
+                    ) !important;
+
+                box-shadow:
+                    0 8px 22px rgba(0,0,0,.16),
+                    inset 0 1px 0 rgba(255,255,255,.035) !important;
+            }
+
+            /* Evitar doble marco del wrapper interno de Streamlit */
+            section[data-testid="stSidebar"]
+            div[class*="st-key-future_nav_panel_"]
+            div[data-testid="stVerticalBlockBorderWrapper"],
+            section[data-testid="stSidebar"]
+            div[class*="st-key-future_route_panel_"]
+            div[data-testid="stVerticalBlockBorderWrapper"] {
+                border:none !important;
+                background:transparent !important;
+                box-shadow:none !important;
+                padding:0 !important;
+                margin:0 !important;
+            }
+
+            /* Encabezado más integrado al panel */
+            section[data-testid="stSidebar"]
+            div[class*="st-key-future_nav_panel_"] .future-side-head,
+            section[data-testid="stSidebar"]
+            div[class*="st-key-future_route_panel_"] .future-side-head {
+                padding:.04rem .02rem .72rem !important;
+                margin:0 0 .72rem !important;
+                border-bottom:1px solid rgba(105,221,243,.34) !important;
+            }
+
+            section[data-testid="stSidebar"]
+            div[class*="st-key-future_nav_panel_"] .future-side-kicker,
+            section[data-testid="stSidebar"]
+            div[class*="st-key-future_route_panel_"] .future-side-kicker {
+                font-size:1.02rem !important;
+                font-weight:900 !important;
+                letter-spacing:.045em !important;
+                color:#f6fdff !important;
+            }
+
+            section[data-testid="stSidebar"]
+            div[class*="st-key-future_nav_panel_"] .future-side-sub,
+            section[data-testid="stSidebar"]
+            div[class*="st-key-future_route_panel_"] .future-side-sub {
+                font-size:.72rem !important;
+                color:#a9d0df !important;
+                margin-top:.22rem !important;
+            }
+
+            /* Radios dentro del cuadro con margen lateral 0 */
+            section[data-testid="stSidebar"]
+            div[class*="st-key-future_nav_panel_"] div[data-testid="stRadio"],
+            section[data-testid="stSidebar"]
+            div[class*="st-key-future_route_panel_"] div[data-testid="stRadio"] {
+                width:100% !important;
+                margin:0 !important;
+            }
+            </style>
+            """,
+            unsafe_allow_html=True,
+        )
+
         # Normaliza la etapa guardada antes de construir el selector.
         # Evita ValueError cuando session_state conserva una etapa de una versión
         # anterior del laboratorio que ya no existe en la lista actual.
@@ -27374,7 +27483,10 @@ def future_lab_view_impl(lab):
             prefix="✓" if done else "●" if current else ""
             return f"{prefix} Etapa {i} · {title}".strip()
 
-        with st.container(border=True):
+        with st.container(
+            border=True,
+            key=f"future_route_panel_{class_id}",
+        ):
             _done_count=sum(1 for i in _stage_options if bool(saved.get(f"done_{i}",False)))
             st.markdown(
                 f"""
