@@ -26865,22 +26865,23 @@ def future_lab_view_impl(lab):
             }
 
             .future-sidebar-panel-title {
-                padding:.02rem .05rem .48rem;
-                margin-bottom:.48rem;
-                border-bottom:1px solid rgba(89,212,239,.20);
+                padding:.08rem .08rem .62rem;
+                margin-bottom:.58rem;
+                border-bottom:1px solid rgba(89,212,239,.24);
             }
             .future-sidebar-panel-kicker {
-                color:#eafaff;
-                font-size:.76rem;
-                font-weight:850;
-                letter-spacing:.055em;
-                line-height:1.1;
+                color:#f4fcff;
+                font-size:1.00rem;
+                font-weight:900;
+                letter-spacing:.045em;
+                line-height:1.15;
             }
             .future-sidebar-panel-subtitle {
-                color:#9fc7d8;
-                font-size:.67rem;
-                margin-top:.18rem;
-                line-height:1.15;
+                color:#a9ccdc;
+                font-size:.72rem;
+                font-weight:600;
+                margin-top:.20rem;
+                line-height:1.20;
             }
 
             /* El widget radio ocupa TODO el panel */
