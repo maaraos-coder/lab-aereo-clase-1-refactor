@@ -26274,276 +26274,180 @@ def future_lab_view_impl(lab):
 
         role_now=st.session_state.get("role","Alumno")
 
-        # Navegación principal con radio buttons dentro de tarjetas. Al estar
-        # dentro del laboratorio, la tercera opción se muestra seleccionada.
-        active_view=current_lab_label
-
-        st.markdown(
-            """
-        <style>
-        /* Navegación principal: radio buttons contenidos en tarjetas */
-        section[data-testid="stSidebar"] div[data-testid="stRadio"]:has(div[role="radiogroup"][aria-label="Navegación principal"]) > div[role="radiogroup"] {
-            gap: .44rem;
-        }
-        section[data-testid="stSidebar"] div[data-testid="stRadio"]:has(div[role="radiogroup"][aria-label="Navegación principal"]) > div[role="radiogroup"] > label {
-            width: 100%;
-            margin: 0;
-            padding: .62rem .68rem;
-            border: 1px solid rgba(142, 221, 242, .28);
-            border-radius: 12px;
-            background: rgba(12, 73, 112, .30);
-            transition: background .16s ease, border-color .16s ease, box-shadow .16s ease, transform .08s ease;
-            cursor: pointer;
-            align-items: flex-start;
-        }
-        section[data-testid="stSidebar"] div[data-testid="stRadio"]:has(div[role="radiogroup"][aria-label="Navegación principal"]) > div[role="radiogroup"] > label:hover {
-            background: rgba(21, 111, 160, .34);
-            border-color: rgba(89, 212, 239, .58);
-        }
-        section[data-testid="stSidebar"] div[data-testid="stRadio"]:has(div[role="radiogroup"][aria-label="Navegación principal"]) > div[role="radiogroup"] > label:active {
-            transform: translateY(1px);
-        }
-        section[data-testid="stSidebar"] div[data-testid="stRadio"]:has(div[role="radiogroup"][aria-label="Navegación principal"]) > div[role="radiogroup"] > label:has(input:checked) {
-            background: linear-gradient(135deg, rgba(8, 94, 143, .72), rgba(12, 125, 166, .52));
-            border-color: #59d4ef;
-            box-shadow: inset 3px 0 0 #59d4ef, 0 0 0 1px rgba(89, 212, 239, .08);
-        }
-        section[data-testid="stSidebar"] div[data-testid="stRadio"]:has(div[role="radiogroup"][aria-label="Navegación principal"]) input[type="radio"] {
-            accent-color: #59d4ef;
-        }
-        section[data-testid="stSidebar"] div[data-testid="stRadio"]:has(div[role="radiogroup"][aria-label="Navegación principal"]) [data-testid="stMarkdownContainer"] p {
-            font-weight: 700;
-            line-height: 1.22;
-        }
-        section[data-testid="stSidebar"] div[data-testid="stRadio"]:has(div[role="radiogroup"][aria-label="Navegación principal"]) [data-testid="stCaptionContainer"] {
-            color: #a9cada;
-            font-size: .69rem;
-            line-height: 1.18;
-            margin-top: .12rem;
-        }
-        </style>
-        """,
-            unsafe_allow_html=True,
-        )
-
-        # Ruta de aprendizaje: tarjetas-radio compactas para Alumno y Docente.
-        # Mantiene el mismo lenguaje visual de la navegación principal, sin
-        # modificar la lógica ni el estado guardado de cada etapa.
-        st.markdown(
-            """
-        <style>
-        section[data-testid="stSidebar"] div[class*="st-key-future_stage_"] [role="radiogroup"] {
-            gap: .34rem !important;
-        }
-        section[data-testid="stSidebar"] div[class*="st-key-future_stage_"] [role="radiogroup"] > label {
-            width: 100% !important;
-            margin: 0 !important;
-            padding: .48rem .56rem !important;
-            border: 1px solid rgba(142,221,242,.20) !important;
-            border-radius: 10px !important;
-            background: rgba(12,73,112,.22) !important;
-            transition: background .15s ease,border-color .15s ease,box-shadow .15s ease,transform .08s ease !important;
-            cursor: pointer !important;
-            align-items: flex-start !important;
-        }
-        section[data-testid="stSidebar"] div[class*="st-key-future_stage_"] [role="radiogroup"] > label:hover {
-            background: rgba(21,111,160,.30) !important;
-            border-color: rgba(89,212,239,.48) !important;
-        }
-        section[data-testid="stSidebar"] div[class*="st-key-future_stage_"] [role="radiogroup"] > label:active {
-            transform: translateY(1px);
-        }
-        section[data-testid="stSidebar"] div[class*="st-key-future_stage_"] [role="radiogroup"] > label:has(input:checked) {
-            background: linear-gradient(135deg,rgba(8,94,143,.62),rgba(12,125,166,.42)) !important;
-            border-color: #59d4ef !important;
-            box-shadow: inset 3px 0 0 #59d4ef,0 0 0 1px rgba(89,212,239,.06) !important;
-        }
-        section[data-testid="stSidebar"] div[class*="st-key-future_stage_"] [data-baseweb="radio"] {
-            display:flex !important;
-            opacity:1 !important;
-            visibility:visible !important;
-            flex:0 0 auto !important;
-            margin-top:.05rem !important;
-        }
-        section[data-testid="stSidebar"] div[class*="st-key-future_stage_"] input[type="radio"] {
-            accent-color:#59d4ef !important;
-        }
-        section[data-testid="stSidebar"] div[class*="st-key-future_stage_"] [data-testid="stMarkdownContainer"] p {
-            font-size:.75rem !important;
-            font-weight:650 !important;
-            line-height:1.28 !important;
-            text-align:left !important;
-        }
-        </style>
-        """,
-            unsafe_allow_html=True,
-        )
-
+        # -------------------------------------------------------------
+        # Sidebar profesional: módulos consistentes, radios visibles y
+        # jerarquía clara para Alumno y Docente.
+        # -------------------------------------------------------------
         st.markdown(
             r"""
-    <style>
-    /* =========================================================
-       SIDEBAR · ANCHO Y ALTO REALMENTE UNIFORMES
-       Fuerza también wrappers internos de BaseWeb/Streamlit.
-       ========================================================= */
+            <style>
+            section[data-testid="stSidebar"] {
+                --sb-border: rgba(93, 199, 230, .34);
+                --sb-border-strong: rgba(105, 221, 243, .88);
+                --sb-panel: rgba(5, 37, 61, .54);
+                --sb-card: rgba(9, 63, 96, .58);
+                --sb-card-hover: rgba(12, 90, 132, .72);
+                --sb-card-active: linear-gradient(135deg, rgba(4,108,157,.96), rgba(12,139,179,.76));
+                --sb-text: #f6fbff;
+                --sb-muted: #9fc5d7;
+                --sb-accent: #69ddf3;
+            }
 
-    section[data-testid="stSidebar"] {
-        --future-card-height: 64px;
-    }
+            /* Panel exterior común */
+            section[data-testid="stSidebar"] div[data-testid="stVerticalBlockBorderWrapper"] {
+                width: 100% !important;
+                max-width: 100% !important;
+                box-sizing: border-box !important;
+                border: 1px solid var(--sb-border) !important;
+                border-radius: 15px !important;
+                background: linear-gradient(180deg, rgba(5,43,70,.72), rgba(4,33,55,.55)) !important;
+                box-shadow: 0 7px 20px rgba(0,0,0,.10) !important;
+                overflow: hidden !important;
+            }
+            section[data-testid="stSidebar"] div[data-testid="stVerticalBlockBorderWrapper"] > div {
+                width:100% !important;
+                box-sizing:border-box !important;
+                padding:.78rem !important;
+            }
 
-    /* Todo el árbol del radio ocupa el ancho disponible */
-    section[data-testid="stSidebar"] div[data-testid="stRadio"],
-    section[data-testid="stSidebar"] div[data-testid="stRadio"] > div,
-    section[data-testid="stSidebar"] div[data-testid="stRadio"] div[role="radiogroup"],
-    section[data-testid="stSidebar"] div[data-testid="stRadio"] div[role="radiogroup"] > div,
-    section[data-testid="stSidebar"] div[data-testid="stRadio"] label,
-    section[data-testid="stSidebar"] div[data-testid="stRadio"] label[data-baseweb="radio"],
-    section[data-testid="stSidebar"] div[data-testid="stRadio"] [data-baseweb="radio"] {
-        width:100% !important;
-        max-width:100% !important;
-        min-width:0 !important;
-        box-sizing:border-box !important;
-        align-self:stretch !important;
-    }
+            .future-side-head {
+                padding: .02rem .06rem .62rem;
+                margin-bottom: .62rem;
+                border-bottom: 1px solid rgba(105,221,243,.20);
+            }
+            .future-side-kicker {
+                color: var(--sb-text);
+                font-size: .96rem;
+                line-height: 1.15;
+                font-weight: 900;
+                letter-spacing: .04em;
+            }
+            .future-side-sub {
+                color: var(--sb-muted);
+                font-size: .69rem;
+                line-height: 1.20;
+                font-weight: 600;
+                margin-top: .20rem;
+            }
 
-    section[data-testid="stSidebar"] div[data-testid="stRadio"] div[role="radiogroup"] {
-        display:flex !important;
-        flex-direction:column !important;
-        align-items:stretch !important;
-        gap:.48rem !important;
-    }
+            /* Radio group */
+            section[data-testid="stSidebar"] div[data-testid="stRadio"],
+            section[data-testid="stSidebar"] div[data-testid="stRadio"] > div,
+            section[data-testid="stSidebar"] div[data-testid="stRadio"] [role="radiogroup"] {
+                width: 100% !important;
+                max-width: 100% !important;
+                box-sizing: border-box !important;
+            }
+            section[data-testid="stSidebar"] div[data-testid="stRadio"] [role="radiogroup"] {
+                display:flex !important;
+                flex-direction:column !important;
+                align-items:stretch !important;
+                gap:.46rem !important;
+            }
 
-    /* La tarjeta real es el componente BaseWeb del radio */
-    section[data-testid="stSidebar"]
-    div[data-testid="stRadio"] label[data-baseweb="radio"],
-    section[data-testid="stSidebar"]
-    div[data-testid="stRadio"] div[role="radiogroup"] > label,
-    section[data-testid="stSidebar"]
-    div[data-testid="stRadio"] div[role="radiogroup"] > div > label {
-        width:100% !important;
-        max-width:100% !important;
-        min-width:100% !important;
-        flex:0 0 100% !important;
+            /* Tarjeta radio uniforme */
+            section[data-testid="stSidebar"] div[data-testid="stRadio"] [role="radiogroup"] > label,
+            section[data-testid="stSidebar"] div[data-testid="stRadio"] label[data-baseweb="radio"] {
+                width:100% !important;
+                max-width:100% !important;
+                min-width:100% !important;
+                box-sizing:border-box !important;
+                margin:0 !important;
+                padding:.58rem .68rem !important;
+                min-height:62px !important;
+                height:62px !important;
+                border:1px solid var(--sb-border) !important;
+                border-radius:11px !important;
+                background:var(--sb-card) !important;
+                display:flex !important;
+                align-items:center !important;
+                gap:.48rem !important;
+                box-shadow:0 2px 7px rgba(0,0,0,.06) !important;
+                transition:background .15s ease,border-color .15s ease,box-shadow .15s ease,transform .10s ease !important;
+                overflow:hidden !important;
+            }
+            section[data-testid="stSidebar"] div[data-testid="stRadio"] [role="radiogroup"] > label:hover,
+            section[data-testid="stSidebar"] div[data-testid="stRadio"] label[data-baseweb="radio"]:hover {
+                background:var(--sb-card-hover) !important;
+                border-color:rgba(105,221,243,.70) !important;
+                transform:translateY(-1px) !important;
+            }
+            section[data-testid="stSidebar"] div[data-testid="stRadio"] [role="radiogroup"] > label:has(input:checked),
+            section[data-testid="stSidebar"] div[data-testid="stRadio"] label[data-baseweb="radio"]:has(input:checked) {
+                background:var(--sb-card-active) !important;
+                border-color:var(--sb-border-strong) !important;
+                box-shadow:inset 4px 0 0 var(--sb-accent), 0 4px 12px rgba(0,0,0,.10) !important;
+            }
 
-        height:var(--future-card-height) !important;
-        min-height:var(--future-card-height) !important;
-        max-height:var(--future-card-height) !important;
+            section[data-testid="stSidebar"] div[data-testid="stRadio"] input[type="radio"] {
+                flex:0 0 15px !important;
+                width:15px !important;
+                height:15px !important;
+                margin:0 !important;
+                accent-color:var(--sb-accent) !important;
+            }
+            section[data-testid="stSidebar"] div[data-testid="stRadio"] [data-testid="stMarkdownContainer"] {
+                width:100% !important;
+                min-width:0 !important;
+                flex:1 1 0 !important;
+                display:flex !important;
+                align-items:center !important;
+            }
+            section[data-testid="stSidebar"] div[data-testid="stRadio"] [data-testid="stMarkdownContainer"] p {
+                width:100% !important;
+                margin:0 !important;
+                color:var(--sb-text) !important;
+                font-size:.75rem !important;
+                line-height:1.22 !important;
+                font-weight:700 !important;
+                white-space:normal !important;
+                overflow-wrap:anywhere !important;
+                text-align:left !important;
+            }
 
-        margin:0 !important;
-        padding:.60rem .70rem !important;
-        box-sizing:border-box !important;
+            /* Navegación: un poco más grande */
+            section[data-testid="stSidebar"] div[class*="st-key-future_nav_radio_"] [role="radiogroup"] > label {
+                height:66px !important;
+                min-height:66px !important;
+            }
+            section[data-testid="stSidebar"] div[class*="st-key-future_nav_radio_"] [data-testid="stMarkdownContainer"] p {
+                font-size:.79rem !important;
+                font-weight:760 !important;
+            }
 
-        display:flex !important;
-        align-items:center !important;
-        justify-content:flex-start !important;
-        gap:.50rem !important;
+            /* Ruta: timeline sutil */
+            section[data-testid="stSidebar"] div[class*="st-key-future_stage_"] [role="radiogroup"] {
+                position:relative !important;
+                padding-left:.12rem !important;
+            }
+            section[data-testid="stSidebar"] div[class*="st-key-future_stage_"] [role="radiogroup"]::before {
+                content:"";
+                position:absolute;
+                left:8px;
+                top:16px;
+                bottom:16px;
+                width:1px;
+                background:rgba(105,221,243,.18);
+                z-index:0;
+            }
+            section[data-testid="stSidebar"] div[class*="st-key-future_stage_"] [role="radiogroup"] > label {
+                position:relative !important;
+                z-index:1 !important;
+                height:66px !important;
+                min-height:66px !important;
+            }
 
-        border:1px solid rgba(94,194,225,.52) !important;
-        border-radius:11px !important;
-        background:linear-gradient(
-            135deg,
-            rgba(8,58,92,.70),
-            rgba(10,79,117,.48)
-        ) !important;
-        box-shadow:0 2px 7px rgba(0,0,0,.08) !important;
-        overflow:hidden !important;
-    }
-
-    /* Hover */
-    section[data-testid="stSidebar"]
-    div[data-testid="stRadio"] label[data-baseweb="radio"]:hover,
-    section[data-testid="stSidebar"]
-    div[data-testid="stRadio"] div[role="radiogroup"] > label:hover,
-    section[data-testid="stSidebar"]
-    div[data-testid="stRadio"] div[role="radiogroup"] > div > label:hover {
-        background:linear-gradient(
-            135deg,
-            rgba(13,85,128,.82),
-            rgba(15,111,151,.58)
-        ) !important;
-        border-color:rgba(89,212,239,.90) !important;
-    }
-
-    /* Seleccionado */
-    section[data-testid="stSidebar"]
-    div[data-testid="stRadio"] label[data-baseweb="radio"]:has(input:checked),
-    section[data-testid="stSidebar"]
-    div[data-testid="stRadio"] div[role="radiogroup"] > label:has(input:checked),
-    section[data-testid="stSidebar"]
-    div[data-testid="stRadio"] div[role="radiogroup"] > div > label:has(input:checked) {
-        background:linear-gradient(
-            135deg,
-            rgba(4,104,154,.96),
-            rgba(13,140,179,.76)
-        ) !important;
-        border-color:#69ddf3 !important;
-        box-shadow:
-            inset 4px 0 0 #69ddf3,
-            0 4px 12px rgba(0,0,0,.12) !important;
-    }
-
-    /* Contenido textual: siempre usa todo el espacio restante */
-    section[data-testid="stSidebar"]
-    div[data-testid="stRadio"] [data-testid="stMarkdownContainer"] {
-        width:100% !important;
-        max-width:100% !important;
-        min-width:0 !important;
-        flex:1 1 0 !important;
-        display:flex !important;
-        align-items:center !important;
-        box-sizing:border-box !important;
-    }
-
-    section[data-testid="stSidebar"]
-    div[data-testid="stRadio"] [data-testid="stMarkdownContainer"] p {
-        width:100% !important;
-        max-width:100% !important;
-        min-width:0 !important;
-        margin:0 !important;
-        color:#fff !important;
-        font-size:.75rem !important;
-        font-weight:700 !important;
-        line-height:1.22 !important;
-        white-space:normal !important;
-        overflow-wrap:anywhere !important;
-        text-align:left !important;
-    }
-
-    /* Radio visible con ancho reservado idéntico */
-    section[data-testid="stSidebar"] div[data-testid="stRadio"] input[type="radio"] {
-        flex:0 0 16px !important;
-        width:16px !important;
-        height:16px !important;
-        margin:0 !important;
-        accent-color:#69ddf3 !important;
-    }
-
-    /* Ambos paneles exteriores ocupan el mismo ancho */
-    section[data-testid="stSidebar"]
-    div[data-testid="stVerticalBlockBorderWrapper"] {
-        width:100% !important;
-        max-width:100% !important;
-        min-width:0 !important;
-        box-sizing:border-box !important;
-    }
-
-    section[data-testid="stSidebar"]
-    div[data-testid="stVerticalBlockBorderWrapper"] > div {
-        width:100% !important;
-        max-width:100% !important;
-        min-width:0 !important;
-        box-sizing:border-box !important;
-    }
-
-    /* Captions no alteran el ancho de la tarjeta */
-    section[data-testid="stSidebar"]
-    div[data-testid="stRadio"] [data-testid="stCaptionContainer"] {
-        width:100% !important;
-        max-width:100% !important;
-        box-sizing:border-box !important;
-    }
-    </style>
-""",
+            /* Botones/link dentro de Herramientas */
+            section[data-testid="stSidebar"] .stButton > button,
+            section[data-testid="stSidebar"] .stLinkButton > a {
+                width:100% !important;
+                min-height:42px !important;
+                border-radius:9px !important;
+                font-size:.75rem !important;
+                font-weight:700 !important;
+            }
+            </style>
+            """,
             unsafe_allow_html=True,
         )
 
@@ -26818,9 +26722,9 @@ def future_lab_view_impl(lab):
         with st.container(border=True):
             st.markdown(
                 """
-                <div class="future-sidebar-panel-title">
-                    <div class="future-sidebar-panel-kicker">NAVEGACIÓN</div>
-                    <div class="future-sidebar-panel-subtitle">Accesos principales</div>
+                <div class="future-side-head">
+                    <div class="future-side-kicker">NAVEGACIÓN</div>
+                    <div class="future-side-sub">Espacios del diplomado</div>
                 </div>
                 """,
                 unsafe_allow_html=True,
@@ -26830,7 +26734,6 @@ def future_lab_view_impl(lab):
                 future_options,
                 index=future_options.index(current_lab_label),
                 format_func=lambda option: nav_titles[option],
-                captions=nav_captions,
                 key=nav_key,
                 label_visibility="collapsed",
                 help="Selecciona el espacio al que quieres ir.",
@@ -27054,50 +26957,59 @@ def future_lab_view_impl(lab):
             else:
                 st.caption("Vista docente · el avance y los resultados se revisan desde ‘Evaluaciones entregadas’.")
 
-        # Herramientas comunes del diplomado.
-        formula_popup_button()
-        st.link_button(
-            "📕 Generar apunte visual (PDF)",
-            f"?print_future_lab={class_id}",
-            width="stretch",
-            help="Abre una vista limpia con las etapas 0 a 10 para imprimirla o guardarla como PDF.",
-        )
-
-        # Mismos controles de proyección docente disponibles en el Curso 1.
-        if st.session_state.get("role")=="Docente":
+        # Herramientas separadas de la navegación principal.
+        with st.container(border=True):
+            st.markdown(
+                f"""
+                <div class="future-side-head">
+                    <div class="future-side-kicker">{'HERRAMIENTAS DOCENTES' if st.session_state.get('role')=='Docente' else 'RECURSOS'}</div>
+                    <div class="future-side-sub">{'Proyección, apoyo y materiales' if st.session_state.get('role')=='Docente' else 'Apoyo y material del laboratorio'}</div>
+                </div>
+                """,
+                unsafe_allow_html=True,
+            )
+            formula_popup_button()
             st.link_button(
-                "🖥️ Abrir vista para Zoom",
-                f"?projection=1&future_lab={class_id}",
+                "📕 Generar apunte visual (PDF)",
+                f"?print_future_lab={class_id}",
                 width="stretch",
-                help="Ábrela en otra ventana y comparte solo esa ventana en Zoom.",
+                help="Abre una vista limpia con las etapas 0 a 10 para imprimirla o guardarla como PDF.",
             )
-            future_projection_options = {
-                f"Etapa {i} · {(
-                    _future_stage_display_title(lab,i)
-                    if class_id==_C2L2_CLASS_ID
-                    else _c3l1_nav_stage_title(lab,i)
-                    if class_id==_C3L1_CLASS_ID
-                    else lab['stages'][i][0]
-                )}": i
-                for i in range(len(lab["stages"]))
-            }
-            future_projection_label = st.selectbox(
-                "Contenido visible en Zoom",
-                list(future_projection_options),
-                key=f"future_projection_stage_selector_{class_id}",
-            )
-            future_projection_stage = future_projection_options[future_projection_label]
-            if st.button(
-                "Mostrar etapa en Zoom",
-                key=f"future_projection_show_{class_id}",
-                width="stretch",
-            ):
-                _set_projection(stage=future_projection_stage, class_id=class_id)
-                st.success(
-                    f"{future_projection_label} enviada a Zoom. "
-                    "Pulsa ‘Actualizar pantalla’ en la ventana de Zoom."
-                )
 
+            # Mismos controles de proyección docente disponibles en el Curso 1.
+            if st.session_state.get("role")=="Docente":
+                st.link_button(
+                    "🖥️ Abrir vista para Zoom",
+                    f"?projection=1&future_lab={class_id}",
+                    width="stretch",
+                    help="Ábrela en otra ventana y comparte solo esa ventana en Zoom.",
+                )
+                future_projection_options = {
+                    f"Etapa {i} · {(
+                        _future_stage_display_title(lab,i)
+                        if class_id==_C2L2_CLASS_ID
+                        else _c3l1_nav_stage_title(lab,i)
+                        if class_id==_C3L1_CLASS_ID
+                        else lab['stages'][i][0]
+                    )}": i
+                    for i in range(len(lab["stages"]))
+                }
+                future_projection_label = st.selectbox(
+                    "Contenido visible en Zoom",
+                    list(future_projection_options),
+                    key=f"future_projection_stage_selector_{class_id}",
+                )
+                future_projection_stage = future_projection_options[future_projection_label]
+                if st.button(
+                    "Mostrar etapa en Zoom",
+                    key=f"future_projection_show_{class_id}",
+                    width="stretch",
+                ):
+                    _set_projection(stage=future_projection_stage, class_id=class_id)
+                    st.success(
+                        f"{future_projection_label} enviada a Zoom. "
+                        "Pulsa ‘Actualizar pantalla’ en la ventana de Zoom."
+                    )
         # Normaliza la etapa guardada antes de construir el selector.
         # Evita ValueError cuando session_state conserva una etapa de una versión
         # anterior del laboratorio que ya no existe en la lista actual.
@@ -27113,12 +27025,25 @@ def future_lab_view_impl(lab):
                 _saved_stage = max(_stage_options) if _stage_options else 0
             st.session_state[_stage_key] = _saved_stage
 
+        def _future_stage_sidebar_title(i):
+            if class_id==_C2L2_CLASS_ID:
+                title=_future_stage_display_title(lab,i)
+            elif class_id==_C3L1_CLASS_ID:
+                title=_c3l1_nav_stage_title(lab,i)
+            else:
+                title=lab['stages'][i][0]
+            done=bool(saved.get(f"done_{i}",False))
+            current=st.session_state.get(_stage_key,0)==i
+            prefix="✓" if done else "●" if current else ""
+            return f"{prefix} Etapa {i} · {title}".strip()
+
         with st.container(border=True):
+            _done_count=sum(1 for i in _stage_options if bool(saved.get(f"done_{i}",False)))
             st.markdown(
-                """
-                <div class="future-sidebar-panel-title">
-                    <div class="future-sidebar-panel-kicker">RUTA DE APRENDIZAJE</div>
-                    <div class="future-sidebar-panel-subtitle">Etapas del laboratorio</div>
+                f"""
+                <div class="future-side-head">
+                    <div class="future-side-kicker">RUTA DE APRENDIZAJE</div>
+                    <div class="future-side-sub">Laboratorio {lab['number']} · {_done_count} de {len(_stage_options)} etapas completadas</div>
                 </div>
                 """,
                 unsafe_allow_html=True,
@@ -27126,13 +27051,7 @@ def future_lab_view_impl(lab):
             selected=st.radio(
                 "Ruta de aprendizaje",
                 _stage_options,
-                format_func=lambda i:(
-                    f"Etapa {i} · {_future_stage_display_title(lab,i)}"
-                    if class_id==_C2L2_CLASS_ID
-                    else f"Etapa {i} · {_c3l1_nav_stage_title(lab,i)}"
-                    if class_id==_C3L1_CLASS_ID
-                    else f"Etapa {i} · {lab['stages'][i][0]}"
-                ),
+                format_func=_future_stage_sidebar_title,
                 key=_stage_key,
                 label_visibility="collapsed",
             )
