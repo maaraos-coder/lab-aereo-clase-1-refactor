@@ -448,6 +448,36 @@ st.markdown(
 )
 
 
+# Jerarquía visual global de encabezados del sidebar del diplomado.
+st.markdown(
+    """
+    <style>
+    section[data-testid="stSidebar"] .future-sidebar-panel-title {
+        padding:.08rem .08rem .62rem !important;
+        margin-bottom:.58rem !important;
+        border-bottom:1px solid rgba(89,212,239,.24) !important;
+    }
+    section[data-testid="stSidebar"] .future-sidebar-panel-kicker {
+        color:#f4fcff !important;
+        font-size:1.00rem !important;
+        font-weight:900 !important;
+        letter-spacing:.045em !important;
+        line-height:1.15 !important;
+    }
+    section[data-testid="stSidebar"] .future-sidebar-panel-subtitle {
+        color:#a9ccdc !important;
+        font-size:.72rem !important;
+        font-weight:600 !important;
+        margin-top:.20rem !important;
+        line-height:1.20 !important;
+    }
+    </style>
+    """,
+    unsafe_allow_html=True,
+)
+
+
+
 ROOT = Path(__file__).parent
 
 FREQS = np.array([100,125,160,200,250,315,400,500,630,800,1000,1250,1600,2000,2500,3150])
