@@ -26241,6 +26241,507 @@ def _render_course3_lab1_stage10(lab, saved):
     return _c3l1_stage10_impl(lab, saved, _course3_lab1_deps())
 
 
+
+# ============================================================================
+# CURSO 3 · LABORATORIO 2 · PROPAGACIÓN, TRÁFICO Y GIS
+# ============================================================================
+_C3L2_CLASS_ID = "clase-06-ruido-ambiental-lab-2"
+_C3L2_VERSION = 1
+
+_C3L2_NAV_STAGE_TITLES = {
+    0: "Introducción al laboratorio",
+    1: "De la fuente al receptor",
+    2: "Fuente puntual vs fuente lineal",
+    3: "¿Qué ocurre al alejarnos?",
+    4: "De la potencia sonora al nivel en el receptor",
+    5: "Del vehículo individual a la carretera",
+    6: "¿Qué hace más ruidosa una carretera?",
+    7: "Laboratorio virtual de tráfico",
+    8: "Preparación de la campaña real",
+    9: "Preguntas de comprensión",
+    10: "Mapa GIS de ruido de tráfico vehicular",
+}
+
+def _c3l2_nav_stage_title(lab, stage):
+    stage=int(stage)
+    return _C3L2_NAV_STAGE_TITLES.get(stage, lab["stages"][stage][0])
+
+def _c3l2_save(saved):
+    if st.session_state.get("projection_mode") or st.session_state.get("role")=="Proyección":
+        return
+    saved["updated_at"]=_now()
+    _save_future_state(_C3L2_CLASS_ID, saved)
+
+def _c3l2_complete(saved, stage, payload=None):
+    if payload is not None:
+        saved[f"c3l2_stage{stage}"]=payload
+    saved[f"done_{stage}"]=True
+    saved[f"updated_{stage}"]=_now()
+    _c3l2_save(saved)
+
+def _c3l2_header(stage, title, purpose, minutes=20):
+    header(
+        f"ETAPA {stage} · LABORATORIO 2",
+        title,
+        purpose,
+        show_overview=False,
+        duration_minutes=minutes,
+    )
+    st.caption("Curso 3 · Control de ruido ambiental · Laboratorio 2")
+    _c3l2_style()
+
+def _c3l2_style():
+    st.markdown("""
+    <style>
+    .c3l2-intro{border:1px solid #cfe0ec;border-radius:18px;padding:18px 20px;background:linear-gradient(135deg,#f7fbff,#eef8fd);margin:.65rem 0 1rem}
+    .c3l2-k{font-size:.72rem;font-weight:850;letter-spacing:.08em;color:#0879b9;text-transform:uppercase}
+    .c3l2-title{font-size:1.08rem;font-weight:850;color:#102c47;margin:.18rem 0 .3rem}
+    .c3l2-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;margin:.75rem 0 1rem}
+    .c3l2-grid2{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;margin:.75rem 0 1rem}
+    .c3l2-card{border:1px solid #d6e3ed;border-radius:16px;padding:15px 16px;background:#fff;box-shadow:0 2px 9px rgba(15,23,42,.035)}
+    .c3l2-card.blue{background:#eff8ff;border-color:#bfdbfe}.c3l2-card.green{background:#effcf5;border-color:#bbf7d0}.c3l2-card.orange{background:#fff8ed;border-color:#fed7aa}
+    .c3l2-num{font-size:1.45rem;font-weight:900;color:#0879b9}
+    .c3l2-flow{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin:.8rem 0}
+    .c3l2-node{border:1px solid #cfe0ec;border-radius:999px;padding:8px 12px;background:#fff;font-weight:750}.c3l2-arrow{font-weight:900;color:#0b91c7}
+    .c3l2-note{border-left:4px solid #0b8fc5;background:#eef8ff;border-radius:10px;padding:12px 14px;margin:.8rem 0}
+    .c3l2-warn{border-left:4px solid #f59e0b;background:#fffbeb;border-radius:10px;padding:12px 14px;margin:.8rem 0}
+    @media(max-width:850px){.c3l2-grid,.c3l2-grid2{grid-template-columns:1fr}}
+    </style>
+    """, unsafe_allow_html=True)
+
+def _c3l2_role():
+    return st.session_state.get("role","Alumno")
+
+def _c3l2_answer_box(saved, stage, label, min_chars=30, key_suffix="answer"):
+    key=f"c3l2_s{stage}_{key_suffix}"
+    previous=(saved.get(f"c3l2_stage{stage}") or {}).get(key_suffix,"") if isinstance(saved.get(f"c3l2_stage{stage}"),dict) else ""
+    return st.text_area(label, value=previous, height=110, key=key, placeholder="Explica tu razonamiento técnico...")
+
+def _c3l2_teacher_pauta(title, body):
+    if _c3l2_role()=="Docente":
+        with st.container(border=True):
+            st.markdown(f"### Pauta docente · {title}")
+            st.markdown(body)
+
+def _c3l2_map(points, key, heat=False, height=480):
+    """Mapa OSM interactivo. Devuelve el último clic o None."""
+    try:
+        import folium
+        from folium.plugins import HeatMap
+        from streamlit_folium import st_folium
+    except Exception:
+        st.warning("El componente GIS requiere `folium` y `streamlit-folium`. El parche ya los agrega a requirements.txt.")
+        return None
+
+    valid=[p for p in points if isinstance(p,dict) and p.get("lat") is not None and p.get("lon") is not None]
+    if valid:
+        center=[sum(float(p["lat"]) for p in valid)/len(valid), sum(float(p["lon"]) for p in valid)/len(valid)]
+        zoom=16
+    else:
+        center=[-33.4489,-70.6693]
+        zoom=12
+
+    m=folium.Map(location=center, zoom_start=zoom, control_scale=True, tiles="OpenStreetMap")
+    for idx,p in enumerate(valid):
+        laeq=p.get("laeq")
+        color="#0ea5e9"
+        if isinstance(laeq,(int,float)):
+            if laeq>=75: color="#b91c1c"
+            elif laeq>=70: color="#ea580c"
+            elif laeq>=65: color="#f59e0b"
+            elif laeq>=60: color="#84cc16"
+            else: color="#16a34a"
+        label=p.get("id") or f"P{idx+1}"
+        tooltip=f"{label}"
+        if isinstance(laeq,(int,float)): tooltip+=f" · LAeq {laeq:.1f} dB(A)"
+        folium.CircleMarker(
+            [float(p["lat"]),float(p["lon"])],
+            radius=8, color=color, fill=True, fill_color=color, fill_opacity=.9,
+            tooltip=tooltip,
+        ).add_to(m)
+        folium.Marker(
+            [float(p["lat"]),float(p["lon"])],
+            icon=folium.DivIcon(html=f'<div style="font-weight:800;font-size:11px;background:white;border:1px solid #64748b;border-radius:5px;padding:1px 4px">{label}</div>')
+        ).add_to(m)
+    measured=[p for p in valid if isinstance(p.get("laeq"),(int,float))]
+    if heat and len(measured)>=3:
+        weights=[[float(p["lat"]),float(p["lon"]),max(0.1,(float(p["laeq"])-45)/35)] for p in measured]
+        HeatMap(weights, radius=35, blur=28, min_opacity=.30, name="Superficie indicativa").add_to(m)
+        folium.LayerControl().add_to(m)
+
+    data=st_folium(m, width=None, height=height, key=key)
+    click=(data or {}).get("last_clicked")
+    if click and click.get("lat") is not None and click.get("lng") is not None:
+        return {"lat":float(click["lat"]), "lon":float(click["lng"])}
+    return None
+
+def _c3l2_stage0(lab,saved):
+    _c3l2_header(0,"De la fuente al territorio","Comprender la ruta del Laboratorio 2 y el producto final: un mapa GIS construido con puntos medidos.",10)
+    st.markdown("""
+    <div class="c3l2-intro">
+      <div class="c3l2-k">DESAFÍO PROFESIONAL</div>
+      <div class="c3l2-title">¿Cómo se distribuye en el territorio el ruido generado por una vía urbana?</div>
+      Una medición aislada no explica por sí sola el patrón espacial. En este laboratorio conectarás
+      geometría, distancia, tráfico, campaña de terreno y representación GIS.
+    </div>
+    """,unsafe_allow_html=True)
+    st.markdown("""
+    <div class="c3l2-flow">
+      <span class="c3l2-node">FUENTE</span><span class="c3l2-arrow">→</span>
+      <span class="c3l2-node">GEOMETRÍA</span><span class="c3l2-arrow">→</span>
+      <span class="c3l2-node">DISTANCIA</span><span class="c3l2-arrow">→</span>
+      <span class="c3l2-node">TRÁFICO</span><span class="c3l2-arrow">→</span>
+      <span class="c3l2-node">CAMPAÑA</span><span class="c3l2-arrow">→</span>
+      <span class="c3l2-node">GIS</span>
+    </div>
+    """,unsafe_allow_html=True)
+    st.markdown("### Ruta de aprendizaje")
+    route=[
+        ("1–2","Reconocer","Fuente, receptor y geometría."),
+        ("3–4","Propagar","Distancia, Lp y Lw."),
+        ("5–7","Analizar tráfico","Vehículo, flujo y receptores."),
+        ("8","Preparar terreno","Mapa GIS + medición piloto."),
+        ("9","Comprobar","Preguntas de comprensión."),
+        ("10","Integrar","Campaña real + mapa GIS."),
+    ]
+    cols=st.columns(3)
+    for i,(n,t,d) in enumerate(route):
+        with cols[i%3]:
+            st.markdown(f'<div class="c3l2-card"><div class="c3l2-k">ETAPAS {n}</div><b>{t}</b><br><span style="color:#64748b">{d}</span></div>',unsafe_allow_html=True)
+    if _c3l2_role()=="Alumno" and st.button("Comenzar Laboratorio 2",type="primary",use_container_width=True,key="c3l2_s0_start"):
+        _c3l2_complete(saved,0,{"started":True})
+        st.success("Ruta iniciada. Tu avance quedó guardado.")
+    _c3l2_teacher_pauta("Etapa 0","La apertura debe enfatizar que la Etapa 10 reutiliza una campaña real y que GIS representa espacialmente mediciones e inferencias, no una medición continua del territorio.")
+
+def _c3l2_stage1(lab,saved):
+    _c3l2_header(1,"De la fuente al receptor","Reconocer fuente, camino de propagación y receptor antes de calcular niveles.")
+    st.markdown("""
+    <div class="c3l2-grid">
+      <div class="c3l2-card blue"><div class="c3l2-k">FUENTE</div><b>¿Quién genera?</b><br>Vehículo, HVAC, industria, obra.</div>
+      <div class="c3l2-card"><div class="c3l2-k">CAMINO</div><b>¿Cómo viaja?</b><br>Aire, geometría, reflexiones, barreras.</div>
+      <div class="c3l2-card green"><div class="c3l2-k">RECEPTOR</div><b>¿Dónde importa?</b><br>Vivienda, colegio, persona o punto de evaluación.</div>
+    </div>""",unsafe_allow_html=True)
+    items={"Automóvil circulando":"Fuente","Aire entre la vía y vivienda":"Camino","Fachada de vivienda":"Receptor","Barrera acústica":"Camino","Equipo HVAC":"Fuente"}
+    answers={}
+    for item,correct in items.items():
+        answers[item]=st.segmented_control(item,["Fuente","Camino","Receptor"],key=f"c3l2_s1_{item}")
+    hypothesis=st.text_area("Hipótesis: ¿qué esperas que ocurra si el receptor se aleja al doble de distancia?",key="c3l2_s1_hyp",height=90)
+    if _c3l2_role()=="Alumno" and st.button("Comprobar y guardar",type="primary",key="c3l2_s1_save"):
+        ok=sum(answers[k]==v for k,v in items.items())
+        if ok<4 or len(hypothesis.strip())<20: st.warning("Revisa la clasificación y desarrolla tu hipótesis.")
+        else:
+            _c3l2_complete(saved,1,{"classification":answers,"hypothesis":hypothesis})
+            st.success("Etapa guardada.")
+    _c3l2_teacher_pauta("Etapa 1","Respuesta esperada: fuente genera, camino modifica la propagación y receptor es el punto/persona de interés. Alejar el receptor reduce el nivel en condiciones comparables; la magnitud depende de la geometría.")
+
+def _c3l2_stage2(lab,saved):
+    _c3l2_header(2,"Fuente puntual vs fuente lineal","Comparar dos geometrías ideales y descubrir por qué la misma duplicación de distancia no produce el mismo cambio.")
+    kind=st.segmented_control("Geometría",["Fuente puntual","Fuente lineal idealizada"],default="Fuente puntual",key="c3l2_s2_kind")
+    r1=st.number_input("Distancia inicial r₁ [m]",1.0,100.0,10.0,1.0,key="c3l2_s2_r1")
+    r2=st.slider("Distancia final r₂ [m]",1.0,100.0,20.0,1.0,key="c3l2_s2_r2")
+    coef=20 if kind=="Fuente puntual" else 10
+    delta=coef*__import__("math").log10(r1/r2)
+    st.latex(r"\Delta L = " + ("20" if coef==20 else "10") + r"\log_{10}\left(\frac{r_1}{r_2}\right)")
+    c1,c2,c3=st.columns(3)
+    c1.metric("r₁",f"{r1:.0f} m"); c2.metric("r₂",f"{r2:.0f} m"); c3.metric("Cambio relativo",f"{delta:+.1f} dB")
+    distances=[2,4,8,16,32,64]
+    rel=[coef*__import__("math").log10(2/d) for d in distances]
+    fig=go.Figure(go.Scatter(x=distances,y=rel,mode="lines+markers"))
+    fig.update_layout(xaxis_title="Distancia [m]",yaxis_title="Cambio respecto de 2 m [dB]",height=330,margin=dict(l=20,r=20,t=20,b=20))
+    st.plotly_chart(fig,use_container_width=True)
+    question=st.radio("Si duplicas la distancia desde una vía idealizada, ¿qué tendencia esperas?",["≈ −6 dB","≈ −3 dB","0 dB"],index=None,key="c3l2_s2_q")
+    if _c3l2_role()=="Alumno" and st.button("Guardar descubrimiento",type="primary",key="c3l2_s2_save"):
+        if question!="≈ −3 dB": st.warning("Revisa la diferencia entre propagación puntual y lineal.")
+        else:
+            _c3l2_complete(saved,2,{"kind":kind,"r1":r1,"r2":r2,"delta":delta,"question":question})
+            st.success("Etapa guardada.")
+    _c3l2_teacher_pauta("Etapa 2","Para las idealizaciones del laboratorio: puntual → 20log10(r1/r2), lineal → 10log10(r1/r2). Al duplicar distancia: aproximadamente −6 dB y −3 dB, respectivamente.")
+
+def _c3l2_stage3(lab,saved):
+    _c3l2_header(3,"¿Qué ocurre al alejarnos?","Aplicar duplicaciones sucesivas de distancia y construir el patrón espacial.")
+    base=st.slider("Nivel de referencia a 1 m [dB]",60,95,80,key="c3l2_s3_base")
+    geom=st.segmented_control("Modelo",["Puntual","Lineal idealizado"],default="Puntual",key="c3l2_s3_geom")
+    d=[1,2,4,8,16,32]
+    loss=6 if geom=="Puntual" else 3
+    levels=[base-loss*i for i in range(len(d))]
+    st.dataframe(pd.DataFrame({"Distancia [m]":d,"Nivel aproximado [dB]":levels}),hide_index=True,use_container_width=True)
+    fig=go.Figure(go.Scatter(x=d,y=levels,mode="lines+markers"))
+    fig.update_layout(xaxis_type="log",xaxis_title="Distancia [m] (escala log)",yaxis_title="Nivel [dB]",height=330,margin=dict(l=20,r=20,t=20,b=20))
+    st.plotly_chart(fig,use_container_width=True)
+    ans=st.number_input("Una fuente puntual produce 72 dB a 4 m. Estima el nivel a 8 m.",40.0,90.0,70.0,.5,key="c3l2_s3_ans")
+    if _c3l2_role()=="Alumno" and st.button("Comprobar y guardar",type="primary",key="c3l2_s3_save"):
+        if abs(ans-66)>1: st.warning("Entre 4 y 8 m hay una duplicación. Revisa la tendencia puntual.")
+        else:
+            _c3l2_complete(saved,3,{"base":base,"geom":geom,"answer":ans})
+            st.success("Correcto: una duplicación en fuente puntual ideal equivale aproximadamente a −6 dB.")
+    _c3l2_teacher_pauta("Etapa 3","Ejercicio: 72 dB a 4 m → ~66 dB a 8 m bajo propagación puntual ideal. Aclarar que son tendencias geométricas ideales, no una predicción universal del ambiente urbano.")
+
+def _c3l2_stage4(lab,saved):
+    _c3l2_header(4,"De la potencia sonora al nivel en el receptor","Distinguir Lw como emisión de la fuente y Lp como nivel dependiente de la posición.")
+    st.markdown("""
+    <div class="c3l2-grid2">
+      <div class="c3l2-card blue"><div class="c3l2-k">Lw</div><b>Potencia sonora</b><br>Caracteriza la emisión acústica de la fuente.</div>
+      <div class="c3l2-card green"><div class="c3l2-k">Lp</div><b>Presión sonora</b><br>Depende de emisión, distancia, geometría y entorno.</div>
+    </div>""",unsafe_allow_html=True)
+    lw=st.slider("Lw de la fuente [dB]",70,110,95,key="c3l2_s4_lw")
+    r=st.slider("Distancia al receptor [m]",1.0,50.0,5.0,.5,key="c3l2_s4_r")
+    import math
+    lp=lw-10*math.log10(4*math.pi*r*r)
+    st.latex(r"L_p \approx L_w - 10\log_{10}(4\pi r^2)")
+    c1,c2=st.columns(2); c1.metric("Lw",f"{lw} dB"); c2.metric("Lp idealizado",f"{lp:.1f} dB")
+    choice=st.radio("Si Lw no cambia y aumentas la distancia, ¿qué magnitud cambia directamente en el receptor?",["Lw","Lp","Ambas son siempre iguales"],index=None,key="c3l2_s4_q")
+    if _c3l2_role()=="Alumno" and st.button("Guardar etapa",type="primary",key="c3l2_s4_save"):
+        if choice!="Lp": st.warning("Lw caracteriza emisión; Lp es el nivel observado en el punto.")
+        else:
+            _c3l2_complete(saved,4,{"lw":lw,"r":r,"lp":lp,"choice":choice})
+            st.success("Etapa guardada.")
+    _c3l2_teacher_pauta("Etapa 4","La fórmula se usa como modelo ideal de campo libre para enseñar la diferencia Lw/Lp. No presentarla como sustituto de un modelo ambiental completo.")
+
+def _c3l2_stage5(lab,saved):
+    _c3l2_header(5,"Del vehículo individual a la carretera","Distinguir evento móvil individual de un flujo que puede aproximarse como fuente lineal.")
+    mode=st.segmented_control("Escenario",["Vehículo individual","Flujo discontinuo","Flujo continuo"],default="Vehículo individual",key="c3l2_s5_mode")
+    descriptions={
+        "Vehículo individual":"Un evento móvil cambia continuamente su geometría respecto del receptor.",
+        "Flujo discontinuo":"Los eventos siguen distinguiéndose; una sola línea equivalente puede ocultar variabilidad.",
+        "Flujo continuo":"Con suficiente densidad temporal, el corredor puede aproximarse didácticamente como fuente lineal.",
+    }
+    st.markdown(f'<div class="c3l2-note"><b>{mode}</b><br>{descriptions[mode]}</div>',unsafe_allow_html=True)
+    model=st.radio("¿Qué representación usarías primero para una avenida con flujo continuo y estable?",["Fuente puntual fija","Corredor / fuente lineal idealizada","No existe fuente"],index=None,key="c3l2_s5_q")
+    why=st.text_area("Justifica brevemente",key="c3l2_s5_why",height=90)
+    if _c3l2_role()=="Alumno" and st.button("Guardar razonamiento",type="primary",key="c3l2_s5_save"):
+        if model!="Corredor / fuente lineal idealizada" or len(why.strip())<20: st.warning("Selecciona el modelo coherente y justifica.")
+        else:
+            _c3l2_complete(saved,5,{"mode":mode,"model":model,"why":why})
+            st.success("Etapa guardada.")
+    _c3l2_teacher_pauta("Etapa 5","Evitar la frase absoluta 'la carretera es una fuente lineal'. Es una aproximación útil bajo condiciones de flujo y escala espacial determinadas.")
+
+def _c3l2_traffic_index(flow, speed, heavy, distance, pavement):
+    import math
+    # Índice didáctico de tendencias, NO normativo.
+    p_corr={"Más silencioso":-2.0,"Normal":0.0,"Rugoso":2.0}[pavement]
+    return 52 + 10*math.log10(max(flow,1)/100) + 0.05*(speed-50) + 0.16*heavy - 10*math.log10(max(distance,1)/10) + p_corr
+
+def _c3l2_stage6(lab,saved):
+    _c3l2_header(6,"¿Qué hace más ruidosa una carretera?","Experimentar con flujo, velocidad, pesados y distancia mediante un simulador didáctico.")
+    st.markdown('<div class="c3l2-warn"><b>Modelo didáctico.</b> Permite estudiar tendencias y sensibilidad; no es un método predictivo reglamentario.</div>',unsafe_allow_html=True)
+    c1,c2=st.columns(2)
+    flow=c1.slider("Flujo [veh/h]",100,3000,1000,100,key="c3l2_s6_flow")
+    speed=c2.slider("Velocidad [km/h]",20,120,50,5,key="c3l2_s6_speed")
+    c3,c4=st.columns(2)
+    heavy=c3.slider("Vehículos pesados [%]",0,40,8,1,key="c3l2_s6_heavy")
+    distance=c4.slider("Distancia al receptor [m]",5,100,20,5,key="c3l2_s6_dist")
+    pavement=st.segmented_control("Superficie vial",["Más silencioso","Normal","Rugoso"],default="Normal",key="c3l2_s6_pav")
+    level=_c3l2_traffic_index(flow,speed,heavy,distance,pavement)
+    st.metric("Índice de nivel relativo del escenario",f"{level:.1f} dB")
+    variable=st.radio("¿Qué variable estás modificando principalmente cuando alejas al receptor?",["Emisión","Propagación","Composición vehicular"],index=None,key="c3l2_s6_q")
+    if _c3l2_role()=="Alumno" and st.button("Guardar escenario",type="primary",key="c3l2_s6_save"):
+        if variable!="Propagación": st.warning("La distancia modifica principalmente el camino de propagación.")
+        else:
+            _c3l2_complete(saved,6,{"flow":flow,"speed":speed,"heavy":heavy,"distance":distance,"pavement":pavement,"level":level})
+            st.success("Escenario guardado.")
+    _c3l2_teacher_pauta("Etapa 6","El índice es deliberadamente didáctico. Usar para comparar tendencias manteniendo las otras variables fijas; no presentarlo como nivel normativo ni como modelo oficial de tránsito.")
+
+def _c3l2_stage7(lab,saved):
+    _c3l2_header(7,"Laboratorio virtual de tráfico","Predecir el receptor crítico y contrastar la hipótesis con un escenario controlado.")
+    flow=st.slider("Flujo [veh/h]",300,2500,1200,100,key="c3l2_s7_flow")
+    heavy=st.slider("Pesados [%]",0,30,10,1,key="c3l2_s7_heavy")
+    speed=st.slider("Velocidad [km/h]",30,100,60,5,key="c3l2_s7_speed")
+    receptor_dist={"P1":8,"P2":15,"P3":25,"P4":40,"P5":70}
+    prediction=st.radio("Antes de ejecutar: ¿qué receptor esperas que tenga mayor nivel?",list(receptor_dist),index=None,key="c3l2_s7_pred")
+    rows=[]
+    for p,d in receptor_dist.items():
+        rows.append({"Receptor":p,"Distancia [m]":d,"Nivel relativo [dB]":round(_c3l2_traffic_index(flow,speed,heavy,d,"Normal"),1)})
+    if st.button("▶ Ejecutar escenario",key="c3l2_s7_run",use_container_width=True):
+        st.session_state["c3l2_s7_ran"]=True
+    if st.session_state.get("c3l2_s7_ran"):
+        df=pd.DataFrame(rows)
+        st.dataframe(df,hide_index=True,use_container_width=True)
+        fig=go.Figure(go.Bar(x=df["Receptor"],y=df["Nivel relativo [dB]"]))
+        fig.update_layout(height=320,margin=dict(l=20,r=20,t=20,b=20),yaxis_title="Nivel relativo [dB]")
+        st.plotly_chart(fig,use_container_width=True)
+        actual=max(rows,key=lambda x:x["Nivel relativo [dB]"])["Receptor"]
+        st.info(f"Receptor con mayor nivel en este escenario: **{actual}**.")
+        if _c3l2_role()=="Alumno" and st.button("Guardar laboratorio virtual",type="primary",key="c3l2_s7_save"):
+            if not prediction: st.warning("Formula primero una predicción.")
+            else:
+                _c3l2_complete(saved,7,{"prediction":prediction,"actual":actual,"scenario":{"flow":flow,"speed":speed,"heavy":heavy},"results":rows})
+                st.success("Etapa guardada.")
+    _c3l2_teacher_pauta("Etapa 7","Con las demás variables iguales, el receptor más cercano resulta crítico en el simulador. La discusión debe centrarse en control de variables y no en memorizar el resultado.")
+
+def _c3l2_stage8(lab,saved):
+    _c3l2_header(8,"Preparación de la campaña real","Practicar el flujo GIS + sonómetro antes de la evaluación integradora.",30)
+    prev=saved.get("c3l2_stage8") if isinstance(saved.get("c3l2_stage8"),dict) else {}
+    location=st.text_input("Intersección / sector de práctica",value=prev.get("location",""),placeholder="Ej.: Av. Irarrázaval con Av. Pedro de Valdivia",key="c3l2_s8_location")
+    pilot_points=prev.get("points",[]) if isinstance(prev.get("points"),list) else []
+    st.markdown("### 1. Marca un punto piloto en el mapa")
+    click=_c3l2_map(pilot_points,"c3l2_s8_map",height=430)
+    if click:
+        st.caption(f"Último clic: {click['lat']:.6f}, {click['lon']:.6f}")
+        if st.button("📍 Usar este punto como piloto",key="c3l2_s8_add"):
+            pilot_points=[{"id":"P1","lat":click["lat"],"lon":click["lon"]}]
+            prev["points"]=pilot_points; prev["location"]=location
+            saved["c3l2_stage8"]=prev; _c3l2_save(saved); st.rerun()
+    st.markdown("### 2. Realiza una medición piloto")
+    st.link_button("🎙️ Abrir sonómetro online","https://soundlevelmeteruc.vercel.app/",use_container_width=True)
+    c1,c2,c3=st.columns(3)
+    laeq=c1.number_input("LAeq [dB(A)]",35.0,110.0,float(prev.get("laeq",65.0)),.1,key="c3l2_s8_laeq")
+    lmax=c2.number_input("Lmax [dB(A)]",35.0,130.0,float(prev.get("lmax",75.0)),.1,key="c3l2_s8_lmax")
+    dur=c3.number_input("Duración [min]",1.0,15.0,float(prev.get("duration",2.0)),.5,key="c3l2_s8_dur")
+    obs=st.text_area("Observaciones del punto piloto",value=prev.get("notes",""),height=90,key="c3l2_s8_notes")
+    if _c3l2_role()=="Alumno" and st.button("💾 Guardar práctica GIS",type="primary",use_container_width=True,key="c3l2_s8_save"):
+        if not pilot_points or not location.strip() or len(obs.strip())<10: st.warning("Marca un punto, identifica el sector y registra una observación.")
+        else:
+            payload={"location":location,"points":pilot_points,"laeq":laeq,"lmax":lmax,"duration":dur,"notes":obs}
+            _c3l2_complete(saved,8,payload)
+            st.success("Práctica GIS guardada.")
+    _c3l2_teacher_pauta("Etapa 8","El objetivo no es evaluar todavía. El alumno debe aprender el flujo: ubicar → marcar → medir → registrar. El teléfono/sonómetro online se usa con finalidad educativa, no para afirmar cumplimiento reglamentario.")
+
+_C3L2_Q=[
+("Una máquina fija aislada se aproxima inicialmente a:",["Fuente puntual","Fuente lineal","Receptor"],0),
+("Una vía con flujo continuo puede idealizarse como:",["Fuente puntual fija","Fuente lineal","Receptor"],1),
+("Duplicar distancia en fuente puntual ideal produce aproximadamente:",["−3 dB","−6 dB","+6 dB"],1),
+("Duplicar distancia en fuente lineal idealizada produce aproximadamente:",["−3 dB","−6 dB","0 dB"],0),
+("Lw representa principalmente:",["Emisión de la fuente","Nivel en cualquier receptor","Distancia"],0),
+("Al alejar el receptor modificas principalmente:",["Emisión","Propagación","Porcentaje de pesados"],1),
+("Para comparar puntos de una vía conviene mantener:",["Trazabilidad de método y condiciones","Solo el color del mapa","La distancia sin registrar"],0),
+("Un valor interpolado entre dos puntos:",["Fue medido directamente allí","Es una estimación espacial","Siempre es normativo"],1),
+("Una medición aislada en la esquina más ruidosa:",["Representa automáticamente toda la vía","Puede no ser representativa","Elimina la necesidad de campaña"],1),
+("Además de LAeq conviene registrar:",["Contexto, duración, hora y eventos","Solo nombre de calle","Nada más"],0),
+]
+
+def _c3l2_stage9(lab,saved):
+    _c3l2_header(9,"Preguntas de comprensión","Comprobar conceptos antes de la campaña GIS final.",25)
+    prev=saved.get("c3l2_stage9") if isinstance(saved.get("c3l2_stage9"),dict) else {}
+    answers=prev.get("answers",{}) if isinstance(prev.get("answers"),dict) else {}
+    for i,(q,opts,correct) in enumerate(_C3L2_Q):
+        with st.container(border=True):
+            st.markdown(f"**Pregunta {i+1}**")
+            previous=answers.get(str(i))
+            idx=opts.index(previous) if previous in opts else None
+            val=st.radio(q,opts,index=idx,key=f"c3l2_s9_q{i}")
+            answers[str(i)]=val
+    correct_count=sum(answers.get(str(i))==opts[correct] for i,(_,opts,correct) in enumerate(_C3L2_Q))
+    st.caption(f"Respuestas actuales: {len([v for v in answers.values() if v])} de 10")
+    if _c3l2_role()=="Alumno" and st.button("💾 Guardar preguntas de comprensión",type="primary",use_container_width=True,key="c3l2_s9_save"):
+        if len([v for v in answers.values() if v])<10: st.warning("Responde las 10 preguntas antes de guardar la etapa como completada.")
+        else:
+            _c3l2_complete(saved,9,{"answers":answers,"correct_count":correct_count})
+            st.success("Preguntas guardadas. Puedes volver y modificar tus respuestas.")
+    _c3l2_teacher_pauta("Etapa 9","Clave: 1 puntual; 2 lineal; 3 −6 dB; 4 −3 dB; 5 Lw emisión; 6 propagación; 7 trazabilidad; 8 estimación espacial; 9 puede no ser representativa; 10 registrar contexto completo.")
+
+def _c3l2_stage10(lab,saved):
+    _c3l2_header(10,"Mapa GIS de ruido de tráfico vehicular","Realizar la campaña integradora sobre una intersección real y construir el mapa a partir de puntos medidos.",50)
+    data=saved.get("c3l2_stage10") if isinstance(saved.get("c3l2_stage10"),dict) else {}
+    data=dict(data or {})
+    points=list(data.get("points",[]) or [])
+
+    st.markdown("""
+    <div class="c3l2-intro">
+      <div class="c3l2-k">EVALUACIÓN INTEGRADORA</div>
+      <div class="c3l2-title">De la medición puntual al patrón espacial</div>
+      Selecciona una intersección real, define vía principal y secundaria, registra tus puntos y construye
+      la representación GIS. Los colores entre puntos son una visualización estimativa; solo los marcadores corresponden a mediciones ingresadas.
+    </div>
+    """,unsafe_allow_html=True)
+
+    st.markdown("### 1. Define la intersección")
+    c1,c2=st.columns(2)
+    principal=c1.text_input("Vía principal",value=data.get("principal",""),key="c3l2_s10_mainroad")
+    secondary=c2.text_input("Vía secundaria",value=data.get("secondary",""),key="c3l2_s10_secondary")
+    sector=st.text_input("Sector / comuna",value=data.get("sector",""),key="c3l2_s10_sector")
+
+    st.markdown("### 2. Marca tus puntos GIS")
+    heat=st.toggle("Mostrar superficie indicativa a partir de puntos medidos",value=False,key="c3l2_s10_heat")
+    click=_c3l2_map(points,"c3l2_s10_map",heat=heat,height=500)
+    c3,c4=st.columns([1,1])
+    route=c3.selectbox("Asignar nuevo punto a",["Vía principal","Vía secundaria"],key="c3l2_s10_route")
+    if click and c4.button("➕ Agregar último clic",use_container_width=True,key="c3l2_s10_add"):
+        pid=f"P{len(points)+1}"
+        points.append({"id":pid,"lat":click["lat"],"lon":click["lon"],"route":route,"laeq":None,"lmax":None,"duration":None,"time":"","notes":""})
+        data.update({"points":points,"principal":principal,"secondary":secondary,"sector":sector})
+        saved["c3l2_stage10"]=data; _c3l2_save(saved); st.rerun()
+
+    if points:
+        st.caption(f"Puntos creados: {len(points)}. La tarea original permite trabajar hasta 16 puntos; la plataforma acepta una campaña progresiva.")
+        if st.button("🗑 Eliminar último punto",key="c3l2_s10_del"):
+            points=points[:-1]; data["points"]=points; saved["c3l2_stage10"]=data; _c3l2_save(saved); st.rerun()
+
+    st.markdown("### 3. Registra las mediciones")
+    st.link_button("🎙️ Abrir sonómetro online","https://soundlevelmeteruc.vercel.app/",use_container_width=True)
+    if points:
+        ids=[p["id"] for p in points]
+        pid=st.selectbox("Punto a editar",ids,key="c3l2_s10_point_select")
+        p=next(x for x in points if x["id"]==pid)
+        c1,c2,c3=st.columns(3)
+        laeq=c1.number_input("LAeq [dB(A)]",35.0,110.0,float(p["laeq"] if isinstance(p.get("laeq"),(int,float)) else 65.0),.1,key=f"c3l2_{pid}_laeq")
+        lmax=c2.number_input("Lmax [dB(A)]",35.0,130.0,float(p["lmax"] if isinstance(p.get("lmax"),(int,float)) else 75.0),.1,key=f"c3l2_{pid}_lmax")
+        duration=c3.number_input("Duración [min]",1.0,15.0,float(p["duration"] if isinstance(p.get("duration"),(int,float)) else 2.0),.5,key=f"c3l2_{pid}_dur")
+        c4,c5=st.columns(2)
+        time=c4.text_input("Hora / intervalo",value=p.get("time",""),placeholder="Ej.: 18:10–18:12",key=f"c3l2_{pid}_time")
+        notes=c5.text_input("Observación breve",value=p.get("notes",""),placeholder="Bus, semáforo, bocina, flujo estable...",key=f"c3l2_{pid}_notes")
+        if st.button(f"💾 Guardar medición {pid}",key=f"c3l2_{pid}_save",use_container_width=True):
+            for pp in points:
+                if pp["id"]==pid:
+                    pp.update({"laeq":laeq,"lmax":lmax,"duration":duration,"time":time,"notes":notes})
+            data.update({"points":points,"principal":principal,"secondary":secondary,"sector":sector})
+            saved["c3l2_stage10"]=data; _c3l2_save(saved); st.success(f"{pid} guardado."); st.rerun()
+
+    measured=[p for p in points if isinstance(p.get("laeq"),(int,float))]
+    if measured:
+        st.markdown("### 4. Analiza la campaña")
+        df=pd.DataFrame([{
+            "Punto":p["id"],"Vía":p.get("route",""),"LAeq [dB(A)]":p.get("laeq"),
+            "Lmax [dB(A)]":p.get("lmax"),"Duración [min]":p.get("duration"),
+            "Hora":p.get("time",""),"Observación":p.get("notes","")
+        } for p in measured])
+        st.dataframe(df,hide_index=True,use_container_width=True)
+        c1,c2,c3=st.columns(3)
+        c1.metric("Puntos medidos",len(measured))
+        c2.metric("Mayor LAeq",f"{max(p['laeq'] for p in measured):.1f} dB(A)")
+        c3.metric("Menor LAeq",f"{min(p['laeq'] for p in measured):.1f} dB(A)")
+        fig=go.Figure()
+        for route_name in ["Vía principal","Vía secundaria"]:
+            subset=[p for p in measured if p.get("route")==route_name]
+            if subset:
+                fig.add_trace(go.Scatter(x=[p["id"] for p in subset],y=[p["laeq"] for p in subset],mode="lines+markers",name=route_name))
+        fig.update_layout(height=340,margin=dict(l=20,r=20,t=20,b=20),yaxis_title="LAeq [dB(A)]",xaxis_title="Punto")
+        st.plotly_chart(fig,use_container_width=True)
+        st.markdown('<div class="c3l2-warn"><b>Interpretación GIS:</b> los marcadores son datos medidos ingresados por el alumno. La capa continua/heatmap es una visualización estimativa entre puntos y no significa que esos lugares hayan sido medidos directamente.</div>',unsafe_allow_html=True)
+
+    st.markdown("### 5. Interpreta y concluye")
+    limitations=st.text_area("Limitaciones de la campaña",value=data.get("limitations",""),height=110,key="c3l2_s10_limits")
+    interpretation=st.text_area("Interpretación espacial",value=data.get("interpretation",""),height=120,key="c3l2_s10_interp",placeholder="Compara las vías, identifica el sector más expuesto y explica el patrón observado.")
+    conclusion=st.text_area("Conclusión técnica",value=data.get("conclusion",""),height=150,key="c3l2_s10_conclusion",placeholder="Integra objetivo, ubicación, resultados, patrón espacial, limitaciones y alcance.")
+
+    if _c3l2_role()=="Alumno" and st.button("📤 Guardar y entregar campaña GIS",type="primary",use_container_width=True,key="c3l2_s10_submit"):
+        if len(measured)<5:
+            st.warning("Registra al menos 5 puntos medidos antes de entregar. La campaña completa puede ampliarse hasta 16 puntos.")
+        elif not principal.strip() or not secondary.strip():
+            st.warning("Identifica vía principal y secundaria.")
+        elif len(limitations.strip())<30 or len(interpretation.strip())<50 or len(conclusion.strip())<80:
+            st.warning("Desarrolla limitaciones, interpretación y conclusión antes de entregar.")
+        else:
+            data.update({
+                "version":_C3L2_VERSION,"principal":principal,"secondary":secondary,"sector":sector,
+                "points":points,"limitations":limitations,"interpretation":interpretation,"conclusion":conclusion,
+                "submitted":True,"submitted_at":_now(),
+            })
+            _c3l2_complete(saved,10,data)
+            st.success("Campaña GIS guardada y entregada.")
+    _c3l2_teacher_pauta("Etapa 10","Producto esperado: intersección real, vía principal/secundaria, puntos georreferenciados, LAeq/Lmax, trazabilidad temporal, mapa de marcadores, visualización espacial indicativa, perfiles por vía, limitaciones y conclusión. La superficie entre puntos no debe presentarse como medición directa.")
+
+def _render_course3_lab2_stage0(lab,saved): return _c3l2_stage0(lab,saved)
+def _render_course3_lab2_stage1(lab,saved): return _c3l2_stage1(lab,saved)
+def _render_course3_lab2_stage2(lab,saved): return _c3l2_stage2(lab,saved)
+def _render_course3_lab2_stage3(lab,saved): return _c3l2_stage3(lab,saved)
+def _render_course3_lab2_stage4(lab,saved): return _c3l2_stage4(lab,saved)
+def _render_course3_lab2_stage5(lab,saved): return _c3l2_stage5(lab,saved)
+def _render_course3_lab2_stage6(lab,saved): return _c3l2_stage6(lab,saved)
+def _render_course3_lab2_stage7(lab,saved): return _c3l2_stage7(lab,saved)
+def _render_course3_lab2_stage8(lab,saved): return _c3l2_stage8(lab,saved)
+def _render_course3_lab2_stage9(lab,saved): return _c3l2_stage9(lab,saved)
+def _render_course3_lab2_stage10(lab,saved): return _c3l2_stage10(lab,saved)
+
 def future_lab_view_impl(lab):
     """Renderer de los laboratorios posteriores manteniendo la navegación institucional."""
     class_id=lab["id"]
@@ -26274,180 +26775,276 @@ def future_lab_view_impl(lab):
 
         role_now=st.session_state.get("role","Alumno")
 
-        # -------------------------------------------------------------
-        # Sidebar profesional: módulos consistentes, radios visibles y
-        # jerarquía clara para Alumno y Docente.
-        # -------------------------------------------------------------
+        # Navegación principal con radio buttons dentro de tarjetas. Al estar
+        # dentro del laboratorio, la tercera opción se muestra seleccionada.
+        active_view=current_lab_label
+
+        st.markdown(
+            """
+        <style>
+        /* Navegación principal: radio buttons contenidos en tarjetas */
+        section[data-testid="stSidebar"] div[data-testid="stRadio"]:has(div[role="radiogroup"][aria-label="Navegación principal"]) > div[role="radiogroup"] {
+            gap: .44rem;
+        }
+        section[data-testid="stSidebar"] div[data-testid="stRadio"]:has(div[role="radiogroup"][aria-label="Navegación principal"]) > div[role="radiogroup"] > label {
+            width: 100%;
+            margin: 0;
+            padding: .62rem .68rem;
+            border: 1px solid rgba(142, 221, 242, .28);
+            border-radius: 12px;
+            background: rgba(12, 73, 112, .30);
+            transition: background .16s ease, border-color .16s ease, box-shadow .16s ease, transform .08s ease;
+            cursor: pointer;
+            align-items: flex-start;
+        }
+        section[data-testid="stSidebar"] div[data-testid="stRadio"]:has(div[role="radiogroup"][aria-label="Navegación principal"]) > div[role="radiogroup"] > label:hover {
+            background: rgba(21, 111, 160, .34);
+            border-color: rgba(89, 212, 239, .58);
+        }
+        section[data-testid="stSidebar"] div[data-testid="stRadio"]:has(div[role="radiogroup"][aria-label="Navegación principal"]) > div[role="radiogroup"] > label:active {
+            transform: translateY(1px);
+        }
+        section[data-testid="stSidebar"] div[data-testid="stRadio"]:has(div[role="radiogroup"][aria-label="Navegación principal"]) > div[role="radiogroup"] > label:has(input:checked) {
+            background: linear-gradient(135deg, rgba(8, 94, 143, .72), rgba(12, 125, 166, .52));
+            border-color: #59d4ef;
+            box-shadow: inset 3px 0 0 #59d4ef, 0 0 0 1px rgba(89, 212, 239, .08);
+        }
+        section[data-testid="stSidebar"] div[data-testid="stRadio"]:has(div[role="radiogroup"][aria-label="Navegación principal"]) input[type="radio"] {
+            accent-color: #59d4ef;
+        }
+        section[data-testid="stSidebar"] div[data-testid="stRadio"]:has(div[role="radiogroup"][aria-label="Navegación principal"]) [data-testid="stMarkdownContainer"] p {
+            font-weight: 700;
+            line-height: 1.22;
+        }
+        section[data-testid="stSidebar"] div[data-testid="stRadio"]:has(div[role="radiogroup"][aria-label="Navegación principal"]) [data-testid="stCaptionContainer"] {
+            color: #a9cada;
+            font-size: .69rem;
+            line-height: 1.18;
+            margin-top: .12rem;
+        }
+        </style>
+        """,
+            unsafe_allow_html=True,
+        )
+
+        # Ruta de aprendizaje: tarjetas-radio compactas para Alumno y Docente.
+        # Mantiene el mismo lenguaje visual de la navegación principal, sin
+        # modificar la lógica ni el estado guardado de cada etapa.
+        st.markdown(
+            """
+        <style>
+        section[data-testid="stSidebar"] div[class*="st-key-future_stage_"] [role="radiogroup"] {
+            gap: .34rem !important;
+        }
+        section[data-testid="stSidebar"] div[class*="st-key-future_stage_"] [role="radiogroup"] > label {
+            width: 100% !important;
+            margin: 0 !important;
+            padding: .48rem .56rem !important;
+            border: 1px solid rgba(142,221,242,.20) !important;
+            border-radius: 10px !important;
+            background: rgba(12,73,112,.22) !important;
+            transition: background .15s ease,border-color .15s ease,box-shadow .15s ease,transform .08s ease !important;
+            cursor: pointer !important;
+            align-items: flex-start !important;
+        }
+        section[data-testid="stSidebar"] div[class*="st-key-future_stage_"] [role="radiogroup"] > label:hover {
+            background: rgba(21,111,160,.30) !important;
+            border-color: rgba(89,212,239,.48) !important;
+        }
+        section[data-testid="stSidebar"] div[class*="st-key-future_stage_"] [role="radiogroup"] > label:active {
+            transform: translateY(1px);
+        }
+        section[data-testid="stSidebar"] div[class*="st-key-future_stage_"] [role="radiogroup"] > label:has(input:checked) {
+            background: linear-gradient(135deg,rgba(8,94,143,.62),rgba(12,125,166,.42)) !important;
+            border-color: #59d4ef !important;
+            box-shadow: inset 3px 0 0 #59d4ef,0 0 0 1px rgba(89,212,239,.06) !important;
+        }
+        section[data-testid="stSidebar"] div[class*="st-key-future_stage_"] [data-baseweb="radio"] {
+            display:flex !important;
+            opacity:1 !important;
+            visibility:visible !important;
+            flex:0 0 auto !important;
+            margin-top:.05rem !important;
+        }
+        section[data-testid="stSidebar"] div[class*="st-key-future_stage_"] input[type="radio"] {
+            accent-color:#59d4ef !important;
+        }
+        section[data-testid="stSidebar"] div[class*="st-key-future_stage_"] [data-testid="stMarkdownContainer"] p {
+            font-size:.75rem !important;
+            font-weight:650 !important;
+            line-height:1.28 !important;
+            text-align:left !important;
+        }
+        </style>
+        """,
+            unsafe_allow_html=True,
+        )
+
         st.markdown(
             r"""
-            <style>
-            section[data-testid="stSidebar"] {
-                --sb-border: rgba(93, 199, 230, .34);
-                --sb-border-strong: rgba(105, 221, 243, .88);
-                --sb-panel: rgba(5, 37, 61, .54);
-                --sb-card: rgba(9, 63, 96, .58);
-                --sb-card-hover: rgba(12, 90, 132, .72);
-                --sb-card-active: linear-gradient(135deg, rgba(4,108,157,.96), rgba(12,139,179,.76));
-                --sb-text: #f6fbff;
-                --sb-muted: #9fc5d7;
-                --sb-accent: #69ddf3;
-            }
+    <style>
+    /* =========================================================
+       SIDEBAR · ANCHO Y ALTO REALMENTE UNIFORMES
+       Fuerza también wrappers internos de BaseWeb/Streamlit.
+       ========================================================= */
 
-            /* Panel exterior común */
-            section[data-testid="stSidebar"] div[data-testid="stVerticalBlockBorderWrapper"] {
-                width: 100% !important;
-                max-width: 100% !important;
-                box-sizing: border-box !important;
-                border: 1px solid var(--sb-border) !important;
-                border-radius: 15px !important;
-                background: linear-gradient(180deg, rgba(5,43,70,.72), rgba(4,33,55,.55)) !important;
-                box-shadow: 0 7px 20px rgba(0,0,0,.10) !important;
-                overflow: hidden !important;
-            }
-            section[data-testid="stSidebar"] div[data-testid="stVerticalBlockBorderWrapper"] > div {
-                width:100% !important;
-                box-sizing:border-box !important;
-                padding:.78rem !important;
-            }
+    section[data-testid="stSidebar"] {
+        --future-card-height: 64px;
+    }
 
-            .future-side-head {
-                padding: .02rem .06rem .62rem;
-                margin-bottom: .62rem;
-                border-bottom: 1px solid rgba(105,221,243,.20);
-            }
-            .future-side-kicker {
-                color: var(--sb-text);
-                font-size: .96rem;
-                line-height: 1.15;
-                font-weight: 900;
-                letter-spacing: .04em;
-            }
-            .future-side-sub {
-                color: var(--sb-muted);
-                font-size: .69rem;
-                line-height: 1.20;
-                font-weight: 600;
-                margin-top: .20rem;
-            }
+    /* Todo el árbol del radio ocupa el ancho disponible */
+    section[data-testid="stSidebar"] div[data-testid="stRadio"],
+    section[data-testid="stSidebar"] div[data-testid="stRadio"] > div,
+    section[data-testid="stSidebar"] div[data-testid="stRadio"] div[role="radiogroup"],
+    section[data-testid="stSidebar"] div[data-testid="stRadio"] div[role="radiogroup"] > div,
+    section[data-testid="stSidebar"] div[data-testid="stRadio"] label,
+    section[data-testid="stSidebar"] div[data-testid="stRadio"] label[data-baseweb="radio"],
+    section[data-testid="stSidebar"] div[data-testid="stRadio"] [data-baseweb="radio"] {
+        width:100% !important;
+        max-width:100% !important;
+        min-width:0 !important;
+        box-sizing:border-box !important;
+        align-self:stretch !important;
+    }
 
-            /* Radio group */
-            section[data-testid="stSidebar"] div[data-testid="stRadio"],
-            section[data-testid="stSidebar"] div[data-testid="stRadio"] > div,
-            section[data-testid="stSidebar"] div[data-testid="stRadio"] [role="radiogroup"] {
-                width: 100% !important;
-                max-width: 100% !important;
-                box-sizing: border-box !important;
-            }
-            section[data-testid="stSidebar"] div[data-testid="stRadio"] [role="radiogroup"] {
-                display:flex !important;
-                flex-direction:column !important;
-                align-items:stretch !important;
-                gap:.46rem !important;
-            }
+    section[data-testid="stSidebar"] div[data-testid="stRadio"] div[role="radiogroup"] {
+        display:flex !important;
+        flex-direction:column !important;
+        align-items:stretch !important;
+        gap:.48rem !important;
+    }
 
-            /* Tarjeta radio uniforme */
-            section[data-testid="stSidebar"] div[data-testid="stRadio"] [role="radiogroup"] > label,
-            section[data-testid="stSidebar"] div[data-testid="stRadio"] label[data-baseweb="radio"] {
-                width:100% !important;
-                max-width:100% !important;
-                min-width:100% !important;
-                box-sizing:border-box !important;
-                margin:0 !important;
-                padding:.58rem .68rem !important;
-                min-height:62px !important;
-                height:62px !important;
-                border:1px solid var(--sb-border) !important;
-                border-radius:11px !important;
-                background:var(--sb-card) !important;
-                display:flex !important;
-                align-items:center !important;
-                gap:.48rem !important;
-                box-shadow:0 2px 7px rgba(0,0,0,.06) !important;
-                transition:background .15s ease,border-color .15s ease,box-shadow .15s ease,transform .10s ease !important;
-                overflow:hidden !important;
-            }
-            section[data-testid="stSidebar"] div[data-testid="stRadio"] [role="radiogroup"] > label:hover,
-            section[data-testid="stSidebar"] div[data-testid="stRadio"] label[data-baseweb="radio"]:hover {
-                background:var(--sb-card-hover) !important;
-                border-color:rgba(105,221,243,.70) !important;
-                transform:translateY(-1px) !important;
-            }
-            section[data-testid="stSidebar"] div[data-testid="stRadio"] [role="radiogroup"] > label:has(input:checked),
-            section[data-testid="stSidebar"] div[data-testid="stRadio"] label[data-baseweb="radio"]:has(input:checked) {
-                background:var(--sb-card-active) !important;
-                border-color:var(--sb-border-strong) !important;
-                box-shadow:inset 4px 0 0 var(--sb-accent), 0 4px 12px rgba(0,0,0,.10) !important;
-            }
+    /* La tarjeta real es el componente BaseWeb del radio */
+    section[data-testid="stSidebar"]
+    div[data-testid="stRadio"] label[data-baseweb="radio"],
+    section[data-testid="stSidebar"]
+    div[data-testid="stRadio"] div[role="radiogroup"] > label,
+    section[data-testid="stSidebar"]
+    div[data-testid="stRadio"] div[role="radiogroup"] > div > label {
+        width:100% !important;
+        max-width:100% !important;
+        min-width:100% !important;
+        flex:0 0 100% !important;
 
-            section[data-testid="stSidebar"] div[data-testid="stRadio"] input[type="radio"] {
-                flex:0 0 15px !important;
-                width:15px !important;
-                height:15px !important;
-                margin:0 !important;
-                accent-color:var(--sb-accent) !important;
-            }
-            section[data-testid="stSidebar"] div[data-testid="stRadio"] [data-testid="stMarkdownContainer"] {
-                width:100% !important;
-                min-width:0 !important;
-                flex:1 1 0 !important;
-                display:flex !important;
-                align-items:center !important;
-            }
-            section[data-testid="stSidebar"] div[data-testid="stRadio"] [data-testid="stMarkdownContainer"] p {
-                width:100% !important;
-                margin:0 !important;
-                color:var(--sb-text) !important;
-                font-size:.75rem !important;
-                line-height:1.22 !important;
-                font-weight:700 !important;
-                white-space:normal !important;
-                overflow-wrap:anywhere !important;
-                text-align:left !important;
-            }
+        height:var(--future-card-height) !important;
+        min-height:var(--future-card-height) !important;
+        max-height:var(--future-card-height) !important;
 
-            /* Navegación: un poco más grande */
-            section[data-testid="stSidebar"] div[class*="st-key-future_nav_radio_"] [role="radiogroup"] > label {
-                height:66px !important;
-                min-height:66px !important;
-            }
-            section[data-testid="stSidebar"] div[class*="st-key-future_nav_radio_"] [data-testid="stMarkdownContainer"] p {
-                font-size:.79rem !important;
-                font-weight:760 !important;
-            }
+        margin:0 !important;
+        padding:.60rem .70rem !important;
+        box-sizing:border-box !important;
 
-            /* Ruta: timeline sutil */
-            section[data-testid="stSidebar"] div[class*="st-key-future_stage_"] [role="radiogroup"] {
-                position:relative !important;
-                padding-left:.12rem !important;
-            }
-            section[data-testid="stSidebar"] div[class*="st-key-future_stage_"] [role="radiogroup"]::before {
-                content:"";
-                position:absolute;
-                left:8px;
-                top:16px;
-                bottom:16px;
-                width:1px;
-                background:rgba(105,221,243,.18);
-                z-index:0;
-            }
-            section[data-testid="stSidebar"] div[class*="st-key-future_stage_"] [role="radiogroup"] > label {
-                position:relative !important;
-                z-index:1 !important;
-                height:66px !important;
-                min-height:66px !important;
-            }
+        display:flex !important;
+        align-items:center !important;
+        justify-content:flex-start !important;
+        gap:.50rem !important;
 
-            /* Botones/link dentro de Herramientas */
-            section[data-testid="stSidebar"] .stButton > button,
-            section[data-testid="stSidebar"] .stLinkButton > a {
-                width:100% !important;
-                min-height:42px !important;
-                border-radius:9px !important;
-                font-size:.75rem !important;
-                font-weight:700 !important;
-            }
-            </style>
-            """,
+        border:1px solid rgba(94,194,225,.52) !important;
+        border-radius:11px !important;
+        background:linear-gradient(
+            135deg,
+            rgba(8,58,92,.70),
+            rgba(10,79,117,.48)
+        ) !important;
+        box-shadow:0 2px 7px rgba(0,0,0,.08) !important;
+        overflow:hidden !important;
+    }
+
+    /* Hover */
+    section[data-testid="stSidebar"]
+    div[data-testid="stRadio"] label[data-baseweb="radio"]:hover,
+    section[data-testid="stSidebar"]
+    div[data-testid="stRadio"] div[role="radiogroup"] > label:hover,
+    section[data-testid="stSidebar"]
+    div[data-testid="stRadio"] div[role="radiogroup"] > div > label:hover {
+        background:linear-gradient(
+            135deg,
+            rgba(13,85,128,.82),
+            rgba(15,111,151,.58)
+        ) !important;
+        border-color:rgba(89,212,239,.90) !important;
+    }
+
+    /* Seleccionado */
+    section[data-testid="stSidebar"]
+    div[data-testid="stRadio"] label[data-baseweb="radio"]:has(input:checked),
+    section[data-testid="stSidebar"]
+    div[data-testid="stRadio"] div[role="radiogroup"] > label:has(input:checked),
+    section[data-testid="stSidebar"]
+    div[data-testid="stRadio"] div[role="radiogroup"] > div > label:has(input:checked) {
+        background:linear-gradient(
+            135deg,
+            rgba(4,104,154,.96),
+            rgba(13,140,179,.76)
+        ) !important;
+        border-color:#69ddf3 !important;
+        box-shadow:
+            inset 4px 0 0 #69ddf3,
+            0 4px 12px rgba(0,0,0,.12) !important;
+    }
+
+    /* Contenido textual: siempre usa todo el espacio restante */
+    section[data-testid="stSidebar"]
+    div[data-testid="stRadio"] [data-testid="stMarkdownContainer"] {
+        width:100% !important;
+        max-width:100% !important;
+        min-width:0 !important;
+        flex:1 1 0 !important;
+        display:flex !important;
+        align-items:center !important;
+        box-sizing:border-box !important;
+    }
+
+    section[data-testid="stSidebar"]
+    div[data-testid="stRadio"] [data-testid="stMarkdownContainer"] p {
+        width:100% !important;
+        max-width:100% !important;
+        min-width:0 !important;
+        margin:0 !important;
+        color:#fff !important;
+        font-size:.75rem !important;
+        font-weight:700 !important;
+        line-height:1.22 !important;
+        white-space:normal !important;
+        overflow-wrap:anywhere !important;
+        text-align:left !important;
+    }
+
+    /* Radio visible con ancho reservado idéntico */
+    section[data-testid="stSidebar"] div[data-testid="stRadio"] input[type="radio"] {
+        flex:0 0 16px !important;
+        width:16px !important;
+        height:16px !important;
+        margin:0 !important;
+        accent-color:#69ddf3 !important;
+    }
+
+    /* Ambos paneles exteriores ocupan el mismo ancho */
+    section[data-testid="stSidebar"]
+    div[data-testid="stVerticalBlockBorderWrapper"] {
+        width:100% !important;
+        max-width:100% !important;
+        min-width:0 !important;
+        box-sizing:border-box !important;
+    }
+
+    section[data-testid="stSidebar"]
+    div[data-testid="stVerticalBlockBorderWrapper"] > div {
+        width:100% !important;
+        max-width:100% !important;
+        min-width:0 !important;
+        box-sizing:border-box !important;
+    }
+
+    /* Captions no alteran el ancho de la tarjeta */
+    section[data-testid="stSidebar"]
+    div[data-testid="stRadio"] [data-testid="stCaptionContainer"] {
+        width:100% !important;
+        max-width:100% !important;
+        box-sizing:border-box !important;
+    }
+    </style>
+""",
             unsafe_allow_html=True,
         )
 
@@ -26719,15 +27316,12 @@ def future_lab_view_impl(lab):
             unsafe_allow_html=True,
         )
 
-        with st.container(
-            border=True,
-            key=f"future_nav_panel_{class_id}",
-        ):
+        with st.container(border=True):
             st.markdown(
                 """
-                <div class="future-side-head">
-                    <div class="main-nav-panel-title">NAVEGACIÓN</div>
-                    <div class="main-nav-panel-subtitle">Accesos principales</div>
+                <div class="future-sidebar-panel-title">
+                    <div class="future-sidebar-panel-kicker">NAVEGACIÓN</div>
+                    <div class="future-sidebar-panel-subtitle">Accesos principales</div>
                 </div>
                 """,
                 unsafe_allow_html=True,
@@ -26927,143 +27521,6 @@ def future_lab_view_impl(lab):
             unsafe_allow_html=True,
         )
 
-
-        # Geometría fija del módulo NAVEGACIÓN:
-        # normal, hover y seleccionado conservan exactamente las mismas dimensiones.
-        st.markdown(
-            """
-            <style>
-            /* --- NAVEGACIÓN PRINCIPAL: UNA SOLA GEOMETRÍA --- */
-            section[data-testid="stSidebar"]
-            div[class*="st-key-future_nav_radio_"] div[role="radiogroup"] {
-                width:100% !important;
-                display:flex !important;
-                flex-direction:column !important;
-                align-items:stretch !important;
-                gap:.48rem !important;
-            }
-
-            section[data-testid="stSidebar"]
-            div[class*="st-key-future_nav_radio_"] div[role="radiogroup"] > label,
-            section[data-testid="stSidebar"]
-            div[class*="st-key-future_nav_radio_"] label[data-baseweb="radio"] {
-                width:100% !important;
-                min-width:100% !important;
-                max-width:100% !important;
-
-                height:58px !important;
-                min-height:58px !important;
-                max-height:58px !important;
-
-                margin:0 !important;
-                padding:.55rem .70rem !important;
-                box-sizing:border-box !important;
-
-                display:flex !important;
-                align-items:center !important;
-                gap:.48rem !important;
-
-                border:1px solid rgba(94,194,225,.52) !important;
-                border-radius:11px !important;
-
-                background:linear-gradient(
-                    135deg,
-                    rgba(8,58,92,.70),
-                    rgba(10,79,117,.48)
-                ) !important;
-
-                box-shadow:none !important;
-                transform:none !important;
-                overflow:hidden !important;
-            }
-
-            /* Hover: SOLO cambia color */
-            section[data-testid="stSidebar"]
-            div[class*="st-key-future_nav_radio_"] div[role="radiogroup"] > label:hover,
-            section[data-testid="stSidebar"]
-            div[class*="st-key-future_nav_radio_"] label[data-baseweb="radio"]:hover {
-                width:100% !important;
-                min-width:100% !important;
-                max-width:100% !important;
-                height:58px !important;
-                min-height:58px !important;
-                max-height:58px !important;
-                padding:.55rem .70rem !important;
-                border-width:1px !important;
-                transform:none !important;
-
-                background:linear-gradient(
-                    135deg,
-                    rgba(13,85,128,.82),
-                    rgba(15,111,151,.58)
-                ) !important;
-                border-color:rgba(89,212,239,.90) !important;
-            }
-
-            /* Seleccionado: MISMA geometría; solo fondo, borde y acento interno */
-            section[data-testid="stSidebar"]
-            div[class*="st-key-future_nav_radio_"] div[role="radiogroup"] > label:has(input:checked),
-            section[data-testid="stSidebar"]
-            div[class*="st-key-future_nav_radio_"] label[data-baseweb="radio"]:has(input:checked) {
-                width:100% !important;
-                min-width:100% !important;
-                max-width:100% !important;
-
-                height:58px !important;
-                min-height:58px !important;
-                max-height:58px !important;
-
-                margin:0 !important;
-                padding:.55rem .70rem !important;
-                box-sizing:border-box !important;
-
-                border-width:1px !important;
-                border-color:#69ddf3 !important;
-                border-radius:11px !important;
-
-                background:linear-gradient(
-                    135deg,
-                    rgba(4,104,154,.96),
-                    rgba(13,140,179,.76)
-                ) !important;
-
-                box-shadow:inset 4px 0 0 #69ddf3 !important;
-                transform:none !important;
-            }
-
-            /* Fallback si Streamlit marca selección con atributos */
-            section[data-testid="stSidebar"]
-            div[class*="st-key-future_nav_radio_"] label[aria-checked="true"],
-            section[data-testid="stSidebar"]
-            div[class*="st-key-future_nav_radio_"] [data-checked="true"] {
-                width:100% !important;
-                min-width:100% !important;
-                max-width:100% !important;
-                height:58px !important;
-                min-height:58px !important;
-                max-height:58px !important;
-                padding:.55rem .70rem !important;
-                border-width:1px !important;
-                border-color:#69ddf3 !important;
-                box-shadow:inset 4px 0 0 #69ddf3 !important;
-                transform:none !important;
-            }
-
-            /* El wrapper interno tampoco puede crecer/encogerse */
-            section[data-testid="stSidebar"]
-            div[class*="st-key-future_nav_radio_"] [data-baseweb="radio"],
-            section[data-testid="stSidebar"]
-            div[class*="st-key-future_nav_radio_"] [data-testid="stMarkdownContainer"] {
-                width:100% !important;
-                max-width:100% !important;
-                min-width:0 !important;
-                box-sizing:border-box !important;
-            }
-            </style>
-            """,
-            unsafe_allow_html=True,
-        )
-
         if selected_view=="🏠 Mis clases":
             st.session_state[future_view_key]="🏠 Mis clases"
             st.session_state.pop("future_lab_id",None)
@@ -27098,573 +27555,51 @@ def future_lab_view_impl(lab):
             else:
                 st.caption("Vista docente · el avance y los resultados se revisan desde ‘Evaluaciones entregadas’.")
 
-        # Herramientas separadas de la navegación principal.
-        with st.container(border=True):
-            st.markdown(
-                f"""
-                <div class="future-side-head">
-                    <div class="future-side-kicker">{'HERRAMIENTAS DOCENTES' if st.session_state.get('role')=='Docente' else 'RECURSOS'}</div>
-                    <div class="future-side-sub">{'Proyección, apoyo y materiales' if st.session_state.get('role')=='Docente' else 'Apoyo y material del laboratorio'}</div>
-                </div>
-                """,
-                unsafe_allow_html=True,
-            )
-            formula_popup_button()
+        # Herramientas comunes del diplomado.
+        formula_popup_button()
+        st.link_button(
+            "📕 Generar apunte visual (PDF)",
+            f"?print_future_lab={class_id}",
+            width="stretch",
+            help="Abre una vista limpia con las etapas 0 a 10 para imprimirla o guardarla como PDF.",
+        )
+
+        # Mismos controles de proyección docente disponibles en el Curso 1.
+        if st.session_state.get("role")=="Docente":
             st.link_button(
-                "📕 Generar apunte visual (PDF)",
-                f"?print_future_lab={class_id}",
+                "🖥️ Abrir vista para Zoom",
+                f"?projection=1&future_lab={class_id}",
                 width="stretch",
-                help="Abre una vista limpia con las etapas 0 a 10 para imprimirla o guardarla como PDF.",
+                help="Ábrela en otra ventana y comparte solo esa ventana en Zoom.",
             )
-
-            # Mismos controles de proyección docente disponibles en el Curso 1.
-            if st.session_state.get("role")=="Docente":
-                st.link_button(
-                    "🖥️ Abrir vista para Zoom",
-                    f"?projection=1&future_lab={class_id}",
-                    width="stretch",
-                    help="Ábrela en otra ventana y comparte solo esa ventana en Zoom.",
+            future_projection_options = {
+                f"Etapa {i} · {(
+                    _future_stage_display_title(lab,i)
+                    if class_id==_C2L2_CLASS_ID
+                    else _c3l1_nav_stage_title(lab,i)
+                    if class_id==_C3L1_CLASS_ID
+                    else _c3l2_nav_stage_title(lab,i)
+                    if class_id==_C3L2_CLASS_ID
+                    else lab['stages'][i][0]
+                )}": i
+                for i in range(len(lab["stages"]))
+            }
+            future_projection_label = st.selectbox(
+                "Contenido visible en Zoom",
+                list(future_projection_options),
+                key=f"future_projection_stage_selector_{class_id}",
+            )
+            future_projection_stage = future_projection_options[future_projection_label]
+            if st.button(
+                "Mostrar etapa en Zoom",
+                key=f"future_projection_show_{class_id}",
+                width="stretch",
+            ):
+                _set_projection(stage=future_projection_stage, class_id=class_id)
+                st.success(
+                    f"{future_projection_label} enviada a Zoom. "
+                    "Pulsa ‘Actualizar pantalla’ en la ventana de Zoom."
                 )
-                future_projection_options = {
-                    f"Etapa {i} · {(
-                        _future_stage_display_title(lab,i)
-                        if class_id==_C2L2_CLASS_ID
-                        else _c3l1_nav_stage_title(lab,i)
-                        if class_id==_C3L1_CLASS_ID
-                        else lab['stages'][i][0]
-                    )}": i
-                    for i in range(len(lab["stages"]))
-                }
-                future_projection_label = st.selectbox(
-                    "Contenido visible en Zoom",
-                    list(future_projection_options),
-                    key=f"future_projection_stage_selector_{class_id}",
-                )
-                future_projection_stage = future_projection_options[future_projection_label]
-                if st.button(
-                    "Mostrar etapa en Zoom",
-                    key=f"future_projection_show_{class_id}",
-                    width="stretch",
-                ):
-                    _set_projection(stage=future_projection_stage, class_id=class_id)
-                    st.success(
-                        f"{future_projection_label} enviada a Zoom. "
-                        "Pulsa ‘Actualizar pantalla’ en la ventana de Zoom."
-                    )
-        # Refuerzo visual final de los módulos del sidebar.
-        st.markdown(
-            """
-            <style>
-            /* ===============================
-               PANEL EXTERIOR DE CADA MÓDULO
-               =============================== */
-            section[data-testid="stSidebar"]
-            div[data-testid="stVerticalBlockBorderWrapper"] {
-                width:100% !important;
-                max-width:100% !important;
-                box-sizing:border-box !important;
-                border:1px solid rgba(77,190,225,.46) !important;
-                border-radius:15px !important;
-                background:linear-gradient(
-                    180deg,
-                    rgba(4,42,68,.88),
-                    rgba(5,35,58,.72)
-                ) !important;
-                box-shadow:
-                    0 7px 20px rgba(0,0,0,.11),
-                    inset 0 1px 0 rgba(255,255,255,.025) !important;
-                overflow:hidden !important;
-                margin:.30rem 0 .92rem !important;
-            }
-
-            section[data-testid="stSidebar"]
-            div[data-testid="stVerticalBlockBorderWrapper"] > div {
-                width:100% !important;
-                max-width:100% !important;
-                box-sizing:border-box !important;
-                padding:.90rem !important;
-            }
-
-            /* ===============================
-               ENCABEZADO DENTRO DEL CUADRO
-               =============================== */
-            section[data-testid="stSidebar"] .future-side-head {
-                width:100% !important;
-                box-sizing:border-box !important;
-                padding:.08rem .08rem .70rem !important;
-                margin:0 0 .70rem !important;
-                border-bottom:1px solid rgba(105,221,243,.30) !important;
-            }
-
-            section[data-testid="stSidebar"] .future-side-kicker {
-                color:#f5fcff !important;
-                font-size:1.00rem !important;
-                font-weight:900 !important;
-                letter-spacing:.045em !important;
-                line-height:1.12 !important;
-            }
-
-            section[data-testid="stSidebar"] .future-side-sub {
-                color:#a9cedd !important;
-                font-size:.72rem !important;
-                font-weight:600 !important;
-                line-height:1.18 !important;
-                margin-top:.22rem !important;
-            }
-
-            /* ===============================
-               RADIO CARDS DENTRO DEL PANEL
-               =============================== */
-            section[data-testid="stSidebar"]
-            div[data-testid="stVerticalBlockBorderWrapper"]
-            div[data-testid="stRadio"],
-            section[data-testid="stSidebar"]
-            div[data-testid="stVerticalBlockBorderWrapper"]
-            div[data-testid="stRadio"] > div,
-            section[data-testid="stSidebar"]
-            div[data-testid="stVerticalBlockBorderWrapper"]
-            div[data-testid="stRadio"] [role="radiogroup"] {
-                width:100% !important;
-                max-width:100% !important;
-                min-width:0 !important;
-                box-sizing:border-box !important;
-            }
-
-            section[data-testid="stSidebar"]
-            div[data-testid="stVerticalBlockBorderWrapper"]
-            div[data-testid="stRadio"] [role="radiogroup"] {
-                display:flex !important;
-                flex-direction:column !important;
-                align-items:stretch !important;
-                gap:.52rem !important;
-            }
-
-            section[data-testid="stSidebar"]
-            div[data-testid="stVerticalBlockBorderWrapper"]
-            div[data-testid="stRadio"] [role="radiogroup"] > label,
-            section[data-testid="stSidebar"]
-            div[data-testid="stVerticalBlockBorderWrapper"]
-            div[data-testid="stRadio"] label[data-baseweb="radio"] {
-                width:100% !important;
-                min-width:100% !important;
-                max-width:100% !important;
-                height:60px !important;
-                min-height:60px !important;
-                max-height:60px !important;
-                box-sizing:border-box !important;
-
-                margin:0 !important;
-                padding:.56rem .68rem !important;
-
-                display:flex !important;
-                align-items:center !important;
-                gap:.50rem !important;
-
-                border:1px solid rgba(79,183,216,.45) !important;
-                border-radius:10px !important;
-                background:rgba(8,61,94,.62) !important;
-                box-shadow:none !important;
-                transform:none !important;
-                overflow:hidden !important;
-            }
-
-            section[data-testid="stSidebar"]
-            div[data-testid="stVerticalBlockBorderWrapper"]
-            div[data-testid="stRadio"] [role="radiogroup"] > label:hover,
-            section[data-testid="stSidebar"]
-            div[data-testid="stVerticalBlockBorderWrapper"]
-            div[data-testid="stRadio"] label[data-baseweb="radio"]:hover {
-                background:rgba(10,89,130,.76) !important;
-                border-color:rgba(89,212,239,.80) !important;
-                transform:none !important;
-            }
-
-            section[data-testid="stSidebar"]
-            div[data-testid="stVerticalBlockBorderWrapper"]
-            div[data-testid="stRadio"] [role="radiogroup"] > label:has(input:checked),
-            section[data-testid="stSidebar"]
-            div[data-testid="stVerticalBlockBorderWrapper"]
-            div[data-testid="stRadio"] label[data-baseweb="radio"]:has(input:checked) {
-                width:100% !important;
-                min-width:100% !important;
-                max-width:100% !important;
-                height:60px !important;
-                min-height:60px !important;
-                max-height:60px !important;
-                padding:.56rem .68rem !important;
-
-                background:linear-gradient(
-                    135deg,
-                    rgba(5,107,154,.98),
-                    rgba(12,138,176,.80)
-                ) !important;
-                border:1px solid #69ddf3 !important;
-                box-shadow:inset 4px 0 0 #69ddf3 !important;
-                transform:none !important;
-            }
-
-            /* Texto uniforme */
-            section[data-testid="stSidebar"]
-            div[data-testid="stVerticalBlockBorderWrapper"]
-            div[data-testid="stRadio"] [data-testid="stMarkdownContainer"] {
-                width:100% !important;
-                min-width:0 !important;
-                max-width:100% !important;
-                flex:1 1 auto !important;
-            }
-
-            section[data-testid="stSidebar"]
-            div[data-testid="stVerticalBlockBorderWrapper"]
-            div[data-testid="stRadio"] [data-testid="stMarkdownContainer"] p {
-                width:100% !important;
-                margin:0 !important;
-                color:#fff !important;
-                font-size:.76rem !important;
-                font-weight:700 !important;
-                line-height:1.22 !important;
-                text-align:left !important;
-                white-space:normal !important;
-                overflow-wrap:anywhere !important;
-            }
-
-            section[data-testid="stSidebar"]
-            div[data-testid="stVerticalBlockBorderWrapper"]
-            div[data-testid="stRadio"] input[type="radio"] {
-                width:15px !important;
-                height:15px !important;
-                flex:0 0 15px !important;
-                margin:0 !important;
-                accent-color:#69ddf3 !important;
-            }
-
-            /* Caption de navegación: más integrado al módulo */
-            section[data-testid="stSidebar"]
-            div[data-testid="stVerticalBlockBorderWrapper"]
-            div[data-testid="stRadio"] [data-testid="stCaptionContainer"] {
-                color:#91b9ca !important;
-                font-size:.63rem !important;
-                line-height:1.12 !important;
-                margin:.08rem .10rem 0 !important;
-            }
-            </style>
-            """,
-            unsafe_allow_html=True,
-        )
-
-        # Paneles explícitos: Navegación y Ruta.
-        st.markdown(
-            """
-            <style>
-            /* CUADRO REAL DE NAVEGACIÓN */
-            section[data-testid="stSidebar"]
-            div[class*="st-key-future_nav_panel_"] {
-                width:100% !important;
-                box-sizing:border-box !important;
-                padding:.95rem !important;
-                margin:.45rem 0 1rem !important;
-
-                border:2px solid rgba(80,200,232,.62) !important;
-                border-radius:16px !important;
-
-                background:
-                    linear-gradient(
-                        180deg,
-                        rgba(7,53,84,.94),
-                        rgba(5,38,63,.90)
-                    ) !important;
-
-                box-shadow:
-                    0 8px 22px rgba(0,0,0,.16),
-                    inset 0 1px 0 rgba(255,255,255,.035) !important;
-            }
-
-            /* CUADRO REAL DE RUTA */
-            section[data-testid="stSidebar"]
-            div[class*="st-key-future_route_panel_"] {
-                width:100% !important;
-                box-sizing:border-box !important;
-                padding:.95rem !important;
-                margin:.45rem 0 1rem !important;
-
-                border:2px solid rgba(80,200,232,.62) !important;
-                border-radius:16px !important;
-
-                background:
-                    linear-gradient(
-                        180deg,
-                        rgba(7,53,84,.94),
-                        rgba(5,38,63,.90)
-                    ) !important;
-
-                box-shadow:
-                    0 8px 22px rgba(0,0,0,.16),
-                    inset 0 1px 0 rgba(255,255,255,.035) !important;
-            }
-
-            /* Evitar doble marco del wrapper interno de Streamlit */
-            section[data-testid="stSidebar"]
-            div[class*="st-key-future_nav_panel_"]
-            div[data-testid="stVerticalBlockBorderWrapper"],
-            section[data-testid="stSidebar"]
-            div[class*="st-key-future_route_panel_"]
-            div[data-testid="stVerticalBlockBorderWrapper"] {
-                border:none !important;
-                background:transparent !important;
-                box-shadow:none !important;
-                padding:0 !important;
-                margin:0 !important;
-            }
-
-            /* Encabezado más integrado al panel */
-            section[data-testid="stSidebar"]
-            div[class*="st-key-future_nav_panel_"] .future-side-head,
-            section[data-testid="stSidebar"]
-            div[class*="st-key-future_route_panel_"] .future-side-head {
-                padding:.04rem .02rem .72rem !important;
-                margin:0 0 .72rem !important;
-                border-bottom:1px solid rgba(105,221,243,.34) !important;
-            }
-
-            section[data-testid="stSidebar"]
-            div[class*="st-key-future_nav_panel_"] .future-side-kicker,
-            section[data-testid="stSidebar"]
-            div[class*="st-key-future_route_panel_"] .future-side-kicker {
-                font-size:1.02rem !important;
-                font-weight:900 !important;
-                letter-spacing:.045em !important;
-                color:#f6fdff !important;
-            }
-
-            section[data-testid="stSidebar"]
-            div[class*="st-key-future_nav_panel_"] .future-side-sub,
-            section[data-testid="stSidebar"]
-            div[class*="st-key-future_route_panel_"] .future-side-sub {
-                font-size:.72rem !important;
-                color:#a9d0df !important;
-                margin-top:.22rem !important;
-            }
-
-            /* Radios dentro del cuadro con margen lateral 0 */
-            section[data-testid="stSidebar"]
-            div[class*="st-key-future_nav_panel_"] div[data-testid="stRadio"],
-            section[data-testid="stSidebar"]
-            div[class*="st-key-future_route_panel_"] div[data-testid="stRadio"] {
-                width:100% !important;
-                margin:0 !important;
-            }
-            </style>
-            """,
-            unsafe_allow_html=True,
-        )
-
-        st.markdown(
-            r"""
-<style>
-/* ============================================================
-   NAVEGACIÓN PRINCIPAL · MISMA GEOMETRÍA EN TODAS LAS VISTAS
-   ============================================================ */
-section[data-testid="stSidebar"] .main-nav-panel-head {
-    width:100% !important;
-    box-sizing:border-box !important;
-    padding:.04rem .02rem .72rem !important;
-    margin:0 0 .72rem !important;
-    border-bottom:1px solid rgba(105,221,243,.34) !important;
-}
-section[data-testid="stSidebar"] .main-nav-panel-title {
-    color:#f6fdff !important;
-    font-size:1.02rem !important;
-    font-weight:900 !important;
-    letter-spacing:.045em !important;
-    line-height:1.15 !important;
-}
-section[data-testid="stSidebar"] .main-nav-panel-subtitle {
-    color:#a9d0df !important;
-    font-size:.72rem !important;
-    font-weight:600 !important;
-    margin-top:.22rem !important;
-    line-height:1.18 !important;
-}
-
-/* Ambos contenedores: app.py y cursos.py */
-section[data-testid="stSidebar"] div[class*="st-key-main_navigation_panel"],
-section[data-testid="stSidebar"] div[class*="st-key-future_nav_panel_"] {
-    width:100% !important;
-    max-width:100% !important;
-    box-sizing:border-box !important;
-    padding:.95rem !important;
-    margin:.45rem 0 1rem !important;
-    border:2px solid rgba(80,200,232,.62) !important;
-    border-radius:16px !important;
-    background:linear-gradient(
-        180deg,
-        rgba(7,53,84,.94),
-        rgba(5,38,63,.90)
-    ) !important;
-    box-shadow:
-        0 8px 22px rgba(0,0,0,.16),
-        inset 0 1px 0 rgba(255,255,255,.035) !important;
-}
-
-/* Quitar doble marco interno */
-section[data-testid="stSidebar"] div[class*="st-key-main_navigation_panel"]
-div[data-testid="stVerticalBlockBorderWrapper"],
-section[data-testid="stSidebar"] div[class*="st-key-future_nav_panel_"]
-div[data-testid="stVerticalBlockBorderWrapper"] {
-    border:none !important;
-    background:transparent !important;
-    box-shadow:none !important;
-    padding:0 !important;
-    margin:0 !important;
-}
-
-/* Radio widgets y wrappers internos */
-section[data-testid="stSidebar"] div[class*="st-key-main_navigation_panel"]
-div[data-testid="stRadio"],
-section[data-testid="stSidebar"] div[class*="st-key-main_navigation_panel"]
-div[data-testid="stRadio"] > div,
-section[data-testid="stSidebar"] div[class*="st-key-main_navigation_panel"]
-[role="radiogroup"],
-section[data-testid="stSidebar"] div[class*="st-key-future_nav_panel_"]
-div[data-testid="stRadio"],
-section[data-testid="stSidebar"] div[class*="st-key-future_nav_panel_"]
-div[data-testid="stRadio"] > div,
-section[data-testid="stSidebar"] div[class*="st-key-future_nav_panel_"]
-[role="radiogroup"] {
-    width:100% !important;
-    max-width:100% !important;
-    min-width:0 !important;
-    box-sizing:border-box !important;
-}
-
-section[data-testid="stSidebar"] div[class*="st-key-main_navigation_panel"]
-[role="radiogroup"],
-section[data-testid="stSidebar"] div[class*="st-key-future_nav_panel_"]
-[role="radiogroup"] {
-    display:flex !important;
-    flex-direction:column !important;
-    align-items:stretch !important;
-    gap:.52rem !important;
-}
-
-/* Tarjetas: geometría IDÉNTICA normal / hover / activo */
-section[data-testid="stSidebar"] div[class*="st-key-main_navigation_panel"]
-[role="radiogroup"] > label,
-section[data-testid="stSidebar"] div[class*="st-key-main_navigation_panel"]
-label[data-baseweb="radio"],
-section[data-testid="stSidebar"] div[class*="st-key-future_nav_panel_"]
-[role="radiogroup"] > label,
-section[data-testid="stSidebar"] div[class*="st-key-future_nav_panel_"]
-label[data-baseweb="radio"] {
-    width:100% !important;
-    min-width:100% !important;
-    max-width:100% !important;
-    height:64px !important;
-    min-height:64px !important;
-    max-height:64px !important;
-    margin:0 !important;
-    padding:.56rem .68rem !important;
-    box-sizing:border-box !important;
-    display:flex !important;
-    align-items:center !important;
-    gap:.50rem !important;
-    border:1px solid rgba(79,183,216,.45) !important;
-    border-radius:10px !important;
-    background:rgba(8,61,94,.62) !important;
-    box-shadow:none !important;
-    transform:none !important;
-    overflow:hidden !important;
-}
-
-section[data-testid="stSidebar"] div[class*="st-key-main_navigation_panel"]
-[role="radiogroup"] > label:hover,
-section[data-testid="stSidebar"] div[class*="st-key-main_navigation_panel"]
-label[data-baseweb="radio"]:hover,
-section[data-testid="stSidebar"] div[class*="st-key-future_nav_panel_"]
-[role="radiogroup"] > label:hover,
-section[data-testid="stSidebar"] div[class*="st-key-future_nav_panel_"]
-label[data-baseweb="radio"]:hover {
-    width:100% !important;
-    height:64px !important;
-    padding:.56rem .68rem !important;
-    background:rgba(10,89,130,.76) !important;
-    border-color:rgba(89,212,239,.80) !important;
-    transform:none !important;
-}
-
-section[data-testid="stSidebar"] div[class*="st-key-main_navigation_panel"]
-[role="radiogroup"] > label:has(input:checked),
-section[data-testid="stSidebar"] div[class*="st-key-main_navigation_panel"]
-label[data-baseweb="radio"]:has(input:checked),
-section[data-testid="stSidebar"] div[class*="st-key-future_nav_panel_"]
-[role="radiogroup"] > label:has(input:checked),
-section[data-testid="stSidebar"] div[class*="st-key-future_nav_panel_"]
-label[data-baseweb="radio"]:has(input:checked) {
-    width:100% !important;
-    min-width:100% !important;
-    max-width:100% !important;
-    height:64px !important;
-    min-height:64px !important;
-    max-height:64px !important;
-    padding:.56rem .68rem !important;
-    background:linear-gradient(
-        135deg,
-        rgba(5,107,154,.98),
-        rgba(12,138,176,.80)
-    ) !important;
-    border:1px solid #69ddf3 !important;
-    box-shadow:inset 4px 0 0 #69ddf3 !important;
-    transform:none !important;
-}
-
-/* Radio y texto */
-section[data-testid="stSidebar"] div[class*="st-key-main_navigation_panel"]
-input[type="radio"],
-section[data-testid="stSidebar"] div[class*="st-key-future_nav_panel_"]
-input[type="radio"] {
-    width:15px !important;
-    height:15px !important;
-    flex:0 0 15px !important;
-    margin:0 !important;
-    accent-color:#69ddf3 !important;
-}
-
-section[data-testid="stSidebar"] div[class*="st-key-main_navigation_panel"]
-[data-testid="stMarkdownContainer"],
-section[data-testid="stSidebar"] div[class*="st-key-future_nav_panel_"]
-[data-testid="stMarkdownContainer"] {
-    width:100% !important;
-    min-width:0 !important;
-    flex:1 1 auto !important;
-}
-
-section[data-testid="stSidebar"] div[class*="st-key-main_navigation_panel"]
-[data-testid="stMarkdownContainer"] p,
-section[data-testid="stSidebar"] div[class*="st-key-future_nav_panel_"]
-[data-testid="stMarkdownContainer"] p {
-    width:100% !important;
-    margin:0 !important;
-    color:#fff !important;
-    font-size:.78rem !important;
-    font-weight:720 !important;
-    line-height:1.20 !important;
-    text-align:left !important;
-    white-space:normal !important;
-}
-
-/* Captions: mismo estilo en ambas vistas */
-section[data-testid="stSidebar"] div[class*="st-key-main_navigation_panel"]
-[data-testid="stCaptionContainer"],
-section[data-testid="stSidebar"] div[class*="st-key-future_nav_panel_"]
-[data-testid="stCaptionContainer"] {
-    color:#9fc2d2 !important;
-    font-size:.63rem !important;
-    line-height:1.10 !important;
-    margin:.08rem .10rem 0 !important;
-}
-</style>
-""",
-            unsafe_allow_html=True,
-        )
 
         # Normaliza la etapa guardada antes de construir el selector.
         # Evita ValueError cuando session_state conserva una etapa de una versión
@@ -27681,28 +27616,12 @@ section[data-testid="stSidebar"] div[class*="st-key-future_nav_panel_"]
                 _saved_stage = max(_stage_options) if _stage_options else 0
             st.session_state[_stage_key] = _saved_stage
 
-        def _future_stage_sidebar_title(i):
-            if class_id==_C2L2_CLASS_ID:
-                title=_future_stage_display_title(lab,i)
-            elif class_id==_C3L1_CLASS_ID:
-                title=_c3l1_nav_stage_title(lab,i)
-            else:
-                title=lab['stages'][i][0]
-            done=bool(saved.get(f"done_{i}",False))
-            current=st.session_state.get(_stage_key,0)==i
-            prefix="✓" if done else "●" if current else ""
-            return f"{prefix} Etapa {i} · {title}".strip()
-
-        with st.container(
-            border=True,
-            key=f"future_route_panel_{class_id}",
-        ):
-            _done_count=sum(1 for i in _stage_options if bool(saved.get(f"done_{i}",False)))
+        with st.container(border=True):
             st.markdown(
-                f"""
-                <div class="future-side-head">
-                    <div class="future-side-kicker">RUTA DE APRENDIZAJE</div>
-                    <div class="future-side-sub">Laboratorio {lab['number']} · {_done_count} de {len(_stage_options)} etapas completadas</div>
+                """
+                <div class="future-sidebar-panel-title">
+                    <div class="future-sidebar-panel-kicker">RUTA DE APRENDIZAJE</div>
+                    <div class="future-sidebar-panel-subtitle">Etapas del laboratorio</div>
                 </div>
                 """,
                 unsafe_allow_html=True,
@@ -27710,7 +27629,15 @@ section[data-testid="stSidebar"] div[class*="st-key-future_nav_panel_"]
             selected=st.radio(
                 "Ruta de aprendizaje",
                 _stage_options,
-                format_func=_future_stage_sidebar_title,
+                format_func=lambda i:(
+                    f"Etapa {i} · {_future_stage_display_title(lab,i)}"
+                    if class_id==_C2L2_CLASS_ID
+                    else f"Etapa {i} · {_c3l1_nav_stage_title(lab,i)}"
+                    if class_id==_C3L1_CLASS_ID
+                    else f"Etapa {i} · {_c3l2_nav_stage_title(lab,i)}"
+                    if class_id==_C3L2_CLASS_ID
+                    else f"Etapa {i} · {lab['stages'][i][0]}"
+                ),
                 key=_stage_key,
                 label_visibility="collapsed",
             )
@@ -27801,6 +27728,23 @@ section[data-testid="stSidebar"] div[class*="st-key-future_nav_panel_"]
             _render_course3_lab1_stage8,
             _render_course3_lab1_stage9,
             _render_course3_lab1_stage10,
+        ]
+        renderers[selected](lab, saved)
+        return
+
+    if class_id == _C3L2_CLASS_ID:
+        renderers = [
+            _render_course3_lab2_stage0,
+            _render_course3_lab2_stage1,
+            _render_course3_lab2_stage2,
+            _render_course3_lab2_stage3,
+            _render_course3_lab2_stage4,
+            _render_course3_lab2_stage5,
+            _render_course3_lab2_stage6,
+            _render_course3_lab2_stage7,
+            _render_course3_lab2_stage8,
+            _render_course3_lab2_stage9,
+            _render_course3_lab2_stage10,
         ]
         renderers[selected](lab, saved)
         return
@@ -27949,6 +27893,20 @@ def future_print_view_impl(lab):
             9: _render_course3_lab1_stage9,
             10: _render_course3_lab1_stage10,
         }
+    elif class_id == _C3L2_CLASS_ID:
+        renderers = {
+            0: _render_course3_lab2_stage0,
+            1: _render_course3_lab2_stage1,
+            2: _render_course3_lab2_stage2,
+            3: _render_course3_lab2_stage3,
+            4: _render_course3_lab2_stage4,
+            5: _render_course3_lab2_stage5,
+            6: _render_course3_lab2_stage6,
+            7: _render_course3_lab2_stage7,
+            8: _render_course3_lab2_stage8,
+            9: _render_course3_lab2_stage9,
+            10: _render_course3_lab2_stage10,
+        }
     else:
         st.warning("El apunte visual todavía no está integrado para este laboratorio.")
         return
@@ -28056,6 +28014,23 @@ def future_projection_stage_impl(lab, stage):
             _render_course3_lab1_stage8,
             _render_course3_lab1_stage9,
             _render_course3_lab1_stage10,
+        ]
+        renderers[stage](lab, projection_saved)
+        return
+
+    if lab.get("id") == _C3L2_CLASS_ID:
+        renderers = [
+            _render_course3_lab2_stage0,
+            _render_course3_lab2_stage1,
+            _render_course3_lab2_stage2,
+            _render_course3_lab2_stage3,
+            _render_course3_lab2_stage4,
+            _render_course3_lab2_stage5,
+            _render_course3_lab2_stage6,
+            _render_course3_lab2_stage7,
+            _render_course3_lab2_stage8,
+            _render_course3_lab2_stage9,
+            _render_course3_lab2_stage10,
         ]
         renderers[stage](lab, projection_saved)
         return
