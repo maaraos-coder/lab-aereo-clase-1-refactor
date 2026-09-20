@@ -26496,6 +26496,7 @@ def _c3l2_stage1(lab,saved):
     """, unsafe_allow_html=True)
 
     st.markdown("## 1. Construye la cadena física")
+    st.caption("Primero identifica qué genera el sonido, por dónde se propaga y dónde necesitas conocer el resultado.")
     st.markdown("""
     <div class="c3l2-grid">
       <div class="c3l2-card blue">
@@ -26527,10 +26528,33 @@ def _c3l2_stage1(lab,saved):
     """, unsafe_allow_html=True)
 
     st.markdown("## 2. Observa el problema antes de interactuar")
+    st.caption("Usa los renders como una lectura guiada: no busques todavía números, busca relaciones físicas.")
+    st.markdown(
+        """
+        <div class="c3l2-grid">
+          <div class="c3l2-card blue">
+            <div class="c3l2-k">MIRA PRIMERO</div>
+            <b>¿Dónde nace el sonido?</b><br>
+            Identifica la fuente antes de mirar el receptor.
+          </div>
+          <div class="c3l2-card">
+            <div class="c3l2-k">SIGUE EL CAMINO</div>
+            <b>¿Qué hay entre ambos?</b><br>
+            Distancia, barreras, fachadas, suelo y trayectorias alternativas.
+          </div>
+          <div class="c3l2-card green">
+            <div class="c3l2-k">CIERRA EN EL RECEPTOR</div>
+            <b>¿Dónde importa el resultado?</b><br>
+            Una vivienda, colegio, persona o punto de evaluación.
+          </div>
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
 
     st.image(
-        "assets/c3l2_etapa1_render_urbano.png",
-        caption="Render conceptual · una misma fuente puede alcanzar distintos receptores por caminos diferentes.",
+        "assets/c3l2_etapa1_fuente_camino_receptor_realista.webp",
+        caption="Render conceptual realista · fuente, barrera y receptor en un entorno urbano.",
         use_container_width=True,
     )
 
@@ -26601,7 +26625,40 @@ def _c3l2_stage1(lab,saved):
     </div>
     """, unsafe_allow_html=True)
 
+    st.markdown("### Segundo ejemplo · propagación aérea hacia un receptor")
+    st.markdown(
+        """
+        <div class="c3l2-grid2">
+          <div class="c3l2-card blue">
+            <div class="c3l2-k">QUÉ OBSERVAR</div>
+            <b>La fuente no “lleva” un nivel fijo hasta el receptor.</b><br>
+            El campo cambia con la posición y con el camino de propagación.
+          </div>
+          <div class="c3l2-card green">
+            <div class="c3l2-k">QUÉ PREGUNTAR</div>
+            <b>¿Qué parte pertenece a la fuente y qué parte depende del entorno?</b><br>
+            Esa separación será central durante todo el laboratorio.
+          </div>
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
+    st.image(
+        "assets/c3l2_etapa1_propagacion_receptor_realista.webp",
+        caption="Ejemplo conceptual · propagación desde una fuente hacia un receptor.",
+        use_container_width=True,
+    )
+
     st.markdown("## 3. Explora una escena urbana interactiva")
+    st.markdown(
+        """
+        <div class="c3l2-note">
+          <b>Ahora sí interactúa:</b> cambia la fuente y el receptor y observa cómo cambia la trayectoria
+          que necesitas analizar. El objetivo no es calcular aún, sino aprender a <b>definir correctamente el sistema</b>.
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
     c1, c2 = st.columns(2)
     source = c1.selectbox(
         "Fuente que quieres estudiar",
@@ -26659,6 +26716,22 @@ def _c3l2_stage1(lab,saved):
     """, unsafe_allow_html=True)
 
     st.markdown("## 4. Clasifica los elementos del sistema")
+    st.caption("La clasificación no es vocabulario: define qué variable podrías modificar después para controlar el problema.")
+    st.markdown(
+        """
+        <div class="c3l2-grid2">
+          <div class="c3l2-card">
+            <div class="c3l2-k">PISTA 1</div>
+            Si <b>genera energía acústica</b>, piensa primero en fuente.
+          </div>
+          <div class="c3l2-card">
+            <div class="c3l2-k">PISTA 2</div>
+            Si <b>modifica el recorrido</b>, piensa primero en camino.
+          </div>
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
     classify_items = [
         ("Automóvil circulando","Fuente"),
         ("Equipo HVAC","Fuente"),
@@ -26684,6 +26757,7 @@ def _c3l2_stage1(lab,saved):
             st.warning(f"Obtuviste {score} de {len(classify_items)}. Revisa especialmente los elementos que modifican el camino.")
 
     st.markdown("## 5. ¿Qué estás modificando: fuente, camino o receptor?")
+    st.caption("Un mismo problema puede controlarse actuando en lugares distintos. Aquí debes reconocer dónde ocurre cada intervención.")
     path_cases = [
         ("Se instala una barrera entre la avenida y una vivienda.","Camino","La fuente y el receptor siguen en el mismo lugar; se interviene la propagación."),
         ("Se reemplaza un ventilador por otro de menor emisión.","Fuente","Se actúa directamente sobre el elemento que genera el ruido."),
@@ -26708,6 +26782,26 @@ def _c3l2_stage1(lab,saved):
                     st.info("Revisa: " + explanation)
 
     st.markdown("## 6. El receptor define la pregunta")
+    st.caption("La misma fuente puede requerir estrategias distintas según quién o qué estés protegiendo.")
+    st.markdown(
+        """
+        <div class="c3l2-grid">
+          <div class="c3l2-card blue">
+            <div class="c3l2-k">VIVIENDA</div>
+            Interesa exposición y comportamiento del ruido sobre el receptor residencial.
+          </div>
+          <div class="c3l2-card green">
+            <div class="c3l2-k">COLEGIO</div>
+            Importa el periodo de uso y la compatibilidad con actividades sensibles.
+          </div>
+          <div class="c3l2-card orange">
+            <div class="c3l2-k">PEATÓN</div>
+            La exposición puede ser transitoria y asociada a eventos móviles.
+          </div>
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
     mission = st.segmented_control(
         "Selecciona una misión",
         ["Ruido vial en vivienda","HVAC frente a colegio","Camión de reparto frente a peatón"],
@@ -26744,6 +26838,22 @@ def _c3l2_stage1(lab,saved):
     st.info("Contexto relevante: " + mission_info["context"])
 
     st.markdown("## 7. ¿Una sola medición basta?")
+    st.caption("Aquí aparece una idea que usarás después en la campaña GIS: medir bien un punto no significa haber caracterizado todo el territorio.")
+    st.markdown(
+        """
+        <div class="c3l2-grid2">
+          <div class="c3l2-card blue">
+            <div class="c3l2-k">DATO MEDIDO</div>
+            Describe <b>ese punto</b>, <b>ese periodo</b> y <b>esas condiciones</b>.
+          </div>
+          <div class="c3l2-card orange">
+            <div class="c3l2-k">REPRESENTATIVIDAD</div>
+            Requiere justificar por qué ese dato puede utilizarse para describir algo más amplio.
+          </div>
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
     one_point = st.radio(
         "Mides 2 minutos junto a una avenida a las 18:00. ¿Qué puedes afirmar con seguridad?",
         [
@@ -26761,6 +26871,7 @@ def _c3l2_stage1(lab,saved):
             st.warning("Una medición corta no puede extenderse automáticamente a otros lugares o periodos.")
 
     st.markdown("## 8. Formula una hipótesis antes de calcular")
+    st.caption("Primero predice la tendencia. La cuantificación mediante geometría puntual y lineal llegará en la Etapa 2.")
     c1,c2 = st.columns(2)
     r_initial = c1.slider("Posición inicial del receptor [m]",5,40,10,1,key="c3l2_s1_r_initial")
     r_final = c2.slider("Nueva posición [m]",5,80,20,1,key="c3l2_s1_r_final")
@@ -26784,6 +26895,17 @@ def _c3l2_stage1(lab,saved):
             st.warning("Selecciona primero una tendencia y luego justifícala.")
 
     st.markdown("## 9. Construye un problema acústico profesional")
+    st.caption("El cierre de la etapa consiste en convertir lo observado en una pregunta que realmente podría investigarse mediante medición o modelación.")
+    st.markdown(
+        """
+        <div class="c3l2-grid">
+          <div class="c3l2-card"><div class="c3l2-k">1 · DEFINE</div><b>Fuente y receptor</b></div>
+          <div class="c3l2-card blue"><div class="c3l2-k">2 · CAMBIA</div><b>Una variable de interés</b></div>
+          <div class="c3l2-card green"><div class="c3l2-k">3 · PREGUNTA</div><b>Qué quieres investigar</b></div>
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
     st.markdown("""
     <div class="c3l2-note">
       Integra todo lo anterior en una sola estructura:
