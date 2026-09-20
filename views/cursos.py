@@ -26553,7 +26553,7 @@ def _c3l2_stage1(lab,saved):
     )
 
     st.image(
-        "assets/c3l2_etapa1_fuente_camino_receptor_realista.webp",
+        "assets/c3l2_etapa1_render_profesional.webp",
         caption="Render conceptual realista · fuente, barrera y receptor en un entorno urbano.",
         use_container_width=True,
     )
@@ -26567,12 +26567,14 @@ def _c3l2_stage1(lab,saved):
 
     st.markdown("### Animación · un vehículo no produce el mismo nivel durante todo su paso")
     st.image(
-        "assets/c3l2_etapa1_vehiculo_evento.gif",
+        "assets/c3l2_etapa1_vehiculo_evento_profesional.gif",
         caption="El nivel relativo aumenta al aproximarse, alcanza un máximo cerca del receptor y disminuye al alejarse.",
         use_container_width=True,
     )
 
     st.markdown("### Animación · modifica el camino, no la fuente")
+    st.caption("Compara la misma fuente y el mismo receptor. Lo único que cambia es la geometría del camino.")
+
     barrier_mode = st.segmented_control(
         "Escenario de propagación",
         ["Sin barrera", "Con barrera"],
@@ -26581,47 +26583,30 @@ def _c3l2_stage1(lab,saved):
     )
 
     if barrier_mode == "Sin barrera":
-        barrier_svg = """
-        <svg viewBox="0 0 900 250" width="100%">
-          <style>
-            .wave{fill:none;stroke:#159dca;stroke-width:4;stroke-dasharray:10 8;animation:dash 1.1s linear infinite}
-            @keyframes dash{to{stroke-dashoffset:-36}}
-          </style>
-          <rect width="900" height="250" rx="18" fill="#eef8fd"/>
-          <rect x="0" y="180" width="900" height="70" fill="#687b88"/>
-          <circle cx="150" cy="180" r="15" fill="#e85d4e"/>
-          <circle cx="740" cy="130" r="15" fill="#0aa4cf"/>
-          <path class="wave" d="M165 176 Q440 95 725 130"/>
-          <text x="90" y="150" font-size="18" font-weight="700">FUENTE</text>
-          <text x="755" y="120" font-size="18" font-weight="700">RECEPTOR</text>
-          <text x="365" y="70" font-size="16">camino directo libre</text>
-        </svg>
-        """
+        st.image(
+            "assets/c3l2_etapa1_propagacion_sin_barrera_profesional.gif",
+            caption="Línea de visión directa entre fuente y receptor.",
+            use_container_width=True,
+        )
     else:
-        barrier_svg = """
-        <svg viewBox="0 0 900 250" width="100%">
-          <style>
-            .wave{fill:none;stroke:#159dca;stroke-width:4;stroke-dasharray:10 8;animation:dash 1.1s linear infinite}
-            @keyframes dash{to{stroke-dashoffset:-36}}
-          </style>
-          <rect width="900" height="250" rx="18" fill="#eef8fd"/>
-          <rect x="0" y="180" width="900" height="70" fill="#687b88"/>
-          <circle cx="150" cy="180" r="15" fill="#e85d4e"/>
-          <circle cx="740" cy="130" r="15" fill="#0aa4cf"/>
-          <rect x="440" y="75" width="18" height="105" fill="#20a66a"/>
-          <path class="wave" d="M165 176 Q365 115 449 75 Q570 80 725 130"/>
-          <text x="90" y="150" font-size="18" font-weight="700">FUENTE</text>
-          <text x="755" y="120" font-size="18" font-weight="700">RECEPTOR</text>
-          <text x="405" y="58" font-size="16" font-weight="700">BARRERA</text>
-          <text x="520" y="70" font-size="16">trayectoria modificada</text>
-        </svg>
-        """
-    components.html(barrier_svg, height=280)
+        st.image(
+            "assets/c3l2_etapa1_propagacion_con_barrera_profesional.gif",
+            caption="La barrera modifica la trayectoria de propagación.",
+            use_container_width=True,
+        )
 
     st.markdown("""
-    <div class="c3l2-note">
-      La barrera no cambia la potencia de la fuente ni mueve al receptor: cambia el <b>camino de propagación</b>.
-      Más adelante cuantificaremos efectos de geometría; aquí interesa reconocer el mecanismo.
+    <div class="c3l2-grid2">
+      <div class="c3l2-card blue">
+        <div class="c3l2-k">QUÉ SE MANTIENE</div>
+        <b>Fuente y receptor</b><br>
+        No hemos cambiado ni la fuente ni la posición donde observamos.
+      </div>
+      <div class="c3l2-card green">
+        <div class="c3l2-k">QUÉ CAMBIA</div>
+        <b>El camino de propagación</b><br>
+        La barrera introduce una nueva geometría entre ambos.
+      </div>
     </div>
     """, unsafe_allow_html=True)
 
