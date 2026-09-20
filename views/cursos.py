@@ -26375,145 +26375,342 @@ def _c3l2_map(points, key, heat=False, height=480):
         return {"lat":float(click["lat"]), "lon":float(click["lng"])}
     return None
 
+
 def _c3l2_stage0(lab,saved):
-    _c3l2_header(0,"De la fuente al territorio","Comprender la ruta del Laboratorio 2 y el producto final: un mapa GIS construido con puntos medidos.",10)
-    st.markdown("""
-    <div class="c3l2-intro">
-      <div class="c3l2-k">DESAFÍO PROFESIONAL</div>
-      <div class="c3l2-title">¿Cómo se distribuye en el territorio el ruido generado por una vía urbana?</div>
-      Una medición aislada no explica por sí sola el patrón espacial. En este laboratorio conectarás
-      geometría, distancia, tráfico, campaña de terreno y representación GIS.
-    </div>
-    """,unsafe_allow_html=True)
-    st.markdown("""
-    <div class="c3l2-flow">
-      <span class="c3l2-node">FUENTE</span><span class="c3l2-arrow">→</span>
-      <span class="c3l2-node">GEOMETRÍA</span><span class="c3l2-arrow">→</span>
-      <span class="c3l2-node">DISTANCIA</span><span class="c3l2-arrow">→</span>
-      <span class="c3l2-node">TRÁFICO</span><span class="c3l2-arrow">→</span>
-      <span class="c3l2-node">CAMPAÑA</span><span class="c3l2-arrow">→</span>
-      <span class="c3l2-node">GIS</span>
-    </div>
-    """,unsafe_allow_html=True)
-    st.markdown("### Ruta de aprendizaje")
-    route=[
-        ("1–2","Reconocer","Fuente, receptor y geometría."),
-        ("3–4","Propagar","Distancia, Lp y Lw."),
-        ("5–7","Analizar tráfico","Vehículo, flujo y receptores."),
-        ("8","Preparar terreno","Mapa GIS + medición piloto."),
-        ("9","Comprobar","Preguntas de comprensión."),
-        ("10","Integrar","Campaña real + mapa GIS."),
+    """Etapa 0 · Bienvenida y ruta, con la misma arquitectura de los otros laboratorios."""
+    class_id=lab["id"]
+
+    header(
+        "ETAPA 0 · BIENVENIDA",
+        "Laboratorio 2 · De la fuente al territorio",
+        "Una experiencia aplicada para comprender cómo la emisión, la geometría, la distancia y el tránsito se transforman en un patrón espacial que finalmente podrás medir y representar sobre un mapa GIS real.",
+        show_overview=False,
+        duration_minutes=10,
+    )
+
+    # 210 min de aprendizaje/aplicación + 30 min de pausa = 4 h.
+    route_minutes=[20,25,20,20,20,25,20,20,20,40]
+    break_after_stage=5
+    break_minutes=30
+    active_minutes=sum(route_minutes)
+    total_minutes=active_minutes+break_minutes
+
+    st.markdown(
+        f'<div class="class-clock"><div><strong>⏱️ Duración total del laboratorio: 4 horas</strong>'
+        f'<br><span>{active_minutes} min de aprendizaje y aplicación + {break_minutes} min de pausa</span>'
+        f'</div><div><strong>{total_minutes} min</strong></div></div>',
+        unsafe_allow_html=True,
+    )
+
+    st.markdown(
+        '<div class="section-band"><span>🗺️</span><h3>Tu ruta de aprendizaje</h3></div>',
+        unsafe_allow_html=True,
+    )
+
+    route_descriptions=[
+        "Reconoce fuente, camino de propagación y receptor antes de intentar calcular o modelar.",
+        "Compara fuente puntual y fuente lineal idealizada y descubre por qué la distancia no actúa igual en ambas.",
+        "Construye secuencias de duplicación de distancia y relaciona geometría con pérdida de nivel.",
+        "Distingue Lw como emisión de la fuente y Lp como nivel observado en un punto del campo.",
+        "Pasa del vehículo individual al flujo vehicular y decide cuándo una vía puede representarse como corredor lineal.",
+        "Experimenta con flujo, velocidad, pesados, pavimento y distancia mediante un simulador didáctico de tendencias.",
+        "Integra variables de tránsito y propagación sobre varios receptores y contrasta tu predicción.",
+        "Aprende el flujo GIS antes de evaluar: ubicar → marcar → medir → registrar → documentar.",
+        "Comprueba propagación, tráfico, representatividad y lectura espacial mediante diez preguntas formativas.",
+        "Realiza una campaña real en una intersección y construye el mapa GIS a partir de tus puntos medidos.",
     ]
-    cols=st.columns(3)
-    for i,(n,t,d) in enumerate(route):
-        with cols[i%3]:
-            st.markdown(f'<div class="c3l2-card"><div class="c3l2-k">ETAPAS {n}</div><b>{t}</b><br><span style="color:#64748b">{d}</span></div>',unsafe_allow_html=True)
-    if _c3l2_role()=="Alumno" and st.button("Comenzar Laboratorio 2",type="primary",use_container_width=True,key="c3l2_s0_start"):
-        _c3l2_complete(saved,0,{"started":True})
-        st.success("Ruta iniciada. Tu avance quedó guardado.")
-    _c3l2_teacher_pauta("Etapa 0","La apertura debe enfatizar que la Etapa 10 reutiliza una campaña real y que GIS representa espacialmente mediciones e inferencias, no una medición continua del territorio.")
+
+    html='<div class="route-grid">'
+    for stage in range(1,len(lab["stages"])):
+        title=_c3l2_nav_stage_title(lab,stage)
+        description=route_descriptions[stage-1]
+        minutes=route_minutes[stage-1]
+        html+=(
+            f'<div class="route-card"><span class="step">{stage}</span><div>'
+            f'<b>{title}</b><p>{description}</p>'
+            f'<span class="route-time">⏱️ {minutes} min</span></div></div>'
+        )
+        if stage==break_after_stage:
+            html+=(
+                f'<div class="break-card"><span class="step">☕</span><div>'
+                f'<b>Pausa pedagógica</b><p>Descanso antes de pasar al bloque de tráfico, campaña y GIS.</p>'
+                f'<span class="route-time">⏱️ {break_minutes} min</span></div></div>'
+            )
+    st.markdown(html+"</div>",unsafe_allow_html=True)
+
+    st.markdown(
+        '<div class="good" style="margin-top:1rem"><b>Así aprenderás:</b> '
+        'identificar → idealizar → calcular → experimentar → diseñar → medir → representar → interpretar.</div>',
+        unsafe_allow_html=True,
+    )
+    st.markdown(
+        '<div class="warn" style="margin-top:.8rem"><b>Producto final:</b> '
+        'construirás un mapa GIS de una intersección real a partir de puntos medidos por ti. '
+        'Los marcadores serán datos directos; cualquier superficie continua será una estimación espacial entre puntos.</div>',
+        unsafe_allow_html=True,
+    )
+
+    st.markdown("### ¿Qué vas a ser capaz de hacer al terminar?")
+    c1,c2,c3=st.columns(3)
+    with c1:
+        st.markdown('<div class="c3l2-card blue"><div class="c3l2-k">PROPAGAR</div><b>Geometría + distancia</b><br><span style="color:#526174">Distinguirás fuente puntual y lineal y sabrás qué significa alejar un receptor.</span></div>',unsafe_allow_html=True)
+    with c2:
+        st.markdown('<div class="c3l2-card green"><div class="c3l2-k">ANALIZAR</div><b>Tráfico + receptores</b><br><span style="color:#526174">Relacionarás flujo, velocidad, pesados y ubicación con cambios de nivel.</span></div>',unsafe_allow_html=True)
+    with c3:
+        st.markdown('<div class="c3l2-card orange"><div class="c3l2-k">REPRESENTAR</div><b>Campaña + GIS</b><br><span style="color:#526174">Construirás una representación territorial trazable desde datos medidos.</span></div>',unsafe_allow_html=True)
+
+    if st.session_state.get("role")=="Alumno" and not saved.get("done_0"):
+        saved["done_0"]=True
+        saved["updated_0"]=_now()
+        _save_future_state_impl(class_id,saved)
+
+    st.caption("Para continuar, selecciona la siguiente etapa desde la barra lateral.")
+
 
 def _c3l2_stage1(lab,saved):
-    _c3l2_header(1,"De la fuente al receptor","Reconocer fuente, camino de propagación y receptor antes de calcular niveles.")
+    _c3l2_header(1,"De la fuente al receptor","Construir primero el problema físico: quién genera, cómo se propaga y dónde se evalúa.",20)
+
+    st.markdown("""
+    <div class="c3l2-intro">
+      <div class="c3l2-k">IDEA CENTRAL</div>
+      <div class="c3l2-title">Antes de calcular un nivel, debes definir el sistema acústico.</div>
+      En ruido ambiental una misma fuente puede producir niveles distintos en receptores distintos porque cambia
+      la distancia, la geometría y el camino de propagación.
+    </div>""",unsafe_allow_html=True)
+
+    st.markdown("### 1. La cadena física del problema")
     st.markdown("""
     <div class="c3l2-grid">
-      <div class="c3l2-card blue"><div class="c3l2-k">FUENTE</div><b>¿Quién genera?</b><br>Vehículo, HVAC, industria, obra.</div>
-      <div class="c3l2-card"><div class="c3l2-k">CAMINO</div><b>¿Cómo viaja?</b><br>Aire, geometría, reflexiones, barreras.</div>
-      <div class="c3l2-card green"><div class="c3l2-k">RECEPTOR</div><b>¿Dónde importa?</b><br>Vivienda, colegio, persona o punto de evaluación.</div>
+      <div class="c3l2-card blue"><div class="c3l2-k">FUENTE</div><b>Genera energía acústica</b><br>Vehículos, HVAC, industria, obras, aeronaves.</div>
+      <div class="c3l2-card"><div class="c3l2-k">CAMINO</div><b>Transporta y modifica</b><br>Distancia, geometría, suelo, reflexiones, pantallas, edificios.</div>
+      <div class="c3l2-card green"><div class="c3l2-k">RECEPTOR</div><b>Es donde interesa el resultado</b><br>Vivienda, colegio, persona, fachada o punto de evaluación.</div>
     </div>""",unsafe_allow_html=True)
-    items={"Automóvil circulando":"Fuente","Aire entre la vía y vivienda":"Camino","Fachada de vivienda":"Receptor","Barrera acústica":"Camino","Equipo HVAC":"Fuente"}
+
+    st.markdown("### 2. Escenario urbano")
+    components.html("""
+    <svg viewBox="0 0 1000 310" width="100%" style="background:#eef8fd;border:1px solid #cfe0ec;border-radius:16px">
+      <rect x="0" y="235" width="1000" height="75" fill="#657886"/>
+      <line x1="0" y1="273" x2="1000" y2="273" stroke="#f7d45d" stroke-width="5" stroke-dasharray="28 20"/>
+      <rect x="720" y="100" width="180" height="135" rx="8" fill="#d9c3a0"/><text x="760" y="90" font-size="18" font-weight="700">VIVIENDA</text>
+      <rect x="250" y="120" width="180" height="115" rx="8" fill="#c7d9e4"/><rect x="300" y="90" width="80" height="30" rx="5" fill="#718c9c"/>
+      <text x="270" y="80" font-size="18" font-weight="700">HVAC</text>
+      <circle cx="600" cy="205" r="13" fill="#11a3d3"/><text x="620" y="210" font-size="16">RECEPTOR</text>
+      <rect x="105" y="245" width="70" height="28" rx="8" fill="#e75b4b"/><circle cx="120" cy="278" r="9"/><circle cx="160" cy="278" r="9"/>
+      <text x="80" y="225" font-size="16" font-weight="700">TRÁFICO</text>
+      <path d="M180 248 Q390 190 590 205" fill="none" stroke="#1d9bc3" stroke-width="3" stroke-dasharray="8 7"/>
+      <path d="M382 125 Q470 155 590 205" fill="none" stroke="#1d9bc3" stroke-width="3" stroke-dasharray="8 7"/>
+      <text x="410" y="165" font-size="14" fill="#24506b">caminos de propagación</text>
+    </svg>
+    """,height=330)
+
+    st.markdown("### 3. Clasifica lo que observas")
+    items={"Automóvil circulando":"Fuente","Aire entre la avenida y la vivienda":"Camino","Fachada de vivienda":"Receptor","Barrera acústica":"Camino","Equipo HVAC":"Fuente"}
     answers={}
     for item,correct in items.items():
         answers[item]=st.segmented_control(item,["Fuente","Camino","Receptor"],key=f"c3l2_s1_{item}")
-    hypothesis=st.text_area("Hipótesis: ¿qué esperas que ocurra si el receptor se aleja al doble de distancia?",key="c3l2_s1_hyp",height=90)
-    if _c3l2_role()=="Alumno" and st.button("Comprobar y guardar",type="primary",key="c3l2_s1_save"):
+
+    st.markdown("### 4. Formula una hipótesis")
+    hypothesis=st.text_area(
+        "Si el receptor se desplaza desde 10 m hasta 20 m de una misma fuente, ¿qué esperas que ocurra y de qué dependerá?",
+        key="c3l2_s1_hyp",height=100,
+        placeholder="No basta con decir 'baja': menciona geometría y distancia."
+    )
+
+    if _c3l2_role()=="Alumno" and st.button("🔎 Contrastar y guardar",type="primary",key="c3l2_s1_save",use_container_width=True):
         ok=sum(answers[k]==v for k,v in items.items())
-        if ok<4 or len(hypothesis.strip())<20: st.warning("Revisa la clasificación y desarrolla tu hipótesis.")
+        if ok<5 or len(hypothesis.strip())<30:
+            st.warning("Revisa la clasificación y explica mejor de qué depende el cambio de nivel.")
         else:
             _c3l2_complete(saved,1,{"classification":answers,"hypothesis":hypothesis})
-            st.success("Etapa guardada.")
-    _c3l2_teacher_pauta("Etapa 1","Respuesta esperada: fuente genera, camino modifica la propagación y receptor es el punto/persona de interés. Alejar el receptor reduce el nivel en condiciones comparables; la magnitud depende de la geometría.")
+            st.success("Bien: primero definiste el sistema físico. En la siguiente etapa compararemos dos geometrías.")
+    _c3l2_teacher_pauta("Etapa 1","La respuesta debe separar fuente, camino y receptor. La hipótesis correcta no necesita aún un número: debe reconocer que alejar el receptor reduce el nivel en condiciones comparables y que la tasa depende de la geometría de propagación.")
+
 
 def _c3l2_stage2(lab,saved):
-    _c3l2_header(2,"Fuente puntual vs fuente lineal","Comparar dos geometrías ideales y descubrir por qué la misma duplicación de distancia no produce el mismo cambio.")
+    _c3l2_header(2,"Fuente puntual vs fuente lineal","Descubrir por qué duplicar la distancia no produce la misma pérdida en dos geometrías ideales.",25)
+
+    st.markdown("""
+    <div class="c3l2-intro"><div class="c3l2-k">PREGUNTA GUÍA</div>
+    <div class="c3l2-title">¿Una máquina aislada y una carretera extensa se propagan de la misma manera?</div>
+    No. En una idealización puntual la energía se reparte sobre una superficie aproximadamente esférica.
+    En una fuente lineal idealizada se reparte sobre una superficie aproximadamente cilíndrica.</div>
+    """,unsafe_allow_html=True)
+
+    st.markdown("### 1. Comprende las dos geometrías")
+    c1,c2=st.columns(2)
+    with c1:
+        st.markdown('<div class="c3l2-card blue"><div class="c3l2-k">PUNTUAL</div><b>Expansión esférica</b><br>El área crece aproximadamente con r². Por eso el nivel cae más rápido al alejarse.</div>',unsafe_allow_html=True)
+        st.latex(r"\Delta L_p = 20\log_{10}\left(\frac{r_1}{r_2}\right)")
+    with c2:
+        st.markdown('<div class="c3l2-card green"><div class="c3l2-k">LINEAL IDEALIZADA</div><b>Expansión cilíndrica</b><br>La superficie efectiva crece aproximadamente con r. La caída con distancia es menor.</div>',unsafe_allow_html=True)
+        st.latex(r"\Delta L_p = 10\log_{10}\left(\frac{r_1}{r_2}\right)")
+
+    st.markdown("### 2. Experimenta con la distancia")
     kind=st.segmented_control("Geometría",["Fuente puntual","Fuente lineal idealizada"],default="Fuente puntual",key="c3l2_s2_kind")
-    r1=st.number_input("Distancia inicial r₁ [m]",1.0,100.0,10.0,1.0,key="c3l2_s2_r1")
-    r2=st.slider("Distancia final r₂ [m]",1.0,100.0,20.0,1.0,key="c3l2_s2_r2")
+    c1,c2=st.columns(2)
+    r1=c1.number_input("Distancia inicial r₁ [m]",1.0,100.0,10.0,1.0,key="c3l2_s2_r1")
+    r2=c2.slider("Distancia final r₂ [m]",1.0,100.0,20.0,1.0,key="c3l2_s2_r2")
     coef=20 if kind=="Fuente puntual" else 10
     delta=coef*__import__("math").log10(r1/r2)
-    st.latex(r"\Delta L = " + ("20" if coef==20 else "10") + r"\log_{10}\left(\frac{r_1}{r_2}\right)")
-    c1,c2,c3=st.columns(3)
-    c1.metric("r₁",f"{r1:.0f} m"); c2.metric("r₂",f"{r2:.0f} m"); c3.metric("Cambio relativo",f"{delta:+.1f} dB")
+    a,b,c=st.columns(3)
+    a.metric("Geometría","Puntual" if coef==20 else "Lineal")
+    b.metric("Relación r₂/r₁",f"{r2/r1:.2f}")
+    c.metric("Cambio relativo",f"{delta:+.1f} dB")
+
+    st.markdown("### 3. Observa la curva")
     distances=[2,4,8,16,32,64]
     rel=[coef*__import__("math").log10(2/d) for d in distances]
-    fig=go.Figure(go.Scatter(x=distances,y=rel,mode="lines+markers"))
-    fig.update_layout(xaxis_title="Distancia [m]",yaxis_title="Cambio respecto de 2 m [dB]",height=330,margin=dict(l=20,r=20,t=20,b=20))
+    fig=go.Figure(go.Scatter(x=distances,y=rel,mode="lines+markers",line=dict(width=3)))
+    fig.update_layout(xaxis_title="Distancia [m]",yaxis_title="Cambio respecto de 2 m [dB]",height=340,margin=dict(l=20,r=20,t=20,b=20))
     st.plotly_chart(fig,use_container_width=True)
-    question=st.radio("Si duplicas la distancia desde una vía idealizada, ¿qué tendencia esperas?",["≈ −6 dB","≈ −3 dB","0 dB"],index=None,key="c3l2_s2_q")
-    if _c3l2_role()=="Alumno" and st.button("Guardar descubrimiento",type="primary",key="c3l2_s2_save"):
-        if question!="≈ −3 dB": st.warning("Revisa la diferencia entre propagación puntual y lineal.")
+
+    st.markdown("### 4. Comprueba que entendiste")
+    q1=st.radio("Al duplicar distancia en una fuente puntual ideal:",["≈ −3 dB","≈ −6 dB","No cambia"],index=None,key="c3l2_s2_q1")
+    q2=st.radio("Al duplicar distancia respecto de una fuente lineal idealizada:",["≈ −3 dB","≈ −6 dB","≈ +3 dB"],index=None,key="c3l2_s2_q2")
+    explain=st.text_area("Explica por qué las dos pérdidas son diferentes",height=90,key="c3l2_s2_exp")
+
+    if _c3l2_role()=="Alumno" and st.button("Guardar descubrimiento",type="primary",key="c3l2_s2_save",use_container_width=True):
+        if q1!="≈ −6 dB" or q2!="≈ −3 dB" or len(explain.strip())<25:
+            st.warning("Revisa cómo crece la superficie de propagación en cada geometría.")
         else:
-            _c3l2_complete(saved,2,{"kind":kind,"r1":r1,"r2":r2,"delta":delta,"question":question})
-            st.success("Etapa guardada.")
-    _c3l2_teacher_pauta("Etapa 2","Para las idealizaciones del laboratorio: puntual → 20log10(r1/r2), lineal → 10log10(r1/r2). Al duplicar distancia: aproximadamente −6 dB y −3 dB, respectivamente.")
+            _c3l2_complete(saved,2,{"kind":kind,"r1":r1,"r2":r2,"delta":delta,"q1":q1,"q2":q2,"explain":explain})
+            st.success("Correcto. En la siguiente etapa usarás duplicaciones sucesivas.")
+    _c3l2_teacher_pauta("Etapa 2","Puntual ideal: −6 dB por duplicación. Lineal idealizada: −3 dB por duplicación. Insistir en que son tendencias geométricas ideales y no reglas universales para cualquier entorno urbano.")
+
 
 def _c3l2_stage3(lab,saved):
-    _c3l2_header(3,"¿Qué ocurre al alejarnos?","Aplicar duplicaciones sucesivas de distancia y construir el patrón espacial.")
+    _c3l2_header(3,"¿Qué ocurre al alejarnos?","Transformar la idea de distancia en una secuencia cuantitativa de duplicaciones.",20)
+
+    st.markdown("""
+    <div class="c3l2-intro"><div class="c3l2-k">DE LA REGLA AL PATRÓN</div>
+    <div class="c3l2-title">1 → 2 → 4 → 8 → 16 m no son saltos arbitrarios.</div>
+    Cada paso duplica la distancia. Si la geometría se mantiene, cada duplicación repite aproximadamente
+    la misma pérdida relativa.</div>""",unsafe_allow_html=True)
+
     base=st.slider("Nivel de referencia a 1 m [dB]",60,95,80,key="c3l2_s3_base")
     geom=st.segmented_control("Modelo",["Puntual","Lineal idealizado"],default="Puntual",key="c3l2_s3_geom")
     d=[1,2,4,8,16,32]
     loss=6 if geom=="Puntual" else 3
     levels=[base-loss*i for i in range(len(d))]
-    st.dataframe(pd.DataFrame({"Distancia [m]":d,"Nivel aproximado [dB]":levels}),hide_index=True,use_container_width=True)
-    fig=go.Figure(go.Scatter(x=d,y=levels,mode="lines+markers"))
-    fig.update_layout(xaxis_type="log",xaxis_title="Distancia [m] (escala log)",yaxis_title="Nivel [dB]",height=330,margin=dict(l=20,r=20,t=20,b=20))
+    df=pd.DataFrame({"Distancia [m]":d,"Duplicaciones desde 1 m":list(range(len(d))),"Nivel aproximado [dB]":levels})
+    st.dataframe(df,hide_index=True,use_container_width=True)
+
+    fig=go.Figure()
+    fig.add_trace(go.Scatter(x=d,y=levels,mode="lines+markers",name=geom))
+    fig.update_layout(xaxis_type="log",xaxis_title="Distancia [m] · escala logarítmica",yaxis_title="Nivel [dB]",height=340,margin=dict(l=20,r=20,t=20,b=20))
     st.plotly_chart(fig,use_container_width=True)
-    ans=st.number_input("Una fuente puntual produce 72 dB a 4 m. Estima el nivel a 8 m.",40.0,90.0,70.0,.5,key="c3l2_s3_ans")
-    if _c3l2_role()=="Alumno" and st.button("Comprobar y guardar",type="primary",key="c3l2_s3_save"):
-        if abs(ans-66)>1: st.warning("Entre 4 y 8 m hay una duplicación. Revisa la tendencia puntual.")
+
+    st.markdown("### Ejercicio guiado")
+    st.write("Una fuente puntual produce **72 dB a 4 m**. ¿Qué nivel estimarías a **8 m**?")
+    st.markdown("1. 4 → 8 m corresponde a **una duplicación**.")
+    st.latex(r"L_p(8m)\approx L_p(4m)-6")
+    ans=st.number_input("Tu resultado [dB]",40.0,90.0,70.0,.5,key="c3l2_s3_ans")
+    why=st.text_area("Explica el procedimiento en una o dos frases",height=80,key="c3l2_s3_why")
+
+    if _c3l2_role()=="Alumno" and st.button("Comprobar y guardar",type="primary",key="c3l2_s3_save",use_container_width=True):
+        if abs(ans-66)>1 or len(why.strip())<20:
+            st.warning("Entre 4 y 8 m hay una sola duplicación. Para fuente puntual ideal usa aproximadamente −6 dB.")
         else:
-            _c3l2_complete(saved,3,{"base":base,"geom":geom,"answer":ans})
-            st.success("Correcto: una duplicación en fuente puntual ideal equivale aproximadamente a −6 dB.")
-    _c3l2_teacher_pauta("Etapa 3","Ejercicio: 72 dB a 4 m → ~66 dB a 8 m bajo propagación puntual ideal. Aclarar que son tendencias geométricas ideales, no una predicción universal del ambiente urbano.")
+            _c3l2_complete(saved,3,{"base":base,"geom":geom,"answer":ans,"why":why})
+            st.success("Resultado coherente: aproximadamente 66 dB.")
+    _c3l2_teacher_pauta("Etapa 3","72 dB a 4 m → ~66 dB a 8 m en campo libre puntual ideal. La finalidad es que el alumno cuente duplicaciones y no memorice tablas aisladas.")
+
 
 def _c3l2_stage4(lab,saved):
-    _c3l2_header(4,"De la potencia sonora al nivel en el receptor","Distinguir Lw como emisión de la fuente y Lp como nivel dependiente de la posición.")
+    _c3l2_header(4,"De la potencia sonora al nivel en el receptor","Separar emisión de la fuente y nivel observado en el espacio.",20)
+
+    st.markdown("""
+    <div class="c3l2-intro"><div class="c3l2-k">DOS MAGNITUDES, DOS PREGUNTAS</div>
+    <div class="c3l2-title">Lw responde “¿cuánto emite la fuente?”; Lp responde “¿qué nivel existe aquí?”</div>
+    Confundirlas conduce a trasladar una propiedad de emisión como si fuera una medición de receptor.</div>
+    """,unsafe_allow_html=True)
+
+    st.markdown("### 1. Compara")
     st.markdown("""
     <div class="c3l2-grid2">
-      <div class="c3l2-card blue"><div class="c3l2-k">Lw</div><b>Potencia sonora</b><br>Caracteriza la emisión acústica de la fuente.</div>
-      <div class="c3l2-card green"><div class="c3l2-k">Lp</div><b>Presión sonora</b><br>Depende de emisión, distancia, geometría y entorno.</div>
+      <div class="c3l2-card blue"><div class="c3l2-k">Lw · POTENCIA SONORA</div><b>Propiedad de emisión</b><br>No depende de dónde coloques el receptor.</div>
+      <div class="c3l2-card green"><div class="c3l2-k">Lp · PRESIÓN SONORA</div><b>Propiedad del campo</b><br>Cambia con distancia, geometría y entorno.</div>
     </div>""",unsafe_allow_html=True)
+
+    st.markdown("### 2. Visualiza la expansión")
+    components.html("""
+    <svg viewBox="0 0 900 260" width="100%" style="background:#f7fbff;border:1px solid #d4e3ed;border-radius:16px">
+      <circle cx="170" cy="130" r="20" fill="#e95c4e"/>
+      <circle cx="170" cy="130" r="55" fill="none" stroke="#42a9ce" stroke-width="3" opacity=".9"/>
+      <circle cx="170" cy="130" r="95" fill="none" stroke="#42a9ce" stroke-width="3" opacity=".55"/>
+      <circle cx="170" cy="130" r="130" fill="none" stroke="#42a9ce" stroke-width="3" opacity=".3"/>
+      <text x="85" y="25" font-size="16" font-weight="700">MISMA POTENCIA</text>
+      <circle cx="390" cy="130" r="10" fill="#13a067"/><text x="408" y="135" font-size="15">receptor cercano</text>
+      <circle cx="690" cy="130" r="10" fill="#13a067"/><text x="708" y="135" font-size="15">receptor lejano</text>
+      <line x1="190" y1="130" x2="380" y2="130" stroke="#657786" stroke-dasharray="7 6"/>
+      <line x1="190" y1="145" x2="680" y2="145" stroke="#657786" stroke-dasharray="7 6"/>
+    </svg>
+    """,height=280)
+
+    st.markdown("### 3. Simulador idealizado")
     lw=st.slider("Lw de la fuente [dB]",70,110,95,key="c3l2_s4_lw")
     r=st.slider("Distancia al receptor [m]",1.0,50.0,5.0,.5,key="c3l2_s4_r")
     import math
     lp=lw-10*math.log10(4*math.pi*r*r)
     st.latex(r"L_p \approx L_w - 10\log_{10}(4\pi r^2)")
-    c1,c2=st.columns(2); c1.metric("Lw",f"{lw} dB"); c2.metric("Lp idealizado",f"{lp:.1f} dB")
-    choice=st.radio("Si Lw no cambia y aumentas la distancia, ¿qué magnitud cambia directamente en el receptor?",["Lw","Lp","Ambas son siempre iguales"],index=None,key="c3l2_s4_q")
-    if _c3l2_role()=="Alumno" and st.button("Guardar etapa",type="primary",key="c3l2_s4_save"):
-        if choice!="Lp": st.warning("Lw caracteriza emisión; Lp es el nivel observado en el punto.")
+    c1,c2,c3=st.columns(3)
+    c1.metric("Lw",f"{lw} dB")
+    c2.metric("Distancia",f"{r:.1f} m")
+    c3.metric("Lp idealizado",f"{lp:.1f} dB")
+
+    q1=st.radio("Si mueves el receptor pero la fuente no cambia, ¿qué magnitud permanece asociada a la emisión?",["Lw","Lp","Ambas cambian igual"],index=None,key="c3l2_s4_q1")
+    q2=st.text_area("Explica por qué dos receptores pueden tener distinto Lp frente a la misma fuente",height=90,key="c3l2_s4_q2")
+    if _c3l2_role()=="Alumno" and st.button("Guardar etapa",type="primary",key="c3l2_s4_save",use_container_width=True):
+        if q1!="Lw" or len(q2.strip())<25:
+            st.warning("Revisa la diferencia entre emisión de la fuente y nivel en el campo.")
         else:
-            _c3l2_complete(saved,4,{"lw":lw,"r":r,"lp":lp,"choice":choice})
+            _c3l2_complete(saved,4,{"lw":lw,"r":r,"lp":lp,"q1":q1,"q2":q2})
             st.success("Etapa guardada.")
-    _c3l2_teacher_pauta("Etapa 4","La fórmula se usa como modelo ideal de campo libre para enseñar la diferencia Lw/Lp. No presentarla como sustituto de un modelo ambiental completo.")
+    _c3l2_teacher_pauta("Etapa 4","La ecuación se presenta como campo libre ideal. La pauta debe verificar que el alumno no confunda Lw con Lp y que comprenda por qué Lp cambia con la posición.")
+
 
 def _c3l2_stage5(lab,saved):
-    _c3l2_header(5,"Del vehículo individual a la carretera","Distinguir evento móvil individual de un flujo que puede aproximarse como fuente lineal.")
+    _c3l2_header(5,"Del vehículo individual a la carretera","Entender cuándo un conjunto de eventos móviles puede representarse como un corredor lineal.",20)
+
+    st.markdown("""
+    <div class="c3l2-intro"><div class="c3l2-k">CAMBIO DE ESCALA</div>
+    <div class="c3l2-title">Un automóvil no es una carretera.</div>
+    El automóvil es una fuente móvil individual. Una vía con muchos vehículos simultáneos puede,
+    bajo ciertas condiciones, aproximarse como una distribución lineal de fuentes.</div>
+    """,unsafe_allow_html=True)
+
+    st.markdown("### 1. Observa tres regímenes")
     mode=st.segmented_control("Escenario",["Vehículo individual","Flujo discontinuo","Flujo continuo"],default="Vehículo individual",key="c3l2_s5_mode")
     descriptions={
-        "Vehículo individual":"Un evento móvil cambia continuamente su geometría respecto del receptor.",
-        "Flujo discontinuo":"Los eventos siguen distinguiéndose; una sola línea equivalente puede ocultar variabilidad.",
-        "Flujo continuo":"Con suficiente densidad temporal, el corredor puede aproximarse didácticamente como fuente lineal.",
+        "Vehículo individual":"Evento móvil: el nivel crece al acercarse, alcanza un máximo y disminuye al alejarse.",
+        "Flujo discontinuo":"Los eventos siguen siendo distinguibles; aparecen valles claros entre vehículos.",
+        "Flujo continuo":"Los eventos se superponen y el corredor puede aproximarse mediante una fuente lineal idealizada.",
     }
     st.markdown(f'<div class="c3l2-note"><b>{mode}</b><br>{descriptions[mode]}</div>',unsafe_allow_html=True)
-    model=st.radio("¿Qué representación usarías primero para una avenida con flujo continuo y estable?",["Fuente puntual fija","Corredor / fuente lineal idealizada","No existe fuente"],index=None,key="c3l2_s5_q")
-    why=st.text_area("Justifica brevemente",key="c3l2_s5_why",height=90)
-    if _c3l2_role()=="Alumno" and st.button("Guardar razonamiento",type="primary",key="c3l2_s5_save"):
-        if model!="Corredor / fuente lineal idealizada" or len(why.strip())<20: st.warning("Selecciona el modelo coherente y justifica.")
+
+    import numpy as np
+    x=np.linspace(0,60,121)
+    if mode=="Vehículo individual":
+        y=48+24*np.exp(-((x-30)/7)**2)
+    elif mode=="Flujo discontinuo":
+        y=47+16*np.exp(-((x-14)/4)**2)+18*np.exp(-((x-31)/4.5)**2)+15*np.exp(-((x-48)/4)**2)
+    else:
+        y=60+2.5*np.sin(x/4)+1.2*np.sin(x/1.7)
+    fig=go.Figure(go.Scatter(x=x,y=y,mode="lines"))
+    fig.update_layout(height=320,margin=dict(l=20,r=20,t=20,b=20),xaxis_title="Tiempo [s]",yaxis_title="Nivel relativo [dB]")
+    st.plotly_chart(fig,use_container_width=True)
+
+    st.markdown("### 2. Selecciona el modelo")
+    model=st.radio("Para una avenida con flujo continuo y estable, ¿qué representación usarías como primera idealización?",["Fuente puntual fija","Corredor / fuente lineal idealizada","Receptor"],index=None,key="c3l2_s5_q")
+    why=st.text_area("Justifica: ¿por qué no basta con modelar un solo automóvil?",key="c3l2_s5_why",height=90)
+
+    if _c3l2_role()=="Alumno" and st.button("Guardar razonamiento",type="primary",key="c3l2_s5_save",use_container_width=True):
+        if model!="Corredor / fuente lineal idealizada" or len(why.strip())<25:
+            st.warning("Revisa cómo cambia el problema al pasar de un evento móvil a un flujo continuo.")
         else:
             _c3l2_complete(saved,5,{"mode":mode,"model":model,"why":why})
             st.success("Etapa guardada.")
-    _c3l2_teacher_pauta("Etapa 5","Evitar la frase absoluta 'la carretera es una fuente lineal'. Es una aproximación útil bajo condiciones de flujo y escala espacial determinadas.")
+    _c3l2_teacher_pauta("Etapa 5","Evitar afirmar que toda carretera 'es' una fuente lineal. Es una idealización útil cuando la escala espacial y la continuidad del flujo justifican esa representación.")
 
 def _c3l2_traffic_index(flow, speed, heavy, distance, pavement):
     import math
@@ -26521,9 +26718,23 @@ def _c3l2_traffic_index(flow, speed, heavy, distance, pavement):
     p_corr={"Más silencioso":-2.0,"Normal":0.0,"Rugoso":2.0}[pavement]
     return 52 + 10*math.log10(max(flow,1)/100) + 0.05*(speed-50) + 0.16*heavy - 10*math.log10(max(distance,1)/10) + p_corr
 
+
 def _c3l2_stage6(lab,saved):
-    _c3l2_header(6,"¿Qué hace más ruidosa una carretera?","Experimentar con flujo, velocidad, pesados y distancia mediante un simulador didáctico.")
-    st.markdown('<div class="c3l2-warn"><b>Modelo didáctico.</b> Permite estudiar tendencias y sensibilidad; no es un método predictivo reglamentario.</div>',unsafe_allow_html=True)
+    _c3l2_header(6,"¿Qué hace más ruidosa una carretera?","Separar variables de emisión y propagación mediante experimentos controlados.",25)
+
+    st.markdown("""
+    <div class="c3l2-warn"><b>Importante:</b> este simulador es didáctico. Sirve para estudiar tendencias
+    y sensibilidad, no para predecir cumplimiento ni reemplazar un modelo oficial de tránsito.</div>
+    """,unsafe_allow_html=True)
+
+    st.markdown("### 1. ¿Qué variable estás cambiando?")
+    st.markdown("""
+    <div class="c3l2-grid">
+      <div class="c3l2-card blue"><div class="c3l2-k">EMISIÓN</div><b>Flujo, velocidad, pesados, pavimento</b><br>Modifican la energía generada por el tránsito.</div>
+      <div class="c3l2-card green"><div class="c3l2-k">PROPAGACIÓN</div><b>Distancia al receptor</b><br>Modifica el camino desde la vía al punto de evaluación.</div>
+      <div class="c3l2-card orange"><div class="c3l2-k">MÉTODO</div><b>Una variable a la vez</b><br>Si cambias varias simultáneamente no sabrás cuál produjo el efecto.</div>
+    </div>""",unsafe_allow_html=True)
+
     c1,c2=st.columns(2)
     flow=c1.slider("Flujo [veh/h]",100,3000,1000,100,key="c3l2_s6_flow")
     speed=c2.slider("Velocidad [km/h]",20,120,50,5,key="c3l2_s6_speed")
@@ -26533,47 +26744,108 @@ def _c3l2_stage6(lab,saved):
     pavement=st.segmented_control("Superficie vial",["Más silencioso","Normal","Rugoso"],default="Normal",key="c3l2_s6_pav")
     level=_c3l2_traffic_index(flow,speed,heavy,distance,pavement)
     st.metric("Índice de nivel relativo del escenario",f"{level:.1f} dB")
-    variable=st.radio("¿Qué variable estás modificando principalmente cuando alejas al receptor?",["Emisión","Propagación","Composición vehicular"],index=None,key="c3l2_s6_q")
-    if _c3l2_role()=="Alumno" and st.button("Guardar escenario",type="primary",key="c3l2_s6_save"):
-        if variable!="Propagación": st.warning("La distancia modifica principalmente el camino de propagación.")
+
+    st.markdown("### 2. Ejecuta tres mini-experimentos")
+    exp=st.segmented_control("Experimento",["Velocidad","Pesados","Distancia"],default="Velocidad",key="c3l2_s6_exp")
+    if exp=="Velocidad":
+        vals=[30,50,70,90]
+        lev=[_c3l2_traffic_index(flow,v,heavy,distance,pavement) for v in vals]
+        xlabel="Velocidad [km/h]"
+    elif exp=="Pesados":
+        vals=[0,5,15,30]
+        lev=[_c3l2_traffic_index(flow,speed,v,distance,pavement) for v in vals]
+        xlabel="Pesados [%]"
+    else:
+        vals=[10,20,40,80]
+        lev=[_c3l2_traffic_index(flow,speed,heavy,v,pavement) for v in vals]
+        xlabel="Distancia [m]"
+    fig=go.Figure(go.Bar(x=vals,y=lev))
+    fig.update_layout(height=320,margin=dict(l=20,r=20,t=20,b=20),xaxis_title=xlabel,yaxis_title="Índice relativo [dB]")
+    st.plotly_chart(fig,use_container_width=True)
+
+    variable=st.radio("¿Qué variable modifica principalmente el camino de propagación en este laboratorio?",["Flujo","Distancia al receptor","Porcentaje de pesados"],index=None,key="c3l2_s6_q")
+    conclusion=st.text_area("Escribe una conclusión del experimento que acabas de observar",height=90,key="c3l2_s6_conc")
+    if _c3l2_role()=="Alumno" and st.button("Guardar escenario",type="primary",key="c3l2_s6_save",use_container_width=True):
+        if variable!="Distancia al receptor" or len(conclusion.strip())<25:
+            st.warning("Distingue variables de emisión de variables del camino y explica el patrón observado.")
         else:
-            _c3l2_complete(saved,6,{"flow":flow,"speed":speed,"heavy":heavy,"distance":distance,"pavement":pavement,"level":level})
+            _c3l2_complete(saved,6,{"flow":flow,"speed":speed,"heavy":heavy,"distance":distance,"pavement":pavement,"level":level,"experiment":exp,"conclusion":conclusion})
             st.success("Escenario guardado.")
-    _c3l2_teacher_pauta("Etapa 6","El índice es deliberadamente didáctico. Usar para comparar tendencias manteniendo las otras variables fijas; no presentarlo como nivel normativo ni como modelo oficial de tránsito.")
+    _c3l2_teacher_pauta("Etapa 6","Pauta: flujo/velocidad/pesados/pavimento se tratan como variables de emisión en este simulador; distancia como propagación. La conclusión debe reconocer tendencia, no convertir el índice didáctico en predicción reglamentaria.")
+
 
 def _c3l2_stage7(lab,saved):
-    _c3l2_header(7,"Laboratorio virtual de tráfico","Predecir el receptor crítico y contrastar la hipótesis con un escenario controlado.")
-    flow=st.slider("Flujo [veh/h]",300,2500,1200,100,key="c3l2_s7_flow")
-    heavy=st.slider("Pesados [%]",0,30,10,1,key="c3l2_s7_heavy")
-    speed=st.slider("Velocidad [km/h]",30,100,60,5,key="c3l2_s7_speed")
+    _c3l2_header(7,"Laboratorio virtual de tráfico","Integrar variables de tránsito y propagación sobre cinco receptores.",20)
+
+    st.markdown("""
+    <div class="c3l2-intro"><div class="c3l2-k">HIPÓTESIS → SIMULACIÓN → CONTRASTE</div>
+    <div class="c3l2-title">Primero predice. Después ejecuta.</div>
+    Si ves el resultado antes de formular una hipótesis, pierdes la oportunidad de comprobar si tu modelo mental funciona.</div>
+    """,unsafe_allow_html=True)
+
+    c1,c2,c3=st.columns(3)
+    flow=c1.slider("Flujo [veh/h]",300,2500,1200,100,key="c3l2_s7_flow")
+    heavy=c2.slider("Pesados [%]",0,30,10,1,key="c3l2_s7_heavy")
+    speed=c3.slider("Velocidad [km/h]",30,100,60,5,key="c3l2_s7_speed")
     receptor_dist={"P1":8,"P2":15,"P3":25,"P4":40,"P5":70}
+
+    components.html("""
+    <svg viewBox="0 0 950 260" width="100%" style="background:#f4fbff;border:1px solid #d5e6ef;border-radius:16px">
+      <rect x="0" y="190" width="950" height="70" fill="#647785"/>
+      <line x1="0" y1="225" x2="950" y2="225" stroke="#f6d65a" stroke-width="5" stroke-dasharray="28 18"/>
+      <g fill="#14a3d0" font-size="14" font-weight="700">
+        <circle cx="120" cy="168" r="10"/><text x="105" y="150">P1 · 8 m</text>
+        <circle cx="270" cy="145" r="10"/><text x="248" y="126">P2 · 15 m</text>
+        <circle cx="430" cy="120" r="10"/><text x="405" y="101">P3 · 25 m</text>
+        <circle cx="610" cy="90" r="10"/><text x="585" y="71">P4 · 40 m</text>
+        <circle cx="800" cy="50" r="10"/><text x="775" y="31">P5 · 70 m</text>
+      </g>
+    </svg>
+    """,height=280)
+
     prediction=st.radio("Antes de ejecutar: ¿qué receptor esperas que tenga mayor nivel?",list(receptor_dist),index=None,key="c3l2_s7_pred")
-    rows=[]
-    for p,d in receptor_dist.items():
-        rows.append({"Receptor":p,"Distancia [m]":d,"Nivel relativo [dB]":round(_c3l2_traffic_index(flow,speed,heavy,d,"Normal"),1)})
+    reason=st.text_area("Justifica tu predicción",height=80,key="c3l2_s7_reason")
+
     if st.button("▶ Ejecutar escenario",key="c3l2_s7_run",use_container_width=True):
         st.session_state["c3l2_s7_ran"]=True
     if st.session_state.get("c3l2_s7_ran"):
+        rows=[]
+        for p,d in receptor_dist.items():
+            rows.append({"Receptor":p,"Distancia [m]":d,"Nivel relativo [dB]":round(_c3l2_traffic_index(flow,speed,heavy,d,"Normal"),1)})
         df=pd.DataFrame(rows)
         st.dataframe(df,hide_index=True,use_container_width=True)
         fig=go.Figure(go.Bar(x=df["Receptor"],y=df["Nivel relativo [dB]"]))
         fig.update_layout(height=320,margin=dict(l=20,r=20,t=20,b=20),yaxis_title="Nivel relativo [dB]")
         st.plotly_chart(fig,use_container_width=True)
         actual=max(rows,key=lambda x:x["Nivel relativo [dB]"])["Receptor"]
-        st.info(f"Receptor con mayor nivel en este escenario: **{actual}**.")
-        if _c3l2_role()=="Alumno" and st.button("Guardar laboratorio virtual",type="primary",key="c3l2_s7_save"):
-            if not prediction: st.warning("Formula primero una predicción.")
+        if prediction:
+            if prediction==actual: st.success(f"Tu hipótesis coincide: {actual} es el receptor más expuesto del escenario.")
+            else: st.info(f"El escenario entrega {actual}. Compara tu justificación con la distancia de cada receptor.")
+        if _c3l2_role()=="Alumno" and st.button("Guardar laboratorio virtual",type="primary",key="c3l2_s7_save",use_container_width=True):
+            if not prediction or len(reason.strip())<20: st.warning("Formula y justifica primero tu predicción.")
             else:
-                _c3l2_complete(saved,7,{"prediction":prediction,"actual":actual,"scenario":{"flow":flow,"speed":speed,"heavy":heavy},"results":rows})
+                _c3l2_complete(saved,7,{"prediction":prediction,"reason":reason,"actual":actual,"scenario":{"flow":flow,"speed":speed,"heavy":heavy},"results":rows})
                 st.success("Etapa guardada.")
-    _c3l2_teacher_pauta("Etapa 7","Con las demás variables iguales, el receptor más cercano resulta crítico en el simulador. La discusión debe centrarse en control de variables y no en memorizar el resultado.")
+    _c3l2_teacher_pauta("Etapa 7","La respuesta esperada, manteniendo las demás variables iguales, es P1 por su menor distancia. Lo importante es que el alumno prediga antes de ejecutar y explique con variables controladas.")
+
 
 def _c3l2_stage8(lab,saved):
-    _c3l2_header(8,"Preparación de la campaña real","Practicar el flujo GIS + sonómetro antes de la evaluación integradora.",30)
+    _c3l2_header(8,"Preparación de la campaña real","Practicar el flujo GIS y la trazabilidad de una medición antes de la evaluación final.",20)
+
+    st.markdown("""
+    <div class="c3l2-intro"><div class="c3l2-k">ENSAYO GENERAL</div>
+    <div class="c3l2-title">En esta etapa no estás siendo evaluado: estás aprendiendo el procedimiento.</div>
+    El flujo que practiques aquí será el mismo de la Etapa 10: ubicar → marcar → medir → registrar → interpretar.</div>
+    """,unsafe_allow_html=True)
+
+    st.markdown("### 1. Diseña el punto antes de medir")
     prev=saved.get("c3l2_stage8") if isinstance(saved.get("c3l2_stage8"),dict) else {}
-    location=st.text_input("Intersección / sector de práctica",value=prev.get("location",""),placeholder="Ej.: Av. Irarrázaval con Av. Pedro de Valdivia",key="c3l2_s8_location")
+    location=st.text_input("Intersección / sector de práctica",value=prev.get("location",""),placeholder="Ej.: Av. Irarrázaval con Pedro de Valdivia",key="c3l2_s8_location")
+    objective=st.selectbox("Objetivo del punto piloto",["Seleccionar","Caracterizar flujo de la vía","Comparar dos lados de la intersección","Observar influencia de pesados","Reconocer un receptor cercano"],key="c3l2_s8_obj")
+    time_window=st.text_input("Horario previsto",value=prev.get("time_window",""),placeholder="Ej.: 18:00–18:10",key="c3l2_s8_timewindow")
+
+    st.markdown("### 2. Marca el punto en un mapa real")
     pilot_points=prev.get("points",[]) if isinstance(prev.get("points"),list) else []
-    st.markdown("### 1. Marca un punto piloto en el mapa")
     click=_c3l2_map(pilot_points,"c3l2_s8_map",height=430)
     if click:
         st.caption(f"Último clic: {click['lat']:.6f}, {click['lon']:.6f}")
@@ -26581,154 +26853,230 @@ def _c3l2_stage8(lab,saved):
             pilot_points=[{"id":"P1","lat":click["lat"],"lon":click["lon"]}]
             prev["points"]=pilot_points; prev["location"]=location
             saved["c3l2_stage8"]=prev; _c3l2_save(saved); st.rerun()
-    st.markdown("### 2. Realiza una medición piloto")
+
+    st.markdown("### 3. Mide con el sonómetro online")
     st.link_button("🎙️ Abrir sonómetro online","https://soundlevelmeteruc.vercel.app/",use_container_width=True)
+    st.info("Uso educativo: registra el resultado y el contexto de forma trazable. Esta práctica no sustituye una medición reglamentaria con instrumentación y procedimiento exigibles.")
     c1,c2,c3=st.columns(3)
     laeq=c1.number_input("LAeq [dB(A)]",35.0,110.0,float(prev.get("laeq",65.0)),.1,key="c3l2_s8_laeq")
     lmax=c2.number_input("Lmax [dB(A)]",35.0,130.0,float(prev.get("lmax",75.0)),.1,key="c3l2_s8_lmax")
     dur=c3.number_input("Duración [min]",1.0,15.0,float(prev.get("duration",2.0)),.5,key="c3l2_s8_dur")
-    obs=st.text_area("Observaciones del punto piloto",value=prev.get("notes",""),height=90,key="c3l2_s8_notes")
-    if _c3l2_role()=="Alumno" and st.button("💾 Guardar práctica GIS",type="primary",use_container_width=True,key="c3l2_s8_save"):
-        if not pilot_points or not location.strip() or len(obs.strip())<10: st.warning("Marca un punto, identifica el sector y registra una observación.")
-        else:
-            payload={"location":location,"points":pilot_points,"laeq":laeq,"lmax":lmax,"duration":dur,"notes":obs}
-            _c3l2_complete(saved,8,payload)
-            st.success("Práctica GIS guardada.")
-    _c3l2_teacher_pauta("Etapa 8","El objetivo no es evaluar todavía. El alumno debe aprender el flujo: ubicar → marcar → medir → registrar. El teléfono/sonómetro online se usa con finalidad educativa, no para afirmar cumplimiento reglamentario.")
+    obs=st.text_area("Observaciones: flujo, pesados, bocinas, semáforo, interferencias, viento u otros eventos",value=prev.get("notes",""),height=100,key="c3l2_s8_notes")
 
-_C3L2_Q=[
-("Una máquina fija aislada se aproxima inicialmente a:",["Fuente puntual","Fuente lineal","Receptor"],0),
-("Una vía con flujo continuo puede idealizarse como:",["Fuente puntual fija","Fuente lineal","Receptor"],1),
-("Duplicar distancia en fuente puntual ideal produce aproximadamente:",["−3 dB","−6 dB","+6 dB"],1),
-("Duplicar distancia en fuente lineal idealizada produce aproximadamente:",["−3 dB","−6 dB","0 dB"],0),
-("Lw representa principalmente:",["Emisión de la fuente","Nivel en cualquier receptor","Distancia"],0),
-("Al alejar el receptor modificas principalmente:",["Emisión","Propagación","Porcentaje de pesados"],1),
-("Para comparar puntos de una vía conviene mantener:",["Trazabilidad de método y condiciones","Solo el color del mapa","La distancia sin registrar"],0),
-("Un valor interpolado entre dos puntos:",["Fue medido directamente allí","Es una estimación espacial","Siempre es normativo"],1),
-("Una medición aislada en la esquina más ruidosa:",["Representa automáticamente toda la vía","Puede no ser representativa","Elimina la necesidad de campaña"],1),
-("Además de LAeq conviene registrar:",["Contexto, duración, hora y eventos","Solo nombre de calle","Nada más"],0),
-]
+    st.markdown("### 4. Interpreta tu punto piloto")
+    interpretation=st.text_area("¿Qué representa realmente esta medición y qué NO puedes concluir con un solo punto?",height=100,key="c3l2_s8_interp")
+
+    if _c3l2_role()=="Alumno" and st.button("💾 Guardar práctica GIS",type="primary",use_container_width=True,key="c3l2_s8_save"):
+        if not pilot_points or not location.strip() or objective=="Seleccionar" or len(obs.strip())<15 or len(interpretation.strip())<30:
+            st.warning("Completa ubicación, objetivo, punto, observaciones e interpretación.")
+        else:
+            payload={"location":location,"objective":objective,"time_window":time_window,"points":pilot_points,"laeq":laeq,"lmax":lmax,"duration":dur,"notes":obs,"interpretation":interpretation}
+            _c3l2_complete(saved,8,payload)
+            st.success("Práctica GIS guardada. Ya conoces el flujo que usarás en la evaluación.")
+    _c3l2_teacher_pauta("Etapa 8","La pauta debe revisar que el alumno entienda que un punto piloto no representa automáticamente toda la vía. Debe registrar objetivo, ubicación, horario, duración, descriptores y eventos observados.")
+
 
 def _c3l2_stage9(lab,saved):
-    _c3l2_header(9,"Preguntas de comprensión","Comprobar conceptos antes de la campaña GIS final.",25)
+    _c3l2_header(9,"Preguntas de comprensión","Comprobar propagación, tráfico, representatividad y lectura espacial antes de la campaña GIS.",20)
+
     prev=saved.get("c3l2_stage9") if isinstance(saved.get("c3l2_stage9"),dict) else {}
-    answers=prev.get("answers",{}) if isinstance(prev.get("answers"),dict) else {}
-    for i,(q,opts,correct) in enumerate(_C3L2_Q):
-        with st.container(border=True):
-            st.markdown(f"**Pregunta {i+1}**")
-            previous=answers.get(str(i))
-            idx=opts.index(previous) if previous in opts else None
-            val=st.radio(q,opts,index=idx,key=f"c3l2_s9_q{i}")
-            answers[str(i)]=val
-    correct_count=sum(answers.get(str(i))==opts[correct] for i,(_,opts,correct) in enumerate(_C3L2_Q))
-    st.caption(f"Respuestas actuales: {len([v for v in answers.values() if v])} de 10")
+    answers=dict(prev.get("answers",{}) or {})
+
+    st.markdown('<div class="c3l2-note"><b>Actividad formativa, sin nota.</b> Puedes guardar, volver a revisar materia y modificar tus respuestas sin perder el avance.</div>',unsafe_allow_html=True)
+
+    # 1
+    with st.container(border=True):
+        st.markdown("**Pregunta 1 · selección única**")
+        a1=st.radio("Una máquina fija aislada se aproxima inicialmente a:",["Fuente puntual","Fuente lineal","Receptor"],index=["Fuente puntual","Fuente lineal","Receptor"].index(answers["1"]) if answers.get("1") in ["Fuente puntual","Fuente lineal","Receptor"] else None,key="c3l2_s9_1")
+        answers["1"]=a1
+    # 2
+    with st.container(border=True):
+        st.markdown("**Pregunta 2 · cálculo**")
+        a2=st.number_input("Una fuente puntual produce 72 dB a 4 m. Estima el nivel a 8 m [dB].",40.0,90.0,float(answers.get("2",70.0)),.5,key="c3l2_s9_2")
+        answers["2"]=a2
+    # 3
+    with st.container(border=True):
+        st.markdown("**Pregunta 3 · selección única**")
+        opts=["≈ −3 dB","≈ −6 dB","0 dB"]
+        a3=st.radio("Al duplicar distancia desde una vía lineal idealizada:",opts,index=opts.index(answers["3"]) if answers.get("3") in opts else None,key="c3l2_s9_3")
+        answers["3"]=a3
+    # 4
+    with st.container(border=True):
+        st.markdown("**Pregunta 4 · desarrollo corto**")
+        a4=st.text_area("Explica la diferencia entre Lw y Lp.",value=str(answers.get("4","")),height=85,key="c3l2_s9_4")
+        answers["4"]=a4
+    # 5
+    with st.container(border=True):
+        st.markdown("**Pregunta 5 · selección múltiple conceptual**")
+        a5=st.multiselect("¿Qué variables del simulador se asocian principalmente a emisión del tránsito?",["Flujo","Velocidad","Pesados","Pavimento","Distancia al receptor"],default=answers.get("5",[]) if isinstance(answers.get("5"),list) else [],key="c3l2_s9_5")
+        answers["5"]=a5
+    # 6
+    with st.container(border=True):
+        st.markdown("**Pregunta 6 · desarrollo aplicado**")
+        a6=st.text_area("¿Por qué una medición en la esquina más ruidosa podría no representar toda la vía?",value=str(answers.get("6","")),height=85,key="c3l2_s9_6")
+        answers["6"]=a6
+    # 7
+    with st.container(border=True):
+        st.markdown("**Pregunta 7 · decisión de campaña**")
+        opts=["Poner todos los puntos junto al semáforo","Distribuir puntos en ambas vías y documentar condiciones","Medir un único punto por más tiempo y asumir el resto"]
+        a7=st.radio("¿Qué diseño ofrece mejor información espacial?",opts,index=opts.index(answers["7"]) if answers.get("7") in opts else None,key="c3l2_s9_7")
+        answers["7"]=a7
+    # 8
+    with st.container(border=True):
+        st.markdown("**Pregunta 8 · verdadero/falso con justificación**")
+        a8=st.radio("Un valor coloreado entre puntos en una interpolación significa que fue medido directamente allí.",["Verdadero","Falso"],index=["Verdadero","Falso"].index(answers["8"]) if answers.get("8") in ["Verdadero","Falso"] else None,key="c3l2_s9_8")
+        a8b=st.text_area("Justifica",value=str(answers.get("8b","")),height=70,key="c3l2_s9_8b")
+        answers["8"]=a8; answers["8b"]=a8b
+    # 9
+    with st.container(border=True):
+        st.markdown("**Pregunta 9 · registro de terreno**")
+        a9=st.text_area("Además de LAeq y Lmax, ¿qué información registrarías en cada punto?",value=str(answers.get("9","")),height=85,key="c3l2_s9_9")
+        answers["9"]=a9
+    # 10
+    with st.container(border=True):
+        st.markdown("**Pregunta 10 · estrategia profesional**")
+        a10=st.text_area("Tienes 30 minutos para caracterizar una intersección. Propón una estrategia y declara al menos una limitación.",value=str(answers.get("10","")),height=105,key="c3l2_s9_10")
+        answers["10"]=a10
+
+    complete=(
+        answers.get("1") and abs(float(answers.get("2",0))-66)<=1 and answers.get("3")
+        and len(str(answers.get("4","")).strip())>=20 and len(answers.get("5",[]))>=3
+        and len(str(answers.get("6","")).strip())>=25 and answers.get("7")
+        and answers.get("8") and len(str(answers.get("8b","")).strip())>=15
+        and len(str(answers.get("9","")).strip())>=20 and len(str(answers.get("10","")).strip())>=35
+    )
     if _c3l2_role()=="Alumno" and st.button("💾 Guardar preguntas de comprensión",type="primary",use_container_width=True,key="c3l2_s9_save"):
-        if len([v for v in answers.values() if v])<10: st.warning("Responde las 10 preguntas antes de guardar la etapa como completada.")
+        if not complete:
+            st.warning("Completa las 10 preguntas y desarrolla las respuestas abiertas.")
         else:
-            _c3l2_complete(saved,9,{"answers":answers,"correct_count":correct_count})
-            st.success("Preguntas guardadas. Puedes volver y modificar tus respuestas.")
-    _c3l2_teacher_pauta("Etapa 9","Clave: 1 puntual; 2 lineal; 3 −6 dB; 4 −3 dB; 5 Lw emisión; 6 propagación; 7 trazabilidad; 8 estimación espacial; 9 puede no ser representativa; 10 registrar contexto completo.")
+            _c3l2_complete(saved,9,{"answers":answers})
+            st.success("Respuestas guardadas. Puedes volver a esta etapa y modificarlas.")
+    _c3l2_teacher_pauta("Etapa 9","Pauta: 1 puntual; 2 ≈66 dB; 3 ≈−3 dB; 4 Lw=emisión / Lp=campo; 5 flujo, velocidad, pesados y pavimento; 6 falta de representatividad; 7 distribuir puntos y documentar; 8 falso, es estimación; 9 contexto, hora, duración, eventos, condiciones; 10 estrategia coherente con puntos y limitaciones.")
+
 
 def _c3l2_stage10(lab,saved):
-    _c3l2_header(10,"Mapa GIS de ruido de tráfico vehicular","Realizar la campaña integradora sobre una intersección real y construir el mapa a partir de puntos medidos.",50)
+    _c3l2_header(10,"Mapa GIS de ruido de tráfico vehicular","Resolver la tarea integradora mediante una campaña real y una representación espacial trazable.",40)
     data=saved.get("c3l2_stage10") if isinstance(saved.get("c3l2_stage10"),dict) else {}
     data=dict(data or {})
     points=list(data.get("points",[]) or [])
 
     st.markdown("""
     <div class="c3l2-intro">
-      <div class="c3l2-k">EVALUACIÓN INTEGRADORA</div>
-      <div class="c3l2-title">De la medición puntual al patrón espacial</div>
-      Selecciona una intersección real, define vía principal y secundaria, registra tus puntos y construye
-      la representación GIS. Los colores entre puntos son una visualización estimativa; solo los marcadores corresponden a mediciones ingresadas.
-    </div>
-    """,unsafe_allow_html=True)
+      <div class="c3l2-k">TAREA INTEGRADORA · MAPA GIS</div>
+      <div class="c3l2-title">Desde puntos medidos a una interpretación territorial</div>
+      Selecciona una intersección real, define una vía principal y una secundaria, distribuye tus puntos,
+      mide, documenta y construye una representación espacial. La evaluación no consiste solo en “hacer un mapa”:
+      debes poder defender cómo mediste y qué alcance tiene tu conclusión.
+    </div>""",unsafe_allow_html=True)
 
-    st.markdown("### 1. Define la intersección")
+    st.markdown("### Misión 1 · Define el problema")
     c1,c2=st.columns(2)
     principal=c1.text_input("Vía principal",value=data.get("principal",""),key="c3l2_s10_mainroad")
     secondary=c2.text_input("Vía secundaria",value=data.get("secondary",""),key="c3l2_s10_secondary")
     sector=st.text_input("Sector / comuna",value=data.get("sector",""),key="c3l2_s10_sector")
+    objective=st.text_area("Objetivo de la campaña",value=data.get("objective",""),height=80,key="c3l2_s10_objective",placeholder="Ej.: comparar el patrón espacial de LAeq entre la vía principal y secundaria durante un mismo periodo de observación.")
 
-    st.markdown("### 2. Marca tus puntos GIS")
-    heat=st.toggle("Mostrar superficie indicativa a partir de puntos medidos",value=False,key="c3l2_s10_heat")
-    click=_c3l2_map(points,"c3l2_s10_map",heat=heat,height=500)
-    c3,c4=st.columns([1,1])
-    route=c3.selectbox("Asignar nuevo punto a",["Vía principal","Vía secundaria"],key="c3l2_s10_route")
-    if click and c4.button("➕ Agregar último clic",use_container_width=True,key="c3l2_s10_add"):
+    st.markdown("### Misión 2 · Diseña la campaña antes de medir")
+    c3,c4,c5=st.columns(3)
+    target_points=c3.selectbox("Número objetivo de puntos",[8,12,16],index=[8,12,16].index(data.get("target_points",16)) if data.get("target_points",16) in [8,12,16] else 2,key="c3l2_s10_target")
+    duration_plan=c4.selectbox("Duración por punto",["1 min","2 min","3 min","5 min"],index=1,key="c3l2_s10_duration_plan")
+    period_plan=c5.text_input("Periodo de campaña",value=data.get("period_plan",""),placeholder="Ej.: 18:00–19:00",key="c3l2_s10_period_plan")
+    st.markdown('<div class="c3l2-note"><b>Criterio:</b> los puntos deben cubrir ambas vías. No concentres todos los registros en el lugar que ya sabes que es más ruidoso.</div>',unsafe_allow_html=True)
+
+    st.markdown("### Misión 3 · Marca los puntos sobre un mapa real")
+    heat=st.toggle("Mostrar superficie indicativa entre puntos medidos",value=False,key="c3l2_s10_heat")
+    click=_c3l2_map(points,"c3l2_s10_map",heat=heat,height=520)
+    c6,c7=st.columns([1,1])
+    route=c6.selectbox("Asignar nuevo punto a",["Vía principal","Vía secundaria"],key="c3l2_s10_route")
+    if click and c7.button("➕ Agregar último clic",use_container_width=True,key="c3l2_s10_add"):
         pid=f"P{len(points)+1}"
         points.append({"id":pid,"lat":click["lat"],"lon":click["lon"],"route":route,"laeq":None,"lmax":None,"duration":None,"time":"","notes":""})
-        data.update({"points":points,"principal":principal,"secondary":secondary,"sector":sector})
+        data.update({"points":points,"principal":principal,"secondary":secondary,"sector":sector,"objective":objective,"target_points":target_points,"period_plan":period_plan})
         saved["c3l2_stage10"]=data; _c3l2_save(saved); st.rerun()
 
     if points:
-        st.caption(f"Puntos creados: {len(points)}. La tarea original permite trabajar hasta 16 puntos; la plataforma acepta una campaña progresiva.")
+        main_count=sum(p.get("route")=="Vía principal" for p in points)
+        sec_count=sum(p.get("route")=="Vía secundaria" for p in points)
+        a,b,c=st.columns(3)
+        a.metric("Puntos creados",len(points))
+        b.metric("Vía principal",main_count)
+        c.metric("Vía secundaria",sec_count)
         if st.button("🗑 Eliminar último punto",key="c3l2_s10_del"):
             points=points[:-1]; data["points"]=points; saved["c3l2_stage10"]=data; _c3l2_save(saved); st.rerun()
 
-    st.markdown("### 3. Registra las mediciones")
+    st.markdown("### Misión 4 · Mide y documenta")
     st.link_button("🎙️ Abrir sonómetro online","https://soundlevelmeteruc.vercel.app/",use_container_width=True)
+    st.caption("El sonómetro online se utiliza con finalidad educativa. La trazabilidad de la campaña exige registrar punto, hora, duración, eventos e interferencias.")
     if points:
         ids=[p["id"] for p in points]
         pid=st.selectbox("Punto a editar",ids,key="c3l2_s10_point_select")
-        p=next(x for x in points if x["id"]==pid)
+        pnt=next(x for x in points if x["id"]==pid)
         c1,c2,c3=st.columns(3)
-        laeq=c1.number_input("LAeq [dB(A)]",35.0,110.0,float(p["laeq"] if isinstance(p.get("laeq"),(int,float)) else 65.0),.1,key=f"c3l2_{pid}_laeq")
-        lmax=c2.number_input("Lmax [dB(A)]",35.0,130.0,float(p["lmax"] if isinstance(p.get("lmax"),(int,float)) else 75.0),.1,key=f"c3l2_{pid}_lmax")
-        duration=c3.number_input("Duración [min]",1.0,15.0,float(p["duration"] if isinstance(p.get("duration"),(int,float)) else 2.0),.5,key=f"c3l2_{pid}_dur")
+        laeq=c1.number_input("LAeq [dB(A)]",35.0,110.0,float(pnt["laeq"] if isinstance(pnt.get("laeq"),(int,float)) else 65.0),.1,key=f"c3l2_{pid}_laeq")
+        lmax=c2.number_input("Lmax [dB(A)]",35.0,130.0,float(pnt["lmax"] if isinstance(pnt.get("lmax"),(int,float)) else 75.0),.1,key=f"c3l2_{pid}_lmax")
+        duration=c3.number_input("Duración [min]",1.0,15.0,float(pnt["duration"] if isinstance(pnt.get("duration"),(int,float)) else 2.0),.5,key=f"c3l2_{pid}_dur")
         c4,c5=st.columns(2)
-        time=c4.text_input("Hora / intervalo",value=p.get("time",""),placeholder="Ej.: 18:10–18:12",key=f"c3l2_{pid}_time")
-        notes=c5.text_input("Observación breve",value=p.get("notes",""),placeholder="Bus, semáforo, bocina, flujo estable...",key=f"c3l2_{pid}_notes")
+        time=c4.text_input("Hora / intervalo",value=pnt.get("time",""),placeholder="Ej.: 18:10–18:12",key=f"c3l2_{pid}_time")
+        notes=c5.text_input("Observación breve",value=pnt.get("notes",""),placeholder="Bus, semáforo, bocina, viento...",key=f"c3l2_{pid}_notes")
         if st.button(f"💾 Guardar medición {pid}",key=f"c3l2_{pid}_save",use_container_width=True):
             for pp in points:
                 if pp["id"]==pid:
                     pp.update({"laeq":laeq,"lmax":lmax,"duration":duration,"time":time,"notes":notes})
-            data.update({"points":points,"principal":principal,"secondary":secondary,"sector":sector})
+            data.update({"points":points,"principal":principal,"secondary":secondary,"sector":sector,"objective":objective,"target_points":target_points,"period_plan":period_plan})
             saved["c3l2_stage10"]=data; _c3l2_save(saved); st.success(f"{pid} guardado."); st.rerun()
 
     measured=[p for p in points if isinstance(p.get("laeq"),(int,float))]
     if measured:
-        st.markdown("### 4. Analiza la campaña")
+        st.markdown("### Misión 5 · Construye la evidencia")
         df=pd.DataFrame([{
             "Punto":p["id"],"Vía":p.get("route",""),"LAeq [dB(A)]":p.get("laeq"),
             "Lmax [dB(A)]":p.get("lmax"),"Duración [min]":p.get("duration"),
             "Hora":p.get("time",""),"Observación":p.get("notes","")
         } for p in measured])
         st.dataframe(df,hide_index=True,use_container_width=True)
-        c1,c2,c3=st.columns(3)
-        c1.metric("Puntos medidos",len(measured))
-        c2.metric("Mayor LAeq",f"{max(p['laeq'] for p in measured):.1f} dB(A)")
-        c3.metric("Menor LAeq",f"{min(p['laeq'] for p in measured):.1f} dB(A)")
+        c1,c2,c3,c4=st.columns(4)
+        c1.metric("Medidos",len(measured))
+        c2.metric("Mayor LAeq",f"{max(p['laeq'] for p in measured):.1f}")
+        c3.metric("Menor LAeq",f"{min(p['laeq'] for p in measured):.1f}")
+        c4.metric("Rango",f"{max(p['laeq'] for p in measured)-min(p['laeq'] for p in measured):.1f} dB")
+
         fig=go.Figure()
         for route_name in ["Vía principal","Vía secundaria"]:
             subset=[p for p in measured if p.get("route")==route_name]
             if subset:
                 fig.add_trace(go.Scatter(x=[p["id"] for p in subset],y=[p["laeq"] for p in subset],mode="lines+markers",name=route_name))
-        fig.update_layout(height=340,margin=dict(l=20,r=20,t=20,b=20),yaxis_title="LAeq [dB(A)]",xaxis_title="Punto")
+        fig.update_layout(height=350,margin=dict(l=20,r=20,t=20,b=20),yaxis_title="LAeq [dB(A)]",xaxis_title="Punto")
         st.plotly_chart(fig,use_container_width=True)
-        st.markdown('<div class="c3l2-warn"><b>Interpretación GIS:</b> los marcadores son datos medidos ingresados por el alumno. La capa continua/heatmap es una visualización estimativa entre puntos y no significa que esos lugares hayan sido medidos directamente.</div>',unsafe_allow_html=True)
 
-    st.markdown("### 5. Interpreta y concluye")
-    limitations=st.text_area("Limitaciones de la campaña",value=data.get("limitations",""),height=110,key="c3l2_s10_limits")
-    interpretation=st.text_area("Interpretación espacial",value=data.get("interpretation",""),height=120,key="c3l2_s10_interp",placeholder="Compara las vías, identifica el sector más expuesto y explica el patrón observado.")
-    conclusion=st.text_area("Conclusión técnica",value=data.get("conclusion",""),height=150,key="c3l2_s10_conclusion",placeholder="Integra objetivo, ubicación, resultados, patrón espacial, limitaciones y alcance.")
+        st.markdown('<div class="c3l2-warn"><b>Lectura correcta del mapa:</b> los marcadores corresponden a datos ingresados como medidos. La superficie continua/heatmap es una estimación visual entre puntos y no significa que se haya medido físicamente en cada píxel.</div>',unsafe_allow_html=True)
 
+    st.markdown("### Misión 6 · Interpreta")
+    limitations=st.text_area("Limitaciones de la campaña",value=data.get("limitations",""),height=110,key="c3l2_s10_limits",placeholder="Representatividad temporal, duración, condiciones de tránsito, instrumento, interferencias...")
+    interpretation=st.text_area("Interpretación espacial",value=data.get("interpretation",""),height=130,key="c3l2_s10_interp",placeholder="Compara ambas vías, identifica máximos/mínimos y relaciona el patrón con posición, tráfico y eventos.")
+    conclusion=st.text_area("Conclusión técnica",value=data.get("conclusion",""),height=160,key="c3l2_s10_conclusion",placeholder="Integra objetivo, método, resultados, patrón espacial, limitaciones y alcance.")
+
+    st.markdown("### Misión 7 · Entrega")
+    ready_points=len(measured)
+    st.progress(min(1.0,ready_points/max(target_points,1)),text=f"{ready_points} de {target_points} puntos objetivo con LAeq registrado")
     if _c3l2_role()=="Alumno" and st.button("📤 Guardar y entregar campaña GIS",type="primary",use_container_width=True,key="c3l2_s10_submit"):
-        if len(measured)<5:
-            st.warning("Registra al menos 5 puntos medidos antes de entregar. La campaña completa puede ampliarse hasta 16 puntos.")
-        elif not principal.strip() or not secondary.strip():
-            st.warning("Identifica vía principal y secundaria.")
-        elif len(limitations.strip())<30 or len(interpretation.strip())<50 or len(conclusion.strip())<80:
-            st.warning("Desarrolla limitaciones, interpretación y conclusión antes de entregar.")
+        if ready_points<5:
+            st.warning("Registra al menos 5 puntos medidos para habilitar una entrega preliminar; la campaña objetivo es la cantidad que seleccionaste.")
+        elif sum(p.get("route")=="Vía principal" for p in measured)<2 or sum(p.get("route")=="Vía secundaria" for p in measured)<2:
+            st.warning("Debes tener datos en ambas vías.")
+        elif not principal.strip() or not secondary.strip() or len(objective.strip())<20:
+            st.warning("Completa vías y objetivo.")
+        elif len(limitations.strip())<40 or len(interpretation.strip())<60 or len(conclusion.strip())<90:
+            st.warning("Desarrolla limitaciones, interpretación y conclusión.")
         else:
             data.update({
                 "version":_C3L2_VERSION,"principal":principal,"secondary":secondary,"sector":sector,
+                "objective":objective,"target_points":target_points,"duration_plan":duration_plan,"period_plan":period_plan,
                 "points":points,"limitations":limitations,"interpretation":interpretation,"conclusion":conclusion,
                 "submitted":True,"submitted_at":_now(),
             })
             _c3l2_complete(saved,10,data)
             st.success("Campaña GIS guardada y entregada.")
-    _c3l2_teacher_pauta("Etapa 10","Producto esperado: intersección real, vía principal/secundaria, puntos georreferenciados, LAeq/Lmax, trazabilidad temporal, mapa de marcadores, visualización espacial indicativa, perfiles por vía, limitaciones y conclusión. La superficie entre puntos no debe presentarse como medición directa.")
+    _c3l2_teacher_pauta("Etapa 10","Revisar coherencia entre objetivo, distribución espacial, cobertura de ambas vías, trazabilidad de cada punto, LAeq/Lmax, interpretación del patrón, limitaciones y conclusión. El mapa no debe presentar la interpolación como si fuera medición directa.")
 
 def _render_course3_lab2_stage0(lab,saved): return _c3l2_stage0(lab,saved)
 def _render_course3_lab2_stage1(lab,saved): return _c3l2_stage1(lab,saved)
