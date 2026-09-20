@@ -26561,19 +26561,19 @@ def _c3l2_stage1(lab,saved):
         """
         <div class="c3l2-grid">
           <div class="c3l2-card blue">
-            <div class="c3l2-k">ESCALA CONSTANTE</div>
-            <b>Mismo encuadre y distancia aparente</b><br>
-            Vehículo, vivienda y receptor mantienen su tamaño relativo.
+            <div class="c3l2-k">PROPAGACIÓN DIRECTA</div>
+            <b>Fuente y receptor con línea de visión</b><br>
+            Sin obstáculos, el sonido puede propagarse por un camino directo entre el vehículo y la fachada.
           </div>
           <div class="c3l2-card">
-            <div class="c3l2-k">VARIABLE CONTROLADA</div>
-            <b>Solo cambia la barrera</b><br>
-            Evitamos cambiar simultáneamente posición, cámara o receptor.
+            <div class="c3l2-k">INTERVENCIÓN DEL CAMINO</div>
+            <b>La barrera modifica la geometría</b><br>
+            La fuente sigue emitiendo; lo que cambia es la trayectoria disponible entre fuente y receptor.
           </div>
           <div class="c3l2-card green">
-            <div class="c3l2-k">LECTURA CORRECTA</div>
-            <b>Compara el camino</b><br>
-            El objetivo es identificar qué parte del sistema fue intervenida.
+            <div class="c3l2-k">RECEPTOR</div>
+            <b>El nivel se evalúa en una posición concreta</b><br>
+            El resultado depende de dónde se encuentra el receptor respecto de la fuente y de los obstáculos.
           </div>
         </div>
         """,
@@ -26584,19 +26584,19 @@ def _c3l2_stage1(lab,saved):
         """
         <div class="c3l2-grid">
           <div class="c3l2-card blue">
-            <div class="c3l2-k">FUENTE</div>
-            <b>Automóvil en la vía</b><br>
-            Se mantiene en ambos escenarios.
+            <div class="c3l2-k">FUENTE MÓVIL</div>
+            <b>El automóvil cambia continuamente de posición</b><br>
+            Por eso su distancia y su geometría respecto del receptor no son constantes durante el paso.
           </div>
           <div class="c3l2-card">
-            <div class="c3l2-k">CAMINO</div>
-            <b>Directo o modificado</b><br>
-            Es la variable que vas a intervenir.
+            <div class="c3l2-k">CAMINO DE PROPAGACIÓN</div>
+            <b>Puede ser directo, reflejado o difractado</b><br>
+            La presencia de obstáculos modifica la trayectoria y, por tanto, el nivel que llega al receptor.
           </div>
           <div class="c3l2-card green">
-            <div class="c3l2-k">RECEPTOR</div>
-            <b>Fachada de vivienda</b><br>
-            Permanece en la misma posición.
+            <div class="c3l2-k">PUNTO DE EVALUACIÓN</div>
+            <b>La fachada representa una posición receptora</b><br>
+            El nivel observado corresponde a esa ubicación y no puede trasladarse automáticamente a otros puntos.
           </div>
         </div>
         """,
@@ -26691,15 +26691,66 @@ def _c3l2_stage1(lab,saved):
         """
         <div class="c3l2-grid2">
           <div class="c3l2-card blue">
-            <div class="c3l2-k">TÚ CONTROLAS</div>
-            <b>La posición longitudinal del vehículo</b><br>
-            El automóvil es la fuente móvil y puedes desplazarlo manualmente.
+            <div class="c3l2-k">FUENTE PUNTUAL MÓVIL · APROXIMACIÓN DIDÁCTICA</div>
+            <b>La posición de la fuente cambia con el tiempo</b><br>
+            Para cada instante se calcula una distancia distinta entre el vehículo y cada receptor.
           </div>
           <div class="c3l2-card green">
-            <div class="c3l2-k">LA APP CALCULA</div>
-            <b>Distancia y nivel en tres receptores</b><br>
-            Cada receptor responde de forma distinta según su posición respecto del vehículo.
+            <div class="c3l2-k">TRES HISTORIAS TEMPORALES DISTINTAS</div>
+            <b>Cada receptor “ve” un paso diferente</b><br>
+            El máximo ocurre cuando el vehículo se encuentra más próximo a ese receptor, no al mismo tiempo en los tres puntos.
           </div>
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
+
+    st.markdown(
+        """
+        <div class="c3l2-intro">
+          <div class="c3l2-k">QUÉ SE QUIERE DEMOSTRAR</div>
+          <div class="c3l2-title">Una misma fuente móvil produce niveles distintos en receptores distintos.</div>
+          R1, R2 y R3 están ubicados en posiciones diferentes respecto de la vía. Al mover el vehículo,
+          cambia simultáneamente la distancia a cada receptor. Por eso cada punto presenta una
+          <b>historia temporal propia</b> y su máximo ocurre en un instante diferente.
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
+
+    st.markdown("#### Modelo geométrico utilizado")
+    st.latex(r"r_i(t)=\sqrt{x_i(t)^2+d_i^2}")
+    st.markdown(
+        """
+        <div class="c3l2-grid">
+          <div class="c3l2-card">
+            <div class="c3l2-k">xᵢ(t)</div>
+            <b>Separación longitudinal</b><br>
+            Distancia, medida sobre el eje de la vía, entre el vehículo y la proyección del receptor.
+          </div>
+          <div class="c3l2-card">
+            <div class="c3l2-k">dᵢ</div>
+            <b>Distancia perpendicular a la vía</b><br>
+            R1, R2 y R3 se ubican a distintas distancias laterales.
+          </div>
+          <div class="c3l2-card blue">
+            <div class="c3l2-k">rᵢ(t)</div>
+            <b>Distancia instantánea fuente–receptor</b><br>
+            Es la distancia geométrica que controla la atenuación del modelo puntual idealizado.
+          </div>
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
+
+    st.markdown("#### Nivel relativo utilizado en el laboratorio")
+    st.latex(r"L_{p,i}(t)=L_{p,\mathrm{ref}}-20\log_{10}\left(\frac{r_i(t)}{r_\mathrm{ref}}\right)")
+    st.markdown(
+        """
+        <div class="c3l2-note">
+          <b>Interpretación:</b> al disminuir la distancia instantánea <i>rᵢ(t)</i>, aumenta el nivel estimado.
+          El máximo para cada receptor ocurre aproximadamente cuando el vehículo pasa por el punto de la vía
+          más cercano a ese receptor.
         </div>
         """,
         unsafe_allow_html=True,
@@ -26806,11 +26857,11 @@ def _c3l2_stage1(lab,saved):
           <div>
             <div class="title">Laboratorio móvil · fuente en movimiento</div>
             <div class="sub">
-              Arrastra el automóvil. R1, R2 y R3 permanecen fijos.<br>
-              Observa cómo cada receptor alcanza su máximo en una posición diferente.
+              Mueve la fuente a lo largo de la vía y compara simultáneamente R1, R2 y R3.<br>
+              Cada indicador representa el nivel instantáneo estimado para su distancia fuente–receptor.
             </div>
           </div>
-          <div class="pill">Modelo didáctico · no normativo</div>
+          <div class="pill">Propagación puntual idealizada</div>
         </div>
 
         <svg id="scene" viewBox="0 0 1000 430" width="100%" style="display:block;background:#eaf6fc;touch-action:none;user-select:none">
@@ -26887,7 +26938,7 @@ def _c3l2_stage1(lab,saved):
           <div class="meter">
             <div class="meterhead">
               <div class="metername">R1 · Vivienda</div>
-              <div style="font-size:11px;color:#718394">10 m de la vía</div>
+              <div style="font-size:11px;color:#718394">d₁ = 10 m</div>
             </div>
             <div><span class="db" id="db1">--</span><span class="unit">dB(A)</span></div>
             <div class="track"><div class="fill" id="bar1"></div></div>
@@ -26897,7 +26948,7 @@ def _c3l2_stage1(lab,saved):
           <div class="meter">
             <div class="meterhead">
               <div class="metername">R2 · Colegio</div>
-              <div style="font-size:11px;color:#718394">20 m de la vía</div>
+              <div style="font-size:11px;color:#718394">d₂ = 20 m</div>
             </div>
             <div><span class="db" id="db2">--</span><span class="unit">dB(A)</span></div>
             <div class="track"><div class="fill" id="bar2"></div></div>
@@ -26907,7 +26958,7 @@ def _c3l2_stage1(lab,saved):
           <div class="meter">
             <div class="meterhead">
               <div class="metername">R3 · Vivienda</div>
-              <div style="font-size:11px;color:#718394">30 m de la vía</div>
+              <div style="font-size:11px;color:#718394">d₃ = 30 m</div>
             </div>
             <div><span class="db" id="db3">--</span><span class="unit">dB(A)</span></div>
             <div class="track"><div class="fill" id="bar3"></div></div>
@@ -26916,8 +26967,10 @@ def _c3l2_stage1(lab,saved):
         </div>
 
         <div class="hint">
-          Modelo didáctico: se considera el vehículo como fuente puntual móvil y se estima una tendencia geométrica
-          con <b>L(r)=78−20·log₁₀(r/5)</b>. Sirve para visualizar relaciones espaciales; no corresponde a un método normativo.
+          <b>Lectura técnica:</b> el cálculo usa propagación esférica ideal de una fuente puntual móvil.
+          El nivel de referencia es 78 dB(A) a 5 m y se aplica <b>20·log₁₀(r/r<sub>ref</sub>)</b>.
+          El objetivo es estudiar la dependencia geométrica con la distancia; no modela directividad,
+          reflexión, absorción del suelo, tráfico múltiple ni condiciones meteorológicas.
         </div>
       </div>
 
@@ -27031,23 +27084,42 @@ def _c3l2_stage1(lab,saved):
 
     components.html(vehicle_svg, height=760, scrolling=False)
 
+    st.markdown("#### ¿Qué debes comprobar moviendo el vehículo?")
     st.markdown(
         """
         <div class="c3l2-grid">
           <div class="c3l2-card blue">
-            <div class="c3l2-k">OBSERVA R1</div>
-            <b>Máximo cerca de su posición longitudinal</b><br>
-            Cuando el vehículo pasa frente a R1, su distancia total es mínima.
+            <div class="c3l2-k">R1 · d₁ = 10 m</div>
+            <b>Mayor nivel máximo esperado</b><br>
+            Al estar más cerca de la vía, su distancia mínima al vehículo es menor y por ello alcanza el mayor máximo del ejemplo.
           </div>
           <div class="c3l2-card green">
-            <div class="c3l2-k">COMPARA R2</div>
-            <b>El máximo ocurre después</b><br>
-            R2 está más adelante sobre la vía y además a mayor distancia perpendicular.
+            <div class="c3l2-k">R2 · d₂ = 20 m</div>
+            <b>Máximo desplazado en el tiempo</b><br>
+            El máximo aparece cuando el vehículo pasa frente a R2, pero su valor es menor que en R1 por su mayor distancia lateral.
           </div>
           <div class="c3l2-card orange">
-            <div class="c3l2-k">INTERPRETA R3</div>
-            <b>No todos los máximos son iguales</b><br>
-            La distancia perpendicular modifica el nivel máximo que alcanza cada receptor.
+            <div class="c3l2-k">R3 · d₃ = 30 m</div>
+            <b>Máximo aún menor</b><br>
+            Aunque el vehículo pase directamente frente a R3, la distancia mínima sigue siendo 30 m.
+          </div>
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
+
+    st.markdown(
+        """
+        <div class="c3l2-grid2">
+          <div class="c3l2-card">
+            <div class="c3l2-k">POSICIÓN DEL MÁXIMO</div>
+            <b>No ocurre al mismo tiempo en todos los receptores</b><br>
+            Depende de la coordenada longitudinal de cada punto respecto de la trayectoria del vehículo.
+          </div>
+          <div class="c3l2-card">
+            <div class="c3l2-k">MAGNITUD DEL MÁXIMO</div>
+            <b>Tampoco es igual en los tres puntos</b><br>
+            Depende principalmente de la distancia mínima entre la trayectoria de la fuente y cada receptor.
           </div>
         </div>
         """,
@@ -27063,6 +27135,41 @@ def _c3l2_stage1(lab,saved):
         """,
         unsafe_allow_html=True,
     )
+
+    st.markdown("#### Comprueba que entendiste el fenómeno")
+    q_mobile_1 = st.radio(
+        "Si el vehículo pasa exactamente frente a R1, ¿qué ocurre con la distancia fuente–R1?",
+        [
+            "Alcanza aproximadamente su valor mínimo",
+            "Alcanza su valor máximo",
+            "Permanece igual durante todo el recorrido",
+        ],
+        index=None,
+        key="c3l2_s1_mobile_q1",
+    )
+    q_mobile_2 = st.radio(
+        "¿Por qué R1 puede alcanzar un máximo mayor que R3 en este ejemplo?",
+        [
+            "Porque R1 está a menor distancia perpendicular de la vía",
+            "Porque R1 siempre mide antes",
+            "Porque R3 no recibe propagación directa",
+        ],
+        index=None,
+        key="c3l2_s1_mobile_q2",
+    )
+
+    if q_mobile_1 and q_mobile_2:
+        if (
+            q_mobile_1 == "Alcanza aproximadamente su valor mínimo"
+            and q_mobile_2 == "Porque R1 está a menor distancia perpendicular de la vía"
+        ):
+            st.success(
+                "Correcto. Has relacionado posición de la fuente, distancia instantánea y nivel máximo en el receptor."
+            )
+        else:
+            st.info(
+                "Revisa las expresiones rᵢ(t) y Lp,i(t): el máximo se asocia a la menor distancia geométrica."
+            )
 
     st.markdown("## 3. Explora una escena urbana interactiva")
     st.markdown(
