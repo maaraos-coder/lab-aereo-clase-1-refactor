@@ -26555,6 +26555,16 @@ def _c3l2_stage1(lab,saved):
         unsafe_allow_html=True,
     )
 
+    st.markdown(
+        """
+        <div class="c3l2-note">
+          <b>Objetivo de la comparación:</b> mantén constante la fuente y el receptor.
+          Cambia únicamente la presencia de la barrera para identificar qué parte del sistema se modifica.
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
+
     barrier_state = st.segmented_control(
         "1 · Explora una condición",
         ["Estado inicial · sin barrera", "Barrera acústica"],
@@ -26564,7 +26574,7 @@ def _c3l2_stage1(lab,saved):
 
     if barrier_state == "Estado inicial · sin barrera":
         st.image(
-            "assets/c3l2_s1_estado_inicial_sin_barrera.webp",
+            "assets/c3l2_s1_estado_inicial_limpio.webp",
             caption="Estado inicial · línea de visión libre entre fuente y receptor.",
             use_container_width=True,
         )
@@ -26572,7 +26582,7 @@ def _c3l2_stage1(lab,saved):
         path_text = "La propagación hacia la fachada no encuentra una pantalla entre fuente y receptor."
     else:
         st.image(
-            "assets/c3l2_s1_barrera_acustica.webp",
+            "assets/c3l2_s1_barrera_limpia.webp",
             caption="Barrera acústica · el camino geométrico entre fuente y receptor se modifica.",
             use_container_width=True,
         )
@@ -26635,10 +26645,10 @@ def _c3l2_stage1(lab,saved):
         key="c3l2_s1_event_state",
     )
     event_asset = {
-        "Lejos": "assets/c3l2_s1_evento_lejos.webp",
-        "Acercándose": "assets/c3l2_s1_evento_acercandose.webp",
-        "Frente al receptor": "assets/c3l2_s1_evento_frente.webp",
-        "Alejándose": "assets/c3l2_s1_evento_alejandose.webp",
+        "Lejos": "assets/c3l2_s1_evento_lejos_limpio.webp",
+        "Acercándose": "assets/c3l2_s1_evento_acercandose_limpio.webp",
+        "Frente al receptor": "assets/c3l2_s1_evento_frente_limpio.webp",
+        "Alejándose": "assets/c3l2_s1_evento_alejandose_limpio.webp",
     }[event_state]
     st.image(event_asset, use_container_width=True)
 
