@@ -26681,9 +26681,10 @@ def _c3l2_stage1(lab,saved):
         unsafe_allow_html=True,
     )
 
-    st.markdown("### 2.1 Evento móvil · posición del vehículo")
+    st.markdown("### 2.1 Evento móvil · observa el paso completo")
     st.caption(
-        "La cámara y el receptor permanecen fijos. Solo cambia la posición longitudinal del vehículo sobre la vía, conservando la escala del escenario."
+        "La cámara y el receptor permanecen fijos. El GIF reproduce el paso completo del vehículo: "
+        "lejos → acercándose → frente al receptor → alejándose."
     )
 
     st.markdown(
@@ -26692,52 +26693,47 @@ def _c3l2_stage1(lab,saved):
           <div class="c3l2-card blue">
             <div class="c3l2-k">VARIABLE</div>
             <b>Distancia instantánea fuente–receptor</b><br>
-            El vehículo se desplaza; el receptor permanece fijo.
+            El vehículo cambia de posición mientras el receptor permanece fijo.
           </div>
           <div class="c3l2-card green">
-            <div class="c3l2-k">LECTURA</div>
-            <b>No compares tamaños de imágenes</b><br>
-            Compara la posición del vehículo dentro de una escena con la misma escala.
+            <div class="c3l2-k">QUÉ OBSERVAR</div>
+            <b>La contribución no es constante</b><br>
+            Aumenta al aproximarse, alcanza un máximo y disminuye al alejarse.
           </div>
         </div>
         """,
         unsafe_allow_html=True,
     )
 
-    event_state = st.segmented_control(
-        "Posición relativa",
-        ["Lejos", "Acercándose", "Frente al receptor", "Alejándose"],
-        default="Lejos",
-        key="c3l2_s1_event_state",
+    st.image(
+        "assets/c3l2_s1_evento_movil_profesional.gif",
+        caption="Evento móvil · secuencia continua con receptor fijo y nivel relativo variable.",
+        use_container_width=True,
     )
-    event_asset = {
-        "Lejos": "assets/c3l2_s1_evento_lejos_final.webp",
-        "Acercándose": "assets/c3l2_s1_evento_acercandose_final.webp",
-        "Frente al receptor": "assets/c3l2_s1_evento_frente_final.webp",
-        "Alejándose": "assets/c3l2_s1_evento_alejandose_final.webp",
-    }[event_state]
-    st.image(event_asset, use_container_width=True)
-
-    event_explanation = {
-        "Lejos": "El vehículo todavía está lejos del receptor: su contribución relativa es menor.",
-        "Acercándose": "Al reducirse la distancia, la contribución aumenta.",
-        "Frente al receptor": "La proximidad es máxima y el nivel relativo alcanza su mayor valor del recorrido.",
-        "Alejándose": "La distancia vuelve a aumentar y la contribución disminuye.",
-    }[event_state]
 
     st.markdown(
-        f"""
+        """
         <div class="c3l2-grid2">
           <div class="c3l2-card blue">
             <div class="c3l2-k">QUÉ CAMBIA</div>
             <b>Posición y distancia instantánea</b><br>
-            {event_explanation}
+            La geometría fuente–receptor evoluciona durante todo el paso.
           </div>
           <div class="c3l2-card green">
             <div class="c3l2-k">QUÉ APRENDER</div>
             <b>Una fuente móvil genera una historia temporal.</b><br>
-            El receptor no observa el mismo nivel durante todo el paso.
+            El receptor no observa el mismo nivel durante todo el evento.
           </div>
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
+
+    st.markdown(
+        """
+        <div class="c3l2-note">
+          <b>Principio profesional:</b> un vehículo que circula no debe interpretarse como una fuente fija.
+          Su posición respecto del receptor cambia continuamente y con ella cambia la contribución acústica observada.
         </div>
         """,
         unsafe_allow_html=True,
