@@ -26527,9 +26527,57 @@ def _c3l2_stage1(lab,saved):
     </div>
     """, unsafe_allow_html=True)
 
+    st.markdown("""
+    <style>
+    /* C3L2 · Etapa 1 · renders profesionales */
+    div[data-testid="stImage"] img {
+        border-radius:16px !important;
+        border:1px solid rgba(148,163,184,.35) !important;
+        box-shadow:0 10px 28px rgba(15,23,42,.08) !important;
+        width:100% !important;
+        height:auto !important;
+        object-fit:contain !important;
+    }
+    div[data-testid="stImage"] figcaption {
+        text-align:center !important;
+        color:#708090 !important;
+        font-size:.78rem !important;
+        margin-top:.35rem !important;
+    }
+    @media (max-width: 760px) {
+        div[data-testid="stImage"] img {
+            border-radius:12px !important;
+        }
+    }
+    </style>
+    """, unsafe_allow_html=True)
+
     st.markdown("## 2. Laboratorio conceptual · identifica y modifica el camino")
     st.caption(
-        "Misma fuente y mismo receptor. Selecciona una condición y observa qué cambia físicamente en la escena."
+        "Misma cámara, misma fuente y mismo receptor. La comparación conserva la escala visual para que el único cambio relevante sea la presencia de la barrera."
+    )
+
+    st.markdown(
+        """
+        <div class="c3l2-grid">
+          <div class="c3l2-card blue">
+            <div class="c3l2-k">ESCALA CONSTANTE</div>
+            <b>Mismo encuadre y distancia aparente</b><br>
+            Vehículo, vivienda y receptor mantienen su tamaño relativo.
+          </div>
+          <div class="c3l2-card">
+            <div class="c3l2-k">VARIABLE CONTROLADA</div>
+            <b>Solo cambia la barrera</b><br>
+            Evitamos cambiar simultáneamente posición, cámara o receptor.
+          </div>
+          <div class="c3l2-card green">
+            <div class="c3l2-k">LECTURA CORRECTA</div>
+            <b>Compara el camino</b><br>
+            El objetivo es identificar qué parte del sistema fue intervenida.
+          </div>
+        </div>
+        """,
+        unsafe_allow_html=True,
     )
 
     st.markdown(
@@ -26574,16 +26622,16 @@ def _c3l2_stage1(lab,saved):
 
     if barrier_state == "Estado inicial · sin barrera":
         st.image(
-            "assets/c3l2_s1_estado_inicial_limpio.webp",
-            caption="Estado inicial · línea de visión libre entre fuente y receptor.",
+            "assets/c3l2_s1_estado_inicial_final.webp",
+            caption="Estado inicial · sin barrera. Escena de referencia con línea de visión libre entre fuente y receptor.",
             use_container_width=True,
         )
         path_status = "DIRECTO"
         path_text = "La propagación hacia la fachada no encuentra una pantalla entre fuente y receptor."
     else:
         st.image(
-            "assets/c3l2_s1_barrera_limpia.webp",
-            caption="Barrera acústica · el camino geométrico entre fuente y receptor se modifica.",
+            "assets/c3l2_s1_barrera_final.webp",
+            caption="Barrera acústica · misma geometría global y misma escala visual; se interviene únicamente el camino de propagación.",
             use_container_width=True,
         )
         path_status = "MODIFICADO"
@@ -26635,7 +26683,25 @@ def _c3l2_stage1(lab,saved):
 
     st.markdown("### 2.1 Evento móvil · posición del vehículo")
     st.caption(
-        "Reemplazamos el GIF por un interactivo estable. Cambia la posición del vehículo y observa la tendencia del nivel relativo."
+        "La cámara y el receptor permanecen fijos. Solo cambia la posición longitudinal del vehículo sobre la vía, conservando la escala del escenario."
+    )
+
+    st.markdown(
+        """
+        <div class="c3l2-grid2">
+          <div class="c3l2-card blue">
+            <div class="c3l2-k">VARIABLE</div>
+            <b>Distancia instantánea fuente–receptor</b><br>
+            El vehículo se desplaza; el receptor permanece fijo.
+          </div>
+          <div class="c3l2-card green">
+            <div class="c3l2-k">LECTURA</div>
+            <b>No compares tamaños de imágenes</b><br>
+            Compara la posición del vehículo dentro de una escena con la misma escala.
+          </div>
+        </div>
+        """,
+        unsafe_allow_html=True,
     )
 
     event_state = st.segmented_control(
@@ -26645,10 +26711,10 @@ def _c3l2_stage1(lab,saved):
         key="c3l2_s1_event_state",
     )
     event_asset = {
-        "Lejos": "assets/c3l2_s1_evento_lejos_limpio.webp",
-        "Acercándose": "assets/c3l2_s1_evento_acercandose_limpio.webp",
-        "Frente al receptor": "assets/c3l2_s1_evento_frente_limpio.webp",
-        "Alejándose": "assets/c3l2_s1_evento_alejandose_limpio.webp",
+        "Lejos": "assets/c3l2_s1_evento_lejos_final.webp",
+        "Acercándose": "assets/c3l2_s1_evento_acercandose_final.webp",
+        "Frente al receptor": "assets/c3l2_s1_evento_frente_final.webp",
+        "Alejándose": "assets/c3l2_s1_evento_alejandose_final.webp",
     }[event_state]
     st.image(event_asset, use_container_width=True)
 
