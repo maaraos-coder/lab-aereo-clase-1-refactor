@@ -26527,111 +26527,144 @@ def _c3l2_stage1(lab,saved):
     </div>
     """, unsafe_allow_html=True)
 
-    st.markdown("## 2. Observa el problema antes de interactuar")
-    st.caption("Usa los renders como una lectura guiada: no busques todavía números, busca relaciones físicas.")
+    st.markdown("## 2. Laboratorio conceptual · identifica y modifica el camino")
+    st.caption(
+        "Misma fuente y mismo receptor. Selecciona una condición y observa qué cambia físicamente en la escena."
+    )
+
     st.markdown(
         """
         <div class="c3l2-grid">
           <div class="c3l2-card blue">
-            <div class="c3l2-k">MIRA PRIMERO</div>
-            <b>¿Dónde nace el sonido?</b><br>
-            Identifica la fuente antes de mirar el receptor.
+            <div class="c3l2-k">FUENTE</div>
+            <b>Automóvil en la vía</b><br>
+            Se mantiene en ambos escenarios.
           </div>
           <div class="c3l2-card">
-            <div class="c3l2-k">SIGUE EL CAMINO</div>
-            <b>¿Qué hay entre ambos?</b><br>
-            Distancia, barreras, fachadas, suelo y trayectorias alternativas.
+            <div class="c3l2-k">CAMINO</div>
+            <b>Directo o modificado</b><br>
+            Es la variable que vas a intervenir.
           </div>
           <div class="c3l2-card green">
-            <div class="c3l2-k">CIERRA EN EL RECEPTOR</div>
-            <b>¿Dónde importa el resultado?</b><br>
-            Una vivienda, colegio, persona o punto de evaluación.
+            <div class="c3l2-k">RECEPTOR</div>
+            <b>Fachada de vivienda</b><br>
+            Permanece en la misma posición.
           </div>
         </div>
         """,
         unsafe_allow_html=True,
     )
 
-    st.image(
-        "assets/c3l2_etapa1_render_profesional.webp",
-        caption="Render conceptual realista · fuente, barrera y receptor en un entorno urbano.",
-        use_container_width=True,
+    barrier_state = st.segmented_control(
+        "1 · Explora una condición",
+        ["Estado inicial · sin barrera", "Barrera acústica"],
+        default="Estado inicial · sin barrera",
+        key="c3l2_s1_barrier_state_pro",
     )
 
-    st.markdown("""
-    <div class="c3l2-note">
-      <b>Lee la escena:</b> identifica primero la fuente, luego el receptor y recién después observa
-      qué trayectorias permiten que el sonido llegue hasta él.
-    </div>
-    """, unsafe_allow_html=True)
-
-    st.markdown("### Animación · un vehículo no produce el mismo nivel durante todo su paso")
-    st.image(
-        "assets/c3l2_etapa1_vehiculo_evento_profesional.gif",
-        caption="El nivel relativo aumenta al aproximarse, alcanza un máximo cerca del receptor y disminuye al alejarse.",
-        use_container_width=True,
-    )
-
-    st.markdown("### Animación · modifica el camino, no la fuente")
-    st.caption("Compara la misma fuente y el mismo receptor. Lo único que cambia es la geometría del camino.")
-
-    barrier_mode = st.segmented_control(
-        "Escenario de propagación",
-        ["Sin barrera", "Con barrera"],
-        default="Sin barrera",
-        key="c3l2_s1_barrier_mode",
-    )
-
-    if barrier_mode == "Sin barrera":
+    if barrier_state == "Estado inicial · sin barrera":
         st.image(
-            "assets/c3l2_etapa1_propagacion_sin_barrera_profesional.gif",
-            caption="Línea de visión directa entre fuente y receptor.",
+            "assets/c3l2_s1_estado_inicial_sin_barrera.webp",
+            caption="Estado inicial · línea de visión libre entre fuente y receptor.",
             use_container_width=True,
         )
+        path_status = "DIRECTO"
+        path_text = "La propagación hacia la fachada no encuentra una pantalla entre fuente y receptor."
     else:
         st.image(
-            "assets/c3l2_etapa1_propagacion_con_barrera_profesional.gif",
-            caption="La barrera modifica la trayectoria de propagación.",
+            "assets/c3l2_s1_barrera_acustica.webp",
+            caption="Barrera acústica · el camino geométrico entre fuente y receptor se modifica.",
             use_container_width=True,
         )
+        path_status = "MODIFICADO"
+        path_text = "La barrera interviene el camino de propagación; la fuente y el receptor no se han cambiado."
 
-    st.markdown("""
-    <div class="c3l2-grid2">
-      <div class="c3l2-card blue">
-        <div class="c3l2-k">QUÉ SE MANTIENE</div>
-        <b>Fuente y receptor</b><br>
-        No hemos cambiado ni la fuente ni la posición donde observamos.
-      </div>
-      <div class="c3l2-card green">
-        <div class="c3l2-k">QUÉ CAMBIA</div>
-        <b>El camino de propagación</b><br>
-        La barrera introduce una nueva geometría entre ambos.
-      </div>
-    </div>
-    """, unsafe_allow_html=True)
+    c_a, c_b, c_c = st.columns(3)
+    with c_a:
+        st.markdown(
+            """
+            <div class="c3l2-card">
+              <div class="c3l2-k">FUENTE</div>
+              <b>AUTOMÓVIL</b><br>
+              <span style="color:#16a34a;font-weight:800">SIN CAMBIOS</span>
+            </div>
+            """,
+            unsafe_allow_html=True,
+        )
+    with c_b:
+        st.markdown(
+            f"""
+            <div class="c3l2-card blue">
+              <div class="c3l2-k">CAMINO</div>
+              <b>PROPAGACIÓN</b><br>
+              <span style="color:#0b79b7;font-weight:800">{path_status}</span>
+            </div>
+            """,
+            unsafe_allow_html=True,
+        )
+    with c_c:
+        st.markdown(
+            """
+            <div class="c3l2-card">
+              <div class="c3l2-k">RECEPTOR</div>
+              <b>FACHADA</b><br>
+              <span style="color:#16a34a;font-weight:800">SIN CAMBIOS</span>
+            </div>
+            """,
+            unsafe_allow_html=True,
+        )
 
-    st.markdown("### Segundo ejemplo · propagación aérea hacia un receptor")
     st.markdown(
-        """
-        <div class="c3l2-grid2">
-          <div class="c3l2-card blue">
-            <div class="c3l2-k">QUÉ OBSERVAR</div>
-            <b>La fuente no “lleva” un nivel fijo hasta el receptor.</b><br>
-            El campo cambia con la posición y con el camino de propagación.
-          </div>
-          <div class="c3l2-card green">
-            <div class="c3l2-k">QUÉ PREGUNTAR</div>
-            <b>¿Qué parte pertenece a la fuente y qué parte depende del entorno?</b><br>
-            Esa separación será central durante todo el laboratorio.
-          </div>
+        f"""
+        <div class="c3l2-note">
+          <b>Principio profesional:</b> {path_text}
         </div>
         """,
         unsafe_allow_html=True,
     )
-    st.image(
-        "assets/c3l2_etapa1_propagacion_receptor_realista.webp",
-        caption="Ejemplo conceptual · propagación desde una fuente hacia un receptor.",
-        use_container_width=True,
+
+    st.markdown("### 2.1 Evento móvil · posición del vehículo")
+    st.caption(
+        "Reemplazamos el GIF por un interactivo estable. Cambia la posición del vehículo y observa la tendencia del nivel relativo."
+    )
+
+    event_state = st.segmented_control(
+        "Posición relativa",
+        ["Lejos", "Acercándose", "Frente al receptor", "Alejándose"],
+        default="Lejos",
+        key="c3l2_s1_event_state",
+    )
+    event_asset = {
+        "Lejos": "assets/c3l2_s1_evento_lejos.webp",
+        "Acercándose": "assets/c3l2_s1_evento_acercandose.webp",
+        "Frente al receptor": "assets/c3l2_s1_evento_frente.webp",
+        "Alejándose": "assets/c3l2_s1_evento_alejandose.webp",
+    }[event_state]
+    st.image(event_asset, use_container_width=True)
+
+    event_explanation = {
+        "Lejos": "El vehículo todavía está lejos del receptor: su contribución relativa es menor.",
+        "Acercándose": "Al reducirse la distancia, la contribución aumenta.",
+        "Frente al receptor": "La proximidad es máxima y el nivel relativo alcanza su mayor valor del recorrido.",
+        "Alejándose": "La distancia vuelve a aumentar y la contribución disminuye.",
+    }[event_state]
+
+    st.markdown(
+        f"""
+        <div class="c3l2-grid2">
+          <div class="c3l2-card blue">
+            <div class="c3l2-k">QUÉ CAMBIA</div>
+            <b>Posición y distancia instantánea</b><br>
+            {event_explanation}
+          </div>
+          <div class="c3l2-card green">
+            <div class="c3l2-k">QUÉ APRENDER</div>
+            <b>Una fuente móvil genera una historia temporal.</b><br>
+            El receptor no observa el mismo nivel durante todo el paso.
+          </div>
+        </div>
+        """,
+        unsafe_allow_html=True,
     )
 
     st.markdown("## 3. Explora una escena urbana interactiva")
