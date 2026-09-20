@@ -26681,48 +26681,373 @@ def _c3l2_stage1(lab,saved):
         unsafe_allow_html=True,
     )
 
-    st.markdown("### 2.1 Evento móvil · observa el paso completo")
+    st.markdown("### 2.1 Evento móvil · mueve el vehículo y observa tres receptores")
     st.caption(
-        "La cámara y el receptor permanecen fijos. El GIF reproduce el paso completo del vehículo: "
-        "lejos → acercándose → frente al receptor → alejándose."
+        "Arrastra el automóvil a lo largo de la vía. Los tres receptores permanecen fijos y cada sonómetro "
+        "actualiza su nivel estimado en tiempo real."
     )
 
     st.markdown(
         """
         <div class="c3l2-grid2">
           <div class="c3l2-card blue">
-            <div class="c3l2-k">VARIABLE</div>
-            <b>Distancia instantánea fuente–receptor</b><br>
-            El vehículo cambia de posición mientras el receptor permanece fijo.
+            <div class="c3l2-k">TÚ CONTROLAS</div>
+            <b>La posición longitudinal del vehículo</b><br>
+            El automóvil es la fuente móvil y puedes desplazarlo manualmente.
           </div>
           <div class="c3l2-card green">
-            <div class="c3l2-k">QUÉ OBSERVAR</div>
-            <b>La contribución no es constante</b><br>
-            Aumenta al aproximarse, alcanza un máximo y disminuye al alejarse.
+            <div class="c3l2-k">LA APP CALCULA</div>
+            <b>Distancia y nivel en tres receptores</b><br>
+            Cada receptor responde de forma distinta según su posición respecto del vehículo.
           </div>
         </div>
         """,
         unsafe_allow_html=True,
     )
 
-    st.image(
-        "assets/c3l2_s1_evento_movil_profesional.gif",
-        caption="Evento móvil · secuencia continua con receptor fijo y nivel relativo variable.",
-        use_container_width=True,
-    )
+    vehicle_svg = r"""
+    <!DOCTYPE html>
+    <html>
+    <head>
+      <meta charset="utf-8">
+      <style>
+        *{box-sizing:border-box}
+        body{
+          margin:0;
+          font-family:Inter,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
+          background:#f6fbfe;
+          color:#102a43;
+        }
+        .wrap{
+          border:1px solid #d4e5ee;
+          border-radius:18px;
+          background:white;
+          overflow:hidden;
+          box-shadow:0 8px 24px rgba(15,23,42,.06);
+        }
+        .top{
+          padding:16px 18px 10px;
+          display:flex;
+          justify-content:space-between;
+          gap:14px;
+          align-items:flex-start;
+          border-bottom:1px solid #e7eef3;
+        }
+        .title{font-size:17px;font-weight:850}
+        .sub{font-size:12px;color:#60758a;margin-top:4px;line-height:1.35}
+        .pill{
+          padding:7px 10px;
+          border-radius:999px;
+          font-size:11px;
+          font-weight:800;
+          color:#0b6e99;
+          background:#e9f7fd;
+          border:1px solid #bfe6f5;
+          white-space:nowrap;
+        }
+        .meters{
+          display:grid;
+          grid-template-columns:repeat(3,1fr);
+          gap:10px;
+          padding:12px 14px;
+          background:#f8fbfd;
+          border-top:1px solid #e6eef3;
+        }
+        .meter{
+          background:#fff;
+          border:1px solid #d6e3eb;
+          border-radius:14px;
+          padding:11px 12px;
+        }
+        .meterhead{
+          display:flex;
+          justify-content:space-between;
+          align-items:center;
+          gap:8px;
+        }
+        .metername{font-size:12px;font-weight:850}
+        .db{
+          font-size:24px;
+          font-weight:900;
+          line-height:1;
+          margin-top:7px;
+        }
+        .unit{font-size:11px;color:#718394;margin-left:4px}
+        .track{
+          height:8px;
+          background:#e7eef3;
+          border-radius:999px;
+          overflow:hidden;
+          margin-top:9px;
+        }
+        .fill{
+          height:100%;
+          width:0%;
+          background:linear-gradient(90deg,#2aa6d6,#68c26d,#f1b83b,#e76759);
+          border-radius:999px;
+          transition:width .08s linear;
+        }
+        .dist{font-size:11px;color:#6a7d8e;margin-top:7px}
+        .hint{
+          padding:10px 15px 14px;
+          font-size:11px;
+          color:#5c7182;
+          background:#f8fbfd;
+        }
+        @media(max-width:720px){
+          .meters{grid-template-columns:1fr}
+          .top{flex-direction:column}
+        }
+      </style>
+    </head>
+    <body>
+      <div class="wrap">
+        <div class="top">
+          <div>
+            <div class="title">Laboratorio móvil · fuente en movimiento</div>
+            <div class="sub">
+              Arrastra el automóvil. R1, R2 y R3 permanecen fijos.<br>
+              Observa cómo cada receptor alcanza su máximo en una posición diferente.
+            </div>
+          </div>
+          <div class="pill">Modelo didáctico · no normativo</div>
+        </div>
+
+        <svg id="scene" viewBox="0 0 1000 430" width="100%" style="display:block;background:#eaf6fc;touch-action:none;user-select:none">
+          <!-- cielo y terreno -->
+          <rect x="0" y="0" width="1000" height="430" fill="#eaf6fc"/>
+          <rect x="0" y="250" width="1000" height="180" fill="#819d62"/>
+
+          <!-- edificios -->
+          <g opacity=".98">
+            <rect x="205" y="85" width="145" height="145" rx="7" fill="#d9c7a8"/>
+            <polygon points="190,85 278,40 365,85" fill="#a77b55"/>
+            <rect x="250" y="135" width="36" height="52" fill="#78a4bc"/>
+            <rect x="300" y="135" width="36" height="52" fill="#78a4bc"/>
+
+            <rect x="500" y="70" width="160" height="160" rx="7" fill="#cfd9df"/>
+            <rect x="525" y="118" width="42" height="55" fill="#7ca6bc"/>
+            <rect x="585" y="118" width="42" height="55" fill="#7ca6bc"/>
+
+            <rect x="785" y="55" width="150" height="175" rx="7" fill="#d6c5a8"/>
+            <polygon points="770,55 860,18 950,55" fill="#9f7855"/>
+            <rect x="815" y="105" width="40" height="55" fill="#79a5bd"/>
+            <rect x="872" y="105" width="40" height="55" fill="#79a5bd"/>
+          </g>
+
+          <!-- etiquetas de receptores -->
+          <text x="230" y="28" font-size="14" font-weight="800" fill="#153a50">R1 · Vivienda</text>
+          <text x="528" y="28" font-size="14" font-weight="800" fill="#153a50">R2 · Colegio</text>
+          <text x="805" y="28" font-size="14" font-weight="800" fill="#153a50">R3 · Vivienda</text>
+
+          <!-- receptores -->
+          <g id="receptors">
+            <circle cx="280" cy="205" r="12" fill="#13a2cf" stroke="white" stroke-width="4"/>
+            <circle cx="580" cy="190" r="12" fill="#13a2cf" stroke="white" stroke-width="4"/>
+            <circle cx="860" cy="175" r="12" fill="#13a2cf" stroke="white" stroke-width="4"/>
+          </g>
+
+          <!-- líneas perpendiculares de referencia -->
+          <line x1="280" y1="205" x2="280" y2="315" stroke="#6ca8c0" stroke-width="2" stroke-dasharray="7 6" opacity=".65"/>
+          <line x1="580" y1="190" x2="580" y2="315" stroke="#6ca8c0" stroke-width="2" stroke-dasharray="7 6" opacity=".65"/>
+          <line x1="860" y1="175" x2="860" y2="315" stroke="#6ca8c0" stroke-width="2" stroke-dasharray="7 6" opacity=".65"/>
+
+          <!-- carretera -->
+          <polygon points="0,292 1000,275 1000,430 0,430" fill="#4a5963"/>
+          <line x1="0" y1="357" x2="1000" y2="342" stroke="#f4d15a" stroke-width="6" stroke-dasharray="34 22"/>
+
+          <!-- paths dynamically updated -->
+          <line id="p1" x1="100" y1="330" x2="280" y2="205" stroke="#27a8d6" stroke-width="3" opacity=".42"/>
+          <line id="p2" x1="100" y1="330" x2="580" y2="190" stroke="#27a8d6" stroke-width="3" opacity=".42"/>
+          <line id="p3" x1="100" y1="330" x2="860" y2="175" stroke="#27a8d6" stroke-width="3" opacity=".42"/>
+
+          <!-- vehículo draggable -->
+          <g id="car" transform="translate(110,320)" style="cursor:grab">
+            <ellipse cx="0" cy="28" rx="58" ry="12" fill="rgba(0,0,0,.18)"/>
+            <rect x="-48" y="-2" width="96" height="34" rx="12" fill="#596d7c"/>
+            <polygon points="-27,-2 -9,-24 28,-24 43,-2" fill="#718d9f"/>
+            <polygon points="-20,-3 -5,-19 23,-19 34,-3" fill="#a7cedf"/>
+            <circle cx="-29" cy="30" r="13" fill="#232c33"/>
+            <circle cx="29" cy="30" r="13" fill="#232c33"/>
+            <circle cx="-29" cy="30" r="6" fill="#9daab2"/>
+            <circle cx="29" cy="30" r="6" fill="#9daab2"/>
+            <circle cx="0" cy="13" r="8" fill="#e85b52"/>
+          </g>
+
+          <!-- instruction -->
+          <g>
+            <rect x="355" y="375" width="290" height="36" rx="18" fill="rgba(8,31,50,.85)"/>
+            <text x="500" y="398" text-anchor="middle" font-size="13" font-weight="700" fill="white">
+              ← Arrastra el automóvil por la vía →
+            </text>
+          </g>
+        </svg>
+
+        <div class="meters">
+          <div class="meter">
+            <div class="meterhead">
+              <div class="metername">R1 · Vivienda</div>
+              <div style="font-size:11px;color:#718394">10 m de la vía</div>
+            </div>
+            <div><span class="db" id="db1">--</span><span class="unit">dB(A)</span></div>
+            <div class="track"><div class="fill" id="bar1"></div></div>
+            <div class="dist" id="dist1">Distancia fuente–receptor: -- m</div>
+          </div>
+
+          <div class="meter">
+            <div class="meterhead">
+              <div class="metername">R2 · Colegio</div>
+              <div style="font-size:11px;color:#718394">20 m de la vía</div>
+            </div>
+            <div><span class="db" id="db2">--</span><span class="unit">dB(A)</span></div>
+            <div class="track"><div class="fill" id="bar2"></div></div>
+            <div class="dist" id="dist2">Distancia fuente–receptor: -- m</div>
+          </div>
+
+          <div class="meter">
+            <div class="meterhead">
+              <div class="metername">R3 · Vivienda</div>
+              <div style="font-size:11px;color:#718394">30 m de la vía</div>
+            </div>
+            <div><span class="db" id="db3">--</span><span class="unit">dB(A)</span></div>
+            <div class="track"><div class="fill" id="bar3"></div></div>
+            <div class="dist" id="dist3">Distancia fuente–receptor: -- m</div>
+          </div>
+        </div>
+
+        <div class="hint">
+          Modelo didáctico: se considera el vehículo como fuente puntual móvil y se estima una tendencia geométrica
+          con <b>L(r)=78−20·log₁₀(r/5)</b>. Sirve para visualizar relaciones espaciales; no corresponde a un método normativo.
+        </div>
+      </div>
+
+      <script>
+        const svg = document.getElementById('scene');
+        const car = document.getElementById('car');
+        const lines = [document.getElementById('p1'),document.getElementById('p2'),document.getElementById('p3')];
+
+        // Coordenadas visuales de los receptores en el SVG
+        const receptors = [
+          {x:280, y:205, offsetM:10},
+          {x:580, y:190, offsetM:20},
+          {x:860, y:175, offsetM:30}
+        ];
+
+        let carX = 110;
+        const carY = 320;
+        let dragging = false;
+
+        // Mapeo didáctico: 80..920 px => 0..100 m longitudinales
+        function pxToMeters(x){ return (x-80) / (920-80) * 100; }
+        const recLongM = [24, 60, 92];
+
+        function levelFromDistance(r){
+          r = Math.max(r, 5);
+          return 78 - 20*Math.log10(r/5);
+        }
+
+        function meterPercent(db){
+          return Math.max(0, Math.min(100, (db-35)/(80-35)*100));
+        }
+
+        function update(){
+          car.setAttribute('transform', `translate(${carX},${carY})`);
+
+          lines.forEach((ln,i)=>{
+            ln.setAttribute('x1',carX);
+            ln.setAttribute('y1',carY+8);
+          });
+
+          const carM = pxToMeters(carX);
+
+          receptors.forEach((r,i)=>{
+            const dxM = carM - recLongM[i];
+            const distM = Math.sqrt(dxM*dxM + r.offsetM*r.offsetM);
+            const db = levelFromDistance(distM);
+
+            document.getElementById(`db${i+1}`).textContent = db.toFixed(1);
+            document.getElementById(`dist${i+1}`).textContent =
+              `Distancia fuente–receptor: ${distM.toFixed(1)} m`;
+            document.getElementById(`bar${i+1}`).style.width =
+              `${meterPercent(db).toFixed(1)}%`;
+
+            // resalta el receptor más cercano con opacidad de camino
+            lines[i].setAttribute('opacity', Math.max(.18, Math.min(.8, 1-distM/90)));
+          });
+        }
+
+        function pointFromEvent(evt){
+          const pt = svg.createSVGPoint();
+          if(evt.touches && evt.touches.length){
+            pt.x = evt.touches[0].clientX;
+            pt.y = evt.touches[0].clientY;
+          }else{
+            pt.x = evt.clientX;
+            pt.y = evt.clientY;
+          }
+          const m = pt.matrixTransform(svg.getScreenCTM().inverse());
+          return m;
+        }
+
+        function startDrag(evt){
+          dragging = true;
+          car.style.cursor='grabbing';
+          evt.preventDefault();
+        }
+        function moveDrag(evt){
+          if(!dragging) return;
+          const p = pointFromEvent(evt);
+          carX = Math.max(80, Math.min(920, p.x));
+          update();
+          evt.preventDefault();
+        }
+        function endDrag(){
+          dragging = false;
+          car.style.cursor='grab';
+        }
+
+        car.addEventListener('mousedown', startDrag);
+        car.addEventListener('touchstart', startDrag, {passive:false});
+        svg.addEventListener('mousemove', moveDrag);
+        svg.addEventListener('touchmove', moveDrag, {passive:false});
+        window.addEventListener('mouseup', endDrag);
+        window.addEventListener('touchend', endDrag);
+
+        // También permite hacer clic sobre la vía para mover el vehículo.
+        svg.addEventListener('click', (evt)=>{
+          if(dragging) return;
+          const p = pointFromEvent(evt);
+          if(p.y > 275){
+            carX = Math.max(80, Math.min(920, p.x));
+            update();
+          }
+        });
+
+        update();
+      </script>
+    </body>
+    </html>
+    """
+
+    components.html(vehicle_svg, height=760, scrolling=False)
 
     st.markdown(
         """
-        <div class="c3l2-grid2">
+        <div class="c3l2-grid">
           <div class="c3l2-card blue">
-            <div class="c3l2-k">QUÉ CAMBIA</div>
-            <b>Posición y distancia instantánea</b><br>
-            La geometría fuente–receptor evoluciona durante todo el paso.
+            <div class="c3l2-k">OBSERVA R1</div>
+            <b>Máximo cerca de su posición longitudinal</b><br>
+            Cuando el vehículo pasa frente a R1, su distancia total es mínima.
           </div>
           <div class="c3l2-card green">
-            <div class="c3l2-k">QUÉ APRENDER</div>
-            <b>Una fuente móvil genera una historia temporal.</b><br>
-            El receptor no observa el mismo nivel durante todo el evento.
+            <div class="c3l2-k">COMPARA R2</div>
+            <b>El máximo ocurre después</b><br>
+            R2 está más adelante sobre la vía y además a mayor distancia perpendicular.
+          </div>
+          <div class="c3l2-card orange">
+            <div class="c3l2-k">INTERPRETA R3</div>
+            <b>No todos los máximos son iguales</b><br>
+            La distancia perpendicular modifica el nivel máximo que alcanza cada receptor.
           </div>
         </div>
         """,
@@ -26732,8 +27057,8 @@ def _c3l2_stage1(lab,saved):
     st.markdown(
         """
         <div class="c3l2-note">
-          <b>Principio profesional:</b> un vehículo que circula no debe interpretarse como una fuente fija.
-          Su posición respecto del receptor cambia continuamente y con ella cambia la contribución acústica observada.
+          <b>Principio profesional:</b> una fuente móvil genera simultáneamente historias temporales distintas
+          en receptores distintos. Por eso una campaña espacial no puede interpretarse solo con la posición de la fuente.
         </div>
         """,
         unsafe_allow_html=True,
