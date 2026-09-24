@@ -27137,61 +27137,224 @@ def _c3l2_stage1(lab,saved):
     )
 
     st.markdown("#### Comprueba que entendiste el fenómeno")
-    q_mobile_1 = st.radio(
-        "Si el vehículo pasa exactamente frente a R1, ¿qué ocurre con la distancia fuente–R1?",
-        [
-            "Alcanza aproximadamente su valor mínimo",
-            "Alcanza su valor máximo",
-            "Permanece igual durante todo el recorrido",
-        ],
-        index=None,
-        key="c3l2_s1_mobile_q1",
+    st.caption(
+        "Responde después de mover el vehículo varias veces. La idea es interpretar la geometría que acabas de observar, no memorizar una regla."
     )
-    q_mobile_2 = st.radio(
-        "¿Por qué R1 puede alcanzar un máximo mayor que R3 en este ejemplo?",
-        [
-            "Porque R1 está a menor distancia perpendicular de la vía",
-            "Porque R1 siempre mide antes",
-            "Porque R3 no recibe propagación directa",
-        ],
-        index=None,
-        key="c3l2_s1_mobile_q2",
+
+    # Estética específica para las tarjetas de comprensión de esta etapa.
+    st.markdown(
+        """
+        <style>
+        div[class*="st-key-c3l2_mobile_question_"] {
+            border:1px solid #d4e4ee !important;
+            border-radius:16px !important;
+            background:linear-gradient(180deg,#ffffff,#f8fbfd) !important;
+            box-shadow:0 4px 14px rgba(15,23,42,.045) !important;
+            padding:1rem 1.05rem .8rem !important;
+            margin:.65rem 0 !important;
+        }
+
+        div[class*="st-key-c3l2_mobile_question_"] [data-testid="stRadio"] {
+            margin-top:.25rem !important;
+        }
+
+        div[class*="st-key-c3l2_mobile_question_"] [role="radiogroup"] {
+            gap:.38rem !important;
+        }
+
+        div[class*="st-key-c3l2_mobile_question_"] label[data-baseweb="radio"] {
+            width:100% !important;
+            border:1px solid #dde8ef !important;
+            border-radius:10px !important;
+            padding:.55rem .70rem !important;
+            background:#ffffff !important;
+            transition:all .15s ease !important;
+        }
+
+        div[class*="st-key-c3l2_mobile_question_"] label[data-baseweb="radio"]:hover {
+            border-color:#83c7e2 !important;
+            background:#f1f9fd !important;
+        }
+
+        div[class*="st-key-c3l2_mobile_question_"] label[data-baseweb="radio"]:has(input:checked) {
+            border-color:#28a7d4 !important;
+            background:#eaf7fd !important;
+            box-shadow:inset 3px 0 0 #28a7d4 !important;
+        }
+
+        .c3l2-q-kicker{
+            font-size:.68rem;
+            font-weight:900;
+            letter-spacing:.08em;
+            color:#0782b9;
+            text-transform:uppercase;
+            margin-bottom:.18rem;
+        }
+        .c3l2-q-title{
+            font-size:1rem;
+            line-height:1.3;
+            font-weight:850;
+            color:#17324a;
+            margin-bottom:.25rem;
+        }
+        .c3l2-q-context{
+            font-size:.78rem;
+            color:#687d8e;
+            line-height:1.35;
+            margin-bottom:.55rem;
+        }
+        </style>
+        """,
+        unsafe_allow_html=True,
     )
+
+    with st.container(border=True, key="c3l2_mobile_question_1"):
+        st.markdown(
+            """
+            <div class="c3l2-q-kicker">Pregunta 1 · Geometría fuente–receptor</div>
+            <div class="c3l2-q-title">¿Qué ocurre cuando el vehículo pasa exactamente frente a R1?</div>
+            <div class="c3l2-q-context">
+              Piensa en la expresión r₁(t): el máximo acústico se relaciona con la menor distancia geométrica entre fuente y receptor.
+            </div>
+            """,
+            unsafe_allow_html=True,
+        )
+        q_mobile_1 = st.radio(
+            "Respuesta pregunta 1",
+            [
+                "Alcanza aproximadamente su valor mínimo",
+                "Alcanza su valor máximo",
+                "Permanece igual durante todo el recorrido",
+            ],
+            index=None,
+            key="c3l2_s1_mobile_q1",
+            label_visibility="collapsed",
+        )
+
+        if q_mobile_1:
+            if q_mobile_1 == "Alcanza aproximadamente su valor mínimo":
+                st.success(
+                    "Correcto. En ese instante la separación longitudinal es aproximadamente cero y la distancia total queda dominada por la distancia perpendicular a la vía."
+                )
+            else:
+                st.warning(
+                    "Revisa la geometría: cuando el vehículo queda frente a R1, la distancia fuente–receptor se aproxima a su mínimo."
+                )
+
+    with st.container(border=True, key="c3l2_mobile_question_2"):
+        st.markdown(
+            """
+            <div class="c3l2-q-kicker">Pregunta 2 · Magnitud del máximo</div>
+            <div class="c3l2-q-title">¿Por qué R1 puede alcanzar un máximo mayor que R3?</div>
+            <div class="c3l2-q-context">
+              Ambos receptores tienen su propio instante de máxima proximidad, pero sus distancias mínimas a la trayectoria del vehículo no son iguales.
+            </div>
+            """,
+            unsafe_allow_html=True,
+        )
+        q_mobile_2 = st.radio(
+            "Respuesta pregunta 2",
+            [
+                "Porque R1 está a menor distancia perpendicular de la vía",
+                "Porque R1 siempre mide antes",
+                "Porque R3 no recibe propagación directa",
+            ],
+            index=None,
+            key="c3l2_s1_mobile_q2",
+            label_visibility="collapsed",
+        )
+
+        if q_mobile_2:
+            if q_mobile_2 == "Porque R1 está a menor distancia perpendicular de la vía":
+                st.success(
+                    "Correcto. Una menor distancia mínima produce un nivel máximo mayor dentro del modelo puntual idealizado."
+                )
+            else:
+                st.warning(
+                    "El orden temporal no determina la magnitud del máximo. Compara las distancias perpendiculares d₁ y d₃."
+                )
 
     if q_mobile_1 and q_mobile_2:
         if (
             q_mobile_1 == "Alcanza aproximadamente su valor mínimo"
             and q_mobile_2 == "Porque R1 está a menor distancia perpendicular de la vía"
         ):
-            st.success(
-                "Correcto. Has relacionado posición de la fuente, distancia instantánea y nivel máximo en el receptor."
-            )
-        else:
-            st.info(
-                "Revisa las expresiones rᵢ(t) y Lp,i(t): el máximo se asocia a la menor distancia geométrica."
+            st.markdown(
+                """
+                <div class="c3l2-note">
+                  <b>Conclusión del ejercicio:</b> la posición temporal del máximo depende de dónde se encuentra cada receptor a lo largo de la vía;
+                  la magnitud de ese máximo depende, entre otros factores, de la distancia mínima entre la trayectoria de la fuente y el receptor.
+                </div>
+                """,
+                unsafe_allow_html=True,
             )
 
+    # ================================================================
+    # 3. ESCENA URBANA INTERACTIVA
+    # ================================================================
     st.markdown("## 3. Explora una escena urbana interactiva")
+    st.caption(
+        "Objetivo: reconocer cómo cambia el problema acústico cuando seleccionas distintas fuentes y receptores dentro de un mismo entorno urbano."
+    )
+
     st.markdown(
         """
-        <div class="c3l2-note">
-          <b>Ahora sí interactúa:</b> cambia la fuente y el receptor y observa cómo cambia la trayectoria
-          que necesitas analizar. El objetivo no es calcular aún, sino aprender a <b>definir correctamente el sistema</b>.
+        <div class="c3l2-intro">
+          <div class="c3l2-k">¿QUÉ VAS A APRENDER?</div>
+          <div class="c3l2-title">Una fuente no puede analizarse aislada del receptor y del camino que los conecta.</div>
+          En esta actividad debes identificar tres cosas: <b>quién emite</b>, <b>dónde se evalúa</b>
+          y <b>qué trayectoria de propagación existe entre ambos</b>. Todavía no calcularemos niveles:
+          el objetivo es construir correctamente el problema físico.
         </div>
         """,
         unsafe_allow_html=True,
     )
-    c1, c2 = st.columns(2)
-    source = c1.selectbox(
-        "Fuente que quieres estudiar",
-        ["Tráfico de avenida", "Equipo HVAC en cubierta", "Camión de reparto"],
-        key="c3l2_s1_source",
+
+    st.markdown(
+        """
+        <div class="c3l2-grid">
+          <div class="c3l2-card blue">
+            <div class="c3l2-k">1 · IDENTIFICA LA FUENTE</div>
+            <b>¿Quién genera la energía acústica?</b><br>
+            Tráfico, HVAC o un vehículo de reparto representan fuentes con comportamientos distintos.
+          </div>
+          <div class="c3l2-card">
+            <div class="c3l2-k">2 · UBICA EL RECEPTOR</div>
+            <b>¿Dónde necesitas conocer el nivel?</b><br>
+            Vivienda, colegio o peatón representan posiciones y usos distintos del espacio.
+          </div>
+          <div class="c3l2-card green">
+            <div class="c3l2-k">3 · OBSERVA EL CAMINO</div>
+            <b>¿Cómo puede llegar el sonido?</b><br>
+            Camino directo y trayectorias alternativas pueden coexistir dentro del mismo escenario.
+          </div>
+        </div>
+        """,
+        unsafe_allow_html=True,
     )
-    receptor = c2.selectbox(
-        "Receptor que quieres estudiar",
-        ["Vivienda", "Colegio", "Peatón"],
-        key="c3l2_s1_receptor",
-    )
+
+    with st.container(border=True, key="c3l2_s1_scene_controls"):
+        st.markdown(
+            """
+            <div class="c3l2-q-kicker">CONFIGURA EL ESCENARIO</div>
+            <div class="c3l2-q-title">Selecciona una fuente y un receptor</div>
+            <div class="c3l2-q-context">
+              Mantén el entorno urbano y cambia únicamente los elementos que quieres estudiar.
+            </div>
+            """,
+            unsafe_allow_html=True,
+        )
+        c1, c2 = st.columns(2)
+        source = c1.selectbox(
+            "Fuente que quieres estudiar",
+            ["Tráfico de avenida", "Equipo HVAC en cubierta", "Camión de reparto"],
+            key="c3l2_s1_source",
+        )
+        receptor = c2.selectbox(
+            "Receptor que quieres estudiar",
+            ["Vivienda", "Colegio", "Peatón"],
+            key="c3l2_s1_receptor",
+        )
 
     src_x = {"Tráfico de avenida":125, "Equipo HVAC en cubierta":360, "Camión de reparto":235}[source]
     src_y = {"Tráfico de avenida":235, "Equipo HVAC en cubierta":92, "Camión de reparto":235}[source]
@@ -27203,105 +27366,305 @@ def _c3l2_stage1(lab,saved):
     <svg viewBox="0 0 1000 330" width="100%" style="background:#eef8fd;border:1px solid #cfe0ec;border-radius:18px">
       <rect x="0" y="250" width="1000" height="80" fill="#647987"/>
       <line x1="0" y1="290" x2="1000" y2="290" stroke="#f5d55c" stroke-width="5" stroke-dasharray="30 20"/>
+
       <rect x="735" y="115" width="165" height="135" rx="8" fill="#d9c39d"/>
       <polygon points="720,115 817,65 915,115" fill="#b58b5e"/>
       <text x="775" y="55" font-size="17" font-weight="700">VIVIENDA</text>
+
       <rect x="570" y="145" width="150" height="105" rx="8" fill="#d7c5a8"/>
       <text x="610" y="135" font-size="17" font-weight="700">COLEGIO</text>
+
       <rect x="310" y="145" width="145" height="105" rx="8" fill="#c8dbe5"/>
       <rect x="340" y="108" width="82" height="37" rx="5" fill="#718b9a"/>
       <text x="325" y="95" font-size="16" font-weight="700">HVAC</text>
+
       <rect x="90" y="255" width="72" height="28" rx="7" fill="#e85d4e"/>
       <circle cx="108" cy="286" r="9" fill="#263b47"/><circle cx="147" cy="286" r="9" fill="#263b47"/>
       <rect x="205" y="252" width="75" height="32" rx="5" fill="#edb94b"/>
       <circle cx="222" cy="286" r="9" fill="#263b47"/><circle cx="264" cy="286" r="9" fill="#263b47"/>
-      <circle cx="{src_x}" cy="{src_y}" r="13" fill="#e95454"/>
-      <circle cx="{rec_x}" cy="{rec_y}" r="13" fill="#0ba4d0"/>
+
+      <circle cx="{src_x}" cy="{src_y}" r="13" fill="#e95454" stroke="white" stroke-width="3"/>
+      <circle cx="{rec_x}" cy="{rec_y}" r="13" fill="#0ba4d0" stroke="white" stroke-width="3"/>
+
       <path d="M {src_x} {src_y} Q {(src_x+rec_x)/2:.0f} {min(src_y,rec_y)-55:.0f} {rec_x} {rec_y}"
             fill="none" stroke="#0c92c2" stroke-width="4"/>
       <path d="M {src_x} {src_y} Q {(src_x+rec_x)/2:.0f} 285 {rec_x} {rec_y}"
             fill="none" stroke="#8aa3b2" stroke-width="3" stroke-dasharray="8 7"/>
-      <text x="{src_x+18}" y="{src_y-12}" font-size="14" font-weight="700" fill="#a72f2f">{source_label}</text>
-      <text x="{rec_x+18}" y="{rec_y-12}" font-size="14" font-weight="700" fill="#087ba0">{receptor}</text>
-      <text x="410" y="55" font-size="13" fill="#527386">camino directo</text>
-      <text x="405" y="305" font-size="13" fill="#637b89">camino reflejado / indirecto</text>
+
+      <rect x="40" y="24" width="210" height="54" rx="12" fill="rgba(255,255,255,.90)" stroke="#c7dce8"/>
+      <text x="58" y="47" font-size="12" fill="#6a7f8f">FUENTE SELECCIONADA</text>
+      <text x="58" y="66" font-size="16" font-weight="700" fill="#9e3434">{source_label}</text>
+
+      <rect x="740" y="24" width="215" height="54" rx="12" fill="rgba(255,255,255,.90)" stroke="#c7dce8"/>
+      <text x="758" y="47" font-size="12" fill="#6a7f8f">RECEPTOR SELECCIONADO</text>
+      <text x="758" y="66" font-size="16" font-weight="700" fill="#087b9f">{receptor}</text>
+
+      <text x="430" y="88" font-size="13" fill="#087b9f" font-weight="700">camino directo</text>
+      <text x="410" y="309" font-size="13" fill="#637b89">trayectoria alternativa / indirecta</text>
     </svg>
     """
     components.html(svg, height=350)
 
-    st.markdown("""
-    <div class="c3l2-note">
-      La escena permite distinguir el <b>camino directo</b> y una trayectoria alternativa.
-      Todavía no calculamos atenuación: primero debes reconocer qué elementos pueden modificar
-      la propagación antes de llegar al receptor.
-    </div>
-    """, unsafe_allow_html=True)
+    scene_context = {
+        "Tráfico de avenida": "El tráfico representa una fuente móvil distribuida a lo largo de la vía cuando existe flujo continuo.",
+        "Equipo HVAC en cubierta": "El HVAC representa una fuente técnica fija: su posición no cambia durante el periodo de funcionamiento.",
+        "Camión de reparto": "El camión representa una fuente móvil individual y transitoria.",
+    }[source]
 
-    st.markdown("## 4. Clasifica los elementos del sistema")
-    st.caption("La clasificación no es vocabulario: define qué variable podrías modificar después para controlar el problema.")
+    receptor_context = {
+        "Vivienda": "La vivienda representa un receptor fijo cuya exposición depende de su posición respecto de la fuente.",
+        "Colegio": "El colegio es un receptor fijo y sensible al periodo de uso del establecimiento.",
+        "Peatón": "El peatón representa un receptor móvil o transitorio, por lo que la exposición puede variar rápidamente.",
+    }[receptor]
+
     st.markdown(
-        """
+        f"""
         <div class="c3l2-grid2">
-          <div class="c3l2-card">
-            <div class="c3l2-k">PISTA 1</div>
-            Si <b>genera energía acústica</b>, piensa primero en fuente.
+          <div class="c3l2-card blue">
+            <div class="c3l2-k">LECTURA DE LA FUENTE</div>
+            <b>{source}</b><br>
+            {scene_context}
           </div>
-          <div class="c3l2-card">
-            <div class="c3l2-k">PISTA 2</div>
-            Si <b>modifica el recorrido</b>, piensa primero en camino.
+          <div class="c3l2-card green">
+            <div class="c3l2-k">LECTURA DEL RECEPTOR</div>
+            <b>{receptor}</b><br>
+            {receptor_context}
           </div>
         </div>
         """,
         unsafe_allow_html=True,
     )
+
+    st.markdown(
+        """
+        <div class="c3l2-note">
+          <b>Aprendizaje esperado:</b> antes de hablar de atenuación o de niveles en dB, debes poder definir
+          claramente la fuente, el receptor y el camino que los conecta. Si alguno de estos elementos cambia,
+          cambia también el problema acústico que estás estudiando.
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
+
+    # ================================================================
+    # 4. CLASIFICACIÓN
+    # ================================================================
+    st.markdown("## 4. Clasifica los elementos del sistema")
+    st.caption(
+        "Objetivo: distinguir correctamente fuente, camino y receptor para poder interpretar después qué variable estás modificando."
+    )
+
+    st.markdown(
+        """
+        <div class="c3l2-intro">
+          <div class="c3l2-k">REGLA DE CLASIFICACIÓN</div>
+          <div class="c3l2-title">Pregúntate qué función cumple cada elemento dentro del problema acústico.</div>
+          No clasifiques por el nombre del objeto, sino por su <b>función física</b> dentro de la cadena de propagación.
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
+
+    st.markdown(
+        """
+        <div class="c3l2-grid">
+          <div class="c3l2-card blue">
+            <div class="c3l2-k">FUENTE</div>
+            <b>Genera energía acústica</b><br>
+            Vehículo, ventilador, maquinaria o actividad.
+          </div>
+          <div class="c3l2-card">
+            <div class="c3l2-k">CAMINO</div>
+            <b>Permite o modifica la propagación</b><br>
+            Aire, distancia, barreras, fachadas, aberturas o suelo.
+          </div>
+          <div class="c3l2-card green">
+            <div class="c3l2-k">RECEPTOR</div>
+            <b>Es el punto donde interesa conocer el resultado</b><br>
+            Vivienda, colegio, fachada, persona o punto de evaluación.
+          </div>
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
+
     classify_items = [
-        ("Automóvil circulando","Fuente"),
-        ("Equipo HVAC","Fuente"),
-        ("Aire entre fuente y receptor","Camino"),
-        ("Pantalla acústica","Camino"),
-        ("Fachada de vivienda","Receptor"),
-        ("Patio de un colegio","Receptor"),
+        ("Automóvil circulando","Fuente","Genera el sonido asociado al paso vehicular."),
+        ("Equipo HVAC","Fuente","Genera ruido durante su funcionamiento."),
+        ("Aire entre fuente y receptor","Camino","Es el medio por el cual se propaga el sonido."),
+        ("Pantalla acústica","Camino","Modifica físicamente la trayectoria de propagación."),
+        ("Fachada de vivienda","Receptor","Representa una posición donde interesa conocer el nivel."),
+        ("Patio de un colegio","Receptor","Es un espacio receptor donde interesa evaluar exposición."),
     ]
+
     classification = {}
     cols = st.columns(2)
-    for i,(item,correct) in enumerate(classify_items):
+
+    for i,(item,correct,why) in enumerate(classify_items):
         with cols[i%2]:
-            classification[item] = st.segmented_control(
-                item, ["Fuente","Camino","Receptor"],
-                key=f"c3l2_s1_class_{i}",
-            )
+            with st.container(border=True, key=f"c3l2_class_card_{i}"):
+                st.markdown(
+                    f"""
+                    <div class="c3l2-q-kicker">ELEMENTO {i+1}</div>
+                    <div class="c3l2-q-title">{item}</div>
+                    <div class="c3l2-q-context">¿Qué función cumple principalmente dentro del sistema acústico?</div>
+                    """,
+                    unsafe_allow_html=True,
+                )
+                classification[item] = st.segmented_control(
+                    f"Clasificación {i+1}",
+                    ["Fuente","Camino","Receptor"],
+                    key=f"c3l2_s1_class_{i}",
+                    label_visibility="collapsed",
+                )
 
-    if st.button("Comprobar clasificación", key="c3l2_s1_check_class"):
-        score = sum(classification[item] == correct for item,correct in classify_items)
-        if score == len(classify_items):
-            st.success("Correcto: identificaste los tres componentes del sistema.")
-        else:
-            st.warning(f"Obtuviste {score} de {len(classify_items)}. Revisa especialmente los elementos que modifican el camino.")
+                if classification[item]:
+                    if classification[item] == correct:
+                        st.success(why)
+                    else:
+                        st.info("Revisa la función física del elemento dentro de la cadena fuente–camino–receptor.")
 
-    st.markdown("## 5. ¿Qué estás modificando: fuente, camino o receptor?")
-    st.caption("Un mismo problema puede controlarse actuando en lugares distintos. Aquí debes reconocer dónde ocurre cada intervención.")
+    class_score = sum(classification[item] == correct for item,correct,_ in classify_items)
+
+    c1,c2 = st.columns([1,2])
+    with c1:
+        if st.button("Comprobar clasificación", key="c3l2_s1_check_class", use_container_width=True):
+            if class_score == len(classify_items):
+                st.success("Clasificación completa.")
+            else:
+                st.warning(f"Resultado actual: {class_score} de {len(classify_items)}.")
+
+    with c2:
+        st.markdown(
+            f"""
+            <div class="c3l2-card blue">
+              <div class="c3l2-k">PROGRESO DE LA ACTIVIDAD</div>
+              <b>{class_score} de {len(classify_items)} elementos correctamente clasificados</b><br>
+              El objetivo es reconocer la función física antes de pasar a las intervenciones.
+            </div>
+            """,
+            unsafe_allow_html=True,
+        )
+
+    # ================================================================
+    # 5. INTERVENCIÓN
+    # ================================================================
+    st.markdown("## 5. ¿Dónde estás actuando: fuente, camino o receptor?")
+    st.caption(
+        "Objetivo: reconocer qué parte del sistema se modifica cuando aplicas una medida de control o cambias el punto de evaluación."
+    )
+
+    st.markdown(
+        """
+        <div class="c3l2-intro">
+          <div class="c3l2-k">DE CLASIFICAR A INTERVENIR</div>
+          <div class="c3l2-title">La misma reducción de ruido puede buscarse actuando en lugares diferentes.</div>
+          Una medida puede reducir la <b>emisión de la fuente</b>, modificar el <b>camino de propagación</b>
+          o cambiar la <b>posición del receptor</b>. Identificar correctamente dónde actúas es el primer paso
+          para seleccionar una estrategia de control coherente.
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
+
+    st.markdown(
+        """
+        <div class="c3l2-grid">
+          <div class="c3l2-card blue">
+            <div class="c3l2-k">ACTUAR EN LA FUENTE</div>
+            <b>Reducir lo que se genera</b><br>
+            Cambiar equipo, reducir emisión, encapsular o modificar operación.
+          </div>
+          <div class="c3l2-card">
+            <div class="c3l2-k">ACTUAR EN EL CAMINO</div>
+            <b>Modificar cómo llega el sonido</b><br>
+            Barreras, cerramientos, pantallas, sellos o aumento de distancia.
+          </div>
+          <div class="c3l2-card green">
+            <div class="c3l2-k">ACTUAR EN EL RECEPTOR</div>
+            <b>Cambiar dónde se evalúa o protege</b><br>
+            Reubicar, aumentar distancia o proteger directamente el punto receptor.
+          </div>
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
+
     path_cases = [
-        ("Se instala una barrera entre la avenida y una vivienda.","Camino","La fuente y el receptor siguen en el mismo lugar; se interviene la propagación."),
-        ("Se reemplaza un ventilador por otro de menor emisión.","Fuente","Se actúa directamente sobre el elemento que genera el ruido."),
-        ("El punto de evaluación se mueve desde la vereda a la fachada del segundo piso.","Receptor","La posición donde se observa el campo cambia."),
-        ("Se cierra una abertura por donde se propagaba el sonido hacia un patio.","Camino","Se modifica una trayectoria de transmisión."),
+        (
+            "Se instala una barrera entre la avenida y una vivienda.",
+            "Camino",
+            "La barrera no reduce la emisión del tráfico: modifica la trayectoria entre fuente y receptor.",
+            "BARRERA ACÚSTICA"
+        ),
+        (
+            "Se reemplaza un ventilador por otro de menor emisión.",
+            "Fuente",
+            "La intervención reduce directamente la energía acústica generada por el equipo.",
+            "CAMBIO DE EQUIPO"
+        ),
+        (
+            "El punto de evaluación se mueve desde la vereda a la fachada del segundo piso.",
+            "Receptor",
+            "La fuente y el camino existen, pero cambia la posición donde se observa el campo acústico.",
+            "CAMBIO DE POSICIÓN"
+        ),
+        (
+            "Se cierra una abertura por donde se propagaba el sonido hacia un patio.",
+            "Camino",
+            "La abertura era parte de la trayectoria; al cerrarla se modifica el camino de transmisión.",
+            "CIERRE DE ABERTURA"
+        ),
     ]
+
     path_answers = {}
-    for i,(case,correct,explanation) in enumerate(path_cases):
-        with st.container(border=True):
-            st.markdown(f"**Caso {i+1}**")
-            st.write(case)
-            path_answers[str(i)] = st.radio(
-                "¿Qué componente se modifica principalmente?",
-                ["Fuente","Camino","Receptor"],
-                index=None, horizontal=True,
-                key=f"c3l2_s1_path_case_{i}",
+
+    for i,(case,correct,explanation,kicker) in enumerate(path_cases):
+        with st.container(border=True, key=f"c3l2_path_case_card_{i}"):
+            st.markdown(
+                f"""
+                <div class="c3l2-q-kicker">CASO {i+1} · {kicker}</div>
+                <div class="c3l2-q-title">{case}</div>
+                <div class="c3l2-q-context">
+                  Identifica el componente que se modifica principalmente.
+                </div>
+                """,
+                unsafe_allow_html=True,
             )
+
+            path_answers[str(i)] = st.radio(
+                f"Respuesta caso {i+1}",
+                ["Fuente","Camino","Receptor"],
+                index=None,
+                horizontal=True,
+                key=f"c3l2_s1_path_case_{i}",
+                label_visibility="collapsed",
+            )
+
             if path_answers[str(i)]:
                 if path_answers[str(i)] == correct:
                     st.success(explanation)
                 else:
-                    st.info("Revisa: " + explanation)
+                    st.warning(
+                        "Revisa qué elemento físico cambió realmente: ¿la generación, la trayectoria o el punto de observación?"
+                    )
+
+    correct_cases = sum(
+        path_answers.get(str(i)) == correct
+        for i,(_,correct,_,_) in enumerate(path_cases)
+    )
+
+    st.markdown(
+        f"""
+        <div class="c3l2-note">
+          <b>Aprendizaje esperado:</b> distinguir correctamente dónde se produce una intervención.
+          Resultado actual: <b>{correct_cases} de {len(path_cases)}</b> casos identificados correctamente.
+          Esta idea será fundamental más adelante para separar medidas sobre la fuente, sobre la propagación
+          y sobre el receptor.
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
 
     st.markdown("## 6. El receptor define la pregunta")
     st.caption("La misma fuente puede requerir estrategias distintas según quién o qué estés protegiendo.")
