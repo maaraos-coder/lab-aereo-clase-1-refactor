@@ -27684,210 +27684,547 @@ def _c3l2_stage1(lab,saved):
         unsafe_allow_html=True,
     )
 
-    st.markdown("## 6. El receptor define la pregunta")
-    st.caption("La misma fuente puede requerir estrategias distintas según quién o qué estés protegiendo.")
+    # ================================================================
+    # 6. CASO PROFESIONAL INTEGRADOR
+    # ================================================================
+    st.markdown("## 6. Caso profesional · reclamo por ruido de supermercado")
+    st.caption(
+        "Objetivo: aplicar fuente → camino → receptor en un caso de diagnóstico acústico con antecedentes operacionales, horarios de reclamo y medidas de control."
+    )
+
     st.markdown(
         """
-        <div class="c3l2-grid">
-          <div class="c3l2-card blue">
-            <div class="c3l2-k">VIVIENDA</div>
-            Interesa exposición y comportamiento del ruido sobre el receptor residencial.
-          </div>
-          <div class="c3l2-card green">
-            <div class="c3l2-k">COLEGIO</div>
-            Importa el periodo de uso y la compatibilidad con actividades sensibles.
-          </div>
-          <div class="c3l2-card orange">
-            <div class="c3l2-k">PEATÓN</div>
-            La exposición puede ser transitoria y asociada a eventos móviles.
-          </div>
+        <div class="c3l2-intro">
+          <div class="c3l2-k">ENCARGO PROFESIONAL</div>
+          <div class="c3l2-title">Vecinos de un edificio residencial reclaman por ruido nocturno proveniente de un supermercado colindante.</div>
+          Tu tarea es construir una <b>hipótesis de fuente</b>, definir el <b>receptor crítico</b>,
+          decidir <b>dónde medir</b> y reconocer si una medida de mitigación actúa sobre la
+          <b>fuente, el camino o el receptor</b>.
         </div>
         """,
         unsafe_allow_html=True,
     )
-    mission = st.segmented_control(
-        "Selecciona una misión",
-        ["Ruido vial en vivienda","HVAC frente a colegio","Camión de reparto frente a peatón"],
-        default="Ruido vial en vivienda",
-        key="c3l2_s1_mission",
-    )
-    mission_info = {
-        "Ruido vial en vivienda":{
-            "source":"Tráfico de avenida","receptor":"Fachada / vivienda",
-            "question":"¿Cómo cambia la exposición al alejarnos de la vía?",
-            "context":"Posición del receptor, distancia y continuidad del flujo."
-        },
-        "HVAC frente a colegio":{
-            "source":"Equipo HVAC","receptor":"Colegio",
-            "question":"¿Qué parte del nivel observado podría asociarse a la fuente técnica?",
-            "context":"Funcionamiento ON/OFF, ruido residual y posición del receptor."
-        },
-        "Camión de reparto frente a peatón":{
-            "source":"Camión de reparto","receptor":"Peatón",
-            "question":"¿Cómo cambia el nivel durante el paso del vehículo?",
-            "context":"Evento móvil, máxima proximidad y duración."
-        },
-    }[mission]
-    st.markdown(
-        f"""
-        <div class="c3l2-grid">
-          <div class="c3l2-card"><div class="c3l2-k">FUENTE</div><b>{mission_info['source']}</b></div>
-          <div class="c3l2-card"><div class="c3l2-k">RECEPTOR</div><b>{mission_info['receptor']}</b></div>
-          <div class="c3l2-card blue"><div class="c3l2-k">PREGUNTA</div><b>{mission_info['question']}</b></div>
-        </div>
-        """,
-        unsafe_allow_html=True,
-    )
-    st.info("Contexto relevante: " + mission_info["context"])
 
-    st.markdown("## 7. ¿Una sola medición basta?")
-    st.caption("Aquí aparece una idea que usarás después en la campaña GIS: medir bien un punto no significa haber caracterizado todo el territorio.")
+    # ---------- expediente ----------
+    st.markdown("### Antecedentes del expediente")
     st.markdown(
         """
         <div class="c3l2-grid2">
           <div class="c3l2-card blue">
-            <div class="c3l2-k">DATO MEDIDO</div>
-            Describe <b>ese punto</b>, <b>ese periodo</b> y <b>esas condiciones</b>.
+            <div class="c3l2-k">DENUNCIA</div>
+            <b>“Ruido continuo durante la noche”</b><br>
+            Los residentes de los departamentos 301 y 401 señalan que el ruido se percibe con mayor claridad entre
+            <b>23:00 y 06:00 h</b> y parece provenir de la cubierta del supermercado.
           </div>
-          <div class="c3l2-card orange">
-            <div class="c3l2-k">REPRESENTATIVIDAD</div>
-            Requiere justificar por qué ese dato puede utilizarse para describir algo más amplio.
+          <div class="c3l2-card green">
+            <div class="c3l2-k">CONFIGURACIÓN DEL SITIO</div>
+            <b>Supermercado + edificio de 10 pisos</b><br>
+            Ambos predios están separados por una medianera. Los departamentos reclamantes se ubican por sobre la altura efectiva de esa medianera.
           </div>
         </div>
         """,
         unsafe_allow_html=True,
     )
-    one_point = st.radio(
-        "Mides 2 minutos junto a una avenida a las 18:00. ¿Qué puedes afirmar con seguridad?",
-        [
-            "Que conoces el comportamiento acústico de todo el día",
-            "Que conoces el nivel observado en ese punto y periodo, bajo esas condiciones",
-            "Que ese valor representa todos los receptores cercanos",
-        ],
-        index=None,
-        key="c3l2_s1_rep_q",
-    )
-    if one_point:
-        if one_point == "Que conoces el nivel observado en ese punto y periodo, bajo esas condiciones":
-            st.success("Correcto. La medición describe ese punto, periodo y condiciones; la representatividad requiere justificación.")
-        else:
-            st.warning("Una medición corta no puede extenderse automáticamente a otros lugares o periodos.")
 
-    st.markdown("## 8. Formula una hipótesis antes de calcular")
-    st.caption("Primero predice la tendencia. La cuantificación mediante geometría puntual y lineal llegará en la Etapa 2.")
-    c1,c2 = st.columns(2)
-    r_initial = c1.slider("Posición inicial del receptor [m]",5,40,10,1,key="c3l2_s1_r_initial")
-    r_final = c2.slider("Nueva posición [m]",5,80,20,1,key="c3l2_s1_r_final")
-    prediction = st.radio(
-        "Manteniendo las demás condiciones, si el receptor se aleja, esperas que el nivel:",
-        ["Aumente","Disminuya","Permanezca necesariamente igual"],
-        index=None, horizontal=True,
-        key="c3l2_s1_prediction",
-    )
-    hypothesis = st.text_area(
-        "Justifica tu hipótesis. No uses todavía −3 dB ni −6 dB: explica en términos de distancia y geometría.",
-        key="c3l2_s1_hyp", height=105,
-        placeholder="Ej.: espero que disminuya porque la energía se distribuye sobre una región mayor; la magnitud exacta dependerá de cómo idealicemos la fuente.",
-    )
-    if st.button("🔎 Contrastar hipótesis", key="c3l2_s1_check_hyp", use_container_width=True):
-        if prediction == "Disminuya" and len(hypothesis.strip()) >= 25:
-            st.success("Hipótesis coherente. La Etapa 2 responderá cuánto cambia el nivel para distintas geometrías.")
-        elif prediction:
-            st.info("La tendencia general es una disminución al aumentar la distancia; la tasa exacta depende de la geometría.")
-        else:
-            st.warning("Selecciona primero una tendencia y luego justifícala.")
-
-    st.markdown("## 9. Construye un problema acústico profesional")
-    st.caption("El cierre de la etapa consiste en convertir lo observado en una pregunta que realmente podría investigarse mediante medición o modelación.")
     st.markdown(
         """
         <div class="c3l2-grid">
-          <div class="c3l2-card"><div class="c3l2-k">1 · DEFINE</div><b>Fuente y receptor</b></div>
-          <div class="c3l2-card blue"><div class="c3l2-k">2 · CAMBIA</div><b>Una variable de interés</b></div>
-          <div class="c3l2-card green"><div class="c3l2-k">3 · PREGUNTA</div><b>Qué quieres investigar</b></div>
+          <div class="c3l2-card">
+            <div class="c3l2-k">HVAC ROOFTOP</div>
+            <b>07:00–23:00 h</b><br>
+            Climatización general del supermercado.
+          </div>
+          <div class="c3l2-card blue">
+            <div class="c3l2-k">CHILLER REFRIGERACIÓN</div>
+            <b>Operación 24 h</b><br>
+            Asociado a cámaras y conservación de productos.
+          </div>
+          <div class="c3l2-card orange">
+            <div class="c3l2-k">GRUPO ELECTRÓGENO</div>
+            <b>Emergencia + prueba martes 11:00–11:30</b><br>
+            No opera normalmente durante la noche.
+          </div>
         </div>
         """,
         unsafe_allow_html=True,
     )
-    st.markdown("""
-    <div class="c3l2-note">
-      Integra todo lo anterior en una sola estructura:
-      <b>fuente + camino + receptor + variable + pregunta técnica.</b>
-    </div>
-    """, unsafe_allow_html=True)
 
-    c1,c2 = st.columns(2)
-    build_source = c1.selectbox("1. Fuente",["Tráfico","HVAC","Camión de reparto"],key="c3l2_s1_build_source")
-    build_receptor = c2.selectbox("2. Receptor",["Vivienda","Colegio","Peatón"],key="c3l2_s1_build_receptor")
-    build_variable = st.selectbox(
-        "3. Variable que quieres estudiar",
-        ["Distancia","Presencia de barrera","Estado ON/OFF de la fuente","Cambio de posición del receptor"],
-        key="c3l2_s1_build_variable",
-    )
-    professional_question = st.text_area(
-        "4. Escribe la pregunta técnica que investigarías",
-        height=95, key="c3l2_s1_prof_question",
-        placeholder="Ej.: ¿cómo cambia el nivel en la vivienda al aumentar la distancia respecto de la avenida?",
+    # ---------- technical SVG ----------
+    st.markdown("### Diagrama técnico del caso")
+    st.caption(
+        "Lee primero la geometría. Las fuentes se muestran en naranja, los receptores reclamantes en rojo y los posibles caminos acústicos en azul."
     )
 
+    case_svg = r"""
+    <svg viewBox="0 0 1200 650" width="100%" style="display:block;border-radius:18px;background:#101820">
+      <defs>
+        <linearGradient id="wall" x1="0" y1="0" x2="1" y2="1">
+          <stop offset="0%" stop-color="#3e4a52"/>
+          <stop offset="100%" stop-color="#232d34"/>
+        </linearGradient>
+        <linearGradient id="market" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stop-color="#34424c"/>
+          <stop offset="100%" stop-color="#202a31"/>
+        </linearGradient>
+        <filter id="ds" x="-20%" y="-20%" width="140%" height="140%">
+          <feDropShadow dx="0" dy="7" stdDeviation="8" flood-color="#000" flood-opacity=".32"/>
+        </filter>
+      </defs>
+
+      <!-- floor -->
+      <rect x="0" y="560" width="1200" height="90" fill="#151d22"/>
+
+      <!-- supermarket -->
+      <g filter="url(#ds)">
+        <rect x="70" y="330" width="560" height="230" rx="8" fill="url(#market)" stroke="#596974" stroke-width="2"/>
+        <rect x="70" y="305" width="560" height="32" rx="5" fill="#46545d"/>
+        <text x="92" y="530" fill="#dce6eb" font-size="24" font-weight="800">SUPERMERCADO</text>
+      </g>
+
+      <!-- rooftop HVAC -->
+      <g transform="translate(145 225)">
+        <rect width="155" height="80" rx="8" fill="#697983" stroke="#9dadb6" stroke-width="2"/>
+        <rect x="18" y="18" width="48" height="42" rx="5" fill="#26343d"/>
+        <circle cx="105" cy="39" r="23" fill="#273740" stroke="#91a5af" stroke-width="2"/>
+        <path d="M105 17 L105 61 M83 39 L127 39 M90 24 L120 54 M120 24 L90 54" stroke="#91a5af" stroke-width="2"/>
+        <rect x="0" y="-31" width="155" height="24" rx="8" fill="#0f2734"/>
+        <text x="77" y="-14" text-anchor="middle" fill="#d9e7ed" font-size="14" font-weight="800">HVAC ROOFTOP</text>
+      </g>
+
+      <!-- chiller -->
+      <g transform="translate(350 205)">
+        <rect width="205" height="100" rx="10" fill="#5b6870" stroke="#a0afb7" stroke-width="2"/>
+        <circle cx="55" cy="49" r="30" fill="#24333b" stroke="#97a9b2" stroke-width="2"/>
+        <circle cx="150" cy="49" r="30" fill="#24333b" stroke="#97a9b2" stroke-width="2"/>
+        <path d="M55 21 L55 77 M27 49 L83 49 M35 29 L75 69 M75 29 L35 69" stroke="#97a9b2" stroke-width="2"/>
+        <path d="M150 21 L150 77 M122 49 L178 49 M130 29 L170 69 M170 29 L130 69" stroke="#97a9b2" stroke-width="2"/>
+        <rect x="15" y="-35" width="175" height="26" rx="9" fill="#5b2c16"/>
+        <text x="102" y="-17" text-anchor="middle" fill="#ffd7be" font-size="15" font-weight="900">CHILLER · 24 h</text>
+      </g>
+
+      <!-- generator ground -->
+      <g transform="translate(120 448)">
+        <rect width="160" height="88" rx="8" fill="#4d5458" stroke="#808b91" stroke-width="2"/>
+        <rect x="16" y="15" width="85" height="58" rx="4" fill="#2e383e"/>
+        <circle cx="125" cy="44" r="18" fill="#252d32" stroke="#87949b"/>
+        <rect x="5" y="-32" width="150" height="24" rx="8" fill="#603b10"/>
+        <text x="80" y="-15" text-anchor="middle" fill="#ffe4b3" font-size="13" font-weight="900">GRUPO ELECTRÓGENO</text>
+      </g>
+
+      <!-- median wall -->
+      <g filter="url(#ds)">
+        <rect x="650" y="285" width="42" height="275" fill="#707a80"/>
+        <rect x="645" y="278" width="52" height="14" fill="#919a9f"/>
+        <text x="674" y="445" transform="rotate(-90 674 445)" fill="#dce5e9" font-size="16" font-weight="800">MEDIANERA</text>
+      </g>
+
+      <!-- 10-floor building -->
+      <g filter="url(#ds)">
+        <rect x="760" y="55" width="355" height="505" rx="6" fill="url(#wall)" stroke="#677985" stroke-width="2"/>
+        <rect x="780" y="32" width="315" height="28" rx="5" fill="#495963"/>
+        <text x="937" y="24" text-anchor="middle" fill="#dce8ed" font-size="18" font-weight="900">EDIFICIO RESIDENCIAL · 10 PISOS</text>
+
+        <!-- floors -->
+        <g stroke="#657681" stroke-width="1">
+          <line x1="760" y1="105" x2="1115" y2="105"/><line x1="760" y1="155" x2="1115" y2="155"/>
+          <line x1="760" y1="205" x2="1115" y2="205"/><line x1="760" y1="255" x2="1115" y2="255"/>
+          <line x1="760" y1="305" x2="1115" y2="305"/><line x1="760" y1="355" x2="1115" y2="355"/>
+          <line x1="760" y1="405" x2="1115" y2="405"/><line x1="760" y1="455" x2="1115" y2="455"/>
+          <line x1="760" y1="505" x2="1115" y2="505"/>
+        </g>
+
+        <!-- windows -->
+        <g fill="#5f91a9">
+          <rect x="800" y="70" width="54" height="22"/><rect x="900" y="70" width="54" height="22"/><rect x="1000" y="70" width="54" height="22"/>
+          <rect x="800" y="120" width="54" height="22"/><rect x="900" y="120" width="54" height="22"/><rect x="1000" y="120" width="54" height="22"/>
+          <rect x="800" y="170" width="54" height="22"/><rect x="900" y="170" width="54" height="22"/><rect x="1000" y="170" width="54" height="22"/>
+          <rect x="800" y="220" width="54" height="22"/><rect x="900" y="220" width="54" height="22"/><rect x="1000" y="220" width="54" height="22"/>
+          <rect x="800" y="270" width="54" height="22"/><rect x="900" y="270" width="54" height="22"/><rect x="1000" y="270" width="54" height="22"/>
+          <rect x="800" y="320" width="54" height="22"/><rect x="900" y="320" width="54" height="22"/><rect x="1000" y="320" width="54" height="22"/>
+          <rect x="800" y="370" width="54" height="22"/><rect x="900" y="370" width="54" height="22"/><rect x="1000" y="370" width="54" height="22"/>
+          <rect x="800" y="420" width="54" height="22"/><rect x="900" y="420" width="54" height="22"/><rect x="1000" y="420" width="54" height="22"/>
+          <rect x="800" y="470" width="54" height="22"/><rect x="900" y="470" width="54" height="22"/><rect x="1000" y="470" width="54" height="22"/>
+          <rect x="800" y="520" width="54" height="22"/><rect x="900" y="520" width="54" height="22"/><rect x="1000" y="520" width="54" height="22"/>
+        </g>
+      </g>
+
+      <!-- complaint receivers: floors 3 and 4 -->
+      <rect x="786" y="366" width="83" height="38" rx="6" fill="#8a2424" opacity=".88"/>
+      <text x="827" y="391" text-anchor="middle" fill="white" font-size="14" font-weight="900">DEPTO 401</text>
+      <circle cx="785" cy="385" r="10" fill="#ef5350" stroke="white" stroke-width="3"/>
+
+      <rect x="786" y="416" width="83" height="38" rx="6" fill="#8a2424" opacity=".88"/>
+      <text x="827" y="441" text-anchor="middle" fill="white" font-size="14" font-weight="900">DEPTO 301</text>
+      <circle cx="785" cy="435" r="10" fill="#ef5350" stroke="white" stroke-width="3"/>
+
+      <!-- source markers -->
+      <circle cx="452" cy="255" r="10" fill="#f28b39" stroke="white" stroke-width="3"/>
+      <circle cx="222" cy="266" r="10" fill="#f28b39" stroke="white" stroke-width="3"/>
+      <circle cx="200" cy="492" r="10" fill="#f28b39" stroke="white" stroke-width="3"/>
+
+      <!-- propagation paths -->
+      <path d="M452 255 Q650 300 785 385" fill="none" stroke="#36a9e1" stroke-width="4"/>
+      <path d="M452 255 Q655 335 785 435" fill="none" stroke="#36a9e1" stroke-width="3" stroke-dasharray="9 7" opacity=".82"/>
+      <circle cx="675" cy="289" r="6" fill="#36a9e1"/>
+      <text x="545" y="295" fill="#7bc8ec" font-size="14" font-weight="800">camino hacia receptores reclamantes</text>
+
+      <!-- measurement points -->
+      <g>
+        <circle cx="510" cy="305" r="15" fill="#155f84" stroke="#9ce3ff" stroke-width="3"/>
+        <text x="510" y="311" text-anchor="middle" fill="white" font-size="12" font-weight="900">P1</text>
+
+        <circle cx="676" cy="525" r="15" fill="#155f84" stroke="#9ce3ff" stroke-width="3"/>
+        <text x="676" y="531" text-anchor="middle" fill="white" font-size="12" font-weight="900">P2</text>
+
+        <circle cx="785" cy="385" r="15" fill="#155f84" stroke="#9ce3ff" stroke-width="3" opacity=".01"/>
+        <text x="888" y="390" fill="#9ce3ff" font-size="13" font-weight="800">P3 · receptor</text>
+      </g>
+
+      <!-- legend -->
+      <g transform="translate(65 600)">
+        <circle cx="0" cy="0" r="7" fill="#f28b39"/><text x="15" y="5" fill="#dce7ec" font-size="13">fuente</text>
+        <circle cx="105" cy="0" r="7" fill="#ef5350"/><text x="120" y="5" fill="#dce7ec" font-size="13">receptor reclamante</text>
+        <line x1="285" y1="0" x2="330" y2="0" stroke="#36a9e1" stroke-width="4"/><text x="340" y="5" fill="#dce7ec" font-size="13">camino acústico</text>
+      </g>
+    </svg>
+    """
+    components.html(case_svg, height=650)
+
+    # ---------- mission 1 ----------
+    st.markdown("### Misión 1 · Identifica las fuentes")
+    st.caption("No todo lo que aparece en el diagrama es una fuente acústica.")
+
+    source_choices = [
+        "HVAC rooftop",
+        "Chiller de refrigeración",
+        "Grupo electrógeno",
+        "Medianera",
+        "Edificio residencial",
+    ]
+    case_sources = st.multiselect(
+        "Selecciona todos los elementos que corresponden a fuentes acústicas del caso",
+        source_choices,
+        default=[],
+        key="c3l2_case_sources",
+    )
+
+    if case_sources:
+        correct_set = {"HVAC rooftop", "Chiller de refrigeración", "Grupo electrógeno"}
+        selected_set = set(case_sources)
+        if selected_set == correct_set:
+            st.success("Correcto. Identificaste las tres fuentes técnicas del escenario.")
+        else:
+            st.info("Revisa: una medianera o un edificio forman parte del entorno/receptor, pero no generan por sí mismos el ruido investigado.")
+
+    # ---------- mission 2 ----------
+    st.markdown("### Misión 2 · Usa el horario como evidencia")
+    st.markdown(
+        """
+        <div class="c3l2-note">
+          La denuncia se concentra entre <b>23:00 y 06:00 h</b>. Usa ese antecedente para priorizar una fuente,
+          pero recuerda: <b>coincidir con el horario no demuestra causalidad</b>; solo construye una hipótesis de investigación.
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
+
+    suspect = st.radio(
+        "¿Qué fuente es inicialmente más consistente con el horario denunciado?",
+        [
+            "HVAC rooftop",
+            "Chiller de refrigeración",
+            "Grupo electrógeno",
+        ],
+        index=None,
+        key="c3l2_case_suspect",
+    )
+    if suspect:
+        if suspect == "Chiller de refrigeración":
+            st.success("Hipótesis coherente: el chiller opera 24 h y permanece activo durante todo el periodo denunciado.")
+        else:
+            st.warning("Compara nuevamente el horario de funcionamiento con el horario de la denuncia.")
+
+    # ---------- mission 3 ----------
+    st.markdown("### Misión 3 · Define el receptor crítico")
+    receptor_case = st.radio(
+        "¿Cuál es el receptor principal que debes considerar para investigar el reclamo?",
+        [
+            "El chiller en cubierta",
+            "La medianera",
+            "Los departamentos reclamantes 301 y 401",
+            "El interior del supermercado",
+        ],
+        index=None,
+        key="c3l2_case_receptor",
+    )
+    if receptor_case:
+        if receptor_case == "Los departamentos reclamantes 301 y 401":
+            st.success("Correcto. El receptor es el lugar donde interesa conocer la exposición asociada al reclamo.")
+        else:
+            st.info("Distingue nuevamente fuente, camino y receptor.")
+
+    # ---------- mission 4 ----------
+    st.markdown("### Misión 4 · Decide dónde medir")
+    st.markdown(
+        """
+        <div class="c3l2-grid">
+          <div class="c3l2-card blue">
+            <div class="c3l2-k">P1 · CERCA DE LA FUENTE</div>
+            <b>Caracterización de la fuente</b><br>
+            Ayuda a comprobar su estado operacional y su emisión próxima.
+          </div>
+          <div class="c3l2-card">
+            <div class="c3l2-k">P2 · CAMINO</div>
+            <b>Información de propagación</b><br>
+            Puede ayudar a entender cómo se transmite el sonido entre ambos recintos.
+          </div>
+          <div class="c3l2-card green">
+            <div class="c3l2-k">P3 · RECEPTOR</div>
+            <b>Exposición en el punto reclamante</b><br>
+            Permite conocer qué nivel llega al lugar afectado.
+          </div>
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
+
+    measurement_plan = st.multiselect(
+        "Para una investigación inicial bien fundamentada, ¿qué puntos usarías?",
+        ["P1 · Fuente", "P2 · Camino", "P3 · Receptor"],
+        default=[],
+        key="c3l2_case_measure_points",
+    )
+    if measurement_plan:
+        mp = set(measurement_plan)
+        if {"P1 · Fuente", "P3 · Receptor"}.issubset(mp):
+            st.success("Buena estrategia: combinas información de la fuente con exposición en el receptor. P2 puede complementar el análisis del camino.")
+        else:
+            st.info("Para vincular una fuente sospechosa con un reclamo conviene, como mínimo, caracterizar la fuente y observar el receptor.")
+
+    # ---------- mission 5 ----------
+    st.markdown("### Misión 5 · Compara fuente ON / OFF")
+    st.markdown(
+        """
+        <div class="c3l2-grid2">
+          <div class="c3l2-card blue">
+            <div class="c3l2-k">CHILLER ON</div>
+            <b>LAeq receptor = 58 dB(A)</b><br>
+            Fuente sospechosa operando.
+          </div>
+          <div class="c3l2-card green">
+            <div class="c3l2-k">CHILLER OFF</div>
+            <b>LAeq residual = 49 dB(A)</b><br>
+            Fuente sospechosa detenida.
+          </div>
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
+
+    onoff = st.radio(
+        "¿Qué puedes concluir correctamente con esta comparación preliminar?",
+        [
+            "El chiller queda demostrado como única fuente responsable",
+            "La diferencia ON/OFF fortalece la hipótesis de contribución del chiller, pero debe interpretarse con el resto de los antecedentes",
+            "No existe ninguna relación entre el chiller y el receptor",
+        ],
+        index=None,
+        key="c3l2_case_onoff",
+    )
+    if onoff:
+        if onoff.startswith("La diferencia ON/OFF"):
+            st.success("Correcto. La comparación operacional aporta evidencia, pero no debe sobregeneralizarse.")
+        else:
+            st.warning("Una comparación preliminar aporta evidencia; no permite declarar automáticamente causalidad exclusiva.")
+
+    # ---------- mission 6 ----------
+    st.markdown("### Misión 6 · Interpreta el camino de propagación")
+    path_question = st.radio(
+        "La medianera bloquea completamente el ruido hacia todos los departamentos del edificio.",
+        ["Verdadero", "Falso"],
+        index=None,
+        key="c3l2_case_wall",
+    )
+    if path_question:
+        if path_question == "Falso":
+            st.success(
+                "Correcto. Los departamentos superiores pueden quedar por sobre la pantalla efectiva y mantener línea de visión o recibir contribución por difracción."
+            )
+        else:
+            st.warning("Observa la altura de la medianera respecto de los departamentos reclamantes.")
+
+    # ---------- mission 7 ----------
+    st.markdown("### Misión 7 · ¿Dónde actúa la medida de mitigación?")
+    st.caption("Clasifica cada alternativa según el elemento principal sobre el que actúa.")
+
+    mitigation_answers = {}
+    mitigation_cases = [
+        ("Encierro acústico del chiller", "Fuente"),
+        ("Aumentar / optimizar una pantalla entre supermercado y edificio", "Camino"),
+        ("Mejorar el aislamiento de ventanas del departamento reclamante", "Receptor"),
+    ]
+    cols = st.columns(3)
+    for i, (measure, correct) in enumerate(mitigation_cases):
+        with cols[i]:
+            with st.container(border=True, key=f"c3l2_case_mit_{i}"):
+                st.markdown(f"**{measure}**")
+                mitigation_answers[str(i)] = st.segmented_control(
+                    f"Clasificación medida {i+1}",
+                    ["Fuente", "Camino", "Receptor"],
+                    key=f"c3l2_case_mitigation_{i}",
+                    label_visibility="collapsed",
+                )
+                if mitigation_answers[str(i)]:
+                    if mitigation_answers[str(i)] == correct:
+                        st.success(f"Actúa principalmente sobre: {correct}.")
+                    else:
+                        st.info("Revisa qué parte del sistema es modificada físicamente por la medida.")
+
+    # ---------- mission 8 ----------
+    st.markdown("### Misión 8 · Selecciona una estrategia de investigación")
+    strategy = st.radio(
+        "¿Qué estrategia es técnicamente más completa para iniciar la investigación?",
+        [
+            "Medir únicamente a 1 m del chiller",
+            "Medir únicamente dentro del departamento",
+            "Verificar estado operacional, medir en receptor, comparar fuente ON/OFF y registrar antecedentes del camino de propagación",
+        ],
+        index=None,
+        key="c3l2_case_strategy",
+    )
+    if strategy:
+        if strategy.startswith("Verificar estado operacional"):
+            st.success("Correcto. Integra fuente, receptor, condición operacional y propagación.")
+        else:
+            st.warning("Una sola medición aislada entrega información parcial del problema.")
+
+    # ---------- mission 9 / diagnosis ----------
+    st.markdown("### Misión 9 · Construye tu diagnóstico preliminar")
+    st.caption("No declares cumplimiento ni causalidad definitiva. Redacta una hipótesis técnica defendible a partir de los antecedentes disponibles.")
+
+    diagnosis_reason = st.text_area(
+        "Fundamento de la hipótesis",
+        key="c3l2_case_reason",
+        height=110,
+        placeholder="Relaciona horario denunciado, fuente que opera durante ese periodo, receptor y comparación operacional.",
+    )
+
+    if suspect == "Chiller de refrigeración" and receptor_case == "Los departamentos reclamantes 301 y 401":
+        auto_diag = (
+            "El chiller de refrigeración constituye la principal fuente sospechosa de la investigación preliminar, "
+            "porque opera durante el horario nocturno denunciado. Los departamentos 301 y 401 corresponden a los "
+            "receptores reclamantes. La hipótesis debe comprobarse mediante mediciones asociadas al estado operacional "
+            "de la fuente y en el receptor, considerando además el camino de propagación."
+        )
+    else:
+        auto_diag = (
+            "Completa la identificación de la fuente sospechosa y del receptor para construir una hipótesis diagnóstica coherente."
+        )
+
+    st.markdown(
+        f"""
+        <div class="c3l2-note">
+          <b>Hipótesis diagnóstica construida:</b><br>
+          {auto_diag}
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
+
+    # ---------- stage completion ----------
     if _c3l2_role() == "Alumno":
-        if st.button("💾 Guardar Etapa 1 y continuar",type="primary",key="c3l2_s1_save",use_container_width=True):
-            class_ok = sum(classification[item] == correct for item,correct in classify_items) == len(classify_items)
-            path_ok = all(path_answers.get(str(i)) == correct for i,(_,correct,_) in enumerate(path_cases))
-            rep_ok = one_point == "Que conoces el nivel observado en ese punto y periodo, bajo esas condiciones"
-            hyp_ok = prediction == "Disminuya" and len(hypothesis.strip()) >= 25
-            problem_ok = len(professional_question.strip()) >= 30
+        if st.button(
+            "💾 Guardar Etapa 1",
+            type="primary",
+            key="c3l2_s1_save",
+            use_container_width=True,
+        ):
+            class_ok = sum(classification[item] == correct for item,correct,_ in classify_items) == len(classify_items)
+            path_ok = all(
+                path_answers.get(str(i)) == correct
+                for i,(_,correct,_,_) in enumerate(path_cases)
+            )
+            sources_ok = set(case_sources) == {"HVAC rooftop", "Chiller de refrigeración", "Grupo electrógeno"}
+            suspect_ok = suspect == "Chiller de refrigeración"
+            receptor_ok = receptor_case == "Los departamentos reclamantes 301 y 401"
+            measure_ok = {"P1 · Fuente", "P3 · Receptor"}.issubset(set(measurement_plan))
+            onoff_ok = bool(onoff and onoff.startswith("La diferencia ON/OFF"))
+            wall_ok = path_question == "Falso"
+            mitigation_ok = all(
+                mitigation_answers.get(str(i)) == correct
+                for i,(_,correct) in enumerate(mitigation_cases)
+            )
+            strategy_ok = bool(strategy and strategy.startswith("Verificar estado operacional"))
+            diagnosis_ok = len(diagnosis_reason.strip()) >= 50
 
-            missing=[]
-            if not class_ok: missing.append("clasificación")
-            if not path_ok: missing.append("casos fuente/camino/receptor")
-            if not rep_ok: missing.append("representatividad")
-            if not hyp_ok: missing.append("hipótesis")
-            if not problem_ok: missing.append("problema profesional")
+            missing = []
+            if not class_ok: missing.append("clasificación fuente/camino/receptor")
+            if not path_ok: missing.append("intervenciones")
+            if not sources_ok: missing.append("fuentes del caso")
+            if not suspect_ok: missing.append("fuente sospechosa")
+            if not receptor_ok: missing.append("receptor")
+            if not measure_ok: missing.append("plan de medición")
+            if not onoff_ok: missing.append("interpretación ON/OFF")
+            if not wall_ok: missing.append("camino de propagación")
+            if not mitigation_ok: missing.append("medidas de mitigación")
+            if not strategy_ok: missing.append("estrategia de investigación")
+            if not diagnosis_ok: missing.append("fundamento del diagnóstico")
 
             if missing:
-                st.warning("Completa o revisa: " + ", ".join(missing) + ".")
+                st.warning("Antes de cerrar la etapa revisa: " + ", ".join(missing) + ".")
             else:
-                _c3l2_complete(saved,1,{
-                    "selected_source":source,
-                    "selected_receptor":receptor,
-                    "classification":classification,
-                    "path_cases":path_answers,
-                    "mission":mission,
-                    "representativity":one_point,
-                    "r_initial_m":r_initial,
-                    "r_final_m":r_final,
-                    "prediction":prediction,
-                    "hypothesis":hypothesis,
-                    "professional_problem":{
-                        "source":build_source,
-                        "receptor":build_receptor,
-                        "variable":build_variable,
-                        "question":professional_question,
+                _c3l2_complete(
+                    saved,
+                    1,
+                    {
+                        "selected_source": source,
+                        "selected_receptor": receptor,
+                        "classification": classification,
+                        "path_cases": path_answers,
+                        "case_professional": {
+                            "sources": case_sources,
+                            "suspect": suspect,
+                            "receptor": receptor_case,
+                            "measurement_plan": measurement_plan,
+                            "on_off_interpretation": onoff,
+                            "median_wall": path_question,
+                            "mitigation": mitigation_answers,
+                            "strategy": strategy,
+                            "diagnosis_reason": diagnosis_reason,
+                            "diagnostic_hypothesis": auto_diag,
+                        },
                     },
-                })
-                st.success("Etapa 1 completada. En la Etapa 2 cuantificarás el efecto de la geometría.")
+                )
+                st.success("Etapa 1 completada. El caso profesional quedó guardado en tu avance.")
 
     _c3l2_teacher_pauta(
         "Etapa 1",
         """
-**Objetivo:** formular correctamente el sistema acústico antes de calcular.
+**Objetivo general**
+El alumno debe ser capaz de formular un problema de ruido ambiental mediante la estructura
+**fuente → camino → receptor** y aplicarla a un caso profesional.
 
-**Pauta técnica**
-- Automóvil y HVAC → fuente.
-- Aire y pantalla → camino.
-- Fachada y patio del colegio → receptor.
-- Barrera → camino.
-- Ventilador de menor emisión → fuente.
-- Cambio de punto de evaluación → receptor.
-- Cierre de abertura → camino.
-- Una medición de 2 min describe ese punto y periodo; no representa automáticamente todo el día.
-- Al aumentar distancia se espera una disminución, pero la tasa depende de la geometría.
-- El problema profesional debe contener fuente, receptor, variable de interés y pregunta investigable.
+**Caso supermercado / edificio**
+- Fuentes técnicas presentes: HVAC rooftop, chiller y grupo electrógeno.
+- Fuente inicialmente más consistente con reclamo 23:00–06:00: **chiller**, por su operación 24 h.
+- Esto constituye una **hipótesis de trabajo**, no prueba causal definitiva.
+- Receptores principales: departamentos reclamantes 301 y 401.
+- P1: caracterización próxima de fuente.
+- P2: información complementaria del camino.
+- P3: exposición en receptor.
+- Investigación inicial recomendada: combinar fuente + receptor y, cuando aporte valor, caracterización del camino.
+- Comparación ON/OFF 58 vs 49 dB(A): fortalece la hipótesis de contribución de la fuente, pero debe interpretarse junto con el estado operacional y otros antecedentes.
+- La medianera no implica protección completa de pisos superiores; puede existir línea de visión y/o difracción.
+- Encierro de chiller → intervención en la **fuente**.
+- Pantalla/barrera → intervención en el **camino**.
+- Mejora de ventanas del receptor → intervención en el **receptor**.
+- Estrategia más completa: verificar estado operacional, medir en receptor, realizar comparación ON/OFF y documentar propagación.
 
-**Error conceptual a vigilar:** confundir una barrera con una fuente o generalizar una medición puntual sin justificar representatividad.
+**Criterio de cierre**
+La conclusión del alumno debe utilizar lenguaje de hipótesis diagnóstica y evitar afirmar causalidad o cumplimiento sin evidencia suficiente.
         """
     )
+
 
 def _c3l2_stage2(lab,saved):
     _c3l2_header(2,"Fuente puntual vs fuente lineal","Descubrir por qué duplicar la distancia no produce la misma pérdida en dos geometrías ideales.",25)
