@@ -27690,444 +27690,182 @@ def _c3l2_stage1(lab,saved):
     # ================================================================
     # 6. CASO PROFESIONAL INTERACTIVO
     # ================================================================
+    # ================================================================
+    # 6. CASO PROFESIONAL INTERACTIVO SINCRONIZADO
+    # ================================================================
     st.markdown("## 6. Caso profesional · reclamo por ruido de supermercado")
     st.caption(
-        "Objetivo: construir una hipótesis acústica a partir de antecedentes operacionales, geometría del sitio, "
-        "selección de fuentes, receptores y puntos de medición."
+        "La imagen y las preguntas trabajan como una sola actividad: las selecciones realizadas directamente "
+        "sobre el diagrama quedan asociadas a cada misión."
     )
 
     st.markdown(
         """
         <div class="c3l2-intro">
           <div class="c3l2-k">ENCARGO PROFESIONAL</div>
-          <div class="c3l2-title">No recibes el caso resuelto: debes construirlo.</div>
-          Un supermercado colinda con un edificio residencial de 10 pisos. Existen varias fuentes técnicas,
-          una medianera y tres posibles posiciones receptoras. La denuncia se concentra entre
-          <b>23:00 y 06:00 h</b>. Identifica qué investigarías, dónde medirías y qué receptor podría estar
-          más expuesto antes de realizar cualquier medición.
+          <div class="c3l2-title">Investiga un reclamo nocturno sin recibir la respuesta de antemano.</div>
+          El supermercado cuenta con HVAC, chiller y grupo electrógeno. La denuncia se concentra entre
+          <b>23:00 y 06:00 h</b>. El edificio tiene tres posiciones receptoras: una bajo la medianera,
+          otra apenas sobre ella y otra en un piso superior.
         </div>
         """,
         unsafe_allow_html=True,
     )
 
-    st.markdown("### Antecedentes operacionales")
     st.markdown(
         """
         <div class="c3l2-grid">
-          <div class="c3l2-card">
-            <div class="c3l2-k">HVAC ROOFTOP</div>
-            <b>07:00–23:00 h</b><br>
-            Climatización general del supermercado.
-          </div>
-          <div class="c3l2-card blue">
-            <div class="c3l2-k">CHILLER</div>
-            <b>Operación continua 24 h</b><br>
-            Refrigeración de cámaras y conservación de productos.
-          </div>
-          <div class="c3l2-card orange">
-            <div class="c3l2-k">GRUPO ELECTRÓGENO</div>
-            <b>Emergencia + prueba martes 11:00–11:30 h</b><br>
-            No opera normalmente durante el periodo nocturno denunciado.
-          </div>
+          <div class="c3l2-card"><div class="c3l2-k">HVAC</div><b>07:00–23:00 h</b><br>Climatización general.</div>
+          <div class="c3l2-card blue"><div class="c3l2-k">CHILLER</div><b>Operación 24 h</b><br>Refrigeración de cámaras.</div>
+          <div class="c3l2-card orange"><div class="c3l2-k">GRUPO ELECTRÓGENO</div><b>Emergencia + prueba 11:00–11:30 h</b><br>No opera normalmente de noche.</div>
         </div>
         """,
         unsafe_allow_html=True,
     )
 
-    st.markdown(
-        """
-        <div class="c3l2-note">
-          <b>Denuncia:</b> residentes señalan un ruido continuo, más perceptible entre 23:00 y 06:00 h,
-          aparentemente proveniente de la cubierta del supermercado.
-        </div>
-        """,
-        unsafe_allow_html=True,
+    import os as _os
+    _case_component_path = _os.path.join(
+        _os.path.dirname(_os.path.dirname(__file__)),
+        "ui",
+        "c3l2_case_prof",
+    )
+    _case_component = components.declare_component(
+        "c3l2_case_prof",
+        path=_case_component_path,
     )
 
-    st.markdown("### Explora el caso directamente sobre el diagrama")
+    _previous_case = saved.get("c3l2_stage1_case_interactive", {})
+    _case_state = _case_component(
+        value=_previous_case,
+        key="c3l2_case_prof_component",
+        default=_previous_case,
+    ) or _previous_case
+
+    if isinstance(_case_state, dict):
+        saved["c3l2_stage1_case_interactive"] = _case_state
+
+    st.markdown("### Cierre profesional")
     st.caption(
-        "Primero identifica elementos y después diseña tu campaña. El diagrama no te entrega de antemano "
-        "qué es fuente, camino o punto de medición."
+        "Resume la hipótesis que construiste a partir del caso interactivo. "
+        "No declares causalidad definitiva."
     )
-
-    case_interactive = r"""
-    <!DOCTYPE html>
-    <html>
-    <head>
-      <meta charset="utf-8">
-      <style>
-        *{box-sizing:border-box}
-        body{margin:0;font-family:Inter,system-ui,-apple-system,"Segoe UI",sans-serif;background:#f7fafc;color:#e7eef3}
-        .wrap{background:#101820;border-radius:18px;overflow:hidden;border:1px solid #293b46;box-shadow:0 10px 30px rgba(0,0,0,.12)}
-        .toolbar{display:flex;flex-wrap:wrap;gap:8px;align-items:center;padding:13px 15px;background:#16232b;border-bottom:1px solid #2f434f}
-        .label{font-size:12px;font-weight:850;color:#b9cad4;margin-right:4px}
-        button{border:1px solid #425d6d;background:#20323d;color:#e8f1f5;border-radius:10px;padding:8px 11px;font-size:11px;font-weight:800;cursor:pointer}
-        button:hover{background:#29414f} button.active{background:#0b749e;border-color:#42b9e8;color:white}
-        .main{display:grid;grid-template-columns:minmax(0,1fr) 285px}
-        .side{background:#142129;border-left:1px solid #2d414d;padding:13px;min-height:590px}
-        .panel{border:1px solid #334b58;border-radius:12px;background:#192832;padding:10px;margin-bottom:10px}
-        .ptitle{font-size:11px;font-weight:900;letter-spacing:.06em;color:#6ed0f4;text-transform:uppercase;margin-bottom:7px}
-        .item{font-size:12px;color:#dbe8ee;padding:5px 0;border-bottom:1px solid rgba(255,255,255,.06)}
-        .muted{font-size:11px;color:#91a6b2;line-height:1.4}
-        .tag{display:inline-block;padding:4px 7px;border-radius:999px;background:#253946;color:#cfe1e9;font-size:10px;margin:2px}
-        svg{display:block;width:100%;height:auto;background:#101820;touch-action:none}
-        .clickable{cursor:pointer}.selected-outline{stroke:#f7c65b!important;stroke-width:5!important;filter:drop-shadow(0 0 6px rgba(247,198,91,.5))}
-        .receiver-hot{cursor:pointer}.receiver-hot:hover circle{stroke:#fff;stroke-width:5}
-        @media(max-width:800px){.main{grid-template-columns:1fr}.side{border-left:0;border-top:1px solid #2d414d;min-height:auto}}
-      </style>
-    </head>
-    <body>
-    <div class="wrap">
-      <div class="toolbar">
-        <span class="label">Modo:</span>
-        <button id="modeIdentify" class="active" onclick="setMode('identify')">1 · Identificar elementos</button>
-        <button id="modePoint" onclick="setMode('point')">2 · Colocar punto de medición</button>
-        <button id="showPaths" onclick="togglePaths()">Mostrar caminos posibles</button>
-        <button onclick="undoPoint()">Deshacer último punto</button>
-        <button onclick="resetAll()">Reiniciar</button>
-      </div>
-      <div class="main">
-        <div>
-          <svg id="caseSvg" viewBox="0 0 980 610">
-            <defs>
-              <linearGradient id="market" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#34434d"/><stop offset="100%" stop-color="#202b32"/></linearGradient>
-              <linearGradient id="tower" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#3d4a53"/><stop offset="100%" stop-color="#27323a"/></linearGradient>
-              <filter id="ds"><feDropShadow dx="0" dy="5" stdDeviation="5" flood-color="#000" flood-opacity=".35"/></filter>
-            </defs>
-            <rect width="980" height="610" fill="#101820"/><rect y="535" width="980" height="75" fill="#151f25"/>
-
-            <g filter="url(#ds)">
-              <rect x="45" y="300" width="480" height="235" rx="7" fill="url(#market)" stroke="#60717b" stroke-width="2"/>
-              <rect x="45" y="282" width="480" height="24" rx="4" fill="#4c5b64"/>
-              <text x="65" y="505" fill="#dce8ed" font-size="22" font-weight="900">SUPERMERCADO</text>
-            </g>
-
-            <g id="hvac" class="clickable" onclick="toggleElement('hvac')">
-              <rect id="hvacBox" x="95" y="215" width="135" height="67" rx="8" fill="#667781" stroke="#9babb3" stroke-width="2"/>
-              <rect x="108" y="232" width="45" height="34" rx="4" fill="#26343d"/>
-              <circle cx="190" cy="248" r="23" fill="#26343d" stroke="#9babb3" stroke-width="2"/>
-              <path d="M190 226V270 M168 248H212 M175 233L205 263 M205 233L175 263" stroke="#95a7b0" stroke-width="2"/>
-              <text x="163" y="202" text-anchor="middle" fill="#d9e7ed" font-size="14" font-weight="900">HVAC</text>
-            </g>
-
-            <g id="chiller" class="clickable" onclick="toggleElement('chiller')">
-              <rect id="chillerBox" x="285" y="195" width="190" height="87" rx="9" fill="#5b6971" stroke="#a1b0b8" stroke-width="2"/>
-              <circle cx="337" cy="238" r="28" fill="#24333b" stroke="#98aab3" stroke-width="2"/>
-              <circle cx="425" cy="238" r="28" fill="#24333b" stroke="#98aab3" stroke-width="2"/>
-              <path d="M337 212V264 M311 238H363 M319 220L355 256 M355 220L319 256" stroke="#98aab3" stroke-width="2"/>
-              <path d="M425 212V264 M399 238H451 M407 220L443 256 M443 220L407 256" stroke="#98aab3" stroke-width="2"/>
-              <text x="380" y="181" text-anchor="middle" fill="#ffd8bd" font-size="14" font-weight="900">CHILLER · 24 h</text>
-            </g>
-
-            <g id="generator" class="clickable" onclick="toggleElement('generator')">
-              <rect id="generatorBox" x="90" y="405" width="145" height="82" rx="8" fill="#4e565b" stroke="#818d93" stroke-width="2"/>
-              <rect x="104" y="420" width="78" height="52" rx="4" fill="#2d383e"/>
-              <circle cx="210" cy="446" r="18" fill="#252e33" stroke="#87949b"/>
-              <text x="162" y="390" text-anchor="middle" fill="#ffe2ad" font-size="13" font-weight="900">GRUPO ELECTRÓGENO</text>
-            </g>
-
-            <g id="wall" class="clickable" onclick="toggleElement('wall')">
-              <rect id="wallBox" x="540" y="425" width="40" height="110" fill="#747f85" stroke="#adb6ba" stroke-width="2"/>
-              <rect x="535" y="418" width="50" height="12" fill="#929ca1"/>
-            </g>
-
-            <g id="building" class="clickable" onclick="toggleElement('building')" filter="url(#ds)">
-              <rect id="buildingBox" x="650" y="45" width="280" height="490" rx="6" fill="url(#tower)" stroke="#657680" stroke-width="2"/>
-              <rect x="665" y="24" width="250" height="25" rx="4" fill="#4c5b64"/>
-              <text x="790" y="18" text-anchor="middle" fill="#dce8ed" font-size="16" font-weight="900">EDIFICIO RESIDENCIAL · 10 PISOS</text>
-              <g stroke="#61727c">
-                <line x1="650" y1="94" x2="930" y2="94"/><line x1="650" y1="143" x2="930" y2="143"/><line x1="650" y1="192" x2="930" y2="192"/>
-                <line x1="650" y1="241" x2="930" y2="241"/><line x1="650" y1="290" x2="930" y2="290"/><line x1="650" y1="339" x2="930" y2="339"/>
-                <line x1="650" y1="388" x2="930" y2="388"/><line x1="650" y1="437" x2="930" y2="437"/><line x1="650" y1="486" x2="930" y2="486"/>
-              </g>
-              <g fill="#6598b0">
-                <rect x="685" y="58" width="44" height="20"/><rect x="770" y="58" width="44" height="20"/><rect x="855" y="58" width="44" height="20"/>
-                <rect x="685" y="107" width="44" height="20"/><rect x="770" y="107" width="44" height="20"/><rect x="855" y="107" width="44" height="20"/>
-                <rect x="685" y="156" width="44" height="20"/><rect x="770" y="156" width="44" height="20"/><rect x="855" y="156" width="44" height="20"/>
-                <rect x="685" y="205" width="44" height="20"/><rect x="770" y="205" width="44" height="20"/><rect x="855" y="205" width="44" height="20"/>
-                <rect x="685" y="254" width="44" height="20"/><rect x="770" y="254" width="44" height="20"/><rect x="855" y="254" width="44" height="20"/>
-                <rect x="685" y="303" width="44" height="20"/><rect x="770" y="303" width="44" height="20"/><rect x="855" y="303" width="44" height="20"/>
-                <rect x="685" y="352" width="44" height="20"/><rect x="770" y="352" width="44" height="20"/><rect x="855" y="352" width="44" height="20"/>
-                <rect x="685" y="401" width="44" height="20"/><rect x="770" y="401" width="44" height="20"/><rect x="855" y="401" width="44" height="20"/>
-                <rect x="685" y="450" width="44" height="20"/><rect x="770" y="450" width="44" height="20"/><rect x="855" y="450" width="44" height="20"/>
-                <rect x="685" y="499" width="44" height="20"/><rect x="770" y="499" width="44" height="20"/><rect x="855" y="499" width="44" height="20"/>
-              </g>
-            </g>
-
-            <g id="r1" class="receiver-hot" onclick="selectReceiver('R1')">
-              <circle cx="666" cy="468" r="12" fill="#ef5350" stroke="#fff" stroke-width="3"/>
-              <rect x="682" y="454" width="115" height="28" rx="7" fill="#6d2828"/><text x="739" y="473" text-anchor="middle" fill="#fff" font-size="12" font-weight="900">R1 · bajo medianera</text>
-            </g>
-            <g id="r2" class="receiver-hot" onclick="selectReceiver('R2')">
-              <circle cx="666" cy="397" r="12" fill="#ef5350" stroke="#fff" stroke-width="3"/>
-              <rect x="682" y="383" width="145" height="28" rx="7" fill="#8a2727"/><text x="754" y="402" text-anchor="middle" fill="#fff" font-size="12" font-weight="900">R2 · sobre medianera</text>
-            </g>
-            <g id="r3" class="receiver-hot" onclick="selectReceiver('R3')">
-              <circle cx="666" cy="142" r="12" fill="#ef5350" stroke="#fff" stroke-width="3"/>
-              <rect x="682" y="128" width="110" height="28" rx="7" fill="#6d2828"/><text x="737" y="147" text-anchor="middle" fill="#fff" font-size="12" font-weight="900">R3 · piso alto</text>
-            </g>
-
-            <line x1="500" y1="418" x2="690" y2="418" stroke="#bdc6ca" stroke-width="2" stroke-dasharray="7 6"/>
-            <text x="588" y="406" fill="#c9d3d8" font-size="11">altura efectiva medianera</text>
-
-            <g id="paths" style="display:none">
-              <path d="M380 238 Q520 300 666 397" fill="none" stroke="#3cb4e8" stroke-width="4"/>
-              <path d="M380 238 Q535 365 666 468" fill="none" stroke="#3cb4e8" stroke-width="3" stroke-dasharray="8 6"/>
-              <path d="M380 238 Q520 155 666 142" fill="none" stroke="#3cb4e8" stroke-width="3"/>
-              <circle cx="560" cy="418" r="6" fill="#3cb4e8"/>
-            </g>
-
-            <g id="pointLayer"></g>
-            <rect id="clickLayer" x="0" y="0" width="980" height="610" fill="transparent" style="display:none;cursor:crosshair"/>
-          </svg>
-        </div>
-
-        <div class="side">
-          <div class="panel"><div class="ptitle">Elementos seleccionados</div><div id="elementList" class="muted">Haz clic sobre equipos o elementos del escenario.</div></div>
-          <div class="panel"><div class="ptitle">Receptor seleccionado</div><div id="receiverSelected" class="muted">Selecciona R1, R2 o R3 sobre el edificio.</div></div>
-          <div class="panel">
-            <div class="ptitle">Puntos de medición colocados</div>
-            <div class="muted" style="margin-bottom:7px">En modo “Colocar punto”, haz clic donde medirías.</div>
-            <div style="margin-bottom:7px">
-              <button id="roleSource" class="active" onclick="setPointRole('Fuente')">Fuente</button>
-              <button id="rolePath" onclick="setPointRole('Camino')">Camino</button>
-              <button id="roleReceiver" onclick="setPointRole('Receptor')">Receptor</button>
-            </div>
-            <div id="pointList" class="muted">Aún no has colocado puntos.</div>
-          </div>
-          <div class="panel">
-            <div class="ptitle">Qué observar</div>
-            <div class="muted">R1 queda bajo la medianera.<br>R2 queda apenas sobre ella y próximo a la línea directa desde cubierta.<br>R3 está claramente expuesto, pero con una trayectoria más larga.<br><br>La geometría permite formular una hipótesis; no reemplaza la medición.</div>
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <script>
-      const selected = new Set(); const points = [];
-      let mode='identify', pointRole='Fuente', pathsVisible=false, selectedReceiver=null;
-      const names={hvac:'HVAC',chiller:'Chiller',generator:'Grupo electrógeno',wall:'Medianera',building:'Edificio residencial'};
-
-      function setMode(m){mode=m;document.getElementById('modeIdentify').classList.toggle('active',m==='identify');document.getElementById('modePoint').classList.toggle('active',m==='point');document.getElementById('clickLayer').style.display=m==='point'?'block':'none';}
-      function toggleElement(id){if(mode!=='identify')return;if(selected.has(id))selected.delete(id);else selected.add(id);const box=document.getElementById(id+'Box');if(box)box.classList.toggle('selected-outline',selected.has(id));renderElements();}
-      function renderElements(){const box=document.getElementById('elementList');if(!selected.size){box.innerHTML='Haz clic sobre equipos o elementos del escenario.';return;}box.innerHTML=[...selected].map(id=>`<span class="tag">${names[id]}</span>`).join('');}
-      function selectReceiver(id){selectedReceiver=id;document.getElementById('receiverSelected').innerHTML=`<span class="tag">${id}</span>`;['r1','r2','r3'].forEach(r=>{document.getElementById(r).style.opacity=(r.toUpperCase()===id)?'1':'.42';});}
-      function setPointRole(role){pointRole=role;document.getElementById('roleSource').classList.toggle('active',role==='Fuente');document.getElementById('rolePath').classList.toggle('active',role==='Camino');document.getElementById('roleReceiver').classList.toggle('active',role==='Receptor');}
-      function svgPoint(evt){const svg=document.getElementById('caseSvg'),pt=svg.createSVGPoint();pt.x=evt.clientX;pt.y=evt.clientY;return pt.matrixTransform(svg.getScreenCTM().inverse());}
-      function locationLabel(x,y){if(x<525&&y<310)return'Cubierta / equipos';if(x<525&&y>=310)return'Supermercado / patio técnico';if(x>=525&&x<625)return'Sector medianera';if(x>=625)return'Fachada edificio';return'Sector intermedio';}
-      function addPoint(evt){if(mode!=='point')return;const p=svgPoint(evt);if(p.y<18||p.y>570)return;const id='M'+(points.length+1);points.push({id,role:pointRole,x:p.x,y:p.y,location:locationLabel(p.x,p.y)});drawPoints();renderPoints();}
-      function drawPoints(){const layer=document.getElementById('pointLayer');layer.innerHTML='';points.forEach(p=>{const color=p.role==='Fuente'?'#f28b39':(p.role==='Camino'?'#3cb4e8':'#67d28c');layer.innerHTML+=`<g><circle cx="${p.x.toFixed(1)}" cy="${p.y.toFixed(1)}" r="15" fill="#102935" stroke="${color}" stroke-width="4"/><text x="${p.x.toFixed(1)}" y="${(p.y+4).toFixed(1)}" text-anchor="middle" fill="white" font-size="10" font-weight="900">${p.id}</text></g>`;});}
-      function renderPoints(){const box=document.getElementById('pointList');if(!points.length){box.innerHTML='Aún no has colocado puntos.';return;}box.innerHTML=points.map(p=>`<div class="item"><b>${p.id}</b> · ${p.role}<br><span class="muted">${p.location}</span></div>`).join('');}
-      function undoPoint(){points.pop();drawPoints();renderPoints();}
-      function togglePaths(){pathsVisible=!pathsVisible;document.getElementById('paths').style.display=pathsVisible?'block':'none';document.getElementById('showPaths').classList.toggle('active',pathsVisible);}
-      function resetAll(){selected.clear();points.length=0;selectedReceiver=null;['hvacBox','chillerBox','generatorBox','wallBox','buildingBox'].forEach(id=>{const el=document.getElementById(id);if(el)el.classList.remove('selected-outline');});['r1','r2','r3'].forEach(r=>document.getElementById(r).style.opacity='1');document.getElementById('receiverSelected').innerHTML='Selecciona R1, R2 o R3 sobre el edificio.';renderElements();drawPoints();renderPoints();}
-      document.getElementById('clickLayer').addEventListener('click',addPoint);
-    </script>
-    </body>
-    </html>
-    """
-    components.html(case_interactive, height=665, scrolling=False)
-
-    st.markdown(
-        """
-        <div class="c3l2-note">
-          <b>Importante:</b> el interactivo permite explorar y diseñar. Después registra tus decisiones finales
-          en las preguntas siguientes para que queden guardadas en tu avance.
-        </div>
-        """,
-        unsafe_allow_html=True,
+    diagnosis_reason = st.text_area(
+        "Hipótesis diagnóstica preliminar",
+        value=str(saved.get("c3l2_stage1_case_diagnosis", "")),
+        key="c3l2_case_reason_sync",
+        height=125,
+        placeholder=(
+            "Integra fuente priorizada, horario, receptor elegido, geometría, puntos de medición "
+            "y evidencia ON/OFF."
+        ),
     )
+    saved["c3l2_stage1_case_diagnosis"] = diagnosis_reason
 
-    st.markdown("### Misión 1 · Registra las fuentes que identificaste")
-    case_sources = st.multiselect(
-        "Elementos que consideras fuentes acústicas",
-        ["HVAC","Chiller","Grupo electrógeno","Medianera","Edificio residencial"],
-        default=[],
-        key="c3l2_case_sources",
-    )
-    if case_sources:
-        if set(case_sources)=={"HVAC","Chiller","Grupo electrógeno"}:
-            st.success("Correcto: identificaste las tres fuentes técnicas presentes.")
-        else:
-            st.info("Revisa la función física de cada elemento: no todo elemento visible genera energía acústica.")
+    if _c3l2_role() == "Alumno":
+        if st.button(
+            "💾 Guardar Etapa 1",
+            type="primary",
+            key="c3l2_s1_save",
+            use_container_width=True,
+        ):
+            class_ok = sum(
+                classification[item] == correct
+                for item,correct,_ in classify_items
+            ) == len(classify_items)
 
-    st.markdown("### Misión 2 · Usa el horario como evidencia")
-    suspect = st.radio(
-        "La denuncia se concentra entre 23:00 y 06:00 h. ¿Qué fuente priorizarías inicialmente?",
-        ["HVAC","Chiller","Grupo electrógeno"], index=None, key="c3l2_case_suspect"
-    )
-    if suspect:
-        if suspect=="Chiller":
-            st.success("Hipótesis coherente: el chiller opera 24 h. El horario orienta la investigación, pero todavía no demuestra causalidad.")
-        else:
-            st.warning("Compara nuevamente el horario de operación de cada fuente con el periodo denunciado.")
+            path_ok = all(
+                path_answers.get(str(i)) == correct
+                for i,(_,correct,_,_) in enumerate(path_cases)
+            )
 
-    st.markdown("### Misión 3 · Compara tres posiciones receptoras")
-    st.markdown(
-        """
-        <div class="c3l2-grid">
-          <div class="c3l2-card"><div class="c3l2-k">R1</div><b>Bajo la altura de la medianera</b><br>Puede quedar parcialmente apantallado respecto de las fuentes de cubierta.</div>
-          <div class="c3l2-card blue"><div class="c3l2-k">R2</div><b>Apenas sobre la medianera</b><br>Presenta línea de visión más directa hacia la cubierta y una trayectoria relativamente corta.</div>
-          <div class="c3l2-card green"><div class="c3l2-k">R3</div><b>Piso superior</b><br>Está expuesto sobre la medianera, pero la trayectoria geométrica hacia la fuente es mayor.</div>
-        </div>
-        """, unsafe_allow_html=True
-    )
-    receiver_hyp = st.radio(
-        "Antes de medir, ¿en cuál esperarías la mayor contribución del chiller según esta geometría idealizada?",
-        ["R1","R2","R3"], index=None, horizontal=True, key="c3l2_case_receiver_hyp"
-    )
-    receiver_why = st.text_area(
-        "Justifica tu hipótesis", key="c3l2_case_receiver_why", height=90,
-        placeholder="Considera apantallamiento, línea de visión y distancia geométrica."
-    )
-    if receiver_hyp:
-        if receiver_hyp=="R2":
-            st.success("R2 es la hipótesis más razonable en este esquema: queda sobre la medianera, mantiene línea de visión y tiene una trayectoria más corta que R3.")
-        else:
-            st.info("No basta con estar más alto o más bajo. Compara simultáneamente apantallamiento, línea de visión y longitud de trayectoria.")
+            _sources = set(_case_state.get("sources", [])) if isinstance(_case_state, dict) else set()
+            _suspect = _case_state.get("suspect") if isinstance(_case_state, dict) else None
+            _receiver = _case_state.get("receiver") if isinstance(_case_state, dict) else None
+            _receiver_why = str(_case_state.get("receiverWhy", "")) if isinstance(_case_state, dict) else ""
+            _points = _case_state.get("points", []) if isinstance(_case_state, dict) else []
+            _onoff = _case_state.get("onoff") if isinstance(_case_state, dict) else None
+            _mit = _case_state.get("mitigation", {}) if isinstance(_case_state, dict) else {}
 
-    st.markdown("### Misión 4 · Diseña tu campaña de medición")
-    st.caption("En el SVG puedes colocar tus propios puntos M1, M2… Aquí registra qué funciones cubrirá finalmente tu campaña.")
-    measurement_plan = st.multiselect(
-        "Funciones que cubrirán tus puntos",
-        ["Caracterización próxima a la fuente","Caracterización del camino","Medición en receptor"],
-        default=[], key="c3l2_case_measure_plan"
-    )
-    measure_reason = st.text_area(
-        "Explica por qué elegiste esos puntos", key="c3l2_case_measure_reason", height=90,
-        placeholder="Ej.: un punto junto al chiller, uno en fachada R2 y un punto complementario próximo a la medianera."
-    )
-    if measurement_plan:
-        if {"Caracterización próxima a la fuente","Medición en receptor"}.issubset(set(measurement_plan)):
-            st.success("La campaña vincula la fuente sospechosa con la exposición en receptor. Un punto de camino puede complementar el diagnóstico.")
-        else:
-            st.info("Una investigación inicial debería vincular, al menos, la fuente sospechosa con el receptor reclamante.")
+            sources_ok = _sources == {"HVAC","Chiller","Grupo electrógeno"}
+            suspect_ok = _suspect == "Chiller"
+            receiver_ok = _receiver == "R2" and len(_receiver_why.strip()) >= 25
+            point_roles = {
+                p.get("role")
+                for p in _points
+                if isinstance(p, dict)
+            }
+            points_ok = {"Fuente","Receptor"}.issubset(point_roles)
+            onoff_ok = _onoff == "supports"
+            mitigation_ok = (
+                _mit.get("encierro") == "Fuente"
+                and _mit.get("pantalla") == "Camino"
+                and _mit.get("ventanas") == "Receptor"
+            )
+            diagnosis_ok = len(diagnosis_reason.strip()) >= 70
 
-    st.markdown("### Misión 5 · Contrasta la hipótesis con el estado operacional")
-    st.markdown(
-        """
-        <div class="c3l2-grid2">
-          <div class="c3l2-card blue"><div class="c3l2-k">CHILLER ON</div><b>LAeq en receptor = 58 dB(A)</b><br>Fuente sospechosa operando.</div>
-          <div class="c3l2-card green"><div class="c3l2-k">CHILLER OFF</div><b>LAeq residual = 49 dB(A)</b><br>Fuente sospechosa detenida.</div>
-        </div>
-        """, unsafe_allow_html=True
-    )
-    onoff = st.radio(
-        "¿Qué interpretación es técnicamente defendible?",
-        [
-            "El chiller queda demostrado como única fuente responsable",
-            "La diferencia ON/OFF fortalece la hipótesis de contribución del chiller, pero debe interpretarse junto con los demás antecedentes",
-            "La comparación ON/OFF no aporta información",
-        ],
-        index=None, key="c3l2_case_onoff"
-    )
-    if onoff:
-        if onoff.startswith("La diferencia ON/OFF"):
-            st.success("Correcto: aporta evidencia sin convertir todavía la hipótesis en una conclusión absoluta.")
-        else:
-            st.warning("Evita tanto sobregeneralizar como descartar información operacional útil.")
-
-    st.markdown("### Misión 6 · ¿Dónde actúa la medida de mitigación?")
-    mitigation_answers={}
-    mitigation_cases=[
-        ("Encierro acústico del chiller","Fuente"),
-        ("Aumentar / optimizar una pantalla entre supermercado y edificio","Camino"),
-        ("Mejorar el aislamiento de ventanas del departamento","Receptor"),
-    ]
-    cols=st.columns(3)
-    for i,(measure,correct) in enumerate(mitigation_cases):
-        with cols[i]:
-            with st.container(border=True,key=f"c3l2_case_mit_{i}"):
-                st.markdown(f"**{measure}**")
-                mitigation_answers[str(i)]=st.segmented_control(
-                    f"Mitigación {i+1}",["Fuente","Camino","Receptor"],
-                    key=f"c3l2_case_mitigation_{i}",label_visibility="collapsed"
-                )
-                if mitigation_answers[str(i)]:
-                    if mitigation_answers[str(i)]==correct: st.success(f"Actúa principalmente sobre {correct.lower()}.")
-                    else: st.info("Revisa qué parte del sistema cambia físicamente.")
-
-    st.markdown("### Misión 7 · Redacta una hipótesis diagnóstica")
-    diagnosis_reason=st.text_area(
-        "Hipótesis preliminar",key="c3l2_case_reason",height=130,
-        placeholder="Integra fuente sospechosa, horario, receptor, geometría, puntos de medición y evidencia ON/OFF. No declares causalidad definitiva."
-    )
-
-    if _c3l2_role()=="Alumno":
-        if st.button("💾 Guardar Etapa 1",type="primary",key="c3l2_s1_save",use_container_width=True):
-            class_ok=sum(classification[item]==correct for item,correct,_ in classify_items)==len(classify_items)
-            path_ok=all(path_answers.get(str(i))==correct for i,(_,correct,_,_) in enumerate(path_cases))
-            sources_ok=set(case_sources)=={"HVAC","Chiller","Grupo electrógeno"}
-            suspect_ok=suspect=="Chiller"
-            receiver_ok=receiver_hyp=="R2" and len(receiver_why.strip())>=30
-            measure_ok={"Caracterización próxima a la fuente","Medición en receptor"}.issubset(set(measurement_plan)) and len(measure_reason.strip())>=30
-            onoff_ok=bool(onoff and onoff.startswith("La diferencia ON/OFF"))
-            mitigation_ok=all(mitigation_answers.get(str(i))==correct for i,(_,correct) in enumerate(mitigation_cases))
-            diagnosis_ok=len(diagnosis_reason.strip())>=70
-
-            missing=[]
+            missing = []
             if not class_ok: missing.append("clasificación fuente/camino/receptor")
             if not path_ok: missing.append("intervenciones")
-            if not sources_ok: missing.append("fuentes del caso")
+            if not sources_ok: missing.append("fuentes identificadas en el diagrama")
             if not suspect_ok: missing.append("priorización por horario")
-            if not receiver_ok: missing.append("hipótesis de receptor")
-            if not measure_ok: missing.append("campaña de medición")
+            if not receiver_ok: missing.append("receptor y justificación")
+            if not points_ok: missing.append("puntos de medición en fuente y receptor")
             if not onoff_ok: missing.append("interpretación ON/OFF")
-            if not mitigation_ok: missing.append("clasificación de mitigaciones")
+            if not mitigation_ok: missing.append("mitigaciones sobre el diagrama")
             if not diagnosis_ok: missing.append("hipótesis diagnóstica")
 
             if missing:
-                st.warning("Revisa antes de guardar: "+", ".join(missing)+".")
+                st.warning("Revisa antes de guardar: " + ", ".join(missing) + ".")
             else:
-                _c3l2_complete(saved,1,{
-                    "selected_source":source,
-                    "selected_receptor":receptor,
-                    "classification":classification,
-                    "path_cases":path_answers,
-                    "case_professional":{
-                        "sources":case_sources,
-                        "suspect":suspect,
-                        "receiver_hypothesis":receiver_hyp,
-                        "receiver_reason":receiver_why,
-                        "measurement_plan":measurement_plan,
-                        "measurement_reason":measure_reason,
-                        "on_off_interpretation":onoff,
-                        "mitigation":mitigation_answers,
-                        "diagnosis_reason":diagnosis_reason,
+                _c3l2_complete(
+                    saved,
+                    1,
+                    {
+                        "selected_source": source,
+                        "selected_receptor": receptor,
+                        "classification": classification,
+                        "path_cases": path_answers,
+                        "case_professional": _case_state,
+                        "diagnosis_reason": diagnosis_reason,
                     },
-                })
-                st.success("Etapa 1 completada y guardada.")
+                )
+                st.success(
+                    "Etapa 1 completada. El caso interactivo y tu hipótesis quedaron guardados."
+                )
 
     _c3l2_teacher_pauta(
         "Etapa 1",
         """
-**Caso profesional supermercado / edificio**
+**Caso profesional sincronizado con el diagrama**
 
-**Fuentes técnicas**
-HVAC, chiller y grupo electrógeno. La medianera y el edificio no son fuentes.
+Las respuestas del alumno se construyen directamente en la imagen y quedan registradas por la actividad.
 
-**Fuente sospechosa por horario**
-Chiller, porque opera 24 h y coincide con el reclamo 23:00–06:00. Es una hipótesis, no prueba causal.
+**Misión 1 · fuentes**
+Selección esperada: HVAC, chiller y grupo electrógeno. Medianera y edificio no son fuentes.
 
-**Tres receptores**
-- R1: bajo la altura efectiva de la medianera → mayor posibilidad de apantallamiento.
-- R2: apenas sobre la medianera, con línea de visión relativamente corta hacia la cubierta.
-- R3: claramente sobre la medianera, pero con una trayectoria más larga.
-Para la geometría didáctica mostrada, la hipótesis esperada de mayor contribución es **R2**.
+**Misión 2 · horario**
+Fuente priorizada: chiller, por operación 24 h frente a denuncia 23:00–06:00. Es hipótesis, no prueba causal.
 
-**Campaña**
-El alumno puede colocar puntos directamente sobre el SVG. Debe vincular, como mínimo, fuente sospechosa y receptor; el punto de camino es complementario.
+**Misión 3 · receptores**
+- R1 bajo medianera: mayor apantallamiento.
+- R2 apenas sobre medianera: línea de visión y trayectoria relativamente corta.
+- R3 piso alto: expuesto, pero con trayectoria mayor.
+Para la geometría didáctica, la hipótesis esperada es R2.
 
-**Comparación ON/OFF**
-58 dB(A) con chiller ON y 49 dB(A) OFF fortalece la hipótesis de contribución, sin demostrar causalidad exclusiva.
+**Misión 4 · puntos**
+El alumno coloca M1, M2... directamente sobre el SVG. Debe existir al menos un punto con función Fuente y uno con función Receptor. Camino es complementario.
 
-**Mitigaciones**
-- Encierro del chiller → fuente.
-- Pantalla → camino.
-- Mejora de ventanas → receptor.
+**Misión 5 · ON/OFF**
+58 dB(A) ON y 49 dB(A) OFF fortalecen la hipótesis de contribución del chiller sin demostrar causalidad exclusiva.
 
-**Redacción**
-La conclusión debe expresarse como hipótesis diagnóstica que requiere comprobación.
+**Misión 6 · mitigación**
+- Encierro del chiller → Fuente.
+- Pantalla → Camino.
+- Ventanas del receptor → Receptor.
+La clasificación se realiza haciendo clic sobre la zona física correspondiente del diagrama.
+
+**Cierre**
+La hipótesis final debe integrar fuente, horario, receptor, geometría, puntos y evidencia operacional, evitando conclusiones definitivas sin medición suficiente.
         """
     )
 
