@@ -27725,8 +27725,7 @@ def _c3l2_stage1(lab,saved):
 
     import os as _os
     _case_component_path = _os.path.join(
-        _os.path.dirname(_os.path.dirname(__file__)),
-        "ui",
+        _os.path.dirname(__file__),
         "c3l2_case_prof",
     )
     _case_component = components.declare_component(

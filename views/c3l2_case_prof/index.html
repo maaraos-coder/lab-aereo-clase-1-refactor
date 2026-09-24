@@ -1,0 +1,397 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<style>
+*{box-sizing:border-box}
+:root{
+  --bg:#101820;--panel:#16232b;--panel2:#1b2c36;--line:#36505e;--txt:#e8f1f5;
+  --muted:#9ab0bd;--blue:#39b4e7;--orange:#f29a45;--red:#ef5b57;--green:#68d28d;--gold:#f7c65b;
+}
+body{margin:0;font-family:Inter,system-ui,-apple-system,"Segoe UI",sans-serif;background:#f5f8fb;color:#102a43}
+.shell{border:1px solid #d7e4eb;border-radius:18px;overflow:hidden;background:#fff;box-shadow:0 10px 28px rgba(15,23,42,.08)}
+.head{padding:15px 17px;background:#fff;border-bottom:1px solid #e4edf2}
+.head h3{margin:0;font-size:17px}.head p{margin:4px 0 0;color:#6c8090;font-size:12px;line-height:1.4}
+.workspace{display:grid;grid-template-columns:minmax(0,1fr) 360px;background:var(--bg)}
+.canvas-wrap{padding:12px}
+.side{background:var(--panel);border-left:1px solid #2e4450;min-height:650px;display:flex;flex-direction:column}
+.mission-tabs{display:grid;grid-template-columns:repeat(3,1fr);gap:7px;padding:11px;border-bottom:1px solid #2f4551}
+.mission-tabs button{border:1px solid #405d6c;background:#20343f;color:#dce9ef;padding:8px 7px;border-radius:9px;font-size:10px;font-weight:850;cursor:pointer}
+.mission-tabs button.active{background:#0c7da8;border-color:#4fc6ef;color:white}
+.panel{padding:13px 14px;overflow:auto;max-height:555px}
+.kicker{font-size:10px;font-weight:900;letter-spacing:.08em;color:#6ed4f7;text-transform:uppercase}
+.title{font-size:15px;font-weight:900;color:white;margin:3px 0 5px}
+.help{font-size:11px;color:var(--muted);line-height:1.45;margin-bottom:10px}
+.card{border:1px solid #37515e;border-radius:11px;background:var(--panel2);padding:9px 10px;margin:8px 0}
+.card b{color:white}.small{font-size:11px;color:#bdd0da;line-height:1.4}
+.status{display:flex;flex-wrap:wrap;gap:5px;margin-top:6px}
+.tag{background:#263d49;border:1px solid #3c5d6d;color:#e3edf2;padding:4px 7px;border-radius:999px;font-size:10px}
+.ok{border-color:#3b8f5f;background:#173629}.warn{border-color:#9b6f2e;background:#3b2e18}
+.choice{width:100%;text-align:left;border:1px solid #3b5664;background:#20323d;color:#e8f1f5;padding:9px;border-radius:9px;margin:5px 0;cursor:pointer;font-size:11px}
+.choice.selected{border-color:#5ec8ef;background:#123e51}
+.choice.good{border-color:#54b67c;background:#173a2a}
+textarea{width:100%;min-height:82px;border:1px solid #46606d;border-radius:9px;background:#10212a;color:white;padding:9px;font-family:inherit;font-size:11px;resize:vertical}
+.point-tools{display:flex;gap:6px;flex-wrap:wrap;margin:7px 0}
+.point-tools button,.action{border:1px solid #416172;background:#203640;color:white;border-radius:8px;padding:7px 9px;font-size:10px;font-weight:800;cursor:pointer}
+.point-tools button.active,.action.active{background:#0c7da8;border-color:#52c7ef}
+.summary{margin-top:auto;border-top:1px solid #2e4450;padding:10px 12px;background:#122029;font-size:10px;color:#9fb4bf}
+svg{display:block;width:100%;height:auto;border-radius:14px;background:#101820}
+.clickable{cursor:pointer}.hot{cursor:pointer}
+.selected-outline{stroke:var(--gold)!important;stroke-width:5!important;filter:drop-shadow(0 0 7px rgba(247,198,91,.55))}
+.priority-outline{stroke:#ff8c42!important;stroke-width:6!important;filter:drop-shadow(0 0 8px rgba(255,140,66,.6))}
+.receiver-selected circle{stroke:var(--gold)!important;stroke-width:6!important}
+.hidden{display:none}
+.legend{display:flex;gap:14px;flex-wrap:wrap;color:#b7cad3;font-size:10px;padding:8px 4px 0}
+.dot{display:inline-block;width:9px;height:9px;border-radius:50%;margin-right:5px}
+@media(max-width:900px){
+ .workspace{grid-template-columns:1fr}.side{border-left:0;border-top:1px solid #2e4450;min-height:0}
+ .panel{max-height:none}.mission-tabs{grid-template-columns:repeat(3,1fr)}
+}
+</style>
+</head>
+<body>
+<div class="shell">
+  <div class="head">
+    <h3>Caso profesional interactivo · supermercado / edificio residencial</h3>
+    <p>La imagen permanece visible mientras respondes. Tus selecciones sobre el diagrama y tus respuestas forman un único registro.</p>
+  </div>
+
+  <div class="workspace">
+    <div class="canvas-wrap">
+      <svg id="svg" viewBox="0 0 980 610">
+        <defs>
+          <linearGradient id="market" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#34434d"/><stop offset="100%" stop-color="#202b32"/></linearGradient>
+          <linearGradient id="tower" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#3d4a53"/><stop offset="100%" stop-color="#27323a"/></linearGradient>
+          <filter id="ds"><feDropShadow dx="0" dy="5" stdDeviation="5" flood-color="#000" flood-opacity=".35"/></filter>
+        </defs>
+        <rect width="980" height="610" fill="#101820"/><rect y="535" width="980" height="75" fill="#151f25"/>
+
+        <g filter="url(#ds)">
+          <rect x="45" y="300" width="480" height="235" rx="7" fill="url(#market)" stroke="#60717b" stroke-width="2"/>
+          <rect x="45" y="282" width="480" height="24" rx="4" fill="#4c5b64"/>
+          <text x="65" y="505" fill="#dce8ed" font-size="22" font-weight="900">SUPERMERCADO</text>
+        </g>
+
+        <g id="hvac" class="clickable" data-element="HVAC">
+          <rect id="hvacBox" x="95" y="215" width="135" height="67" rx="8" fill="#667781" stroke="#9babb3" stroke-width="2"/>
+          <rect x="108" y="232" width="45" height="34" rx="4" fill="#26343d"/>
+          <circle cx="190" cy="248" r="23" fill="#26343d" stroke="#9babb3" stroke-width="2"/>
+          <path d="M190 226V270 M168 248H212 M175 233L205 263 M205 233L175 263" stroke="#95a7b0" stroke-width="2"/>
+          <text x="163" y="202" text-anchor="middle" fill="#d9e7ed" font-size="14" font-weight="900">HVAC</text>
+        </g>
+
+        <g id="chiller" class="clickable" data-element="Chiller">
+          <rect id="chillerBox" x="285" y="195" width="190" height="87" rx="9" fill="#5b6971" stroke="#a1b0b8" stroke-width="2"/>
+          <circle cx="337" cy="238" r="28" fill="#24333b" stroke="#98aab3" stroke-width="2"/>
+          <circle cx="425" cy="238" r="28" fill="#24333b" stroke="#98aab3" stroke-width="2"/>
+          <path d="M337 212V264 M311 238H363 M319 220L355 256 M355 220L319 256" stroke="#98aab3" stroke-width="2"/>
+          <path d="M425 212V264 M399 238H451 M407 220L443 256 M443 220L407 256" stroke="#98aab3" stroke-width="2"/>
+          <text x="380" y="181" text-anchor="middle" fill="#ffd8bd" font-size="14" font-weight="900">CHILLER · 24 h</text>
+        </g>
+
+        <g id="generator" class="clickable" data-element="Grupo electrógeno">
+          <rect id="generatorBox" x="90" y="405" width="145" height="82" rx="8" fill="#4e565b" stroke="#818d93" stroke-width="2"/>
+          <rect x="104" y="420" width="78" height="52" rx="4" fill="#2d383e"/>
+          <circle cx="210" cy="446" r="18" fill="#252e33" stroke="#87949b"/>
+          <text x="162" y="390" text-anchor="middle" fill="#ffe2ad" font-size="13" font-weight="900">GRUPO ELECTRÓGENO</text>
+        </g>
+
+        <g id="wall" class="clickable" data-element="Medianera">
+          <rect id="wallBox" x="540" y="425" width="40" height="110" fill="#747f85" stroke="#adb6ba" stroke-width="2"/>
+          <rect x="535" y="418" width="50" height="12" fill="#929ca1"/>
+        </g>
+
+        <g id="building" class="clickable" data-element="Edificio residencial" filter="url(#ds)">
+          <rect id="buildingBox" x="650" y="45" width="280" height="490" rx="6" fill="url(#tower)" stroke="#657680" stroke-width="2"/>
+          <rect x="665" y="24" width="250" height="25" rx="4" fill="#4c5b64"/>
+          <text x="790" y="18" text-anchor="middle" fill="#dce8ed" font-size="16" font-weight="900">EDIFICIO RESIDENCIAL · 10 PISOS</text>
+          <g stroke="#61727c">
+            <line x1="650" y1="94" x2="930" y2="94"/><line x1="650" y1="143" x2="930" y2="143"/><line x1="650" y1="192" x2="930" y2="192"/>
+            <line x1="650" y1="241" x2="930" y2="241"/><line x1="650" y1="290" x2="930" y2="290"/><line x1="650" y1="339" x2="930" y2="339"/>
+            <line x1="650" y1="388" x2="930" y2="388"/><line x1="650" y1="437" x2="930" y2="437"/><line x1="650" y1="486" x2="930" y2="486"/>
+          </g>
+          <g fill="#6598b0">
+            <rect x="685" y="58" width="44" height="20"/><rect x="770" y="58" width="44" height="20"/><rect x="855" y="58" width="44" height="20"/>
+            <rect x="685" y="107" width="44" height="20"/><rect x="770" y="107" width="44" height="20"/><rect x="855" y="107" width="44" height="20"/>
+            <rect x="685" y="156" width="44" height="20"/><rect x="770" y="156" width="44" height="20"/><rect x="855" y="156" width="44" height="20"/>
+            <rect x="685" y="205" width="44" height="20"/><rect x="770" y="205" width="44" height="20"/><rect x="855" y="205" width="44" height="20"/>
+            <rect x="685" y="254" width="44" height="20"/><rect x="770" y="254" width="44" height="20"/><rect x="855" y="254" width="44" height="20"/>
+            <rect x="685" y="303" width="44" height="20"/><rect x="770" y="303" width="44" height="20"/><rect x="855" y="303" width="44" height="20"/>
+            <rect x="685" y="352" width="44" height="20"/><rect x="770" y="352" width="44" height="20"/><rect x="855" y="352" width="44" height="20"/>
+            <rect x="685" y="401" width="44" height="20"/><rect x="770" y="401" width="44" height="20"/><rect x="855" y="401" width="44" height="20"/>
+            <rect x="685" y="450" width="44" height="20"/><rect x="770" y="450" width="44" height="20"/><rect x="855" y="450" width="44" height="20"/>
+            <rect x="685" y="499" width="44" height="20"/><rect x="770" y="499" width="44" height="20"/><rect x="855" y="499" width="44" height="20"/>
+          </g>
+        </g>
+
+        <g id="r1" class="hot receiver" data-receiver="R1">
+          <circle cx="666" cy="468" r="12" fill="#ef5350" stroke="#fff" stroke-width="3"/>
+          <rect x="682" y="454" width="120" height="28" rx="7" fill="#6d2828"/><text x="742" y="473" text-anchor="middle" fill="#fff" font-size="12" font-weight="900">R1 · bajo medianera</text>
+        </g>
+        <g id="r2" class="hot receiver" data-receiver="R2">
+          <circle cx="666" cy="397" r="12" fill="#ef5350" stroke="#fff" stroke-width="3"/>
+          <rect x="682" y="383" width="145" height="28" rx="7" fill="#8a2727"/><text x="754" y="402" text-anchor="middle" fill="#fff" font-size="12" font-weight="900">R2 · sobre medianera</text>
+        </g>
+        <g id="r3" class="hot receiver" data-receiver="R3">
+          <circle cx="666" cy="142" r="12" fill="#ef5350" stroke="#fff" stroke-width="3"/>
+          <rect x="682" y="128" width="110" height="28" rx="7" fill="#6d2828"/><text x="737" y="147" text-anchor="middle" fill="#fff" font-size="12" font-weight="900">R3 · piso alto</text>
+        </g>
+
+        <line x1="500" y1="418" x2="690" y2="418" stroke="#bdc6ca" stroke-width="2" stroke-dasharray="7 6"/>
+        <text x="588" y="406" fill="#c9d3d8" font-size="11">altura efectiva medianera</text>
+
+        <g id="paths" class="hidden">
+          <path d="M380 238 Q520 300 666 397" fill="none" stroke="#3cb4e8" stroke-width="4"/>
+          <path d="M380 238 Q535 365 666 468" fill="none" stroke="#3cb4e8" stroke-width="3" stroke-dasharray="8 6"/>
+          <path d="M380 238 Q520 155 666 142" fill="none" stroke="#3cb4e8" stroke-width="3"/>
+        </g>
+        <g id="points"></g>
+        <rect id="pointLayer" x="0" y="0" width="980" height="610" fill="transparent" class="hidden" style="cursor:crosshair"/>
+      </svg>
+
+      <div class="legend">
+        <span><span class="dot" style="background:var(--orange)"></span>equipos técnicos</span>
+        <span><span class="dot" style="background:var(--red)"></span>posiciones receptoras</span>
+        <span><span class="dot" style="background:var(--blue)"></span>caminos posibles</span>
+      </div>
+    </div>
+
+    <div class="side">
+      <div class="mission-tabs">
+        <button data-m="1" class="active">1 · Fuentes</button>
+        <button data-m="2">2 · Horario</button>
+        <button data-m="3">3 · Receptor</button>
+        <button data-m="4">4 · Medición</button>
+        <button data-m="5">5 · ON/OFF</button>
+        <button data-m="6">6 · Mitigación</button>
+      </div>
+
+      <div class="panel">
+        <section id="m1">
+          <div class="kicker">Misión 1</div><div class="title">Identifica las fuentes directamente en la imagen</div>
+          <div class="help">Haz clic sobre todos los elementos que consideres fuentes acústicas. Tu selección queda registrada aquí mismo.</div>
+          <div class="card"><b>Seleccionados</b><div id="sourceTags" class="status"></div></div>
+          <div id="sourceFeedback" class="small">Aún no has seleccionado elementos.</div>
+        </section>
+
+        <section id="m2" class="hidden">
+          <div class="kicker">Misión 2</div><div class="title">Usa el horario para priorizar una fuente</div>
+          <div class="help">Reclamo: 23:00–06:00 h. Haz clic en el equipo del diagrama que priorizarías como hipótesis inicial.</div>
+          <div class="card"><b>Fuente priorizada</b><div id="priority" class="status"></div></div>
+          <div id="priorityFeedback" class="small">Selecciona una fuente sobre la imagen.</div>
+        </section>
+
+        <section id="m3" class="hidden">
+          <div class="kicker">Misión 3</div><div class="title">Selecciona el receptor más comprometido</div>
+          <div class="help">Compara apantallamiento, línea de visión y distancia. Haz clic sobre R1, R2 o R3.</div>
+          <div class="card"><b>Receptor seleccionado</b><div id="receiverTag" class="status"></div></div>
+          <textarea id="receiverWhy" placeholder="Justifica tu hipótesis técnica..."></textarea>
+          <div id="receiverFeedback" class="small" style="margin-top:7px"></div>
+        </section>
+
+        <section id="m4" class="hidden">
+          <div class="kicker">Misión 4</div><div class="title">Diseña la campaña directamente sobre el plano</div>
+          <div class="help">Elige la función del punto y luego haz clic donde medirías. Puedes colocar varios puntos M1, M2, M3...</div>
+          <div class="point-tools">
+            <button id="pf" class="active">Fuente</button><button id="pc">Camino</button><button id="pr">Receptor</button>
+          </div>
+          <div class="card"><b>Puntos colocados</b><div id="pointList" class="small">Aún no has colocado puntos.</div></div>
+          <button class="action" id="undo">Deshacer último punto</button>
+        </section>
+
+        <section id="m5" class="hidden">
+          <div class="kicker">Misión 5</div><div class="title">Contrasta la hipótesis con ON / OFF</div>
+          <div class="help">La fuente sospechosa ya fue priorizada. Ahora interpreta la evidencia operacional.</div>
+          <div class="card"><b>Chiller ON</b><div class="small">LAeq receptor = 58 dB(A)</div></div>
+          <div class="card"><b>Chiller OFF</b><div class="small">LAeq residual = 49 dB(A)</div></div>
+          <button class="choice" data-onoff="exclusive">Demuestra que el chiller es la única fuente responsable</button>
+          <button class="choice" data-onoff="supports">Fortalece la hipótesis de contribución del chiller, pero debe interpretarse con los demás antecedentes</button>
+          <button class="choice" data-onoff="none">No aporta información</button>
+          <div id="onoffFeedback" class="small" style="margin-top:7px"></div>
+        </section>
+
+        <section id="m6" class="hidden">
+          <div class="kicker">Misión 6</div><div class="title">Ubica dónde actúa cada mitigación</div>
+          <div class="help">Selecciona una medida y luego haz clic sobre la zona del diagrama donde actúa principalmente.</div>
+          <button class="choice mitigation selected" data-mit="encierro">Encierro acústico del chiller</button>
+          <button class="choice mitigation" data-mit="pantalla">Aumentar / optimizar pantalla</button>
+          <button class="choice mitigation" data-mit="ventanas">Mejorar ventanas del receptor</button>
+          <div class="card"><b>Clasificación construida en la imagen</b><div id="mitigationList" class="small"></div></div>
+          <div id="mitFeedback" class="small"></div>
+        </section>
+      </div>
+
+      <div class="summary">
+        <b>Registro del caso</b><br>
+        <span id="summaryText">Completa las misiones. Los cambios se guardan automáticamente en la actividad.</span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+const state={
+  mission:1,
+  sources:[],
+  suspect:null,
+  receiver:null,
+  receiverWhy:"",
+  points:[],
+  onoff:null,
+  mitigation:{encierro:null,pantalla:null,ventanas:null}
+};
+let pointRole='Fuente', currentMit='encierro', pathsVisible=false, initialized=false;
+
+function send(type,payload){
+  window.parent.postMessage(Object.assign({isStreamlitMessage:true,type:type},payload||{}),"*");
+}
+function setValue(){
+  send("streamlit:setComponentValue",{value:state});
+  updateSummary();
+}
+function setHeight(){send("streamlit:setFrameHeight",{height:Math.max(720,document.body.scrollHeight+8)});}
+
+function applyInitial(args){
+  if(!args||!args.value||initialized)return;
+  const v=args.value;
+  Object.assign(state,v);
+  initialized=true;
+  renderAll();
+}
+window.addEventListener("message",e=>{
+  if(e.data&&e.data.type==="streamlit:render"){applyInitial(e.data.args||{});setHeight();}
+});
+send("streamlit:componentReady",{apiVersion:1});
+setTimeout(setHeight,50);
+
+document.querySelectorAll(".mission-tabs button").forEach(b=>b.addEventListener("click",()=>{
+  state.mission=Number(b.dataset.m);
+  document.querySelectorAll(".mission-tabs button").forEach(x=>x.classList.toggle("active",x===b));
+  for(let i=1;i<=6;i++)document.getElementById("m"+i).classList.toggle("hidden",i!==state.mission);
+  document.getElementById("pointLayer").classList.toggle("hidden",state.mission!==4);
+  setValue(); setHeight();
+}));
+
+function elementNameFromTarget(t){
+  const g=t.closest("[data-element]"); return g?g.dataset.element:null;
+}
+document.getElementById("svg").addEventListener("click",e=>{
+  if(state.mission===4)return;
+  const el=elementNameFromTarget(e.target);
+  const rec=e.target.closest("[data-receiver]");
+
+  if(state.mission===1 && el){
+    const i=state.sources.indexOf(el);
+    if(i>=0)state.sources.splice(i,1); else state.sources.push(el);
+    renderSources();setValue();return;
+  }
+  if(state.mission===2 && el && ["HVAC","Chiller","Grupo electrógeno"].includes(el)){
+    state.suspect=el;renderPriority();setValue();return;
+  }
+  if(state.mission===3 && rec){
+    state.receiver=rec.dataset.receiver;renderReceiver();setValue();return;
+  }
+  if(state.mission===6){
+    if(currentMit==="encierro" && el==="Chiller") state.mitigation.encierro="Fuente";
+    else if(currentMit==="pantalla" && el==="Medianera") state.mitigation.pantalla="Camino";
+    else if(currentMit==="ventanas" && rec) state.mitigation.ventanas="Receptor";
+    else{
+      if(el==="Chiller") state.mitigation[currentMit]="Fuente";
+      else if(el==="Medianera") state.mitigation[currentMit]="Camino";
+      else if(rec) state.mitigation[currentMit]="Receptor";
+    }
+    renderMitigation();setValue();
+  }
+});
+
+function renderSources(){
+  document.querySelectorAll("[data-element]").forEach(g=>{
+    const rect=g.querySelector("rect[id$='Box']");
+    if(rect)rect.classList.toggle("selected-outline",state.sources.includes(g.dataset.element));
+  });
+  const box=document.getElementById("sourceTags");
+  box.innerHTML=state.sources.length?state.sources.map(x=>`<span class="tag">${x}</span>`).join(""):"<span class='small'>Sin selección</span>";
+  const correct=["HVAC","Chiller","Grupo electrógeno"];
+  const ok=correct.length===state.sources.length&&correct.every(x=>state.sources.includes(x));
+  document.getElementById("sourceFeedback").innerHTML=ok?"<span style='color:#7ee0a3'>Correcto: identificaste las tres fuentes técnicas.</span>":"Selecciona solo los elementos que generan energía acústica.";
+}
+function renderPriority(){
+  ["hvacBox","chillerBox","generatorBox"].forEach(id=>document.getElementById(id).classList.remove("priority-outline"));
+  if(state.suspect){
+    const map={"HVAC":"hvacBox","Chiller":"chillerBox","Grupo electrógeno":"generatorBox"};
+    document.getElementById(map[state.suspect]).classList.add("priority-outline");
+    document.getElementById("priority").innerHTML=`<span class="tag">${state.suspect}</span>`;
+    document.getElementById("priorityFeedback").innerHTML=state.suspect==="Chiller"
+      ?"<span style='color:#7ee0a3'>Coherente: es la fuente que opera durante todo el periodo denunciado.</span>"
+      :"Revisa el horario de operación.";
+  }
+}
+function renderReceiver(){
+  document.querySelectorAll(".receiver").forEach(g=>g.classList.toggle("receiver-selected",g.dataset.receiver===state.receiver));
+  document.getElementById("receiverTag").innerHTML=state.receiver?`<span class="tag">${state.receiver}</span>`:"<span class='small'>Sin selección</span>";
+  document.getElementById("receiverFeedback").innerHTML=state.receiver==="R2"
+    ?"<span style='color:#7ee0a3'>R2 es la hipótesis geométrica esperada: sobre medianera y con trayectoria relativamente corta.</span>"
+    :"Considera simultáneamente apantallamiento, línea de visión y distancia.";
+}
+document.getElementById("receiverWhy").addEventListener("input",e=>{state.receiverWhy=e.target.value;setValue();});
+
+function svgPoint(evt){
+  const svg=document.getElementById("svg"),pt=svg.createSVGPoint();pt.x=evt.clientX;pt.y=evt.clientY;
+  return pt.matrixTransform(svg.getScreenCTM().inverse());
+}
+document.getElementById("pointLayer").addEventListener("click",e=>{
+  if(state.mission!==4)return;
+  const p=svgPoint(e);
+  state.points.push({id:"M"+(state.points.length+1),role:pointRole,x:+p.x.toFixed(1),y:+p.y.toFixed(1)});
+  renderPoints();setValue();
+});
+function renderPoints(){
+  const layer=document.getElementById("points");layer.innerHTML="";
+  state.points.forEach(p=>{
+    const c=p.role==="Fuente"?"#f29a45":p.role==="Camino"?"#39b4e7":"#68d28d";
+    layer.innerHTML+=`<g><circle cx="${p.x}" cy="${p.y}" r="15" fill="#102935" stroke="${c}" stroke-width="4"/><text x="${p.x}" y="${p.y+4}" text-anchor="middle" fill="white" font-size="10" font-weight="900">${p.id}</text></g>`;
+  });
+  document.getElementById("pointList").innerHTML=state.points.length
+   ?state.points.map(p=>`<div class="item"><b>${p.id}</b> · ${p.role}</div>`).join("")
+   :"Aún no has colocado puntos.";
+}
+["pf","pc","pr"].forEach(id=>document.getElementById(id).addEventListener("click",e=>{
+  pointRole={pf:"Fuente",pc:"Camino",pr:"Receptor"}[id];
+  ["pf","pc","pr"].forEach(x=>document.getElementById(x).classList.toggle("active",x===id));
+}));
+document.getElementById("undo").addEventListener("click",()=>{state.points.pop();renderPoints();setValue();});
+
+document.querySelectorAll("[data-onoff]").forEach(b=>b.addEventListener("click",()=>{
+  state.onoff=b.dataset.onoff;
+  document.querySelectorAll("[data-onoff]").forEach(x=>x.classList.toggle("selected",x===b));
+  document.getElementById("onoffFeedback").innerHTML=state.onoff==="supports"
+   ?"<span style='color:#7ee0a3'>Correcto: aporta evidencia sin demostrar causalidad exclusiva.</span>"
+   :"Revisa el alcance de una comparación operacional ON/OFF.";
+  setValue();
+}));
+
+document.querySelectorAll(".mitigation").forEach(b=>b.addEventListener("click",()=>{
+  currentMit=b.dataset.mit;
+  document.querySelectorAll(".mitigation").forEach(x=>x.classList.toggle("selected",x===b));
+}));
+function renderMitigation(){
+  const labels={encierro:"Encierro chiller",pantalla:"Pantalla",ventanas:"Ventanas"};
+  document.getElementById("mitigationList").innerHTML=Object.keys(state.mitigation).map(k=>
+    `<div class="item">${labels[k]} → <b>${state.mitigation[k]||"sin clasificar"}</b></div>`).join("");
+  const ok=state.mitigation.encierro==="Fuente"&&state.mitigation.pantalla==="Camino"&&state.mitigation.ventanas==="Receptor";
+  document.getElementById("mitFeedback").innerHTML=ok?"<span style='color:#7ee0a3'>Correcto: fuente / camino / receptor.</span>":"Selecciona una medida y luego haz clic en la zona física donde actúa.";
+}
+function updateSummary(){
+  document.getElementById("summaryText").textContent=
+    `${state.sources.length} fuentes seleccionadas · ${state.receiver||"sin receptor"} · ${state.points.length} puntos · ${Object.values(state.mitigation).filter(Boolean).length}/3 mitigaciones`;
+}
+function renderAll(){
+  renderSources();renderPriority();renderReceiver();renderPoints();renderMitigation();updateSummary();
+  document.getElementById("receiverWhy").value=state.receiverWhy||"";
+  document.querySelectorAll("[data-onoff]").forEach(x=>x.classList.toggle("selected",x.dataset.onoff===state.onoff));
+}
+renderAll();setValue();
+</script>
+</body>
+</html>
