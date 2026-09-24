@@ -283,7 +283,7 @@ svg{display:block;width:100%;height:auto;border-radius:14px;background:#101820}
             Selecciona una medida, haz clic directamente en la zona del diagrama donde la implementarías
             y luego explica por qué actuarías allí.
           </div>
-          <button class="choice mitigation selected" data-mit="encierro">Encierro acústico del chiller</button>
+          <button class="choice mitigation" data-mit="encierro">Encierro acústico del chiller</button>
           <button class="choice mitigation" data-mit="pantalla">Aumentar / optimizar pantalla</button>
           <button class="choice mitigation" data-mit="ventanas">Mejorar ventanas del receptor</button>
           <div class="card"><b>Ubicación / tipo de intervención</b><div id="mitigationList" class="small"></div></div>
@@ -313,7 +313,7 @@ const state={
   mitigation:{encierro:null,pantalla:null,ventanas:null},
   mitigationWhy:{encierro:"",pantalla:"",ventanas:""}
 };
-let pointRole='Fuente', currentMit='encierro', pathsVisible=false, initialized=false;
+let pointRole='Fuente', currentMit=null, pathsVisible=false, initialized=false;
 
 const isPopup = !!(window.opener && window.opener !== window);
 
@@ -410,6 +410,13 @@ document.querySelectorAll(".mission-tabs button").forEach(b=>b.addEventListener(
   document.querySelectorAll(".mission-tabs button").forEach(x=>x.classList.toggle("active",x===b));
   for(let i=1;i<=6;i++)document.getElementById("m"+i).classList.toggle("hidden",i!==state.mission);
   document.getElementById("pointLayer").classList.toggle("hidden",state.mission!==4);
+
+  if(state.mission===6){
+    showMitigationPreview(currentMit);
+  }else{
+    showMitigationPreview(null);
+  }
+
   setValue(); setHeight();
 }));
 
@@ -540,7 +547,8 @@ function showMitigationPreview(kind){
     const el=document.getElementById(id);
     if(el) el.style.display="none";
   });
-  if(map[kind]){
+
+  if(state.mission===6 && kind && map[kind]){
     const el=document.getElementById(map[kind]);
     if(el) el.style.display="block";
   }
@@ -550,7 +558,7 @@ function renderMitigation(){
   const labels={encierro:"Encierro chiller",pantalla:"Pantalla",ventanas:"Ventanas"};
   document.getElementById("mitigationList").innerHTML=Object.keys(state.mitigation).map(k=>
     `<div class="item">${labels[k]} → <b>${state.mitigation[k]||"sin ubicar"}</b></div>`).join("");
-  document.getElementById("mitigationWhy").value=state.mitigationWhy[currentMit]||"";
+  document.getElementById("mitigationWhy").value=currentMit ? (state.mitigationWhy[currentMit]||"") : "";
   const ok=state.mitigation.encierro==="Fuente"&&state.mitigation.pantalla==="Camino"&&state.mitigation.ventanas==="Receptor";
   document.getElementById("mitFeedback").innerHTML=ok
     ?"<span style='color:#7ee0a3'>Las tres medidas quedaron ubicadas correctamente. Completa también la justificación de cada una.</span>"
@@ -571,7 +579,7 @@ function resetCase(){
   state.onoff=null;
   state.mitigation={encierro:null,pantalla:null,ventanas:null};
   state.mitigationWhy={encierro:"",pantalla:"",ventanas:""};
-  currentMit="encierro";
+  currentMit=null;
   pointRole="Fuente";
 
   document.querySelectorAll(".mission-tabs button").forEach(b=>{
@@ -584,12 +592,13 @@ function resetCase(){
 
   document.getElementById("pointLayer").classList.add("hidden");
   document.querySelectorAll(".mitigation").forEach(b=>{
-    b.classList.toggle("selected",b.dataset.mit==="encierro");
+    b.classList.remove("selected");
   });
   document.querySelectorAll("[data-onoff]").forEach(b=>b.classList.remove("selected"));
   document.getElementById("suspectWhy").value="";
   document.getElementById("receiverWhy").value="";
   document.getElementById("mitigationWhy").value="";
+  showMitigationPreview(null);
   renderAll();
   setValue();
 }
@@ -603,8 +612,8 @@ function renderAll(){
   renderSources();renderPriority();renderReceiver();renderPoints();renderMitigation();updateSummary();
   document.getElementById("suspectWhy").value=state.suspectWhy||"";
   document.getElementById("receiverWhy").value=state.receiverWhy||"";
-  document.getElementById("mitigationWhy").value=(state.mitigationWhy&&state.mitigationWhy[currentMit])||"";
-  showMitigationPreview(currentMit);
+  document.getElementById("mitigationWhy").value=(currentMit && state.mitigationWhy && state.mitigationWhy[currentMit])||"";
+  showMitigationPreview(state.mission===6 ? currentMit : null);
   document.querySelectorAll("[data-onoff]").forEach(x=>x.classList.toggle("selected",x.dataset.onoff===state.onoff));
 }
 renderAll();setValue();
