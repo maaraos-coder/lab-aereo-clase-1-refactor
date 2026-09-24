@@ -12,6 +12,20 @@
 body{margin:0;font-family:Inter,system-ui,-apple-system,"Segoe UI",sans-serif;background:#f5f8fb;color:#102a43}
 .shell{border:1px solid #d7e4eb;border-radius:18px;overflow:hidden;background:#fff;box-shadow:0 10px 28px rgba(15,23,42,.08)}
 .head{padding:15px 17px;background:#fff;border-bottom:1px solid #e4edf2}
+.head{display:flex;align-items:center;justify-content:space-between;gap:14px}
+.head-copy{min-width:0}
+.expand-btn{
+  flex:0 0 auto;border:1px solid #0f8fbd;background:#0b7da8;color:#fff;
+  border-radius:10px;padding:9px 13px;font-size:11px;font-weight:900;cursor:pointer;
+  box-shadow:0 4px 12px rgba(11,125,168,.18)
+}
+.expand-btn:hover{background:#096a90}
+body.popup-mode{background:#101820}
+body.popup-mode .shell{border-radius:0;border:0;box-shadow:none;min-height:100vh}
+body.popup-mode .workspace{min-height:calc(100vh - 76px)}
+body.popup-mode .side{min-height:calc(100vh - 76px)}
+body.popup-mode .expand-btn{display:none}
+
 .head h3{margin:0;font-size:17px}.head p{margin:4px 0 0;color:#6c8090;font-size:12px;line-height:1.4}
 .workspace{display:grid;grid-template-columns:minmax(0,1fr) 360px;background:var(--bg)}
 .canvas-wrap{padding:12px}
@@ -53,8 +67,11 @@ svg{display:block;width:100%;height:auto;border-radius:14px;background:#101820}
 <body>
 <div class="shell">
   <div class="head">
-    <h3>Caso profesional interactivo · supermercado / edificio residencial</h3>
-    <p>La imagen permanece visible mientras respondes. Tus selecciones sobre el diagrama y tus respuestas forman un único registro.</p>
+    <div class="head-copy">
+      <h3>Caso profesional interactivo · supermercado / edificio residencial</h3>
+      <p>La imagen permanece visible mientras respondes. Tus selecciones sobre el diagrama y tus respuestas forman un único registro.</p>
+    </div>
+    <button id="expandBtn" class="expand-btn" onclick="openExpandedView()">⛶ Abrir vista ampliada</button>
   </div>
 
   <div class="workspace">
@@ -176,10 +193,14 @@ svg{display:block;width:100%;height:auto;border-radius:14px;background:#101820}
         </section>
 
         <section id="m2" class="hidden">
-          <div class="kicker">Misión 2</div><div class="title">Usa el horario para priorizar una fuente</div>
-          <div class="help">Reclamo: 23:00–06:00 h. Haz clic en el equipo del diagrama que priorizarías como hipótesis inicial.</div>
-          <div class="card"><b>Fuente priorizada</b><div id="priority" class="status"></div></div>
-          <div id="priorityFeedback" class="small">Selecciona una fuente sobre la imagen.</div>
+          <div class="kicker">Misión 2</div><div class="title">¿Qué fuente podría estar asociada al problema?</div>
+          <div class="help">
+            La denuncia se concentra entre <b>23:00 y 06:00 h</b>. Selecciona directamente en el diagrama
+            la fuente que consideras más probable según su horario de funcionamiento.
+          </div>
+          <div class="card"><b>Fuente potencialmente asociada</b><div id="priority" class="status"></div></div>
+          <textarea id="suspectWhy" placeholder="Explica por qué esa fuente es la más consistente con el horario denunciado y qué antecedente necesitarías para confirmarlo."></textarea>
+          <div id="priorityFeedback" class="small" style="margin-top:7px">Selecciona una fuente sobre la imagen y fundamenta tu respuesta.</div>
         </section>
 
         <section id="m3" class="hidden">
@@ -212,13 +233,17 @@ svg{display:block;width:100%;height:auto;border-radius:14px;background:#101820}
         </section>
 
         <section id="m6" class="hidden">
-          <div class="kicker">Misión 6</div><div class="title">Ubica dónde actúa cada mitigación</div>
-          <div class="help">Selecciona una medida y luego haz clic sobre la zona del diagrama donde actúa principalmente.</div>
+          <div class="kicker">Misión 6</div><div class="title">Diseña y justifica la mitigación sobre el escenario</div>
+          <div class="help">
+            Selecciona una medida, haz clic directamente en la zona del diagrama donde la implementarías
+            y luego explica por qué actuarías allí.
+          </div>
           <button class="choice mitigation selected" data-mit="encierro">Encierro acústico del chiller</button>
           <button class="choice mitigation" data-mit="pantalla">Aumentar / optimizar pantalla</button>
           <button class="choice mitigation" data-mit="ventanas">Mejorar ventanas del receptor</button>
-          <div class="card"><b>Clasificación construida en la imagen</b><div id="mitigationList" class="small"></div></div>
-          <div id="mitFeedback" class="small"></div>
+          <div class="card"><b>Ubicación / tipo de intervención</b><div id="mitigationList" class="small"></div></div>
+          <textarea id="mitigationWhy" placeholder="Explica por qué implementarías esta medida en la zona seleccionada y qué parte del sistema acústico modifica."></textarea>
+          <div id="mitFeedback" class="small" style="margin-top:7px"></div>
         </section>
       </div>
 
@@ -235,35 +260,105 @@ const state={
   mission:1,
   sources:[],
   suspect:null,
+  suspectWhy:"",
   receiver:null,
   receiverWhy:"",
   points:[],
   onoff:null,
-  mitigation:{encierro:null,pantalla:null,ventanas:null}
+  mitigation:{encierro:null,pantalla:null,ventanas:null},
+  mitigationWhy:{encierro:"",pantalla:"",ventanas:""}
 };
 let pointRole='Fuente', currentMit='encierro', pathsVisible=false, initialized=false;
 
+const isPopup = !!(window.opener && window.opener !== window);
+
 function send(type,payload){
+  if(isPopup){
+    if(type==="streamlit:setComponentValue"){
+      window.opener.postMessage({type:"c3l2:popupState",value:payload.value},"*");
+    }
+    return;
+  }
   window.parent.postMessage(Object.assign({isStreamlitMessage:true,type:type},payload||{}),"*");
 }
 function setValue(){
   send("streamlit:setComponentValue",{value:state});
   updateSummary();
 }
-function setHeight(){send("streamlit:setFrameHeight",{height:Math.max(720,document.body.scrollHeight+8)});}
+function setHeight(){
+  if(!isPopup){
+    send("streamlit:setFrameHeight",{height:Math.max(720,document.body.scrollHeight+8)});
+  }
+}
 
 function applyInitial(args){
   if(!args||!args.value||initialized)return;
-  const v=args.value;
-  Object.assign(state,v);
+  Object.assign(state,args.value);
+  if(!state.mitigationWhy) state.mitigationWhy={encierro:"",pantalla:"",ventanas:""};
+  if(typeof state.suspectWhy!=="string") state.suspectWhy="";
   initialized=true;
   renderAll();
 }
+
+function openExpandedView(){
+  const popup = window.open(
+    "",
+    "c3l2_case_prof_expanded",
+    "popup=yes,width=1500,height=950,resizable=yes,scrollbars=yes"
+  );
+  if(!popup){
+    if(document.documentElement.requestFullscreen){
+      document.documentElement.requestFullscreen();
+    }else{
+      alert("El navegador bloqueó la ventana emergente. Habilita pop-ups para esta página.");
+    }
+    return;
+  }
+  popup.document.open();
+  popup.document.write("<!doctype html>"+document.documentElement.outerHTML);
+  popup.document.close();
+}
+
 window.addEventListener("message",e=>{
-  if(e.data&&e.data.type==="streamlit:render"){applyInitial(e.data.args||{});setHeight();}
+  const d=e.data||{};
+
+  if(isPopup && d.type==="c3l2:initState"){
+    Object.assign(state,d.value||{});
+    if(!state.mitigationWhy) state.mitigationWhy={encierro:"",pantalla:"",ventanas:""};
+    if(typeof state.suspectWhy!=="string") state.suspectWhy="";
+    initialized=true;
+    renderAll();
+    return;
+  }
+
+  if(!isPopup && d.type==="c3l2:popupReady"){
+    if(e.source){
+      e.source.postMessage({type:"c3l2:initState",value:state},"*");
+    }
+    return;
+  }
+
+  if(!isPopup && d.type==="c3l2:popupState"){
+    Object.assign(state,d.value||{});
+    initialized=true;
+    renderAll();
+    setValue();
+    return;
+  }
+
+  if(!isPopup && d.type==="streamlit:render"){
+    applyInitial(d.args||{});
+    setHeight();
+  }
 });
-send("streamlit:componentReady",{apiVersion:1});
-setTimeout(setHeight,50);
+
+if(isPopup){
+  document.body.classList.add("popup-mode");
+  window.opener.postMessage({type:"c3l2:popupReady"},"*");
+}else{
+  send("streamlit:componentReady",{apiVersion:1});
+  setTimeout(setHeight,50);
+}
 
 document.querySelectorAll(".mission-tabs button").forEach(b=>b.addEventListener("click",()=>{
   state.mission=Number(b.dataset.m);
@@ -322,11 +417,18 @@ function renderPriority(){
     const map={"HVAC":"hvacBox","Chiller":"chillerBox","Grupo electrógeno":"generatorBox"};
     document.getElementById(map[state.suspect]).classList.add("priority-outline");
     document.getElementById("priority").innerHTML=`<span class="tag">${state.suspect}</span>`;
-    document.getElementById("priorityFeedback").innerHTML=state.suspect==="Chiller"
-      ?"<span style='color:#7ee0a3'>Coherente: es la fuente que opera durante todo el periodo denunciado.</span>"
-      :"Revisa el horario de operación.";
+    document.getElementById("priorityFeedback").innerHTML=state.suspect
+      ?(state.suspect==="Chiller"
+        ?"<span style='color:#7ee0a3'>Selección consistente con los antecedentes operacionales. Falta justificar y posteriormente comprobarla mediante medición.</span>"
+        :"La selección quedó registrada. Contrástala con los horarios de funcionamiento y fundamenta tu hipótesis.")
+      :"Selecciona una fuente sobre la imagen y fundamenta tu respuesta.";
   }
 }
+document.getElementById("suspectWhy").addEventListener("input",e=>{
+  state.suspectWhy=e.target.value;
+  setValue();
+});
+
 function renderReceiver(){
   document.querySelectorAll(".receiver").forEach(g=>g.classList.toggle("receiver-selected",g.dataset.receiver===state.receiver));
   document.getElementById("receiverTag").innerHTML=state.receiver?`<span class="tag">${state.receiver}</span>`:"<span class='small'>Sin selección</span>";
@@ -374,13 +476,23 @@ document.querySelectorAll("[data-onoff]").forEach(b=>b.addEventListener("click",
 document.querySelectorAll(".mitigation").forEach(b=>b.addEventListener("click",()=>{
   currentMit=b.dataset.mit;
   document.querySelectorAll(".mitigation").forEach(x=>x.classList.toggle("selected",x===b));
+  document.getElementById("mitigationWhy").value=state.mitigationWhy[currentMit]||"";
+  renderMitigation();
 }));
+document.getElementById("mitigationWhy").addEventListener("input",e=>{
+  state.mitigationWhy[currentMit]=e.target.value;
+  setValue();
+});
+
 function renderMitigation(){
   const labels={encierro:"Encierro chiller",pantalla:"Pantalla",ventanas:"Ventanas"};
   document.getElementById("mitigationList").innerHTML=Object.keys(state.mitigation).map(k=>
-    `<div class="item">${labels[k]} → <b>${state.mitigation[k]||"sin clasificar"}</b></div>`).join("");
+    `<div class="item">${labels[k]} → <b>${state.mitigation[k]||"sin ubicar"}</b></div>`).join("");
+  document.getElementById("mitigationWhy").value=state.mitigationWhy[currentMit]||"";
   const ok=state.mitigation.encierro==="Fuente"&&state.mitigation.pantalla==="Camino"&&state.mitigation.ventanas==="Receptor";
-  document.getElementById("mitFeedback").innerHTML=ok?"<span style='color:#7ee0a3'>Correcto: fuente / camino / receptor.</span>":"Selecciona una medida y luego haz clic en la zona física donde actúa.";
+  document.getElementById("mitFeedback").innerHTML=ok
+    ?"<span style='color:#7ee0a3'>Las tres medidas quedaron ubicadas correctamente. Completa también la justificación de cada una.</span>"
+    :"Selecciona una medida y haz clic sobre la zona física donde la implementarías.";
 }
 function updateSummary(){
   document.getElementById("summaryText").textContent=
@@ -388,7 +500,9 @@ function updateSummary(){
 }
 function renderAll(){
   renderSources();renderPriority();renderReceiver();renderPoints();renderMitigation();updateSummary();
+  document.getElementById("suspectWhy").value=state.suspectWhy||"";
   document.getElementById("receiverWhy").value=state.receiverWhy||"";
+  document.getElementById("mitigationWhy").value=(state.mitigationWhy&&state.mitigationWhy[currentMit])||"";
   document.querySelectorAll("[data-onoff]").forEach(x=>x.classList.toggle("selected",x.dataset.onoff===state.onoff));
 }
 renderAll();setValue();

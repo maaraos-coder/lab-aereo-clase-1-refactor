@@ -27803,14 +27803,16 @@ def _c3l2_stage1(lab,saved):
 
             _sources = set(_case_state.get("sources", [])) if isinstance(_case_state, dict) else set()
             _suspect = _case_state.get("suspect") if isinstance(_case_state, dict) else None
+            _suspect_why = str(_case_state.get("suspectWhy", "")) if isinstance(_case_state, dict) else ""
             _receiver = _case_state.get("receiver") if isinstance(_case_state, dict) else None
             _receiver_why = str(_case_state.get("receiverWhy", "")) if isinstance(_case_state, dict) else ""
             _points = _case_state.get("points", []) if isinstance(_case_state, dict) else []
             _onoff = _case_state.get("onoff") if isinstance(_case_state, dict) else None
             _mit = _case_state.get("mitigation", {}) if isinstance(_case_state, dict) else {}
+            _mit_why = _case_state.get("mitigationWhy", {}) if isinstance(_case_state, dict) else {}
 
             sources_ok = _sources == {"HVAC","Chiller","Grupo electrógeno"}
-            suspect_ok = _suspect == "Chiller"
+            suspect_ok = _suspect == "Chiller" and len(_suspect_why.strip()) >= 30
             receiver_ok = _receiver == "R2" and len(_receiver_why.strip()) >= 25
             point_roles = {
                 p.get("role")
@@ -27823,6 +27825,10 @@ def _c3l2_stage1(lab,saved):
                 _mit.get("encierro") == "Fuente"
                 and _mit.get("pantalla") == "Camino"
                 and _mit.get("ventanas") == "Receptor"
+                and all(
+                    len(str(_mit_why.get(k, "")).strip()) >= 25
+                    for k in ("encierro", "pantalla", "ventanas")
+                )
             )
             diagnosis_ok = len(diagnosis_reason.strip()) >= 70
 
@@ -27830,11 +27836,11 @@ def _c3l2_stage1(lab,saved):
             if not class_ok: missing.append("clasificación fuente/camino/receptor")
             if not path_ok: missing.append("intervenciones")
             if not sources_ok: missing.append("fuentes identificadas en el diagrama")
-            if not suspect_ok: missing.append("priorización por horario")
+            if not suspect_ok: missing.append("fuente potencial y su justificación")
             if not receiver_ok: missing.append("receptor y justificación")
             if not points_ok: missing.append("puntos de medición en fuente y receptor")
             if not onoff_ok: missing.append("interpretación ON/OFF")
-            if not mitigation_ok: missing.append("mitigaciones sobre el diagrama")
+            if not mitigation_ok: missing.append("ubicación y justificación de las mitigaciones")
             if not diagnosis_ok: missing.append("hipótesis diagnóstica")
 
             if missing:
