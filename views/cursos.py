@@ -27333,114 +27333,132 @@ def _c3l2_stage1(lab,saved):
         unsafe_allow_html=True,
     )
 
-    with st.container(border=True, key="c3l2_s1_scene_controls"):
-        st.markdown(
-            """
-            <div class="c3l2-q-kicker">CONFIGURA EL ESCENARIO</div>
-            <div class="c3l2-q-title">Selecciona una fuente y un receptor</div>
-            <div class="c3l2-q-context">
-              Mantén el entorno urbano y cambia únicamente los elementos que quieres estudiar.
-            </div>
-            """,
-            unsafe_allow_html=True,
-        )
-        c1, c2 = st.columns(2)
-        source = c1.selectbox(
-            "Fuente que quieres estudiar",
-            ["Tráfico de avenida", "Equipo HVAC en cubierta", "Camión de reparto"],
-            key="c3l2_s1_source",
-        )
-        receptor = c2.selectbox(
-            "Receptor que quieres estudiar",
-            ["Vivienda", "Colegio", "Peatón"],
-            key="c3l2_s1_receptor",
-        )
-
-    src_x = {"Tráfico de avenida":125, "Equipo HVAC en cubierta":360, "Camión de reparto":235}[source]
-    src_y = {"Tráfico de avenida":235, "Equipo HVAC en cubierta":92, "Camión de reparto":235}[source]
-    rec_x = {"Vivienda":815, "Colegio":650, "Peatón":535}[receptor]
-    rec_y = {"Vivienda":165, "Colegio":180, "Peatón":225}[receptor]
-    source_label = source.replace(" de avenida","").replace(" en cubierta","")
-
-    svg = f"""
-    <svg viewBox="0 0 1000 330" width="100%" style="background:#eef8fd;border:1px solid #cfe0ec;border-radius:18px">
-      <rect x="0" y="250" width="1000" height="80" fill="#647987"/>
-      <line x1="0" y1="290" x2="1000" y2="290" stroke="#f5d55c" stroke-width="5" stroke-dasharray="30 20"/>
-
-      <rect x="735" y="115" width="165" height="135" rx="8" fill="#d9c39d"/>
-      <polygon points="720,115 817,65 915,115" fill="#b58b5e"/>
-      <text x="775" y="55" font-size="17" font-weight="700">VIVIENDA</text>
-
-      <rect x="570" y="145" width="150" height="105" rx="8" fill="#d7c5a8"/>
-      <text x="610" y="135" font-size="17" font-weight="700">COLEGIO</text>
-
-      <rect x="310" y="145" width="145" height="105" rx="8" fill="#c8dbe5"/>
-      <rect x="340" y="108" width="82" height="37" rx="5" fill="#718b9a"/>
-      <text x="325" y="95" font-size="16" font-weight="700">HVAC</text>
-
-      <rect x="90" y="255" width="72" height="28" rx="7" fill="#e85d4e"/>
-      <circle cx="108" cy="286" r="9" fill="#263b47"/><circle cx="147" cy="286" r="9" fill="#263b47"/>
-      <rect x="205" y="252" width="75" height="32" rx="5" fill="#edb94b"/>
-      <circle cx="222" cy="286" r="9" fill="#263b47"/><circle cx="264" cy="286" r="9" fill="#263b47"/>
-
-      <circle cx="{src_x}" cy="{src_y}" r="13" fill="#e95454" stroke="white" stroke-width="3"/>
-      <circle cx="{rec_x}" cy="{rec_y}" r="13" fill="#0ba4d0" stroke="white" stroke-width="3"/>
-
-      <path d="M {src_x} {src_y} Q {(src_x+rec_x)/2:.0f} {min(src_y,rec_y)-55:.0f} {rec_x} {rec_y}"
-            fill="none" stroke="#0c92c2" stroke-width="4"/>
-      <path d="M {src_x} {src_y} Q {(src_x+rec_x)/2:.0f} 285 {rec_x} {rec_y}"
-            fill="none" stroke="#8aa3b2" stroke-width="3" stroke-dasharray="8 7"/>
-
-      <rect x="40" y="24" width="210" height="54" rx="12" fill="rgba(255,255,255,.90)" stroke="#c7dce8"/>
-      <text x="58" y="47" font-size="12" fill="#6a7f8f">FUENTE SELECCIONADA</text>
-      <text x="58" y="66" font-size="16" font-weight="700" fill="#9e3434">{source_label}</text>
-
-      <rect x="740" y="24" width="215" height="54" rx="12" fill="rgba(255,255,255,.90)" stroke="#c7dce8"/>
-      <text x="758" y="47" font-size="12" fill="#6a7f8f">RECEPTOR SELECCIONADO</text>
-      <text x="758" y="66" font-size="16" font-weight="700" fill="#087b9f">{receptor}</text>
-
-      <text x="430" y="88" font-size="13" fill="#087b9f" font-weight="700">camino directo</text>
-      <text x="410" y="309" font-size="13" fill="#637b89">trayectoria alternativa / indirecta</text>
-    </svg>
-    """
-    components.html(svg, height=350)
-
-    scene_context = {
-        "Tráfico de avenida": "El tráfico representa una fuente móvil distribuida a lo largo de la vía cuando existe flujo continuo.",
-        "Equipo HVAC en cubierta": "El HVAC representa una fuente técnica fija: su posición no cambia durante el periodo de funcionamiento.",
-        "Camión de reparto": "El camión representa una fuente móvil individual y transitoria.",
-    }[source]
-
-    receptor_context = {
-        "Vivienda": "La vivienda representa un receptor fijo cuya exposición depende de su posición respecto de la fuente.",
-        "Colegio": "El colegio es un receptor fijo y sensible al periodo de uso del establecimiento.",
-        "Peatón": "El peatón representa un receptor móvil o transitorio, por lo que la exposición puede variar rápidamente.",
-    }[receptor]
-
     st.markdown(
-        f"""
-        <div class="c3l2-grid2">
-          <div class="c3l2-card blue">
-            <div class="c3l2-k">LECTURA DE LA FUENTE</div>
-            <b>{source}</b><br>
-            {scene_context}
-          </div>
-          <div class="c3l2-card green">
-            <div class="c3l2-k">LECTURA DEL RECEPTOR</div>
-            <b>{receptor}</b><br>
-            {receptor_context}
-          </div>
-        </div>
+        """
+        <style>
+        div[class*="st-key-c3l2_scene_station"]{
+            border:1px solid #cfe0ea !important;
+            border-radius:20px !important;
+            background:linear-gradient(180deg,#ffffff,#f6fafc) !important;
+            box-shadow:0 10px 28px rgba(15,23,42,.06) !important;
+            padding:1rem 1.1rem 1.15rem !important;
+            margin:.7rem 0 1rem !important;
+        }
+        .c3l2-station-head{display:flex;justify-content:space-between;gap:1rem;align-items:flex-start;padding:.1rem .1rem .85rem;border-bottom:1px solid #dce8ef;margin-bottom:.9rem}
+        .c3l2-station-title{font-size:1.05rem;font-weight:900;color:#153249;line-height:1.25}
+        .c3l2-station-sub{font-size:.78rem;color:#6a7e8e;margin-top:.2rem;line-height:1.35}
+        .c3l2-station-pill{background:#eaf7fd;color:#087aa5;border:1px solid #b8e3f2;border-radius:999px;padding:.38rem .62rem;font-size:.68rem;font-weight:850;white-space:nowrap}
+        .c3l2-readout{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:.7rem;margin:.75rem 0 .25rem}
+        .c3l2-readout-card{border:1px solid #d7e4ec;border-radius:14px;background:#fff;padding:.8rem .9rem;min-height:105px}
+        .c3l2-readout-card.blue{background:#f0f8fd;border-color:#c5e5f4}.c3l2-readout-card.green{background:#f1fbf5;border-color:#c7edd5}
+        .c3l2-readout-k{font-size:.64rem;font-weight:900;letter-spacing:.075em;color:#0781b5;text-transform:uppercase;margin-bottom:.25rem}
+        .c3l2-readout-v{font-size:.93rem;font-weight:850;color:#18344b;margin-bottom:.2rem}
+        .c3l2-readout-d{font-size:.74rem;line-height:1.4;color:#637687}
+        @media(max-width:780px){.c3l2-station-head{flex-direction:column}.c3l2-readout{grid-template-columns:1fr}}
+        </style>
         """,
         unsafe_allow_html=True,
     )
 
+    with st.container(border=True, key="c3l2_scene_station"):
+        st.markdown(
+            """
+            <div class="c3l2-station-head">
+              <div>
+                <div class="c3l2-station-title">Estación de análisis · Fuente → Camino → Receptor</div>
+                <div class="c3l2-station-sub">Configura el escenario y observa cómo cambia la relación física entre los elementos del sistema.</div>
+              </div>
+              <div class="c3l2-station-pill">ANÁLISIS CUALITATIVO</div>
+            </div>
+            """,
+            unsafe_allow_html=True,
+        )
+
+        c1, c2 = st.columns(2)
+        source = c1.selectbox(
+            "Fuente acústica",
+            ["Tráfico de avenida", "Equipo HVAC en cubierta", "Camión de reparto"],
+            key="c3l2_s1_source",
+        )
+        receptor = c2.selectbox(
+            "Receptor",
+            ["Vivienda", "Colegio", "Peatón"],
+            key="c3l2_s1_receptor",
+        )
+
+        src_x = {"Tráfico de avenida":145, "Equipo HVAC en cubierta":355, "Camión de reparto":245}[source]
+        src_y = {"Tráfico de avenida":264, "Equipo HVAC en cubierta":118, "Camión de reparto":264}[source]
+        rec_x = {"Vivienda":835, "Colegio":650, "Peatón":545}[receptor]
+        rec_y = {"Vivienda":160, "Colegio":178, "Peatón":242}[receptor]
+        source_short = {"Tráfico de avenida":"Tráfico vial","Equipo HVAC en cubierta":"HVAC","Camión de reparto":"Camión de reparto"}[source]
+
+        scene_svg = f"""
+        <svg viewBox="0 0 1000 360" width="100%" style="display:block;border-radius:16px;background:#edf6fa">
+          <defs>
+            <linearGradient id="sky" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#eaf5fb"/><stop offset="100%" stop-color="#f7fbfd"/></linearGradient>
+            <linearGradient id="road" x1="0" y1="0" x2="1" y2="0"><stop offset="0%" stop-color="#4d5f6b"/><stop offset="100%" stop-color="#566976"/></linearGradient>
+            <filter id="shadow" x="-20%" y="-20%" width="140%" height="140%"><feDropShadow dx="0" dy="5" stdDeviation="5" flood-color="#274559" flood-opacity=".14"/></filter>
+          </defs>
+          <rect width="1000" height="360" fill="url(#sky)"/>
+          <rect x="0" y="245" width="1000" height="115" fill="url(#road)"/>
+          <line x1="0" y1="304" x2="1000" y2="304" stroke="#f2d05c" stroke-width="6" stroke-dasharray="36 24"/>
+          <g filter="url(#shadow)">
+            <rect x="710" y="92" width="190" height="153" rx="10" fill="#d9c7a8"/><polygon points="690,92 806,34 920,92" fill="#a77d58"/>
+            <rect x="535" y="130" width="150" height="115" rx="9" fill="#d6c7a8"/>
+            <rect x="285" y="154" width="170" height="91" rx="9" fill="#c8d9e2"/><rect x="330" y="113" width="83" height="41" rx="6" fill="#708b99"/>
+          </g>
+          <text x="748" y="76" font-size="15" font-weight="800" fill="#2b4659">VIVIENDA</text>
+          <text x="573" y="117" font-size="15" font-weight="800" fill="#2b4659">COLEGIO</text>
+          <text x="349" y="101" font-size="14" font-weight="800" fill="#2b4659">HVAC</text>
+
+          <rect x="100" y="263" width="80" height="30" rx="8" fill="#e45f54"/><circle cx="118" cy="296" r="10" fill="#27333a"/><circle cx="163" cy="296" r="10" fill="#27333a"/>
+          <rect x="210" y="258" width="82" height="35" rx="8" fill="#e9b945"/><circle cx="229" cy="296" r="10" fill="#27333a"/><circle cx="274" cy="296" r="10" fill="#27333a"/>
+
+          <path d="M {src_x} {src_y} Q {(src_x+rec_x)/2:.0f} {min(src_y,rec_y)-72:.0f} {rec_x} {rec_y}" fill="none" stroke="#0c94c3" stroke-width="4.5"/>
+          <path d="M {src_x} {src_y} Q {(src_x+rec_x)/2:.0f} 292 {rec_x} {rec_y}" fill="none" stroke="#8ca8b8" stroke-width="3" stroke-dasharray="9 7"/>
+          <circle cx="{src_x}" cy="{src_y}" r="13" fill="#e5534d" stroke="white" stroke-width="4"/>
+          <circle cx="{rec_x}" cy="{rec_y}" r="13" fill="#10a4d0" stroke="white" stroke-width="4"/>
+
+          <g transform="translate(42,28)"><rect width="225" height="58" rx="12" fill="white" opacity=".94" stroke="#c9dce7"/><text x="16" y="21" font-size="11" font-weight="800" fill="#7d8e9a">FUENTE SELECCIONADA</text><text x="16" y="43" font-size="16" font-weight="850" fill="#a63c38">{source_short}</text></g>
+          <g transform="translate(735,28)"><rect width="225" height="58" rx="12" fill="white" opacity=".94" stroke="#c9dce7"/><text x="16" y="21" font-size="11" font-weight="800" fill="#7d8e9a">RECEPTOR SELECCIONADO</text><text x="16" y="43" font-size="16" font-weight="850" fill="#087d9f">{receptor}</text></g>
+          <g transform="translate(390,38)"><rect width="220" height="43" rx="12" fill="#0b2838" opacity=".88"/><circle cx="22" cy="21" r="5" fill="#0c94c3"/><text x="38" y="26" font-size="13" font-weight="750" fill="white">camino directo</text></g>
+          <g transform="translate(390,315)"><rect width="250" height="32" rx="10" fill="white" opacity=".92" stroke="#d1e0e8"/><line x1="16" y1="16" x2="45" y2="16" stroke="#8ca8b8" stroke-width="3" stroke-dasharray="8 6"/><text x="56" y="21" font-size="12" fill="#647b8b">trayectoria alternativa / indirecta</text></g>
+        </svg>
+        """
+        components.html(scene_svg, height=380)
+
+        source_context = {
+            "Tráfico de avenida":"Fuente móvil distribuida cuando existe flujo continuo. Su posición efectiva se extiende a lo largo del corredor vial.",
+            "Equipo HVAC en cubierta":"Fuente técnica fija. La posición permanece constante durante la operación.",
+            "Camión de reparto":"Fuente móvil individual y transitoria. La geometría fuente–receptor cambia durante el paso.",
+        }[source]
+        receptor_context = {
+            "Vivienda":"Receptor fijo. El nivel observado corresponde a esa ubicación y depende de la geometría respecto de la fuente.",
+            "Colegio":"Receptor fijo cuyo uso puede ser sensible al periodo de funcionamiento y a la actividad desarrollada.",
+            "Peatón":"Receptor transitorio. Su propia posición puede cambiar además de la posición de la fuente.",
+        }[receptor]
+        path_context = {
+            "Tráfico de avenida":"El camino varía con la posición de los vehículos y con los obstáculos entre la vía y el receptor.",
+            "Equipo HVAC en cubierta":"El camino es relativamente estable mientras no cambien la geometría ni los obstáculos.",
+            "Camión de reparto":"La trayectoria acústica cambia continuamente porque la fuente se desplaza respecto del receptor.",
+        }[source]
+
+        st.markdown(
+            f"""
+            <div class="c3l2-readout">
+              <div class="c3l2-readout-card blue"><div class="c3l2-readout-k">FUENTE</div><div class="c3l2-readout-v">{source}</div><div class="c3l2-readout-d">{source_context}</div></div>
+              <div class="c3l2-readout-card"><div class="c3l2-readout-k">CAMINO</div><div class="c3l2-readout-v">Directo + trayectoria alternativa</div><div class="c3l2-readout-d">{path_context}</div></div>
+              <div class="c3l2-readout-card green"><div class="c3l2-readout-k">RECEPTOR</div><div class="c3l2-readout-v">{receptor}</div><div class="c3l2-readout-d">{receptor_context}</div></div>
+            </div>
+            """,
+            unsafe_allow_html=True,
+        )
+
     st.markdown(
         """
         <div class="c3l2-note">
-          <b>Aprendizaje esperado:</b> antes de hablar de atenuación o de niveles en dB, debes poder definir
-          claramente la fuente, el receptor y el camino que los conecta. Si alguno de estos elementos cambia,
-          cambia también el problema acústico que estás estudiando.
+          <b>Aprendizaje esperado:</b> un problema de ruido ambiental queda correctamente definido cuando puedes
+          identificar la <b>fuente</b>, el <b>camino de propagación</b> y el <b>receptor</b>. La cuantificación en dB viene después.
         </div>
         """,
         unsafe_allow_html=True,
