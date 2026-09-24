@@ -13,6 +13,18 @@ MODULE_DIR = Path(__file__).resolve().parent
 PROJECT_ROOT = MODULE_DIR.parent
 ASSET_DIR = PROJECT_ROOT / "assets"
 
+_C3L2_CASE_COMPONENT_DIR = MODULE_DIR / "c3l2_case_prof"
+_C3L2_CASE_COMPONENT = None
+if (_C3L2_CASE_COMPONENT_DIR / "index.html").is_file():
+    try:
+        _C3L2_CASE_COMPONENT = components.declare_component(
+            "c3l2_case_prof",
+            path=str(_C3L2_CASE_COMPONENT_DIR),
+        )
+    except Exception:
+        _C3L2_CASE_COMPONENT = None
+
+
 """Vistas de cursos, selección de laboratorios y laboratorios futuros.
 
 La lógica se conserva sin cambios. ``app.py`` inyecta las dependencias
@@ -27723,22 +27735,34 @@ def _c3l2_stage1(lab,saved):
         unsafe_allow_html=True,
     )
 
-    import os as _os
-    _case_component_path = _os.path.join(
-        _os.path.dirname(__file__),
-        "c3l2_case_prof",
-    )
-    _case_component = components.declare_component(
-        "c3l2_case_prof",
-        path=_case_component_path,
-    )
+    _case_component = _C3L2_CASE_COMPONENT
 
     _previous_case = saved.get("c3l2_stage1_case_interactive", {})
-    _case_state = _case_component(
-        value=_previous_case,
-        key="c3l2_case_prof_component",
-        default=_previous_case,
-    ) or _previous_case
+
+    if _case_component is not None:
+        _case_state = _case_component(
+            value=_previous_case,
+            key="c3l2_case_prof_component",
+            default=_previous_case,
+        ) or _previous_case
+    else:
+        _case_state = _previous_case
+        _case_html_path = _C3L2_CASE_COMPONENT_DIR / "index.html"
+        if _case_html_path.is_file():
+            components.html(
+                _case_html_path.read_text(encoding="utf-8"),
+                height=780,
+                scrolling=True,
+            )
+            st.warning(
+                "El caso interactivo se está mostrando en modo visual de respaldo. "
+                "Verifica que `views/c3l2_case_prof/index.html` esté presente en el repositorio."
+            )
+        else:
+            st.error(
+                "Falta el archivo `views/c3l2_case_prof/index.html`. "
+                "Sube la carpeta incluida en el parche."
+            )
 
     if isinstance(_case_state, dict):
         saved["c3l2_stage1_case_interactive"] = _case_state
