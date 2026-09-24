@@ -31,6 +31,11 @@ body.popup-mode .expand-btn{display:none}
 .canvas-wrap{padding:12px}
 .side{background:var(--panel);border-left:1px solid #2e4450;min-height:650px;display:flex;flex-direction:column}
 .mission-tabs{display:grid;grid-template-columns:repeat(3,1fr);gap:7px;padding:11px;border-bottom:1px solid #2f4551}
+.case-tools{display:flex;justify-content:flex-end;gap:7px;padding:8px 11px 0;background:var(--panel)}
+.reset-btn{border:1px solid #8b4b4b!important;background:#3b2323!important;color:#ffd6d6!important}
+.reset-btn:hover{background:#532d2d!important}
+.preview-label{font-size:11px;font-weight:900;fill:#fff;paint-order:stroke;stroke:#10202a;stroke-width:3px;stroke-linejoin:round}
+
 .mission-tabs button{border:1px solid #405d6c;background:#20343f;color:#dce9ef;padding:8px 7px;border-radius:9px;font-size:10px;font-weight:850;cursor:pointer}
 .mission-tabs button.active{background:#0c7da8;border-color:#4fc6ef;color:white}
 .panel{padding:13px 14px;overflow:auto;max-height:555px}
@@ -163,6 +168,43 @@ svg{display:block;width:100%;height:auto;border-radius:14px;background:#101820}
           <path d="M380 238 Q535 365 666 468" fill="none" stroke="#3cb4e8" stroke-width="3" stroke-dasharray="8 6"/>
           <path d="M380 238 Q520 155 666 142" fill="none" stroke="#3cb4e8" stroke-width="3"/>
         </g>
+        <!-- mitigation preview / applied measures -->
+        <g id="mitigationPreview" style="pointer-events:none">
+          <!-- Encierro acústico del chiller -->
+          <g id="mitPreviewEncierro" style="display:none">
+            <rect x="272" y="182" width="216" height="113" rx="12"
+                  fill="rgba(129,82,187,.16)" stroke="#b184e8" stroke-width="5" stroke-dasharray="10 7"/>
+            <rect x="292" y="163" width="175" height="24" rx="8" fill="#6f42a7"/>
+            <text x="380" y="180" text-anchor="middle" class="preview-label">ENCIERRO ACÚSTICO</text>
+          </g>
+
+          <!-- Pantalla acústica -->
+          <g id="mitPreviewPantalla" style="display:none">
+            <rect x="526" y="315" width="68" height="220" rx="4"
+                  fill="rgba(55,173,220,.18)" stroke="#39b4e7" stroke-width="5"/>
+            <line x1="526" y1="315" x2="594" y2="315" stroke="#8ce3ff" stroke-width="8"/>
+            <rect x="500" y="286" width="120" height="24" rx="8" fill="#176b8f"/>
+            <text x="560" y="303" text-anchor="middle" class="preview-label">PANTALLA</text>
+          </g>
+
+          <!-- Mejora en ventanas del receptor -->
+          <g id="mitPreviewVentanas" style="display:none">
+            <rect x="675" y="120" width="235" height="370" rx="10"
+                  fill="none" stroke="#68d28d" stroke-width="4" stroke-dasharray="8 6"/>
+            <rect x="720" y="95" width="150" height="24" rx="8" fill="#267a49"/>
+            <text x="795" y="112" text-anchor="middle" class="preview-label">VENTANAS ACÚSTICAS</text>
+            <g fill="rgba(104,210,141,.25)" stroke="#68d28d" stroke-width="3">
+              <rect x="685" y="156" width="44" height="20"/>
+              <rect x="685" y="205" width="44" height="20"/>
+              <rect x="685" y="254" width="44" height="20"/>
+              <rect x="685" y="303" width="44" height="20"/>
+              <rect x="685" y="352" width="44" height="20"/>
+              <rect x="685" y="401" width="44" height="20"/>
+              <rect x="685" y="450" width="44" height="20"/>
+            </g>
+          </g>
+        </g>
+
         <g id="points"></g>
         <rect id="pointLayer" x="0" y="0" width="980" height="610" fill="transparent" class="hidden" style="cursor:crosshair"/>
       </svg>
@@ -175,6 +217,9 @@ svg{display:block;width:100%;height:auto;border-radius:14px;background:#101820}
     </div>
 
     <div class="side">
+      <div class="case-tools">
+        <button class="reset-btn" id="resetCase">↺ Reiniciar caso</button>
+      </div>
       <div class="mission-tabs">
         <button data-m="1" class="active">1 · Fuentes</button>
         <button data-m="2">2 · Horario</button>
@@ -477,12 +522,29 @@ document.querySelectorAll(".mitigation").forEach(b=>b.addEventListener("click",(
   currentMit=b.dataset.mit;
   document.querySelectorAll(".mitigation").forEach(x=>x.classList.toggle("selected",x===b));
   document.getElementById("mitigationWhy").value=state.mitigationWhy[currentMit]||"";
+  showMitigationPreview(currentMit);
   renderMitigation();
 }));
 document.getElementById("mitigationWhy").addEventListener("input",e=>{
   state.mitigationWhy[currentMit]=e.target.value;
   setValue();
 });
+
+function showMitigationPreview(kind){
+  const map={
+    encierro:"mitPreviewEncierro",
+    pantalla:"mitPreviewPantalla",
+    ventanas:"mitPreviewVentanas"
+  };
+  Object.values(map).forEach(id=>{
+    const el=document.getElementById(id);
+    if(el) el.style.display="none";
+  });
+  if(map[kind]){
+    const el=document.getElementById(map[kind]);
+    if(el) el.style.display="block";
+  }
+}
 
 function renderMitigation(){
   const labels={encierro:"Encierro chiller",pantalla:"Pantalla",ventanas:"Ventanas"};
@@ -492,17 +554,57 @@ function renderMitigation(){
   const ok=state.mitigation.encierro==="Fuente"&&state.mitigation.pantalla==="Camino"&&state.mitigation.ventanas==="Receptor";
   document.getElementById("mitFeedback").innerHTML=ok
     ?"<span style='color:#7ee0a3'>Las tres medidas quedaron ubicadas correctamente. Completa también la justificación de cada una.</span>"
-    :"Selecciona una medida y haz clic sobre la zona física donde la implementarías.";
+    :"La medida seleccionada se muestra como previsualización en el diagrama. Haz clic sobre la zona donde la implementarías para registrar tu decisión.";
 }
 function updateSummary(){
   document.getElementById("summaryText").textContent=
     `${state.sources.length} fuentes seleccionadas · ${state.receiver||"sin receptor"} · ${state.points.length} puntos · ${Object.values(state.mitigation).filter(Boolean).length}/3 mitigaciones`;
 }
+function resetCase(){
+  state.mission=1;
+  state.sources=[];
+  state.suspect=null;
+  state.suspectWhy="";
+  state.receiver=null;
+  state.receiverWhy="";
+  state.points=[];
+  state.onoff=null;
+  state.mitigation={encierro:null,pantalla:null,ventanas:null};
+  state.mitigationWhy={encierro:"",pantalla:"",ventanas:""};
+  currentMit="encierro";
+  pointRole="Fuente";
+
+  document.querySelectorAll(".mission-tabs button").forEach(b=>{
+    const active=Number(b.dataset.m)===1;
+    b.classList.toggle("active",active);
+  });
+  for(let i=1;i<=6;i++){
+    document.getElementById("m"+i).classList.toggle("hidden",i!==1);
+  }
+
+  document.getElementById("pointLayer").classList.add("hidden");
+  document.querySelectorAll(".mitigation").forEach(b=>{
+    b.classList.toggle("selected",b.dataset.mit==="encierro");
+  });
+  document.querySelectorAll("[data-onoff]").forEach(b=>b.classList.remove("selected"));
+  document.getElementById("suspectWhy").value="";
+  document.getElementById("receiverWhy").value="";
+  document.getElementById("mitigationWhy").value="";
+  renderAll();
+  setValue();
+}
+document.getElementById("resetCase").addEventListener("click",()=>{
+  if(confirm("¿Reiniciar todas las respuestas y selecciones de este caso?")){
+    resetCase();
+  }
+});
+
 function renderAll(){
   renderSources();renderPriority();renderReceiver();renderPoints();renderMitigation();updateSummary();
   document.getElementById("suspectWhy").value=state.suspectWhy||"";
   document.getElementById("receiverWhy").value=state.receiverWhy||"";
   document.getElementById("mitigationWhy").value=(state.mitigationWhy&&state.mitigationWhy[currentMit])||"";
+  showMitigationPreview(currentMit);
   document.querySelectorAll("[data-onoff]").forEach(x=>x.classList.toggle("selected",x.dataset.onoff===state.onoff));
 }
 renderAll();setValue();
