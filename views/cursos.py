@@ -13,18 +13,6 @@ MODULE_DIR = Path(__file__).resolve().parent
 PROJECT_ROOT = MODULE_DIR.parent
 ASSET_DIR = PROJECT_ROOT / "assets"
 
-_C3L2_CASE_COMPONENT_DIR = MODULE_DIR / "c3l2_case_prof"
-_C3L2_CASE_COMPONENT = None
-if (_C3L2_CASE_COMPONENT_DIR / "index.html").is_file():
-    try:
-        _C3L2_CASE_COMPONENT = components.declare_component(
-            "c3l2_case_prof",
-            path=str(_C3L2_CASE_COMPONENT_DIR),
-        )
-    except Exception:
-        _C3L2_CASE_COMPONENT = None
-
-
 """Vistas de cursos, selección de laboratorios y laboratorios futuros.
 
 La lógica se conserva sin cambios. ``app.py`` inyecta las dependencias
@@ -27715,38 +27703,10 @@ def _c3l2_stage1(lab,saved):
         """
         <div class="c3l2-intro">
           <div class="c3l2-k">ENCARGO PROFESIONAL</div>
-          <div class="c3l2-title">Investiga un reclamo nocturno por ruido proveniente de un supermercado colindante con un edificio residencial.</div>
-
-          <p style="margin:.55rem 0 .7rem;line-height:1.55;">
-            Los residentes informan molestias principalmente entre <b>23:00 y 06:00 h</b>.
-            En el supermercado operan un sistema HVAC, un chiller y un grupo electrógeno,
-            con horarios de funcionamiento diferentes. El edificio residencial presenta receptores
-            ubicados a distintas alturas respecto de la medianera.
-          </p>
-
-          <div style="font-weight:850;margin:.45rem 0 .35rem;color:#17324a;">Tu trabajo será:</div>
-          <ol style="margin:.2rem 0 .75rem 1.25rem;padding:0;line-height:1.55;">
-            <li><b>Identificar las fuentes acústicas presentes</b> en el escenario.</li>
-            <li><b>Determinar cuál podría estar asociada al horario denunciado</b> y fundamentar tu hipótesis.</li>
-            <li><b>Analizar los posibles receptores</b>, considerando altura, línea de visión, distancia y efecto de la medianera.</li>
-            <li><b>Seleccionar el receptor que investigarías prioritariamente</b>.</li>
-            <li><b>Diseñar una campaña de medición</b>, ubicando directamente sobre el esquema los puntos para caracterizar fuente, camino y receptor.</li>
-            <li><b>Interpretar una comparación operacional ON/OFF</b> de la fuente sospechosa.</li>
-            <li><b>Proponer medidas de mitigación</b> y decidir si actúan sobre la fuente, el camino de propagación o el receptor.</li>
-            <li><b>Redactar una hipótesis diagnóstica preliminar</b>, indicando además qué información o mediciones faltarían para confirmar el origen del ruido.</li>
-          </ol>
-
-          <div style="
-              margin-top:.65rem;
-              padding:.7rem .85rem;
-              border-radius:12px;
-              border:1px solid #bfe3f2;
-              background:#eef8fd;
-              color:#18435a;
-              line-height:1.45;">
-            <b>Resultado esperado:</b> al finalizar deberás ser capaz de construir una estrategia de investigación acústica defendible
-            a partir de antecedentes de denuncia, funcionamiento de las fuentes y geometría fuente–camino–receptor.
-          </div>
+          <div class="c3l2-title">Investiga un reclamo nocturno sin recibir la respuesta de antemano.</div>
+          El supermercado cuenta con HVAC, chiller y grupo electrógeno. La denuncia se concentra entre
+          <b>23:00 y 06:00 h</b>. El edificio tiene tres posiciones receptoras: una bajo la medianera,
+          otra apenas sobre ella y otra en un piso superior.
         </div>
         """,
         unsafe_allow_html=True,
@@ -27763,34 +27723,23 @@ def _c3l2_stage1(lab,saved):
         unsafe_allow_html=True,
     )
 
-    _case_component = _C3L2_CASE_COMPONENT
+    import os as _os
+    _case_component_path = _os.path.join(
+        _os.path.dirname(_os.path.dirname(__file__)),
+        "components",
+        "c3l2_case_prof",
+    )
+    _case_component = components.declare_component(
+        "c3l2_case_prof",
+        path=_case_component_path,
+    )
 
     _previous_case = saved.get("c3l2_stage1_case_interactive", {})
-
-    if _case_component is not None:
-        _case_state = _case_component(
-            value=_previous_case,
-            key="c3l2_case_prof_component",
-            default=_previous_case,
-        ) or _previous_case
-    else:
-        _case_state = _previous_case
-        _case_html_path = _C3L2_CASE_COMPONENT_DIR / "index.html"
-        if _case_html_path.is_file():
-            components.html(
-                _case_html_path.read_text(encoding="utf-8"),
-                height=780,
-                scrolling=True,
-            )
-            st.warning(
-                "El caso interactivo se está mostrando en modo visual de respaldo. "
-                "Verifica que `views/c3l2_case_prof/index.html` esté presente en el repositorio."
-            )
-        else:
-            st.error(
-                "Falta el archivo `views/c3l2_case_prof/index.html`. "
-                "Sube la carpeta incluida en el parche."
-            )
+    _case_state = _case_component(
+        value=_previous_case,
+        key="c3l2_case_prof_component",
+        default=_previous_case,
+    ) or _previous_case
 
     if isinstance(_case_state, dict):
         saved["c3l2_stage1_case_interactive"] = _case_state
@@ -27831,16 +27780,14 @@ def _c3l2_stage1(lab,saved):
 
             _sources = set(_case_state.get("sources", [])) if isinstance(_case_state, dict) else set()
             _suspect = _case_state.get("suspect") if isinstance(_case_state, dict) else None
-            _suspect_why = str(_case_state.get("suspectWhy", "")) if isinstance(_case_state, dict) else ""
             _receiver = _case_state.get("receiver") if isinstance(_case_state, dict) else None
             _receiver_why = str(_case_state.get("receiverWhy", "")) if isinstance(_case_state, dict) else ""
             _points = _case_state.get("points", []) if isinstance(_case_state, dict) else []
             _onoff = _case_state.get("onoff") if isinstance(_case_state, dict) else None
             _mit = _case_state.get("mitigation", {}) if isinstance(_case_state, dict) else {}
-            _mit_why = _case_state.get("mitigationWhy", {}) if isinstance(_case_state, dict) else {}
 
             sources_ok = _sources == {"HVAC","Chiller","Grupo electrógeno"}
-            suspect_ok = _suspect == "Chiller" and len(_suspect_why.strip()) >= 30
+            suspect_ok = _suspect == "Chiller"
             receiver_ok = _receiver == "R2" and len(_receiver_why.strip()) >= 25
             point_roles = {
                 p.get("role")
@@ -27853,10 +27800,6 @@ def _c3l2_stage1(lab,saved):
                 _mit.get("encierro") == "Fuente"
                 and _mit.get("pantalla") == "Camino"
                 and _mit.get("ventanas") == "Receptor"
-                and all(
-                    len(str(_mit_why.get(k, "")).strip()) >= 25
-                    for k in ("encierro", "pantalla", "ventanas")
-                )
             )
             diagnosis_ok = len(diagnosis_reason.strip()) >= 70
 
@@ -27864,11 +27807,11 @@ def _c3l2_stage1(lab,saved):
             if not class_ok: missing.append("clasificación fuente/camino/receptor")
             if not path_ok: missing.append("intervenciones")
             if not sources_ok: missing.append("fuentes identificadas en el diagrama")
-            if not suspect_ok: missing.append("fuente potencial y su justificación")
+            if not suspect_ok: missing.append("priorización por horario")
             if not receiver_ok: missing.append("receptor y justificación")
             if not points_ok: missing.append("puntos de medición en fuente y receptor")
             if not onoff_ok: missing.append("interpretación ON/OFF")
-            if not mitigation_ok: missing.append("ubicación y justificación de las mitigaciones")
+            if not mitigation_ok: missing.append("mitigaciones sobre el diagrama")
             if not diagnosis_ok: missing.append("hipótesis diagnóstica")
 
             if missing:
@@ -27928,56 +27871,335 @@ La hipótesis final debe integrar fuente, horario, receptor, geometría, puntos 
 
 
 def _c3l2_stage2(lab,saved):
-    _c3l2_header(2,"Fuente puntual vs fuente lineal","Descubrir por qué duplicar la distancia no produce la misma pérdida en dos geometrías ideales.",25)
+    _c3l2_header(
+        2,
+        "Fuente puntual vs fuente lineal",
+        "Comprender cómo la geometría de la fuente modifica la propagación y la pérdida por distancia.",
+        35,
+    )
 
-    st.markdown("""
-    <div class="c3l2-intro"><div class="c3l2-k">PREGUNTA GUÍA</div>
-    <div class="c3l2-title">¿Una máquina aislada y una carretera extensa se propagan de la misma manera?</div>
-    No. En una idealización puntual la energía se reparte sobre una superficie aproximadamente esférica.
-    En una fuente lineal idealizada se reparte sobre una superficie aproximadamente cilíndrica.</div>
-    """,unsafe_allow_html=True)
+    # ================================================================
+    # 1. CONTEXTO TÉCNICO
+    # ================================================================
+    st.markdown("## 1. ¿Qué significa aproximar una fuente como puntual o lineal?")
+    st.caption(
+        "Objetivo: comprender que puntual y lineal son modelos geométricos dependientes de la escala del problema."
+    )
 
-    st.markdown("### 1. Comprende las dos geometrías")
+    st.markdown(
+        """
+        <div class="c3l2-intro">
+          <div class="c3l2-k">PREGUNTA GUÍA</div>
+          <div class="c3l2-title">¿Una máquina compacta y una vía extensa distribuyen la energía acústica de la misma forma?</div>
+          La elección del modelo depende de la <b>geometría efectiva de la fuente</b>, de sus dimensiones
+          respecto de la distancia al receptor y de la extensión espacial desde la cual se emite sonido.
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
+
+    st.markdown(
+        """
+        <div class="c3l2-grid">
+          <div class="c3l2-card blue">
+            <div class="c3l2-k">FUENTE PUNTUAL · APROXIMACIÓN</div>
+            <b>Dimensiones pequeñas respecto de la distancia al receptor</b><br>
+            Una máquina compacta, un grupo electrógeno o una unidad HVAC pueden aproximarse como puntuales
+            cuando el receptor se encuentra suficientemente alejado respecto de sus dimensiones.
+          </div>
+          <div class="c3l2-card green">
+            <div class="c3l2-k">FUENTE LINEAL · APROXIMACIÓN</div>
+            <b>Emisión distribuida a lo largo de una longitud relevante</b><br>
+            Una vía con flujo continuo o una línea extensa de fuentes puede aproximarse como lineal
+            cuando su longitud efectiva domina la geometría observada.
+          </div>
+          <div class="c3l2-card">
+            <div class="c3l2-k">IDEA CLAVE</div>
+            <b>La clasificación depende de la escala</b><br>
+            La misma fuente física puede requerir modelos distintos si cambia la distancia de observación
+            o la extensión efectiva que participa en la emisión.
+          </div>
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
+
+    st.markdown(
+        """
+        <div class="c3l2-note">
+          <b>No memorices “máquina = puntual” o “carretera = lineal”.</b>
+          Antes de elegir un modelo compara dimensiones de la fuente, distancia al receptor
+          y extensión espacial de la emisión.
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
+
+    # ================================================================
+    # 2. VISUAL COMPARATIVO
+    # ================================================================
+    st.markdown("## 2. Visualiza las dos geometrías de propagación")
+    st.caption(
+        "Objetivo: observar cómo cambia la distribución espacial de la energía cuando la fuente se idealiza como puntual o lineal."
+    )
+
+    comparison_html = r"""
+    <!doctype html><html lang="es"><head><meta charset="utf-8">
+    <style>
+      *{box-sizing:border-box}body{margin:0;font-family:Inter,system-ui,-apple-system,"Segoe UI",sans-serif;background:#f7fafc;color:#132f43}
+      .wrap{border:1px solid #d7e5ed;border-radius:18px;background:white;overflow:hidden}
+      .head{padding:13px 16px;border-bottom:1px solid #e4edf2;background:#fbfdfe}.head b{font-size:15px}.head span{display:block;margin-top:3px;font-size:11px;color:#6f8291}
+      .grid{display:grid;grid-template-columns:1fr 1fr}.scene{padding:12px;border-right:1px solid #e3ebef}.scene:last-child{border-right:0}
+      .label{font-size:11px;font-weight:900;letter-spacing:.06em;color:#0783b7;text-transform:uppercase}.title{font-size:15px;font-weight:900;margin:3px 0 8px}
+      .desc{font-size:11px;color:#667b8b;line-height:1.4;margin-top:8px}svg{width:100%;display:block;border-radius:14px;background:#edf7fb}
+      @media(max-width:760px){.grid{grid-template-columns:1fr}.scene{border-right:0;border-bottom:1px solid #e3ebef}}
+    </style></head><body>
+    <div class="wrap">
+      <div class="head"><b>Misma distancia · distinta geometría de expansión</b><span>Compara cómo aumenta la superficie efectiva sobre la cual se distribuye la energía.</span></div>
+      <div class="grid">
+        <div class="scene">
+          <div class="label">Fuente puntual</div><div class="title">Expansión aproximadamente esférica</div>
+          <svg viewBox="0 0 470 310">
+            <rect width="470" height="310" fill="#eef8fc"/>
+            <circle cx="120" cy="155" r="13" fill="#e45d55" stroke="white" stroke-width="4"/>
+            <text x="90" y="125" font-size="13" font-weight="800" fill="#243f52">fuente</text>
+            <g fill="none" stroke="#39a9d5" stroke-width="3" opacity=".82">
+              <circle cx="120" cy="155" r="45"/><circle cx="120" cy="155" r="85"/><circle cx="120" cy="155" r="125"/><circle cx="120" cy="155" r="165"/>
+            </g>
+            <circle cx="365" cy="155" r="12" fill="#0a9dcc" stroke="white" stroke-width="4"/>
+            <text x="340" y="128" font-size="13" font-weight="800" fill="#243f52">receptor</text>
+            <line x1="120" y1="155" x2="365" y2="155" stroke="#7e96a5" stroke-width="2" stroke-dasharray="7 6"/>
+          </svg>
+          <div class="desc">La superficie de expansión aumenta aproximadamente con <b>r²</b>. Por eso el nivel disminuye más rápidamente con la distancia.</div>
+        </div>
+        <div class="scene">
+          <div class="label">Fuente lineal idealizada</div><div class="title">Expansión aproximadamente cilíndrica</div>
+          <svg viewBox="0 0 470 310">
+            <rect width="470" height="310" fill="#eef8fc"/>
+            <line x1="95" y1="55" x2="95" y2="255" stroke="#e45d55" stroke-width="12" stroke-linecap="round"/>
+            <text x="48" y="35" font-size="13" font-weight="800" fill="#243f52">fuente lineal</text>
+            <g fill="none" stroke="#54b987" stroke-width="3" opacity=".82">
+              <path d="M95 75 Q165 155 95 235"/><path d="M95 55 Q235 155 95 255"/><path d="M95 35 Q305 155 95 275"/>
+            </g>
+            <circle cx="365" cy="155" r="12" fill="#0a9dcc" stroke="white" stroke-width="4"/>
+            <text x="340" y="128" font-size="13" font-weight="800" fill="#243f52">receptor</text>
+            <line x1="95" y1="155" x2="365" y2="155" stroke="#7e96a5" stroke-width="2" stroke-dasharray="7 6"/>
+          </svg>
+          <div class="desc">La superficie efectiva aumenta aproximadamente en proporción a <b>r</b>. La pérdida geométrica por distancia es menor.</div>
+        </div>
+      </div>
+    </div></body></html>
+    """
+    components.html(comparison_html, height=470, scrolling=False)
+
+    # ================================================================
+    # 3. ECUACIONES
+    # ================================================================
+    st.markdown("## 3. Construye e interpreta las ecuaciones")
+    st.caption(
+        "Objetivo: relacionar la geometría de expansión con la pérdida de nivel producida por un cambio de distancia."
+    )
+
     c1,c2=st.columns(2)
     with c1:
-        st.markdown('<div class="c3l2-card blue"><div class="c3l2-k">PUNTUAL</div><b>Expansión esférica</b><br>El área crece aproximadamente con r². Por eso el nivel cae más rápido al alejarse.</div>',unsafe_allow_html=True)
-        st.latex(r"\Delta L_p = 20\log_{10}\left(\frac{r_1}{r_2}\right)")
+        st.markdown(
+            """<div class="c3l2-card blue"><div class="c3l2-k">MODELO PUNTUAL IDEAL</div>
+            <b>La expansión geométrica produce una caída más rápida.</b><br>
+            La superficie esférica aumenta aproximadamente con r².</div>""",
+            unsafe_allow_html=True,
+        )
+        st.latex(r"\Delta L_p=-20\log_{10}\left(\frac{r_2}{r_1}\right)")
+        st.markdown('<div class="c3l2-note"><b>Si r₂ = 2r₁:</b> aproximadamente <b>−6 dB</b>.</div>',unsafe_allow_html=True)
+
     with c2:
-        st.markdown('<div class="c3l2-card green"><div class="c3l2-k">LINEAL IDEALIZADA</div><b>Expansión cilíndrica</b><br>La superficie efectiva crece aproximadamente con r. La caída con distancia es menor.</div>',unsafe_allow_html=True)
-        st.latex(r"\Delta L_p = 10\log_{10}\left(\frac{r_1}{r_2}\right)")
+        st.markdown(
+            """<div class="c3l2-card green"><div class="c3l2-k">MODELO LINEAL IDEALIZADO</div>
+            <b>La energía se distribuye más lentamente con la distancia.</b><br>
+            La superficie efectiva aumenta aproximadamente en proporción a r.</div>""",
+            unsafe_allow_html=True,
+        )
+        st.latex(r"\Delta L_p=-10\log_{10}\left(\frac{r_2}{r_1}\right)")
+        st.markdown('<div class="c3l2-note"><b>Si r₂ = 2r₁:</b> aproximadamente <b>−3 dB</b>.</div>',unsafe_allow_html=True)
 
-    st.markdown("### 2. Experimenta con la distancia")
-    kind=st.segmented_control("Geometría",["Fuente puntual","Fuente lineal idealizada"],default="Fuente puntual",key="c3l2_s2_kind")
-    c1,c2=st.columns(2)
-    r1=c1.number_input("Distancia inicial r₁ [m]",1.0,100.0,10.0,1.0,key="c3l2_s2_r1")
-    r2=c2.slider("Distancia final r₂ [m]",1.0,100.0,20.0,1.0,key="c3l2_s2_r2")
-    coef=20 if kind=="Fuente puntual" else 10
-    delta=coef*__import__("math").log10(r1/r2)
-    a,b,c=st.columns(3)
-    a.metric("Geometría","Puntual" if coef==20 else "Lineal")
-    b.metric("Relación r₂/r₁",f"{r2/r1:.2f}")
-    c.metric("Cambio relativo",f"{delta:+.1f} dB")
+    st.markdown(
+        """
+        <div class="c3l2-grid">
+          <div class="c3l2-card"><div class="c3l2-k">r₁</div><b>Distancia de referencia</b><br>Punto donde conoces o defines inicialmente el nivel.</div>
+          <div class="c3l2-card"><div class="c3l2-k">r₂</div><b>Nueva distancia</b><br>Punto al que quieres trasladar geométricamente la estimación.</div>
+          <div class="c3l2-card blue"><div class="c3l2-k">ΔLₚ</div><b>Cambio relativo</b><br>No es un nivel absoluto: expresa cuánto cambia respecto del punto inicial.</div>
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
 
-    st.markdown("### 3. Observa la curva")
-    distances=[2,4,8,16,32,64]
-    rel=[coef*__import__("math").log10(2/d) for d in distances]
-    fig=go.Figure(go.Scatter(x=distances,y=rel,mode="lines+markers",line=dict(width=3)))
-    fig.update_layout(xaxis_title="Distancia [m]",yaxis_title="Cambio respecto de 2 m [dB]",height=340,margin=dict(l=20,r=20,t=20,b=20))
-    st.plotly_chart(fig,use_container_width=True)
+    st.markdown(
+        """
+        <div class="c3l2-note">
+          <b>Alcance:</b> estas expresiones representan solo divergencia geométrica ideal.
+          No incorporan reflexiones, absorción atmosférica, suelo, pantallas, meteorología, directividad ni múltiples fuentes.
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
 
-    st.markdown("### 4. Comprueba que entendiste")
-    q1=st.radio("Al duplicar distancia en una fuente puntual ideal:",["≈ −3 dB","≈ −6 dB","No cambia"],index=None,key="c3l2_s2_q1")
-    q2=st.radio("Al duplicar distancia respecto de una fuente lineal idealizada:",["≈ −3 dB","≈ −6 dB","≈ +3 dB"],index=None,key="c3l2_s2_q2")
-    explain=st.text_area("Explica por qué las dos pérdidas son diferentes",height=90,key="c3l2_s2_exp")
+    # ================================================================
+    # 4. LABORATORIO VISUAL INTERACTIVO
+    # ================================================================
+    st.markdown("## 4. Laboratorio visual · selecciona la geometría y observa la propagación")
+    st.caption(
+        "Objetivo: relacionar visualmente fuente puntual ↔ propagación esférica y fuente lineal ↔ propagación cilíndrica."
+    )
 
-    if _c3l2_role()=="Alumno" and st.button("Guardar descubrimiento",type="primary",key="c3l2_s2_save",use_container_width=True):
-        if q1!="≈ −6 dB" or q2!="≈ −3 dB" or len(explain.strip())<25:
-            st.warning("Revisa cómo crece la superficie de propagación en cada geometría.")
-        else:
-            _c3l2_complete(saved,2,{"kind":kind,"r1":r1,"r2":r2,"delta":delta,"q1":q1,"q2":q2,"explain":explain})
-            st.success("Correcto. En la siguiente etapa usarás duplicaciones sucesivas.")
-    _c3l2_teacher_pauta("Etapa 2","Puntual ideal: −6 dB por duplicación. Lineal idealizada: −3 dB por duplicación. Insistir en que son tendencias geométricas ideales y no reglas universales para cualquier entorno urbano.")
+    geometry_lab = r"""
+    <!doctype html><html lang="es"><head><meta charset="utf-8">
+    <style>
+      *{box-sizing:border-box}body{margin:0;font-family:Inter,system-ui,-apple-system,"Segoe UI",sans-serif;background:#f7fafc;color:#153249}
+      .wrap{border:1px solid #d4e3eb;border-radius:18px;background:white;overflow:hidden}.toolbar{display:flex;gap:8px;flex-wrap:wrap;padding:12px 14px;background:#f8fbfd;border-bottom:1px solid #e2ebef}
+      button{border:1px solid #bfd3df;background:white;color:#24465c;border-radius:9px;padding:8px 11px;font-size:11px;font-weight:850;cursor:pointer}
+      button.active{background:#0b84b4;color:white;border-color:#0b84b4}.body{display:grid;grid-template-columns:minmax(0,1fr) 280px}
+      .side{padding:14px;background:#f9fbfc;border-left:1px solid #e1eaef}.card{border:1px solid #d6e5ed;border-radius:12px;background:white;padding:10px;margin-bottom:9px}
+      .k{font-size:10px;font-weight:900;letter-spacing:.07em;color:#0783b7;text-transform:uppercase}.v{font-size:14px;font-weight:900;margin:3px 0}.d{font-size:11px;color:#667c8b;line-height:1.45}
+      input[type=range]{width:100%}svg{display:block;width:100%;background:#edf7fb}@media(max-width:760px){.body{grid-template-columns:1fr}.side{border-left:0;border-top:1px solid #e1eaef}}
+    </style></head><body>
+    <div class="wrap">
+      <div class="toolbar">
+        <button id="bp" class="active">Fuente puntual</button><button id="bl">Fuente lineal</button>
+        <button id="bf" class="active">Frentes de onda</button><button id="bg">Geometría</button><button id="ba">Superficie de expansión</button>
+      </div>
+      <div class="body">
+        <div>
+          <svg viewBox="0 0 760 410">
+            <rect width="760" height="410" fill="#edf7fb"/><line x1="70" y1="330" x2="700" y2="330" stroke="#9badb7" stroke-width="3"/>
+            <g id="pointSource"><circle cx="125" cy="250" r="15" fill="#e35d54" stroke="white" stroke-width="4"/></g>
+            <g id="lineSource" style="display:none"><line x1="125" y1="150" x2="125" y2="330" stroke="#e35d54" stroke-width="12" stroke-linecap="round"/></g>
+            <g id="waves"></g><g id="geometry"></g><g id="area"></g>
+            <circle id="receiverDot" cx="355" cy="250" r="13" fill="#0a9dcc" stroke="white" stroke-width="4"/>
+            <text id="receiverText" x="355" y="220" text-anchor="middle" font-size="13" font-weight="800" fill="#23465b">receptor</text>
+            <line id="distanceLine" x1="125" y1="250" x2="355" y2="250" stroke="#718b9a" stroke-width="2" stroke-dasharray="7 6"/>
+            <text id="distanceLabel" x="240" y="240" text-anchor="middle" font-size="12" fill="#536d7c">20 m</text>
+          </svg>
+        </div>
+        <div class="side">
+          <div class="card"><div class="k">MODELO</div><div class="v" id="modelName">Fuente puntual</div><div class="d" id="modelDesc">Fuente compacta observada a una distancia grande respecto de sus dimensiones.</div></div>
+          <div class="card"><div class="k">PROPAGACIÓN</div><div class="v" id="propName">Esférica</div><div class="d" id="propDesc">La superficie aumenta aproximadamente con r².</div></div>
+          <div class="card"><div class="k">DISTANCIA AL RECEPTOR</div><input id="slider" type="range" min="10" max="60" value="20" step="1"><div class="v"><span id="dist">20</span> m</div></div>
+          <div class="card"><div class="k">AL DUPLICAR DISTANCIA</div><div class="v" id="drop">≈ −6 dB</div><div class="d">Tendencia geométrica ideal.</div></div>
+        </div>
+      </div>
+    </div>
+    <script>
+      let kind="point",layer="fronts";const slider=document.getElementById("slider"),waves=document.getElementById("waves"),geometry=document.getElementById("geometry"),area=document.getElementById("area");
+      function setKind(k){kind=k;bp.classList.toggle("active",k==="point");bl.classList.toggle("active",k==="line");pointSource.style.display=k==="point"?"block":"none";lineSource.style.display=k==="line"?"block":"none";modelName.textContent=k==="point"?"Fuente puntual":"Fuente lineal idealizada";modelDesc.textContent=k==="point"?"Fuente compacta observada a una distancia grande respecto de sus dimensiones.":"Emisión distribuida a lo largo de una longitud relevante.";propName.textContent=k==="point"?"Esférica":"Cilíndrica";propDesc.textContent=k==="point"?"La superficie aumenta aproximadamente con r².":"La superficie efectiva aumenta aproximadamente en proporción a r.";drop.textContent=k==="point"?"≈ −6 dB":"≈ −3 dB";render();}
+      function setLayer(l){layer=l;bf.classList.toggle("active",l==="fronts");bg.classList.toggle("active",l==="geom");ba.classList.toggle("active",l==="area");render();}
+      function render(){const d=+slider.value,x=125+(d-10)/50*520;receiverDot.setAttribute("cx",x);receiverText.setAttribute("x",x);distanceLine.setAttribute("x2",x);distanceLabel.setAttribute("x",(125+x)/2);distanceLabel.textContent=d+" m";dist.textContent=d;waves.innerHTML="";geometry.innerHTML="";area.innerHTML="";
+        if(layer==="fronts"){if(kind==="point"){[55,105,155,205].forEach(r=>waves.innerHTML+=`<circle cx="125" cy="250" r="${r}" fill="none" stroke="#39a9d5" stroke-width="3" opacity=".75"/>`)}else{[55,105,155,205].forEach(r=>waves.innerHTML+=`<path d="M125 ${250-r/2} Q${125+r} 250 125 ${250+r/2}" fill="none" stroke="#54b987" stroke-width="3" opacity=".78"/>`)}}
+        if(layer==="geom"){geometry.innerHTML=`<line x1="125" y1="250" x2="${x}" y2="250" stroke="#0a9dcc" stroke-width="4"/><text x="${(125+x)/2}" y="275" text-anchor="middle" font-size="13" font-weight="800" fill="#0a7098">${kind==="point"?"radio r":"distancia radial r"}</text>`}
+        if(layer==="area"){area.innerHTML=kind==="point"?`<circle cx="125" cy="250" r="${Math.max(45,(x-125)*.6)}" fill="rgba(57,169,213,.13)" stroke="#39a9d5" stroke-width="3"/><text x="390" y="75" font-size="14" font-weight="800" fill="#23526b">superficie ∝ r²</text>`:`<path d="M125 150 Q${x} 250 125 350" fill="rgba(84,185,135,.12)" stroke="#54b987" stroke-width="3"/><text x="390" y="75" font-size="14" font-weight="800" fill="#256347">superficie efectiva ∝ r</text>`}
+      }
+      bp.onclick=()=>setKind("point");bl.onclick=()=>setKind("line");bf.onclick=()=>setLayer("fronts");bg.onclick=()=>setLayer("geom");ba.onclick=()=>setLayer("area");slider.oninput=render;render();
+    </script></body></html>
+    """
+    components.html(geometry_lab,height=545,scrolling=False)
 
+    # ================================================================
+    # 5. DESAFÍO PROFESIONAL
+    # ================================================================
+    st.markdown("## 5. Desafío profesional · clasifica la fuente y su propagación")
+    st.caption(
+        "Objetivo: decidir qué modelo geométrico usarías inicialmente. Cuando falten antecedentes, responde que no se puede decidir."
+    )
+
+    st.markdown(
+        """
+        <div class="c3l2-intro">
+          <div class="c3l2-k">REGLA DE DECISIÓN</div>
+          <div class="c3l2-title">Primero analiza la escala geométrica; después elige el modelo.</div>
+          Para cada caso selecciona <b>tipo de fuente</b> y <b>geometría de propagación</b>.
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
+
+    cases=[
+        ("Grupo electrógeno compacto a 30 m","Equipo pequeño respecto de la distancia al receptor.","Puntual","Esférica","Puede aproximarse como fuente compacta."),
+        ("Autopista extensa con flujo continuo","El tramo acústicamente relevante es largo respecto de la distancia al receptor.","Lineal","Cilíndrica","La emisión se distribuye a lo largo de un corredor."),
+        ("Unidad HVAC compacta en cubierta","Equipo compacto y receptor bastante alejado respecto de sus dimensiones.","Puntual","Esférica","La escala permite una aproximación puntual."),
+        ("Tren largo desplazándose frente a un receptor","No se entrega longitud efectiva, distancia al receptor ni tramo dominante.","No se puede decidir","No se puede decidir","Faltan antecedentes geométricos suficientes."),
+        ("Línea extensa de ventiladores industriales","Múltiples fuentes próximas entre sí distribuidas a lo largo de una gran fachada.","Lineal","Cilíndrica","Como primera aproximación puede modelarse como distribución lineal."),
+        ("Tramo corto de carretera observado a gran distancia","La longitud efectiva del tramo es pequeña comparada con la distancia al receptor.","Puntual","Esférica","A gran distancia puede comportarse como una fuente compacta equivalente."),
+    ]
+
+    answers={}
+    for i,(name,context,src_ok,prop_ok,why) in enumerate(cases):
+        with st.container(border=True,key=f"c3l2_s2_case_{i}"):
+            st.markdown(
+                f"""<div class="c3l2-q-kicker">CASO {i+1}</div>
+                <div class="c3l2-q-title">{name}</div>
+                <div class="c3l2-q-context">{context}</div>""",
+                unsafe_allow_html=True,
+            )
+            c1,c2=st.columns(2)
+            src_ans=c1.segmented_control("Modelo de fuente",["Puntual","Lineal","No se puede decidir"],key=f"c3l2_s2_src_{i}")
+            prop_ans=c2.segmented_control("Propagación inicial",["Esférica","Cilíndrica","No se puede decidir"],key=f"c3l2_s2_prop_{i}")
+            answers[str(i)]={"source":src_ans,"propagation":prop_ans}
+            if src_ans and prop_ans:
+                if src_ans==src_ok and prop_ans==prop_ok:
+                    st.success(why)
+                else:
+                    st.info("Revisa la relación entre extensión efectiva de la fuente y distancia al receptor.")
+
+    correct=sum(
+        answers[str(i)]["source"]==case[2] and answers[str(i)]["propagation"]==case[3]
+        for i,case in enumerate(cases)
+    )
+
+    st.markdown(
+        f"""<div class="c3l2-note"><b>Progreso:</b> {correct} de {len(cases)} casos correctamente clasificados.<br>
+        <b>Idea de cierre:</b> una fuente no es puntual o lineal “para siempre”; el modelo depende de la escala geométrica.</div>""",
+        unsafe_allow_html=True,
+    )
+
+    reflection=st.text_area(
+        "Explica por qué una carretera no tiene que modelarse siempre como fuente lineal.",
+        key="c3l2_s2_reflection",
+        height=85,
+        placeholder="Relaciona longitud efectiva de la fuente con distancia al receptor.",
+    )
+
+    if _c3l2_role()=="Alumno":
+        if st.button("💾 Guardar Etapa 2",type="primary",key="c3l2_s2_save",use_container_width=True):
+            if correct!=len(cases) or len(reflection.strip())<30:
+                st.warning("Completa correctamente los seis casos y explica por qué el modelo depende de la escala geométrica.")
+            else:
+                _c3l2_complete(saved,2,{"challenge":answers,"reflection":reflection})
+                st.success("Etapa 2 completada y guardada.")
+
+    _c3l2_teacher_pauta(
+        "Etapa 2",
+        """
+**Objetivo**
+Comprender puntual y lineal como aproximaciones geométricas dependientes de la escala.
+
+**Claves**
+- Puntual ideal → propagación esférica.
+- Lineal idealizada → propagación cilíndrica.
+- Puntual: ΔLp = −20 log10(r2/r1).
+- Lineal: ΔLp = −10 log10(r2/r1).
+- Duplicación ideal: aproximadamente −6 dB y −3 dB, respectivamente.
+- Son modelos de divergencia geométrica ideal, no reglas universales.
+
+**Casos**
+1. Grupo electrógeno compacto a 30 m → puntual / esférica.
+2. Autopista extensa con flujo continuo → lineal / cilíndrica.
+3. HVAC compacto y receptor alejado → puntual / esférica.
+4. Tren largo sin datos geométricos suficientes → no se puede decidir.
+5. Línea extensa de ventiladores → lineal / cilíndrica.
+6. Tramo corto de carretera a gran distancia → puntual / esférica.
+
+**Cierre**
+La clasificación depende de la relación entre dimensiones/extensión efectiva de la fuente y distancia al receptor.
+        """
+    )
 
 def _c3l2_stage3(lab,saved):
     _c3l2_header(3,"¿Qué ocurre al alejarnos?","Transformar la idea de distancia en una secuencia cuantitativa de duplicaciones.",20)
