@@ -28520,7 +28520,142 @@ def _c3l2_stage3(lab,saved):
     st.latex(r"L_W=10\log_{10}\left(\frac{W}{W_0}\right),\qquad W_0=10^{-12}\ \mathrm{W}")
     st.latex(r"L_p=20\log_{10}\left(\frac{p}{p_0}\right),\qquad p_0=20\ \mu\mathrm{Pa}")
 
-    st.markdown("### 2. Laboratorio interactivo · mueve la fuente y el receptor")
+    st.markdown("### 2. ¿Qué significa el factor de directividad Q?")
+    st.write(
+        "El factor **Q** no cambia la potencia sonora total de la fuente. "
+        "Describe cómo esa misma potencia se reparte en el espacio dentro de un modelo idealizado."
+    )
+
+    st.markdown("""
+    <div class="c3l2-grid2">
+      <div class="c3l2-card blue">
+        <div class="c3l2-k">Q = 1 · ESPACIO LIBRE</div>
+        <b>Radiación ideal en todas las direcciones.</b><br>
+        La potencia se reparte sobre una esfera completa: <b>4πr²</b>.
+        Es la idealización típica de una fuente omnidireccional en campo libre, alejada de superficies reflectantes.
+      </div>
+      <div class="c3l2-card orange">
+        <div class="c3l2-k">Q = 2 · SOBRE UN PLANO REFLECTANTE</div>
+        <b>La radiación queda concentrada en medio espacio.</b><br>
+        La misma potencia se reparte aproximadamente sobre una semiesfera: <b>2πr²</b>.
+        En el modelo ideal, a igual Lw y distancia, esto produce aproximadamente <b>+3 dB</b> respecto de Q = 1.
+      </div>
+    </div>
+    """, unsafe_allow_html=True)
+
+    components.html(r"""
+    <svg viewBox="0 0 980 300" width="100%" style="background:#f7fbff;border:1px solid #d4e3ed;border-radius:16px">
+      <style>.t{font-family:Inter,Arial,sans-serif;fill:#263f50}.b{font-weight:850}.m{fill:#637a88}</style>
+      <text x="245" y="35" text-anchor="middle" class="t b" font-size="18">Q = 1 · 4π</text>
+      <circle cx="245" cy="150" r="22" fill="#176ea5"/>
+      <circle cx="245" cy="150" r="62" fill="none" stroke="#4aa3c6" stroke-width="3" opacity=".75"/>
+      <circle cx="245" cy="150" r="105" fill="none" stroke="#4aa3c6" stroke-width="3" opacity=".40"/>
+      <circle cx="245" cy="150" r="135" fill="none" stroke="#4aa3c6" stroke-width="2" opacity=".20"/>
+      <text x="245" y="285" text-anchor="middle" class="t m" font-size="14">misma potencia distribuida sobre esfera completa</text>
+
+      <text x="735" y="35" text-anchor="middle" class="t b" font-size="18">Q = 2 · 2π</text>
+      <line x1="555" y1="222" x2="915" y2="222" stroke="#6f7f88" stroke-width="5"/>
+      <circle cx="735" cy="222" r="22" fill="#d97706"/>
+      <path d="M675 222 A60 60 0 0 1 795 222" fill="none" stroke="#e9a240" stroke-width="3" opacity=".85"/>
+      <path d="M630 222 A105 105 0 0 1 840 222" fill="none" stroke="#e9a240" stroke-width="3" opacity=".50"/>
+      <path d="M600 222 A135 135 0 0 1 870 222" fill="none" stroke="#e9a240" stroke-width="2" opacity=".25"/>
+      <text x="735" y="285" text-anchor="middle" class="t m" font-size="14">misma potencia distribuida sobre semiesfera</text>
+    </svg>
+    """, height=315)
+
+    st.info(
+        "Q es una **idealización de directividad y confinamiento geométrico**. "
+        "No significa que una fuente real tenga siempre Q = 1 o Q = 2: la directividad real puede depender "
+        "de la frecuencia, de la geometría del equipo y de las superficies próximas."
+    )
+
+    st.markdown("### 3. ¿Cómo se obtiene Lw en la práctica?")
+    st.write(
+        "El nivel de potencia sonora no se obtiene colocando un sonómetro en un único punto. "
+        "En métodos basados en presión sonora se mide alrededor de la fuente sobre una **superficie de medición** "
+        "y, a partir de esos niveles y del área de esa superficie, se determina la potencia sonora emitida."
+    )
+
+    chamber_mode = st.segmented_control(
+        "Entorno de ensayo",
+        ["Cámara anecoica", "Cámara semianecoica"],
+        default="Cámara semianecoica",
+        key="c3l2_s3_chamber_mode",
+    )
+
+    if chamber_mode == "Cámara anecoica":
+        chamber_note = (
+            "Las superficies se acondicionan para minimizar reflexiones y aproximar un campo libre. "
+            "Conceptualmente, una fuente omnidireccional aislada puede asociarse a Q ≈ 1 y una superficie esférica."
+        )
+        floor_fill = "#22313b"
+        floor_wedges = True
+        surface_label = "superficie esférica de medición"
+    else:
+        chamber_note = (
+            "Paredes y cielo absorben; el piso es reflectante. "
+            "Es habitual para maquinaria apoyada sobre el suelo y aproxima un campo libre sobre un plano reflectante. "
+            "En la idealización simple puede asociarse a Q ≈ 2 y una superficie semiesférica."
+        )
+        floor_fill = "#aeb8be"
+        floor_wedges = False
+        surface_label = "superficie semiesférica de medición"
+
+    chamber_svg = f"""
+    <svg viewBox="0 0 1080 560" width="100%" style="background:#101b24;border:1px solid #273b49;border-radius:18px">
+      <defs>
+        <pattern id="wedges" width="42" height="42" patternUnits="userSpaceOnUse">
+          <path d="M0 42 L21 0 L42 42 Z" fill="#344b58"/>
+          <path d="M7 42 L21 12 L35 42 Z" fill="#263945"/>
+        </pattern>
+        <radialGradient id="device" cx="35%" cy="30%">
+          <stop offset="0%" stop-color="#86c7e2"/><stop offset="100%" stop-color="#176ea5"/>
+        </radialGradient>
+      </defs>
+
+      <rect x="38" y="35" width="1004" height="455" rx="18" fill="#172630"/>
+      <rect x="38" y="35" width="1004" height="82" rx="18" fill="url(#wedges)"/>
+      <rect x="38" y="95" width="92" height="395" fill="url(#wedges)"/>
+      <rect x="950" y="95" width="92" height="395" fill="url(#wedges)"/>
+      <rect x="130" y="405" width="820" height="85" fill="{floor_fill}"/>
+      {"<rect x='130' y='405' width='820' height='85' fill='url(#wedges)'/>" if floor_wedges else ""}
+
+      <text x="540" y="72" text-anchor="middle" font-family="Inter,Arial" font-size="20" font-weight="850" fill="#eef8ff">{chamber_mode.upper()}</text>
+
+      <g>
+        <rect x="455" y="300" width="170" height="95" rx="18" fill="url(#device)" stroke="#d8eff9" stroke-width="3"/>
+        <rect x="482" y="323" width="70" height="37" rx="7" fill="#cceaf6"/>
+        <circle cx="590" cy="346" r="16" fill="#0f4d70"/>
+        <rect x="492" y="395" width="20" height="22" fill="#3e4b52"/>
+        <rect x="570" y="395" width="20" height="22" fill="#3e4b52"/>
+        <text x="540" y="285" text-anchor="middle" font-family="Inter,Arial" font-size="16" font-weight="850" fill="#ffffff">EQUIPO BAJO ENSAYO</text>
+      </g>
+
+      <path d="M270 350 A270 270 0 0 1 810 350" fill="none" stroke="#4fd1c5" stroke-width="3" stroke-dasharray="9 8" opacity=".85"/>
+      {"<path d='M270 350 A270 270 0 1 0 810 350' fill='none' stroke='#4fd1c5' stroke-width='3' stroke-dasharray='9 8' opacity='.55'/>" if floor_wedges else ""}
+
+      <g fill="#f8fafc" stroke="#4fd1c5" stroke-width="3">
+        <circle cx="298" cy="246" r="10"/><circle cx="368" cy="157" r="10"/><circle cx="467" cy="105" r="10"/>
+        <circle cx="613" cy="105" r="10"/><circle cx="712" cy="157" r="10"/><circle cx="782" cy="246" r="10"/>
+        {"<circle cx='298' cy='454' r='10'/><circle cx='368' cy='523' r='10'/><circle cx='712' cy='523' r='10'/><circle cx='782' cy='454' r='10'/>" if floor_wedges else ""}
+      </g>
+
+      <text x="540" y="135" text-anchor="middle" font-family="Inter,Arial" font-size="14" font-weight="800" fill="#78e0d5">{surface_label}</text>
+      <text x="540" y="520" text-anchor="middle" font-family="Inter,Arial" font-size="14" fill="#b9cbd5">Micrófonos en varias posiciones → nivel medio sobre la superficie → Lw</text>
+    </svg>
+    """
+    components.html(chamber_svg, height=585)
+    st.markdown(f'<div class="c3l2-note"><b>{chamber_mode}:</b> {chamber_note}</div>', unsafe_allow_html=True)
+
+    st.markdown("#### Relación conceptual entre la superficie medida y la potencia")
+    st.latex(r"L_W \approx \overline{L_p}+10\log_{10}\left(\frac{S}{S_0}\right)")
+    st.caption(
+        "Relación conceptual para un campo libre ideal. Los procedimientos normalizados incorporan requisitos de "
+        "entorno, instrumentación, posiciones de micrófono y correcciones específicas. "
+        "ISO 3745 utiliza mediciones sobre una superficie que envuelve la fuente en cámaras anecoicas o semianecoicas."
+    )
+
+    st.markdown("### 4. Del Lw de la fuente al Lp del receptor")
     st.write(
         "Arrastra la **fuente** o el **receptor** dentro de la escena. "
         "El nivel de potencia sonora **Lw permanece asociado a la fuente**, mientras que "
@@ -28833,7 +28968,68 @@ def _c3l2_stage3(lab,saved):
         "no incorpora absorción atmosférica, suelo, pantallas, meteorología ni reflexiones complejas."
     )
 
-    st.markdown("### 5. Comprueba el concepto")
+    st.markdown("### 5. Conversor idealizado · Lw ↔ Lp")
+    st.write(
+        "En campo libre ideal, si conocemos la distancia y Q podemos pasar de una magnitud a la otra. "
+        "Esto **no significa que Lw y Lp sean la misma magnitud**: solo estamos usando un modelo de propagación para relacionarlas."
+    )
+
+    conv_mode = st.segmented_control(
+        "Dirección del cálculo",
+        ["Lw → Lp", "Lp → Lw"],
+        default="Lw → Lp",
+        key="c3l2_s3_conv_mode",
+    )
+    cc1, cc2, cc3 = st.columns(3)
+    with cc1:
+        conv_level = st.number_input(
+            "Lw de entrada [dB]" if conv_mode == "Lw → Lp" else "Lp medido [dB]",
+            min_value=20.0,
+            max_value=140.0,
+            value=95.0 if conv_mode == "Lw → Lp" else 63.0,
+            step=0.5,
+            key="c3l2_s3_conv_level",
+        )
+    with cc2:
+        conv_r = st.number_input(
+            "Distancia r [m]",
+            min_value=0.5,
+            max_value=500.0,
+            value=10.0,
+            step=0.5,
+            key="c3l2_s3_conv_r",
+        )
+    with cc3:
+        conv_q = st.selectbox(
+            "Factor Q",
+            [1, 2],
+            format_func=lambda x: "Q = 1 · 4π" if x == 1 else "Q = 2 · 2π",
+            key="c3l2_s3_conv_q",
+        )
+
+    geom_term = 10 * math.log10(conv_q / (4 * math.pi * conv_r * conv_r))
+    if conv_mode == "Lw → Lp":
+        conv_result = conv_level + geom_term
+        st.latex(r"L_p=L_W+10\log_{10}\left(\frac{Q}{4\pi r^2}\right)")
+        st.success(
+            f"Con Lw = {conv_level:.1f} dB, r = {conv_r:.1f} m y Q = {conv_q}, "
+            f"el modelo ideal estima Lp ≈ {conv_result:.1f} dB."
+        )
+    else:
+        conv_result = conv_level - geom_term
+        st.latex(r"L_W=L_p-10\log_{10}\left(\frac{Q}{4\pi r^2}\right)")
+        st.success(
+            f"Con Lp = {conv_level:.1f} dB medido a {conv_r:.1f} m y Q = {conv_q}, "
+            f"el modelo ideal estima Lw ≈ {conv_result:.1f} dB."
+        )
+
+    st.warning(
+        "La conversión inversa Lp → Lw solo es válida si el modelo describe adecuadamente el campo acústico. "
+        "En una situación real deben considerarse directividad real, reflexiones, suelo, absorción atmosférica, "
+        "ruido de fondo y las correcciones del método de ensayo."
+    )
+
+    st.markdown("### 6. Comprueba el concepto")
     q1 = st.radio(
         "Si mantienes la misma máquina y duplicas la distancia, ¿qué magnitud propia de la fuente permanece?",
         ["Lw", "Lp", "Ambas disminuyen 6 dB"],
@@ -28841,10 +29037,24 @@ def _c3l2_stage3(lab,saved):
         key="c3l2_s3_q1",
     )
     q2 = st.radio(
-        "Dos receptores frente a la misma fuente pueden tener:",
-        ["El mismo Lw de fuente y distinto Lp", "Distinto Lw porque están a distinta distancia", "Siempre el mismo Lp"],
+        "¿Qué representa Q = 2 en la idealización usada en esta etapa?",
+        [
+            "Que la fuente duplica su potencia sonora",
+            "Que la misma potencia se distribuye aproximadamente en medio espacio sobre un plano reflectante",
+            "Que el receptor está al doble de distancia",
+        ],
         index=None,
         key="c3l2_s3_q2",
+    )
+    q3 = st.radio(
+        "¿Cómo se determina Lw mediante un método basado en presión sonora en cámara anecoica o semianecoica?",
+        [
+            "Midiendo Lp en un único punto y llamándolo Lw",
+            "Midiendo sobre una superficie que envuelve la fuente y relacionando el nivel superficial con el área de medición",
+            "Midiendo solo a 1 m frente al equipo",
+        ],
+        index=None,
+        key="c3l2_s3_q3",
     )
     explanation = st.text_area(
         "Explica con tus palabras la cadena Lw → propagación → Lp.",
@@ -28865,7 +29075,7 @@ def _c3l2_stage3(lab,saved):
         use_container_width=True,
         key="c3l2_s3_save",
     ):
-        if q1 != "Lw" or q2 != "El mismo Lw de fuente y distinto Lp" or len(explanation.strip()) < 30:
+        if (q1 != "Lw" or q2 != "Que la misma potencia se distribuye aproximadamente en medio espacio sobre un plano reflectante" or q3 != "Midiendo sobre una superficie que envuelve la fuente y relacionando el nivel superficial con el área de medición" or len(explanation.strip()) < 30):
             st.warning("Revisa qué magnitud pertenece a la fuente y cuál corresponde al campo acústico en el receptor.")
         else:
             _c3l2_complete(
@@ -28874,6 +29084,12 @@ def _c3l2_stage3(lab,saved):
                 {
                     "q1": q1,
                     "q2": q2,
+                    "q3": q3,
+                    "conversion_mode": conv_mode,
+                    "conversion_input": conv_level,
+                    "conversion_r": conv_r,
+                    "conversion_q": conv_q,
+                    "conversion_result": conv_result,
                     "explanation": explanation,
                 },
             )
@@ -28883,8 +29099,8 @@ def _c3l2_stage3(lab,saved):
         "Etapa 3",
         "Lw caracteriza la emisión y no cambia por mover el receptor. "
         "Lp corresponde al campo acústico en una posición y depende de la propagación. "
-        "La relación mostrada es una idealización de campo libre con directividad Q. "
-        "Esta distinción es requisito conceptual para construir correctamente una fuente de área en la Etapa 4.",
+        "Q representa la distribución espacial idealizada de la misma potencia: Q=1 para 4π y Q=2 para 2π sobre un plano reflectante. "
+        "La obtención de Lw se vincula conceptualmente con mediciones sobre una superficie envolvente en cámara anecoica o semianecoica, y la conversión Lw↔Lp solo se usa aquí bajo un modelo de campo libre ideal. Esta distinción es requisito conceptual para la Etapa 4.",
     )
 
 def _c3l2_stage4(lab,saved):
