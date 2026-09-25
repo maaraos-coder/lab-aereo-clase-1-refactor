@@ -28045,92 +28045,341 @@ def _c3l2_stage2(lab,saved):
     # ================================================================
     # 4. LABORATORIO VISUAL INTERACTIVO
     # ================================================================
-    st.markdown("## 4. Laboratorio visual · selecciona la geometría y observa la propagación")
+    st.markdown("## 4. Laboratorio visual · mueve el receptor y observa cómo cambia el nivel")
     st.caption(
-        "Objetivo: relacionar visualmente fuente puntual ↔ propagación esférica y fuente lineal ↔ propagación cilíndrica."
+        "Objetivo: relacionar directamente distancia, geometría de propagación y nivel acústico en el receptor."
+    )
+
+    st.markdown(
+        """
+        <div class="c3l2-intro">
+          <div class="c3l2-k">QUÉ DEBES OBSERVAR</div>
+          <div class="c3l2-title">El receptor no solo se aleja: también cambia el nivel que recibe.</div>
+          Selecciona una fuente <b>puntual</b> o <b>lineal</b>, mueve el receptor y observa simultáneamente
+          la distancia, el frente de onda y el nivel estimado en el sonómetro virtual.
+        </div>
+        """,
+        unsafe_allow_html=True,
     )
 
     geometry_lab = r"""
-    <!doctype html><html lang="es"><head><meta charset="utf-8">
+    <!doctype html>
+    <html lang="es">
+    <head>
+    <meta charset="utf-8">
     <style>
-      *{box-sizing:border-box}body{margin:0;font-family:Inter,system-ui,-apple-system,"Segoe UI",sans-serif;background:#f7fafc;color:#153249}
-      .wrap{border:1px solid #d4e3eb;border-radius:18px;background:white;overflow:hidden}.toolbar{display:flex;gap:8px;flex-wrap:wrap;padding:12px 14px;background:#f8fbfd;border-bottom:1px solid #e2ebef}
-      button{border:1px solid #bfd3df;background:white;color:#24465c;border-radius:9px;padding:8px 11px;font-size:11px;font-weight:850;cursor:pointer}
-      button.active{background:#0b84b4;color:white;border-color:#0b84b4}.body{display:grid;grid-template-columns:minmax(0,1fr) 280px}
-      .side{padding:14px;background:#f9fbfc;border-left:1px solid #e1eaef}.card{border:1px solid #d6e5ed;border-radius:12px;background:white;padding:10px;margin-bottom:9px}
-      .k{font-size:10px;font-weight:900;letter-spacing:.07em;color:#0783b7;text-transform:uppercase}.v{font-size:14px;font-weight:900;margin:3px 0}.d{font-size:11px;color:#667c8b;line-height:1.45}
-      input[type=range]{width:100%}svg{display:block;width:100%;background:#edf7fb}@media(max-width:760px){.body{grid-template-columns:1fr}.side{border-left:0;border-top:1px solid #e1eaef}}
-    </style></head><body>
+      *{box-sizing:border-box}
+      body{margin:0;font-family:Inter,system-ui,-apple-system,"Segoe UI",sans-serif;background:#f7fafc;color:#143047}
+      .wrap{border:1px solid #d4e3eb;border-radius:18px;background:#fff;overflow:hidden;box-shadow:0 8px 24px rgba(15,23,42,.05)}
+      .toolbar{display:flex;gap:8px;flex-wrap:wrap;padding:12px 14px;background:#f8fbfd;border-bottom:1px solid #e2ebef}
+      button{border:1px solid #bfd3df;background:#fff;color:#24465c;border-radius:9px;padding:8px 11px;font-size:11px;font-weight:850;cursor:pointer}
+      button.active{background:#0b84b4;color:#fff;border-color:#0b84b4}
+      .body{display:grid;grid-template-columns:minmax(0,1fr) 295px}
+      .side{padding:14px;background:#f9fbfc;border-left:1px solid #e1eaef}
+      .card{border:1px solid #d6e5ed;border-radius:12px;background:#fff;padding:10px;margin-bottom:9px}
+      .k{font-size:10px;font-weight:900;letter-spacing:.07em;color:#0783b7;text-transform:uppercase}
+      .v{font-size:14px;font-weight:900;margin:3px 0}.d{font-size:11px;color:#667c8b;line-height:1.45}
+      .meter{background:#0f1d25;border-radius:12px;padding:12px;color:#fff;margin-bottom:9px;border:1px solid #263d4a}
+      .meter .top{font-size:10px;letter-spacing:.08em;color:#88d7f4;font-weight:900}
+      .meter .db{font-size:32px;line-height:1;font-weight:900;margin:7px 0}
+      .meter .unit{font-size:12px;color:#b9cbd4}
+      .bar{height:10px;border-radius:999px;background:#dce7ec;overflow:hidden;margin-top:8px}
+      .fill{height:100%;background:linear-gradient(90deg,#2db36b,#e5bb34,#e66b3d);width:50%}
+      input[type=range]{width:100%}
+      svg{display:block;width:100%;background:#edf7fb}
+      @media(max-width:760px){.body{grid-template-columns:1fr}.side{border-left:0;border-top:1px solid #e1eaef}}
+    </style>
+    </head>
+    <body>
     <div class="wrap">
       <div class="toolbar">
-        <button id="bp" class="active">Fuente puntual</button><button id="bl">Fuente lineal</button>
-        <button id="bf" class="active">Frentes de onda</button><button id="bg">Geometría</button><button id="ba">Superficie de expansión</button>
+        <button id="bp" class="active">Fuente puntual</button>
+        <button id="bl">Fuente lineal</button>
+        <button id="bf" class="active">Frentes de onda</button>
+        <button id="bg">Geometría</button>
+        <button id="ba">Superficie de expansión</button>
       </div>
+
       <div class="body">
         <div>
-          <svg viewBox="0 0 760 410">
-            <rect width="760" height="410" fill="#edf7fb"/><line x1="70" y1="330" x2="700" y2="330" stroke="#9badb7" stroke-width="3"/>
-            <g id="pointSource"><circle cx="125" cy="250" r="15" fill="#e35d54" stroke="white" stroke-width="4"/></g>
-            <g id="lineSource" style="display:none"><line x1="125" y1="150" x2="125" y2="330" stroke="#e35d54" stroke-width="12" stroke-linecap="round"/></g>
-            <g id="waves"></g><g id="geometry"></g><g id="area"></g>
-            <circle id="receiverDot" cx="355" cy="250" r="13" fill="#0a9dcc" stroke="white" stroke-width="4"/>
-            <text id="receiverText" x="355" y="220" text-anchor="middle" font-size="13" font-weight="800" fill="#23465b">receptor</text>
-            <line id="distanceLine" x1="125" y1="250" x2="355" y2="250" stroke="#718b9a" stroke-width="2" stroke-dasharray="7 6"/>
-            <text id="distanceLabel" x="240" y="240" text-anchor="middle" font-size="12" fill="#536d7c">20 m</text>
+          <svg viewBox="0 0 760 430">
+            <rect width="760" height="430" fill="#edf7fb"/>
+            <rect x="55" y="340" width="650" height="12" rx="6" fill="#9eafb8"/>
+
+            <g id="pointSource">
+              <circle cx="120" cy="255" r="16" fill="#e35d54" stroke="white" stroke-width="4"/>
+              <text x="120" y="220" text-anchor="middle" font-size="13" font-weight="800" fill="#233f52">fuente puntual</text>
+            </g>
+
+            <g id="lineSource" style="display:none">
+              <line x1="120" y1="145" x2="120" y2="340" stroke="#e35d54" stroke-width="14" stroke-linecap="round"/>
+              <text x="120" y="120" text-anchor="middle" font-size="13" font-weight="800" fill="#233f52">fuente lineal</text>
+            </g>
+
+            <g id="waves"></g>
+            <g id="geometry"></g>
+            <g id="area"></g>
+
+            <g id="receiver">
+              <rect x="0" y="0" width="66" height="88" rx="10" fill="#172a35" stroke="#4a6575" stroke-width="2"/>
+              <rect x="10" y="10" width="46" height="33" rx="5" fill="#c7f2d6"/>
+              <text id="meterText" x="33" y="32" text-anchor="middle" font-size="14" font-weight="900" fill="#13402a">80.0</text>
+              <circle cx="33" cy="59" r="7" fill="#319dcc"/>
+              <rect x="28" y="67" width="10" height="15" rx="3" fill="#6a7e89"/>
+            </g>
+
+            <line id="distanceLine" x1="120" y1="255" x2="250" y2="215" stroke="#718b9a" stroke-width="2" stroke-dasharray="7 6"/>
+            <text id="distanceLabel" x="185" y="225" text-anchor="middle" font-size="12" fill="#536d7c">10 m</text>
           </svg>
         </div>
+
         <div class="side">
-          <div class="card"><div class="k">MODELO</div><div class="v" id="modelName">Fuente puntual</div><div class="d" id="modelDesc">Fuente compacta observada a una distancia grande respecto de sus dimensiones.</div></div>
-          <div class="card"><div class="k">PROPAGACIÓN</div><div class="v" id="propName">Esférica</div><div class="d" id="propDesc">La superficie aumenta aproximadamente con r².</div></div>
-          <div class="card"><div class="k">DISTANCIA AL RECEPTOR</div><input id="slider" type="range" min="10" max="60" value="20" step="1"><div class="v"><span id="dist">20</span> m</div></div>
-          <div class="card"><div class="k">AL DUPLICAR DISTANCIA</div><div class="v" id="drop">≈ −6 dB</div><div class="d">Tendencia geométrica ideal.</div></div>
+          <div class="meter">
+            <div class="top">SONÓMETRO VIRTUAL · RECEPTOR</div>
+            <div class="db"><span id="dbValue">80.0</span> <span class="unit">dB</span></div>
+            <div class="unit">Nivel relativo estimado</div>
+            <div class="bar"><div id="levelFill" class="fill"></div></div>
+          </div>
+
+          <div class="card">
+            <div class="k">MODELO</div>
+            <div class="v" id="modelName">Fuente puntual</div>
+            <div class="d" id="modelDesc">Fuente compacta observada a una distancia grande respecto de sus dimensiones.</div>
+          </div>
+
+          <div class="card">
+            <div class="k">PROPAGACIÓN</div>
+            <div class="v" id="propName">Esférica</div>
+            <div class="d" id="propDesc">La superficie aumenta aproximadamente con r².</div>
+          </div>
+
+          <div class="card">
+            <div class="k">DISTANCIA AL RECEPTOR</div>
+            <input id="slider" type="range" min="10" max="60" value="10" step="1">
+            <div class="v"><span id="dist">10</span> m</div>
+          </div>
+
+          <div class="card">
+            <div class="k">REFERENCIA DIDÁCTICA</div>
+            <div class="v">80 dB a 10 m</div>
+            <div class="d" id="law">Puntual: Lp(r)=80−20·log₁₀(r/10)</div>
+          </div>
+
+          <div class="card">
+            <div class="k">AL DUPLICAR DISTANCIA</div>
+            <div class="v" id="drop">≈ −6 dB</div>
+            <div class="d">Tendencia geométrica ideal.</div>
+          </div>
         </div>
       </div>
     </div>
+
     <script>
-      let kind="point",layer="fronts";const slider=document.getElementById("slider"),waves=document.getElementById("waves"),geometry=document.getElementById("geometry"),area=document.getElementById("area");
-      function setKind(k){kind=k;bp.classList.toggle("active",k==="point");bl.classList.toggle("active",k==="line");pointSource.style.display=k==="point"?"block":"none";lineSource.style.display=k==="line"?"block":"none";modelName.textContent=k==="point"?"Fuente puntual":"Fuente lineal idealizada";modelDesc.textContent=k==="point"?"Fuente compacta observada a una distancia grande respecto de sus dimensiones.":"Emisión distribuida a lo largo de una longitud relevante.";propName.textContent=k==="point"?"Esférica":"Cilíndrica";propDesc.textContent=k==="point"?"La superficie aumenta aproximadamente con r².":"La superficie efectiva aumenta aproximadamente en proporción a r.";drop.textContent=k==="point"?"≈ −6 dB":"≈ −3 dB";render();}
-      function setLayer(l){layer=l;bf.classList.toggle("active",l==="fronts");bg.classList.toggle("active",l==="geom");ba.classList.toggle("active",l==="area");render();}
-      function render(){const d=+slider.value,x=125+(d-10)/50*520;receiverDot.setAttribute("cx",x);receiverText.setAttribute("x",x);distanceLine.setAttribute("x2",x);distanceLabel.setAttribute("x",(125+x)/2);distanceLabel.textContent=d+" m";dist.textContent=d;waves.innerHTML="";geometry.innerHTML="";area.innerHTML="";
-        if(layer==="fronts"){if(kind==="point"){[55,105,155,205].forEach(r=>waves.innerHTML+=`<circle cx="125" cy="250" r="${r}" fill="none" stroke="#39a9d5" stroke-width="3" opacity=".75"/>`)}else{[55,105,155,205].forEach(r=>waves.innerHTML+=`<path d="M125 ${250-r/2} Q${125+r} 250 125 ${250+r/2}" fill="none" stroke="#54b987" stroke-width="3" opacity=".78"/>`)}}
-        if(layer==="geom"){geometry.innerHTML=`<line x1="125" y1="250" x2="${x}" y2="250" stroke="#0a9dcc" stroke-width="4"/><text x="${(125+x)/2}" y="275" text-anchor="middle" font-size="13" font-weight="800" fill="#0a7098">${kind==="point"?"radio r":"distancia radial r"}</text>`}
-        if(layer==="area"){area.innerHTML=kind==="point"?`<circle cx="125" cy="250" r="${Math.max(45,(x-125)*.6)}" fill="rgba(57,169,213,.13)" stroke="#39a9d5" stroke-width="3"/><text x="390" y="75" font-size="14" font-weight="800" fill="#23526b">superficie ∝ r²</text>`:`<path d="M125 150 Q${x} 250 125 350" fill="rgba(84,185,135,.12)" stroke="#54b987" stroke-width="3"/><text x="390" y="75" font-size="14" font-weight="800" fill="#256347">superficie efectiva ∝ r</text>`}
+      let kind="point",layer="fronts";
+      const slider=document.getElementById("slider");
+      const waves=document.getElementById("waves"),geometry=document.getElementById("geometry"),area=document.getElementById("area");
+
+      function levelAtDistance(r){
+        const coef=kind==="point"?20:10;
+        return 80-coef*Math.log10(r/10);
       }
-      bp.onclick=()=>setKind("point");bl.onclick=()=>setKind("line");bf.onclick=()=>setLayer("fronts");bg.onclick=()=>setLayer("geom");ba.onclick=()=>setLayer("area");slider.oninput=render;render();
-    </script></body></html>
+
+      function setKind(k){
+        kind=k;
+        bp.classList.toggle("active",k==="point");
+        bl.classList.toggle("active",k==="line");
+        pointSource.style.display=k==="point"?"block":"none";
+        lineSource.style.display=k==="line"?"block":"none";
+        modelName.textContent=k==="point"?"Fuente puntual":"Fuente lineal idealizada";
+        modelDesc.textContent=k==="point"
+          ?"Fuente compacta observada a una distancia grande respecto de sus dimensiones."
+          :"Emisión distribuida a lo largo de una longitud relevante.";
+        propName.textContent=k==="point"?"Esférica":"Cilíndrica";
+        propDesc.textContent=k==="point"
+          ?"La superficie aumenta aproximadamente con r²."
+          :"La superficie efectiva aumenta aproximadamente en proporción a r.";
+        drop.textContent=k==="point"?"≈ −6 dB":"≈ −3 dB";
+        law.textContent=k==="point"
+          ?"Puntual: Lp(r)=80−20·log₁₀(r/10)"
+          :"Lineal: Lp(r)=80−10·log₁₀(r/10)";
+        render();
+      }
+
+      function setLayer(l){
+        layer=l;
+        bf.classList.toggle("active",l==="fronts");
+        bg.classList.toggle("active",l==="geom");
+        ba.classList.toggle("active",l==="area");
+        render();
+      }
+
+      function render(){
+        const d=+slider.value;
+        const x=250+(d-10)/50*420;
+        const y=215;
+        const lp=levelAtDistance(d);
+
+        receiver.setAttribute("transform",`translate(${x-33} ${y-44})`);
+        distanceLine.setAttribute("x2",x);
+        distanceLine.setAttribute("y2",y);
+        distanceLabel.setAttribute("x",(120+x)/2);
+        distanceLabel.setAttribute("y",y-12);
+        distanceLabel.textContent=d+" m";
+        dist.textContent=d;
+
+        dbValue.textContent=lp.toFixed(1);
+        meterText.textContent=lp.toFixed(1);
+        levelFill.style.width=Math.max(10,Math.min(100,(lp-45)/35*100))+"%";
+
+        waves.innerHTML=""; geometry.innerHTML=""; area.innerHTML="";
+
+        if(layer==="fronts"){
+          if(kind==="point"){
+            [45,90,135,180,225].forEach(r=>{
+              waves.innerHTML+=`<circle cx="120" cy="255" r="${r}" fill="none" stroke="#39a9d5" stroke-width="3" opacity=".72"/>`;
+            });
+          }else{
+            [45,90,135,180,225].forEach(r=>{
+              waves.innerHTML+=`<path d="M120 ${255-r/2} Q${120+r} 255 120 ${255+r/2}" fill="none" stroke="#54b987" stroke-width="3" opacity=".75"/>`;
+            });
+          }
+        }
+
+        if(layer==="geom"){
+          geometry.innerHTML=
+            `<line x1="120" y1="255" x2="${x}" y2="${y}" stroke="#0a9dcc" stroke-width="4"/>
+             <text x="${(120+x)/2}" y="${y+28}" text-anchor="middle" font-size="13" font-weight="800" fill="#0a7098">
+             ${kind==="point"?"radio r":"distancia radial r"}</text>`;
+        }
+
+        if(layer==="area"){
+          if(kind==="point"){
+            area.innerHTML=
+              `<circle cx="120" cy="255" r="${Math.max(45,Math.min(220,(x-120)*.72))}" fill="rgba(57,169,213,.13)" stroke="#39a9d5" stroke-width="3"/>
+               <text x="365" y="78" font-size="14" font-weight="800" fill="#23526b">superficie ∝ r²</text>`;
+          }else{
+            area.innerHTML=
+              `<path d="M120 145 Q${x} 255 120 365" fill="rgba(84,185,135,.12)" stroke="#54b987" stroke-width="3"/>
+               <text x="365" y="78" font-size="14" font-weight="800" fill="#256347">superficie efectiva ∝ r</text>`;
+          }
+        }
+      }
+
+      bp.onclick=()=>setKind("point");
+      bl.onclick=()=>setKind("line");
+      bf.onclick=()=>setLayer("fronts");
+      bg.onclick=()=>setLayer("geom");
+      ba.onclick=()=>setLayer("area");
+      slider.oninput=render;
+      render();
+    </script>
+    </body>
+    </html>
     """
-    components.html(geometry_lab,height=545,scrolling=False)
+    components.html(geometry_lab,height=565,scrolling=False)
+
+    st.markdown(
+        """
+        <div class="c3l2-note">
+          <b>Lectura técnica:</b> usando la misma referencia de 80 dB a 10 m, el nivel cae más rápido
+          en el modelo puntual que en el lineal. Mueve el receptor y observa esa diferencia directamente
+          en el sonómetro virtual.
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
 
     # ================================================================
-    # 5. DESAFÍO PROFESIONAL
+    # 5. DESAFÍO PROFESIONAL CON ESCENAS VISUALES
     # ================================================================
     st.markdown("## 5. Desafío profesional · clasifica la fuente y su propagación")
     st.caption(
-        "Objetivo: decidir qué modelo geométrico usarías inicialmente. Cuando falten antecedentes, responde que no se puede decidir."
+        "Objetivo: observar una situación física, interpretar su escala geométrica y decidir qué modelo usarías inicialmente."
     )
 
     st.markdown(
         """
         <div class="c3l2-intro">
           <div class="c3l2-k">REGLA DE DECISIÓN</div>
-          <div class="c3l2-title">Primero analiza la escala geométrica; después elige el modelo.</div>
-          Para cada caso selecciona <b>tipo de fuente</b> y <b>geometría de propagación</b>.
+          <div class="c3l2-title">No clasifiques por el nombre de la fuente: mira primero su geometría.</div>
+          En cada escena observa la extensión efectiva de la emisión y la distancia al receptor.
+          Después selecciona <b>tipo de fuente</b> y <b>geometría de propagación</b>.
         </div>
         """,
         unsafe_allow_html=True,
     )
 
     cases=[
-        ("Grupo electrógeno compacto a 30 m","Equipo pequeño respecto de la distancia al receptor.","Puntual","Esférica","Puede aproximarse como fuente compacta."),
-        ("Autopista extensa con flujo continuo","El tramo acústicamente relevante es largo respecto de la distancia al receptor.","Lineal","Cilíndrica","La emisión se distribuye a lo largo de un corredor."),
-        ("Unidad HVAC compacta en cubierta","Equipo compacto y receptor bastante alejado respecto de sus dimensiones.","Puntual","Esférica","La escala permite una aproximación puntual."),
-        ("Tren largo desplazándose frente a un receptor","No se entrega longitud efectiva, distancia al receptor ni tramo dominante.","No se puede decidir","No se puede decidir","Faltan antecedentes geométricos suficientes."),
-        ("Línea extensa de ventiladores industriales","Múltiples fuentes próximas entre sí distribuidas a lo largo de una gran fachada.","Lineal","Cilíndrica","Como primera aproximación puede modelarse como distribución lineal."),
-        ("Tramo corto de carretera observado a gran distancia","La longitud efectiva del tramo es pequeña comparada con la distancia al receptor.","Puntual","Esférica","A gran distancia puede comportarse como una fuente compacta equivalente."),
+        ("Grupo electrógeno compacto a 30 m","Equipo de dimensiones pequeñas respecto de la distancia al receptor.","Puntual","Esférica","A esa escala puede aproximarse como una fuente compacta con expansión esférica ideal.","generator"),
+        ("Autopista extensa con flujo continuo","El tramo acústicamente relevante es largo respecto de la distancia al receptor.","Lineal","Cilíndrica","La emisión se distribuye a lo largo de un corredor y puede idealizarse linealmente.","highway"),
+        ("Unidad HVAC compacta en cubierta","Equipo compacto observado desde un receptor bastante alejado respecto de sus dimensiones.","Puntual","Esférica","La escala permite una aproximación puntual.","hvac"),
+        ("Tren largo frente a un receptor","No se entrega longitud efectiva, distancia al receptor ni tramo que domina la emisión.","No se puede decidir","No se puede decidir","Faltan antecedentes geométricos suficientes.","train"),
+        ("Línea extensa de ventiladores industriales","Múltiples fuentes próximas entre sí distribuidas a lo largo de una gran fachada.","Lineal","Cilíndrica","Como primera aproximación, una distribución suficientemente extensa puede modelarse linealmente.","fans"),
+        ("Tramo corto de carretera observado a gran distancia","La longitud efectiva del tramo es pequeña comparada con la distancia al receptor.","Puntual","Esférica","A gran distancia el tramo puede comportarse como una fuente compacta equivalente.","shortroad"),
     ]
 
+    scene_svg = {
+        "generator": """
+        <svg viewBox="0 0 760 255" width="100%" style="display:block;border-radius:14px;background:#eef7fb;border:1px solid #d5e4ec">
+          <rect x="0" y="190" width="760" height="65" fill="#d8e2e7"/>
+          <rect x="85" y="110" width="150" height="82" rx="9" fill="#46545d"/>
+          <rect x="105" y="130" width="78" height="42" rx="4" fill="#26343d"/>
+          <circle cx="207" cy="151" r="18" fill="#26343d" stroke="#8da0aa" stroke-width="2"/>
+          <text x="160" y="95" text-anchor="middle" font-size="16" font-weight="900" fill="#283f50">GRUPO ELECTRÓGENO</text>
+          <circle cx="600" cy="155" r="13" fill="#0a9dcc" stroke="white" stroke-width="4"/>
+          <line x1="235" y1="151" x2="600" y2="155" stroke="#718b9a" stroke-width="2" stroke-dasharray="8 7"/>
+          <text x="420" y="140" text-anchor="middle" font-size="13" fill="#526b7a">30 m</text>
+        </svg>""",
+        "highway": """
+        <svg viewBox="0 0 760 255" width="100%" style="display:block;border-radius:14px;background:#eef7fb;border:1px solid #d5e4ec">
+          <rect x="0" y="155" width="760" height="100" fill="#596d78"/>
+          <line x1="0" y1="205" x2="760" y2="205" stroke="#f0d05b" stroke-width="5" stroke-dasharray="32 20"/>
+          <g fill="#e45e54"><rect x="90" y="167" width="62" height="24" rx="6"/><rect x="245" y="167" width="62" height="24" rx="6"/><rect x="400" y="167" width="62" height="24" rx="6"/><rect x="555" y="167" width="62" height="24" rx="6"/></g>
+          <circle cx="635" cy="78" r="13" fill="#0a9dcc" stroke="white" stroke-width="4"/>
+          <text x="380" y="40" text-anchor="middle" font-size="17" font-weight="900" fill="#283f50">AUTOPISTA EXTENSA · FLUJO CONTINUO</text>
+          <path d="M90 180 Q350 80 635 78" fill="none" stroke="#54b987" stroke-width="3" opacity=".75"/>
+        </svg>""",
+        "hvac": """
+        <svg viewBox="0 0 760 255" width="100%" style="display:block;border-radius:14px;background:#eef7fb;border:1px solid #d5e4ec">
+          <rect x="75" y="145" width="270" height="70" rx="6" fill="#cad8df"/>
+          <rect x="150" y="92" width="120" height="53" rx="8" fill="#657983"/>
+          <circle cx="205" cy="118" r="18" fill="#26343d" stroke="#9dafb8" stroke-width="2"/>
+          <text x="210" y="78" text-anchor="middle" font-size="16" font-weight="900" fill="#283f50">HVAC COMPACTO</text>
+          <circle cx="625" cy="118" r="13" fill="#0a9dcc" stroke="white" stroke-width="4"/>
+          <line x1="270" y1="118" x2="625" y2="118" stroke="#718b9a" stroke-width="2" stroke-dasharray="8 7"/>
+          <text x="447" y="105" text-anchor="middle" font-size="13" fill="#526b7a">receptor alejado</text>
+        </svg>""",
+        "train": """
+        <svg viewBox="0 0 760 255" width="100%" style="display:block;border-radius:14px;background:#eef7fb;border:1px solid #d5e4ec">
+          <rect x="0" y="198" width="760" height="57" fill="#d8e2e7"/>
+          <line x1="0" y1="220" x2="760" y2="220" stroke="#5f6f78" stroke-width="5"/>
+          <g fill="#4d6f84"><rect x="85" y="145" width="150" height="52" rx="8"/><rect x="245" y="145" width="150" height="52" rx="8"/><rect x="405" y="145" width="150" height="52" rx="8"/></g>
+          <circle cx="650" cy="85" r="13" fill="#0a9dcc" stroke="white" stroke-width="4"/>
+          <text x="320" y="125" text-anchor="middle" font-size="17" font-weight="900" fill="#283f50">TREN LARGO</text>
+          <text x="650" y="62" text-anchor="middle" font-size="13" fill="#526b7a">¿distancia? ¿longitud efectiva?</text>
+        </svg>""",
+        "fans": """
+        <svg viewBox="0 0 760 255" width="100%" style="display:block;border-radius:14px;background:#eef7fb;border:1px solid #d5e4ec">
+          <rect x="60" y="70" width="520" height="130" rx="6" fill="#cbd9df"/>
+          <g fill="#354853" stroke="#8399a5" stroke-width="2"><circle cx="125" cy="135" r="28"/><circle cx="225" cy="135" r="28"/><circle cx="325" cy="135" r="28"/><circle cx="425" cy="135" r="28"/><circle cx="525" cy="135" r="28"/></g>
+          <text x="320" y="52" text-anchor="middle" font-size="17" font-weight="900" fill="#283f50">LÍNEA EXTENSA DE VENTILADORES</text>
+          <circle cx="675" cy="135" r="13" fill="#0a9dcc" stroke="white" stroke-width="4"/>
+          <line x1="580" y1="135" x2="675" y2="135" stroke="#718b9a" stroke-width="2" stroke-dasharray="8 7"/>
+        </svg>""",
+        "shortroad": """
+        <svg viewBox="0 0 760 255" width="100%" style="display:block;border-radius:14px;background:#eef7fb;border:1px solid #d5e4ec">
+          <rect x="150" y="178" width="180" height="55" rx="8" fill="#596d78"/>
+          <line x1="165" y1="205" x2="315" y2="205" stroke="#f0d05b" stroke-width="4" stroke-dasharray="22 12"/>
+          <rect x="205" y="186" width="58" height="22" rx="5" fill="#e45e54"/>
+          <circle cx="650" cy="110" r="13" fill="#0a9dcc" stroke="white" stroke-width="4"/>
+          <line x1="240" y1="195" x2="650" y2="110" stroke="#718b9a" stroke-width="2" stroke-dasharray="8 7"/>
+          <text x="240" y="160" text-anchor="middle" font-size="16" font-weight="900" fill="#283f50">TRAMO CORTO</text>
+          <text x="500" y="95" text-anchor="middle" font-size="13" fill="#526b7a">gran distancia al receptor</text>
+        </svg>""",
+    }
+
     answers={}
-    for i,(name,context,src_ok,prop_ok,why) in enumerate(cases):
+    for i,(name,context,src_ok,prop_ok,why,scene) in enumerate(cases):
         with st.container(border=True,key=f"c3l2_s2_case_{i}"):
             st.markdown(
                 f"""<div class="c3l2-q-kicker">CASO {i+1}</div>
@@ -28138,18 +28387,30 @@ def _c3l2_stage2(lab,saved):
                 <div class="c3l2-q-context">{context}</div>""",
                 unsafe_allow_html=True,
             )
+            st.markdown(scene_svg[scene],unsafe_allow_html=True)
+
             c1,c2=st.columns(2)
-            src_ans=c1.segmented_control("Modelo de fuente",["Puntual","Lineal","No se puede decidir"],key=f"c3l2_s2_src_{i}")
-            prop_ans=c2.segmented_control("Propagación inicial",["Esférica","Cilíndrica","No se puede decidir"],key=f"c3l2_s2_prop_{i}")
+            src_ans=c1.segmented_control(
+                "Modelo de fuente",
+                ["Puntual","Lineal","No se puede decidir"],
+                key=f"c3l2_s2_src_{i}",
+            )
+            prop_ans=c2.segmented_control(
+                "Propagación inicial",
+                ["Esférica","Cilíndrica","No se puede decidir"],
+                key=f"c3l2_s2_prop_{i}",
+            )
             answers[str(i)]={"source":src_ans,"propagation":prop_ans}
+
             if src_ans and prop_ans:
                 if src_ans==src_ok and prop_ans==prop_ok:
                     st.success(why)
                 else:
-                    st.info("Revisa la relación entre extensión efectiva de la fuente y distancia al receptor.")
+                    st.info("Revisa la escala representada en la escena antes de elegir el modelo.")
 
     correct=sum(
-        answers[str(i)]["source"]==case[2] and answers[str(i)]["propagation"]==case[3]
+        answers[str(i)]["source"]==case[2]
+        and answers[str(i)]["propagation"]==case[3]
         for i,case in enumerate(cases)
     )
 
