@@ -587,7 +587,24 @@ def student_sidebar_summary(client, user_key):
     c3_prog=_future_lab_progress(c3_lab1,future_progress) if c3_lab1 else {
         "completed":0,"expected":11,"percent":0.0
     }
-    c3_formative_pct=float(c3_prog.get("percent") or 0.0)
+    c3_lab2=next(
+        (lab for lab in course3_labs if int(lab.get("number") or 0)==2),
+        None,
+    )
+    c3_lab2_prog=_future_lab_progress(c3_lab2,future_progress) if c3_lab2 else {
+        "completed":0,"expected":11,"percent":0.0,"state":{}
+    }
+    c3_lab2_state=c3_lab2_prog.get("state") or {}
+    c3_formative_done=int(c3_prog.get("completed") or 0)+sum(
+        bool(c3_lab2_state.get(f"done_{i}")) for i in range(9)
+    )
+    c3_formative_total=int(c3_prog.get("expected") or 11)+9
+    c3_formative_pct=(100.0*c3_formative_done/c3_formative_total) if c3_formative_total else 0.0
+    c3_official=_course3_lab2_delivery_rows(rows)
+    c3_official_delivered=sum(
+        c3_official.get(k) is not None
+        for k in ("final_comprehension","final_integrated_design")
+    )
 
     st.markdown(
         f"""
@@ -615,6 +632,10 @@ def student_sidebar_summary(client, user_key):
 
           <div style="display:flex;justify-content:space-between;gap:.5rem;font-size:.82rem">
             <span>Curso 3 · avance formativo</span><b>{c3_formative_pct:.0f}%</b>
+          </div>
+
+          <div style="display:flex;justify-content:space-between;gap:.5rem;font-size:.82rem;margin-top:.35rem">
+            <span>Curso 3 · evaluaciones</span><b>{c3_official_delivered}/2</b>
           </div>
 
         </div>
