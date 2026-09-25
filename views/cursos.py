@@ -29576,6 +29576,39 @@ def _c3l2_stage3(lab,saved):
 
         st.caption(ex["context"] + " · " + ex["q_text"])
 
+        # Pauta visible exclusivamente en la vista docente.
+        if st.session_state.get("role") == "Docente":
+            teacher_di = 10 * math.log10(ex["q"])
+            teacher_geom = 10 * math.log10(
+                ex["q"] / (4 * math.pi * ex["r"]**2)
+            )
+            with st.container(border=True):
+                st.markdown("##### 👩‍🏫 Pauta docente · Respuesta esperada")
+                pc1, pc2, pc3 = st.columns(3)
+                with pc1:
+                    st.metric("Resultado correcto", f"{expected_lp:.1f} dB")
+                with pc2:
+                    st.metric("Directividad", f"Q = {ex['q']}")
+                with pc3:
+                    st.metric("Tolerancia", "± 0,5 dB")
+
+                st.caption(
+                    "Esta pauta se muestra únicamente en la vista docente y "
+                    "no forma parte de la interfaz del alumno."
+                )
+                st.latex(
+                    rf"DI=10\\log_{{10}}({ex['q']})"
+                    rf"\\approx {teacher_di:.1f}\\ \\mathrm{{dB}}"
+                )
+                st.latex(
+                    rf"L_p={ex['lw']:.0f}+10\\log_{{10}}\\left("
+                    rf"\\frac{{{ex['q']}}}{{4\\pi({ex['r']:.0f})^2}}\\right)"
+                )
+                st.latex(
+                    rf"L_p\\approx {ex['lw']:.0f}+({teacher_geom:.1f})"
+                    rf"={expected_lp:.1f}\\ \\mathrm{{dB}}"
+                )
+
         answer = st.number_input(
             "Tu resultado para Lp [dB]",
             min_value=0.0,
