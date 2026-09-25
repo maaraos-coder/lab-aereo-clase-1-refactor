@@ -29831,11 +29831,11 @@ def _c3l2_stage4(lab,saved):
     </div>
     """, unsafe_allow_html=True)
 
-    st.warning(
-        "**No son exactamente el mismo supuesto físico.** La fuente puntual extrema representa toda la potencia "
-        "concentrada en una posición instantánea desfavorable. La fuente de área representa una emisión equivalente "
-        "distribuida sobre la zona de operación. Por ello, la fuente de área puede simplificar una actividad móvil "
-        "o distribuida, pero no debe presentarse como sustituto automático de una comprobación de máximo instantáneo."
+    st.info(
+        "**Criterio de esta etapa:** no utilizaremos el Lw'' obtenido únicamente por repartir la misma potencia. "
+        "Construiremos una **fuente de área equivalente conservadora** y ajustaremos su Lw'' para que entregue en "
+        "los receptores A y B el mismo nivel que produciría la fuente puntual ubicada en la posición más desfavorable "
+        "frente a cada edificio. Así una sola geometría reemplaza los dos escenarios de ubicación."
     )
 
     # ------------------------------------------------------------------
@@ -29863,7 +29863,7 @@ def _c3l2_stage4(lab,saved):
             key="c3l2_s4_depth",
         )
 
-    p4, p5, p6, p7 = st.columns(4)
+    p4, p5, p6 = st.columns(3)
     with p4:
         setback = st.slider(
             "Margen operativo interior [m]",
@@ -29871,24 +29871,24 @@ def _c3l2_stage4(lab,saved):
             key="c3l2_s4_setback",
         )
     with p5:
-        dist_a = st.slider(
-            "Obra → Edificio A [m]",
+        dist_receiver = st.slider(
+            "Distancia obra → edificios [m]",
             5.0, 50.0, 15.0, 1.0,
-            key="c3l2_s4_dist_a",
+            key="c3l2_s4_dist_receiver",
         )
     with p6:
-        dist_b = st.slider(
-            "Obra → Edificio B [m]",
-            5.0, 50.0, 15.0, 1.0,
-            key="c3l2_s4_dist_b",
-        )
-    with p7:
         cell_size = st.selectbox(
             "Tamaño de discretización",
             [5, 10],
             format_func=lambda x: f"{x} × {x} m",
             key="c3l2_s4_cell_size",
         )
+
+    st.caption(
+        "Para esta demostración A y B se ubican de forma simétrica respecto de la obra. "
+        "Así podemos comprobar directamente que una sola fuente de área equivalente reproduce "
+        "la condición puntual desfavorable de ambos receptores."
+    )
 
     if setback * 2 >= site_length:
         st.error("El margen operativo es demasiado grande para el largo seleccionado.")
@@ -29899,8 +29899,8 @@ def _c3l2_stage4(lab,saved):
     lw_per_m2 = lw_total - 10.0 * math.log10(area)
 
     # Coordenadas en planta.
-    rec_a = (-float(dist_a), site_depth / 2.0)
-    rec_b = (float(site_length) + float(dist_b), site_depth / 2.0)
+    rec_a = (-float(dist_receiver), site_depth / 2.0)
+    rec_b = (float(site_length) + float(dist_receiver), site_depth / 2.0)
     src_a = (float(setback), site_depth / 2.0)
     src_b = (float(site_length) - float(setback), site_depth / 2.0)
 
@@ -29923,15 +29923,17 @@ def _c3l2_stage4(lab,saved):
     lp_ba, r_ba = _s4_point_level(src_b, rec_a)
     lp_bb, r_bb = _s4_point_level(src_b, rec_b)
 
-    # Fuente de área discretizada.
+    # Fuente de área discretizada: primero se calcula el reparto simple de la
+    # misma potencia y luego se calibra una fuente de área equivalente
+    # conservadora para reproducir los niveles puntuales desfavorables.
     nx = int(site_length / cell_size)
     ny = int(site_depth / cell_size)
     cell_area = float(cell_size * cell_size)
-    lw_cell = lw_per_m2 + 10.0 * math.log10(cell_area)
+    lw_cell_base = lw_per_m2 + 10.0 * math.log10(cell_area)
 
-    area_energy_a = []
-    area_energy_b = []
-    area_cells = []
+    raw_energy_a = []
+    raw_energy_b = []
+    raw_cells = []
 
     for iy in range(ny):
         for ix in range(nx):
@@ -29941,28 +29943,53 @@ def _c3l2_stage4(lab,saved):
             ra = max(1.0, math.hypot(rec_a[0] - x, rec_a[1] - y))
             rb = max(1.0, math.hypot(rec_b[0] - x, rec_b[1] - y))
 
-            lpa = lw_cell + 10.0 * math.log10(q / (4.0 * math.pi * ra * ra))
-            lpb = lw_cell + 10.0 * math.log10(q / (4.0 * math.pi * rb * rb))
+            lpa = lw_cell_base + 10.0 * math.log10(q / (4.0 * math.pi * ra * ra))
+            lpb = lw_cell_base + 10.0 * math.log10(q / (4.0 * math.pi * rb * rb))
 
-            area_energy_a.append(10.0 ** (lpa / 10.0))
-            area_energy_b.append(10.0 ** (lpb / 10.0))
-            area_cells.append((x, y, lpa, lpb))
+            raw_energy_a.append(10.0 ** (lpa / 10.0))
+            raw_energy_b.append(10.0 ** (lpb / 10.0))
+            raw_cells.append((x, y, lpa, lpb))
+
+    lp_area_raw_a = 10.0 * math.log10(sum(raw_energy_a))
+    lp_area_raw_b = 10.0 * math.log10(sum(raw_energy_b))
+
+    # Objetivo: que una sola fuente de área reproduzca el nivel que se
+    # obtendría con la fuente puntual ubicada en el extremo más desfavorable
+    # frente a cada receptor.
+    target_a = lp_aa
+    target_b = lp_bb
+    correction_a = target_a - lp_area_raw_a
+    correction_b = target_b - lp_area_raw_b
+    area_correction = max(correction_a, correction_b)
+
+    lw_per_m2_eq = lw_per_m2 + area_correction
+    lw_cell_eq = lw_cell_base + area_correction
+
+    area_energy_a = []
+    area_energy_b = []
+    area_cells = []
+    for x, y, raw_lpa, raw_lpb in raw_cells:
+        lpa = raw_lpa + area_correction
+        lpb = raw_lpb + area_correction
+        area_energy_a.append(10.0 ** (lpa / 10.0))
+        area_energy_b.append(10.0 ** (lpb / 10.0))
+        area_cells.append((x, y, lpa, lpb))
 
     lp_area_a = 10.0 * math.log10(sum(area_energy_a))
     lp_area_b = 10.0 * math.log10(sum(area_energy_b))
 
-    reconstructed_lw = 10.0 * math.log10(
-        len(area_cells) * 10.0 ** (lw_cell / 10.0)
-    )
+    equivalent_lw_total = lw_per_m2_eq + 10.0 * math.log10(area)
 
-    k1, k2, k3 = st.columns(3)
+    k1, k2, k3, k4 = st.columns(4)
     k1.metric("Área operacional", f"{area:.0f} m²")
-    k2.metric("Lw total", f"{lw_total:.1f} dB")
-    k3.metric("Lw''", f"{lw_per_m2:.1f} dB/m²")
+    k2.metric("Lw puntual", f"{lw_total:.1f} dB")
+    k3.metric("Lw'' por reparto", f"{lw_per_m2:.1f} dB/m²")
+    k4.metric("Lw'' equivalente", f"{lw_per_m2_eq:.1f} dB/m²")
 
-    st.caption(
-        f"Comprobación energética: al sumar las {len(area_cells)} celdas se reconstruyen "
-        f"{reconstructed_lw:.1f} dB de potencia sonora, frente a {lw_total:.1f} dB originales."
+    st.info(
+        f"Para que una única fuente de área reproduzca la peor condición puntual en A y B, "
+        f"se aplica una corrección de {area_correction:+.1f} dB al Lw'' obtenido por simple reparto. "
+        f"El nivel de potencia total equivalente del área pasa a {equivalent_lw_total:.1f} dB."
     )
 
     # ------------------------------------------------------------------
@@ -29977,8 +30004,8 @@ def _c3l2_stage4(lab,saved):
         canvas_h = 220
 
         def sx(x):
-            x_min = -dist_a - 25.0
-            x_max = site_length + dist_b + 25.0
+            x_min = -dist_receiver - 25.0
+            x_max = site_length + dist_receiver + 25.0
             return canvas_x0 + (x - x_min) / (x_max - x_min) * canvas_w
 
         sy_mid = canvas_y0 + canvas_h / 2.0
@@ -30009,7 +30036,7 @@ def _c3l2_stage4(lab,saved):
               <rect x="{work_x1:.1f}" y="{canvas_y0+18:.1f}" width="{work_x2-work_x1:.1f}" height="{canvas_h-36:.1f}"
                     rx="12" fill="#f59e0b" opacity=".68" stroke="#c77b00" stroke-width="3"/>
               <text x="{(work_x1+work_x2)/2:.1f}" y="{sy_mid-8:.1f}" text-anchor="middle" class="w b" font-size="15">FUENTE DE ÁREA</text>
-              <text x="{(work_x1+work_x2)/2:.1f}" y="{sy_mid+16:.1f}" text-anchor="middle" class="w" font-size="13">Lw'' = {lw_per_m2:.1f} dB/m²</text>
+              <text x="{(work_x1+work_x2)/2:.1f}" y="{sy_mid+16:.1f}" text-anchor="middle" class="w" font-size="13">Lw'' eq = {lw_per_m2_eq:.1f} dB/m²</text>
             '''
             title = "UNA SOLA FUENTE DE ÁREA · TODA LA ZONA OPERACIONAL"
 
@@ -30093,8 +30120,8 @@ def _c3l2_stage4(lab,saved):
         cc1.metric("Lp en Receptor A", f"{lp_area_a:.1f} dB")
         cc2.metric("Lp en Receptor B", f"{lp_area_b:.1f} dB")
         st.caption(
-            f"La misma Lw total de {lw_total:.1f} dB se distribuye sobre {area:.0f} m² "
-            f"como Lw'' = {lw_per_m2:.1f} dB/m²."
+            f"La fuente de área se calibra con Lw'' = {lw_per_m2_eq:.1f} dB/m² para que "
+            f"reproduzca en A y B el nivel de las posiciones puntuales más desfavorables."
         )
 
     # ------------------------------------------------------------------
@@ -30123,7 +30150,7 @@ def _c3l2_stage4(lab,saved):
                 "Lp en A [dB]": round(lp_area_a, 1),
                 "Lp en B [dB]": round(lp_area_b, 1),
                 "Geometría": "1 superficie",
-                "Objetivo": "Zona operacional completa",
+                "Objetivo": "Reproducir peor condición A y B",
             },
         ]
     )
@@ -30149,10 +30176,10 @@ def _c3l2_stage4(lab,saved):
 
     st.markdown("""
     <div class="c3l2-note">
-      <b>Lectura profesional:</b> la ventaja de la fuente de área no es que siempre entregue un nivel mayor,
-      sino que permite representar de forma compacta una actividad cuya posición varía dentro de una superficie.
-      Esto puede reducir el número de configuraciones geométricas necesarias cuando existen varios receptores
-      alrededor de la zona de trabajo.
+      <b>Lectura profesional:</b> en este ejercicio la fuente de área se <b>calibra como fuente equivalente conservadora</b>.
+      Su Lw'' se ajusta hasta reproducir la condición que obtendríamos colocando la fuente puntual en la posición
+      más desfavorable frente a cada receptor. De este modo, dos escenarios puntuales se sustituyen por una sola
+      superficie emisora que cubre toda la zona operacional.
     </div>
     """, unsafe_allow_html=True)
 
@@ -30224,10 +30251,10 @@ def _c3l2_stage4(lab,saved):
     )
 
     q2 = st.radio(
-        "¿Cuál es la principal ventaja de la fuente de área en el caso de los dos edificios?",
+        "¿Cuál es la principal ventaja de la fuente de área equivalente en el caso de los dos edificios?",
         [
-            "Permite representar la zona operacional completa en una sola geometría y calcular ambos receptores.",
-            "Garantiza que ambos receptores reciben simultáneamente el máximo nivel puntual posible.",
+            "Permite ajustar una sola superficie para reproducir las condiciones puntuales desfavorables de ambos receptores.",
+            "Mantiene obligatoriamente el mismo Lw total que una única posición puntual.",
             "Hace innecesario conocer la potencia sonora de la actividad.",
         ],
         index=None,
@@ -30235,11 +30262,11 @@ def _c3l2_stage4(lab,saved):
     )
 
     q3 = st.radio(
-        "Si se necesita demostrar la peor condición instantánea de una excavadora concreta junto al Edificio A, ¿qué conviene hacer?",
+        "¿Por qué el Lw'' equivalente puede ser mayor que el obtenido al repartir simplemente el Lw puntual sobre el área?",
         [
-            "Comprobar explícitamente el escenario puntual desfavorable para A.",
-            "Usar siempre la fuente de área y asumir que será idéntica.",
-            "Eliminar el receptor B del modelo.",
+            "Porque se calibra para reproducir en los receptores el nivel de las posiciones puntuales más desfavorables.",
+            "Porque el área elimina la atenuación por distancia.",
+            "Porque Lp y Lw son la misma magnitud.",
         ],
         index=None,
         key="c3l2_s4_q3",
@@ -30258,15 +30285,15 @@ def _c3l2_stage4(lab,saved):
         key="c3l2_s4_save",
     ):
         ok1 = q1 == "El nivel de potencia sonora distribuido por unidad de superficie."
-        ok2 = q2 == "Permite representar la zona operacional completa en una sola geometría y calcular ambos receptores."
-        ok3 = q3 == "Comprobar explícitamente el escenario puntual desfavorable para A."
+        ok2 = q2 == "Permite ajustar una sola superficie para reproducir las condiciones puntuales desfavorables de ambos receptores."
+        ok3 = q3 == "Porque se calibra para reproducir en los receptores el nivel de las posiciones puntuales más desfavorables."
 
         if not ok1:
             st.warning("Revisa la diferencia entre potencia sonora y presión sonora.")
         elif not ok2:
-            st.warning("La ventaja aquí es espacial: una única superficie permite evaluar receptores en distintas direcciones.")
+            st.warning("La ventaja aquí es reemplazar varias ubicaciones puntuales desfavorables por una única superficie equivalente calibrada.")
         elif not ok3:
-            st.warning("Una fuente de área no reemplaza automáticamente una verificación puntual de máximo instantáneo.")
+            st.warning("Revisa por qué el Lw'' equivalente requiere una calibración adicional respecto del simple reparto de potencia.")
         elif len(explanation.strip()) < 50:
             st.warning("Desarrolla un poco más tu explicación.")
         else:
@@ -30278,7 +30305,10 @@ def _c3l2_stage4(lab,saved):
                     "site_length": site_length,
                     "site_depth": site_depth,
                     "area": area,
-                    "lw_per_m2": lw_per_m2,
+                    "lw_per_m2_base": lw_per_m2,
+                    "lw_per_m2_equivalent": lw_per_m2_eq,
+                    "area_correction": area_correction,
+                    "equivalent_lw_total": equivalent_lw_total,
                     "cell_size": cell_size,
                     "lp_point_worst_a": lp_aa,
                     "lp_point_worst_b": lp_bb,
@@ -30298,8 +30328,9 @@ def _c3l2_stage4(lab,saved):
             st.markdown(
                 "- **Lw''**: nivel de potencia sonora por unidad de superficie, no Lp.  \n"
                 "- **Puntual**: para dos receptores enfrentados se requieren posiciones desfavorables distintas.  \n"
-                "- **Área**: una única superficie representa la zona operacional y calcula ambos receptores.  \n"
-                "- **Cautela**: la distribución superficial equivalente no garantiza el máximo instantáneo de una máquina puntual."
+                "- **Lw'' por reparto**: conserva el Lw total original, pero no necesariamente reproduce la peor condición puntual.  \n"
+                "- **Lw'' equivalente**: se calibra para igualar la condición puntual desfavorable en los receptores de control.  \n"
+                "- **Ventaja**: una única superficie puede reemplazar varias configuraciones espaciales conservadoras."
             )
 
 
