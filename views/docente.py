@@ -622,6 +622,24 @@ def _teacher_course_results_impl(compact=False):
                     "reviewer":"c3_stage10_formative",
                 },
             },
+            "Laboratorio 2 · Evaluaciones oficiales":{
+                "Etapa 9 · Evaluación de comprensión":{
+                    "class_id":"clase-06-ruido-ambiental-lab-2",
+                    "question_key":"final_comprehension",
+                    "stage":9,
+                    "maximum":40,
+                    "with_grade":True,
+                    "reviewer":"c3l2_stage9",
+                },
+                "Etapa 10 · Mapa de ruido por mediciones":{
+                    "class_id":"clase-06-ruido-ambiental-lab-2",
+                    "question_key":"final_integrated_design",
+                    "stage":10,
+                    "maximum":60,
+                    "with_grade":True,
+                    "reviewer":"c3l2_stage10",
+                },
+            },
         },
     }
 
@@ -1044,6 +1062,119 @@ def _teacher_course_results_impl(compact=False):
                             + " · Comprensión guardada: "
                             + ("Sí" if payload.get("comprehension_saved") else "No")
                         )
+
+        elif reviewer in ("c3l2_stage9","c3l2_stage10"):
+            if not rows:
+                st.caption("Todavía no hay entregas oficiales del Curso 3 · Laboratorio 2.")
+            else:
+                selected_idx=st.selectbox(
+                    "Alumno",
+                    range(len(rows)),
+                    format_func=lambda i: (
+                        (rows[i].get("users") or {}).get("display_name")
+                        or (rows[i].get("users") or {}).get("email")
+                        or rows[i].get("user_key","Alumno")
+                    ),
+                    key=f"teacher_c3l2_student_{config['stage']}",
+                )
+                row=rows[selected_idx]
+                payload=row.get("answer") or {}
+                if isinstance(payload,str):
+                    try:
+                        payload=json.loads(payload)
+                    except Exception:
+                        payload={}
+                if not isinstance(payload,dict):
+                    payload={}
+                current_score=float(
+                    row.get("teacher_score")
+                    if row.get("teacher_score") is not None
+                    else row.get("auto_score") or 0
+                )
+                reviewed=row.get("teacher_score") is not None or row.get("status")=="reviewed"
+                st.markdown("#### Resumen de la entrega")
+                a,b,c1=st.columns(3)
+                a.metric("Puntaje vigente",f"{current_score:g}/{config['maximum']}")
+                b.metric("Nota",f"{_grade_from_percent(current_score/config['maximum']*100):.1f}" if reviewed else "Pendiente")
+                c1.metric("Estado","Revisada" if reviewed else "Pendiente")
+
+                if reviewer=="c3l2_stage9":
+                    answers=payload.get("answers",{}) if isinstance(payload.get("answers"),dict) else {}
+                    expected=[
+                        "La distancia al receptor es suficientemente grande respecto de sus dimensiones efectivas",
+                        "−3 dB",
+                        "Una fachada industrial extensa que radia sobre una superficie",
+                        "Lw caracteriza emisión y Lp caracteriza el campo en una posición",
+                        "Una estimación/interpolación espacial",
+                        "Distribuir puntos según objetivo y variabilidad espacial documentada",
+                        "Revisarse y tratarse de forma documentada según el objetivo de la campaña",
+                        "Un receptor calculado por el modelo",
+                        "Mediante suma energética",
+                        "El método, datos, cobertura, supuestos y limitaciones deben acompañar al mapa",
+                    ]
+                    st.markdown("#### Respuestas y pauta")
+                    for i in range(10):
+                        chosen=answers.get(str(i)) or "Sin respuesta"
+                        ok=chosen==expected[i]
+                        with st.container(border=True):
+                            st.markdown(f"**Pregunta {i+1} · {'Correcta' if ok else 'Incorrecta'}**")
+                            st.write(f"**Alumno:** {chosen}")
+                            st.success(f"**Pauta:** {expected[i]}")
+                    st.caption(f"Puntaje automático registrado: {float(row.get('auto_score') or 0):g}/40.")
+                else:
+                    points=payload.get("points") if isinstance(payload.get("points"),list) else []
+                    measured=[p for p in points if isinstance(p,dict) and isinstance(p.get("laeq"),(int,float))]
+                    st.markdown("#### Desarrollo entregado")
+                    st.write(f"**Sector:** {payload.get('sector') or '—'}")
+                    st.write(f"**Vía principal:** {payload.get('principal') or '—'}")
+                    st.write(f"**Vía secundaria:** {payload.get('secondary') or '—'}")
+                    st.write(f"**Periodo:** {payload.get('period_plan') or '—'}")
+                    st.write(f"**Objetivo:** {payload.get('objective') or '—'}")
+                    st.write(f"**Puntos medidos:** {len(measured)}")
+                    if measured:
+                        st.dataframe(pd.DataFrame([{
+                            "Punto":p.get("id"),"Sector":p.get("route"),"LAeq":p.get("laeq"),
+                            "Lmax":p.get("lmax"),"Duración":p.get("duration"),
+                            "Hora":p.get("time"),"Observación":p.get("notes"),
+                        } for p in measured]),hide_index=True,use_container_width=True)
+                    st.markdown("**Interpretación**"); st.write(payload.get("interpretation") or "—")
+                    st.markdown("**Limitaciones**"); st.write(payload.get("limitations") or "—")
+                    st.markdown("**Conclusión**"); st.write(payload.get("conclusion") or "—")
+                    with st.expander("📘 Rúbrica docente · 60 puntos",expanded=True):
+                        rubric=[
+                            ("Diseño y objetivo de campaña",10),
+                            ("Trazabilidad de mediciones",10),
+                            ("Cobertura y representatividad",10),
+                            ("Construcción e interpretación del mapa",10),
+                            ("Limitaciones e incertidumbre",10),
+                            ("Conclusión profesional",10),
+                        ]
+                        st.dataframe(pd.DataFrame(rubric,columns=["Criterio","Máximo"]),hide_index=True,use_container_width=True)
+
+                adjusted=st.number_input(
+                    "Puntaje final otorgado por el docente",
+                    0.0,float(config["maximum"]),float(current_score),0.5,
+                    key=f"teacher_c3l2_score_{row['id']}",
+                )
+                note=st.text_area(
+                    "Observación docente",
+                    value=row.get("teacher_note") or "",
+                    key=f"teacher_c3l2_note_{row['id']}",
+                )
+                if st.button(
+                    "Guardar revisión docente",
+                    type="primary",
+                    use_container_width=True,
+                    key=f"teacher_c3l2_save_{row['id']}",
+                ):
+                    client.table("responses").update({
+                        "teacher_level":"Revisada",
+                        "teacher_score":adjusted,
+                        "teacher_note":note,
+                        "status":"reviewed",
+                        "updated_at":_now(),
+                    }).eq("id",row["id"]).execute()
+                    st.success("Revisión del Curso 3 guardada.")
 
         elif reviewer in ("c2l2_stage9","c2l2_stage10"):
             if not rows:
