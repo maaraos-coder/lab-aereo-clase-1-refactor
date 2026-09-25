@@ -28096,8 +28096,6 @@ def _c3l2_stage2(lab,saved):
         <button id="bp" class="active">Fuente puntual</button>
         <button id="bl">Fuente lineal</button>
         <button id="bf" class="active">Frentes de onda</button>
-        <button id="bg">Geometría</button>
-        <button id="ba">Superficie de expansión</button>
       </div>
 
       <div class="body">
@@ -28117,8 +28115,6 @@ def _c3l2_stage2(lab,saved):
             </g>
 
             <g id="waves"></g>
-            <g id="geometry"></g>
-            <g id="area"></g>
 
             <g id="receiver">
               <rect x="0" y="0" width="66" height="88" rx="10" fill="#172a35" stroke="#4a6575" stroke-width="2"/>
@@ -28148,7 +28144,7 @@ def _c3l2_stage2(lab,saved):
           </div>
 
           <div class="card">
-            <div class="k">PROPAGACIÓN</div>
+            <div class="k">FRENTE DE ONDA / PROPAGACIÓN</div>
             <div class="v" id="propName">Esférica</div>
             <div class="d" id="propDesc">La superficie aumenta aproximadamente con r².</div>
           </div>
@@ -28175,9 +28171,9 @@ def _c3l2_stage2(lab,saved):
     </div>
 
     <script>
-      let kind="point",layer="fronts";
+      let kind="point",showFronts=true;
       const slider=document.getElementById("slider");
-      const waves=document.getElementById("waves"),geometry=document.getElementById("geometry"),area=document.getElementById("area");
+      const waves=document.getElementById("waves");
 
       function levelAtDistance(r){
         const coef=kind==="point"?20:10;
@@ -28205,11 +28201,9 @@ def _c3l2_stage2(lab,saved):
         render();
       }
 
-      function setLayer(l){
-        layer=l;
-        bf.classList.toggle("active",l==="fronts");
-        bg.classList.toggle("active",l==="geom");
-        ba.classList.toggle("active",l==="area");
+      function toggleFronts(){
+        showFronts=!showFronts;
+        bf.classList.toggle("active",showFronts);
         render();
       }
 
@@ -28231,45 +28225,26 @@ def _c3l2_stage2(lab,saved):
         meterText.textContent=lp.toFixed(1);
         levelFill.style.width=Math.max(10,Math.min(100,(lp-45)/35*100))+"%";
 
-        waves.innerHTML=""; geometry.innerHTML=""; area.innerHTML="";
+        waves.innerHTML="";
 
-        if(layer==="fronts"){
+        if(showFronts){
           if(kind==="point"){
             [45,90,135,180,225].forEach(r=>{
               waves.innerHTML+=`<circle cx="120" cy="255" r="${r}" fill="none" stroke="#39a9d5" stroke-width="3" opacity=".72"/>`;
             });
+            waves.innerHTML+=`<text x="340" y="80" font-size="14" font-weight="850" fill="#23526b">frentes de onda · expansión esférica</text>`;
           }else{
             [45,90,135,180,225].forEach(r=>{
               waves.innerHTML+=`<path d="M120 ${255-r/2} Q${120+r} 255 120 ${255+r/2}" fill="none" stroke="#54b987" stroke-width="3" opacity=".75"/>`;
             });
-          }
-        }
-
-        if(layer==="geom"){
-          geometry.innerHTML=
-            `<line x1="120" y1="255" x2="${x}" y2="${y}" stroke="#0a9dcc" stroke-width="4"/>
-             <text x="${(120+x)/2}" y="${y+28}" text-anchor="middle" font-size="13" font-weight="800" fill="#0a7098">
-             ${kind==="point"?"radio r":"distancia radial r"}</text>`;
-        }
-
-        if(layer==="area"){
-          if(kind==="point"){
-            area.innerHTML=
-              `<circle cx="120" cy="255" r="${Math.max(45,Math.min(220,(x-120)*.72))}" fill="rgba(57,169,213,.13)" stroke="#39a9d5" stroke-width="3"/>
-               <text x="365" y="78" font-size="14" font-weight="800" fill="#23526b">superficie ∝ r²</text>`;
-          }else{
-            area.innerHTML=
-              `<path d="M120 145 Q${x} 255 120 365" fill="rgba(84,185,135,.12)" stroke="#54b987" stroke-width="3"/>
-               <text x="365" y="78" font-size="14" font-weight="800" fill="#256347">superficie efectiva ∝ r</text>`;
+            waves.innerHTML+=`<text x="340" y="80" font-size="14" font-weight="850" fill="#256347">frentes de onda · expansión cilíndrica</text>`;
           }
         }
       }
 
       bp.onclick=()=>setKind("point");
       bl.onclick=()=>setKind("line");
-      bf.onclick=()=>setLayer("fronts");
-      bg.onclick=()=>setLayer("geom");
-      ba.onclick=()=>setLayer("area");
+      bf.onclick=toggleFronts;
       slider.oninput=render;
       render();
     </script>
@@ -28305,6 +28280,41 @@ def _c3l2_stage2(lab,saved):
           En cada escena observa la extensión efectiva de la emisión y la distancia al receptor.
           Después selecciona <b>tipo de fuente</b> y <b>geometría de propagación</b>.
         </div>
+        """,
+        unsafe_allow_html=True,
+    )
+
+    st.markdown(
+        """
+        <style>
+        div[class*="st-key-c3l2_s2_case_"]{
+            border:1px solid #cfe0e9 !important;
+            border-radius:18px !important;
+            background:linear-gradient(180deg,#ffffff 0%,#f8fbfd 100%) !important;
+            box-shadow:0 8px 20px rgba(15,23,42,.045) !important;
+            padding:1rem 1.05rem 1.05rem !important;
+            margin-bottom:1rem !important;
+        }
+        .c3l2-case-head{
+            display:flex;align-items:flex-start;justify-content:space-between;gap:1rem;
+            padding:.1rem 0 .7rem;border-bottom:1px solid #e3edf2;margin-bottom:.75rem
+        }
+        .c3l2-case-num{
+            display:inline-flex;align-items:center;justify-content:center;
+            min-width:42px;height:26px;border-radius:999px;background:#e9f6fc;color:#087fa9;
+            font-size:.68rem;font-weight:900;letter-spacing:.05em
+        }
+        .c3l2-case-title{font-size:1rem;font-weight:900;color:#17344a;line-height:1.25}
+        .c3l2-case-context{font-size:.78rem;color:#657a89;line-height:1.45;margin-top:.25rem}
+        .c3l2-case-badge{
+            flex:0 0 auto;border:1px solid #cfe0e9;border-radius:999px;background:#fff;
+            padding:.35rem .6rem;font-size:.64rem;font-weight:850;color:#567080
+        }
+        .c3l2-choice-caption{
+            font-size:.69rem;font-weight:900;letter-spacing:.05em;color:#0a7da7;
+            text-transform:uppercase;margin:.15rem 0 .35rem
+        }
+        </style>
         """,
         unsafe_allow_html=True,
     )
@@ -28382,21 +28392,32 @@ def _c3l2_stage2(lab,saved):
     for i,(name,context,src_ok,prop_ok,why,scene) in enumerate(cases):
         with st.container(border=True,key=f"c3l2_s2_case_{i}"):
             st.markdown(
-                f"""<div class="c3l2-q-kicker">CASO {i+1}</div>
-                <div class="c3l2-q-title">{name}</div>
-                <div class="c3l2-q-context">{context}</div>""",
+                f"""
+                <div class="c3l2-case-head">
+                  <div>
+                    <div class="c3l2-case-num">CASO {i+1}</div>
+                    <div class="c3l2-case-title">{name}</div>
+                    <div class="c3l2-case-context">{context}</div>
+                  </div>
+                  <div class="c3l2-case-badge">ANÁLISIS GEOMÉTRICO</div>
+                </div>
+                """,
                 unsafe_allow_html=True,
             )
             st.markdown(scene_svg[scene],unsafe_allow_html=True)
 
+            st.markdown(
+                '<div class="c3l2-choice-caption">Tu diagnóstico geométrico</div>',
+                unsafe_allow_html=True,
+            )
             c1,c2=st.columns(2)
             src_ans=c1.segmented_control(
-                "Modelo de fuente",
+                "¿Cómo modelarías la fuente?",
                 ["Puntual","Lineal","No se puede decidir"],
                 key=f"c3l2_s2_src_{i}",
             )
             prop_ans=c2.segmented_control(
-                "Propagación inicial",
+                "¿Qué propagación usarías inicialmente?",
                 ["Esférica","Cilíndrica","No se puede decidir"],
                 key=f"c3l2_s2_prop_{i}",
             )
@@ -28404,9 +28425,9 @@ def _c3l2_stage2(lab,saved):
 
             if src_ans and prop_ans:
                 if src_ans==src_ok and prop_ans==prop_ok:
-                    st.success(why)
+                    st.success("✓ Selección coherente. " + why)
                 else:
-                    st.info("Revisa la escala representada en la escena antes de elegir el modelo.")
+                    st.info("Observa nuevamente la relación entre tamaño/extensión de la fuente y distancia al receptor.")
 
     correct=sum(
         answers[str(i)]["source"]==case[2]
