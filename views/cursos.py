@@ -28501,26 +28501,123 @@ def _c3l2_stage3(lab,saved):
     </div>
     """, unsafe_allow_html=True)
 
-    st.markdown("### 1. Dos magnitudes, dos lugares en el problema")
+    st.markdown("### 1. Antes de hablar de dB: ¿qué es la potencia sonora?")
+    st.write(
+        "Una máquina transforma parte de la energía que consume en **energía acústica**. "
+        "La cantidad de energía acústica que la fuente entrega al medio por unidad de tiempo es la **potencia sonora W**, "
+        "y se expresa físicamente en **watts (W)**."
+    )
+
     st.markdown("""
     <div class="c3l2-grid2">
       <div class="c3l2-card blue">
-        <div class="c3l2-k">Lw · NIVEL DE POTENCIA SONORA</div>
-        <b>Caracteriza la emisión acústica de la fuente.</b><br>
-        Se referencia a 10⁻¹² W. Es una propiedad de emisión de la fuente y no depende de dónde coloquemos el receptor.
+        <div class="c3l2-k">POTENCIA SONORA · W</div>
+        <b>Es una propiedad de emisión de la fuente.</b><br>
+        Responde a la pregunta: <i>¿cuánta energía acústica emite esta máquina por unidad de tiempo?</i><br><br>
+        Si movemos el receptor, la potencia que caracteriza a la fuente <b>no cambia</b>.
       </div>
       <div class="c3l2-card green">
-        <div class="c3l2-k">Lp · NIVEL DE PRESIÓN SONORA</div>
-        <b>Caracteriza el campo acústico en un punto.</b><br>
-        Se referencia a 20 µPa y cambia con distancia, geometría, directividad y condiciones de propagación.
+        <div class="c3l2-k">NIVEL DE POTENCIA SONORA · Lw</div>
+        <b>Es la forma logarítmica de expresar W.</b><br>
+        Compara la potencia acústica de la fuente con una potencia de referencia
+        <b>W₀ = 10⁻¹² W</b> y la expresa en decibeles.
       </div>
     </div>
     """, unsafe_allow_html=True)
 
     st.latex(r"L_W=10\log_{10}\left(\frac{W}{W_0}\right),\qquad W_0=10^{-12}\ \mathrm{W}")
+
+    st.markdown("""
+    <div class="c3l2-note">
+      <b>Importante:</b> decir que una máquina tiene <b>Lw = 95 dB</b> no significa que un sonómetro colocado
+      junto a ella vaya a indicar 95 dB. Lw caracteriza la <b>fuente</b>, no un punto del espacio.
+    </div>
+    """, unsafe_allow_html=True)
+
+    st.markdown("### 2. Entonces, ¿qué mide el sonómetro? · nivel de presión sonora Lp")
+    st.write(
+        "Cuando el sonido se propaga por el aire produce pequeñas variaciones de presión. "
+        "El micrófono del sonómetro detecta esas variaciones en **el lugar donde está ubicado**. "
+        "Por eso el nivel de presión sonora depende del receptor y de las condiciones de propagación."
+    )
+
+    st.markdown("""
+    <div class="c3l2-grid2">
+      <div class="c3l2-card green">
+        <div class="c3l2-k">PRESIÓN SONORA · p</div>
+        <b>Es una magnitud del campo acústico.</b><br>
+        El micrófono detecta variaciones de presión alrededor de la presión atmosférica.
+        Se expresa físicamente en pascales (Pa).
+      </div>
+      <div class="c3l2-card orange">
+        <div class="c3l2-k">NIVEL DE PRESIÓN SONORA · Lp</div>
+        <b>Es la forma logarítmica de expresar esa presión.</b><br>
+        Se referencia a <b>p₀ = 20 µPa</b>. Cambia con distancia, geometría, obstáculos,
+        reflexiones y otras condiciones del entorno.
+      </div>
+    </div>
+    """, unsafe_allow_html=True)
+
     st.latex(r"L_p=20\log_{10}\left(\frac{p}{p_0}\right),\qquad p_0=20\ \mu\mathrm{Pa}")
 
-    st.markdown("### 2. ¿Qué significa el factor de directividad Q?")
+    components.html(r"""
+    <svg viewBox="0 0 1040 330" width="100%" style="background:#f7fbff;border:1px solid #d4e3ed;border-radius:16px">
+      <style>.t{font-family:Inter,Arial,sans-serif;fill:#263f50}.b{font-weight:850}.m{fill:#657c89}</style>
+
+      <text x="150" y="38" text-anchor="middle" class="t b" font-size="17">FUENTE</text>
+      <rect x="90" y="105" width="120" height="80" rx="14" fill="#176ea5"/>
+      <rect x="110" y="125" width="52" height="30" rx="5" fill="#c5e6f4"/>
+      <text x="150" y="220" text-anchor="middle" class="t b" font-size="20">W / Lw</text>
+      <text x="150" y="244" text-anchor="middle" class="t m" font-size="14">propiedad de emisión</text>
+
+      <circle cx="150" cy="145" r="95" fill="none" stroke="#5aa8c5" stroke-width="3" opacity=".35"/>
+      <circle cx="150" cy="145" r="155" fill="none" stroke="#5aa8c5" stroke-width="3" opacity=".20"/>
+      <circle cx="150" cy="145" r="215" fill="none" stroke="#5aa8c5" stroke-width="2" opacity=".12"/>
+
+      <path d="M300 145 L450 145" stroke="#7f939e" stroke-width="2" stroke-dasharray="8 7"/>
+      <text x="375" y="128" text-anchor="middle" class="t m" font-size="13">propagación</text>
+
+      <circle cx="505" cy="145" r="17" fill="#18a36f"/>
+      <text x="505" y="105" text-anchor="middle" class="t b" font-size="15">SONÓMETRO A</text>
+      <text x="505" y="190" text-anchor="middle" class="t b" font-size="19">Lp,A</text>
+      <text x="505" y="214" text-anchor="middle" class="t m" font-size="13">presión en este punto</text>
+
+      <path d="M540 145 L770 145" stroke="#7f939e" stroke-width="2" stroke-dasharray="8 7"/>
+
+      <circle cx="825" cy="145" r="17" fill="#e4772e"/>
+      <text x="825" y="105" text-anchor="middle" class="t b" font-size="15">SONÓMETRO B</text>
+      <text x="825" y="190" text-anchor="middle" class="t b" font-size="19">Lp,B</text>
+      <text x="825" y="214" text-anchor="middle" class="t m" font-size="13">otro punto · otro Lp</text>
+
+      <rect x="65" y="270" width="910" height="38" rx="12" fill="#e9f4fa"/>
+      <text x="520" y="294" text-anchor="middle" class="t b" font-size="14">
+        UNA MISMA FUENTE → UN MISMO Lw · DISTINTAS POSICIONES → DISTINTOS Lp
+      </text>
+    </svg>
+    """, height=345)
+
+    st.markdown("#### La diferencia esencial")
+    st.markdown("""
+    <div class="c3l2-grid2">
+      <div class="c3l2-card blue">
+        <b>Lw pertenece a la fuente.</b><br>
+        No depende de dónde pongamos el sonómetro.
+        Para una condición de operación dada, describe la capacidad de emisión acústica del equipo.
+      </div>
+      <div class="c3l2-card green">
+        <b>Lp pertenece al punto de observación.</b><br>
+        Un mismo equipo puede producir distintos Lp en distintos receptores porque el sonido se propaga y se atenúa.
+      </div>
+    </div>
+    """, unsafe_allow_html=True)
+
+    st.info(
+        "Una analogía útil: la **potencia de una lámpara** pertenece a la lámpara; "
+        "la **iluminación que recibes** depende de dónde te encuentres. "
+        "En acústica, Lw caracteriza la fuente y Lp caracteriza lo que ocurre en un punto del campo sonoro."
+    )
+
+    st.markdown("### 3. Ahora sí: ¿qué significa el factor de directividad Q?")
     st.write(
         "El factor **Q** no cambia la potencia sonora total de la fuente. "
         "Describe cómo esa misma potencia se reparte en el espacio dentro de un modelo idealizado."
@@ -28569,7 +28666,7 @@ def _c3l2_stage3(lab,saved):
         "de la frecuencia, de la geometría del equipo y de las superficies próximas."
     )
 
-    st.markdown("### 3. ¿Cómo se obtiene Lw en la práctica?")
+    st.markdown("### 4. ¿Cómo se obtiene Lw en la práctica?")
     st.write(
         "El nivel de potencia sonora no se obtiene colocando un sonómetro en un único punto. "
         "En métodos basados en presión sonora se mide alrededor de la fuente sobre una **superficie de medición** "
@@ -28655,7 +28752,7 @@ def _c3l2_stage3(lab,saved):
         "ISO 3745 utiliza mediciones sobre una superficie que envuelve la fuente en cámaras anecoicas o semianecoicas."
     )
 
-    st.markdown("### 4. Del Lw de la fuente al Lp del receptor")
+    st.markdown("### 5. Del Lw de la fuente al Lp del receptor")
     st.write(
         "Arrastra la **fuente** o el **receptor** dentro de la escena. "
         "El nivel de potencia sonora **Lw permanece asociado a la fuente**, mientras que "
@@ -28968,7 +29065,7 @@ def _c3l2_stage3(lab,saved):
         "no incorpora absorción atmosférica, suelo, pantallas, meteorología ni reflexiones complejas."
     )
 
-    st.markdown("### 5. Conversor idealizado · Lw ↔ Lp")
+    st.markdown("### 6. Conversor idealizado · Lw ↔ Lp")
     st.write(
         "En campo libre ideal, si conocemos la distancia y Q podemos pasar de una magnitud a la otra. "
         "Esto **no significa que Lw y Lp sean la misma magnitud**: solo estamos usando un modelo de propagación para relacionarlas."
@@ -29029,7 +29126,7 @@ def _c3l2_stage3(lab,saved):
         "ruido de fondo y las correcciones del método de ensayo."
     )
 
-    st.markdown("### 6. Comprueba el concepto")
+    st.markdown("### 7. Comprueba el concepto")
     q1 = st.radio(
         "Si mantienes la misma máquina y duplicas la distancia, ¿qué magnitud propia de la fuente permanece?",
         ["Lw", "Lp", "Ambas disminuyen 6 dB"],
