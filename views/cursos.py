@@ -27715,10 +27715,38 @@ def _c3l2_stage1(lab,saved):
         """
         <div class="c3l2-intro">
           <div class="c3l2-k">ENCARGO PROFESIONAL</div>
-          <div class="c3l2-title">Investiga un reclamo nocturno sin recibir la respuesta de antemano.</div>
-          El supermercado cuenta con HVAC, chiller y grupo electrógeno. La denuncia se concentra entre
-          <b>23:00 y 06:00 h</b>. El edificio tiene tres posiciones receptoras: una bajo la medianera,
-          otra apenas sobre ella y otra en un piso superior.
+          <div class="c3l2-title">Investiga un reclamo nocturno por ruido proveniente de un supermercado colindante con un edificio residencial.</div>
+
+          <p style="margin:.55rem 0 .7rem;line-height:1.55;">
+            Los residentes informan molestias principalmente entre <b>23:00 y 06:00 h</b>.
+            En el supermercado operan un sistema HVAC, un chiller y un grupo electrógeno,
+            con horarios de funcionamiento diferentes. El edificio residencial presenta receptores
+            ubicados a distintas alturas respecto de la medianera.
+          </p>
+
+          <div style="font-weight:850;margin:.45rem 0 .35rem;color:#17324a;">Tu trabajo será:</div>
+          <ol style="margin:.2rem 0 .75rem 1.25rem;padding:0;line-height:1.55;">
+            <li><b>Identificar las fuentes acústicas presentes</b> en el escenario.</li>
+            <li><b>Determinar cuál podría estar asociada al horario denunciado</b> y fundamentar tu hipótesis.</li>
+            <li><b>Analizar los posibles receptores</b>, considerando altura, línea de visión, distancia y efecto de la medianera.</li>
+            <li><b>Seleccionar el receptor que investigarías prioritariamente</b>.</li>
+            <li><b>Diseñar una campaña de medición</b>, ubicando directamente sobre el esquema los puntos para caracterizar fuente, camino y receptor.</li>
+            <li><b>Interpretar una comparación operacional ON/OFF</b> de la fuente sospechosa.</li>
+            <li><b>Proponer medidas de mitigación</b> y decidir si actúan sobre la fuente, el camino de propagación o el receptor.</li>
+            <li><b>Redactar una hipótesis diagnóstica preliminar</b>, indicando además qué información o mediciones faltarían para confirmar el origen del ruido.</li>
+          </ol>
+
+          <div style="
+              margin-top:.65rem;
+              padding:.7rem .85rem;
+              border-radius:12px;
+              border:1px solid #bfe3f2;
+              background:#eef8fd;
+              color:#18435a;
+              line-height:1.45;">
+            <b>Resultado esperado:</b> al finalizar deberás ser capaz de construir una estrategia de investigación acústica defendible
+            a partir de antecedentes de denuncia, funcionamiento de las fuentes y geometría fuente–camino–receptor.
+          </div>
         </div>
         """,
         unsafe_allow_html=True,
