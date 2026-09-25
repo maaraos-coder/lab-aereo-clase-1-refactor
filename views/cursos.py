@@ -28490,14 +28490,78 @@ def _c3l2_stage3(lab,saved):
     st.markdown("""
     <div class="c3l2-intro">
       <div class="c3l2-k">TERCERA GEOMETRÍA</div>
-      <div class="c3l2-title">No toda fuente real cabe bien en un punto o en una línea.</div>
-      Una <b>fuente de área</b> distribuye emisión sobre una superficie finita: una fachada radiante,
-      una cubierta con múltiples equipos, un patio industrial o una gran superficie vibrante.
-      La elección del modelo depende otra vez de la <b>escala entre dimensiones de la fuente y distancia al receptor</b>.
+      <div class="c3l2-title">Una fuente de área representa emisión distribuida sobre una superficie.</div>
+      En vez de concentrar toda la emisión en un punto o a lo largo de una línea,
+      el modelo reparte la <b>potencia sonora sobre un área activa</b>. Esto resulta útil cuando
+      las fuentes ocupan o recorren una superficie relevante y su posición instantánea no es fija.
+      La elección del modelo sigue dependiendo de la <b>escala entre dimensiones de la fuente y distancia al receptor</b>.
     </div>
     """,unsafe_allow_html=True)
 
-    st.markdown("### 1. Compara las tres idealizaciones")
+    st.markdown("### 1. ¿Qué significa realmente «fuente de área»?")
+    st.markdown("""
+    <div class="c3l2-grid2">
+      <div class="c3l2-card orange">
+        <div class="c3l2-k">DISTRIBUCIÓN ESPACIAL</div>
+        <b>La energía acústica se asigna a una superficie finita.</b><br>
+        Cada pequeña porción del área puede entenderse como una contribución elemental.
+        El receptor recibe la suma energética de todas esas contribuciones, cada una con su propia distancia y trayectoria.
+      </div>
+      <div class="c3l2-card blue">
+        <div class="c3l2-k">NO ES «UN NIVEL DE PRESIÓN REPARTIDO»</div>
+        <b>Lo que se distribuye es la emisión de la fuente.</b><br>
+        En modelación se puede ingresar una potencia sonora total distribuida sobre el área
+        o una <b>potencia sonora por unidad de superficie</b>, según el software y el método utilizado.
+      </div>
+    </div>
+    """,unsafe_allow_html=True)
+
+    st.markdown("#### Relación didáctica · potencia total y potencia por unidad de área")
+    st.latex(r"L_{W,\,A}=L_{W,\,tot}-10\log_{10}\left(\frac{S}{1\ \mathrm{m}^2}\right)")
+    st.latex(r"L_{W,\,tot}=L_{W,\,A}+10\log_{10}\left(\frac{S}{1\ \mathrm{m}^2}\right)")
+    st.caption(
+        "L_W,A representa aquí un nivel de potencia sonora uniformemente distribuido por unidad de superficie. "
+        "Es una formulación didáctica: la nomenclatura y el dato de entrada exacto pueden variar entre modelos y programas."
+    )
+
+    st.markdown("### 2. Ejemplo profesional · obra de construcción")
+    st.markdown("""
+    <div class="c3l2-card orange">
+      <div class="c3l2-k">CASO · FAENA CON EQUIPOS MÓVILES</div>
+      <b>Excavadora + cargador frontal + camiones + compactador dentro de un predio.</b><br><br>
+      Durante una jornada, varias máquinas pueden desplazarse por distintas zonas de la obra.
+      Si no existe una posición fija representativa para cada equipo, una alternativa de modelación es definir
+      el <b>área activa de la faena</b> y distribuir sobre ella la potencia sonora asociada al escenario analizado.<br><br>
+      Por ejemplo, para un escenario de alta actividad se puede sumar energéticamente la potencia sonora de los equipos
+      considerados simultáneamente y luego distribuir esa potencia total sobre el área donde razonablemente pueden operar.
+    </div>
+    """,unsafe_allow_html=True)
+
+    st.markdown("""
+    <div class="c3l2-warn">
+      <b>Importante:</b> modelar la obra como fuente de área no convierte automáticamente el resultado en el
+      «peor caso posible». Es un <b>escenario espacial simplificado</b>. La condición más desfavorable para un receptor
+      puede ocurrir si uno o más equipos trabajan cerca del límite del predio. Por eso deben declararse las hipótesis:
+      equipos simultáneos, área activa, tiempo de operación y criterio usado para distribuir la potencia.
+    </div>
+    """,unsafe_allow_html=True)
+
+    # Ejemplo numérico sencillo de potencia distribuida.
+    st.markdown("#### Mini ejemplo")
+    cex1,cex2=st.columns(2)
+    total_lw=cex1.slider("Potencia sonora total del escenario Lw,tot [dB]",90,120,108,key="c3l2_s3_total_lw")
+    active_area=cex2.slider("Área activa de la obra [m²]",100,10000,2000,100,key="c3l2_s3_area")
+    lw_area=total_lw-10*math.log10(active_area)
+    a1,a2,a3=st.columns(3)
+    a1.metric("Lw,total",f"{total_lw} dB")
+    a2.metric("Área activa",f"{active_area:,} m²".replace(",","."))
+    a3.metric("Lw por m²",f"{lw_area:.1f} dB/m²")
+    st.caption(
+        "Interpretación: el modelo conserva la potencia sonora total del escenario, pero la reparte uniformemente "
+        "sobre el área activa. Después, el cálculo de propagación determina el nivel en cada receptor."
+    )
+
+    st.markdown("### 3. Compara las tres idealizaciones")
     st.markdown("""
     <div class="c3l2-grid">
       <div class="c3l2-card blue"><div class="c3l2-k">PUNTUAL</div><b>Dimensiones pequeñas respecto de r</b><br>La fuente puede tratarse como compacta desde el receptor.</div>
@@ -28506,7 +28570,7 @@ def _c3l2_stage3(lab,saved):
     </div>
     """,unsafe_allow_html=True)
 
-    st.markdown("### 2. Laboratorio geométrico · ¿qué ve el receptor?")
+    st.markdown("### 4. Laboratorio geométrico · ¿qué ve el receptor?")
     c1,c2,c3=st.columns(3)
     width=c1.slider("Ancho de la superficie [m]",5.0,80.0,30.0,1.0,key="c3l2_s3_width")
     height=c2.slider("Alto de la superficie [m]",3.0,40.0,15.0,1.0,key="c3l2_s3_height")
@@ -28542,11 +28606,11 @@ def _c3l2_stage3(lab,saved):
     components.html(area_html,height=350)
     st.markdown(f'<div class="c3l2-note"><b>Lectura de escala:</b> {scale_text}</div>',unsafe_allow_html=True)
 
-    st.markdown("### 3. Ejemplos profesionales")
+    st.markdown("### 5. Otros ejemplos profesionales")
     examples=[
         ("Fachada industrial radiante","Una gran fachada con paneles o aberturas que emiten sobre una superficie."),
         ("Cubierta técnica","Muchos equipos distribuidos sobre una cubierta extensa pueden formar una fuente espacialmente distribuida."),
-        ("Patio industrial","Operaciones distribuidas sobre una superficie requieren representar ubicación y extensión, no solo un punto."),
+        ("Obra de construcción","Maquinaria móvil o de posición variable puede representarse mediante un área activa cuando la hipótesis de modelación lo justifica."),\n        ("Patio industrial","Operaciones distribuidas sobre una superficie requieren representar ubicación y extensión, no solo un punto."),
         ("Panel o placa vibrante","Una superficie grande que radia sonido puede analizarse como fuente de área en la escala adecuada."),
     ]
     for title,desc in examples:
@@ -28554,7 +28618,7 @@ def _c3l2_stage3(lab,saved):
             st.markdown(f"**{title}**")
             st.caption(desc)
 
-    st.markdown("### 4. Decide según la escala")
+    st.markdown("### 6. Decide según la escala")
     case=st.radio(
         "Una fachada emisora mide 40 m de largo y 18 m de alto. El receptor está a 12 m. ¿Qué aproximación inicial describe mejor la geometría?",
         ["Fuente puntual","Fuente lineal","Fuente de área"],
