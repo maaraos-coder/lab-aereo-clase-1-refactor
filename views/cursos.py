@@ -28520,78 +28520,317 @@ def _c3l2_stage3(lab,saved):
     st.latex(r"L_W=10\log_{10}\left(\frac{W}{W_0}\right),\qquad W_0=10^{-12}\ \mathrm{W}")
     st.latex(r"L_p=20\log_{10}\left(\frac{p}{p_0}\right),\qquad p_0=20\ \mu\mathrm{Pa}")
 
-    st.markdown("### 2. Visualiza dónde vive cada magnitud")
-    components.html("""
-    <svg viewBox="0 0 980 300" width="100%" style="background:#f7fbff;border:1px solid #d4e3ed;border-radius:16px">
+    st.markdown("### 2. Laboratorio interactivo · mueve la fuente y el receptor")
+    st.write(
+        "Arrastra la **fuente** o el **receptor** dentro de la escena. "
+        "El nivel de potencia sonora **Lw permanece asociado a la fuente**, mientras que "
+        "el nivel de presión sonora **Lp cambia con la distancia**."
+    )
+
+    components.html(r"""
+    <div id="lwlp-lab" style="font-family:Inter,Arial,sans-serif;color:#1f3442;">
       <style>
-        .t{font-family:Inter,Arial,sans-serif;fill:#263f50}.b{font-weight:850}
+        #lwlp-lab *{box-sizing:border-box}
+        #lwlp-lab .panel{border:1px solid #cfe0ec;border-radius:18px;background:#f7fbff;padding:14px}
+        #lwlp-lab .top{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-bottom:12px}
+        #lwlp-lab .metric{background:#fff;border:1px solid #d9e5ed;border-radius:14px;padding:12px;text-align:center}
+        #lwlp-lab .metric .k{font-size:11px;font-weight:800;letter-spacing:.04em;color:#607786;text-transform:uppercase}
+        #lwlp-lab .metric .v{font-size:24px;font-weight:900;margin-top:4px}
+        #lwlp-lab .metric small{color:#6f8390}
+        #lwlp-lab .scene-wrap{position:relative;border:1px solid #d4e3ed;border-radius:16px;overflow:hidden;background:#eef7fb}
+        #lwlp-lab svg{display:block;width:100%;height:auto;touch-action:none;user-select:none}
+        #lwlp-lab .controls{display:grid;grid-template-columns:1.2fr .8fr;gap:12px;margin-top:12px}
+        #lwlp-lab label{font-size:12px;font-weight:800;color:#425c6b;display:block;margin-bottom:6px}
+        #lwlp-lab input[type=range]{width:100%}
+        #lwlp-lab select,#lwlp-lab button{width:100%;min-height:42px;border:1px solid #bfd2df;border-radius:10px;background:#fff;padding:8px;font-size:14px}
+        #lwlp-lab button{font-weight:800;cursor:pointer}
+        #lwlp-lab .note{margin-top:12px;background:#fff;border-left:4px solid #1689d8;border-radius:10px;padding:10px 12px;font-size:13px;line-height:1.45}
+        #lwlp-lab .hint{font-size:12px;color:#6e8492;margin-top:8px}
+        #lwlp-lab .drag{cursor:grab}
+        #lwlp-lab .drag:active{cursor:grabbing}
+        #lwlp-lab .pulse{transform-origin:center;animation:pulse 1.6s ease-out infinite}
+        @keyframes pulse{0%{opacity:.35}70%,100%{opacity:0}}
+        @media (prefers-reduced-motion:reduce){#lwlp-lab .pulse{animation:none;opacity:.18}}
+        @media(max-width:650px){
+          #lwlp-lab .top{grid-template-columns:1fr}
+          #lwlp-lab .controls{grid-template-columns:1fr}
+        }
       </style>
-      <rect x="70" y="105" width="130" height="85" rx="14" fill="#176ea5"/>
-      <rect x="92" y="126" width="72" height="38" rx="6" fill="#bfe1f2"/>
-      <text x="135" y="80" text-anchor="middle" class="t b" font-size="18">FUENTE</text>
-      <text x="135" y="220" text-anchor="middle" class="t b" font-size="18">Lw</text>
-      <text x="135" y="243" text-anchor="middle" class="t" font-size="14">emisión</text>
 
-      <circle cx="135" cy="147" r="120" fill="none" stroke="#57abc9" stroke-width="3" opacity=".22"/>
-      <circle cx="135" cy="147" r="185" fill="none" stroke="#57abc9" stroke-width="3" opacity=".16"/>
-      <circle cx="135" cy="147" r="250" fill="none" stroke="#57abc9" stroke-width="3" opacity=".10"/>
+      <div class="panel">
+        <div class="top">
+          <div class="metric">
+            <div class="k">Fuente · Lw</div>
+            <div class="v" id="mLw">95 dB</div>
+            <small>permanece constante al moverla</small>
+          </div>
+          <div class="metric">
+            <div class="k">Distancia fuente–receptor</div>
+            <div class="v" id="mDist">47.5 m</div>
+            <small>se recalcula en tiempo real</small>
+          </div>
+          <div class="metric">
+            <div class="k">Receptor · Lp</div>
+            <div class="v" id="mLp">— dB</div>
+            <small>cambia con la distancia</small>
+          </div>
+        </div>
 
-      <circle cx="515" cy="147" r="15" fill="#18a36f"/>
-      <text x="515" y="112" text-anchor="middle" class="t b" font-size="16">RECEPTOR 1</text>
-      <text x="515" y="190" text-anchor="middle" class="t b" font-size="18">Lp₁</text>
+        <div class="scene-wrap">
+          <svg id="labSvg" viewBox="0 0 960 430" role="img" aria-label="Laboratorio interactivo con fuente y receptor movibles">
+            <defs>
+              <linearGradient id="ground" x1="0" x2="0" y1="0" y2="1">
+                <stop offset="0%" stop-color="#f8fcff"/>
+                <stop offset="100%" stop-color="#e8f3f8"/>
+              </linearGradient>
+            </defs>
+            <rect x="0" y="0" width="960" height="430" fill="url(#ground)"/>
+            <line x1="55" y1="365" x2="905" y2="365" stroke="#afc4d0" stroke-width="3"/>
+            <text x="65" y="400" font-size="13" fill="#708591">Escala didáctica · 1 m ≈ 8 px</text>
 
-      <circle cx="820" cy="147" r="15" fill="#e5772d"/>
-      <text x="820" y="112" text-anchor="middle" class="t b" font-size="16">RECEPTOR 2</text>
-      <text x="820" y="190" text-anchor="middle" class="t b" font-size="18">Lp₂</text>
+            <g id="waves">
+              <circle id="w1" class="pulse" cx="220" cy="210" r="65" fill="none" stroke="#57abc9" stroke-width="3"/>
+              <circle id="w2" class="pulse" cx="220" cy="210" r="115" fill="none" stroke="#57abc9" stroke-width="3" style="animation-delay:.35s"/>
+              <circle id="w3" class="pulse" cx="220" cy="210" r="165" fill="none" stroke="#57abc9" stroke-width="3" style="animation-delay:.7s"/>
+            </g>
 
-      <line x1="205" y1="260" x2="805" y2="260" stroke="#788e9b" stroke-width="2"/>
-      <text x="505" y="286" text-anchor="middle" class="t" font-size="14">La fuente conserva Lw; Lp cambia con la posición del receptor.</text>
-    </svg>
-    """, height=320)
+            <line id="distanceLine" x1="220" y1="210" x2="600" y2="210" stroke="#728b99" stroke-width="2" stroke-dasharray="8 7"/>
+            <rect id="distBg" x="372" y="176" width="86" height="28" rx="10" fill="#fff" stroke="#c9d8e1"/>
+            <text id="distLabel" x="415" y="195" text-anchor="middle" font-size="13" font-weight="800" fill="#405967">47.5 m</text>
 
-    st.markdown("### 3. Simulador · misma fuente, distintos receptores")
-    lw = st.slider(
-        "Nivel de potencia sonora Lw [dB]",
-        75, 115, 95,
-        key="c3l2_s3_lw",
-    )
-    r = st.slider(
-        "Distancia al receptor [m]",
-        1.0, 100.0, 10.0, 0.5,
-        key="c3l2_s3_r",
-    )
-    directivity = st.segmented_control(
-        "Factor de directividad idealizado Q",
-        ["1 · espacio libre", "2 · sobre plano reflectante"],
-        default="1 · espacio libre",
-        key="c3l2_s3_q",
-    )
-    q = 1.0 if directivity.startswith("1") else 2.0
-    lp = lw + 10 * math.log10(q / (4 * math.pi * r * r))
+            <g id="source" class="drag" tabindex="0" role="button" aria-label="Fuente sonora movible">
+              <circle cx="220" cy="210" r="47" fill="#ffffff" stroke="#176ea5" stroke-width="3"/>
+              <rect x="188" y="190" width="64" height="40" rx="8" fill="#176ea5"/>
+              <rect x="198" y="199" width="32" height="18" rx="4" fill="#bfe1f2"/>
+              <circle cx="240" cy="211" r="6" fill="#dbeaf2"/>
+              <text x="220" y="162" text-anchor="middle" font-size="15" font-weight="900" fill="#1f3442">FUENTE</text>
+              <text id="sourceLabel" x="220" y="264" text-anchor="middle" font-size="14" font-weight="900" fill="#176ea5">Lw = 95 dB</text>
+            </g>
+
+            <g id="receiver" class="drag" tabindex="0" role="button" aria-label="Receptor movible">
+              <circle cx="600" cy="210" r="22" fill="#18a36f" stroke="#fff" stroke-width="4"/>
+              <circle cx="600" cy="210" r="5" fill="#fff"/>
+              <text x="600" y="164" text-anchor="middle" font-size="15" font-weight="900" fill="#1f3442">RECEPTOR</text>
+              <text id="receiverLabel" x="600" y="257" text-anchor="middle" font-size="14" font-weight="900" fill="#15805a">Lp = — dB</text>
+            </g>
+
+            <g>
+              <text x="795" y="70" text-anchor="middle" font-size="13" font-weight="800" fill="#5a7180">IDEA CLAVE</text>
+              <text x="795" y="100" text-anchor="middle" font-size="14" fill="#263f50">La fuente conserva</text>
+              <text x="795" y="122" text-anchor="middle" font-size="17" font-weight="900" fill="#176ea5">Lw</text>
+              <text x="795" y="158" text-anchor="middle" font-size="14" fill="#263f50">El receptor observa</text>
+              <text x="795" y="180" text-anchor="middle" font-size="17" font-weight="900" fill="#15805a">Lp(r)</text>
+            </g>
+          </svg>
+        </div>
+
+        <div class="controls">
+          <div>
+            <label for="lwRange">Nivel de potencia sonora de la fuente · Lw</label>
+            <input id="lwRange" type="range" min="75" max="115" step="1" value="95" aria-label="Nivel de potencia sonora Lw">
+          </div>
+          <div>
+            <label for="qSelect">Condición idealizada</label>
+            <select id="qSelect" aria-label="Factor de directividad">
+              <option value="1">Q = 1 · espacio libre</option>
+              <option value="2">Q = 2 · sobre plano reflectante</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="controls">
+          <div>
+            <label for="distRange">Alternativa al arrastre · fija la distancia</label>
+            <input id="distRange" type="range" min="2" max="80" step="0.5" value="47.5" aria-label="Distancia entre fuente y receptor">
+          </div>
+          <div>
+            <button id="resetBtn" type="button">Reiniciar posiciones</button>
+          </div>
+        </div>
+
+        <div class="note" id="interpretation" aria-live="polite"></div>
+        <div class="hint">Arrastra la fuente o el receptor. También puedes usar las flechas del teclado cuando uno de ellos tenga el foco.</div>
+      </div>
+
+      <script>
+      (function(){
+        var root=document.getElementById('lwlp-lab');
+        if(!root || root.getAttribute('data-ready')==='1') return;
+        root.setAttribute('data-ready','1');
+
+        var svg=root.querySelector('#labSvg');
+        var source=root.querySelector('#source');
+        var receiver=root.querySelector('#receiver');
+        var line=root.querySelector('#distanceLine');
+        var distLabel=root.querySelector('#distLabel');
+        var distBg=root.querySelector('#distBg');
+        var sourceLabel=root.querySelector('#sourceLabel');
+        var receiverLabel=root.querySelector('#receiverLabel');
+        var mLw=root.querySelector('#mLw');
+        var mDist=root.querySelector('#mDist');
+        var mLp=root.querySelector('#mLp');
+        var lwRange=root.querySelector('#lwRange');
+        var qSelect=root.querySelector('#qSelect');
+        var distRange=root.querySelector('#distRange');
+        var resetBtn=root.querySelector('#resetBtn');
+        var interp=root.querySelector('#interpretation');
+        var waves=[root.querySelector('#w1'),root.querySelector('#w2'),root.querySelector('#w3')];
+
+        var pxPerM=8;
+        var bounds={xmin:85,xmax:705,ymin:105,ymax:325};
+        var state={sx:220,sy:210,rx:600,ry:210,lw:95,q:1,dragging:null};
+
+        function clamp(v,a,b){return Math.max(a,Math.min(b,v));}
+        function distancePx(){return Math.hypot(state.rx-state.sx,state.ry-state.sy);}
+        function distanceM(){return Math.max(1,distancePx()/pxPerM);}
+        function calcLp(){
+          var rr=distanceM();
+          return state.lw + 10*Math.log10(state.q/(4*Math.PI*rr*rr));
+        }
+        function moveGroup(el,x,y,bx,by){
+          el.setAttribute('transform','translate('+(x-bx)+' '+(y-by)+')');
+        }
+        function update(){
+          var rr=distanceM();
+          var lp=calcLp();
+
+          moveGroup(source,state.sx,state.sy,220,210);
+          moveGroup(receiver,state.rx,state.ry,600,210);
+
+          waves.forEach(function(w){
+            w.setAttribute('cx',state.sx);
+            w.setAttribute('cy',state.sy);
+          });
+
+          line.setAttribute('x1',state.sx);
+          line.setAttribute('y1',state.sy);
+          line.setAttribute('x2',state.rx);
+          line.setAttribute('y2',state.ry);
+
+          var mx=(state.sx+state.rx)/2;
+          var my=(state.sy+state.ry)/2;
+          distBg.setAttribute('x',mx-43);
+          distBg.setAttribute('y',my-34);
+          distLabel.setAttribute('x',mx);
+          distLabel.setAttribute('y',my-15);
+
+          distLabel.textContent=rr.toFixed(1)+' m';
+          sourceLabel.textContent='Lw = '+state.lw.toFixed(0)+' dB';
+          receiverLabel.textContent='Lp = '+lp.toFixed(1)+' dB';
+          mLw.textContent=state.lw.toFixed(0)+' dB';
+          mDist.textContent=rr.toFixed(1)+' m';
+          mLp.textContent=lp.toFixed(1)+' dB';
+
+          distRange.value=String(clamp(rr,parseFloat(distRange.min),parseFloat(distRange.max)));
+
+          var msg;
+          if(rr<8){
+            msg='El receptor está cerca. Lw sigue siendo '+state.lw.toFixed(0)+' dB y Lp es relativamente alto porque la distancia es pequeña.';
+          }else if(rr<30){
+            msg='Al aumentar la distancia, Lw permanece en '+state.lw.toFixed(0)+' dB; el valor que disminuye es Lp en el receptor.';
+          }else{
+            msg='Aunque el receptor está lejos, la fuente conserva Lw = '+state.lw.toFixed(0)+' dB. La atenuación por distancia aparece en Lp.';
+          }
+          interp.innerHTML='<b>Interpretación:</b> '+msg;
+        }
+
+        function svgPoint(evt){
+          var pt=svg.createSVGPoint();
+          pt.x=evt.clientX;
+          pt.y=evt.clientY;
+          var ctm=svg.getScreenCTM();
+          return ctm ? pt.matrixTransform(ctm.inverse()) : {x:0,y:0};
+        }
+
+        function beginDrag(which,evt){
+          state.dragging=which;
+          if(evt.currentTarget.setPointerCapture && evt.pointerId!==undefined){
+            try{evt.currentTarget.setPointerCapture(evt.pointerId);}catch(err){}
+          }
+          evt.preventDefault();
+        }
+
+        source.addEventListener('pointerdown',function(e){beginDrag('source',e);});
+        receiver.addEventListener('pointerdown',function(e){beginDrag('receiver',e);});
+
+        svg.addEventListener('pointermove',function(evt){
+          if(!state.dragging) return;
+          var p=svgPoint(evt);
+          if(state.dragging==='source'){
+            state.sx=clamp(p.x,bounds.xmin,bounds.xmax);
+            state.sy=clamp(p.y,bounds.ymin,bounds.ymax);
+          }else{
+            state.rx=clamp(p.x,bounds.xmin,bounds.xmax);
+            state.ry=clamp(p.y,bounds.ymin,bounds.ymax);
+          }
+          update();
+        });
+
+        ['pointerup','pointercancel','pointerleave'].forEach(function(type){
+          svg.addEventListener(type,function(){state.dragging=null;});
+        });
+
+        lwRange.addEventListener('input',function(){
+          state.lw=parseFloat(lwRange.value);
+          update();
+        });
+
+        qSelect.addEventListener('change',function(){
+          state.q=parseFloat(qSelect.value);
+          update();
+        });
+
+        distRange.addEventListener('input',function(){
+          var target=parseFloat(distRange.value);
+          var dx=state.rx-state.sx;
+          var dy=state.ry-state.sy;
+          var mag=Math.hypot(dx,dy)||1;
+          var ux=dx/mag;
+          var uy=dy/mag;
+          var px=target*pxPerM;
+          state.rx=clamp(state.sx+ux*px,bounds.xmin,bounds.xmax);
+          state.ry=clamp(state.sy+uy*px,bounds.ymin,bounds.ymax);
+          update();
+        });
+
+        resetBtn.addEventListener('click',function(){
+          state.sx=220; state.sy=210; state.rx=600; state.ry=210;
+          state.lw=95; state.q=1;
+          lwRange.value='95'; qSelect.value='1'; distRange.value='47.5';
+          update();
+        });
+
+        [source,receiver].forEach(function(el,idx){
+          el.addEventListener('keydown',function(e){
+            var step=e.shiftKey?10:4;
+            var dx=0,dy=0;
+            if(e.key==='ArrowLeft') dx=-step;
+            else if(e.key==='ArrowRight') dx=step;
+            else if(e.key==='ArrowUp') dy=-step;
+            else if(e.key==='ArrowDown') dy=step;
+            else return;
+            e.preventDefault();
+            if(idx===0){
+              state.sx=clamp(state.sx+dx,bounds.xmin,bounds.xmax);
+              state.sy=clamp(state.sy+dy,bounds.ymin,bounds.ymax);
+            }else{
+              state.rx=clamp(state.rx+dx,bounds.xmin,bounds.xmax);
+              state.ry=clamp(state.ry+dy,bounds.ymin,bounds.ymax);
+            }
+            update();
+          });
+        });
+
+        update();
+      })();
+      </script>
+    </div>
+    """, height=760, scrolling=False)
 
     st.latex(r"L_p \approx L_W + 10\log_{10}\left(\frac{Q}{4\pi r^2}\right)")
-    a, b, c = st.columns(3)
-    a.metric("Lw de la fuente", f"{lw} dB")
-    b.metric("Distancia", f"{r:.1f} m")
-    c.metric("Lp idealizado", f"{lp:.1f} dB")
     st.caption(
-        "Modelo didáctico de divergencia geométrica. No incorpora absorción atmosférica, "
-        "suelo, pantallas, meteorología ni reflexiones complejas."
-    )
-
-    st.markdown("### 4. Cambia solo la distancia")
-    distances = [2, 4, 8, 16, 32]
-    rows = []
-    for rr in distances:
-        lpr = lw + 10 * math.log10(q / (4 * math.pi * rr * rr))
-        rows.append({
-            "Distancia [m]": rr,
-            "Lw de la fuente [dB]": lw,
-            "Lp en el receptor [dB]": round(lpr, 1),
-        })
-    st.dataframe(pd.DataFrame(rows), hide_index=True, use_container_width=True)
-    st.info(
-        "Observa la columna Lw: no cambia. La magnitud que cambia al mover el receptor es Lp."
+        "Modelo didáctico de campo libre. La escena muestra únicamente divergencia geométrica y directividad idealizada; "
+        "no incorpora absorción atmosférica, suelo, pantallas, meteorología ni reflexiones complejas."
     )
 
     st.markdown("### 5. Comprueba el concepto")
@@ -28633,10 +28872,6 @@ def _c3l2_stage3(lab,saved):
                 saved,
                 3,
                 {
-                    "lw": lw,
-                    "distance": r,
-                    "q": q,
-                    "lp": lp,
                     "q1": q1,
                     "q2": q2,
                     "explanation": explanation,
