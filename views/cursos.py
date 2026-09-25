@@ -29096,91 +29096,241 @@ def _c3l2_stage3(lab,saved):
     </div>
     """, unsafe_allow_html=True)
 
-    st.markdown("### 6. ¿Cómo se obtiene Lw en la práctica?")
+    st.markdown("### 6. Si el sonómetro mide Lp, ¿cómo obtenemos Lw?")
     st.write(
-        "El nivel de potencia sonora no se obtiene colocando un sonómetro en un único punto. "
-        "En métodos basados en presión sonora se mide alrededor de la fuente sobre una **superficie de medición** "
-        "y, a partir de esos niveles y del área de esa superficie, se determina la potencia sonora emitida."
+        "Un **sonómetro convencional mide presión sonora** y entrega niveles como Lp, Leq, Lmax, etc. "
+        "No mide directamente la potencia sonora de la máquina. Sin embargo, existen métodos normalizados que permiten "
+        "determinar **Lw a partir de mediciones acústicas realizadas alrededor de la fuente**."
     )
 
-    chamber_mode = st.segmented_control(
-        "Entorno de ensayo",
-        ["Cámara anecoica", "Cámara semianecoica"],
-        default="Cámara semianecoica",
-        key="c3l2_s3_chamber_mode",
+    st.markdown("""
+    <div class="c3l2-note">
+      <b>Idea esencial:</b> el instrumento mide una magnitud del campo acústico. Para llegar a la
+      <b>potencia sonora de la fuente</b> necesitamos un método de ensayo que defina dónde medir,
+      cuántos puntos utilizar, qué superficie considerar y qué correcciones aplicar.
+    </div>
+    """, unsafe_allow_html=True)
+
+    method = st.segmented_control(
+        "Método para determinar potencia sonora",
+        ["Presión sonora", "Intensidad sonora", "Sala reverberante"],
+        default="Presión sonora",
+        key="c3l2_s3_power_method",
     )
 
-    if chamber_mode == "Cámara anecoica":
-        chamber_note = (
-            "Las superficies se acondicionan para minimizar reflexiones y aproximar un campo libre. "
-            "Conceptualmente, una fuente omnidireccional aislada puede asociarse a Q ≈ 1 y una superficie esférica."
+    if method == "Presión sonora":
+        st.markdown("#### Método A · a partir de niveles de presión sonora")
+        st.write(
+            "Se utilizan uno o varios micrófonos/sonómetros para medir **Lp en diferentes posiciones sobre una "
+            "superficie que envuelve a la fuente**. A partir del nivel medio sobre esa superficie, su área y las "
+            "correcciones exigidas por el método, se determina el nivel de potencia sonora."
         )
-        floor_fill = "#22313b"
-        floor_wedges = True
-        surface_label = "superficie esférica de medición"
+
+        chamber_mode = st.segmented_control(
+            "Entorno de ensayo",
+            ["Cámara anecoica", "Cámara semianecoica"],
+            default="Cámara semianecoica",
+            key="c3l2_s3_chamber_mode",
+        )
+
+        if chamber_mode == "Cámara anecoica":
+            chamber_note = (
+                "Las superficies se acondicionan para minimizar reflexiones y aproximar un campo libre. "
+                "La superficie de medición puede idealizarse como envolvente alrededor de la fuente."
+            )
+            floor_fill = "#22313b"
+            floor_wedges = True
+            surface_label = "superficie envolvente de medición"
+        else:
+            chamber_note = (
+                "Paredes y cielo absorben y el piso permanece reflectante. "
+                "Es una configuración habitual para maquinaria apoyada sobre el suelo."
+            )
+            floor_fill = "#aeb8be"
+            floor_wedges = False
+            surface_label = "superficie semiesférica de medición"
+
+        chamber_svg = f"""
+        <svg viewBox="0 0 1080 560" width="100%" style="background:#101b24;border:1px solid #273b49;border-radius:18px">
+          <defs>
+            <pattern id="wedges" width="42" height="42" patternUnits="userSpaceOnUse">
+              <path d="M0 42 L21 0 L42 42 Z" fill="#344b58"/>
+              <path d="M7 42 L21 12 L35 42 Z" fill="#263945"/>
+            </pattern>
+            <radialGradient id="device" cx="35%" cy="30%">
+              <stop offset="0%" stop-color="#86c7e2"/><stop offset="100%" stop-color="#176ea5"/>
+            </radialGradient>
+          </defs>
+
+          <rect x="38" y="35" width="1004" height="455" rx="18" fill="#172630"/>
+          <rect x="38" y="35" width="1004" height="82" rx="18" fill="url(#wedges)"/>
+          <rect x="38" y="95" width="92" height="395" fill="url(#wedges)"/>
+          <rect x="950" y="95" width="92" height="395" fill="url(#wedges)"/>
+          <rect x="130" y="405" width="820" height="85" fill="{floor_fill}"/>
+          {"<rect x='130' y='405' width='820' height='85' fill='url(#wedges)'/>" if floor_wedges else ""}
+
+          <text x="540" y="72" text-anchor="middle" font-family="Inter,Arial" font-size="20" font-weight="850" fill="#eef8ff">{chamber_mode.upper()}</text>
+
+          <g>
+            <rect x="455" y="300" width="170" height="95" rx="18" fill="url(#device)" stroke="#d8eff9" stroke-width="3"/>
+            <rect x="482" y="323" width="70" height="37" rx="7" fill="#cceaf6"/>
+            <circle cx="590" cy="346" r="16" fill="#0f4d70"/>
+            <rect x="492" y="395" width="20" height="22" fill="#3e4b52"/>
+            <rect x="570" y="395" width="20" height="22" fill="#3e4b52"/>
+            <text x="540" y="285" text-anchor="middle" font-family="Inter,Arial" font-size="16" font-weight="850" fill="#ffffff">EQUIPO BAJO ENSAYO</text>
+          </g>
+
+          <path d="M270 350 A270 270 0 0 1 810 350" fill="none" stroke="#4fd1c5" stroke-width="3" stroke-dasharray="9 8" opacity=".85"/>
+          {"<path d='M270 350 A270 270 0 1 0 810 350' fill='none' stroke='#4fd1c5' stroke-width='3' stroke-dasharray='9 8' opacity='.55'/>" if floor_wedges else ""}
+
+          <g fill="#f8fafc" stroke="#4fd1c5" stroke-width="3">
+            <circle cx="298" cy="246" r="10"/><circle cx="368" cy="157" r="10"/><circle cx="467" cy="105" r="10"/>
+            <circle cx="613" cy="105" r="10"/><circle cx="712" cy="157" r="10"/><circle cx="782" cy="246" r="10"/>
+            {"<circle cx='298' cy='454' r='10'/><circle cx='368' cy='523' r='10'/><circle cx='712' cy='523' r='10'/><circle cx='782' cy='454' r='10'/>" if floor_wedges else ""}
+          </g>
+
+          <text x="540" y="135" text-anchor="middle" font-family="Inter,Arial" font-size="14" font-weight="800" fill="#78e0d5">{surface_label}</text>
+          <text x="540" y="520" text-anchor="middle" font-family="Inter,Arial" font-size="14" fill="#b9cbd5">Lp en varios puntos → promedio superficial + área + correcciones → Lw</text>
+        </svg>
+        """
+        components.html(chamber_svg, height=585)
+
+        st.markdown(f'<div class="c3l2-note"><b>{chamber_mode}:</b> {chamber_note}</div>', unsafe_allow_html=True)
+
+        st.markdown("##### Relación conceptual")
+        st.latex(r"L_W \approx \overline{L_p}+10\log_{10}\left(\frac{S}{S_0}\right)+K")
+        st.caption(
+            "Forma conceptual: Lp medio sobre la superficie + término de área + correcciones K. "
+            "El procedimiento real depende de la norma y del entorno de ensayo."
+        )
+
+        st.markdown("""
+        <div class="c3l2-grid2">
+          <div class="c3l2-card blue">
+            <div class="c3l2-k">¿QUÉ MIDE EL INSTRUMENTO?</div>
+            <b>Nivel de presión sonora Lp.</b><br>
+            Cada posición de micrófono entrega información del campo acústico alrededor de la fuente.
+          </div>
+          <div class="c3l2-card green">
+            <div class="c3l2-k">¿QUÉ SE OBTIENE AL FINAL?</div>
+            <b>Nivel de potencia sonora Lw.</b><br>
+            Se calcula mediante el método de ensayo usando todas las mediciones y la geometría de la superficie.
+          </div>
+        </div>
+        """, unsafe_allow_html=True)
+
+    elif method == "Intensidad sonora":
+        st.markdown("#### Método B · mediante intensidad sonora")
+        st.write(
+            "Otra vía es medir **intensidad sonora**. En este caso se utiliza una **sonda de intensidad**, "
+            "habitualmente formada por dos micrófonos muy próximos y ajustados en fase. "
+            "El sistema estima el flujo de energía acústica que atraviesa una superficie."
+        )
+
+        components.html(r"""
+        <svg viewBox="0 0 1080 520" width="100%" style="background:#f7fbff;border:1px solid #d5e4ec;border-radius:18px">
+          <style>.t{font-family:Inter,Arial,sans-serif;fill:#263f50}.b{font-weight:850}.m{fill:#647b88}</style>
+
+          <text x="540" y="38" text-anchor="middle" class="t b" font-size="20">DETERMINACIÓN DE POTENCIA MEDIANTE INTENSIDAD SONORA</text>
+
+          <rect x="390" y="210" width="230" height="145" rx="18" fill="#176ea5"/>
+          <rect x="425" y="240" width="80" height="45" rx="8" fill="#cae8f4"/>
+          <circle cx="575" cy="265" r="25" fill="#0e5276"/>
+          <text x="505" y="195" text-anchor="middle" class="t b" font-size="16">FUENTE BAJO ENSAYO</text>
+
+          <rect x="250" y="120" width="510" height="315" rx="28" fill="none" stroke="#18a36f" stroke-width="4" stroke-dasharray="12 9"/>
+          <text x="505" y="460" text-anchor="middle" class="t b" font-size="15">SUPERFICIE DE MEDICIÓN QUE ENVUELVE LA FUENTE</text>
+
+          <!-- probe -->
+          <g transform="translate(780 175)">
+            <rect x="0" y="0" width="165" height="45" rx="14" fill="#273d49"/>
+            <rect x="-40" y="10" width="45" height="24" rx="8" fill="#788d99"/>
+            <circle cx="-43" cy="22" r="12" fill="#9cafb8"/>
+            <rect x="-78" y="10" width="30" height="24" rx="8" fill="#788d99"/>
+            <circle cx="-82" cy="22" r="12" fill="#9cafb8"/>
+            <text x="82" y="28" text-anchor="middle" font-family="Inter,Arial" font-size="13" font-weight="850" fill="#eef8fb">SONDA DE INTENSIDAD</text>
+          </g>
+
+          <line x1="700" y1="197" x2="620" y2="230" stroke="#d97706" stroke-width="4" marker-end="url(#arrowI)"/>
+          <defs>
+            <marker id="arrowI" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+              <path d="M0 0 L10 5 L0 10 z" fill="#d97706"/>
+            </marker>
+          </defs>
+          <text x="660" y="180" class="t b" font-size="16">Iₙ</text>
+
+          <g fill="#18a36f">
+            <circle cx="255" cy="250" r="9"/><circle cx="310" cy="135" r="9"/><circle cx="505" cy="122" r="9"/>
+            <circle cx="700" cy="135" r="9"/><circle cx="755" cy="315" r="9"/><circle cx="650" cy="430" r="9"/>
+            <circle cx="350" cy="430" r="9"/>
+          </g>
+
+          <text x="840" y="285" text-anchor="middle" class="t b" font-size="16">DOS MICRÓFONOS</text>
+          <text x="840" y="307" text-anchor="middle" class="t m" font-size="13">permiten estimar presión</text>
+          <text x="840" y="326" text-anchor="middle" class="t m" font-size="13">y velocidad de partícula</text>
+
+          <text x="540" y="495" text-anchor="middle" class="t m" font-size="13">Se integra la componente normal de intensidad sobre toda la superficie para obtener la potencia sonora.</text>
+        </svg>
+        """, height=540)
+
+        st.markdown("##### Del flujo de energía a la potencia")
+        st.latex(r"W=\int_S I_n\,dS")
+        st.latex(r"L_W=10\log_{10}\left(\frac{W}{W_0}\right)")
+
+        st.markdown("""
+        <div class="c3l2-grid2">
+          <div class="c3l2-card orange">
+            <div class="c3l2-k">QUÉ MIDE</div>
+            <b>Intensidad sonora I</b><br>
+            Representa flujo de potencia acústica por unidad de área y tiene dirección.
+          </div>
+          <div class="c3l2-card green">
+            <div class="c3l2-k">CÓMO SE OBTIENE W</div>
+            <b>Integrando Iₙ sobre una superficie cerrada.</b><br>
+            El flujo neto que atraviesa la superficie corresponde a la potencia sonora emitida por la fuente encerrada.
+          </div>
+        </div>
+        """, unsafe_allow_html=True)
+
+        st.info(
+            "En lenguaje cotidiano a veces se habla de **intensímetro**, pero técnicamente es más preciso hablar de "
+            "**sistema o sonda de intensidad sonora**. Este método está normalizado en la serie ISO 9614."
+        )
+
     else:
-        chamber_note = (
-            "Paredes y cielo absorben; el piso es reflectante. "
-            "Es habitual para maquinaria apoyada sobre el suelo y aproxima un campo libre sobre un plano reflectante. "
-            "En la idealización simple puede asociarse a Q ≈ 2 y una superficie semiesférica."
+        st.markdown("#### Método C · sala reverberante")
+        st.write(
+            "También existen métodos que determinan Lw a partir de niveles de presión sonora medidos en una "
+            "**sala reverberante normalizada**. Aquí se aprovecha un campo sonoro difuso y se aplican procedimientos "
+            "específicos para relacionar el nivel medido en la sala con la potencia de la fuente."
         )
-        floor_fill = "#aeb8be"
-        floor_wedges = False
-        surface_label = "superficie semiesférica de medición"
 
-    chamber_svg = f"""
-    <svg viewBox="0 0 1080 560" width="100%" style="background:#101b24;border:1px solid #273b49;border-radius:18px">
-      <defs>
-        <pattern id="wedges" width="42" height="42" patternUnits="userSpaceOnUse">
-          <path d="M0 42 L21 0 L42 42 Z" fill="#344b58"/>
-          <path d="M7 42 L21 12 L35 42 Z" fill="#263945"/>
-        </pattern>
-        <radialGradient id="device" cx="35%" cy="30%">
-          <stop offset="0%" stop-color="#86c7e2"/><stop offset="100%" stop-color="#176ea5"/>
-        </radialGradient>
-      </defs>
+        st.markdown("""
+        <div class="c3l2-grid2">
+          <div class="c3l2-card blue">
+            <div class="c3l2-k">INSTRUMENTO</div>
+            <b>Micrófonos / sonómetros</b><br>
+            Nuevamente se mide presión sonora, no potencia directamente.
+          </div>
+          <div class="c3l2-card green">
+            <div class="c3l2-k">MÉTODO</div>
+            <b>Sala reverberante caracterizada</b><br>
+            El método utiliza las propiedades acústicas conocidas de la sala para calcular Lw.
+          </div>
+        </div>
+        """, unsafe_allow_html=True)
 
-      <rect x="38" y="35" width="1004" height="455" rx="18" fill="#172630"/>
-      <rect x="38" y="35" width="1004" height="82" rx="18" fill="url(#wedges)"/>
-      <rect x="38" y="95" width="92" height="395" fill="url(#wedges)"/>
-      <rect x="950" y="95" width="92" height="395" fill="url(#wedges)"/>
-      <rect x="130" y="405" width="820" height="85" fill="{floor_fill}"/>
-      {"<rect x='130' y='405' width='820' height='85' fill='url(#wedges)'/>" if floor_wedges else ""}
+        st.latex(r"\text{Lp medido en sala} \;+\; \text{características de la sala} \;\longrightarrow\; L_W")
+        st.caption("Ejemplo de referencia: métodos de precisión de ISO 3741.")
 
-      <text x="540" y="72" text-anchor="middle" font-family="Inter,Arial" font-size="20" font-weight="850" fill="#eef8ff">{chamber_mode.upper()}</text>
-
-      <g>
-        <rect x="455" y="300" width="170" height="95" rx="18" fill="url(#device)" stroke="#d8eff9" stroke-width="3"/>
-        <rect x="482" y="323" width="70" height="37" rx="7" fill="#cceaf6"/>
-        <circle cx="590" cy="346" r="16" fill="#0f4d70"/>
-        <rect x="492" y="395" width="20" height="22" fill="#3e4b52"/>
-        <rect x="570" y="395" width="20" height="22" fill="#3e4b52"/>
-        <text x="540" y="285" text-anchor="middle" font-family="Inter,Arial" font-size="16" font-weight="850" fill="#ffffff">EQUIPO BAJO ENSAYO</text>
-      </g>
-
-      <path d="M270 350 A270 270 0 0 1 810 350" fill="none" stroke="#4fd1c5" stroke-width="3" stroke-dasharray="9 8" opacity=".85"/>
-      {"<path d='M270 350 A270 270 0 1 0 810 350' fill='none' stroke='#4fd1c5' stroke-width='3' stroke-dasharray='9 8' opacity='.55'/>" if floor_wedges else ""}
-
-      <g fill="#f8fafc" stroke="#4fd1c5" stroke-width="3">
-        <circle cx="298" cy="246" r="10"/><circle cx="368" cy="157" r="10"/><circle cx="467" cy="105" r="10"/>
-        <circle cx="613" cy="105" r="10"/><circle cx="712" cy="157" r="10"/><circle cx="782" cy="246" r="10"/>
-        {"<circle cx='298' cy='454' r='10'/><circle cx='368' cy='523' r='10'/><circle cx='712' cy='523' r='10'/><circle cx='782' cy='454' r='10'/>" if floor_wedges else ""}
-      </g>
-
-      <text x="540" y="135" text-anchor="middle" font-family="Inter,Arial" font-size="14" font-weight="800" fill="#78e0d5">{surface_label}</text>
-      <text x="540" y="520" text-anchor="middle" font-family="Inter,Arial" font-size="14" fill="#b9cbd5">Micrófonos en varias posiciones → nivel medio sobre la superficie → Lw</text>
-    </svg>
-    """
-    components.html(chamber_svg, height=585)
-    st.markdown(f'<div class="c3l2-note"><b>{chamber_mode}:</b> {chamber_note}</div>', unsafe_allow_html=True)
-
-    st.markdown("#### Relación conceptual entre la superficie medida y la potencia")
-    st.latex(r"L_W \approx \overline{L_p}+10\log_{10}\left(\frac{S}{S_0}\right)")
-    st.caption(
-        "Relación conceptual para un campo libre ideal. Los procedimientos normalizados incorporan requisitos de "
-        "entorno, instrumentación, posiciones de micrófono y correcciones específicas. "
-        "ISO 3745 utiliza mediciones sobre una superficie que envuelve la fuente en cámaras anecoicas o semianecoicas."
-    )
+    st.markdown("""
+    <div class="c3l2-note">
+      <b>Resumen:</b> la potencia sonora es una propiedad de la fuente, pero normalmente se
+      <b>determina mediante un procedimiento de medición</b>. Puede obtenerse a partir de presión sonora
+      medida alrededor de la fuente, a partir de intensidad sonora integrada sobre una superficie o mediante
+      otros métodos normalizados como una sala reverberante.
+    </div>
+    """, unsafe_allow_html=True)
 
     st.markdown("### 7. Conversor idealizado · Lw ↔ Lp")
     st.write(
