@@ -28819,24 +28819,35 @@ def _c3l2_stage3(lab,saved):
         "En acústica, Lw caracteriza la fuente y Lp caracteriza lo que ocurre en un punto del campo sonoro."
     )
 
-    st.markdown("### 4. Ahora sí: ¿qué significa el factor de directividad Q?")
+    st.markdown("### 4. Conozcamos el factor de directividad Q")
     st.write(
-        "El factor **Q** no cambia la potencia sonora total de la fuente. "
-        "Describe cómo esa misma potencia se reparte en el espacio dentro de un modelo idealizado."
+        "Hasta aquí sabemos que **Lw pertenece a la fuente**. El siguiente paso es comprender que una fuente "
+        "no necesariamente reparte su energía acústica de la misma manera en todas las direcciones. "
+        "El **factor de directividad Q** describe, de manera idealizada, cómo se concentra o distribuye espacialmente "
+        "la potencia sonora emitida."
     )
+
+    st.markdown("""
+    <div class="c3l2-note">
+      <b>Relación con la potencia sonora:</b> Q <b>no modifica W ni Lw</b>.
+      La fuente sigue emitiendo la misma potencia sonora total. Lo que cambia es la superficie espacial
+      sobre la cual esa potencia se distribuye y, por lo tanto, el nivel de presión sonora que puede obtenerse
+      en una dirección y distancia determinadas.
+    </div>
+    """, unsafe_allow_html=True)
 
     st.markdown("""
     <div class="c3l2-grid2">
       <div class="c3l2-card blue">
         <div class="c3l2-k">Q = 1 · ESPACIO LIBRE</div>
         <b>Radiación ideal en todas las direcciones.</b><br>
-        La potencia se reparte sobre una esfera completa: <b>4πr²</b>.
+        La misma potencia sonora total se reparte sobre una esfera completa de área <b>4πr²</b>.
         Es la idealización típica de una fuente omnidireccional en campo libre, alejada de superficies reflectantes.
       </div>
       <div class="c3l2-card orange">
         <div class="c3l2-k">Q = 2 · SOBRE UN PLANO REFLECTANTE</div>
         <b>La radiación queda concentrada en medio espacio.</b><br>
-        La misma potencia se reparte aproximadamente sobre una semiesfera: <b>2πr²</b>.
+        La misma potencia sonora total se reparte aproximadamente sobre una semiesfera de área <b>2πr²</b>.
         En el modelo ideal, a igual Lw y distancia, esto produce aproximadamente <b>+3 dB</b> respecto de Q = 1.
       </div>
     </div>
@@ -28868,7 +28879,66 @@ def _c3l2_stage3(lab,saved):
         "de la frecuencia, de la geometría del equipo y de las superficies próximas."
     )
 
-    st.markdown("### 5. ¿Cómo se obtiene Lw en la práctica?")
+    st.markdown("### 5. De Lw a Lp · ¿cómo se relacionan?")
+    st.write(
+        "Ahora podemos unir las piezas. **Lw caracteriza la emisión de la fuente**. "
+        "Para estimar qué **Lp** se observará en un punto necesitamos saber, además, "
+        "cómo se reparte esa emisión (**Q**) y a qué distancia está el punto (**r**)."
+    )
+
+    st.markdown("""
+    <div class="c3l2-grid2">
+      <div class="c3l2-card blue">
+        <div class="c3l2-k">DATO DE LA FUENTE</div>
+        <b>Lw</b><br>
+        Indica cuánto emite acústicamente la fuente.
+        No depende de la posición del sonómetro.
+      </div>
+      <div class="c3l2-card green">
+        <div class="c3l2-k">DATOS DE PROPAGACIÓN</div>
+        <b>Q + r</b><br>
+        Q representa la distribución espacial idealizada y r la distancia entre fuente y punto de observación.
+      </div>
+    </div>
+    """, unsafe_allow_html=True)
+
+    st.markdown("#### Caso ideal de campo libre")
+    st.latex(r"L_p \approx L_W + 10\log_{10}\left(\frac{Q}{4\pi r^2}\right)")
+
+    st.markdown("""
+    <div class="c3l2-note">
+      La ecuación no dice que <b>Lw se convierta en Lp</b>. Dice que, bajo estas condiciones idealizadas,
+      podemos usar la potencia sonora de la fuente y la geometría de propagación para <b>estimar el nivel de presión sonora
+      en un punto</b>.
+    </div>
+    """, unsafe_allow_html=True)
+
+    st.markdown("#### ¿Qué aporta cada término?")
+    eq1, eq2, eq3 = st.columns(3)
+    with eq1:
+        st.metric("Lw", "emisión")
+        st.caption("Propiedad de la fuente.")
+    with eq2:
+        st.metric("Q", "directividad")
+        st.caption("Cómo se distribuye espacialmente la potencia.")
+    with eq3:
+        st.metric("r", "distancia")
+        st.caption("Separación entre la fuente y el punto donde queremos estimar Lp.")
+
+    st.markdown("""
+    <div class="c3l2-grid2">
+      <div class="c3l2-card blue">
+        <b>Si aumenta r</b><br>
+        La misma potencia se reparte sobre una superficie mayor y, en el modelo ideal, <b>Lp disminuye</b>.
+      </div>
+      <div class="c3l2-card orange">
+        <b>Si Q aumenta</b><br>
+        La potencia queda más concentrada en una región del espacio y, en esa dirección, <b>Lp aumenta</b>.
+      </div>
+    </div>
+    """, unsafe_allow_html=True)
+
+    st.markdown("### 6. ¿Cómo se obtiene Lw en la práctica?")
     st.write(
         "El nivel de potencia sonora no se obtiene colocando un sonómetro en un único punto. "
         "En métodos basados en presión sonora se mide alrededor de la fuente sobre una **superficie de medición** "
@@ -28954,10 +29024,11 @@ def _c3l2_stage3(lab,saved):
         "ISO 3745 utiliza mediciones sobre una superficie que envuelve la fuente en cámaras anecoicas o semianecoicas."
     )
 
-    st.markdown("### 6. Conversor idealizado · Lw ↔ Lp")
+    st.markdown("### 7. Conversor idealizado · Lw ↔ Lp")
     st.write(
-        "En campo libre ideal, si conocemos la distancia y Q podemos pasar de una magnitud a la otra. "
-        "Esto **no significa que Lw y Lp sean la misma magnitud**: solo estamos usando un modelo de propagación para relacionarlas."
+        "En campo libre ideal, si conocemos la distancia y Q podemos **relacionar** ambas magnitudes. "
+        "Lw sigue siendo una propiedad de la fuente y Lp sigue siendo el nivel de presión en un punto: "
+        "la ecuación solo permite estimar una a partir de la otra bajo los supuestos del modelo."
     )
 
     conv_mode = st.segmented_control(
@@ -29015,7 +29086,7 @@ def _c3l2_stage3(lab,saved):
         "ruido de fondo y las correcciones del método de ensayo."
     )
 
-    st.markdown("### 7. Comprueba el concepto")
+    st.markdown("### 8. Comprueba el concepto")
     q1 = st.radio(
         "Si mantienes la misma máquina y duplicas la distancia, ¿qué magnitud propia de la fuente permanece?",
         ["Lw", "Lp", "Ambas disminuyen 6 dB"],
