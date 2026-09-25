@@ -29702,388 +29702,605 @@ def _c3l2_stage3(lab,saved):
 def _c3l2_stage4(lab,saved):
     _c3l2_header(
         4,
-        "Fuente de área · de máquinas individuales a una emisión distribuida",
-        "Construir una fuente de área a partir de fuentes puntuales, conservar su potencia sonora total y comparar ambas representaciones en un mismo receptor.",
-        35,
+        "Fuentes de área · una obra, varios receptores",
+        "Comprender qué es una fuente de área en un mapa de ruido y comparar una única superficie emisora con escenarios puntuales de peor ubicación para receptores enfrentados.",
+        45,
     )
 
     st.markdown("""
     <div class="c3l2-intro">
-      <div class="c3l2-k">MODELACIÓN DE UNA SUPERFICIE EMISORA</div>
-      <div class="c3l2-title">Una fuente de área distribuye potencia sonora sobre una superficie definida.</div>
-      No se construye repartiendo niveles de presión sonora. Primero se determina la <b>potencia sonora total</b>
-      de las fuentes que queremos representar, luego se define el <b>área activa</b> y finalmente se distribuye
-      esa potencia sobre la superficie.
+      <div class="c3l2-k">MODELACIÓN DE MAPAS DE RUIDO</div>
+      <div class="c3l2-title">Una fuente de área representa una emisión distribuida sobre una superficie.</div>
+      En una obra de construcción la maquinaria puede desplazarse dentro de una <b>zona operacional</b>.
+      Cuando existen receptores en distintas direcciones, una fuente de área permite representar esa actividad
+      mediante una sola geometría superficial y calcular simultáneamente el aporte hacia todos ellos.
     </div>
     """, unsafe_allow_html=True)
 
-    st.markdown("### 1. Del conjunto de fuentes al área")
-    st.markdown("""
-    <div class="c3l2-grid2">
-      <div class="c3l2-card blue">
-        <div class="c3l2-k">MODELO PUNTUAL</div>
-        <b>Cada máquina conserva su Lw y su posición.</b><br>
-        El receptor recibe el aporte propagado desde cada fuente individual.
-      </div>
-      <div class="c3l2-card orange">
-        <div class="c3l2-k">MODELO DE ÁREA</div>
-        <b>La misma potencia total se distribuye sobre una superficie.</b><br>
-        Para calcular la propagación, la superficie puede discretizarse en pequeñas fuentes elementales.
-      </div>
-    </div>
-    """, unsafe_allow_html=True)
+    # ------------------------------------------------------------------
+    # 1 · QUÉ ES UNA FUENTE DE ÁREA
+    # ------------------------------------------------------------------
+    st.markdown("### 1. ¿Qué es una fuente de área?")
 
-    st.latex(r"L_{W,\mathrm{total}}=10\log_{10}\left(\sum_i 10^{L_{W,i}/10}\right)")
-    st.latex(r"L_W''=L_{W,\mathrm{total}}-10\log_{10}\left(\frac{S}{1\ \mathrm{m}^2}\right)")
-    st.latex(r"L_{W,\mathrm{celda}}=L_W''+10\log_{10}\left(\frac{S_{\mathrm{celda}}}{1\ \mathrm{m}^2}\right)")
-
-    st.caption(
-        "En esta etapa, Lw'' representa el nivel de potencia sonora distribuido por unidad de superficie. "
-        "La discretización conserva la potencia sonora total del área."
-    )
-
-    st.markdown("### 2. Construye el escenario puntual")
     st.write(
-        "El predio mide **50 × 40 m** y está dividido en **20 celdas de 10 × 10 m**. "
-        "Selecciona una máquina y colócala en una celda. Puedes usar tantas máquinas como necesites."
+        "En un modelo de propagación acústica, una **fuente de área** es una superficie a la que se asigna "
+        "una emisión sonora distribuida. No significa que el suelo 'tenga un nivel de presión sonora'. "
+        "La magnitud que se distribuye es la **potencia sonora equivalente de la actividad**."
     )
 
-    equipment = {
-        "Excavadora": {"short": "EX", "lw": 105.0},
-        "Cargador frontal": {"short": "CF", "lw": 108.0},
-        "Camión": {"short": "CM", "lw": 104.0},
-        "Compactador": {"short": "CP", "lw": 106.0},
-    }
-
-    tool = st.selectbox(
-        "Equipo para colocar",
-        list(equipment.keys()) + ["Borrar celda"],
-        key="c3l2_s4_tool",
-    )
-
-    point_grid_key = "c3l2_s4_point_grid"
-    if (
-        point_grid_key not in st.session_state
-        or not isinstance(st.session_state.get(point_grid_key), list)
-        or len(st.session_state[point_grid_key]) != 20
-    ):
-        st.session_state[point_grid_key] = [None] * 20
-
-    top1, top2 = st.columns([0.75, 0.25])
-    with top1:
-        st.caption("Cada botón representa una celda de 10 × 10 m.")
-    with top2:
-        if st.button("Reiniciar máquinas", use_container_width=True, key="c3l2_s4_reset_points"):
-            st.session_state[point_grid_key] = [None] * 20
-            st.rerun()
-
-    for row in range(4):
-        cols = st.columns(5)
-        for col in range(5):
-            idx = row * 5 + col
-            current = st.session_state[point_grid_key][idx]
-            if current in equipment:
-                cfg = equipment[current]
-                label = f"{cfg['short']} · Lw {cfg['lw']:.0f}"
-            else:
-                label = "＋"
-            if cols[col].button(
-                label,
-                key=f"c3l2_s4_point_cell_{idx}",
-                use_container_width=True,
-                type="primary" if current else "secondary",
-            ):
-                st.session_state[point_grid_key][idx] = None if tool == "Borrar celda" else tool
-                st.rerun()
-
-    placed = [(idx, name) for idx, name in enumerate(st.session_state[point_grid_key]) if name in equipment]
-
-    st.markdown("### 3. Define el área activa")
-    st.write(
-        "Ahora selecciona las celdas donde consideras que la actividad puede distribuirse durante el escenario analizado. "
-        "La fuente de área se construirá **solo sobre esas celdas**, no necesariamente sobre todo el predio."
-    )
-
-    active_key = "c3l2_s4_active_cells"
-    if (
-        active_key not in st.session_state
-        or not isinstance(st.session_state.get(active_key), list)
-        or len(st.session_state[active_key]) != 20
-    ):
-        st.session_state[active_key] = [False] * 20
-
-    areset1, areset2 = st.columns([0.75, 0.25])
-    with areset1:
-        st.caption("Seleccionado = parte del área activa.")
-    with areset2:
-        if st.button("Limpiar área", use_container_width=True, key="c3l2_s4_reset_area"):
-            st.session_state[active_key] = [False] * 20
-            st.rerun()
-
-    for row in range(4):
-        cols = st.columns(5)
-        for col in range(5):
-            idx = row * 5 + col
-            selected = bool(st.session_state[active_key][idx])
-            if cols[col].button(
-                "ACTIVA" if selected else "vacía",
-                key=f"c3l2_s4_area_cell_{idx}",
-                use_container_width=True,
-                type="primary" if selected else "secondary",
-            ):
-                st.session_state[active_key][idx] = not selected
-                st.rerun()
-
-    active_cells = [i for i, value in enumerate(st.session_state[active_key]) if value]
-
-    if not placed:
-        st.info("Coloca al menos una máquina para calcular la potencia sonora total.")
-    elif not active_cells:
-        st.info("Selecciona al menos una celda del área activa.")
-    else:
-        site_h = 40.0
-        cell_size = 10.0
-        cell_area = 100.0
-        receiver_x = 70.0
-        receiver_y = 20.0
-        q = 1.0
-
-        # Potencia sonora total de las máquinas.
-        total_power_ratio = sum(10 ** (equipment[name]["lw"] / 10.0) for _, name in placed)
-        lw_total = 10.0 * math.log10(total_power_ratio)
-
-        active_area = len(active_cells) * cell_area
-        lw_per_m2 = lw_total - 10.0 * math.log10(active_area)
-        lw_cell = lw_per_m2 + 10.0 * math.log10(cell_area)
-
-        # Modelo A: máquinas puntuales.
-        point_rows = []
-        point_receiver_energy = []
-        for idx, name in placed:
-            row = idx // 5
-            col = idx % 5
-            x = col * cell_size + cell_size / 2.0
-            y = site_h - (row * cell_size + cell_size / 2.0)
-            dist = max(1.0, math.hypot(receiver_x - x, receiver_y - y))
-            lw_i = equipment[name]["lw"]
-            lp_i = lw_i + 10.0 * math.log10(q / (4.0 * math.pi * dist * dist))
-            point_receiver_energy.append(10 ** (lp_i / 10.0))
-            point_rows.append({
-                "Celda": f"{row+1}-{col+1}",
-                "Equipo": name,
-                "Lw [dB]": round(lw_i, 1),
-                "Distancia a R [m]": round(dist, 1),
-                "Lp en R [dB]": round(lp_i, 1),
-            })
-        lp_point_total = 10.0 * math.log10(sum(point_receiver_energy))
-
-        # Modelo B: fuente de área discretizada.
-        area_rows = []
-        area_receiver_energy = []
-        for idx in active_cells:
-            row = idx // 5
-            col = idx % 5
-            x = col * cell_size + cell_size / 2.0
-            y = site_h - (row * cell_size + cell_size / 2.0)
-            dist = max(1.0, math.hypot(receiver_x - x, receiver_y - y))
-            lp_cell = lw_cell + 10.0 * math.log10(q / (4.0 * math.pi * dist * dist))
-            area_receiver_energy.append(10 ** (lp_cell / 10.0))
-            area_rows.append({
-                "Celda": f"{row+1}-{col+1}",
-                "Área celda [m²]": int(cell_area),
-                "Lw'' [dB/m²]": round(lw_per_m2, 1),
-                "Lw celda [dB]": round(lw_cell, 1),
-                "Distancia a R [m]": round(dist, 1),
-                "Lp en R [dB]": round(lp_cell, 1),
-            })
-        lp_area_total = 10.0 * math.log10(sum(area_receiver_energy))
-
-        # Comprobación energética de la discretización.
-        discretized_lw = 10.0 * math.log10(
-            len(active_cells) * (10 ** (lw_cell / 10.0))
-        )
-
-        st.markdown("### 4. Observa el modelo puntual")
-        point_marks = []
-        for idx, name in placed:
-            row = idx // 5
-            col = idx % 5
-            px = 70 + col * 90 + 45
-            py = 55 + row * 70 + 35
-            cfg = equipment[name]
-            point_marks.append(
-                f'<circle cx="{px}" cy="{py}" r="24" fill="#176ea5" stroke="#fff" stroke-width="3"/>'
-                f'<text x="{px}" y="{py+4}" text-anchor="middle" font-size="12" font-weight="850" fill="#fff">{cfg["short"]}</text>'
-                f'<text x="{px}" y="{py+42}" text-anchor="middle" font-size="11" fill="#263f50">Lw {cfg["lw"]:.0f}</text>'
-            )
-
-        point_svg = f"""
-        <svg viewBox="0 0 800 390" width="100%" style="background:#f7fbff;border:1px solid #d7e5ee;border-radius:16px">
-          <style>.t{{font-family:Inter,Arial,sans-serif;fill:#263f50}} .b{{font-weight:850}}</style>
-          <rect x="70" y="55" width="450" height="280" rx="12" fill="#eadab9" stroke="#af9465" stroke-width="2"/>
-          <g stroke="#b7a27e" stroke-width="1">
-            <line x1="160" y1="55" x2="160" y2="335"/><line x1="250" y1="55" x2="250" y2="335"/><line x1="340" y1="55" x2="340" y2="335"/><line x1="430" y1="55" x2="430" y2="335"/>
-            <line x1="70" y1="125" x2="520" y2="125"/><line x1="70" y1="195" x2="520" y2="195"/><line x1="70" y1="265" x2="520" y2="265"/>
-          </g>
-          {''.join(point_marks)}
-          <rect x="650" y="110" width="100" height="180" rx="6" fill="#cbd5df"/>
-          <g fill="#7fa2bc"><rect x="670" y="135" width="18" height="25"/><rect x="712" y="135" width="18" height="25"/><rect x="670" y="185" width="18" height="25"/><rect x="712" y="185" width="18" height="25"/><rect x="670" y="235" width="18" height="25"/><rect x="712" y="235" width="18" height="25"/></g>
-          <circle cx="650" cy="200" r="12" fill="#18a36f"/>
-          <text x="700" y="90" text-anchor="middle" class="t b" font-size="15">RECEPTOR R</text>
-          <text x="295" y="32" text-anchor="middle" class="t b" font-size="16">MODELO A · FUENTES PUNTUALES</text>
-        </svg>
-        """
-        components.html(point_svg, height=410)
-        st.dataframe(pd.DataFrame(point_rows), hide_index=True, use_container_width=True)
-
-        m1, m2, m3 = st.columns(3)
-        m1.metric("Máquinas", len(placed))
-        m2.metric("Lw total", f"{lw_total:.1f} dB")
-        m3.metric("Lp total en R", f"{lp_point_total:.1f} dB")
-
-        st.markdown("### 5. Construye la fuente de área")
-        st.write(
-            "La misma **Lw total** se distribuye uniformemente solo sobre las celdas activas. "
-            "Cada celda representa una fuente elemental situada en su centro."
-        )
-
-        n1, n2, n3, n4 = st.columns(4)
-        n1.metric("Área activa", f"{active_area:.0f} m²")
-        n2.metric("Lw total", f"{lw_total:.1f} dB")
-        n3.metric("Lw''", f"{lw_per_m2:.1f} dB/m²")
-        n4.metric("Lw por celda", f"{lw_cell:.1f} dB")
-
-        area_marks = []
-        for idx in active_cells:
-            row = idx // 5
-            col = idx % 5
-            px = 70 + col * 90
-            py = 55 + row * 70
-            area_marks.append(
-                f'<rect x="{px+3}" y="{py+3}" width="84" height="64" rx="8" fill="#f59e0b" opacity=".82"/>'
-                f'<text x="{px+45}" y="{py+32}" text-anchor="middle" font-size="11" font-weight="850" fill="#fff">{lw_per_m2:.1f} dB/m²</text>'
-                f'<text x="{px+45}" y="{py+49}" text-anchor="middle" font-size="10" fill="#fff">Lw celda {lw_cell:.1f}</text>'
-            )
-
-        area_svg = f"""
-        <svg viewBox="0 0 800 390" width="100%" style="background:#f7fbff;border:1px solid #d7e5ee;border-radius:16px">
-          <style>.t{{font-family:Inter,Arial,sans-serif;fill:#263f50}} .b{{font-weight:850}}</style>
-          <rect x="70" y="55" width="450" height="280" rx="12" fill="#f5ead2" stroke="#d6b56f" stroke-width="2"/>
-          <g stroke="#cbb37d" stroke-width="1">
-            <line x1="160" y1="55" x2="160" y2="335"/><line x1="250" y1="55" x2="250" y2="335"/><line x1="340" y1="55" x2="340" y2="335"/><line x1="430" y1="55" x2="430" y2="335"/>
-            <line x1="70" y1="125" x2="520" y2="125"/><line x1="70" y1="195" x2="520" y2="195"/><line x1="70" y1="265" x2="520" y2="265"/>
-          </g>
-          {''.join(area_marks)}
-          <rect x="650" y="110" width="100" height="180" rx="6" fill="#cbd5df"/>
-          <g fill="#7fa2bc"><rect x="670" y="135" width="18" height="25"/><rect x="712" y="135" width="18" height="25"/><rect x="670" y="185" width="18" height="25"/><rect x="712" y="185" width="18" height="25"/><rect x="670" y="235" width="18" height="25"/><rect x="712" y="235" width="18" height="25"/></g>
-          <circle cx="650" cy="200" r="12" fill="#18a36f"/>
-          <text x="700" y="90" text-anchor="middle" class="t b" font-size="15">RECEPTOR R</text>
-          <text x="295" y="32" text-anchor="middle" class="t b" font-size="16">MODELO B · FUENTE DE ÁREA DISCRETIZADA</text>
-        </svg>
-        """
-        components.html(area_svg, height=410)
-
-        st.success(
-            f"Comprobación de conservación de potencia: Lw de las celdas = {discretized_lw:.1f} dB; "
-            f"Lw original = {lw_total:.1f} dB."
-        )
-
-        with st.expander("Ver cálculo de cada celda"):
-            st.dataframe(pd.DataFrame(area_rows), hide_index=True, use_container_width=True)
-
-        st.markdown("### 6. Compara las dos representaciones")
-        c1, c2, c3 = st.columns(3)
-        c1.metric("Puntuales · Lp en R", f"{lp_point_total:.1f} dB")
-        c2.metric("Área · Lp en R", f"{lp_area_total:.1f} dB")
-        c3.metric("Diferencia Área − Puntual", f"{lp_area_total-lp_point_total:+.1f} dB")
-
-        if abs(lp_area_total - lp_point_total) < 0.5:
-            st.info(
-                "En esta configuración ambas representaciones producen niveles muy próximos en R. "
-                "La coincidencia depende de la distribución espacial elegida."
-            )
-        elif lp_area_total > lp_point_total:
-            st.info(
-                "La fuente de área entrega un nivel mayor en R porque parte de la potencia fue desplazada "
-                "hacia celdas que, en conjunto, resultan más favorables para la propagación hacia ese receptor."
-            )
-        else:
-            st.info(
-                "Las fuentes puntuales entregan un nivel mayor en R porque las posiciones reales de las máquinas "
-                "resultan más desfavorables que la distribución uniforme seleccionada."
-            )
-
+    c1, c2, c3 = st.columns(3)
+    with c1:
         st.markdown("""
-        <div class="c3l2-note">
-          <b>Conclusión física:</b> conservar Lw total no obliga a obtener el mismo Lp en el receptor.
-          El nivel en R depende también de <b>dónde se distribuye espacialmente esa potencia</b>.
-          Al transformar fuentes puntuales en una fuente de área hacemos una hipótesis de modelación.
+        <div class="c3l2-card blue">
+          <div class="c3l2-k">FUENTE PUNTUAL</div>
+          <b>Equipo localizado.</b><br>
+          Se caracteriza mediante un nivel de potencia sonora
+          <b>Lw [dB]</b> y una posición concreta.
+        </div>
+        """, unsafe_allow_html=True)
+    with c2:
+        st.markdown("""
+        <div class="c3l2-card green">
+          <div class="c3l2-k">FUENTE LINEAL</div>
+          <b>Emisión distribuida a lo largo de una trayectoria.</b><br>
+          Puede expresarse mediante potencia por unidad de longitud
+          <b>Lw' [dB/m]</b>.
+        </div>
+        """, unsafe_allow_html=True)
+    with c3:
+        st.markdown("""
+        <div class="c3l2-card orange">
+          <div class="c3l2-k">FUENTE DE ÁREA</div>
+          <b>Emisión distribuida sobre una superficie.</b><br>
+          Se caracteriza mediante potencia por unidad de superficie
+          <b>Lw'' [dB/m²]</b>.
         </div>
         """, unsafe_allow_html=True)
 
-        st.markdown("### 7. Comprueba lo aprendido")
-        q1 = st.radio(
-            "¿Qué magnitud se distribuye sobre el área?",
-            ["El nivel de presión Lp medido en el receptor", "La potencia sonora de las fuentes", "La distancia al receptor"],
-            index=None,
-            key="c3l2_s4_q1",
-        )
-        q2 = st.radio(
-            "¿Por qué el modelo puntual y el modelo de área pueden entregar distinto Lp en R aunque conserven la misma Lw total?",
-            [
-                "Porque cambió la distribución espacial de la emisión respecto del receptor.",
-                "Porque Lw deja de existir al usar una fuente de área.",
-                "Porque los decibeles no pueden sumarse.",
-            ],
-            index=None,
-            key="c3l2_s4_q2",
-        )
-        explanation = st.text_area(
-            "Explica cuándo sería razonable representar una actividad móvil o distribuida mediante una fuente de área.",
-            height=100,
-            key="c3l2_s4_exp",
-        )
-
-        if _c3l2_role() == "Alumno" and st.button(
-            "Guardar Etapa 4",
-            type="primary",
-            use_container_width=True,
-            key="c3l2_s4_save",
-        ):
-            if q1 != "La potencia sonora de las fuentes":
-                st.warning("Una fuente de área distribuye emisión/potencia sonora, no Lp del receptor.")
-            elif q2 != "Porque cambió la distribución espacial de la emisión respecto del receptor.":
-                st.warning("La potencia total puede conservarse y, aun así, cambiar su posición espacial respecto del receptor.")
-            elif len(explanation.strip()) < 40:
-                st.warning("Desarrolla un poco más tu criterio de uso de una fuente de área.")
-            else:
-                _c3l2_complete(
-                    saved,
-                    4,
-                    {
-                        "point_grid": st.session_state[point_grid_key],
-                        "active_cells": st.session_state[active_key],
-                        "lw_total": lw_total,
-                        "active_area": active_area,
-                        "lw_per_m2": lw_per_m2,
-                        "lw_cell": lw_cell,
-                        "lp_point_total": lp_point_total,
-                        "lp_area_total": lp_area_total,
-                        "q1": q1,
-                        "q2": q2,
-                        "explanation": explanation,
-                    },
-                )
-                st.success("Etapa 4 guardada.")
-
-    _c3l2_teacher_pauta(
-        "Etapa 4",
-        "La fuente de área debe formularse a partir de potencia sonora, no repartiendo niveles de presión. "
-        "Primero se suma energéticamente Lw de las máquinas; después se define el área activa S y se obtiene Lw'' "
-        "por unidad de superficie. La discretización asigna a cada celda una fracción de la potencia de modo que "
-        "la suma energética de todas las celdas reproduzca Lw,total. La comparación con fuentes puntuales debe "
-        "destacar que conservar potencia total no implica conservar Lp en un receptor si cambia la distribución espacial.",
+    st.markdown("#### La magnitud clave: Lw''")
+    st.latex(
+        r"L_W''=L_{W,\mathrm{total}}"
+        r"-10\log_{10}\left(\frac{S}{1\ \mathrm{m}^2}\right)"
     )
+    st.write(
+        "**Lw'' no es Lp.** Es un nivel de potencia sonora superficial: indica cuánta potencia equivalente "
+        "se distribuye por unidad de superficie dentro de la zona modelada."
+    )
+
+    st.info(
+        "En los programas de mapas de ruido, la superficie se discretiza internamente en elementos emisores "
+        "para calcular la propagación. Esa discretización es una herramienta matemática; no significa que "
+        "exista físicamente una máquina en cada celda."
+    )
+
+    # ------------------------------------------------------------------
+    # 2 · EJEMPLO NUMÉRICO SIMPLE
+    # ------------------------------------------------------------------
+    st.markdown("### 2. Ejemplo simple · distribuir una actividad sobre el suelo")
+
+    ex1, ex2 = st.columns([0.45, 0.55])
+    with ex1:
+        st.markdown("""
+        <div class="c3l2-card orange">
+          <div class="c3l2-k">ZONA DE OBRA</div>
+          <b>Superficie operacional:</b> 1.000 m²<br>
+          <b>Lw total equivalente:</b> 110 dB<br><br>
+          Queremos representar esa misma potencia como una fuente de área uniforme.
+        </div>
+        """, unsafe_allow_html=True)
+    with ex2:
+        st.latex(r"L_W''=110-10\log_{10}(1000)")
+        st.latex(r"L_W''=110-30")
+        st.latex(r"\boxed{L_W''=80\ \mathrm{dB/m^2}}")
+        st.caption(
+            "La potencia total sigue siendo 110 dB. Lo que cambia es la forma espacial con que la representamos."
+        )
+
+    st.markdown("""
+    <div class="c3l2-note">
+      <b>Idea fundamental:</b> aumentar el área manteniendo la misma potencia total disminuye Lw'' porque
+      la misma energía equivalente se reparte sobre una superficie mayor. La potencia total de la actividad
+      no se crea ni se pierde por cambiar de representación.
+    </div>
+    """, unsafe_allow_html=True)
+
+    # ------------------------------------------------------------------
+    # 3 · POR QUÉ PUEDE REDUCIR TRABAJO EN UN MAPA DE RUIDO
+    # ------------------------------------------------------------------
+    st.markdown("### 3. Una obra con receptores enfrentados")
+
+    st.write(
+        "Ahora supongamos una obra ubicada **entre dos edificios receptores**. Una máquina puede desplazarse "
+        "por toda la zona de trabajo. Si queremos estudiar la ubicación puntual más desfavorable para cada "
+        "edificio, necesitaremos posiciones distintas de la fuente."
+    )
+
+    st.markdown("""
+    <div class="c3l2-grid2">
+      <div class="c3l2-card blue">
+        <div class="c3l2-k">MODELACIÓN PUNTUAL</div>
+        <b>Escenario A:</b> máquina en el extremo más cercano al Edificio A.<br>
+        <b>Escenario B:</b> máquina en el extremo más cercano al Edificio B.<br><br>
+        Para dos receptores enfrentados se requieren, como mínimo, dos posiciones de peor exposición.
+      </div>
+      <div class="c3l2-card orange">
+        <div class="c3l2-k">MODELACIÓN MEDIANTE ÁREA</div>
+        La zona operacional completa se modela como una superficie emisora.<br><br>
+        <b>Una única geometría</b> permite calcular simultáneamente el aporte hacia A y B.
+      </div>
+    </div>
+    """, unsafe_allow_html=True)
+
+    st.warning(
+        "**No son exactamente el mismo supuesto físico.** La fuente puntual extrema representa toda la potencia "
+        "concentrada en una posición instantánea desfavorable. La fuente de área representa una emisión equivalente "
+        "distribuida sobre la zona de operación. Por ello, la fuente de área puede simplificar una actividad móvil "
+        "o distribuida, pero no debe presentarse como sustituto automático de una comprobación de máximo instantáneo."
+    )
+
+    # ------------------------------------------------------------------
+    # 4 · ESCENARIO INTERACTIVO
+    # ------------------------------------------------------------------
+    st.markdown("### 4. Construye el escenario")
+
+    p1, p2, p3 = st.columns(3)
+    with p1:
+        lw_total = st.slider(
+            "Lw total equivalente [dB]",
+            95.0, 125.0, 110.0, 1.0,
+            key="c3l2_s4_lw_total",
+        )
+    with p2:
+        site_length = st.slider(
+            "Largo de la zona operacional [m]",
+            40, 100, 60, 10,
+            key="c3l2_s4_length",
+        )
+    with p3:
+        site_depth = st.slider(
+            "Ancho de la zona operacional [m]",
+            20, 60, 30, 10,
+            key="c3l2_s4_depth",
+        )
+
+    p4, p5, p6, p7 = st.columns(4)
+    with p4:
+        setback = st.slider(
+            "Margen operativo interior [m]",
+            0.0, 15.0, 5.0, 1.0,
+            key="c3l2_s4_setback",
+        )
+    with p5:
+        dist_a = st.slider(
+            "Obra → Edificio A [m]",
+            5.0, 50.0, 15.0, 1.0,
+            key="c3l2_s4_dist_a",
+        )
+    with p6:
+        dist_b = st.slider(
+            "Obra → Edificio B [m]",
+            5.0, 50.0, 15.0, 1.0,
+            key="c3l2_s4_dist_b",
+        )
+    with p7:
+        cell_size = st.selectbox(
+            "Tamaño de discretización",
+            [5, 10],
+            format_func=lambda x: f"{x} × {x} m",
+            key="c3l2_s4_cell_size",
+        )
+
+    if setback * 2 >= site_length:
+        st.error("El margen operativo es demasiado grande para el largo seleccionado.")
+        return
+
+    q = 2.0
+    area = float(site_length * site_depth)
+    lw_per_m2 = lw_total - 10.0 * math.log10(area)
+
+    # Coordenadas en planta.
+    rec_a = (-float(dist_a), site_depth / 2.0)
+    rec_b = (float(site_length) + float(dist_b), site_depth / 2.0)
+    src_a = (float(setback), site_depth / 2.0)
+    src_b = (float(site_length) - float(setback), site_depth / 2.0)
+
+    def _s4_point_level(source_xy, receiver_xy):
+        r = max(
+            1.0,
+            math.hypot(
+                receiver_xy[0] - source_xy[0],
+                receiver_xy[1] - source_xy[1],
+            ),
+        )
+        lp = lw_total + 10.0 * math.log10(q / (4.0 * math.pi * r * r))
+        return lp, r
+
+    # Escenario puntual 1: peor posición respecto de A.
+    lp_aa, r_aa = _s4_point_level(src_a, rec_a)
+    lp_ab, r_ab = _s4_point_level(src_a, rec_b)
+
+    # Escenario puntual 2: peor posición respecto de B.
+    lp_ba, r_ba = _s4_point_level(src_b, rec_a)
+    lp_bb, r_bb = _s4_point_level(src_b, rec_b)
+
+    # Fuente de área discretizada.
+    nx = int(site_length / cell_size)
+    ny = int(site_depth / cell_size)
+    cell_area = float(cell_size * cell_size)
+    lw_cell = lw_per_m2 + 10.0 * math.log10(cell_area)
+
+    area_energy_a = []
+    area_energy_b = []
+    area_cells = []
+
+    for iy in range(ny):
+        for ix in range(nx):
+            x = (ix + 0.5) * cell_size
+            y = (iy + 0.5) * cell_size
+
+            ra = max(1.0, math.hypot(rec_a[0] - x, rec_a[1] - y))
+            rb = max(1.0, math.hypot(rec_b[0] - x, rec_b[1] - y))
+
+            lpa = lw_cell + 10.0 * math.log10(q / (4.0 * math.pi * ra * ra))
+            lpb = lw_cell + 10.0 * math.log10(q / (4.0 * math.pi * rb * rb))
+
+            area_energy_a.append(10.0 ** (lpa / 10.0))
+            area_energy_b.append(10.0 ** (lpb / 10.0))
+            area_cells.append((x, y, lpa, lpb))
+
+    lp_area_a = 10.0 * math.log10(sum(area_energy_a))
+    lp_area_b = 10.0 * math.log10(sum(area_energy_b))
+
+    reconstructed_lw = 10.0 * math.log10(
+        len(area_cells) * 10.0 ** (lw_cell / 10.0)
+    )
+
+    k1, k2, k3 = st.columns(3)
+    k1.metric("Área operacional", f"{area:.0f} m²")
+    k2.metric("Lw total", f"{lw_total:.1f} dB")
+    k3.metric("Lw''", f"{lw_per_m2:.1f} dB/m²")
+
+    st.caption(
+        f"Comprobación energética: al sumar las {len(area_cells)} celdas se reconstruyen "
+        f"{reconstructed_lw:.1f} dB de potencia sonora, frente a {lw_total:.1f} dB originales."
+    )
+
+    # ------------------------------------------------------------------
+    # 5 · VISUALIZACIÓN DE LOS TRES MODELOS
+    # ------------------------------------------------------------------
+    st.markdown("### 5. Compara las tres representaciones")
+
+    def _s4_scene(source_mode):
+        canvas_x0 = 225
+        canvas_w = 550
+        canvas_y0 = 115
+        canvas_h = 220
+
+        def sx(x):
+            x_min = -dist_a - 25.0
+            x_max = site_length + dist_b + 25.0
+            return canvas_x0 + (x - x_min) / (x_max - x_min) * canvas_w
+
+        sy_mid = canvas_y0 + canvas_h / 2.0
+        work_x1 = sx(0.0)
+        work_x2 = sx(float(site_length))
+
+        source_svg = ""
+        title = ""
+
+        if source_mode == "A":
+            px = sx(src_a[0])
+            source_svg = f'''
+              <circle cx="{px:.1f}" cy="{sy_mid:.1f}" r="22" fill="#d94c4c" stroke="#fff" stroke-width="4"/>
+              <text x="{px:.1f}" y="{sy_mid+5:.1f}" text-anchor="middle" class="w b" font-size="12">Lw</text>
+              <text x="{px:.1f}" y="{sy_mid+42:.1f}" text-anchor="middle" class="t b" font-size="12">peor para A</text>
+            '''
+            title = "ESCENARIO PUNTUAL · POSICIÓN MÁS CERCANA A A"
+        elif source_mode == "B":
+            px = sx(src_b[0])
+            source_svg = f'''
+              <circle cx="{px:.1f}" cy="{sy_mid:.1f}" r="22" fill="#d94c4c" stroke="#fff" stroke-width="4"/>
+              <text x="{px:.1f}" y="{sy_mid+5:.1f}" text-anchor="middle" class="w b" font-size="12">Lw</text>
+              <text x="{px:.1f}" y="{sy_mid+42:.1f}" text-anchor="middle" class="t b" font-size="12">peor para B</text>
+            '''
+            title = "ESCENARIO PUNTUAL · POSICIÓN MÁS CERCANA A B"
+        else:
+            source_svg = f'''
+              <rect x="{work_x1:.1f}" y="{canvas_y0+18:.1f}" width="{work_x2-work_x1:.1f}" height="{canvas_h-36:.1f}"
+                    rx="12" fill="#f59e0b" opacity=".68" stroke="#c77b00" stroke-width="3"/>
+              <text x="{(work_x1+work_x2)/2:.1f}" y="{sy_mid-8:.1f}" text-anchor="middle" class="w b" font-size="15">FUENTE DE ÁREA</text>
+              <text x="{(work_x1+work_x2)/2:.1f}" y="{sy_mid+16:.1f}" text-anchor="middle" class="w" font-size="13">Lw'' = {lw_per_m2:.1f} dB/m²</text>
+            '''
+            title = "UNA SOLA FUENTE DE ÁREA · TODA LA ZONA OPERACIONAL"
+
+        xa = sx(rec_a[0])
+        xb = sx(rec_b[0])
+
+        return f"""
+        <svg viewBox="0 0 1000 430" width="100%" style="background:#f7fbff;border:1px solid #d7e5ee;border-radius:18px">
+          <style>
+            .t{{font-family:Inter,Arial,sans-serif;fill:#263f50}}
+            .w{{font-family:Inter,Arial,sans-serif;fill:#fff}}
+            .b{{font-weight:850}}
+          </style>
+
+          <text x="500" y="38" text-anchor="middle" class="t b" font-size="17">{title}</text>
+
+          <rect x="{work_x1:.1f}" y="{canvas_y0:.1f}" width="{work_x2-work_x1:.1f}" height="{canvas_h:.1f}"
+                rx="14" fill="#ead9b6" stroke="#aa9166" stroke-width="3"/>
+          <text x="{(work_x1+work_x2)/2:.1f}" y="{canvas_y0+28:.1f}" text-anchor="middle" class="t b" font-size="13">OBRA · ZONA OPERACIONAL</text>
+
+          <rect x="{xa-92:.1f}" y="88" width="82" height="270" rx="7" fill="#b8c7d3" stroke="#718798" stroke-width="2"/>
+          <g fill="#6f95af">
+            <rect x="{xa-76:.1f}" y="112" width="18" height="26"/><rect x="{xa-43:.1f}" y="112" width="18" height="26"/>
+            <rect x="{xa-76:.1f}" y="163" width="18" height="26"/><rect x="{xa-43:.1f}" y="163" width="18" height="26"/>
+            <rect x="{xa-76:.1f}" y="214" width="18" height="26"/><rect x="{xa-43:.1f}" y="214" width="18" height="26"/>
+            <rect x="{xa-76:.1f}" y="265" width="18" height="26"/><rect x="{xa-43:.1f}" y="265" width="18" height="26"/>
+          </g>
+          <circle cx="{xa:.1f}" cy="{sy_mid:.1f}" r="11" fill="#18a36f"/>
+          <text x="{xa-51:.1f}" y="75" text-anchor="middle" class="t b" font-size="14">EDIFICIO A</text>
+          <text x="{xa:.1f}" y="{sy_mid+28:.1f}" text-anchor="middle" class="t b" font-size="11">R-A</text>
+
+          <rect x="{xb+10:.1f}" y="88" width="82" height="270" rx="7" fill="#b8c7d3" stroke="#718798" stroke-width="2"/>
+          <g fill="#6f95af">
+            <rect x="{xb+25:.1f}" y="112" width="18" height="26"/><rect x="{xb+58:.1f}" y="112" width="18" height="26"/>
+            <rect x="{xb+25:.1f}" y="163" width="18" height="26"/><rect x="{xb+58:.1f}" y="163" width="18" height="26"/>
+            <rect x="{xb+25:.1f}" y="214" width="18" height="26"/><rect x="{xb+58:.1f}" y="214" width="18" height="26"/>
+            <rect x="{xb+25:.1f}" y="265" width="18" height="26"/><rect x="{xb+58:.1f}" y="265" width="18" height="26"/>
+          </g>
+          <circle cx="{xb:.1f}" cy="{sy_mid:.1f}" r="11" fill="#18a36f"/>
+          <text x="{xb+51:.1f}" y="75" text-anchor="middle" class="t b" font-size="14">EDIFICIO B</text>
+          <text x="{xb:.1f}" y="{sy_mid+28:.1f}" text-anchor="middle" class="t b" font-size="11">R-B</text>
+
+          {source_svg}
+
+          <line x1="{work_x1:.1f}" y1="375" x2="{work_x2:.1f}" y2="375" stroke="#647b88" stroke-width="2"/>
+          <line x1="{work_x1:.1f}" y1="367" x2="{work_x1:.1f}" y2="383" stroke="#647b88" stroke-width="2"/>
+          <line x1="{work_x2:.1f}" y1="367" x2="{work_x2:.1f}" y2="383" stroke="#647b88" stroke-width="2"/>
+          <text x="{(work_x1+work_x2)/2:.1f}" y="402" text-anchor="middle" class="t b" font-size="12">{site_length} m</text>
+        </svg>
+        """
+
+    tab_a, tab_b, tab_area = st.tabs(
+        [
+            "Puntual · peor para A",
+            "Puntual · peor para B",
+            "Fuente de área",
+        ]
+    )
+
+    with tab_a:
+        components.html(_s4_scene("A"), height=450)
+        ca1, ca2 = st.columns(2)
+        ca1.metric("Lp en Receptor A", f"{lp_aa:.1f} dB")
+        ca2.metric("Lp en Receptor B", f"{lp_ab:.1f} dB")
+        st.caption(
+            f"La fuente está a {r_aa:.1f} m de A y a {r_ab:.1f} m de B."
+        )
+
+    with tab_b:
+        components.html(_s4_scene("B"), height=450)
+        cb1, cb2 = st.columns(2)
+        cb1.metric("Lp en Receptor A", f"{lp_ba:.1f} dB")
+        cb2.metric("Lp en Receptor B", f"{lp_bb:.1f} dB")
+        st.caption(
+            f"La fuente está a {r_ba:.1f} m de A y a {r_bb:.1f} m de B."
+        )
+
+    with tab_area:
+        components.html(_s4_scene("AREA"), height=450)
+        cc1, cc2 = st.columns(2)
+        cc1.metric("Lp en Receptor A", f"{lp_area_a:.1f} dB")
+        cc2.metric("Lp en Receptor B", f"{lp_area_b:.1f} dB")
+        st.caption(
+            f"La misma Lw total de {lw_total:.1f} dB se distribuye sobre {area:.0f} m² "
+            f"como Lw'' = {lw_per_m2:.1f} dB/m²."
+        )
+
+    # ------------------------------------------------------------------
+    # 6 · COMPARACIÓN PROFESIONAL
+    # ------------------------------------------------------------------
+    st.markdown("### 6. ¿Qué cambia al modelar?")
+
+    comparison = pd.DataFrame(
+        [
+            {
+                "Representación": "Puntual · peor para A",
+                "Lp en A [dB]": round(lp_aa, 1),
+                "Lp en B [dB]": round(lp_ab, 1),
+                "Geometría": "1 punto",
+                "Objetivo": "Máxima cercanía a A",
+            },
+            {
+                "Representación": "Puntual · peor para B",
+                "Lp en A [dB]": round(lp_ba, 1),
+                "Lp en B [dB]": round(lp_bb, 1),
+                "Geometría": "1 punto",
+                "Objetivo": "Máxima cercanía a B",
+            },
+            {
+                "Representación": "Fuente de área",
+                "Lp en A [dB]": round(lp_area_a, 1),
+                "Lp en B [dB]": round(lp_area_b, 1),
+                "Geometría": "1 superficie",
+                "Objetivo": "Zona operacional completa",
+            },
+        ]
+    )
+    st.dataframe(comparison, hide_index=True, use_container_width=True)
+
+    d1, d2 = st.columns(2)
+    with d1:
+        st.markdown("""
+        <div class="c3l2-card blue">
+          <div class="c3l2-k">PUNTUALES</div>
+          Para representar la posición más desfavorable respecto de A y B se construyen
+          <b>dos escenarios espaciales diferentes</b>.
+        </div>
+        """, unsafe_allow_html=True)
+    with d2:
+        st.markdown("""
+        <div class="c3l2-card orange">
+          <div class="c3l2-k">ÁREA</div>
+          La superficie permanece fija y los dos receptores se calculan
+          <b>simultáneamente en una sola modelación</b>.
+        </div>
+        """, unsafe_allow_html=True)
+
+    st.markdown("""
+    <div class="c3l2-note">
+      <b>Lectura profesional:</b> la ventaja de la fuente de área no es que siempre entregue un nivel mayor,
+      sino que permite representar de forma compacta una actividad cuya posición varía dentro de una superficie.
+      Esto puede reducir el número de configuraciones geométricas necesarias cuando existen varios receptores
+      alrededor de la zona de trabajo.
+    </div>
+    """, unsafe_allow_html=True)
+
+    # ------------------------------------------------------------------
+    # 7 · QUÉ PARTES DEL ÁREA DOMINAN CADA RECEPTOR
+    # ------------------------------------------------------------------
+    st.markdown("### 7. ¿Toda la superficie aporta igual?")
+    st.write(
+        "No. Aunque Lw'' sea uniforme, cada elemento de la superficie está a una distancia diferente de cada receptor. "
+        "Las zonas más próximas tienden a aportar más al receptor correspondiente."
+    )
+
+    left_contrib = sorted(area_cells, key=lambda row: row[2], reverse=True)[:5]
+    right_contrib = sorted(area_cells, key=lambda row: row[3], reverse=True)[:5]
+
+    e1, e2 = st.columns(2)
+    with e1:
+        st.markdown("**Celdas con mayor aporte individual a A**")
+        st.dataframe(
+            pd.DataFrame(
+                [
+                    {
+                        "x [m]": round(x, 1),
+                        "y [m]": round(y, 1),
+                        "Lp celda en A [dB]": round(lpa, 1),
+                    }
+                    for x, y, lpa, _ in left_contrib
+                ]
+            ),
+            hide_index=True,
+            use_container_width=True,
+        )
+    with e2:
+        st.markdown("**Celdas con mayor aporte individual a B**")
+        st.dataframe(
+            pd.DataFrame(
+                [
+                    {
+                        "x [m]": round(x, 1),
+                        "y [m]": round(y, 1),
+                        "Lp celda en B [dB]": round(lpb, 1),
+                    }
+                    for x, y, _, lpb in right_contrib
+                ]
+            ),
+            hide_index=True,
+            use_container_width=True,
+        )
+
+    st.info(
+        "Esto explica por qué una fuente de área puede atender simultáneamente receptores enfrentados: "
+        "para A predominan las porciones cercanas al lado A; para B predominan las porciones próximas al lado B."
+    )
+
+    # ------------------------------------------------------------------
+    # 8 · ACTIVIDAD DEL ALUMNO
+    # ------------------------------------------------------------------
+    st.markdown("### 8. Comprueba el criterio de modelación")
+
+    q1 = st.radio(
+        "¿Qué representa Lw'' en una fuente de área?",
+        [
+            "El nivel de presión sonora medido sobre el suelo.",
+            "El nivel de potencia sonora distribuido por unidad de superficie.",
+            "La atenuación producida por cada metro cuadrado.",
+        ],
+        index=None,
+        key="c3l2_s4_q1",
+    )
+
+    q2 = st.radio(
+        "¿Cuál es la principal ventaja de la fuente de área en el caso de los dos edificios?",
+        [
+            "Permite representar la zona operacional completa en una sola geometría y calcular ambos receptores.",
+            "Garantiza que ambos receptores reciben simultáneamente el máximo nivel puntual posible.",
+            "Hace innecesario conocer la potencia sonora de la actividad.",
+        ],
+        index=None,
+        key="c3l2_s4_q2",
+    )
+
+    q3 = st.radio(
+        "Si se necesita demostrar la peor condición instantánea de una excavadora concreta junto al Edificio A, ¿qué conviene hacer?",
+        [
+            "Comprobar explícitamente el escenario puntual desfavorable para A.",
+            "Usar siempre la fuente de área y asumir que será idéntica.",
+            "Eliminar el receptor B del modelo.",
+        ],
+        index=None,
+        key="c3l2_s4_q3",
+    )
+
+    explanation = st.text_area(
+        "Explica con tus palabras por qué una fuente de área puede reducir el trabajo de modelación cuando existen varios receptores alrededor de una obra.",
+        height=110,
+        key="c3l2_s4_explanation",
+    )
+
+    if _c3l2_role() == "Alumno" and st.button(
+        "Guardar Etapa 4",
+        type="primary",
+        use_container_width=True,
+        key="c3l2_s4_save",
+    ):
+        ok1 = q1 == "El nivel de potencia sonora distribuido por unidad de superficie."
+        ok2 = q2 == "Permite representar la zona operacional completa en una sola geometría y calcular ambos receptores."
+        ok3 = q3 == "Comprobar explícitamente el escenario puntual desfavorable para A."
+
+        if not ok1:
+            st.warning("Revisa la diferencia entre potencia sonora y presión sonora.")
+        elif not ok2:
+            st.warning("La ventaja aquí es espacial: una única superficie permite evaluar receptores en distintas direcciones.")
+        elif not ok3:
+            st.warning("Una fuente de área no reemplaza automáticamente una verificación puntual de máximo instantáneo.")
+        elif len(explanation.strip()) < 50:
+            st.warning("Desarrolla un poco más tu explicación.")
+        else:
+            _c3l2_complete(
+                saved,
+                4,
+                {
+                    "lw_total": lw_total,
+                    "site_length": site_length,
+                    "site_depth": site_depth,
+                    "area": area,
+                    "lw_per_m2": lw_per_m2,
+                    "cell_size": cell_size,
+                    "lp_point_worst_a": lp_aa,
+                    "lp_point_worst_b": lp_bb,
+                    "lp_area_a": lp_area_a,
+                    "lp_area_b": lp_area_b,
+                    "q1": q1,
+                    "q2": q2,
+                    "q3": q3,
+                    "explanation": explanation,
+                },
+            )
+            st.success("Etapa 4 guardada.")
+
+    if st.session_state.get("role") == "Docente":
+        with st.container(border=True):
+            st.markdown("##### 👩‍🏫 Pauta docente · ideas clave")
+            st.markdown(
+                "- **Lw''**: nivel de potencia sonora por unidad de superficie, no Lp.  \n"
+                "- **Puntual**: para dos receptores enfrentados se requieren posiciones desfavorables distintas.  \n"
+                "- **Área**: una única superficie representa la zona operacional y calcula ambos receptores.  \n"
+                "- **Cautela**: la distribución superficial equivalente no garantiza el máximo instantáneo de una máquina puntual."
+            )
 
 
 def _c3l2_stage5(lab,saved):
