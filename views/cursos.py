@@ -29712,8 +29712,10 @@ def _c3l2_stage4(lab,saved):
       <div class="c3l2-k">MODELACIÓN DE MAPAS DE RUIDO</div>
       <div class="c3l2-title">Una fuente de área representa una emisión distribuida sobre una superficie.</div>
       En una obra de construcción, una actividad puede desplazarse dentro de una zona operacional.
-      En vez de dibujar una posición puntual diferente para cada receptor, el software puede representar
-      la emisión mediante una <b>fuente de área horizontal</b> definida sobre el terreno.
+      Cuando la localización detallada de una parte, obra o acción no puede definirse previamente,
+      la Guía del SEA plantea delimitar un <b>polígono o área máxima de intervención</b> y evaluar
+      la <b>condición ambiental más desfavorable</b>. En modelación acústica, esa zona puede representarse,
+      cuando corresponda físicamente, mediante una <b>fuente de área horizontal</b> definida sobre el terreno.
     </div>
     """, unsafe_allow_html=True)
 
@@ -29769,20 +29771,30 @@ def _c3l2_stage4(lab,saved):
     st.markdown("### 2. ¿Cómo se define la emisión de una fuente de área?")
 
     st.write(
-        "CadnaA distingue entre el **PWL total** de la fuente y el **PWL'' por unidad de área**. "
-        "Cuando una fuente puntual móvil se representa sobre una superficie, la documentación de CadnaA "
-        "relaciona la potencia del evento, el número de eventos y el área de la siguiente forma:"
+        "Primero debe definirse la **emisión equivalente de la actividad**, expresada como "
+        "**Lw,eq [dB]** para el período y escenario que se está evaluando. Ese Lw,eq puede provenir de "
+        "una o varias máquinas, tiempos de operación, número de eventos u otra caracterización compatible "
+        "con la metodología de cálculo utilizada."
     )
 
-    st.latex(r"L_W=L_{W,\mathrm{Pt}}+10\log_{10}(Q)")
+    st.write(
+        "Una vez conocido Lw,eq, la fuente de área se caracteriza mediante el nivel de potencia sonora "
+        "por unidad de superficie:"
+    )
+
     st.latex(
-        r"L_W''=L_{W,\mathrm{Pt}}+10\log_{10}(Q)"
-        r"-10\log_{10}\left(\frac{S}{1\ \mathrm{m}^2}\right)"
+        r"\boxed{L_W''=L_{W,\mathrm{eq}}"
+        r"-10\log_{10}\left(\frac{S}{1\ \mathrm{m}^2}\right)}"
     )
 
     st.caption(
-        "Lw,Pt: potencia sonora del evento o fuente móvil · Q: número de eventos en el período de referencia "
-        "· S: superficie de la fuente de área."
+        "Lw,eq: nivel de potencia sonora equivalente de la actividad · "
+        "S: superficie total representada por la fuente de área."
+    )
+
+    st.info(
+        "Esta relación es general para expresar una potencia total equivalente por unidad de superficie. "
+        "La forma específica de obtener Lw,eq depende de cómo se caracterice la actividad en el modelo."
     )
 
     area_ex_svg = """
@@ -29831,14 +29843,14 @@ def _c3l2_stage4(lab,saved):
         st.markdown("""
         <div class="c3l2-card orange">
           <div class="c3l2-k">EJEMPLO</div>
-          Lw,Pt = <b>110 dB</b><br>
-          Q = <b>10 eventos</b><br>
-          S = <b>1.000 m²</b>
+          Lw,eq = <b>120 dB</b><br>
+          S = <b>1.000 m²</b><br><br>
+          La emisión equivalente ya fue determinada para el escenario de obra.
         </div>
         """, unsafe_allow_html=True)
     with exb:
-        st.latex(r"L_W=110+10\log_{10}(10)=120\ \mathrm{dB}")
         st.latex(r"L_W''=120-10\log_{10}(1000)")
+        st.latex(r"L_W''=120-30")
         st.latex(r"\boxed{L_W''=90\ \mathrm{dB/m^2}}")
 
     st.markdown("""
@@ -29848,6 +29860,21 @@ def _c3l2_stage4(lab,saved):
     </div>
     """, unsafe_allow_html=True)
 
+    st.markdown("""
+    <div class="c3l2-card green">
+      <div class="c3l2-k">CRITERIO SEA</div>
+      Cuando la localización detallada de una parte, obra o acción no puede definirse previamente,
+      puede delimitarse un <b>polígono de intervención máxima</b>. La predicción debe mantener un criterio
+      conservador y considerar la <b>condición ambiental más desfavorable</b> del escenario evaluado.
+    </div>
+    """, unsafe_allow_html=True)
+
+    st.caption(
+        "La Guía para la Predicción y Evaluación de Impactos por Ruido y Vibración en el SEIA "
+        "aporta el criterio ambiental de área máxima de intervención y condición más desfavorable; "
+        "la elección de una fuente de área como objeto acústico pertenece a la metodología de modelación."
+    )
+
     # ------------------------------------------------------------------
     # 3 · COMPARACIÓN INTERACTIVA EN UNA SOLA PLANTA
     # ------------------------------------------------------------------
@@ -29856,29 +29883,25 @@ def _c3l2_stage4(lab,saved):
     st.write(
         "La obra se ubica entre dos edificios. Los receptores A y B están en las fachadas que enfrentan la obra. "
         "Con fuentes puntuales, la ubicación espacial más desfavorable es distinta para cada receptor. "
-        "Con una fuente de área, la zona operacional completa se mantiene como una sola geometría."
+        "Con una fuente de área, la zona operacional completa se mantiene como una sola geometría. "
+        "La comparación permite ver que ambas representaciones responden a hipótesis espaciales distintas; "
+        "la fuente de área no garantiza por definición el máximo puntual en todos los receptores."
     )
 
-    p1, p2, p3, p4 = st.columns(4)
+    p1, p2, p3 = st.columns(3)
     with p1:
-        lw_pt = st.slider(
-            "Lw del evento puntual [dB]",
-            95.0, 120.0, 105.0, 1.0,
-            key="c3l2_s4_lw_pt",
+        lw_equiv = st.slider(
+            "Lw,eq de la actividad [dB]",
+            95.0, 130.0, 115.0, 1.0,
+            key="c3l2_s4_lw_equiv",
         )
     with p2:
-        events_q = st.slider(
-            "Eventos Q",
-            1, 20, 5, 1,
-            key="c3l2_s4_events_q",
-        )
-    with p3:
         site_length = st.slider(
             "Largo de la obra [m]",
             40, 100, 60, 10,
             key="c3l2_s4_length",
         )
-    with p4:
+    with p3:
         site_depth = st.slider(
             "Ancho de la obra [m]",
             20, 60, 30, 10,
@@ -29911,7 +29934,6 @@ def _c3l2_stage4(lab,saved):
         return
 
     # Misma emisión equivalente para las dos representaciones.
-    lw_equiv = lw_pt + 10.0 * math.log10(events_q)
     area = float(site_length * site_depth)
     lw_per_m2 = lw_equiv - 10.0 * math.log10(area)
 
@@ -30141,7 +30163,7 @@ def _c3l2_stage4(lab,saved):
     )
 
     explanation = st.text_area(
-        "Explica cuándo usarías una fuente puntual y cuándo una fuente de área para representar maquinaria de una obra.",
+        "Explica cuándo usarías una fuente puntual y cuándo una fuente de área para representar maquinaria de una obra, considerando además el área máxima de intervención y la condición más desfavorable.",
         height=110,
         key="c3l2_s4_explanation",
     )
@@ -30169,8 +30191,6 @@ def _c3l2_stage4(lab,saved):
                 saved,
                 4,
                 {
-                    "lw_pt": lw_pt,
-                    "events_q": events_q,
                     "lw_equiv": lw_equiv,
                     "area": area,
                     "lw_per_m2": lw_per_m2,
@@ -30191,8 +30211,10 @@ def _c3l2_stage4(lab,saved):
             st.markdown("##### 👩‍🏫 Pauta docente · ideas clave")
             st.markdown(
                 "- **Fuente de área**: superficie emisora caracterizada por Lw'' [dB/m²].  \n"
-                "- **CadnaA · fuente móvil sobre área**: Lw = Lw,Pt + 10 log Q y Lw'' = Lw,Pt + 10 log Q − 10 log S.  \n"
-                "- **Comparación**: punto y área pueden conservar la misma emisión equivalente y dar distinto Lp porque cambia la distribución espacial.  \n"
+                "- **Fuente de área**: superficie emisora caracterizada por Lw'' [dB/m²].  \n"
+                "- **Relación general**: Lw'' = Lw,eq − 10 log S.  \n"
+                "- **SEA**: cuando la ubicación detallada no está definida, se delimita un área máxima de intervención y se evalúa la condición más desfavorable.  \n"
+                "- **Comparación**: punto y área pueden usar la misma emisión equivalente y dar distinto Lp porque cambia la distribución espacial.  \n"
                 "- **Geometría**: edificios, receptores y obra deben analizarse en una misma vista en planta."
             )
 
