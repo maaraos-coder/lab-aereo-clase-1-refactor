@@ -29454,67 +29454,192 @@ def _c3l2_stage3(lab,saved):
     </div>
     """, unsafe_allow_html=True)
 
-    st.markdown("### 7. Conversor idealizado · Lw ↔ Lp")
+    st.markdown("### 7. Practica · calcula Lp a partir de Lw")
     st.write(
-        "En campo libre ideal, si conocemos la distancia y Q podemos **relacionar** ambas magnitudes. "
-        "Lw sigue siendo una propiedad de la fuente y Lp sigue siendo el nivel de presión en un punto: "
-        "la ecuación solo permite estimar una a partir de la otra bajo los supuestos del modelo."
+        "Resuelve los siguientes cinco casos usando la relación idealizada entre **Lw, Q, r y Lp**. "
+        "En cada ejercicio observa primero **dónde está ubicada la fuente**, identifica el valor de Q, "
+        "calcula Lp y escribe tu resultado. Al presionar **Comprobar** aparecerá el desarrollo completo."
     )
 
-    conv_mode = st.segmented_control(
-        "Dirección del cálculo",
-        ["Lw → Lp", "Lp → Lw"],
-        default="Lw → Lp",
-        key="c3l2_s3_conv_mode",
-    )
-    cc1, cc2, cc3 = st.columns(3)
-    with cc1:
-        conv_level = st.number_input(
-            "Lw de entrada [dB]" if conv_mode == "Lw → Lp" else "Lp medido [dB]",
-            min_value=20.0,
-            max_value=140.0,
-            value=95.0 if conv_mode == "Lw → Lp" else 63.0,
-            step=0.5,
-            key="c3l2_s3_conv_level",
-        )
-    with cc2:
-        conv_r = st.number_input(
-            "Distancia r [m]",
-            min_value=0.5,
-            max_value=500.0,
-            value=10.0,
-            step=0.5,
-            key="c3l2_s3_conv_r",
-        )
-    with cc3:
-        conv_q = st.selectbox(
-            "Factor Q",
-            [1, 2],
-            format_func=lambda x: "Q = 1 · 4π" if x == 1 else "Q = 2 · 2π",
-            key="c3l2_s3_conv_q",
+    st.latex(r"L_p=L_W+10\log_{10}\left(\frac{Q}{4\pi r^2}\right)")
+
+    exercise_cases = [
+        {
+            "id": "e1",
+            "title": "Ejercicio 1 · Ventilador suspendido",
+            "context": "Fuente suspendida, alejada de superficies reflectantes próximas.",
+            "lw": 92.0, "r": 5.0, "q": 1,
+            "q_text": "Q = 1 · espacio completo 4π",
+            "scene": "suspended",
+        },
+        {
+            "id": "e2",
+            "title": "Ejercicio 2 · Compresor sobre piso rígido",
+            "context": "Equipo apoyado sobre un plano rígido reflectante.",
+            "lw": 100.0, "r": 10.0, "q": 2,
+            "q_text": "Q = 2 · medio espacio 2π",
+            "scene": "floor",
+        },
+        {
+            "id": "e3",
+            "title": "Ejercicio 3 · Unidad junto a piso y pared",
+            "context": "Fuente próxima a dos planos rígidos perpendiculares.",
+            "lw": 98.0, "r": 8.0, "q": 4,
+            "q_text": "Q = 4 · cuarto de espacio",
+            "scene": "wall_floor",
+        },
+        {
+            "id": "e4",
+            "title": "Ejercicio 4 · Equipo en rincón",
+            "context": "Fuente ubicada en la intersección ideal de tres planos rígidos.",
+            "lw": 105.0, "r": 12.0, "q": 8,
+            "q_text": "Q = 8 · octavo de espacio",
+            "scene": "corner",
+        },
+        {
+            "id": "e5",
+            "title": "Ejercicio 5 · Parlante suspendido",
+            "context": "Fuente suspendida en campo libre ideal a menor distancia.",
+            "lw": 88.0, "r": 3.0, "q": 1,
+            "q_text": "Q = 1 · espacio completo 4π",
+            "scene": "speaker",
+        },
+    ]
+
+    exercise_results = {}
+
+    for idx, ex in enumerate(exercise_cases, start=1):
+        expected_lp = ex["lw"] + 10 * math.log10(ex["q"] / (4 * math.pi * ex["r"]**2))
+        exercise_results[ex["id"]] = expected_lp
+
+        st.markdown(f"#### {ex['title']}")
+
+        scene = ex["scene"]
+        floor = scene in ("floor", "wall_floor", "corner")
+        left_wall = scene in ("wall_floor", "corner")
+        right_wall = scene == "corner"
+
+        floor_svg = '<rect x="55" y="285" width="610" height="48" rx="5" fill="#8f9ca4"/><line x1="55" y1="285" x2="665" y2="285" stroke="#4f606a" stroke-width="5"/>' if floor else ""
+        left_wall_svg = '<rect x="55" y="65" width="42" height="220" fill="#9da9b0"/><line x1="97" y1="65" x2="97" y2="285" stroke="#4f606a" stroke-width="5"/>' if left_wall else ""
+        right_wall_svg = '<polygon points="665,95 620,125 620,285 665,285" fill="#87959d"/><line x1="620" y1="125" x2="620" y2="285" stroke="#4f606a" stroke-width="5"/>' if right_wall else ""
+
+        source_y = 215 if floor else 175
+        source_x = 160 if left_wall else 190
+
+        if scene == "speaker":
+            source_shape = f'''
+              <rect x="{source_x-34}" y="{source_y-44}" width="68" height="88" rx="10" fill="#263f50"/>
+              <circle cx="{source_x}" cy="{source_y-16}" r="14" fill="#8fc8df"/>
+              <circle cx="{source_x}" cy="{source_y+18}" r="22" fill="#176ea5"/>
+            '''
+        else:
+            source_shape = f'''
+              <rect x="{source_x-48}" y="{source_y-34}" width="96" height="68" rx="12" fill="#176ea5"/>
+              <rect x="{source_x-30}" y="{source_y-15}" width="40" height="23" rx="5" fill="#c7e7f4"/>
+              <circle cx="{source_x+29}" cy="{source_y}" r="12" fill="#0f5275"/>
+            '''
+
+        svg = f"""
+        <svg viewBox="0 0 760 360" width="100%" style="background:#f7fbff;border:1px solid #d5e4ec;border-radius:16px">
+          <style>.t{{font-family:Inter,Arial,sans-serif;fill:#263f50}}.b{{font-weight:850}}.m{{fill:#647b88}}</style>
+          {floor_svg}
+          {left_wall_svg}
+          {right_wall_svg}
+
+          <g>
+            {source_shape}
+            <text x="{source_x}" y="{source_y-62}" text-anchor="middle" class="t b" font-size="15">FUENTE</text>
+            <text x="{source_x}" y="{source_y+62}" text-anchor="middle" class="t b" font-size="15">Lw = {ex['lw']:.0f} dB</text>
+          </g>
+
+          <line x1="{source_x+60}" y1="{source_y}" x2="520" y2="{source_y}" stroke="#748995" stroke-width="2.5" stroke-dasharray="9 7"/>
+          <rect x="305" y="{source_y-38}" width="92" height="28" rx="10" fill="#fff" stroke="#cad9e2"/>
+          <text x="351" y="{source_y-19}" text-anchor="middle" class="t b" font-size="13">r = {ex['r']:.0f} m</text>
+
+          <g>
+            <rect x="500" y="{source_y-42}" width="44" height="82" rx="9" fill="#263f50"/>
+            <rect x="508" y="{source_y-27}" width="28" height="26" rx="4" fill="#bce5d4"/>
+            <rect x="516" y="{source_y-61}" width="12" height="21" rx="5" fill="#657983"/>
+            <circle cx="522" cy="{source_y-65}" r="8" fill="#95a8b1"/>
+            <text x="522" y="{source_y+65}" text-anchor="middle" class="t b" font-size="14">SONÓMETRO</text>
+            <text x="522" y="{source_y+84}" text-anchor="middle" class="t m" font-size="12">¿Lp = ?</text>
+          </g>
+
+          <rect x="565" y="68" width="160" height="105" rx="14" fill="#ffffff" stroke="#d5e1e8"/>
+          <text x="645" y="95" text-anchor="middle" class="t b" font-size="14">DATOS</text>
+          <text x="645" y="119" text-anchor="middle" class="t" font-size="13">Lw = {ex['lw']:.0f} dB</text>
+          <text x="645" y="140" text-anchor="middle" class="t" font-size="13">r = {ex['r']:.0f} m</text>
+          <text x="645" y="161" text-anchor="middle" class="t b" font-size="13">Q = {ex['q']}</text>
+        </svg>
+        """
+        components.html(svg, height=380)
+
+        st.caption(ex["context"] + " · " + ex["q_text"])
+
+        answer = st.number_input(
+            "Tu resultado para Lp [dB]",
+            min_value=0.0,
+            max_value=150.0,
+            value=None,
+            step=0.1,
+            key=f"c3l2_s3_{ex['id']}_answer",
+            placeholder="Ingresa tu resultado",
         )
 
-    geom_term = 10 * math.log10(conv_q / (4 * math.pi * conv_r * conv_r))
-    if conv_mode == "Lw → Lp":
-        conv_result = conv_level + geom_term
-        st.latex(r"L_p=L_W+10\log_{10}\left(\frac{Q}{4\pi r^2}\right)")
-        st.success(
-            f"Con Lw = {conv_level:.1f} dB, r = {conv_r:.1f} m y Q = {conv_q}, "
-            f"el modelo ideal estima Lp ≈ {conv_result:.1f} dB."
-        )
-    else:
-        conv_result = conv_level - geom_term
-        st.latex(r"L_W=L_p-10\log_{10}\left(\frac{Q}{4\pi r^2}\right)")
-        st.success(
-            f"Con Lp = {conv_level:.1f} dB medido a {conv_r:.1f} m y Q = {conv_q}, "
-            f"el modelo ideal estima Lw ≈ {conv_result:.1f} dB."
-        )
+        if st.button(
+            "Comprobar",
+            key=f"c3l2_s3_{ex['id']}_check",
+            type="primary",
+            use_container_width=True,
+        ):
+            st.session_state[f"c3l2_s3_{ex['id']}_shown"] = True
+            if answer is None:
+                st.session_state[f"c3l2_s3_{ex['id']}_correct"] = False
+                st.session_state[f"c3l2_s3_{ex['id']}_empty"] = True
+            else:
+                st.session_state[f"c3l2_s3_{ex['id']}_empty"] = False
+                st.session_state[f"c3l2_s3_{ex['id']}_correct"] = abs(answer - expected_lp) <= 0.5
 
-    st.warning(
-        "La conversión inversa Lp → Lw solo es válida si el modelo describe adecuadamente el campo acústico. "
-        "En una situación real deben considerarse directividad real, reflexiones, suelo, absorción atmosférica, "
-        "ruido de fondo y las correcciones del método de ensayo."
+        if st.session_state.get(f"c3l2_s3_{ex['id']}_shown", False):
+            if st.session_state.get(f"c3l2_s3_{ex['id']}_empty", False):
+                st.warning("Ingresa primero un valor de Lp y vuelve a comprobar.")
+            elif st.session_state.get(f"c3l2_s3_{ex['id']}_correct", False):
+                st.success(f"Correcto. Lp ≈ {expected_lp:.1f} dB.")
+            else:
+                st.error(f"Revisa el cálculo. El resultado esperado es aproximadamente {expected_lp:.1f} dB.")
+
+            st.markdown("##### Desarrollo")
+            st.latex(r"L_p=L_W+10\log_{10}\left(\frac{Q}{4\pi r^2}\right)")
+            st.latex(
+                rf"L_p={ex['lw']:.0f}+10\log_{{10}}\left("
+                rf"\frac{{{ex['q']}}}{{4\pi({ex['r']:.0f})^2}}\right)"
+            )
+            geom = 10 * math.log10(ex["q"] / (4 * math.pi * ex["r"]**2))
+            st.latex(rf"10\log_{{10}}\left(\frac{{{ex['q']}}}{{4\pi({ex['r']:.0f})^2}}\right)\approx {geom:.1f}\ \mathrm{{dB}}")
+            st.latex(rf"L_p\approx {ex['lw']:.0f}+({geom:.1f})={expected_lp:.1f}\ \mathrm{{dB}}")
+
+            if ex["q"] == 1:
+                q_explain = "Q = 1 representa radiación ideal en espacio completo."
+            elif ex["q"] == 2:
+                q_explain = "Q = 2 representa radiación ideal en medio espacio sobre un plano reflectante."
+            elif ex["q"] == 4:
+                q_explain = "Q = 4 representa, idealmente, una fuente asociada a dos planos reflectantes perpendiculares."
+            else:
+                q_explain = "Q = 8 representa, idealmente, una fuente asociada a tres planos reflectantes perpendiculares."
+
+            st.info(
+                f"{q_explain} El Lw de la fuente sigue siendo {ex['lw']:.0f} dB; "
+                f"Q y la distancia determinan el Lp estimado en la posición del sonómetro."
+            )
+
+        st.markdown("---")
+
+    solved_count = sum(
+        1 for ex in exercise_cases
+        if st.session_state.get(f"c3l2_s3_{ex['id']}_correct", False)
     )
+    st.progress(solved_count / len(exercise_cases))
+    st.caption(f"Ejercicios correctos: {solved_count} de {len(exercise_cases)}")
 
     st.markdown("### 8. Comprueba el concepto")
     q1 = st.radio(
@@ -29572,11 +29697,13 @@ def _c3l2_stage3(lab,saved):
                     "q1": q1,
                     "q2": q2,
                     "q3": q3,
-                    "conversion_mode": conv_mode,
-                    "conversion_input": conv_level,
-                    "conversion_r": conv_r,
-                    "conversion_q": conv_q,
-                    "conversion_result": conv_result,
+                    "exercise_results": {
+                        ex["id"]: {
+                            "answer": st.session_state.get(f"c3l2_s3_{ex['id']}_answer"),
+                            "correct": st.session_state.get(f"c3l2_s3_{ex['id']}_correct", False),
+                        }
+                        for ex in exercise_cases
+                    },
                     "explanation": explanation,
                 },
             )
