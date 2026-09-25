@@ -28485,154 +28485,332 @@ La clasificación depende de la relación entre dimensiones/extensión efectiva 
 
 
 def _c3l2_stage3(lab,saved):
-    _c3l2_header(3,"Fuente de área","Comprender cuándo una superficie emisora debe representarse como área y cómo cambia su comportamiento aparente con la distancia.",25)
+    _c3l2_header(
+        3,
+        "Fuente de área",
+        "Reconocer cuándo una actividad sonora ocupa una superficie y representarla geométricamente sin introducir todavía magnitudes de emisión.",
+        25,
+    )
 
     st.markdown("""
     <div class="c3l2-intro">
       <div class="c3l2-k">TERCERA GEOMETRÍA</div>
-      <div class="c3l2-title">Una fuente de área representa emisión distribuida sobre una superficie.</div>
-      En vez de concentrar toda la emisión en un punto o a lo largo de una línea,
-      el modelo reparte la <b>potencia sonora sobre un área activa</b>. Esto resulta útil cuando
-      las fuentes ocupan o recorren una superficie relevante y su posición instantánea no es fija.
-      La elección del modelo sigue dependiendo de la <b>escala entre dimensiones de la fuente y distancia al receptor</b>.
+      <div class="c3l2-title">Una fuente de área aparece cuando la actividad sonora se distribuye sobre una superficie.</div>
+      No necesitamos todavía calcular cuánto emite la fuente. Primero debemos responder una pregunta más básica:
+      <b>¿dónde ocurre espacialmente la actividad que genera el sonido?</b>
+      Si no está concentrada en un punto ni sigue principalmente una línea, sino que ocupa una zona,
+      puede representarse mediante un <b>área</b>.
     </div>
     """,unsafe_allow_html=True)
 
-    st.markdown("### 1. ¿Qué significa realmente «fuente de área»?")
-    st.markdown("""
-    <div class="c3l2-grid2">
-      <div class="c3l2-card orange">
-        <div class="c3l2-k">DISTRIBUCIÓN ESPACIAL</div>
-        <b>La energía acústica se asigna a una superficie finita.</b><br>
-        Cada pequeña porción del área puede entenderse como una contribución elemental.
-        El receptor recibe la suma energética de todas esas contribuciones, cada una con su propia distancia y trayectoria.
-      </div>
-      <div class="c3l2-card blue">
-        <div class="c3l2-k">NO ES «UN NIVEL DE PRESIÓN REPARTIDO»</div>
-        <b>Lo que se distribuye es la emisión de la fuente.</b><br>
-        En modelación se puede ingresar una potencia sonora total distribuida sobre el área
-        o una <b>potencia sonora por unidad de superficie</b>, según el software y el método utilizado.
-      </div>
-    </div>
-    """,unsafe_allow_html=True)
-
-    st.markdown("#### Relación didáctica · potencia total y potencia por unidad de área")
-    st.latex(r"L_{W,\,A}=L_{W,\,tot}-10\log_{10}\left(\frac{S}{1\ \mathrm{m}^2}\right)")
-    st.latex(r"L_{W,\,tot}=L_{W,\,A}+10\log_{10}\left(\frac{S}{1\ \mathrm{m}^2}\right)")
-    st.caption(
-        "L_W,A representa aquí un nivel de potencia sonora uniformemente distribuido por unidad de superficie. "
-        "Es una formulación didáctica: la nomenclatura y el dato de entrada exacto pueden variar entre modelos y programas."
+    st.markdown("### 1. Mira primero la geometría")
+    st.write(
+        "Antes de usar números, compara cómo ocupa el espacio cada tipo de fuente. "
+        "La diferencia principal está en la forma espacial que representa mejor la actividad."
     )
 
-    st.markdown("### 2. Ejemplo profesional · obra de construcción")
-    st.markdown("""
-    <div class="c3l2-card orange">
-      <div class="c3l2-k">CASO · FAENA CON EQUIPOS MÓVILES</div>
-      <b>Excavadora + cargador frontal + camiones + compactador dentro de un predio.</b><br><br>
-      Durante una jornada, varias máquinas pueden desplazarse por distintas zonas de la obra.
-      Si no existe una posición fija representativa para cada equipo, una alternativa de modelación es definir
-      el <b>área activa de la faena</b> y distribuir sobre ella la potencia sonora asociada al escenario analizado.<br><br>
-      Por ejemplo, para un escenario de alta actividad se puede sumar energéticamente la potencia sonora de los equipos
-      considerados simultáneamente y luego distribuir esa potencia total sobre el área donde razonablemente pueden operar.
-    </div>
-    """,unsafe_allow_html=True)
+    geometry_svg = """
+    <svg viewBox="0 0 1080 330" width="100%" style="background:#f7fbff;border:1px solid #d7e5ee;border-radius:18px">
+      <style>
+        .ttl{font:800 18px Inter,Arial,sans-serif;fill:#1f3442}
+        .sub{font:500 14px Inter,Arial,sans-serif;fill:#617887}
+        .lbl{font:800 13px Inter,Arial,sans-serif;fill:#ffffff}
+      </style>
 
-    st.markdown("""
-    <div class="c3l2-warn">
-      <b>Importante:</b> modelar la obra como fuente de área no convierte automáticamente el resultado en el
-      «peor caso posible». Es un <b>escenario espacial simplificado</b>. La condición más desfavorable para un receptor
-      puede ocurrir si uno o más equipos trabajan cerca del límite del predio. Por eso deben declararse las hipótesis:
-      equipos simultáneos, área activa, tiempo de operación y criterio usado para distribuir la potencia.
-    </div>
-    """,unsafe_allow_html=True)
+      <rect x="30" y="28" width="320" height="270" rx="18" fill="#ffffff" stroke="#cfe0ea"/>
+      <text x="190" y="62" text-anchor="middle" class="ttl">FUENTE PUNTUAL</text>
+      <text x="190" y="84" text-anchor="middle" class="sub">actividad localizada</text>
+      <circle cx="190" cy="176" r="24" fill="#1689d8"/>
+      <circle cx="190" cy="176" r="55" fill="none" stroke="#1689d8" stroke-width="3" opacity=".55"/>
+      <circle cx="190" cy="176" r="88" fill="none" stroke="#1689d8" stroke-width="2" opacity=".28"/>
+      <text x="190" y="266" text-anchor="middle" class="sub">Ej.: equipo compacto</text>
 
-    # Ejemplo numérico sencillo de potencia distribuida.
-    st.markdown("#### Mini ejemplo")
-    cex1,cex2=st.columns(2)
-    total_lw=cex1.slider("Potencia sonora total del escenario Lw,tot [dB]",90,120,108,key="c3l2_s3_total_lw")
-    active_area=cex2.slider("Área activa de la obra [m²]",100,10000,2000,100,key="c3l2_s3_area")
-    lw_area=total_lw-10*math.log10(active_area)
-    a1,a2,a3=st.columns(3)
-    a1.metric("Lw,total",f"{total_lw} dB")
-    a2.metric("Área activa",f"{active_area:,} m²".replace(",","."))
-    a3.metric("Lw por m²",f"{lw_area:.1f} dB/m²")
-    st.caption(
-        "Interpretación: el modelo conserva la potencia sonora total del escenario, pero la reparte uniformemente "
-        "sobre el área activa. Después, el cálculo de propagación determina el nivel en cada receptor."
-    )
-
-    st.markdown("### 3. Compara las tres idealizaciones")
-    st.markdown("""
-    <div class="c3l2-grid">
-      <div class="c3l2-card blue"><div class="c3l2-k">PUNTUAL</div><b>Dimensiones pequeñas respecto de r</b><br>La fuente puede tratarse como compacta desde el receptor.</div>
-      <div class="c3l2-card green"><div class="c3l2-k">LINEAL</div><b>Una dimensión domina</b><br>La emisión se extiende principalmente a lo largo de un eje.</div>
-      <div class="c3l2-card orange"><div class="c3l2-k">DE ÁREA</div><b>Dos dimensiones son relevantes</b><br>La emisión está distribuida sobre una superficie.</div>
-    </div>
-    """,unsafe_allow_html=True)
-
-    st.markdown("### 4. Laboratorio geométrico · ¿qué ve el receptor?")
-    c1,c2,c3=st.columns(3)
-    width=c1.slider("Ancho de la superficie [m]",5.0,80.0,30.0,1.0,key="c3l2_s3_width")
-    height=c2.slider("Alto de la superficie [m]",3.0,40.0,15.0,1.0,key="c3l2_s3_height")
-    distance=c3.slider("Distancia del receptor [m]",2.0,200.0,20.0,2.0,key="c3l2_s3_distance")
-    characteristic=max(width,height)
-    ratio=distance/characteristic if characteristic else 0.0
-    if ratio<1:
-        scale_text="Receptor muy próximo: la extensión de la superficie domina la geometría."
-        scale_label="r < D"
-    elif ratio<3:
-        scale_text="Distancia comparable con la dimensión de la fuente: la aproximación de área sigue siendo importante."
-        scale_label="r ≈ D"
-    else:
-        scale_text="Distancia varias veces mayor que la dimensión característica: la fuente empieza a verse más compacta."
-        scale_label="r ≫ D"
-
-    area_html=f"""
-    <svg viewBox="0 0 930 330" width="100%" style="background:#f4fbff;border:1px solid #d6e6ee;border-radius:16px">
-      <defs><linearGradient id="fa" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#f59e0b"/><stop offset="100%" stop-color="#ea580c"/></linearGradient></defs>
-      <rect x="90" y="75" width="260" height="180" rx="12" fill="url(#fa)" opacity=".85"/>
-      <g fill="#fff" opacity=".85">
-        <circle cx="135" cy="120" r="8"/><circle cx="220" cy="120" r="8"/><circle cx="305" cy="120" r="8"/>
-        <circle cx="135" cy="205" r="8"/><circle cx="220" cy="205" r="8"/><circle cx="305" cy="205" r="8"/>
+      <rect x="380" y="28" width="320" height="270" rx="18" fill="#ffffff" stroke="#cfe0ea"/>
+      <text x="540" y="62" text-anchor="middle" class="ttl">FUENTE LINEAL</text>
+      <text x="540" y="84" text-anchor="middle" class="sub">actividad extendida en un eje</text>
+      <line x1="435" y1="176" x2="645" y2="176" stroke="#18a36f" stroke-width="16" stroke-linecap="round"/>
+      <g fill="#18a36f" opacity=".38">
+        <circle cx="455" cy="176" r="42"/><circle cx="505" cy="176" r="42"/>
+        <circle cx="555" cy="176" r="42"/><circle cx="605" cy="176" r="42"/>
       </g>
-      <text x="220" y="48" text-anchor="middle" font-size="17" font-weight="850" fill="#263f50">superficie emisora {width:.0f} × {height:.0f} m</text>
-      <line x1="350" y1="165" x2="760" y2="165" stroke="#67808f" stroke-width="2" stroke-dasharray="8 7"/>
-      <circle cx="760" cy="165" r="14" fill="#079dcc" stroke="#fff" stroke-width="4"/>
-      <text x="760" y="138" text-anchor="middle" font-size="15" font-weight="850" fill="#263f50">receptor</text>
-      <text x="555" y="150" text-anchor="middle" font-size="14" fill="#526c7b">r = {distance:.0f} m</text>
-      <text x="555" y="285" text-anchor="middle" font-size="15" font-weight="850" fill="#0b789f">{scale_label} · r/D = {ratio:.2f}</text>
+      <line x1="435" y1="176" x2="645" y2="176" stroke="#ffffff" stroke-width="3" stroke-dasharray="12 10"/>
+      <text x="540" y="266" text-anchor="middle" class="sub">Ej.: vía con flujo continuo</text>
+
+      <rect x="730" y="28" width="320" height="270" rx="18" fill="#ffffff" stroke="#cfe0ea"/>
+      <text x="890" y="62" text-anchor="middle" class="ttl">FUENTE DE ÁREA</text>
+      <text x="890" y="84" text-anchor="middle" class="sub">actividad distribuida en una superficie</text>
+      <rect x="790" y="118" width="200" height="125" rx="14" fill="#f59e0b" opacity=".82"/>
+      <g fill="#ffffff" opacity=".94">
+        <circle cx="825" cy="151" r="8"/><circle cx="885" cy="148" r="8"/><circle cx="950" cy="155" r="8"/>
+        <circle cx="840" cy="205" r="8"/><circle cx="910" cy="198" r="8"/><circle cx="965" cy="216" r="8"/>
+      </g>
+      <text x="890" y="266" text-anchor="middle" class="sub">Ej.: patio industrial</text>
     </svg>
     """
-    components.html(area_html,height=350)
-    st.markdown(f'<div class="c3l2-note"><b>Lectura de escala:</b> {scale_text}</div>',unsafe_allow_html=True)
+    components.html(geometry_svg,height=350)
 
-    st.markdown("### 5. Otros ejemplos profesionales")
-    examples=[
-        ("Fachada industrial radiante","Una gran fachada con paneles o aberturas que emiten sobre una superficie."),
-        ("Cubierta técnica","Muchos equipos distribuidos sobre una cubierta extensa pueden formar una fuente espacialmente distribuida."),
-        ("Obra de construcción","Maquinaria móvil o de posición variable puede representarse mediante un área activa cuando la hipótesis de modelación lo justifica."),
-        ("Patio industrial","Operaciones distribuidas sobre una superficie requieren representar ubicación y extensión, no solo un punto."),
-        ("Panel o placa vibrante","Una superficie grande que radia sonido puede analizarse como fuente de área en la escala adecuada."),
-    ]
-    for title,desc in examples:
-        with st.container(border=True):
-            st.markdown(f"**{title}**")
-            st.caption(desc)
+    st.markdown("""
+    <div class="c3l2-note">
+      <b>Idea clave:</b> punto, línea y área son formas de representar espacialmente un problema acústico.
+      No significan necesariamente que exista una sola fuente física. Varias fuentes individuales pueden,
+      según el caso y la escala del análisis, representarse como una actividad distribuida.
+    </div>
+    """,unsafe_allow_html=True)
 
-    st.markdown("### 6. Decide según la escala")
-    case=st.radio(
-        "Una fachada emisora mide 40 m de largo y 18 m de alto. El receptor está a 12 m. ¿Qué aproximación inicial describe mejor la geometría?",
-        ["Fuente puntual","Fuente lineal","Fuente de área"],
-        index=None,key="c3l2_s3_case"
+    st.markdown("### 2. De una escena real a una fuente de área")
+    st.write(
+        "Imagina un patio industrial donde camiones y maquinaria cambian de posición durante la operación. "
+        "La realidad contiene muchas fuentes individuales, pero la actividad ocurre dentro de una zona."
     )
-    why=st.text_area("Justifica comparando dimensiones de la fuente y distancia al receptor.",height=90,key="c3l2_s3_why")
-    if _c3l2_role()=="Alumno" and st.button("Guardar Etapa 3",type="primary",use_container_width=True,key="c3l2_s3_save"):
-        if case!="Fuente de área" or len(why.strip())<30:
-            st.warning("La fachada conserva dos dimensiones relevantes frente a una distancia de solo 12 m.")
+
+    transform = st.segmented_control(
+        "Representación",
+        ["Escena real","Simplificación espacial"],
+        default="Escena real",
+        key="c3l2_s3_transform",
+    )
+
+    if transform=="Escena real":
+        scene_svg = """
+        <svg viewBox="0 0 1000 390" width="100%" style="background:#eef6f8;border:1px solid #d2e2e8;border-radius:18px">
+          <style>.t{font-family:Inter,Arial,sans-serif;fill:#263f50}.b{font-weight:850}</style>
+          <rect x="80" y="75" width="650" height="245" rx="18" fill="#e9d7b0" stroke="#b99c68" stroke-width="3"/>
+          <text x="405" y="54" text-anchor="middle" class="t b" font-size="18">PATIO INDUSTRIAL · VISTA SUPERIOR</text>
+
+          <g transform="translate(130,120)">
+            <rect width="105" height="48" rx="9" fill="#f28b30"/><rect x="70" y="8" width="30" height="30" rx="4" fill="#d9edf7"/>
+            <circle cx="22" cy="52" r="10" fill="#27313a"/><circle cx="82" cy="52" r="10" fill="#27313a"/>
+          </g>
+          <g transform="translate(360,118)">
+            <rect width="85" height="56" rx="8" fill="#e7b416"/><rect x="64" y="15" width="55" height="12" rx="6" fill="#8b6d16"/>
+            <circle cx="20" cy="60" r="11" fill="#27313a"/><circle cx="65" cy="60" r="11" fill="#27313a"/>
+          </g>
+          <g transform="translate(545,210)">
+            <rect width="110" height="48" rx="9" fill="#dc6b52"/><rect x="76" y="8" width="28" height="29" rx="4" fill="#d9edf7"/>
+            <circle cx="22" cy="52" r="10" fill="#27313a"/><circle cx="86" cy="52" r="10" fill="#27313a"/>
+          </g>
+          <g transform="translate(250,235)">
+            <rect width="92" height="48" rx="8" fill="#6d9e4d"/><path d="M86 12 L142 -8 L145 4 L92 28 Z" fill="#587f3e"/>
+            <circle cx="20" cy="52" r="10" fill="#27313a"/><circle cx="70" cy="52" r="10" fill="#27313a"/>
+          </g>
+
+          <path d="M140 102 C260 60 430 65 610 95" fill="none" stroke="#7d8f99" stroke-width="2" stroke-dasharray="8 8"/>
+          <path d="M180 285 C320 340 505 330 675 278" fill="none" stroke="#7d8f99" stroke-width="2" stroke-dasharray="8 8"/>
+          <circle cx="860" cy="195" r="18" fill="#1689d8"/>
+          <text x="860" y="160" text-anchor="middle" class="t b" font-size="16">RECEPTOR</text>
+          <line x1="730" y1="195" x2="840" y2="195" stroke="#738995" stroke-width="2" stroke-dasharray="7 7"/>
+          <text x="405" y="352" text-anchor="middle" class="t" font-size="15">Las posiciones cambian dentro de la zona de operación.</text>
+        </svg>
+        """
+    else:
+        scene_svg = """
+        <svg viewBox="0 0 1000 390" width="100%" style="background:#eef6f8;border:1px solid #d2e2e8;border-radius:18px">
+          <style>.t{font-family:Inter,Arial,sans-serif;fill:#263f50}.b{font-weight:850}</style>
+          <rect x="80" y="75" width="650" height="245" rx="18" fill="#f59e0b" opacity=".78" stroke="#d97706" stroke-width="3"/>
+          <g fill="#ffffff" opacity=".95">
+            <circle cx="160" cy="130" r="9"/><circle cx="255" cy="130" r="9"/><circle cx="350" cy="130" r="9"/><circle cx="445" cy="130" r="9"/><circle cx="540" cy="130" r="9"/><circle cx="635" cy="130" r="9"/>
+            <circle cx="160" cy="200" r="9"/><circle cx="255" cy="200" r="9"/><circle cx="350" cy="200" r="9"/><circle cx="445" cy="200" r="9"/><circle cx="540" cy="200" r="9"/><circle cx="635" cy="200" r="9"/>
+            <circle cx="160" cy="270" r="9"/><circle cx="255" cy="270" r="9"/><circle cx="350" cy="270" r="9"/><circle cx="445" cy="270" r="9"/><circle cx="540" cy="270" r="9"/><circle cx="635" cy="270" r="9"/>
+          </g>
+          <text x="405" y="54" text-anchor="middle" class="t b" font-size="18">SIMPLIFICACIÓN ESPACIAL</text>
+          <text x="405" y="194" text-anchor="middle" class="t b" font-size="26" fill="#ffffff">FUENTE DE ÁREA</text>
+          <text x="405" y="225" text-anchor="middle" class="t" font-size="16" fill="#ffffff">actividad distribuida dentro de una superficie</text>
+          <circle cx="860" cy="195" r="18" fill="#1689d8"/>
+          <text x="860" y="160" text-anchor="middle" class="t b" font-size="16">RECEPTOR</text>
+          <line x1="730" y1="195" x2="840" y2="195" stroke="#738995" stroke-width="2" stroke-dasharray="7 7"/>
+          <text x="405" y="352" text-anchor="middle" class="t" font-size="15">La zona de actividad pasa a ser el elemento geométrico que se representa.</text>
+        </svg>
+        """
+    components.html(scene_svg,height=410)
+
+    st.markdown("### 3. Ejemplos visuales · cambia de escenario")
+    scenario=st.segmented_control(
+        "Escenario",
+        ["Patio industrial","Obra","Estacionamiento","Fachada"],
+        default="Patio industrial",
+        key="c3l2_s3_scenario",
+    )
+
+    scenario_data={
+        "Patio industrial":(
+            "Actividad distribuida",
+            "Camiones y maquinaria operan en posiciones distintas dentro de un recinto.",
+            "área",
+        ),
+        "Obra":(
+            "Faena cambiante",
+            "Excavadora, cargador y camiones se desplazan por diferentes sectores de la obra.",
+            "área",
+        ),
+        "Estacionamiento":(
+            "Movimientos dentro de una superficie",
+            "Vehículos entran, salen y circulan en diferentes posiciones del estacionamiento.",
+            "área",
+        ),
+        "Fachada":(
+            "Superficie física extensa",
+            "Una fachada con múltiples aberturas o sectores emisores ocupa dos dimensiones relevantes.",
+            "área",
+        ),
+    }
+    title,desc,shape=scenario_data[scenario]
+
+    icons={
+        "Patio industrial":("🚛","🚜","🚚","🏗️"),
+        "Obra":("🚧","🚜","🚚","🏗️"),
+        "Estacionamiento":("🚗","🚙","🚕","🚐"),
+        "Fachada":("▦","▦","▦","▦"),
+    }
+    i1,i2,i3,i4=icons[scenario]
+    visual_html = """
+    <div style="border:1px solid #d5e4ec;border-radius:18px;background:#f7fbff;padding:18px">
+      <div style="font:850 18px Inter,Arial,sans-serif;color:#263f50;margin-bottom:12px">{scenario}</div>
+      <div style="position:relative;height:230px;border-radius:14px;background:#edf2df;border:2px solid #9caf79;overflow:hidden">
+        <div style="position:absolute;left:12%;top:20%;font-size:44px">{i1}</div>
+        <div style="position:absolute;left:38%;top:54%;font-size:44px">{i2}</div>
+        <div style="position:absolute;left:62%;top:24%;font-size:44px">{i3}</div>
+        <div style="position:absolute;left:78%;top:58%;font-size:44px">{i4}</div>
+        <div style="position:absolute;left:5%;right:5%;bottom:12px;text-align:center;font:750 14px Inter,Arial,sans-serif;color:#43566a">
+          La actividad ocupa una superficie, no una única posición.
+        </div>
+      </div>
+    </div>
+    """.format(scenario=scenario,i1=i1,i2=i2,i3=i3,i4=i4)
+    components.html(visual_html,height=300)
+    st.markdown(
+        '<div class="c3l2-note"><b>{}</b><br>{}<br><br><b>Representación inicial:</b> fuente de {}.</div>'.format(
+            title,desc,shape
+        ),
+        unsafe_allow_html=True,
+    )
+
+    st.markdown("### 4. ¿Punto, línea o área?")
+    st.write(
+        "Clasifica cada escena por su geometría dominante. El objetivo no es memorizar ejemplos, "
+        "sino reconocer cómo se distribuye espacialmente la actividad."
+    )
+
+    training_cases=[
+        ("Grupo electrógeno compacto instalado en una posición fija.","Punto"),
+        ("Autopista extensa con flujo continuo de vehículos.","Línea"),
+        ("Patio logístico donde camiones se mueven y operan en diferentes posiciones.","Área"),
+        ("Faena de construcción con maquinaria desplazándose dentro del predio.","Área"),
+    ]
+    answers=[]
+    for idx,(question,correct) in enumerate(training_cases,1):
+        with st.container(border=True):
+            st.markdown("**Caso {}** · {}".format(idx,question))
+            ans=st.segmented_control(
+                "Selecciona la representación",
+                ["Punto","Línea","Área"],
+                key="c3l2_s3_train_{}".format(idx),
+                label_visibility="collapsed",
+            )
+            answers.append(ans)
+            if ans is not None:
+                if ans==correct:
+                    st.success("Correcto · la geometría seleccionada representa adecuadamente la distribución espacial del caso.")
+                else:
+                    st.warning("Revisa dónde ocurre la actividad: ¿está localizada, sigue un eje o ocupa una superficie?")
+
+    st.markdown("### 5. Laboratorio geométrico · cambia la escala")
+    st.write(
+        "Una misma fuente extensa puede percibirse de manera diferente según la distancia. "
+        "Acerca o aleja el receptor y observa la relación entre su distancia y el tamaño de la zona."
+    )
+    c1,c2,c3=st.columns(3)
+    width=c1.slider("Ancho de la zona [m]",10.0,100.0,50.0,5.0,key="c3l2_s3_width")
+    depth=c2.slider("Profundidad de la zona [m]",10.0,80.0,30.0,5.0,key="c3l2_s3_depth")
+    distance=c3.slider("Distancia del receptor [m]",5.0,250.0,25.0,5.0,key="c3l2_s3_distance")
+    characteristic=max(width,depth)
+    ratio=distance/characteristic if characteristic else 0.0
+
+    if ratio<1:
+        scale_text="El receptor está muy próximo: la extensión completa de la zona es claramente relevante."
+        scale_label="EXTENSIÓN DOMINANTE"
+    elif ratio<3:
+        scale_text="La distancia y el tamaño de la zona son comparables: la distribución espacial sigue siendo importante."
+        scale_label="ESCALA COMPARABLE"
+    else:
+        scale_text="Desde esta distancia la zona comienza a verse más compacta; la simplificación dependerá del objetivo del análisis."
+        scale_label="VISTA MÁS COMPACTA"
+
+    area_html = """
+    <svg viewBox="0 0 930 330" width="100%" style="background:#f4fbff;border:1px solid #d6e6ee;border-radius:16px">
+      <rect x="90" y="75" width="270" height="180" rx="14" fill="#f59e0b" opacity=".82"/>
+      <g fill="#fff" opacity=".92">
+        <circle cx="140" cy="120" r="8"/><circle cx="220" cy="120" r="8"/><circle cx="305" cy="120" r="8"/>
+        <circle cx="140" cy="205" r="8"/><circle cx="220" cy="205" r="8"/><circle cx="305" cy="205" r="8"/>
+      </g>
+      <text x="225" y="50" text-anchor="middle" font-size="17" font-weight="850" fill="#263f50">zona {width:.0f} × {depth:.0f} m</text>
+      <line x1="360" y1="165" x2="760" y2="165" stroke="#67808f" stroke-width="2" stroke-dasharray="8 7"/>
+      <circle cx="760" cy="165" r="14" fill="#1689d8" stroke="#fff" stroke-width="4"/>
+      <text x="760" y="138" text-anchor="middle" font-size="15" font-weight="850" fill="#263f50">receptor</text>
+      <text x="560" y="150" text-anchor="middle" font-size="14" fill="#526c7b">distancia = {distance:.0f} m</text>
+      <text x="560" y="285" text-anchor="middle" font-size="15" font-weight="850" fill="#0b789f">{label}</text>
+    </svg>
+    """.format(width=width,depth=depth,distance=distance,label=scale_label)
+    components.html(area_html,height=350)
+    st.markdown(
+        '<div class="c3l2-note"><b>Lectura:</b> {}</div>'.format(scale_text),
+        unsafe_allow_html=True,
+    )
+
+    st.markdown("### 6. Cierre formativo")
+    final_case=st.radio(
+        "Un patio de 60 × 40 m contiene vehículos y maquinaria que cambian de posición durante la jornada. "
+        "Si queremos representar primero la distribución espacial de esa actividad, ¿qué geometría resulta más natural?",
+        ["Fuente puntual","Fuente lineal","Fuente de área"],
+        index=None,
+        key="c3l2_s3_case",
+    )
+    why=st.text_area(
+        "Justifica tu elección describiendo cómo ocupa el espacio la actividad.",
+        height=90,
+        key="c3l2_s3_why",
+    )
+
+    if _c3l2_role()=="Alumno" and st.button(
+        "Comprobar y guardar",
+        type="primary",
+        use_container_width=True,
+        key="c3l2_s3_save",
+    ):
+        training_ok=all(
+            ans==correct
+            for ans,(_,correct) in zip(answers,training_cases)
+        )
+        if not training_ok:
+            st.warning("Completa correctamente los cuatro casos de clasificación antes de cerrar la etapa.")
+        elif final_case!="Fuente de área" or len(why.strip())<30:
+            st.warning(
+                "La actividad ocurre en diferentes posiciones dentro de una superficie. "
+                "Explica esa distribución espacial en tu justificación."
+            )
         else:
-            _c3l2_complete(saved,3,{"width":width,"height":height,"distance":distance,"ratio":ratio,"case":case,"why":why})
-            st.success("Etapa 3 guardada.")
-    _c3l2_teacher_pauta("Etapa 3","La fuente de área es una representación geométrica de una emisión distribuida sobre una superficie finita. Debe insistirse en que el modelo depende de la escala: a distancias suficientemente grandes una fuente extensa puede aproximarse como una fuente compacta equivalente.")
+            _c3l2_complete(
+                saved,
+                3,
+                {
+                    "training":answers,
+                    "scenario":scenario,
+                    "width":width,
+                    "depth":depth,
+                    "distance":distance,
+                    "ratio":ratio,
+                    "case":final_case,
+                    "why":why,
+                },
+            )
+            st.success("Etapa 3 guardada. Ya puedes continuar con la Etapa 4.")
+
+    _c3l2_teacher_pauta(
+        "Etapa 3",
+        "La fuente de área se introduce exclusivamente como representación geométrica de una actividad distribuida "
+        "sobre una superficie. No introducir todavía nivel de potencia sonora, Lw, potencia por unidad de superficie "
+        "ni ecuaciones asociadas: esas magnitudes se presentan recién en la Etapa 4. "
+        "La discusión debe centrarse en punto, línea, área, distribución espacial y escala respecto del receptor.",
+    )
 
 
 def _c3l2_stage4(lab,saved):
