@@ -29300,28 +29300,150 @@ def _c3l2_stage3(lab,saved):
     else:
         st.markdown("#### Método C · sala reverberante")
         st.write(
-            "También existen métodos que determinan Lw a partir de niveles de presión sonora medidos en una "
-            "**sala reverberante normalizada**. Aquí se aprovecha un campo sonoro difuso y se aplican procedimientos "
-            "específicos para relacionar el nivel medido en la sala con la potencia de la fuente."
+            "Una tercera forma de determinar el nivel de potencia sonora utiliza una **sala reverberante normalizada**. "
+            "A diferencia de una cámara anecoica, aquí las superficies son deliberadamente **duras y reflectantes**, "
+            "de modo que el sonido rebota muchas veces y se busca formar un **campo sonoro aproximadamente difuso**."
+        )
+
+        st.markdown("""
+        <div class="c3l2-note">
+          <b>¿Qué significa “campo difuso”?</b> Idealmente, la energía acústica llega a un punto desde muchas direcciones
+          y el nivel deja de depender fuertemente de una sola trayectoria directa entre la fuente y el micrófono.
+          Por eso se utilizan varias posiciones de micrófono —o un micrófono móvil— y se obtiene un promedio espacial.
+        </div>
+        """, unsafe_allow_html=True)
+
+        components.html(r"""
+        <svg viewBox="0 0 1120 620" width="100%" style="background:#eef3f6;border:1px solid #d3dfe6;border-radius:18px">
+          <defs>
+            <linearGradient id="wallRev" x1="0" x2="1" y1="0" y2="1">
+              <stop offset="0%" stop-color="#c8d0d4"/>
+              <stop offset="100%" stop-color="#929da4"/>
+            </linearGradient>
+            <linearGradient id="floorRev" x1="0" x2="0" y1="0" y2="1">
+              <stop offset="0%" stop-color="#aab4ba"/>
+              <stop offset="100%" stop-color="#737f86"/>
+            </linearGradient>
+            <radialGradient id="machineRev" cx="35%" cy="30%">
+              <stop offset="0%" stop-color="#87cbe5"/>
+              <stop offset="100%" stop-color="#176ea5"/>
+            </radialGradient>
+            <marker id="arrowRev" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+              <path d="M0 0 L10 5 L0 10 z" fill="#d97706"/>
+            </marker>
+          </defs>
+          <style>
+            .t{font-family:Inter,Arial,sans-serif;fill:#263f50}
+            .b{font-weight:850}
+            .m{fill:#607783}
+          </style>
+
+          <text x="560" y="40" text-anchor="middle" class="t b" font-size="21">SALA REVERBERANTE · DETERMINACIÓN DE Lw</text>
+          <text x="560" y="66" text-anchor="middle" class="t m" font-size="13">Superficies reflectantes + múltiples reflexiones + promedio espacial de Lp</text>
+
+          <!-- room -->
+          <polygon points="110,120 860,120 1010,230 255,230" fill="url(#wallRev)" stroke="#6e7c84" stroke-width="3"/>
+          <polygon points="110,120 255,230 255,535 110,405" fill="#a7b1b7" stroke="#6e7c84" stroke-width="3"/>
+          <polygon points="255,230 1010,230 1010,535 255,535" fill="#bbc4c9" stroke="#6e7c84" stroke-width="3"/>
+          <polygon points="255,535 1010,535 860,595 110,470" fill="url(#floorRev)" stroke="#6e7c84" stroke-width="3"/>
+
+          <!-- machine -->
+          <g>
+            <rect x="485" y="385" width="175" height="105" rx="18" fill="url(#machineRev)" stroke="#e5f5fb" stroke-width="3"/>
+            <rect x="515" y="412" width="68" height="38" rx="7" fill="#c8e9f6"/>
+            <circle cx="625" cy="433" r="18" fill="#0f5275"/>
+            <rect x="522" y="490" width="20" height="18" rx="2" fill="#3f4c53"/>
+            <rect x="602" y="490" width="20" height="18" rx="2" fill="#3f4c53"/>
+            <text x="572" y="367" text-anchor="middle" class="t b" font-size="16">FUENTE BAJO ENSAYO</text>
+          </g>
+
+          <!-- microphones -->
+          <g fill="#f7fbfd" stroke="#18a36f" stroke-width="3">
+            <circle cx="330" cy="300" r="10"/>
+            <circle cx="440" cy="260" r="10"/>
+            <circle cx="610" cy="275" r="10"/>
+            <circle cx="790" cy="310" r="10"/>
+            <circle cx="875" cy="400" r="10"/>
+            <circle cx="720" cy="485" r="10"/>
+            <circle cx="405" cy="475" r="10"/>
+          </g>
+
+          <!-- diffuse rays -->
+          <g fill="none" stroke="#d97706" stroke-width="2.5" opacity=".75" marker-end="url(#arrowRev)">
+            <path d="M570 405 L360 240 L185 325 L430 435"/>
+            <path d="M605 405 L820 250 L965 350 L735 465"/>
+            <path d="M550 445 L300 500 L135 410 L390 280"/>
+            <path d="M635 445 L900 500 L1000 280 L760 255"/>
+            <path d="M585 395 L570 145 L775 190 L845 330"/>
+          </g>
+
+          <text x="345" y="283" class="t b" font-size="13">Micrófonos</text>
+          <line x1="410" y1="286" x2="438" y2="264" stroke="#4e6674" stroke-width="2"/>
+
+          <rect x="785" y="95" width="260" height="108" rx="14" fill="#ffffff" stroke="#d1dce3"/>
+          <text x="915" y="122" text-anchor="middle" class="t b" font-size="14">QUÉ SE BUSCA</text>
+          <text x="915" y="149" text-anchor="middle" class="t" font-size="13">Muchos rebotes → energía</text>
+          <text x="915" y="169" text-anchor="middle" class="t" font-size="13">distribuida en muchas direcciones</text>
+          <text x="915" y="189" text-anchor="middle" class="t b" font-size="13">campo aproximadamente difuso</text>
+
+          <text x="560" y="575" text-anchor="middle" class="t b" font-size="15">Lp en varias posiciones → promedio espacial → corrección por absorción de la sala → Lw</text>
+        </svg>
+        """, height=640)
+
+        st.markdown("##### ¿Qué mide el instrumento?")
+        st.write(
+            "Al igual que en el método por presión sonora en campo libre, los micrófonos **siguen midiendo Lp**. "
+            "La diferencia es el entorno: aquí se aprovecha deliberadamente la reverberación de una sala con "
+            "características acústicas conocidas."
+        )
+
+        st.markdown("##### ¿Cómo aparece la potencia sonora?")
+        st.write(
+            "El nivel medio de presión sonora medido en la sala se relaciona con la **absorción acústica equivalente** "
+            "del recinto. Si conocemos cuánto absorbe la sala, podemos estimar cuánta potencia debe estar entregando "
+            "la fuente para mantener ese campo reverberante."
+        )
+
+        st.latex(r"L_W \approx \overline{L_p}+10\log_{10}\left(\frac{A}{A_0}\right)+K")
+        st.caption(
+            "Relación conceptual simplificada: A representa el área de absorción acústica equivalente de la sala, "
+            "A₀ = 1 m² y K agrupa correcciones del método. La formulación exacta depende del procedimiento normalizado."
         )
 
         st.markdown("""
         <div class="c3l2-grid2">
           <div class="c3l2-card blue">
-            <div class="c3l2-k">INSTRUMENTO</div>
-            <b>Micrófonos / sonómetros</b><br>
-            Nuevamente se mide presión sonora, no potencia directamente.
+            <div class="c3l2-k">1 · MEDIMOS</div>
+            <b>Lp en varias posiciones.</b><br>
+            Se busca un promedio espacial representativo del campo reverberante.
           </div>
-          <div class="c3l2-card green">
-            <div class="c3l2-k">MÉTODO</div>
-            <b>Sala reverberante caracterizada</b><br>
-            El método utiliza las propiedades acústicas conocidas de la sala para calcular Lw.
+          <div class="c3l2-card orange">
+            <div class="c3l2-k">2 · CONOCEMOS LA SALA</div>
+            <b>Absorción equivalente / tiempo de reverberación.</b><br>
+            La sala debe estar caracterizada acústicamente según el método.
           </div>
         </div>
         """, unsafe_allow_html=True)
 
-        st.latex(r"\text{Lp medido en sala} \;+\; \text{características de la sala} \;\longrightarrow\; L_W")
-        st.caption("Ejemplo de referencia: métodos de precisión de ISO 3741.")
+        st.markdown("""
+        <div class="c3l2-grid2">
+          <div class="c3l2-card green">
+            <div class="c3l2-k">3 · CALCULAMOS</div>
+            <b>Lw de la fuente.</b><br>
+            El nivel de presión promedio y las propiedades de la sala permiten determinar la potencia sonora.
+          </div>
+          <div class="c3l2-card">
+            <div class="c3l2-k">VENTAJA CONCEPTUAL</div>
+            <b>No dependemos de una única dirección de radiación.</b><br>
+            El campo reverberante mezcla energía proveniente de muchas trayectorias y direcciones.
+          </div>
+        </div>
+        """, unsafe_allow_html=True)
+
+        st.info(
+            "Este enfoque está asociado a métodos en **salas reverberantes**, como ISO 3741. "
+            "También existen otros métodos de la familia ISO 3740 según el grado de precisión y el entorno de ensayo."
+        )
 
     st.markdown("""
     <div class="c3l2-note">
