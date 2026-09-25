@@ -28560,180 +28560,152 @@ def _c3l2_stage3(lab,saved):
 
     st.latex(r"L_p=20\log_{10}\left(\frac{p}{p_0}\right),\qquad p_0=20\ \mu\mathrm{Pa}")
 
-    st.markdown("### 3. Compruébalo moviendo la fuente y el receptor")
+    st.markdown("### 3. Compruébalo moviendo la fuente y el sonómetro")
     st.write(
-        "En esta condición ideal, arrastra la **fuente** o el **receptor**. "        "Observa que **Lw permanece ligado a la fuente**, mientras que **Lp cambia con la distancia**. "
+        "Arrastra la **fuente** o el **sonómetro**. "
+        "La fuente mantiene siempre el mismo **Lw = 95 dB**; lo que cambia es el **Lp que registra el sonómetro** según su posición."
     )
 
     components.html(r"""
-    <div id="lwlp-lab" style="font-family:Inter,Arial,sans-serif;color:#1f3442;">
+    <div id="lwlp-concept" style="font-family:Inter,Arial,sans-serif;color:#1f3442;">
       <style>
-        #lwlp-lab *{box-sizing:border-box}
-        #lwlp-lab .panel{border:1px solid #cfe0ec;border-radius:18px;background:#f7fbff;padding:14px}
-        #lwlp-lab .top{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-bottom:12px}
-        #lwlp-lab .metric{background:#fff;border:1px solid #d9e5ed;border-radius:14px;padding:12px;text-align:center}
-        #lwlp-lab .metric .k{font-size:11px;font-weight:800;letter-spacing:.04em;color:#607786;text-transform:uppercase}
-        #lwlp-lab .metric .v{font-size:24px;font-weight:900;margin-top:4px}
-        #lwlp-lab .metric small{color:#6f8390}
-        #lwlp-lab .scene-wrap{position:relative;border:1px solid #d4e3ed;border-radius:16px;overflow:hidden;background:#eef7fb}
-        #lwlp-lab svg{display:block;width:100%;height:auto;touch-action:none;user-select:none}
-        #lwlp-lab .controls{display:grid;grid-template-columns:1.2fr .8fr;gap:12px;margin-top:12px}
-        #lwlp-lab label{font-size:12px;font-weight:800;color:#425c6b;display:block;margin-bottom:6px}
-        #lwlp-lab input[type=range]{width:100%}
-        #lwlp-lab select,#lwlp-lab button{width:100%;min-height:42px;border:1px solid #bfd2df;border-radius:10px;background:#fff;padding:8px;font-size:14px}
-        #lwlp-lab button{font-weight:800;cursor:pointer}
-        #lwlp-lab .note{margin-top:12px;background:#fff;border-left:4px solid #1689d8;border-radius:10px;padding:10px 12px;font-size:13px;line-height:1.45}
-        #lwlp-lab .hint{font-size:12px;color:#6e8492;margin-top:8px}
-        #lwlp-lab .drag{cursor:grab}
-        #lwlp-lab .drag:active{cursor:grabbing}
-        #lwlp-lab .pulse{transform-origin:center;animation:pulse 1.6s ease-out infinite}
-        @keyframes pulse{0%{opacity:.35}70%,100%{opacity:0}}
-        @media (prefers-reduced-motion:reduce){#lwlp-lab .pulse{animation:none;opacity:.18}}
-        @media(max-width:650px){
-          #lwlp-lab .top{grid-template-columns:1fr}
-          #lwlp-lab .controls{grid-template-columns:1fr}
-        }
+        #lwlp-concept *{box-sizing:border-box}
+        #lwlp-concept .panel{border:1px solid #cfe0ec;border-radius:18px;background:#f7fbff;padding:14px}
+        #lwlp-concept .top{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-bottom:12px}
+        #lwlp-concept .metric{background:#fff;border:1px solid #d9e5ed;border-radius:14px;padding:12px;text-align:center}
+        #lwlp-concept .metric .k{font-size:11px;font-weight:800;letter-spacing:.04em;color:#607786;text-transform:uppercase}
+        #lwlp-concept .metric .v{font-size:24px;font-weight:900;margin-top:4px}
+        #lwlp-concept .metric small{color:#6f8390}
+        #lwlp-concept .scene{border:1px solid #d4e3ed;border-radius:16px;overflow:hidden;background:#eef7fb}
+        #lwlp-concept svg{display:block;width:100%;height:auto;touch-action:none;user-select:none}
+        #lwlp-concept .drag{cursor:grab}
+        #lwlp-concept .drag:active{cursor:grabbing}
+        #lwlp-concept .note{margin-top:12px;background:#fff;border-left:4px solid #1689d8;border-radius:10px;padding:10px 12px;font-size:13px;line-height:1.45}
+        #lwlp-concept .actions{display:flex;justify-content:flex-end;margin-top:10px}
+        #lwlp-concept button{min-height:40px;border:1px solid #bfd2df;border-radius:10px;background:#fff;padding:8px 14px;font-weight:800;cursor:pointer}
+        #lwlp-concept .pulse{transform-origin:center;animation:pulse 1.6s ease-out infinite}
+        @keyframes pulse{0%{opacity:.30}70%,100%{opacity:0}}
+        @media (prefers-reduced-motion:reduce){#lwlp-concept .pulse{animation:none;opacity:.16}}
+        @media(max-width:650px){#lwlp-concept .top{grid-template-columns:1fr}}
       </style>
 
       <div class="panel">
         <div class="top">
           <div class="metric">
             <div class="k">Fuente · Lw</div>
-            <div class="v" id="mLw">95 dB</div>
-            <small>permanece constante al moverla</small>
+            <div class="v">95 dB</div>
+            <small>propiedad de la fuente</small>
           </div>
           <div class="metric">
-            <div class="k">Distancia fuente–receptor</div>
-            <div class="v" id="mDist">47.5 m</div>
-            <small>se recalcula en tiempo real</small>
+            <div class="k">Distancia</div>
+            <div class="v" id="cDist">47.5 m</div>
+            <small>fuente ↔ sonómetro</small>
           </div>
           <div class="metric">
-            <div class="k">Receptor · Lp</div>
-            <div class="v" id="mLp">— dB</div>
-            <small>cambia con la distancia</small>
+            <div class="k">Sonómetro · Lp</div>
+            <div class="v" id="cLp">49.5 dB</div>
+            <small>cambia con la posición</small>
           </div>
         </div>
 
-        <div class="scene-wrap">
-          <svg id="labSvg" viewBox="0 0 960 430" role="img" aria-label="Laboratorio interactivo con fuente y receptor movibles">
+        <div class="scene">
+          <svg id="conceptSvg" viewBox="0 0 960 410" role="img" aria-label="Fuente sonora y sonómetro movibles">
             <defs>
-              <linearGradient id="ground" x1="0" x2="0" y1="0" y2="1">
-                <stop offset="0%" stop-color="#f8fcff"/>
-                <stop offset="100%" stop-color="#e8f3f8"/>
+              <linearGradient id="cg" x1="0" x2="0" y1="0" y2="1">
+                <stop offset="0%" stop-color="#f9fcfe"/>
+                <stop offset="100%" stop-color="#eaf4f8"/>
               </linearGradient>
             </defs>
-            <rect x="0" y="0" width="960" height="430" fill="url(#ground)"/>
-            <line x1="55" y1="365" x2="905" y2="365" stroke="#afc4d0" stroke-width="3"/>
-            <text x="65" y="400" font-size="13" fill="#708591">Escala didáctica · 1 m ≈ 8 px</text>
+            <rect width="960" height="410" fill="url(#cg)"/>
 
-            <g id="waves">
-              <circle id="w1" class="pulse" cx="220" cy="210" r="65" fill="none" stroke="#57abc9" stroke-width="3"/>
-              <circle id="w2" class="pulse" cx="220" cy="210" r="115" fill="none" stroke="#57abc9" stroke-width="3" style="animation-delay:.35s"/>
-              <circle id="w3" class="pulse" cx="220" cy="210" r="165" fill="none" stroke="#57abc9" stroke-width="3" style="animation-delay:.7s"/>
+            <g id="cwaves">
+              <circle class="pulse" cx="220" cy="205" r="72" fill="none" stroke="#58abc8" stroke-width="3"/>
+              <circle class="pulse" cx="220" cy="205" r="132" fill="none" stroke="#58abc8" stroke-width="3" style="animation-delay:.35s"/>
+              <circle class="pulse" cx="220" cy="205" r="192" fill="none" stroke="#58abc8" stroke-width="2" style="animation-delay:.7s"/>
             </g>
 
-            <line id="distanceLine" x1="220" y1="210" x2="600" y2="210" stroke="#728b99" stroke-width="2" stroke-dasharray="8 7"/>
-            <rect id="distBg" x="372" y="176" width="86" height="28" rx="10" fill="#fff" stroke="#c9d8e1"/>
-            <text id="distLabel" x="415" y="195" text-anchor="middle" font-size="13" font-weight="800" fill="#405967">47.5 m</text>
+            <line id="cLine" x1="220" y1="205" x2="600" y2="205" stroke="#728b99" stroke-width="2" stroke-dasharray="8 7"/>
+            <rect id="cDistBg" x="368" y="170" width="94" height="28" rx="10" fill="#fff" stroke="#c9d8e1"/>
+            <text id="cDistLabel" x="415" y="189" text-anchor="middle" font-size="13" font-weight="800" fill="#405967">47.5 m</text>
 
-            <g id="source" class="drag" tabindex="0" role="button" aria-label="Fuente sonora movible">
-              <circle cx="220" cy="210" r="47" fill="#ffffff" stroke="#176ea5" stroke-width="3"/>
-              <rect x="188" y="190" width="64" height="40" rx="8" fill="#176ea5"/>
-              <rect x="198" y="199" width="32" height="18" rx="4" fill="#bfe1f2"/>
-              <circle cx="240" cy="211" r="6" fill="#dbeaf2"/>
-              <text x="220" y="162" text-anchor="middle" font-size="15" font-weight="900" fill="#1f3442">FUENTE</text>
-              <text id="sourceLabel" x="220" y="264" text-anchor="middle" font-size="14" font-weight="900" fill="#176ea5">Lw = 95 dB</text>
+            <g id="cSource" class="drag" tabindex="0" role="button" aria-label="Mover fuente sonora">
+              <circle cx="220" cy="205" r="52" fill="#fff" stroke="#176ea5" stroke-width="3"/>
+              <rect x="184" y="183" width="72" height="44" rx="9" fill="#176ea5"/>
+              <rect x="196" y="194" width="34" height="19" rx="4" fill="#c4e5f2"/>
+              <circle cx="244" cy="205" r="6" fill="#dcecf3"/>
+              <text x="220" y="145" text-anchor="middle" font-size="15" font-weight="900" fill="#1f3442">FUENTE</text>
+              <text x="220" y="275" text-anchor="middle" font-size="15" font-weight="900" fill="#176ea5">Lw = 95 dB</text>
+              <text x="220" y="296" text-anchor="middle" font-size="12" fill="#5f7684">no cambia al moverla</text>
             </g>
 
-            <g id="receiver" class="drag" tabindex="0" role="button" aria-label="Receptor movible">
-              <circle cx="600" cy="210" r="22" fill="#18a36f" stroke="#fff" stroke-width="4"/>
-              <circle cx="600" cy="210" r="5" fill="#fff"/>
-              <text x="600" y="164" text-anchor="middle" font-size="15" font-weight="900" fill="#1f3442">RECEPTOR</text>
-              <text id="receiverLabel" x="600" y="257" text-anchor="middle" font-size="14" font-weight="900" fill="#15805a">Lp = — dB</text>
+            <g id="cMeter" class="drag" tabindex="0" role="button" aria-label="Mover sonómetro">
+              <rect x="578" y="165" width="44" height="82" rx="10" fill="#243d4a" stroke="#fff" stroke-width="3"/>
+              <rect x="586" y="181" width="28" height="25" rx="4" fill="#bde7d5"/>
+              <text id="meterScreen" x="600" y="198" text-anchor="middle" font-size="9" font-weight="900" fill="#155f47">49.5</text>
+              <circle cx="600" cy="225" r="5" fill="#62c59a"/>
+              <rect x="594" y="148" width="12" height="22" rx="5" fill="#566b76"/>
+              <circle cx="600" cy="145" r="8" fill="#8da0a9"/>
+              <text x="600" y="125" text-anchor="middle" font-size="15" font-weight="900" fill="#1f3442">SONÓMETRO</text>
+              <text id="meterLabel" x="600" y="275" text-anchor="middle" font-size="15" font-weight="900" fill="#15805a">Lp = 49.5 dB</text>
+              <text x="600" y="296" text-anchor="middle" font-size="12" fill="#5f7684">cambia con la posición</text>
             </g>
 
-            <g>
-              <text x="795" y="70" text-anchor="middle" font-size="13" font-weight="800" fill="#5a7180">IDEA CLAVE</text>
-              <text x="795" y="100" text-anchor="middle" font-size="14" fill="#263f50">La fuente conserva</text>
-              <text x="795" y="122" text-anchor="middle" font-size="17" font-weight="900" fill="#176ea5">Lw</text>
-              <text x="795" y="158" text-anchor="middle" font-size="14" fill="#263f50">El receptor observa</text>
-              <text x="795" y="180" text-anchor="middle" font-size="17" font-weight="900" fill="#15805a">Lp(r)</text>
-            </g>
+            <rect x="720" y="85" width="190" height="150" rx="16" fill="#fff" stroke="#d7e4eb"/>
+            <text x="815" y="115" text-anchor="middle" font-size="13" font-weight="900" fill="#5a7180">IDEA CLAVE</text>
+            <text x="815" y="148" text-anchor="middle" font-size="14" fill="#263f50">La fuente conserva</text>
+            <text x="815" y="173" text-anchor="middle" font-size="19" font-weight="900" fill="#176ea5">Lw = constante</text>
+            <text x="815" y="204" text-anchor="middle" font-size="14" fill="#263f50">El sonómetro registra</text>
+            <text x="815" y="229" text-anchor="middle" font-size="19" font-weight="900" fill="#15805a">Lp = variable</text>
+
+            <text x="60" y="385" font-size="12" fill="#718692">Arrastra ambos elementos para comparar posiciones.</text>
           </svg>
         </div>
 
-        <div class="controls">
-          <div>
-            <label for="lwRange">Nivel de potencia sonora de la fuente · Lw</label>
-            <input id="lwRange" type="range" min="75" max="115" step="1" value="95" aria-label="Nivel de potencia sonora Lw">
-          </div>
-          <div>
-            <label for="qSelect">Condición idealizada</label>
-            <select id="qSelect" aria-label="Factor de directividad">
-              <option value="1">Q = 1 · espacio libre</option>
-              <option value="2">Q = 2 · sobre plano reflectante</option>
-            </select>
-          </div>
-        </div>
-
-        <div class="controls">
-          <div>
-            <label for="distRange">Alternativa al arrastre · fija la distancia</label>
-            <input id="distRange" type="range" min="2" max="80" step="0.5" value="47.5" aria-label="Distancia entre fuente y receptor">
-          </div>
-          <div>
-            <button id="resetBtn" type="button">Reiniciar posiciones</button>
-          </div>
-        </div>
-
-        <div class="note" id="interpretation" aria-live="polite"></div>
-        <div class="hint">Arrastra la fuente o el receptor. También puedes usar las flechas del teclado cuando uno de ellos tenga el foco.</div>
+        <div class="note" id="cNote" aria-live="polite"></div>
+        <div class="actions"><button id="cReset" type="button">Reiniciar posiciones</button></div>
       </div>
 
       <script>
       (function(){
-        var root=document.getElementById('lwlp-lab');
+        var root=document.getElementById('lwlp-concept');
         if(!root || root.getAttribute('data-ready')==='1') return;
         root.setAttribute('data-ready','1');
 
-        var svg=root.querySelector('#labSvg');
-        var source=root.querySelector('#source');
-        var receiver=root.querySelector('#receiver');
-        var line=root.querySelector('#distanceLine');
-        var distLabel=root.querySelector('#distLabel');
-        var distBg=root.querySelector('#distBg');
-        var sourceLabel=root.querySelector('#sourceLabel');
-        var receiverLabel=root.querySelector('#receiverLabel');
-        var mLw=root.querySelector('#mLw');
-        var mDist=root.querySelector('#mDist');
-        var mLp=root.querySelector('#mLp');
-        var lwRange=root.querySelector('#lwRange');
-        var qSelect=root.querySelector('#qSelect');
-        var distRange=root.querySelector('#distRange');
-        var resetBtn=root.querySelector('#resetBtn');
-        var interp=root.querySelector('#interpretation');
-        var waves=[root.querySelector('#w1'),root.querySelector('#w2'),root.querySelector('#w3')];
+        var svg=root.querySelector('#conceptSvg');
+        var source=root.querySelector('#cSource');
+        var meter=root.querySelector('#cMeter');
+        var line=root.querySelector('#cLine');
+        var dLabel=root.querySelector('#cDistLabel');
+        var dBg=root.querySelector('#cDistBg');
+        var mDist=root.querySelector('#cDist');
+        var mLp=root.querySelector('#cLp');
+        var meterLabel=root.querySelector('#meterLabel');
+        var meterScreen=root.querySelector('#meterScreen');
+        var note=root.querySelector('#cNote');
+        var reset=root.querySelector('#cReset');
+        var waves=root.querySelectorAll('#cwaves circle');
 
         var pxPerM=8;
-        var bounds={xmin:85,xmax:705,ymin:105,ymax:325};
-        var state={sx:220,sy:210,rx:600,ry:210,lw:95,q:1,dragging:null};
+        var lw=95;
+        var bounds={xmin:85,xmax:680,ymin:105,ymax:315};
+        var state={sx:220,sy:205,mx:600,my:205,drag:null};
 
         function clamp(v,a,b){return Math.max(a,Math.min(b,v));}
-        function distancePx(){return Math.hypot(state.rx-state.sx,state.ry-state.sy);}
-        function distanceM(){return Math.max(1,distancePx()/pxPerM);}
-        function calcLp(){
-          var rr=distanceM();
-          return state.lw + 10*Math.log10(state.q/(4*Math.PI*rr*rr));
+        function distanceM(){
+          return Math.max(1,Math.hypot(state.mx-state.sx,state.my-state.sy)/pxPerM);
         }
-        function moveGroup(el,x,y,bx,by){
+        function calcLp(r){
+          return lw - 10*Math.log10(4*Math.PI*r*r);
+        }
+        function move(el,x,y,bx,by){
           el.setAttribute('transform','translate('+(x-bx)+' '+(y-by)+')');
         }
         function update(){
-          var rr=distanceM();
-          var lp=calcLp();
+          var r=distanceM();
+          var lp=calcLp(r);
 
-          moveGroup(source,state.sx,state.sy,220,210);
-          moveGroup(receiver,state.rx,state.ry,600,210);
+          move(source,state.sx,state.sy,220,205);
+          move(meter,state.mx,state.my,600,205);
 
           waves.forEach(function(w){
             w.setAttribute('cx',state.sx);
@@ -28742,134 +28714,89 @@ def _c3l2_stage3(lab,saved):
 
           line.setAttribute('x1',state.sx);
           line.setAttribute('y1',state.sy);
-          line.setAttribute('x2',state.rx);
-          line.setAttribute('y2',state.ry);
+          line.setAttribute('x2',state.mx);
+          line.setAttribute('y2',state.my);
 
-          var mx=(state.sx+state.rx)/2;
-          var my=(state.sy+state.ry)/2;
-          distBg.setAttribute('x',mx-43);
-          distBg.setAttribute('y',my-34);
-          distLabel.setAttribute('x',mx);
-          distLabel.setAttribute('y',my-15);
+          var cx=(state.sx+state.mx)/2;
+          var cy=(state.sy+state.my)/2;
+          dBg.setAttribute('x',cx-47);
+          dBg.setAttribute('y',cy-35);
+          dLabel.setAttribute('x',cx);
+          dLabel.setAttribute('y',cy-16);
 
-          distLabel.textContent=rr.toFixed(1)+' m';
-          sourceLabel.textContent='Lw = '+state.lw.toFixed(0)+' dB';
-          receiverLabel.textContent='Lp = '+lp.toFixed(1)+' dB';
-          mLw.textContent=state.lw.toFixed(0)+' dB';
-          mDist.textContent=rr.toFixed(1)+' m';
+          dLabel.textContent=r.toFixed(1)+' m';
+          mDist.textContent=r.toFixed(1)+' m';
           mLp.textContent=lp.toFixed(1)+' dB';
+          meterLabel.textContent='Lp = '+lp.toFixed(1)+' dB';
+          meterScreen.textContent=lp.toFixed(1);
 
-          distRange.value=String(clamp(rr,parseFloat(distRange.min),parseFloat(distRange.max)));
-
-          var msg;
-          if(rr<8){
-            msg='El receptor está cerca. Lw sigue siendo '+state.lw.toFixed(0)+' dB y Lp es relativamente alto porque la distancia es pequeña.';
-          }else if(rr<30){
-            msg='Al aumentar la distancia, Lw permanece en '+state.lw.toFixed(0)+' dB; el valor que disminuye es Lp en el receptor.';
+          if(r<10){
+            note.innerHTML='<b>Observa:</b> la fuente sigue teniendo Lw = 95 dB. Al acercar el sonómetro, el Lp registrado aumenta.';
+          }else if(r<30){
+            note.innerHTML='<b>Observa:</b> Lw sigue siendo 95 dB. Al cambiar la distancia cambia el Lp que registra el sonómetro.';
           }else{
-            msg='Aunque el receptor está lejos, la fuente conserva Lw = '+state.lw.toFixed(0)+' dB. La atenuación por distancia aparece en Lp.';
+            note.innerHTML='<b>Observa:</b> aunque la fuente conserva Lw = 95 dB, el sonómetro registra un Lp menor al estar más alejado.';
           }
-          interp.innerHTML='<b>Interpretación:</b> '+msg;
         }
-
-        function svgPoint(evt){
-          var pt=svg.createSVGPoint();
-          pt.x=evt.clientX;
-          pt.y=evt.clientY;
+        function point(evt){
+          var p=svg.createSVGPoint(); p.x=evt.clientX; p.y=evt.clientY;
           var ctm=svg.getScreenCTM();
-          return ctm ? pt.matrixTransform(ctm.inverse()) : {x:0,y:0};
+          return ctm ? p.matrixTransform(ctm.inverse()) : {x:0,y:0};
         }
-
-        function beginDrag(which,evt){
-          state.dragging=which;
-          if(evt.currentTarget.setPointerCapture && evt.pointerId!==undefined){
-            try{evt.currentTarget.setPointerCapture(evt.pointerId);}catch(err){}
+        function begin(which,e){
+          state.drag=which;
+          if(e.currentTarget.setPointerCapture && e.pointerId!==undefined){
+            try{e.currentTarget.setPointerCapture(e.pointerId);}catch(err){}
           }
-          evt.preventDefault();
+          e.preventDefault();
         }
 
-        source.addEventListener('pointerdown',function(e){beginDrag('source',e);});
-        receiver.addEventListener('pointerdown',function(e){beginDrag('receiver',e);});
-
-        svg.addEventListener('pointermove',function(evt){
-          if(!state.dragging) return;
-          var p=svgPoint(evt);
-          if(state.dragging==='source'){
+        source.addEventListener('pointerdown',function(e){begin('source',e);});
+        meter.addEventListener('pointerdown',function(e){begin('meter',e);});
+        svg.addEventListener('pointermove',function(e){
+          if(!state.drag) return;
+          var p=point(e);
+          if(state.drag==='source'){
             state.sx=clamp(p.x,bounds.xmin,bounds.xmax);
             state.sy=clamp(p.y,bounds.ymin,bounds.ymax);
           }else{
-            state.rx=clamp(p.x,bounds.xmin,bounds.xmax);
-            state.ry=clamp(p.y,bounds.ymin,bounds.ymax);
+            state.mx=clamp(p.x,bounds.xmin,bounds.xmax);
+            state.my=clamp(p.y,bounds.ymin,bounds.ymax);
           }
           update();
         });
-
-        ['pointerup','pointercancel','pointerleave'].forEach(function(type){
-          svg.addEventListener(type,function(){state.dragging=null;});
+        ['pointerup','pointercancel','pointerleave'].forEach(function(t){
+          svg.addEventListener(t,function(){state.drag=null;});
         });
 
-        lwRange.addEventListener('input',function(){
-          state.lw=parseFloat(lwRange.value);
-          update();
-        });
-
-        qSelect.addEventListener('change',function(){
-          state.q=parseFloat(qSelect.value);
-          update();
-        });
-
-        distRange.addEventListener('input',function(){
-          var target=parseFloat(distRange.value);
-          var dx=state.rx-state.sx;
-          var dy=state.ry-state.sy;
-          var mag=Math.hypot(dx,dy)||1;
-          var ux=dx/mag;
-          var uy=dy/mag;
-          var px=target*pxPerM;
-          state.rx=clamp(state.sx+ux*px,bounds.xmin,bounds.xmax);
-          state.ry=clamp(state.sy+uy*px,bounds.ymin,bounds.ymax);
-          update();
-        });
-
-        resetBtn.addEventListener('click',function(){
-          state.sx=220; state.sy=210; state.rx=600; state.ry=210;
-          state.lw=95; state.q=1;
-          lwRange.value='95'; qSelect.value='1'; distRange.value='47.5';
-          update();
-        });
-
-        [source,receiver].forEach(function(el,idx){
+        [source,meter].forEach(function(el,idx){
           el.addEventListener('keydown',function(e){
-            var step=e.shiftKey?10:4;
-            var dx=0,dy=0;
-            if(e.key==='ArrowLeft') dx=-step;
-            else if(e.key==='ArrowRight') dx=step;
-            else if(e.key==='ArrowUp') dy=-step;
-            else if(e.key==='ArrowDown') dy=step;
+            var step=e.shiftKey?10:4,dx=0,dy=0;
+            if(e.key==='ArrowLeft')dx=-step;
+            else if(e.key==='ArrowRight')dx=step;
+            else if(e.key==='ArrowUp')dy=-step;
+            else if(e.key==='ArrowDown')dy=step;
             else return;
             e.preventDefault();
             if(idx===0){
               state.sx=clamp(state.sx+dx,bounds.xmin,bounds.xmax);
               state.sy=clamp(state.sy+dy,bounds.ymin,bounds.ymax);
             }else{
-              state.rx=clamp(state.rx+dx,bounds.xmin,bounds.xmax);
-              state.ry=clamp(state.ry+dy,bounds.ymin,bounds.ymax);
+              state.mx=clamp(state.mx+dx,bounds.xmin,bounds.xmax);
+              state.my=clamp(state.my+dy,bounds.ymin,bounds.ymax);
             }
             update();
           });
         });
 
+        reset.addEventListener('click',function(){
+          state.sx=220;state.sy=205;state.mx=600;state.my=205;update();
+        });
         update();
       })();
       </script>
     </div>
-    """, height=760, scrolling=False)
-
-    st.latex(r"L_p \approx L_W + 10\log_{10}\left(\frac{Q}{4\pi r^2}\right)")
-    st.caption(
-        "Modelo didáctico de campo libre. La escena muestra únicamente divergencia geométrica y directividad idealizada; "
-        "no incorpora absorción atmosférica, suelo, pantallas, meteorología ni reflexiones complejas."
-    )
+    """, height=650, scrolling=False)
 
     st.markdown("#### La diferencia esencial")
     st.markdown("""
@@ -28881,7 +28808,7 @@ def _c3l2_stage3(lab,saved):
       </div>
       <div class="c3l2-card green">
         <b>Lp pertenece al punto de observación.</b><br>
-        Un mismo equipo puede producir distintos Lp en distintos receptores porque el sonido se propaga y se atenúa.
+        Un mismo equipo puede producir distintos Lp en distintas posiciones del sonómetro porque el sonido se propaga y se atenúa.
       </div>
     </div>
     """, unsafe_allow_html=True)
