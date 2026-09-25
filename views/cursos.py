@@ -28995,6 +28995,74 @@ def _c3l2_stage3(lab,saved):
     st.markdown("#### Caso ideal de campo libre")
     st.latex(r"L_p \approx L_W + 10\log_{10}\left(\frac{Q}{4\pi r^2}\right)")
 
+    st.markdown("#### Ejemplo resuelto · misma fuente, dos condiciones")
+    st.write(
+        "Consideremos la **misma fuente con Lw = 95 dB** y un sonómetro ubicado a **10 m**. "
+        "Solo cambia la forma idealizada en que la potencia se distribuye en el espacio."
+    )
+
+    ex_q1 = 1.0
+    ex_q2 = 2.0
+    ex_lw = 95.0
+    ex_r = 10.0
+    ex_lp_q1 = ex_lw + 10 * math.log10(ex_q1 / (4 * math.pi * ex_r**2))
+    ex_lp_q2 = ex_lw + 10 * math.log10(ex_q2 / (4 * math.pi * ex_r**2))
+    ex_diff = ex_lp_q2 - ex_lp_q1
+
+    st.markdown("""
+    <div class="c3l2-grid2">
+      <div class="c3l2-card blue">
+        <div class="c3l2-k">EJEMPLO A · FUENTE SUSPENDIDA</div>
+        <b>Q = 1 · radiación ideal en 4π</b><br><br>
+        <b>Lw = 95 dB</b><br>
+        <b>r = 10 m</b><br>
+        <b>Q = 1</b>
+      </div>
+      <div class="c3l2-card orange">
+        <div class="c3l2-k">EJEMPLO B · SOBRE PLANO REFLECTANTE</div>
+        <b>Q = 2 · radiación ideal en 2π</b><br><br>
+        <b>Lw = 95 dB</b><br>
+        <b>r = 10 m</b><br>
+        <b>Q = 2</b>
+      </div>
+    </div>
+    """, unsafe_allow_html=True)
+
+    cqa, cqb = st.columns(2)
+    with cqa:
+        st.markdown("##### Cálculo para Q = 1")
+        st.latex(r"L_p=95+10\log_{10}\left(\frac{1}{4\pi(10)^2}\right)")
+        st.latex(r"L_p\approx 64.0\ \mathrm{dB}")
+        st.markdown(
+            f'<div class="c3l2-card blue"><div class="c3l2-k">RESULTADO</div>'
+            f'<div class="c3l2-num">{ex_lp_q1:.1f} dB</div>'
+            '<b>Nivel de presión sonora estimado a 10 m.</b></div>',
+            unsafe_allow_html=True,
+        )
+
+    with cqb:
+        st.markdown("##### Cálculo para Q = 2")
+        st.latex(r"L_p=95+10\log_{10}\left(\frac{2}{4\pi(10)^2}\right)")
+        st.latex(r"L_p\approx 67.0\ \mathrm{dB}")
+        st.markdown(
+            f'<div class="c3l2-card orange"><div class="c3l2-k">RESULTADO</div>'
+            f'<div class="c3l2-num">{ex_lp_q2:.1f} dB</div>'
+            '<b>Nivel de presión sonora estimado a 10 m.</b></div>',
+            unsafe_allow_html=True,
+        )
+
+    st.markdown(
+        f"""
+        <div class="c3l2-note">
+          <b>Comparación:</b> la fuente tiene el mismo <b>Lw = {ex_lw:.0f} dB</b> y el sonómetro está a la misma
+          distancia de <b>{ex_r:.0f} m</b>. Al pasar de Q = 1 a Q = 2, el nivel estimado aumenta
+          <b>{ex_diff:.1f} dB</b>. La diferencia aparece porque la misma potencia sonora se distribuye
+          sobre una superficie espacial menor.
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
+
     st.markdown("""
     <div class="c3l2-note">
       La ecuación no dice que <b>Lw se convierta en Lp</b>. Dice que, bajo estas condiciones idealizadas,
