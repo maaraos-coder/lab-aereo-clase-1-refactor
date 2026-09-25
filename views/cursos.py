@@ -28560,203 +28560,9 @@ def _c3l2_stage3(lab,saved):
 
     st.latex(r"L_p=20\log_{10}\left(\frac{p}{p_0}\right),\qquad p_0=20\ \mu\mathrm{Pa}")
 
-    components.html(r"""
-    <svg viewBox="0 0 1040 330" width="100%" style="background:#f7fbff;border:1px solid #d4e3ed;border-radius:16px">
-      <style>.t{font-family:Inter,Arial,sans-serif;fill:#263f50}.b{font-weight:850}.m{fill:#657c89}</style>
-
-      <text x="150" y="38" text-anchor="middle" class="t b" font-size="17">FUENTE</text>
-      <rect x="90" y="105" width="120" height="80" rx="14" fill="#176ea5"/>
-      <rect x="110" y="125" width="52" height="30" rx="5" fill="#c5e6f4"/>
-      <text x="150" y="220" text-anchor="middle" class="t b" font-size="20">W / Lw</text>
-      <text x="150" y="244" text-anchor="middle" class="t m" font-size="14">propiedad de emisión</text>
-
-      <circle cx="150" cy="145" r="95" fill="none" stroke="#5aa8c5" stroke-width="3" opacity=".35"/>
-      <circle cx="150" cy="145" r="155" fill="none" stroke="#5aa8c5" stroke-width="3" opacity=".20"/>
-      <circle cx="150" cy="145" r="215" fill="none" stroke="#5aa8c5" stroke-width="2" opacity=".12"/>
-
-      <path d="M300 145 L450 145" stroke="#7f939e" stroke-width="2" stroke-dasharray="8 7"/>
-      <text x="375" y="128" text-anchor="middle" class="t m" font-size="13">propagación</text>
-
-      <circle cx="505" cy="145" r="17" fill="#18a36f"/>
-      <text x="505" y="105" text-anchor="middle" class="t b" font-size="15">SONÓMETRO A</text>
-      <text x="505" y="190" text-anchor="middle" class="t b" font-size="19">Lp,A</text>
-      <text x="505" y="214" text-anchor="middle" class="t m" font-size="13">presión en este punto</text>
-
-      <path d="M540 145 L770 145" stroke="#7f939e" stroke-width="2" stroke-dasharray="8 7"/>
-
-      <circle cx="825" cy="145" r="17" fill="#e4772e"/>
-      <text x="825" y="105" text-anchor="middle" class="t b" font-size="15">SONÓMETRO B</text>
-      <text x="825" y="190" text-anchor="middle" class="t b" font-size="19">Lp,B</text>
-      <text x="825" y="214" text-anchor="middle" class="t m" font-size="13">otro punto · otro Lp</text>
-
-      <rect x="65" y="270" width="910" height="38" rx="12" fill="#e9f4fa"/>
-      <text x="520" y="294" text-anchor="middle" class="t b" font-size="14">
-        UNA MISMA FUENTE → UN MISMO Lw · DISTINTAS POSICIONES → DISTINTOS Lp
-      </text>
-    </svg>
-    """, height=345)
-
-    st.markdown("#### La diferencia esencial")
-    st.markdown("""
-    <div class="c3l2-grid2">
-      <div class="c3l2-card blue">
-        <b>Lw pertenece a la fuente.</b><br>
-        No depende de dónde pongamos el sonómetro.
-        Para una condición de operación dada, describe la capacidad de emisión acústica del equipo.
-      </div>
-      <div class="c3l2-card green">
-        <b>Lp pertenece al punto de observación.</b><br>
-        Un mismo equipo puede producir distintos Lp en distintos receptores porque el sonido se propaga y se atenúa.
-      </div>
-    </div>
-    """, unsafe_allow_html=True)
-
-    st.info(
-        "Una analogía útil: la **potencia de una lámpara** pertenece a la lámpara; "
-        "la **iluminación que recibes** depende de dónde te encuentres. "
-        "En acústica, Lw caracteriza la fuente y Lp caracteriza lo que ocurre en un punto del campo sonoro."
-    )
-
-    st.markdown("### 3. Ahora sí: ¿qué significa el factor de directividad Q?")
+    st.markdown("### 3. Compruébalo moviendo la fuente y el receptor")
     st.write(
-        "El factor **Q** no cambia la potencia sonora total de la fuente. "
-        "Describe cómo esa misma potencia se reparte en el espacio dentro de un modelo idealizado."
-    )
-
-    st.markdown("""
-    <div class="c3l2-grid2">
-      <div class="c3l2-card blue">
-        <div class="c3l2-k">Q = 1 · ESPACIO LIBRE</div>
-        <b>Radiación ideal en todas las direcciones.</b><br>
-        La potencia se reparte sobre una esfera completa: <b>4πr²</b>.
-        Es la idealización típica de una fuente omnidireccional en campo libre, alejada de superficies reflectantes.
-      </div>
-      <div class="c3l2-card orange">
-        <div class="c3l2-k">Q = 2 · SOBRE UN PLANO REFLECTANTE</div>
-        <b>La radiación queda concentrada en medio espacio.</b><br>
-        La misma potencia se reparte aproximadamente sobre una semiesfera: <b>2πr²</b>.
-        En el modelo ideal, a igual Lw y distancia, esto produce aproximadamente <b>+3 dB</b> respecto de Q = 1.
-      </div>
-    </div>
-    """, unsafe_allow_html=True)
-
-    components.html(r"""
-    <svg viewBox="0 0 980 300" width="100%" style="background:#f7fbff;border:1px solid #d4e3ed;border-radius:16px">
-      <style>.t{font-family:Inter,Arial,sans-serif;fill:#263f50}.b{font-weight:850}.m{fill:#637a88}</style>
-      <text x="245" y="35" text-anchor="middle" class="t b" font-size="18">Q = 1 · 4π</text>
-      <circle cx="245" cy="150" r="22" fill="#176ea5"/>
-      <circle cx="245" cy="150" r="62" fill="none" stroke="#4aa3c6" stroke-width="3" opacity=".75"/>
-      <circle cx="245" cy="150" r="105" fill="none" stroke="#4aa3c6" stroke-width="3" opacity=".40"/>
-      <circle cx="245" cy="150" r="135" fill="none" stroke="#4aa3c6" stroke-width="2" opacity=".20"/>
-      <text x="245" y="285" text-anchor="middle" class="t m" font-size="14">misma potencia distribuida sobre esfera completa</text>
-
-      <text x="735" y="35" text-anchor="middle" class="t b" font-size="18">Q = 2 · 2π</text>
-      <line x1="555" y1="222" x2="915" y2="222" stroke="#6f7f88" stroke-width="5"/>
-      <circle cx="735" cy="222" r="22" fill="#d97706"/>
-      <path d="M675 222 A60 60 0 0 1 795 222" fill="none" stroke="#e9a240" stroke-width="3" opacity=".85"/>
-      <path d="M630 222 A105 105 0 0 1 840 222" fill="none" stroke="#e9a240" stroke-width="3" opacity=".50"/>
-      <path d="M600 222 A135 135 0 0 1 870 222" fill="none" stroke="#e9a240" stroke-width="2" opacity=".25"/>
-      <text x="735" y="285" text-anchor="middle" class="t m" font-size="14">misma potencia distribuida sobre semiesfera</text>
-    </svg>
-    """, height=315)
-
-    st.info(
-        "Q es una **idealización de directividad y confinamiento geométrico**. "
-        "No significa que una fuente real tenga siempre Q = 1 o Q = 2: la directividad real puede depender "
-        "de la frecuencia, de la geometría del equipo y de las superficies próximas."
-    )
-
-    st.markdown("### 4. ¿Cómo se obtiene Lw en la práctica?")
-    st.write(
-        "El nivel de potencia sonora no se obtiene colocando un sonómetro en un único punto. "
-        "En métodos basados en presión sonora se mide alrededor de la fuente sobre una **superficie de medición** "
-        "y, a partir de esos niveles y del área de esa superficie, se determina la potencia sonora emitida."
-    )
-
-    chamber_mode = st.segmented_control(
-        "Entorno de ensayo",
-        ["Cámara anecoica", "Cámara semianecoica"],
-        default="Cámara semianecoica",
-        key="c3l2_s3_chamber_mode",
-    )
-
-    if chamber_mode == "Cámara anecoica":
-        chamber_note = (
-            "Las superficies se acondicionan para minimizar reflexiones y aproximar un campo libre. "
-            "Conceptualmente, una fuente omnidireccional aislada puede asociarse a Q ≈ 1 y una superficie esférica."
-        )
-        floor_fill = "#22313b"
-        floor_wedges = True
-        surface_label = "superficie esférica de medición"
-    else:
-        chamber_note = (
-            "Paredes y cielo absorben; el piso es reflectante. "
-            "Es habitual para maquinaria apoyada sobre el suelo y aproxima un campo libre sobre un plano reflectante. "
-            "En la idealización simple puede asociarse a Q ≈ 2 y una superficie semiesférica."
-        )
-        floor_fill = "#aeb8be"
-        floor_wedges = False
-        surface_label = "superficie semiesférica de medición"
-
-    chamber_svg = f"""
-    <svg viewBox="0 0 1080 560" width="100%" style="background:#101b24;border:1px solid #273b49;border-radius:18px">
-      <defs>
-        <pattern id="wedges" width="42" height="42" patternUnits="userSpaceOnUse">
-          <path d="M0 42 L21 0 L42 42 Z" fill="#344b58"/>
-          <path d="M7 42 L21 12 L35 42 Z" fill="#263945"/>
-        </pattern>
-        <radialGradient id="device" cx="35%" cy="30%">
-          <stop offset="0%" stop-color="#86c7e2"/><stop offset="100%" stop-color="#176ea5"/>
-        </radialGradient>
-      </defs>
-
-      <rect x="38" y="35" width="1004" height="455" rx="18" fill="#172630"/>
-      <rect x="38" y="35" width="1004" height="82" rx="18" fill="url(#wedges)"/>
-      <rect x="38" y="95" width="92" height="395" fill="url(#wedges)"/>
-      <rect x="950" y="95" width="92" height="395" fill="url(#wedges)"/>
-      <rect x="130" y="405" width="820" height="85" fill="{floor_fill}"/>
-      {"<rect x='130' y='405' width='820' height='85' fill='url(#wedges)'/>" if floor_wedges else ""}
-
-      <text x="540" y="72" text-anchor="middle" font-family="Inter,Arial" font-size="20" font-weight="850" fill="#eef8ff">{chamber_mode.upper()}</text>
-
-      <g>
-        <rect x="455" y="300" width="170" height="95" rx="18" fill="url(#device)" stroke="#d8eff9" stroke-width="3"/>
-        <rect x="482" y="323" width="70" height="37" rx="7" fill="#cceaf6"/>
-        <circle cx="590" cy="346" r="16" fill="#0f4d70"/>
-        <rect x="492" y="395" width="20" height="22" fill="#3e4b52"/>
-        <rect x="570" y="395" width="20" height="22" fill="#3e4b52"/>
-        <text x="540" y="285" text-anchor="middle" font-family="Inter,Arial" font-size="16" font-weight="850" fill="#ffffff">EQUIPO BAJO ENSAYO</text>
-      </g>
-
-      <path d="M270 350 A270 270 0 0 1 810 350" fill="none" stroke="#4fd1c5" stroke-width="3" stroke-dasharray="9 8" opacity=".85"/>
-      {"<path d='M270 350 A270 270 0 1 0 810 350' fill='none' stroke='#4fd1c5' stroke-width='3' stroke-dasharray='9 8' opacity='.55'/>" if floor_wedges else ""}
-
-      <g fill="#f8fafc" stroke="#4fd1c5" stroke-width="3">
-        <circle cx="298" cy="246" r="10"/><circle cx="368" cy="157" r="10"/><circle cx="467" cy="105" r="10"/>
-        <circle cx="613" cy="105" r="10"/><circle cx="712" cy="157" r="10"/><circle cx="782" cy="246" r="10"/>
-        {"<circle cx='298' cy='454' r='10'/><circle cx='368' cy='523' r='10'/><circle cx='712' cy='523' r='10'/><circle cx='782' cy='454' r='10'/>" if floor_wedges else ""}
-      </g>
-
-      <text x="540" y="135" text-anchor="middle" font-family="Inter,Arial" font-size="14" font-weight="800" fill="#78e0d5">{surface_label}</text>
-      <text x="540" y="520" text-anchor="middle" font-family="Inter,Arial" font-size="14" fill="#b9cbd5">Micrófonos en varias posiciones → nivel medio sobre la superficie → Lw</text>
-    </svg>
-    """
-    components.html(chamber_svg, height=585)
-    st.markdown(f'<div class="c3l2-note"><b>{chamber_mode}:</b> {chamber_note}</div>', unsafe_allow_html=True)
-
-    st.markdown("#### Relación conceptual entre la superficie medida y la potencia")
-    st.latex(r"L_W \approx \overline{L_p}+10\log_{10}\left(\frac{S}{S_0}\right)")
-    st.caption(
-        "Relación conceptual para un campo libre ideal. Los procedimientos normalizados incorporan requisitos de "
-        "entorno, instrumentación, posiciones de micrófono y correcciones específicas. "
-        "ISO 3745 utiliza mediciones sobre una superficie que envuelve la fuente en cámaras anecoicas o semianecoicas."
-    )
-
-    st.markdown("### 5. Del Lw de la fuente al Lp del receptor")
-    st.write(
-        "Arrastra la **fuente** o el **receptor** dentro de la escena. "
-        "El nivel de potencia sonora **Lw permanece asociado a la fuente**, mientras que "
-        "el nivel de presión sonora **Lp cambia con la distancia**."
+        "En esta condición ideal, arrastra la **fuente** o el **receptor**. "        "Observa que **Lw permanece ligado a la fuente**, mientras que **Lp cambia con la distancia**. "
     )
 
     components.html(r"""
@@ -29063,6 +28869,162 @@ def _c3l2_stage3(lab,saved):
     st.caption(
         "Modelo didáctico de campo libre. La escena muestra únicamente divergencia geométrica y directividad idealizada; "
         "no incorpora absorción atmosférica, suelo, pantallas, meteorología ni reflexiones complejas."
+    )
+
+    st.markdown("#### La diferencia esencial")
+    st.markdown("""
+    <div class="c3l2-grid2">
+      <div class="c3l2-card blue">
+        <b>Lw pertenece a la fuente.</b><br>
+        No depende de dónde pongamos el sonómetro.
+        Para una condición de operación dada, describe la capacidad de emisión acústica del equipo.
+      </div>
+      <div class="c3l2-card green">
+        <b>Lp pertenece al punto de observación.</b><br>
+        Un mismo equipo puede producir distintos Lp en distintos receptores porque el sonido se propaga y se atenúa.
+      </div>
+    </div>
+    """, unsafe_allow_html=True)
+
+    st.info(
+        "Una analogía útil: la **potencia de una lámpara** pertenece a la lámpara; "
+        "la **iluminación que recibes** depende de dónde te encuentres. "
+        "En acústica, Lw caracteriza la fuente y Lp caracteriza lo que ocurre en un punto del campo sonoro."
+    )
+
+    st.markdown("### 4. Ahora sí: ¿qué significa el factor de directividad Q?")
+    st.write(
+        "El factor **Q** no cambia la potencia sonora total de la fuente. "
+        "Describe cómo esa misma potencia se reparte en el espacio dentro de un modelo idealizado."
+    )
+
+    st.markdown("""
+    <div class="c3l2-grid2">
+      <div class="c3l2-card blue">
+        <div class="c3l2-k">Q = 1 · ESPACIO LIBRE</div>
+        <b>Radiación ideal en todas las direcciones.</b><br>
+        La potencia se reparte sobre una esfera completa: <b>4πr²</b>.
+        Es la idealización típica de una fuente omnidireccional en campo libre, alejada de superficies reflectantes.
+      </div>
+      <div class="c3l2-card orange">
+        <div class="c3l2-k">Q = 2 · SOBRE UN PLANO REFLECTANTE</div>
+        <b>La radiación queda concentrada en medio espacio.</b><br>
+        La misma potencia se reparte aproximadamente sobre una semiesfera: <b>2πr²</b>.
+        En el modelo ideal, a igual Lw y distancia, esto produce aproximadamente <b>+3 dB</b> respecto de Q = 1.
+      </div>
+    </div>
+    """, unsafe_allow_html=True)
+
+    components.html(r"""
+    <svg viewBox="0 0 980 300" width="100%" style="background:#f7fbff;border:1px solid #d4e3ed;border-radius:16px">
+      <style>.t{font-family:Inter,Arial,sans-serif;fill:#263f50}.b{font-weight:850}.m{fill:#637a88}</style>
+      <text x="245" y="35" text-anchor="middle" class="t b" font-size="18">Q = 1 · 4π</text>
+      <circle cx="245" cy="150" r="22" fill="#176ea5"/>
+      <circle cx="245" cy="150" r="62" fill="none" stroke="#4aa3c6" stroke-width="3" opacity=".75"/>
+      <circle cx="245" cy="150" r="105" fill="none" stroke="#4aa3c6" stroke-width="3" opacity=".40"/>
+      <circle cx="245" cy="150" r="135" fill="none" stroke="#4aa3c6" stroke-width="2" opacity=".20"/>
+      <text x="245" y="285" text-anchor="middle" class="t m" font-size="14">misma potencia distribuida sobre esfera completa</text>
+
+      <text x="735" y="35" text-anchor="middle" class="t b" font-size="18">Q = 2 · 2π</text>
+      <line x1="555" y1="222" x2="915" y2="222" stroke="#6f7f88" stroke-width="5"/>
+      <circle cx="735" cy="222" r="22" fill="#d97706"/>
+      <path d="M675 222 A60 60 0 0 1 795 222" fill="none" stroke="#e9a240" stroke-width="3" opacity=".85"/>
+      <path d="M630 222 A105 105 0 0 1 840 222" fill="none" stroke="#e9a240" stroke-width="3" opacity=".50"/>
+      <path d="M600 222 A135 135 0 0 1 870 222" fill="none" stroke="#e9a240" stroke-width="2" opacity=".25"/>
+      <text x="735" y="285" text-anchor="middle" class="t m" font-size="14">misma potencia distribuida sobre semiesfera</text>
+    </svg>
+    """, height=315)
+
+    st.info(
+        "Q es una **idealización de directividad y confinamiento geométrico**. "
+        "No significa que una fuente real tenga siempre Q = 1 o Q = 2: la directividad real puede depender "
+        "de la frecuencia, de la geometría del equipo y de las superficies próximas."
+    )
+
+    st.markdown("### 5. ¿Cómo se obtiene Lw en la práctica?")
+    st.write(
+        "El nivel de potencia sonora no se obtiene colocando un sonómetro en un único punto. "
+        "En métodos basados en presión sonora se mide alrededor de la fuente sobre una **superficie de medición** "
+        "y, a partir de esos niveles y del área de esa superficie, se determina la potencia sonora emitida."
+    )
+
+    chamber_mode = st.segmented_control(
+        "Entorno de ensayo",
+        ["Cámara anecoica", "Cámara semianecoica"],
+        default="Cámara semianecoica",
+        key="c3l2_s3_chamber_mode",
+    )
+
+    if chamber_mode == "Cámara anecoica":
+        chamber_note = (
+            "Las superficies se acondicionan para minimizar reflexiones y aproximar un campo libre. "
+            "Conceptualmente, una fuente omnidireccional aislada puede asociarse a Q ≈ 1 y una superficie esférica."
+        )
+        floor_fill = "#22313b"
+        floor_wedges = True
+        surface_label = "superficie esférica de medición"
+    else:
+        chamber_note = (
+            "Paredes y cielo absorben; el piso es reflectante. "
+            "Es habitual para maquinaria apoyada sobre el suelo y aproxima un campo libre sobre un plano reflectante. "
+            "En la idealización simple puede asociarse a Q ≈ 2 y una superficie semiesférica."
+        )
+        floor_fill = "#aeb8be"
+        floor_wedges = False
+        surface_label = "superficie semiesférica de medición"
+
+    chamber_svg = f"""
+    <svg viewBox="0 0 1080 560" width="100%" style="background:#101b24;border:1px solid #273b49;border-radius:18px">
+      <defs>
+        <pattern id="wedges" width="42" height="42" patternUnits="userSpaceOnUse">
+          <path d="M0 42 L21 0 L42 42 Z" fill="#344b58"/>
+          <path d="M7 42 L21 12 L35 42 Z" fill="#263945"/>
+        </pattern>
+        <radialGradient id="device" cx="35%" cy="30%">
+          <stop offset="0%" stop-color="#86c7e2"/><stop offset="100%" stop-color="#176ea5"/>
+        </radialGradient>
+      </defs>
+
+      <rect x="38" y="35" width="1004" height="455" rx="18" fill="#172630"/>
+      <rect x="38" y="35" width="1004" height="82" rx="18" fill="url(#wedges)"/>
+      <rect x="38" y="95" width="92" height="395" fill="url(#wedges)"/>
+      <rect x="950" y="95" width="92" height="395" fill="url(#wedges)"/>
+      <rect x="130" y="405" width="820" height="85" fill="{floor_fill}"/>
+      {"<rect x='130' y='405' width='820' height='85' fill='url(#wedges)'/>" if floor_wedges else ""}
+
+      <text x="540" y="72" text-anchor="middle" font-family="Inter,Arial" font-size="20" font-weight="850" fill="#eef8ff">{chamber_mode.upper()}</text>
+
+      <g>
+        <rect x="455" y="300" width="170" height="95" rx="18" fill="url(#device)" stroke="#d8eff9" stroke-width="3"/>
+        <rect x="482" y="323" width="70" height="37" rx="7" fill="#cceaf6"/>
+        <circle cx="590" cy="346" r="16" fill="#0f4d70"/>
+        <rect x="492" y="395" width="20" height="22" fill="#3e4b52"/>
+        <rect x="570" y="395" width="20" height="22" fill="#3e4b52"/>
+        <text x="540" y="285" text-anchor="middle" font-family="Inter,Arial" font-size="16" font-weight="850" fill="#ffffff">EQUIPO BAJO ENSAYO</text>
+      </g>
+
+      <path d="M270 350 A270 270 0 0 1 810 350" fill="none" stroke="#4fd1c5" stroke-width="3" stroke-dasharray="9 8" opacity=".85"/>
+      {"<path d='M270 350 A270 270 0 1 0 810 350' fill='none' stroke='#4fd1c5' stroke-width='3' stroke-dasharray='9 8' opacity='.55'/>" if floor_wedges else ""}
+
+      <g fill="#f8fafc" stroke="#4fd1c5" stroke-width="3">
+        <circle cx="298" cy="246" r="10"/><circle cx="368" cy="157" r="10"/><circle cx="467" cy="105" r="10"/>
+        <circle cx="613" cy="105" r="10"/><circle cx="712" cy="157" r="10"/><circle cx="782" cy="246" r="10"/>
+        {"<circle cx='298' cy='454' r='10'/><circle cx='368' cy='523' r='10'/><circle cx='712' cy='523' r='10'/><circle cx='782' cy='454' r='10'/>" if floor_wedges else ""}
+      </g>
+
+      <text x="540" y="135" text-anchor="middle" font-family="Inter,Arial" font-size="14" font-weight="800" fill="#78e0d5">{surface_label}</text>
+      <text x="540" y="520" text-anchor="middle" font-family="Inter,Arial" font-size="14" fill="#b9cbd5">Micrófonos en varias posiciones → nivel medio sobre la superficie → Lw</text>
+    </svg>
+    """
+    components.html(chamber_svg, height=585)
+    st.markdown(f'<div class="c3l2-note"><b>{chamber_mode}:</b> {chamber_note}</div>', unsafe_allow_html=True)
+
+    st.markdown("#### Relación conceptual entre la superficie medida y la potencia")
+    st.latex(r"L_W \approx \overline{L_p}+10\log_{10}\left(\frac{S}{S_0}\right)")
+    st.caption(
+        "Relación conceptual para un campo libre ideal. Los procedimientos normalizados incorporan requisitos de "
+        "entorno, instrumentación, posiciones de micrófono y correcciones específicas. "
+        "ISO 3745 utiliza mediciones sobre una superficie que envuelve la fuente en cámaras anecoicas o semianecoicas."
     )
 
     st.markdown("### 6. Conversor idealizado · Lw ↔ Lp")
