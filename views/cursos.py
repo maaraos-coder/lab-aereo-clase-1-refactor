@@ -29519,12 +29519,31 @@ def _c3l2_stage3(lab,saved):
         left_wall = scene in ("wall_floor", "corner")
         right_wall = scene == "corner"
 
-        floor_svg = '<rect x="55" y="285" width="610" height="48" rx="5" fill="#8f9ca4"/><line x1="55" y1="285" x2="665" y2="285" stroke="#4f606a" stroke-width="5"/>' if floor else ""
-        left_wall_svg = '<rect x="55" y="65" width="42" height="220" fill="#9da9b0"/><line x1="97" y1="65" x2="97" y2="285" stroke="#4f606a" stroke-width="5"/>' if left_wall else ""
-        right_wall_svg = '<polygon points="665,95 620,125 620,285 665,285" fill="#87959d"/><line x1="620" y1="125" x2="620" y2="285" stroke="#4f606a" stroke-width="5"/>' if right_wall else ""
-
-        source_y = 215 if floor else 175
-        source_x = 160 if left_wall else 190
+        if scene == "corner":
+            floor_svg = '''
+              <polygon points="95,260 665,260 715,330 45,330"
+                       fill="#a7b2b8" stroke="#4f606a" stroke-width="4"/>
+              <text x="405" y="315" text-anchor="middle" class="t b" font-size="13">PLANO RÍGIDO 1 · PISO</text>
+            '''
+            left_wall_svg = '''
+              <rect x="95" y="60" width="570" height="200"
+                    fill="#d3dbe0" stroke="#4f606a" stroke-width="4"/>
+              <text x="400" y="88" text-anchor="middle" class="t b" font-size="13">PLANO RÍGIDO 2 · MURO POSTERIOR</text>
+            '''
+            right_wall_svg = '''
+              <polygon points="45,105 95,60 95,260 45,330"
+                       fill="#8e9ba3" stroke="#4f606a" stroke-width="4"/>
+              <text x="70" y="175" text-anchor="middle" class="t b" font-size="12"
+                    transform="rotate(-90 70 175)">PLANO RÍGIDO 3 · MURO LATERAL</text>
+            '''
+            source_y = 225
+            source_x = 135
+        else:
+            floor_svg = '<rect x="55" y="285" width="610" height="48" rx="5" fill="#8f9ca4"/><line x1="55" y1="285" x2="665" y2="285" stroke="#4f606a" stroke-width="5"/>' if floor else ""
+            left_wall_svg = '<rect x="55" y="65" width="42" height="220" fill="#9da9b0"/><line x1="97" y1="65" x2="97" y2="285" stroke="#4f606a" stroke-width="5"/>' if left_wall else ""
+            right_wall_svg = '<polygon points="665,95 620,125 620,285 665,285" fill="#87959d"/><line x1="620" y1="125" x2="620" y2="285" stroke="#4f606a" stroke-width="5"/>' if right_wall else ""
+            source_y = 215 if floor else 175
+            source_x = 160 if left_wall else 190
 
         if scene == "speaker":
             source_shape = f'''
@@ -29674,81 +29693,32 @@ def _c3l2_stage3(lab,saved):
     st.progress(solved_count / len(exercise_cases))
     st.caption(f"Ejercicios correctos: {solved_count} de {len(exercise_cases)}")
 
-    st.markdown("### 8. Comprueba el concepto")
-    q1 = st.radio(
-        "Si mantienes la misma máquina y duplicas la distancia, ¿qué magnitud propia de la fuente permanece?",
-        ["Lw", "Lp", "Ambas disminuyen 6 dB"],
-        index=None,
-        key="c3l2_s3_q1",
-    )
-    q2 = st.radio(
-        "¿Qué representa Q = 2 en la idealización usada en esta etapa?",
-        [
-            "Que la fuente duplica su potencia sonora",
-            "Que la misma potencia se distribuye aproximadamente en medio espacio sobre un plano reflectante",
-            "Que el receptor está al doble de distancia",
-        ],
-        index=None,
-        key="c3l2_s3_q2",
-    )
-    q3 = st.radio(
-        "¿Cómo se determina Lw mediante un método basado en presión sonora en cámara anecoica o semianecoica?",
-        [
-            "Midiendo Lp en un único punto y llamándolo Lw",
-            "Midiendo sobre una superficie que envuelve la fuente y relacionando el nivel superficial con el área de medición",
-            "Midiendo solo a 1 m frente al equipo",
-        ],
-        index=None,
-        key="c3l2_s3_q3",
-    )
-    explanation = st.text_area(
-        "Explica con tus palabras la cadena Lw → propagación → Lp.",
-        height=90,
-        key="c3l2_s3_exp",
-    )
-
-    st.markdown("""
-    <div class="c3l2-note">
-      <b>Puente hacia la Etapa 4:</b> ahora que sabemos que <b>Lw caracteriza la emisión</b>,
-      podemos distribuir esa emisión sobre una superficie sin confundirla con el nivel de presión sonora del receptor.
-    </div>
-    """, unsafe_allow_html=True)
-
-    if _c3l2_role() == "Alumno" and st.button(
-        "Guardar Etapa 3",
-        type="primary",
-        use_container_width=True,
-        key="c3l2_s3_save",
-    ):
-        if (q1 != "Lw" or q2 != "Que la misma potencia se distribuye aproximadamente en medio espacio sobre un plano reflectante" or q3 != "Midiendo sobre una superficie que envuelve la fuente y relacionando el nivel superficial con el área de medición" or len(explanation.strip()) < 30):
-            st.warning("Revisa qué magnitud pertenece a la fuente y cuál corresponde al campo acústico en el receptor.")
-        else:
-            _c3l2_complete(
-                saved,
-                3,
-                {
-                    "q1": q1,
-                    "q2": q2,
-                    "q3": q3,
-                    "exercise_results": {
-                        ex["id"]: {
-                            "answer": st.session_state.get(f"c3l2_s3_{ex['id']}_answer"),
-                            "correct": st.session_state.get(f"c3l2_s3_{ex['id']}_correct", False),
-                        }
-                        for ex in exercise_cases
+    # La Etapa 3 termina con los cinco ejercicios; no existe una Parte 8 adicional.
+    if _c3l2_role() == "Alumno":
+        if solved_count == len(exercise_cases):
+            if st.button(
+                "Guardar Etapa 3",
+                type="primary",
+                use_container_width=True,
+                key="c3l2_s3_save",
+            ):
+                _c3l2_complete(
+                    saved,
+                    3,
+                    {
+                        "exercise_results": {
+                            ex["id"]: {
+                                "answer": st.session_state.get(f"c3l2_s3_{ex['id']}_answer"),
+                                "correct": st.session_state.get(f"c3l2_s3_{ex['id']}_correct", False),
+                            }
+                            for ex in exercise_cases
+                        },
                     },
-                    "explanation": explanation,
-                },
-            )
-            st.success("Etapa 3 guardada.")
+                )
+                st.success("Etapa 3 guardada.")
+        else:
+            st.info("Completa correctamente los cinco ejercicios para guardar la Etapa 3.")
 
-    _c3l2_teacher_pauta(
-        "Etapa 3",
-        "Lw caracteriza la emisión y no cambia por mover el receptor. "
-        "Lp corresponde al campo acústico en una posición y depende de la propagación. "
-        "Q representa la distribución espacial idealizada de la misma potencia: Q=1 para 4π y Q=2 para 2π sobre un plano reflectante. "
-        "La obtención de Lw se vincula conceptualmente con mediciones sobre una superficie envolvente en cámara anecoica o semianecoica, y la conversión Lw↔Lp solo se usa aquí bajo un modelo de campo libre ideal. Esta distinción es requisito conceptual para la Etapa 4.",
-    )
 
 def _c3l2_stage4(lab,saved):
     _c3l2_header(
