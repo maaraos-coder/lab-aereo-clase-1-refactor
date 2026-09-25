@@ -28853,25 +28853,115 @@ def _c3l2_stage3(lab,saved):
     </div>
     """, unsafe_allow_html=True)
 
-    components.html(r"""
-    <svg viewBox="0 0 980 300" width="100%" style="background:#f7fbff;border:1px solid #d4e3ed;border-radius:16px">
-      <style>.t{font-family:Inter,Arial,sans-serif;fill:#263f50}.b{font-weight:850}.m{fill:#637a88}</style>
-      <text x="245" y="35" text-anchor="middle" class="t b" font-size="18">Q = 1 · 4π</text>
-      <circle cx="245" cy="150" r="22" fill="#176ea5"/>
-      <circle cx="245" cy="150" r="62" fill="none" stroke="#4aa3c6" stroke-width="3" opacity=".75"/>
-      <circle cx="245" cy="150" r="105" fill="none" stroke="#4aa3c6" stroke-width="3" opacity=".40"/>
-      <circle cx="245" cy="150" r="135" fill="none" stroke="#4aa3c6" stroke-width="2" opacity=".20"/>
-      <text x="245" y="285" text-anchor="middle" class="t m" font-size="14">misma potencia distribuida sobre esfera completa</text>
+    st.markdown("#### Mismo equipo, dos condiciones ideales")
+    st.write(
+        "Para visualizar Q, usemos **exactamente la misma fuente con el mismo Lw = 95 dB**. "
+        "Lo único que cambia es su relación con las superficies reflectantes."
+    )
 
-      <text x="735" y="35" text-anchor="middle" class="t b" font-size="18">Q = 2 · 2π</text>
-      <line x1="555" y1="222" x2="915" y2="222" stroke="#6f7f88" stroke-width="5"/>
-      <circle cx="735" cy="222" r="22" fill="#d97706"/>
-      <path d="M675 222 A60 60 0 0 1 795 222" fill="none" stroke="#e9a240" stroke-width="3" opacity=".85"/>
-      <path d="M630 222 A105 105 0 0 1 840 222" fill="none" stroke="#e9a240" stroke-width="3" opacity=".50"/>
-      <path d="M600 222 A135 135 0 0 1 870 222" fill="none" stroke="#e9a240" stroke-width="2" opacity=".25"/>
-      <text x="735" y="285" text-anchor="middle" class="t m" font-size="14">misma potencia distribuida sobre semiesfera</text>
+    components.html(r"""
+    <svg viewBox="0 0 1120 520" width="100%" style="background:#f7fbff;border:1px solid #d4e3ed;border-radius:18px">
+      <defs>
+        <radialGradient id="devBlue" cx="35%" cy="30%">
+          <stop offset="0%" stop-color="#87cbe5"/>
+          <stop offset="100%" stop-color="#176ea5"/>
+        </radialGradient>
+        <radialGradient id="waveBlue" cx="50%" cy="50%">
+          <stop offset="0%" stop-color="#64b8d5" stop-opacity=".16"/>
+          <stop offset="100%" stop-color="#64b8d5" stop-opacity="0"/>
+        </radialGradient>
+        <linearGradient id="floorQ" x1="0" x2="0" y1="0" y2="1">
+          <stop offset="0%" stop-color="#9faeb6"/>
+          <stop offset="100%" stop-color="#6e7c84"/>
+        </linearGradient>
+      </defs>
+      <style>
+        .t{font-family:Inter,Arial,sans-serif;fill:#263f50}
+        .b{font-weight:850}
+        .m{fill:#637a88}
+        .cap{font-size:13px}
+      </style>
+
+      <!-- panel Q1 -->
+      <rect x="25" y="25" width="520" height="465" rx="20" fill="#ffffff" stroke="#d5e3ec"/>
+      <text x="285" y="62" text-anchor="middle" class="t b" font-size="20">Q = 1 · fuente ideal en espacio libre</text>
+      <text x="285" y="86" text-anchor="middle" class="t m cap">misma fuente · Lw = 95 dB</text>
+
+      <!-- suspension -->
+      <line x1="245" y1="100" x2="245" y2="157" stroke="#6f7f88" stroke-width="3"/>
+      <line x1="325" y1="100" x2="325" y2="157" stroke="#6f7f88" stroke-width="3"/>
+      <line x1="215" y1="100" x2="355" y2="100" stroke="#a1b1bb" stroke-width="4"/>
+      <text x="285" y="120" text-anchor="middle" class="t m" font-size="12">suspendida, alejada de superficies</text>
+
+      <!-- spherical field -->
+      <circle cx="285" cy="250" r="145" fill="url(#waveBlue)"/>
+      <circle cx="285" cy="250" r="70" fill="none" stroke="#5aaecb" stroke-width="3" opacity=".78"/>
+      <circle cx="285" cy="250" r="110" fill="none" stroke="#5aaecb" stroke-width="3" opacity=".46"/>
+      <circle cx="285" cy="250" r="145" fill="none" stroke="#5aaecb" stroke-width="2" opacity=".25"/>
+
+      <!-- device Q1 -->
+      <g>
+        <rect x="225" y="194" width="120" height="90" rx="15" fill="url(#devBlue)" stroke="#d7eef8" stroke-width="3"/>
+        <rect x="245" y="215" width="52" height="29" rx="6" fill="#c8e8f5"/>
+        <circle cx="320" cy="232" r="13" fill="#0e5276"/>
+        <rect x="249" y="284" width="18" height="14" rx="2" fill="#3d4a51"/>
+        <rect x="304" y="284" width="18" height="14" rx="2" fill="#3d4a51"/>
+        <text x="285" y="319" text-anchor="middle" class="t b" font-size="15">FUENTE</text>
+        <text x="285" y="340" text-anchor="middle" class="t" font-size="14">Lw = 95 dB</text>
+      </g>
+
+      <text x="285" y="415" text-anchor="middle" class="t b" font-size="16">La potencia se distribuye sobre 4π</text>
+      <text x="285" y="440" text-anchor="middle" class="t m" font-size="13">superficie ideal: esfera completa</text>
+      <text x="285" y="465" text-anchor="middle" class="t m" font-size="12">sin plano reflectante próximo</text>
+
+      <!-- panel Q2 -->
+      <rect x="575" y="25" width="520" height="465" rx="20" fill="#ffffff" stroke="#ead9c5"/>
+      <text x="835" y="62" text-anchor="middle" class="t b" font-size="20">Q = 2 · fuente ideal sobre plano reflectante</text>
+      <text x="835" y="86" text-anchor="middle" class="t m cap">misma fuente · Lw = 95 dB</text>
+
+      <!-- floor -->
+      <rect x="625" y="330" width="420" height="58" rx="8" fill="url(#floorQ)"/>
+      <line x1="625" y1="330" x2="1045" y2="330" stroke="#43545d" stroke-width="5"/>
+      <text x="835" y="372" text-anchor="middle" font-family="Inter,Arial" font-size="13" font-weight="800" fill="#eef6fa">PLANO RÍGIDO REFLECTANTE</text>
+
+      <!-- hemispherical field -->
+      <path d="M690 330 A145 145 0 0 1 980 330" fill="none" stroke="#e7a04a" stroke-width="3" opacity=".30"/>
+      <path d="M725 330 A110 110 0 0 1 945 330" fill="none" stroke="#e7a04a" stroke-width="3" opacity=".52"/>
+      <path d="M765 330 A70 70 0 0 1 905 330" fill="none" stroke="#e7a04a" stroke-width="3" opacity=".82"/>
+
+      <!-- device Q2 -->
+      <g>
+        <rect x="775" y="238" width="120" height="90" rx="15" fill="url(#devBlue)" stroke="#d7eef8" stroke-width="3"/>
+        <rect x="795" y="259" width="52" height="29" rx="6" fill="#c8e8f5"/>
+        <circle cx="870" cy="276" r="13" fill="#0e5276"/>
+        <rect x="799" y="328" width="18" height="10" rx="2" fill="#3d4a51"/>
+        <rect x="854" y="328" width="18" height="10" rx="2" fill="#3d4a51"/>
+        <text x="835" y="220" text-anchor="middle" class="t b" font-size="15">FUENTE</text>
+        <text x="835" y="198" text-anchor="middle" class="t" font-size="14">Lw = 95 dB</text>
+      </g>
+
+      <!-- image source under plane as conceptual mirror -->
+      <g opacity=".22">
+        <rect x="775" y="340" width="120" height="72" rx="15" fill="#d97706" stroke="#9a5a13" stroke-width="2"/>
+        <text x="835" y="382" text-anchor="middle" font-family="Inter,Arial" font-size="12" font-weight="800" fill="#6b3d0c">FUENTE IMAGEN</text>
+      </g>
+      <line x1="910" y1="360" x2="1000" y2="405" stroke="#9f6c31" stroke-width="2" stroke-dasharray="5 5"/>
+      <text x="1002" y="410" class="t m" font-size="11">representación conceptual</text>
+
+      <text x="835" y="430" text-anchor="middle" class="t b" font-size="16">La potencia se distribuye sobre 2π</text>
+      <text x="835" y="455" text-anchor="middle" class="t m" font-size="13">superficie ideal: semiesfera</text>
+      <text x="835" y="477" text-anchor="middle" class="t m" font-size="12">a igual Lw y r → ≈ +3 dB respecto de Q = 1</text>
     </svg>
-    """, height=315)
+    """, height=535)
+
+    st.markdown("""
+    <div class="c3l2-note">
+      <b>Lee la figura de izquierda a derecha:</b> no estamos cambiando la máquina ni aumentando su Lw.
+      En ambos casos la fuente tiene <b>Lw = 95 dB</b>. En el caso Q = 2, el plano reflectante hace que,
+      en la idealización, la radiación útil se concentre en medio espacio. Por eso, a la misma distancia,
+      el Lp estimado en ese espacio es aproximadamente 3 dB mayor que para Q = 1.
+    </div>
+    """, unsafe_allow_html=True)
 
     st.info(
         "Q es una **idealización de directividad y confinamiento geométrico**. "
