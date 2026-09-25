@@ -28610,7 +28610,8 @@ def _c3l2_stage3(lab,saved):
     examples=[
         ("Fachada industrial radiante","Una gran fachada con paneles o aberturas que emiten sobre una superficie."),
         ("Cubierta técnica","Muchos equipos distribuidos sobre una cubierta extensa pueden formar una fuente espacialmente distribuida."),
-        ("Obra de construcción","Maquinaria móvil o de posición variable puede representarse mediante un área activa cuando la hipótesis de modelación lo justifica."),\n        ("Patio industrial","Operaciones distribuidas sobre una superficie requieren representar ubicación y extensión, no solo un punto."),
+        ("Obra de construcción","Maquinaria móvil o de posición variable puede representarse mediante un área activa cuando la hipótesis de modelación lo justifica."),
+        ("Patio industrial","Operaciones distribuidas sobre una superficie requieren representar ubicación y extensión, no solo un punto."),
         ("Panel o placa vibrante","Una superficie grande que radia sonido puede analizarse como fuente de área en la escala adecuada."),
     ]
     for title,desc in examples:
