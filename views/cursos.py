@@ -30971,7 +30971,7 @@ def _c3l2_stage6(lab,saved):
         <div class="c3l2-k">IDW</div>
         <b>Determinista y fácil de interpretar.</b><br>
         La influencia depende principalmente de la distancia. Es útil para enseñar y para casos donde
-        se justifica la continuidad espacial, pero puede producir “bullseyes” alrededor de puntos.
+        se justifica la continuidad espacial, pero puede generar patrones circulares artificiales alrededor de los puntos de medición.
       </div>
       <div class="c3l2-card green">
         <div class="c3l2-k">KRIGING</div>
