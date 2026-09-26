@@ -31005,19 +31005,59 @@ def _c3l2_stage6(lab,saved):
         unsafe_allow_html=True,
     )
 
-    st.markdown("### 10. Límites del mapa")
-    st.markdown("""
-    Un mapa obtenido desde mediciones es defendible solo dentro del alcance de la campaña. Debe informarse, como mínimo:
+    st.markdown("### 10. Limitaciones del mapa y antecedentes que deben informarse")
 
-    - dónde están los puntos realmente medidos;
-    - qué descriptor y periodo representa cada valor;
-    - qué método de interpolación y parámetros se usaron;
-    - cuál fue la densidad y geometría de la red;
-    - cómo se trataron eventos atípicos o datos inválidos;
-    - dónde existen zonas con poco apoyo de medición;
-    - que fuera de la zona bien cubierta se entra en **extrapolación**, cuya interpretación es más débil;
-    - y que una superficie visualmente suave no implica exactitud física.
-    """)
+    st.markdown("#### Limitaciones del mapa")
+    st.markdown("""
+    <div class="c3l2-grid">
+      <div class="c3l2-card orange">
+        <div class="c3l2-k">NO TODO EL MAPA FUE MEDIDO</div>
+        <b>Solo los puntos de terreno son mediciones reales.</b><br>
+        Los valores entre ellos corresponden a una estimación obtenida mediante interpolación.
+      </div>
+      <div class="c3l2-card blue">
+        <div class="c3l2-k">DEPENDE DE LA RED DE MEDICIÓN</div>
+        <b>La distribución de los puntos condiciona el resultado.</b><br>
+        Sectores con pocos puntos o grandes separaciones quedan menos respaldados por información de terreno.
+      </div>
+      <div class="c3l2-card orange">
+        <div class="c3l2-k">NO ES UN MODELO DE PROPAGACIÓN</div>
+        <b>La interpolación no conoce por sí sola muros, barreras ni fuentes.</b><br>
+        Un mapa suave no significa necesariamente que represente con exactitud la física del campo acústico.
+      </div>
+      <div class="c3l2-card blue">
+        <div class="c3l2-k">CAUTELA FUERA DEL ÁREA MEDIDA</div>
+        <b>La extrapolación es más débil que la interpolación.</b><br>
+        Mientras más nos alejamos del soporte espacial de las mediciones, mayor debe ser la cautela al interpretar el mapa.
+      </div>
+    </div>
+    """,unsafe_allow_html=True)
+
+    st.markdown("#### ¿Qué debe informarse junto con el mapa?")
+    st.markdown("""
+    <div class="c3l2-grid">
+      <div class="c3l2-card green">
+        <div class="c3l2-k">QUÉ SE MIDIÓ</div>
+        <b>Descriptor acústico y periodo representado.</b><br>
+        Por ejemplo LAeq,T, duración de cada medición y condición operacional de la campaña.
+      </div>
+      <div class="c3l2-card green">
+        <div class="c3l2-k">DÓNDE SE MIDIÓ</div>
+        <b>Ubicación de los puntos reales.</b><br>
+        Debe distinguirse claramente entre posiciones medidas y zonas estimadas.
+      </div>
+      <div class="c3l2-card green">
+        <div class="c3l2-k">CÓMO SE CONSTRUYÓ</div>
+        <b>Método de interpolación y criterios utilizados.</b><br>
+        Debe indicarse el procedimiento empleado para transformar los puntos discretos en una superficie continua.
+      </div>
+      <div class="c3l2-card green">
+        <div class="c3l2-k">CÓMO SE REVISARON LOS DATOS</div>
+        <b>Control de calidad y tratamiento de eventos atípicos.</b><br>
+        Cualquier exclusión, repetición o conservación de datos debe quedar técnicamente justificada.
+      </div>
+    </div>
+    """,unsafe_allow_html=True)
 
     q1=st.radio(
         "Si una celda del mapa muestra 63 dB(A), pero allí nunca se instaló un sonómetro, ese valor corresponde a:",
