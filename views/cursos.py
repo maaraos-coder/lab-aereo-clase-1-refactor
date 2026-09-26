@@ -30655,29 +30655,37 @@ def _c3l2_stage6(lab,saved):
     ]
     x0_demo,y0_demo=52.0,48.0
     idw_demo=go.Figure()
+    # Celda objetivo: grande y visible. El rótulo se desplaza fuera para no taparla.
     idw_demo.add_shape(
-        type="rect",x0=x0_demo-4,y0=y0_demo-4,x1=x0_demo+4,y1=y0_demo+4,
-        line=dict(width=3),fillcolor="rgba(255,255,255,0.85)",layer="above"
+        type="rect",x0=x0_demo-5,y0=y0_demo-5,x1=x0_demo+5,y1=y0_demo+5,
+        line=dict(width=4,color="#111827"),fillcolor="#FFD54F",layer="above"
+    )
+    idw_demo.add_shape(
+        type="circle",x0=x0_demo-0.9,y0=y0_demo-0.9,x1=x0_demo+0.9,y1=y0_demo+0.9,
+        line=dict(width=2,color="#111827"),fillcolor="#111827",layer="above"
     )
     idw_demo.add_annotation(
-        x=x0_demo,y=y0_demo,
-        text="<b>X₀</b><br>celda a estimar",
-        showarrow=False,font=dict(size=12),
-        bgcolor="rgba(255,255,255,0.92)",bordercolor="#111827",borderwidth=1
+        x=x0_demo,y=y0_demo+5.5,
+        text="<b>X₀ · celda a estimar</b>",
+        showarrow=True,arrowhead=2,ax=0,ay=-46,
+        font=dict(size=13,color="#111827"),
+        bgcolor="rgba(255,255,255,0.98)",bordercolor="#111827",borderwidth=1
     )
     demo_distances=[]
+    distance_offsets={"M1":(-4,4),"M2":(6,5),"M3":(-6,3)}
     for label,px,py,level in idw_demo_pts:
         d=float(np.sqrt((px-x0_demo)**2+(py-y0_demo)**2))
         demo_distances.append((label,d,level,px,py))
         idw_demo.add_shape(
             type="line",x0=x0_demo,y0=y0_demo,x1=px,y1=py,
-            line=dict(width=2,dash="dash"),layer="below"
+            line=dict(width=2,dash="dash",color="#334155"),layer="below"
         )
         mx=(x0_demo+px)/2
         my=(y0_demo+py)/2
+        ox,oy=distance_offsets[label]
         idw_demo.add_annotation(
-            x=mx,y=my,text=f"<b>d{label[-1]} = {d:.1f} m</b>",
-            showarrow=False,bgcolor="rgba(255,255,255,0.92)",
+            x=mx+ox,y=my+oy,text=f"<b>d{label[-1]} = {d:.1f} m</b>",
+            showarrow=False,bgcolor="rgba(255,255,255,0.96)",
             bordercolor="#64748b",borderwidth=1,font=dict(size=11)
         )
     idw_demo.add_trace(go.Scatter(
@@ -30720,22 +30728,11 @@ def _c3l2_stage6(lab,saved):
         key="c3l2_s6_power",
         help="p mayor = la influencia de una medición cae más rápido con la distancia.",
     )
-
-    raw_demo_weights=[1.0/(d**float(power)) for _,d,_,_,_ in demo_distances]
-    sum_demo_weights=sum(raw_demo_weights)
-    norm_demo_weights=[100.0*w/sum_demo_weights for w in raw_demo_weights]
-    wc1,wc2,wc3=st.columns(3)
-    for col,(label,d,level,_,_),pct in zip([wc1,wc2,wc3],demo_distances,norm_demo_weights):
-        col.metric(
-            f"{label} · d = {d:.1f} m",
-            f"{pct:.1f}% del peso",
-            help=f"Con p={power:.2f}, el peso bruto es 1/{d:.1f}^{power:.2f}.",
-        )
-    estimated_demo=sum(pct/100.0*row[2] for row,pct in zip(demo_distances,norm_demo_weights))
     st.markdown(
-        f'<div class="c3l2-note"><b>Con p = {power:.2f}</b>, IDW combina los tres niveles según esos pesos y '
-        f'estimaría aproximadamente <b>{estimated_demo:.1f} dB(A)</b> en X₀. '
-        'Si aumentas p, observa cómo el punto más cercano gana participación.</div>',
+        f'<div class="c3l2-note"><b>Cómo leer p = {power:.2f}:</b> IDW utiliza esas distancias d₁, d₂ y d₃ '
+        'para dar más influencia a las mediciones cercanas y menos a las lejanas. '
+        'Al aumentar p, esa diferencia por distancia se hace más marcada. No necesitas calcular porcentajes para '
+        'entender el concepto en esta etapa.</div>',
         unsafe_allow_html=True,
     )
 
