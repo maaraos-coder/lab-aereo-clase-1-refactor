@@ -31500,48 +31500,19 @@ def _c3l2_stage7(lab,saved):
     - Documentación técnica de **SoundPLAN, CadnaA, IMMI, Predictor-LimA, NoiseModelling y FAA AEDT**.
     """)
 
-    q1=st.radio(
-        "En un mapa de proyección, una celda que muestra 64 dB representa:",
-        [
-            "Una medición directa realizada en esa celda",
-            "Un nivel calculado por el modelo para un receptor de la grilla",
-            "Una interpolación obligatoria entre dos sonómetros",
-        ],
-        index=None,
-        key="c3l2_s7_q1",
-    )
-    q2=st.radio(
-        "¿Qué demuestra principalmente una verificación conforme a la lógica de ISO 17534?",
-        [
-            "Que el software implementa de forma consistente el método de cálculo",
-            "Que cualquier proyecto modelado con ese software coincidirá con la realidad",
-            "Que ya no es necesario revisar los datos de entrada",
-        ],
-        index=None,
-        key="c3l2_s7_q2",
-    )
-
     if _c3l2_role()=="Alumno" and st.button(
         "Guardar Etapa 7",
         type="primary",
         use_container_width=True,
         key="c3l2_s7_save",
     ):
-        if (
-            q1!="Un nivel calculado por el modelo para un receptor de la grilla"
-            or q2!="Que el software implementa de forma consistente el método de cálculo"
-        ):
-            st.warning("Revisa la diferencia entre medición, interpolación, proyección y verificación del software.")
-        else:
-            _c3l2_complete(saved,7,{
-                "kind":kind,
-                "emission":lw if kind=="Fuente puntual" else ref,
-                "calibration_mae":round(mae_cal,3),
-                "calibration_bias":round(bias_cal,3),
-                "q1":q1,
-                "q2":q2,
-            })
-            st.success("Etapa 7 guardada.")
+        _c3l2_complete(saved,7,{
+            "kind":kind,
+            "emission":lw if kind=="Fuente puntual" else ref,
+            "calibration_mae":round(mae_cal,3),
+            "calibration_bias":round(bias_cal,3),
+        })
+        st.success("Etapa 7 guardada.")
 
     _c3l2_teacher_pauta(
         "Etapa 7",
