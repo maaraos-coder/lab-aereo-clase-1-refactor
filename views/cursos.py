@@ -30607,26 +30607,62 @@ def _c3l2_stage6(lab,saved):
     Los puntos de medición son discretos. Para obtener una superficie continua se estima un valor en las posiciones
     donde **no hubo un sonómetro**. Esa operación es la **interpolación espacial**.
 
-    En esta etapa usaremos **IDW — Inverse Distance Weighting** porque permite ver con claridad el mecanismo:
-    los puntos cercanos pesan más que los lejanos.
+    En esta etapa usaremos **IDW — Inverse Distance Weighting**. La idea es muy simple: para estimar una celda,
+    IDW mira los puntos medidos que la rodean y les asigna más importancia a los que están más cerca.
     """)
     st.latex(r"\hat L(x_0)=\frac{\sum_{i=1}^{n} w_i L_i}{\sum_{i=1}^{n} w_i}")
     st.latex(r"w_i=\frac{1}{d_i^{p}}")
     st.markdown("""
-    - **Lᵢ:** valor del descriptor medido en el punto i.
-    - **dᵢ:** distancia entre el punto i y la celda que se desea estimar.
-    - **p:** potencia de IDW. Al aumentar p, los vecinos más próximos dominan más el resultado.
-    - **L̂(x₀):** valor espacial estimado para esa celda; **no es una nueva medición**.
+    - **Lᵢ:** nivel medido en el punto i.
+    - **dᵢ:** distancia entre el punto medido y la celda que queremos estimar.
+    - **p:** **exponente de distancia**. Controla qué tan rápido pierde influencia un punto al alejarse.
+    - **L̂(x₀):** valor estimado en esa celda; **no es una nueva medición**.
+    """)
+
+    st.markdown(
+        '<div class="c3l2-warn"><b>Importante:</b> el exponente <b>p</b> de IDW no tiene ninguna relación '
+        'con la <b>potencia sonora L<sub>W</sub></b>. Aquí “potencia” significa solamente que la distancia '
+        'se eleva matemáticamente a un exponente.</div>',
+        unsafe_allow_html=True,
+    )
+
+    p1,p2,p3=st.columns(3)
+    p1.markdown("""
+    <div class="c3l2-card blue">
+      <div class="c3l2-k">p = 1</div>
+      Si un punto está a <b>10 m</b> y otro a <b>20 m</b>, el cercano pesa <b>2 veces</b> más.
+      La influencia disminuye suavemente con la distancia.
+    </div>
+    """,unsafe_allow_html=True)
+    p2.markdown("""
+    <div class="c3l2-card green">
+      <div class="c3l2-k">p = 2 · habitual para explicar IDW</div>
+      Con las mismas distancias, el punto a 10 m pesa <b>4 veces</b> más que el punto a 20 m.
+      El mapa responde más a los vecinos próximos.
+    </div>
+    """,unsafe_allow_html=True)
+    p3.markdown("""
+    <div class="c3l2-card orange">
+      <div class="c3l2-k">p = 3</div>
+      El punto a 10 m pesa <b>8 veces</b> más que el de 20 m.
+      Aparecen zonas más dominadas por cada medición.
+    </div>
+    """,unsafe_allow_html=True)
+
+    st.markdown("""
+    **Ejemplo mental:** imagina que queremos estimar el nivel justo entre varias mediciones. Con un valor pequeño de
+    **p**, también influyen puntos relativamente lejanos. Al aumentar **p**, IDW “confía” cada vez más en los puntos
+    próximos. Por eso no existe un valor universalmente correcto: debe elegirse y comprobarse según la red de medición.
     """)
 
     power=st.slider(
-        "Potencia IDW · p",
+        "Exponente de distancia IDW · p",
         min_value=1.0,
         max_value=3.0,
         value=2.0,
         step=0.25,
         key="c3l2_s6_power",
-        help="Valores mayores hacen que la influencia caiga más rápido con la distancia.",
+        help="p mayor = la influencia de una medición cae más rápido con la distancia.",
     )
     st.caption(
         "IDW es un método general de interpolación espacial; no es un modelo acústico de propagación. "
@@ -30635,16 +30671,51 @@ def _c3l2_stage6(lab,saved):
     )
 
     st.markdown("### 6. De los puntos a la superficie continua")
+    st.markdown("""
+    Para representar el resultado usaremos **bandas de 5 dB** y la escala cromática tradicional de mapas de ruido
+    basada en **ISO 1996-2:1987**. Esta convención histórica facilita reconocer rápidamente zonas de distinto nivel.
+    La edición vigente ISO 1996-2:2017 ya no establece esta tabla de colores como requisito.
+    """)
     xx=np.linspace(0,100,81)
     yy=np.linspace(0,90,73)
     X,Y=np.meshgrid(xx,yy)
     Z=_c3l2_idw_surface(pts,X,Y,power=power)
 
+    # Equivalentes digitales representativos de los nombres cromáticos históricos
+    # de ISO 1996-2:1987. La norma histórica definía nombres de colores/tramas,
+    # no una paleta RGB/HEX única para pantallas.
+    iso_band_colors=[
+        "#90EE90", # <35 verde claro
+        "#00A651", # 35-40 verde
+        "#006B3C", # 40-45 verde oscuro
+        "#FFD700", # 45-50 amarillo
+        "#CC9A06", # 50-55 ocre
+        "#FF6600", # 55-60 naranjo
+        "#FF3333", # 60-65 cinabrio
+        "#990033", # 65-70 carmín
+        "#AD9AD6", # 70-75 rojo lila
+        "#0000FF", # 75-80 azul
+        "#000080", # 80-85 azul oscuro
+    ]
+    iso_scale=[]
+    n_iso=len(iso_band_colors)
+    for i,col in enumerate(iso_band_colors):
+        lo=i/n_iso
+        hi=(i+1)/n_iso
+        iso_scale.extend([(lo,col),(hi,col)])
+
     map_fig=go.Figure()
     map_fig.add_trace(go.Contour(
         x=xx,y=yy,z=Z,
-        contours=dict(start=54,end=74,size=2,showlabels=True),
-        colorbar=dict(title="LAeq,T<br>dB(A)"),
+        zmin=30,zmax=85,
+        contours=dict(start=35,end=85,size=5,showlabels=True,coloring="fill"),
+        colorscale=iso_scale,
+        colorbar=dict(
+            title="LAeq,T<br>dB(A)",
+            tickmode="array",
+            tickvals=[32.5,37.5,42.5,47.5,52.5,57.5,62.5,67.5,72.5,77.5,82.5],
+            ticktext=["<35","35–40","40–45","45–50","50–55","55–60","60–65","65–70","70–75","75–80","80–85"],
+        ),
         name="Superficie IDW",
         hovertemplate="X=%{x:.1f} m<br>Y=%{y:.1f} m<br>Estimado=%{z:.1f} dB(A)<extra></extra>",
     ))
