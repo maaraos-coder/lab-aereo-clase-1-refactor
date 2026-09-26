@@ -32341,8 +32341,27 @@ def _c3l2_stage10(lab,saved):
     )
 
     st.markdown("### 2. Metodología de la campaña")
+    st.markdown(
+        """
+        <div class="c3l2-card blue" style="margin-bottom:.75rem">
+          <div class="c3l2-k">INSTRUMENTO DE MEDICIÓN</div>
+          Utiliza el <b>Sonómetro del Diplomado</b> para registrar Leq y Lmax en cada punto.
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
+    st.link_button(
+        "🎚️ Abrir Sonómetro del Diplomado",
+        "https://soundlevelmeteruc.vercel.app/",
+        use_container_width=True,
+    )
     m1,m2,m3=st.columns(3)
-    app_name=m1.text_input("Aplicación utilizada",value=data.get("app_name",""),placeholder="Ej.: Sound Level Meter",key="c3l2_s10_app")
+    app_name=m1.text_input(
+        "Aplicación utilizada",
+        value=data.get("app_name") or "Sonómetro del Diplomado UC",
+        placeholder="Ej.: Sonómetro del Diplomado UC",
+        key="c3l2_s10_app"
+    )
     measurement_date=m2.text_input("Fecha de medición",value=data.get("measurement_date",""),placeholder="dd-mm-aaaa",key="c3l2_s10_date")
     period=m3.text_input("Periodo / horario",value=data.get("period",""),placeholder="Ej.: 18:00–19:00",key="c3l2_s10_period")
 
@@ -32350,8 +32369,8 @@ def _c3l2_stage10(lab,saved):
     <div class="c3l2-grid2">
       <div class="c3l2-card blue">
         <div class="c3l2-k">RED DE MEDICIÓN</div>
-        <b>16 registros en total</b><br>
-        8 puntos asociados a la vía principal y 8 a la vía secundaria.
+        <b>18 registros en total</b><br>
+        9 puntos asociados a la vía principal y 9 a la vía secundaria.
       </div>
       <div class="c3l2-card green">
         <div class="c3l2-k">SEPARACIÓN</div>
