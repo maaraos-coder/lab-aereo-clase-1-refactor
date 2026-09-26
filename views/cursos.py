@@ -31048,32 +31048,20 @@ def _c3l2_stage6(lab,saved):
     </div>
     """,unsafe_allow_html=True)
 
-    interpretation=st.text_area(
-        "Explica por qué una zona con pocos puntos cercanos debe interpretarse con mayor cautela y qué harías para mejorar el mapa.",
-        height=105,
-        key="c3l2_s6_interp",
-    )
-
     if _c3l2_role()=="Alumno" and st.button(
         "Guardar Etapa 6",
         type="primary",
         use_container_width=True,
         key="c3l2_s6_save",
     ):
-        if len(interpretation.strip())<55:
-            st.warning(
-                "Explica brevemente por qué una zona con pocos puntos cercanos debe interpretarse con mayor cautela y cómo mejorarías el mapa."
-            )
-        else:
-            _c3l2_complete(saved,6,{
-                "design":design,
-                "point_count":len(pts),
-                "idw_power":power,
-                "cv_mae":round(mae,3),
-                "cv_rmse":round(rmse,3),
-                "interpretation":interpretation,
-            })
-            st.success("Etapa 6 guardada.")
+        _c3l2_complete(saved,6,{
+            "design":design,
+            "point_count":len(pts),
+            "idw_power":power,
+            "cv_mae":round(mae,3),
+            "cv_rmse":round(rmse,3),
+        })
+        st.success("Etapa 6 guardada.")
 
     _c3l2_teacher_pauta(
         "Etapa 6",
