@@ -29966,20 +29966,60 @@ def _c3l2_stage4(lab,saved):
     lp_ba, r_ba = _lp_from_point(src_b, rec_a, lw_total)
     lp_bb, r_bb = _lp_from_point(src_b, rec_b, lw_total)
 
-    # Fuente de área discretizada con la misma potencia total equivalente.
-    area_energy_a = []
-    area_energy_b = []
+    # Fuente de área base: misma potencia total distribuida sobre la superficie.
+    area_energy_a_base = []
+    area_energy_b_base = []
     for iy in range(ny):
         for ix in range(nx):
             x = (ix + 0.5) * site_length / nx
             y = (iy + 0.5) * site_depth / ny
             lpa_cell, _ = _lp_from_point((x, y), rec_a, lw_cell)
             lpb_cell, _ = _lp_from_point((x, y), rec_b, lw_cell)
+            area_energy_a_base.append(10.0 ** (lpa_cell / 10.0))
+            area_energy_b_base.append(10.0 ** (lpb_cell / 10.0))
+
+    lp_area_a_base = 10.0 * math.log10(sum(area_energy_a_base))
+    lp_area_b_base = 10.0 * math.log10(sum(area_energy_b_base))
+
+    # Ajuste conservador de la fuente de área:
+    # se incrementa uniformemente Lw'' hasta reproducir el nivel de la
+    # posición puntual más desfavorable en los receptores de control.
+    target_a = lp_aa
+    target_b = lp_bb
+    correction_a = target_a - lp_area_a_base
+    correction_b = target_b - lp_area_b_base
+    area_correction = max(correction_a, correction_b)
+
+    lw_per_m2_worst = lw_per_m2 + area_correction
+    lw_cell_worst = lw_cell + area_correction
+
+    area_energy_a = []
+    area_energy_b = []
+    for iy in range(ny):
+        for ix in range(nx):
+            x = (ix + 0.5) * site_length / nx
+            y = (iy + 0.5) * site_depth / ny
+            lpa_cell, _ = _lp_from_point((x, y), rec_a, lw_cell_worst)
+            lpb_cell, _ = _lp_from_point((x, y), rec_b, lw_cell_worst)
             area_energy_a.append(10.0 ** (lpa_cell / 10.0))
             area_energy_b.append(10.0 ** (lpb_cell / 10.0))
 
     lp_area_a = 10.0 * math.log10(sum(area_energy_a))
     lp_area_b = 10.0 * math.log10(sum(area_energy_b))
+
+    st.markdown("#### Ajuste de la fuente de área a la peor condición")
+    st.write(
+        "La fuente de área construida en el punto anterior conserva la potencia total de las máquinas. "
+        "Para usarla aquí como representación conservadora, calculamos cuánto debe aumentarse uniformemente "
+        "su emisión superficial para que alcance el mismo Lp que la fuente puntual en su posición más desfavorable."
+    )
+    st.latex(
+        r"\Delta L="
+        r"L_{p,\mathrm{puntual\ peor}}-L_{p,\mathrm{area\ base}}"
+    )
+    st.latex(
+        r"L_{W,\mathrm{ajustado}}''=L_W''+\Delta L"
+    )
 
     mode = st.segmented_control(
         "Selecciona la representación",
@@ -30018,14 +30058,14 @@ def _c3l2_stage4(lab,saved):
                     area_points.append(
                         f'<circle cx="{px:.1f}" cy="{py:.1f}" r="13" fill="#f59e0b" stroke="#fff" stroke-width="2"/>'
                         f'<text x="{px:.1f}" y="{py+3:.1f}" text-anchor="middle" fill="#fff" '
-                        f'font-family="Inter,Arial" font-size="7.5" font-weight="850">{lw_cell:.1f}</text>'
+                        f'font-family="Inter,Arial" font-size="7.5" font-weight="850">{lw_cell_worst:.1f}</text>'
                     )
             source_svg = f'''
               <rect x="255" y="105" width="490" height="210" rx="12"
                     fill="#f59e0b" opacity=".16" stroke="#d08a18" stroke-width="3"/>
               {''.join(area_points)}
               <text x="500" y="344" text-anchor="middle" class="t b" font-size="12">
-                18 elementos equivalentes · Lw celda = {lw_cell:.1f} dB
+                18 elementos equivalentes · Lw celda ajustado = {lw_cell_worst:.1f} dB
               </text>
             '''
 
@@ -30084,15 +30124,21 @@ def _c3l2_stage4(lab,saved):
         c1.metric("Lp en R-A", f"{lp_area_a:.1f} dB")
         c2.metric("Lp en R-B", f"{lp_area_b:.1f} dB")
         st.caption(
-            "La potencia equivalente se distribuye sobre toda la superficie mediante los 18 elementos de la grilla."
+            f"La fuente de área se ajusta en {area_correction:+.1f} dB respecto del reparto base. "
+            f"Así reproduce la peor condición puntual: R-A = {lp_area_a:.1f} dB y R-B = {lp_area_b:.1f} dB."
         )
+
+        a1, a2, a3 = st.columns(3)
+        a1.metric("Lw'' base", f"{lw_per_m2:.1f} dB/m²")
+        a2.metric("Corrección conservadora", f"{area_correction:+.1f} dB")
+        a3.metric("Lw'' ajustado", f"{lw_per_m2_worst:.1f} dB/m²")
 
     st.markdown("""
     <div class="c3l2-card blue">
       <div class="c3l2-k">COMPARA LOS TRES CASOS</div>
-      Cambia entre <b>R-A</b>, <b>R-B</b> y <b>Fuente de área</b>. Con una fuente puntual,
-      la posición espacial más desfavorable cambia según el receptor. Con una fuente de área,
-      la misma superficie emisora permanece fija y permite calcular simultáneamente ambos receptores.
+      Cambia entre <b>R-A</b>, <b>R-B</b> y <b>Fuente de área</b>. Primero se obtiene la peor condición
+      con una fuente puntual frente a cada receptor. Luego se ajusta uniformemente la emisión de la fuente
+      de área hasta que esa única superficie reproduzca esos mismos niveles en R-A y R-B.
     </div>
     """, unsafe_allow_html=True)
 
@@ -30115,6 +30161,9 @@ def _c3l2_stage4(lab,saved):
                     "area": area,
                     "lw_per_m2": lw_per_m2,
                     "lw_cell": lw_cell,
+                    "lw_per_m2_worst": lw_per_m2_worst,
+                    "lw_cell_worst": lw_cell_worst,
+                    "area_correction": area_correction,
                     "lp_point_ra": lp_aa,
                     "lp_point_rb": lp_bb,
                     "lp_area_a": lp_area_a,
@@ -30128,9 +30177,10 @@ def _c3l2_stage4(lab,saved):
             st.markdown("##### 👩‍🏫 Pauta docente · ideas clave")
             st.markdown(
                 "- **Fuente puntual**: la posición más desfavorable cambia según el receptor analizado.  \n"
-                "- **Fuente de área**: mantiene una única superficie emisora para toda la zona de actividad.  \n"
-                "- **Construcción**: la potencia total de las máquinas se distribuye entre los elementos equivalentes de la grilla.  \n"
-                "- **Conservación**: la suma energética de los elementos recupera el Lw total de la actividad."
+                "- **Fuente de área base**: distribuye la potencia total de las máquinas entre los elementos equivalentes de la grilla.  \n"
+                "- **Peor condición**: se calcula primero con la fuente puntual en la posición más desfavorable para cada receptor.  \n"
+                "- **Ajuste conservador**: se incrementa uniformemente Lw'' hasta que la fuente de área reproduzca esos niveles objetivo en R-A y R-B.  \n"
+                "- **Ventaja**: una sola superficie ajustada reemplaza las dos configuraciones puntuales desfavorables del ejemplo."
             )
 
 
