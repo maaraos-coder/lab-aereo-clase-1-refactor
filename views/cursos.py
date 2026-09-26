@@ -31842,60 +31842,308 @@ def _c3l2_stage7(lab,saved):
 
 
 def _c3l2_stage8(lab,saved):
-    _c3l2_header(8,"Mini caso profesional · construir un mapa por mediciones","Diseñar, depurar e interpretar una campaña antes de la evaluación oficial.",30)
+    _c3l2_header(
+        8,
+        "Ejemplo guiado · campaña vial por mediciones",
+        "Revisar paso a paso el mismo flujo que se utilizará en la evaluación de la Etapa 10.",
+        35,
+    )
 
     st.markdown("""
     <div class="c3l2-intro">
-      <div class="c3l2-k">ENCARGO PROFESIONAL</div>
-      <div class="c3l2-title">Caracterización acústica de un sector urbano mixto</div>
-      Un municipio solicita representar el <b>LAeq diurno observado durante una campaña específica</b>
-      en un sector con avenida, calle secundaria, viviendas y plaza. Debes decidir dónde medir,
-      revisar la calidad de los datos y recién después construir el mapa.
+      <div class="c3l2-k">EJEMPLO COMPLETO · ANTES DE LA EVALUACIÓN</div>
+      <div class="c3l2-title">De la medición en terreno al mapa vial automático</div>
+      En este ejemplo los datos <b>ya fueron medidos y registrados</b>. El objetivo es que observes el procedimiento completo:
+      selección de la intersección, 9 puntos por vía, verificación de estabilidad a los 3 y 6 minutos,
+      registro de Leq/Lmax y construcción automática del mapa vial.
     </div>
     """,unsafe_allow_html=True)
 
-    points=[
-        {"id":"A","x":10,"y":15,"db":69,"zone":"Avenida","event":""},
-        {"id":"B","x":30,"y":15,"db":67,"zone":"Avenida","event":""},
-        {"id":"C","x":55,"y":15,"db":76,"zone":"Intersección","event":"Ambulancia con sirena"},
-        {"id":"D","x":80,"y":18,"db":65,"zone":"Avenida","event":""},
-        {"id":"E","x":18,"y":48,"db":61,"zone":"Residencial","event":""},
-        {"id":"F","x":45,"y":48,"db":59,"zone":"Plaza","event":""},
-        {"id":"G","x":75,"y":48,"db":58,"zone":"Residencial","event":""},
-        {"id":"H","x":15,"y":78,"db":57,"zone":"Calle secundaria","event":""},
-        {"id":"I","x":45,"y":78,"db":55,"zone":"Calle secundaria","event":""},
-        {"id":"J","x":80,"y":78,"db":54,"zone":"Residencial","event":""},
+    st.markdown("### 1. Intersección del ejemplo")
+    st.markdown("""
+    <div class="c3l2-grid2">
+      <div class="c3l2-card blue">
+        <div class="c3l2-k">VÍA PRINCIPAL</div>
+        <b>Avenida Principal</b><br>
+        Mayor flujo vehicular, buses y vehículos pesados.
+      </div>
+      <div class="c3l2-card orange">
+        <div class="c3l2-k">VÍA SECUNDARIA</div>
+        <b>Calle Secundaria</b><br>
+        Menor flujo y predominio de vehículos livianos.
+      </div>
+    </div>
+    """,unsafe_allow_html=True)
+    st.caption(
+        "Ejemplo didáctico: los nombres y coordenadas son simulados. En la Etapa 10 debes registrar una intersección real y sus coordenadas GPS."
+    )
+
+    components.html("""
+<div style="font-family:Arial,sans-serif;color:#243447;border:1px solid #dbe5ec;border-radius:16px;padding:16px;background:#fbfdff;box-sizing:border-box">
+  <div style="font-size:12px;font-weight:800;letter-spacing:.04em;color:#0b4f83;margin-bottom:6px">RECORRIDO DE MEDICIÓN</div>
+  <svg viewBox="0 0 860 360" role="img" aria-label="Intersección con nueve puntos alineados en la vía principal y nueve puntos alineados en la vía secundaria" style="width:100%;height:auto;display:block">
+    <rect x="20" y="22" width="820" height="316" rx="18" fill="#f4f8fb" stroke="#d8e4ec"/>
+    <rect x="45" y="168" width="770" height="80" rx="10" fill="#dfe7ec"/>
+    <rect x="382" y="42" width="96" height="276" rx="10" fill="#e7edf1"/>
+    <line x1="58" y1="208" x2="802" y2="208" stroke="#94a3b8" stroke-width="3" stroke-dasharray="14 12"/>
+    <line x1="430" y1="54" x2="430" y2="305" stroke="#94a3b8" stroke-width="3" stroke-dasharray="14 12"/>
+    <circle cx="430" cy="208" r="22" fill="#fff" stroke="#334155" stroke-width="2"/>
+    <text x="430" y="204" text-anchor="middle" font-size="10.5" font-weight="800" fill="#0f172a">INICIO</text>
+    <text x="430" y="219" text-anchor="middle" font-size="9.5" fill="#475569">cruce</text>
+
+    <g font-family="Arial,sans-serif" font-size="10.5" font-weight="800" text-anchor="middle">
+      <g fill="#0b78b4" stroke="#fff" stroke-width="2">
+        <circle cx="478" cy="158" r="15"/><circle cx="518" cy="158" r="15"/><circle cx="558" cy="158" r="15"/>
+        <circle cx="598" cy="158" r="15"/><circle cx="638" cy="158" r="15"/><circle cx="678" cy="158" r="15"/>
+        <circle cx="718" cy="158" r="15"/><circle cx="758" cy="158" r="15"/><circle cx="798" cy="158" r="15"/>
+      </g>
+      <g fill="#fff">
+        <text x="478" y="162">P1</text><text x="518" y="162">P2</text><text x="558" y="162">P3</text>
+        <text x="598" y="162">P4</text><text x="638" y="162">P5</text><text x="678" y="162">P6</text>
+        <text x="718" y="162">P7</text><text x="758" y="162">P8</text><text x="798" y="162">P9</text>
+      </g>
+      <g fill="#d97706" stroke="#fff" stroke-width="2">
+        <circle cx="366" cy="162" r="15"/><circle cx="366" cy="148" r="15"/><circle cx="366" cy="134" r="15"/>
+        <circle cx="366" cy="120" r="15"/><circle cx="366" cy="106" r="15"/><circle cx="366" cy="92" r="15"/>
+        <circle cx="366" cy="78" r="15"/><circle cx="366" cy="64" r="15"/><circle cx="366" cy="50" r="15"/>
+      </g>
+      <g fill="#fff">
+        <text x="366" y="166">S1</text><text x="366" y="152">S2</text><text x="366" y="138">S3</text>
+        <text x="366" y="124">S4</text><text x="366" y="110">S5</text><text x="366" y="96">S6</text>
+        <text x="366" y="82">S7</text><text x="366" y="68">S8</text><text x="366" y="54">S9</text>
+      </g>
+    </g>
+
+    <text x="625" y="278" text-anchor="middle" font-size="13" font-weight="800" fill="#0b4f83">VÍA PRINCIPAL · P1 → P9</text>
+    <text x="625" y="297" text-anchor="middle" font-size="11.5" fill="#475569">25–30 pasos entre puntos consecutivos</text>
+    <g transform="translate(505,105) rotate(-90)">
+      <text x="0" y="0" text-anchor="middle" font-size="13" font-weight="800" fill="#8a4d08">VÍA SECUNDARIA · S1 → S9</text>
+    </g>
+  </svg>
+</div>
+""",height=430,scrolling=False)
+
+    st.markdown("### 2. Cómo se realizó cada medición")
+    st.markdown("""
+    <div class="c3l2-grid2">
+      <div class="c3l2-card blue">
+        <div class="c3l2-k">DURACIÓN</div>
+        <b>6 minutos por punto</b><br>
+        En cada ubicación se mantuvo el teléfono en una posición equivalente durante todo el registro.
+      </div>
+      <div class="c3l2-card green">
+        <div class="c3l2-k">CONTROL DE ESTABILIDAD</div>
+        <b>Lectura al minuto 3 y al minuto 6</b><br>
+        Si la diferencia entre ambas lecturas era ≤ 2 dB, el registro se consideró estable.
+      </div>
+      <div class="c3l2-card orange">
+        <div class="c3l2-k">DATO INFORMADO</div>
+        <b>Leq a los 6 min + Lmax</b><br>
+        Una vez verificada la estabilidad, esos valores se incorporaron a la tabla.
+      </div>
+      <div class="c3l2-card">
+        <div class="c3l2-k">TRAZABILIDAD</div>
+        <b>Hora + coordenada + observación</b><br>
+        También se registró el contexto de tránsito de cada punto.
+      </div>
+    </div>
+    """,unsafe_allow_html=True)
+
+    st.info(
+        "Ejemplo: si al minuto 3 el Leq era 68,2 dB(A) y al minuto 6 era 68,9 dB(A), "
+        "la diferencia es 0,7 dB. Como no supera 2 dB, la medición se considera estable y se registra 68,9 dB(A)."
+    )
+
+    # Datos completamente registrados del ejemplo.
+    demo_rows=[
+        ("P1","Vía principal",28,-33.45110,-70.66490,68.2,68.9,76.4,"10:05","Flujo continuo"),
+        ("P2","Vía principal",27,-33.45108,-70.66462,69.1,69.8,77.6,"10:13","Paso de bus"),
+        ("P3","Vía principal",26,-33.45106,-70.66434,70.0,70.9,79.1,"10:21","Flujo alto"),
+        ("P4","Vía principal",29,-33.45104,-70.66404,71.2,72.0,80.2,"10:29","Bus y vehículos livianos"),
+        ("P5","Vía principal",28,-33.45102,-70.66374,72.0,72.9,81.0,"10:37","Flujo alto"),
+        ("P6","Vía principal",27,-33.45100,-70.66346,71.4,72.1,79.8,"10:45","Tránsito continuo"),
+        ("P7","Vía principal",30,-33.45098,-70.66315,70.6,71.3,78.5,"10:53","Menor flujo"),
+        ("P8","Vía principal",26,-33.45096,-70.66288,69.8,70.4,77.4,"11:01","Vehículos livianos"),
+        ("P9","Vía principal",28,-33.45094,-70.66258,68.9,69.5,76.8,"11:09","Flujo moderado"),
+        ("S1","Vía secundaria",27,-33.45083,-70.66510,63.1,63.8,71.5,"11:18","Flujo bajo"),
+        ("S2","Vía secundaria",29,-33.45059,-70.66508,62.7,63.5,70.9,"11:26","Vehículos livianos"),
+        ("S3","Vía secundaria",26,-33.45035,-70.66506,62.2,62.9,70.0,"11:34","Flujo bajo"),
+        ("S4","Vía secundaria",28,-33.45010,-70.66504,61.8,62.6,69.8,"11:42","Paso aislado"),
+        ("S5","Vía secundaria",27,-33.44986,-70.66502,61.2,62.0,69.0,"11:50","Poco tránsito"),
+        ("S6","Vía secundaria",30,-33.44960,-70.66500,60.9,61.7,68.7,"11:58","Vehículos livianos"),
+        ("S7","Vía secundaria",28,-33.44936,-70.66498,60.5,61.3,68.2,"12:06","Flujo bajo"),
+        ("S8","Vía secundaria",26,-33.44913,-70.66496,60.2,60.9,67.5,"12:14","Sin eventos relevantes"),
+        ("S9","Vía secundaria",29,-33.44888,-70.66494,59.8,60.6,67.1,"12:22","Flujo muy bajo"),
     ]
-    selected=st.multiselect("Selecciona los puntos que usarías para cubrir el sector", [p["id"] for p in points], default=["A","B","C","D","E","F","G","H","I","J"],key="c3l2_s8_sel")
-    handling=st.radio("El punto C registró una ambulancia con sirena. Para este ejercicio, ¿cómo lo tratarás?",[
-        "Mantener 76 dB sin observación",
-        "Excluir C de la interpolación y documentar el evento atípico",
-        "Cambiar C manualmente a 65 dB para que el mapa se vea mejor",
-    ],index=None,key="c3l2_s8_handling")
-    used=[p for p in points if p["id"] in selected and not (p["id"]=="C" and handling=="Excluir C de la interpolación y documentar el evento atípico")]
+    demo=pd.DataFrame(
+        demo_rows,
+        columns=["Punto","Vía","Pasos","Latitud","Longitud","Leq min 3 [dB(A)]","Leq min 6 [dB(A)]","Lmax [dB(A)]","Hora","Observación"]
+    )
+    demo["Δ 3–6 min [dB]"]=(demo["Leq min 6 [dB(A)]"]-demo["Leq min 3 [dB(A)]"]).abs().round(1)
+    demo["Estable"]=demo["Δ 3–6 min [dB]"].apply(lambda x:"Sí" if x<=2 else "No")
 
-    if len(used)>=3:
-        xx=np.linspace(0,100,60); yy=np.linspace(0,90,54); X,Y=np.meshgrid(xx,yy)
-        Z=_c3l2_idw_surface([(p["x"],p["y"],p["db"]) for p in used],X,Y)
-        fig=go.Figure()
-        fig.add_trace(go.Contour(x=xx,y=yy,z=Z,contours=dict(showlabels=True),colorbar=dict(title="LAeq")))
-        fig.add_trace(go.Scatter(x=[p["x"] for p in used],y=[p["y"] for p in used],mode="markers+text",text=[f'{p["id"]} · {p["db"]} dB' for p in used],textposition="top center",marker=dict(size=11),name="Medidos utilizados"))
-        fig.update_layout(height=480,xaxis_title="X local [m]",yaxis_title="Y local [m]",margin=dict(l=20,r=20,t=20,b=20))
-        st.plotly_chart(fig,use_container_width=True)
-    else:
-        st.info("Selecciona al menos 3 puntos para construir una superficie.")
+    st.markdown("### 3. Tabla de mediciones ya completada")
+    st.dataframe(
+        demo[["Punto","Vía","Pasos","Leq min 3 [dB(A)]","Leq min 6 [dB(A)]","Δ 3–6 min [dB]","Estable","Lmax [dB(A)]","Hora","Observación"]],
+        hide_index=True,
+        use_container_width=True,
+    )
 
-    st.markdown("### Dictamen previo a la evaluación")
-    coverage=st.radio("¿La red seleccionada cubre avenida, interior y calle secundaria?",["Sí","No"],index=None,key="c3l2_s8_cov")
-    limitations=st.text_area("Describe al menos dos limitaciones o fuentes de incertidumbre de este mapa.",height=95,key="c3l2_s8_lim")
-    conclusion=st.text_area("Redacta una conclusión técnica breve, diferenciando puntos medidos de superficie interpolada.",height=110,key="c3l2_s8_conc")
-    if _c3l2_role()=="Alumno" and st.button("Guardar mini caso profesional",type="primary",use_container_width=True,key="c3l2_s8_save"):
-        if len(used)<6 or handling!="Excluir C de la interpolación y documentar el evento atípico" or coverage!="Sí" or len(limitations.strip())<50 or len(conclusion.strip())<60:
-            st.warning("Revisa cobertura espacial, tratamiento del evento atípico, limitaciones y conclusión.")
-        else:
-            _c3l2_complete(saved,8,{"selected":selected,"used":[p["id"] for p in used],"handling":handling,"coverage":coverage,"limitations":limitations,"conclusion":conclusion})
-            st.success("Mini caso guardado. Ya estás preparado para las evaluaciones oficiales.")
-    _c3l2_teacher_pauta("Etapa 8","Caso formativo. La red debe cubrir distintos ambientes del sector. C debe ser tratado como evento atípico según el objetivo del ejercicio y documentarse. La conclusión debe declarar que solo los puntos son mediciones directas.")
+    stable_count=int((demo["Δ 3–6 min [dB]"]<=2).sum())
+    c1,c2,c3=st.columns(3)
+    c1.metric("Registros","18/18")
+    c2.metric("Estables",f"{stable_count}/18")
+    c3.metric("Separaciones 25–30 pasos",f"{int(demo['Pasos'].between(25,30).sum())}/18")
+
+    st.success(
+        "Los 18 registros cumplen el criterio del ejemplo: entre el minuto 3 y el minuto 6 "
+        "la variación de Leq no supera 2 dB. Por lo tanto, los valores del minuto 6 pueden incorporarse al mapa."
+    )
+
+    st.markdown("### 4. La plataforma construye el mapa vial")
+    st.write(
+        "Una vez ingresados los datos, la aplicación toma el **Leq final de cada punto**, mantiene la trazabilidad de su coordenada "
+        "y representa el nivel sobre el eje de la vía correspondiente. En este ejemplo se muestran intervalos de 3 dB."
+    )
+
+    principal=demo[demo["Vía"]=="Vía principal"].copy()
+    secondary=demo[demo["Vía"]=="Vía secundaria"].copy()
+    interval=3
+    levels=demo["Leq min 6 [dB(A)]"].astype(float).tolist()
+    lo=math.floor(min(levels)/interval)*interval
+    palette=["#C0FFC0","#00CC00","#005000","#FFFF00","#FFC74A","#FF6600","#FF3333","#990033","#AD9AD6","#0000FF","#000066","#000000"]
+
+    def _s8_color(level):
+        idx=int(math.floor((float(level)-lo)/interval))
+        return palette[max(0,min(len(palette)-1,idx))]
+
+    fig=go.Figure()
+    # Vía principal: eje horizontal; vía secundaria: eje vertical.
+    p_x=np.arange(1,10,dtype=float)
+    s_y=np.arange(1,10,dtype=float)
+
+    fig.add_trace(go.Scatter(
+        x=[0,10],y=[0,0],mode="lines",
+        line=dict(width=20,color="#d6dde3"),hoverinfo="skip",showlegend=False
+    ))
+    fig.add_trace(go.Scatter(
+        x=[0,0],y=[0,10],mode="lines",
+        line=dict(width=20,color="#d6dde3"),hoverinfo="skip",showlegend=False
+    ))
+
+    prev=0.0
+    for x,(_,r) in zip(p_x,principal.iterrows()):
+        lv=float(r["Leq min 6 [dB(A)]"])
+        fig.add_trace(go.Scatter(
+            x=[prev,x],y=[0,0],mode="lines",
+            line=dict(width=13,color=_s8_color(lv)),hoverinfo="skip",showlegend=False
+        ))
+        prev=x
+
+    prev=0.0
+    for y,(_,r) in zip(s_y,secondary.iterrows()):
+        lv=float(r["Leq min 6 [dB(A)]"])
+        fig.add_trace(go.Scatter(
+            x=[0,0],y=[prev,y],mode="lines",
+            line=dict(width=13,color=_s8_color(lv)),hoverinfo="skip",showlegend=False
+        ))
+        prev=y
+
+    fig.add_trace(go.Scatter(
+        x=p_x,y=[0]*9,mode="markers+text",
+        text=principal["Punto"].tolist(),textposition="top center",
+        marker=dict(size=14,color=[_s8_color(v) for v in principal["Leq min 6 [dB(A)]"]]),
+        customdata=np.column_stack([principal["Leq min 6 [dB(A)]"],principal["Lmax [dB(A)]"]]),
+        hovertemplate="<b>%{text}</b><br>Leq: %{customdata[0]:.1f} dB(A)<br>Lmax: %{customdata[1]:.1f} dB(A)<extra></extra>",
+        showlegend=False
+    ))
+    fig.add_trace(go.Scatter(
+        x=[0]*9,y=s_y,mode="markers+text",
+        text=secondary["Punto"].tolist(),textposition="middle right",
+        marker=dict(size=14,color=[_s8_color(v) for v in secondary["Leq min 6 [dB(A)]"]]),
+        customdata=np.column_stack([secondary["Leq min 6 [dB(A)]"],secondary["Lmax [dB(A)]"]]),
+        hovertemplate="<b>%{text}</b><br>Leq: %{customdata[0]:.1f} dB(A)<br>Lmax: %{customdata[1]:.1f} dB(A)<extra></extra>",
+        showlegend=False
+    ))
+    fig.add_trace(go.Scatter(
+        x=[0],y=[0],mode="markers+text",text=["Intersección"],textposition="bottom right",
+        marker=dict(size=15,symbol="x",color="#111827"),showlegend=False
+    ))
+    fig.update_layout(
+        height=560,
+        xaxis=dict(title="Vía principal · P1 → P9",range=[-0.7,10.2],showgrid=False,zeroline=False),
+        yaxis=dict(title="Vía secundaria · S1 → S9",range=[-0.7,10.2],showgrid=False,zeroline=False,scaleanchor="x",scaleratio=1),
+        margin=dict(l=20,r=20,t=25,b=20),
+        showlegend=False,
+    )
+    st.plotly_chart(fig,use_container_width=True,key="c3l2_s8_example_roadmap")
+
+    hi=math.ceil(max(levels)/interval)*interval
+    bins=[]
+    a=lo
+    while a<=hi and len(bins)<len(palette):
+        bins.append((a,a+interval,palette[len(bins)]))
+        a+=interval
+    st.markdown(
+        '<div style="display:flex;flex-wrap:wrap;gap:6px;margin:.2rem 0 .8rem">'
+        +''.join(
+            f'<span style="display:inline-flex;align-items:center;gap:6px;border:1px solid #dbe5ec;border-radius:999px;padding:5px 9px;font-size:.78rem">'
+            f'<span style="width:14px;height:14px;border-radius:3px;background:{color};border:1px solid rgba(0,0,0,.12)"></span>{a:g}–&lt;{b:g} dB(A)</span>'
+            for a,b,color in bins
+        )
+        +'</div>',
+        unsafe_allow_html=True,
+    )
+    st.caption(
+        "Mapa vial esquemático del ejemplo. En la evaluación real, la Etapa 10 utiliza las coordenadas GPS y proyecta gráficamente los puntos hacia el eje de cada vía."
+    )
+
+    st.markdown("### 5. ¿Qué se observa en el resultado?")
+    p_mean=float(principal["Leq min 6 [dB(A)]"].mean())
+    s_mean=float(secondary["Leq min 6 [dB(A)]"].mean())
+    diff=p_mean-s_mean
+    a,b,c4=st.columns(3)
+    a.metric("Leq medio · vía principal",f"{p_mean:.1f} dB(A)")
+    b.metric("Leq medio · vía secundaria",f"{s_mean:.1f} dB(A)")
+    c4.metric("Diferencia entre vías",f"{diff:.1f} dB")
+
+    st.markdown(
+        f"""
+        <div class="c3l2-card green">
+          <div class="c3l2-k">LECTURA DEL EJEMPLO</div>
+          La vía principal presenta niveles mayores que la secundaria durante esta campaña.
+          El promedio de los 9 puntos es <b>{p_mean:.1f} dB(A)</b> en la vía principal y
+          <b>{s_mean:.1f} dB(A)</b> en la secundaria. Esta conclusión describe
+          <b>este periodo y estas mediciones</b>; no representa por sí sola todo el comportamiento diario de ambas vías.
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
+
+    st.markdown("### 6. Secuencia que debes repetir en la Etapa 10")
+    st.markdown("""
+    **Intersección real → 9 puntos por vía → 25–30 pasos → 6 min por punto → comparar Leq minuto 3 vs minuto 6 → verificar Δ ≤ 2 dB → registrar Leq/Lmax + GPS + hora + observación → generar mapa vial → analizar y concluir.**
+    """)
+
+    if _c3l2_role()=="Alumno":
+        if st.button("✓ Marcar ejemplo guiado como revisado",type="primary",use_container_width=True,key="c3l2_s8_save"):
+            _c3l2_complete(
+                saved,8,
+                {
+                    "example":"campaña vial 18 puntos",
+                    "duration_min":6,
+                    "stability_check":"Leq minuto 3 vs minuto 6; diferencia ≤ 2 dB",
+                    "stable_points":stable_count,
+                    "map":"vial automático por intervalos de 3 dB",
+                }
+            )
+            st.success("Ejemplo revisado. La Etapa 10 repite este mismo flujo con tus mediciones reales.")
+
+    _c3l2_teacher_pauta(
+        "Etapa 8",
+        "Ejemplo formativo previo a la evaluación. Debe quedar explícito el flujo: 9 puntos por vía, 25–30 pasos, 6 minutos por punto, "
+        "comparación de Leq al minuto 3 y al minuto 6, criterio de estabilidad Δ≤2 dB, registro de Leq/Lmax y construcción automática del mapa vial."
+    )
 
 
 _C3L2_STAGE9_QUESTIONS=[
