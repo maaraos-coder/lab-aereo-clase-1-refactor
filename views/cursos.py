@@ -30655,6 +30655,79 @@ def _c3l2_stage6(lab,saved):
     próximos. Por eso no existe un valor universalmente correcto: debe elegirse y comprobarse según la red de medición.
     """)
 
+    st.markdown("#### ¿Qué es exactamente la distancia d?")
+    st.markdown("""
+    Para construir el mapa, el área se divide computacionalmente en muchas **celdas pequeñas**. Para cada celda
+    donde no existe una medición se calcula un valor estimado. En IDW, **dᵢ es la distancia geométrica desde el
+    centro de esa celda objetivo hasta el punto de medición i**.
+
+    En el esquema siguiente, **X₀** es una celda que queremos estimar. M1, M2 y M3 son lugares donde sí se midió.
+    Las líneas punteadas representan las distancias **d₁, d₂ y d₃** utilizadas por IDW.
+    """)
+
+    idw_demo_pts=[
+        ("M1",28.0,28.0,68.0),
+        ("M2",76.0,34.0,74.0),
+        ("M3",58.0,76.0,65.0),
+    ]
+    x0_demo,y0_demo=52.0,48.0
+    idw_demo=go.Figure()
+    idw_demo.add_shape(
+        type="rect",x0=x0_demo-4,y0=y0_demo-4,x1=x0_demo+4,y1=y0_demo+4,
+        line=dict(width=3),fillcolor="rgba(255,255,255,0.85)",layer="above"
+    )
+    idw_demo.add_annotation(
+        x=x0_demo,y=y0_demo,
+        text="<b>X₀</b><br>celda a estimar",
+        showarrow=False,font=dict(size=12),
+        bgcolor="rgba(255,255,255,0.92)",bordercolor="#111827",borderwidth=1
+    )
+    demo_distances=[]
+    for label,px,py,level in idw_demo_pts:
+        d=float(np.sqrt((px-x0_demo)**2+(py-y0_demo)**2))
+        demo_distances.append((label,d,level,px,py))
+        idw_demo.add_shape(
+            type="line",x0=x0_demo,y0=y0_demo,x1=px,y1=py,
+            line=dict(width=2,dash="dash"),layer="below"
+        )
+        mx=(x0_demo+px)/2
+        my=(y0_demo+py)/2
+        idw_demo.add_annotation(
+            x=mx,y=my,text=f"<b>d{label[-1]} = {d:.1f} m</b>",
+            showarrow=False,bgcolor="rgba(255,255,255,0.92)",
+            bordercolor="#64748b",borderwidth=1,font=dict(size=11)
+        )
+    idw_demo.add_trace(go.Scatter(
+        x=[p[1] for p in idw_demo_pts],
+        y=[p[2] for p in idw_demo_pts],
+        mode="markers",
+        marker=dict(size=18,line=dict(width=3,color="white"),color="#111827"),
+        name="Puntos medidos",
+        hovertemplate="%{customdata[0]}<br>Medido: %{customdata[1]:.0f} dB(A)<extra></extra>",
+        customdata=[[p[0],p[3]] for p in idw_demo_pts],
+    ))
+    for label,px,py,level in idw_demo_pts:
+        idw_demo.add_annotation(
+            x=px,y=py+7,
+            text=f"<b>{label}</b><br>{level:.0f} dB(A)",
+            showarrow=False,bgcolor="rgba(255,255,255,0.96)",
+            bordercolor="#111827",borderwidth=1,font=dict(size=12)
+        )
+    idw_demo.update_layout(
+        height=430,
+        xaxis=dict(range=[10,92],title="X [m]",showgrid=True,dtick=10),
+        yaxis=dict(range=[10,92],title="Y [m]",showgrid=True,dtick=10,scaleanchor="x",scaleratio=1),
+        margin=dict(l=20,r=20,t=20,b=20),
+        showlegend=False,
+    )
+    st.plotly_chart(idw_demo,use_container_width=True,key="c3l2_s6_idw_distance_demo")
+    st.markdown(
+        '<div class="c3l2-note"><b>d no es el tamaño de la celda.</b> Es la distancia desde el centro '
+        'de la celda que se quiere estimar hasta cada medición disponible. Por eso para una misma celda '
+        'existen varias distancias: d₁ hacia M1, d₂ hacia M2, d₃ hacia M3, etc.</div>',
+        unsafe_allow_html=True,
+    )
+
     power=st.slider(
         "Exponente de distancia IDW · p",
         min_value=1.0,
@@ -30664,6 +30737,25 @@ def _c3l2_stage6(lab,saved):
         key="c3l2_s6_power",
         help="p mayor = la influencia de una medición cae más rápido con la distancia.",
     )
+
+    raw_demo_weights=[1.0/(d**float(power)) for _,d,_,_,_ in demo_distances]
+    sum_demo_weights=sum(raw_demo_weights)
+    norm_demo_weights=[100.0*w/sum_demo_weights for w in raw_demo_weights]
+    wc1,wc2,wc3=st.columns(3)
+    for col,(label,d,level,_,_),pct in zip([wc1,wc2,wc3],demo_distances,norm_demo_weights):
+        col.metric(
+            f"{label} · d = {d:.1f} m",
+            f"{pct:.1f}% del peso",
+            help=f"Con p={power:.2f}, el peso bruto es 1/{d:.1f}^{power:.2f}.",
+        )
+    estimated_demo=sum(pct/100.0*row[2] for row,pct in zip(demo_distances,norm_demo_weights))
+    st.markdown(
+        f'<div class="c3l2-note"><b>Con p = {power:.2f}</b>, IDW combina los tres niveles según esos pesos y '
+        f'estimaría aproximadamente <b>{estimated_demo:.1f} dB(A)</b> en X₀. '
+        'Si aumentas p, observa cómo el punto más cercano gana participación.</div>',
+        unsafe_allow_html=True,
+    )
+
     st.caption(
         "IDW es un método general de interpolación espacial; no es un modelo acústico de propagación. "
         "Se utiliza también en mapas de ruido basados en mediciones, pero la calidad del resultado depende de la "
@@ -30719,17 +30811,52 @@ def _c3l2_stage6(lab,saved):
         name="Superficie IDW",
         hovertemplate="X=%{x:.1f} m<br>Y=%{y:.1f} m<br>Estimado=%{z:.1f} dB(A)<extra></extra>",
     ))
+    _factory_background(map_fig,show_grid=True,show_machine_labels=False)
+
+    # Máquinas: se resaltan sobre la superficie para que el alumno pueda
+    # relacionar visualmente el campo interpolado con la distribución de fuentes.
+    map_fig.add_trace(go.Scatter(
+        x=[m[1] for m in machines],
+        y=[m[2] for m in machines],
+        mode="markers",
+        marker=dict(
+            symbol="square",size=22,color="#111827",
+            line=dict(width=3,color="white")
+        ),
+        customdata=[[m[0],m[3]] for m in machines],
+        name="Máquinas",
+        hovertemplate="<b>%{customdata[1]} · %{customdata[0]}</b><extra></extra>",
+    ))
+    for name,mx,my,tag in machines:
+        map_fig.add_annotation(
+            x=mx,y=my,
+            text=f"<b>{tag}</b><br>{name}",
+            showarrow=True,arrowhead=2,ax=0,ay=-42,
+            bgcolor="rgba(17,24,39,0.92)",font=dict(color="white",size=10),
+            bordercolor="white",borderwidth=1,
+        )
+
+    # Puntos medidos: alto contraste y nivel registrado siempre visible.
     map_fig.add_trace(go.Scatter(
         x=[p[0] for p in pts],
         y=[p[1] for p in pts],
-        mode="markers+text",
-        text=[f"M{i+1} · {p[2]} dB" for i,p in enumerate(pts)],
-        textposition="top center",
-        marker=dict(size=11,line=dict(width=1)),
-        name="Mediciones",
-        hovertemplate="Punto medido<br>%{text}<extra></extra>",
+        mode="markers",
+        marker=dict(
+            symbol="circle",size=15,color="white",
+            line=dict(width=4,color="#111827")
+        ),
+        name="Puntos de medición",
+        customdata=[[f"M{i+1}",p[2]] for i,p in enumerate(pts)],
+        hovertemplate="<b>%{customdata[0]}</b><br>LAeq,T medido = %{customdata[1]:.0f} dB(A)<extra></extra>",
     ))
-    _factory_background(map_fig,show_grid=True,show_machine_labels=True)
+    for i,p in enumerate(pts):
+        map_fig.add_annotation(
+            x=p[0],y=p[1],
+            text=f"<b>M{i+1}</b><br>{p[2]:.0f} dB(A)",
+            showarrow=True,arrowhead=2,ax=28,ay=28 if i%2==0 else -28,
+            bgcolor="rgba(255,255,255,0.96)",font=dict(color="#111827",size=10),
+            bordercolor="#111827",borderwidth=1,
+        )
     map_fig.update_layout(
         height=560,
         xaxis_title="Coordenada local X [m]",
@@ -30739,8 +30866,9 @@ def _c3l2_stage6(lab,saved):
     )
     st.plotly_chart(map_fig,use_container_width=True,key="c3l2_s6_idw_map")
     st.markdown(
-        '<div class="c3l2-note"><b>Lectura correcta:</b> los círculos corresponden a posiciones realmente '
-        'medidas. Todos los demás colores son valores estimados por IDW a partir de esas mediciones.</div>',
+        '<div class="c3l2-note"><b>Lectura correcta:</b> los círculos blancos son posiciones realmente '
+        'medidas y cada etiqueta muestra el LAeq,T registrado. Los cuadrados oscuros identifican las máquinas. '
+        'La superficie de colores entre los puntos no fue medida directamente: corresponde a valores estimados por IDW.</div>',
         unsafe_allow_html=True,
     )
 
