@@ -30744,31 +30744,128 @@ def _c3l2_stage6(lab,saved):
         unsafe_allow_html=True,
     )
 
-    st.markdown("### 7. La cobertura también se puede visualizar")
+    st.markdown("### 7. ¿Qué significa que el mapa tenga buena o mala cobertura?")
+    st.markdown("""
+    La **cobertura espacial** indica qué tan bien respaldada está cada zona del mapa por **mediciones reales**.
+
+    Imagina una celda cualquiera de la fábrica. Si esa celda está a pocos metros de uno o varios puntos donde
+    realmente se instaló el sonómetro, el valor interpolado tiene bastante apoyo espacial. En cambio, si la celda
+    queda en una gran zona donde no se midió, el algoritmo debe estimar el nivel usando información más lejana.
+
+    Por eso un mapa puede verse continuo y muy suave, pero contener sectores con **mucho menos respaldo de terreno**.
+    La interpolación siempre entregará un color; eso no significa que todos los colores tengan el mismo nivel de
+    confianza.
+    """)
+
+    st.markdown("""
+    <div class="c3l2-grid">
+      <div class="c3l2-card green">
+        <div class="c3l2-k">ALTO APOYO ESPACIAL</div>
+        <b>Cerca de puntos medidos.</b><br>
+        La estimación se encuentra rodeada o próxima a mediciones reales. El interpolador dispone de información
+        local para construir el valor.
+      </div>
+      <div class="c3l2-card orange">
+        <div class="c3l2-k">APOYO INTERMEDIO</div>
+        <b>Entre puntos relativamente separados.</b><br>
+        El valor sigue siendo una interpolación, pero depende de observaciones más distantes. Si existe un cambio
+        brusco entre ellas, una grilla demasiado gruesa puede no detectarlo.
+      </div>
+      <div class="c3l2-card blue">
+        <div class="c3l2-k">BAJO APOYO</div>
+        <b>Grandes vacíos de medición o bordes.</b><br>
+        El valor depende fuertemente del supuesto de continuidad espacial. En estas zonas conviene incorporar
+        puntos adicionales antes de interpretar detalles finos.
+      </div>
+    </div>
+    """,unsafe_allow_html=True)
+
+    st.markdown("#### Una forma simple de visualizar el apoyo: distancia al punto medido más cercano")
+    st.markdown("""
+    Para cada celda calcularemos la distancia hasta la medición más próxima. Esta distancia **no es el error del mapa**:
+    solamente indica cuánto debe “viajar” espacialmente la información medida para llegar hasta esa celda.
+
+    - **Distancia pequeña:** existe una medición cercana.
+    - **Distancia grande:** existe un vacío de mediciones alrededor de la celda.
+    - **En los bordes:** además hay que revisar si la celda está dentro o fuera del área realmente encerrada por los puntos.
+    """)
+
     nearest=np.full_like(X,np.inf,dtype=float)
     for px,py,_ in pts:
         nearest=np.minimum(nearest,np.sqrt((X-px)**2+(Y-py)**2))
+
+    mean_nearest=float(np.mean(nearest))
+    max_nearest=float(np.max(nearest))
+    pct_10=float(np.mean(nearest<=10)*100.0)
+    pct_20=float(np.mean(nearest<=20)*100.0)
+
     coverage_fig=go.Figure(go.Contour(
         x=xx,y=yy,z=nearest,
-        contours=dict(showlabels=True),
-        colorbar=dict(title="Distancia<br>al punto<br>más cercano [m]"),
-        hovertemplate="X=%{x:.1f} m<br>Y=%{y:.1f} m<br>Punto medido más cercano=%{z:.1f} m<extra></extra>",
+        contours=dict(start=0,end=max(30,float(np.ceil(max_nearest/5)*5)),size=5,showlabels=True),
+        colorbar=dict(title="Distancia al<br>punto medido<br>más cercano [m]"),
+        hovertemplate="X=%{x:.1f} m<br>Y=%{y:.1f} m<br>Medición más cercana=%{z:.1f} m<extra></extra>",
     ))
     coverage_fig.add_trace(go.Scatter(
         x=[p[0] for p in pts],y=[p[1] for p in pts],
-        mode="markers",marker=dict(size=10),name="Mediciones",
+        mode="markers+text",
+        text=[f"M{i+1}" for i in range(len(pts))],
+        textposition="top center",
+        marker=dict(size=11,line=dict(width=1)),
+        name="Mediciones",
     ))
     _factory_background(coverage_fig,show_grid=True,show_machine_labels=False)
     coverage_fig.update_layout(
-        height=460,
+        height=480,
         xaxis_title="X [m]",yaxis_title="Y [m]",
         margin=dict(l=20,r=20,t=20,b=20),
+        legend=dict(orientation="h",y=1.03),
     )
     st.plotly_chart(coverage_fig,use_container_width=True,key="c3l2_s6_coverage_map")
-    st.caption(
-        "Esta figura no es una incertidumbre estadística formal. Es un indicador geométrico de apoyo: "
-        "cuanto más lejos queda una celda de cualquier medición, más cautela requiere la interpretación."
+
+    ca,cb,cc,cd=st.columns(4)
+    ca.metric("Distancia media al punto más cercano",f"{mean_nearest:.1f} m")
+    cb.metric("Mayor vacío geométrico",f"{max_nearest:.1f} m")
+    cc.metric("Área a ≤ 10 m de una medición",f"{pct_10:.0f}%")
+    cd.metric("Área a ≤ 20 m de una medición",f"{pct_20:.0f}%")
+
+    st.markdown(
+        '<div class="c3l2-note"><b>Cómo leer estas métricas:</b> si al pasar de 6 a 10 o 15 puntos disminuye '
+        'la distancia máxima y aumenta el porcentaje del área cercano a una medición, la red está cubriendo mejor '
+        'la planta. Los valores de 10 m y 20 m se usan aquí solo para visualizar el ejercicio; '
+        '<b>no son criterios normativos universales</b>.</div>',
+        unsafe_allow_html=True,
     )
+
+    st.markdown("#### Cobertura no es lo mismo que incertidumbre")
+    st.markdown("""
+    Una zona cercana a una medición suele estar mejor respaldada espacialmente, pero eso **no permite afirmar**
+    automáticamente que su incertidumbre sea, por ejemplo, ±1 dB. La incertidumbre depende además de otros factores:
+
+    - incertidumbre del instrumento y calibración;
+    - duración y repetibilidad de la medición;
+    - variación temporal de la fuente;
+    - condiciones de operación;
+    - geometría y cantidad de puntos vecinos;
+    - método y parámetros de interpolación;
+    - existencia de obstáculos o cambios físicos que el interpolador no conoce.
+
+    El mapa de distancia sirve entonces como una **alerta geométrica**: muestra dónde faltan datos y dónde sería
+    razonable densificar la campaña.
+    """)
+
+    st.markdown("#### ¿Y qué ocurre fuera de los puntos medidos?")
+    st.markdown("""
+    Hay una diferencia importante:
+
+    **Interpolación:** se estima dentro de una zona respaldada por mediciones distribuidas alrededor.
+
+    **Extrapolación:** se intenta estimar más allá del soporte espacial de la campaña, por ejemplo fuera del borde
+    formado por los puntos extremos. Allí el resultado es más dependiente del método y debe interpretarse con mayor
+    cautela.
+
+    En una campaña real, si aparece una gran zona de baja cobertura, la solución más robusta normalmente no es
+    “cambiar los colores del mapa”, sino **volver a medir y agregar puntos donde faltan datos**.
+    """)
 
     st.markdown("### 8. ¿Cómo saber si la interpolación es razonable?")
     st.markdown("""
