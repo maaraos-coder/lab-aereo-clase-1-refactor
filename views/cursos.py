@@ -30719,15 +30719,8 @@ def _c3l2_stage6(lab,saved):
         unsafe_allow_html=True,
     )
 
-    power=st.slider(
-        "Exponente de distancia IDW · p",
-        min_value=1.0,
-        max_value=3.0,
-        value=2.0,
-        step=0.25,
-        key="c3l2_s6_power",
-        help="p mayor = la influencia de una medición cae más rápido con la distancia.",
-    )
+    # Valor fijo para el ejemplo didáctico de esta etapa.
+    power=2.0
 
     st.caption(
         "IDW es un método general de interpolación espacial; no es un modelo acústico de propagación. "
@@ -30825,7 +30818,7 @@ def _c3l2_stage6(lab,saved):
     for i,p in enumerate(pts):
         map_fig.add_annotation(
             x=p[0],y=p[1],
-            text=f"<b>M{i+1}</b><br>{p[2]:.0f} dB(A)",
+            text=f"<b>P{i+1}</b><br>{p[2]:.0f} dB(A)",
             showarrow=True,arrowhead=2,ax=28,ay=28 if i%2==0 else -28,
             bgcolor="rgba(255,255,255,0.96)",font=dict(color="#111827",size=10),
             bordercolor="#111827",borderwidth=1,
@@ -30845,148 +30838,52 @@ def _c3l2_stage6(lab,saved):
         unsafe_allow_html=True,
     )
 
-    st.markdown("### 7. ¿Qué significa que el mapa tenga buena o mala cobertura?")
+    st.markdown("### 7. ¿Qué significa la cobertura del mapa?")
     st.markdown("""
-    La **cobertura espacial** indica qué tan bien respaldada está cada zona del mapa por **mediciones reales**.
-
-    Imagina una celda cualquiera de la fábrica. Si esa celda está a pocos metros de uno o varios puntos donde
-    realmente se instaló el sonómetro, el valor interpolado tiene bastante apoyo espacial. En cambio, si la celda
-    queda en una gran zona donde no se midió, el algoritmo debe estimar el nivel usando información más lejana.
-
-    Por eso un mapa puede verse continuo y muy suave, pero contener sectores con **mucho menos respaldo de terreno**.
-    La interpolación siempre entregará un color; eso no significa que todos los colores tengan el mismo nivel de
-    confianza.
+    La **cobertura** indica qué tan bien está representada el área de estudio por los puntos donde realmente se midió.
+    No es una medida de incertidumbre ni un cálculo estadístico: es una forma simple de preguntarse
+    **“¿tenemos suficientes mediciones, bien distribuidas, para representar esta zona?”**
     """)
 
     st.markdown("""
     <div class="c3l2-grid">
       <div class="c3l2-card green">
-        <div class="c3l2-k">ALTO APOYO ESPACIAL</div>
-        <b>Cerca de puntos medidos.</b><br>
-        La estimación se encuentra rodeada o próxima a mediciones reales. El interpolador dispone de información
-        local para construir el valor.
+        <div class="c3l2-k">BUENA COBERTURA</div>
+        <b>Hay puntos de medición distribuidos en toda el área.</b><br>
+        Las zonas del mapa quedan próximas a mediciones reales y no existen grandes sectores sin información.
       </div>
       <div class="c3l2-card orange">
-        <div class="c3l2-k">APOYO INTERMEDIO</div>
-        <b>Entre puntos relativamente separados.</b><br>
-        El valor sigue siendo una interpolación, pero depende de observaciones más distantes. Si existe un cambio
-        brusco entre ellas, una grilla demasiado gruesa puede no detectarlo.
+        <div class="c3l2-k">COBERTURA INTERMEDIA</div>
+        <b>Existen algunos espacios amplios entre puntos.</b><br>
+        El mapa puede construirse, pero ciertas zonas dependen más de la interpolación y conviene revisar si faltan mediciones.
       </div>
       <div class="c3l2-card blue">
-        <div class="c3l2-k">BAJO APOYO</div>
-        <b>Grandes vacíos de medición o bordes.</b><br>
-        El valor depende fuertemente del supuesto de continuidad espacial. En estas zonas conviene incorporar
-        puntos adicionales antes de interpretar detalles finos.
+        <div class="c3l2-k">MALA COBERTURA</div>
+        <b>Los puntos están muy separados o concentrados en una sola zona.</b><br>
+        Grandes sectores quedan representados casi exclusivamente por la interpolación. La solución es agregar mediciones donde faltan datos.
       </div>
     </div>
     """,unsafe_allow_html=True)
 
-    st.markdown("#### Una forma simple de visualizar el apoyo: distancia al punto medido más cercano")
-    st.caption("Lectura visual del mapa: verde = mayor respaldo espacial por cercanía a mediciones; amarillo = apoyo intermedio; naranjo/rojo = sectores más alejados de los puntos medidos.")
-    st.markdown("""
-    Para cada celda calcularemos la distancia hasta la medición más próxima. Esta distancia **no es el error del mapa**:
-    solamente indica cuánto debe “viajar” espacialmente la información medida para llegar hasta esa celda.
-
-    - **Distancia pequeña:** existe una medición cercana.
-    - **Distancia grande:** existe un vacío de mediciones alrededor de la celda.
-    - **En los bordes:** además hay que revisar si la celda está dentro o fuera del área realmente encerrada por los puntos.
-    """)
-
-    nearest=np.full_like(X,np.inf,dtype=float)
-    for px,py,_ in pts:
-        nearest=np.minimum(nearest,np.sqrt((X-px)**2+(Y-py)**2))
-
-    mean_nearest=float(np.mean(nearest))
-    max_nearest=float(np.max(nearest))
-    pct_10=float(np.mean(nearest<=10)*100.0)
-    pct_20=float(np.mean(nearest<=20)*100.0)
-
-    coverage_max=max(30.0,float(np.ceil(max_nearest/5)*5))
-    coverage_fig=go.Figure(go.Contour(
-        x=xx,y=yy,z=nearest,
-        zmin=0,zmax=coverage_max,
-        contours=dict(start=0,end=coverage_max,size=5,showlabels=True,coloring="fill"),
-        colorscale=[
-            [0.00,"#0B6E4F"],
-            [0.20,"#39A96B"],
-            [0.40,"#B7D65A"],
-            [0.60,"#F4D35E"],
-            [0.80,"#F08A4B"],
-            [1.00,"#C23B3B"],
-        ],
-        colorbar=dict(
-            title="Distancia al<br>punto medido<br>más cercano [m]",
-            tickfont=dict(size=11),
-        ),
-        hovertemplate="X=%{x:.1f} m<br>Y=%{y:.1f} m<br>Medición más cercana=%{z:.1f} m<extra></extra>",
-    ))
-    coverage_fig.add_trace(go.Scatter(
-        x=[p[0] for p in pts],y=[p[1] for p in pts],
-        mode="markers+text",
-        text=[f"P{i+1}" for i in range(len(pts))],
-        textposition="top center",
-        marker=dict(size=13,color="white",line=dict(width=3,color="#111827")),
-        name="Puntos de medición",
-    ))
-    _factory_background(coverage_fig,show_grid=True,show_machine_labels=False)
-    coverage_fig.update_layout(
-        height=480,
-        xaxis_title="X [m]",yaxis_title="Y [m]",
-        margin=dict(l=20,r=20,t=20,b=20),
-        legend=dict(orientation="h",y=1.03),
-    )
-    st.plotly_chart(coverage_fig,use_container_width=True,key="c3l2_s6_coverage_map")
-
-    ca,cb,cc,cd=st.columns(4)
-    ca.metric("Distancia media al punto más cercano",f"{mean_nearest:.1f} m")
-    cb.metric("Mayor vacío geométrico",f"{max_nearest:.1f} m")
-    cc.metric("Área a ≤ 10 m de una medición",f"{pct_10:.0f}%")
-    cd.metric("Área a ≤ 20 m de una medición",f"{pct_20:.0f}%")
-
     st.markdown(
-        '<div class="c3l2-note"><b>Cómo leer estas métricas:</b> si al pasar de 6 a 10 o 15 puntos disminuye '
-        'la distancia máxima y aumenta el porcentaje del área cercano a una medición, la red está cubriendo mejor '
-        'la planta. Los valores de 10 m y 20 m se usan aquí solo para visualizar el ejercicio; '
-        '<b>no son criterios normativos universales</b>.</div>',
+        '<div class="c3l2-note"><b>Idea clave:</b> un mapa puede verse continuo y atractivo aunque tenga mala cobertura. '
+        'La calidad de la representación depende primero de una red de medición bien distribuida y recién después del método de interpolación.</div>',
         unsafe_allow_html=True,
     )
 
-    st.markdown("#### Cobertura no es lo mismo que incertidumbre")
-    st.markdown("""
-    Una zona cercana a una medición suele estar mejor respaldada espacialmente, pero eso **no permite afirmar**
-    automáticamente que su incertidumbre sea, por ejemplo, ±1 dB. La incertidumbre depende además de otros factores:
-
-    - incertidumbre del instrumento y calibración;
-    - duración y repetibilidad de la medición;
-    - variación temporal de la fuente;
-    - condiciones de operación;
-    - geometría y cantidad de puntos vecinos;
-    - método y parámetros de interpolación;
-    - existencia de obstáculos o cambios físicos que el interpolador no conoce.
-
-    El mapa de distancia sirve entonces como una **alerta geométrica**: muestra dónde faltan datos y dónde sería
-    razonable densificar la campaña.
-    """)
-
-    st.markdown("#### ¿Y qué ocurre fuera de los puntos medidos?")
-    st.markdown("""
-    Hay una diferencia importante:
-
-    **Interpolación:** se estima dentro de una zona respaldada por mediciones distribuidas alrededor.
-
-    **Extrapolación:** se intenta estimar más allá del soporte espacial de la campaña, por ejemplo fuera del borde
-    formado por los puntos extremos. Allí el resultado es más dependiente del método y debe interpretarse con mayor
-    cautela.
-
-    En una campaña real, si aparece una gran zona de baja cobertura, la solución más robusta normalmente no es
-    “cambiar los colores del mapa”, sino **volver a medir y agregar puntos donde faltan datos**.
-    """)
-
     st.markdown("### 8. ¿Cómo saber si la interpolación es razonable?")
     st.markdown("""
-    Una forma simple de comprobar el comportamiento del método es la **validación cruzada leave-one-out**:
-    se retira temporalmente un punto, se predice su valor usando los demás y luego se compara la predicción
-    con el valor realmente medido. Se repite para todos los puntos.
+    Una forma simple de comprobar si la interpolación está reproduciendo razonablemente los datos es la
+    **validación cruzada leave-one-out**.
+
+    El procedimiento es sencillo:
+
+    1. se retira temporalmente un punto medido;
+    2. se estima cuánto debería valer ese punto usando solamente los demás;
+    3. se compara el valor estimado con el valor que realmente se midió;
+    4. se repite el procedimiento para todos los puntos.
+
+    Así obtenemos varios **errores de predicción**, expresados directamente en **dB**.
     """)
     def _idw_predict(train, x0, y0, p):
         arr=np.asarray(train,dtype=float)
@@ -31011,15 +30908,43 @@ def _c3l2_stage6(lab,saved):
         })
     mae=float(np.mean(np.abs(errors))) if errors else float("nan")
     rmse=float(np.sqrt(np.mean(np.square(errors)))) if errors else float("nan")
-    v1,v2,v3=st.columns(3)
-    v1.metric("MAE validación cruzada",f"{mae:.2f} dB")
-    v2.metric("RMSE validación cruzada",f"{rmse:.2f} dB")
-    v3.metric("Potencia evaluada",f"p = {power:.2f}")
+    st.markdown("#### ¿Qué significan los valores estadísticos?")
+    st.markdown("""
+    <div class="c3l2-grid">
+      <div class="c3l2-card green">
+        <div class="c3l2-k">ERROR DE CADA PUNTO</div>
+        <b>Predicho − medido.</b><br>
+        Si el resultado es +3 dB, el método sobreestimó ese punto en 3 dB. Si es −3 dB, lo subestimó en 3 dB.
+      </div>
+      <div class="c3l2-card blue">
+        <div class="c3l2-k">MAE · ERROR ABSOLUTO MEDIO</div>
+        <b>Promedio del tamaño de los errores.</b><br>
+        Ignora el signo y responde: “en promedio, ¿cuántos dB se alejan las predicciones de las mediciones?”.
+      </div>
+      <div class="c3l2-card orange">
+        <div class="c3l2-k">RMSE · RAÍZ DEL ERROR CUADRÁTICO MEDIO</div>
+        <b>Da más importancia a los errores grandes.</b><br>
+        Si uno o varios puntos están muy mal estimados, el RMSE aumenta más que el MAE.
+      </div>
+    </div>
+    """,unsafe_allow_html=True)
+
+    v1,v2=st.columns(2)
+    v1.metric("MAE · error medio",f"{mae:.2f} dB")
+    v2.metric("RMSE · penaliza errores grandes",f"{rmse:.2f} dB")
+
+    st.markdown(
+        f'<div class="c3l2-note"><b>Cómo interpretar estos resultados:</b> en este ejercicio el MAE es '
+        f'<b>{mae:.2f} dB</b> y el RMSE es <b>{rmse:.2f} dB</b>. '
+        'Cuanto más pequeños sean ambos valores, mejor está reproduciendo el interpolador los puntos que se van retirando. '
+        'Si el RMSE es bastante mayor que el MAE, suele indicar que existen uno o varios puntos con errores especialmente grandes.</div>',
+        unsafe_allow_html=True,
+    )
     with st.expander("Ver validación punto por punto"):
         st.dataframe(pd.DataFrame(cv_rows),hide_index=True,use_container_width=True)
     st.caption(
-        "Un error de validación cruzada menor es una señal favorable, pero no demuestra por sí solo que la campaña "
-        "represente todo el territorio ni todo el periodo temporal de interés."
+        "MAE y RMSE sirven para evaluar el comportamiento de la interpolación frente a los puntos medidos. "
+        "No son límites normativos ni representan por sí solos la incertidumbre total del mapa."
     )
 
     st.markdown("### 9. IDW no es la única interpolación")
