@@ -30177,9 +30177,135 @@ def _c3l2_stage5(lab,saved):
     """, unsafe_allow_html=True)
 
     # ------------------------------------------------------------------
-    # 1 · QUÉ ES UN MAPA DE RUIDO
+    # 1 · FINALIDAD DE UN MAPA DE RUIDO
     # ------------------------------------------------------------------
-    st.markdown("### 1. ¿Qué representa realmente un mapa de ruido?")
+    st.markdown("### 1. ¿Para qué sirve un mapa de ruido?")
+
+    st.write(
+        "La finalidad principal de un mapa de ruido es **convertir información acústica en información espacial**. "
+        "En lugar de conocer solo el nivel en uno o varios puntos aislados, podemos observar cómo se distribuye "
+        "el ambiente sonoro sobre un territorio, identificar zonas críticas, reconocer qué receptores están más "
+        "expuestos y comparar alternativas de gestión o diseño."
+    )
+
+    st.markdown("""
+    <div class="c3l2-grid2">
+      <div class="c3l2-card blue">
+        <div class="c3l2-k">DIAGNÓSTICO</div>
+        <b>¿Dónde están los mayores niveles?</b><br>
+        Permite localizar sectores con mayor exposición, reconocer gradientes espaciales y detectar zonas
+        donde conviene profundizar con nuevas mediciones o análisis.
+      </div>
+      <div class="c3l2-card green">
+        <div class="c3l2-k">PLANIFICACIÓN</div>
+        <b>¿Qué ocurriría si cambia el territorio?</b><br>
+        Permite evaluar nuevas vías, industrias, obras, aeropuertos, ampliaciones, cambios de operación
+        o redistribución de actividades.
+      </div>
+      <div class="c3l2-card orange">
+        <div class="c3l2-k">GESTIÓN Y MITIGACIÓN</div>
+        <b>¿Dónde conviene actuar?</b><br>
+        Ayuda a comparar barreras, encapsulamientos, cambios de trazado, restricciones operacionales,
+        redistribución de fuentes u otras medidas de control.
+      </div>
+      <div class="c3l2-card purple">
+        <div class="c3l2-k">EXPOSICIÓN</div>
+        <b>¿Quiénes están afectados y cuánto?</b><br>
+        Permite relacionar niveles con viviendas, escuelas, hospitales, población u otros receptores
+        sensibles, siempre que el mapa haya sido construido con un descriptor y período adecuados.
+      </div>
+    </div>
+    """, unsafe_allow_html=True)
+
+    purpose_svg = """
+    <svg viewBox="0 0 980 430" width="100%" style="background:#f8fbfd;border:1px solid #d8e5ed;border-radius:18px">
+      <defs>
+        <radialGradient id="pA"><stop offset="0%" stop-color="#ef4444" stop-opacity=".86"/><stop offset="48%" stop-color="#f59e0b" stop-opacity=".62"/><stop offset="100%" stop-color="#93c5fd" stop-opacity=".12"/></radialGradient>
+      </defs>
+      <style>.t{font-family:Inter,Arial,sans-serif;fill:#263f50}.b{font-weight:850}</style>
+
+      <text x="490" y="32" text-anchor="middle" class="t b" font-size="17">DEL NIVEL ACÚSTICO A UNA DECISIÓN TERRITORIAL</text>
+
+      <rect x="50" y="62" width="880" height="300" rx="15" fill="#dfe7e8"/>
+      <ellipse cx="470" cy="215" rx="285" ry="135" fill="url(#pA)"/>
+
+      <rect x="95" y="102" width="110" height="82" rx="5" fill="#b9c7d2"/>
+      <text x="150" y="94" text-anchor="middle" class="t b" font-size="12">VIVIENDAS</text>
+
+      <rect x="735" y="96" width="135" height="92" rx="5" fill="#b9c7d2"/>
+      <text x="802" y="88" text-anchor="middle" class="t b" font-size="12">ESCUELA</text>
+
+      <rect x="110" y="260" width="125" height="72" rx="5" fill="#b9c7d2"/>
+      <text x="172" y="350" text-anchor="middle" class="t b" font-size="12">HOSPITAL</text>
+
+      <rect x="405" y="188" width="130" height="56" rx="8" fill="#596d78"/>
+      <text x="470" y="220" text-anchor="middle" fill="#fff" font-family="Inter,Arial" font-size="12" font-weight="850">FUENTE / ACTIVIDAD</text>
+
+      <g fill="#18a36f" stroke="#fff" stroke-width="3">
+        <circle cx="230" cy="145" r="10"/><circle cx="760" cy="218" r="10"/><circle cx="250" cy="300" r="10"/>
+      </g>
+      <text x="230" y="169" text-anchor="middle" class="t b" font-size="10">R1</text>
+      <text x="760" y="242" text-anchor="middle" class="t b" font-size="10">R2</text>
+      <text x="250" y="324" text-anchor="middle" class="t b" font-size="10">R3</text>
+
+      <g fill="none" stroke="#fff" stroke-width="2">
+        <ellipse cx="470" cy="215" rx="95" ry="48"/><ellipse cx="470" cy="215" rx="170" ry="82"/><ellipse cx="470" cy="215" rx="250" ry="118"/>
+      </g>
+      <text x="470" y="153" text-anchor="middle" class="t b" font-size="11">70 dB</text>
+      <text x="620" y="150" text-anchor="middle" class="t b" font-size="11">65 dB</text>
+      <text x="690" y="302" text-anchor="middle" class="t b" font-size="11">60 dB</text>
+
+      <text x="490" y="392" text-anchor="middle" class="t b" font-size="13">
+        El mapa permite ver simultáneamente fuente, territorio, receptores y niveles.
+      </text>
+    </svg>
+    """
+    components.html(purpose_svg, height=450)
+
+    st.markdown("#### Un mapa puede responder preguntas diferentes")
+
+    use_cases = pd.DataFrame(
+        [
+            {
+                "Pregunta": "¿Dónde están hoy los sectores con mayor nivel?",
+                "Uso del mapa": "Diagnóstico del ambiente sonoro existente",
+            },
+            {
+                "Pregunta": "¿Qué receptores podrían quedar más expuestos?",
+                "Uso del mapa": "Identificación espacial de receptores y zonas sensibles",
+            },
+            {
+                "Pregunta": "¿Qué pasará si se construye o modifica una fuente?",
+                "Uso del mapa": "Evaluación de escenarios futuros",
+            },
+            {
+                "Pregunta": "¿Qué medida de control funciona mejor?",
+                "Uso del mapa": "Comparación antes/después de mitigaciones",
+            },
+            {
+                "Pregunta": "¿Cómo cambia el ruido entre día y noche?",
+                "Uso del mapa": "Comparación entre períodos o condiciones operacionales",
+            },
+            {
+                "Pregunta": "¿Dónde conviene medir con mayor detalle?",
+                "Uso del mapa": "Diseño o refinamiento de una campaña de terreno",
+            },
+        ]
+    )
+    st.dataframe(use_cases, hide_index=True, use_container_width=True)
+
+    st.markdown("""
+    <div class="c3l2-note">
+      <b>El mapa no es el objetivo final.</b> Es una herramienta para entender una distribución espacial,
+      comparar escenarios y apoyar decisiones. Su utilidad depende de que el descriptor, el período,
+      la altura, las fuentes y las condiciones representadas sean coherentes con la pregunta que se quiere responder.
+    </div>
+    """, unsafe_allow_html=True)
+
+    # ------------------------------------------------------------------
+    # 2 · QUÉ ES UN MAPA DE RUIDO
+    # ------------------------------------------------------------------
+    st.markdown("### 2. ¿Qué representa realmente un mapa de ruido?")
 
     st.write(
         "Un mapa de ruido asigna valores de un **descriptor acústico** a posiciones del espacio y los representa "
@@ -30246,9 +30372,9 @@ def _c3l2_stage5(lab,saved):
     components.html(anatomy_svg, height=450)
 
     # ------------------------------------------------------------------
-    # 2 · DOS FAMILIAS
+    # 3 · DOS FAMILIAS
     # ------------------------------------------------------------------
-    st.markdown("### 2. Dos formas principales de construir un mapa")
+    st.markdown("### 3. Dos formas principales de construir un mapa")
 
     left, right = st.columns(2)
     with left:
@@ -30393,9 +30519,9 @@ def _c3l2_stage5(lab,saved):
         )
 
     # ------------------------------------------------------------------
-    # 3 · RENDERS POR TIPO DE FUENTE
+    # 4 · RENDERS POR TIPO DE FUENTE
     # ------------------------------------------------------------------
-    st.markdown("### 3. Cómo cambia el mapa según el tipo de fuente")
+    st.markdown("### 4. Cómo cambia el mapa según el tipo de fuente")
 
     st.write(
         "La geometría de los contornos depende de la fuente. Los siguientes renders son ejemplos didácticos "
@@ -30543,9 +30669,9 @@ def _c3l2_stage5(lab,saved):
         )
 
     # ------------------------------------------------------------------
-    # 4 · COMPARACIÓN TÉCNICA
+    # 5 · COMPARACIÓN TÉCNICA
     # ------------------------------------------------------------------
-    st.markdown("### 4. Medición y predicción no responden exactamente la misma pregunta")
+    st.markdown("### 5. Medición y predicción no responden exactamente la misma pregunta")
 
     comparison = pd.DataFrame(
         [
@@ -30599,9 +30725,9 @@ def _c3l2_stage5(lab,saved):
     """, unsafe_allow_html=True)
 
     # ------------------------------------------------------------------
-    # 5 · ERRORES DE INTERPRETACIÓN
+    # 6 · ERRORES DE INTERPRETACIÓN
     # ------------------------------------------------------------------
-    st.markdown("### 5. Cinco errores frecuentes al leer un mapa de ruido")
+    st.markdown("### 6. Cinco errores frecuentes al leer un mapa de ruido")
 
     st.markdown(
         "1. **Creer que cada píxel fue medido.** En un mapa de campaña, solo los puntos efectivamente instrumentados son observaciones directas.  \n"
@@ -30640,6 +30766,7 @@ def _c3l2_stage5(lab,saved):
         with st.container(border=True):
             st.markdown("##### 👩‍🏫 Pauta docente · ideas clave")
             st.markdown(
+                "- **Finalidad**: convertir información acústica en información espacial para diagnóstico, exposición, planificación y comparación de escenarios o medidas.  \n"
                 "- Un mapa representa un **descriptor acústico espacial**, no una fotografía instantánea del sonido.  \n"
                 "- En mapas basados en mediciones, distinguir **punto observado** de **valor interpolado**.  \n"
                 "- En mapas de predicción, los niveles de la grilla son **calculados a partir de fuentes y propagación**.  \n"
