@@ -31307,173 +31307,284 @@ def _c3l2_stage7(lab,saved):
     st.latex(r"L_{tot}=10\log_{10}\left(\sum_i 10^{L_i/10}\right)")
     st.markdown("</div>",unsafe_allow_html=True)
 
-    st.markdown("### 5. Mini laboratorio de modelación · estilo dBmap")
+    st.markdown("### 5. Mini laboratorio interactivo de modelación")
     st.markdown("""
     <div class="c3l2-note">
-      <b>Objetivo:</b> construir un escenario acústico simple y observar cómo cambia el campo sonoro al modificar
-      la fuente, el terreno, una barrera y la posición del receptor. Los cálculos se actualizan automáticamente.
+      <b>Interactúa directamente con el mapa:</b> arrastra la fuente <b>F1</b> o el receptor <b>R1</b>.
+      El campo sonoro se recalcula automáticamente. Al seleccionar un objeto aparecen solo sus parámetros básicos.
     </div>
     """,unsafe_allow_html=True)
 
-    st.markdown("""
-    <div class="c3l2-flow">
-      <span class="c3l2-node">Fuente F1</span><span class="c3l2-arrow">→</span>
-      <span class="c3l2-node">Propagación</span><span class="c3l2-arrow">→</span>
-      <span class="c3l2-node">Terreno / barrera</span><span class="c3l2-arrow">→</span>
-      <span class="c3l2-node">Receptor R1</span><span class="c3l2-arrow">→</span>
-      <span class="c3l2-node">Mapa</span>
-    </div>
-    """,unsafe_allow_html=True)
+    _s7_interactive_html = r'''
+    <div id="s7noise" style="font-family:Inter,system-ui,-apple-system,Segoe UI,sans-serif;color:#17324a">
+      <style>
+        #s7noise{background:#fff}
+        #s7noise .wrap{display:grid;grid-template-columns:minmax(0,1fr) 250px;gap:14px;align-items:start}
+        #s7noise .mapbox{border:1px solid #d9e5ed;border-radius:16px;overflow:hidden;background:#f7fafc}
+        #s7noise .toolbar{display:flex;flex-wrap:wrap;gap:8px;align-items:center;padding:10px 12px;border-bottom:1px solid #e1eaf0;background:#fbfdfe}
+        #s7noise .tag{font-size:12px;font-weight:800;color:#476274}
+        #s7noise button{border:1px solid #cbdde8;background:#fff;border-radius:999px;padding:7px 11px;font-size:12px;font-weight:800;color:#24485f;cursor:pointer}
+        #s7noise button.active{background:#e9f5fb;border-color:#88c8e7;color:#0b6f9f}
+        #s7noise canvas{display:block;width:100%;height:auto;touch-action:none;cursor:default}
+        #s7noise .side{border:1px solid #d9e5ed;border-radius:16px;background:#fff;overflow:hidden}
+        #s7noise .sidehead{padding:12px 14px;background:#f4f8fb;border-bottom:1px solid #e1eaf0;font-weight:900}
+        #s7noise .panel{padding:13px 14px}
+        #s7noise .objname{font-size:12px;letter-spacing:.06em;font-weight:900;color:#0b7aaa;text-transform:uppercase;margin-bottom:8px}
+        #s7noise label{display:block;font-size:12px;font-weight:800;color:#496274;margin:10px 0 4px}
+        #s7noise input[type=number],#s7noise select{width:100%;box-sizing:border-box;border:1px solid #cfdde6;border-radius:9px;padding:8px 9px;font-size:14px;background:#fff;color:#17324a}
+        #s7noise input[type=range]{width:100%}
+        #s7noise .metric{margin-top:12px;border:1px solid #dbe7ee;border-radius:12px;padding:10px 11px;background:#fbfdfe}
+        #s7noise .metric small{display:block;color:#6a7e8c;font-weight:800;text-transform:uppercase;font-size:10px;letter-spacing:.05em}
+        #s7noise .metric strong{display:block;font-size:22px;color:#153f5b;margin-top:2px}
+        #s7noise .env{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:10px}
+        #s7noise .check{display:flex;align-items:center;gap:7px;font-size:12px;font-weight:800;color:#466171}
+        #s7noise .legend{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:5px;padding:9px 10px;border-top:1px solid #e1eaf0;background:#fff}
+        #s7noise .leg{font-size:9px;text-align:center;color:#405868}
+        #s7noise .sw{height:10px;border-radius:3px;margin-bottom:2px;border:1px solid rgba(0,0,0,.08)}
+        #s7noise .foot{font-size:11px;color:#657885;line-height:1.42;margin-top:8px}
+        @media(max-width:760px){#s7noise .wrap{grid-template-columns:1fr}#s7noise .legend{grid-template-columns:repeat(4,minmax(0,1fr))}}
+      </style>
 
-    method=st.segmented_control(
-        "Método conceptual de propagación",
-        ["ISO 9613","CNOSSOS-EU"],
-        default="ISO 9613",
-        key="c3l2_s7_lab_method",
-        help="Selector didáctico para comparar filosofías de cálculo. Este mini laboratorio no implementa íntegramente ninguna norma.",
+      <div class="wrap">
+        <div class="mapbox">
+          <div class="toolbar">
+            <span class="tag">Seleccionar:</span>
+            <button id="selF" class="active" type="button">F1 · Fuente</button>
+            <button id="selR" type="button">R1 · Receptor</button>
+            <span class="tag" style="margin-left:auto">Arrastra el objeto sobre el plano</span>
+          </div>
+          <canvas id="map" width="900" height="540" aria-label="Mapa acústico interactivo"></canvas>
+          <div class="legend" id="legend"></div>
+        </div>
+
+        <div class="side">
+          <div class="sidehead">Objeto seleccionado</div>
+          <div class="panel">
+            <div id="sourcePanel">
+              <div class="objname">F1 · Fuente puntual</div>
+              <label for="lw">Potencia sonora Lw [dB]</label>
+              <input id="lw" type="number" min="70" max="120" step="1" value="98">
+              <label for="sh">Altura de fuente [m]</label>
+              <input id="sh" type="number" min="0.5" max="20" step="0.5" value="2">
+            </div>
+            <div id="receiverPanel" hidden>
+              <div class="objname">R1 · Receptor</div>
+              <label for="rh">Altura de receptor [m]</label>
+              <input id="rh" type="number" min="1" max="15" step="0.5" value="1.5">
+            </div>
+
+            <div class="metric">
+              <small>Nivel calculado en R1</small>
+              <strong id="rLevel">— dB</strong>
+            </div>
+
+            <div style="margin-top:14px;border-top:1px solid #e7eef3;padding-top:10px">
+              <div class="objname">Entorno</div>
+              <label for="g">Factor de suelo G</label>
+              <input id="g" type="range" min="0" max="1" step="0.1" value="0.5">
+              <div style="display:flex;justify-content:space-between;font-size:11px;color:#6b7d89"><span>0 · duro</span><b id="gVal">0.5</b><span>1 · poroso</span></div>
+              <div class="env">
+                <label class="check"><input id="barrier" type="checkbox" checked> Barrera</label>
+                <select id="barH" aria-label="Altura de barrera">
+                  <option value="2">2 m</option>
+                  <option value="4" selected>4 m</option>
+                  <option value="6">6 m</option>
+                </select>
+              </div>
+            </div>
+            <div class="foot">
+              Escala cromática clásica de <b>ISO 1996-2:1987</b>, en bandas de 5 dB. Este cálculo es didáctico y no sustituye una implementación normativa completa.
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <script>
+      (() => {
+        const root=document.getElementById('s7noise');
+        const canvas=root.querySelector('#map');
+        const ctx=canvas.getContext('2d');
+        const W=canvas.width,H=canvas.height;
+        const world={xmin:-90,xmax:90,ymin:-70,ymax:70};
+        const state={
+          selected:'F',
+          source:{x:-35,y:0,lw:98,h:2},
+          receiver:{x:45,y:10,h:1.5},
+          g:.5,barrier:true,barrierH:4
+        };
+        const bands=[
+          {max:35,label:'<35',c:'#C0FFC0'},
+          {max:40,label:'35–40',c:'#00CC00'},
+          {max:45,label:'40–45',c:'#005000'},
+          {max:50,label:'45–50',c:'#FFFF00'},
+          {max:55,label:'50–55',c:'#FFC74A'},
+          {max:60,label:'55–60',c:'#FF6600'},
+          {max:65,label:'60–65',c:'#FF3333'},
+          {max:70,label:'65–70',c:'#990033'},
+          {max:75,label:'70–75',c:'#AD9AD6'},
+          {max:80,label:'75–80',c:'#0000FF'},
+          {max:85,label:'80–85',c:'#000066'},
+          {max:999,label:'>85',c:'#000000'}
+        ];
+        const legend=root.querySelector('#legend');
+        legend.innerHTML=bands.map(b=>'<div class="leg"><div class="sw" style="background:'+b.c+'"></div>'+b.label+'</div>').join('');
+
+        const toPx=(x,y)=>[
+          (x-world.xmin)/(world.xmax-world.xmin)*W,
+          H-(y-world.ymin)/(world.ymax-world.ymin)*H
+        ];
+        const toWorld=(px,py)=>[
+          world.xmin+px/W*(world.xmax-world.xmin),
+          world.ymin+(H-py)/H*(world.ymax-world.ymin)
+        ];
+        const colorFor=L=>bands.find(b=>L<b.max).c;
+
+        function levelAt(x,y,bar=true){
+          const dx=x-state.source.x,dy=y-state.source.y;
+          const dh=state.source.h-state.receiver.h;
+          const d=Math.max(1,Math.sqrt(dx*dx+dy*dy+dh*dh));
+          let L=state.source.lw-20*Math.log10(d)-11;
+          L-=0.005*d;
+          L-=state.g*Math.min(4.5,0.018*d);
+
+          if(bar && state.barrier){
+            const bx=0;
+            const den=x-state.source.x;
+            if(Math.abs(den)>1e-6){
+              const t=(bx-state.source.x)/den;
+              if(t>0 && t<1){
+                const yCross=state.source.y+t*(y-state.source.y);
+                if(Math.abs(yCross)<=48){
+                  const losH=state.source.h+t*(state.receiver.h-state.source.h);
+                  const excess=Math.max(0,state.barrierH-losH);
+                  if(excess>0) L-=Math.min(20,3+7*excess);
+                }
+              }
+            }
+          }
+          return L;
+        }
+
+        function drawGrid(){
+          ctx.save();
+          ctx.strokeStyle='rgba(255,255,255,.28)';
+          ctx.lineWidth=1;
+          for(let x=-80;x<=80;x+=20){
+            const p=toPx(x,0)[0]; ctx.beginPath();ctx.moveTo(p,0);ctx.lineTo(p,H);ctx.stroke();
+          }
+          for(let y=-60;y<=60;y+=20){
+            const p=toPx(0,y)[1]; ctx.beginPath();ctx.moveTo(0,p);ctx.lineTo(W,p);ctx.stroke();
+          }
+          ctx.restore();
+        }
+
+        function draw(){
+          const step=5;
+          for(let py=0;py<H;py+=step){
+            for(let px=0;px<W;px+=step){
+              const [x,y]=toWorld(px+step/2,py+step/2);
+              ctx.fillStyle=colorFor(levelAt(x,y,true));
+              ctx.fillRect(px,py,step+1,step+1);
+            }
+          }
+          drawGrid();
+
+          if(state.barrier){
+            const [bx1,by1]=toPx(0,-48), [bx2,by2]=toPx(0,48);
+            ctx.strokeStyle='#233646';ctx.lineWidth=7;ctx.beginPath();ctx.moveTo(bx1,by1);ctx.lineTo(bx2,by2);ctx.stroke();
+            ctx.fillStyle='#233646';ctx.font='700 12px system-ui';ctx.fillText('Barrera '+state.barrierH+' m',bx1+8,by2+16);
+          }
+
+          const [sx,sy]=toPx(state.source.x,state.source.y);
+          ctx.beginPath();ctx.arc(sx,sy,11,0,Math.PI*2);
+          ctx.fillStyle='#ffffff';ctx.fill();ctx.lineWidth=4;ctx.strokeStyle=state.selected==='F'?'#0b7aaa':'#213b4d';ctx.stroke();
+          ctx.fillStyle='#17324a';ctx.font='900 13px system-ui';ctx.fillText('F1',sx+15,sy-12);
+
+          const [rx,ry]=toPx(state.receiver.x,state.receiver.y);
+          ctx.save();ctx.translate(rx,ry);ctx.rotate(Math.PI/4);
+          ctx.fillStyle='#fff';ctx.strokeStyle=state.selected==='R'?'#0b7aaa':'#213b4d';ctx.lineWidth=4;
+          ctx.fillRect(-8,-8,16,16);ctx.strokeRect(-8,-8,16,16);ctx.restore();
+          const rL=levelAt(state.receiver.x,state.receiver.y,true);
+          ctx.fillStyle='#17324a';ctx.font='900 13px system-ui';ctx.fillText('R1 · '+rL.toFixed(1)+' dB',rx+15,ry-12);
+          root.querySelector('#rLevel').textContent=rL.toFixed(1)+' dB';
+        }
+
+        let raf=0;
+        function render(){cancelAnimationFrame(raf);raf=requestAnimationFrame(draw);}
+
+        function selectObject(which){
+          state.selected=which;
+          root.querySelector('#selF').classList.toggle('active',which==='F');
+          root.querySelector('#selR').classList.toggle('active',which==='R');
+          root.querySelector('#sourcePanel').hidden=which!=='F';
+          root.querySelector('#receiverPanel').hidden=which!=='R';
+          render();
+        }
+
+        root.querySelector('#selF').addEventListener('click',()=>selectObject('F'));
+        root.querySelector('#selR').addEventListener('click',()=>selectObject('R'));
+
+        const bindNum=(id,get,set,min,max)=>{
+          const el=root.querySelector('#'+id);
+          const update=()=>{let v=parseFloat(el.value);if(!Number.isFinite(v))v=get();v=Math.max(min,Math.min(max,v));el.value=v;set(v);render();};
+          el.addEventListener('input',update);el.addEventListener('change',update);
+        };
+        bindNum('lw',()=>state.source.lw,v=>state.source.lw=v,70,120);
+        bindNum('sh',()=>state.source.h,v=>state.source.h=v,.5,20);
+        bindNum('rh',()=>state.receiver.h,v=>state.receiver.h=v,1,15);
+
+        root.querySelector('#g').addEventListener('input',e=>{state.g=parseFloat(e.target.value);root.querySelector('#gVal').textContent=state.g.toFixed(1);render();});
+        root.querySelector('#barrier').addEventListener('change',e=>{state.barrier=e.target.checked;render();});
+        root.querySelector('#barH').addEventListener('change',e=>{state.barrierH=parseFloat(e.target.value);render();});
+
+        function pos(ev){
+          const r=canvas.getBoundingClientRect();
+          return [(ev.clientX-r.left)*W/r.width,(ev.clientY-r.top)*H/r.height];
+        }
+        function hit(px,py,obj){
+          const [ox,oy]=toPx(obj.x,obj.y);
+          return Math.hypot(px-ox,py-oy)<22;
+        }
+        let dragging=null;
+        canvas.addEventListener('pointerdown',ev=>{
+          const [px,py]=pos(ev);
+          if(hit(px,py,state.source)){dragging='F';selectObject('F');}
+          else if(hit(px,py,state.receiver)){dragging='R';selectObject('R');}
+          else {dragging=state.selected;}
+          canvas.setPointerCapture(ev.pointerId);
+          const [x,y]=toWorld(px,py);
+          if(dragging==='F'){state.source.x=Math.max(world.xmin,Math.min(world.xmax,x));state.source.y=Math.max(world.ymin,Math.min(world.ymax,y));}
+          if(dragging==='R'){state.receiver.x=Math.max(world.xmin,Math.min(world.xmax,x));state.receiver.y=Math.max(world.ymin,Math.min(world.ymax,y));}
+          render();
+        });
+        canvas.addEventListener('pointermove',ev=>{
+          if(!dragging)return;
+          const [px,py]=pos(ev),[x,y]=toWorld(px,py);
+          if(dragging==='F'){state.source.x=Math.max(world.xmin,Math.min(world.xmax,x));state.source.y=Math.max(world.ymin,Math.min(world.ymax,y));}
+          else{state.receiver.x=Math.max(world.xmin,Math.min(world.xmax,x));state.receiver.y=Math.max(world.ymin,Math.min(world.ymax,y));}
+          render();
+        });
+        const stop=()=>{dragging=null;};
+        canvas.addEventListener('pointerup',stop);
+        canvas.addEventListener('pointercancel',stop);
+
+        draw();
+      })();
+      </script>
+    </div>
+    '''
+    components.html(_s7_interactive_html,height=820,scrolling=False)
+
+    st.caption(
+        "La paleta utiliza las bandas cromáticas clásicas de ISO 1996-2:1987: verde para niveles bajos, "
+        "amarillo/ocre/naranjo en niveles intermedios, rojo/carmín en niveles altos y azul en los superiores. "
+        "La edición posterior de ISO 1996-2 ya no mantuvo esta definición cromática."
     )
-
-    p1,p2,p3=st.columns(3)
-    with p1:
-        st.markdown("##### Fuente F1")
-        source_level=st.number_input(
-            "Potencia sonora Lw [dB]",
-            min_value=70.0,max_value=120.0,value=98.0,step=1.0,
-            key="c3l2_s7_lab_lw",
-        )
-        sx=st.number_input("X fuente [m]",min_value=-80.0,max_value=80.0,value=-35.0,step=5.0,key="c3l2_s7_lab_sx")
-        sy=st.number_input("Y fuente [m]",min_value=-80.0,max_value=80.0,value=0.0,step=5.0,key="c3l2_s7_lab_sy")
-        source_h=st.number_input("Altura fuente [m]",min_value=0.5,max_value=20.0,value=2.0,step=0.5,key="c3l2_s7_lab_sh")
-
-    with p2:
-        st.markdown("##### Entorno")
-        ground_g=st.number_input(
-            "Factor de suelo G",
-            min_value=0.0,max_value=1.0,value=0.5,step=0.1,
-            key="c3l2_s7_lab_g",
-            help="0 = suelo duro/reflejante · 1 = suelo poroso/absorbente.",
-        )
-        barrier_on=st.toggle("Activar barrera",value=True,key="c3l2_s7_lab_barrier")
-        barrier_x=st.number_input("X barrera [m]",min_value=-70.0,max_value=70.0,value=0.0,step=5.0,key="c3l2_s7_lab_bx",disabled=not barrier_on)
-        barrier_h=st.number_input("Altura barrera [m]",min_value=1.0,max_value=12.0,value=4.0,step=0.5,key="c3l2_s7_lab_bh",disabled=not barrier_on)
-        barrier_half=st.number_input("Semilargo barrera [m]",min_value=10.0,max_value=90.0,value=45.0,step=5.0,key="c3l2_s7_lab_bl",disabled=not barrier_on)
-
-    with p3:
-        st.markdown("##### Receptor R1")
-        rx=st.number_input("X receptor [m]",min_value=-80.0,max_value=80.0,value=45.0,step=5.0,key="c3l2_s7_lab_rx")
-        ry=st.number_input("Y receptor [m]",min_value=-80.0,max_value=80.0,value=10.0,step=5.0,key="c3l2_s7_lab_ry")
-        receiver_h=st.number_input("Altura receptor [m]",min_value=1.0,max_value=15.0,value=1.5,step=0.5,key="c3l2_s7_lab_rh")
-        frequency=st.selectbox(
-            "Frecuencia de referencia",
-            [500,1000,2000],
-            index=1,
-            format_func=lambda x:f"{x} Hz",
-            key="c3l2_s7_lab_freq",
-        )
-
-    xx=np.linspace(-90,90,121)
-    yy=np.linspace(-90,90,121)
-    X,Y=np.meshgrid(xx,yy)
-
-    def _s7_demo_field(with_barrier=True):
-        horizontal=np.sqrt((X-float(sx))**2+(Y-float(sy))**2)
-        distance=np.sqrt(horizontal**2+float(source_h-receiver_h)**2)
-        distance=np.maximum(distance,1.0)
-
-        # Núcleo deliberadamente didáctico: divergencia + término suave de suelo/atmósfera.
-        L=float(source_level)-20*np.log10(distance)-11.0
-        if method=="ISO 9613":
-            L-=0.005*distance
-            L-=float(ground_g)*np.minimum(4.5,0.018*distance)
-        else:
-            L-=0.004*distance
-            L-=float(ground_g)*np.minimum(5.5,0.021*distance)
-
-        if with_barrier and barrier_on:
-            denom=(X-float(sx))
-            t=np.where(np.abs(denom)>1e-9,(float(barrier_x)-float(sx))/denom,np.nan)
-            y_cross=float(sy)+t*(Y-float(sy))
-            crosses=(t>0)&(t<1)&(np.abs(y_cross)<=float(barrier_half))
-
-            horizontal_total=np.sqrt((X-float(sx))**2+(Y-float(sy))**2)
-            frac=np.clip(np.abs(float(barrier_x)-float(sx))/np.maximum(horizontal_total,1e-9),0,1)
-            los_h=float(source_h)+frac*(float(receiver_h)-float(source_h))
-            excess=np.maximum(float(barrier_h)-los_h,0.0)
-            freq_factor=np.sqrt(float(frequency)/1000.0)
-            cap=20.0 if method=="ISO 9613" else 25.0
-            screen=np.minimum(cap,3.0+7.0*excess*freq_factor)
-            L-=np.where(crosses & (excess>0),screen,0.0)
-        return L
-
-    L=_s7_demo_field(with_barrier=True)
-    L_no_barrier=_s7_demo_field(with_barrier=False)
-
-    def _s7_level_at(field,x0,y0):
-        ix=int(np.argmin(np.abs(xx-float(x0))))
-        iy=int(np.argmin(np.abs(yy-float(y0))))
-        return float(field[iy,ix])
-
-    r_level=_s7_level_at(L,rx,ry)
-    r_free=_s7_level_at(L_no_barrier,rx,ry)
-    barrier_gain=max(0.0,r_free-r_level)
-
-    map_fig=go.Figure()
-    map_fig.add_trace(go.Contour(
-        x=xx,y=yy,z=L,
-        contours=dict(start=30,end=90,size=5,showlabels=True),
-        colorbar=dict(title="Nivel<br>calculado [dB]"),
-        hovertemplate="X=%{x:.0f} m<br>Y=%{y:.0f} m<br>Nivel=%{z:.1f} dB<extra></extra>",
-        name="Mapa calculado",
-    ))
-    map_fig.add_trace(go.Scatter(
-        x=[sx],y=[sy],mode="markers+text",
-        text=["F1"],textposition="top center",
-        marker=dict(size=15,symbol="star"),
-        name="Fuente F1",
-    ))
-    map_fig.add_trace(go.Scatter(
-        x=[rx],y=[ry],mode="markers+text",
-        text=[f"R1 · {r_level:.1f} dB"],textposition="top center",
-        marker=dict(size=13,symbol="diamond"),
-        name="Receptor R1",
-    ))
-    if barrier_on:
-        map_fig.add_trace(go.Scatter(
-            x=[barrier_x,barrier_x],
-            y=[-barrier_half,barrier_half],
-            mode="lines",
-            line=dict(width=8),
-            name=f"Barrera · {barrier_h:.1f} m",
-        ))
-    map_fig.update_layout(
-        height=590,
-        xaxis=dict(title="X [m]",range=[-90,90],scaleanchor="y",scaleratio=1),
-        yaxis=dict(title="Y [m]",range=[-90,90]),
-        margin=dict(l=20,r=20,t=25,b=20),
-        legend=dict(orientation="h",y=1.04),
-    )
-    st.plotly_chart(map_fig,use_container_width=True,key="c3l2_s7_dbmap_like")
-
-    k1,k2,k3,k4=st.columns(4)
-    k1.metric("Nivel en R1",f"{r_level:.1f} dB")
-    k2.metric("Sin barrera",f"{r_free:.1f} dB")
-    k3.metric("Efecto pantalla",f"{barrier_gain:.1f} dB")
-    k4.metric("Suelo",f"G = {ground_g:.1f}")
-
-    st.markdown("""
-    <div class="s7-mini-grid">
-      <div class="s7-mini"><b>Mueve F1</b><br>Cambia X/Y de la fuente y observa cómo se desplazan las isolíneas.</div>
-      <div class="s7-mini"><b>Mueve R1</b><br>El nivel mostrado corresponde al receptor calculado en esa posición.</div>
-      <div class="s7-mini"><b>Activa la barrera</b><br>La zona detrás de la pantalla muestra el concepto de sombra acústica.</div>
-      <div class="s7-mini"><b>Cambia G</b><br>Compara suelo duro y poroso y observa cómo cambia la atenuación con la distancia.</div>
-    </div>
-    """,unsafe_allow_html=True)
 
     st.markdown(
-        '<div class="c3l2-warn"><b>Modelo didáctico:</b> esta simulación reproduce la lógica de trabajo de un '
-        'software de mapas de ruido —objetos, parámetros y recálculo automático—, pero utiliza ecuaciones '
-        'simplificadas para aprendizaje. No implementa íntegramente ISO 9613 ni CNOSSOS-EU y no debe utilizarse '
-        'como predicción normativa.</div>',
+        '<div class="c3l2-warn"><b>Modelo didáctico:</b> el mapa se recalcula en tiempo real para enseñar '
+        'la relación fuente–propagación–receptor. El núcleo de cálculo está simplificado y no constituye una '
+        'implementación completa de ISO 9613 ni un software de predicción normativa.</div>',
         unsafe_allow_html=True,
     )
 
@@ -31670,8 +31781,7 @@ def _c3l2_stage7(lab,saved):
         key="c3l2_s7_save",
     ):
         _c3l2_complete(saved,7,{
-            "kind":kind,
-            "emission":lw if kind=="Fuente puntual" else ref,
+            "interactive_model":"completed",
             "calibration_mae":round(mae_cal,3),
             "calibration_bias":round(bias_cal,3),
         })
