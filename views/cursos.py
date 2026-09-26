@@ -30178,11 +30178,25 @@ def _c3l2_stage5(lab,saved):
     noise_render_uri = "data:image/webp;base64,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"
 
     def _noise_crop(x, y, w, h, height=390):
+        # Render profesional raster ya embebido en la etapa.
+        # El viewBox recorta la lámina maestra sin reconstruirla con SVG didáctico.
         components.html(
             f"""
-            <div style="width:100%;border:1px solid #d8e5ed;border-radius:16px;overflow:hidden;background:#fff;">
-              <svg viewBox="{{x}} {{y}} {{w}} {{h}}" width="100%" xmlns="http://www.w3.org/2000/svg">
-                <image href="{{noise_render_uri}}" x="0" y="0" width="400" height="267" preserveAspectRatio="none"/>
+            <div style="
+                width:100%;
+                border:1px solid #d8e5ed;
+                border-radius:18px;
+                overflow:hidden;
+                background:#fff;
+                box-shadow:0 10px 28px rgba(15,23,42,.08);
+            ">
+              <svg viewBox="{x} {y} {w} {h}"
+                   width="100%"
+                   xmlns="http://www.w3.org/2000/svg"
+                   style="display:block;width:100%;height:auto;background:#fff;">
+                <image href="{noise_render_uri}"
+                       x="0" y="0" width="400" height="267"
+                       preserveAspectRatio="none"/>
               </svg>
             </div>
             """,
@@ -30195,13 +30209,54 @@ def _c3l2_stage5(lab,saved):
         "Así podemos pasar de conocer niveles aislados a comprender cómo se distribuye el ruido sobre un territorio."
     )
 
-    c1,c2,c3,c4=st.columns(4)
-    c1.markdown("**Diagnóstico**  \\nLocalizar zonas con mayores niveles.")
-    c2.markdown("**Exposición**  \\nIdentificar receptores más afectados.")
-    c3.markdown("**Planificación**  \\nComparar escenarios actuales y futuros.")
-    c4.markdown("**Mitigación**  \\nEvaluar dónde y cuánto mejora una medida.")
+    st.markdown("""
+    <style>
+    .nm-purpose-grid{
+        display:grid;
+        grid-template-columns:repeat(4,minmax(0,1fr));
+        gap:.8rem;
+        margin:.8rem 0 1rem;
+    }
+    .nm-purpose-card{
+        border:1px solid #d7e5ef;
+        border-radius:16px;
+        background:linear-gradient(180deg,#ffffff 0%,#f8fbfd 100%);
+        padding:1rem 1.05rem;
+        min-height:118px;
+        box-shadow:0 6px 18px rgba(15,23,42,.05);
+    }
+    .nm-purpose-k{
+        font-size:.72rem;
+        font-weight:900;
+        letter-spacing:.06em;
+        color:#1184b4;
+        margin-bottom:.35rem;
+        text-transform:uppercase;
+    }
+    .nm-purpose-t{
+        font-size:1.02rem;
+        font-weight:850;
+        color:#12324b;
+        margin-bottom:.28rem;
+    }
+    .nm-purpose-d{
+        color:#526b7e;
+        font-size:.88rem;
+        line-height:1.45;
+    }
+    @media (max-width:850px){
+        .nm-purpose-grid{grid-template-columns:repeat(2,minmax(0,1fr));}
+    }
+    </style>
+    <div class="nm-purpose-grid">
+      <div class="nm-purpose-card"><div class="nm-purpose-k">01</div><div class="nm-purpose-t">Diagnóstico</div><div class="nm-purpose-d">Localiza zonas con mayores niveles y permite reconocer sectores acústicamente críticos.</div></div>
+      <div class="nm-purpose-card"><div class="nm-purpose-k">02</div><div class="nm-purpose-t">Exposición</div><div class="nm-purpose-d">Relaciona la distribución espacial del ruido con receptores y población potencialmente expuesta.</div></div>
+      <div class="nm-purpose-card"><div class="nm-purpose-k">03</div><div class="nm-purpose-t">Planificación</div><div class="nm-purpose-d">Permite comparar escenarios actuales y futuros, por ejemplo nuevas vías, proyectos o cambios operacionales.</div></div>
+      <div class="nm-purpose-card"><div class="nm-purpose-k">04</div><div class="nm-purpose-t">Mitigación</div><div class="nm-purpose-d">Ayuda a evaluar dónde actúa una medida de control y cuánto cambia espacialmente el escenario acústico.</div></div>
+    </div>
+    """, unsafe_allow_html=True)
 
-    _noise_crop(125, 0, 275, 80, 360)
+    _noise_crop(125, 0, 275, 80, 285)
 
     st.markdown("""
     <div class="c3l2-note">
@@ -30229,7 +30284,7 @@ def _c3l2_stage5(lab,saved):
             "Los datos originales son niveles medidos en puntos georreferenciados. "
             "Los valores entre puntos se estiman mediante interpolación u otra técnica espacial."
         )
-        _noise_crop(0, 80, 200, 96, 350)
+        _noise_crop(0, 80, 200, 96, 245)
         st.caption("Los puntos son mediciones directas; la superficie coloreada entre ellos es una estimación espacial.")
     with right:
         st.markdown("#### B. A partir de predicción / modelación")
@@ -30237,7 +30292,7 @@ def _c3l2_stage5(lab,saved):
             "Se definen fuentes, emisión, geometría y condiciones de propagación. "
             "El nivel se calcula en una grilla de receptores distribuida en el área de estudio."
         )
-        _noise_crop(200, 80, 200, 96, 350)
+        _noise_crop(200, 80, 200, 96, 245)
         st.caption("Cada celda o receptor proviene del cálculo acústico del escenario.")
 
     st.markdown("### 4. Diferencias técnicas entre medición y predicción")
@@ -30255,37 +30310,48 @@ def _c3l2_stage5(lab,saved):
         "La geometría de los contornos cambia según el tipo de fuente. "
         "Los siguientes son renders didácticos con apariencia de mapas profesionales."
     )
-    t1,t2,t3,t4=st.tabs(["Tránsito vial","Industria / obra","Aeronaves","Urbano general"])
-    with t1:
-        _noise_crop(0,178,100,89,430)
-        st.caption("Mapa de tránsito vial: los contornos siguen la red vial y decrecen lateralmente.")
-    with t2:
-        _noise_crop(100,178,100,89,430)
-        st.caption("Mapa industrial / obra: combina fuentes puntuales, lineales y de área.")
-    with t3:
-        _noise_crop(200,178,100,89,430)
-        st.caption("Mapa aeronáutico: contornos asociados a pista, operaciones y trayectorias.")
-    with t4:
-        _noise_crop(300,178,100,89,430)
-        st.caption("Mapa urbano general: integra múltiples fuentes para representar el ambiente sonoro global.")
+    st.markdown(
+        "<div class='c3l2-note'><b>Observa la geometría:</b> la forma de las isófonas entrega pistas sobre la fuente dominante, "
+        "pero siempre debe interpretarse junto con el descriptor, el escenario y los antecedentes del modelo o campaña.</div>",
+        unsafe_allow_html=True,
+    )
+    row1a,row1b=st.columns(2)
+    with row1a:
+        st.markdown("#### 🚗 Tránsito vial")
+        _noise_crop(0,178,100,89,365)
+        st.caption("Los contornos tienden a seguir los corredores viales y disminuyen lateralmente desde las calzadas.")
+    with row1b:
+        st.markdown("#### 🏭 Industria / obra")
+        _noise_crop(100,178,100,89,365)
+        st.caption("Puede combinar fuentes puntuales, lineales y de área, generando campos superpuestos y sectores críticos localizados.")
+
+    row2a,row2b=st.columns(2)
+    with row2a:
+        st.markdown("#### ✈️ Aeronaves")
+        _noise_crop(200,178,100,89,365)
+        st.caption("Las isófonas se relacionan con pista, trayectorias, procedimientos operacionales y distribución temporal de eventos.")
+    with row2b:
+        st.markdown("#### 🏙️ Urbano general")
+        _noise_crop(300,178,100,89,365)
+        st.caption("Integra múltiples fuentes para representar el ambiente sonoro global de un sector urbano.")
 
     st.markdown("### 6. Tipos de mapas según cómo se obtienen o utilizan")
     t61,t62,t63=st.tabs(["Mediciones / interpolación","Predicción","Resumen de tipologías"])
     with t61:
-        _noise_crop(0,80,200,96,430)
+        _noise_crop(0,80,200,96,260)
         st.markdown(
             "**Uso principal:** describir espacialmente el ambiente observado durante una campaña. "
             "Solo los puntos instrumentados corresponden a mediciones directas."
         )
     with t62:
-        _noise_crop(200,80,200,96,430)
+        _noise_crop(200,80,200,96,260)
         st.markdown(
             "**Uso principal:** estudiar escenarios actuales o futuros y comparar alternativas, "
             "modificaciones de fuentes o medidas de control."
         )
     with t63:
         components.html(
-            f'<img src="{{noise_render_uri}}" style="width:100%;border-radius:16px;border:1px solid #d8e5ed;">',
+            f'<img src="{noise_render_uri}" style="display:block;width:100%;border-radius:18px;border:1px solid #d8e5ed;box-shadow:0 10px 28px rgba(15,23,42,.08);">',
             height=610,
         )
         st.caption("Resumen visual: concepto general, mediciones, predicción y distintas fuentes de ruido.")
