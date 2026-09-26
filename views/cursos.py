@@ -31111,6 +31111,48 @@ def _c3l2_stage7(lab,saved):
     )
 
     st.markdown("""
+    <style>
+    .s7-section{margin:1.25rem 0 .55rem;padding-top:.2rem}
+    .s7-table-wrap{border:1px solid #d8e5ee;border-radius:16px;overflow:hidden;background:#fff;box-shadow:0 4px 14px rgba(15,23,42,.045);margin:.7rem 0 1rem}
+    .s7-table{width:100%;border-collapse:collapse;font-size:.91rem;line-height:1.38}
+    .s7-table th{background:linear-gradient(180deg,#eef7fc,#e4f1f8);color:#17324a;text-align:left;padding:12px 13px;font-size:.78rem;letter-spacing:.025em;text-transform:uppercase;border-bottom:1px solid #cadde8;vertical-align:bottom}
+    .s7-table td{padding:12px 13px;border-bottom:1px solid #e8eef3;vertical-align:top;color:#263746}
+    .s7-table tr:last-child td{border-bottom:none}
+    .s7-table tbody tr:nth-child(even){background:#f9fbfc}
+    .s7-table tbody tr:hover{background:#f1f8fc}
+    .s7-pill{display:inline-block;border-radius:999px;padding:4px 8px;background:#eaf6fc;border:1px solid #c9e5f3;color:#176a91;font-size:.78rem;font-weight:800;white-space:nowrap}
+    .s7-eqbox{border:1px solid #cfe0ec;border-radius:16px;background:linear-gradient(135deg,#fbfdff,#f2f8fc);padding:14px 16px 6px;margin:.7rem 0 1rem}
+    .s7-eqtitle{font-size:.76rem;font-weight:900;letter-spacing:.055em;text-transform:uppercase;color:#0879b9;margin-bottom:.15rem}
+    .s7-eqdesc{font-size:.9rem;color:#536779;margin-bottom:.35rem}
+    .s7-metric-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;margin:.8rem 0 1rem}
+    .s7-metric{border:1px solid #d8e5ee;border-radius:15px;background:#fff;padding:14px 16px;box-shadow:0 3px 10px rgba(15,23,42,.035)}
+    .s7-metric-label{font-size:.75rem;font-weight:800;text-transform:uppercase;letter-spacing:.045em;color:#6a7d8d}
+    .s7-metric-value{font-size:1.55rem;font-weight:900;color:#123b59;margin-top:.15rem}
+    .s7-mini-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;margin:.65rem 0 1rem}
+    .s7-mini{border:1px solid #dbe7ef;border-radius:14px;padding:12px 14px;background:#fbfdff}
+    .s7-mini b{color:#153a55}
+    @media(max-width:900px){.s7-metric-grid,.s7-mini-grid{grid-template-columns:1fr}.s7-table{font-size:.84rem}.s7-table th,.s7-table td{padding:10px}}
+    </style>
+    """,unsafe_allow_html=True)
+
+    def _s7_table(rows, columns, pill_col=None):
+        head="".join(f"<th>{label}</th>" for key,label in columns)
+        body=[]
+        for row in rows:
+            cells=[]
+            for key,label in columns:
+                val=str(row.get(key,""))
+                if pill_col==key:
+                    val=f'<span class="s7-pill">{val}</span>'
+                cells.append(f"<td>{val}</td>")
+            body.append("<tr>"+"".join(cells)+"</tr>")
+        st.markdown(
+            '<div class="s7-table-wrap"><table class="s7-table"><thead><tr>'
+            +head+'</tr></thead><tbody>'+"".join(body)+'</tbody></table></div>',
+            unsafe_allow_html=True,
+        )
+
+    st.markdown("""
     <div class="c3l2-intro">
       <div class="c3l2-k">FUENTES → EMISIÓN → PROPAGACIÓN → RECEPTORES → MAPA</div>
       <div class="c3l2-title">Un mapa por proyección no interpola puntos medidos: calcula el nivel esperado en cada receptor.</div>
@@ -31154,20 +31196,19 @@ def _c3l2_stage7(lab,saved):
 
     st.markdown("### 2. ¿Qué necesita un modelo de predicción?")
     st.markdown("""
-    Un software no puede “inventar” el mapa. El usuario debe construir un escenario acústico coherente. Como
-    mínimo se deben revisar y documentar:
-
-    - **Fuentes:** posición, altura, geometría, directividad, horario y condición operacional.
-    - **Emisión:** nivel de potencia sonora o dato de emisión compatible con el método utilizado.
-    - **Espectro:** cuando corresponda, niveles por bandas de octava o tercio de octava.
-    - **Topografía:** curvas de nivel, taludes, excavaciones y desniveles relevantes.
-    - **Edificaciones y obstáculos:** alturas, dimensiones, reflexión y apantallamiento.
-    - **Terreno:** absorción o factor de suelo según el método.
-    - **Meteorología:** temperatura, humedad y, cuando corresponda, condiciones de propagación favorables.
-    - **Receptores:** coordenadas y alturas de evaluación.
-    - **Reflexiones y difracción:** configuración coherente con la norma de cálculo.
-    - **Malla:** resolución espacial y altura de cálculo del mapa.
+    Un software no puede “inventar” el mapa. El usuario debe construir un escenario acústico coherente.
+    Los bloques siguientes resumen las entradas que normalmente controlan la calidad de la predicción:
     """)
+    st.markdown("""
+    <div class="s7-mini-grid">
+      <div class="s7-mini"><b>Fuentes y emisión</b><br>Posición, altura, geometría, directividad, horario, condición operacional y potencia sonora.</div>
+      <div class="s7-mini"><b>Espectro</b><br>Niveles por bandas de octava o tercio de octava cuando el método o el análisis lo requieran.</div>
+      <div class="s7-mini"><b>Topografía y obstáculos</b><br>Curvas de nivel, taludes, edificaciones, pantallas y otras geometrías relevantes.</div>
+      <div class="s7-mini"><b>Terreno y meteorología</b><br>Absorción del suelo, temperatura, humedad y condiciones de propagación aplicables.</div>
+      <div class="s7-mini"><b>Receptores</b><br>Coordenadas, alturas y distribución de los puntos de evaluación.</div>
+      <div class="s7-mini"><b>Configuración de cálculo</b><br>Reflexiones, difracción, resolución de malla y altura del mapa.</div>
+    </div>
+    """,unsafe_allow_html=True)
 
     st.markdown(
         '<div class="c3l2-warn"><b>Principio clave:</b> un mapa visualmente detallado no es necesariamente '
@@ -31209,10 +31250,25 @@ def _c3l2_stage7(lab,saved):
             "Nota":"Debe verificarse el método exigido por la jurisdicción y las correcciones específicas aplicables.",
         },
     ]
-    st.dataframe(pd.DataFrame(model_rows),hide_index=True,use_container_width=True)
+    _s7_table(
+        model_rows,
+        [
+            ("Fuente / aplicación","Fuente / aplicación"),
+            ("Métodos de referencia","Métodos de referencia"),
+            ("Qué modelan","Qué representa el cálculo"),
+            ("Nota","Criterio de uso"),
+        ],
+        pill_col="Fuente / aplicación",
+    )
 
     st.markdown("### 4. La lógica física de una proyección")
+    st.markdown(
+        '<div class="s7-eqbox"><div class="s7-eqtitle">Ecuación conceptual de propagación</div>'
+        '<div class="s7-eqdesc">El nivel en el receptor parte de la emisión de la fuente y descuenta las atenuaciones del camino.</div>',
+        unsafe_allow_html=True,
+    )
     st.latex(r"L_p = L_w + D_c - (A_{div}+A_{atm}+A_{gr}+A_{bar}+A_{misc})")
+    st.markdown("</div>",unsafe_allow_html=True)
     st.markdown("""
     Esta forma resume conceptualmente el balance usado por modelos de propagación como ISO 9613:
 
@@ -31227,7 +31283,13 @@ def _c3l2_stage7(lab,saved):
     Cuando existen varias fuentes, sus aportes en un receptor se combinan mediante **suma energética**, no
     mediante suma aritmética de decibeles.
     """)
+    st.markdown(
+        '<div class="s7-eqbox"><div class="s7-eqtitle">Suma energética de fuentes</div>'
+        '<div class="s7-eqdesc">Los aportes simultáneos se combinan en energía; los decibeles no se suman aritméticamente.</div>',
+        unsafe_allow_html=True,
+    )
     st.latex(r"L_{tot}=10\log_{10}\left(\sum_i 10^{L_i/10}\right)")
+    st.markdown("</div>",unsafe_allow_html=True)
 
     st.markdown("### 5. Ejemplo didáctico: de una fuente a una grilla calculada")
     kind=st.segmented_control(
@@ -31302,7 +31364,15 @@ def _c3l2_stage7(lab,saved):
             "Ejemplos de métodos":"Modelo aeronáutico integrado FAA; utiliza bases de datos de performance, ruido y emisiones",
         },
     ]
-    st.dataframe(pd.DataFrame(software_rows),hide_index=True,use_container_width=True)
+    _s7_table(
+        software_rows,
+        [
+            ("Software","Software"),
+            ("Uso típico","Uso típico"),
+            ("Ejemplos de métodos","Métodos / capacidades"),
+        ],
+        pill_col="Software",
+    )
     st.markdown(
         '<div class="c3l2-note"><b>No existe “el mejor software” en abstracto:</b> importa que implemente '
         'el método requerido, que pueda representar la geometría y las fuentes del problema y que su implementación '
@@ -31351,15 +31421,46 @@ def _c3l2_stage7(lab,saved):
     ]
     cal_df=pd.DataFrame(cal_rows)
     cal_df["Diferencia modelo-medición [dB]"]=(cal_df["Modelado inicial [dB(A)]"]-cal_df["Medido [dB(A)]"]).round(1)
-    st.dataframe(cal_df,hide_index=True,use_container_width=True)
+    cal_display=cal_df.rename(columns={
+        "Medido [dB(A)]":"Medido",
+        "Modelado inicial [dB(A)]":"Modelado",
+        "Diferencia modelo-medición [dB]":"Δ modelo − medición",
+    }).to_dict("records")
+    _s7_table(
+        cal_display,
+        [
+            ("Punto","Punto"),
+            ("Medido","Medido [dB(A)]"),
+            ("Modelado","Modelado [dB(A)]"),
+            ("Δ modelo − medición","Diferencia [dB]"),
+        ],
+        pill_col="Punto",
+    )
     diffs=cal_df["Diferencia modelo-medición [dB]"].to_numpy(dtype=float)
     mae_cal=float(np.mean(np.abs(diffs)))
     bias_cal=float(np.mean(diffs))
     max_cal=float(np.max(np.abs(diffs)))
-    m1,m2,m3=st.columns(3)
-    m1.metric("Error absoluto medio",f"{mae_cal:.2f} dB")
-    m2.metric("Sesgo medio",f"{bias_cal:+.2f} dB")
-    m3.metric("Mayor diferencia",f"{max_cal:.2f} dB")
+    st.markdown(
+        f"""
+        <div class="s7-metric-grid">
+          <div class="s7-metric"><div class="s7-metric-label">Error absoluto medio</div><div class="s7-metric-value">{mae_cal:.2f} dB</div></div>
+          <div class="s7-metric"><div class="s7-metric-label">Sesgo medio</div><div class="s7-metric-value">{bias_cal:+.2f} dB</div></div>
+          <div class="s7-metric"><div class="s7-metric-label">Mayor diferencia</div><div class="s7-metric-value">{max_cal:.2f} dB</div></div>
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
+
+    st.markdown("""
+    <div class="c3l2-flow">
+      <span class="c3l2-node">Escenario real</span><span class="c3l2-arrow">→</span>
+      <span class="c3l2-node">Medición</span><span class="c3l2-arrow">→</span>
+      <span class="c3l2-node">Modelo equivalente</span><span class="c3l2-arrow">→</span>
+      <span class="c3l2-node">Comparación</span><span class="c3l2-arrow">→</span>
+      <span class="c3l2-node">Ajuste justificado</span><span class="c3l2-arrow">→</span>
+      <span class="c3l2-node">Validación</span>
+    </div>
+    """,unsafe_allow_html=True)
 
     st.markdown("""
     **Flujo recomendado de calibración / ajuste del modelo:**
