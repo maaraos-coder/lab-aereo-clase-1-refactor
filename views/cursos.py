@@ -31150,12 +31150,7 @@ def _c3l2_stage7(lab,saved):
     st.markdown("""
     Una proyección permite estudiar situaciones que todavía no existen: un proyecto futuro, una ampliación,
     una nueva carretera, una planta industrial, una barrera acústica o un cambio operacional. También permite
-    comparar escenarios <b>sin proyecto / con proyecto</b> o <b>sin medida / con medida</b>.
-
-    En Chile, la Guía del SEA para ruido y vibración indica que la predicción debe representar los escenarios
-    de mayor emisión, declarar las condiciones de borde del modelo y documentar los datos de entrada. Además,
-    la idoneidad del método debe justificarse según el tipo de fuente y el objetivo de la evaluación.
-    """)
+    comparar escenarios <b>sin proyecto / con proyecto</b> o <b>sin medida / con medida</b>.    """)
 
     st.markdown("### 2. ¿Qué necesita un modelo de predicción?")
     st.markdown("""
@@ -31187,7 +31182,7 @@ def _c3l2_stage7(lab,saved):
             "Fuente / aplicación":"Fuentes industriales, comerciales y faenas",
             "Métodos de referencia":"ISO 9613-1 + ISO 9613-2",
             "Qué modelan":"Absorción atmosférica y propagación exterior: divergencia, suelo, barreras, reflexiones y otros términos según el método.",
-            "Nota":"ISO 9613-2:2024 es la edición internacional vigente. En Chile debe revisarse siempre la exigencia concreta del instrumento aplicable.",
+            "Nota":"ISO 9613-2:2024 es la edición internacional vigente; siempre debe verificarse la versión exigida por el marco técnico aplicable.",
         },
         {
             "Fuente / aplicación":"Tránsito vehicular",
@@ -31215,17 +31210,6 @@ def _c3l2_stage7(lab,saved):
         },
     ]
     st.dataframe(pd.DataFrame(model_rows),hide_index=True,use_container_width=True)
-
-    st.markdown("""
-    **Chile · D.S. N°38/2011 MMA.** El artículo 19 permite utilizar predicciones mediante el procedimiento
-    técnico de ISO 9613 cuando el ruido de fondo impide obtener una medición válida bajo las condiciones
-    indicadas por la norma. El mismo artículo establece que, cuando existen ambos antecedentes,
-    **prevalecen los niveles medidos por sobre los proyectados**.
-
-    **SEIA.** La Guía del SEA de 2019 desarrolla el uso de modelos de predicción, exige identificar el tipo
-    de fuente, las condiciones de borde y los parámetros de entrada, y advierte que la calidad de los
-    resultados depende de la calidad de esos antecedentes y de la semejanza entre el modelo y el escenario real.
-    """)
 
     st.markdown("### 4. La lógica física de una proyección")
     st.latex(r"L_p = L_w + D_c - (A_{div}+A_{atm}+A_{gr}+A_{bar}+A_{misc})")
@@ -31399,16 +31383,14 @@ def _c3l2_stage7(lab,saved):
     )
 
     st.markdown("""
-    La Guía del SEA recuerda que la precisión del método ISO 9613-2 para determinadas configuraciones de ruido
-    de banda ancha puede alcanzar aproximadamente **±3 dB(A)**. Ese valor describe el orden de precisión del
-    método bajo sus condiciones de aplicación; **no debe transformarse en una regla automática de calibración**
-    ni en permiso para corregir arbitrariamente el modelo.
+    La precisión de un método de predicción depende de su campo de aplicación, de la geometría y de la calidad
+    de los datos de entrada. Cualquier tolerancia o incertidumbre declarada por el método debe interpretarse
+    dentro de esas condiciones y **no debe transformarse en una regla automática de calibración** ni en permiso
+    para corregir arbitrariamente el modelo.
     """)
 
     st.markdown("### Referencias técnicas utilizadas en esta etapa")
     st.markdown("""
-    - **D.S. N°38/2011 del Ministerio del Medio Ambiente**, especialmente artículo 19.
-    - **SEA (2019), Guía para la predicción y evaluación de impactos por ruido y vibración en el SEIA.**
     - **ISO 9613-2:2024**, propagación del sonido en exteriores.
     - **ISO 1996-2:2017**, determinación de niveles de presión sonora ambiental por medición y cálculo.
     - **ISO 17534-1:2015** e informes técnicos asociados para aseguramiento de calidad del software.
@@ -31467,10 +31449,9 @@ def _c3l2_stage7(lab,saved):
         la norma de cálculo no es el software; seleccionar el método según el tipo de fuente y comprender que
         la calidad del mapa depende de las entradas, la geometría y el campo de aplicación.
 
-        **Normativa y métodos:** en Chile, D.S. 38/2011 contempla predicción mediante ISO 9613 en el contexto
-        señalado por su artículo 19. Para estudios ambientales deben revisarse además los criterios del SEA y
-        el método adecuado a cada fuente. ISO 9613-2:2024 es la edición internacional vigente, pero la versión
-        exigible debe verificarse según el instrumento y procedimiento aplicable.
+        **Normativa y métodos:** ISO 9613-2:2024 es la edición internacional vigente para propagación exterior
+        en su campo de aplicación. La selección del método y de su versión debe justificarse según el tipo de
+        fuente, el objetivo del estudio y el marco técnico aplicable.
 
         **Software:** SoundPLAN, CadnaA, Predictor-LimA, IMMI y NoiseModelling son herramientas de modelación
         ambiental; AEDT es específico para aviación. El software implementa métodos: no reemplaza la norma.
