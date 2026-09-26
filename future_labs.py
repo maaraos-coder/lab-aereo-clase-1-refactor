@@ -237,8 +237,8 @@ COURSE_LABS = [
                      "Responde las diez preguntas y realiza un único envío definitivo de 40 puntos."),
                     ("Evaluación oficial · ruido de tráfico vehicular",
                      "Realizar una campaña real en una intersección y construir un mapa vial a partir de mediciones.",
-                     "La evaluación integra 8 puntos por vía, separación de 25–30 pasos, Leq/Lmax, estabilización de 2 dB, evidencias, mapa en intervalos de 3 o 5 dB, análisis y conclusión.",
-                     "Registra los 16 puntos directamente en la plataforma, genera el mapa vial y entrega la evaluación integradora de 60 puntos."),
+                     "La evaluación integra 9 puntos por vía, separación de 25–30 pasos, Leq/Lmax, estabilización de 2 dB, evidencias, mapa en intervalos de 3 o 5 dB, análisis y conclusión.",
+                     "Registra los 18 puntos directamente en la plataforma, genera el mapa vial y entrega la evaluación integradora de 60 puntos."),
                 ],
             }
         ],
