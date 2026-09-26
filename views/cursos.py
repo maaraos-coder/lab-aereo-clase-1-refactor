@@ -31307,40 +31307,174 @@ def _c3l2_stage7(lab,saved):
     st.latex(r"L_{tot}=10\log_{10}\left(\sum_i 10^{L_i/10}\right)")
     st.markdown("</div>",unsafe_allow_html=True)
 
-    st.markdown("### 5. Ejemplo didáctico: de una fuente a una grilla calculada")
-    kind=st.segmented_control(
-        "Tipo de fuente",
-        ["Fuente puntual","Vía lineal idealizada"],
-        default="Fuente puntual",
-        key="c3l2_s7_kind",
+    st.markdown("### 5. Mini laboratorio de modelación · estilo dBmap")
+    st.markdown("""
+    <div class="c3l2-note">
+      <b>Objetivo:</b> construir un escenario acústico simple y observar cómo cambia el campo sonoro al modificar
+      la fuente, el terreno, una barrera y la posición del receptor. Los cálculos se actualizan automáticamente.
+    </div>
+    """,unsafe_allow_html=True)
+
+    st.markdown("""
+    <div class="c3l2-flow">
+      <span class="c3l2-node">Fuente F1</span><span class="c3l2-arrow">→</span>
+      <span class="c3l2-node">Propagación</span><span class="c3l2-arrow">→</span>
+      <span class="c3l2-node">Terreno / barrera</span><span class="c3l2-arrow">→</span>
+      <span class="c3l2-node">Receptor R1</span><span class="c3l2-arrow">→</span>
+      <span class="c3l2-node">Mapa</span>
+    </div>
+    """,unsafe_allow_html=True)
+
+    method=st.segmented_control(
+        "Método conceptual de propagación",
+        ["ISO 9613","CNOSSOS-EU"],
+        default="ISO 9613",
+        key="c3l2_s7_lab_method",
+        help="Selector didáctico para comparar filosofías de cálculo. Este mini laboratorio no implementa íntegramente ninguna norma.",
     )
-    c1,c2=st.columns(2)
-    lw=c1.slider("Potencia / emisión de referencia [dB]",75,115,95,key="c3l2_s7_lw")
-    ref=c2.slider("Nivel vial de referencia a 10 m [dB]",55,90,72,key="c3l2_s7_ref")
-    xx,yy,L=_c3l2_projection_grid(kind,lw,ref)
-    fig=go.Figure(go.Contour(
+
+    p1,p2,p3=st.columns(3)
+    with p1:
+        st.markdown("##### Fuente F1")
+        source_level=st.number_input(
+            "Potencia sonora Lw [dB]",
+            min_value=70.0,max_value=120.0,value=98.0,step=1.0,
+            key="c3l2_s7_lab_lw",
+        )
+        sx=st.number_input("X fuente [m]",min_value=-80.0,max_value=80.0,value=-35.0,step=5.0,key="c3l2_s7_lab_sx")
+        sy=st.number_input("Y fuente [m]",min_value=-80.0,max_value=80.0,value=0.0,step=5.0,key="c3l2_s7_lab_sy")
+        source_h=st.number_input("Altura fuente [m]",min_value=0.5,max_value=20.0,value=2.0,step=0.5,key="c3l2_s7_lab_sh")
+
+    with p2:
+        st.markdown("##### Entorno")
+        ground_g=st.number_input(
+            "Factor de suelo G",
+            min_value=0.0,max_value=1.0,value=0.5,step=0.1,
+            key="c3l2_s7_lab_g",
+            help="0 = suelo duro/reflejante · 1 = suelo poroso/absorbente.",
+        )
+        barrier_on=st.toggle("Activar barrera",value=True,key="c3l2_s7_lab_barrier")
+        barrier_x=st.number_input("X barrera [m]",min_value=-70.0,max_value=70.0,value=0.0,step=5.0,key="c3l2_s7_lab_bx",disabled=not barrier_on)
+        barrier_h=st.number_input("Altura barrera [m]",min_value=1.0,max_value=12.0,value=4.0,step=0.5,key="c3l2_s7_lab_bh",disabled=not barrier_on)
+        barrier_half=st.number_input("Semilargo barrera [m]",min_value=10.0,max_value=90.0,value=45.0,step=5.0,key="c3l2_s7_lab_bl",disabled=not barrier_on)
+
+    with p3:
+        st.markdown("##### Receptor R1")
+        rx=st.number_input("X receptor [m]",min_value=-80.0,max_value=80.0,value=45.0,step=5.0,key="c3l2_s7_lab_rx")
+        ry=st.number_input("Y receptor [m]",min_value=-80.0,max_value=80.0,value=10.0,step=5.0,key="c3l2_s7_lab_ry")
+        receiver_h=st.number_input("Altura receptor [m]",min_value=1.0,max_value=15.0,value=1.5,step=0.5,key="c3l2_s7_lab_rh")
+        frequency=st.selectbox(
+            "Frecuencia de referencia",
+            [500,1000,2000],
+            index=1,
+            format_func=lambda x:f"{x} Hz",
+            key="c3l2_s7_lab_freq",
+        )
+
+    xx=np.linspace(-90,90,121)
+    yy=np.linspace(-90,90,121)
+    X,Y=np.meshgrid(xx,yy)
+
+    def _s7_demo_field(with_barrier=True):
+        horizontal=np.sqrt((X-float(sx))**2+(Y-float(sy))**2)
+        distance=np.sqrt(horizontal**2+float(source_h-receiver_h)**2)
+        distance=np.maximum(distance,1.0)
+
+        # Núcleo deliberadamente didáctico: divergencia + término suave de suelo/atmósfera.
+        L=float(source_level)-20*np.log10(distance)-11.0
+        if method=="ISO 9613":
+            L-=0.005*distance
+            L-=float(ground_g)*np.minimum(4.5,0.018*distance)
+        else:
+            L-=0.004*distance
+            L-=float(ground_g)*np.minimum(5.5,0.021*distance)
+
+        if with_barrier and barrier_on:
+            denom=(X-float(sx))
+            t=np.where(np.abs(denom)>1e-9,(float(barrier_x)-float(sx))/denom,np.nan)
+            y_cross=float(sy)+t*(Y-float(sy))
+            crosses=(t>0)&(t<1)&(np.abs(y_cross)<=float(barrier_half))
+
+            horizontal_total=np.sqrt((X-float(sx))**2+(Y-float(sy))**2)
+            frac=np.clip(np.abs(float(barrier_x)-float(sx))/np.maximum(horizontal_total,1e-9),0,1)
+            los_h=float(source_h)+frac*(float(receiver_h)-float(source_h))
+            excess=np.maximum(float(barrier_h)-los_h,0.0)
+            freq_factor=np.sqrt(float(frequency)/1000.0)
+            cap=20.0 if method=="ISO 9613" else 25.0
+            screen=np.minimum(cap,3.0+7.0*excess*freq_factor)
+            L-=np.where(crosses & (excess>0),screen,0.0)
+        return L
+
+    L=_s7_demo_field(with_barrier=True)
+    L_no_barrier=_s7_demo_field(with_barrier=False)
+
+    def _s7_level_at(field,x0,y0):
+        ix=int(np.argmin(np.abs(xx-float(x0))))
+        iy=int(np.argmin(np.abs(yy-float(y0))))
+        return float(field[iy,ix])
+
+    r_level=_s7_level_at(L,rx,ry)
+    r_free=_s7_level_at(L_no_barrier,rx,ry)
+    barrier_gain=max(0.0,r_free-r_level)
+
+    map_fig=go.Figure()
+    map_fig.add_trace(go.Contour(
         x=xx,y=yy,z=L,
-        contours=dict(showlabels=True),
+        contours=dict(start=30,end=90,size=5,showlabels=True),
         colorbar=dict(title="Nivel<br>calculado [dB]"),
-        hovertemplate="X=%{x:.1f} m<br>Y=%{y:.1f} m<br>Nivel calculado=%{z:.1f} dB<extra></extra>",
+        hovertemplate="X=%{x:.0f} m<br>Y=%{y:.0f} m<br>Nivel=%{z:.1f} dB<extra></extra>",
+        name="Mapa calculado",
     ))
-    if kind=="Fuente puntual":
-        fig.add_trace(go.Scatter(
-            x=[0],y=[0],mode="markers+text",text=["F1"],textposition="top center",
-            marker=dict(size=13),name="Fuente puntual",
+    map_fig.add_trace(go.Scatter(
+        x=[sx],y=[sy],mode="markers+text",
+        text=["F1"],textposition="top center",
+        marker=dict(size=15,symbol="star"),
+        name="Fuente F1",
+    ))
+    map_fig.add_trace(go.Scatter(
+        x=[rx],y=[ry],mode="markers+text",
+        text=[f"R1 · {r_level:.1f} dB"],textposition="top center",
+        marker=dict(size=13,symbol="diamond"),
+        name="Receptor R1",
+    ))
+    if barrier_on:
+        map_fig.add_trace(go.Scatter(
+            x=[barrier_x,barrier_x],
+            y=[-barrier_half,barrier_half],
+            mode="lines",
+            line=dict(width=8),
+            name=f"Barrera · {barrier_h:.1f} m",
         ))
-    else:
-        fig.add_trace(go.Scatter(x=[-80,80],y=[0,0],mode="lines",line=dict(width=8),name="Vía"))
-    fig.update_layout(
-        height=500,
-        xaxis_title="X [m]",
-        yaxis_title="Y [m]",
+    map_fig.update_layout(
+        height=590,
+        xaxis=dict(title="X [m]",range=[-90,90],scaleanchor="y",scaleratio=1),
+        yaxis=dict(title="Y [m]",range=[-90,90]),
         margin=dict(l=20,r=20,t=25,b=20),
+        legend=dict(orientation="h",y=1.04),
     )
-    st.plotly_chart(fig,use_container_width=True,key="c3l2_s7_projection_map")
-    st.caption(
-        "Ejemplo pedagógico deliberadamente simplificado. La grilla ilustra el concepto de receptor calculado; "
-        "no constituye una predicción normativa ni reemplaza un método implementado y verificado."
+    st.plotly_chart(map_fig,use_container_width=True,key="c3l2_s7_dbmap_like")
+
+    k1,k2,k3,k4=st.columns(4)
+    k1.metric("Nivel en R1",f"{r_level:.1f} dB")
+    k2.metric("Sin barrera",f"{r_free:.1f} dB")
+    k3.metric("Efecto pantalla",f"{barrier_gain:.1f} dB")
+    k4.metric("Suelo",f"G = {ground_g:.1f}")
+
+    st.markdown("""
+    <div class="s7-mini-grid">
+      <div class="s7-mini"><b>Mueve F1</b><br>Cambia X/Y de la fuente y observa cómo se desplazan las isolíneas.</div>
+      <div class="s7-mini"><b>Mueve R1</b><br>El nivel mostrado corresponde al receptor calculado en esa posición.</div>
+      <div class="s7-mini"><b>Activa la barrera</b><br>La zona detrás de la pantalla muestra el concepto de sombra acústica.</div>
+      <div class="s7-mini"><b>Cambia G</b><br>Compara suelo duro y poroso y observa cómo cambia la atenuación con la distancia.</div>
+    </div>
+    """,unsafe_allow_html=True)
+
+    st.markdown(
+        '<div class="c3l2-warn"><b>Modelo didáctico:</b> esta simulación reproduce la lógica de trabajo de un '
+        'software de mapas de ruido —objetos, parámetros y recálculo automático—, pero utiliza ecuaciones '
+        'simplificadas para aprendizaje. No implementa íntegramente ISO 9613 ni CNOSSOS-EU y no debe utilizarse '
+        'como predicción normativa.</div>',
+        unsafe_allow_html=True,
     )
 
     st.markdown("### 6. Software de predicción acústica")
