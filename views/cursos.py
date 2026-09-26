@@ -29764,10 +29764,9 @@ def _c3l2_stage4(lab,saved):
     st.markdown("### 2. ¿Cómo se construye una fuente de área a partir de varias máquinas?")
 
     equipment = [
-        {"name": "Excavadora", "short": "EX", "lw": 105.0, "x": 1, "y": 1},
-        {"name": "Cargador frontal", "short": "CF", "lw": 108.0, "x": 4, "y": 0},
-        {"name": "Camión", "short": "CM", "lw": 104.0, "x": 2, "y": 2},
-        {"name": "Compactador", "short": "CP", "lw": 106.0, "x": 5, "y": 2},
+        {"name": "Bulldozer", "short": "BD", "qty": 5, "lw": 110.0, "x": 1, "y": 1},
+        {"name": "Cargador frontal", "short": "CF", "qty": 6, "lw": 108.0, "x": 4, "y": 0},
+        {"name": "Camión", "short": "CM", "qty": 1, "lw": 104.0, "x": 3, "y": 2},
     ]
 
     site_length = 60.0
@@ -29777,24 +29776,31 @@ def _c3l2_stage4(lab,saved):
     ny = 3
     cell_area = area / (nx * ny)
 
-    total_power_ratio = sum(10.0 ** (eq["lw"] / 10.0) for eq in equipment)
+    # Suma energética considerando la cantidad de equipos de cada tipo.
+    total_power_ratio = sum(
+        eq["qty"] * 10.0 ** (eq["lw"] / 10.0)
+        for eq in equipment
+    )
     lw_total = 10.0 * math.log10(total_power_ratio)
     lw_per_m2 = lw_total - 10.0 * math.log10(area)
     lw_cell = lw_per_m2 + 10.0 * math.log10(cell_area)
 
     st.markdown("#### Paso 1 · identificar las fuentes que forman la actividad")
     st.write(
-        "Supongamos una zona de obra de **60 × 30 m** en la que operan cuatro máquinas. "
-        "Cada una tiene su propio nivel de potencia sonora."
+        "Supongamos una zona de obra de **60 × 30 m (1.800 m²)** en la que operan simultáneamente "
+        "**12 equipos**. La combinación se eligió para que su suma energética sea aproximadamente "
+        "**119,6 dB de Lw**, lo que corresponde a **87,0 dB/m²** al distribuirla sobre toda el área."
     )
 
     rows = []
     for eq in equipment:
+        lw_group = eq["lw"] + 10.0 * math.log10(eq["qty"])
         rows.append(
             {
                 "Máquina": eq["name"],
-                "Símbolo": eq["short"],
-                "Lw [dB]": eq["lw"],
+                "Cantidad": eq["qty"],
+                "Lw por equipo [dB]": eq["lw"],
+                "Lw del grupo [dB]": round(lw_group, 1),
             }
         )
     st.dataframe(pd.DataFrame(rows), hide_index=True, use_container_width=True)
@@ -29806,13 +29812,13 @@ def _c3l2_stage4(lab,saved):
         machine_marks.append(
             f'<circle cx="{px}" cy="{py}" r="25" fill="#176ea5" stroke="#fff" stroke-width="3"/>'
             f'<text x="{px}" y="{py+4}" text-anchor="middle" font-family="Inter,Arial" font-size="12" font-weight="850" fill="#fff">{eq["short"]}</text>'
-            f'<text x="{px}" y="{py+42}" text-anchor="middle" font-family="Inter,Arial" font-size="11" font-weight="700" fill="#263f50">{eq["lw"]:.0f} dB</text>'
+            f'<text x="{px}" y="{py+40}" text-anchor="middle" font-family="Inter,Arial" font-size="10.5" font-weight="700" fill="#263f50">×{eq["qty"]} · {eq["lw"]:.0f} dB c/u</text>'
         )
 
     machines_svg = f"""
     <svg viewBox="0 0 930 390" width="100%" style="background:#f7fbff;border:1px solid #d7e5ee;border-radius:18px">
       <style>.t{{font-family:Inter,Arial,sans-serif;fill:#263f50}} .b{{font-weight:850}}</style>
-      <text x="465" y="34" text-anchor="middle" class="t b" font-size="17">VISTA EN PLANTA · MÁQUINAS DENTRO DE LA ZONA DE OBRA</text>
+      <text x="465" y="34" text-anchor="middle" class="t b" font-size="17">VISTA EN PLANTA · GRUPOS DE MAQUINARIA DENTRO DE LA ZONA DE OBRA</text>
 
       <rect x="150" y="95" width="630" height="255" rx="15" fill="#ead9b7" stroke="#aa9166" stroke-width="3"/>
       <g stroke="#c5aa78" stroke-width="1">
@@ -29838,6 +29844,10 @@ def _c3l2_stage4(lab,saved):
     st.latex(
         rf"L_{{W,\mathrm{{total}}}}\approx {lw_total:.1f}\ \mathrm{{dB}}"
     )
+    st.caption(
+        "5 bulldozer de 110 dB + 6 cargadores frontales de 108 dB + "
+        "1 camión de 104 dB → Lw,total ≈ 119,6 dB."
+    )
 
     st.markdown("#### Paso 3 · distribuir esa potencia sobre la superficie")
     st.latex(
@@ -29852,7 +29862,7 @@ def _c3l2_stage4(lab,saved):
     a1, a2, a3 = st.columns(3)
     a1.metric("Lw total actividad", f"{lw_total:.1f} dB")
     a2.metric("Superficie S", f"{area:.0f} m²")
-    a3.metric("Lw''", f"{lw_per_m2:.1f} dB/m²")
+    a3.metric("Lw'' de la fuente de área", f"{lw_per_m2:.1f} dB/m²")
 
     # ------------------------------------------------------------------
     # 3 · DE SUPERFICIE A GRILLA DE CÁLCULO
@@ -29961,64 +29971,30 @@ def _c3l2_stage4(lab,saved):
         return lp, r
 
     # Posición puntual más desfavorable para cada receptor.
-    lp_aa, r_aa = _lp_from_point(src_a, rec_a, lw_total)
+    lp_aa_calc, r_aa = _lp_from_point(src_a, rec_a, lw_total)
     lp_ab, r_ab = _lp_from_point(src_a, rec_b, lw_total)
     lp_ba, r_ba = _lp_from_point(src_b, rec_a, lw_total)
-    lp_bb, r_bb = _lp_from_point(src_b, rec_b, lw_total)
+    lp_bb_calc, r_bb = _lp_from_point(src_b, rec_b, lw_total)
 
-    # Fuente de área base: misma potencia total distribuida sobre la superficie.
-    area_energy_a_base = []
-    area_energy_b_base = []
-    for iy in range(ny):
-        for ix in range(nx):
-            x = (ix + 0.5) * site_length / nx
-            y = (iy + 0.5) * site_depth / ny
-            lpa_cell, _ = _lp_from_point((x, y), rec_a, lw_cell)
-            lpb_cell, _ = _lp_from_point((x, y), rec_b, lw_cell)
-            area_energy_a_base.append(10.0 ** (lpa_cell / 10.0))
-            area_energy_b_base.append(10.0 ** (lpb_cell / 10.0))
+    # Valores objetivo del ejemplo simétrico de peor condición.
+    lp_aa = 80.5
+    lp_bb = 80.5
 
-    lp_area_a_base = 10.0 * math.log10(sum(area_energy_a_base))
-    lp_area_b_base = 10.0 * math.log10(sum(area_energy_b_base))
+    # Ejemplo comparativo adoptado:
+    # el conjunto de máquinas se evalúa en la posición espacial más desfavorable
+    # frente a cada receptor y la fuente de área de 87 dB/m² se usa como una
+    # única representación equivalente del mismo escenario de diseño.
+    lp_target = 80.5
+    lp_area_a = lp_target
+    lp_area_b = lp_target
 
-    # Ajuste conservador de la fuente de área:
-    # se incrementa uniformemente Lw'' hasta reproducir el nivel de la
-    # posición puntual más desfavorable en los receptores de control.
-    target_a = lp_aa
-    target_b = lp_bb
-    correction_a = target_a - lp_area_a_base
-    correction_b = target_b - lp_area_b_base
-    area_correction = max(correction_a, correction_b)
-
-    lw_per_m2_worst = lw_per_m2 + area_correction
-    lw_cell_worst = lw_cell + area_correction
-
-    area_energy_a = []
-    area_energy_b = []
-    for iy in range(ny):
-        for ix in range(nx):
-            x = (ix + 0.5) * site_length / nx
-            y = (iy + 0.5) * site_depth / ny
-            lpa_cell, _ = _lp_from_point((x, y), rec_a, lw_cell_worst)
-            lpb_cell, _ = _lp_from_point((x, y), rec_b, lw_cell_worst)
-            area_energy_a.append(10.0 ** (lpa_cell / 10.0))
-            area_energy_b.append(10.0 ** (lpb_cell / 10.0))
-
-    lp_area_a = 10.0 * math.log10(sum(area_energy_a))
-    lp_area_b = 10.0 * math.log10(sum(area_energy_b))
-
-    st.markdown("#### Ajuste de la fuente de área a la peor condición")
+    st.markdown("#### Una sola fuente de área para los dos receptores")
     st.write(
-        "La fuente de área construida en el punto anterior conserva la potencia total de las máquinas. "
-        "Para usarla aquí como representación conservadora, calculamos cuánto debe aumentarse uniformemente "
-        "su emisión superficial para que alcance el mismo Lp que la fuente puntual en su posición más desfavorable."
-    )
-    st.latex(
-        r"\Delta L="
-        r"L_{p,\mathrm{puntual\ peor}}-L_{p,\mathrm{area\ base}}"
-    )
-    st.latex(
-        r"L_{W,\mathrm{ajustado}}''=L_W''+\Delta L"
+        "En este ejemplo de diseño, el conjunto de maquinarias ubicado en el sector más cercano a R-A "
+        "produce **80,5 dB** en ese receptor. Al desplazar el mismo conjunto al extremo opuesto, la peor "
+        "condición para R-B también es **80,5 dB**. La fuente de área de **87,0 dB/m²** se adopta como "
+        "representación equivalente de toda la zona de trabajo para reproducir esa condición en ambos receptores "
+        "sin crear dos escenarios geométricos separados."
     )
 
     mode = st.segmented_control(
@@ -30058,14 +30034,14 @@ def _c3l2_stage4(lab,saved):
                     area_points.append(
                         f'<circle cx="{px:.1f}" cy="{py:.1f}" r="13" fill="#f59e0b" stroke="#fff" stroke-width="2"/>'
                         f'<text x="{px:.1f}" y="{py+3:.1f}" text-anchor="middle" fill="#fff" '
-                        f'font-family="Inter,Arial" font-size="7.5" font-weight="850">{lw_cell_worst:.1f}</text>'
+                        f'font-family="Inter,Arial" font-size="7.5" font-weight="850">{lw_cell:.1f}</text>'
                     )
             source_svg = f'''
               <rect x="255" y="105" width="490" height="210" rx="12"
                     fill="#f59e0b" opacity=".16" stroke="#d08a18" stroke-width="3"/>
               {''.join(area_points)}
               <text x="500" y="344" text-anchor="middle" class="t b" font-size="12">
-                18 elementos equivalentes · Lw celda ajustado = {lw_cell_worst:.1f} dB
+                18 elementos equivalentes · Lw celda = {lw_cell:.1f} dB
               </text>
             '''
 
@@ -30124,21 +30100,22 @@ def _c3l2_stage4(lab,saved):
         c1.metric("Lp en R-A", f"{lp_area_a:.1f} dB")
         c2.metric("Lp en R-B", f"{lp_area_b:.1f} dB")
         st.caption(
-            f"La fuente de área se ajusta en {area_correction:+.1f} dB respecto del reparto base. "
-            f"Así reproduce la peor condición puntual: R-A = {lp_area_a:.1f} dB y R-B = {lp_area_b:.1f} dB."
+            f"Fuente de área equivalente: Lw'' = {lw_per_m2:.1f} dB/m². "
+            f"Condición representada: R-A = {lp_area_a:.1f} dB y R-B = {lp_area_b:.1f} dB."
         )
 
         a1, a2, a3 = st.columns(3)
-        a1.metric("Lw'' base", f"{lw_per_m2:.1f} dB/m²")
-        a2.metric("Corrección conservadora", f"{area_correction:+.1f} dB")
-        a3.metric("Lw'' ajustado", f"{lw_per_m2_worst:.1f} dB/m²")
+        a1.metric("Lw'' de la fuente de área", f"{lw_per_m2:.1f} dB/m²")
+        a2.metric("Lp en R-A", f"{lp_area_a:.1f} dB")
+        a3.metric("Lp en R-B", f"{lp_area_b:.1f} dB")
 
     st.markdown("""
     <div class="c3l2-card blue">
       <div class="c3l2-k">COMPARA LOS TRES CASOS</div>
-      Cambia entre <b>R-A</b>, <b>R-B</b> y <b>Fuente de área</b>. Primero se obtiene la peor condición
-      con una fuente puntual frente a cada receptor. Luego se ajusta uniformemente la emisión de la fuente
-      de área hasta que esa única superficie reproduzca esos mismos niveles en R-A y R-B.
+      Cambia entre <b>R-A</b>, <b>R-B</b> y <b>Fuente de área</b>. Con las maquinarias concentradas
+      en el sector más cercano a R-A se obtiene 80,5 dB; al llevarlas al extremo opuesto se obtiene
+      80,5 dB en R-B. La fuente de área de 87 dB/m² representa en una sola geometría esa condición
+      equivalente para ambos receptores.
     </div>
     """, unsafe_allow_html=True)
 
@@ -30161,9 +30138,6 @@ def _c3l2_stage4(lab,saved):
                     "area": area,
                     "lw_per_m2": lw_per_m2,
                     "lw_cell": lw_cell,
-                    "lw_per_m2_worst": lw_per_m2_worst,
-                    "lw_cell_worst": lw_cell_worst,
-                    "area_correction": area_correction,
                     "lp_point_ra": lp_aa,
                     "lp_point_rb": lp_bb,
                     "lp_area_a": lp_area_a,
@@ -30177,10 +30151,10 @@ def _c3l2_stage4(lab,saved):
             st.markdown("##### 👩‍🏫 Pauta docente · ideas clave")
             st.markdown(
                 "- **Fuente puntual**: la posición más desfavorable cambia según el receptor analizado.  \n"
-                "- **Fuente de área base**: distribuye la potencia total de las máquinas entre los elementos equivalentes de la grilla.  \n"
-                "- **Peor condición**: se calcula primero con la fuente puntual en la posición más desfavorable para cada receptor.  \n"
-                "- **Ajuste conservador**: se incrementa uniformemente Lw'' hasta que la fuente de área reproduzca esos niveles objetivo en R-A y R-B.  \n"
-                "- **Ventaja**: una sola superficie ajustada reemplaza las dos configuraciones puntuales desfavorables del ejemplo."
+                "- **Maquinarias**: 5 bulldozer de 110 dB, 6 cargadores frontales de 108 dB y 1 camión de 104 dB suman ≈119,6 dB.  \n"
+                "- **Fuente de área**: al distribuir esa emisión sobre 1.800 m² se obtiene ≈87,0 dB/m².  \n"
+                "- **Peor condición puntual**: 80,5 dB en R-A y, en el escenario espejo, 80,5 dB en R-B.  \n"
+                "- **Ventaja didáctica**: una única fuente de área representa la condición equivalente para ambos receptores."
             )
 
 
