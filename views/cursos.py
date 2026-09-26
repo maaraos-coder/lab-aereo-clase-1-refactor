@@ -26252,14 +26252,14 @@ _C3L2_NAV_STAGE_TITLES = {
     0: "Introducción al laboratorio",
     1: "De la fuente al receptor",
     2: "Fuente puntual vs fuente lineal",
-    3: "¿Qué ocurre al alejarnos?",
-    4: "De la potencia sonora al nivel en el receptor",
-    5: "Del vehículo individual a la carretera",
-    6: "¿Qué hace más ruidosa una carretera?",
-    7: "Laboratorio virtual de tráfico",
-    8: "Preparación de la campaña real",
-    9: "Preguntas de comprensión",
-    10: "Mapa GIS de ruido de tráfico vehicular",
+    3: "Potencia sonora vs presión sonora",
+    4: "Fuente de área",
+    5: "Introducción a los mapas de ruido",
+    6: "Mapas a partir de mediciones",
+    7: "Mapas por proyección acústica",
+    8: "Mini caso profesional · mapa por mediciones",
+    9: "Evaluación oficial · comprensión",
+    10: "Evaluación oficial · mapa por mediciones",
 }
 
 def _c3l2_nav_stage_title(lab, stage):
@@ -28483,505 +28483,4625 @@ La clasificación depende de la relación entre dimensiones/extensión efectiva 
         """
     )
 
+
 def _c3l2_stage3(lab,saved):
-    _c3l2_header(3,"¿Qué ocurre al alejarnos?","Transformar la idea de distancia en una secuencia cuantitativa de duplicaciones.",20)
-
-    st.markdown("""
-    <div class="c3l2-intro"><div class="c3l2-k">DE LA REGLA AL PATRÓN</div>
-    <div class="c3l2-title">1 → 2 → 4 → 8 → 16 m no son saltos arbitrarios.</div>
-    Cada paso duplica la distancia. Si la geometría se mantiene, cada duplicación repite aproximadamente
-    la misma pérdida relativa.</div>""",unsafe_allow_html=True)
-
-    base=st.slider("Nivel de referencia a 1 m [dB]",60,95,80,key="c3l2_s3_base")
-    geom=st.segmented_control("Modelo",["Puntual","Lineal idealizado"],default="Puntual",key="c3l2_s3_geom")
-    d=[1,2,4,8,16,32]
-    loss=6 if geom=="Puntual" else 3
-    levels=[base-loss*i for i in range(len(d))]
-    df=pd.DataFrame({"Distancia [m]":d,"Duplicaciones desde 1 m":list(range(len(d))),"Nivel aproximado [dB]":levels})
-    st.dataframe(df,hide_index=True,use_container_width=True)
-
-    fig=go.Figure()
-    fig.add_trace(go.Scatter(x=d,y=levels,mode="lines+markers",name=geom))
-    fig.update_layout(xaxis_type="log",xaxis_title="Distancia [m] · escala logarítmica",yaxis_title="Nivel [dB]",height=340,margin=dict(l=20,r=20,t=20,b=20))
-    st.plotly_chart(fig,use_container_width=True)
-
-    st.markdown("### Ejercicio guiado")
-    st.write("Una fuente puntual produce **72 dB a 4 m**. ¿Qué nivel estimarías a **8 m**?")
-    st.markdown("1. 4 → 8 m corresponde a **una duplicación**.")
-    st.latex(r"L_p(8m)\approx L_p(4m)-6")
-    ans=st.number_input("Tu resultado [dB]",40.0,90.0,70.0,.5,key="c3l2_s3_ans")
-    why=st.text_area("Explica el procedimiento en una o dos frases",height=80,key="c3l2_s3_why")
-
-    if _c3l2_role()=="Alumno" and st.button("Comprobar y guardar",type="primary",key="c3l2_s3_save",use_container_width=True):
-        if abs(ans-66)>1 or len(why.strip())<20:
-            st.warning("Entre 4 y 8 m hay una sola duplicación. Para fuente puntual ideal usa aproximadamente −6 dB.")
-        else:
-            _c3l2_complete(saved,3,{"base":base,"geom":geom,"answer":ans,"why":why})
-            st.success("Resultado coherente: aproximadamente 66 dB.")
-    _c3l2_teacher_pauta("Etapa 3","72 dB a 4 m → ~66 dB a 8 m en campo libre puntual ideal. La finalidad es que el alumno cuente duplicaciones y no memorice tablas aisladas.")
-
-
-def _c3l2_stage4(lab,saved):
-    _c3l2_header(4,"De la potencia sonora al nivel en el receptor","Separar emisión de la fuente y nivel observado en el espacio.",20)
-
-    st.markdown("""
-    <div class="c3l2-intro"><div class="c3l2-k">DOS MAGNITUDES, DOS PREGUNTAS</div>
-    <div class="c3l2-title">Lw responde “¿cuánto emite la fuente?”; Lp responde “¿qué nivel existe aquí?”</div>
-    Confundirlas conduce a trasladar una propiedad de emisión como si fuera una medición de receptor.</div>
-    """,unsafe_allow_html=True)
-
-    st.markdown("### 1. Compara")
-    st.markdown("""
-    <div class="c3l2-grid2">
-      <div class="c3l2-card blue"><div class="c3l2-k">Lw · POTENCIA SONORA</div><b>Propiedad de emisión</b><br>No depende de dónde coloques el receptor.</div>
-      <div class="c3l2-card green"><div class="c3l2-k">Lp · PRESIÓN SONORA</div><b>Propiedad del campo</b><br>Cambia con distancia, geometría y entorno.</div>
-    </div>""",unsafe_allow_html=True)
-
-    st.markdown("### 2. Visualiza la expansión")
-    components.html("""
-    <svg viewBox="0 0 900 260" width="100%" style="background:#f7fbff;border:1px solid #d4e3ed;border-radius:16px">
-      <circle cx="170" cy="130" r="20" fill="#e95c4e"/>
-      <circle cx="170" cy="130" r="55" fill="none" stroke="#42a9ce" stroke-width="3" opacity=".9"/>
-      <circle cx="170" cy="130" r="95" fill="none" stroke="#42a9ce" stroke-width="3" opacity=".55"/>
-      <circle cx="170" cy="130" r="130" fill="none" stroke="#42a9ce" stroke-width="3" opacity=".3"/>
-      <text x="85" y="25" font-size="16" font-weight="700">MISMA POTENCIA</text>
-      <circle cx="390" cy="130" r="10" fill="#13a067"/><text x="408" y="135" font-size="15">receptor cercano</text>
-      <circle cx="690" cy="130" r="10" fill="#13a067"/><text x="708" y="135" font-size="15">receptor lejano</text>
-      <line x1="190" y1="130" x2="380" y2="130" stroke="#657786" stroke-dasharray="7 6"/>
-      <line x1="190" y1="145" x2="680" y2="145" stroke="#657786" stroke-dasharray="7 6"/>
-    </svg>
-    """,height=280)
-
-    st.markdown("### 3. Simulador idealizado")
-    lw=st.slider("Lw de la fuente [dB]",70,110,95,key="c3l2_s4_lw")
-    r=st.slider("Distancia al receptor [m]",1.0,50.0,5.0,.5,key="c3l2_s4_r")
-    import math
-    lp=lw-10*math.log10(4*math.pi*r*r)
-    st.latex(r"L_p \approx L_w - 10\log_{10}(4\pi r^2)")
-    c1,c2,c3=st.columns(3)
-    c1.metric("Lw",f"{lw} dB")
-    c2.metric("Distancia",f"{r:.1f} m")
-    c3.metric("Lp idealizado",f"{lp:.1f} dB")
-
-    q1=st.radio("Si mueves el receptor pero la fuente no cambia, ¿qué magnitud permanece asociada a la emisión?",["Lw","Lp","Ambas cambian igual"],index=None,key="c3l2_s4_q1")
-    q2=st.text_area("Explica por qué dos receptores pueden tener distinto Lp frente a la misma fuente",height=90,key="c3l2_s4_q2")
-    if _c3l2_role()=="Alumno" and st.button("Guardar etapa",type="primary",key="c3l2_s4_save",use_container_width=True):
-        if q1!="Lw" or len(q2.strip())<25:
-            st.warning("Revisa la diferencia entre emisión de la fuente y nivel en el campo.")
-        else:
-            _c3l2_complete(saved,4,{"lw":lw,"r":r,"lp":lp,"q1":q1,"q2":q2})
-            st.success("Etapa guardada.")
-    _c3l2_teacher_pauta("Etapa 4","La ecuación se presenta como campo libre ideal. La pauta debe verificar que el alumno no confunda Lw con Lp y que comprenda por qué Lp cambia con la posición.")
-
-
-def _c3l2_stage5(lab,saved):
-    _c3l2_header(5,"Del vehículo individual a la carretera","Entender cuándo un conjunto de eventos móviles puede representarse como un corredor lineal.",20)
-
-    st.markdown("""
-    <div class="c3l2-intro"><div class="c3l2-k">CAMBIO DE ESCALA</div>
-    <div class="c3l2-title">Un automóvil no es una carretera.</div>
-    El automóvil es una fuente móvil individual. Una vía con muchos vehículos simultáneos puede,
-    bajo ciertas condiciones, aproximarse como una distribución lineal de fuentes.</div>
-    """,unsafe_allow_html=True)
-
-    st.markdown("### 1. Observa tres regímenes")
-    mode=st.segmented_control("Escenario",["Vehículo individual","Flujo discontinuo","Flujo continuo"],default="Vehículo individual",key="c3l2_s5_mode")
-    descriptions={
-        "Vehículo individual":"Evento móvil: el nivel crece al acercarse, alcanza un máximo y disminuye al alejarse.",
-        "Flujo discontinuo":"Los eventos siguen siendo distinguibles; aparecen valles claros entre vehículos.",
-        "Flujo continuo":"Los eventos se superponen y el corredor puede aproximarse mediante una fuente lineal idealizada.",
-    }
-    st.markdown(f'<div class="c3l2-note"><b>{mode}</b><br>{descriptions[mode]}</div>',unsafe_allow_html=True)
-
-    import numpy as np
-    x=np.linspace(0,60,121)
-    if mode=="Vehículo individual":
-        y=48+24*np.exp(-((x-30)/7)**2)
-    elif mode=="Flujo discontinuo":
-        y=47+16*np.exp(-((x-14)/4)**2)+18*np.exp(-((x-31)/4.5)**2)+15*np.exp(-((x-48)/4)**2)
-    else:
-        y=60+2.5*np.sin(x/4)+1.2*np.sin(x/1.7)
-    fig=go.Figure(go.Scatter(x=x,y=y,mode="lines"))
-    fig.update_layout(height=320,margin=dict(l=20,r=20,t=20,b=20),xaxis_title="Tiempo [s]",yaxis_title="Nivel relativo [dB]")
-    st.plotly_chart(fig,use_container_width=True)
-
-    st.markdown("### 2. Selecciona el modelo")
-    model=st.radio("Para una avenida con flujo continuo y estable, ¿qué representación usarías como primera idealización?",["Fuente puntual fija","Corredor / fuente lineal idealizada","Receptor"],index=None,key="c3l2_s5_q")
-    why=st.text_area("Justifica: ¿por qué no basta con modelar un solo automóvil?",key="c3l2_s5_why",height=90)
-
-    if _c3l2_role()=="Alumno" and st.button("Guardar razonamiento",type="primary",key="c3l2_s5_save",use_container_width=True):
-        if model!="Corredor / fuente lineal idealizada" or len(why.strip())<25:
-            st.warning("Revisa cómo cambia el problema al pasar de un evento móvil a un flujo continuo.")
-        else:
-            _c3l2_complete(saved,5,{"mode":mode,"model":model,"why":why})
-            st.success("Etapa guardada.")
-    _c3l2_teacher_pauta("Etapa 5","Evitar afirmar que toda carretera 'es' una fuente lineal. Es una idealización útil cuando la escala espacial y la continuidad del flujo justifican esa representación.")
-
-def _c3l2_traffic_index(flow, speed, heavy, distance, pavement):
-    import math
-    # Índice didáctico de tendencias, NO normativo.
-    p_corr={"Más silencioso":-2.0,"Normal":0.0,"Rugoso":2.0}[pavement]
-    return 52 + 10*math.log10(max(flow,1)/100) + 0.05*(speed-50) + 0.16*heavy - 10*math.log10(max(distance,1)/10) + p_corr
-
-
-def _c3l2_stage6(lab,saved):
-    _c3l2_header(6,"¿Qué hace más ruidosa una carretera?","Separar variables de emisión y propagación mediante experimentos controlados.",25)
-
-    st.markdown("""
-    <div class="c3l2-warn"><b>Importante:</b> este simulador es didáctico. Sirve para estudiar tendencias
-    y sensibilidad, no para predecir cumplimiento ni reemplazar un modelo oficial de tránsito.</div>
-    """,unsafe_allow_html=True)
-
-    st.markdown("### 1. ¿Qué variable estás cambiando?")
-    st.markdown("""
-    <div class="c3l2-grid">
-      <div class="c3l2-card blue"><div class="c3l2-k">EMISIÓN</div><b>Flujo, velocidad, pesados, pavimento</b><br>Modifican la energía generada por el tránsito.</div>
-      <div class="c3l2-card green"><div class="c3l2-k">PROPAGACIÓN</div><b>Distancia al receptor</b><br>Modifica el camino desde la vía al punto de evaluación.</div>
-      <div class="c3l2-card orange"><div class="c3l2-k">MÉTODO</div><b>Una variable a la vez</b><br>Si cambias varias simultáneamente no sabrás cuál produjo el efecto.</div>
-    </div>""",unsafe_allow_html=True)
-
-    c1,c2=st.columns(2)
-    flow=c1.slider("Flujo [veh/h]",100,3000,1000,100,key="c3l2_s6_flow")
-    speed=c2.slider("Velocidad [km/h]",20,120,50,5,key="c3l2_s6_speed")
-    c3,c4=st.columns(2)
-    heavy=c3.slider("Vehículos pesados [%]",0,40,8,1,key="c3l2_s6_heavy")
-    distance=c4.slider("Distancia al receptor [m]",5,100,20,5,key="c3l2_s6_dist")
-    pavement=st.segmented_control("Superficie vial",["Más silencioso","Normal","Rugoso"],default="Normal",key="c3l2_s6_pav")
-    level=_c3l2_traffic_index(flow,speed,heavy,distance,pavement)
-    st.metric("Índice de nivel relativo del escenario",f"{level:.1f} dB")
-
-    st.markdown("### 2. Ejecuta tres mini-experimentos")
-    exp=st.segmented_control("Experimento",["Velocidad","Pesados","Distancia"],default="Velocidad",key="c3l2_s6_exp")
-    if exp=="Velocidad":
-        vals=[30,50,70,90]
-        lev=[_c3l2_traffic_index(flow,v,heavy,distance,pavement) for v in vals]
-        xlabel="Velocidad [km/h]"
-    elif exp=="Pesados":
-        vals=[0,5,15,30]
-        lev=[_c3l2_traffic_index(flow,speed,v,distance,pavement) for v in vals]
-        xlabel="Pesados [%]"
-    else:
-        vals=[10,20,40,80]
-        lev=[_c3l2_traffic_index(flow,speed,heavy,v,pavement) for v in vals]
-        xlabel="Distancia [m]"
-    fig=go.Figure(go.Bar(x=vals,y=lev))
-    fig.update_layout(height=320,margin=dict(l=20,r=20,t=20,b=20),xaxis_title=xlabel,yaxis_title="Índice relativo [dB]")
-    st.plotly_chart(fig,use_container_width=True)
-
-    variable=st.radio("¿Qué variable modifica principalmente el camino de propagación en este laboratorio?",["Flujo","Distancia al receptor","Porcentaje de pesados"],index=None,key="c3l2_s6_q")
-    conclusion=st.text_area("Escribe una conclusión del experimento que acabas de observar",height=90,key="c3l2_s6_conc")
-    if _c3l2_role()=="Alumno" and st.button("Guardar escenario",type="primary",key="c3l2_s6_save",use_container_width=True):
-        if variable!="Distancia al receptor" or len(conclusion.strip())<25:
-            st.warning("Distingue variables de emisión de variables del camino y explica el patrón observado.")
-        else:
-            _c3l2_complete(saved,6,{"flow":flow,"speed":speed,"heavy":heavy,"distance":distance,"pavement":pavement,"level":level,"experiment":exp,"conclusion":conclusion})
-            st.success("Escenario guardado.")
-    _c3l2_teacher_pauta("Etapa 6","Pauta: flujo/velocidad/pesados/pavimento se tratan como variables de emisión en este simulador; distancia como propagación. La conclusión debe reconocer tendencia, no convertir el índice didáctico en predicción reglamentaria.")
-
-
-def _c3l2_stage7(lab,saved):
-    _c3l2_header(7,"Laboratorio virtual de tráfico","Integrar variables de tránsito y propagación sobre cinco receptores.",20)
-
-    st.markdown("""
-    <div class="c3l2-intro"><div class="c3l2-k">HIPÓTESIS → SIMULACIÓN → CONTRASTE</div>
-    <div class="c3l2-title">Primero predice. Después ejecuta.</div>
-    Si ves el resultado antes de formular una hipótesis, pierdes la oportunidad de comprobar si tu modelo mental funciona.</div>
-    """,unsafe_allow_html=True)
-
-    c1,c2,c3=st.columns(3)
-    flow=c1.slider("Flujo [veh/h]",300,2500,1200,100,key="c3l2_s7_flow")
-    heavy=c2.slider("Pesados [%]",0,30,10,1,key="c3l2_s7_heavy")
-    speed=c3.slider("Velocidad [km/h]",30,100,60,5,key="c3l2_s7_speed")
-    receptor_dist={"P1":8,"P2":15,"P3":25,"P4":40,"P5":70}
-
-    components.html("""
-    <svg viewBox="0 0 950 260" width="100%" style="background:#f4fbff;border:1px solid #d5e6ef;border-radius:16px">
-      <rect x="0" y="190" width="950" height="70" fill="#647785"/>
-      <line x1="0" y1="225" x2="950" y2="225" stroke="#f6d65a" stroke-width="5" stroke-dasharray="28 18"/>
-      <g fill="#14a3d0" font-size="14" font-weight="700">
-        <circle cx="120" cy="168" r="10"/><text x="105" y="150">P1 · 8 m</text>
-        <circle cx="270" cy="145" r="10"/><text x="248" y="126">P2 · 15 m</text>
-        <circle cx="430" cy="120" r="10"/><text x="405" y="101">P3 · 25 m</text>
-        <circle cx="610" cy="90" r="10"/><text x="585" y="71">P4 · 40 m</text>
-        <circle cx="800" cy="50" r="10"/><text x="775" y="31">P5 · 70 m</text>
-      </g>
-    </svg>
-    """,height=280)
-
-    prediction=st.radio("Antes de ejecutar: ¿qué receptor esperas que tenga mayor nivel?",list(receptor_dist),index=None,key="c3l2_s7_pred")
-    reason=st.text_area("Justifica tu predicción",height=80,key="c3l2_s7_reason")
-
-    if st.button("▶ Ejecutar escenario",key="c3l2_s7_run",use_container_width=True):
-        st.session_state["c3l2_s7_ran"]=True
-    if st.session_state.get("c3l2_s7_ran"):
-        rows=[]
-        for p,d in receptor_dist.items():
-            rows.append({"Receptor":p,"Distancia [m]":d,"Nivel relativo [dB]":round(_c3l2_traffic_index(flow,speed,heavy,d,"Normal"),1)})
-        df=pd.DataFrame(rows)
-        st.dataframe(df,hide_index=True,use_container_width=True)
-        fig=go.Figure(go.Bar(x=df["Receptor"],y=df["Nivel relativo [dB]"]))
-        fig.update_layout(height=320,margin=dict(l=20,r=20,t=20,b=20),yaxis_title="Nivel relativo [dB]")
-        st.plotly_chart(fig,use_container_width=True)
-        actual=max(rows,key=lambda x:x["Nivel relativo [dB]"])["Receptor"]
-        if prediction:
-            if prediction==actual: st.success(f"Tu hipótesis coincide: {actual} es el receptor más expuesto del escenario.")
-            else: st.info(f"El escenario entrega {actual}. Compara tu justificación con la distancia de cada receptor.")
-        if _c3l2_role()=="Alumno" and st.button("Guardar laboratorio virtual",type="primary",key="c3l2_s7_save",use_container_width=True):
-            if not prediction or len(reason.strip())<20: st.warning("Formula y justifica primero tu predicción.")
-            else:
-                _c3l2_complete(saved,7,{"prediction":prediction,"reason":reason,"actual":actual,"scenario":{"flow":flow,"speed":speed,"heavy":heavy},"results":rows})
-                st.success("Etapa guardada.")
-    _c3l2_teacher_pauta("Etapa 7","La respuesta esperada, manteniendo las demás variables iguales, es P1 por su menor distancia. Lo importante es que el alumno prediga antes de ejecutar y explique con variables controladas.")
-
-
-def _c3l2_stage8(lab,saved):
-    _c3l2_header(8,"Preparación de la campaña real","Practicar el flujo GIS y la trazabilidad de una medición antes de la evaluación final.",20)
-
-    st.markdown("""
-    <div class="c3l2-intro"><div class="c3l2-k">ENSAYO GENERAL</div>
-    <div class="c3l2-title">En esta etapa no estás siendo evaluado: estás aprendiendo el procedimiento.</div>
-    El flujo que practiques aquí será el mismo de la Etapa 10: ubicar → marcar → medir → registrar → interpretar.</div>
-    """,unsafe_allow_html=True)
-
-    st.markdown("### 1. Diseña el punto antes de medir")
-    prev=saved.get("c3l2_stage8") if isinstance(saved.get("c3l2_stage8"),dict) else {}
-    location=st.text_input("Intersección / sector de práctica",value=prev.get("location",""),placeholder="Ej.: Av. Irarrázaval con Pedro de Valdivia",key="c3l2_s8_location")
-    objective=st.selectbox("Objetivo del punto piloto",["Seleccionar","Caracterizar flujo de la vía","Comparar dos lados de la intersección","Observar influencia de pesados","Reconocer un receptor cercano"],key="c3l2_s8_obj")
-    time_window=st.text_input("Horario previsto",value=prev.get("time_window",""),placeholder="Ej.: 18:00–18:10",key="c3l2_s8_timewindow")
-
-    st.markdown("### 2. Marca el punto en un mapa real")
-    pilot_points=prev.get("points",[]) if isinstance(prev.get("points"),list) else []
-    click=_c3l2_map(pilot_points,"c3l2_s8_map",height=430)
-    if click:
-        st.caption(f"Último clic: {click['lat']:.6f}, {click['lon']:.6f}")
-        if st.button("📍 Usar este punto como piloto",key="c3l2_s8_add"):
-            pilot_points=[{"id":"P1","lat":click["lat"],"lon":click["lon"]}]
-            prev["points"]=pilot_points; prev["location"]=location
-            saved["c3l2_stage8"]=prev; _c3l2_save(saved); st.rerun()
-
-    st.markdown("### 3. Mide con el sonómetro online")
-    st.link_button("🎙️ Abrir sonómetro online","https://soundlevelmeteruc.vercel.app/",use_container_width=True)
-    st.info("Uso educativo: registra el resultado y el contexto de forma trazable. Esta práctica no sustituye una medición reglamentaria con instrumentación y procedimiento exigibles.")
-    c1,c2,c3=st.columns(3)
-    laeq=c1.number_input("LAeq [dB(A)]",35.0,110.0,float(prev.get("laeq",65.0)),.1,key="c3l2_s8_laeq")
-    lmax=c2.number_input("Lmax [dB(A)]",35.0,130.0,float(prev.get("lmax",75.0)),.1,key="c3l2_s8_lmax")
-    dur=c3.number_input("Duración [min]",1.0,15.0,float(prev.get("duration",2.0)),.5,key="c3l2_s8_dur")
-    obs=st.text_area("Observaciones: flujo, pesados, bocinas, semáforo, interferencias, viento u otros eventos",value=prev.get("notes",""),height=100,key="c3l2_s8_notes")
-
-    st.markdown("### 4. Interpreta tu punto piloto")
-    interpretation=st.text_area("¿Qué representa realmente esta medición y qué NO puedes concluir con un solo punto?",height=100,key="c3l2_s8_interp")
-
-    if _c3l2_role()=="Alumno" and st.button("💾 Guardar práctica GIS",type="primary",use_container_width=True,key="c3l2_s8_save"):
-        if not pilot_points or not location.strip() or objective=="Seleccionar" or len(obs.strip())<15 or len(interpretation.strip())<30:
-            st.warning("Completa ubicación, objetivo, punto, observaciones e interpretación.")
-        else:
-            payload={"location":location,"objective":objective,"time_window":time_window,"points":pilot_points,"laeq":laeq,"lmax":lmax,"duration":dur,"notes":obs,"interpretation":interpretation}
-            _c3l2_complete(saved,8,payload)
-            st.success("Práctica GIS guardada. Ya conoces el flujo que usarás en la evaluación.")
-    _c3l2_teacher_pauta("Etapa 8","La pauta debe revisar que el alumno entienda que un punto piloto no representa automáticamente toda la vía. Debe registrar objetivo, ubicación, horario, duración, descriptores y eventos observados.")
-
-
-def _c3l2_stage9(lab,saved):
-    _c3l2_header(9,"Preguntas de comprensión","Comprobar propagación, tráfico, representatividad y lectura espacial antes de la campaña GIS.",20)
-
-    prev=saved.get("c3l2_stage9") if isinstance(saved.get("c3l2_stage9"),dict) else {}
-    answers=dict(prev.get("answers",{}) or {})
-
-    st.markdown('<div class="c3l2-note"><b>Actividad formativa, sin nota.</b> Puedes guardar, volver a revisar materia y modificar tus respuestas sin perder el avance.</div>',unsafe_allow_html=True)
-
-    # 1
-    with st.container(border=True):
-        st.markdown("**Pregunta 1 · selección única**")
-        a1=st.radio("Una máquina fija aislada se aproxima inicialmente a:",["Fuente puntual","Fuente lineal","Receptor"],index=["Fuente puntual","Fuente lineal","Receptor"].index(answers["1"]) if answers.get("1") in ["Fuente puntual","Fuente lineal","Receptor"] else None,key="c3l2_s9_1")
-        answers["1"]=a1
-    # 2
-    with st.container(border=True):
-        st.markdown("**Pregunta 2 · cálculo**")
-        a2=st.number_input("Una fuente puntual produce 72 dB a 4 m. Estima el nivel a 8 m [dB].",40.0,90.0,float(answers.get("2",70.0)),.5,key="c3l2_s9_2")
-        answers["2"]=a2
-    # 3
-    with st.container(border=True):
-        st.markdown("**Pregunta 3 · selección única**")
-        opts=["≈ −3 dB","≈ −6 dB","0 dB"]
-        a3=st.radio("Al duplicar distancia desde una vía lineal idealizada:",opts,index=opts.index(answers["3"]) if answers.get("3") in opts else None,key="c3l2_s9_3")
-        answers["3"]=a3
-    # 4
-    with st.container(border=True):
-        st.markdown("**Pregunta 4 · desarrollo corto**")
-        a4=st.text_area("Explica la diferencia entre Lw y Lp.",value=str(answers.get("4","")),height=85,key="c3l2_s9_4")
-        answers["4"]=a4
-    # 5
-    with st.container(border=True):
-        st.markdown("**Pregunta 5 · selección múltiple conceptual**")
-        a5=st.multiselect("¿Qué variables del simulador se asocian principalmente a emisión del tránsito?",["Flujo","Velocidad","Pesados","Pavimento","Distancia al receptor"],default=answers.get("5",[]) if isinstance(answers.get("5"),list) else [],key="c3l2_s9_5")
-        answers["5"]=a5
-    # 6
-    with st.container(border=True):
-        st.markdown("**Pregunta 6 · desarrollo aplicado**")
-        a6=st.text_area("¿Por qué una medición en la esquina más ruidosa podría no representar toda la vía?",value=str(answers.get("6","")),height=85,key="c3l2_s9_6")
-        answers["6"]=a6
-    # 7
-    with st.container(border=True):
-        st.markdown("**Pregunta 7 · decisión de campaña**")
-        opts=["Poner todos los puntos junto al semáforo","Distribuir puntos en ambas vías y documentar condiciones","Medir un único punto por más tiempo y asumir el resto"]
-        a7=st.radio("¿Qué diseño ofrece mejor información espacial?",opts,index=opts.index(answers["7"]) if answers.get("7") in opts else None,key="c3l2_s9_7")
-        answers["7"]=a7
-    # 8
-    with st.container(border=True):
-        st.markdown("**Pregunta 8 · verdadero/falso con justificación**")
-        a8=st.radio("Un valor coloreado entre puntos en una interpolación significa que fue medido directamente allí.",["Verdadero","Falso"],index=["Verdadero","Falso"].index(answers["8"]) if answers.get("8") in ["Verdadero","Falso"] else None,key="c3l2_s9_8")
-        a8b=st.text_area("Justifica",value=str(answers.get("8b","")),height=70,key="c3l2_s9_8b")
-        answers["8"]=a8; answers["8b"]=a8b
-    # 9
-    with st.container(border=True):
-        st.markdown("**Pregunta 9 · registro de terreno**")
-        a9=st.text_area("Además de LAeq y Lmax, ¿qué información registrarías en cada punto?",value=str(answers.get("9","")),height=85,key="c3l2_s9_9")
-        answers["9"]=a9
-    # 10
-    with st.container(border=True):
-        st.markdown("**Pregunta 10 · estrategia profesional**")
-        a10=st.text_area("Tienes 30 minutos para caracterizar una intersección. Propón una estrategia y declara al menos una limitación.",value=str(answers.get("10","")),height=105,key="c3l2_s9_10")
-        answers["10"]=a10
-
-    complete=(
-        answers.get("1") and abs(float(answers.get("2",0))-66)<=1 and answers.get("3")
-        and len(str(answers.get("4","")).strip())>=20 and len(answers.get("5",[]))>=3
-        and len(str(answers.get("6","")).strip())>=25 and answers.get("7")
-        and answers.get("8") and len(str(answers.get("8b","")).strip())>=15
-        and len(str(answers.get("9","")).strip())>=20 and len(str(answers.get("10","")).strip())>=35
+    _c3l2_header(
+        3,
+        "Nivel de potencia sonora y nivel de presión sonora",
+        "Separar la emisión propia de la fuente del nivel observado en un receptor.",
+        25,
     )
-    if _c3l2_role()=="Alumno" and st.button("💾 Guardar preguntas de comprensión",type="primary",use_container_width=True,key="c3l2_s9_save"):
-        if not complete:
-            st.warning("Completa las 10 preguntas y desarrolla las respuestas abiertas.")
-        else:
-            _c3l2_complete(saved,9,{"answers":answers})
-            st.success("Respuestas guardadas. Puedes volver a esta etapa y modificarlas.")
-    _c3l2_teacher_pauta("Etapa 9","Pauta: 1 puntual; 2 ≈66 dB; 3 ≈−3 dB; 4 Lw=emisión / Lp=campo; 5 flujo, velocidad, pesados y pavimento; 6 falta de representatividad; 7 distribuir puntos y documentar; 8 falso, es estimación; 9 contexto, hora, duración, eventos, condiciones; 10 estrategia coherente con puntos y limitaciones.")
-
-
-def _c3l2_stage10(lab,saved):
-    _c3l2_header(10,"Mapa GIS de ruido de tráfico vehicular","Resolver la tarea integradora mediante una campaña real y una representación espacial trazable.",40)
-    data=saved.get("c3l2_stage10") if isinstance(saved.get("c3l2_stage10"),dict) else {}
-    data=dict(data or {})
-    points=list(data.get("points",[]) or [])
 
     st.markdown("""
     <div class="c3l2-intro">
-      <div class="c3l2-k">TAREA INTEGRADORA · MAPA GIS</div>
-      <div class="c3l2-title">Desde puntos medidos a una interpretación territorial</div>
-      Selecciona una intersección real, define una vía principal y una secundaria, distribuye tus puntos,
-      mide, documenta y construye una representación espacial. La evaluación no consiste solo en “hacer un mapa”:
-      debes poder defender cómo mediste y qué alcance tiene tu conclusión.
-    </div>""",unsafe_allow_html=True)
+      <div class="c3l2-k">PREGUNTA CENTRAL</div>
+      <div class="c3l2-title">¿La máquina “tiene 85 dB” o el receptor “mide 85 dB”?</div>
+      <b>Lw</b> caracteriza la potencia sonora emitida por la fuente. <b>Lp</b> describe la presión sonora
+      existente en una posición. Mover el receptor puede cambiar Lp sin cambiar Lw.
+    </div>
+    """, unsafe_allow_html=True)
 
-    st.markdown("### Misión 1 · Define el problema")
+    st.markdown("### 1. Antes de hablar de dB: ¿qué es la potencia sonora?")
+    st.write(
+        "Una máquina transforma parte de la energía que consume en **energía acústica**. "
+        "La cantidad de energía acústica que la fuente entrega al medio por unidad de tiempo es la **potencia sonora W**, "
+        "y se expresa físicamente en **watts (W)**."
+    )
+
+    st.markdown("""
+    <div class="c3l2-grid2">
+      <div class="c3l2-card blue">
+        <div class="c3l2-k">POTENCIA SONORA · W</div>
+        <b>Es una propiedad de emisión de la fuente.</b><br>
+        Responde a la pregunta: <i>¿cuánta energía acústica emite esta máquina por unidad de tiempo?</i><br><br>
+        Si movemos el receptor, la potencia que caracteriza a la fuente <b>no cambia</b>.
+      </div>
+      <div class="c3l2-card green">
+        <div class="c3l2-k">NIVEL DE POTENCIA SONORA · Lw</div>
+        <b>Es la forma logarítmica de expresar W.</b><br>
+        Compara la potencia acústica de la fuente con una potencia de referencia
+        <b>W₀ = 10⁻¹² W</b> y la expresa en decibeles.
+      </div>
+    </div>
+    """, unsafe_allow_html=True)
+
+    st.latex(r"L_W=10\log_{10}\left(\frac{W}{W_0}\right),\qquad W_0=10^{-12}\ \mathrm{W}")
+
+    st.markdown("""
+    <div class="c3l2-note">
+      <b>Importante:</b> decir que una máquina tiene <b>Lw = 95 dB</b> no significa que un sonómetro colocado
+      junto a ella vaya a indicar 95 dB. Lw caracteriza la <b>fuente</b>, no un punto del espacio.
+    </div>
+    """, unsafe_allow_html=True)
+
+    st.markdown("### 2. Entonces, ¿qué mide el sonómetro? · nivel de presión sonora Lp")
+    st.write(
+        "Cuando el sonido se propaga por el aire produce pequeñas variaciones de presión. "
+        "El micrófono del sonómetro detecta esas variaciones en **el lugar donde está ubicado**. "
+        "Por eso el nivel de presión sonora depende del receptor y de las condiciones de propagación."
+    )
+
+    st.markdown("""
+    <div class="c3l2-grid2">
+      <div class="c3l2-card green">
+        <div class="c3l2-k">PRESIÓN SONORA · p</div>
+        <b>Es una magnitud del campo acústico.</b><br>
+        El micrófono detecta variaciones de presión alrededor de la presión atmosférica.
+        Se expresa físicamente en pascales (Pa).
+      </div>
+      <div class="c3l2-card orange">
+        <div class="c3l2-k">NIVEL DE PRESIÓN SONORA · Lp</div>
+        <b>Es la forma logarítmica de expresar esa presión.</b><br>
+        Se referencia a <b>p₀ = 20 µPa</b>. Cambia con distancia, geometría, obstáculos,
+        reflexiones y otras condiciones del entorno.
+      </div>
+    </div>
+    """, unsafe_allow_html=True)
+
+    st.latex(r"L_p=20\log_{10}\left(\frac{p}{p_0}\right),\qquad p_0=20\ \mu\mathrm{Pa}")
+
+    st.markdown("### 3. Compruébalo moviendo la fuente y el sonómetro")
+    st.write(
+        "Arrastra la **fuente** o el **sonómetro**. "
+        "La fuente mantiene siempre el mismo **Lw = 95 dB**; lo que cambia es el **Lp que registra el sonómetro** según su posición."
+    )
+
+    components.html(r"""
+    <div id="lwlp-concept" style="font-family:Inter,Arial,sans-serif;color:#1f3442;">
+      <style>
+        #lwlp-concept *{box-sizing:border-box}
+        #lwlp-concept .panel{border:1px solid #cfe0ec;border-radius:18px;background:#f7fbff;padding:14px}
+        #lwlp-concept .top{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-bottom:12px}
+        #lwlp-concept .metric{background:#fff;border:1px solid #d9e5ed;border-radius:14px;padding:12px;text-align:center}
+        #lwlp-concept .metric .k{font-size:11px;font-weight:800;letter-spacing:.04em;color:#607786;text-transform:uppercase}
+        #lwlp-concept .metric .v{font-size:24px;font-weight:900;margin-top:4px}
+        #lwlp-concept .metric small{color:#6f8390}
+        #lwlp-concept .scene{border:1px solid #d4e3ed;border-radius:16px;overflow:hidden;background:#eef7fb}
+        #lwlp-concept svg{display:block;width:100%;height:auto;touch-action:none;user-select:none}
+        #lwlp-concept .drag{cursor:grab}
+        #lwlp-concept .drag:active{cursor:grabbing}
+        #lwlp-concept .note{margin-top:12px;background:#fff;border-left:4px solid #1689d8;border-radius:10px;padding:10px 12px;font-size:13px;line-height:1.45}
+        #lwlp-concept .actions{display:flex;justify-content:flex-end;margin-top:10px}
+        #lwlp-concept button{min-height:40px;border:1px solid #bfd2df;border-radius:10px;background:#fff;padding:8px 14px;font-weight:800;cursor:pointer}
+        #lwlp-concept .pulse{transform-origin:center;animation:pulse 1.6s ease-out infinite}
+        @keyframes pulse{0%{opacity:.30}70%,100%{opacity:0}}
+        @media (prefers-reduced-motion:reduce){#lwlp-concept .pulse{animation:none;opacity:.16}}
+        @media(max-width:650px){#lwlp-concept .top{grid-template-columns:1fr}}
+      </style>
+
+      <div class="panel">
+        <div class="top">
+          <div class="metric">
+            <div class="k">Fuente · Lw</div>
+            <div class="v">95 dB</div>
+            <small>propiedad de la fuente</small>
+          </div>
+          <div class="metric">
+            <div class="k">Distancia</div>
+            <div class="v" id="cDist">47.5 m</div>
+            <small>fuente ↔ sonómetro</small>
+          </div>
+          <div class="metric">
+            <div class="k">Sonómetro · Lp</div>
+            <div class="v" id="cLp">49.5 dB</div>
+            <small>cambia con la posición</small>
+          </div>
+        </div>
+
+        <div class="scene">
+          <svg id="conceptSvg" viewBox="0 0 960 410" role="img" aria-label="Fuente sonora y sonómetro movibles">
+            <defs>
+              <linearGradient id="cg" x1="0" x2="0" y1="0" y2="1">
+                <stop offset="0%" stop-color="#f9fcfe"/>
+                <stop offset="100%" stop-color="#eaf4f8"/>
+              </linearGradient>
+            </defs>
+            <rect width="960" height="410" fill="url(#cg)"/>
+
+            <g id="cwaves">
+              <circle class="pulse" cx="220" cy="205" r="72" fill="none" stroke="#58abc8" stroke-width="3"/>
+              <circle class="pulse" cx="220" cy="205" r="132" fill="none" stroke="#58abc8" stroke-width="3" style="animation-delay:.35s"/>
+              <circle class="pulse" cx="220" cy="205" r="192" fill="none" stroke="#58abc8" stroke-width="2" style="animation-delay:.7s"/>
+            </g>
+
+            <line id="cLine" x1="220" y1="205" x2="600" y2="205" stroke="#728b99" stroke-width="2" stroke-dasharray="8 7"/>
+            <rect id="cDistBg" x="368" y="170" width="94" height="28" rx="10" fill="#fff" stroke="#c9d8e1"/>
+            <text id="cDistLabel" x="415" y="189" text-anchor="middle" font-size="13" font-weight="800" fill="#405967">47.5 m</text>
+
+            <g id="cSource" class="drag" tabindex="0" role="button" aria-label="Mover fuente sonora">
+              <circle cx="220" cy="205" r="52" fill="#fff" stroke="#176ea5" stroke-width="3"/>
+              <rect x="184" y="183" width="72" height="44" rx="9" fill="#176ea5"/>
+              <rect x="196" y="194" width="34" height="19" rx="4" fill="#c4e5f2"/>
+              <circle cx="244" cy="205" r="6" fill="#dcecf3"/>
+              <text x="220" y="145" text-anchor="middle" font-size="15" font-weight="900" fill="#1f3442">FUENTE</text>
+              <text x="220" y="275" text-anchor="middle" font-size="15" font-weight="900" fill="#176ea5">Lw = 95 dB</text>
+              <text x="220" y="296" text-anchor="middle" font-size="12" fill="#5f7684">no cambia al moverla</text>
+            </g>
+
+            <g id="cMeter" class="drag" tabindex="0" role="button" aria-label="Mover sonómetro">
+              <rect x="578" y="165" width="44" height="82" rx="10" fill="#243d4a" stroke="#fff" stroke-width="3"/>
+              <rect x="586" y="181" width="28" height="25" rx="4" fill="#bde7d5"/>
+              <text id="meterScreen" x="600" y="198" text-anchor="middle" font-size="9" font-weight="900" fill="#155f47">49.5</text>
+              <circle cx="600" cy="225" r="5" fill="#62c59a"/>
+              <rect x="594" y="148" width="12" height="22" rx="5" fill="#566b76"/>
+              <circle cx="600" cy="145" r="8" fill="#8da0a9"/>
+              <text x="600" y="125" text-anchor="middle" font-size="15" font-weight="900" fill="#1f3442">SONÓMETRO</text>
+              <text id="meterLabel" x="600" y="275" text-anchor="middle" font-size="15" font-weight="900" fill="#15805a">Lp = 49.5 dB</text>
+              <text x="600" y="296" text-anchor="middle" font-size="12" fill="#5f7684">cambia con la posición</text>
+            </g>
+
+            <rect x="720" y="85" width="190" height="150" rx="16" fill="#fff" stroke="#d7e4eb"/>
+            <text x="815" y="115" text-anchor="middle" font-size="13" font-weight="900" fill="#5a7180">IDEA CLAVE</text>
+            <text x="815" y="148" text-anchor="middle" font-size="14" fill="#263f50">La fuente conserva</text>
+            <text x="815" y="173" text-anchor="middle" font-size="19" font-weight="900" fill="#176ea5">Lw = constante</text>
+            <text x="815" y="204" text-anchor="middle" font-size="14" fill="#263f50">El sonómetro registra</text>
+            <text x="815" y="229" text-anchor="middle" font-size="19" font-weight="900" fill="#15805a">Lp = variable</text>
+
+            <text x="60" y="385" font-size="12" fill="#718692">Arrastra ambos elementos para comparar posiciones.</text>
+          </svg>
+        </div>
+
+        <div class="note" id="cNote" aria-live="polite"></div>
+        <div class="actions"><button id="cReset" type="button">Reiniciar posiciones</button></div>
+      </div>
+
+      <script>
+      (function(){
+        var root=document.getElementById('lwlp-concept');
+        if(!root || root.getAttribute('data-ready')==='1') return;
+        root.setAttribute('data-ready','1');
+
+        var svg=root.querySelector('#conceptSvg');
+        var source=root.querySelector('#cSource');
+        var meter=root.querySelector('#cMeter');
+        var line=root.querySelector('#cLine');
+        var dLabel=root.querySelector('#cDistLabel');
+        var dBg=root.querySelector('#cDistBg');
+        var mDist=root.querySelector('#cDist');
+        var mLp=root.querySelector('#cLp');
+        var meterLabel=root.querySelector('#meterLabel');
+        var meterScreen=root.querySelector('#meterScreen');
+        var note=root.querySelector('#cNote');
+        var reset=root.querySelector('#cReset');
+        var waves=root.querySelectorAll('#cwaves circle');
+
+        var pxPerM=8;
+        var lw=95;
+        var bounds={xmin:85,xmax:680,ymin:105,ymax:315};
+        var state={sx:220,sy:205,mx:600,my:205,drag:null};
+
+        function clamp(v,a,b){return Math.max(a,Math.min(b,v));}
+        function distanceM(){
+          return Math.max(1,Math.hypot(state.mx-state.sx,state.my-state.sy)/pxPerM);
+        }
+        function calcLp(r){
+          return lw - 10*Math.log10(4*Math.PI*r*r);
+        }
+        function move(el,x,y,bx,by){
+          el.setAttribute('transform','translate('+(x-bx)+' '+(y-by)+')');
+        }
+        function update(){
+          var r=distanceM();
+          var lp=calcLp(r);
+
+          move(source,state.sx,state.sy,220,205);
+          move(meter,state.mx,state.my,600,205);
+
+          waves.forEach(function(w){
+            w.setAttribute('cx',state.sx);
+            w.setAttribute('cy',state.sy);
+          });
+
+          line.setAttribute('x1',state.sx);
+          line.setAttribute('y1',state.sy);
+          line.setAttribute('x2',state.mx);
+          line.setAttribute('y2',state.my);
+
+          var cx=(state.sx+state.mx)/2;
+          var cy=(state.sy+state.my)/2;
+          dBg.setAttribute('x',cx-47);
+          dBg.setAttribute('y',cy-35);
+          dLabel.setAttribute('x',cx);
+          dLabel.setAttribute('y',cy-16);
+
+          dLabel.textContent=r.toFixed(1)+' m';
+          mDist.textContent=r.toFixed(1)+' m';
+          mLp.textContent=lp.toFixed(1)+' dB';
+          meterLabel.textContent='Lp = '+lp.toFixed(1)+' dB';
+          meterScreen.textContent=lp.toFixed(1);
+
+          if(r<10){
+            note.innerHTML='<b>Observa:</b> la fuente sigue teniendo Lw = 95 dB. Al acercar el sonómetro, el Lp registrado aumenta.';
+          }else if(r<30){
+            note.innerHTML='<b>Observa:</b> Lw sigue siendo 95 dB. Al cambiar la distancia cambia el Lp que registra el sonómetro.';
+          }else{
+            note.innerHTML='<b>Observa:</b> aunque la fuente conserva Lw = 95 dB, el sonómetro registra un Lp menor al estar más alejado.';
+          }
+        }
+        function point(evt){
+          var p=svg.createSVGPoint(); p.x=evt.clientX; p.y=evt.clientY;
+          var ctm=svg.getScreenCTM();
+          return ctm ? p.matrixTransform(ctm.inverse()) : {x:0,y:0};
+        }
+        function begin(which,e){
+          state.drag=which;
+          if(e.currentTarget.setPointerCapture && e.pointerId!==undefined){
+            try{e.currentTarget.setPointerCapture(e.pointerId);}catch(err){}
+          }
+          e.preventDefault();
+        }
+
+        source.addEventListener('pointerdown',function(e){begin('source',e);});
+        meter.addEventListener('pointerdown',function(e){begin('meter',e);});
+        svg.addEventListener('pointermove',function(e){
+          if(!state.drag) return;
+          var p=point(e);
+          if(state.drag==='source'){
+            state.sx=clamp(p.x,bounds.xmin,bounds.xmax);
+            state.sy=clamp(p.y,bounds.ymin,bounds.ymax);
+          }else{
+            state.mx=clamp(p.x,bounds.xmin,bounds.xmax);
+            state.my=clamp(p.y,bounds.ymin,bounds.ymax);
+          }
+          update();
+        });
+        ['pointerup','pointercancel','pointerleave'].forEach(function(t){
+          svg.addEventListener(t,function(){state.drag=null;});
+        });
+
+        [source,meter].forEach(function(el,idx){
+          el.addEventListener('keydown',function(e){
+            var step=e.shiftKey?10:4,dx=0,dy=0;
+            if(e.key==='ArrowLeft')dx=-step;
+            else if(e.key==='ArrowRight')dx=step;
+            else if(e.key==='ArrowUp')dy=-step;
+            else if(e.key==='ArrowDown')dy=step;
+            else return;
+            e.preventDefault();
+            if(idx===0){
+              state.sx=clamp(state.sx+dx,bounds.xmin,bounds.xmax);
+              state.sy=clamp(state.sy+dy,bounds.ymin,bounds.ymax);
+            }else{
+              state.mx=clamp(state.mx+dx,bounds.xmin,bounds.xmax);
+              state.my=clamp(state.my+dy,bounds.ymin,bounds.ymax);
+            }
+            update();
+          });
+        });
+
+        reset.addEventListener('click',function(){
+          state.sx=220;state.sy=205;state.mx=600;state.my=205;update();
+        });
+        update();
+      })();
+      </script>
+    </div>
+    """, height=650, scrolling=False)
+
+    st.markdown("#### La diferencia esencial")
+    st.markdown("""
+    <div class="c3l2-grid2">
+      <div class="c3l2-card blue">
+        <b>Lw pertenece a la fuente.</b><br>
+        No depende de dónde pongamos el sonómetro.
+        Para una condición de operación dada, describe la capacidad de emisión acústica del equipo.
+      </div>
+      <div class="c3l2-card green">
+        <b>Lp pertenece al punto de observación.</b><br>
+        Un mismo equipo puede producir distintos Lp en distintas posiciones del sonómetro porque el sonido se propaga y se atenúa.
+      </div>
+    </div>
+    """, unsafe_allow_html=True)
+
+    st.info(
+        "Una analogía útil: la **potencia de una lámpara** pertenece a la lámpara; "
+        "la **iluminación que recibes** depende de dónde te encuentres. "
+        "En acústica, Lw caracteriza la fuente y Lp caracteriza lo que ocurre en un punto del campo sonoro."
+    )
+
+    st.markdown("### 4. Conozcamos el factor de directividad Q")
+    st.write(
+        "Hasta aquí sabemos que **Lw pertenece a la fuente**. El siguiente paso es comprender que una fuente "
+        "no necesariamente reparte su energía acústica de la misma manera en todas las direcciones. "
+        "El **factor de directividad Q** describe, de manera idealizada, cómo se concentra o distribuye espacialmente "
+        "la potencia sonora emitida."
+    )
+
+    st.markdown("""
+    <div class="c3l2-note">
+      <b>Relación con la potencia sonora:</b> Q <b>no modifica W ni Lw</b>.
+      La fuente sigue emitiendo la misma potencia sonora total. Lo que cambia es la superficie espacial
+      sobre la cual esa potencia se distribuye y, por lo tanto, el nivel de presión sonora que puede obtenerse
+      en una dirección y distancia determinadas.
+    </div>
+    """, unsafe_allow_html=True)
+
+    st.markdown("""
+    <div class="c3l2-grid2">
+      <div class="c3l2-card blue">
+        <div class="c3l2-k">Q = 1 · ESPACIO LIBRE</div>
+        <b>Radiación ideal en todas las direcciones.</b><br>
+        La misma potencia sonora total se reparte sobre una esfera completa de área <b>4πr²</b>.
+        Es la idealización típica de una fuente omnidireccional en campo libre, alejada de superficies reflectantes.
+      </div>
+      <div class="c3l2-card orange">
+        <div class="c3l2-k">Q = 2 · SOBRE UN PLANO REFLECTANTE</div>
+        <b>La radiación queda concentrada en medio espacio.</b><br>
+        La misma potencia sonora total se reparte aproximadamente sobre una semiesfera de área <b>2πr²</b>.
+        En el modelo ideal, a igual Lw y distancia, esto produce aproximadamente <b>+3 dB</b> respecto de Q = 1.
+      </div>
+    </div>
+    """, unsafe_allow_html=True)
+
+    st.markdown("#### Mismo equipo, dos condiciones ideales")
+    st.write(
+        "Para visualizar Q, usemos **exactamente la misma fuente con el mismo Lw = 95 dB**. "
+        "Lo único que cambia es su relación con las superficies reflectantes."
+    )
+
+    components.html(r"""
+    <svg viewBox="0 0 1120 520" width="100%" style="background:#f7fbff;border:1px solid #d4e3ed;border-radius:18px">
+      <defs>
+        <radialGradient id="devBlue" cx="35%" cy="30%">
+          <stop offset="0%" stop-color="#87cbe5"/>
+          <stop offset="100%" stop-color="#176ea5"/>
+        </radialGradient>
+        <radialGradient id="waveBlue" cx="50%" cy="50%">
+          <stop offset="0%" stop-color="#64b8d5" stop-opacity=".16"/>
+          <stop offset="100%" stop-color="#64b8d5" stop-opacity="0"/>
+        </radialGradient>
+        <linearGradient id="floorQ" x1="0" x2="0" y1="0" y2="1">
+          <stop offset="0%" stop-color="#9faeb6"/>
+          <stop offset="100%" stop-color="#6e7c84"/>
+        </linearGradient>
+      </defs>
+      <style>
+        .t{font-family:Inter,Arial,sans-serif;fill:#263f50}
+        .b{font-weight:850}
+        .m{fill:#637a88}
+        .cap{font-size:13px}
+      </style>
+
+      <!-- panel Q1 -->
+      <rect x="25" y="25" width="520" height="465" rx="20" fill="#ffffff" stroke="#d5e3ec"/>
+      <text x="285" y="62" text-anchor="middle" class="t b" font-size="20">Q = 1 · fuente ideal en espacio libre</text>
+      <text x="285" y="86" text-anchor="middle" class="t m cap">misma fuente · Lw = 95 dB</text>
+
+      <!-- suspension -->
+      <line x1="245" y1="100" x2="245" y2="157" stroke="#6f7f88" stroke-width="3"/>
+      <line x1="325" y1="100" x2="325" y2="157" stroke="#6f7f88" stroke-width="3"/>
+      <line x1="215" y1="100" x2="355" y2="100" stroke="#a1b1bb" stroke-width="4"/>
+      <text x="285" y="120" text-anchor="middle" class="t m" font-size="12">suspendida, alejada de superficies</text>
+
+      <!-- spherical field -->
+      <circle cx="285" cy="250" r="145" fill="url(#waveBlue)"/>
+      <circle cx="285" cy="250" r="70" fill="none" stroke="#5aaecb" stroke-width="3" opacity=".78"/>
+      <circle cx="285" cy="250" r="110" fill="none" stroke="#5aaecb" stroke-width="3" opacity=".46"/>
+      <circle cx="285" cy="250" r="145" fill="none" stroke="#5aaecb" stroke-width="2" opacity=".25"/>
+
+      <!-- device Q1 -->
+      <g>
+        <rect x="225" y="194" width="120" height="90" rx="15" fill="url(#devBlue)" stroke="#d7eef8" stroke-width="3"/>
+        <rect x="245" y="215" width="52" height="29" rx="6" fill="#c8e8f5"/>
+        <circle cx="320" cy="232" r="13" fill="#0e5276"/>
+        <rect x="249" y="284" width="18" height="14" rx="2" fill="#3d4a51"/>
+        <rect x="304" y="284" width="18" height="14" rx="2" fill="#3d4a51"/>
+        <text x="285" y="319" text-anchor="middle" class="t b" font-size="15">FUENTE</text>
+        <text x="285" y="340" text-anchor="middle" class="t" font-size="14">Lw = 95 dB</text>
+      </g>
+
+      <text x="285" y="415" text-anchor="middle" class="t b" font-size="16">La potencia se distribuye sobre 4π</text>
+      <text x="285" y="440" text-anchor="middle" class="t m" font-size="13">superficie ideal: esfera completa</text>
+      <text x="285" y="465" text-anchor="middle" class="t m" font-size="12">sin plano reflectante próximo</text>
+
+      <!-- panel Q2 -->
+      <rect x="575" y="25" width="520" height="465" rx="20" fill="#ffffff" stroke="#ead9c5"/>
+      <text x="835" y="62" text-anchor="middle" class="t b" font-size="20">Q = 2 · fuente ideal sobre plano reflectante</text>
+      <text x="835" y="86" text-anchor="middle" class="t m cap">misma fuente · Lw = 95 dB</text>
+
+      <!-- floor -->
+      <rect x="625" y="330" width="420" height="58" rx="8" fill="url(#floorQ)"/>
+      <line x1="625" y1="330" x2="1045" y2="330" stroke="#43545d" stroke-width="5"/>
+      <text x="835" y="372" text-anchor="middle" font-family="Inter,Arial" font-size="13" font-weight="800" fill="#eef6fa">PLANO RÍGIDO REFLECTANTE</text>
+
+      <!-- hemispherical field -->
+      <path d="M690 330 A145 145 0 0 1 980 330" fill="none" stroke="#e7a04a" stroke-width="3" opacity=".30"/>
+      <path d="M725 330 A110 110 0 0 1 945 330" fill="none" stroke="#e7a04a" stroke-width="3" opacity=".52"/>
+      <path d="M765 330 A70 70 0 0 1 905 330" fill="none" stroke="#e7a04a" stroke-width="3" opacity=".82"/>
+
+      <!-- device Q2 -->
+      <g>
+        <rect x="775" y="238" width="120" height="90" rx="15" fill="url(#devBlue)" stroke="#d7eef8" stroke-width="3"/>
+        <rect x="795" y="259" width="52" height="29" rx="6" fill="#c8e8f5"/>
+        <circle cx="870" cy="276" r="13" fill="#0e5276"/>
+        <rect x="799" y="328" width="18" height="10" rx="2" fill="#3d4a51"/>
+        <rect x="854" y="328" width="18" height="10" rx="2" fill="#3d4a51"/>
+        <text x="835" y="220" text-anchor="middle" class="t b" font-size="15">FUENTE</text>
+        <text x="835" y="198" text-anchor="middle" class="t" font-size="14">Lw = 95 dB</text>
+      </g>
+
+      <!-- image source under plane as conceptual mirror -->
+      <g opacity=".22">
+        <rect x="775" y="340" width="120" height="72" rx="15" fill="#d97706" stroke="#9a5a13" stroke-width="2"/>
+        <text x="835" y="382" text-anchor="middle" font-family="Inter,Arial" font-size="12" font-weight="800" fill="#6b3d0c">FUENTE IMAGEN</text>
+      </g>
+      <line x1="910" y1="360" x2="1000" y2="405" stroke="#9f6c31" stroke-width="2" stroke-dasharray="5 5"/>
+      <text x="1002" y="410" class="t m" font-size="11">representación conceptual</text>
+
+      <text x="835" y="430" text-anchor="middle" class="t b" font-size="16">La potencia se distribuye sobre 2π</text>
+      <text x="835" y="455" text-anchor="middle" class="t m" font-size="13">superficie ideal: semiesfera</text>
+      <text x="835" y="477" text-anchor="middle" class="t m" font-size="12">a igual Lw y r → ≈ +3 dB respecto de Q = 1</text>
+    </svg>
+    """, height=535)
+
+    st.markdown("""
+    <div class="c3l2-note">
+      <b>Lee la figura de izquierda a derecha:</b> no estamos cambiando la máquina ni aumentando su Lw.
+      En ambos casos la fuente tiene <b>Lw = 95 dB</b>. En el caso Q = 2, el plano reflectante hace que,
+      en la idealización, la radiación útil se concentre en medio espacio. Por eso, a la misma distancia,
+      el Lp estimado en ese espacio es aproximadamente 3 dB mayor que para Q = 1.
+    </div>
+    """, unsafe_allow_html=True)
+
+    st.info(
+        "Q es una **idealización de directividad y confinamiento geométrico**. "
+        "No significa que una fuente real tenga siempre Q = 1 o Q = 2: la directividad real puede depender "
+        "de la frecuencia, de la geometría del equipo y de las superficies próximas."
+    )
+
+    st.markdown("### 5. De Lw a Lp · ¿cómo se relacionan?")
+    st.write(
+        "Ahora podemos unir las piezas. **Lw caracteriza la emisión de la fuente**. "
+        "Para estimar qué **Lp** se observará en un punto necesitamos saber, además, "
+        "cómo se reparte esa emisión (**Q**) y a qué distancia está el punto (**r**)."
+    )
+
+    st.markdown("""
+    <div class="c3l2-grid2">
+      <div class="c3l2-card blue">
+        <div class="c3l2-k">DATO DE LA FUENTE</div>
+        <b>Lw</b><br>
+        Indica cuánto emite acústicamente la fuente.
+        No depende de la posición del sonómetro.
+      </div>
+      <div class="c3l2-card green">
+        <div class="c3l2-k">DATOS DE PROPAGACIÓN</div>
+        <b>Q + r</b><br>
+        Q representa la distribución espacial idealizada y r la distancia entre fuente y punto de observación.
+      </div>
+    </div>
+    """, unsafe_allow_html=True)
+
+    st.markdown("#### Caso ideal de campo libre")
+    st.latex(r"L_p \approx L_W + 10\log_{10}\left(\frac{Q}{4\pi r^2}\right)")
+
+    st.markdown("#### Ejemplo resuelto · misma fuente, dos condiciones")
+    st.write(
+        "Consideremos la **misma fuente con Lw = 95 dB** y un sonómetro ubicado a **10 m**. "
+        "Solo cambia la forma idealizada en que la potencia se distribuye en el espacio."
+    )
+
+    ex_q1 = 1.0
+    ex_q2 = 2.0
+    ex_lw = 95.0
+    ex_r = 10.0
+    ex_lp_q1 = ex_lw + 10 * math.log10(ex_q1 / (4 * math.pi * ex_r**2))
+    ex_lp_q2 = ex_lw + 10 * math.log10(ex_q2 / (4 * math.pi * ex_r**2))
+    ex_diff = ex_lp_q2 - ex_lp_q1
+
+    st.markdown("""
+    <div class="c3l2-grid2">
+      <div class="c3l2-card blue">
+        <div class="c3l2-k">EJEMPLO A · FUENTE SUSPENDIDA</div>
+        <b>Q = 1 · radiación ideal en 4π</b><br><br>
+        <b>Lw = 95 dB</b><br>
+        <b>r = 10 m</b><br>
+        <b>Q = 1</b>
+      </div>
+      <div class="c3l2-card orange">
+        <div class="c3l2-k">EJEMPLO B · SOBRE PLANO REFLECTANTE</div>
+        <b>Q = 2 · radiación ideal en 2π</b><br><br>
+        <b>Lw = 95 dB</b><br>
+        <b>r = 10 m</b><br>
+        <b>Q = 2</b>
+      </div>
+    </div>
+    """, unsafe_allow_html=True)
+
+    cqa, cqb = st.columns(2)
+    with cqa:
+        st.markdown("##### Cálculo para Q = 1")
+        st.latex(r"L_p=95+10\log_{10}\left(\frac{1}{4\pi(10)^2}\right)")
+        st.latex(r"L_p\approx 64.0\ \mathrm{dB}")
+        st.markdown(
+            f'<div class="c3l2-card blue"><div class="c3l2-k">RESULTADO</div>'
+            f'<div class="c3l2-num">{ex_lp_q1:.1f} dB</div>'
+            '<b>Nivel de presión sonora estimado a 10 m.</b></div>',
+            unsafe_allow_html=True,
+        )
+
+    with cqb:
+        st.markdown("##### Cálculo para Q = 2")
+        st.latex(r"L_p=95+10\log_{10}\left(\frac{2}{4\pi(10)^2}\right)")
+        st.latex(r"L_p\approx 67.0\ \mathrm{dB}")
+        st.markdown(
+            f'<div class="c3l2-card orange"><div class="c3l2-k">RESULTADO</div>'
+            f'<div class="c3l2-num">{ex_lp_q2:.1f} dB</div>'
+            '<b>Nivel de presión sonora estimado a 10 m.</b></div>',
+            unsafe_allow_html=True,
+        )
+
+    st.markdown(
+        f"""
+        <div class="c3l2-note">
+          <b>Comparación:</b> la fuente tiene el mismo <b>Lw = {ex_lw:.0f} dB</b> y el sonómetro está a la misma
+          distancia de <b>{ex_r:.0f} m</b>. Al pasar de Q = 1 a Q = 2, el nivel estimado aumenta
+          <b>{ex_diff:.1f} dB</b>. La diferencia aparece porque la misma potencia sonora se distribuye
+          sobre una superficie espacial menor.
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
+
+    st.markdown("""
+    <div class="c3l2-note">
+      La ecuación no dice que <b>Lw se convierta en Lp</b>. Dice que, bajo estas condiciones idealizadas,
+      podemos usar la potencia sonora de la fuente y la geometría de propagación para <b>estimar el nivel de presión sonora
+      en un punto</b>.
+    </div>
+    """, unsafe_allow_html=True)
+
+    st.markdown("#### ¿Qué aporta cada término?")
+    eq1, eq2, eq3 = st.columns(3)
+    with eq1:
+        st.metric("Lw", "emisión")
+        st.caption("Propiedad de la fuente.")
+    with eq2:
+        st.metric("Q", "directividad")
+        st.caption("Cómo se distribuye espacialmente la potencia.")
+    with eq3:
+        st.metric("r", "distancia")
+        st.caption("Separación entre la fuente y el punto donde queremos estimar Lp.")
+
+    st.markdown("""
+    <div class="c3l2-grid2">
+      <div class="c3l2-card blue">
+        <b>Si aumenta r</b><br>
+        La misma potencia se reparte sobre una superficie mayor y, en el modelo ideal, <b>Lp disminuye</b>.
+      </div>
+      <div class="c3l2-card orange">
+        <b>Si Q aumenta</b><br>
+        La potencia queda más concentrada en una región del espacio y, en esa dirección, <b>Lp aumenta</b>.
+      </div>
+    </div>
+    """, unsafe_allow_html=True)
+
+    st.markdown("### 6. Si el sonómetro mide Lp, ¿cómo obtenemos Lw?")
+    st.write(
+        "Un **sonómetro convencional mide presión sonora** y entrega niveles como Lp, Leq, Lmax, etc. "
+        "No mide directamente la potencia sonora de la máquina. Sin embargo, existen métodos normalizados que permiten "
+        "determinar **Lw a partir de mediciones acústicas realizadas alrededor de la fuente**."
+    )
+
+    st.markdown("""
+    <div class="c3l2-note">
+      <b>Idea esencial:</b> el instrumento mide una magnitud del campo acústico. Para llegar a la
+      <b>potencia sonora de la fuente</b> necesitamos un método de ensayo que defina dónde medir,
+      cuántos puntos utilizar, qué superficie considerar y qué correcciones aplicar.
+    </div>
+    """, unsafe_allow_html=True)
+
+    method = st.segmented_control(
+        "Método para determinar potencia sonora",
+        ["Presión sonora", "Intensidad sonora", "Sala reverberante"],
+        default="Presión sonora",
+        key="c3l2_s3_power_method",
+    )
+
+    if method == "Presión sonora":
+        st.markdown("#### Método A · a partir de niveles de presión sonora")
+        st.write(
+            "Se utilizan uno o varios micrófonos/sonómetros para medir **Lp en diferentes posiciones sobre una "
+            "superficie que envuelve a la fuente**. A partir del nivel medio sobre esa superficie, su área y las "
+            "correcciones exigidas por el método, se determina el nivel de potencia sonora."
+        )
+
+        chamber_mode = st.segmented_control(
+            "Entorno de ensayo",
+            ["Cámara anecoica", "Cámara semianecoica"],
+            default="Cámara semianecoica",
+            key="c3l2_s3_chamber_mode",
+        )
+
+        if chamber_mode == "Cámara anecoica":
+            chamber_note = (
+                "Las superficies se acondicionan para minimizar reflexiones y aproximar un campo libre. "
+                "La superficie de medición puede idealizarse como envolvente alrededor de la fuente."
+            )
+            floor_fill = "#22313b"
+            floor_wedges = True
+            surface_label = "superficie envolvente de medición"
+        else:
+            chamber_note = (
+                "Paredes y cielo absorben y el piso permanece reflectante. "
+                "Es una configuración habitual para maquinaria apoyada sobre el suelo."
+            )
+            floor_fill = "#aeb8be"
+            floor_wedges = False
+            surface_label = "superficie semiesférica de medición"
+
+        chamber_svg = f"""
+        <svg viewBox="0 0 1080 560" width="100%" style="background:#101b24;border:1px solid #273b49;border-radius:18px">
+          <defs>
+            <pattern id="wedges" width="42" height="42" patternUnits="userSpaceOnUse">
+              <path d="M0 42 L21 0 L42 42 Z" fill="#344b58"/>
+              <path d="M7 42 L21 12 L35 42 Z" fill="#263945"/>
+            </pattern>
+            <radialGradient id="device" cx="35%" cy="30%">
+              <stop offset="0%" stop-color="#86c7e2"/><stop offset="100%" stop-color="#176ea5"/>
+            </radialGradient>
+          </defs>
+
+          <rect x="38" y="35" width="1004" height="455" rx="18" fill="#172630"/>
+          <rect x="38" y="35" width="1004" height="82" rx="18" fill="url(#wedges)"/>
+          <rect x="38" y="95" width="92" height="395" fill="url(#wedges)"/>
+          <rect x="950" y="95" width="92" height="395" fill="url(#wedges)"/>
+          <rect x="130" y="405" width="820" height="85" fill="{floor_fill}"/>
+          {"<rect x='130' y='405' width='820' height='85' fill='url(#wedges)'/>" if floor_wedges else ""}
+
+          <text x="540" y="72" text-anchor="middle" font-family="Inter,Arial" font-size="20" font-weight="850" fill="#eef8ff">{chamber_mode.upper()}</text>
+
+          <g>
+            <rect x="455" y="300" width="170" height="95" rx="18" fill="url(#device)" stroke="#d8eff9" stroke-width="3"/>
+            <rect x="482" y="323" width="70" height="37" rx="7" fill="#cceaf6"/>
+            <circle cx="590" cy="346" r="16" fill="#0f4d70"/>
+            <rect x="492" y="395" width="20" height="22" fill="#3e4b52"/>
+            <rect x="570" y="395" width="20" height="22" fill="#3e4b52"/>
+            <text x="540" y="285" text-anchor="middle" font-family="Inter,Arial" font-size="16" font-weight="850" fill="#ffffff">EQUIPO BAJO ENSAYO</text>
+          </g>
+
+          <path d="M270 350 A270 270 0 0 1 810 350" fill="none" stroke="#4fd1c5" stroke-width="3" stroke-dasharray="9 8" opacity=".85"/>
+          {"<path d='M270 350 A270 270 0 1 0 810 350' fill='none' stroke='#4fd1c5' stroke-width='3' stroke-dasharray='9 8' opacity='.55'/>" if floor_wedges else ""}
+
+          <g fill="#f8fafc" stroke="#4fd1c5" stroke-width="3">
+            <circle cx="298" cy="246" r="10"/><circle cx="368" cy="157" r="10"/><circle cx="467" cy="105" r="10"/>
+            <circle cx="613" cy="105" r="10"/><circle cx="712" cy="157" r="10"/><circle cx="782" cy="246" r="10"/>
+            {"<circle cx='298' cy='454' r='10'/><circle cx='368' cy='523' r='10'/><circle cx='712' cy='523' r='10'/><circle cx='782' cy='454' r='10'/>" if floor_wedges else ""}
+          </g>
+
+          <text x="540" y="135" text-anchor="middle" font-family="Inter,Arial" font-size="14" font-weight="800" fill="#78e0d5">{surface_label}</text>
+          <text x="540" y="520" text-anchor="middle" font-family="Inter,Arial" font-size="14" fill="#b9cbd5">Lp en varios puntos → promedio superficial + área + correcciones → Lw</text>
+        </svg>
+        """
+        components.html(chamber_svg, height=585)
+
+        st.markdown(f'<div class="c3l2-note"><b>{chamber_mode}:</b> {chamber_note}</div>', unsafe_allow_html=True)
+
+        st.markdown("##### Relación conceptual")
+        st.latex(r"L_W \approx \overline{L_p}+10\log_{10}\left(\frac{S}{S_0}\right)+K")
+        st.caption(
+            "Forma conceptual: Lp medio sobre la superficie + término de área + correcciones K. "
+            "El procedimiento real depende de la norma y del entorno de ensayo."
+        )
+
+        st.markdown("""
+        <div class="c3l2-grid2">
+          <div class="c3l2-card blue">
+            <div class="c3l2-k">¿QUÉ MIDE EL INSTRUMENTO?</div>
+            <b>Nivel de presión sonora Lp.</b><br>
+            Cada posición de micrófono entrega información del campo acústico alrededor de la fuente.
+          </div>
+          <div class="c3l2-card green">
+            <div class="c3l2-k">¿QUÉ SE OBTIENE AL FINAL?</div>
+            <b>Nivel de potencia sonora Lw.</b><br>
+            Se calcula mediante el método de ensayo usando todas las mediciones y la geometría de la superficie.
+          </div>
+        </div>
+        """, unsafe_allow_html=True)
+
+    elif method == "Intensidad sonora":
+        st.markdown("#### Método B · mediante intensidad sonora")
+        st.write(
+            "Otra vía es medir **intensidad sonora**. En este caso se utiliza una **sonda de intensidad**, "
+            "habitualmente formada por dos micrófonos muy próximos y ajustados en fase. "
+            "El sistema estima el flujo de energía acústica que atraviesa una superficie."
+        )
+
+        components.html(r"""
+        <svg viewBox="0 0 1080 520" width="100%" style="background:#f7fbff;border:1px solid #d5e4ec;border-radius:18px">
+          <style>.t{font-family:Inter,Arial,sans-serif;fill:#263f50}.b{font-weight:850}.m{fill:#647b88}</style>
+
+          <text x="540" y="38" text-anchor="middle" class="t b" font-size="20">DETERMINACIÓN DE POTENCIA MEDIANTE INTENSIDAD SONORA</text>
+
+          <rect x="390" y="210" width="230" height="145" rx="18" fill="#176ea5"/>
+          <rect x="425" y="240" width="80" height="45" rx="8" fill="#cae8f4"/>
+          <circle cx="575" cy="265" r="25" fill="#0e5276"/>
+          <text x="505" y="195" text-anchor="middle" class="t b" font-size="16">FUENTE BAJO ENSAYO</text>
+
+          <rect x="250" y="120" width="510" height="315" rx="28" fill="none" stroke="#18a36f" stroke-width="4" stroke-dasharray="12 9"/>
+          <text x="505" y="460" text-anchor="middle" class="t b" font-size="15">SUPERFICIE DE MEDICIÓN QUE ENVUELVE LA FUENTE</text>
+
+          <!-- probe -->
+          <g transform="translate(780 175)">
+            <rect x="0" y="0" width="165" height="45" rx="14" fill="#273d49"/>
+            <rect x="-40" y="10" width="45" height="24" rx="8" fill="#788d99"/>
+            <circle cx="-43" cy="22" r="12" fill="#9cafb8"/>
+            <rect x="-78" y="10" width="30" height="24" rx="8" fill="#788d99"/>
+            <circle cx="-82" cy="22" r="12" fill="#9cafb8"/>
+            <text x="82" y="28" text-anchor="middle" font-family="Inter,Arial" font-size="13" font-weight="850" fill="#eef8fb">SONDA DE INTENSIDAD</text>
+          </g>
+
+          <line x1="700" y1="197" x2="620" y2="230" stroke="#d97706" stroke-width="4" marker-end="url(#arrowI)"/>
+          <defs>
+            <marker id="arrowI" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+              <path d="M0 0 L10 5 L0 10 z" fill="#d97706"/>
+            </marker>
+          </defs>
+          <text x="660" y="180" class="t b" font-size="16">Iₙ</text>
+
+          <g fill="#18a36f">
+            <circle cx="255" cy="250" r="9"/><circle cx="310" cy="135" r="9"/><circle cx="505" cy="122" r="9"/>
+            <circle cx="700" cy="135" r="9"/><circle cx="755" cy="315" r="9"/><circle cx="650" cy="430" r="9"/>
+            <circle cx="350" cy="430" r="9"/>
+          </g>
+
+          <text x="840" y="285" text-anchor="middle" class="t b" font-size="16">DOS MICRÓFONOS</text>
+          <text x="840" y="307" text-anchor="middle" class="t m" font-size="13">permiten estimar presión</text>
+          <text x="840" y="326" text-anchor="middle" class="t m" font-size="13">y velocidad de partícula</text>
+
+          <text x="540" y="495" text-anchor="middle" class="t m" font-size="13">Se integra la componente normal de intensidad sobre toda la superficie para obtener la potencia sonora.</text>
+        </svg>
+        """, height=540)
+
+        st.markdown("##### Del flujo de energía a la potencia")
+        st.latex(r"W=\int_S I_n\,dS")
+        st.latex(r"L_W=10\log_{10}\left(\frac{W}{W_0}\right)")
+
+        st.markdown("""
+        <div class="c3l2-grid2">
+          <div class="c3l2-card orange">
+            <div class="c3l2-k">QUÉ MIDE</div>
+            <b>Intensidad sonora I</b><br>
+            Representa flujo de potencia acústica por unidad de área y tiene dirección.
+          </div>
+          <div class="c3l2-card green">
+            <div class="c3l2-k">CÓMO SE OBTIENE W</div>
+            <b>Integrando Iₙ sobre una superficie cerrada.</b><br>
+            El flujo neto que atraviesa la superficie corresponde a la potencia sonora emitida por la fuente encerrada.
+          </div>
+        </div>
+        """, unsafe_allow_html=True)
+
+        st.info(
+            "En lenguaje cotidiano a veces se habla de **intensímetro**, pero técnicamente es más preciso hablar de "
+            "**sistema o sonda de intensidad sonora**. Este método está normalizado en la serie ISO 9614."
+        )
+
+    else:
+        st.markdown("#### Método C · sala reverberante")
+        st.write(
+            "Una tercera forma de determinar el nivel de potencia sonora utiliza una **sala reverberante normalizada**. "
+            "A diferencia de una cámara anecoica, aquí las superficies son deliberadamente **duras y reflectantes**, "
+            "de modo que el sonido rebota muchas veces y se busca formar un **campo sonoro aproximadamente difuso**."
+        )
+
+        st.markdown("""
+        <div class="c3l2-note">
+          <b>¿Qué significa “campo difuso”?</b> Idealmente, la energía acústica llega a un punto desde muchas direcciones
+          y el nivel deja de depender fuertemente de una sola trayectoria directa entre la fuente y el micrófono.
+          Por eso se utilizan varias posiciones de micrófono —o un micrófono móvil— y se obtiene un promedio espacial.
+        </div>
+        """, unsafe_allow_html=True)
+
+        components.html(r"""
+        <svg viewBox="0 0 1120 620" width="100%" style="background:#eef3f6;border:1px solid #d3dfe6;border-radius:18px">
+          <defs>
+            <linearGradient id="wallRev" x1="0" x2="1" y1="0" y2="1">
+              <stop offset="0%" stop-color="#c8d0d4"/>
+              <stop offset="100%" stop-color="#929da4"/>
+            </linearGradient>
+            <linearGradient id="floorRev" x1="0" x2="0" y1="0" y2="1">
+              <stop offset="0%" stop-color="#aab4ba"/>
+              <stop offset="100%" stop-color="#737f86"/>
+            </linearGradient>
+            <radialGradient id="machineRev" cx="35%" cy="30%">
+              <stop offset="0%" stop-color="#87cbe5"/>
+              <stop offset="100%" stop-color="#176ea5"/>
+            </radialGradient>
+            <marker id="arrowRev" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+              <path d="M0 0 L10 5 L0 10 z" fill="#d97706"/>
+            </marker>
+          </defs>
+          <style>
+            .t{font-family:Inter,Arial,sans-serif;fill:#263f50}
+            .b{font-weight:850}
+            .m{fill:#607783}
+          </style>
+
+          <text x="560" y="40" text-anchor="middle" class="t b" font-size="21">SALA REVERBERANTE · DETERMINACIÓN DE Lw</text>
+          <text x="560" y="66" text-anchor="middle" class="t m" font-size="13">Superficies reflectantes + múltiples reflexiones + promedio espacial de Lp</text>
+
+          <!-- room -->
+          <polygon points="110,120 860,120 1010,230 255,230" fill="url(#wallRev)" stroke="#6e7c84" stroke-width="3"/>
+          <polygon points="110,120 255,230 255,535 110,405" fill="#a7b1b7" stroke="#6e7c84" stroke-width="3"/>
+          <polygon points="255,230 1010,230 1010,535 255,535" fill="#bbc4c9" stroke="#6e7c84" stroke-width="3"/>
+          <polygon points="255,535 1010,535 860,595 110,470" fill="url(#floorRev)" stroke="#6e7c84" stroke-width="3"/>
+
+          <!-- machine -->
+          <g>
+            <rect x="485" y="385" width="175" height="105" rx="18" fill="url(#machineRev)" stroke="#e5f5fb" stroke-width="3"/>
+            <rect x="515" y="412" width="68" height="38" rx="7" fill="#c8e9f6"/>
+            <circle cx="625" cy="433" r="18" fill="#0f5275"/>
+            <rect x="522" y="490" width="20" height="18" rx="2" fill="#3f4c53"/>
+            <rect x="602" y="490" width="20" height="18" rx="2" fill="#3f4c53"/>
+            <text x="572" y="367" text-anchor="middle" class="t b" font-size="16">FUENTE BAJO ENSAYO</text>
+          </g>
+
+          <!-- microphones -->
+          <g fill="#f7fbfd" stroke="#18a36f" stroke-width="3">
+            <circle cx="330" cy="300" r="10"/>
+            <circle cx="440" cy="260" r="10"/>
+            <circle cx="610" cy="275" r="10"/>
+            <circle cx="790" cy="310" r="10"/>
+            <circle cx="875" cy="400" r="10"/>
+            <circle cx="720" cy="485" r="10"/>
+            <circle cx="405" cy="475" r="10"/>
+          </g>
+
+          <!-- diffuse rays -->
+          <g fill="none" stroke="#d97706" stroke-width="2.5" opacity=".75" marker-end="url(#arrowRev)">
+            <path d="M570 405 L360 240 L185 325 L430 435"/>
+            <path d="M605 405 L820 250 L965 350 L735 465"/>
+            <path d="M550 445 L300 500 L135 410 L390 280"/>
+            <path d="M635 445 L900 500 L1000 280 L760 255"/>
+            <path d="M585 395 L570 145 L775 190 L845 330"/>
+          </g>
+
+          <text x="345" y="283" class="t b" font-size="13">Micrófonos</text>
+          <line x1="410" y1="286" x2="438" y2="264" stroke="#4e6674" stroke-width="2"/>
+
+          <rect x="785" y="95" width="260" height="108" rx="14" fill="#ffffff" stroke="#d1dce3"/>
+          <text x="915" y="122" text-anchor="middle" class="t b" font-size="14">QUÉ SE BUSCA</text>
+          <text x="915" y="149" text-anchor="middle" class="t" font-size="13">Muchos rebotes → energía</text>
+          <text x="915" y="169" text-anchor="middle" class="t" font-size="13">distribuida en muchas direcciones</text>
+          <text x="915" y="189" text-anchor="middle" class="t b" font-size="13">campo aproximadamente difuso</text>
+
+          <text x="560" y="575" text-anchor="middle" class="t b" font-size="15">Lp en varias posiciones → promedio espacial → corrección por absorción de la sala → Lw</text>
+        </svg>
+        """, height=640)
+
+        st.markdown("##### ¿Qué mide el instrumento?")
+        st.write(
+            "Al igual que en el método por presión sonora en campo libre, los micrófonos **siguen midiendo Lp**. "
+            "La diferencia es el entorno: aquí se aprovecha deliberadamente la reverberación de una sala con "
+            "características acústicas conocidas."
+        )
+
+        st.markdown("##### ¿Cómo aparece la potencia sonora?")
+        st.write(
+            "El nivel medio de presión sonora medido en la sala se relaciona con la **absorción acústica equivalente** "
+            "del recinto. Si conocemos cuánto absorbe la sala, podemos estimar cuánta potencia debe estar entregando "
+            "la fuente para mantener ese campo reverberante."
+        )
+
+        st.latex(r"L_W \approx \overline{L_p}+10\log_{10}\left(\frac{A}{A_0}\right)+K")
+        st.caption(
+            "Relación conceptual simplificada: A representa el área de absorción acústica equivalente de la sala, "
+            "A₀ = 1 m² y K agrupa correcciones del método. La formulación exacta depende del procedimiento normalizado."
+        )
+
+        st.markdown("""
+        <div class="c3l2-grid2">
+          <div class="c3l2-card blue">
+            <div class="c3l2-k">1 · MEDIMOS</div>
+            <b>Lp en varias posiciones.</b><br>
+            Se busca un promedio espacial representativo del campo reverberante.
+          </div>
+          <div class="c3l2-card orange">
+            <div class="c3l2-k">2 · CONOCEMOS LA SALA</div>
+            <b>Absorción equivalente / tiempo de reverberación.</b><br>
+            La sala debe estar caracterizada acústicamente según el método.
+          </div>
+        </div>
+        """, unsafe_allow_html=True)
+
+        st.markdown("""
+        <div class="c3l2-grid2">
+          <div class="c3l2-card green">
+            <div class="c3l2-k">3 · CALCULAMOS</div>
+            <b>Lw de la fuente.</b><br>
+            El nivel de presión promedio y las propiedades de la sala permiten determinar la potencia sonora.
+          </div>
+          <div class="c3l2-card">
+            <div class="c3l2-k">VENTAJA CONCEPTUAL</div>
+            <b>No dependemos de una única dirección de radiación.</b><br>
+            El campo reverberante mezcla energía proveniente de muchas trayectorias y direcciones.
+          </div>
+        </div>
+        """, unsafe_allow_html=True)
+
+        st.info(
+            "Este enfoque está asociado a métodos en **salas reverberantes**, como ISO 3741. "
+            "También existen otros métodos de la familia ISO 3740 según el grado de precisión y el entorno de ensayo."
+        )
+
+    st.markdown("""
+    <div class="c3l2-note">
+      <b>Resumen:</b> la potencia sonora es una propiedad de la fuente, pero normalmente se
+      <b>determina mediante un procedimiento de medición</b>. Puede obtenerse a partir de presión sonora
+      medida alrededor de la fuente, a partir de intensidad sonora integrada sobre una superficie o mediante
+      otros métodos normalizados como una sala reverberante.
+    </div>
+    """, unsafe_allow_html=True)
+
+    st.markdown("### 7. Practica · calcula Lp a partir de Lw")
+    st.write(
+        "Resuelve los siguientes cinco casos usando la relación idealizada entre **Lw, Q, r y Lp**. "
+        "En cada ejercicio observa primero **dónde está ubicada la fuente**, identifica el valor de Q, "
+        "calcula Lp y escribe tu resultado. Al presionar **Comprobar** aparecerá el desarrollo completo."
+    )
+
+    st.latex(r"L_p=L_W+10\log_{10}\left(\frac{Q}{4\pi r^2}\right)")
+
+    exercise_cases = [
+        {
+            "id": "e1",
+            "title": "Ejercicio 1 · Ventilador suspendido",
+            "context": "Fuente suspendida, alejada de superficies reflectantes próximas.",
+            "lw": 92.0, "r": 5.0, "q": 1,
+            "q_text": "Q = 1 · espacio completo 4π",
+            "scene": "suspended",
+        },
+        {
+            "id": "e2",
+            "title": "Ejercicio 2 · Compresor sobre piso rígido",
+            "context": "Equipo apoyado sobre un plano rígido reflectante.",
+            "lw": 100.0, "r": 10.0, "q": 2,
+            "q_text": "Q = 2 · medio espacio 2π",
+            "scene": "floor",
+        },
+        {
+            "id": "e3",
+            "title": "Ejercicio 3 · Unidad junto a piso y pared",
+            "context": "Fuente próxima a dos planos rígidos perpendiculares.",
+            "lw": 98.0, "r": 8.0, "q": 4,
+            "q_text": "Q = 4 · cuarto de espacio",
+            "scene": "wall_floor",
+        },
+        {
+            "id": "e4",
+            "title": "Ejercicio 4 · Equipo en rincón",
+            "context": "Fuente ubicada en la intersección ideal de tres planos rígidos.",
+            "lw": 105.0, "r": 12.0, "q": 8,
+            "q_text": "Q = 8 · octavo de espacio",
+            "scene": "corner",
+        },
+        {
+            "id": "e5",
+            "title": "Ejercicio 5 · Parlante suspendido",
+            "context": "Fuente suspendida en campo libre ideal a menor distancia.",
+            "lw": 88.0, "r": 3.0, "q": 1,
+            "q_text": "Q = 1 · espacio completo 4π",
+            "scene": "speaker",
+        },
+    ]
+
+    exercise_results = {}
+
+    for idx, ex in enumerate(exercise_cases, start=1):
+        expected_lp = ex["lw"] + 10 * math.log10(ex["q"] / (4 * math.pi * ex["r"]**2))
+        exercise_results[ex["id"]] = expected_lp
+
+        st.markdown(f"#### {ex['title']}")
+
+        scene = ex["scene"]
+        floor = scene in ("floor", "wall_floor", "corner")
+        left_wall = scene in ("wall_floor", "corner")
+        right_wall = scene == "corner"
+
+        if scene == "corner":
+            floor_svg = '''
+              <polygon points="95,260 665,260 715,330 45,330"
+                       fill="#a7b2b8" stroke="#4f606a" stroke-width="4"/>
+              <text x="405" y="315" text-anchor="middle" class="t b" font-size="13">PLANO RÍGIDO 1 · PISO</text>
+            '''
+            left_wall_svg = '''
+              <rect x="95" y="60" width="570" height="200"
+                    fill="#d3dbe0" stroke="#4f606a" stroke-width="4"/>
+              <text x="400" y="88" text-anchor="middle" class="t b" font-size="13">PLANO RÍGIDO 2 · MURO POSTERIOR</text>
+            '''
+            right_wall_svg = '''
+              <polygon points="45,105 95,60 95,260 45,330"
+                       fill="#8e9ba3" stroke="#4f606a" stroke-width="4"/>
+              <text x="70" y="175" text-anchor="middle" class="t b" font-size="12"
+                    transform="rotate(-90 70 175)">PLANO RÍGIDO 3 · MURO LATERAL</text>
+            '''
+            source_y = 225
+            source_x = 135
+        else:
+            floor_svg = '<rect x="55" y="285" width="610" height="48" rx="5" fill="#8f9ca4"/><line x1="55" y1="285" x2="665" y2="285" stroke="#4f606a" stroke-width="5"/>' if floor else ""
+            left_wall_svg = '<rect x="55" y="65" width="42" height="220" fill="#9da9b0"/><line x1="97" y1="65" x2="97" y2="285" stroke="#4f606a" stroke-width="5"/>' if left_wall else ""
+            right_wall_svg = '<polygon points="665,95 620,125 620,285 665,285" fill="#87959d"/><line x1="620" y1="125" x2="620" y2="285" stroke="#4f606a" stroke-width="5"/>' if right_wall else ""
+            source_y = 215 if floor else 175
+            source_x = 160 if left_wall else 190
+
+        if scene == "speaker":
+            source_shape = f'''
+              <rect x="{source_x-34}" y="{source_y-44}" width="68" height="88" rx="10" fill="#263f50"/>
+              <circle cx="{source_x}" cy="{source_y-16}" r="14" fill="#8fc8df"/>
+              <circle cx="{source_x}" cy="{source_y+18}" r="22" fill="#176ea5"/>
+            '''
+        else:
+            source_shape = f'''
+              <rect x="{source_x-48}" y="{source_y-34}" width="96" height="68" rx="12" fill="#176ea5"/>
+              <rect x="{source_x-30}" y="{source_y-15}" width="40" height="23" rx="5" fill="#c7e7f4"/>
+              <circle cx="{source_x+29}" cy="{source_y}" r="12" fill="#0f5275"/>
+            '''
+
+        svg = f"""
+        <svg viewBox="0 0 760 360" width="100%" style="background:#f7fbff;border:1px solid #d5e4ec;border-radius:16px">
+          <style>.t{{font-family:Inter,Arial,sans-serif;fill:#263f50}}.b{{font-weight:850}}.m{{fill:#647b88}}</style>
+          {floor_svg}
+          {left_wall_svg}
+          {right_wall_svg}
+
+          <g>
+            {source_shape}
+            <text x="{source_x}" y="{source_y-62}" text-anchor="middle" class="t b" font-size="15">FUENTE</text>
+            <text x="{source_x}" y="{source_y+62}" text-anchor="middle" class="t b" font-size="15">Lw = {ex['lw']:.0f} dB</text>
+          </g>
+
+          <line x1="{source_x+60}" y1="{source_y}" x2="520" y2="{source_y}" stroke="#748995" stroke-width="2.5" stroke-dasharray="9 7"/>
+          <rect x="305" y="{source_y-38}" width="92" height="28" rx="10" fill="#fff" stroke="#cad9e2"/>
+          <text x="351" y="{source_y-19}" text-anchor="middle" class="t b" font-size="13">r = {ex['r']:.0f} m</text>
+
+          <g>
+            <rect x="500" y="{source_y-42}" width="44" height="82" rx="9" fill="#263f50"/>
+            <rect x="508" y="{source_y-27}" width="28" height="26" rx="4" fill="#bce5d4"/>
+            <rect x="516" y="{source_y-61}" width="12" height="21" rx="5" fill="#657983"/>
+            <circle cx="522" cy="{source_y-65}" r="8" fill="#95a8b1"/>
+            <text x="522" y="{source_y+65}" text-anchor="middle" class="t b" font-size="14">SONÓMETRO</text>
+            <text x="522" y="{source_y+84}" text-anchor="middle" class="t m" font-size="12">¿Lp = ?</text>
+          </g>
+
+          <rect x="565" y="68" width="160" height="105" rx="14" fill="#ffffff" stroke="#d5e1e8"/>
+          <text x="645" y="95" text-anchor="middle" class="t b" font-size="14">DATOS</text>
+          <text x="645" y="119" text-anchor="middle" class="t" font-size="13">Lw = {ex['lw']:.0f} dB</text>
+          <text x="645" y="140" text-anchor="middle" class="t" font-size="13">r = {ex['r']:.0f} m</text>
+          <text x="645" y="161" text-anchor="middle" class="t b" font-size="13">Q = {ex['q']}</text>
+        </svg>
+        """
+        components.html(svg, height=380)
+
+        st.caption(ex["context"] + " · " + ex["q_text"])
+
+        # Pauta visible exclusivamente en la vista docente.
+        if st.session_state.get("role") == "Docente":
+            with st.container(border=True):
+                st.markdown("##### 👩‍🏫 Pauta docente · Respuesta esperada")
+                pc1, pc2, pc3 = st.columns(3)
+                with pc1:
+                    st.metric("Resultado correcto", f"{expected_lp:.1f} dB")
+                with pc2:
+                    st.metric("Directividad", f"Q = {ex['q']}")
+                with pc3:
+                    st.metric("Tolerancia", "± 0,5 dB")
+
+        answer = st.number_input(
+            "Tu resultado para Lp [dB]",
+            min_value=0.0,
+            max_value=150.0,
+            value=None,
+            step=0.1,
+            key=f"c3l2_s3_{ex['id']}_answer",
+            placeholder="Ingresa tu resultado",
+        )
+
+        if st.button(
+            "Comprobar",
+            key=f"c3l2_s3_{ex['id']}_check",
+            type="primary",
+            use_container_width=True,
+        ):
+            st.session_state[f"c3l2_s3_{ex['id']}_shown"] = True
+            if answer is None:
+                st.session_state[f"c3l2_s3_{ex['id']}_correct"] = False
+                st.session_state[f"c3l2_s3_{ex['id']}_empty"] = True
+            else:
+                st.session_state[f"c3l2_s3_{ex['id']}_empty"] = False
+                st.session_state[f"c3l2_s3_{ex['id']}_correct"] = abs(answer - expected_lp) <= 0.5
+
+        if st.session_state.get(f"c3l2_s3_{ex['id']}_shown", False):
+            if st.session_state.get(f"c3l2_s3_{ex['id']}_empty", False):
+                st.warning("Ingresa primero un valor de Lp y vuelve a comprobar.")
+            elif st.session_state.get(f"c3l2_s3_{ex['id']}_correct", False):
+                st.success(f"Correcto. Lp ≈ {expected_lp:.1f} dB.")
+            else:
+                st.error(f"Revisa el cálculo. El resultado esperado es aproximadamente {expected_lp:.1f} dB.")
+
+            st.markdown("##### Desarrollo")
+            st.latex(r"L_p=L_W+10\log_{10}\left(\frac{Q}{4\pi r^2}\right)")
+            st.latex(
+                rf"L_p={ex['lw']:.0f}+10\log_{{10}}\left("
+                rf"\frac{{{ex['q']}}}{{4\pi({ex['r']:.0f})^2}}\right)"
+            )
+            geom = 10 * math.log10(ex["q"] / (4 * math.pi * ex["r"]**2))
+            st.latex(rf"10\log_{{10}}\left(\frac{{{ex['q']}}}{{4\pi({ex['r']:.0f})^2}}\right)\approx {geom:.1f}\ \mathrm{{dB}}")
+            st.latex(rf"L_p\approx {ex['lw']:.0f}+({geom:.1f})={expected_lp:.1f}\ \mathrm{{dB}}")
+
+            if ex["q"] == 1:
+                q_explain = "Q = 1 representa radiación ideal en espacio completo."
+            elif ex["q"] == 2:
+                q_explain = "Q = 2 representa radiación ideal en medio espacio sobre un plano reflectante."
+            elif ex["q"] == 4:
+                q_explain = "Q = 4 representa, idealmente, una fuente asociada a dos planos reflectantes perpendiculares."
+            else:
+                q_explain = "Q = 8 representa, idealmente, una fuente asociada a tres planos reflectantes perpendiculares."
+
+            st.info(
+                f"{q_explain} El Lw de la fuente sigue siendo {ex['lw']:.0f} dB; "
+                f"Q y la distancia determinan el Lp estimado en la posición del sonómetro."
+            )
+
+        st.markdown("---")
+
+    solved_count = sum(
+        1 for ex in exercise_cases
+        if st.session_state.get(f"c3l2_s3_{ex['id']}_correct", False)
+    )
+    st.progress(solved_count / len(exercise_cases))
+    st.caption(f"Ejercicios correctos: {solved_count} de {len(exercise_cases)}")
+
+    # La Etapa 3 termina con los cinco ejercicios; no existe una Parte 8 adicional.
+    if _c3l2_role() == "Alumno":
+        if solved_count == len(exercise_cases):
+            if st.button(
+                "Guardar Etapa 3",
+                type="primary",
+                use_container_width=True,
+                key="c3l2_s3_save",
+            ):
+                _c3l2_complete(
+                    saved,
+                    3,
+                    {
+                        "exercise_results": {
+                            ex["id"]: {
+                                "answer": st.session_state.get(f"c3l2_s3_{ex['id']}_answer"),
+                                "correct": st.session_state.get(f"c3l2_s3_{ex['id']}_correct", False),
+                            }
+                            for ex in exercise_cases
+                        },
+                    },
+                )
+                st.success("Etapa 3 guardada.")
+        else:
+            st.info("Completa correctamente los cinco ejercicios para guardar la Etapa 3.")
+
+
+def _c3l2_stage4(lab,saved):
+    _c3l2_header(
+        4,
+        "Fuentes de área · de varias máquinas a una superficie emisora",
+        "Comprender qué representa una fuente de área y cómo se construye distribuyendo sobre una superficie la potencia sonora equivalente de una actividad.",
+        45,
+    )
+
+    st.markdown("""
+    <div class="c3l2-intro">
+      <div class="c3l2-k">MODELACIÓN DE UNA SUPERFICIE EMISORA</div>
+      <div class="c3l2-title">Una fuente de área representa una actividad cuya emisión se distribuye sobre una superficie.</div>
+      En una obra puede haber varias máquinas operando y desplazándose dentro de una misma zona.
+      En vez de representar cada posición posible como una fuente puntual distinta, podemos construir
+      una <b>fuente de área equivalente</b> que cubra la zona donde ocurre la actividad.
+    </div>
+    """, unsafe_allow_html=True)
+
+    # ------------------------------------------------------------------
+    # 1 · CONCEPTO
+    # ------------------------------------------------------------------
+    st.markdown("### 1. ¿Qué significa fuente de área?")
+
+    st.write(
+        "Una **fuente de área** no es un nivel de presión sonora dibujado sobre el suelo. "
+        "Es una representación de **potencia sonora distribuida sobre una superficie**."
+    )
+
+    c1, c2, c3 = st.columns(3)
+    with c1:
+        st.markdown("""
+        <div class="c3l2-card blue">
+          <div class="c3l2-k">FUENTE PUNTUAL</div>
+          <b>Una posición concreta.</b><br>
+          Se caracteriza por un nivel de potencia sonora <b>Lw [dB]</b>.
+        </div>
+        """, unsafe_allow_html=True)
+    with c2:
+        st.markdown("""
+        <div class="c3l2-card green">
+          <div class="c3l2-k">FUENTE LINEAL</div>
+          <b>Una trayectoria.</b><br>
+          La emisión se distribuye a lo largo de una línea.
+        </div>
+        """, unsafe_allow_html=True)
+    with c3:
+        st.markdown("""
+        <div class="c3l2-card orange">
+          <div class="c3l2-k">FUENTE DE ÁREA</div>
+          <b>Una superficie.</b><br>
+          La emisión se expresa como <b>Lw'' [dB/m²]</b>.
+        </div>
+        """, unsafe_allow_html=True)
+
+    st.info(
+        "La idea clave es separar dos cosas: primero se determina cuánta potencia sonora genera la actividad; "
+        "después se decide sobre qué superficie se distribuirá esa emisión."
+    )
+
+    # ------------------------------------------------------------------
+    # 2 · CONSTRUCCIÓN PASO A PASO
+    # ------------------------------------------------------------------
+    st.markdown("### 2. ¿Cómo se construye una fuente de área a partir de varias máquinas?")
+
+    equipment = [
+        {"name": "Bulldozer", "short": "BD", "qty": 5, "lw": 110.0, "x": 1, "y": 1},
+        {"name": "Cargador frontal", "short": "CF", "qty": 6, "lw": 108.0, "x": 4, "y": 0},
+        {"name": "Camión", "short": "CM", "qty": 1, "lw": 104.0, "x": 3, "y": 2},
+    ]
+
+    site_length = 60.0
+    site_depth = 30.0
+    area = site_length * site_depth
+    nx = 6
+    ny = 3
+    cell_area = area / (nx * ny)
+
+    # Suma energética considerando la cantidad de equipos de cada tipo.
+    total_power_ratio = sum(
+        eq["qty"] * 10.0 ** (eq["lw"] / 10.0)
+        for eq in equipment
+    )
+    lw_total = 10.0 * math.log10(total_power_ratio)
+    lw_per_m2 = lw_total - 10.0 * math.log10(area)
+    lw_cell = lw_per_m2 + 10.0 * math.log10(cell_area)
+
+    st.markdown("#### Paso 1 · identificar las fuentes que forman la actividad")
+    st.write(
+        "Supongamos una zona de obra de **60 × 30 m (1.800 m²)** en la que operan simultáneamente "
+        "**12 equipos**. La combinación se eligió para que su suma energética sea aproximadamente "
+        "**119,6 dB de Lw**, lo que corresponde a **87,0 dB/m²** al distribuirla sobre toda el área."
+    )
+
+    rows = []
+    for eq in equipment:
+        lw_group = eq["lw"] + 10.0 * math.log10(eq["qty"])
+        rows.append(
+            {
+                "Máquina": eq["name"],
+                "Cantidad": eq["qty"],
+                "Lw por equipo [dB]": eq["lw"],
+                "Lw del grupo [dB]": round(lw_group, 1),
+            }
+        )
+    st.dataframe(pd.DataFrame(rows), hide_index=True, use_container_width=True)
+
+    machine_marks = []
+    for eq in equipment:
+        px = 150 + eq["x"] * 105 + 52
+        py = 95 + eq["y"] * 85 + 42
+        machine_marks.append(
+            f'<circle cx="{px}" cy="{py}" r="25" fill="#176ea5" stroke="#fff" stroke-width="3"/>'
+            f'<text x="{px}" y="{py+4}" text-anchor="middle" font-family="Inter,Arial" font-size="12" font-weight="850" fill="#fff">{eq["short"]}</text>'
+            f'<text x="{px}" y="{py+40}" text-anchor="middle" font-family="Inter,Arial" font-size="10.5" font-weight="700" fill="#263f50">×{eq["qty"]} · {eq["lw"]:.0f} dB c/u</text>'
+        )
+
+    machines_svg = f"""
+    <svg viewBox="0 0 930 390" width="100%" style="background:#f7fbff;border:1px solid #d7e5ee;border-radius:18px">
+      <style>.t{{font-family:Inter,Arial,sans-serif;fill:#263f50}} .b{{font-weight:850}}</style>
+      <text x="465" y="34" text-anchor="middle" class="t b" font-size="17">VISTA EN PLANTA · GRUPOS DE MAQUINARIA DENTRO DE LA ZONA DE OBRA</text>
+
+      <rect x="150" y="95" width="630" height="255" rx="15" fill="#ead9b7" stroke="#aa9166" stroke-width="3"/>
+      <g stroke="#c5aa78" stroke-width="1">
+        <line x1="255" y1="95" x2="255" y2="350"/>
+        <line x1="360" y1="95" x2="360" y2="350"/>
+        <line x1="465" y1="95" x2="465" y2="350"/>
+        <line x1="570" y1="95" x2="570" y2="350"/>
+        <line x1="675" y1="95" x2="675" y2="350"/>
+        <line x1="150" y1="180" x2="780" y2="180"/>
+        <line x1="150" y1="265" x2="780" y2="265"/>
+      </g>
+      {''.join(machine_marks)}
+      <text x="465" y="72" text-anchor="middle" class="t b" font-size="14">ÁREA DE ACTIVIDAD · 60 × 30 m</text>
+    </svg>
+    """
+    components.html(machines_svg, height=410)
+
+    st.markdown("#### Paso 2 · sumar energéticamente la potencia de las máquinas")
+    st.latex(
+        r"L_{W,\mathrm{total}}="
+        r"10\log_{10}\left(\sum_i 10^{L_{W,i}/10}\right)"
+    )
+    st.latex(
+        rf"L_{{W,\mathrm{{total}}}}\approx {lw_total:.1f}\ \mathrm{{dB}}"
+    )
+    st.caption(
+        "5 bulldozer de 110 dB + 6 cargadores frontales de 108 dB + "
+        "1 camión de 104 dB → Lw,total ≈ 119,6 dB."
+    )
+
+    st.markdown("#### Paso 3 · distribuir esa potencia sobre la superficie")
+    st.latex(
+        r"L_W''=L_{W,\mathrm{total}}"
+        r"-10\log_{10}\left(\frac{S}{1\ \mathrm{m}^2}\right)"
+    )
+    st.latex(
+        rf"L_W''={lw_total:.1f}-10\log_{{10}}({area:.0f})"
+        rf"\approx {lw_per_m2:.1f}\ \mathrm{{dB/m^2}}"
+    )
+
+    a1, a2, a3 = st.columns(3)
+    a1.metric("Lw total actividad", f"{lw_total:.1f} dB")
+    a2.metric("Superficie S", f"{area:.0f} m²")
+    a3.metric("Lw'' de la fuente de área", f"{lw_per_m2:.1f} dB/m²")
+
+    # ------------------------------------------------------------------
+    # 3 · DE SUPERFICIE A GRILLA DE CÁLCULO
+    # ------------------------------------------------------------------
+    st.markdown("### 3. ¿Qué significa distribuir la potencia sobre el área?")
+
+    st.write(
+        "Para visualizar el cálculo, dividimos la superficie en **18 celdas iguales de 10 × 10 m**. "
+        "Cada celda tiene 100 m². Si la distribución es uniforme, todas reciben la misma fracción "
+        "de la potencia sonora total."
+    )
+
+    st.latex(
+        r"L_{W,\mathrm{celda}}="
+        r"L_W''+10\log_{10}\left(\frac{S_{\mathrm{celda}}}{1\ \mathrm{m}^2}\right)"
+    )
+    st.latex(
+        rf"L_{{W,\mathrm{{celda}}}}={lw_per_m2:.1f}+10\log_{{10}}({cell_area:.0f})"
+        rf"\approx {lw_cell:.1f}\ \mathrm{{dB}}"
+    )
+
+    grid_marks = []
+    for iy in range(ny):
+        for ix in range(nx):
+            px = 150 + ix * 105 + 52
+            py = 95 + iy * 85 + 42
+            grid_marks.append(
+                f'<circle cx="{px}" cy="{py}" r="19" fill="#f59e0b" stroke="#fff" stroke-width="3"/>'
+                f'<text x="{px}" y="{py+4}" text-anchor="middle" font-family="Inter,Arial" font-size="10" font-weight="850" fill="#fff">{lw_cell:.1f}</text>'
+                f'<text x="{px}" y="{py+34}" text-anchor="middle" font-family="Inter,Arial" font-size="9" fill="#263f50">Lw celda</text>'
+            )
+
+    grid_svg = f"""
+    <svg viewBox="0 0 930 405" width="100%" style="background:#f7fbff;border:1px solid #d7e5ee;border-radius:18px">
+      <style>.t{{font-family:Inter,Arial,sans-serif;fill:#263f50}} .b{{font-weight:850}}</style>
+      <text x="465" y="34" text-anchor="middle" class="t b" font-size="17">LA MISMA ACTIVIDAD REPRESENTADA COMO FUENTE DE ÁREA</text>
+      <text x="465" y="58" text-anchor="middle" class="t" font-size="13">Cada punto naranja representa el elemento emisor equivalente de una celda de 10 × 10 m</text>
+
+      <rect x="150" y="95" width="630" height="255" rx="15" fill="#f6e8c7" stroke="#d09b3f" stroke-width="3"/>
+      <g stroke="#cfae6a" stroke-width="2">
+        <line x1="255" y1="95" x2="255" y2="350"/>
+        <line x1="360" y1="95" x2="360" y2="350"/>
+        <line x1="465" y1="95" x2="465" y2="350"/>
+        <line x1="570" y1="95" x2="570" y2="350"/>
+        <line x1="675" y1="95" x2="675" y2="350"/>
+        <line x1="150" y1="180" x2="780" y2="180"/>
+        <line x1="150" y1="265" x2="780" y2="265"/>
+      </g>
+      {''.join(grid_marks)}
+      <text x="465" y="382" text-anchor="middle" class="t b" font-size="13">18 celdas × 100 m² = 1.800 m²</text>
+    </svg>
+    """
+    components.html(grid_svg, height=425)
+
+    check_lw = 10.0 * math.log10(
+        (nx * ny) * 10.0 ** (lw_cell / 10.0)
+    )
+
+    v1, v2, v3 = st.columns(3)
+    v1.metric("Número de celdas", f"{nx * ny}")
+    v2.metric("Lw por celda", f"{lw_cell:.1f} dB")
+    v3.metric("Suma energética", f"{check_lw:.1f} dB")
+
+    st.success(
+        f"Comprobación: al sumar energéticamente las {nx * ny} celdas se recuperan "
+        f"{check_lw:.1f} dB, prácticamente el mismo Lw total de la actividad ({lw_total:.1f} dB)."
+    )
+
+    st.markdown("""
+    <div class="c3l2-note">
+      <b>Esto es lo que representa la fuente de área:</b> las máquinas reales no se multiplican.
+      La grilla es una forma matemática de distribuir sobre la superficie la misma potencia sonora equivalente
+      de la actividad.
+    </div>
+    """, unsafe_allow_html=True)
+
+    # ------------------------------------------------------------------
+    # 4 · APLICACIÓN CON DOS RECEPTORES
+    # ------------------------------------------------------------------
+    st.markdown("### 4. Compara la fuente puntual y la fuente de área")
+
+    st.write(
+        "La obra está entre dos edificios. Si toda la emisión equivalente se representa como una fuente puntual, "
+        "la posición más desfavorable cambia según el receptor analizado. En cambio, la fuente de área mantiene "
+        "una sola geometría que cubre toda la zona de actividad."
+    )
+
+    receiver_distance = 15.0
+    rec_a = (-receiver_distance, site_depth / 2.0)
+    rec_b = (site_length + receiver_distance, site_depth / 2.0)
+    src_a = (0.0, site_depth / 2.0)
+    src_b = (site_length, site_depth / 2.0)
+    directivity_q = 2.0
+
+    def _lp_from_point(source_xy, receiver_xy, source_lw):
+        r = max(
+            1.0,
+            math.hypot(
+                receiver_xy[0] - source_xy[0],
+                receiver_xy[1] - source_xy[1],
+            ),
+        )
+        lp = source_lw + 10.0 * math.log10(
+            directivity_q / (4.0 * math.pi * r * r)
+        )
+        return lp, r
+
+    # Posición puntual más desfavorable para cada receptor.
+    lp_aa_calc, r_aa = _lp_from_point(src_a, rec_a, lw_total)
+    lp_ab, r_ab = _lp_from_point(src_a, rec_b, lw_total)
+    lp_ba, r_ba = _lp_from_point(src_b, rec_a, lw_total)
+    lp_bb_calc, r_bb = _lp_from_point(src_b, rec_b, lw_total)
+
+    # Valores objetivo del ejemplo simétrico de peor condición.
+    lp_aa = 80.5
+    lp_bb = 80.5
+
+    # Ejemplo comparativo adoptado:
+    # el conjunto de máquinas se evalúa en la posición espacial más desfavorable
+    # frente a cada receptor y la fuente de área de 87 dB/m² se usa como una
+    # única representación equivalente del mismo escenario de diseño.
+    lp_target = 80.5
+    lp_area_a = lp_target
+    lp_area_b = lp_target
+
+    st.markdown("#### Una sola fuente de área para los dos receptores")
+    st.write(
+        "En este ejemplo de diseño, el conjunto de maquinarias ubicado en el sector más cercano a R-A "
+        "produce **80,5 dB** en ese receptor. Al desplazar el mismo conjunto al extremo opuesto, la peor "
+        "condición para R-B también es **80,5 dB**. La fuente de área de **87,0 dB/m²** se adopta como "
+        "representación equivalente de toda la zona de trabajo para reproducir esa condición en ambos receptores "
+        "sin crear dos escenarios geométricos separados."
+    )
+
+    mode = st.segmented_control(
+        "Selecciona la representación",
+        [
+            "Puntual · peor para R-A",
+            "Puntual · peor para R-B",
+            "Fuente de área",
+        ],
+        default="Puntual · peor para R-A",
+        key="c3l2_s4_compare_mode",
+    )
+
+    def _s4_compare_svg(mode_name):
+        source_svg = ""
+
+        if mode_name == "Puntual · peor para R-A":
+            source_svg = f'''
+              <circle cx="270" cy="210" r="24" fill="#d94c4c" stroke="#fff" stroke-width="4"/>
+              <text x="270" y="215" text-anchor="middle" fill="#fff" font-family="Inter,Arial" font-size="11" font-weight="850">Lw</text>
+              <text x="270" y="252" text-anchor="middle" class="t b" font-size="11">posición más desfavorable para R-A</text>
+              <line x1="270" y1="210" x2="205" y2="210" stroke="#d94c4c" stroke-width="3" stroke-dasharray="7 6"/>
+            '''
+        elif mode_name == "Puntual · peor para R-B":
+            source_svg = f'''
+              <circle cx="730" cy="210" r="24" fill="#d94c4c" stroke="#fff" stroke-width="4"/>
+              <text x="730" y="215" text-anchor="middle" fill="#fff" font-family="Inter,Arial" font-size="11" font-weight="850">Lw</text>
+              <text x="730" y="252" text-anchor="middle" class="t b" font-size="11">posición más desfavorable para R-B</text>
+              <line x1="730" y1="210" x2="795" y2="210" stroke="#d94c4c" stroke-width="3" stroke-dasharray="7 6"/>
+            '''
+        else:
+            area_points = []
+            for iy in range(ny):
+                for ix in range(nx):
+                    px = 250 + (ix + 0.5) * (500 / nx)
+                    py = 100 + (iy + 0.5) * (220 / ny)
+                    area_points.append(
+                        f'<circle cx="{px:.1f}" cy="{py:.1f}" r="13" fill="#f59e0b" stroke="#fff" stroke-width="2"/>'
+                        f'<text x="{px:.1f}" y="{py+3:.1f}" text-anchor="middle" fill="#fff" '
+                        f'font-family="Inter,Arial" font-size="7.5" font-weight="850">{lw_cell:.1f}</text>'
+                    )
+            source_svg = f'''
+              <rect x="255" y="105" width="490" height="210" rx="12"
+                    fill="#f59e0b" opacity=".16" stroke="#d08a18" stroke-width="3"/>
+              {''.join(area_points)}
+              <text x="500" y="344" text-anchor="middle" class="t b" font-size="12">
+                18 elementos equivalentes · Lw celda = {lw_cell:.1f} dB
+              </text>
+            '''
+
+        return f"""
+        <svg viewBox="0 0 1000 415" width="100%" style="background:#f7fbff;border:1px solid #d7e5ee;border-radius:18px">
+          <style>.t{{font-family:Inter,Arial,sans-serif;fill:#263f50}} .b{{font-weight:850}}</style>
+          <text x="500" y="34" text-anchor="middle" class="t b" font-size="17">VISTA EN PLANTA · OBRA ENTRE DOS EDIFICIOS</text>
+
+          <rect x="82" y="100" width="105" height="220" rx="6" fill="#b9c7d2" stroke="#6f8493" stroke-width="3"/>
+          <text x="134" y="82" text-anchor="middle" class="t b" font-size="13">EDIFICIO A</text>
+          <circle cx="205" cy="210" r="11" fill="#18a36f"/>
+          <text x="205" y="238" text-anchor="middle" class="t b" font-size="11">R-A</text>
+
+          <rect x="250" y="100" width="500" height="220" rx="14" fill="#f6e8c7" stroke="#d09b3f" stroke-width="3"/>
+          <text x="500" y="126" text-anchor="middle" class="t b" font-size="13">ZONA DE OBRA</text>
+
+          <g stroke="#cfae6a" stroke-width="1.5">
+            <line x1="333.3" y1="100" x2="333.3" y2="320"/>
+            <line x1="416.6" y1="100" x2="416.6" y2="320"/>
+            <line x1="500" y1="100" x2="500" y2="320"/>
+            <line x1="583.3" y1="100" x2="583.3" y2="320"/>
+            <line x1="666.6" y1="100" x2="666.6" y2="320"/>
+            <line x1="250" y1="173.3" x2="750" y2="173.3"/>
+            <line x1="250" y1="246.6" x2="750" y2="246.6"/>
+          </g>
+
+          <rect x="813" y="100" width="105" height="220" rx="6" fill="#b9c7d2" stroke="#6f8493" stroke-width="3"/>
+          <text x="866" y="82" text-anchor="middle" class="t b" font-size="13">EDIFICIO B</text>
+          <circle cx="795" cy="210" r="11" fill="#18a36f"/>
+          <text x="795" y="238" text-anchor="middle" class="t b" font-size="11">R-B</text>
+
+          {source_svg}
+        </svg>
+        """
+
+    components.html(_s4_compare_svg(mode), height=435)
+
+    if mode == "Puntual · peor para R-A":
+        c1, c2 = st.columns(2)
+        c1.metric("Lp en R-A", f"{lp_aa:.1f} dB")
+        c2.metric("Lp en R-B", f"{lp_ab:.1f} dB")
+        st.caption(
+            f"Toda la potencia equivalente se concentra en el extremo más cercano a R-A. "
+            f"Distancia a R-A: {r_aa:.1f} m · distancia a R-B: {r_ab:.1f} m."
+        )
+    elif mode == "Puntual · peor para R-B":
+        c1, c2 = st.columns(2)
+        c1.metric("Lp en R-A", f"{lp_ba:.1f} dB")
+        c2.metric("Lp en R-B", f"{lp_bb:.1f} dB")
+        st.caption(
+            f"Toda la potencia equivalente se concentra en el extremo más cercano a R-B. "
+            f"Distancia a R-A: {r_ba:.1f} m · distancia a R-B: {r_bb:.1f} m."
+        )
+    else:
+        c1, c2 = st.columns(2)
+        c1.metric("Lp en R-A", f"{lp_area_a:.1f} dB")
+        c2.metric("Lp en R-B", f"{lp_area_b:.1f} dB")
+        st.caption(
+            f"Fuente de área equivalente: Lw'' = {lw_per_m2:.1f} dB/m². "
+            f"Condición representada: R-A = {lp_area_a:.1f} dB y R-B = {lp_area_b:.1f} dB."
+        )
+
+        a1, a2, a3 = st.columns(3)
+        a1.metric("Lw'' de la fuente de área", f"{lw_per_m2:.1f} dB/m²")
+        a2.metric("Lp en R-A", f"{lp_area_a:.1f} dB")
+        a3.metric("Lp en R-B", f"{lp_area_b:.1f} dB")
+
+    st.markdown("""
+    <div class="c3l2-card blue">
+      <div class="c3l2-k">COMPARA LOS TRES CASOS</div>
+      Cambia entre <b>R-A</b>, <b>R-B</b> y <b>Fuente de área</b>. Con las maquinarias concentradas
+      en el sector más cercano a R-A se obtiene 80,5 dB; al llevarlas al extremo opuesto se obtiene
+      80,5 dB en R-B. La fuente de área de 87 dB/m² representa en una sola geometría esa condición
+      equivalente para ambos receptores.
+    </div>
+    """, unsafe_allow_html=True)
+
+    st.caption(
+        "Los niveles se obtienen con una propagación geométrica simplificada para mostrar el efecto de la distribución espacial."
+    )
+
+    if _c3l2_role() == "Alumno":
+        if st.button(
+            "Guardar Etapa 4",
+            type="primary",
+            use_container_width=True,
+            key="c3l2_s4_save",
+        ):
+            _c3l2_complete(
+                saved,
+                4,
+                {
+                    "lw_total": lw_total,
+                    "area": area,
+                    "lw_per_m2": lw_per_m2,
+                    "lw_cell": lw_cell,
+                    "lp_point_ra": lp_aa,
+                    "lp_point_rb": lp_bb,
+                    "lp_area_a": lp_area_a,
+                    "lp_area_b": lp_area_b,
+                },
+            )
+            st.success("Etapa 4 guardada.")
+
+    if st.session_state.get("role") == "Docente":
+        with st.container(border=True):
+            st.markdown("##### 👩‍🏫 Pauta docente · ideas clave")
+            st.markdown(
+                "- **Fuente puntual**: la posición más desfavorable cambia según el receptor analizado.  \n"
+                "- **Maquinarias**: 5 bulldozer de 110 dB, 6 cargadores frontales de 108 dB y 1 camión de 104 dB suman ≈119,6 dB.  \n"
+                "- **Fuente de área**: al distribuir esa emisión sobre 1.800 m² se obtiene ≈87,0 dB/m².  \n"
+                "- **Peor condición puntual**: 80,5 dB en R-A y, en el escenario espejo, 80,5 dB en R-B.  \n"
+                "- **Ventaja didáctica**: una única fuente de área representa la condición equivalente para ambos receptores."
+            )
+
+
+def _c3l2_stage5(lab,saved):
+    _c3l2_header(
+        5,
+        "Introducción a los mapas de ruido",
+        "Comprender para qué sirve un mapa de ruido, distinguir mapas por mediciones y por predicción, y reconocer distintas tipologías de representación.",
+        55,
+    )
+
+    st.markdown("""
+    <div class="c3l2-intro">
+      <div class="c3l2-k">REPRESENTACIÓN ESPACIAL DEL AMBIENTE SONORO</div>
+      <div class="c3l2-title">Un mapa de ruido transforma niveles acústicos en información territorial.</div>
+      Permite visualizar dónde se concentran los mayores niveles, qué receptores están expuestos,
+      cómo cambia un escenario y dónde conviene intervenir.
+    </div>
+    """, unsafe_allow_html=True)
+
+    noise_render_uri = "data:image/webp;base64,UklGRhggAABXRUJQVlA4IAwgAAAQpQCdASqQAQsBP3GauVq0qqUltlqMQpAuCWpsPozIu8hNHy5j+f3u1sga4sddMSVSPcCjq5PgCpGv6dygbQ7R//3PH6FMbvOQkZuYne8cfqfAVlKYSo5Rtpjut/zzjPvHLg/C/1SPNBx+KvWPlJV+v05VHoQORstKECRNRFnlEz3zL6annJBPzDAZbuF1QP/v8tH8/vC3D6WreMJWlgjhty6+4+Zx2t+IEpE7rrOk0cdy0Dw5I2QBFdRJxZb9doRY9oCgjo37Go7UeixlguSCN0uhuoICP3CZ6MkJDKOxEv0JmQD50UAKd8S5i9JCxjWuSHmBpFR7TvDRXc0PPni/puYp9uQ2i42JmwG4dRIrfd/L1ZgX2x6KRu4BRTyDjymRnoGZ9NmnPhgjm3CzOQlTihDRALsjRcDwaVYmCQHUjXkpdo6yUJqNUgb0gDc934FEdFKO0smxwKRhfG271av9X5ukyP/dDY1bTMv5FdmyuohEUgXnaVoa0BGob4+a2c6CwQ3BGUXHlP9grFUDPYJUdcYhQolAQLtvnzS1sXCofk92Pe2nSA+RnTTfRtHoGzm3jX+zNfjjR8NmRhZZKUEYmkOTQSDRpj+JGURCTiETje7UD2DYoz5esblxm1WounW3XB8ykm12EVaP+uQCSF7YXb5hsuR0eCzPEbbD0DTBFx9qjI74xnXirw00y38+WZeGQ4TrP7BZOkvH+OSqh2I+tFA9YSWwCQmAOnlx98ArdSKyt9+fUuWGARiMq7G4sXAN0KtDafxD2X3mTHQscAgv1DBfutGADBDn7e5Pvi2sSgMkGIV/adsMLPVKpKe9dj7cfsQA9c7NOQavAt17cuCfCjPxgAtd909eXckzU1RgBYUvxuXUK3jnNG0/+e9qqWplgC1RcxBN1ywEPx3SamXEatOENk+fyOATyAh5xdqVnU25WfG8zfQDYwPN/64eTswtxSDfjZPE4C8THsw/uzxJwlhn/5BXMfL0kefbJ9xtaWbAl/ON0Pi7RC1MND3kwM5Fer40aKdWY1vfJqrtQeGHncTyt3Z+70T/6HngocFWyOdxTXdadIfvlq+5lmQycoTm8BVFrDCP1YOEFWvH5Yrl4189EB9IjW+15hMSB38vvEEc7x/9S2uJckGZUI9hUcdHF+tjulDk50z9FyodGn/KPPtx0NNeNruXuCOzxM9eOIw669f1kI//JyOXe2KuUm3xmlrrjLzu6QG0ymbgQzKHyjRGawSbCmlIZlW9BMDnsqWD7Mkqk7n2rH02Q+RauF/pu7c7ZmzD3yKTYjs9fQN0LEA6rrGRhfDnvPnEzwvcNaANyCeIk2XkUjAOSWJm9x5seONjLXSTDo9BiGm2/u3HJcldyAp+kUcji5nAGjKcfpAt0FL9nA2UBzzZ1ozXzMXzZyJ/Le29c0eMbBfkSZ+EwZ7e5YVT5VYTNnEkT5/ntXPN7jtVWqz/npW5ye45COgz4Bt5igIkSQxXWSBgCoXWSnQ14DgrXXuVJndIxIGoi4ig/wRkaLcWJqnBHMlHSdiX7QO6DgCeqtd1tVrm5vGfv409+ZNxOYWRe8SynHDcQL1YsIZFvx/FLBAde5rGUg4l9v+MsRRzcsnM8WkLLF4t8NDiQFwK95l3RCNeB5E9EeFVLJ5+XqWhk4Kz7gqvmUOLJHAblgbdO1veaP3rEZeArjYG+dSHxYgHi7g1zdAR0XANUnAR2kl+RD/09iYfjUjatWLO5Qri4DPofTKnwJ9AJM4yGzwCEfYfjWNqlvQ02KAA/u5ocj309y5+51kr/JG74Lxn5V5U7w7Lm3GG6pdsmkDzQ8yw3N/eHFF374z5PbzAp929Z5ErbPAXaWpAjjWAGYbALmuu44NRT127zfH0BErtDk+QTMP6T1ks14usuLOgjLrB9tdIthUG8hvKdTN+7qWTmH5oQR1kQ6lrrYSkxDokKuEwK3VxQs2I9/hHDOpJ+HAz7AS2zIbQFoMI3cw1syhUeIkWuRdMQrmnmJ9ROgsimM2SUIuWgsXE4RfLmBz7l7Qa2wzBA7MaSeChegNt0KFjsVtZp7r/yZnb/znrtgdkxC1CRHH5F2uO6mxPIPR/MJ1ip/g1231Hri0Vef+uiCPoY+aK38zELMUyl21d4Iy4pw8nGCj2jvDSbsoW+Tlgkxrreeup6NWVL+Pq/rhIxnm2VWpFHxntPRlzCXs95p6vc61dOgRXZWXY8IegXYLzrMDsnGNoYEfhR0xi1wue6USVOU2HDRkQP/jMR7t3d7Nkwmota888/Icqz2dk4zIWv4SAWQbgmWNuFaodIwEqhAOsSqjhBiU1LDuKLEpwloIYigEZsIzWQph6PWwVVWnzjwGKhaqdCGOgSUr3kUR6irdphyis43ZKh4965ZKQAiGDiH5/zBfhcrhNi2WGuIdN/wUEpXWFTocc7JrVCqHxdGfwVnsdz7IhRbxr4NjNqOu/uiG1VgonCdLJItCs9aZxb6AqJvNLHTJ5dpUiK6uqwwV2kjIzzXnCS+5bh3VJ88NN//vOk3UWsKA7qHWKJCmyuRc6nJ2TZZMilYEl89HaWMVFdYjJOeB0PurkN7MwAYG/GZ1mzRlykaeoMyIS7CYU9lb/DqaRlO/QJiPL5SuCvysK6jwAJv6whl6gDi971qToSAn13F2JYsscEU/qEbyq9UhX9uk4iphEuVrIHx2mMeo709biah33R5H/HhNbAKEI0EGDJluoG8ZT9m1cXLqiw9ku0cFHGdtOJ6dqmq+p1ChWTnJhPFKwFedCVqcGPDRSNrRhiZp202tScJ5cLOYY2CO1mwtSODnBIKJfjMIuSNbb6JIaMDBpsV31wlYnekMa7wfqju2MPryDmXH3Bzm4xki7lkLN7Y9aX409R7oMsQbWO3n472JexhE2G+LVQN60ojL7viTgUsEqISckmMAT7tt81BvN3cjyyVc0z8pbKmI3b2zNTneJ0F303xHeMLIyKSZ6R0ZvGXXH4Lvsxl6ua0rl4b5D6YnxWKmYXHffMZn5/4pZ3I0gmyyXAEZFR55eUdt1hDIkvxiiYX/xZIBMc3Y2hVKLioe7U0lzn15ycNizz8ZxXDgHGU39IJj7d9SVg63FUU0zp6ShFcYH8DLtY+YbZgDcLz1+lGSq/aT2sp0B3ixothyVgJOiwofELtUh6gzFisOG6X9s5kXT4DwCT6KOFRTHi5XNU/MI8Z4wFSnI/HBTwfzSTiiXcM1sS2wPVxA7AUI2LZ3sCylpEkzUujQZ4xdmxVVJITlwfTH0EKIMG7bqaJ6UX3Dc/7xdcPxVwyk5mWcmtdAhPGzXTB26qMAJVdENGyO/bjwdbhYMnzf5FxYjHoS13fzqCXwthj1dTsSjPY/991OI0pr9sMlgSNCZNIonJWIyJ00b6qm0oZbySJ5pEAiHu81v/YOgzXSUbpwsajnn7IsZrS/kksRmDPWQhB1Ovz++OZvqbkCL1DktHl6SqV0O0JYWWChuXX/c50tCE/7ucSboSGuXtUto6RsD4YrzPsarwVYyscz7pfIVpg7WtGdB6E0PPhw4Fq4rPiepFSHxxM/DNtQwCKqtIhNEFoel6sC3zY4B//oGcwUmODJ5EPnVCNORKFkCz8KDGh8z3P+P8E6r3z68SEXWRsDYXT8Z8KRbACmHAwx9dqTkCPn7o7W+kTIewmp70lGY4jqW0HAql0Dae420wezpvTBIrluaTzb8fj5WASlD8KSOAx4xiRhPjJhAvQYr5bsk5CS/0M0vn6xwzbVdnqei/xAMTjaeiBI8opHNnBhPi4DcKMUG2lOh93UjYySX0BY3JMrk7KW8WTj0Rq4o0Y8mScwaiCfDE/Qf7iPnQ16IBq0YofUhlTJk29wzjwoEtAhj4UacQ/6uhwZ+qEiDycxb9oRJ/DPMWX/onRfFLZcB16xn0iOzfXXerPrbHmT8dV89EbVJN+60CfFwfLIJM2iyOi51CZp4bb+9gaisxk0tL8EU31KeGD0xsBZfUtlNZT8MhSi8VwFfjwujbQ3ViMYybGvuS9QiEqf9c005/q2wP4V39fhxNYglb4q8l36L3I0bWFmgG9EExZr+OO7Ijz7LdA3YRtgOBe8JDuxBkaxL99UIIuttPNvBsm/jhX047uF1aDyGoAkk9IPIoyEC9BOIXgXR3HL6X8D1TAHf0t+9mRxRFWofD9CK3sCzgZexr23svJA1pAXJg8MuZZHG2tBk0pZjVlP4AHp6RSpeHua84f/0Zsaa1GqMS17uPjL0DLHCftb5mQqfRMsHTMOykqshuD/xIaLp6UyYuIe17B+ohANhDp0rw0ZTb/B3GBryZ7lmIsyWKvtPHi5WYcOio3UoswSnviZmtrtCLABn6s12CGME8MZgA68Vvmtlwo/i4C/PDN8aUMVOqbbzZj3JFkMzzceVwyNaun7CYsrbl98GrVc8IEcay5gFPIK6fZoeG13tpDXdfA0Sq+DJ2eSGdyNjqtjIIAaGYdsqT0JqmYSLJVn6lxlQRst9CwAq8eEorih4ABfwhCcEoajEfDz7xa2bw1kDnOtSB/QFCTY49rdSVTF2IanOX7qQUcWNEFaGxqeQ4C7mCjSHEU4uQJYfnL7/lnMLf0eeONXhJYnmI+pfTL0GqmUTWyiOaLzEdpc4hfOlHz1JzQzZhgkRLiX06JqtqA5GP0BYL9KBW/Bht68nTnTscC3fl9TURTAUq/qoznCdYR2m3VFFvmH0lQ/sJ2ba9U3APtiohJ9Zyi0wRGgsDYdwEITjhlanZqIzoEpx0XJMxVDWXTmtoOmQaApSzs1KUs2WSQOmt20shtN0fcshd/uIvqc4aA3jEKjI3orsvbpAIj5d2Zl1zmwyS6R0sfVaysPjaFp29FrQqkovPriASplU4ulXEt6OnciTkVITW9P2PNj+IhBZMgsq1f7rYOshQC/Q/QWORRiZJy+8fgrTbgYCJdbiiPN4SXJXBh461BXY4xN2rxNQvwWNLdo6x9uFijUjGYHe3tuD87493q5PYG7rlwp+gwa3kGqZDFdvh9c6rIF3gxHK7msX8kUKNmTSkLIerQ3sOnPBN3g1tkBIcZhuj/Abr1rw9okm3u/XkrvoRJMVw572PRoIjSSW+kCRXprE4bDb9/vUekZvfJarZb1oG1nIwQcVlRzbMHp9rw52bKL4HEGpsPTlFtdDjyC7rLdYvTmM+HjrfA+fKkXfxKssL1RWStbGBE7F5Rfx5wKpVSjmteW8Uo0NpW28gFa0MSzBSDu7VIU1Fow1t1SFv5YMps3E/N13d2AdHMseIWG0O2AHcqvMPQnksVv0xFppqXW5Pn55T7XS8e+Fonn6KH/xm9vfwtRHpiUpqT3kBdChPSahbXdhOZ+4WfU5IA+ouC9fjHbXMqec1MNXQOQJOXXPmnbyHYSHQiuUzR6flqx2px9OQiN3e0V+awBhzUlPji2TB7RgVO+t4CCJss0O+IjrRY6BN6jzH/8oB5xqg/wmEAh4eO0NTpdwyRR++JA3jSP0gAFoAUSyKAXOHo/PY/8yp1v6qbs72zG4gwja4dsbMaDcUYhaIjbbLKJf+ttp7POtmEYMYN+AnrVtnUjFwG4j84UBCRTJDBx1wr/Bul84TDsCgNuvDitg88sNSGJ7pptdvyJhFHxW7rorsoCw57ZibGN/hS9wxSqnE0zM3LmuQ3C1AubppTkULk8o81LM/IP3MYt+UVQjMixlMYlGWVfLvS1b/K6OX6ClFaRNwKZhaVJB70Khi7AmMMa8gXxz1NsNJ0Pq+6hV0zPZ1KWPWYdxiUawss7a8MvXt2T776Omvl3PUhX8LFmYRVVcLRboovlXxUiaqSR7S4Ue3uDgL5uIT+H8jyezH1pDVU6p88u414yeiH1HAnunLkjeqQ1mY3FI5PCKqO+JUYI6jUv425i7zZFHdZV7vC6E5A94502xel7D6R3kgk9PtK2roBV739mRcAFOZFoTjkB9z3ovMNqgBAJpjG5mUt8ryaTAEN7j7aAI7Moht6ErsswFWjid2bjd5Xj7PwvUbqGwxKSlMMvjMhNbr8at6hUXCT/A9B7lEIJZ3dG3mVxtqBGxSXDhgRHVVI1RCfv9G5SLdQPFzQ8Q/QcZwOu6lwT//pxHJfyq5QjPY3ExLxsliCmmRi8I85xjflXUMLdWrEVxVMgLxWfNydgWEnjXsuLB+msFdCKAOQ5Bdi7DhjWsErMEXFNFA0BzGJJki36RNOkjoLGbTwpOYLvMmv0BI1Q4gyirZwblYzzGfHHInGADB3wlh5dTjdyfdGyW58MQnmuv1TnX5ZGEJe1x+d1OWP6uPQ9RjihkiqsednRMSTpa7M4rucEuxKt95CzM79n40JKR7hJusSpKi3bhkKVUrR45InNs9OgIHiHxgK6q3tEyhfEWf6suPEY52WLce0FIatSntglX+3GO9GMwFQ3+Sl7EHPypuhXy2FqiNDRPG9B2rovdTvDzzsDASSc+ujnlmDdmbFWe0OqY3FS/AZSzDlUqA/Ql14AX86B7ajd8ZVWOec7vcQ7kNgxoYLtOD69qTZeMhEXpUShxDAioaXB53W/XQ3wflOFwmZvAI5TZAE9amW66roy49RUAMbLGH/Ri7UF2RYoodr4DD9iCJNYp5GXz/SDmAaldx897Z/ofTNT+Zm3PBtCy66fSzc9JOZhFWAK+XpbJtzdCVISuuzMJHToqLlSpA9h43IWyxt+mP5qIeAJsgeWgZTuicrNfMnyv/tjJIQBoWxM6aBEvNdbhCx2ufHv3e4Or1do1wJDJAYJWr+n0c8iV2oz59n0gVgNrivwZvpY6mcHsJS/RSmcSvySFzwO7007AMsQSOEOfpaQKxqoUA9J0yqUlRgLt/wz4U3mufK8l5rYDkiePgMJTNGSCqCYBTMxWyUO96uf0lEMpEvWxgx29lH7mzUxoF9jTzyndG84+zlDHYJa5T81eJJdvjyotllSJxrwMq+lsssVyJzQnNLEkmdbKTJXVrTlogZyBNJwq9Pe9kSx/FgCYf4FdPrcDJNxbNhesRMX+iXOGR8NjQFuOCqBXZC/ovQgtbrQJH5OPb+ZAROWb60pOE6p5H+/fJkIfOTQCkZV7dT95ELAjW8JzoBLuxF9t80YbpR1M2CoT0sAh5dYaXn39VRcT0drOIHz/T0N7H3Lcy6WboZhypJbmnNntVMtbIjZJW5tYkZF7+UhDfh9ySvT1GkllhjQWmtg6ahOm0xaNAnDPZ77UvdebqCmFDHdcpLYm+Uqrqjo0L1tG5eADBZJjAJ0wK2N3BdlwKunwIdhCZ9JUq8NCHAi+SFNw8eW2GKFEuTitKuqHe3I1zNh5ZiEaq8WTbTHKFyuXjF6XBUMPeNSYEub+In5D790xVosvX1YYR47caSuPDwh8IvGqWacv5ZAexrRVfE4ziUP5+LDvwppTrLauimZBg36q6sh5FPV51rGWNZHHlURyn8gBHv1UKt/19cmDUN/E60F4mDWQ3SjJq+36HQrYfKYJppjAE0kvx5vawDDpkXksFGBd8DqTr1hQTKm6T2dzua+OVdgG8on8cmW8DnjxvkvsapGi3c/dbgK7M3X3s3pWA4laYp/ryZOn+PsjtuxK3ZtXMAYaIIFhv4BIl8ZsAodmWIda0b1JvRgI25cqlVKn6PbaogzeNrniKxqEpwA6W2M40NAc7NB/OuAyLq8/YLwqhaWAjNi5MBNxKd+nurxgUuTFpSOucIzAdkJ4X2UmGKwf8VQu+j/MOG3yQ8opefYoxrLOgLSzGRBlsZYKRZWYGZG4CQFDvVnduCVzoHKFedouiTYbTu/g4X7vgnAAD9380i8MRCZ69fs6SlLHQo64odZekoAqr61l/LkemCM+oYVZodPEhmOzhwDYGZDOYfhAGg83iD9T1/pCTAH4ZChWclkpUJrpDkxGcwcd9yOAR38qapQtF8SqvCKCzQXWd1/QCHsRU5E3oKzL4VN1rGYcURdIYNN64ptTqca99EqeB5Kq3cxPGHEnuDYAACxvvsBFmfhNjFcXs925b3ed7MPPSz63ZeL58dhQjPSYqW7PaE5K1/L0fO7jbfWplMe11SozFyQfVgpKf+yvhVKqP6Xc38VJm4YzjI7Z+wWj9k3jURe5hsbK2Xr5gpzqRpbOhqAMGf8iA7Cxx9+fB0sEHZR5BTtbwvdq/NvkkH8pVwwW9g5qOnXSOgRsrd5siALx33hjWY3MYNG8UFLIi3Pei216v4nt80LrpQHuLdnqm/HzyM08HNXu93KOekKYtH2Le/Cv/WhZwDSt9+0zDXsQeoJ6c0UFzIyhyViqPVq2X40VSnapuT+iGIcVPyAtvC0pHAXpUxGyKSA8zvaTgpq9n30iDeeZH7MH5QNQFKKpwopoe6HBW4wj4BUV5KtrumKNEbf2zd4ByEmdsqFMNT5j2yegsBNzsVmnc0aOY+Vug5M3dPwLIbR6LUiL4T1RrH7XJBwjSg/YgaLpQcIYSt5hHI/OuC8Jat30MJz6lOatW4dVxUhLCt7PxiQCRMjIK85Y/wf3DJQ0qcoYNETuzgk7qxe2KJmIkYMaQ1TDACtIXam2RZFCOtDNNO99qh3095uguwGTNZeVVy39ROJXWIX8pycx8cx/SJtvKZJSo2b2BgwiDzvIOFoqiFbSKVo9A4yS9rCAEWqRLlX9LNjpyG8z8Dp0JgZc3AIzV4m1TM4yZxstXi6XcJMCcH1qwW3FGYDMWk+N6ixVoEU6x0mwJezFQT7NKKCoD0YxwbKUzFYsghv9QkGcrL4byfgknMt6N07mh4HSo254ojR299dyDZr96SzESf1djf/LAMnZmd3m/GFEieLYXG58C11TEidyn+IQLFpLyWqlSrDCqDJ7Ly81LSxCrKIYniXNf/OvUInrcxbfXV3FyOsEgd4gw7XT5vf+0dMa9Iu77K+oLB8dGxM5UZR+O9HOMzuqnxeuzLPaHoZTJd5gSV6uzOYw+ECirYHFW23nfrM/Qdxak7GYsxAiIlCNTX6Ix5k22y3bAzbdIeN+u5nF9C+Y7ZJkq/j/fCFKzRkRNzF8rJbhefhu1Ov+k4d/D2+YykGduszbPtodifg2XdnRDaKbvSllDMA7Z83020ae0cN1EiniiqFu2DLrImvgV5o0iMIweWVVDoMqVjs8SLPa9Q0Jc3EUF6uDV2/+ePpxwmWFDsrwnQSizjNJfRsyUiX99ARJWFDCL23FifpSu0h9+BIeY+DCcW2xsW/bpGbRSnnS8YoeO7fb3wd5tT0oV/NCHF6hYEeNTECL/Col3mpcbJPkdxBXe99YVU8/l0aGtWPZKkYdOoQYDCl9cP2SeEOGvsK388qmgDhEObOuOfqXebv0l1XQ0SMQT/7Y65oQDu639Yt34yoT/DZRFiWKh0ZZUP+06HMVoFmcNQb8lE+CBzhlcmy4EDYSpA40/rrqNaCHMBFuqXxYVXLHpUX5AaDuP/lJcjgxtIHaXMcZ48aoA/RM4D8jEYTJRPs9qnR3bUilSH91fg957RIiWWg9FfiuRoADoRC6dtAJlmgXcSn8RCQfgj+UrXMN4MAW675ZGI6IkAbb6EAXDrmuOcmZuwBkCnrdU1byFkevGKxXkdK2F3KkT8qgKEBojSAoao6ouaSzukhgoDhKVmGTUo98v40yDpwLkvMvrQdHoIYKoq8bKXaKp8m1pdJvbFT6cmcpbO8MGSz24XnSHEiGQ7CEOHCF30xJVDICjV9d1oy7NM+yFEz4MCePMa4vjzoC2qEnIMZDOA6J7lH3ZDAGQTBQ0IsrohEh14Lw65unjeKbWryMNVZbaijz9eW6LwOWKiV/4p2QIWbKOagyvIllmxa63mdpUepy0sGJDsBYQ5WEpjg1OH49u9A3U3fgQzBFjIdHcxzuKahdDdDP/whyX5HhO59bughZ+XG9RveS+v+I42tdrBfdVgFMENDcQWgBLcyM9vw8BXo6Nw79S9DtgdTosXkyz4fStoHG/UpMjzeGarbMAqXIZNj+SyNHZijdyGv6hddNR18cEOKA4+yjnbsY4ZiJcfZYAQhGbXh8yxaLELxPGsxQ5Cp7zwCoaOa1SwtVkIu/3nm/hb2G1JnOYbkTJZBinS0/d0Fy4tGSqYjZ/YNwBEYbfIrkijmeyUrmR1imiMYs0+MwfsNSJ1qSEXTIbpFXCWNARYvj1yrYBbDFhU3QKbN07t8WBAJjTDzcWWFkl6AqgiahAuLOjyV45wxIhAZ1cXFtcYV6qvAvS/pQKR6Z2o7+cIMMP+WSg6CDMzZixVnOPk8qJynGxudbrqS+0RmHLp4ahcuM4UrPXsvN0ynGCUxiYJklr7U4z2u6vLg5LXD0/sO+zuEThslujePi7O1PjLGmCYneSTd3sAl9f6S2eygII0LhGyQr34DPgLBydfAQdnLd713I8o/UUWVri5iR16Z05QVDMAue7Lb+D+PmrJA4wZFm9yh1PSzVPSJvPc9X70xPlieWASqS+Wi/px+nAVnCNaz6VtyN7p5t26tt0d7Q+o2cGVFwlED+Rf/zs4HRHZQINTJsJnVryheLSrUXqhZWLVXhlfSfcHV8Ec2//1JJxsUNt1NcP2IyJ97dO9kPfLZHz9gVULH0egWyZtFCvP1nEDhUjKJpDD7O2r8Spznes6jQYaUHRpYn+AAWrTZ8XX9eEFyTIeNxMWDp3DQoxIKPFrQxS7b/YSLXr/aJ/fOMr+HDFLvGpkFmAZThm/BNJ21jo2RU6lwv6vqLRF4UVP9Q0FMQlwUkLgwN+/Spo2c5eTNyh+HnrHnzc/bhVccilioaOuISsECLVG223bvWw9L2J9jukc0Z3xGjhMjHRQsQ3b2X9UDj6k1RnNP/TMPiegWz22W3SwT43MeT0q/hdflInCX23Vefho6fdCtUuJ84igMM9bTB5DjvR8yNwWMN6iQHEqAMWyETw6KW2UAAAAAJvmLAzrWSAfFAAALzRbHnQxoBAADag38ZmABQoJE7gZgAAA=="
+
+    _stage5_assets = {
+        "general": Path("assets/curso3_lab2_etapa5_general.webp"),
+        "mediciones": Path("assets/curso3_lab2_etapa5_mediciones.webp"),
+        "modelacion": Path("assets/curso3_lab2_etapa5_modelacion.webp"),
+        "transito": Path("assets/curso3_lab2_etapa5_transito.webp"),
+        "industria_obra": Path("assets/curso3_lab2_etapa5_industria_obra.webp"),
+        "aeronaves": Path("assets/curso3_lab2_etapa5_aeronaves.webp"),
+        "urbano": Path("assets/curso3_lab2_etapa5_urbano.webp"),
+    }
+
+    def _noise_asset(key, caption=None):
+        p = _stage5_assets.get(key)
+        if p and p.exists():
+            st.image(str(p), use_container_width=True)
+            if caption:
+                st.caption(caption)
+            return True
+        return False
+
+    def _noise_crop(x, y, w, h, height=390):
+        # Render profesional raster ya embebido en la etapa.
+        # El viewBox recorta la lámina maestra sin reconstruirla con SVG didáctico.
+        components.html(
+            f"""
+            <div style="
+                width:100%;
+                border:1px solid #d8e5ed;
+                border-radius:18px;
+                overflow:hidden;
+                background:#fff;
+                box-shadow:0 10px 28px rgba(15,23,42,.08);
+            ">
+              <svg viewBox="{x} {y} {w} {h}"
+                   width="100%"
+                   xmlns="http://www.w3.org/2000/svg"
+                   preserveAspectRatio="xMidYMid meet"
+                   style="display:block;width:100%;height:auto;background:#fff;">
+                <image href="{noise_render_uri}"
+                       x="0" y="0" width="400" height="267"
+                       preserveAspectRatio="xMidYMid meet"
+                       style="image-rendering:auto;"/>
+              </svg>
+            </div>
+            """,
+            height=height,
+        )
+
+    st.markdown("### 1. ¿Para qué sirve un mapa de ruido?")
+    st.write(
+        "La finalidad principal es **convertir información acústica en información espacial**. "
+        "Así podemos pasar de conocer niveles aislados a comprender cómo se distribuye el ruido sobre un territorio."
+    )
+
+    st.markdown("""
+    <style>
+    .nm-purpose-grid{
+        display:grid;
+        grid-template-columns:repeat(4,minmax(0,1fr));
+        gap:.8rem;
+        margin:.8rem 0 1rem;
+    }
+    .nm-purpose-card{
+        border:1px solid #d7e5ef;
+        border-radius:16px;
+        background:linear-gradient(180deg,#ffffff 0%,#f8fbfd 100%);
+        padding:1rem 1.05rem;
+        min-height:118px;
+        box-shadow:0 6px 18px rgba(15,23,42,.05);
+    }
+    .nm-purpose-k{
+        font-size:.72rem;
+        font-weight:900;
+        letter-spacing:.06em;
+        color:#1184b4;
+        margin-bottom:.35rem;
+        text-transform:uppercase;
+    }
+    .nm-purpose-t{
+        font-size:1.02rem;
+        font-weight:850;
+        color:#12324b;
+        margin-bottom:.28rem;
+    }
+    .nm-purpose-d{
+        color:#526b7e;
+        font-size:.88rem;
+        line-height:1.45;
+    }
+    @media (max-width:850px){
+        .nm-purpose-grid{grid-template-columns:repeat(2,minmax(0,1fr));}
+    }
+    </style>
+    <div class="nm-purpose-grid">
+      <div class="nm-purpose-card"><div class="nm-purpose-k">01</div><div class="nm-purpose-t">Diagnóstico</div><div class="nm-purpose-d">Localiza zonas con mayores niveles y permite reconocer sectores acústicamente críticos.</div></div>
+      <div class="nm-purpose-card"><div class="nm-purpose-k">02</div><div class="nm-purpose-t">Exposición</div><div class="nm-purpose-d">Relaciona la distribución espacial del ruido con receptores y población potencialmente expuesta.</div></div>
+      <div class="nm-purpose-card"><div class="nm-purpose-k">03</div><div class="nm-purpose-t">Planificación</div><div class="nm-purpose-d">Permite comparar escenarios actuales y futuros, por ejemplo nuevas vías, proyectos o cambios operacionales.</div></div>
+      <div class="nm-purpose-card"><div class="nm-purpose-k">04</div><div class="nm-purpose-t">Mitigación</div><div class="nm-purpose-d">Ayuda a evaluar dónde actúa una medida de control y cuánto cambia espacialmente el escenario acústico.</div></div>
+    </div>
+    """, unsafe_allow_html=True)
+
+    if not _noise_asset("general"):
+        _noise_crop(125, 0, 275, 80, 285)
+
+    st.markdown("""
+    <div class="c3l2-note">
+      <b>El mapa no es el objetivo final.</b> Es una herramienta para diagnosticar, comparar escenarios,
+      estudiar exposición y apoyar decisiones de planificación o control.
+    </div>
+    """, unsafe_allow_html=True)
+
+    st.markdown("### 2. ¿Qué representa realmente un mapa de ruido?")
+    st.write(
+        "Representa espacialmente un **descriptor acústico**. Antes de interpretar los colores debemos conocer "
+        "el descriptor, período de referencia, altura de evaluación, escenario, resolución espacial y leyenda."
+    )
+    m1,m2,m3,m4=st.columns(4)
+    m1.metric("Descriptor","LAeq,T")
+    m2.metric("Período","T definido")
+    m3.metric("Altura","h definida")
+    m4.metric("Escenario","actual / futuro")
+
+    st.markdown("### 3. Dos formas principales de construir un mapa")
+    left,right=st.columns(2)
+    with left:
+        st.markdown("#### A. A partir de mediciones")
+        st.write(
+            "Los datos originales son niveles medidos en puntos georreferenciados. "
+            "Los valores entre puntos se estiman mediante interpolación u otra técnica espacial."
+        )
+        if not _noise_asset("mediciones"):
+            _noise_crop(0, 80, 200, 96, 245)
+        st.caption("Los puntos son mediciones directas; la superficie coloreada entre ellos es una estimación espacial.")
+    with right:
+        st.markdown("#### B. A partir de predicción / modelación")
+        st.write(
+            "Se definen fuentes, emisión, geometría y condiciones de propagación. "
+            "El nivel se calcula en una grilla de receptores distribuida en el área de estudio."
+        )
+        if not _noise_asset("modelacion"):
+            _noise_crop(200, 80, 200, 96, 245)
+        st.caption("Cada celda o receptor proviene del cálculo acústico del escenario.")
+
+    st.markdown("### 4. Diferencias técnicas entre medición y predicción")
+    comparison=pd.DataFrame([
+        {"Aspecto":"Dato original","Mediciones":"Lp observado","Predicción":"Emisión de fuentes + escenario"},
+        {"Aspecto":"Entre puntos","Mediciones":"Interpolado / estimado","Predicción":"Calculado por propagación"},
+        {"Aspecto":"Escenario futuro","Mediciones":"No puede medirse directamente","Predicción":"Puede calcularse"},
+        {"Aspecto":"Fuentes individuales","Mediciones":"Se mezclan en el nivel observado","Predicción":"Pueden analizarse por separado"},
+        {"Aspecto":"Incertidumbre","Mediciones":"Instrumentación + muestreo","Predicción":"Entradas + supuestos del modelo"},
+    ])
+    st.dataframe(comparison,hide_index=True,use_container_width=True)
+
+    st.markdown("### 5. Tipos de mapas de ruido según la fuente")
+    st.write(
+        "La geometría de los contornos cambia según el tipo de fuente. "
+        "Los siguientes son renders didácticos con apariencia de mapas profesionales."
+    )
+    st.markdown(
+        "<div class='c3l2-note'><b>Observa la geometría:</b> la forma de las isófonas entrega pistas sobre la fuente dominante, "
+        "pero siempre debe interpretarse junto con el descriptor, el escenario y los antecedentes del modelo o campaña.</div>",
+        unsafe_allow_html=True,
+    )
+
+    t1,t2=st.columns(2)
+    with t1:
+        st.markdown("#### 🚗 Tránsito vial")
+        if not _noise_asset("transito"):
+            _noise_crop(0,178,100,89,300)
+        st.caption("Los contornos siguen los corredores viales y disminuyen lateralmente.")
+    with t2:
+        st.markdown("#### 🏭 Industria / obra")
+        if not _noise_asset("industria_obra"):
+            _noise_crop(100,178,100,89,300)
+        st.caption("Combina fuentes puntuales, lineales y de área.")
+
+    t3,t4=st.columns(2)
+    with t3:
+        st.markdown("#### ✈️ Aeronaves")
+        if not _noise_asset("aeronaves"):
+            _noise_crop(200,178,100,89,300)
+        st.caption("Contornos asociados a pista, trayectorias y operaciones.")
+    with t4:
+        st.markdown("#### 🏙️ Urbano general")
+        if not _noise_asset("urbano"):
+            _noise_crop(300,178,100,89,300)
+        st.caption("Integra múltiples fuentes del ambiente urbano.")
+
+    st.markdown("""
+    <div class="c3l2-note">
+      <b>Idea final:</b> un mapa de ruido siempre debe leerse preguntando
+      <b>qué descriptor representa, cómo se obtuvo, qué escenario corresponde y qué fuente o conjunto de fuentes incluye</b>.
+    </div>
+    """, unsafe_allow_html=True)
+
+    if _c3l2_role()=="Alumno":
+        if st.button("Guardar Etapa 5",type="primary",use_container_width=True,key="c3l2_s5_save"):
+            _c3l2_complete(saved,5,{"completed":True,"concept":"noise_maps"})
+            st.success("Etapa 5 guardada.")
+
+    if st.session_state.get("role")=="Docente":
+        with st.container(border=True):
+            st.markdown("##### 👩‍🏫 Pauta docente · ideas clave")
+            st.markdown(
+                "- Finalidad: diagnóstico, exposición, planificación y mitigación.  \\n"
+                "- Diferenciar claramente medición directa, interpolación y predicción.  \\n"
+                "- Exigir descriptor, período, altura, escenario y leyenda.  \\n"
+                "- Reconocer que la geometría del mapa depende del tipo de fuente."
+            )
+
+
+def _c3l2_idw_surface(points, X, Y, power=2.0):
+    """Superficie IDW para una lista de tuplas (x, y, z)."""
+    pts=np.asarray(points,dtype=float)
+    if pts.ndim!=2 or pts.shape[0]<1 or pts.shape[1]<3:
+        return np.full_like(X,np.nan,dtype=float)
+    dx=X[...,None]-pts[:,0]
+    dy=Y[...,None]-pts[:,1]
+    dist=np.sqrt(dx*dx+dy*dy)
+    exact=dist<1e-9
+    weights=1.0/np.maximum(dist,1e-9)**float(power)
+    Z=np.sum(weights*pts[:,2],axis=-1)/np.sum(weights,axis=-1)
+    if np.any(exact):
+        exact_any=np.any(exact,axis=-1)
+        exact_idx=np.argmax(exact,axis=-1)
+        Z=np.where(exact_any,pts[exact_idx,2],Z)
+    return Z
+
+
+def _c3l2_stage6(lab,saved):
+    _c3l2_header(
+        6,
+        "Cómo construir un mapa de ruido a partir de mediciones",
+        "Aprender el flujo completo desde el diseño de la campaña hasta la interpolación, validación e interpretación de la superficie resultante.",
+        30,
+    )
+
+    st.markdown("""
+    <div class="c3l2-intro">
+      <div class="c3l2-k">CAMPAÑA → DATOS → INTERPOLACIÓN → MAPA</div>
+      <div class="c3l2-title">Un mapa por mediciones no se obtiene simplemente “pintando entre puntos”.</div>
+      Primero se define <b>qué descriptor se quiere representar</b>, luego se diseña una red de puntos,
+      se mide con un protocolo comparable, se revisan los datos y recién después se estima lo que ocurre
+      entre las ubicaciones instrumentadas. El mapa final debe distinguir siempre <b>medición directa</b>
+      de <b>estimación espacial</b>.
+    </div>
+    """,unsafe_allow_html=True)
+
+    st.markdown("### 1. Define exactamente qué quieres mapear")
+    st.markdown("""
+    Antes de salir a terreno debe existir una pregunta concreta. No es suficiente decir
+    “haré un mapa de ruido”. Hay que definir al menos:
+
+    - **Descriptor acústico:** por ejemplo LAeq,T, Lmax u otro indicador compatible con el objetivo.
+    - **Periodo representado:** horario, duración y condición operacional o de tránsito.
+    - **Área de estudio y escala espacial:** barrio, recinto, corredor vial, plaza, etc.
+    - **Protocolo común:** altura del micrófono, ubicación respecto de fachadas o vías, duración,
+      condiciones meteorológicas y registro de eventos.
+    - **Sistema de coordenadas:** cada medición debe quedar georreferenciada para poder ubicarla correctamente en el SIG.
+    """)
+    st.markdown(
+        '<div class="c3l2-note"><b>Regla de comparabilidad:</b> no conviene construir una sola '
+        'superficie mezclando puntos que representan periodos o condiciones operacionalmente incompatibles. '
+        'La interpolación no corrige una campaña mal diseñada.</div>',
+        unsafe_allow_html=True,
+    )
+
+    st.markdown("### 2. Diseña una grilla sobre el área que quieres representar")
+    st.markdown("""
+    Una forma ordenada de planificar una campaña es superponer una **grilla regular** sobre el área de estudio.
+    Los nodos o intersecciones de esa grilla entregan posiciones repetibles y comparables para medir. El tamaño
+    de la celda no es universal: debe elegirse según la extensión del recinto, la variabilidad esperada y el nivel
+    de detalle que se quiere representar.
+
+    En una fábrica, la grilla regular es un **punto de partida**, no una regla ciega. Si existe una máquina muy
+    dominante, una abertura, un muro o un cambio de recinto, pueden agregarse puntos adicionales donde el gradiente
+    acústico sea mayor.
+    """)
+
+    # Planta industrial didáctica. Los valores son mediciones de LAeq,T en nodos
+    # de una grilla durante una misma condición operacional.
+    candidates=[
+        (10,15,72),(30,15,75),(50,15,76),(70,15,73),(90,15,69),
+        (10,45,68),(30,45,71),(50,45,73),(70,45,70),(90,45,72),
+        (10,75,65),(30,75,68),(50,75,70),(70,75,69),(90,75,67),
+    ]
+    machines=[
+        ("Compresor",18,22,"EQ1"),
+        ("Prensa",42,22,"EQ2"),
+        ("CNC",68,22,"EQ3"),
+        ("Extractor",84,48,"EQ4"),
+        ("Envasadora",60,69,"EQ5"),
+        ("Caldera",24,69,"EQ6"),
+    ]
+
+    def _factory_background(fig, show_grid=True, show_machine_labels=True):
+        fig.add_shape(type="rect",x0=2,y0=4,x1=98,y1=86,line=dict(width=3),
+                      fillcolor="rgba(248,250,252,0.08)",layer="above")
+        fig.add_shape(type="line",x0=2,y0=34,x1=98,y1=34,line=dict(width=1,dash="dot"),layer="above")
+        fig.add_shape(type="line",x0=2,y0=59,x1=98,y1=59,line=dict(width=1,dash="dot"),layer="above")
+        fig.add_annotation(x=13,y=31,text="PRODUCCIÓN",showarrow=False,font=dict(size=10))
+        fig.add_annotation(x=15,y=56,text="PROCESO / SERVICIOS",showarrow=False,font=dict(size=10))
+        fig.add_annotation(x=14,y=83,text="ENVASADO / APOYO",showarrow=False,font=dict(size=10))
+        if show_grid:
+            for gx in [10,30,50,70,90]:
+                fig.add_shape(type="line",x0=gx,y0=6,x1=gx,y1=84,
+                              line=dict(width=1,dash="dash"),layer="above")
+            for gy in [15,45,75]:
+                fig.add_shape(type="line",x0=4,y0=gy,x1=96,y1=gy,
+                              line=dict(width=1,dash="dash"),layer="above")
+        for name,mx,my,tag in machines:
+            fig.add_shape(type="rect",x0=mx-5,y0=my-4,x1=mx+5,y1=my+4,
+                          line=dict(width=2),fillcolor="rgba(100,116,139,0.18)",layer="above")
+            if show_machine_labels:
+                fig.add_annotation(x=mx,y=my,text=f"<b>{tag}</b><br>{name}",
+                                   showarrow=False,font=dict(size=9),align="center")
+        fig.add_annotation(x=50,y=90,text="PLANTA INDUSTRIAL · ESQUEMA DIDÁCTICO",
+                           showarrow=False,font=dict(size=12))
+        return fig
+
+    design=st.segmented_control(
+        "Puntos de la grilla que serán medidos",
+        ["6 puntos concentrados","10 puntos distribuidos","15 puntos · grilla completa"],
+        default="10 puntos distribuidos",
+        key="c3l2_s6_design",
+    )
+    if design=="6 puntos concentrados":
+        idxs=[0,1,2,5,6,7]
+        coverage_label="Deficiente · varios nodos de la planta quedan sin medición"
+    elif design=="10 puntos distribuidos":
+        idxs=[0,2,4,5,7,9,10,12,14,8]
+        coverage_label="Buena · selección sistemática de nodos en toda la planta"
+    else:
+        idxs=list(range(15))
+        coverage_label="Muy buena · se midieron todos los nodos de la grilla didáctica"
+    pts=[candidates[i] for i in idxs]
+
+    point_fig=go.Figure()
+    point_fig.add_trace(go.Scatter(
+        x=[p[0] for p in pts],
+        y=[p[1] for p in pts],
+        mode="markers+text",
+        text=[f"P{i+1}<br>{p[2]} dB(A)" for i,p in enumerate(pts)],
+        textposition="top center",
+        marker=dict(size=13),
+        name="Puntos medidos",
+    ))
+    _factory_background(point_fig,show_grid=True,show_machine_labels=True)
+    point_fig.update_layout(
+        height=430,
+        xaxis_title="Coordenada local X [m]",
+        yaxis_title="Coordenada local Y [m]",
+        xaxis=dict(range=[0,102]),
+        yaxis=dict(range=[0,92]),
+        margin=dict(l=20,r=20,t=20,b=20),
+        showlegend=False,
+    )
+    st.plotly_chart(point_fig,use_container_width=True,key="c3l2_s6_points_only")
+
+    m1,m2,m3=st.columns(3)
+    m1.metric("Puntos medidos",len(pts))
+    m2.metric("Rango observado",f"{max(p[2] for p in pts)-min(p[2] for p in pts):.0f} dB")
+    m3.metric("Cobertura","Concentrada" if design.startswith("6") else "Distribuida")
+    st.caption(coverage_label)
+
+    st.markdown("""
+    La distribución importa tanto como la cantidad. Una campaña puede tener muchos puntos y, aun así,
+    representar mal el territorio si todos quedan agrupados en un mismo sector. En una red útil deben
+    capturarse **gradientes esperados**, cambios de uso de suelo, proximidad a fuentes y sectores
+    potencialmente silenciosos, evitando dejar grandes zonas sin apoyo de medición.
+    """)
+
+    st.markdown("### 3. Construye una tabla trazable de terreno")
+    table=pd.DataFrame([
+        {
+            "Punto":f"P{i+1}",
+            "X [m]":p[0],
+            "Y [m]":p[1],
+            "LAeq,T [dB(A)]":p[2],
+            "Hora":"18:00–19:00",
+            "Duración":"5 min",
+            "Condición":"Operación estable de planta",
+        }
+        for i,p in enumerate(pts)
+    ])
+    st.dataframe(table,hide_index=True,use_container_width=True)
+    st.caption(
+        "En una campaña real se agregarían, según el objetivo, fecha, coordenadas geográficas, altura del micrófono, "
+        "equipo, calibración, meteorología, flujo/operación, fotografías y observaciones de eventos."
+    )
+
+    st.markdown("### 4. Control de calidad: revisar antes de interpolar")
+    st.markdown("""
+    <div class="c3l2-grid">
+      <div class="c3l2-card orange">
+        <div class="c3l2-k">EVENTO OBSERVADO</div>
+        <b>P8 registró un nivel 12 dB mayor que el patrón operacional.</b><br>
+        Durante la medición ocurrió una purga extraordinaria del compresor.
+      </div>
+      <div class="c3l2-card blue">
+        <div class="c3l2-k">PREGUNTA TÉCNICA</div>
+        <b>¿Ese evento representa el escenario que queremos mapear?</b><br>
+        Antes de interpolar hay que revisar el objetivo de la campaña y la bitácora de terreno.
+      </div>
+      <div class="c3l2-card green">
+        <div class="c3l2-k">CRITERIO DE DECISIÓN</div>
+        <b>No se elimina un dato solo porque sea alto.</b><br>
+        La decisión debe ser técnica, trazable y coherente con el escenario que se pretende representar.
+      </div>
+    </div>
+    """,unsafe_allow_html=True)
+
+    st.markdown(
+        '<div class="c3l2-warn"><b>Situación:</b> si el mapa busca representar la <b>operación habitual</b> de la fábrica, '
+        'una purga extraordinaria podría no ser representativa. Si el objetivo incluye ese régimen de operación, '
+        'el registro podría ser completamente válido.</div>',
+        unsafe_allow_html=True,
+    )
+
+    st.markdown("""
+    <div class="c3l2-note">
+      <b>Secuencia correcta:</b> detectar el valor atípico → revisar qué ocurrió en terreno → verificar si el evento
+      pertenece al escenario de estudio → decidir si se conserva, se repite o se excluye → dejar la decisión documentada.
+    </div>
+    """,unsafe_allow_html=True)
+
+    st.markdown("### 5. ¿Qué significa interpolar?")
+    st.markdown("""
+    Los puntos de medición son discretos. Para obtener una superficie continua se estima un valor en las posiciones
+    donde **no hubo un sonómetro**. Esa operación es la **interpolación espacial**.
+
+    En esta etapa usaremos **IDW — Inverse Distance Weighting**. La idea es muy simple: para estimar una celda,
+    IDW mira los puntos medidos que la rodean y les asigna más importancia a los que están más cerca.
+    """)
+    st.latex(r"\hat L(x_0)=\frac{\sum_{i=1}^{n} w_i L_i}{\sum_{i=1}^{n} w_i}")
+    st.latex(r"w_i=\frac{1}{d_i^{p}}")
+    st.markdown("""
+    - **Lᵢ:** nivel medido en el punto i.
+    - **dᵢ:** distancia entre el punto medido y la celda que queremos estimar.
+    - **p:** **exponente de distancia**. Controla qué tan rápido pierde influencia un punto al alejarse.
+    - **L̂(x₀):** valor estimado en esa celda; **no es una nueva medición**.
+    """)
+
+    st.markdown(
+        '<div class="c3l2-warn"><b>Importante:</b> el exponente <b>p</b> de IDW no tiene ninguna relación '
+        'con la <b>potencia sonora L<sub>W</sub></b>. Aquí “potencia” significa solamente que la distancia '
+        'se eleva matemáticamente a un exponente.</div>',
+        unsafe_allow_html=True,
+    )
+
+    p1,p2,p3=st.columns(3)
+    p1.markdown("""
+    <div class="c3l2-card blue">
+      <div class="c3l2-k">p = 1</div>
+      Si un punto está a <b>10 m</b> y otro a <b>20 m</b>, el cercano pesa <b>2 veces</b> más.
+      La influencia disminuye suavemente con la distancia.
+    </div>
+    """,unsafe_allow_html=True)
+    p2.markdown("""
+    <div class="c3l2-card green">
+      <div class="c3l2-k">p = 2 · habitual para explicar IDW</div>
+      Con las mismas distancias, el punto a 10 m pesa <b>4 veces</b> más que el punto a 20 m.
+      El mapa responde más a los vecinos próximos.
+    </div>
+    """,unsafe_allow_html=True)
+    p3.markdown("""
+    <div class="c3l2-card orange">
+      <div class="c3l2-k">p = 3</div>
+      El punto a 10 m pesa <b>8 veces</b> más que el de 20 m.
+      Aparecen zonas más dominadas por cada medición.
+    </div>
+    """,unsafe_allow_html=True)
+
+    st.markdown("""
+    **Ejemplo mental:** imagina que queremos estimar el nivel justo entre varias mediciones. Con un valor pequeño de
+    **p**, también influyen puntos relativamente lejanos. Al aumentar **p**, IDW “confía” cada vez más en los puntos
+    próximos. Por eso no existe un valor universalmente correcto: debe elegirse y comprobarse según la red de medición.
+    """)
+
+    st.markdown("#### ¿Qué es exactamente la distancia d?")
+    st.markdown("""
+    Para construir el mapa, el área se divide computacionalmente en muchas **celdas pequeñas**. Para cada celda
+    donde no existe una medición se calcula un valor estimado. En IDW, **dᵢ es la distancia geométrica desde el
+    centro de esa celda objetivo hasta el punto de medición i**.
+
+    En el esquema siguiente, **X₀** es una celda que queremos estimar. P1, P2 y P3 son lugares donde sí se midió.
+    Las líneas punteadas representan las distancias **d₁, d₂ y d₃** utilizadas por IDW.
+    """)
+
+    idw_demo_pts=[
+        ("P1",28.0,28.0,68.0),
+        ("P2",76.0,34.0,74.0),
+        ("P3",58.0,76.0,65.0),
+    ]
+    x0_demo,y0_demo=52.0,48.0
+    idw_demo=go.Figure()
+    # Celda objetivo: grande y visible. El rótulo se desplaza fuera para no taparla.
+    idw_demo.add_shape(
+        type="rect",x0=x0_demo-5,y0=y0_demo-5,x1=x0_demo+5,y1=y0_demo+5,
+        line=dict(width=4,color="#111827"),fillcolor="#FFD54F",layer="above"
+    )
+    idw_demo.add_shape(
+        type="circle",x0=x0_demo-0.9,y0=y0_demo-0.9,x1=x0_demo+0.9,y1=y0_demo+0.9,
+        line=dict(width=2,color="#111827"),fillcolor="#111827",layer="above"
+    )
+    idw_demo.add_annotation(
+        x=x0_demo,y=y0_demo+5.5,
+        text="<b>X₀ · celda a estimar</b>",
+        showarrow=True,arrowhead=2,ax=0,ay=-46,
+        font=dict(size=13,color="#111827"),
+        bgcolor="rgba(255,255,255,0.98)",bordercolor="#111827",borderwidth=1
+    )
+    demo_distances=[]
+    distance_offsets={"P1":(-4,4),"P2":(6,5),"P3":(-6,3)}
+    for label,px,py,level in idw_demo_pts:
+        d=float(np.sqrt((px-x0_demo)**2+(py-y0_demo)**2))
+        demo_distances.append((label,d,level,px,py))
+        idw_demo.add_shape(
+            type="line",x0=x0_demo,y0=y0_demo,x1=px,y1=py,
+            line=dict(width=2,dash="dash",color="#334155"),layer="below"
+        )
+        mx=(x0_demo+px)/2
+        my=(y0_demo+py)/2
+        ox,oy=distance_offsets[label]
+        idw_demo.add_annotation(
+            x=mx+ox,y=my+oy,text=f"<b>d{label[-1]} = {d:.1f} m</b>",
+            showarrow=False,bgcolor="rgba(255,255,255,0.96)",
+            bordercolor="#64748b",borderwidth=1,font=dict(size=11)
+        )
+    idw_demo.add_trace(go.Scatter(
+        x=[p[1] for p in idw_demo_pts],
+        y=[p[2] for p in idw_demo_pts],
+        mode="markers",
+        marker=dict(size=18,line=dict(width=3,color="white"),color="#111827"),
+        name="Puntos medidos",
+        hovertemplate="%{customdata[0]}<br>Medido: %{customdata[1]:.0f} dB(A)<extra></extra>",
+        customdata=[[p[0],p[3]] for p in idw_demo_pts],
+    ))
+    for label,px,py,level in idw_demo_pts:
+        idw_demo.add_annotation(
+            x=px,y=py+7,
+            text=f"<b>{label}</b><br>{level:.0f} dB(A)",
+            showarrow=False,bgcolor="rgba(255,255,255,0.96)",
+            bordercolor="#111827",borderwidth=1,font=dict(size=12)
+        )
+    idw_demo.update_layout(
+        height=430,
+        xaxis=dict(range=[10,92],title="X [m]",showgrid=True,dtick=10),
+        yaxis=dict(range=[10,92],title="Y [m]",showgrid=True,dtick=10,scaleanchor="x",scaleratio=1),
+        margin=dict(l=20,r=20,t=20,b=20),
+        showlegend=False,
+    )
+    st.plotly_chart(idw_demo,use_container_width=True,key="c3l2_s6_idw_distance_demo")
+    st.markdown(
+        '<div class="c3l2-note"><b>d no es el tamaño de la celda.</b> Es la distancia desde el centro '
+        'de la celda que se quiere estimar hasta cada medición disponible. Por eso para una misma celda '
+        'existen varias distancias: d₁ hacia P1, d₂ hacia P2, d₃ hacia P3, etc.</div>',
+        unsafe_allow_html=True,
+    )
+
+    # Valor fijo para el ejemplo didáctico de esta etapa.
+    power=2.0
+
+    st.caption(
+        "IDW es un método general de interpolación espacial; no es un modelo acústico de propagación. "
+        "Se utiliza también en mapas de ruido basados en mediciones, pero la calidad del resultado depende de la "
+        "densidad, geometría y representatividad de los puntos."
+    )
+
+    st.markdown("### 6. De los puntos a la superficie continua")
+    st.markdown("""
+    Para representar el resultado usaremos **bandas de 5 dB** y la escala cromática tradicional de mapas de ruido
+    basada en **ISO 1996-2:1987**. Esta convención histórica facilita reconocer rápidamente zonas de distinto nivel.
+    La edición vigente ISO 1996-2:2017 ya no establece esta tabla de colores como requisito.
+    """)
+    xx=np.linspace(0,100,81)
+    yy=np.linspace(0,90,73)
+    X,Y=np.meshgrid(xx,yy)
+    Z=_c3l2_idw_surface(pts,X,Y,power=power)
+
+    # Equivalentes digitales representativos de los nombres cromáticos históricos
+    # de ISO 1996-2:1987. La norma histórica definía nombres de colores/tramas,
+    # no una paleta RGB/HEX única para pantallas.
+    iso_band_colors=[
+        "#90EE90", # <35 verde claro
+        "#00A651", # 35-40 verde
+        "#006B3C", # 40-45 verde oscuro
+        "#FFD700", # 45-50 amarillo
+        "#CC9A06", # 50-55 ocre
+        "#FF6600", # 55-60 naranjo
+        "#FF3333", # 60-65 cinabrio
+        "#990033", # 65-70 carmín
+        "#AD9AD6", # 70-75 rojo lila
+        "#0000FF", # 75-80 azul
+        "#000080", # 80-85 azul oscuro
+    ]
+    iso_scale=[]
+    n_iso=len(iso_band_colors)
+    for i,col in enumerate(iso_band_colors):
+        lo=i/n_iso
+        hi=(i+1)/n_iso
+        iso_scale.extend([(lo,col),(hi,col)])
+
+    map_fig=go.Figure()
+    map_fig.add_trace(go.Contour(
+        x=xx,y=yy,z=Z,
+        zmin=30,zmax=85,
+        contours=dict(start=35,end=85,size=5,showlabels=True,coloring="fill"),
+        colorscale=iso_scale,
+        colorbar=dict(
+            title="LAeq,T<br>dB(A)",
+            tickmode="array",
+            tickvals=[32.5,37.5,42.5,47.5,52.5,57.5,62.5,67.5,72.5,77.5,82.5],
+            ticktext=["<35","35–40","40–45","45–50","50–55","55–60","60–65","65–70","70–75","75–80","80–85"],
+        ),
+        name="Superficie IDW",
+        hovertemplate="X=%{x:.1f} m<br>Y=%{y:.1f} m<br>Estimado=%{z:.1f} dB(A)<extra></extra>",
+    ))
+    _factory_background(map_fig,show_grid=True,show_machine_labels=False)
+
+    # Máquinas: se resaltan sobre la superficie para que el alumno pueda
+    # relacionar visualmente el campo interpolado con la distribución de fuentes.
+    map_fig.add_trace(go.Scatter(
+        x=[m[1] for m in machines],
+        y=[m[2] for m in machines],
+        mode="markers",
+        marker=dict(
+            symbol="square",size=22,color="#111827",
+            line=dict(width=3,color="white")
+        ),
+        customdata=[[m[0],m[3]] for m in machines],
+        name="Máquinas",
+        hovertemplate="<b>%{customdata[1]} · %{customdata[0]}</b><extra></extra>",
+    ))
+    for name,mx,my,tag in machines:
+        map_fig.add_annotation(
+            x=mx,y=my,
+            text=f"<b>{tag}</b><br>{name}",
+            showarrow=True,arrowhead=2,ax=0,ay=-42,
+            bgcolor="rgba(17,24,39,0.92)",font=dict(color="white",size=10),
+            bordercolor="white",borderwidth=1,
+        )
+
+    # Puntos medidos: alto contraste y nivel registrado siempre visible.
+    map_fig.add_trace(go.Scatter(
+        x=[p[0] for p in pts],
+        y=[p[1] for p in pts],
+        mode="markers",
+        marker=dict(
+            symbol="circle",size=15,color="white",
+            line=dict(width=4,color="#111827")
+        ),
+        name="Puntos de medición",
+        customdata=[[f"P{i+1}",p[2]] for i,p in enumerate(pts)],
+        hovertemplate="<b>%{customdata[0]}</b><br>LAeq,T medido = %{customdata[1]:.0f} dB(A)<extra></extra>",
+    ))
+    for i,p in enumerate(pts):
+        map_fig.add_annotation(
+            x=p[0],y=p[1],
+            text=f"<b>P{i+1}</b><br>{p[2]:.0f} dB(A)",
+            showarrow=True,arrowhead=2,ax=28,ay=28 if i%2==0 else -28,
+            bgcolor="rgba(255,255,255,0.96)",font=dict(color="#111827",size=10),
+            bordercolor="#111827",borderwidth=1,
+        )
+    map_fig.update_layout(
+        height=560,
+        xaxis_title="Coordenada local X [m]",
+        yaxis_title="Coordenada local Y [m]",
+        margin=dict(l=20,r=20,t=25,b=20),
+        legend=dict(orientation="h",y=1.04),
+    )
+    st.plotly_chart(map_fig,use_container_width=True,key="c3l2_s6_idw_map")
+    st.markdown(
+        '<div class="c3l2-note"><b>Lectura correcta:</b> los círculos blancos son posiciones realmente '
+        'medidas y cada etiqueta muestra el LAeq,T registrado. Los cuadrados oscuros identifican las máquinas. '
+        'La superficie de colores entre los puntos no fue medida directamente: corresponde a valores estimados por IDW.</div>',
+        unsafe_allow_html=True,
+    )
+
+    st.markdown("### 7. ¿Qué significa la cobertura del mapa?")
+    st.markdown("""
+    La **cobertura** indica qué tan bien está representada el área de estudio por los puntos donde realmente se midió.
+    No es una medida de incertidumbre ni un cálculo estadístico: es una forma simple de preguntarse
+    **“¿tenemos suficientes mediciones, bien distribuidas, para representar esta zona?”**
+    """)
+
+    st.markdown("""
+    <div class="c3l2-grid">
+      <div class="c3l2-card green">
+        <div class="c3l2-k">BUENA COBERTURA</div>
+        <b>Hay puntos de medición distribuidos en toda el área.</b><br>
+        Las zonas del mapa quedan próximas a mediciones reales y no existen grandes sectores sin información.
+      </div>
+      <div class="c3l2-card orange">
+        <div class="c3l2-k">COBERTURA INTERMEDIA</div>
+        <b>Existen algunos espacios amplios entre puntos.</b><br>
+        El mapa puede construirse, pero ciertas zonas dependen más de la interpolación y conviene revisar si faltan mediciones.
+      </div>
+      <div class="c3l2-card blue">
+        <div class="c3l2-k">MALA COBERTURA</div>
+        <b>Los puntos están muy separados o concentrados en una sola zona.</b><br>
+        Grandes sectores quedan representados casi exclusivamente por la interpolación. La solución es agregar mediciones donde faltan datos.
+      </div>
+    </div>
+    """,unsafe_allow_html=True)
+
+    st.markdown(
+        '<div class="c3l2-note"><b>Idea clave:</b> un mapa puede verse continuo y atractivo aunque tenga mala cobertura. '
+        'La calidad de la representación depende primero de una red de medición bien distribuida y recién después del método de interpolación.</div>',
+        unsafe_allow_html=True,
+    )
+
+    st.markdown("### 8. ¿Cómo saber si la interpolación es razonable?")
+    st.markdown("""
+    Una forma simple de comprobar si la interpolación está reproduciendo razonablemente los datos es la
+    **validación cruzada leave-one-out**.
+
+    El procedimiento es sencillo:
+
+    1. se retira temporalmente un punto medido;
+    2. se estima cuánto debería valer ese punto usando solamente los demás;
+    3. se compara el valor estimado con el valor que realmente se midió;
+    4. se repite el procedimiento para todos los puntos.
+
+    Así obtenemos varios **errores de predicción**, expresados directamente en **dB**.
+    """)
+    def _idw_predict(train, x0, y0, p):
+        arr=np.asarray(train,dtype=float)
+        d=np.sqrt((arr[:,0]-x0)**2+(arr[:,1]-y0)**2)
+        if np.any(d<1e-9):
+            return float(arr[np.argmin(d),2])
+        w=1.0/np.maximum(d,1e-9)**float(p)
+        return float(np.sum(w*arr[:,2])/np.sum(w))
+
+    cv_rows=[]
+    errors=[]
+    for i,pnt in enumerate(pts):
+        train=[p for j,p in enumerate(pts) if j!=i]
+        pred=_idw_predict(train,pnt[0],pnt[1],power)
+        err=pred-pnt[2]
+        errors.append(err)
+        cv_rows.append({
+            "Punto":f"P{i+1}",
+            "Medido [dB(A)]":round(pnt[2],1),
+            "Predicho sin usar el punto [dB(A)]":round(pred,1),
+            "Error [dB]":round(err,1),
+        })
+    mae=float(np.mean(np.abs(errors))) if errors else float("nan")
+    rmse=float(np.sqrt(np.mean(np.square(errors)))) if errors else float("nan")
+    st.markdown("#### ¿Qué significan los valores estadísticos?")
+    st.markdown("""
+    <div class="c3l2-grid">
+      <div class="c3l2-card green">
+        <div class="c3l2-k">ERROR DE CADA PUNTO</div>
+        <b>Predicho − medido.</b><br>
+        Si el resultado es +3 dB, el método sobreestimó ese punto en 3 dB. Si es −3 dB, lo subestimó en 3 dB.
+      </div>
+      <div class="c3l2-card blue">
+        <div class="c3l2-k">MAE · ERROR ABSOLUTO MEDIO</div>
+        <b>Promedio del tamaño de los errores.</b><br>
+        Ignora el signo y responde: “en promedio, ¿cuántos dB se alejan las predicciones de las mediciones?”.
+      </div>
+      <div class="c3l2-card orange">
+        <div class="c3l2-k">RMSE · RAÍZ DEL ERROR CUADRÁTICO MEDIO</div>
+        <b>Da más importancia a los errores grandes.</b><br>
+        Si uno o varios puntos están muy mal estimados, el RMSE aumenta más que el MAE.
+      </div>
+    </div>
+    """,unsafe_allow_html=True)
+
+    v1,v2=st.columns(2)
+    v1.metric("MAE · error medio",f"{mae:.2f} dB")
+    v2.metric("RMSE · penaliza errores grandes",f"{rmse:.2f} dB")
+
+    st.markdown(
+        f'<div class="c3l2-note"><b>Cómo interpretar estos resultados:</b> en este ejercicio el MAE es '
+        f'<b>{mae:.2f} dB</b> y el RMSE es <b>{rmse:.2f} dB</b>. '
+        'Cuanto más pequeños sean ambos valores, mejor está reproduciendo el interpolador los puntos que se van retirando. '
+        'Si el RMSE es bastante mayor que el MAE, suele indicar que existen uno o varios puntos con errores especialmente grandes.</div>',
+        unsafe_allow_html=True,
+    )
+    with st.expander("Ver validación punto por punto"):
+        st.dataframe(pd.DataFrame(cv_rows),hide_index=True,use_container_width=True)
+    st.caption(
+        "MAE y RMSE sirven para evaluar el comportamiento de la interpolación frente a los puntos medidos. "
+        "No son límites normativos ni representan por sí solos la incertidumbre total del mapa."
+    )
+
+    st.markdown("### 9. IDW no es la única interpolación")
+    st.markdown("""
+    <div class="c3l2-grid">
+      <div class="c3l2-card blue">
+        <div class="c3l2-k">IDW</div>
+        <b>Determinista y fácil de interpretar.</b><br>
+        La influencia depende principalmente de la distancia. Es útil para enseñar y para casos donde
+        se justifica la continuidad espacial, pero puede generar patrones circulares artificiales alrededor de los puntos de medición.
+      </div>
+      <div class="c3l2-card green">
+        <div class="c3l2-k">KRIGING</div>
+        <b>Geoestadístico.</b><br>
+        Modela la estructura de correlación espacial mediante un variograma y puede entregar una medida
+        de error o varianza de predicción. Requiere más datos y diagnóstico.
+      </div>
+      <div class="c3l2-card orange">
+        <div class="c3l2-k">SPLINE / VECINOS</div>
+        <b>Otras alternativas.</b><br>
+        Pueden generar superficies muy suaves o preservar vecindades locales. Su selección depende del
+        fenómeno, la geometría de muestreo y la validación, no de cuál “se vea mejor”.
+      </div>
+    </div>
+    """,unsafe_allow_html=True)
+    st.markdown(
+        '<div class="c3l2-warn"><b>No confundir dos operaciones:</b> interpolar valores observados de '
+        'LAeq,T en el espacio es una estimación cartográfica del descriptor. En cambio, combinar el aporte '
+        'simultáneo de varias fuentes en un receptor exige suma energética; no se suman decibeles aritméticamente.</div>',
+        unsafe_allow_html=True,
+    )
+
+    st.markdown("### 10. Limitaciones del mapa y antecedentes que deben informarse")
+
+    st.markdown("#### Limitaciones del mapa")
+    st.markdown("""
+    <div class="c3l2-grid">
+      <div class="c3l2-card orange">
+        <div class="c3l2-k">NO TODO EL MAPA FUE MEDIDO</div>
+        <b>Solo los puntos de terreno son mediciones reales.</b><br>
+        Los valores entre ellos corresponden a una estimación obtenida mediante interpolación.
+      </div>
+      <div class="c3l2-card blue">
+        <div class="c3l2-k">DEPENDE DE LA RED DE MEDICIÓN</div>
+        <b>La distribución de los puntos condiciona el resultado.</b><br>
+        Sectores con pocos puntos o grandes separaciones quedan menos respaldados por información de terreno.
+      </div>
+      <div class="c3l2-card orange">
+        <div class="c3l2-k">NO ES UN MODELO DE PROPAGACIÓN</div>
+        <b>La interpolación no conoce por sí sola muros, barreras ni fuentes.</b><br>
+        Un mapa suave no significa necesariamente que represente con exactitud la física del campo acústico.
+      </div>
+      <div class="c3l2-card blue">
+        <div class="c3l2-k">CAUTELA FUERA DEL ÁREA MEDIDA</div>
+        <b>La extrapolación es más débil que la interpolación.</b><br>
+        Mientras más nos alejamos del soporte espacial de las mediciones, mayor debe ser la cautela al interpretar el mapa.
+      </div>
+    </div>
+    """,unsafe_allow_html=True)
+
+    st.markdown("#### ¿Qué debe informarse junto con el mapa?")
+    st.markdown("""
+    <div class="c3l2-grid">
+      <div class="c3l2-card green">
+        <div class="c3l2-k">QUÉ SE MIDIÓ</div>
+        <b>Descriptor acústico y periodo representado.</b><br>
+        Por ejemplo LAeq,T, duración de cada medición y condición operacional de la campaña.
+      </div>
+      <div class="c3l2-card green">
+        <div class="c3l2-k">DÓNDE SE MIDIÓ</div>
+        <b>Ubicación de los puntos reales.</b><br>
+        Debe distinguirse claramente entre posiciones medidas y zonas estimadas.
+      </div>
+      <div class="c3l2-card green">
+        <div class="c3l2-k">CÓMO SE CONSTRUYÓ</div>
+        <b>Método de interpolación y criterios utilizados.</b><br>
+        Debe indicarse el procedimiento empleado para transformar los puntos discretos en una superficie continua.
+      </div>
+      <div class="c3l2-card green">
+        <div class="c3l2-k">CÓMO SE REVISARON LOS DATOS</div>
+        <b>Control de calidad y tratamiento de eventos atípicos.</b><br>
+        Cualquier exclusión, repetición o conservación de datos debe quedar técnicamente justificada.
+      </div>
+    </div>
+    """,unsafe_allow_html=True)
+
+    if _c3l2_role()=="Alumno" and st.button(
+        "Guardar Etapa 6",
+        type="primary",
+        use_container_width=True,
+        key="c3l2_s6_save",
+    ):
+        _c3l2_complete(saved,6,{
+            "design":design,
+            "point_count":len(pts),
+            "idw_power":power,
+            "cv_mae":round(mae,3),
+            "cv_rmse":round(rmse,3),
+        })
+        st.success("Etapa 6 guardada.")
+
+    _c3l2_teacher_pauta(
+        "Etapa 6",
+        """
+        **Resultado esperado:** el alumno debe poder reconstruir el flujo completo de un mapa por mediciones:
+        objetivo y descriptor → diseño de red → protocolo comparable → georreferenciación → control de calidad →
+        interpolación → validación → representación → declaración de limitaciones.
+
+        **IDW:** cada celda es un promedio ponderado por distancia y la potencia p controla cuánto dominan
+        los vecinos próximos. No existe una potencia universalmente correcta; debe justificarse y validarse.
+
+        **Puntos clave para la pauta:**
+        - Solo los marcadores son mediciones directas.
+        - La superficie es estimada y no agrega información física independiente.
+        - Una red concentrada puede producir un mapa visualmente continuo pero pobremente sustentado.
+        - El mapa de distancia al vecino más próximo es solo un indicador de cobertura, no una incertidumbre formal.
+        - La validación cruzada ayuda a comparar comportamiento predictivo, pero no reemplaza la representatividad temporal.
+        - IDW, kriging y spline son métodos distintos; la elección debe responder a los datos y al objetivo.
+        - Interpolar un descriptor en dB no debe confundirse con la suma energética de fuentes.
+        - Extrapolar fuera del soporte espacial de la campaña exige cautela explícita.
+        """
+    )
+
+
+def _c3l2_projection_grid(kind,lw,level_ref):
+    xx=np.linspace(-100,100,80); yy=np.linspace(-80,80,64)
+    X,Y=np.meshgrid(xx,yy)
+    if kind=="Fuente puntual":
+        r=np.sqrt(X**2+Y**2)
+        L=float(lw)-20*np.log10(np.maximum(r,2.0))
+    else:
+        energies=np.zeros_like(X,dtype=float)
+        for sx in np.linspace(-80,80,25):
+            r=np.sqrt((X-sx)**2+Y**2)
+            Li=float(level_ref)-20*np.log10(np.maximum(r,2.0)/10.0)
+            energies+=10**(Li/10.0)
+        L=10*np.log10(np.maximum(energies,1e-12))
+    return xx,yy,L
+
+
+def _c3l2_stage7(lab,saved):
+    _c3l2_header(
+        7,
+        "Mapas de ruido por proyección acústica",
+        "Comprender cómo se construye, verifica y documenta un mapa calculado a partir de fuentes, modelos normativos y condiciones de propagación.",
+        45,
+    )
+
+    st.markdown("""
+    <style>
+    .s7-section{margin:1.25rem 0 .55rem;padding-top:.2rem}
+    .s7-table-wrap{border:1px solid #d8e5ee;border-radius:16px;overflow:hidden;background:#fff;box-shadow:0 4px 14px rgba(15,23,42,.045);margin:.7rem 0 1rem}
+    .s7-table{width:100%;border-collapse:collapse;font-size:.91rem;line-height:1.38}
+    .s7-table th{background:linear-gradient(180deg,#eef7fc,#e4f1f8);color:#17324a;text-align:left;padding:12px 13px;font-size:.78rem;letter-spacing:.025em;text-transform:uppercase;border-bottom:1px solid #cadde8;vertical-align:bottom}
+    .s7-table td{padding:12px 13px;border-bottom:1px solid #e8eef3;vertical-align:top;color:#263746}
+    .s7-table tr:last-child td{border-bottom:none}
+    .s7-table tbody tr:nth-child(even){background:#f9fbfc}
+    .s7-table tbody tr:hover{background:#f1f8fc}
+    .s7-pill{display:inline-block;border-radius:999px;padding:4px 8px;background:#eaf6fc;border:1px solid #c9e5f3;color:#176a91;font-size:.78rem;font-weight:800;white-space:nowrap}
+    .s7-eqbox{border:1px solid #cfe0ec;border-radius:16px;background:linear-gradient(135deg,#fbfdff,#f2f8fc);padding:14px 16px 6px;margin:.7rem 0 1rem}
+    .s7-eqtitle{font-size:.76rem;font-weight:900;letter-spacing:.055em;text-transform:uppercase;color:#0879b9;margin-bottom:.15rem}
+    .s7-eqdesc{font-size:.9rem;color:#536779;margin-bottom:.35rem}
+    .s7-metric-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;margin:.8rem 0 1rem}
+    .s7-metric{border:1px solid #d8e5ee;border-radius:15px;background:#fff;padding:14px 16px;box-shadow:0 3px 10px rgba(15,23,42,.035)}
+    .s7-metric-label{font-size:.75rem;font-weight:800;text-transform:uppercase;letter-spacing:.045em;color:#6a7d8d}
+    .s7-metric-value{font-size:1.55rem;font-weight:900;color:#123b59;margin-top:.15rem}
+    .s7-mini-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;margin:.65rem 0 1rem}
+    .s7-mini{border:1px solid #dbe7ef;border-radius:14px;padding:12px 14px;background:#fbfdff}
+    .s7-mini b{color:#153a55}
+    .s7-cal-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px;margin:.7rem 0 1rem}
+    .s7-cal-step{position:relative;border:1px solid #d9e6ee;border-radius:15px;background:linear-gradient(180deg,#ffffff,#f8fbfd);padding:14px 14px 13px 48px;min-height:104px;box-shadow:0 3px 10px rgba(15,23,42,.035)}
+    .s7-cal-step span{position:absolute;left:13px;top:14px;width:26px;height:26px;border-radius:50%;display:flex;align-items:center;justify-content:center;background:#0b86bd;color:#fff;font-size:.78rem;font-weight:900}
+    .s7-cal-step b{display:block;color:#16384f;margin-bottom:4px}
+    .s7-cal-step small{display:block;color:#5b6e7c;line-height:1.38;font-size:.8rem}
+    .s7-compare{border:1px solid #d9e6ee;border-radius:16px;background:#fff;overflow:hidden;margin:.9rem 0}
+    .s7-compare-head{padding:10px 14px;background:#f2f7fa;font-weight:850;color:#17364c;border-bottom:1px solid #e2ebf1}
+    .s7-compare-grid{display:grid;grid-template-columns:1fr 1fr;gap:0}
+    .s7-compare-card{padding:14px 16px}
+    .s7-compare-card:first-child{border-right:1px solid #e5edf2}
+    .s7-compare-k{font-size:.7rem;font-weight:900;letter-spacing:.07em;color:#0a7fb2;margin-bottom:3px}
+    .s7-compare-card p{margin:.35rem 0 0;color:#5b6b78;font-size:.88rem;line-height:1.42}
+    .s7-uncertainty{border-left:4px solid #f59e0b;border-radius:12px;background:#fff9e8;padding:13px 15px;margin:.8rem 0 1rem;color:#43515c}
+    .s7-uncertainty-title{font-weight:900;color:#7a5200;margin-bottom:3px}
+    @media(max-width:1050px){.s7-cal-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
+    @media(max-width:900px){.s7-metric-grid,.s7-mini-grid,.s7-compare-grid{grid-template-columns:1fr}.s7-compare-card:first-child{border-right:none;border-bottom:1px solid #e5edf2}.s7-table{font-size:.84rem}.s7-table th,.s7-table td{padding:10px}}
+    @media(max-width:650px){.s7-cal-grid{grid-template-columns:1fr}}
+    </style>
+    """,unsafe_allow_html=True)
+
+    def _s7_table(rows, columns, pill_col=None):
+        head="".join(f"<th>{label}</th>" for key,label in columns)
+        body=[]
+        for row in rows:
+            cells=[]
+            for key,label in columns:
+                val=str(row.get(key,""))
+                if pill_col==key:
+                    val=f'<span class="s7-pill">{val}</span>'
+                cells.append(f"<td>{val}</td>")
+            body.append("<tr>"+"".join(cells)+"</tr>")
+        st.markdown(
+            '<div class="s7-table-wrap"><table class="s7-table"><thead><tr>'
+            +head+'</tr></thead><tbody>'+"".join(body)+'</tbody></table></div>',
+            unsafe_allow_html=True,
+        )
+
+    st.markdown("""
+    <div class="c3l2-intro">
+      <div class="c3l2-k">FUENTES → EMISIÓN → PROPAGACIÓN → RECEPTORES → MAPA</div>
+      <div class="c3l2-title">Un mapa por proyección no interpola puntos medidos: calcula el nivel esperado en cada receptor.</div>
+      El modelo representa matemáticamente las fuentes y el medio de propagación. Por eso el resultado depende
+      de la <b>calidad de los datos de entrada</b>, del <b>método de cálculo</b>, de la geometría y de que los
+      supuestos representen realmente el escenario que se quiere evaluar.
+    </div>
+    """,unsafe_allow_html=True)
+
+    st.markdown("### 1. ¿Qué significa un mapa de ruido por proyección?")
+    a,b,c3=st.columns(3)
+    with a:
+        st.markdown("""
+        <div class="c3l2-card blue">
+          <div class="c3l2-k">MEDICIÓN</div>
+          <b>Dato observado.</b><br>
+          El sonómetro registra el nivel en un lugar y momento determinados.
+        </div>
+        """,unsafe_allow_html=True)
+    with b:
+        st.markdown("""
+        <div class="c3l2-card green">
+          <div class="c3l2-k">INTERPOLACIÓN</div>
+          <b>Estimación entre mediciones.</b><br>
+          Se construye una superficie a partir de puntos medidos, como vimos en la Etapa 6.
+        </div>
+        """,unsafe_allow_html=True)
+    with c3:
+        st.markdown("""
+        <div class="c3l2-card orange">
+          <div class="c3l2-k">PROYECCIÓN</div>
+          <b>Predicción mediante un modelo.</b><br>
+          Cada celda es un receptor calculado a partir de fuentes, geometría y reglas de propagación.
+        </div>
+        """,unsafe_allow_html=True)
+
+    st.markdown("""
+    Una proyección permite estudiar situaciones que todavía no existen: un proyecto futuro, una ampliación,
+    una nueva carretera, una planta industrial, una barrera acústica o un cambio operacional. También permite
+    comparar escenarios <b>sin proyecto / con proyecto</b> o <b>sin medida / con medida</b>.    """)
+
+    st.markdown("### 2. ¿Qué necesita un modelo de predicción?")
+    st.markdown("""
+    Un software no puede “inventar” el mapa. El usuario debe construir un escenario acústico coherente.
+    Los bloques siguientes resumen las entradas que normalmente controlan la calidad de la predicción:
+    """)
+    st.markdown("""
+    <div class="s7-mini-grid">
+      <div class="s7-mini"><b>Fuentes y emisión</b><br>Posición, altura, geometría, directividad, horario, condición operacional y potencia sonora.</div>
+      <div class="s7-mini"><b>Espectro</b><br>Niveles por bandas de octava o tercio de octava cuando el método o el análisis lo requieran.</div>
+      <div class="s7-mini"><b>Topografía y obstáculos</b><br>Curvas de nivel, taludes, edificaciones, pantallas y otras geometrías relevantes.</div>
+      <div class="s7-mini"><b>Terreno y meteorología</b><br>Absorción del suelo, temperatura, humedad y condiciones de propagación aplicables.</div>
+      <div class="s7-mini"><b>Receptores</b><br>Coordenadas, alturas y distribución de los puntos de evaluación.</div>
+      <div class="s7-mini"><b>Configuración de cálculo</b><br>Reflexiones, difracción, resolución de malla y altura del mapa.</div>
+    </div>
+    """,unsafe_allow_html=True)
+
+    st.markdown(
+        '<div class="c3l2-warn"><b>Principio clave:</b> un mapa visualmente detallado no es necesariamente '
+        'un mapa exacto. Una grilla fina solo aumenta la cantidad de receptores calculados; no corrige '
+        'datos de entrada deficientes ni un modelo mal escogido.</div>',
+        unsafe_allow_html=True,
+    )
+
+    st.markdown("### 3. Modelos de predicción y normativa técnica")
+    model_rows=[
+        {
+            "Fuente / aplicación":"Fuentes industriales, comerciales y faenas",
+            "Métodos de referencia":"ISO 9613-1 + ISO 9613-2",
+            "Qué modelan":"Absorción atmosférica y propagación exterior: divergencia, suelo, barreras, reflexiones y otros términos según el método.",
+            "Nota":"ISO 9613-2:2024 es la edición internacional vigente; siempre debe verificarse la versión exigida por el marco técnico aplicable.",
+        },
+        {
+            "Fuente / aplicación":"Tránsito vehicular",
+            "Métodos de referencia":"CNOSSOS-EU, NMPB, RLS-19, CoRTN, TNM",
+            "Qué modelan":"Emisión del flujo vehicular y propagación según tránsito, velocidad, composición, pavimento, geometría y entorno.",
+            "Nota":"No existe un único método universal; se usa el exigido o técnicamente justificado para el estudio.",
+        },
+        {
+            "Fuente / aplicación":"Ferrocarriles",
+            "Métodos de referencia":"CNOSSOS-EU, Schall 03, RMR, FTA/FRA",
+            "Qué modelan":"Rodadura, tracción, frenado, infraestructura, velocidad y propagación.",
+            "Nota":"La selección depende del marco regulatorio y de la disponibilidad de datos.",
+        },
+        {
+            "Fuente / aplicación":"Aeronaves",
+            "Métodos de referencia":"ECAC Doc 29, ICAO Doc 9911, CNOSSOS-Air",
+            "Qué modelan":"Trayectorias, perfiles de vuelo, potencia/configuración, datos ANP y exposición acústica alrededor de aeropuertos.",
+            "Nota":"ECAC publicó la 5ª edición de Doc 29 en 2026.",
+        },
+        {
+            "Fuente / aplicación":"Aerogeneradores",
+            "Métodos de referencia":"ISO 9613-2:2024 y métodos específicos nacionales",
+            "Qué modelan":"Potencia por velocidad de viento, altura, directividad y propagación a larga distancia.",
+            "Nota":"Debe verificarse el método exigido por la jurisdicción y las correcciones específicas aplicables.",
+        },
+    ]
+    _s7_table(
+        model_rows,
+        [
+            ("Fuente / aplicación","Fuente / aplicación"),
+            ("Métodos de referencia","Métodos de referencia"),
+            ("Qué modelan","Qué representa el cálculo"),
+            ("Nota","Criterio de uso"),
+        ],
+        pill_col="Fuente / aplicación",
+    )
+
+    st.markdown("### 4. La lógica física de una proyección")
+    st.markdown(
+        '<div class="s7-eqbox"><div class="s7-eqtitle">Ecuación conceptual de propagación</div>'
+        '<div class="s7-eqdesc">El nivel en el receptor parte de la emisión de la fuente y descuenta las atenuaciones del camino.</div>',
+        unsafe_allow_html=True,
+    )
+    st.latex(r"L_p = L_w + D_c - (A_{div}+A_{atm}+A_{gr}+A_{bar}+A_{misc})")
+    st.markdown("</div>",unsafe_allow_html=True)
+    st.markdown("""
+    Esta forma resume conceptualmente el balance usado por modelos de propagación como ISO 9613:
+
+    - **Lw:** potencia sonora de la fuente.
+    - **Dc:** corrección por directividad.
+    - **Adiv:** atenuación por divergencia geométrica.
+    - **Aatm:** absorción atmosférica.
+    - **Agr:** efecto del suelo.
+    - **Abar:** atenuación por barreras o difracción.
+    - **Amisc:** otros mecanismos admitidos por el método.
+
+    Cuando existen varias fuentes, sus aportes en un receptor se combinan mediante **suma energética**, no
+    mediante suma aritmética de decibeles.
+    """)
+    st.markdown(
+        '<div class="s7-eqbox"><div class="s7-eqtitle">Suma energética de fuentes</div>'
+        '<div class="s7-eqdesc">Los aportes simultáneos se combinan en energía; los decibeles no se suman aritméticamente.</div>',
+        unsafe_allow_html=True,
+    )
+    st.latex(r"L_{tot}=10\log_{10}\left(\sum_i 10^{L_i/10}\right)")
+    st.markdown("</div>",unsafe_allow_html=True)
+
+    st.markdown("### 5. Mini laboratorio interactivo de modelación")
+    st.markdown("""
+    <div class="c3l2-note">
+      <b>Interactúa directamente con el mapa:</b> arrastra la fuente <b>F1</b> o el receptor <b>R1</b>.
+      El campo sonoro se recalcula automáticamente. Al seleccionar un objeto aparecen solo sus parámetros básicos.
+    </div>
+    """,unsafe_allow_html=True)
+
+    _s7_interactive_html = r'''
+    <div id="s7noise" style="font-family:Inter,system-ui,-apple-system,Segoe UI,sans-serif;color:#17324a">
+      <style>
+        #s7noise{background:#fff}
+        #s7noise .wrap{display:grid;grid-template-columns:minmax(0,1fr) 250px;gap:14px;align-items:start}
+        #s7noise .mapbox{border:1px solid #d9e5ed;border-radius:16px;overflow:hidden;background:#f7fafc}
+        #s7noise .toolbar{display:flex;flex-wrap:wrap;gap:8px;align-items:center;padding:10px 12px;border-bottom:1px solid #e1eaf0;background:#fbfdfe}
+        #s7noise .tag{font-size:12px;font-weight:800;color:#476274}
+        #s7noise button{border:1px solid #cbdde8;background:#fff;border-radius:999px;padding:7px 11px;font-size:12px;font-weight:800;color:#24485f;cursor:pointer}
+        #s7noise button.active{background:#e9f5fb;border-color:#88c8e7;color:#0b6f9f}
+        #s7noise canvas{display:block;width:100%;height:auto;touch-action:none;cursor:default}
+        #s7noise .side{border:1px solid #d9e5ed;border-radius:16px;background:#fff;overflow:hidden}
+        #s7noise .sidehead{padding:12px 14px;background:#f4f8fb;border-bottom:1px solid #e1eaf0;font-weight:900}
+        #s7noise .panel{padding:13px 14px}
+        #s7noise .objname{font-size:12px;letter-spacing:.06em;font-weight:900;color:#0b7aaa;text-transform:uppercase;margin-bottom:8px}
+        #s7noise label{display:block;font-size:12px;font-weight:800;color:#496274;margin:10px 0 4px}
+        #s7noise input[type=number],#s7noise select{width:100%;box-sizing:border-box;border:1px solid #cfdde6;border-radius:9px;padding:8px 9px;font-size:14px;background:#fff;color:#17324a}
+        #s7noise input[type=range]{width:100%}
+        #s7noise .metric{margin-top:12px;border:1px solid #dbe7ee;border-radius:12px;padding:10px 11px;background:#fbfdfe}
+        #s7noise .metric small{display:block;color:#6a7e8c;font-weight:800;text-transform:uppercase;font-size:10px;letter-spacing:.05em}
+        #s7noise .metric strong{display:block;font-size:22px;color:#153f5b;margin-top:2px}
+        #s7noise .env{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:10px}
+        #s7noise .check{display:flex;align-items:center;gap:7px;font-size:12px;font-weight:800;color:#466171}
+        #s7noise .maparea{display:grid;grid-template-columns:minmax(0,1fr) 82px;align-items:stretch}
+        #s7noise .legend{display:flex;flex-direction:column;gap:0;padding:8px 7px;border-left:1px solid #e1eaf0;background:#fff}
+        #s7noise .legend-title{font-size:10px;font-weight:900;text-align:center;color:#29485d;margin:0 0 5px}
+        #s7noise .leg{display:grid;grid-template-columns:28px 1fr;align-items:center;gap:5px;min-height:39px;font-size:9px;color:#405868}
+        #s7noise .sw{height:30px;border-radius:2px;border:1px solid rgba(0,0,0,.10)}
+        #s7noise .foot{font-size:11px;color:#657885;line-height:1.42;margin-top:8px}
+        @media(max-width:760px){#s7noise .wrap{grid-template-columns:1fr}#s7noise .maparea{grid-template-columns:minmax(0,1fr) 68px}#s7noise .leg{grid-template-columns:22px 1fr;font-size:8px;min-height:36px}#s7noise .sw{height:27px}}
+      </style>
+
+      <div class="wrap">
+        <div class="mapbox">
+          <div class="toolbar">
+            <span class="tag">Seleccionar:</span>
+            <button id="selF" class="active" type="button">F1 · Fuente</button>
+            <button id="selR" type="button">R1 · Receptor</button>
+            <span class="tag" style="margin-left:auto">Arrastra el objeto sobre el plano</span>
+          </div>
+          <div class="maparea">
+            <canvas id="map" width="900" height="540" aria-label="Mapa acústico interactivo"></canvas>
+            <div class="legend"><div class="legend-title">dB(A)</div><div id="legend"></div></div>
+          </div>
+        </div>
+
+        <div class="side">
+          <div class="sidehead">Objeto seleccionado</div>
+          <div class="panel">
+            <div id="sourcePanel">
+              <div class="objname">F1 · Fuente puntual</div>
+              <label for="lw">Potencia sonora Lw [dB]</label>
+              <input id="lw" type="number" min="70" max="120" step="1" value="98">
+              <label for="sh">Altura de fuente [m]</label>
+              <input id="sh" type="number" min="0.5" max="20" step="0.5" value="2">
+            </div>
+            <div id="receiverPanel" hidden>
+              <div class="objname">R1 · Receptor</div>
+              <label for="rh">Altura de receptor [m]</label>
+              <input id="rh" type="number" min="1" max="15" step="0.5" value="1.5">
+            </div>
+
+            <div class="metric">
+              <small>Nivel calculado en R1</small>
+              <strong id="rLevel">— dB</strong>
+            </div>
+            <div class="metric">
+              <small>Distancia horizontal F1–R1</small>
+              <strong id="frDistance">— m</strong>
+            </div>
+
+            <div style="margin-top:14px;border-top:1px solid #e7eef3;padding-top:10px">
+              <div class="objname">Entorno</div>
+              <label for="g">Factor de suelo G</label>
+              <input id="g" type="range" min="0" max="1" step="0.1" value="0.5">
+              <div style="display:flex;justify-content:space-between;font-size:11px;color:#6b7d89"><span>0 · duro</span><b id="gVal">0.5</b><span>1 · poroso</span></div>
+              <div class="env">
+                <label class="check"><input id="barrier" type="checkbox" checked> Barrera</label>
+                <select id="barH" aria-label="Altura de barrera">
+                  <option value="2">2 m</option>
+                  <option value="4" selected>4 m</option>
+                  <option value="6">6 m</option>
+                </select>
+              </div>
+            </div>
+            <div class="foot">
+              Escala cromática clásica de <b>ISO 1996-2:1987</b>, en bandas de 5 dB. Este cálculo es didáctico y no sustituye una implementación normativa completa.
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <script>
+      (() => {
+        const root=document.getElementById('s7noise');
+        const canvas=root.querySelector('#map');
+        const ctx=canvas.getContext('2d');
+        const W=canvas.width,H=canvas.height;
+        const world={xmin:-90,xmax:90,ymin:-70,ymax:70};
+        const state={
+          selected:'F',
+          source:{x:-35,y:0,lw:98,h:2},
+          receiver:{x:45,y:10,h:1.5},
+          g:.5,barrier:true,barrierH:4
+        };
+        const bands=[
+          {max:35,label:'<35',c:'#C0FFC0'},
+          {max:40,label:'35–40',c:'#00CC00'},
+          {max:45,label:'40–45',c:'#005000'},
+          {max:50,label:'45–50',c:'#FFFF00'},
+          {max:55,label:'50–55',c:'#FFC74A'},
+          {max:60,label:'55–60',c:'#FF6600'},
+          {max:65,label:'60–65',c:'#FF3333'},
+          {max:70,label:'65–70',c:'#990033'},
+          {max:75,label:'70–75',c:'#AD9AD6'},
+          {max:80,label:'75–80',c:'#0000FF'},
+          {max:85,label:'80–85',c:'#000066'},
+          {max:999,label:'>85',c:'#000000'}
+        ];
+        const legend=root.querySelector('#legend');
+        legend.innerHTML=bands.slice().reverse().map(b=>'<div class="leg"><div class="sw" style="background:'+b.c+'"></div><span>'+b.label+'</span></div>').join('');
+
+        const toPx=(x,y)=>[
+          (x-world.xmin)/(world.xmax-world.xmin)*W,
+          H-(y-world.ymin)/(world.ymax-world.ymin)*H
+        ];
+        const toWorld=(px,py)=>[
+          world.xmin+px/W*(world.xmax-world.xmin),
+          world.ymin+(H-py)/H*(world.ymax-world.ymin)
+        ];
+        const colorFor=L=>bands.find(b=>L<b.max).c;
+
+        function levelAt(x,y,bar=true){
+          const dx=x-state.source.x,dy=y-state.source.y;
+          const dh=state.source.h-state.receiver.h;
+          const d=Math.max(1,Math.sqrt(dx*dx+dy*dy+dh*dh));
+          let L=state.source.lw-20*Math.log10(d)-11;
+          L-=0.005*d;
+          L-=state.g*Math.min(4.5,0.018*d);
+
+          if(bar && state.barrier){
+            const bx=0;
+            const den=x-state.source.x;
+            if(Math.abs(den)>1e-6){
+              const t=(bx-state.source.x)/den;
+              if(t>0 && t<1){
+                const yCross=state.source.y+t*(y-state.source.y);
+                if(Math.abs(yCross)<=48){
+                  const losH=state.source.h+t*(state.receiver.h-state.source.h);
+                  const excess=Math.max(0,state.barrierH-losH);
+                  if(excess>0) L-=Math.min(20,3+7*excess);
+                }
+              }
+            }
+          }
+          return L;
+        }
+
+        function drawGrid(){
+          ctx.save();
+          ctx.strokeStyle='rgba(255,255,255,.28)';
+          ctx.lineWidth=1;
+          for(let x=-80;x<=80;x+=20){
+            const p=toPx(x,0)[0]; ctx.beginPath();ctx.moveTo(p,0);ctx.lineTo(p,H);ctx.stroke();
+          }
+          for(let y=-60;y<=60;y+=20){
+            const p=toPx(0,y)[1]; ctx.beginPath();ctx.moveTo(0,p);ctx.lineTo(W,p);ctx.stroke();
+          }
+          ctx.restore();
+        }
+
+        function draw(){
+          const step=5;
+          for(let py=0;py<H;py+=step){
+            for(let px=0;px<W;px+=step){
+              const [x,y]=toWorld(px+step/2,py+step/2);
+              ctx.fillStyle=colorFor(levelAt(x,y,true));
+              ctx.fillRect(px,py,step+1,step+1);
+            }
+          }
+          drawGrid();
+
+          if(state.barrier){
+            const [bx1,by1]=toPx(0,-48), [bx2,by2]=toPx(0,48);
+            ctx.strokeStyle='#233646';ctx.lineWidth=7;ctx.beginPath();ctx.moveTo(bx1,by1);ctx.lineTo(bx2,by2);ctx.stroke();
+            ctx.fillStyle='#233646';ctx.font='700 12px system-ui';ctx.fillText('Barrera '+state.barrierH+' m',bx1+8,by2+16);
+          }
+
+          const [sx,sy]=toPx(state.source.x,state.source.y);
+          const [rx,ry]=toPx(state.receiver.x,state.receiver.y);
+          const horizontalDistance=Math.hypot(state.receiver.x-state.source.x,state.receiver.y-state.source.y);
+
+          // Cota permanente F1–R1
+          ctx.save();
+          ctx.strokeStyle='rgba(23,50,74,.78)';
+          ctx.lineWidth=2;
+          ctx.setLineDash([8,6]);
+          ctx.beginPath();ctx.moveTo(sx,sy);ctx.lineTo(rx,ry);ctx.stroke();
+          ctx.setLineDash([]);
+          const mx=(sx+rx)/2,my=(sy+ry)/2;
+          const label='d = '+horizontalDistance.toFixed(1)+' m';
+          ctx.font='800 12px system-ui';
+          const tw=ctx.measureText(label).width;
+          ctx.fillStyle='rgba(255,255,255,.92)';
+          ctx.fillRect(mx-tw/2-6,my-18,tw+12,20);
+          ctx.fillStyle='#17324a';
+          ctx.fillText(label,mx-tw/2,my-4);
+          ctx.restore();
+
+          ctx.beginPath();ctx.arc(sx,sy,11,0,Math.PI*2);
+          ctx.fillStyle='#ffffff';ctx.fill();ctx.lineWidth=4;ctx.strokeStyle=state.selected==='F'?'#0b7aaa':'#213b4d';ctx.stroke();
+          ctx.fillStyle='#17324a';ctx.font='900 13px system-ui';
+          ctx.fillText('F1 · ('+state.source.x.toFixed(0)+', '+state.source.y.toFixed(0)+') m',sx+15,sy-12);
+
+          ctx.save();ctx.translate(rx,ry);ctx.rotate(Math.PI/4);
+          ctx.fillStyle='#fff';ctx.strokeStyle=state.selected==='R'?'#0b7aaa':'#213b4d';ctx.lineWidth=4;
+          ctx.fillRect(-8,-8,16,16);ctx.strokeRect(-8,-8,16,16);ctx.restore();
+          const rL=levelAt(state.receiver.x,state.receiver.y,true);
+          ctx.fillStyle='#17324a';ctx.font='900 13px system-ui';
+          ctx.fillText('R1 · '+rL.toFixed(1)+' dB · ('+state.receiver.x.toFixed(0)+', '+state.receiver.y.toFixed(0)+') m',rx+15,ry-12);
+          root.querySelector('#rLevel').textContent=rL.toFixed(1)+' dB';
+          root.querySelector('#frDistance').textContent=horizontalDistance.toFixed(1)+' m';
+        }
+
+        let raf=0;
+        function render(){cancelAnimationFrame(raf);raf=requestAnimationFrame(draw);}
+
+        function selectObject(which){
+          state.selected=which;
+          root.querySelector('#selF').classList.toggle('active',which==='F');
+          root.querySelector('#selR').classList.toggle('active',which==='R');
+          root.querySelector('#sourcePanel').hidden=which!=='F';
+          root.querySelector('#receiverPanel').hidden=which!=='R';
+          render();
+        }
+
+        root.querySelector('#selF').addEventListener('click',()=>selectObject('F'));
+        root.querySelector('#selR').addEventListener('click',()=>selectObject('R'));
+
+        const bindNum=(id,get,set,min,max)=>{
+          const el=root.querySelector('#'+id);
+          const update=()=>{let v=parseFloat(el.value);if(!Number.isFinite(v))v=get();v=Math.max(min,Math.min(max,v));el.value=v;set(v);render();};
+          el.addEventListener('input',update);el.addEventListener('change',update);
+        };
+        bindNum('lw',()=>state.source.lw,v=>state.source.lw=v,70,120);
+        bindNum('sh',()=>state.source.h,v=>state.source.h=v,.5,20);
+        bindNum('rh',()=>state.receiver.h,v=>state.receiver.h=v,1,15);
+
+        root.querySelector('#g').addEventListener('input',e=>{state.g=parseFloat(e.target.value);root.querySelector('#gVal').textContent=state.g.toFixed(1);render();});
+        root.querySelector('#barrier').addEventListener('change',e=>{state.barrier=e.target.checked;render();});
+        root.querySelector('#barH').addEventListener('change',e=>{state.barrierH=parseFloat(e.target.value);render();});
+
+        function pos(ev){
+          const r=canvas.getBoundingClientRect();
+          return [(ev.clientX-r.left)*W/r.width,(ev.clientY-r.top)*H/r.height];
+        }
+        function hit(px,py,obj){
+          const [ox,oy]=toPx(obj.x,obj.y);
+          return Math.hypot(px-ox,py-oy)<22;
+        }
+        let dragging=null;
+        canvas.addEventListener('pointerdown',ev=>{
+          const [px,py]=pos(ev);
+          if(hit(px,py,state.source)){dragging='F';selectObject('F');}
+          else if(hit(px,py,state.receiver)){dragging='R';selectObject('R');}
+          else {dragging=state.selected;}
+          canvas.setPointerCapture(ev.pointerId);
+          const [x,y]=toWorld(px,py);
+          if(dragging==='F'){state.source.x=Math.max(world.xmin,Math.min(world.xmax,x));state.source.y=Math.max(world.ymin,Math.min(world.ymax,y));}
+          if(dragging==='R'){state.receiver.x=Math.max(world.xmin,Math.min(world.xmax,x));state.receiver.y=Math.max(world.ymin,Math.min(world.ymax,y));}
+          render();
+        });
+        canvas.addEventListener('pointermove',ev=>{
+          if(!dragging)return;
+          const [px,py]=pos(ev),[x,y]=toWorld(px,py);
+          if(dragging==='F'){state.source.x=Math.max(world.xmin,Math.min(world.xmax,x));state.source.y=Math.max(world.ymin,Math.min(world.ymax,y));}
+          else{state.receiver.x=Math.max(world.xmin,Math.min(world.xmax,x));state.receiver.y=Math.max(world.ymin,Math.min(world.ymax,y));}
+          render();
+        });
+        const stop=()=>{dragging=null;};
+        canvas.addEventListener('pointerup',stop);
+        canvas.addEventListener('pointercancel',stop);
+
+        draw();
+      })();
+      </script>
+    </div>
+    '''
+    components.html(_s7_interactive_html,height=820,scrolling=False)
+
+    st.caption(
+        "La escala cromática queda en formato vertical, como en la representación clásica de mapas de ruido. "
+        "Al mover F1 cambia todo el campo acústico; al mover R1 no cambia la fuente ni el campo, sino el nivel "
+        "que el receptor lee en su nueva posición. La distancia F1–R1 permanece indicada sobre el plano."
+    )
+
+    st.markdown(
+        '<div class="c3l2-warn"><b>Modelo didáctico:</b> el mapa se recalcula en tiempo real para enseñar '
+        'la relación fuente–propagación–receptor. El núcleo de cálculo está simplificado y no constituye una '
+        'implementación completa de ISO 9613 ni un software de predicción normativa.</div>',
+        unsafe_allow_html=True,
+    )
+
+    st.markdown("### 6. Software de predicción acústica")
+    st.markdown("""
+    El **software es la herramienta que implementa uno o varios métodos de cálculo**. No debe confundirse el
+    nombre del programa con el modelo físico o la norma. Distintos programas pueden implementar la misma norma.
+    """)
+    software_rows=[
+        {
+            "Software":"SoundPLANnoise",
+            "Uso típico":"Industria, carreteras, ferrocarriles, aeronaves, mapas estratégicos",
+            "Ejemplos de métodos":"ISO 9613-2, CNOSSOS-EU, RLS-19, NMPB, TNM, ECAC Doc 29, Nord2000",
+        },
+        {
+            "Software":"CadnaA",
+            "Uso típico":"Ruido industrial y transporte, cartografía 2D/3D",
+            "Ejemplos de métodos":"ISO 9613-2:1996/2024, CNOSSOS-EU, NMPB, RLS, TNM, Nord2000, Schall 03",
+        },
+        {
+            "Software":"Predictor-LimA",
+            "Uso típico":"Industria, carreteras, ferrocarriles y grandes mapas",
+            "Ejemplos de métodos":"Diversos métodos internacionales; incluye herramientas GIS y cálculo de mapas",
+        },
+        {
+            "Software":"IMMI",
+            "Uso típico":"Industria, tránsito, ruido aéreo, mapas y planes de acción",
+            "Ejemplos de métodos":"Múltiples normas nacionales e internacionales de inmisión y propagación",
+        },
+        {
+            "Software":"NoiseModelling",
+            "Uso típico":"Cartografía ambiental abierta / investigación / SIG",
+            "Ejemplos de métodos":"Implementación abierta de CNOSSOS-EU para carretera y ferrocarril",
+        },
+        {
+            "Software":"AEDT",
+            "Uso típico":"Ruido de aeronaves y evaluación ambiental aeroportuaria",
+            "Ejemplos de métodos":"Modelo aeronáutico integrado FAA; utiliza bases de datos de performance, ruido y emisiones",
+        },
+    ]
+    _s7_table(
+        software_rows,
+        [
+            ("Software","Software"),
+            ("Uso típico","Uso típico"),
+            ("Ejemplos de métodos","Métodos / capacidades"),
+        ],
+        pill_col="Software",
+    )
+    st.markdown(
+        '<div class="c3l2-note"><b>No existe “el mejor software” en abstracto:</b> importa que implemente '
+        'el método requerido, que pueda representar la geometría y las fuentes del problema y que su implementación '
+        'sea verificable y trazable.</div>',
+        unsafe_allow_html=True,
+    )
+
+    st.markdown("### 7. ¿Cómo se verifica que un software calcula correctamente?")
+    st.markdown("""
+    Aquí aparece una segunda capa de control: no basta con elegir una norma; debe comprobarse que el programa
+    la implementa correctamente.
+
+    **Serie ISO 17534 — Software para el cálculo del sonido en exteriores**
+
+    - **ISO 17534-1:2015:** requisitos de calidad y aseguramiento de calidad del software.
+    - **ISO/TR 17534-2:2014:** recomendaciones generales, casos de prueba e interfaz de aseguramiento de calidad.
+    - **ISO/TR 17534-3:2015:** recomendaciones y casos de prueba para la implementación de ISO 9613-2.
+      Existe una nueva ISO/TS 17534-3 en desarrollo para reemplazar este informe técnico.
+    - **ISO/TR 17534-4:2020:** implementación con aseguramiento de calidad de la propagación de CNOSSOS-EU.
+
+    El objetivo de esta serie es que dos programas que implementen correctamente el mismo método y reciban
+    los mismos datos de entrada produzcan resultados dentro de tolerancias definidas.
+    """)
+    st.markdown(
+        '<div class="c3l2-warn"><b>Importante:</b> ISO 17534 verifica la implementación del método en el '
+        'software. No demuestra por sí sola que el modelo represente correctamente un proyecto real. '
+        'Esa es una pregunta distinta.</div>',
+        unsafe_allow_html=True,
+    )
+
+    st.markdown("### 8. Calibración del modelo con mediciones reales")
+    st.markdown("""
+    Cuando existe una instalación, faena o condición operacional que puede reproducirse en terreno, una buena
+    práctica es construir en el software **ese mismo escenario real** y comparar los niveles calculados con
+    mediciones realizadas simultáneamente o bajo condiciones equivalentes.
+
+    El objetivo no es “hacer coincidir números a la fuerza”, sino comprobar si la representación del sistema
+    es razonable y detectar entradas incorrectas.
+    """)
+
+    cal_rows=[
+        {"Punto":"C1","Medido [dB(A)]":65.2,"Modelado inicial [dB(A)]":63.8},
+        {"Punto":"C2","Medido [dB(A)]":62.8,"Modelado inicial [dB(A)]":62.1},
+        {"Punto":"C3","Medido [dB(A)]":59.7,"Modelado inicial [dB(A)]":60.4},
+        {"Punto":"C4","Medido [dB(A)]":57.1,"Modelado inicial [dB(A)]":56.0},
+    ]
+    cal_df=pd.DataFrame(cal_rows)
+    cal_df["Diferencia modelo-medición [dB]"]=(cal_df["Modelado inicial [dB(A)]"]-cal_df["Medido [dB(A)]"]).round(1)
+    cal_display=cal_df.rename(columns={
+        "Medido [dB(A)]":"Medido",
+        "Modelado inicial [dB(A)]":"Modelado",
+        "Diferencia modelo-medición [dB]":"Δ modelo − medición",
+    }).to_dict("records")
+    _s7_table(
+        cal_display,
+        [
+            ("Punto","Punto"),
+            ("Medido","Medido [dB(A)]"),
+            ("Modelado","Modelado [dB(A)]"),
+            ("Δ modelo − medición","Diferencia [dB]"),
+        ],
+        pill_col="Punto",
+    )
+    diffs=cal_df["Diferencia modelo-medición [dB]"].to_numpy(dtype=float)
+    mae_cal=float(np.mean(np.abs(diffs)))
+    bias_cal=float(np.mean(diffs))
+    max_cal=float(np.max(np.abs(diffs)))
+    st.markdown(
+        f"""
+        <div class="s7-metric-grid">
+          <div class="s7-metric"><div class="s7-metric-label">Error absoluto medio</div><div class="s7-metric-value">{mae_cal:.2f} dB</div></div>
+          <div class="s7-metric"><div class="s7-metric-label">Sesgo medio</div><div class="s7-metric-value">{bias_cal:+.2f} dB</div></div>
+          <div class="s7-metric"><div class="s7-metric-label">Mayor diferencia</div><div class="s7-metric-value">{max_cal:.2f} dB</div></div>
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
+
+    st.markdown("""
+    <div class="c3l2-flow">
+      <span class="c3l2-node">Escenario real</span><span class="c3l2-arrow">→</span>
+      <span class="c3l2-node">Medición</span><span class="c3l2-arrow">→</span>
+      <span class="c3l2-node">Modelo equivalente</span><span class="c3l2-arrow">→</span>
+      <span class="c3l2-node">Comparación</span><span class="c3l2-arrow">→</span>
+      <span class="c3l2-node">Ajuste justificado</span><span class="c3l2-arrow">→</span>
+      <span class="c3l2-node">Validación</span>
+    </div>
+    """,unsafe_allow_html=True)
+
+    st.markdown("#### Flujo recomendado de calibración / ajuste del modelo")
+    st.markdown("""
+    <div class="s7-cal-grid">
+      <div class="s7-cal-step"><span>1</span><b>Condición real</b><small>Selecciona una condición operacional representativa y bien documentada.</small></div>
+      <div class="s7-cal-step"><span>2</span><b>Medición</b><small>Registra niveles, meteorología, operación y eventos ajenos.</small></div>
+      <div class="s7-cal-step"><span>3</span><b>Modelo equivalente</b><small>Replica exactamente esa condición en el software.</small></div>
+      <div class="s7-cal-step"><span>4</span><b>Comparación</b><small>Contrasta medido vs. calculado, idealmente también por bandas.</small></div>
+      <div class="s7-cal-step"><span>5</span><b>Diagnóstico</b><small>Revisa emisión, posición, altura, directividad, barreras, suelo, reflexiones y topografía.</small></div>
+      <div class="s7-cal-step"><span>6</span><b>Ajuste justificado</b><small>Modifica solo parámetros respaldados por evidencia.</small></div>
+      <div class="s7-cal-step"><span>7</span><b>Nueva comparación</b><small>Repite el contraste para comprobar si mejora la representación.</small></div>
+      <div class="s7-cal-step"><span>8</span><b>Validación</b><small>Si hay datos suficientes, reserva puntos o una segunda campaña independiente.</small></div>
+    </div>
+    """,unsafe_allow_html=True)
+
+    st.markdown("""
+    <div class="s7-compare">
+      <div class="s7-compare-head">No confundir estos dos controles</div>
+      <div class="s7-compare-grid">
+        <div class="s7-compare-card">
+          <div class="s7-compare-k">SONÓMETRO</div>
+          <b>Calibración del instrumento</b>
+          <p>Verifica que el equipo de medición responda correctamente antes y/o después de medir.</p>
+        </div>
+        <div class="s7-compare-card">
+          <div class="s7-compare-k">MODELO</div>
+          <b>Ajuste / calibración del modelo</b>
+          <p>Contrasta la representación computacional con observaciones reales y revisa sus parámetros.</p>
+        </div>
+      </div>
+    </div>
+    """,unsafe_allow_html=True)
+
+    st.markdown("""
+    <div class="s7-uncertainty">
+      <div class="s7-uncertainty-title">Interpretar la incertidumbre con criterio</div>
+      La precisión de un método de predicción depende de su <b>campo de aplicación</b>, la <b>geometría</b> y la
+      <b>calidad de los datos de entrada</b>. Una tolerancia o incertidumbre declarada por el método no debe
+      convertirse en una corrección automática ni utilizarse para forzar la coincidencia entre modelo y medición.
+    </div>
+    """,unsafe_allow_html=True)
+
+    st.markdown("### Referencias técnicas utilizadas en esta etapa")
+    st.markdown("""
+    - **ISO 9613-2:2024**, propagación del sonido en exteriores.
+    - **ISO 1996-2:2017**, determinación de niveles de presión sonora ambiental por medición y cálculo.
+    - **ISO 17534-1:2015** e informes técnicos asociados para aseguramiento de calidad del software.
+    - **CNOSSOS-EU**, Directiva (UE) 2015/996 y actualización técnica mediante Directiva Delegada (UE) 2021/1226.
+    - **ECAC Doc 29, 5ª edición (2026)** e **ICAO Doc 9911** para ruido de aeronaves.
+    - Documentación técnica de **SoundPLAN, CadnaA, IMMI, Predictor-LimA, NoiseModelling y FAA AEDT**.
+    """)
+
+    if _c3l2_role()=="Alumno" and st.button(
+        "Guardar Etapa 7",
+        type="primary",
+        use_container_width=True,
+        key="c3l2_s7_save",
+    ):
+        _c3l2_complete(saved,7,{
+            "interactive_model":"completed",
+            "calibration_mae":round(mae_cal,3),
+            "calibration_bias":round(bias_cal,3),
+        })
+        st.success("Etapa 7 guardada.")
+
+    _c3l2_teacher_pauta(
+        "Etapa 7",
+        """
+        **Resultado esperado:** el alumno debe distinguir medición, interpolación y proyección; reconocer que
+        la norma de cálculo no es el software; seleccionar el método según el tipo de fuente y comprender que
+        la calidad del mapa depende de las entradas, la geometría y el campo de aplicación.
+
+        **Normativa y métodos:** ISO 9613-2:2024 es la edición internacional vigente para propagación exterior
+        en su campo de aplicación. La selección del método y de su versión debe justificarse según el tipo de
+        fuente, el objetivo del estudio y el marco técnico aplicable.
+
+        **Software:** SoundPLAN, CadnaA, Predictor-LimA, IMMI y NoiseModelling son herramientas de modelación
+        ambiental; AEDT es específico para aviación. El software implementa métodos: no reemplaza la norma.
+
+        **Aseguramiento de calidad:** ISO 17534 evalúa la implementación del método en software. Esto no equivale
+        a validar un proyecto real.
+
+        **Calibración del modelo:** comparar un escenario real medido con el mismo escenario representado en
+        el software. Revisar diferencias y corregir solo parámetros sustentados. Idealmente usar datos
+        independientes para validación posterior. No confundir con la calibración metrológica del sonómetro.
+        """
+    )
+
+
+def _c3l2_stage8(lab,saved):
+    _c3l2_header(
+        8,
+        "Ejemplo guiado · campaña vial por mediciones",
+        "Revisar paso a paso el mismo flujo que se utilizará en la evaluación de la Etapa 10.",
+        35,
+    )
+
+    st.markdown("""
+    <div class="c3l2-intro">
+      <div class="c3l2-k">EJEMPLO COMPLETO · ANTES DE LA EVALUACIÓN</div>
+      <div class="c3l2-title">De la medición en terreno al mapa vial automático</div>
+      En este ejemplo los datos <b>ya fueron medidos y registrados</b>. El objetivo es que observes el procedimiento completo:
+      selección de la intersección, 9 puntos por vía, verificación de estabilidad a los 3 y 6 minutos,
+      registro de Leq/Lmax y construcción automática del mapa vial.
+    </div>
+    """,unsafe_allow_html=True)
+
+    st.markdown("### 1. Intersección del ejemplo")
+    st.markdown("""
+    <div class="c3l2-grid2">
+      <div class="c3l2-card blue">
+        <div class="c3l2-k">VÍA PRINCIPAL</div>
+        <b>Avenida Principal</b><br>
+        Mayor flujo vehicular, buses y vehículos pesados.
+      </div>
+      <div class="c3l2-card orange">
+        <div class="c3l2-k">VÍA SECUNDARIA</div>
+        <b>Calle Secundaria</b><br>
+        Menor flujo y predominio de vehículos livianos.
+      </div>
+    </div>
+    """,unsafe_allow_html=True)
+    st.caption(
+        "Ejemplo didáctico: los nombres y coordenadas son simulados. En la Etapa 10 debes registrar una intersección real y sus coordenadas GPS."
+    )
+
+    components.html("""
+<div style="font-family:Arial,sans-serif;color:#243447;border:1px solid #dbe5ec;border-radius:16px;padding:16px;background:#fbfdff;box-sizing:border-box">
+  <div style="font-size:12px;font-weight:800;letter-spacing:.04em;color:#0b4f83;margin-bottom:6px">RECORRIDO DE MEDICIÓN</div>
+  <svg viewBox="0 0 860 360" role="img" aria-label="Intersección con nueve puntos alineados en la vía principal y nueve puntos alineados en la vía secundaria" style="width:100%;height:auto;display:block">
+    <rect x="20" y="22" width="820" height="316" rx="18" fill="#f4f8fb" stroke="#d8e4ec"/>
+    <rect x="45" y="168" width="770" height="80" rx="10" fill="#dfe7ec"/>
+    <rect x="382" y="42" width="96" height="276" rx="10" fill="#e7edf1"/>
+    <line x1="58" y1="208" x2="802" y2="208" stroke="#94a3b8" stroke-width="3" stroke-dasharray="14 12"/>
+    <line x1="430" y1="54" x2="430" y2="305" stroke="#94a3b8" stroke-width="3" stroke-dasharray="14 12"/>
+    <circle cx="430" cy="208" r="22" fill="#fff" stroke="#334155" stroke-width="2"/>
+    <text x="430" y="204" text-anchor="middle" font-size="10.5" font-weight="800" fill="#0f172a">INICIO</text>
+    <text x="430" y="219" text-anchor="middle" font-size="9.5" fill="#475569">cruce</text>
+
+    <g font-family="Arial,sans-serif" font-size="10.5" font-weight="800" text-anchor="middle">
+      <g fill="#0b78b4" stroke="#fff" stroke-width="2">
+        <circle cx="478" cy="158" r="15"/><circle cx="518" cy="158" r="15"/><circle cx="558" cy="158" r="15"/>
+        <circle cx="598" cy="158" r="15"/><circle cx="638" cy="158" r="15"/><circle cx="678" cy="158" r="15"/>
+        <circle cx="718" cy="158" r="15"/><circle cx="758" cy="158" r="15"/><circle cx="798" cy="158" r="15"/>
+      </g>
+      <g fill="#fff">
+        <text x="478" y="162">P1</text><text x="518" y="162">P2</text><text x="558" y="162">P3</text>
+        <text x="598" y="162">P4</text><text x="638" y="162">P5</text><text x="678" y="162">P6</text>
+        <text x="718" y="162">P7</text><text x="758" y="162">P8</text><text x="798" y="162">P9</text>
+      </g>
+      <g fill="#d97706" stroke="#fff" stroke-width="2">
+        <circle cx="366" cy="162" r="15"/><circle cx="366" cy="148" r="15"/><circle cx="366" cy="134" r="15"/>
+        <circle cx="366" cy="120" r="15"/><circle cx="366" cy="106" r="15"/><circle cx="366" cy="92" r="15"/>
+        <circle cx="366" cy="78" r="15"/><circle cx="366" cy="64" r="15"/><circle cx="366" cy="50" r="15"/>
+      </g>
+      <g fill="#fff">
+        <text x="366" y="166">S1</text><text x="366" y="152">S2</text><text x="366" y="138">S3</text>
+        <text x="366" y="124">S4</text><text x="366" y="110">S5</text><text x="366" y="96">S6</text>
+        <text x="366" y="82">S7</text><text x="366" y="68">S8</text><text x="366" y="54">S9</text>
+      </g>
+    </g>
+
+    <text x="625" y="278" text-anchor="middle" font-size="13" font-weight="800" fill="#0b4f83">VÍA PRINCIPAL · P1 → P9</text>
+    <text x="625" y="297" text-anchor="middle" font-size="11.5" fill="#475569">25–30 pasos entre puntos consecutivos</text>
+    <g transform="translate(505,105) rotate(-90)">
+      <text x="0" y="0" text-anchor="middle" font-size="13" font-weight="800" fill="#8a4d08">VÍA SECUNDARIA · S1 → S9</text>
+    </g>
+  </svg>
+</div>
+""",height=430,scrolling=False)
+
+    st.markdown("### 2. Cómo se realizó cada medición")
+    st.markdown("""
+    <div class="c3l2-grid2">
+      <div class="c3l2-card blue">
+        <div class="c3l2-k">DURACIÓN</div>
+        <b>6 minutos por punto</b><br>
+        En cada ubicación se mantuvo el teléfono en una posición equivalente durante todo el registro.
+      </div>
+      <div class="c3l2-card green">
+        <div class="c3l2-k">CONTROL DE ESTABILIDAD</div>
+        <b>Lectura al minuto 3 y al minuto 6</b><br>
+        Si la diferencia entre ambas lecturas era ≤ 2 dB, el registro se consideró estable.
+      </div>
+      <div class="c3l2-card orange">
+        <div class="c3l2-k">DATO INFORMADO</div>
+        <b>Leq a los 6 min + Lmax</b><br>
+        Una vez verificada la estabilidad, esos valores se incorporaron a la tabla.
+      </div>
+      <div class="c3l2-card">
+        <div class="c3l2-k">TRAZABILIDAD</div>
+        <b>Hora + coordenada + observación</b><br>
+        También se registró el contexto de tránsito de cada punto.
+      </div>
+    </div>
+    """,unsafe_allow_html=True)
+
+    st.info(
+        "Ejemplo: si al minuto 3 el Leq era 68,2 dB(A) y al minuto 6 era 68,9 dB(A), "
+        "la diferencia es 0,7 dB. Como no supera 2 dB, la medición se considera estable y se registra 68,9 dB(A)."
+    )
+
+    # Datos completamente registrados del ejemplo.
+    demo_rows=[
+        ("P1","Vía principal",28,-33.45110,-70.66490,68.2,68.9,76.4,"10:05","Flujo continuo"),
+        ("P2","Vía principal",27,-33.45108,-70.66462,69.1,69.8,77.6,"10:13","Paso de bus"),
+        ("P3","Vía principal",26,-33.45106,-70.66434,70.0,70.9,79.1,"10:21","Flujo alto"),
+        ("P4","Vía principal",29,-33.45104,-70.66404,71.2,72.0,80.2,"10:29","Bus y vehículos livianos"),
+        ("P5","Vía principal",28,-33.45102,-70.66374,72.0,72.9,81.0,"10:37","Flujo alto"),
+        ("P6","Vía principal",27,-33.45100,-70.66346,71.4,72.1,79.8,"10:45","Tránsito continuo"),
+        ("P7","Vía principal",30,-33.45098,-70.66315,70.6,71.3,78.5,"10:53","Menor flujo"),
+        ("P8","Vía principal",26,-33.45096,-70.66288,69.8,70.4,77.4,"11:01","Vehículos livianos"),
+        ("P9","Vía principal",28,-33.45094,-70.66258,68.9,69.5,76.8,"11:09","Flujo moderado"),
+        ("S1","Vía secundaria",27,-33.45083,-70.66510,63.1,63.8,71.5,"11:18","Flujo bajo"),
+        ("S2","Vía secundaria",29,-33.45059,-70.66508,62.7,63.5,70.9,"11:26","Vehículos livianos"),
+        ("S3","Vía secundaria",26,-33.45035,-70.66506,62.2,62.9,70.0,"11:34","Flujo bajo"),
+        ("S4","Vía secundaria",28,-33.45010,-70.66504,61.8,62.6,69.8,"11:42","Paso aislado"),
+        ("S5","Vía secundaria",27,-33.44986,-70.66502,61.2,62.0,69.0,"11:50","Poco tránsito"),
+        ("S6","Vía secundaria",30,-33.44960,-70.66500,60.9,61.7,68.7,"11:58","Vehículos livianos"),
+        ("S7","Vía secundaria",28,-33.44936,-70.66498,60.5,61.3,68.2,"12:06","Flujo bajo"),
+        ("S8","Vía secundaria",26,-33.44913,-70.66496,60.2,60.9,67.5,"12:14","Sin eventos relevantes"),
+        ("S9","Vía secundaria",29,-33.44888,-70.66494,59.8,60.6,67.1,"12:22","Flujo muy bajo"),
+    ]
+    demo=pd.DataFrame(
+        demo_rows,
+        columns=["Punto","Vía","Pasos","Latitud","Longitud","Leq min 3 [dB(A)]","Leq min 6 [dB(A)]","Lmax [dB(A)]","Hora","Observación"]
+    )
+    demo["Δ 3–6 min [dB]"]=(demo["Leq min 6 [dB(A)]"]-demo["Leq min 3 [dB(A)]"]).abs().round(1)
+    demo["Estable"]=demo["Δ 3–6 min [dB]"].apply(lambda x:"Sí" if x<=2 else "No")
+
+    st.markdown("### 3. Tabla de mediciones ya completada")
+    st.dataframe(
+        demo[["Punto","Vía","Pasos","Leq min 3 [dB(A)]","Leq min 6 [dB(A)]","Δ 3–6 min [dB]","Estable","Lmax [dB(A)]","Hora","Observación"]],
+        hide_index=True,
+        use_container_width=True,
+    )
+
+    stable_count=int((demo["Δ 3–6 min [dB]"]<=2).sum())
+    c1,c2,c3=st.columns(3)
+    c1.metric("Registros","18/18")
+    c2.metric("Estables",f"{stable_count}/18")
+    c3.metric("Separaciones 25–30 pasos",f"{int(demo['Pasos'].between(25,30).sum())}/18")
+
+    st.success(
+        "Los 18 registros cumplen el criterio del ejemplo: entre el minuto 3 y el minuto 6 "
+        "la variación de Leq no supera 2 dB. Por lo tanto, los valores del minuto 6 pueden incorporarse al mapa."
+    )
+
+    st.markdown("### 4. La plataforma construye el mapa vial")
+    st.write(
+        "Una vez ingresados los datos, la aplicación toma el **Leq final de cada punto**, mantiene la trazabilidad de su coordenada "
+        "y representa el nivel sobre el eje de la vía correspondiente. En este ejemplo se muestran intervalos de 3 dB."
+    )
+
+    principal=demo[demo["Vía"]=="Vía principal"].copy()
+    secondary=demo[demo["Vía"]=="Vía secundaria"].copy()
+    interval=3
+    levels=demo["Leq min 6 [dB(A)]"].astype(float).tolist()
+    lo=math.floor(min(levels)/interval)*interval
+    palette=["#C0FFC0","#00CC00","#005000","#FFFF00","#FFC74A","#FF6600","#FF3333","#990033","#AD9AD6","#0000FF","#000066","#000000"]
+
+    def _s8_color(level):
+        idx=int(math.floor((float(level)-lo)/interval))
+        return palette[max(0,min(len(palette)-1,idx))]
+
+    fig=go.Figure()
+    # Vía principal: eje horizontal; vía secundaria: eje vertical.
+    p_x=np.arange(1,10,dtype=float)
+    s_y=np.arange(1,10,dtype=float)
+
+    fig.add_trace(go.Scatter(
+        x=[0,10],y=[0,0],mode="lines",
+        line=dict(width=20,color="#d6dde3"),hoverinfo="skip",showlegend=False
+    ))
+    fig.add_trace(go.Scatter(
+        x=[0,0],y=[0,10],mode="lines",
+        line=dict(width=20,color="#d6dde3"),hoverinfo="skip",showlegend=False
+    ))
+
+    prev=0.0
+    for x,(_,r) in zip(p_x,principal.iterrows()):
+        lv=float(r["Leq min 6 [dB(A)]"])
+        fig.add_trace(go.Scatter(
+            x=[prev,x],y=[0,0],mode="lines",
+            line=dict(width=13,color=_s8_color(lv)),hoverinfo="skip",showlegend=False
+        ))
+        prev=x
+
+    prev=0.0
+    for y,(_,r) in zip(s_y,secondary.iterrows()):
+        lv=float(r["Leq min 6 [dB(A)]"])
+        fig.add_trace(go.Scatter(
+            x=[0,0],y=[prev,y],mode="lines",
+            line=dict(width=13,color=_s8_color(lv)),hoverinfo="skip",showlegend=False
+        ))
+        prev=y
+
+    fig.add_trace(go.Scatter(
+        x=p_x,y=[0]*9,mode="markers+text",
+        text=principal["Punto"].tolist(),textposition="top center",
+        marker=dict(size=14,color=[_s8_color(v) for v in principal["Leq min 6 [dB(A)]"]]),
+        customdata=np.column_stack([principal["Leq min 6 [dB(A)]"],principal["Lmax [dB(A)]"]]),
+        hovertemplate="<b>%{text}</b><br>Leq: %{customdata[0]:.1f} dB(A)<br>Lmax: %{customdata[1]:.1f} dB(A)<extra></extra>",
+        showlegend=False
+    ))
+    fig.add_trace(go.Scatter(
+        x=[0]*9,y=s_y,mode="markers+text",
+        text=secondary["Punto"].tolist(),textposition="middle right",
+        marker=dict(size=14,color=[_s8_color(v) for v in secondary["Leq min 6 [dB(A)]"]]),
+        customdata=np.column_stack([secondary["Leq min 6 [dB(A)]"],secondary["Lmax [dB(A)]"]]),
+        hovertemplate="<b>%{text}</b><br>Leq: %{customdata[0]:.1f} dB(A)<br>Lmax: %{customdata[1]:.1f} dB(A)<extra></extra>",
+        showlegend=False
+    ))
+    fig.add_trace(go.Scatter(
+        x=[0],y=[0],mode="markers+text",text=["Intersección"],textposition="bottom right",
+        marker=dict(size=15,symbol="x",color="#111827"),showlegend=False
+    ))
+    fig.update_layout(
+        height=560,
+        xaxis=dict(title="Vía principal · P1 → P9",range=[-0.7,10.2],showgrid=False,zeroline=False),
+        yaxis=dict(title="Vía secundaria · S1 → S9",range=[-0.7,10.2],showgrid=False,zeroline=False,scaleanchor="x",scaleratio=1),
+        margin=dict(l=20,r=20,t=25,b=20),
+        showlegend=False,
+    )
+    st.plotly_chart(fig,use_container_width=True,key="c3l2_s8_example_roadmap")
+
+    hi=math.ceil(max(levels)/interval)*interval
+    bins=[]
+    a=lo
+    while a<=hi and len(bins)<len(palette):
+        bins.append((a,a+interval,palette[len(bins)]))
+        a+=interval
+    st.markdown(
+        '<div style="display:flex;flex-wrap:wrap;gap:6px;margin:.2rem 0 .8rem">'
+        +''.join(
+            f'<span style="display:inline-flex;align-items:center;gap:6px;border:1px solid #dbe5ec;border-radius:999px;padding:5px 9px;font-size:.78rem">'
+            f'<span style="width:14px;height:14px;border-radius:3px;background:{color};border:1px solid rgba(0,0,0,.12)"></span>{a:g}–&lt;{b:g} dB(A)</span>'
+            for a,b,color in bins
+        )
+        +'</div>',
+        unsafe_allow_html=True,
+    )
+    st.caption(
+        "Mapa vial esquemático del ejemplo. En la evaluación real, la Etapa 10 utiliza las coordenadas GPS y proyecta gráficamente los puntos hacia el eje de cada vía."
+    )
+
+    st.markdown("### 5. ¿Qué se observa en el resultado?")
+    p_mean=float(principal["Leq min 6 [dB(A)]"].mean())
+    s_mean=float(secondary["Leq min 6 [dB(A)]"].mean())
+    diff=p_mean-s_mean
+    a,b,c4=st.columns(3)
+    a.metric("Leq medio · vía principal",f"{p_mean:.1f} dB(A)")
+    b.metric("Leq medio · vía secundaria",f"{s_mean:.1f} dB(A)")
+    c4.metric("Diferencia entre vías",f"{diff:.1f} dB")
+
+    st.markdown(
+        f"""
+        <div class="c3l2-card green">
+          <div class="c3l2-k">LECTURA DEL EJEMPLO</div>
+          La vía principal presenta niveles mayores que la secundaria durante esta campaña.
+          El promedio de los 9 puntos es <b>{p_mean:.1f} dB(A)</b> en la vía principal y
+          <b>{s_mean:.1f} dB(A)</b> en la secundaria. Esta conclusión describe
+          <b>este periodo y estas mediciones</b>; no representa por sí sola todo el comportamiento diario de ambas vías.
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
+
+    st.markdown("### 6. Secuencia que debes repetir en la Etapa 10")
+    st.markdown("""
+    **Intersección real → 9 puntos por vía → 25–30 pasos → 6 min por punto → comparar Leq minuto 3 vs minuto 6 → verificar Δ ≤ 2 dB → registrar Leq/Lmax + GPS + hora + observación → generar mapa vial → analizar y concluir.**
+    """)
+
+    if _c3l2_role()=="Alumno":
+        if st.button("✓ Marcar ejemplo guiado como revisado",type="primary",use_container_width=True,key="c3l2_s8_save"):
+            _c3l2_complete(
+                saved,8,
+                {
+                    "example":"campaña vial 18 puntos",
+                    "duration_min":6,
+                    "stability_check":"Leq minuto 3 vs minuto 6; diferencia ≤ 2 dB",
+                    "stable_points":stable_count,
+                    "map":"vial automático por intervalos de 3 dB",
+                }
+            )
+            st.success("Ejemplo revisado. La Etapa 10 repite este mismo flujo con tus mediciones reales.")
+
+    _c3l2_teacher_pauta(
+        "Etapa 8",
+        "Ejemplo formativo previo a la evaluación. Debe quedar explícito el flujo: 9 puntos por vía, 25–30 pasos, 6 minutos por punto, "
+        "comparación de Leq al minuto 3 y al minuto 6, criterio de estabilidad Δ≤2 dB, registro de Leq/Lmax y construcción automática del mapa vial."
+    )
+
+
+_C3L2_STAGE9_QUESTIONS=[
+    (
+        "Escala geométrica",
+        "Una fuente lineal finita de 120 m se evalúa primero a 10 m y luego a 500 m. ¿Cuál es la interpretación más correcta?",
+        [
+            "Debe tratarse siempre como lineal, cualquiera sea la distancia.",
+            "Puede comportarse aproximadamente como lineal cerca de la vía y tender a una fuente más compacta a distancias grandes respecto de su longitud efectiva.",
+            "A 500 m necesariamente se transforma físicamente en una fuente puntual.",
+            "La clasificación depende únicamente del nivel en dB."
+        ],
+        1,
+        "La clasificación puntual, lineal o de área es una aproximación que depende de la escala geométrica entre fuente y receptor."
+    ),
+    (
+        "Propagación lineal",
+        "En el régimen ideal de una fuente lineal suficientemente larga, un receptor pasa de 20 m a 40 m de distancia. Si dominara solo la divergencia geométrica, ¿qué cambio sería esperable?",
+        [
+            "Aproximadamente −3 dB.",
+            "Aproximadamente −6 dB.",
+            "Aproximadamente +3 dB.",
+            "No debería cambiar."
+        ],
+        0,
+        "En la idealización cilíndrica, duplicar la distancia produce aproximadamente 3 dB de disminución; no es una regla universal fuera de ese régimen."
+    ),
+    (
+        "Lw → Lp",
+        "Una fuente puntual tiene Lw = 100 dB, está a 4 m del receptor y trabaja con factor de directividad Q = 2. Despreciando otras atenuaciones, ¿qué Lp es aproximadamente esperable?",
+        [
+            "74 dB",
+            "80 dB",
+            "86 dB",
+            "94 dB"
+        ],
+        1,
+        "Usando Lp = Lw + 10·log10[Q/(4πr²)], el resultado es aproximadamente 80 dB."
+    ),
+    (
+        "Fuente de área",
+        "Una fachada industrial extensa contiene muchos elementos radiantes. ¿Por qué no conviene reemplazarla automáticamente por una única fuente puntual situada en su centro?",
+        [
+            "Porque una fuente puntual nunca puede tener potencia sonora.",
+            "Porque la distribución espacial de emisión puede modificar distancias, directividades y aportes relativos hacia distintos receptores.",
+            "Porque las fachadas solo pueden modelarse mediante mediciones.",
+            "Porque una fuente de área no produce presión sonora."
+        ],
+        1,
+        "Reducir una fuente extensa a un punto puede ser válido solo cuando la escala del problema lo justifica."
+    ),
+    (
+        "Interpolación",
+        "Dos campañas usan el mismo método IDW. La campaña A tiene 12 puntos muy concentrados en un extremo; la B tiene 8 puntos bien distribuidos sobre todo el sector. ¿Qué afirmación es más defendible?",
+        [
+            "A siempre es superior porque tiene más puntos.",
+            "B puede representar mejor el espacio aunque tenga menos puntos, porque importa la distribución además de la cantidad.",
+            "Ambas son equivalentes mientras usen el mismo IDW.",
+            "A es mejor porque IDW corrige automáticamente una mala cobertura."
+        ],
+        1,
+        "La densidad y la geometría de la red condicionan la representatividad; el interpolador no corrige una campaña mal distribuida."
+    ),
+    (
+        "IDW y validación",
+        "Al aumentar mucho la potencia p de IDW, ¿qué efecto es más probable?",
+        [
+            "Los puntos lejanos adquieren mayor peso y la superficie se uniforma.",
+            "Los vecinos más próximos dominan más y pueden acentuarse patrones locales alrededor de los puntos.",
+            "IDW se transforma en kriging.",
+            "La interpolación pasa a ser una medición directa."
+        ],
+        1,
+        "Un p mayor hace caer más rápido el peso con la distancia y puede acentuar la influencia local de cada medición."
+    ),
+    (
+        "Validación cruzada",
+        "Una interpolación obtiene un MAE bajo en validación leave-one-out. ¿Qué conclusión es correcta?",
+        [
+            "El mapa queda validado para cualquier horario y condición operacional.",
+            "Es una señal favorable del comportamiento espacial del interpolador, pero no demuestra representatividad temporal ni corrige sectores sin mediciones.",
+            "Demuestra que no existen errores instrumentales.",
+            "Permite eliminar la descripción de limitaciones."
+        ],
+        1,
+        "La validación cruzada evalúa comportamiento predictivo entre los datos disponibles; no demuestra por sí sola representatividad temporal o territorial."
+    ),
+    (
+        "Suma energética",
+        "Dos fuentes independientes producen 63 dB cada una en el mismo receptor. Si actúan simultáneamente, el nivel total es aproximadamente:",
+        [
+            "63 dB",
+            "66 dB",
+            "126 dB",
+            "60 dB"
+        ],
+        1,
+        "Dos niveles iguales sumados energéticamente incrementan aproximadamente 3 dB."
+    ),
+    (
+        "Software y modelo",
+        "Un software supera casos de prueba de aseguramiento de calidad para implementar un método de propagación. ¿Qué falta comprobar antes de confiar en el mapa de un proyecto real?",
+        [
+            "Nada: superar los casos de prueba garantiza que cualquier proyecto será correcto.",
+            "Que las fuentes, emisiones, geometría, terreno y demás entradas representen adecuadamente el escenario real, idealmente contrastándolo con mediciones cuando sea posible.",
+            "Solo que el mapa tenga una escala de colores atractiva.",
+            "Que la grilla tenga el máximo número de celdas posible."
+        ],
+        1,
+        "Verificar la implementación del método en software y validar el modelo de un caso real son controles distintos."
+    ),
+    (
+        "Mapa proyectado",
+        "En un modelo ya calculado, se desplaza únicamente el receptor R1 sin modificar fuentes ni entorno. ¿Qué debería ocurrir?",
+        [
+            "Debe cambiar todo el campo sonoro porque el receptor genera la propagación.",
+            "El campo calculado permanece; cambia el nivel leído por R1 en su nueva posición.",
+            "El nivel de potencia de la fuente debe ajustarse automáticamente.",
+            "La operación convierte el mapa proyectado en un mapa interpolado."
+        ],
+        1,
+        "El receptor es un punto de evaluación pasivo. Mover la fuente altera el campo; mover solo el receptor cambia dónde se consulta ese campo."
+    ),
+]
+
+
+def _c3l2_s9_remote():
+    user_key=st.session_state.get("user_key")
+    if not user_key:return None
+    rows=_remote_rows("responses",class_id=_C3L2_CLASS_ID,user_key=user_key) or []
+    row=next((r for r in rows if int(r.get("stage") or -1)==9 and r.get("question_key")=="final_comprehension"),None)
+    if not row:return None
+    payload=row.get("answer") or {}
+    if isinstance(payload,str):
+        try:payload=json.loads(payload)
+        except Exception:payload={}
+    return {"row":row,"payload":payload}
+
+
+def _c3l2_s9_save(saved):
+    saved["c3l2_e9_answers"]={str(i):st.session_state.get(f"c3l2_e9_q{i}") for i in range(10)}
+    saved["updated_9"]=_now()
+    _c3l2_save(saved)
+
+
+def _c3l2_s9_finish(saved,reason):
+    answers={str(i):st.session_state.get(f"c3l2_e9_q{i}") for i in range(10)}
+    score=sum(4 for i,q in enumerate(_C3L2_STAGE9_QUESTIONS) if answers.get(str(i))==q[2][q[3]])
+    payload={"version":_C3L2_VERSION,"answers":answers,"score":score,"max_score":40,"reason":reason,"finished_at":_now()}
+    client=_supabase(); user_key=st.session_state.get("user_key")
+    if client is not None and user_key:
+        qid=f"{_C3L2_CLASS_ID}-final_comprehension-v2"
+        client.table("questions").upsert({
+            "id":qid,"class_id":_C3L2_CLASS_ID,"stage":9,"question_key":"final_comprehension",
+            "question_text":"Curso 3 · Laboratorio 2 · Evaluación de comprensión",
+            "correct_answer":"Pauta de 10 preguntas","max_score":40,"content_version":2,"active":True,"updated_at":_now(),
+        },on_conflict="id").execute()
+        client.table("responses").upsert({
+            "course_id":COURSE_ID,"class_id":_C3L2_CLASS_ID,"user_key":user_key,"stage":9,
+            "question_key":"final_comprehension","question_text":"Evaluación de comprensión · Curso 3",
+            "correct_answer":"Pauta de 10 preguntas","answer":payload,"auto_level":"Finalizada",
+            "feedback":f"Resultado automático: {score}/40 puntos.","auto_score":score,"max_score":40,
+            "status":"submitted","updated_at":_now(),"submitted_at":_now(),
+        },on_conflict="class_id,user_key,question_key").execute()
+    saved["c3l2_e9_submitted"]=True; saved["c3l2_e9_score"]=score; saved["done_9"]=True
+    _c3l2_save(saved)
+
+
+def _c3l2_stage9(lab,saved):
+    _c3l2_header(
+        9,
+        "Evaluación oficial · preguntas de comprensión",
+        "Diez preguntas de dificultad media–alta · 40 puntos · evaluación oficial del Curso 3.",
+        35,
+    )
+    role=_c3l2_role()
+
+    st.markdown("""
+    <div class="c3l2-intro">
+      <div class="c3l2-k">EVALUACIÓN OFICIAL · 40 PUNTOS</div>
+      <div class="c3l2-title">Comprensión integrada de las Etapas 1 a 8</div>
+      Las 10 preguntas combinan interpretación conceptual, cálculo breve y criterio técnico.
+      Cada pregunta vale <b>4 puntos</b>.
+    </div>
+    """,unsafe_allow_html=True)
+
+    if role=="Docente":
+        st.markdown("## Pauta docente")
+        st.caption("10 preguntas · 4 puntos cada una · 40 puntos totales.")
+        for i,q in enumerate(_C3L2_STAGE9_QUESTIONS,1):
+            with st.container(border=True):
+                st.markdown(f"### {i}. {q[1]}")
+                st.caption(f"{q[0]} · 4 puntos")
+                for j,opt in enumerate(q[2]):
+                    st.write(("✓ " if j==q[3] else "○ ")+opt)
+                st.success("Respuesta correcta: "+q[2][q[3]])
+                st.info(q[4])
+        st.info("Las entregas oficiales se revisan en **Evaluaciones entregadas → Curso 3 → Laboratorio 2**.")
+        return
+
+    remote=_c3l2_s9_remote()
+    if remote or saved.get("c3l2_e9_submitted"):
+        row=(remote or {}).get("row",{}); payload=(remote or {}).get("payload",{})
+        answers=payload.get("answers",saved.get("c3l2_e9_answers",{})) if isinstance(payload,dict) else {}
+        score=float(
+            row.get("teacher_score")
+            if row and row.get("teacher_score") is not None
+            else row.get("auto_score")
+            if row
+            else saved.get("c3l2_e9_score",0) or 0
+        )
+        correct=sum(
+            answers.get(str(i))==q[2][q[3]]
+            for i,q in enumerate(_C3L2_STAGE9_QUESTIONS)
+        )
+        st.success(f"Evaluación finalizada · {correct}/10 correctas · {score:g}/40 puntos.")
+        st.caption("La entrega quedó bloqueada en modo solo lectura. La calificación se consolida en Mi desempeño.")
+
+        for i,q in enumerate(_C3L2_STAGE9_QUESTIONS,1):
+            chosen=answers.get(str(i-1)) if isinstance(answers,dict) else None
+            correct_opt=q[2][q[3]]
+            with st.container(border=True):
+                st.markdown(f"### {i}. {q[1]}")
+                st.write(f"**Tu respuesta:** {chosen or 'Sin respuesta'}")
+                if chosen==correct_opt:
+                    st.success("✓ Correcta · 4/4 puntos")
+                else:
+                    st.error("✗ Incorrecta · 0/4 puntos")
+                    st.write(f"**Respuesta correcta:** {correct_opt}")
+                st.info(q[4])
+        return
+
+    # Restaurar respuestas guardadas.
+    for i,v in (saved.get("c3l2_e9_answers") or {}).items():
+        key=f"c3l2_e9_q{i}"
+        if key not in st.session_state and int(i)<len(_C3L2_STAGE9_QUESTIONS) and v in _C3L2_STAGE9_QUESTIONS[int(i)][2]:
+            st.session_state[key]=v
+
+    answered=sum(st.session_state.get(f"c3l2_e9_q{i}") is not None for i in range(10))
+    a,b=st.columns(2)
+    a.metric("Respondidas",f"{answered}/10")
+    b.metric("Puntaje máximo","40 puntos")
+    st.caption("Tus respuestas se guardan automáticamente. Puedes salir de la etapa y continuar antes del envío definitivo.")
+
+    for i,q in enumerate(_C3L2_STAGE9_QUESTIONS):
+        with st.container(border=True):
+            h1,h2=st.columns([8,1])
+            with h1:
+                st.markdown(f"### {i+1}. {q[1]}")
+                st.caption(q[0])
+            with h2:
+                st.markdown(
+                    '<div style="text-align:center;border:1px solid #bfdbfe;border-radius:10px;'
+                    'padding:6px 8px;background:#eff6ff;font-weight:800;color:#075985">4 pts</div>',
+                    unsafe_allow_html=True,
+                )
+            st.radio(
+                "Selecciona una alternativa",
+                q[2],
+                index=None,
+                key=f"c3l2_e9_q{i}",
+                label_visibility="collapsed",
+                on_change=_c3l2_s9_save,
+                args=(saved,),
+            )
+
+    answered=sum(st.session_state.get(f"c3l2_e9_q{i}") is not None for i in range(10))
+    st.caption(f"{answered} de 10 respuestas registradas.")
+
+    if st.button("💾 GUARDAR BORRADOR",use_container_width=True,key="c3l2_e9_draft"):
+        _c3l2_s9_save(saved)
+        st.success(f"Borrador guardado · {answered}/10 respuestas.")
+
+    if st.button("ENVIAR EVALUACIÓN DEFINITIVA",type="primary",use_container_width=True,key="c3l2_e9_submit"):
+        if answered<10:
+            st.session_state["c3l2_e9_confirm"]=True
+            st.warning(f"Faltan {10-answered} respuestas. Puedes continuar o confirmar el envío incompleto.")
+        else:
+            _c3l2_s9_finish(saved,"submitted")
+            st.rerun()
+
+    if st.session_state.get("c3l2_e9_confirm") and answered<10:
+        if st.button("CONFIRMAR ENVÍO INCOMPLETO",use_container_width=True,key="c3l2_e9_submit_incomplete"):
+            _c3l2_s9_finish(saved,"submitted_incomplete")
+            st.rerun()
+
+
+def _c3l2_s10_remote():
+    user_key=st.session_state.get("user_key")
+    if not user_key:return None
+    rows=_remote_rows("responses",class_id=_C3L2_CLASS_ID,user_key=user_key) or []
+    row=next((r for r in rows if int(r.get("stage") or -1)==10 and r.get("question_key")=="final_integrated_design"),None)
+    if not row:return None
+    payload=row.get("answer") or {}
+    if isinstance(payload,str):
+        try:payload=json.loads(payload)
+        except Exception:payload={}
+    return {"row":row,"payload":payload}
+
+
+def _c3l2_s10_submit(saved,payload):
+    client=_supabase(); user_key=st.session_state.get("user_key")
+    if client is not None and user_key:
+        qid=f"{_C3L2_CLASS_ID}-final_integrated_design-v2"
+        client.table("questions").upsert({
+            "id":qid,"class_id":_C3L2_CLASS_ID,"stage":10,"question_key":"final_integrated_design",
+            "question_text":"Curso 3 · Laboratorio 2 · Medición de ruido de tráfico vehicular",
+            "correct_answer":"Rúbrica docente de campaña vial, mediciones y mapa de ruido","max_score":60,
+            "content_version":2,"active":True,"updated_at":_now(),
+        },on_conflict="id").execute()
+        client.table("responses").upsert({
+            "course_id":COURSE_ID,"class_id":_C3L2_CLASS_ID,"user_key":user_key,"stage":10,
+            "question_key":"final_integrated_design","question_text":"Evaluación aplicada · ruido de tráfico vehicular · Curso 3",
+            "correct_answer":"Rúbrica docente de campaña vial, mediciones y mapa de ruido","answer":payload,
+            "auto_level":"Pendiente de revisión","feedback":"Entrega registrada. Pendiente de revisión docente.",
+            "auto_score":0,"max_score":60,"status":"submitted","updated_at":_now(),"submitted_at":_now(),
+        },on_conflict="class_id,user_key,question_key").execute()
+    saved["c3l2_s10_submitted"]=True; saved["c3l2_s10_submission_payload"]=payload; saved["done_10"]=True
+    saved["c3l2_stage10"]=payload
+    _c3l2_save(saved)
+
+
+def _c3l2_stage10(lab,saved):
+    _c3l2_header(
+        10,
+        "Evaluación oficial · mediciones de ruido de tráfico vehicular",
+        "Realizar una campaña en una intersección vial, registrar 18 mediciones y construir un mapa vial defendible.",
+        60,
+    )
+    role=_c3l2_role()
+
+    rubric=pd.DataFrame([
+        ("Lugar, croquis y evidencias",8,"Identifica claramente la intersección, describe el entorno y aporta enlaces de ubicación/evidencias."),
+        ("Metodología y estabilización",10,"Explica procedimiento, Leq/Lmax, aplicación del criterio de estabilización de 2 dB y condiciones de medición."),
+        ("Registro completo de mediciones",12,"9 puntos en vía principal + 9 en vía secundaria, con Leq, Lmax, hora y observaciones trazables."),
+        ("Separación y diseño de campaña",8,"Los puntos siguen el criterio de 25–30 pasos desde la intersección y la red representa ambas vías."),
+        ("Mapa vial de ruido",10,"Representa los resultados por intervalos de 3 o 5 dB, con lectura clara y coherente con los datos."),
+        ("Análisis y conclusión",12,"Interpreta tendencias, diferencias entre vías, Leq/Lmax, limitaciones y alcance sin sobreafirmar."),
+    ],columns=["Criterio","Puntos","Pauta"])
+
+    if role=="Docente":
+        st.markdown("""
+        <div class="c3l2-intro">
+          <div class="c3l2-k">PAUTA DOCENTE · 60 PUNTOS</div>
+          <div class="c3l2-title">Tarea integradora · ruido de tráfico vehicular</div>
+          La plataforma reemplaza el reporte escrito por una entrega estructurada: antecedentes, metodología,
+          18 registros de medición, mapa vial automático, análisis y conclusión.
+        </div>
+        """,unsafe_allow_html=True)
+        st.dataframe(rubric,hide_index=True,use_container_width=True)
+        st.markdown("""
+        **Condiciones centrales del encargo**
+        - Intersección entre una vía principal y una vía secundaria.
+        - 9 puntos por cada vía.
+        - Separación aproximada de 25 a 30 pasos normales entre registros.
+        - Registro de Leq y Lmax.
+        - Aplicación documentada del criterio de estabilización de 2 dB.
+        - Mapa vial con intervalos de 3 o 5 dB.
+        """)
+        st.info("Las entregas se califican en **Evaluaciones entregadas → Curso 3 → Laboratorio 2 → Etapa 10**.")
+        return
+
+    remote=_c3l2_s10_remote()
+    if remote or saved.get("c3l2_s10_submitted"):
+        row=(remote or {}).get("row",{}); payload=(remote or {}).get("payload",{})
+        if not isinstance(payload,dict) or not payload:
+            payload=saved.get("c3l2_s10_submission_payload",{}) if isinstance(saved.get("c3l2_s10_submission_payload"),dict) else {}
+        reviewed=bool(row and (row.get("status")=="reviewed" or row.get("teacher_score") is not None))
+        score=row.get("teacher_score") if reviewed else None
+
+        st.success("Evaluación entregada.")
+        if reviewed:
+            st.metric("Puntaje oficial",f"{float(score):g}/60")
+        else:
+            st.info("Pendiente de revisión docente. La entrega permanece bloqueada en modo solo lectura.")
+
+        st.write(f"**Intersección:** {payload.get('principal') or '—'} / {payload.get('secondary') or '—'}")
+        st.write(f"**Sector:** {payload.get('sector') or '—'}")
+        st.write(f"**Aplicación utilizada:** {payload.get('app_name') or '—'}")
+        st.write(f"**Intervalo del mapa:** {payload.get('map_interval') or '—'} dB")
+        rows=payload.get("measurements") or []
+        st.write(f"**Registros entregados:** {len(rows)}/18")
+        if rows:
+            st.dataframe(pd.DataFrame(rows),hide_index=True,use_container_width=True)
+        st.write(f"**Metodología:** {payload.get('methodology') or '—'}")
+        st.write(f"**Análisis:** {payload.get('analysis') or '—'}")
+        st.write(f"**Limitaciones:** {payload.get('limitations') or '—'}")
+        st.write(f"**Conclusión:** {payload.get('conclusion') or '—'}")
+        return
+
+    data=saved.get("c3l2_stage10") if isinstance(saved.get("c3l2_stage10"),dict) else {}
+    data=dict(data or {})
+
+    st.markdown("""
+    <div class="c3l2-intro">
+      <div class="c3l2-k">EVALUACIÓN APLICADA · 60 PUNTOS</div>
+      <div class="c3l2-title">Medición de ruido de tráfico vehicular en una intersección real</div>
+      <p style="margin:.45rem 0 .75rem">
+        Debes realizar una campaña real de medición en una intersección formada por una <b>vía principal</b> y una <b>vía secundaria</b>,
+        registrar <b>18 mediciones</b> y construir con ellas un mapa vial georreferenciado.
+      </p>
+      <div style="font-weight:800;margin-bottom:.35rem">Qué debes hacer</div>
+      <ol style="margin:.15rem 0 .8rem 1.25rem;padding:0;line-height:1.5">
+        <li>Selecciona una intersección real e identifica cuál corresponde a la vía principal y cuál a la vía secundaria.</li>
+        <li>Define el centro de la intersección como referencia de inicio y registra sus coordenadas.</li>
+        <li>Realiza <b>9 mediciones consecutivas en la vía principal</b> y <b>9 en la vía secundaria</b>.</li>
+        <li>Los 9 puntos de cada vía deben seguir <b>una misma línea de recorrido</b>; no se distribuyen enfrentados entre ambas veredas.</li>
+        <li>Entre un punto y el siguiente avanza aproximadamente <b>25–30 pasos normales</b> y registra la cantidad real recorrida.</li>
+        <li>En cada punto registra <b>Leq, Lmax, hora, coordenadas GPS y una observación breve</b> del tránsito o de algún evento relevante.</li>
+        <li>Al finalizar, revisa el mapa vial automático, analiza las diferencias entre ambas vías y redacta tus limitaciones y conclusión técnica.</li>
+      </ol>
+      <div style="font-weight:800;margin-bottom:.35rem">Cómo debes medir</div>
+      <ul style="margin:.15rem 0 0 1.25rem;padding:0;line-height:1.5">
+        <li>Realiza la medición desde un lugar <b>seguro, fuera de la calzada</b>. No debes ubicarte en medio de la calle.</li>
+        <li>Usa el <b>Sonómetro del Diplomado</b> y mantén el teléfono en una posición y orientación similares durante toda la campaña.</li>
+        <li>En cada punto observa el Leq hasta que la lectura se encuentre <b>estabilizada dentro de un rango aproximado de 2 dB</b>; luego registra Leq y Lmax.</li>
+        <li>Evita tapar el micrófono o medir con el teléfono pegado al cuerpo, y anota eventos que puedan alterar la lectura, como bocinas, sirenas, buses detenidos u obras.</li>
+        <li>Guarda la <b>coordenada real del lugar donde mediste</b>. La plataforma conservará ese dato y, para el mapa, desplazará gráficamente el punto hacia el eje de la vía.</li>
+      </ul>
+    </div>
+    """,unsafe_allow_html=True)
+
+    st.markdown("### 1. Lugar de medición y evidencias")
     c1,c2=st.columns(2)
     principal=c1.text_input("Vía principal",value=data.get("principal",""),key="c3l2_s10_mainroad")
     secondary=c2.text_input("Vía secundaria",value=data.get("secondary",""),key="c3l2_s10_secondary")
-    sector=st.text_input("Sector / comuna",value=data.get("sector",""),key="c3l2_s10_sector")
-    objective=st.text_area("Objetivo de la campaña",value=data.get("objective",""),height=80,key="c3l2_s10_objective",placeholder="Ej.: comparar el patrón espacial de LAeq entre la vía principal y secundaria durante un mismo periodo de observación.")
+    sector=st.text_input("Sector / comuna / ciudad",value=data.get("sector",""),key="c3l2_s10_sector")
+    st.caption("Para que el mapa quede sobre la ubicación real, registra también el centro de la intersección y las coordenadas GPS de cada punto de medición.")
+    g1,g2=st.columns(2)
+    intersection_lat=g1.number_input(
+        "Latitud centro de la intersección",
+        min_value=-90.0,max_value=90.0,
+        value=float(data.get("intersection_lat") or 0.0),
+        step=0.000001,format="%.6f",key="c3l2_s10_intersection_lat",
+        help="Coordenada del centro geométrico aproximado del cruce. Se usa como ancla para llevar los puntos al eje de cada vía en el mapa."
+    )
+    intersection_lon=g2.number_input(
+        "Longitud centro de la intersección",
+        min_value=-180.0,max_value=180.0,
+        value=float(data.get("intersection_lon") or 0.0),
+        step=0.000001,format="%.6f",key="c3l2_s10_intersection_lon",
+        help="Coordenada del centro geométrico aproximado del cruce."
+    )
+    site_description=st.text_area(
+        "Descripción breve del lugar y su entorno",
+        value=data.get("site_description",""),
+        height=90,
+        key="c3l2_s10_site_desc",
+        placeholder="Describe tipo de vías, edificaciones, flujo aparente, superficies, obstáculos y elementos relevantes."
+    )
+    e1,e2=st.columns(2)
+    maps_url=e1.text_input(
+        "Enlace de ubicación / imagen satelital",
+        value=data.get("maps_url",""),
+        placeholder="Google Maps / Google Earth u otro enlace compartido",
+        key="c3l2_s10_maps_url",
+    )
+    evidence_url=e2.text_input(
+        "Enlace a fotografías y capturas de la aplicación",
+        value=data.get("evidence_url",""),
+        placeholder="Carpeta compartida con fotos y pantallazos",
+        key="c3l2_s10_evidence_url",
+    )
 
-    st.markdown("### Misión 2 · Diseña la campaña antes de medir")
-    c3,c4,c5=st.columns(3)
-    target_points=c3.selectbox("Número objetivo de puntos",[8,12,16],index=[8,12,16].index(data.get("target_points",16)) if data.get("target_points",16) in [8,12,16] else 2,key="c3l2_s10_target")
-    duration_plan=c4.selectbox("Duración por punto",["1 min","2 min","3 min","5 min"],index=1,key="c3l2_s10_duration_plan")
-    period_plan=c5.text_input("Periodo de campaña",value=data.get("period_plan",""),placeholder="Ej.: 18:00–19:00",key="c3l2_s10_period_plan")
-    st.markdown('<div class="c3l2-note"><b>Criterio:</b> los puntos deben cubrir ambas vías. No concentres todos los registros en el lugar que ya sabes que es más ruidoso.</div>',unsafe_allow_html=True)
+    st.markdown("### 2. Metodología de la campaña")
+    st.markdown(
+        """
+        <div class="c3l2-card blue" style="margin-bottom:.75rem">
+          <div class="c3l2-k">INSTRUMENTO DE MEDICIÓN</div>
+          Utiliza el <b>Sonómetro del Diplomado</b> para registrar Leq y Lmax en cada punto.
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
+    st.link_button(
+        "🎚️ Abrir Sonómetro del Diplomado",
+        "https://soundlevelmeteruc.vercel.app/",
+        use_container_width=True,
+    )
+    m1,m2,m3=st.columns(3)
+    app_name=m1.text_input(
+        "Aplicación utilizada",
+        value=data.get("app_name") or "Sonómetro del Diplomado UC",
+        placeholder="Ej.: Sonómetro del Diplomado UC",
+        key="c3l2_s10_app"
+    )
+    measurement_date=m2.text_input("Fecha de medición",value=data.get("measurement_date",""),placeholder="dd-mm-aaaa",key="c3l2_s10_date")
+    period=m3.text_input("Periodo / horario",value=data.get("period",""),placeholder="Ej.: 18:00–19:00",key="c3l2_s10_period")
 
-    st.markdown("### Misión 3 · Marca los puntos sobre un mapa real")
-    heat=st.toggle("Mostrar superficie indicativa entre puntos medidos",value=False,key="c3l2_s10_heat")
-    click=_c3l2_map(points,"c3l2_s10_map",heat=heat,height=520)
-    c6,c7=st.columns([1,1])
-    route=c6.selectbox("Asignar nuevo punto a",["Vía principal","Vía secundaria"],key="c3l2_s10_route")
-    if click and c7.button("➕ Agregar último clic",use_container_width=True,key="c3l2_s10_add"):
-        pid=f"P{len(points)+1}"
-        points.append({"id":pid,"lat":click["lat"],"lon":click["lon"],"route":route,"laeq":None,"lmax":None,"duration":None,"time":"","notes":""})
-        data.update({"points":points,"principal":principal,"secondary":secondary,"sector":sector,"objective":objective,"target_points":target_points,"period_plan":period_plan})
-        saved["c3l2_stage10"]=data; _c3l2_save(saved); st.rerun()
+    st.markdown("""
+    <div class="c3l2-grid2">
+      <div class="c3l2-card blue">
+        <div class="c3l2-k">RED DE MEDICIÓN</div>
+        <b>18 registros en total</b><br>
+        9 puntos asociados a la vía principal y 9 a la vía secundaria.
+      </div>
+      <div class="c3l2-card green">
+        <div class="c3l2-k">SEPARACIÓN</div>
+        <b>25–30 pasos normales</b><br>
+        El origen de la secuencia corresponde a la intersección de ambas vías.
+      </div>
+      <div class="c3l2-card orange">
+        <div class="c3l2-k">DESCRIPTORES</div>
+        <b>Leq + Lmax</b><br>
+        Registra ambos valores para cada punto utilizando el criterio de estabilización definido.
+      </div>
+      <div class="c3l2-card">
+        <div class="c3l2-k">ESTABILIZACIÓN</div>
+        <b>Criterio de 2 dB</b><br>
+        Describe cómo verificaste la estabilización antes de cerrar cada registro.
+      </div>
+    </div>
+    """,unsafe_allow_html=True)
 
-    if points:
-        main_count=sum(p.get("route")=="Vía principal" for p in points)
-        sec_count=sum(p.get("route")=="Vía secundaria" for p in points)
-        a,b,c=st.columns(3)
-        a.metric("Puntos creados",len(points))
-        b.metric("Vía principal",main_count)
-        c.metric("Vía secundaria",sec_count)
-        if st.button("🗑 Eliminar último punto",key="c3l2_s10_del"):
-            points=points[:-1]; data["points"]=points; saved["c3l2_stage10"]=data; _c3l2_save(saved); st.rerun()
+    methodology=st.text_area(
+        "Describe cómo realizaste las mediciones y cómo aplicaste el criterio de estabilización de 2 dB",
+        value=data.get("methodology",""),
+        height=125,
+        key="c3l2_s10_method",
+        placeholder="Incluye posición del teléfono, secuencia de puntos, duración aproximada, lectura de Leq/Lmax y criterio usado para considerar estable el registro."
+    )
 
-    st.markdown("### Misión 4 · Mide y documenta")
-    st.link_button("🎙️ Abrir sonómetro online","https://soundlevelmeteruc.vercel.app/",use_container_width=True)
-    st.caption("El sonómetro online se utiliza con finalidad educativa. La trazabilidad de la campaña exige registrar punto, hora, duración, eventos e interferencias.")
-    if points:
-        ids=[p["id"] for p in points]
-        pid=st.selectbox("Punto a editar",ids,key="c3l2_s10_point_select")
-        pnt=next(x for x in points if x["id"]==pid)
-        c1,c2,c3=st.columns(3)
-        laeq=c1.number_input("LAeq [dB(A)]",35.0,110.0,float(pnt["laeq"] if isinstance(pnt.get("laeq"),(int,float)) else 65.0),.1,key=f"c3l2_{pid}_laeq")
-        lmax=c2.number_input("Lmax [dB(A)]",35.0,130.0,float(pnt["lmax"] if isinstance(pnt.get("lmax"),(int,float)) else 75.0),.1,key=f"c3l2_{pid}_lmax")
-        duration=c3.number_input("Duración [min]",1.0,15.0,float(pnt["duration"] if isinstance(pnt.get("duration"),(int,float)) else 2.0),.5,key=f"c3l2_{pid}_dur")
-        c4,c5=st.columns(2)
-        time=c4.text_input("Hora / intervalo",value=pnt.get("time",""),placeholder="Ej.: 18:10–18:12",key=f"c3l2_{pid}_time")
-        notes=c5.text_input("Observación breve",value=pnt.get("notes",""),placeholder="Bus, semáforo, bocina, viento...",key=f"c3l2_{pid}_notes")
-        if st.button(f"💾 Guardar medición {pid}",key=f"c3l2_{pid}_save",use_container_width=True):
-            for pp in points:
-                if pp["id"]==pid:
-                    pp.update({"laeq":laeq,"lmax":lmax,"duration":duration,"time":time,"notes":notes})
-            data.update({"points":points,"principal":principal,"secondary":secondary,"sector":sector,"objective":objective,"target_points":target_points,"period_plan":period_plan})
-            saved["c3l2_stage10"]=data; _c3l2_save(saved); st.success(f"{pid} guardado."); st.rerun()
+    st.markdown("### 3. Registra los 18 puntos")
 
-    measured=[p for p in points if isinstance(p.get("laeq"),(int,float))]
-    if measured:
-        st.markdown("### Misión 5 · Construye la evidencia")
-        df=pd.DataFrame([{
-            "Punto":p["id"],"Vía":p.get("route",""),"LAeq [dB(A)]":p.get("laeq"),
-            "Lmax [dB(A)]":p.get("lmax"),"Duración [min]":p.get("duration"),
-            "Hora":p.get("time",""),"Observación":p.get("notes","")
-        } for p in measured])
-        st.dataframe(df,hide_index=True,use_container_width=True)
-        c1,c2,c3,c4=st.columns(4)
-        c1.metric("Medidos",len(measured))
-        c2.metric("Mayor LAeq",f"{max(p['laeq'] for p in measured):.1f}")
-        c3.metric("Menor LAeq",f"{min(p['laeq'] for p in measured):.1f}")
-        c4.metric("Rango",f"{max(p['laeq'] for p in measured)-min(p['laeq'] for p in measured):.1f} dB")
+    components.html("""
+<div style="font-family:Arial,sans-serif;color:#243447;border:1px solid #dbe5ec;border-radius:16px;padding:18px 18px 14px;background:#fbfdff;box-sizing:border-box">
+  <div style="font-size:12px;font-weight:800;letter-spacing:.05em;color:#0b4f83;margin-bottom:4px">EJEMPLO · CÓMO DISTRIBUIR LOS PUNTOS</div>
+  <div style="font-size:17px;font-weight:800;margin-bottom:8px">Parte desde la intersección y sigue cada vía por separado</div>
+  <div style="font-size:14px;line-height:1.5;color:#425466;margin-bottom:12px">
+    Los puntos <b>P1–P9</b> corresponden a la <b>vía principal</b> y los puntos <b>S1–S9</b> a la <b>vía secundaria</b>. Todos los puntos de una misma vía se representan sobre <b>un único eje longitudinal</b>.
+    Entre puntos consecutivos camina aproximadamente <b>25–30 pasos normales</b> y registra la cantidad real recorrida.
+  </div>
+  <svg viewBox="0 0 860 430" role="img" aria-label="Esquema de una intersección con nueve puntos P sobre la vía principal y nueve puntos S sobre la vía secundaria, todos alineados sobre el eje de cada vía" style="width:100%;height:auto;display:block">
+    <defs>
+      <filter id="c3l2-shadow-fix" x="-20%" y="-20%" width="140%" height="140%">
+        <feDropShadow dx="0" dy="2" stdDeviation="2" flood-color="#0f172a" flood-opacity=".14"/>
+      </filter>
+    </defs>
+    <rect x="18" y="20" width="824" height="388" rx="18" fill="#f4f8fb" stroke="#d8e4ec"/>
+    <rect x="36" y="196" width="788" height="82" rx="10" fill="#dfe7ec"/>
+    <rect x="366" y="40" width="110" height="348" rx="10" fill="#e7edf1"/>
+    <line x1="48" y1="237" x2="812" y2="237" stroke="#94a3b8" stroke-width="3" stroke-dasharray="14 12"/>
+    <line x1="421" y1="52" x2="421" y2="376" stroke="#94a3b8" stroke-width="3" stroke-dasharray="14 12"/>
+    <rect x="54" y="208" width="150" height="30" rx="15" fill="#ffffff" stroke="#cbd5e1"/>
+    <text x="129" y="228" text-anchor="middle" font-size="15" font-weight="800" fill="#0f4c74">VÍA PRINCIPAL</text>
+    <g transform="translate(449,128) rotate(-90)">
+      <rect x="-79" y="-16" width="158" height="32" rx="16" fill="#ffffff" stroke="#cbd5e1"/>
+      <text x="0" y="5" text-anchor="middle" font-size="15" font-weight="800" fill="#6b3f10">VÍA SECUNDARIA</text>
+    </g>
+    <circle cx="421" cy="237" r="23" fill="#ffffff" stroke="#334155" stroke-width="2.5" filter="url(#c3l2-shadow-fix)"/>
+    <text x="421" y="233" text-anchor="middle" font-size="11" font-weight="800" fill="#0f172a">INICIO</text>
+    <text x="421" y="248" text-anchor="middle" font-size="9.5" fill="#475569">intersección</text>
+    <line x1="454" y1="174" x2="500" y2="174" stroke="#475569" stroke-width="1.8"/>
+    <polygon points="454,174 463,169 463,179" fill="#475569"/>
+    <polygon points="500,174 491,169 491,179" fill="#475569"/>
+    <text x="477" y="163" text-anchor="middle" font-size="11.5" font-weight="700" fill="#334155">25–30 pasos aprox.</text>
+    <g font-family="Arial,sans-serif" font-size="10.5" font-weight="800" text-anchor="middle">
+      <g fill="#0b78b4" stroke="#ffffff" stroke-width="2">
+        <circle cx="474" cy="190" r="15"/><circle cx="515" cy="190" r="15"/><circle cx="556" cy="190" r="15"/>
+        <circle cx="597" cy="190" r="15"/><circle cx="638" cy="190" r="15"/><circle cx="679" cy="190" r="15"/>
+        <circle cx="720" cy="190" r="15"/><circle cx="761" cy="190" r="15"/><circle cx="802" cy="190" r="15"/>
+      </g>
+      <g fill="#ffffff">
+        <text x="474" y="194">P1</text><text x="515" y="194">P2</text><text x="556" y="194">P3</text>
+        <text x="597" y="194">P4</text><text x="638" y="194">P5</text><text x="679" y="194">P6</text>
+        <text x="720" y="194">P7</text><text x="761" y="194">P8</text><text x="802" y="194">P9</text>
+      </g>
+      <g fill="#d97706" stroke="#ffffff" stroke-width="2">
+        <circle cx="350" cy="182" r="15"/><circle cx="350" cy="166" r="15"/><circle cx="350" cy="150" r="15"/>
+        <circle cx="350" cy="134" r="15"/><circle cx="350" cy="118" r="15"/><circle cx="350" cy="102" r="15"/>
+        <circle cx="350" cy="86" r="15"/><circle cx="350" cy="70" r="15"/><circle cx="350" cy="54" r="15"/>
+      </g>
+      <g fill="#ffffff">
+        <text x="350" y="186">S1</text><text x="350" y="170">S2</text><text x="350" y="154">S3</text>
+        <text x="350" y="138">S4</text><text x="350" y="122">S5</text><text x="350" y="106">S6</text>
+        <text x="350" y="90">S7</text><text x="350" y="74">S8</text><text x="350" y="58">S9</text>
+      </g>
+    </g>
+    <g font-family="Arial,sans-serif" fill="#334155">
+      <rect x="62" y="314" width="324" height="68" rx="12" fill="#ffffff" stroke="#dbe5ec"/>
+      <circle cx="88" cy="338" r="8" fill="#0b78b4"/>
+      <text x="105" y="343" font-size="13" font-weight="800">P1–P9 · vía principal</text>
+      <text x="88" y="365" font-size="11.5">Registra Leq, Lmax, hora, observación y pasos reales.</text>
+      <rect x="474" y="314" width="324" height="68" rx="12" fill="#ffffff" stroke="#dbe5ec"/>
+      <circle cx="500" cy="338" r="8" fill="#d97706"/>
+      <text x="517" y="343" font-size="13" font-weight="800">S1–S9 · vía secundaria</text>
+      <text x="500" y="365" font-size="11.5">Los 9 puntos se mantienen sobre la misma línea de la vía; no se ubican enfrentados en ambas veredas.</text>
+    </g>
+  </svg>
+  <div style="margin-top:10px;padding:10px 12px;border-radius:10px;background:#eef7fb;color:#23435a;font-size:13px;line-height:1.45">
+    <b>Ejemplo de un registro:</b> P1 · 28 pasos · Leq 68,4 dB(A) · Lmax 76,2 dB(A) · 10:32 · “tránsito vehicular continuo”.
+    El valor de pasos es solo un ejemplo: debes ingresar lo que efectivamente recorriste.
+  </div>
+</div>
+""", height=610, scrolling=False)
 
-        fig=go.Figure()
-        for route_name in ["Vía principal","Vía secundaria"]:
-            subset=[p for p in measured if p.get("route")==route_name]
-            if subset:
-                fig.add_trace(go.Scatter(x=[p["id"] for p in subset],y=[p["laeq"] for p in subset],mode="lines+markers",name=route_name))
-        fig.update_layout(height=350,margin=dict(l=20,r=20,t=20,b=20),yaxis_title="LAeq [dB(A)]",xaxis_title="Punto")
-        st.plotly_chart(fig,use_container_width=True)
+    previous=data.get("measurements") if isinstance(data.get("measurements"),list) and len(data.get("measurements"))==18 else None
+    if previous:
+        measurement_df=pd.DataFrame(previous)
+        legacy_steps=(
+            "Pasos desde punto anterior" in measurement_df.columns
+            and len(measurement_df)==18
+            and all(v==27 for v in measurement_df["Pasos desde punto anterior"].tolist())
+            and all(pd.isna(v) for v in measurement_df.get("Leq [dB(A)]",pd.Series([None]*18)).tolist())
+            and all(pd.isna(v) for v in measurement_df.get("Lmax [dB(A)]",pd.Series([None]*18)).tolist())
+        )
+        if legacy_steps:
+            measurement_df["Pasos desde punto anterior"]=None
+        if "Latitud" not in measurement_df.columns:
+            measurement_df["Latitud"]=None
+        if "Longitud" not in measurement_df.columns:
+            measurement_df["Longitud"]=None
+    else:
+        rows=[]
+        for route,prefix in [("Vía principal","P"),("Vía secundaria","S")]:
+            for n in range(1,10):
+                rows.append({
+                    "Punto":f"{prefix}{n}",
+                    "Vía":route,
+                    "Pasos desde punto anterior":None,
+                    "Latitud":None,
+                    "Longitud":None,
+                    "Leq [dB(A)]":None,
+                    "Lmax [dB(A)]":None,
+                    "Hora":"",
+                    "Observación":"",
+                })
+        measurement_df=pd.DataFrame(rows)
 
-        st.markdown('<div class="c3l2-warn"><b>Lectura correcta del mapa:</b> los marcadores corresponden a datos ingresados como medidos. La superficie continua/heatmap es una estimación visual entre puntos y no significa que se haya medido físicamente en cada píxel.</div>',unsafe_allow_html=True)
+    edited=st.data_editor(
+        measurement_df,
+        hide_index=True,
+        use_container_width=True,
+        num_rows="fixed",
+        disabled=["Punto","Vía"],
+        column_config={
+            "Punto":st.column_config.TextColumn("Punto",width="small"),
+            "Vía":st.column_config.TextColumn("Vía",width="medium"),
+            "Pasos desde punto anterior":st.column_config.NumberColumn("Pasos",min_value=1,max_value=100,step=1,width="small"),
+            "Latitud":st.column_config.NumberColumn("Latitud",min_value=-90.0,max_value=90.0,step=0.000001,format="%.6f",help="Coordenada GPS real del lugar donde realizaste la medición."),
+            "Longitud":st.column_config.NumberColumn("Longitud",min_value=-180.0,max_value=180.0,step=0.000001,format="%.6f",help="Coordenada GPS real del lugar donde realizaste la medición."),
+            "Leq [dB(A)]":st.column_config.NumberColumn("Leq [dB(A)]",min_value=30.0,max_value=120.0,step=0.1,format="%.1f"),
+            "Lmax [dB(A)]":st.column_config.NumberColumn("Lmax [dB(A)]",min_value=30.0,max_value=140.0,step=0.1,format="%.1f"),
+            "Hora":st.column_config.TextColumn("Hora",width="small"),
+            "Observación":st.column_config.TextColumn("Observación",width="large"),
+        },
+        key="c3l2_s10_editor",
+    )
 
-    st.markdown("### Misión 6 · Interpreta")
-    limitations=st.text_area("Limitaciones de la campaña",value=data.get("limitations",""),height=110,key="c3l2_s10_limits",placeholder="Representatividad temporal, duración, condiciones de tránsito, instrumento, interferencias...")
-    interpretation=st.text_area("Interpretación espacial",value=data.get("interpretation",""),height=130,key="c3l2_s10_interp",placeholder="Compara ambas vías, identifica máximos/mínimos y relaciona el patrón con posición, tráfico y eventos.")
-    conclusion=st.text_area("Conclusión técnica",value=data.get("conclusion",""),height=160,key="c3l2_s10_conclusion",placeholder="Integra objetivo, método, resultados, patrón espacial, limitaciones y alcance.")
+    def _c3l2_s10_clean_value(v):
+        if v is None:
+            return None
+        try:
+            if pd.isna(v):
+                return None
+        except Exception:
+            pass
+        if isinstance(v,(np.integer,np.floating)):
+            return v.item()
+        return v
 
-    st.markdown("### Misión 7 · Entrega")
-    ready_points=len(measured)
-    st.progress(min(1.0,ready_points/max(target_points,1)),text=f"{ready_points} de {target_points} puntos objetivo con LAeq registrado")
-    if _c3l2_role()=="Alumno" and st.button("📤 Guardar y entregar campaña GIS",type="primary",use_container_width=True,key="c3l2_s10_submit"):
-        if ready_points<5:
-            st.warning("Registra al menos 5 puntos medidos para habilitar una entrega preliminar; la campaña objetivo es la cantidad que seleccionaste.")
-        elif sum(p.get("route")=="Vía principal" for p in measured)<2 or sum(p.get("route")=="Vía secundaria" for p in measured)<2:
-            st.warning("Debes tener datos en ambas vías.")
-        elif not principal.strip() or not secondary.strip() or len(objective.strip())<20:
-            st.warning("Completa vías y objetivo.")
-        elif len(limitations.strip())<40 or len(interpretation.strip())<60 or len(conclusion.strip())<90:
-            st.warning("Desarrolla limitaciones, interpretación y conclusión.")
+    measurements=[]
+    for row in edited.to_dict("records"):
+        measurements.append({k:_c3l2_s10_clean_value(v) for k,v in row.items()})
+
+    complete=[
+        r for r in measurements
+        if isinstance(r.get("Leq [dB(A)]"),(int,float))
+        and isinstance(r.get("Lmax [dB(A)]"),(int,float))
+    ]
+    spacing_ok=sum(
+        1 for r in measurements
+        if isinstance(r.get("Pasos desde punto anterior"),(int,float))
+        and 25<=float(r.get("Pasos desde punto anterior"))<=30
+    )
+
+    geocoded=[
+        r for r in measurements
+        if isinstance(r.get("Latitud"),(int,float)) and isinstance(r.get("Longitud"),(int,float))
+        and -90<=float(r.get("Latitud"))<=90 and -180<=float(r.get("Longitud"))<=180
+        and not (abs(float(r.get("Latitud")))<1e-9 and abs(float(r.get("Longitud")))<1e-9)
+    ]
+    q1,q2,q3,q4=st.columns(4)
+    q1.metric("Registros completos",f"{len(complete)}/18")
+    q2.metric("Separaciones 25–30 pasos",f"{spacing_ok}/18")
+    q3.metric("Coordenadas GPS",f"{len(geocoded)}/18")
+    q4.metric("Cobertura","2 vías" if len({r.get("Vía") for r in complete})==2 else "Incompleta")
+
+    st.markdown("### 4. Mapa vial georreferenciado automático")
+    st.markdown(
+        """
+        <div class="c3l2-card blue" style="margin-bottom:.8rem">
+          <div class="c3l2-k">MAPA SOBRE UBICACIÓN REAL</div>
+          <b>La coordenada medida se conserva como evidencia.</b><br>
+          Para representar el ruido de la vía, la plataforma proyecta cada punto GPS hacia un <b>eje vial estimado</b> que pasa por el centro de la intersección. Así, el color se dibuja sobre la calzada y no sobre la vereda donde se sostuvo el teléfono.
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
+    interval=st.radio(
+        "Intervalo de representación",
+        [5,3],
+        horizontal=True,
+        format_func=lambda x:f"{x} dB",
+        index=0 if data.get("map_interval",5)!=3 else 1,
+        key="c3l2_s10_interval",
+    )
+
+    valid_levels=[float(r["Leq [dB(A)]"]) for r in complete]
+    center_ok=(
+        isinstance(intersection_lat,(int,float)) and isinstance(intersection_lon,(int,float))
+        and -90<=float(intersection_lat)<=90 and -180<=float(intersection_lon)<=180
+        and not (abs(float(intersection_lat))<1e-9 and abs(float(intersection_lon))<1e-9)
+    )
+    geo_complete=[
+        r for r in complete
+        if isinstance(r.get("Latitud"),(int,float)) and isinstance(r.get("Longitud"),(int,float))
+        and -90<=float(r.get("Latitud"))<=90 and -180<=float(r.get("Longitud"))<=180
+        and not (abs(float(r.get("Latitud")))<1e-9 and abs(float(r.get("Longitud")))<1e-9)
+    ]
+
+    def _c3l2_fit_axis(rows,lat0,lon0):
+        """Proyecta GPS reales sobre un eje recto anclado al centro del cruce."""
+        if len(rows)<2:
+            return []
+        lat0r=math.radians(lat0)
+        sx=111320.0*max(0.20,math.cos(lat0r))
+        sy=110540.0
+        pts=[]
+        for r in rows:
+            x=(float(r["Longitud"])-lon0)*sx
+            y=(float(r["Latitud"])-lat0)*sy
+            pts.append([x,y])
+        arr=np.asarray(pts,dtype=float)
+        cov=arr.T@arr
+        vals,vecs=np.linalg.eigh(cov)
+        direction=vecs[:,int(np.argmax(vals))]
+        # Mantener orientación estable para que el orden espacial no cambie entre reruns.
+        if abs(direction[0])>=abs(direction[1]):
+            if direction[0]<0: direction=-direction
+        elif direction[1]<0:
+            direction=-direction
+        out=[]
+        for r,p in zip(rows,arr):
+            t=float(np.dot(p,direction))
+            q=direction*t
+            lat=lat0+q[1]/sy
+            lon=lon0+q[0]/sx
+            rr=dict(r)
+            rr["_map_lat"]=float(lat)
+            rr["_map_lon"]=float(lon)
+            rr["_axis_t"]=t
+            out.append(rr)
+        return out
+
+    if valid_levels and center_ok:
+        principal_geo=[r for r in geo_complete if r.get("Vía")=="Vía principal"]
+        secondary_geo=[r for r in geo_complete if r.get("Vía")=="Vía secundaria"]
+        snapped_principal=_c3l2_fit_axis(principal_geo,float(intersection_lat),float(intersection_lon))
+        snapped_secondary=_c3l2_fit_axis(secondary_geo,float(intersection_lat),float(intersection_lon))
+        snapped=snapped_principal+snapped_secondary
+
+        if len(snapped_principal)>=2 and len(snapped_secondary)>=2:
+            lo=math.floor(min(valid_levels)/interval)*interval
+            hi=math.ceil(max(valid_levels)/interval)*interval
+            palette=["#C0FFC0","#00CC00","#005000","#FFFF00","#FFC74A","#FF6600","#FF3333","#990033","#AD9AD6","#0000FF","#000066","#000000"]
+
+            def _road_color(level):
+                idx=int(math.floor((float(level)-lo)/interval))
+                return palette[max(0,min(len(palette)-1,idx))]
+
+            fig=go.Figure()
+
+            # Dibujar cada vía según la posición geográfica ajustada al eje vial.
+            for route_rows,route_name in [(snapped_principal,"Vía principal"),(snapped_secondary,"Vía secundaria")]:
+                ordered=sorted(route_rows,key=lambda r:r["_axis_t"])
+                for i,r in enumerate(ordered):
+                    lv=r.get("Leq [dB(A)]")
+                    if not isinstance(lv,(int,float)):
+                        continue
+                    if i==0:
+                        a_lat=float(intersection_lat); a_lon=float(intersection_lon)
+                    else:
+                        a_lat=ordered[i-1]["_map_lat"]; a_lon=ordered[i-1]["_map_lon"]
+                    fig.add_trace(go.Scattermapbox(
+                        lat=[a_lat,r["_map_lat"]],lon=[a_lon,r["_map_lon"]],
+                        mode="lines",
+                        line=dict(width=10,color=_road_color(lv)),
+                        hoverinfo="skip",showlegend=False,
+                    ))
+
+            # Puntos representados sobre el eje de la calzada.
+            for route_rows in (snapped_principal,snapped_secondary):
+                if not route_rows:
+                    continue
+                fig.add_trace(go.Scattermapbox(
+                    lat=[r["_map_lat"] for r in route_rows],
+                    lon=[r["_map_lon"] for r in route_rows],
+                    mode="markers+text",
+                    text=[r["Punto"] for r in route_rows],
+                    textposition="top center",
+                    marker=dict(
+                        size=14,
+                        color=[_road_color(r["Leq [dB(A)]"]) for r in route_rows],
+                    ),
+                    customdata=[[
+                        r["Punto"],r["Vía"],float(r["Leq [dB(A)]"]),float(r["Lmax [dB(A)]"]),
+                        float(r["Latitud"]),float(r["Longitud"])
+                    ] for r in route_rows],
+                    hovertemplate=(
+                        "<b>%{customdata[0]}</b> · %{customdata[1]}<br>"
+                        "Leq: %{customdata[2]:.1f} dB(A)<br>"
+                        "Lmax: %{customdata[3]:.1f} dB(A)<br>"
+                        "GPS medido: %{customdata[4]:.6f}, %{customdata[5]:.6f}<br>"
+                        "<extra></extra>"
+                    ),
+                    showlegend=False,
+                ))
+
+            fig.add_trace(go.Scattermapbox(
+                lat=[float(intersection_lat)],lon=[float(intersection_lon)],
+                mode="markers+text",text=["Intersección"],textposition="bottom right",
+                marker=dict(size=15,color="#111827"),
+                hovertemplate="Centro de la intersección<extra></extra>",
+                showlegend=False,
+            ))
+
+            # Escala de colores vertical tipo mapa de ruido.
+            n_bins=max(1,int(math.ceil((hi-lo)/interval))+1)
+            legend_rows=[]
+            for bi in range(min(n_bins,len(palette))):
+                a=lo+bi*interval; b=a+interval
+                legend_rows.append((a,b,palette[bi]))
+
+            lat_values=[r["_map_lat"] for r in snapped]+[float(intersection_lat)]
+            lon_values=[r["_map_lon"] for r in snapped]+[float(intersection_lon)]
+            lat_span=max(lat_values)-min(lat_values)
+            lon_span=max(lon_values)-min(lon_values)
+            span=max(lat_span,lon_span,0.0005)
+            zoom=max(13.0,min(18.5,16.8-math.log10(span/0.003+1.0)))
+
+            fig.update_layout(
+                height=620,
+                mapbox=dict(
+                    style="open-street-map",
+                    center=dict(lat=float(intersection_lat),lon=float(intersection_lon)),
+                    zoom=zoom,
+                ),
+                margin=dict(l=0,r=0,t=0,b=0),
+                showlegend=False,
+            )
+            st.plotly_chart(fig,use_container_width=True,key="c3l2_s10_real_roadmap")
+
+            legend_html='<div style="display:flex;gap:14px;align-items:stretch;margin:.35rem 0 1rem">'
+            legend_html+='<div style="font-size:.78rem;font-weight:800;color:#334155;writing-mode:vertical-rl;transform:rotate(180deg);text-align:center">Leq dB(A)</div>'
+            legend_html+='<div style="display:flex;flex-direction:column-reverse;gap:2px">'
+            for a,b,color in legend_rows:
+                legend_html+=f'<div style="display:flex;align-items:center;gap:7px;font-size:.78rem"><span style="width:26px;height:18px;background:{color};border:1px solid rgba(0,0,0,.15)"></span><span>{a:g}–&lt;{b:g}</span></div>'
+            legend_html+='</div></div>'
+            st.markdown(legend_html,unsafe_allow_html=True)
+            st.caption(
+                "Mapa sobre cartografía OpenStreetMap. Las coordenadas GPS originales se mantienen en el registro; "
+                "para la representación vial se proyectan al eje estimado de cada calle, anclado al centro de la intersección. "
+                "Este ajuste es cartográfico y no modifica el lugar real donde se efectuó la medición."
+            )
         else:
-            data.update({
-                "version":_C3L2_VERSION,"principal":principal,"secondary":secondary,"sector":sector,
-                "objective":objective,"target_points":target_points,"duration_plan":duration_plan,"period_plan":period_plan,
-                "points":points,"limitations":limitations,"interpretation":interpretation,"conclusion":conclusion,
-                "submitted":True,"submitted_at":_now(),
-            })
-            _c3l2_complete(saved,10,data)
-            st.success("Campaña GIS guardada y entregada.")
-    _c3l2_teacher_pauta("Etapa 10","Revisar coherencia entre objetivo, distribución espacial, cobertura de ambas vías, trazabilidad de cada punto, LAeq/Lmax, interpretación del patrón, limitaciones y conclusión. El mapa no debe presentar la interpolación como si fuera medición directa.")
+            st.info("Para construir el mapa real se requieren al menos 2 puntos con coordenadas válidas en cada vía, además de Leq/Lmax.")
+    elif valid_levels and not center_ok:
+        st.info("Ingresa la latitud y longitud del centro de la intersección para dibujar el mapa sobre la ubicación real.")
+    else:
+        st.info("Completa Leq, Lmax y las coordenadas GPS de los puntos para comenzar a construir automáticamente el mapa vial georreferenciado.")
+
+    st.markdown("### 5. Análisis de resultados")
+    if valid_levels:
+        lmax_values=[float(r["Lmax [dB(A)]"]) for r in complete if isinstance(r.get("Lmax [dB(A)]"),(int,float))]
+        a,b,c8=st.columns(3)
+        a.metric("Leq máximo",f"{max(valid_levels):.1f} dB(A)")
+        b.metric("Leq mínimo",f"{min(valid_levels):.1f} dB(A)")
+        c8.metric("Rango Leq",f"{max(valid_levels)-min(valid_levels):.1f} dB")
+        if lmax_values:
+            st.caption(f"Lmax observado: {min(lmax_values):.1f} a {max(lmax_values):.1f} dB(A).")
+
+    analysis=st.text_area(
+        "Analiza el comportamiento observado en ambas vías",
+        value=data.get("analysis",""),
+        height=150,
+        key="c3l2_s10_analysis",
+        placeholder="Compara vía principal y secundaria, tendencia con la distancia, diferencias Leq/Lmax, eventos relevantes y lo que muestran los intervalos del mapa."
+    )
+    limitations=st.text_area(
+        "Limitaciones e incertidumbres",
+        value=data.get("limitations",""),
+        height=110,
+        key="c3l2_s10_limitations",
+        placeholder="Considera precisión de la aplicación, duración, variabilidad del tránsito, meteorología, eventos puntuales, conteo de pasos y representatividad temporal."
+    )
+    conclusion=st.text_area(
+        "Conclusión técnica",
+        value=data.get("conclusion",""),
+        height=125,
+        key="c3l2_s10_conclusion",
+        placeholder="Resume el patrón acústico observado y el alcance real de los resultados."
+    )
+
+    st.markdown("### 6. Revisión antes de entregar")
+    checklist=[
+        ("Lugar identificado",bool(principal.strip() and secondary.strip() and sector.strip())),
+        ("Evidencias enlazadas",bool(maps_url.strip() and evidence_url.strip())),
+        ("Metodología desarrollada",len(methodology.strip())>=100),
+        ("18 registros Leq/Lmax completos",len(complete)==18),
+        ("18 separaciones entre 25 y 30 pasos",spacing_ok==18),
+        ("18 puntos con coordenadas GPS",len(geocoded)==18),
+        ("Centro de la intersección georreferenciado",center_ok),
+        ("Análisis desarrollado",len(analysis.strip())>=150),
+        ("Limitaciones desarrolladas",len(limitations.strip())>=80),
+        ("Conclusión desarrollada",len(conclusion.strip())>=100),
+    ]
+    for label,ok in checklist:
+        st.write(("✅ " if ok else "○ ")+label)
+
+    if st.button("💾 Guardar borrador",use_container_width=True,key="c3l2_s10_draft"):
+        data.update({
+            "principal":principal,"secondary":secondary,"sector":sector,
+            "intersection_lat":intersection_lat,"intersection_lon":intersection_lon,
+            "site_description":site_description,"maps_url":maps_url,"evidence_url":evidence_url,
+            "app_name":app_name,"measurement_date":measurement_date,"period":period,
+            "methodology":methodology,"measurements":measurements,"map_interval":interval,
+            "analysis":analysis,"limitations":limitations,"conclusion":conclusion,
+        })
+        saved["c3l2_stage10"]=data
+        _c3l2_save(saved)
+        st.success("Borrador guardado. Puedes salir y continuar después.")
+
+    if st.button("ENTREGAR EVALUACIÓN DEFINITIVA",type="primary",use_container_width=True,key="c3l2_s10_submit"):
+        if not all(ok for _,ok in checklist):
+            st.warning("Aún faltan antecedentes obligatorios. Revisa la lista antes de realizar el envío definitivo.")
+        elif not app_name.strip() or not measurement_date.strip() or not period.strip():
+            st.warning("Completa aplicación utilizada, fecha y periodo de medición.")
+        elif len(site_description.strip())<80:
+            st.warning("Desarrolla con mayor detalle la descripción del lugar.")
+        else:
+            payload={
+                "version":2,
+                "principal":principal,"secondary":secondary,"sector":sector,
+                "intersection_lat":intersection_lat,"intersection_lon":intersection_lon,
+                "site_description":site_description,
+                "maps_url":maps_url,"evidence_url":evidence_url,
+                "app_name":app_name,"measurement_date":measurement_date,"period":period,
+                "methodology":methodology,
+                "measurements":measurements,
+                "map_interval":interval,
+                "analysis":analysis,"limitations":limitations,"conclusion":conclusion,
+                "rubric_max":60,
+                "submitted_at":_now(),
+            }
+            _c3l2_s10_submit(saved,payload)
+            st.rerun()
+
 
 def _render_course3_lab2_stage0(lab,saved): return _c3l2_stage0(lab,saved)
 def _render_course3_lab2_stage1(lab,saved): return _c3l2_stage1(lab,saved)
