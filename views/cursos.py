@@ -30159,72 +30159,493 @@ def _c3l2_stage4(lab,saved):
 
 
 def _c3l2_stage5(lab,saved):
-    _c3l2_header(5,"Introducción a los mapas de ruido","Comprender qué representa un mapa de ruido y distinguir un mapa basado en mediciones de uno obtenido por proyección.",20)
+    _c3l2_header(
+        5,
+        "Introducción a los mapas de ruido",
+        "Distinguir mapas construidos a partir de mediciones de mapas obtenidos por predicción, comprender sus entradas, limitaciones y formas de representación.",
+        55,
+    )
 
     st.markdown("""
     <div class="c3l2-intro">
-      <div class="c3l2-k">DOS CAMINOS HACIA UN MAPA</div>
-      <div class="c3l2-title">Los colores pueden parecer similares, pero el origen de los datos no es el mismo.</div>
-      Un mapa por <b>mediciones</b> parte de puntos observados y estima el espacio entre ellos.
-      Un mapa por <b>proyección</b> parte de fuentes y parámetros de un modelo para calcular receptores.
+      <div class="c3l2-k">REPRESENTACIÓN ESPACIAL DEL AMBIENTE SONORO</div>
+      <div class="c3l2-title">Un mapa de ruido no es una fotografía del sonido: es una representación espacial de un descriptor acústico.</div>
+      Para interpretarlo correctamente siempre debemos saber <b>qué descriptor se representa</b>,
+      <b>durante qué período</b>, <b>a qué altura</b>, <b>para qué escenario</b> y
+      <b>de dónde provienen los valores</b>: mediciones o cálculo.
     </div>
-    """,unsafe_allow_html=True)
+    """, unsafe_allow_html=True)
+
+    # ------------------------------------------------------------------
+    # 1 · QUÉ ES UN MAPA DE RUIDO
+    # ------------------------------------------------------------------
+    st.markdown("### 1. ¿Qué representa realmente un mapa de ruido?")
+
+    st.write(
+        "Un mapa de ruido asigna valores de un **descriptor acústico** a posiciones del espacio y los representa "
+        "mediante colores, celdas o líneas de igual nivel —isófonas o contornos—. Dos mapas pueden tener una "
+        "apariencia muy parecida y, sin embargo, haberse obtenido mediante procedimientos completamente distintos."
+    )
+
+    meta1, meta2, meta3, meta4 = st.columns(4)
+    meta1.metric("Descriptor", "LAeq,T")
+    meta2.metric("Período", "T definido")
+    meta3.metric("Altura", "h definida")
+    meta4.metric("Escenario", "actual / futuro")
+
+    st.markdown("""
+    <div class="c3l2-card blue">
+      <div class="c3l2-k">ANTES DE LEER LOS COLORES</div>
+      Un mapa técnicamente interpretable debe indicar, como mínimo, el descriptor acústico, período de referencia,
+      altura de evaluación, fecha o escenario, escala o resolución espacial, leyenda de niveles y sistema de ubicación.
+    </div>
+    """, unsafe_allow_html=True)
+
+    anatomy_svg = """
+    <svg viewBox="0 0 980 430" width="100%" style="background:#f8fbfd;border:1px solid #d8e5ed;border-radius:18px">
+      <defs>
+        <radialGradient id="g1"><stop offset="0%" stop-color="#ef4444"/><stop offset="45%" stop-color="#f59e0b"/><stop offset="72%" stop-color="#facc15"/><stop offset="100%" stop-color="#93c5fd"/></radialGradient>
+        <radialGradient id="g2"><stop offset="0%" stop-color="#f97316"/><stop offset="55%" stop-color="#fde047"/><stop offset="100%" stop-color="#bfdbfe"/></radialGradient>
+      </defs>
+      <style>.t{font-family:Inter,Arial,sans-serif;fill:#263f50}.b{font-weight:850}.s{font-size:12px}</style>
+
+      <text x="490" y="32" text-anchor="middle" class="t b" font-size="17">ANATOMÍA DE UN MAPA DE RUIDO</text>
+      <rect x="55" y="58" width="760" height="315" rx="14" fill="#e8eef1" stroke="#718797" stroke-width="2"/>
+
+      <path d="M70 270 L225 250 L310 270 L405 230 L520 250 L630 225 L800 245 L800 360 L70 360 Z" fill="#d9d0bd"/>
+      <rect x="100" y="95" width="105" height="95" fill="#c2cbd1"/><rect x="235" y="120" width="92" height="72" fill="#b5c1c9"/>
+      <rect x="620" y="90" width="125" height="105" fill="#c2cbd1"/>
+
+      <rect x="70" y="205" width="730" height="46" rx="8" fill="#596d78"/>
+      <line x1="90" y1="228" x2="780" y2="228" stroke="#fff" stroke-width="3" stroke-dasharray="20 16"/>
+
+      <ellipse cx="345" cy="225" rx="245" ry="120" fill="url(#g1)" opacity=".62"/>
+      <ellipse cx="655" cy="224" rx="125" ry="88" fill="url(#g2)" opacity=".52"/>
+
+      <g fill="none" stroke="#fff" stroke-width="2" opacity=".95">
+        <ellipse cx="345" cy="225" rx="75" ry="38"/><ellipse cx="345" cy="225" rx="135" ry="65"/><ellipse cx="345" cy="225" rx="205" ry="100"/>
+      </g>
+      <text x="345" y="190" text-anchor="middle" class="t b" font-size="12">70</text>
+      <text x="450" y="175" text-anchor="middle" class="t b" font-size="12">65</text>
+      <text x="520" y="145" text-anchor="middle" class="t b" font-size="12">60 dB</text>
+
+      <rect x="835" y="84" width="105" height="220" rx="10" fill="#fff" stroke="#ccd9e1"/>
+      <text x="887" y="108" text-anchor="middle" class="t b" font-size="12">LEYENDA</text>
+      <rect x="852" y="128" width="25" height="25" fill="#ef4444"/><text x="888" y="146" class="t s">≥ 75</text>
+      <rect x="852" y="163" width="25" height="25" fill="#f97316"/><text x="888" y="181" class="t s">70–75</text>
+      <rect x="852" y="198" width="25" height="25" fill="#facc15"/><text x="888" y="216" class="t s">65–70</text>
+      <rect x="852" y="233" width="25" height="25" fill="#86efac"/><text x="888" y="251" class="t s">60–65</text>
+      <rect x="852" y="268" width="25" height="25" fill="#93c5fd"/><text x="888" y="286" class="t s">&lt; 60</text>
+
+      <text x="75" y="401" class="t b" font-size="12">Descriptor: LAeq,T</text>
+      <text x="310" y="401" class="t b" font-size="12">Altura: h</text>
+      <text x="505" y="401" class="t b" font-size="12">Resolución: grilla</text>
+      <text x="720" y="401" class="t b" font-size="12">Escenario definido</text>
+    </svg>
+    """
+    components.html(anatomy_svg, height=450)
+
+    # ------------------------------------------------------------------
+    # 2 · DOS FAMILIAS
+    # ------------------------------------------------------------------
+    st.markdown("### 2. Dos formas principales de construir un mapa")
+
+    left, right = st.columns(2)
+    with left:
+        st.markdown("""
+        <div class="c3l2-card blue">
+          <div class="c3l2-k">A · MAPA BASADO EN MEDICIONES</div>
+          <b>Parte de niveles realmente observados.</b><br><br>
+          Se mide en puntos o recorridos definidos. Los sectores donde no se midió directamente
+          deben estimarse mediante interpolación u otra técnica espacial.
+        </div>
+        """, unsafe_allow_html=True)
+    with right:
+        st.markdown("""
+        <div class="c3l2-card green">
+          <div class="c3l2-k">B · MAPA POR PREDICCIÓN / MODELACIÓN</div>
+          <b>Parte de fuentes y condiciones de propagación.</b><br><br>
+          El nivel se calcula en una malla de receptores a partir de emisión, geometría,
+          terreno, obstáculos, meteorología y demás términos del método utilizado.
+        </div>
+        """, unsafe_allow_html=True)
+
+    st.markdown("#### A. Mapa construido a partir de mediciones")
+
+    st.write(
+        "En este caso los datos originales son **niveles de presión sonora medidos**. "
+        "La calidad del mapa depende tanto de la calidad metrológica de cada medición como de la "
+        "representatividad espacial y temporal de la campaña."
+    )
+
+    st.markdown("""
+    <div class="c3l2-flow">
+      <span class="c3l2-node">Diseño de campaña</span><span class="c3l2-arrow">→</span>
+      <span class="c3l2-node">Medición + coordenada</span><span class="c3l2-arrow">→</span>
+      <span class="c3l2-node">Control de calidad</span><span class="c3l2-arrow">→</span>
+      <span class="c3l2-node">Interpolación</span><span class="c3l2-arrow">→</span>
+      <span class="c3l2-node">Superficie + isófonas</span>
+    </div>
+    """, unsafe_allow_html=True)
+
+    m1, m2 = st.columns(2)
+    with m1:
+        st.markdown("**La campaña debe controlar:**")
+        st.markdown(
+            "- descriptor y duración de cada registro;  \n"
+            "- altura y posición del micrófono;  \n"
+            "- calibración y trazabilidad instrumental;  \n"
+            "- condiciones meteorológicas;  \n"
+            "- tráfico, operación u otras variables que expliquen el nivel;  \n"
+            "- horarios y representatividad del período estudiado."
+        )
+    with m2:
+        st.markdown("**La interpolación requiere cautela:**")
+        st.markdown(
+            "- solo los puntos instrumentados son mediciones directas;  \n"
+            "- IDW, kriging, spline u otros métodos generan valores estimados entre puntos;  \n"
+            "- una red escasa puede ocultar gradientes o fuentes locales;  \n"
+            "- no debe extrapolarse muy lejos de los datos sin justificarlo;  \n"
+            "- el mapa hereda la incertidumbre y sesgos de la campaña."
+        )
+
+    measured_svg = """
+    <svg viewBox="0 0 980 455" width="100%" style="background:#f8fbfd;border:1px solid #d8e5ed;border-radius:18px">
+      <defs>
+        <radialGradient id="m1"><stop offset="0%" stop-color="#ef4444"/><stop offset="50%" stop-color="#fbbf24"/><stop offset="100%" stop-color="#93c5fd"/></radialGradient>
+        <radialGradient id="m2"><stop offset="0%" stop-color="#fb923c"/><stop offset="58%" stop-color="#fde68a"/><stop offset="100%" stop-color="#bfdbfe"/></radialGradient>
+      </defs>
+      <style>.t{font-family:Inter,Arial,sans-serif;fill:#263f50}.b{font-weight:850}</style>
+      <text x="490" y="32" text-anchor="middle" class="t b" font-size="17">MAPA BASADO EN MEDICIONES · EJEMPLO DIDÁCTICO</text>
+
+      <rect x="55" y="55" width="870" height="330" rx="14" fill="#dfe7eb"/>
+      <path d="M55 160 H925 M55 285 H925 M210 55 V385 M520 55 V385 M775 55 V385" stroke="#fff" stroke-width="24"/>
+      <path d="M55 160 H925 M55 285 H925 M210 55 V385 M520 55 V385 M775 55 V385" stroke="#687d88" stroke-width="13"/>
+
+      <ellipse cx="390" cy="220" rx="265" ry="145" fill="url(#m1)" opacity=".48"/>
+      <ellipse cx="720" cy="285" rx="145" ry="92" fill="url(#m2)" opacity=".42"/>
+
+      <g fill="#fff" stroke="#145a86" stroke-width="4">
+        <circle cx="145" cy="105" r="13"/><circle cx="315" cy="115" r="13"/><circle cx="460" cy="195" r="13"/>
+        <circle cx="640" cy="120" r="13"/><circle cx="835" cy="120" r="13"/><circle cx="145" cy="330" r="13"/>
+        <circle cx="365" cy="330" r="13"/><circle cx="620" cy="330" r="13"/><circle cx="850" cy="330" r="13"/>
+      </g>
+      <g class="t b" font-size="11">
+        <text x="145" y="110" text-anchor="middle">62</text><text x="315" y="120" text-anchor="middle">67</text>
+        <text x="460" y="200" text-anchor="middle">72</text><text x="640" y="125" text-anchor="middle">65</text>
+        <text x="835" y="125" text-anchor="middle">60</text><text x="145" y="335" text-anchor="middle">58</text>
+        <text x="365" y="335" text-anchor="middle">64</text><text x="620" y="335" text-anchor="middle">69</text>
+        <text x="850" y="335" text-anchor="middle">63</text>
+      </g>
+
+      <text x="490" y="415" text-anchor="middle" class="t b" font-size="13">● = punto medido · superficie coloreada = estimación espacial entre observaciones</text>
+      <text x="490" y="438" text-anchor="middle" class="t" font-size="12">El color entre dos puntos no significa que se haya instalado un sonómetro allí.</text>
+    </svg>
+    """
+    components.html(measured_svg, height=475)
+
+    st.markdown("#### B. Mapa obtenido por predicción o modelación")
+
+    st.write(
+        "Aquí el mapa no nace de una malla de sonómetros. Se define la **emisión de las fuentes** y un "
+        "modelo calcula la propagación hasta receptores o celdas distribuidos por el área de estudio."
+    )
+
+    st.markdown("""
+    <div class="c3l2-flow">
+      <span class="c3l2-node">Fuentes + emisión</span><span class="c3l2-arrow">→</span>
+      <span class="c3l2-node">Modelo 3D</span><span class="c3l2-arrow">→</span>
+      <span class="c3l2-node">Propagación</span><span class="c3l2-arrow">→</span>
+      <span class="c3l2-node">Grilla de cálculo</span><span class="c3l2-arrow">→</span>
+      <span class="c3l2-node">Contornos</span>
+    </div>
+    """, unsafe_allow_html=True)
+
+    st.latex(
+        r"L_p \approx L_W + D_c"
+        r"-A_{\mathrm{div}}-A_{\mathrm{atm}}-A_{\mathrm{gr}}"
+        r"-A_{\mathrm{bar}}-A_{\mathrm{misc}}"
+    )
+    st.caption(
+        "Esquema conceptual de propagación: el método concreto puede utilizar otros términos o formulaciones. "
+        "Lo importante es que el mapa proyectado calcula niveles a partir de la emisión y del entorno."
+    )
+
+    p1, p2 = st.columns(2)
+    with p1:
+        st.markdown("**Entradas acústicas y de actividad**")
+        st.markdown(
+            "- Lw, espectro o parámetros de emisión;  \n"
+            "- número y tipo de vehículos o eventos;  \n"
+            "- velocidad, flujo y composición cuando corresponda;  \n"
+            "- horarios y tiempos de operación;  \n"
+            "- geometría puntual, lineal o superficial de las fuentes."
+        )
+    with p2:
+        st.markdown("**Entradas de propagación**")
+        st.markdown(
+            "- coordenadas y altura de fuentes/receptores;  \n"
+            "- terreno y cotas;  \n"
+            "- edificios, pantallas y obstáculos;  \n"
+            "- propiedades del suelo;  \n"
+            "- meteorología definida por el método;  \n"
+            "- orden de reflexiones y resolución de cálculo."
+        )
+
+    # ------------------------------------------------------------------
+    # 3 · RENDERS POR TIPO DE FUENTE
+    # ------------------------------------------------------------------
+    st.markdown("### 3. Cómo cambia el mapa según el tipo de fuente")
+
+    st.write(
+        "La geometría de los contornos depende de la fuente. Los siguientes renders son ejemplos didácticos "
+        "para aprender a reconocer patrones típicos; no corresponden a una campaña o proyecto real."
+    )
+
+    tab_m, tab_road, tab_ind, tab_air = st.tabs(
+        [
+            "Mediciones urbanas",
+            "Vía de tránsito",
+            "Fuentes industriales",
+            "Aeronaves",
+        ]
+    )
+
+    with tab_m:
+        components.html(measured_svg, height=475)
+        st.caption(
+            "Mapa derivado de puntos medidos. Las manchas dependen de la distribución de observaciones y del método de interpolación."
+        )
+
+    with tab_road:
+        road_svg = """
+        <svg viewBox="0 0 980 455" width="100%" style="background:#eef4f6;border:1px solid #d8e5ed;border-radius:18px">
+          <defs>
+            <linearGradient id="rv" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0%" stop-color="#93c5fd" stop-opacity=".15"/>
+              <stop offset="28%" stop-color="#fde047" stop-opacity=".46"/>
+              <stop offset="47%" stop-color="#fb923c" stop-opacity=".68"/>
+              <stop offset="50%" stop-color="#ef4444" stop-opacity=".82"/>
+              <stop offset="53%" stop-color="#fb923c" stop-opacity=".68"/>
+              <stop offset="72%" stop-color="#fde047" stop-opacity=".46"/>
+              <stop offset="100%" stop-color="#93c5fd" stop-opacity=".15"/>
+            </linearGradient>
+          </defs>
+          <style>.t{font-family:Inter,Arial,sans-serif;fill:#263f50}.b{font-weight:850}</style>
+          <text x="490" y="31" text-anchor="middle" class="t b" font-size="17">FUENTE LINEAL · TRÁNSITO VIAL</text>
+
+          <rect x="40" y="50" width="900" height="340" rx="14" fill="#dfe8df"/>
+          <rect x="40" y="75" width="900" height="285" fill="url(#rv)"/>
+          <rect x="40" y="188" width="900" height="55" fill="#5c6970"/>
+          <line x1="55" y1="215" x2="925" y2="215" stroke="#fff" stroke-width="3" stroke-dasharray="26 20"/>
+
+          <g fill="#c4ced3">
+            <rect x="85" y="90" width="85" height="55"/><rect x="205" y="95" width="105" height="48"/>
+            <rect x="655" y="92" width="90" height="58"/><rect x="790" y="92" width="105" height="52"/>
+            <rect x="100" y="285" width="95" height="50"/><rect x="240" y="280" width="85" height="58"/>
+            <rect x="675" y="278" width="105" height="58"/><rect x="820" y="285" width="75" height="50"/>
+          </g>
+
+          <g fill="none" stroke="#fff" stroke-width="2">
+            <path d="M40 155 H940"/><path d="M40 125 H940"/><path d="M40 275 H940"/><path d="M40 305 H940"/>
+          </g>
+          <text x="70" y="172" class="t b" font-size="11">70</text><text x="70" y="140" class="t b" font-size="11">65</text>
+          <text x="70" y="292" class="t b" font-size="11">65</text>
+
+          <g transform="translate(350 200)">
+            <rect width="48" height="22" rx="5" fill="#176ea5"/><circle cx="10" cy="24" r="5" fill="#263f50"/><circle cx="38" cy="24" r="5" fill="#263f50"/>
+          </g>
+          <g transform="translate(520 200)">
+            <rect width="70" height="25" rx="4" fill="#d97706"/><circle cx="13" cy="27" r="5" fill="#263f50"/><circle cx="57" cy="27" r="5" fill="#263f50"/>
+          </g>
+
+          <text x="490" y="422" text-anchor="middle" class="t b" font-size="13">Los contornos tienden a seguir la vía y decrecen lateralmente con la distancia.</text>
+        </svg>
+        """
+        components.html(road_svg, height=475)
+        st.markdown(
+            "**Entradas típicas:** flujo, composición vehicular, velocidad, geometría de la vía, pendiente/superficie "
+            "según el método, receptores, terreno, edificios y barreras."
+        )
+
+    with tab_ind:
+        ind_svg = """
+        <svg viewBox="0 0 980 455" width="100%" style="background:#eef4f6;border:1px solid #d8e5ed;border-radius:18px">
+          <defs>
+            <radialGradient id="ip"><stop offset="0%" stop-color="#ef4444" stop-opacity=".82"/><stop offset="48%" stop-color="#f59e0b" stop-opacity=".58"/><stop offset="100%" stop-color="#93c5fd" stop-opacity=".12"/></radialGradient>
+            <linearGradient id="ia"><stop offset="0%" stop-color="#fb923c" stop-opacity=".62"/><stop offset="100%" stop-color="#fde047" stop-opacity=".20"/></linearGradient>
+          </defs>
+          <style>.t{font-family:Inter,Arial,sans-serif;fill:#263f50}.b{font-weight:850}</style>
+          <text x="490" y="31" text-anchor="middle" class="t b" font-size="17">INDUSTRIA / OBRA · PUNTOS + LÍNEA + ÁREA</text>
+          <rect x="45" y="52" width="890" height="338" rx="14" fill="#dfe7e7"/>
+
+          <ellipse cx="300" cy="215" rx="170" ry="145" fill="url(#ip)"/>
+          <ellipse cx="700" cy="185" rx="145" ry="120" fill="url(#ip)" opacity=".85"/>
+          <rect x="440" y="245" width="260" height="115" rx="18" fill="url(#ia)" stroke="#d08a18" stroke-width="2"/>
+
+          <rect x="155" y="160" width="90" height="75" fill="#9faeb8"/><text x="200" y="202" text-anchor="middle" class="t b" font-size="11">NAVE</text>
+          <circle cx="300" cy="215" r="17" fill="#b91c1c"/><text x="300" y="219" text-anchor="middle" fill="#fff" font-family="Inter,Arial" font-size="10" font-weight="850">P1</text>
+          <circle cx="700" cy="185" r="17" fill="#b91c1c"/><text x="700" y="189" text-anchor="middle" fill="#fff" font-family="Inter,Arial" font-size="10" font-weight="850">P2</text>
+
+          <path d="M90 325 C250 300, 330 335, 470 305 S760 300, 895 330" fill="none" stroke="#596d78" stroke-width="15"/>
+          <path d="M90 325 C250 300, 330 335, 470 305 S760 300, 895 330" fill="none" stroke="#fff" stroke-width="2" stroke-dasharray="18 14"/>
+          <text x="160" y="350" class="t b" font-size="11">ruta interna · fuente lineal</text>
+
+          <g stroke="#fff" stroke-width="2" fill="none">
+            <ellipse cx="300" cy="215" rx="70" ry="55"/><ellipse cx="300" cy="215" rx="125" ry="102"/>
+            <ellipse cx="700" cy="185" rx="65" ry="50"/><ellipse cx="700" cy="185" rx="115" ry="92"/>
+          </g>
+          <text x="570" y="270" text-anchor="middle" class="t b" font-size="12">FUENTE DE ÁREA</text>
+          <text x="490" y="422" text-anchor="middle" class="t b" font-size="13">Las contribuciones de todas las fuentes se combinan energéticamente en cada receptor.</text>
+        </svg>
+        """
+        components.html(ind_svg, height=475)
+        st.markdown(
+            "**Entradas típicas:** Lw y espectros de equipos, tiempos de operación, directividad, posiciones y alturas, "
+            "áreas de actividad, rutas internas, edificios, barreras y terreno."
+        )
+
+    with tab_air:
+        air_svg = """
+        <svg viewBox="0 0 980 455" width="100%" style="background:#eef4f6;border:1px solid #d8e5ed;border-radius:18px">
+          <defs>
+            <radialGradient id="a1" cx="50%" cy="50%" rx="50%" ry="50%">
+              <stop offset="0%" stop-color="#ef4444" stop-opacity=".80"/><stop offset="40%" stop-color="#fb923c" stop-opacity=".62"/>
+              <stop offset="70%" stop-color="#fde047" stop-opacity=".42"/><stop offset="100%" stop-color="#93c5fd" stop-opacity=".10"/>
+            </radialGradient>
+          </defs>
+          <style>.t{font-family:Inter,Arial,sans-serif;fill:#263f50}.b{font-weight:850}</style>
+          <text x="490" y="31" text-anchor="middle" class="t b" font-size="17">AERONAVES · CONTORNOS ALREDEDOR DE PISTAS Y TRAYECTORIAS</text>
+          <rect x="45" y="52" width="890" height="338" rx="14" fill="#dfe8df"/>
+
+          <ellipse cx="500" cy="215" rx="410" ry="135" fill="url(#a1)" opacity=".70"/>
+          <ellipse cx="500" cy="215" rx="290" ry="92" fill="none" stroke="#fff" stroke-width="3"/>
+          <ellipse cx="500" cy="215" rx="205" ry="60" fill="none" stroke="#fff" stroke-width="3"/>
+
+          <rect x="315" y="195" width="370" height="40" rx="4" fill="#525f66"/>
+          <line x1="330" y1="215" x2="670" y2="215" stroke="#fff" stroke-width="3" stroke-dasharray="22 16"/>
+          <text x="500" y="188" text-anchor="middle" class="t b" font-size="12">PISTA</text>
+
+          <path d="M500 215 C420 175, 300 120, 155 90" fill="none" stroke="#176ea5" stroke-width="4" stroke-dasharray="9 7"/>
+          <path d="M500 215 C620 180, 760 140, 900 110" fill="none" stroke="#176ea5" stroke-width="4" stroke-dasharray="9 7"/>
+          <path d="M500 215 C600 250, 720 315, 870 350" fill="none" stroke="#176ea5" stroke-width="4" stroke-dasharray="9 7"/>
+
+          <text x="175" y="82" class="t b" font-size="11">trayectoria</text>
+          <text x="720" y="128" class="t b" font-size="11">trayectoria</text>
+          <text x="730" y="335" class="t b" font-size="11">trayectoria</text>
+          <text x="500" y="422" text-anchor="middle" class="t b" font-size="13">Los contornos integran tipo de aeronave, operaciones, trayectorias y condiciones del escenario.</text>
+        </svg>
+        """
+        components.html(air_svg, height=475)
+        st.markdown(
+            "**Entradas típicas:** tipo de aeronave, número de operaciones, despegues/aterrizajes, trayectorias, "
+            "perfiles de vuelo, distribución temporal y descriptor de exposición utilizado."
+        )
+
+    # ------------------------------------------------------------------
+    # 4 · COMPARACIÓN TÉCNICA
+    # ------------------------------------------------------------------
+    st.markdown("### 4. Medición y predicción no responden exactamente la misma pregunta")
+
+    comparison = pd.DataFrame(
+        [
+            {
+                "Aspecto": "Dato original",
+                "Mediciones": "Lp observado en posiciones y tiempos definidos",
+                "Predicción": "Emisión de fuentes + parámetros del escenario",
+            },
+            {
+                "Aspecto": "Entre puntos",
+                "Mediciones": "Interpolado / estimado espacialmente",
+                "Predicción": "Calculado por propagación",
+            },
+            {
+                "Aspecto": "Escenario futuro",
+                "Mediciones": "No se mide directamente",
+                "Predicción": "Sí, modificando las entradas del escenario",
+            },
+            {
+                "Aspecto": "Fuentes individuales",
+                "Mediciones": "Pueden mezclarse en el nivel observado",
+                "Predicción": "Pueden modelarse y analizarse por separado",
+            },
+            {
+                "Aspecto": "Validación",
+                "Mediciones": "Control de campaña y representatividad",
+                "Predicción": "Contraste con mediciones cuando corresponde",
+            },
+            {
+                "Aspecto": "Incertidumbre dominante",
+                "Mediciones": "Instrumentación + muestreo espacial/temporal",
+                "Predicción": "Emisión + geometría + supuestos del modelo",
+            },
+        ]
+    )
+    st.dataframe(comparison, hide_index=True, use_container_width=True)
 
     st.markdown("""
     <div class="c3l2-grid2">
-      <div class="c3l2-card blue"><div class="c3l2-k">MAPA POR MEDICIONES</div>
-      <b>Pregunta: ¿qué observamos?</b><br>
-      Datos de entrada: puntos medidos, coordenadas, descriptor, periodo y condiciones.<br>
-      Entre puntos: <b>interpolación / estimación espacial</b>.</div>
-      <div class="c3l2-card green"><div class="c3l2-k">MAPA POR PROYECCIÓN</div>
-      <b>Pregunta: ¿qué estima el modelo?</b><br>
-      Datos de entrada: fuentes, emisión, geometría, terreno y reglas de propagación.<br>
-      En cada celda: <b>nivel calculado</b>.</div>
+      <div class="c3l2-card blue">
+        <div class="c3l2-k">MAPA DE MEDICIONES</div>
+        Es especialmente útil para <b>describir el ambiente sonoro observado</b> durante una campaña,
+        identificar zonas con distintos niveles y comparar espacialmente mediciones homogéneas.
+      </div>
+      <div class="c3l2-card green">
+        <div class="c3l2-k">MAPA DE PREDICCIÓN</div>
+        Es especialmente útil para <b>evaluar escenarios</b>: situación actual modelada, proyecto futuro,
+        alternativas, mitigaciones, cambios de tránsito u operación y distribución de contribuciones.
+      </div>
     </div>
-    """,unsafe_allow_html=True)
+    """, unsafe_allow_html=True)
 
-    st.markdown("### Elementos comunes")
+    # ------------------------------------------------------------------
+    # 5 · ERRORES DE INTERPRETACIÓN
+    # ------------------------------------------------------------------
+    st.markdown("### 5. Cinco errores frecuentes al leer un mapa de ruido")
+
+    st.markdown(
+        "1. **Creer que cada píxel fue medido.** En un mapa de campaña, solo los puntos efectivamente instrumentados son observaciones directas.  \n"
+        "2. **Ignorar el descriptor.** Un LAeq de 15 minutos, LAeq nocturno y un indicador de exposición diaria no representan lo mismo.  \n"
+        "3. **Ignorar la altura de cálculo o medición.** El campo sonoro puede cambiar con la altura, especialmente cerca de pantallas y edificios.  \n"
+        "4. **Leer una isolínea como una frontera física exacta.** Es una representación de una superficie continua o calculada.  \n"
+        "5. **Comparar mapas con escenarios diferentes.** Cambiar tráfico, meteorología, operación, resolución o fuentes puede cambiar el resultado."
+    )
+
     st.markdown("""
-    <div class="c3l2-flow">
-      <span class="c3l2-node">Área de estudio</span><span class="c3l2-arrow">→</span>
-      <span class="c3l2-node">Puntos / receptores</span><span class="c3l2-arrow">→</span>
-      <span class="c3l2-node">Niveles</span><span class="c3l2-arrow">→</span>
-      <span class="c3l2-node">Superficie</span><span class="c3l2-arrow">→</span>
-      <span class="c3l2-node">Isolíneas + leyenda</span>
+    <div class="c3l2-note">
+      <b>Idea final de esta etapa:</b> antes de interpretar un color debemos preguntar
+      <b>qué se representa, cómo se obtuvo y bajo qué condiciones</b>. La apariencia gráfica del mapa
+      por sí sola no permite saber si el valor fue medido, interpolado o calculado.
     </div>
-    """,unsafe_allow_html=True)
+    """, unsafe_allow_html=True)
 
-    st.markdown("### Desafío · identifica el origen de cada valor")
-    scenarios=[
-        ("63 dB aparece en un punto donde un técnico instaló un sonómetro.","Medición directa"),
-        ("61 dB aparece entre M3 y M4 y allí nunca se midió.","Valor interpolado"),
-        ("67 dB aparece en una grilla calculada desde Lw de tres equipos.","Valor proyectado"),
-    ]
-    answers=[]
-    for i,(question,correct) in enumerate(scenarios):
-        ans=st.radio(question,["Medición directa","Valor interpolado","Valor proyectado"],index=None,key=f"c3l2_s5_q{i}")
-        answers.append(ans)
-        if ans:
-            (st.success if ans==correct else st.info)("Correcto." if ans==correct else "Revisa de dónde proviene el valor.")
-    reflection=st.text_area("¿Por qué un mapa coloreado no significa que se midió en cada píxel o celda?",height=90,key="c3l2_s5_ref")
-    if _c3l2_role()=="Alumno" and st.button("Guardar Etapa 5",type="primary",use_container_width=True,key="c3l2_s5_save"):
-        if any(a!=scenarios[i][1] for i,a in enumerate(answers)) or len(reflection.strip())<30:
-            st.warning("Distingue medición directa, interpolación y cálculo mediante modelo.")
-        else:
-            _c3l2_complete(saved,5,{"answers":answers,"reflection":reflection})
+    if _c3l2_role() == "Alumno":
+        if st.button(
+            "Guardar Etapa 5",
+            type="primary",
+            use_container_width=True,
+            key="c3l2_s5_save",
+        ):
+            _c3l2_complete(
+                saved,
+                5,
+                {
+                    "concept": "measurement_vs_prediction",
+                    "completed": True,
+                },
+            )
             st.success("Etapa 5 guardada.")
-    _c3l2_teacher_pauta("Etapa 5","El objetivo es que el alumno no confunda apariencia gráfica con origen del dato. En un mapa por mediciones solo los puntos instrumentados son observaciones directas; en uno proyectado los valores de la grilla son calculados por el modelo.")
 
-
-def _c3l2_idw_surface(points, xgrid, ygrid, power=2.0):
-    """Interpolación IDW didáctica en coordenadas locales."""
-    z=np.zeros_like(xgrid,dtype=float)
-    wsum=np.zeros_like(xgrid,dtype=float)
-    for px,py,pz in points:
-        d2=(xgrid-float(px))**2+(ygrid-float(py))**2
-        w=1.0/np.maximum(d2,0.25)**(power/2.0)
-        z+=w*float(pz); wsum+=w
-    return z/np.maximum(wsum,1e-12)
+    if st.session_state.get("role") == "Docente":
+        with st.container(border=True):
+            st.markdown("##### 👩‍🏫 Pauta docente · ideas clave")
+            st.markdown(
+                "- Un mapa representa un **descriptor acústico espacial**, no una fotografía instantánea del sonido.  \n"
+                "- En mapas basados en mediciones, distinguir **punto observado** de **valor interpolado**.  \n"
+                "- En mapas de predicción, los niveles de la grilla son **calculados a partir de fuentes y propagación**.  \n"
+                "- Exigir siempre descriptor, período, altura, escenario, resolución y leyenda.  \n"
+                "- La geometría de los contornos depende del tipo de fuente: puntual, lineal, área o trayectoria aérea."
+            )
 
 
 def _c3l2_stage6(lab,saved):
