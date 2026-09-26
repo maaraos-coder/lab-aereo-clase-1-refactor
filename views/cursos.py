@@ -19,7 +19,7 @@ La lógica se conserva sin cambios. ``app.py`` inyecta las dependencias
 compartidas antes de ejecutar cada vista para evitar acoplamientos circulares.
 """
 
-_RUNTIME_PROTECTED = {"run_view", "_bind_runtime", "_VIEWS", "_RUNTIME_PROTECTED"}
+_RUNTIME_PROTECTED = {"run_view", "_bind_runtime", "_VIEWS", "_RUNTIME_PROTECTED", "__file__", "__spec__", "__package__", "MODULE_DIR", "PROJECT_ROOT", "ASSET_DIR"}
 
 def _bind_runtime(runtime):
     module_globals = globals()
@@ -27723,11 +27723,7 @@ def _c3l2_stage1(lab,saved):
         unsafe_allow_html=True,
     )
 
-    import os as _os
-    _case_component_path = _os.path.join(
-        _os.path.dirname(__file__),
-        "c3l2_case_prof",
-    )
+    _case_component_path = str(MODULE_DIR / "c3l2_case_prof")
     _case_component = components.declare_component(
         "c3l2_case_prof",
         path=_case_component_path,
