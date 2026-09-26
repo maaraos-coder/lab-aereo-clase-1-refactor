@@ -31103,46 +31103,419 @@ def _c3l2_projection_grid(kind,lw,level_ref):
 
 
 def _c3l2_stage7(lab,saved):
-    _c3l2_header(7,"Mapas de ruido por proyección acústica","Construir una grilla calculada desde fuentes y distinguirla de una superficie interpolada desde mediciones.",30)
+    _c3l2_header(
+        7,
+        "Mapas de ruido por proyección acústica",
+        "Comprender cómo se construye, verifica y documenta un mapa calculado a partir de fuentes, modelos normativos y condiciones de propagación.",
+        45,
+    )
 
     st.markdown("""
     <div class="c3l2-intro">
-      <div class="c3l2-k">FUENTES → MODELO → RECEPTORES CALCULADOS</div>
-      <div class="c3l2-title">Aquí no estamos uniendo mediciones.</div>
-      Cada celda del mapa es un <b>receptor calculado</b> con las entradas y supuestos del modelo.
-      Cambiar la fuente o su emisión modifica toda la grilla.
+      <div class="c3l2-k">FUENTES → EMISIÓN → PROPAGACIÓN → RECEPTORES → MAPA</div>
+      <div class="c3l2-title">Un mapa por proyección no interpola puntos medidos: calcula el nivel esperado en cada receptor.</div>
+      El modelo representa matemáticamente las fuentes y el medio de propagación. Por eso el resultado depende
+      de la <b>calidad de los datos de entrada</b>, del <b>método de cálculo</b>, de la geometría y de que los
+      supuestos representen realmente el escenario que se quiere evaluar.
     </div>
     """,unsafe_allow_html=True)
 
-    kind=st.segmented_control("Tipo de fuente",["Fuente puntual","Vía lineal idealizada"],default="Fuente puntual",key="c3l2_s7_kind")
+    st.markdown("### 1. ¿Qué significa un mapa de ruido por proyección?")
+    a,b,c3=st.columns(3)
+    with a:
+        st.markdown("""
+        <div class="c3l2-card blue">
+          <div class="c3l2-k">MEDICIÓN</div>
+          <b>Dato observado.</b><br>
+          El sonómetro registra el nivel en un lugar y momento determinados.
+        </div>
+        """,unsafe_allow_html=True)
+    with b:
+        st.markdown("""
+        <div class="c3l2-card green">
+          <div class="c3l2-k">INTERPOLACIÓN</div>
+          <b>Estimación entre mediciones.</b><br>
+          Se construye una superficie a partir de puntos medidos, como vimos en la Etapa 6.
+        </div>
+        """,unsafe_allow_html=True)
+    with c3:
+        st.markdown("""
+        <div class="c3l2-card orange">
+          <div class="c3l2-k">PROYECCIÓN</div>
+          <b>Predicción mediante un modelo.</b><br>
+          Cada celda es un receptor calculado a partir de fuentes, geometría y reglas de propagación.
+        </div>
+        """,unsafe_allow_html=True)
+
+    st.markdown("""
+    Una proyección permite estudiar situaciones que todavía no existen: un proyecto futuro, una ampliación,
+    una nueva carretera, una planta industrial, una barrera acústica o un cambio operacional. También permite
+    comparar escenarios <b>sin proyecto / con proyecto</b> o <b>sin medida / con medida</b>.
+
+    En Chile, la Guía del SEA para ruido y vibración indica que la predicción debe representar los escenarios
+    de mayor emisión, declarar las condiciones de borde del modelo y documentar los datos de entrada. Además,
+    la idoneidad del método debe justificarse según el tipo de fuente y el objetivo de la evaluación.
+    """)
+
+    st.markdown("### 2. ¿Qué necesita un modelo de predicción?")
+    st.markdown("""
+    Un software no puede “inventar” el mapa. El usuario debe construir un escenario acústico coherente. Como
+    mínimo se deben revisar y documentar:
+
+    - **Fuentes:** posición, altura, geometría, directividad, horario y condición operacional.
+    - **Emisión:** nivel de potencia sonora o dato de emisión compatible con el método utilizado.
+    - **Espectro:** cuando corresponda, niveles por bandas de octava o tercio de octava.
+    - **Topografía:** curvas de nivel, taludes, excavaciones y desniveles relevantes.
+    - **Edificaciones y obstáculos:** alturas, dimensiones, reflexión y apantallamiento.
+    - **Terreno:** absorción o factor de suelo según el método.
+    - **Meteorología:** temperatura, humedad y, cuando corresponda, condiciones de propagación favorables.
+    - **Receptores:** coordenadas y alturas de evaluación.
+    - **Reflexiones y difracción:** configuración coherente con la norma de cálculo.
+    - **Malla:** resolución espacial y altura de cálculo del mapa.
+    """)
+
+    st.markdown(
+        '<div class="c3l2-warn"><b>Principio clave:</b> un mapa visualmente detallado no es necesariamente '
+        'un mapa exacto. Una grilla fina solo aumenta la cantidad de receptores calculados; no corrige '
+        'datos de entrada deficientes ni un modelo mal escogido.</div>',
+        unsafe_allow_html=True,
+    )
+
+    st.markdown("### 3. Modelos de predicción y normativa técnica")
+    model_rows=[
+        {
+            "Fuente / aplicación":"Fuentes industriales, comerciales y faenas",
+            "Métodos de referencia":"ISO 9613-1 + ISO 9613-2",
+            "Qué modelan":"Absorción atmosférica y propagación exterior: divergencia, suelo, barreras, reflexiones y otros términos según el método.",
+            "Nota":"ISO 9613-2:2024 es la edición internacional vigente. En Chile debe revisarse siempre la exigencia concreta del instrumento aplicable.",
+        },
+        {
+            "Fuente / aplicación":"Tránsito vehicular",
+            "Métodos de referencia":"CNOSSOS-EU, NMPB, RLS-19, CoRTN, TNM",
+            "Qué modelan":"Emisión del flujo vehicular y propagación según tránsito, velocidad, composición, pavimento, geometría y entorno.",
+            "Nota":"No existe un único método universal; se usa el exigido o técnicamente justificado para el estudio.",
+        },
+        {
+            "Fuente / aplicación":"Ferrocarriles",
+            "Métodos de referencia":"CNOSSOS-EU, Schall 03, RMR, FTA/FRA",
+            "Qué modelan":"Rodadura, tracción, frenado, infraestructura, velocidad y propagación.",
+            "Nota":"La selección depende del marco regulatorio y de la disponibilidad de datos.",
+        },
+        {
+            "Fuente / aplicación":"Aeronaves",
+            "Métodos de referencia":"ECAC Doc 29, ICAO Doc 9911, CNOSSOS-Air",
+            "Qué modelan":"Trayectorias, perfiles de vuelo, potencia/configuración, datos ANP y exposición acústica alrededor de aeropuertos.",
+            "Nota":"ECAC publicó la 5ª edición de Doc 29 en 2026.",
+        },
+        {
+            "Fuente / aplicación":"Aerogeneradores",
+            "Métodos de referencia":"ISO 9613-2:2024 y métodos específicos nacionales",
+            "Qué modelan":"Potencia por velocidad de viento, altura, directividad y propagación a larga distancia.",
+            "Nota":"Debe verificarse el método exigido por la jurisdicción y las correcciones específicas aplicables.",
+        },
+    ]
+    st.dataframe(pd.DataFrame(model_rows),hide_index=True,use_container_width=True)
+
+    st.markdown("""
+    **Chile · D.S. N°38/2011 MMA.** El artículo 19 permite utilizar predicciones mediante el procedimiento
+    técnico de ISO 9613 cuando el ruido de fondo impide obtener una medición válida bajo las condiciones
+    indicadas por la norma. El mismo artículo establece que, cuando existen ambos antecedentes,
+    **prevalecen los niveles medidos por sobre los proyectados**.
+
+    **SEIA.** La Guía del SEA de 2019 desarrolla el uso de modelos de predicción, exige identificar el tipo
+    de fuente, las condiciones de borde y los parámetros de entrada, y advierte que la calidad de los
+    resultados depende de la calidad de esos antecedentes y de la semejanza entre el modelo y el escenario real.
+    """)
+
+    st.markdown("### 4. La lógica física de una proyección")
+    st.latex(r"L_p = L_w + D_c - (A_{div}+A_{atm}+A_{gr}+A_{bar}+A_{misc})")
+    st.markdown("""
+    Esta forma resume conceptualmente el balance usado por modelos de propagación como ISO 9613:
+
+    - **Lw:** potencia sonora de la fuente.
+    - **Dc:** corrección por directividad.
+    - **Adiv:** atenuación por divergencia geométrica.
+    - **Aatm:** absorción atmosférica.
+    - **Agr:** efecto del suelo.
+    - **Abar:** atenuación por barreras o difracción.
+    - **Amisc:** otros mecanismos admitidos por el método.
+
+    Cuando existen varias fuentes, sus aportes en un receptor se combinan mediante **suma energética**, no
+    mediante suma aritmética de decibeles.
+    """)
+    st.latex(r"L_{tot}=10\log_{10}\left(\sum_i 10^{L_i/10}\right)")
+
+    st.markdown("### 5. Ejemplo didáctico: de una fuente a una grilla calculada")
+    kind=st.segmented_control(
+        "Tipo de fuente",
+        ["Fuente puntual","Vía lineal idealizada"],
+        default="Fuente puntual",
+        key="c3l2_s7_kind",
+    )
     c1,c2=st.columns(2)
-    lw=c1.slider("Emisión de referencia [dB]",75,115,95,key="c3l2_s7_lw")
-    ref=c2.slider("Nivel de referencia vial a 10 m [dB]",55,90,72,key="c3l2_s7_ref")
+    lw=c1.slider("Potencia / emisión de referencia [dB]",75,115,95,key="c3l2_s7_lw")
+    ref=c2.slider("Nivel vial de referencia a 10 m [dB]",55,90,72,key="c3l2_s7_ref")
     xx,yy,L=_c3l2_projection_grid(kind,lw,ref)
-    fig=go.Figure(go.Contour(x=xx,y=yy,z=L,contours=dict(showlabels=True),colorbar=dict(title="dB")))
+    fig=go.Figure(go.Contour(
+        x=xx,y=yy,z=L,
+        contours=dict(showlabels=True),
+        colorbar=dict(title="Nivel<br>calculado [dB]"),
+        hovertemplate="X=%{x:.1f} m<br>Y=%{y:.1f} m<br>Nivel calculado=%{z:.1f} dB<extra></extra>",
+    ))
     if kind=="Fuente puntual":
-        fig.add_trace(go.Scatter(x=[0],y=[0],mode="markers+text",text=["Fuente"],textposition="top center",marker=dict(size=13),name="Fuente"))
+        fig.add_trace(go.Scatter(
+            x=[0],y=[0],mode="markers+text",text=["F1"],textposition="top center",
+            marker=dict(size=13),name="Fuente puntual",
+        ))
     else:
         fig.add_trace(go.Scatter(x=[-80,80],y=[0,0],mode="lines",line=dict(width=8),name="Vía"))
-    fig.update_layout(height=500,xaxis_title="X [m]",yaxis_title="Y [m]",margin=dict(l=20,r=20,t=25,b=20))
-    st.plotly_chart(fig,use_container_width=True)
-    st.caption("Modelo deliberadamente simplificado para aprendizaje. No constituye una predicción normativa ni reemplaza software/modelos validados.")
+    fig.update_layout(
+        height=500,
+        xaxis_title="X [m]",
+        yaxis_title="Y [m]",
+        margin=dict(l=20,r=20,t=25,b=20),
+    )
+    st.plotly_chart(fig,use_container_width=True,key="c3l2_s7_projection_map")
+    st.caption(
+        "Ejemplo pedagógico deliberadamente simplificado. La grilla ilustra el concepto de receptor calculado; "
+        "no constituye una predicción normativa ni reemplaza un método implementado y verificado."
+    )
 
-    st.markdown("### Suma energética")
-    st.latex(r"L_{tot}=10\log_{10}\left(\sum_i 10^{L_i/10}\right)")
-    q1=st.radio("En este mapa, un valor de 64 dB en una celda representa:",[
-        "Una medición directa realizada allí",
-        "Un nivel calculado por el modelo para ese receptor",
-        "Una interpolación obligatoria entre dos sonómetros",
-    ],index=None,key="c3l2_s7_q1")
-    q2=st.text_area("Menciona dos entradas o supuestos que deberías documentar antes de defender una proyección acústica.",height=90,key="c3l2_s7_q2")
-    if _c3l2_role()=="Alumno" and st.button("Guardar Etapa 7",type="primary",use_container_width=True,key="c3l2_s7_save"):
-        if q1!="Un nivel calculado por el modelo para ese receptor" or len(q2.strip())<35:
-            st.warning("Distingue el receptor calculado de un dato medido y documenta los supuestos del modelo.")
+    st.markdown("### 6. Software de predicción acústica")
+    st.markdown("""
+    El **software es la herramienta que implementa uno o varios métodos de cálculo**. No debe confundirse el
+    nombre del programa con el modelo físico o la norma. Distintos programas pueden implementar la misma norma.
+    """)
+    software_rows=[
+        {
+            "Software":"SoundPLANnoise",
+            "Uso típico":"Industria, carreteras, ferrocarriles, aeronaves, mapas estratégicos",
+            "Ejemplos de métodos":"ISO 9613-2, CNOSSOS-EU, RLS-19, NMPB, TNM, ECAC Doc 29, Nord2000",
+        },
+        {
+            "Software":"CadnaA",
+            "Uso típico":"Ruido industrial y transporte, cartografía 2D/3D",
+            "Ejemplos de métodos":"ISO 9613-2:1996/2024, CNOSSOS-EU, NMPB, RLS, TNM, Nord2000, Schall 03",
+        },
+        {
+            "Software":"Predictor-LimA",
+            "Uso típico":"Industria, carreteras, ferrocarriles y grandes mapas",
+            "Ejemplos de métodos":"Diversos métodos internacionales; incluye herramientas GIS y cálculo de mapas",
+        },
+        {
+            "Software":"IMMI",
+            "Uso típico":"Industria, tránsito, ruido aéreo, mapas y planes de acción",
+            "Ejemplos de métodos":"Múltiples normas nacionales e internacionales de inmisión y propagación",
+        },
+        {
+            "Software":"NoiseModelling",
+            "Uso típico":"Cartografía ambiental abierta / investigación / SIG",
+            "Ejemplos de métodos":"Implementación abierta de CNOSSOS-EU para carretera y ferrocarril",
+        },
+        {
+            "Software":"AEDT",
+            "Uso típico":"Ruido de aeronaves y evaluación ambiental aeroportuaria",
+            "Ejemplos de métodos":"Modelo aeronáutico integrado FAA; utiliza bases de datos de performance, ruido y emisiones",
+        },
+    ]
+    st.dataframe(pd.DataFrame(software_rows),hide_index=True,use_container_width=True)
+    st.markdown(
+        '<div class="c3l2-note"><b>No existe “el mejor software” en abstracto:</b> importa que implemente '
+        'el método requerido, que pueda representar la geometría y las fuentes del problema y que su implementación '
+        'sea verificable y trazable.</div>',
+        unsafe_allow_html=True,
+    )
+
+    st.markdown("### 7. ¿Cómo se verifica que un software calcula correctamente?")
+    st.markdown("""
+    Aquí aparece una segunda capa de control: no basta con elegir una norma; debe comprobarse que el programa
+    la implementa correctamente.
+
+    **Serie ISO 17534 — Software para el cálculo del sonido en exteriores**
+
+    - **ISO 17534-1:2015:** requisitos de calidad y aseguramiento de calidad del software.
+    - **ISO/TR 17534-2:2014:** recomendaciones generales, casos de prueba e interfaz de aseguramiento de calidad.
+    - **ISO/TR 17534-3:2015:** recomendaciones y casos de prueba para la implementación de ISO 9613-2.
+      Existe una nueva ISO/TS 17534-3 en desarrollo para reemplazar este informe técnico.
+    - **ISO/TR 17534-4:2020:** implementación con aseguramiento de calidad de la propagación de CNOSSOS-EU.
+
+    El objetivo de esta serie es que dos programas que implementen correctamente el mismo método y reciban
+    los mismos datos de entrada produzcan resultados dentro de tolerancias definidas.
+    """)
+    st.markdown(
+        '<div class="c3l2-warn"><b>Importante:</b> ISO 17534 verifica la implementación del método en el '
+        'software. No demuestra por sí sola que el modelo represente correctamente un proyecto real. '
+        'Esa es una pregunta distinta.</div>',
+        unsafe_allow_html=True,
+    )
+
+    st.markdown("### 8. Calibración del modelo con mediciones reales")
+    st.markdown("""
+    Cuando existe una instalación, faena o condición operacional que puede reproducirse en terreno, una buena
+    práctica es construir en el software **ese mismo escenario real** y comparar los niveles calculados con
+    mediciones realizadas simultáneamente o bajo condiciones equivalentes.
+
+    El objetivo no es “hacer coincidir números a la fuerza”, sino comprobar si la representación del sistema
+    es razonable y detectar entradas incorrectas.
+    """)
+
+    cal_rows=[
+        {"Punto":"C1","Medido [dB(A)]":65.2,"Modelado inicial [dB(A)]":63.8},
+        {"Punto":"C2","Medido [dB(A)]":62.8,"Modelado inicial [dB(A)]":62.1},
+        {"Punto":"C3","Medido [dB(A)]":59.7,"Modelado inicial [dB(A)]":60.4},
+        {"Punto":"C4","Medido [dB(A)]":57.1,"Modelado inicial [dB(A)]":56.0},
+    ]
+    cal_df=pd.DataFrame(cal_rows)
+    cal_df["Diferencia modelo-medición [dB]"]=(cal_df["Modelado inicial [dB(A)]"]-cal_df["Medido [dB(A)]"]).round(1)
+    st.dataframe(cal_df,hide_index=True,use_container_width=True)
+    diffs=cal_df["Diferencia modelo-medición [dB]"].to_numpy(dtype=float)
+    mae_cal=float(np.mean(np.abs(diffs)))
+    bias_cal=float(np.mean(diffs))
+    max_cal=float(np.max(np.abs(diffs)))
+    m1,m2,m3=st.columns(3)
+    m1.metric("Error absoluto medio",f"{mae_cal:.2f} dB")
+    m2.metric("Sesgo medio",f"{bias_cal:+.2f} dB")
+    m3.metric("Mayor diferencia",f"{max_cal:.2f} dB")
+
+    st.markdown("""
+    **Flujo recomendado de calibración / ajuste del modelo:**
+
+    1. Seleccionar una condición operacional real y bien documentada.
+    2. Medir niveles en varios puntos y registrar meteorología, operación y eventos ajenos.
+    3. Replicar exactamente esa condición en el modelo.
+    4. Comparar **medido vs. calculado**, idealmente también por bandas de frecuencia cuando sea útil.
+    5. Investigar las diferencias: potencia sonora, posición/altura, directividad, barreras, suelo, reflexiones,
+       topografía, horarios o estado operacional.
+    6. Ajustar únicamente parámetros respaldados por evidencia.
+    7. Repetir la comparación.
+    8. Si existen datos suficientes, reservar puntos o una segunda campaña para una **validación independiente**.
+    """)
+
+    st.markdown(
+        '<div class="c3l2-warn"><b>No confundir:</b> calibrar el <i>sonómetro</i> es verificar el instrumento '
+        'de medición. Calibrar o ajustar el <i>modelo</i> es contrastar la representación computacional con '
+        'observaciones reales. Son controles distintos.</div>',
+        unsafe_allow_html=True,
+    )
+
+    st.markdown("""
+    La Guía del SEA recuerda que la precisión del método ISO 9613-2 para determinadas configuraciones de ruido
+    de banda ancha puede alcanzar aproximadamente **±3 dB(A)**. Ese valor describe el orden de precisión del
+    método bajo sus condiciones de aplicación; **no debe transformarse en una regla automática de calibración**
+    ni en permiso para corregir arbitrariamente el modelo.
+    """)
+
+    st.markdown("### 9. De un modelo calibrado al escenario futuro")
+    st.markdown("""
+    Una vez que el escenario existente ha sido razonablemente representado, el modelo puede utilizarse para
+    estudiar cambios futuros, siempre que éstos permanezcan dentro del campo de aplicación del método.
+
+    Por ejemplo:
+
+    **Escenario real medido → modelo del escenario real → contraste y ajuste justificado → escenario futuro → mapa de proyección**
+
+    El escenario futuro puede incorporar nuevas fuentes, mayor producción, cambios de tránsito, barreras,
+    encapsulamientos o medidas de control. Cada cambio debe quedar trazable.
+    """)
+
+    st.markdown("### 10. ¿Qué debe informar una proyección defendible?")
+    st.markdown("""
+    Como mínimo, un informe técnico debería permitir reconstruir el cálculo:
+
+    - norma o método de predicción utilizado y su versión;
+    - software y versión;
+    - origen de los niveles de emisión y su representatividad;
+    - fuentes modeladas, geometría, alturas y horarios;
+    - topografía, terreno y edificaciones;
+    - parámetros meteorológicos y condiciones de propagación;
+    - orden de reflexiones y criterios de difracción cuando correspondan;
+    - ubicación y altura de receptores;
+    - resolución y altura de la grilla del mapa;
+    - medidas de control incorporadas y cómo fueron representadas;
+    - procedimiento de verificación/calibración con mediciones, si existe;
+    - diferencias observadas entre medición y cálculo;
+    - limitaciones, incertidumbre y campo de aplicación;
+    - escenarios comparados y condición de mayor emisión evaluada.
+    """)
+
+    st.markdown("### Referencias técnicas utilizadas en esta etapa")
+    st.markdown("""
+    - **D.S. N°38/2011 del Ministerio del Medio Ambiente**, especialmente artículo 19.
+    - **SEA (2019), Guía para la predicción y evaluación de impactos por ruido y vibración en el SEIA.**
+    - **ISO 9613-2:2024**, propagación del sonido en exteriores.
+    - **ISO 1996-2:2017**, determinación de niveles de presión sonora ambiental por medición y cálculo.
+    - **ISO 17534-1:2015** e informes técnicos asociados para aseguramiento de calidad del software.
+    - **CNOSSOS-EU**, Directiva (UE) 2015/996 y actualización técnica mediante Directiva Delegada (UE) 2021/1226.
+    - **ECAC Doc 29, 5ª edición (2026)** e **ICAO Doc 9911** para ruido de aeronaves.
+    - Documentación técnica de **SoundPLAN, CadnaA, IMMI, Predictor-LimA, NoiseModelling y FAA AEDT**.
+    """)
+
+    q1=st.radio(
+        "En un mapa de proyección, una celda que muestra 64 dB representa:",
+        [
+            "Una medición directa realizada en esa celda",
+            "Un nivel calculado por el modelo para un receptor de la grilla",
+            "Una interpolación obligatoria entre dos sonómetros",
+        ],
+        index=None,
+        key="c3l2_s7_q1",
+    )
+    q2=st.radio(
+        "¿Qué demuestra principalmente una verificación conforme a la lógica de ISO 17534?",
+        [
+            "Que el software implementa de forma consistente el método de cálculo",
+            "Que cualquier proyecto modelado con ese software coincidirá con la realidad",
+            "Que ya no es necesario revisar los datos de entrada",
+        ],
+        index=None,
+        key="c3l2_s7_q2",
+    )
+
+    if _c3l2_role()=="Alumno" and st.button(
+        "Guardar Etapa 7",
+        type="primary",
+        use_container_width=True,
+        key="c3l2_s7_save",
+    ):
+        if (
+            q1!="Un nivel calculado por el modelo para un receptor de la grilla"
+            or q2!="Que el software implementa de forma consistente el método de cálculo"
+        ):
+            st.warning("Revisa la diferencia entre medición, interpolación, proyección y verificación del software.")
         else:
-            _c3l2_complete(saved,7,{"kind":kind,"emission":lw if kind=="Fuente puntual" else ref,"q1":q1,"q2":q2})
+            _c3l2_complete(saved,7,{
+                "kind":kind,
+                "emission":lw if kind=="Fuente puntual" else ref,
+                "calibration_mae":round(mae_cal,3),
+                "calibration_bias":round(bias_cal,3),
+                "q1":q1,
+                "q2":q2,
+            })
             st.success("Etapa 7 guardada.")
-    _c3l2_teacher_pauta("Etapa 7","El mapa proyectado calcula receptores desde fuentes y modelo. La suma de fuentes es energética. Deben declararse emisión, geometría, alturas, directividad, terreno, condiciones de propagación y demás supuestos que correspondan al modelo utilizado.")
+
+    _c3l2_teacher_pauta(
+        "Etapa 7",
+        """
+        **Resultado esperado:** el alumno debe distinguir medición, interpolación y proyección; reconocer que
+        la norma de cálculo no es el software; seleccionar el método según el tipo de fuente y comprender que
+        la calidad del mapa depende de las entradas, la geometría y el campo de aplicación.
+
+        **Normativa y métodos:** en Chile, D.S. 38/2011 contempla predicción mediante ISO 9613 en el contexto
+        señalado por su artículo 19. Para estudios ambientales deben revisarse además los criterios del SEA y
+        el método adecuado a cada fuente. ISO 9613-2:2024 es la edición internacional vigente, pero la versión
+        exigible debe verificarse según el instrumento y procedimiento aplicable.
+
+        **Software:** SoundPLAN, CadnaA, Predictor-LimA, IMMI y NoiseModelling son herramientas de modelación
+        ambiental; AEDT es específico para aviación. El software implementa métodos: no reemplaza la norma.
+
+        **Aseguramiento de calidad:** ISO 17534 evalúa la implementación del método en software. Esto no equivale
+        a validar un proyecto real.
+
+        **Calibración del modelo:** comparar un escenario real medido con el mismo escenario representado en
+        el software. Revisar diferencias y corregir solo parámetros sustentados. Idealmente usar datos
+        independientes para validación posterior. No confundir con la calibración metrológica del sonómetro.
+        """
+    )
 
 
 def _c3l2_stage8(lab,saved):
