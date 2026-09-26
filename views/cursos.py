@@ -30595,17 +30595,6 @@ def _c3l2_stage6(lab,saved):
         unsafe_allow_html=True,
     )
 
-    anomaly=st.radio(
-        "¿Qué decisión corresponde tomar con el registro de P8?",
-        [
-            "Usarlo automáticamente porque todo dato medido debe interpolarse",
-            "Revisar el objetivo y la bitácora; decidir documentadamente si repetir, conservar o excluir el registro",
-            "Reemplazarlo por el promedio de los vecinos sin dejar constancia",
-        ],
-        index=None,
-        key="c3l2_s6_anomaly",
-    )
-
     st.markdown("""
     <div class="c3l2-note">
       <b>Secuencia correcta:</b> detectar el valor atípico → revisar qué ocurrió en terreno → verificar si el evento
@@ -31059,26 +31048,6 @@ def _c3l2_stage6(lab,saved):
     </div>
     """,unsafe_allow_html=True)
 
-    q1=st.radio(
-        "Si una celda del mapa muestra 63 dB(A), pero allí nunca se instaló un sonómetro, ese valor corresponde a:",
-        [
-            "Una medición directa de 63 dB(A)",
-            "Una estimación espacial obtenida con el método de interpolación",
-            "La potencia sonora de la fuente dominante",
-        ],
-        index=None,
-        key="c3l2_s6_q1",
-    )
-    q2=st.radio(
-        "Si aumentas la potencia p de IDW manteniendo los mismos datos, ¿qué ocurre en general?",
-        [
-            "Los puntos cercanos adquieren mayor influencia",
-            "Todos los puntos pesan exactamente igual",
-            "La interpolación se transforma en una suma energética",
-        ],
-        index=None,
-        key="c3l2_s6_q2",
-    )
     interpretation=st.text_area(
         "Explica por qué una zona con pocos puntos cercanos debe interpretarse con mayor cautela y qué harías para mejorar el mapa.",
         height=105,
@@ -31091,15 +31060,9 @@ def _c3l2_stage6(lab,saved):
         use_container_width=True,
         key="c3l2_s6_save",
     ):
-        correct_anomaly="Revisar el objetivo y la bitácora; decidir documentadamente si repetir, conservar o excluir el registro"
-        if (
-            anomaly!=correct_anomaly
-            or q1!="Una estimación espacial obtenida con el método de interpolación"
-            or q2!="Los puntos cercanos adquieren mayor influencia"
-            or len(interpretation.strip())<55
-        ):
+        if len(interpretation.strip())<55:
             st.warning(
-                "Revisa la secuencia campaña → control de calidad → interpolación → validación → interpretación."
+                "Explica brevemente por qué una zona con pocos puntos cercanos debe interpretarse con mayor cautela y cómo mejorarías el mapa."
             )
         else:
             _c3l2_complete(saved,6,{
@@ -31108,9 +31071,6 @@ def _c3l2_stage6(lab,saved):
                 "idw_power":power,
                 "cv_mae":round(mae,3),
                 "cv_rmse":round(rmse,3),
-                "anomaly":anomaly,
-                "q1":q1,
-                "q2":q2,
                 "interpretation":interpretation,
             })
             st.success("Etapa 6 guardada.")
