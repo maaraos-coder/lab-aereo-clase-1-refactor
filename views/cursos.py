@@ -30193,10 +30193,12 @@ def _c3l2_stage5(lab,saved):
               <svg viewBox="{x} {y} {w} {h}"
                    width="100%"
                    xmlns="http://www.w3.org/2000/svg"
+                   preserveAspectRatio="xMidYMid meet"
                    style="display:block;width:100%;height:auto;background:#fff;">
                 <image href="{noise_render_uri}"
                        x="0" y="0" width="400" height="267"
-                       preserveAspectRatio="none"/>
+                       preserveAspectRatio="xMidYMid meet"
+                       style="image-rendering:auto;"/>
               </svg>
             </div>
             """,
@@ -30315,25 +30317,26 @@ def _c3l2_stage5(lab,saved):
         "pero siempre debe interpretarse junto con el descriptor, el escenario y los antecedentes del modelo o campaña.</div>",
         unsafe_allow_html=True,
     )
-    row1a,row1b=st.columns(2)
-    with row1a:
-        st.markdown("#### 🚗 Tránsito vial")
-        _noise_crop(0,178,100,89,365)
-        st.caption("Los contornos tienden a seguir los corredores viales y disminuyen lateralmente desde las calzadas.")
-    with row1b:
-        st.markdown("#### 🏭 Industria / obra")
-        _noise_crop(100,178,100,89,365)
-        st.caption("Puede combinar fuentes puntuales, lineales y de área, generando campos superpuestos y sectores críticos localizados.")
 
-    row2a,row2b=st.columns(2)
-    with row2a:
+    # La lámina maestra de esta versión contiene cuatro recortes pequeños.
+    # Se muestran en una sola fila para evitar ampliarlos artificialmente y perder nitidez.
+    t1,t2,t3,t4 = st.columns(4)
+    with t1:
+        st.markdown("#### 🚗 Tránsito vial")
+        _noise_crop(0,178,100,89,225)
+        st.caption("Los contornos siguen los corredores viales y disminuyen lateralmente.")
+    with t2:
+        st.markdown("#### 🏭 Industria / obra")
+        _noise_crop(100,178,100,89,225)
+        st.caption("Combina fuentes puntuales, lineales y de área.")
+    with t3:
         st.markdown("#### ✈️ Aeronaves")
-        _noise_crop(200,178,100,89,365)
-        st.caption("Las isófonas se relacionan con pista, trayectorias, procedimientos operacionales y distribución temporal de eventos.")
-    with row2b:
+        _noise_crop(200,178,100,89,225)
+        st.caption("Contornos asociados a pista, trayectorias y operaciones.")
+    with t4:
         st.markdown("#### 🏙️ Urbano general")
-        _noise_crop(300,178,100,89,365)
-        st.caption("Integra múltiples fuentes para representar el ambiente sonoro global de un sector urbano.")
+        _noise_crop(300,178,100,89,225)
+        st.caption("Integra múltiples fuentes del ambiente urbano.")
 
     st.markdown("### 6. Tipos de mapas según cómo se obtienen o utilizan")
     t61,t62,t63=st.tabs(["Mediciones / interpolación","Predicción","Resumen de tipologías"])
