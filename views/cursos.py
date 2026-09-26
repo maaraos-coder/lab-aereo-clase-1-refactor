@@ -30162,717 +30162,154 @@ def _c3l2_stage5(lab,saved):
     _c3l2_header(
         5,
         "Introducción a los mapas de ruido",
-        "Distinguir mapas construidos a partir de mediciones de mapas obtenidos por predicción, comprender sus entradas, limitaciones y formas de representación.",
+        "Comprender para qué sirve un mapa de ruido, distinguir mapas por mediciones y por predicción, y reconocer distintas tipologías de representación.",
         55,
     )
 
     st.markdown("""
     <div class="c3l2-intro">
       <div class="c3l2-k">REPRESENTACIÓN ESPACIAL DEL AMBIENTE SONORO</div>
-      <div class="c3l2-title">Un mapa de ruido no es una fotografía del sonido: es una representación espacial de un descriptor acústico.</div>
-      Para interpretarlo correctamente siempre debemos saber <b>qué descriptor se representa</b>,
-      <b>durante qué período</b>, <b>a qué altura</b>, <b>para qué escenario</b> y
-      <b>de dónde provienen los valores</b>: mediciones o cálculo.
+      <div class="c3l2-title">Un mapa de ruido transforma niveles acústicos en información territorial.</div>
+      Permite visualizar dónde se concentran los mayores niveles, qué receptores están expuestos,
+      cómo cambia un escenario y dónde conviene intervenir.
     </div>
     """, unsafe_allow_html=True)
 
-    def _c3l2_noise_legend(x=835, y=92, title="LAeq [dB(A)]"):
-        levels = [
-            ("≥ 75", "#dc2626"),
-            ("70–75", "#f97316"),
-            ("65–70", "#facc15"),
-            ("60–65", "#84cc16"),
-            ("55–60", "#22c55e"),
-            ("50–55", "#14b8a6"),
-            ("45–50", "#38bdf8"),
-            ("< 45", "#2563eb"),
-        ]
-        rows = []
-        for i, (lab, col) in enumerate(levels):
-            yy = y + 42 + i * 27
-            rows.append(
-                f'<rect x="{x+14}" y="{yy}" width="22" height="18" rx="2" fill="{col}"/>'
-                f'<text x="{x+45}" y="{yy+14}" class="t" font-size="10">{lab}</text>'
-            )
-        return (
-            f'<rect x="{x}" y="{y}" width="112" height="270" rx="10" fill="#ffffff" '
-            f'stroke="#cbd5df" stroke-width="1.5"/>'
-            f'<text x="{x+56}" y="{y+20}" text-anchor="middle" class="t b" font-size="11">{title}</text>'
-            + "".join(rows)
+    noise_render_uri = "data:image/webp;base64,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"
+
+    def _noise_crop(x, y, w, h, height=390):
+        components.html(
+            f"""
+            <div style="width:100%;border:1px solid #d8e5ed;border-radius:16px;overflow:hidden;background:#fff;">
+              <svg viewBox="{{x}} {{y}} {{w}} {{h}}" width="100%" xmlns="http://www.w3.org/2000/svg">
+                <image href="{{noise_render_uri}}" x="0" y="0" width="400" height="267" preserveAspectRatio="none"/>
+              </svg>
+            </div>
+            """,
+            height=height,
         )
 
-    def _c3l2_map_tools():
-        return """
-          <g class="t">
-            <path d="M788 80 l12 -28 12 28 -12 -7 z" fill="#ffffff" stroke="#334155" stroke-width="1.5"/>
-            <text x="800" y="45" text-anchor="middle" class="b" font-size="11">N</text>
-            <rect x="650" y="340" width="120" height="5" fill="#0f172a"/>
-            <rect x="650" y="340" width="60" height="5" fill="#ffffff" stroke="#0f172a" stroke-width="1"/>
-            <text x="650" y="360" font-size="9">0</text>
-            <text x="705" y="360" text-anchor="middle" font-size="9">100</text>
-            <text x="770" y="360" text-anchor="end" font-size="9">200 m</text>
-          </g>
-        """
-
-    # ------------------------------------------------------------------
-    # 1 · FINALIDAD DE UN MAPA DE RUIDO
-    # ------------------------------------------------------------------
     st.markdown("### 1. ¿Para qué sirve un mapa de ruido?")
-
     st.write(
-        "La finalidad principal de un mapa de ruido es **convertir información acústica en información espacial**. "
-        "En lugar de conocer solo el nivel en uno o varios puntos aislados, podemos observar cómo se distribuye "
-        "el ambiente sonoro sobre un territorio, identificar zonas críticas, reconocer qué receptores están más "
-        "expuestos y comparar alternativas de gestión o diseño."
+        "La finalidad principal es **convertir información acústica en información espacial**. "
+        "Así podemos pasar de conocer niveles aislados a comprender cómo se distribuye el ruido sobre un territorio."
     )
 
-    st.markdown("""
-    <div class="c3l2-grid2">
-      <div class="c3l2-card blue">
-        <div class="c3l2-k">DIAGNÓSTICO</div>
-        <b>¿Dónde están los mayores niveles?</b><br>
-        Permite localizar sectores con mayor exposición, reconocer gradientes espaciales y detectar zonas
-        donde conviene profundizar con nuevas mediciones o análisis.
-      </div>
-      <div class="c3l2-card green">
-        <div class="c3l2-k">PLANIFICACIÓN</div>
-        <b>¿Qué ocurriría si cambia el territorio?</b><br>
-        Permite evaluar nuevas vías, industrias, obras, aeropuertos, ampliaciones, cambios de operación
-        o redistribución de actividades.
-      </div>
-      <div class="c3l2-card orange">
-        <div class="c3l2-k">GESTIÓN Y MITIGACIÓN</div>
-        <b>¿Dónde conviene actuar?</b><br>
-        Ayuda a comparar barreras, encapsulamientos, cambios de trazado, restricciones operacionales,
-        redistribución de fuentes u otras medidas de control.
-      </div>
-      <div class="c3l2-card purple">
-        <div class="c3l2-k">EXPOSICIÓN</div>
-        <b>¿Quiénes están afectados y cuánto?</b><br>
-        Permite relacionar niveles con viviendas, escuelas, hospitales, población u otros receptores
-        sensibles, siempre que el mapa haya sido construido con un descriptor y período adecuados.
-      </div>
-    </div>
-    """, unsafe_allow_html=True)
+    c1,c2,c3,c4=st.columns(4)
+    c1.markdown("**Diagnóstico**  \\nLocalizar zonas con mayores niveles.")
+    c2.markdown("**Exposición**  \\nIdentificar receptores más afectados.")
+    c3.markdown("**Planificación**  \\nComparar escenarios actuales y futuros.")
+    c4.markdown("**Mitigación**  \\nEvaluar dónde y cuánto mejora una medida.")
 
-    purpose_svg = f"""
-    <svg viewBox="0 0 980 430" width="100%" style="background:#f7fafc;border:1px solid #d8e5ed;border-radius:18px">
-      <defs>
-        <filter id="shadowP"><feDropShadow dx="0" dy="2" stdDeviation="3" flood-opacity=".22"/></filter>
-        <linearGradient id="roadP" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#475569"/><stop offset="1" stop-color="#64748b"/></linearGradient>
-      </defs>
-      <style>.t{{font-family:Inter,Arial,sans-serif;fill:#1f3442}} .b{{font-weight:850}}</style>
-
-      <rect x="22" y="22" width="936" height="386" rx="16" fill="#dbe7df"/>
-      <!-- manzanas -->
-      <g fill="#c8d0d4" stroke="#aab7bf" stroke-width="1">
-        <rect x="50" y="55" width="120" height="72" rx="4"/><rect x="190" y="55" width="105" height="72" rx="4"/>
-        <rect x="50" y="260" width="105" height="82" rx="4"/><rect x="175" y="270" width="120" height="72" rx="4"/>
-        <rect x="685" y="55" width="105" height="78" rx="4"/><rect x="810" y="55" width="115" height="78" rx="4"/>
-        <rect x="690" y="270" width="105" height="72" rx="4"/><rect x="815" y="265" width="110" height="77" rx="4"/>
-      </g>
-
-      <!-- vialidad -->
-      <path d="M20 195 C210 175 330 185 485 205 S760 225 960 195" fill="none" stroke="#eef2f4" stroke-width="54"/>
-      <path d="M20 195 C210 175 330 185 485 205 S760 225 960 195" fill="none" stroke="url(#roadP)" stroke-width="34"/>
-      <path d="M20 195 C210 175 330 185 485 205 S760 225 960 195" fill="none" stroke="#f8fafc" stroke-width="2.5" stroke-dasharray="20 15"/>
-
-      <!-- contornos acústicos irregulares -->
-      <path d="M235 104 C330 62 495 72 615 118 C700 150 752 210 716 270 C675 338 553 370 420 352 C285 334 178 278 184 211 C188 158 205 124 235 104 Z" fill="#2563eb" opacity=".22"/>
-      <path d="M280 118 C367 90 493 96 590 128 C668 154 707 203 680 252 C649 307 550 330 438 319 C329 308 235 269 226 216 C218 171 244 136 280 118 Z" fill="#22c55e" opacity=".35"/>
-      <path d="M322 137 C390 115 494 116 565 143 C628 167 657 203 636 240 C610 282 535 299 450 291 C365 282 292 253 283 215 C276 180 296 150 322 137 Z" fill="#facc15" opacity=".55"/>
-      <path d="M365 154 C422 137 493 140 548 159 C591 175 612 205 596 229 C576 260 521 272 458 267 C397 261 342 239 335 214 C328 190 344 164 365 154 Z" fill="#f97316" opacity=".65"/>
-      <path d="M407 171 C447 160 497 164 530 176 C559 187 571 206 559 220 C545 238 510 246 468 242 C429 239 397 226 392 211 C387 195 396 179 407 171 Z" fill="#dc2626" opacity=".72"/>
-
-      <!-- fuente -->
-      <g filter="url(#shadowP)">
-        <rect x="430" y="184" width="105" height="52" rx="8" fill="#334155"/>
-        <text x="482" y="207" text-anchor="middle" fill="#fff" font-family="Inter,Arial" font-size="10" font-weight="850">FUENTE /</text>
-        <text x="482" y="221" text-anchor="middle" fill="#fff" font-family="Inter,Arial" font-size="10" font-weight="850">ACTIVIDAD</text>
-      </g>
-
-      <!-- receptores -->
-      <g fill="#10b981" stroke="#fff" stroke-width="3">
-        <circle cx="205" cy="120" r="10"/><circle cx="760" cy="155" r="10"/><circle cx="225" cy="302" r="10"/>
-      </g>
-      <g class="t b" font-size="10">
-        <text x="205" y="143" text-anchor="middle">R1 · viviendas</text>
-        <text x="760" y="178" text-anchor="middle">R2 · escuela</text>
-        <text x="225" y="325" text-anchor="middle">R3 · hospital</text>
-      </g>
-
-      <g class="t b" font-size="10">
-        <text x="455" y="152">75</text><text x="595" y="175">70</text><text x="660" y="238">65</text><text x="575" y="315">60</text>
-      </g>
-
-      {_c3l2_map_tools()}
-      {_c3l2_noise_legend(835, 78)}
-    </svg>
-    """
-    components.html(purpose_svg, height=450)
-
-    st.markdown("#### Un mapa puede responder preguntas diferentes")
-
-    use_cases = pd.DataFrame(
-        [
-            {
-                "Pregunta": "¿Dónde están hoy los sectores con mayor nivel?",
-                "Uso del mapa": "Diagnóstico del ambiente sonoro existente",
-            },
-            {
-                "Pregunta": "¿Qué receptores podrían quedar más expuestos?",
-                "Uso del mapa": "Identificación espacial de receptores y zonas sensibles",
-            },
-            {
-                "Pregunta": "¿Qué pasará si se construye o modifica una fuente?",
-                "Uso del mapa": "Evaluación de escenarios futuros",
-            },
-            {
-                "Pregunta": "¿Qué medida de control funciona mejor?",
-                "Uso del mapa": "Comparación antes/después de mitigaciones",
-            },
-            {
-                "Pregunta": "¿Cómo cambia el ruido entre día y noche?",
-                "Uso del mapa": "Comparación entre períodos o condiciones operacionales",
-            },
-            {
-                "Pregunta": "¿Dónde conviene medir con mayor detalle?",
-                "Uso del mapa": "Diseño o refinamiento de una campaña de terreno",
-            },
-        ]
-    )
-    st.dataframe(use_cases, hide_index=True, use_container_width=True)
+    _noise_crop(125, 0, 275, 80, 360)
 
     st.markdown("""
     <div class="c3l2-note">
-      <b>El mapa no es el objetivo final.</b> Es una herramienta para entender una distribución espacial,
-      comparar escenarios y apoyar decisiones. Su utilidad depende de que el descriptor, el período,
-      la altura, las fuentes y las condiciones representadas sean coherentes con la pregunta que se quiere responder.
+      <b>El mapa no es el objetivo final.</b> Es una herramienta para diagnosticar, comparar escenarios,
+      estudiar exposición y apoyar decisiones de planificación o control.
     </div>
     """, unsafe_allow_html=True)
 
-    # ------------------------------------------------------------------
-    # 2 · QUÉ ES UN MAPA DE RUIDO
-    # ------------------------------------------------------------------
     st.markdown("### 2. ¿Qué representa realmente un mapa de ruido?")
-
     st.write(
-        "Un mapa de ruido asigna valores de un **descriptor acústico** a posiciones del espacio y los representa "
-        "mediante colores, celdas o líneas de igual nivel —isófonas o contornos—. Dos mapas pueden tener una "
-        "apariencia muy parecida y, sin embargo, haberse obtenido mediante procedimientos completamente distintos."
+        "Representa espacialmente un **descriptor acústico**. Antes de interpretar los colores debemos conocer "
+        "el descriptor, período de referencia, altura de evaluación, escenario, resolución espacial y leyenda."
     )
+    m1,m2,m3,m4=st.columns(4)
+    m1.metric("Descriptor","LAeq,T")
+    m2.metric("Período","T definido")
+    m3.metric("Altura","h definida")
+    m4.metric("Escenario","actual / futuro")
 
-    meta1, meta2, meta3, meta4 = st.columns(4)
-    meta1.metric("Descriptor", "LAeq,T")
-    meta2.metric("Período", "T definido")
-    meta3.metric("Altura", "h definida")
-    meta4.metric("Escenario", "actual / futuro")
-
-    st.markdown("""
-    <div class="c3l2-card blue">
-      <div class="c3l2-k">ANTES DE LEER LOS COLORES</div>
-      Un mapa técnicamente interpretable debe indicar, como mínimo, el descriptor acústico, período de referencia,
-      altura de evaluación, fecha o escenario, escala o resolución espacial, leyenda de niveles y sistema de ubicación.
-    </div>
-    """, unsafe_allow_html=True)
-
-    anatomy_svg = f"""
-    <svg viewBox="0 0 980 430" width="100%" style="background:#f7fafc;border:1px solid #d8e5ed;border-radius:18px">
-      <style>.t{{font-family:Inter,Arial,sans-serif;fill:#1f3442}} .b{{font-weight:850}}</style>
-      <rect x="24" y="22" width="932" height="386" rx="16" fill="#dce8df"/>
-
-      <!-- base urbana -->
-      <g fill="#c7d0d5" stroke="#a8b7c0" stroke-width="1">
-        <rect x="52" y="62" width="105" height="68" rx="4"/><rect x="175" y="62" width="92" height="68" rx="4"/>
-        <rect x="286" y="60" width="108" height="70" rx="4"/><rect x="665" y="55" width="115" height="76" rx="4"/>
-        <rect x="60" y="285" width="118" height="70" rx="4"/><rect x="200" y="282" width="95" height="75" rx="4"/>
-        <rect x="680" y="285" width="98" height="70" rx="4"/>
-      </g>
-
-      <!-- vía -->
-      <path d="M30 220 L810 220" stroke="#eef2f4" stroke-width="58"/>
-      <path d="M30 220 L810 220" stroke="#475569" stroke-width="38"/>
-      <line x1="45" y1="220" x2="795" y2="220" stroke="#fff" stroke-width="2.5" stroke-dasharray="24 16"/>
-
-      <!-- superficie acústica siguiendo la vía -->
-      <path d="M35 132 C180 108 330 112 470 130 C610 148 725 143 810 124 L810 316 C690 292 585 300 468 315 C325 331 190 326 35 300 Z" fill="#2563eb" opacity=".20"/>
-      <path d="M35 153 C180 132 325 136 468 151 C600 165 718 162 810 146 L810 292 C710 276 596 278 470 292 C330 306 182 302 35 280 Z" fill="#22c55e" opacity=".32"/>
-      <path d="M35 170 C180 154 322 158 464 169 C596 180 710 179 810 165 L810 272 C710 260 595 260 468 272 C327 285 180 283 35 266 Z" fill="#facc15" opacity=".48"/>
-      <path d="M35 187 C180 177 322 179 463 188 C595 197 710 198 810 185 L810 254 C710 245 596 244 468 252 C325 261 180 260 35 250 Z" fill="#f97316" opacity=".58"/>
-      <path d="M35 203 C180 197 322 198 463 204 C596 210 708 210 810 202 L810 238 C708 232 594 231 468 237 C325 243 180 242 35 237 Z" fill="#dc2626" opacity=".66"/>
-
-      <!-- isolíneas -->
-      <g fill="none" stroke="#ffffff" stroke-width="1.6" opacity=".95">
-        <path d="M35 187 C180 177 322 179 463 188 C595 197 710 198 810 185"/>
-        <path d="M35 170 C180 154 322 158 464 169 C596 180 710 179 810 165"/>
-        <path d="M35 153 C180 132 325 136 468 151 C600 165 718 162 810 146"/>
-      </g>
-
-      <!-- etiquetas técnicas -->
-      <g class="t b" font-size="10">
-        <text x="140" y="185">70</text><text x="335" y="166">65</text><text x="610" y="150">60</text>
-      </g>
-
-      {_c3l2_map_tools()}
-      {_c3l2_noise_legend(835, 76)}
-
-      <g class="t" font-size="10">
-        <rect x="55" y="370" width="745" height="24" rx="6" fill="#fff" opacity=".92"/>
-        <text x="70" y="386"><tspan class="b">Descriptor:</tspan> LAeq,T</text>
-        <text x="230" y="386"><tspan class="b">Altura:</tspan> h = 4 m</text>
-        <text x="365" y="386"><tspan class="b">Malla:</tspan> 5 × 5 m</text>
-        <text x="505" y="386"><tspan class="b">Escenario:</tspan> período diurno</text>
-        <text x="680" y="386"><tspan class="b">Isófonas:</tspan> 5 dB</text>
-      </g>
-    </svg>
-    """
-    components.html(anatomy_svg, height=450)
-
-    # ------------------------------------------------------------------
-    # 3 · DOS FAMILIAS
-    # ------------------------------------------------------------------
     st.markdown("### 3. Dos formas principales de construir un mapa")
-
-    left, right = st.columns(2)
+    left,right=st.columns(2)
     with left:
-        st.markdown("""
-        <div class="c3l2-card blue">
-          <div class="c3l2-k">A · MAPA BASADO EN MEDICIONES</div>
-          <b>Parte de niveles realmente observados.</b><br><br>
-          Se mide en puntos o recorridos definidos. Los sectores donde no se midió directamente
-          deben estimarse mediante interpolación u otra técnica espacial.
-        </div>
-        """, unsafe_allow_html=True)
+        st.markdown("#### A. A partir de mediciones")
+        st.write(
+            "Los datos originales son niveles medidos en puntos georreferenciados. "
+            "Los valores entre puntos se estiman mediante interpolación u otra técnica espacial."
+        )
+        _noise_crop(0, 80, 200, 96, 350)
+        st.caption("Los puntos son mediciones directas; la superficie coloreada entre ellos es una estimación espacial.")
     with right:
-        st.markdown("""
-        <div class="c3l2-card green">
-          <div class="c3l2-k">B · MAPA POR PREDICCIÓN / MODELACIÓN</div>
-          <b>Parte de fuentes y condiciones de propagación.</b><br><br>
-          El nivel se calcula en una malla de receptores a partir de emisión, geometría,
-          terreno, obstáculos, meteorología y demás términos del método utilizado.
-        </div>
-        """, unsafe_allow_html=True)
-
-    st.markdown("#### A. Mapa construido a partir de mediciones")
-
-    st.write(
-        "En este caso los datos originales son **niveles de presión sonora medidos**. "
-        "La calidad del mapa depende tanto de la calidad metrológica de cada medición como de la "
-        "representatividad espacial y temporal de la campaña."
-    )
-
-    st.markdown("""
-    <div class="c3l2-flow">
-      <span class="c3l2-node">Diseño de campaña</span><span class="c3l2-arrow">→</span>
-      <span class="c3l2-node">Medición + coordenada</span><span class="c3l2-arrow">→</span>
-      <span class="c3l2-node">Control de calidad</span><span class="c3l2-arrow">→</span>
-      <span class="c3l2-node">Interpolación</span><span class="c3l2-arrow">→</span>
-      <span class="c3l2-node">Superficie + isófonas</span>
-    </div>
-    """, unsafe_allow_html=True)
-
-    m1, m2 = st.columns(2)
-    with m1:
-        st.markdown("**La campaña debe controlar:**")
-        st.markdown(
-            "- descriptor y duración de cada registro;  \n"
-            "- altura y posición del micrófono;  \n"
-            "- calibración y trazabilidad instrumental;  \n"
-            "- condiciones meteorológicas;  \n"
-            "- tráfico, operación u otras variables que expliquen el nivel;  \n"
-            "- horarios y representatividad del período estudiado."
+        st.markdown("#### B. A partir de predicción / modelación")
+        st.write(
+            "Se definen fuentes, emisión, geometría y condiciones de propagación. "
+            "El nivel se calcula en una grilla de receptores distribuida en el área de estudio."
         )
-    with m2:
-        st.markdown("**La interpolación requiere cautela:**")
-        st.markdown(
-            "- solo los puntos instrumentados son mediciones directas;  \n"
-            "- IDW, kriging, spline u otros métodos generan valores estimados entre puntos;  \n"
-            "- una red escasa puede ocultar gradientes o fuentes locales;  \n"
-            "- no debe extrapolarse muy lejos de los datos sin justificarlo;  \n"
-            "- el mapa hereda la incertidumbre y sesgos de la campaña."
-        )
+        _noise_crop(200, 80, 200, 96, 350)
+        st.caption("Cada celda o receptor proviene del cálculo acústico del escenario.")
 
-    measured_svg = f"""
-    <svg viewBox="0 0 980 455" width="100%" style="background:#f7fafc;border:1px solid #d8e5ed;border-radius:18px">
-      <style>.t{{font-family:Inter,Arial,sans-serif;fill:#1f3442}} .b{{font-weight:850}}</style>
-      <rect x="22" y="20" width="936" height="414" rx="16" fill="#dce8df"/>
+    st.markdown("### 4. Diferencias técnicas entre medición y predicción")
+    comparison=pd.DataFrame([
+        {"Aspecto":"Dato original","Mediciones":"Lp observado","Predicción":"Emisión de fuentes + escenario"},
+        {"Aspecto":"Entre puntos","Mediciones":"Interpolado / estimado","Predicción":"Calculado por propagación"},
+        {"Aspecto":"Escenario futuro","Mediciones":"No puede medirse directamente","Predicción":"Puede calcularse"},
+        {"Aspecto":"Fuentes individuales","Mediciones":"Se mezclan en el nivel observado","Predicción":"Pueden analizarse por separado"},
+        {"Aspecto":"Incertidumbre","Mediciones":"Instrumentación + muestreo","Predicción":"Entradas + supuestos del modelo"},
+    ])
+    st.dataframe(comparison,hide_index=True,use_container_width=True)
 
-      <!-- trama urbana -->
-      <g stroke="#f8fafc" stroke-width="28" fill="none">
-        <path d="M35 125 H815"/><path d="M35 285 H815"/><path d="M205 35 V395"/><path d="M500 35 V395"/><path d="M715 35 V395"/>
-      </g>
-      <g stroke="#64748b" stroke-width="12" fill="none">
-        <path d="M35 125 H815"/><path d="M35 285 H815"/><path d="M205 35 V395"/><path d="M500 35 V395"/><path d="M715 35 V395"/>
-      </g>
-      <g fill="#cbd5db">
-        <rect x="65" y="55" width="105" height="48"/><rect x="245" y="55" width="110" height="48"/><rect x="380" y="55" width="90" height="48"/>
-        <rect x="545" y="55" width="120" height="48"/><rect x="745" y="55" width="60" height="48"/>
-        <rect x="65" y="165" width="100" height="82"/><rect x="245" y="165" width="120" height="82"/><rect x="390" y="165" width="80" height="82"/>
-        <rect x="545" y="165" width="115" height="82"/><rect x="745" y="165" width="60" height="82"/>
-        <rect x="65" y="325" width="105" height="50"/><rect x="245" y="325" width="110" height="50"/><rect x="390" y="325" width="80" height="50"/>
-        <rect x="545" y="325" width="115" height="50"/><rect x="745" y="325" width="60" height="50"/>
-      </g>
-
-      <!-- interpolación irregular -->
-      <path d="M90 85 C220 45 405 65 535 125 C650 180 710 265 650 335 C595 399 440 408 300 365 C160 322 65 220 90 85 Z" fill="#2563eb" opacity=".20"/>
-      <path d="M135 102 C245 72 390 82 500 130 C596 172 653 240 610 300 C568 356 440 370 330 340 C215 310 120 229 135 102 Z" fill="#22c55e" opacity=".32"/>
-      <path d="M190 120 C278 97 383 105 463 143 C535 177 575 229 548 273 C517 321 425 335 347 314 C264 292 185 228 190 120 Z" fill="#facc15" opacity=".50"/>
-      <path d="M250 143 C313 128 383 133 438 158 C488 182 514 220 496 249 C475 281 411 292 357 277 C302 262 248 219 250 143 Z" fill="#f97316" opacity=".62"/>
-      <path d="M315 165 C352 157 391 160 421 174 C450 188 462 211 450 229 C437 249 401 256 371 247 C339 238 311 212 315 165 Z" fill="#dc2626" opacity=".72"/>
-
-      <!-- puntos medidos -->
-      <g fill="#ffffff" stroke="#0f5f99" stroke-width="3">
-        <circle cx="125" cy="92" r="11"/><circle cx="300" cy="100" r="11"/><circle cx="420" cy="178" r="11"/>
-        <circle cx="615" cy="112" r="11"/><circle cx="755" cy="115" r="11"/><circle cx="150" cy="330" r="11"/>
-        <circle cx="340" cy="335" r="11"/><circle cx="605" cy="330" r="11"/><circle cx="760" cy="335" r="11"/>
-      </g>
-      <g class="t b" font-size="9">
-        <text x="125" y="96" text-anchor="middle">58</text><text x="300" y="104" text-anchor="middle">64</text><text x="420" y="182" text-anchor="middle">71</text>
-        <text x="615" y="116" text-anchor="middle">65</text><text x="755" y="119" text-anchor="middle">60</text><text x="150" y="334" text-anchor="middle">57</text>
-        <text x="340" y="339" text-anchor="middle">63</text><text x="605" y="334" text-anchor="middle">67</text><text x="760" y="339" text-anchor="middle">61</text>
-      </g>
-
-      {_c3l2_map_tools()}
-      {_c3l2_noise_legend(835, 76)}
-      <rect x="50" y="397" width="750" height="25" rx="6" fill="#fff" opacity=".94"/>
-      <text x="64" y="414" class="t" font-size="10"><tspan class="b">Puntos blancos:</tspan> mediciones directas · <tspan class="b">superficie:</tspan> interpolación espacial · <tspan class="b">isófonas:</tspan> 5 dB</text>
-    </svg>
-    """
-    components.html(measured_svg, height=475)
-
-    st.markdown("#### B. Mapa obtenido por predicción o modelación")
-
-    st.write(
-        "Aquí el mapa no nace de una malla de sonómetros. Se define la **emisión de las fuentes** y un "
-        "modelo calcula la propagación hasta receptores o celdas distribuidos por el área de estudio."
-    )
-
-    st.markdown("""
-    <div class="c3l2-flow">
-      <span class="c3l2-node">Fuentes + emisión</span><span class="c3l2-arrow">→</span>
-      <span class="c3l2-node">Modelo 3D</span><span class="c3l2-arrow">→</span>
-      <span class="c3l2-node">Propagación</span><span class="c3l2-arrow">→</span>
-      <span class="c3l2-node">Grilla de cálculo</span><span class="c3l2-arrow">→</span>
-      <span class="c3l2-node">Contornos</span>
-    </div>
-    """, unsafe_allow_html=True)
-
-    st.latex(
-        r"L_p \approx L_W + D_c"
-        r"-A_{\mathrm{div}}-A_{\mathrm{atm}}-A_{\mathrm{gr}}"
-        r"-A_{\mathrm{bar}}-A_{\mathrm{misc}}"
-    )
-    st.caption(
-        "Esquema conceptual de propagación: el método concreto puede utilizar otros términos o formulaciones. "
-        "Lo importante es que el mapa proyectado calcula niveles a partir de la emisión y del entorno."
-    )
-
-    p1, p2 = st.columns(2)
-    with p1:
-        st.markdown("**Entradas acústicas y de actividad**")
-        st.markdown(
-            "- Lw, espectro o parámetros de emisión;  \n"
-            "- número y tipo de vehículos o eventos;  \n"
-            "- velocidad, flujo y composición cuando corresponda;  \n"
-            "- horarios y tiempos de operación;  \n"
-            "- geometría puntual, lineal o superficial de las fuentes."
-        )
-    with p2:
-        st.markdown("**Entradas de propagación**")
-        st.markdown(
-            "- coordenadas y altura de fuentes/receptores;  \n"
-            "- terreno y cotas;  \n"
-            "- edificios, pantallas y obstáculos;  \n"
-            "- propiedades del suelo;  \n"
-            "- meteorología definida por el método;  \n"
-            "- orden de reflexiones y resolución de cálculo."
-        )
-
-    # ------------------------------------------------------------------
-    # 4 · MEDICIÓN VS PREDICCIÓN
-    # ------------------------------------------------------------------
-    st.markdown("### 4. El mismo territorio puede mapearse de dos maneras")
-
-    st.write(
-        "Un mapa puede describir lo observado en una campaña de terreno o representar niveles calculados "
-        "a partir de fuentes y propagación. Visualmente pueden parecer similares; técnicamente no significan lo mismo."
-    )
-
-    c4a, c4b = st.columns(2)
-    with c4a:
-        components.html(measured_svg, height=390)
-        st.markdown(
-            "**Mapa por mediciones:** los puntos son datos observados; la superficie entre ellos es una estimación espacial."
-        )
-    with c4b:
-        predicted_svg = f"""
-        <svg viewBox="0 0 980 455" width="100%" style="background:#f7fafc;border:1px solid #d8e5ed;border-radius:18px">
-          <style>.t{{font-family:Inter,Arial,sans-serif;fill:#1f3442}} .b{{font-weight:850}}</style>
-          <rect x="22" y="20" width="936" height="414" rx="16" fill="#dce8df"/>
-          <g fill="#cbd5db">
-            <rect x="60" y="55" width="110" height="70"/><rect x="200" y="55" width="92" height="70"/><rect x="675" y="55" width="112" height="72"/>
-            <rect x="65" y="290" width="100" height="70"/><rect x="690" y="290" width="95" height="70"/>
-          </g>
-          <path d="M30 220 C210 180 350 184 480 205 S730 250 815 215" fill="none" stroke="#eef2f4" stroke-width="60"/>
-          <path d="M30 220 C210 180 350 184 480 205 S730 250 815 215" fill="none" stroke="#475569" stroke-width="40"/>
-          <path d="M55 155 C210 130 355 138 495 158 C625 177 735 175 815 155 L815 300 C700 279 615 287 500 302 C352 320 198 313 55 285 Z" fill="#2563eb" opacity=".18"/>
-          <path d="M55 173 C210 153 356 158 495 174 C626 190 735 190 815 176 L815 281 C708 266 610 272 500 284 C353 300 200 297 55 270 Z" fill="#22c55e" opacity=".30"/>
-          <path d="M55 188 C210 174 355 176 495 189 C625 202 736 203 815 191 L815 264 C707 253 610 257 500 266 C354 279 200 278 55 258 Z" fill="#facc15" opacity=".48"/>
-          <path d="M55 202 C210 194 355 195 495 204 C625 213 735 214 815 205 L815 249 C705 241 610 244 500 250 C355 259 200 259 55 249 Z" fill="#f97316" opacity=".58"/>
-          <path d="M55 214 C210 210 355 210 495 216 C626 221 734 222 815 216 L815 236 C706 232 610 233 500 237 C355 241 200 242 55 238 Z" fill="#dc2626" opacity=".68"/>
-          <g fill="none" stroke="#fff" stroke-width="1.6">
-            <path d="M55 202 C210 194 355 195 495 204 C625 213 735 214 815 205"/>
-            <path d="M55 188 C210 174 355 176 495 189 C625 202 736 203 815 191"/>
-            <path d="M55 173 C210 153 356 158 495 174 C626 190 735 190 815 176"/>
-          </g>
-          {_c3l2_map_tools()}
-          {_c3l2_noise_legend(835,76)}
-          <rect x="55" y="395" width="750" height="26" rx="6" fill="#fff" opacity=".94"/>
-          <text x="70" y="412" class="t" font-size="10"><tspan class="b">Resultado calculado:</tspan> cada celda de la grilla proviene del modelo de propagación.</text>
-        </svg>
-        """
-        components.html(predicted_svg, height=390)
-        st.markdown(
-            "**Mapa por predicción:** la superficie completa proviene del cálculo a partir de fuentes, geometría y condiciones del escenario."
-        )
-
-    # ------------------------------------------------------------------
-    # 5 · TIPOS DE MAPAS SEGÚN LA FUENTE
-    # ------------------------------------------------------------------
     st.markdown("### 5. Tipos de mapas de ruido según la fuente")
-
     st.write(
-        "La forma de los contornos cambia con la geometría y movilidad de la fuente. "
-        "Estos renders permiten reconocer patrones típicos en distintas aplicaciones."
+        "La geometría de los contornos cambia según el tipo de fuente. "
+        "Los siguientes son renders didácticos con apariencia de mapas profesionales."
     )
+    t1,t2,t3,t4=st.tabs(["Tránsito vial","Industria / obra","Aeronaves","Urbano general"])
+    with t1:
+        _noise_crop(0,178,100,89,430)
+        st.caption("Mapa de tránsito vial: los contornos siguen la red vial y decrecen lateralmente.")
+    with t2:
+        _noise_crop(100,178,100,89,430)
+        st.caption("Mapa industrial / obra: combina fuentes puntuales, lineales y de área.")
+    with t3:
+        _noise_crop(200,178,100,89,430)
+        st.caption("Mapa aeronáutico: contornos asociados a pista, operaciones y trayectorias.")
+    with t4:
+        _noise_crop(300,178,100,89,430)
+        st.caption("Mapa urbano general: integra múltiples fuentes para representar el ambiente sonoro global.")
 
-    t51, t52, t53, t54 = st.tabs(
-        ["Tránsito vial", "Ferrocarril", "Industria / obra", "Aeronaves"]
-    )
-
-    with t51:
-        road_prof = f"""
-        <svg viewBox="0 0 980 455" width="100%" style="background:#f7fafc;border:1px solid #d8e5ed;border-radius:18px">
-          <style>.t{{font-family:Inter,Arial,sans-serif;fill:#1f3442}} .b{{font-weight:850}}</style>
-          <rect x="22" y="20" width="936" height="414" rx="16" fill="#dce8df"/>
-          <g fill="#cbd5db">
-            <rect x="65" y="55" width="105" height="70"/><rect x="195" y="55" width="90" height="70"/><rect x="700" y="55" width="95" height="70"/>
-            <rect x="65" y="300" width="105" height="70"/><rect x="205" y="300" width="90" height="70"/><rect x="690" y="300" width="110" height="70"/>
-          </g>
-          <path d="M35 230 C210 195 355 195 500 220 S710 258 815 225" fill="none" stroke="#eef2f4" stroke-width="68"/>
-          <path d="M35 230 C210 195 355 195 500 220 S710 258 815 225" fill="none" stroke="#475569" stroke-width="48"/>
-          <path d="M35 230 C210 195 355 195 500 220 S710 258 815 225" fill="none" stroke="#fff" stroke-width="2.5" stroke-dasharray="24 17"/>
-          <path d="M35 145 C190 123 350 132 505 156 C640 177 750 177 815 158 L815 302 C723 284 642 291 510 310 C350 333 190 324 35 300 Z" fill="#2563eb" opacity=".18"/>
-          <path d="M35 165 C190 146 350 151 505 170 C640 187 750 190 815 174 L815 286 C725 271 640 277 510 292 C350 309 190 305 35 283 Z" fill="#22c55e" opacity=".32"/>
-          <path d="M35 184 C190 169 350 172 505 185 C640 198 750 202 815 188 L815 270 C725 258 640 262 510 273 C350 286 190 286 35 267 Z" fill="#facc15" opacity=".48"/>
-          <path d="M35 201 C190 191 350 192 505 201 C640 210 750 214 815 204 L815 255 C725 247 640 250 510 257 C350 267 190 268 35 252 Z" fill="#f97316" opacity=".60"/>
-          <path d="M35 216 C190 211 350 211 505 216 C640 221 750 224 815 217 L815 242 C725 237 640 239 510 242 C350 247 190 248 35 241 Z" fill="#dc2626" opacity=".70"/>
-          {_c3l2_map_tools()}
-          {_c3l2_noise_legend(835,76)}
-        </svg>
-        """
-        components.html(road_prof, height=475)
-        st.caption("Patrón típico: bandas alargadas que siguen la geometría vial y decrecen lateralmente.")
-
-    with t52:
-        rail_prof = f"""
-        <svg viewBox="0 0 980 455" width="100%" style="background:#f7fafc;border:1px solid #d8e5ed;border-radius:18px">
-          <style>.t{{font-family:Inter,Arial,sans-serif;fill:#1f3442}} .b{{font-weight:850}}</style>
-          <rect x="22" y="20" width="936" height="414" rx="16" fill="#dce8df"/>
-          <g fill="#cbd5db">
-            <rect x="60" y="55" width="110" height="72"/><rect x="195" y="55" width="100" height="72"/><rect x="700" y="300" width="95" height="70"/>
-            <rect x="70" y="300" width="95" height="70"/><rect x="650" y="55" width="140" height="72"/>
-          </g>
-          <path d="M30 330 C185 275 280 260 390 225 S625 150 815 95" fill="none" stroke="#cbd5e1" stroke-width="44"/>
-          <path d="M30 330 C185 275 280 260 390 225 S625 150 815 95" fill="none" stroke="#374151" stroke-width="18"/>
-          <path d="M30 330 C185 275 280 260 390 225 S625 150 815 95" fill="none" stroke="#fff" stroke-width="2" stroke-dasharray="7 8"/>
-          <path d="M15 380 C155 322 270 301 382 268 S630 188 820 132 L804 60 C620 115 500 151 372 184 S140 252 20 290 Z" fill="#2563eb" opacity=".19"/>
-          <path d="M18 358 C160 307 270 286 385 251 S625 173 818 118 L809 76 C620 129 495 166 377 199 S154 267 24 308 Z" fill="#22c55e" opacity=".32"/>
-          <path d="M22 344 C165 293 275 275 390 240 S625 162 816 108 L813 88 C628 138 500 177 383 210 S160 278 28 319 Z" fill="#facc15" opacity=".48"/>
-          <path d="M26 334 C170 284 280 266 394 231 S625 154 814 101 L814 94 C632 144 504 183 389 216 S168 285 32 326 Z" fill="#f97316" opacity=".60"/>
-          {_c3l2_map_tools()}
-          {_c3l2_noise_legend(835,76)}
-        </svg>
-        """
-        components.html(rail_prof, height=475)
-        st.caption("Patrón típico: contornos estrechos y lineales que siguen la infraestructura ferroviaria.")
-
-    with t53:
-        ind_prof = f"""
-        <svg viewBox="0 0 980 455" width="100%" style="background:#f7fafc;border:1px solid #d8e5ed;border-radius:18px">
-          <style>.t{{font-family:Inter,Arial,sans-serif;fill:#1f3442}} .b{{font-weight:850}}</style>
-          <rect x="22" y="20" width="936" height="414" rx="16" fill="#dce8df"/>
-          <rect x="180" y="105" width="470" height="245" rx="10" fill="#d9d1bd" stroke="#a89c83"/>
-          <rect x="240" y="145" width="130" height="80" fill="#94a3b8"/><rect x="445" y="125" width="145" height="105" fill="#94a3b8"/>
-          <path d="M220 300 C315 267 410 284 515 310" fill="none" stroke="#475569" stroke-width="24"/>
-          <path d="M220 300 C315 267 410 284 515 310" fill="none" stroke="#fff" stroke-width="2" stroke-dasharray="13 11"/>
-          <path d="M85 95 C220 28 470 44 640 113 C780 170 820 300 726 360 C630 423 397 421 230 369 C90 325 35 210 85 95 Z" fill="#2563eb" opacity=".18"/>
-          <path d="M145 115 C260 64 455 76 590 128 C703 173 742 272 672 326 C595 382 417 382 280 342 C162 306 103 213 145 115 Z" fill="#22c55e" opacity=".31"/>
-          <path d="M205 139 C296 101 440 108 545 147 C628 178 660 249 609 292 C552 338 425 338 326 310 C240 286 174 213 205 139 Z" fill="#facc15" opacity=".49"/>
-          <path d="M275 161 C338 135 430 137 500 163 C559 184 579 230 544 260 C505 292 424 292 361 275 C307 260 252 211 275 161 Z" fill="#f97316" opacity=".61"/>
-          <path d="M345 183 C382 169 428 170 462 184 C492 196 502 218 486 234 C467 253 427 256 397 248 C371 241 334 215 345 183 Z" fill="#dc2626" opacity=".72"/>
-          <g fill="#b91c1c" stroke="#fff" stroke-width="2"><circle cx="326" cy="195" r="10"/><circle cx="515" cy="195" r="10"/><circle cx="400" cy="285" r="10"/></g>
-          {_c3l2_map_tools()}
-          {_c3l2_noise_legend(835,76)}
-        </svg>
-        """
-        components.html(ind_prof, height=475)
-        st.caption("Patrón típico: combinación de lóbulos de fuentes puntuales, áreas operacionales y rutas internas.")
-
-    with t54:
-        air_prof = f"""
-        <svg viewBox="0 0 980 455" width="100%" style="background:#f7fafc;border:1px solid #d8e5ed;border-radius:18px">
-          <style>.t{{font-family:Inter,Arial,sans-serif;fill:#1f3442}} .b{{font-weight:850}}</style>
-          <rect x="22" y="20" width="936" height="414" rx="16" fill="#dce8df"/>
-          <g fill="#cbd5db">
-            <rect x="70" y="65" width="90" height="60"/><rect x="180" y="65" width="95" height="60"/><rect x="710" y="310" width="90" height="60"/>
-            <rect x="70" y="300" width="105" height="60"/><rect x="700" y="60" width="100" height="60"/>
-          </g>
-          <rect x="270" y="195" width="420" height="42" rx="3" fill="#4b5563"/>
-          <line x1="290" y1="216" x2="670" y2="216" stroke="#fff" stroke-width="2.5" stroke-dasharray="20 14"/>
-          <path d="M90 120 C240 80 330 125 470 195 C620 270 725 330 885 350 C730 390 610 360 470 292 C330 223 230 180 90 120 Z" fill="#2563eb" opacity=".20"/>
-          <path d="M145 132 C265 104 345 139 470 200 C592 260 680 306 820 326 C700 354 600 330 470 270 C345 211 255 170 145 132 Z" fill="#22c55e" opacity=".32"/>
-          <path d="M205 145 C300 124 365 153 470 205 C570 254 642 288 758 305 C660 329 580 307 470 257 C365 208 294 174 205 145 Z" fill="#facc15" opacity=".48"/>
-          <path d="M270 160 C335 147 385 169 470 210 C548 248 600 271 695 286 C617 303 550 286 470 250 C386 211 330 184 270 160 Z" fill="#f97316" opacity=".60"/>
-          <path d="M345 180 C390 171 420 184 470 210 C522 235 555 251 620 261 C565 272 520 260 470 238 C418 215 382 196 345 180 Z" fill="#dc2626" opacity=".72"/>
-          <path d="M470 216 C370 160 250 110 125 92" fill="none" stroke="#0f5f99" stroke-width="3" stroke-dasharray="8 7"/>
-          <path d="M470 216 C590 265 710 325 865 350" fill="none" stroke="#0f5f99" stroke-width="3" stroke-dasharray="8 7"/>
-          {_c3l2_map_tools()}
-          {_c3l2_noise_legend(835,76)}
-        </svg>
-        """
-        components.html(air_prof, height=475)
-        st.caption("Patrón típico: contornos alargados asociados a pistas y trayectorias de operación.")
-
-    # ------------------------------------------------------------------
-    # 6 · TIPOS DE MAPAS SEGÚN EL OBJETIVO
-    # ------------------------------------------------------------------
-    st.markdown("### 6. Otros tipos de mapas de ruido según el objetivo")
-
-    st.write(
-        "El mismo territorio puede representarse de distintas maneras según la pregunta técnica que se quiera responder."
-    )
-
-    t61, t62, t63, t64 = st.tabs(
-        ["Mediciones / interpolación", "Urbano multifuente", "Diferencia / mitigación", "Exposición en fachadas"]
-    )
-
+    st.markdown("### 6. Tipos de mapas según cómo se obtienen o utilizan")
+    t61,t62,t63=st.tabs(["Mediciones / interpolación","Predicción","Resumen de tipologías"])
     with t61:
-        components.html(measured_svg, height=475)
-        st.caption("Muestra la distribución estimada a partir de una campaña de puntos medidos.")
-
+        _noise_crop(0,80,200,96,430)
+        st.markdown(
+            "**Uso principal:** describir espacialmente el ambiente observado durante una campaña. "
+            "Solo los puntos instrumentados corresponden a mediciones directas."
+        )
     with t62:
-        urban_prof = f"""
-        <svg viewBox="0 0 980 455" width="100%" style="background:#f7fafc;border:1px solid #d8e5ed;border-radius:18px">
-          <style>.t{{font-family:Inter,Arial,sans-serif;fill:#1f3442}} .b{{font-weight:850}}</style>
-          <rect x="22" y="20" width="936" height="414" rx="16" fill="#dce8df"/>
-          <g stroke="#eef2f4" stroke-width="30"><path d="M35 120 H815"/><path d="M35 285 H815"/><path d="M215 35 V395"/><path d="M520 35 V395"/></g>
-          <g stroke="#64748b" stroke-width="12"><path d="M35 120 H815"/><path d="M35 285 H815"/><path d="M215 35 V395"/><path d="M520 35 V395"/></g>
-          <g fill="#cbd5db">
-            <rect x="60" y="52" width="120" height="44"/><rect x="255" y="52" width="120" height="44"/><rect x="555" y="52" width="110" height="44"/><rect x="690" y="52" width="100" height="44"/>
-            <rect x="60" y="155" width="120" height="90"/><rect x="255" y="155" width="120" height="90"/><rect x="555" y="155" width="110" height="90"/><rect x="690" y="155" width="100" height="90"/>
-            <rect x="60" y="320" width="120" height="55"/><rect x="255" y="320" width="120" height="55"/><rect x="555" y="320" width="110" height="55"/><rect x="690" y="320" width="100" height="55"/>
-          </g>
-          <path d="M25 75 C160 25 340 45 465 110 C585 173 660 250 625 340 C590 414 430 430 300 390 C165 350 65 260 25 75 Z" fill="#2563eb" opacity=".17"/>
-          <path d="M80 92 C200 55 337 68 440 120 C542 172 597 239 567 308 C537 369 410 382 310 352 C205 321 118 247 80 92 Z" fill="#22c55e" opacity=".29"/>
-          <path d="M145 110 C238 82 330 92 412 134 C490 173 532 228 510 281 C487 328 390 338 319 317 C241 294 178 235 145 110 Z" fill="#facc15" opacity=".44"/>
-          <path d="M222 137 C283 119 337 124 392 153 C445 180 470 219 455 256 C438 288 379 296 331 282 C279 267 244 226 222 137 Z" fill="#f97316" opacity=".56"/>
-          <path d="M300 166 C332 157 360 160 389 176 C417 191 429 213 420 231 C410 251 378 255 353 247 C326 240 307 216 300 166 Z" fill="#dc2626" opacity=".68"/>
-          {_c3l2_map_tools()}
-          {_c3l2_noise_legend(835,76)}
-        </svg>
-        """
-        components.html(urban_prof, height=475)
-        st.caption("Integra simultáneamente varias fuentes urbanas para representar el ambiente sonoro global.")
-
+        _noise_crop(200,80,200,96,430)
+        st.markdown(
+            "**Uso principal:** estudiar escenarios actuales o futuros y comparar alternativas, "
+            "modificaciones de fuentes o medidas de control."
+        )
     with t63:
-        diff_prof = """
-        <svg viewBox="0 0 980 455" width="100%" style="background:#f7fafc;border:1px solid #d8e5ed;border-radius:18px">
-          <style>.t{font-family:Inter,Arial,sans-serif;fill:#1f3442}.b{font-weight:850}</style>
-          <rect x="22" y="20" width="936" height="414" rx="16" fill="#dce8df"/>
-          <g fill="#cbd5db"><rect x="75" y="70" width="120" height="80"/><rect x="655" y="70" width="120" height="80"/><rect x="80" y="300" width="110" height="65"/><rect x="665" y="300" width="110" height="65"/></g>
-          <path d="M40 220 H810" stroke="#eef2f4" stroke-width="60"/><path d="M40 220 H810" stroke="#475569" stroke-width="40"/><line x1="55" y1="220" x2="795" y2="220" stroke="#fff" stroke-width="2" stroke-dasharray="20 15"/>
-          <path d="M95 115 C210 90 350 110 420 180 C470 230 445 300 365 340 C260 390 135 330 95 250 C70 200 72 150 95 115 Z" fill="#16a34a" opacity=".55"/>
-          <path d="M420 110 C535 85 700 105 775 175 C825 225 800 295 725 335 C625 385 495 330 445 255 C412 204 400 150 420 110 Z" fill="#dc2626" opacity=".50"/>
-          <text x="250" y="203" text-anchor="middle" class="t b" font-size="14">−3 a −7 dB</text>
-          <text x="610" y="203" text-anchor="middle" class="t b" font-size="14">+2 a +5 dB</text>
-          <rect x="838" y="100" width="105" height="185" rx="10" fill="#fff" stroke="#cbd5df"/>
-          <text x="890" y="122" text-anchor="middle" class="t b" font-size="11">ΔL [dB]</text>
-          <rect x="853" y="145" width="22" height="20" fill="#15803d"/><text x="884" y="160" class="t" font-size="10">≤ −5</text>
-          <rect x="853" y="175" width="22" height="20" fill="#86efac"/><text x="884" y="190" class="t" font-size="10">−5 a 0</text>
-          <rect x="853" y="205" width="22" height="20" fill="#fdba74"/><text x="884" y="220" class="t" font-size="10">0 a +5</text>
-          <rect x="853" y="235" width="22" height="20" fill="#dc2626"/><text x="884" y="250" class="t" font-size="10">≥ +5</text>
-        </svg>
-        """
-        components.html(diff_prof, height=475)
-        st.caption("Mapa de diferencia: muestra dónde una medida reduce o aumenta los niveles respecto de un escenario de referencia.")
-
-    with t64:
-        facade_prof = """
-        <svg viewBox="0 0 980 455" width="100%" style="background:#f7fafc;border:1px solid #d8e5ed;border-radius:18px">
-          <style>.t{font-family:Inter,Arial,sans-serif;fill:#1f3442}.b{font-weight:850}</style>
-          <rect x="22" y="20" width="936" height="414" rx="16" fill="#dce8df"/>
-          <rect x="250" y="72" width="300" height="285" fill="#cbd5db" stroke="#94a3b8" stroke-width="2"/>
-          <g stroke="#f8fafc" stroke-width="3">
-            <line x1="250" y1="130" x2="550" y2="130"/><line x1="250" y1="188" x2="550" y2="188"/><line x1="250" y1="246" x2="550" y2="246"/><line x1="250" y1="304" x2="550" y2="304"/>
-          </g>
-          <g>
-            <circle cx="235" cy="102" r="11" fill="#22c55e"/><circle cx="235" cy="160" r="11" fill="#84cc16"/>
-            <circle cx="235" cy="218" r="11" fill="#facc15"/><circle cx="235" cy="276" r="11" fill="#f97316"/><circle cx="235" cy="334" r="11" fill="#dc2626"/>
-            <circle cx="565" cy="102" r="11" fill="#38bdf8"/><circle cx="565" cy="160" r="11" fill="#22c55e"/>
-            <circle cx="565" cy="218" r="11" fill="#84cc16"/><circle cx="565" cy="276" r="11" fill="#facc15"/><circle cx="565" cy="334" r="11" fill="#f97316"/>
-          </g>
-          <path d="M40 365 H810" stroke="#475569" stroke-width="34"/><line x1="55" y1="365" x2="795" y2="365" stroke="#fff" stroke-width="2" stroke-dasharray="20 15"/>
-          <text x="400" y="52" text-anchor="middle" class="t b" font-size="14">NIVELES EN RECEPTORES DE FACHADA</text>
-          <rect x="690" y="80" width="120" height="210" rx="10" fill="#fff" stroke="#cbd5df"/>
-          <text x="750" y="103" text-anchor="middle" class="t b" font-size="11">Lp [dB(A)]</text>
-          <rect x="708" y="125" width="22" height="18" fill="#dc2626"/><text x="741" y="139" class="t" font-size="10">≥ 75</text>
-          <rect x="708" y="153" width="22" height="18" fill="#f97316"/><text x="741" y="167" class="t" font-size="10">70–75</text>
-          <rect x="708" y="181" width="22" height="18" fill="#facc15"/><text x="741" y="195" class="t" font-size="10">65–70</text>
-          <rect x="708" y="209" width="22" height="18" fill="#84cc16"/><text x="741" y="223" class="t" font-size="10">60–65</text>
-          <rect x="708" y="237" width="22" height="18" fill="#22c55e"/><text x="741" y="251" class="t" font-size="10">55–60</text>
-          <rect x="708" y="265" width="22" height="18" fill="#38bdf8"/><text x="741" y="279" class="t" font-size="10">&lt; 55</text>
-        </svg>
-        """
-        components.html(facade_prof, height=475)
-        st.caption("Mapa o representación de exposición en fachadas: permite estudiar niveles por piso o receptor sensible.")
+        components.html(
+            f'<img src="{{noise_render_uri}}" style="width:100%;border-radius:16px;border:1px solid #d8e5ed;">',
+            height=610,
+        )
+        st.caption("Resumen visual: concepto general, mediciones, predicción y distintas fuentes de ruido.")
 
     st.markdown("""
     <div class="c3l2-note">
-      <b>Idea final:</b> “mapa de ruido” no significa una única representación. Puede describir niveles medidos,
-      niveles predichos, una fuente específica, múltiples fuentes, diferencias entre escenarios o exposición en receptores.
-      Siempre hay que leer el descriptor, el período, la altura, el escenario y el origen de los datos.
+      <b>Idea final:</b> un mapa de ruido siempre debe leerse preguntando
+      <b>qué descriptor representa, cómo se obtuvo, qué escenario corresponde y qué fuente o conjunto de fuentes incluye</b>.
     </div>
     """, unsafe_allow_html=True)
 
-    if _c3l2_role() == "Alumno":
-        if st.button(
-            "Guardar Etapa 5",
-            type="primary",
-            use_container_width=True,
-            key="c3l2_s5_save",
-        ):
-            _c3l2_complete(
-                saved,
-                5,
-                {
-                    "concept": "measurement_vs_prediction",
-                    "completed": True,
-                },
-            )
+    if _c3l2_role()=="Alumno":
+        if st.button("Guardar Etapa 5",type="primary",use_container_width=True,key="c3l2_s5_save"):
+            _c3l2_complete(saved,5,{"completed":True,"concept":"noise_maps"})
             st.success("Etapa 5 guardada.")
 
-    if st.session_state.get("role") == "Docente":
+    if st.session_state.get("role")=="Docente":
         with st.container(border=True):
             st.markdown("##### 👩‍🏫 Pauta docente · ideas clave")
             st.markdown(
-                "- **Finalidad**: convertir información acústica en información espacial para diagnóstico, exposición, planificación y comparación de escenarios o medidas.  \n"
-                "- Un mapa representa un **descriptor acústico espacial**, no una fotografía instantánea del sonido.  \n"
-                "- En mapas basados en mediciones, distinguir **punto observado** de **valor interpolado**.  \n"
-                "- En mapas de predicción, los niveles de la grilla son **calculados a partir de fuentes y propagación**.  \n"
-                "- Exigir siempre descriptor, período, altura, escenario, resolución y leyenda.  \n"
-                "- La geometría de los contornos depende del tipo de fuente: vial, ferroviaria, industrial, de área o aeronáutica.  \n"
-                "- También existen mapas de interpolación de mediciones, mapas urbanos multifuente, mapas de diferencia y representaciones de exposición en fachadas."
+                "- Finalidad: diagnóstico, exposición, planificación y mitigación.  \\n"
+                "- Diferenciar claramente medición directa, interpolación y predicción.  \\n"
+                "- Exigir descriptor, período, altura, escenario y leyenda.  \\n"
+                "- Reconocer que la geometría del mapa depende del tipo de fuente."
             )
 
 
