@@ -30179,6 +30179,8 @@ def _c3l2_stage5(lab,saved):
 
     _stage5_assets = {
         "general": Path("assets/curso3_lab2_etapa5_general.webp"),
+        "mediciones": Path("assets/curso3_lab2_etapa5_mediciones.webp"),
+        "modelacion": Path("assets/curso3_lab2_etapa5_modelacion.webp"),
         "transito": Path("assets/curso3_lab2_etapa5_transito.webp"),
         "industria_obra": Path("assets/curso3_lab2_etapa5_industria_obra.webp"),
         "aeronaves": Path("assets/curso3_lab2_etapa5_aeronaves.webp"),
@@ -30304,7 +30306,8 @@ def _c3l2_stage5(lab,saved):
             "Los datos originales son niveles medidos en puntos georreferenciados. "
             "Los valores entre puntos se estiman mediante interpolación u otra técnica espacial."
         )
-        _noise_crop(0, 80, 200, 96, 245)
+        if not _noise_asset("mediciones"):
+            _noise_crop(0, 80, 200, 96, 245)
         st.caption("Los puntos son mediciones directas; la superficie coloreada entre ellos es una estimación espacial.")
     with right:
         st.markdown("#### B. A partir de predicción / modelación")
@@ -30312,7 +30315,8 @@ def _c3l2_stage5(lab,saved):
             "Se definen fuentes, emisión, geometría y condiciones de propagación. "
             "El nivel se calcula en una grilla de receptores distribuida en el área de estudio."
         )
-        _noise_crop(200, 80, 200, 96, 245)
+        if not _noise_asset("modelacion"):
+            _noise_crop(200, 80, 200, 96, 245)
         st.caption("Cada celda o receptor proviene del cálculo acústico del escenario.")
 
     st.markdown("### 4. Diferencias técnicas entre medición y predicción")
@@ -30359,27 +30363,6 @@ def _c3l2_stage5(lab,saved):
         if not _noise_asset("urbano"):
             _noise_crop(300,178,100,89,300)
         st.caption("Integra múltiples fuentes del ambiente urbano.")
-
-    st.markdown("### 6. Tipos de mapas según cómo se obtienen o utilizan")
-    t61,t62,t63=st.tabs(["Mediciones / interpolación","Predicción","Resumen de tipologías"])
-    with t61:
-        _noise_crop(0,80,200,96,260)
-        st.markdown(
-            "**Uso principal:** describir espacialmente el ambiente observado durante una campaña. "
-            "Solo los puntos instrumentados corresponden a mediciones directas."
-        )
-    with t62:
-        _noise_crop(200,80,200,96,260)
-        st.markdown(
-            "**Uso principal:** estudiar escenarios actuales o futuros y comparar alternativas, "
-            "modificaciones de fuentes o medidas de control."
-        )
-    with t63:
-        components.html(
-            f'<img src="{noise_render_uri}" style="display:block;width:100%;border-radius:18px;border:1px solid #d8e5ed;box-shadow:0 10px 28px rgba(15,23,42,.08);">',
-            height=610,
-        )
-        st.caption("Resumen visual: concepto general, mediciones, predicción y distintas fuentes de ruido.")
 
     st.markdown("""
     <div class="c3l2-note">
