@@ -31405,39 +31405,6 @@ def _c3l2_stage7(lab,saved):
     ni en permiso para corregir arbitrariamente el modelo.
     """)
 
-    st.markdown("### 9. De un modelo calibrado al escenario futuro")
-    st.markdown("""
-    Una vez que el escenario existente ha sido razonablemente representado, el modelo puede utilizarse para
-    estudiar cambios futuros, siempre que éstos permanezcan dentro del campo de aplicación del método.
-
-    Por ejemplo:
-
-    **Escenario real medido → modelo del escenario real → contraste y ajuste justificado → escenario futuro → mapa de proyección**
-
-    El escenario futuro puede incorporar nuevas fuentes, mayor producción, cambios de tránsito, barreras,
-    encapsulamientos o medidas de control. Cada cambio debe quedar trazable.
-    """)
-
-    st.markdown("### 10. ¿Qué debe informar una proyección defendible?")
-    st.markdown("""
-    Como mínimo, un informe técnico debería permitir reconstruir el cálculo:
-
-    - norma o método de predicción utilizado y su versión;
-    - software y versión;
-    - origen de los niveles de emisión y su representatividad;
-    - fuentes modeladas, geometría, alturas y horarios;
-    - topografía, terreno y edificaciones;
-    - parámetros meteorológicos y condiciones de propagación;
-    - orden de reflexiones y criterios de difracción cuando correspondan;
-    - ubicación y altura de receptores;
-    - resolución y altura de la grilla del mapa;
-    - medidas de control incorporadas y cómo fueron representadas;
-    - procedimiento de verificación/calibración con mediciones, si existe;
-    - diferencias observadas entre medición y cálculo;
-    - limitaciones, incertidumbre y campo de aplicación;
-    - escenarios comparados y condición de mayor emisión evaluada.
-    """)
-
     st.markdown("### Referencias técnicas utilizadas en esta etapa")
     st.markdown("""
     - **D.S. N°38/2011 del Ministerio del Medio Ambiente**, especialmente artículo 19.
