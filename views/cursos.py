@@ -30463,12 +30463,12 @@ def _c3l2_stage6(lab,saved):
         (10,75,65),(30,75,68),(50,75,70),(70,75,69),(90,75,67),
     ]
     machines=[
-        ("Compresor",18,22,"M1"),
-        ("Prensa",42,22,"M2"),
-        ("CNC",68,22,"M3"),
-        ("Extractor",84,48,"M4"),
-        ("Envasadora",60,69,"M5"),
-        ("Caldera",24,69,"M6"),
+        ("Compresor",18,22,"EQ1"),
+        ("Prensa",42,22,"EQ2"),
+        ("CNC",68,22,"EQ3"),
+        ("Extractor",84,48,"EQ4"),
+        ("Envasadora",60,69,"EQ5"),
+        ("Caldera",24,69,"EQ6"),
     ]
 
     def _factory_background(fig, show_grid=True, show_machine_labels=True):
@@ -30518,7 +30518,7 @@ def _c3l2_stage6(lab,saved):
         x=[p[0] for p in pts],
         y=[p[1] for p in pts],
         mode="markers+text",
-        text=[f"M{i+1}<br>{p[2]} dB(A)" for i,p in enumerate(pts)],
+        text=[f"P{i+1}<br>{p[2]} dB(A)" for i,p in enumerate(pts)],
         textposition="top center",
         marker=dict(size=13),
         name="Puntos medidos",
@@ -30551,7 +30551,7 @@ def _c3l2_stage6(lab,saved):
     st.markdown("### 3. Construye una tabla trazable de terreno")
     table=pd.DataFrame([
         {
-            "Punto":f"M{i+1}",
+            "Punto":f"P{i+1}",
             "X [m]":p[0],
             "Y [m]":p[1],
             "LAeq,T [dB(A)]":p[2],
@@ -30569,7 +30569,7 @@ def _c3l2_stage6(lab,saved):
 
     st.markdown("### 4. Control de calidad: interpolar viene después")
     anomaly=st.radio(
-        "Durante M8 ocurrió una purga extraordinaria del compresor y el registro quedó 12 dB por sobre el patrón operacional. ¿Qué corresponde hacer?",
+        "Durante P8 ocurrió una purga extraordinaria del compresor y el registro quedó 12 dB por sobre el patrón operacional. ¿Qué corresponde hacer?",
         [
             "Usarlo automáticamente porque todo dato medido debe interpolarse",
             "Revisar el objetivo y la bitácora; decidir documentadamente si repetir, conservar o excluir el registro",
@@ -30644,14 +30644,14 @@ def _c3l2_stage6(lab,saved):
     donde no existe una medición se calcula un valor estimado. En IDW, **dᵢ es la distancia geométrica desde el
     centro de esa celda objetivo hasta el punto de medición i**.
 
-    En el esquema siguiente, **X₀** es una celda que queremos estimar. M1, M2 y M3 son lugares donde sí se midió.
+    En el esquema siguiente, **X₀** es una celda que queremos estimar. P1, P2 y P3 son lugares donde sí se midió.
     Las líneas punteadas representan las distancias **d₁, d₂ y d₃** utilizadas por IDW.
     """)
 
     idw_demo_pts=[
-        ("M1",28.0,28.0,68.0),
-        ("M2",76.0,34.0,74.0),
-        ("M3",58.0,76.0,65.0),
+        ("P1",28.0,28.0,68.0),
+        ("P2",76.0,34.0,74.0),
+        ("P3",58.0,76.0,65.0),
     ]
     x0_demo,y0_demo=52.0,48.0
     idw_demo=go.Figure()
@@ -30672,7 +30672,7 @@ def _c3l2_stage6(lab,saved):
         bgcolor="rgba(255,255,255,0.98)",bordercolor="#111827",borderwidth=1
     )
     demo_distances=[]
-    distance_offsets={"M1":(-4,4),"M2":(6,5),"M3":(-6,3)}
+    distance_offsets={"P1":(-4,4),"P2":(6,5),"P3":(-6,3)}
     for label,px,py,level in idw_demo_pts:
         d=float(np.sqrt((px-x0_demo)**2+(py-y0_demo)**2))
         demo_distances.append((label,d,level,px,py))
@@ -30715,7 +30715,7 @@ def _c3l2_stage6(lab,saved):
     st.markdown(
         '<div class="c3l2-note"><b>d no es el tamaño de la celda.</b> Es la distancia desde el centro '
         'de la celda que se quiere estimar hasta cada medición disponible. Por eso para una misma celda '
-        'existen varias distancias: d₁ hacia M1, d₂ hacia M2, d₃ hacia M3, etc.</div>',
+        'existen varias distancias: d₁ hacia P1, d₂ hacia P2, d₃ hacia P3, etc.</div>',
         unsafe_allow_html=True,
     )
 
@@ -30826,7 +30826,7 @@ def _c3l2_stage6(lab,saved):
             line=dict(width=4,color="#111827")
         ),
         name="Puntos de medición",
-        customdata=[[f"M{i+1}",p[2]] for i,p in enumerate(pts)],
+        customdata=[[f"P{i+1}",p[2]] for i,p in enumerate(pts)],
         hovertemplate="<b>%{customdata[0]}</b><br>LAeq,T medido = %{customdata[1]:.0f} dB(A)<extra></extra>",
     ))
     for i,p in enumerate(pts):
@@ -30916,7 +30916,7 @@ def _c3l2_stage6(lab,saved):
     coverage_fig.add_trace(go.Scatter(
         x=[p[0] for p in pts],y=[p[1] for p in pts],
         mode="markers+text",
-        text=[f"M{i+1}" for i in range(len(pts))],
+        text=[f"P{i+1}" for i in range(len(pts))],
         textposition="top center",
         marker=dict(size=11,line=dict(width=1)),
         name="Mediciones",
@@ -30997,7 +30997,7 @@ def _c3l2_stage6(lab,saved):
         err=pred-pnt[2]
         errors.append(err)
         cv_rows.append({
-            "Punto":f"M{i+1}",
+            "Punto":f"P{i+1}",
             "Medido [dB(A)]":round(pnt[2],1),
             "Predicho sin usar el punto [dB(A)]":round(pred,1),
             "Error [dB]":round(err,1),
