@@ -32303,6 +32303,22 @@ def _c3l2_stage10(lab,saved):
     principal=c1.text_input("Vía principal",value=data.get("principal",""),key="c3l2_s10_mainroad")
     secondary=c2.text_input("Vía secundaria",value=data.get("secondary",""),key="c3l2_s10_secondary")
     sector=st.text_input("Sector / comuna / ciudad",value=data.get("sector",""),key="c3l2_s10_sector")
+    st.caption("Para que el mapa quede sobre la ubicación real, registra también el centro de la intersección y las coordenadas GPS de cada punto de medición.")
+    g1,g2=st.columns(2)
+    intersection_lat=g1.number_input(
+        "Latitud centro de la intersección",
+        min_value=-90.0,max_value=90.0,
+        value=float(data.get("intersection_lat") or 0.0),
+        step=0.000001,format="%.6f",key="c3l2_s10_intersection_lat",
+        help="Coordenada del centro geométrico aproximado del cruce. Se usa como ancla para llevar los puntos al eje de cada vía en el mapa."
+    )
+    intersection_lon=g2.number_input(
+        "Longitud centro de la intersección",
+        min_value=-180.0,max_value=180.0,
+        value=float(data.get("intersection_lon") or 0.0),
+        step=0.000001,format="%.6f",key="c3l2_s10_intersection_lon",
+        help="Coordenada del centro geométrico aproximado del cruce."
+    )
     site_description=st.text_area(
         "Descripción breve del lugar y su entorno",
         value=data.get("site_description",""),
@@ -32454,6 +32470,10 @@ def _c3l2_stage10(lab,saved):
         )
         if legacy_steps:
             measurement_df["Pasos desde punto anterior"]=None
+        if "Latitud" not in measurement_df.columns:
+            measurement_df["Latitud"]=None
+        if "Longitud" not in measurement_df.columns:
+            measurement_df["Longitud"]=None
     else:
         rows=[]
         for route,prefix in [("Vía principal","P"),("Vía secundaria","S")]:
@@ -32462,6 +32482,8 @@ def _c3l2_stage10(lab,saved):
                     "Punto":f"{prefix}{n}",
                     "Vía":route,
                     "Pasos desde punto anterior":None,
+                    "Latitud":None,
+                    "Longitud":None,
                     "Leq [dB(A)]":None,
                     "Lmax [dB(A)]":None,
                     "Hora":"",
@@ -32479,6 +32501,8 @@ def _c3l2_stage10(lab,saved):
             "Punto":st.column_config.TextColumn("Punto",width="small"),
             "Vía":st.column_config.TextColumn("Vía",width="medium"),
             "Pasos desde punto anterior":st.column_config.NumberColumn("Pasos",min_value=1,max_value=100,step=1,width="small"),
+            "Latitud":st.column_config.NumberColumn("Latitud",min_value=-90.0,max_value=90.0,step=0.000001,format="%.6f",help="Coordenada GPS real del lugar donde realizaste la medición."),
+            "Longitud":st.column_config.NumberColumn("Longitud",min_value=-180.0,max_value=180.0,step=0.000001,format="%.6f",help="Coordenada GPS real del lugar donde realizaste la medición."),
             "Leq [dB(A)]":st.column_config.NumberColumn("Leq [dB(A)]",min_value=30.0,max_value=120.0,step=0.1,format="%.1f"),
             "Lmax [dB(A)]":st.column_config.NumberColumn("Lmax [dB(A)]",min_value=30.0,max_value=140.0,step=0.1,format="%.1f"),
             "Hora":st.column_config.TextColumn("Hora",width="small"),
@@ -32514,12 +32538,29 @@ def _c3l2_stage10(lab,saved):
         and 25<=float(r.get("Pasos desde punto anterior"))<=30
     )
 
-    q1,q2,q3=st.columns(3)
+    geocoded=[
+        r for r in measurements
+        if isinstance(r.get("Latitud"),(int,float)) and isinstance(r.get("Longitud"),(int,float))
+        and -90<=float(r.get("Latitud"))<=90 and -180<=float(r.get("Longitud"))<=180
+        and not (abs(float(r.get("Latitud")))<1e-9 and abs(float(r.get("Longitud")))<1e-9)
+    ]
+    q1,q2,q3,q4=st.columns(4)
     q1.metric("Registros completos",f"{len(complete)}/16")
     q2.metric("Separaciones 25–30 pasos",f"{spacing_ok}/16")
-    q3.metric("Cobertura","2 vías" if len({r.get("Vía") for r in complete})==2 else "Incompleta")
+    q3.metric("Coordenadas GPS",f"{len(geocoded)}/16")
+    q4.metric("Cobertura","2 vías" if len({r.get("Vía") for r in complete})==2 else "Incompleta")
 
-    st.markdown("### 4. Mapa vial automático")
+    st.markdown("### 4. Mapa vial georreferenciado automático")
+    st.markdown(
+        """
+        <div class="c3l2-card blue" style="margin-bottom:.8rem">
+          <div class="c3l2-k">MAPA SOBRE UBICACIÓN REAL</div>
+          <b>La coordenada medida se conserva como evidencia.</b><br>
+          Para representar el ruido de la vía, la plataforma proyecta cada punto GPS hacia un <b>eje vial estimado</b> que pasa por el centro de la intersección. Así, el color se dibuja sobre la calzada y no sobre la vereda donde se sostuvo el teléfono.
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
     interval=st.radio(
         "Intervalo de representación",
         [5,3],
@@ -32530,109 +32571,168 @@ def _c3l2_stage10(lab,saved):
     )
 
     valid_levels=[float(r["Leq [dB(A)]"]) for r in complete]
-    if valid_levels:
-        lo=math.floor(min(valid_levels)/interval)*interval
-        hi=math.ceil(max(valid_levels)/interval)*interval
-        palette=["#C0FFC0","#00CC00","#005000","#FFFF00","#FFC74A","#FF6600","#FF3333","#990033","#AD9AD6","#0000FF","#000066","#000000"]
+    center_ok=(
+        isinstance(intersection_lat,(int,float)) and isinstance(intersection_lon,(int,float))
+        and -90<=float(intersection_lat)<=90 and -180<=float(intersection_lon)<=180
+        and not (abs(float(intersection_lat))<1e-9 and abs(float(intersection_lon))<1e-9)
+    )
+    geo_complete=[
+        r for r in complete
+        if isinstance(r.get("Latitud"),(int,float)) and isinstance(r.get("Longitud"),(int,float))
+        and -90<=float(r.get("Latitud"))<=90 and -180<=float(r.get("Longitud"))<=180
+        and not (abs(float(r.get("Latitud")))<1e-9 and abs(float(r.get("Longitud")))<1e-9)
+    ]
 
-        def _road_color(level):
-            idx=int(math.floor((float(level)-lo)/interval))
-            return palette[max(0,min(len(palette)-1,idx))]
+    def _c3l2_fit_axis(rows,lat0,lon0):
+        """Proyecta GPS reales sobre un eje recto anclado al centro del cruce."""
+        if len(rows)<2:
+            return []
+        lat0r=math.radians(lat0)
+        sx=111320.0*max(0.20,math.cos(lat0r))
+        sy=110540.0
+        pts=[]
+        for r in rows:
+            x=(float(r["Longitud"])-lon0)*sx
+            y=(float(r["Latitud"])-lat0)*sy
+            pts.append([x,y])
+        arr=np.asarray(pts,dtype=float)
+        cov=arr.T@arr
+        vals,vecs=np.linalg.eigh(cov)
+        direction=vecs[:,int(np.argmax(vals))]
+        # Mantener orientación estable para que el orden espacial no cambie entre reruns.
+        if abs(direction[0])>=abs(direction[1]):
+            if direction[0]<0: direction=-direction
+        elif direction[1]<0:
+            direction=-direction
+        out=[]
+        for r,p in zip(rows,arr):
+            t=float(np.dot(p,direction))
+            q=direction*t
+            lat=lat0+q[1]/sy
+            lon=lon0+q[0]/sx
+            rr=dict(r)
+            rr["_map_lat"]=float(lat)
+            rr["_map_lon"]=float(lon)
+            rr["_axis_t"]=t
+            out.append(rr)
+        return out
 
-        fig=go.Figure()
-        principal_rows=[r for r in measurements if r.get("Vía")=="Vía principal"]
-        secondary_rows=[r for r in measurements if r.get("Vía")=="Vía secundaria"]
+    if valid_levels and center_ok:
+        principal_geo=[r for r in geo_complete if r.get("Vía")=="Vía principal"]
+        secondary_geo=[r for r in geo_complete if r.get("Vía")=="Vía secundaria"]
+        snapped_principal=_c3l2_fit_axis(principal_geo,float(intersection_lat),float(intersection_lon))
+        snapped_secondary=_c3l2_fit_axis(secondary_geo,float(intersection_lat),float(intersection_lon))
+        snapped=snapped_principal+snapped_secondary
 
-        # Posición esquemática basada en pasos acumulados desde la intersección.
-        p_dist=[]; acc=0.0
-        for r in principal_rows:
-            step=float(r.get("Pasos desde punto anterior") or 27)
-            acc+=step; p_dist.append(acc)
-        s_dist=[]; acc=0.0
-        for r in secondary_rows:
-            step=float(r.get("Pasos desde punto anterior") or 27)
-            acc+=step; s_dist.append(acc)
+        if len(snapped_principal)>=2 and len(snapped_secondary)>=2:
+            lo=math.floor(min(valid_levels)/interval)*interval
+            hi=math.ceil(max(valid_levels)/interval)*interval
+            palette=["#C0FFC0","#00CC00","#005000","#FFFF00","#FFC74A","#FF6600","#FF3333","#990033","#AD9AD6","#0000FF","#000066","#000000"]
 
-        maxd=max(p_dist+s_dist+[220])
-        fig.add_trace(go.Scatter(x=[0,maxd*1.04],y=[0,0],mode="lines",line=dict(width=18),name="Vía principal",hoverinfo="skip"))
-        fig.add_trace(go.Scatter(x=[0,0],y=[0,maxd*1.04],mode="lines",line=dict(width=18),name="Vía secundaria",hoverinfo="skip"))
+            def _road_color(level):
+                idx=int(math.floor((float(level)-lo)/interval))
+                return palette[max(0,min(len(palette)-1,idx))]
 
-        # Tramos coloreados según el nivel registrado en cada punto.
-        prev=0.0
-        for d,r in zip(p_dist,principal_rows):
-            lv=r.get("Leq [dB(A)]")
-            if isinstance(lv,(int,float)):
-                fig.add_trace(go.Scatter(
-                    x=[prev,d],y=[0,0],mode="lines",
-                    line=dict(width=12,color=_road_color(lv)),
-                    showlegend=False,hoverinfo="skip",
-                ))
-            prev=d
-        prev=0.0
-        for d,r in zip(s_dist,secondary_rows):
-            lv=r.get("Leq [dB(A)]")
-            if isinstance(lv,(int,float)):
-                fig.add_trace(go.Scatter(
-                    x=[0,0],y=[prev,d],mode="lines",
-                    line=dict(width=12,color=_road_color(lv)),
-                    showlegend=False,hoverinfo="skip",
-                ))
-            prev=d
+            fig=go.Figure()
 
-        for rows_route,xd,yd in [
-            (principal_rows,p_dist,[0]*len(p_dist)),
-            (secondary_rows,[0]*len(s_dist),s_dist),
-        ]:
-            xs=[];ys=[];texts=[];colors=[]
-            for r,xv,yv in zip(rows_route,xd,yd):
-                lv=r.get("Leq [dB(A)]")
-                if isinstance(lv,(int,float)):
-                    xs.append(xv);ys.append(yv)
-                    texts.append(f"{r['Punto']} · {float(lv):.1f} dB(A)")
-                    colors.append(_road_color(lv))
-            if xs:
-                fig.add_trace(go.Scatter(
-                    x=xs,y=ys,mode="markers+text",
-                    text=texts,textposition="top center",
-                    marker=dict(size=13,color=colors,line=dict(width=2,color="#ffffff")),
+            # Dibujar cada vía según la posición geográfica ajustada al eje vial.
+            for route_rows,route_name in [(snapped_principal,"Vía principal"),(snapped_secondary,"Vía secundaria")]:
+                ordered=sorted(route_rows,key=lambda r:r["_axis_t"])
+                for i,r in enumerate(ordered):
+                    lv=r.get("Leq [dB(A)]")
+                    if not isinstance(lv,(int,float)):
+                        continue
+                    if i==0:
+                        a_lat=float(intersection_lat); a_lon=float(intersection_lon)
+                    else:
+                        a_lat=ordered[i-1]["_map_lat"]; a_lon=ordered[i-1]["_map_lon"]
+                    fig.add_trace(go.Scattermapbox(
+                        lat=[a_lat,r["_map_lat"]],lon=[a_lon,r["_map_lon"]],
+                        mode="lines",
+                        line=dict(width=10,color=_road_color(lv)),
+                        hoverinfo="skip",showlegend=False,
+                    ))
+
+            # Puntos representados sobre el eje de la calzada.
+            for route_rows in (snapped_principal,snapped_secondary):
+                if not route_rows:
+                    continue
+                fig.add_trace(go.Scattermapbox(
+                    lat=[r["_map_lat"] for r in route_rows],
+                    lon=[r["_map_lon"] for r in route_rows],
+                    mode="markers+text",
+                    text=[r["Punto"] for r in route_rows],
+                    textposition="top center",
+                    marker=dict(
+                        size=14,
+                        color=[_road_color(r["Leq [dB(A)]"]) for r in route_rows],
+                    ),
+                    customdata=[[
+                        r["Punto"],r["Vía"],float(r["Leq [dB(A)]"]),float(r["Lmax [dB(A)]"]),
+                        float(r["Latitud"]),float(r["Longitud"])
+                    ] for r in route_rows],
+                    hovertemplate=(
+                        "<b>%{customdata[0]}</b> · %{customdata[1]}<br>"
+                        "Leq: %{customdata[2]:.1f} dB(A)<br>"
+                        "Lmax: %{customdata[3]:.1f} dB(A)<br>"
+                        "GPS medido: %{customdata[4]:.6f}, %{customdata[5]:.6f}<br>"
+                        "<extra></extra>"
+                    ),
                     showlegend=False,
-                    hovertemplate="%{text}<extra></extra>",
                 ))
 
-        fig.add_trace(go.Scatter(
-            x=[0],y=[0],mode="markers+text",
-            text=["Intersección"],textposition="bottom right",
-            marker=dict(size=14,symbol="x"),
-            name="Origen",
-        ))
-        fig.update_layout(
-            height=570,
-            xaxis=dict(title="Vía principal · distancia acumulada [pasos]",range=[-15,maxd*1.12],showgrid=False,zeroline=False),
-            yaxis=dict(title="Vía secundaria · distancia acumulada [pasos]",range=[-15,maxd*1.12],showgrid=False,zeroline=False,scaleanchor="x",scaleratio=1),
-            margin=dict(l=20,r=20,t=30,b=20),
-            showlegend=False,
-        )
-        st.plotly_chart(fig,use_container_width=True,key="c3l2_s10_roadmap")
+            fig.add_trace(go.Scattermapbox(
+                lat=[float(intersection_lat)],lon=[float(intersection_lon)],
+                mode="markers+text",text=["Intersección"],textposition="bottom right",
+                marker=dict(size=15,color="#111827"),
+                hovertemplate="Centro de la intersección<extra></extra>",
+                showlegend=False,
+            ))
 
-        legend_rows=[]
-        n_bins=max(1,int(math.ceil((hi-lo)/interval))+1)
-        for bi in range(min(n_bins,len(palette))):
-            a=lo+bi*interval
-            b=a+interval
-            legend_rows.append({"Intervalo":f"{a:g}–<{b:g} dB(A)","Color":palette[bi]})
-        st.markdown(
-            '<div style="display:flex;flex-wrap:wrap;gap:6px;margin:.3rem 0 1rem">'
-            +''.join(
-                f'<span style="display:inline-flex;align-items:center;gap:6px;border:1px solid #dbe5ec;border-radius:999px;padding:5px 9px;font-size:.78rem">'
-                f'<span style="width:14px;height:14px;border-radius:3px;background:{r["Color"]};border:1px solid rgba(0,0,0,.12)"></span>{r["Intervalo"]}</span>'
-                for r in legend_rows
+            # Escala de colores vertical tipo mapa de ruido.
+            n_bins=max(1,int(math.ceil((hi-lo)/interval))+1)
+            legend_rows=[]
+            for bi in range(min(n_bins,len(palette))):
+                a=lo+bi*interval; b=a+interval
+                legend_rows.append((a,b,palette[bi]))
+
+            lat_values=[r["_map_lat"] for r in snapped]+[float(intersection_lat)]
+            lon_values=[r["_map_lon"] for r in snapped]+[float(intersection_lon)]
+            lat_span=max(lat_values)-min(lat_values)
+            lon_span=max(lon_values)-min(lon_values)
+            span=max(lat_span,lon_span,0.0005)
+            zoom=max(13.0,min(18.5,16.8-math.log10(span/0.003+1.0)))
+
+            fig.update_layout(
+                height=620,
+                mapbox=dict(
+                    style="open-street-map",
+                    center=dict(lat=float(intersection_lat),lon=float(intersection_lon)),
+                    zoom=zoom,
+                ),
+                margin=dict(l=0,r=0,t=0,b=0),
+                showlegend=False,
             )
-            +'</div>',
-            unsafe_allow_html=True,
-        )
-        st.caption("Croquis vial esquemático generado desde los datos ingresados. La distancia se expresa en pasos acumulados, sin asumir una longitud de zancada.")
+            st.plotly_chart(fig,use_container_width=True,key="c3l2_s10_real_roadmap")
+
+            legend_html='<div style="display:flex;gap:14px;align-items:stretch;margin:.35rem 0 1rem">'
+            legend_html+='<div style="font-size:.78rem;font-weight:800;color:#334155;writing-mode:vertical-rl;transform:rotate(180deg);text-align:center">Leq dB(A)</div>'
+            legend_html+='<div style="display:flex;flex-direction:column-reverse;gap:2px">'
+            for a,b,color in legend_rows:
+                legend_html+=f'<div style="display:flex;align-items:center;gap:7px;font-size:.78rem"><span style="width:26px;height:18px;background:{color};border:1px solid rgba(0,0,0,.15)"></span><span>{a:g}–&lt;{b:g}</span></div>'
+            legend_html+='</div></div>'
+            st.markdown(legend_html,unsafe_allow_html=True)
+            st.caption(
+                "Mapa sobre cartografía OpenStreetMap. Las coordenadas GPS originales se mantienen en el registro; "
+                "para la representación vial se proyectan al eje estimado de cada calle, anclado al centro de la intersección. "
+                "Este ajuste es cartográfico y no modifica el lugar real donde se efectuó la medición."
+            )
+        else:
+            st.info("Para construir el mapa real se requieren al menos 2 puntos con coordenadas válidas en cada vía, además de Leq/Lmax.")
+    elif valid_levels and not center_ok:
+        st.info("Ingresa la latitud y longitud del centro de la intersección para dibujar el mapa sobre la ubicación real.")
     else:
-        st.info("Completa valores de Leq para comenzar a construir automáticamente el mapa vial.")
+        st.info("Completa Leq, Lmax y las coordenadas GPS de los puntos para comenzar a construir automáticamente el mapa vial georreferenciado.")
 
     st.markdown("### 5. Análisis de resultados")
     if valid_levels:
@@ -32673,6 +32773,8 @@ def _c3l2_stage10(lab,saved):
         ("Metodología desarrollada",len(methodology.strip())>=100),
         ("16 registros Leq/Lmax completos",len(complete)==16),
         ("16 separaciones entre 25 y 30 pasos",spacing_ok==16),
+        ("16 puntos con coordenadas GPS",len(geocoded)==16),
+        ("Centro de la intersección georreferenciado",center_ok),
         ("Análisis desarrollado",len(analysis.strip())>=150),
         ("Limitaciones desarrolladas",len(limitations.strip())>=80),
         ("Conclusión desarrollada",len(conclusion.strip())>=100),
@@ -32683,6 +32785,7 @@ def _c3l2_stage10(lab,saved):
     if st.button("💾 Guardar borrador",use_container_width=True,key="c3l2_s10_draft"):
         data.update({
             "principal":principal,"secondary":secondary,"sector":sector,
+            "intersection_lat":intersection_lat,"intersection_lon":intersection_lon,
             "site_description":site_description,"maps_url":maps_url,"evidence_url":evidence_url,
             "app_name":app_name,"measurement_date":measurement_date,"period":period,
             "methodology":methodology,"measurements":measurements,"map_interval":interval,
@@ -32703,6 +32806,7 @@ def _c3l2_stage10(lab,saved):
             payload={
                 "version":2,
                 "principal":principal,"secondary":secondary,"sector":sector,
+                "intersection_lat":intersection_lat,"intersection_lon":intersection_lon,
                 "site_description":site_description,
                 "maps_url":maps_url,"evidence_url":evidence_url,
                 "app_name":app_name,"measurement_date":measurement_date,"period":period,
