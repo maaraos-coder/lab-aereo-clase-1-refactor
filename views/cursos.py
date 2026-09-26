@@ -30460,27 +30460,74 @@ def _c3l2_stage6(lab,saved):
         unsafe_allow_html=True,
     )
 
-    st.markdown("### 2. Diseña la red de medición antes de interpolar")
+    st.markdown("### 2. Diseña una grilla sobre el área que quieres representar")
+    st.markdown("""
+    Una forma ordenada de planificar una campaña es superponer una **grilla regular** sobre el área de estudio.
+    Los nodos o intersecciones de esa grilla entregan posiciones repetibles y comparables para medir. El tamaño
+    de la celda no es universal: debe elegirse según la extensión del recinto, la variabilidad esperada y el nivel
+    de detalle que se quiere representar.
+
+    En una fábrica, la grilla regular es un **punto de partida**, no una regla ciega. Si existe una máquina muy
+    dominante, una abertura, un muro o un cambio de recinto, pueden agregarse puntos adicionales donde el gradiente
+    acústico sea mayor.
+    """)
+
+    # Planta industrial didáctica. Los valores son mediciones de LAeq,T en nodos
+    # de una grilla durante una misma condición operacional.
     candidates=[
-        (10,15,70),(30,15,69),(50,15,68),(70,15,70),(90,15,72),
-        (10,45,64),(30,45,63),(50,45,61),(70,45,64),(90,45,66),
-        (10,75,58),(30,75,57),(50,75,56),(70,75,58),(90,75,60),
+        (10,15,72),(30,15,75),(50,15,76),(70,15,73),(90,15,69),
+        (10,45,68),(30,45,71),(50,45,73),(70,45,70),(90,45,72),
+        (10,75,65),(30,75,68),(50,75,70),(70,75,69),(90,75,67),
     ]
+    machines=[
+        ("Compresor",18,22,"M1"),
+        ("Prensa",42,22,"M2"),
+        ("CNC",68,22,"M3"),
+        ("Extractor",84,48,"M4"),
+        ("Envasadora",60,69,"M5"),
+        ("Caldera",24,69,"M6"),
+    ]
+
+    def _factory_background(fig, show_grid=True, show_machine_labels=True):
+        fig.add_shape(type="rect",x0=2,y0=4,x1=98,y1=86,line=dict(width=3),
+                      fillcolor="rgba(248,250,252,0.08)",layer="above")
+        fig.add_shape(type="line",x0=2,y0=34,x1=98,y1=34,line=dict(width=1,dash="dot"),layer="above")
+        fig.add_shape(type="line",x0=2,y0=59,x1=98,y1=59,line=dict(width=1,dash="dot"),layer="above")
+        fig.add_annotation(x=13,y=31,text="PRODUCCIÓN",showarrow=False,font=dict(size=10))
+        fig.add_annotation(x=15,y=56,text="PROCESO / SERVICIOS",showarrow=False,font=dict(size=10))
+        fig.add_annotation(x=14,y=83,text="ENVASADO / APOYO",showarrow=False,font=dict(size=10))
+        if show_grid:
+            for gx in [10,30,50,70,90]:
+                fig.add_shape(type="line",x0=gx,y0=6,x1=gx,y1=84,
+                              line=dict(width=1,dash="dash"),layer="above")
+            for gy in [15,45,75]:
+                fig.add_shape(type="line",x0=4,y0=gy,x1=96,y1=gy,
+                              line=dict(width=1,dash="dash"),layer="above")
+        for name,mx,my,tag in machines:
+            fig.add_shape(type="rect",x0=mx-5,y0=my-4,x1=mx+5,y1=my+4,
+                          line=dict(width=2),fillcolor="rgba(100,116,139,0.18)",layer="above")
+            if show_machine_labels:
+                fig.add_annotation(x=mx,y=my,text=f"<b>{tag}</b><br>{name}",
+                                   showarrow=False,font=dict(size=9),align="center")
+        fig.add_annotation(x=50,y=90,text="PLANTA INDUSTRIAL · ESQUEMA DIDÁCTICO",
+                           showarrow=False,font=dict(size=12))
+        return fig
+
     design=st.segmented_control(
-        "Compara tres diseños de campaña",
-        ["6 puntos concentrados","10 puntos distribuidos","15 puntos distribuidos"],
+        "Puntos de la grilla que serán medidos",
+        ["6 puntos concentrados","10 puntos distribuidos","15 puntos · grilla completa"],
         default="10 puntos distribuidos",
         key="c3l2_s6_design",
     )
     if design=="6 puntos concentrados":
         idxs=[0,1,2,5,6,7]
-        coverage_label="Deficiente · sector izquierdo sobrerrepresentado"
+        coverage_label="Deficiente · varios nodos de la planta quedan sin medición"
     elif design=="10 puntos distribuidos":
         idxs=[0,2,4,5,7,9,10,12,14,8]
-        coverage_label="Buena · cobertura del gradiente y extremos"
+        coverage_label="Buena · selección sistemática de nodos en toda la planta"
     else:
         idxs=list(range(15))
-        coverage_label="Muy buena · malla más densa y homogénea"
+        coverage_label="Muy buena · se midieron todos los nodos de la grilla didáctica"
     pts=[candidates[i] for i in idxs]
 
     point_fig=go.Figure()
@@ -30493,10 +30540,7 @@ def _c3l2_stage6(lab,saved):
         marker=dict(size=13),
         name="Puntos medidos",
     ))
-    point_fig.add_shape(type="line",x0=0,y0=8,x1=100,y1=8,line=dict(width=8))
-    point_fig.add_annotation(x=50,y=4,text="Avenida principal",showarrow=False)
-    point_fig.add_shape(type="line",x0=96,y0=0,x1=96,y1=90,line=dict(width=5))
-    point_fig.add_annotation(x=94,y=62,text="Vía secundaria",textangle=-90,showarrow=False)
+    _factory_background(point_fig,show_grid=True,show_machine_labels=True)
     point_fig.update_layout(
         height=430,
         xaxis_title="Coordenada local X [m]",
@@ -30530,7 +30574,7 @@ def _c3l2_stage6(lab,saved):
             "LAeq,T [dB(A)]":p[2],
             "Hora":"18:00–19:00",
             "Duración":"5 min",
-            "Condición":"Tránsito habitual",
+            "Condición":"Operación estable de planta",
         }
         for i,p in enumerate(pts)
     ])
@@ -30542,7 +30586,7 @@ def _c3l2_stage6(lab,saved):
 
     st.markdown("### 4. Control de calidad: interpolar viene después")
     anomaly=st.radio(
-        "Durante M8 pasó una ambulancia con sirena y el registro quedó 12 dB por sobre el patrón del sector. ¿Qué corresponde hacer?",
+        "Durante M8 ocurrió una purga extraordinaria del compresor y el registro quedó 12 dB por sobre el patrón operacional. ¿Qué corresponde hacer?",
         [
             "Usarlo automáticamente porque todo dato medido debe interpolarse",
             "Revisar el objetivo y la bitácora; decidir documentadamente si repetir, conservar o excluir el registro",
@@ -30553,8 +30597,8 @@ def _c3l2_stage6(lab,saved):
     )
     st.markdown("""
     Un valor extremo **no se elimina solo porque sea alto**. Primero hay que saber si ese evento forma parte del
-    fenómeno que se pretende representar. Si el objetivo es caracterizar una condición habitual y la sirena es un
-    evento ajeno al escenario, puede justificarse repetir o excluir ese registro. Si el objetivo incluye esos eventos,
+    fenómeno que se pretende representar. Si el objetivo es caracterizar la operación habitual de la fábrica y la purga
+    fue extraordinaria, puede justificarse repetir o excluir ese registro. Si el objetivo incluye ese régimen de operación,
     el dato puede ser perfectamente válido. La decisión debe quedar documentada.
     """)
 
@@ -30585,8 +30629,9 @@ def _c3l2_stage6(lab,saved):
         help="Valores mayores hacen que la influencia caiga más rápido con la distancia.",
     )
     st.caption(
-        "IDW es un método determinista y no incorpora por sí mismo un modelo físico de propagación acústica. "
-        "Su utilidad depende de la densidad, geometría y representatividad de los puntos."
+        "IDW es un método general de interpolación espacial; no es un modelo acústico de propagación. "
+        "Se utiliza también en mapas de ruido basados en mediciones, pero la calidad del resultado depende de la "
+        "densidad, geometría y representatividad de los puntos."
     )
 
     st.markdown("### 6. De los puntos a la superficie continua")
@@ -30613,8 +30658,9 @@ def _c3l2_stage6(lab,saved):
         name="Mediciones",
         hovertemplate="Punto medido<br>%{text}<extra></extra>",
     ))
+    _factory_background(map_fig,show_grid=True,show_machine_labels=True)
     map_fig.update_layout(
-        height=520,
+        height=560,
         xaxis_title="Coordenada local X [m]",
         yaxis_title="Coordenada local Y [m]",
         margin=dict(l=20,r=20,t=25,b=20),
@@ -30641,8 +30687,9 @@ def _c3l2_stage6(lab,saved):
         x=[p[0] for p in pts],y=[p[1] for p in pts],
         mode="markers",marker=dict(size=10),name="Mediciones",
     ))
+    _factory_background(coverage_fig,show_grid=True,show_machine_labels=False)
     coverage_fig.update_layout(
-        height=430,
+        height=460,
         xaxis_title="X [m]",yaxis_title="Y [m]",
         margin=dict(l=20,r=20,t=20,b=20),
     )
