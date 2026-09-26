@@ -30728,13 +30728,6 @@ def _c3l2_stage6(lab,saved):
         key="c3l2_s6_power",
         help="p mayor = la influencia de una medición cae más rápido con la distancia.",
     )
-    st.markdown(
-        f'<div class="c3l2-note"><b>Cómo leer p = {power:.2f}:</b> IDW utiliza esas distancias d₁, d₂ y d₃ '
-        'para dar más influencia a las mediciones cercanas y menos a las lejanas. '
-        'Al aumentar p, esa diferencia por distancia se hace más marcada. No necesitas calcular porcentajes para '
-        'entender el concepto en esta etapa.</div>',
-        unsafe_allow_html=True,
-    )
 
     st.caption(
         "IDW es un método general de interpolación espacial; no es un modelo acústico de propagación. "
@@ -30889,6 +30882,7 @@ def _c3l2_stage6(lab,saved):
     """,unsafe_allow_html=True)
 
     st.markdown("#### Una forma simple de visualizar el apoyo: distancia al punto medido más cercano")
+    st.caption("Lectura visual del mapa: verde = mayor respaldo espacial por cercanía a mediciones; amarillo = apoyo intermedio; naranjo/rojo = sectores más alejados de los puntos medidos.")
     st.markdown("""
     Para cada celda calcularemos la distancia hasta la medición más próxima. Esta distancia **no es el error del mapa**:
     solamente indica cuánto debe “viajar” espacialmente la información medida para llegar hasta esa celda.
@@ -30907,10 +30901,23 @@ def _c3l2_stage6(lab,saved):
     pct_10=float(np.mean(nearest<=10)*100.0)
     pct_20=float(np.mean(nearest<=20)*100.0)
 
+    coverage_max=max(30.0,float(np.ceil(max_nearest/5)*5))
     coverage_fig=go.Figure(go.Contour(
         x=xx,y=yy,z=nearest,
-        contours=dict(start=0,end=max(30,float(np.ceil(max_nearest/5)*5)),size=5,showlabels=True),
-        colorbar=dict(title="Distancia al<br>punto medido<br>más cercano [m]"),
+        zmin=0,zmax=coverage_max,
+        contours=dict(start=0,end=coverage_max,size=5,showlabels=True,coloring="fill"),
+        colorscale=[
+            [0.00,"#0B6E4F"],
+            [0.20,"#39A96B"],
+            [0.40,"#B7D65A"],
+            [0.60,"#F4D35E"],
+            [0.80,"#F08A4B"],
+            [1.00,"#C23B3B"],
+        ],
+        colorbar=dict(
+            title="Distancia al<br>punto medido<br>más cercano [m]",
+            tickfont=dict(size=11),
+        ),
         hovertemplate="X=%{x:.1f} m<br>Y=%{y:.1f} m<br>Medición más cercana=%{z:.1f} m<extra></extra>",
     ))
     coverage_fig.add_trace(go.Scatter(
@@ -30918,8 +30925,8 @@ def _c3l2_stage6(lab,saved):
         mode="markers+text",
         text=[f"P{i+1}" for i in range(len(pts))],
         textposition="top center",
-        marker=dict(size=11,line=dict(width=1)),
-        name="Mediciones",
+        marker=dict(size=13,color="white",line=dict(width=3,color="#111827")),
+        name="Puntos de medición",
     ))
     _factory_background(coverage_fig,show_grid=True,show_machine_labels=False)
     coverage_fig.update_layout(
