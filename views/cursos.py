@@ -32293,8 +32293,28 @@ def _c3l2_stage10(lab,saved):
     <div class="c3l2-intro">
       <div class="c3l2-k">EVALUACIÓN APLICADA · 60 PUNTOS</div>
       <div class="c3l2-title">Medición de ruido de tráfico vehicular en una intersección real</div>
-      Realiza la campaña en una intersección entre una <b>vía principal</b> y una <b>vía secundaria</b>.
-      La plataforma organizará los datos y confeccionará automáticamente el mapa vial a partir de tus mediciones.
+      <p style="margin:.45rem 0 .75rem">
+        Debes realizar una campaña real de medición en una intersección formada por una <b>vía principal</b> y una <b>vía secundaria</b>,
+        registrar <b>18 mediciones</b> y construir con ellas un mapa vial georreferenciado.
+      </p>
+      <div style="font-weight:800;margin-bottom:.35rem">Qué debes hacer</div>
+      <ol style="margin:.15rem 0 .8rem 1.25rem;padding:0;line-height:1.5">
+        <li>Selecciona una intersección real e identifica cuál corresponde a la vía principal y cuál a la vía secundaria.</li>
+        <li>Define el centro de la intersección como referencia de inicio y registra sus coordenadas.</li>
+        <li>Realiza <b>9 mediciones consecutivas en la vía principal</b> y <b>9 en la vía secundaria</b>.</li>
+        <li>Los 9 puntos de cada vía deben seguir <b>una misma línea de recorrido</b>; no se distribuyen enfrentados entre ambas veredas.</li>
+        <li>Entre un punto y el siguiente avanza aproximadamente <b>25–30 pasos normales</b> y registra la cantidad real recorrida.</li>
+        <li>En cada punto registra <b>Leq, Lmax, hora, coordenadas GPS y una observación breve</b> del tránsito o de algún evento relevante.</li>
+        <li>Al finalizar, revisa el mapa vial automático, analiza las diferencias entre ambas vías y redacta tus limitaciones y conclusión técnica.</li>
+      </ol>
+      <div style="font-weight:800;margin-bottom:.35rem">Cómo debes medir</div>
+      <ul style="margin:.15rem 0 0 1.25rem;padding:0;line-height:1.5">
+        <li>Realiza la medición desde un lugar <b>seguro, fuera de la calzada</b>. No debes ubicarte en medio de la calle.</li>
+        <li>Usa el <b>Sonómetro del Diplomado</b> y mantén el teléfono en una posición y orientación similares durante toda la campaña.</li>
+        <li>En cada punto observa el Leq hasta que la lectura se encuentre <b>estabilizada dentro de un rango aproximado de 2 dB</b>; luego registra Leq y Lmax.</li>
+        <li>Evita tapar el micrófono o medir con el teléfono pegado al cuerpo, y anota eventos que puedan alterar la lectura, como bocinas, sirenas, buses detenidos u obras.</li>
+        <li>Guarda la <b>coordenada real del lugar donde mediste</b>. La plataforma conservará ese dato y, para el mapa, desplazará gráficamente el punto hacia el eje de la vía.</li>
+      </ul>
     </div>
     """,unsafe_allow_html=True)
 
