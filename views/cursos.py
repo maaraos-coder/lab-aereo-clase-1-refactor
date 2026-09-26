@@ -31131,7 +31131,23 @@ def _c3l2_stage7(lab,saved):
     .s7-mini-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;margin:.65rem 0 1rem}
     .s7-mini{border:1px solid #dbe7ef;border-radius:14px;padding:12px 14px;background:#fbfdff}
     .s7-mini b{color:#153a55}
-    @media(max-width:900px){.s7-metric-grid,.s7-mini-grid{grid-template-columns:1fr}.s7-table{font-size:.84rem}.s7-table th,.s7-table td{padding:10px}}
+    .s7-cal-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px;margin:.7rem 0 1rem}
+    .s7-cal-step{position:relative;border:1px solid #d9e6ee;border-radius:15px;background:linear-gradient(180deg,#ffffff,#f8fbfd);padding:14px 14px 13px 48px;min-height:104px;box-shadow:0 3px 10px rgba(15,23,42,.035)}
+    .s7-cal-step span{position:absolute;left:13px;top:14px;width:26px;height:26px;border-radius:50%;display:flex;align-items:center;justify-content:center;background:#0b86bd;color:#fff;font-size:.78rem;font-weight:900}
+    .s7-cal-step b{display:block;color:#16384f;margin-bottom:4px}
+    .s7-cal-step small{display:block;color:#5b6e7c;line-height:1.38;font-size:.8rem}
+    .s7-compare{border:1px solid #d9e6ee;border-radius:16px;background:#fff;overflow:hidden;margin:.9rem 0}
+    .s7-compare-head{padding:10px 14px;background:#f2f7fa;font-weight:850;color:#17364c;border-bottom:1px solid #e2ebf1}
+    .s7-compare-grid{display:grid;grid-template-columns:1fr 1fr;gap:0}
+    .s7-compare-card{padding:14px 16px}
+    .s7-compare-card:first-child{border-right:1px solid #e5edf2}
+    .s7-compare-k{font-size:.7rem;font-weight:900;letter-spacing:.07em;color:#0a7fb2;margin-bottom:3px}
+    .s7-compare-card p{margin:.35rem 0 0;color:#5b6b78;font-size:.88rem;line-height:1.42}
+    .s7-uncertainty{border-left:4px solid #f59e0b;border-radius:12px;background:#fff9e8;padding:13px 15px;margin:.8rem 0 1rem;color:#43515c}
+    .s7-uncertainty-title{font-weight:900;color:#7a5200;margin-bottom:3px}
+    @media(max-width:1050px){.s7-cal-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
+    @media(max-width:900px){.s7-metric-grid,.s7-mini-grid,.s7-compare-grid{grid-template-columns:1fr}.s7-compare-card:first-child{border-right:none;border-bottom:1px solid #e5edf2}.s7-table{font-size:.84rem}.s7-table th,.s7-table td{padding:10px}}
+    @media(max-width:650px){.s7-cal-grid{grid-template-columns:1fr}}
     </style>
     """,unsafe_allow_html=True)
 
@@ -31462,33 +31478,46 @@ def _c3l2_stage7(lab,saved):
     </div>
     """,unsafe_allow_html=True)
 
+    st.markdown("#### Flujo recomendado de calibración / ajuste del modelo")
     st.markdown("""
-    **Flujo recomendado de calibración / ajuste del modelo:**
-
-    1. Seleccionar una condición operacional real y bien documentada.
-    2. Medir niveles en varios puntos y registrar meteorología, operación y eventos ajenos.
-    3. Replicar exactamente esa condición en el modelo.
-    4. Comparar **medido vs. calculado**, idealmente también por bandas de frecuencia cuando sea útil.
-    5. Investigar las diferencias: potencia sonora, posición/altura, directividad, barreras, suelo, reflexiones,
-       topografía, horarios o estado operacional.
-    6. Ajustar únicamente parámetros respaldados por evidencia.
-    7. Repetir la comparación.
-    8. Si existen datos suficientes, reservar puntos o una segunda campaña para una **validación independiente**.
-    """)
-
-    st.markdown(
-        '<div class="c3l2-warn"><b>No confundir:</b> calibrar el <i>sonómetro</i> es verificar el instrumento '
-        'de medición. Calibrar o ajustar el <i>modelo</i> es contrastar la representación computacional con '
-        'observaciones reales. Son controles distintos.</div>',
-        unsafe_allow_html=True,
-    )
+    <div class="s7-cal-grid">
+      <div class="s7-cal-step"><span>1</span><b>Condición real</b><small>Selecciona una condición operacional representativa y bien documentada.</small></div>
+      <div class="s7-cal-step"><span>2</span><b>Medición</b><small>Registra niveles, meteorología, operación y eventos ajenos.</small></div>
+      <div class="s7-cal-step"><span>3</span><b>Modelo equivalente</b><small>Replica exactamente esa condición en el software.</small></div>
+      <div class="s7-cal-step"><span>4</span><b>Comparación</b><small>Contrasta medido vs. calculado, idealmente también por bandas.</small></div>
+      <div class="s7-cal-step"><span>5</span><b>Diagnóstico</b><small>Revisa emisión, posición, altura, directividad, barreras, suelo, reflexiones y topografía.</small></div>
+      <div class="s7-cal-step"><span>6</span><b>Ajuste justificado</b><small>Modifica solo parámetros respaldados por evidencia.</small></div>
+      <div class="s7-cal-step"><span>7</span><b>Nueva comparación</b><small>Repite el contraste para comprobar si mejora la representación.</small></div>
+      <div class="s7-cal-step"><span>8</span><b>Validación</b><small>Si hay datos suficientes, reserva puntos o una segunda campaña independiente.</small></div>
+    </div>
+    """,unsafe_allow_html=True)
 
     st.markdown("""
-    La precisión de un método de predicción depende de su campo de aplicación, de la geometría y de la calidad
-    de los datos de entrada. Cualquier tolerancia o incertidumbre declarada por el método debe interpretarse
-    dentro de esas condiciones y **no debe transformarse en una regla automática de calibración** ni en permiso
-    para corregir arbitrariamente el modelo.
-    """)
+    <div class="s7-compare">
+      <div class="s7-compare-head">No confundir estos dos controles</div>
+      <div class="s7-compare-grid">
+        <div class="s7-compare-card">
+          <div class="s7-compare-k">SONÓMETRO</div>
+          <b>Calibración del instrumento</b>
+          <p>Verifica que el equipo de medición responda correctamente antes y/o después de medir.</p>
+        </div>
+        <div class="s7-compare-card">
+          <div class="s7-compare-k">MODELO</div>
+          <b>Ajuste / calibración del modelo</b>
+          <p>Contrasta la representación computacional con observaciones reales y revisa sus parámetros.</p>
+        </div>
+      </div>
+    </div>
+    """,unsafe_allow_html=True)
+
+    st.markdown("""
+    <div class="s7-uncertainty">
+      <div class="s7-uncertainty-title">Interpretar la incertidumbre con criterio</div>
+      La precisión de un método de predicción depende de su <b>campo de aplicación</b>, la <b>geometría</b> y la
+      <b>calidad de los datos de entrada</b>. Una tolerancia o incertidumbre declarada por el método no debe
+      convertirse en una corrección automática ni utilizarse para forzar la coincidencia entre modelo y medición.
+    </div>
+    """,unsafe_allow_html=True)
 
     st.markdown("### Referencias técnicas utilizadas en esta etapa")
     st.markdown("""
