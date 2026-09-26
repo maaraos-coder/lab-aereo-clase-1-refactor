@@ -32364,9 +32364,96 @@ def _c3l2_stage10(lab,saved):
     )
 
     st.markdown("### 3. Registra los 16 puntos")
+
+    st.markdown("""
+    <div style="border:1px solid #dbe5ec;border-radius:16px;padding:18px 18px 14px;margin:.35rem 0 1rem;background:#fbfdff">
+      <div style="font-size:.78rem;font-weight:800;letter-spacing:.05em;color:#0b4f83;margin-bottom:4px">EJEMPLO · CÓMO DISTRIBUIR LOS PUNTOS</div>
+      <div style="font-size:1.05rem;font-weight:800;margin-bottom:8px">Parte desde la intersección y sigue cada vía por separado</div>
+      <div style="font-size:.92rem;line-height:1.5;color:#425466;margin-bottom:12px">
+        Los puntos <b>P1–P8</b> corresponden a la <b>vía principal</b> y los puntos <b>S1–S8</b> a la <b>vía secundaria</b>.
+        Entre puntos consecutivos camina aproximadamente <b>25–30 pasos normales</b> y registra la cantidad real recorrida; no existe un número fijo de pasos.
+      </div>
+      <div style="overflow-x:auto">
+        <svg viewBox="0 0 860 430" role="img" aria-label="Esquema de una intersección con ocho puntos P sobre la vía principal y ocho puntos S sobre la vía secundaria" style="width:100%;min-width:700px;height:auto;display:block">
+          <defs>
+            <filter id="c3l2-shadow" x="-20%" y="-20%" width="140%" height="140%">
+              <feDropShadow dx="0" dy="2" stdDeviation="2" flood-color="#0f172a" flood-opacity=".14"/>
+            </filter>
+          </defs>
+          <rect x="18" y="20" width="824" height="388" rx="18" fill="#f4f8fb" stroke="#d8e4ec"/>
+          <rect x="36" y="196" width="788" height="82" rx="10" fill="#dfe7ec"/>
+          <rect x="366" y="40" width="110" height="348" rx="10" fill="#e7edf1"/>
+          <line x1="48" y1="237" x2="812" y2="237" stroke="#94a3b8" stroke-width="3" stroke-dasharray="14 12"/>
+          <line x1="421" y1="52" x2="421" y2="376" stroke="#94a3b8" stroke-width="3" stroke-dasharray="14 12"/>
+
+          <rect x="54" y="208" width="150" height="30" rx="15" fill="#ffffff" stroke="#cbd5e1"/>
+          <text x="129" y="228" text-anchor="middle" font-size="15" font-weight="800" fill="#0f4c74">VÍA PRINCIPAL</text>
+          <g transform="translate(449,128) rotate(-90)">
+            <rect x="-79" y="-16" width="158" height="32" rx="16" fill="#ffffff" stroke="#cbd5e1"/>
+            <text x="0" y="5" text-anchor="middle" font-size="15" font-weight="800" fill="#6b3f10">VÍA SECUNDARIA</text>
+          </g>
+
+          <circle cx="421" cy="237" r="23" fill="#ffffff" stroke="#334155" stroke-width="2.5" filter="url(#c3l2-shadow)"/>
+          <text x="421" y="233" text-anchor="middle" font-size="11" font-weight="800" fill="#0f172a">INICIO</text>
+          <text x="421" y="248" text-anchor="middle" font-size="9.5" fill="#475569">intersección</text>
+
+          <line x1="454" y1="174" x2="500" y2="174" stroke="#475569" stroke-width="1.8"/>
+          <polygon points="454,174 463,169 463,179" fill="#475569"/>
+          <polygon points="500,174 491,169 491,179" fill="#475569"/>
+          <text x="477" y="163" text-anchor="middle" font-size="11.5" font-weight="700" fill="#334155">25–30 pasos aprox.</text>
+
+          <g font-family="Arial, sans-serif" font-size="11" font-weight="800" text-anchor="middle">
+            <g fill="#0b78b4" stroke="#ffffff" stroke-width="2">
+              <circle cx="482" cy="190" r="16"/><circle cx="528" cy="190" r="16"/><circle cx="574" cy="190" r="16"/><circle cx="620" cy="190" r="16"/>
+              <circle cx="666" cy="190" r="16"/><circle cx="712" cy="190" r="16"/><circle cx="758" cy="190" r="16"/><circle cx="804" cy="190" r="16"/>
+            </g>
+            <g fill="#ffffff">
+              <text x="482" y="194">P1</text><text x="528" y="194">P2</text><text x="574" y="194">P3</text><text x="620" y="194">P4</text>
+              <text x="666" y="194">P5</text><text x="712" y="194">P6</text><text x="758" y="194">P7</text><text x="804" y="194">P8</text>
+            </g>
+
+            <g fill="#d97706" stroke="#ffffff" stroke-width="2">
+              <circle cx="350" cy="182" r="16"/><circle cx="350" cy="144" r="16"/><circle cx="350" cy="106" r="16"/><circle cx="350" cy="68" r="16"/>
+              <circle cx="492" cy="182" r="16"/><circle cx="492" cy="144" r="16"/><circle cx="492" cy="106" r="16"/><circle cx="492" cy="68" r="16"/>
+            </g>
+            <g fill="#ffffff">
+              <text x="350" y="186">S1</text><text x="350" y="148">S2</text><text x="350" y="110">S3</text><text x="350" y="72">S4</text>
+              <text x="492" y="186">S5</text><text x="492" y="148">S6</text><text x="492" y="110">S7</text><text x="492" y="72">S8</text>
+            </g>
+          </g>
+
+          <g font-family="Arial, sans-serif" fill="#334155">
+            <rect x="62" y="314" width="324" height="68" rx="12" fill="#ffffff" stroke="#dbe5ec"/>
+            <circle cx="88" cy="338" r="8" fill="#0b78b4"/>
+            <text x="105" y="343" font-size="13" font-weight="800">P1–P8 · vía principal</text>
+            <text x="88" y="365" font-size="11.5">Registra Leq, Lmax, hora, observación y pasos reales.</text>
+
+            <rect x="474" y="314" width="324" height="68" rx="12" fill="#ffffff" stroke="#dbe5ec"/>
+            <circle cx="500" cy="338" r="8" fill="#d97706"/>
+            <text x="517" y="343" font-size="13" font-weight="800">S1–S8 · vía secundaria</text>
+            <text x="500" y="365" font-size="11.5">Repite la misma lógica sobre la segunda vía.</text>
+          </g>
+        </svg>
+      </div>
+      <div style="margin-top:10px;padding:10px 12px;border-radius:10px;background:#eef7fb;color:#23435a;font-size:.88rem;line-height:1.45">
+        <b>Ejemplo de un registro:</b> P1 · 28 pasos · Leq 68,4 dB(A) · Lmax 76,2 dB(A) · 10:32 · “tránsito vehicular continuo”.
+        El valor de pasos es solo un ejemplo: debes ingresar lo que efectivamente recorriste.
+      </div>
+    </div>
+    """,unsafe_allow_html=True)
+
     previous=data.get("measurements") if isinstance(data.get("measurements"),list) and len(data.get("measurements"))==16 else None
     if previous:
         measurement_df=pd.DataFrame(previous)
+        legacy_steps=(
+            "Pasos desde punto anterior" in measurement_df.columns
+            and len(measurement_df)==16
+            and all(v==27 for v in measurement_df["Pasos desde punto anterior"].tolist())
+            and all(pd.isna(v) for v in measurement_df.get("Leq [dB(A)]",pd.Series([None]*16)).tolist())
+            and all(pd.isna(v) for v in measurement_df.get("Lmax [dB(A)]",pd.Series([None]*16)).tolist())
+        )
+        if legacy_steps:
+            measurement_df["Pasos desde punto anterior"]=None
     else:
         rows=[]
         for route,prefix in [("Vía principal","P"),("Vía secundaria","S")]:
@@ -32374,7 +32461,7 @@ def _c3l2_stage10(lab,saved):
                 rows.append({
                     "Punto":f"{prefix}{n}",
                     "Vía":route,
-                    "Pasos desde punto anterior":27,
+                    "Pasos desde punto anterior":None,
                     "Leq [dB(A)]":None,
                     "Lmax [dB(A)]":None,
                     "Hora":"",
