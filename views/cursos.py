@@ -32222,7 +32222,7 @@ def _c3l2_stage10(lab,saved):
     _c3l2_header(
         10,
         "Evaluación oficial · mediciones de ruido de tráfico vehicular",
-        "Realizar una campaña en una intersección vial, registrar 16 mediciones y construir un mapa vial defendible.",
+        "Realizar una campaña en una intersección vial, registrar 18 mediciones y construir un mapa vial defendible.",
         60,
     )
     role=_c3l2_role()
@@ -32230,7 +32230,7 @@ def _c3l2_stage10(lab,saved):
     rubric=pd.DataFrame([
         ("Lugar, croquis y evidencias",8,"Identifica claramente la intersección, describe el entorno y aporta enlaces de ubicación/evidencias."),
         ("Metodología y estabilización",10,"Explica procedimiento, Leq/Lmax, aplicación del criterio de estabilización de 2 dB y condiciones de medición."),
-        ("Registro completo de mediciones",12,"8 puntos en vía principal + 8 en vía secundaria, con Leq, Lmax, hora y observaciones trazables."),
+        ("Registro completo de mediciones",12,"9 puntos en vía principal + 9 en vía secundaria, con Leq, Lmax, hora y observaciones trazables."),
         ("Separación y diseño de campaña",8,"Los puntos siguen el criterio de 25–30 pasos desde la intersección y la red representa ambas vías."),
         ("Mapa vial de ruido",10,"Representa los resultados por intervalos de 3 o 5 dB, con lectura clara y coherente con los datos."),
         ("Análisis y conclusión",12,"Interpreta tendencias, diferencias entre vías, Leq/Lmax, limitaciones y alcance sin sobreafirmar."),
@@ -32242,14 +32242,14 @@ def _c3l2_stage10(lab,saved):
           <div class="c3l2-k">PAUTA DOCENTE · 60 PUNTOS</div>
           <div class="c3l2-title">Tarea integradora · ruido de tráfico vehicular</div>
           La plataforma reemplaza el reporte escrito por una entrega estructurada: antecedentes, metodología,
-          16 registros de medición, mapa vial automático, análisis y conclusión.
+          18 registros de medición, mapa vial automático, análisis y conclusión.
         </div>
         """,unsafe_allow_html=True)
         st.dataframe(rubric,hide_index=True,use_container_width=True)
         st.markdown("""
         **Condiciones centrales del encargo**
         - Intersección entre una vía principal y una vía secundaria.
-        - 8 puntos por cada vía.
+        - 9 puntos por cada vía.
         - Separación aproximada de 25 a 30 pasos normales entre registros.
         - Registro de Leq y Lmax.
         - Aplicación documentada del criterio de estabilización de 2 dB.
@@ -32277,7 +32277,7 @@ def _c3l2_stage10(lab,saved):
         st.write(f"**Aplicación utilizada:** {payload.get('app_name') or '—'}")
         st.write(f"**Intervalo del mapa:** {payload.get('map_interval') or '—'} dB")
         rows=payload.get("measurements") or []
-        st.write(f"**Registros entregados:** {len(rows)}/16")
+        st.write(f"**Registros entregados:** {len(rows)}/18")
         if rows:
             st.dataframe(pd.DataFrame(rows),hide_index=True,use_container_width=True)
         st.write(f"**Metodología:** {payload.get('methodology') or '—'}")
@@ -32379,17 +32379,17 @@ def _c3l2_stage10(lab,saved):
         placeholder="Incluye posición del teléfono, secuencia de puntos, duración aproximada, lectura de Leq/Lmax y criterio usado para considerar estable el registro."
     )
 
-    st.markdown("### 3. Registra los 16 puntos")
+    st.markdown("### 3. Registra los 18 puntos")
 
     components.html("""
 <div style="font-family:Arial,sans-serif;color:#243447;border:1px solid #dbe5ec;border-radius:16px;padding:18px 18px 14px;background:#fbfdff;box-sizing:border-box">
   <div style="font-size:12px;font-weight:800;letter-spacing:.05em;color:#0b4f83;margin-bottom:4px">EJEMPLO · CÓMO DISTRIBUIR LOS PUNTOS</div>
   <div style="font-size:17px;font-weight:800;margin-bottom:8px">Parte desde la intersección y sigue cada vía por separado</div>
   <div style="font-size:14px;line-height:1.5;color:#425466;margin-bottom:12px">
-    Los puntos <b>P1–P8</b> corresponden a la <b>vía principal</b> y los puntos <b>S1–S8</b> a la <b>vía secundaria</b>.
+    Los puntos <b>P1–P9</b> corresponden a la <b>vía principal</b> y los puntos <b>S1–S9</b> a la <b>vía secundaria</b>. Todos los puntos de una misma vía se representan sobre <b>un único eje longitudinal</b>.
     Entre puntos consecutivos camina aproximadamente <b>25–30 pasos normales</b> y registra la cantidad real recorrida.
   </div>
-  <svg viewBox="0 0 860 430" role="img" aria-label="Esquema de una intersección con ocho puntos P sobre la vía principal y ocho puntos S sobre la vía secundaria" style="width:100%;height:auto;display:block">
+  <svg viewBox="0 0 860 430" role="img" aria-label="Esquema de una intersección con nueve puntos P sobre la vía principal y nueve puntos S sobre la vía secundaria, todos alineados sobre el eje de cada vía" style="width:100%;height:auto;display:block">
     <defs>
       <filter id="c3l2-shadow-fix" x="-20%" y="-20%" width="140%" height="140%">
         <feDropShadow dx="0" dy="2" stdDeviation="2" flood-color="#0f172a" flood-opacity=".14"/>
@@ -32413,33 +32413,37 @@ def _c3l2_stage10(lab,saved):
     <polygon points="454,174 463,169 463,179" fill="#475569"/>
     <polygon points="500,174 491,169 491,179" fill="#475569"/>
     <text x="477" y="163" text-anchor="middle" font-size="11.5" font-weight="700" fill="#334155">25–30 pasos aprox.</text>
-    <g font-family="Arial,sans-serif" font-size="11" font-weight="800" text-anchor="middle">
+    <g font-family="Arial,sans-serif" font-size="10.5" font-weight="800" text-anchor="middle">
       <g fill="#0b78b4" stroke="#ffffff" stroke-width="2">
-        <circle cx="482" cy="190" r="16"/><circle cx="528" cy="190" r="16"/><circle cx="574" cy="190" r="16"/><circle cx="620" cy="190" r="16"/>
-        <circle cx="666" cy="190" r="16"/><circle cx="712" cy="190" r="16"/><circle cx="758" cy="190" r="16"/><circle cx="804" cy="190" r="16"/>
+        <circle cx="474" cy="190" r="15"/><circle cx="515" cy="190" r="15"/><circle cx="556" cy="190" r="15"/>
+        <circle cx="597" cy="190" r="15"/><circle cx="638" cy="190" r="15"/><circle cx="679" cy="190" r="15"/>
+        <circle cx="720" cy="190" r="15"/><circle cx="761" cy="190" r="15"/><circle cx="802" cy="190" r="15"/>
       </g>
       <g fill="#ffffff">
-        <text x="482" y="194">P1</text><text x="528" y="194">P2</text><text x="574" y="194">P3</text><text x="620" y="194">P4</text>
-        <text x="666" y="194">P5</text><text x="712" y="194">P6</text><text x="758" y="194">P7</text><text x="804" y="194">P8</text>
+        <text x="474" y="194">P1</text><text x="515" y="194">P2</text><text x="556" y="194">P3</text>
+        <text x="597" y="194">P4</text><text x="638" y="194">P5</text><text x="679" y="194">P6</text>
+        <text x="720" y="194">P7</text><text x="761" y="194">P8</text><text x="802" y="194">P9</text>
       </g>
       <g fill="#d97706" stroke="#ffffff" stroke-width="2">
-        <circle cx="350" cy="182" r="16"/><circle cx="350" cy="144" r="16"/><circle cx="350" cy="106" r="16"/><circle cx="350" cy="68" r="16"/>
-        <circle cx="492" cy="182" r="16"/><circle cx="492" cy="144" r="16"/><circle cx="492" cy="106" r="16"/><circle cx="492" cy="68" r="16"/>
+        <circle cx="350" cy="182" r="15"/><circle cx="350" cy="166" r="15"/><circle cx="350" cy="150" r="15"/>
+        <circle cx="350" cy="134" r="15"/><circle cx="350" cy="118" r="15"/><circle cx="350" cy="102" r="15"/>
+        <circle cx="350" cy="86" r="15"/><circle cx="350" cy="70" r="15"/><circle cx="350" cy="54" r="15"/>
       </g>
       <g fill="#ffffff">
-        <text x="350" y="186">S1</text><text x="350" y="148">S2</text><text x="350" y="110">S3</text><text x="350" y="72">S4</text>
-        <text x="492" y="186">S5</text><text x="492" y="148">S6</text><text x="492" y="110">S7</text><text x="492" y="72">S8</text>
+        <text x="350" y="186">S1</text><text x="350" y="170">S2</text><text x="350" y="154">S3</text>
+        <text x="350" y="138">S4</text><text x="350" y="122">S5</text><text x="350" y="106">S6</text>
+        <text x="350" y="90">S7</text><text x="350" y="74">S8</text><text x="350" y="58">S9</text>
       </g>
     </g>
     <g font-family="Arial,sans-serif" fill="#334155">
       <rect x="62" y="314" width="324" height="68" rx="12" fill="#ffffff" stroke="#dbe5ec"/>
       <circle cx="88" cy="338" r="8" fill="#0b78b4"/>
-      <text x="105" y="343" font-size="13" font-weight="800">P1–P8 · vía principal</text>
+      <text x="105" y="343" font-size="13" font-weight="800">P1–P9 · vía principal</text>
       <text x="88" y="365" font-size="11.5">Registra Leq, Lmax, hora, observación y pasos reales.</text>
       <rect x="474" y="314" width="324" height="68" rx="12" fill="#ffffff" stroke="#dbe5ec"/>
       <circle cx="500" cy="338" r="8" fill="#d97706"/>
-      <text x="517" y="343" font-size="13" font-weight="800">S1–S8 · vía secundaria</text>
-      <text x="500" y="365" font-size="11.5">Repite la misma lógica sobre la segunda vía.</text>
+      <text x="517" y="343" font-size="13" font-weight="800">S1–S9 · vía secundaria</text>
+      <text x="500" y="365" font-size="11.5">Los 9 puntos se mantienen sobre la misma línea de la vía; no se ubican enfrentados en ambas veredas.</text>
     </g>
   </svg>
   <div style="margin-top:10px;padding:10px 12px;border-radius:10px;background:#eef7fb;color:#23435a;font-size:13px;line-height:1.45">
@@ -32449,15 +32453,15 @@ def _c3l2_stage10(lab,saved):
 </div>
 """, height=610, scrolling=False)
 
-    previous=data.get("measurements") if isinstance(data.get("measurements"),list) and len(data.get("measurements"))==16 else None
+    previous=data.get("measurements") if isinstance(data.get("measurements"),list) and len(data.get("measurements"))==18 else None
     if previous:
         measurement_df=pd.DataFrame(previous)
         legacy_steps=(
             "Pasos desde punto anterior" in measurement_df.columns
-            and len(measurement_df)==16
+            and len(measurement_df)==18
             and all(v==27 for v in measurement_df["Pasos desde punto anterior"].tolist())
-            and all(pd.isna(v) for v in measurement_df.get("Leq [dB(A)]",pd.Series([None]*16)).tolist())
-            and all(pd.isna(v) for v in measurement_df.get("Lmax [dB(A)]",pd.Series([None]*16)).tolist())
+            and all(pd.isna(v) for v in measurement_df.get("Leq [dB(A)]",pd.Series([None]*18)).tolist())
+            and all(pd.isna(v) for v in measurement_df.get("Lmax [dB(A)]",pd.Series([None]*18)).tolist())
         )
         if legacy_steps:
             measurement_df["Pasos desde punto anterior"]=None
@@ -32468,7 +32472,7 @@ def _c3l2_stage10(lab,saved):
     else:
         rows=[]
         for route,prefix in [("Vía principal","P"),("Vía secundaria","S")]:
-            for n in range(1,9):
+            for n in range(1,10):
                 rows.append({
                     "Punto":f"{prefix}{n}",
                     "Vía":route,
@@ -32536,9 +32540,9 @@ def _c3l2_stage10(lab,saved):
         and not (abs(float(r.get("Latitud")))<1e-9 and abs(float(r.get("Longitud")))<1e-9)
     ]
     q1,q2,q3,q4=st.columns(4)
-    q1.metric("Registros completos",f"{len(complete)}/16")
-    q2.metric("Separaciones 25–30 pasos",f"{spacing_ok}/16")
-    q3.metric("Coordenadas GPS",f"{len(geocoded)}/16")
+    q1.metric("Registros completos",f"{len(complete)}/18")
+    q2.metric("Separaciones 25–30 pasos",f"{spacing_ok}/18")
+    q3.metric("Coordenadas GPS",f"{len(geocoded)}/18")
     q4.metric("Cobertura","2 vías" if len({r.get("Vía") for r in complete})==2 else "Incompleta")
 
     st.markdown("### 4. Mapa vial georreferenciado automático")
@@ -32762,9 +32766,9 @@ def _c3l2_stage10(lab,saved):
         ("Lugar identificado",bool(principal.strip() and secondary.strip() and sector.strip())),
         ("Evidencias enlazadas",bool(maps_url.strip() and evidence_url.strip())),
         ("Metodología desarrollada",len(methodology.strip())>=100),
-        ("16 registros Leq/Lmax completos",len(complete)==16),
-        ("16 separaciones entre 25 y 30 pasos",spacing_ok==16),
-        ("16 puntos con coordenadas GPS",len(geocoded)==16),
+        ("18 registros Leq/Lmax completos",len(complete)==18),
+        ("18 separaciones entre 25 y 30 pasos",spacing_ok==18),
+        ("18 puntos con coordenadas GPS",len(geocoded)==18),
         ("Centro de la intersección georreferenciado",center_ok),
         ("Análisis desarrollado",len(analysis.strip())>=150),
         ("Limitaciones desarrolladas",len(limitations.strip())>=80),
