@@ -31338,11 +31338,13 @@ def _c3l2_stage7(lab,saved):
         #s7noise .metric strong{display:block;font-size:22px;color:#153f5b;margin-top:2px}
         #s7noise .env{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:10px}
         #s7noise .check{display:flex;align-items:center;gap:7px;font-size:12px;font-weight:800;color:#466171}
-        #s7noise .legend{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:5px;padding:9px 10px;border-top:1px solid #e1eaf0;background:#fff}
-        #s7noise .leg{font-size:9px;text-align:center;color:#405868}
-        #s7noise .sw{height:10px;border-radius:3px;margin-bottom:2px;border:1px solid rgba(0,0,0,.08)}
+        #s7noise .maparea{display:grid;grid-template-columns:minmax(0,1fr) 82px;align-items:stretch}
+        #s7noise .legend{display:flex;flex-direction:column;gap:0;padding:8px 7px;border-left:1px solid #e1eaf0;background:#fff}
+        #s7noise .legend-title{font-size:10px;font-weight:900;text-align:center;color:#29485d;margin:0 0 5px}
+        #s7noise .leg{display:grid;grid-template-columns:28px 1fr;align-items:center;gap:5px;min-height:39px;font-size:9px;color:#405868}
+        #s7noise .sw{height:30px;border-radius:2px;border:1px solid rgba(0,0,0,.10)}
         #s7noise .foot{font-size:11px;color:#657885;line-height:1.42;margin-top:8px}
-        @media(max-width:760px){#s7noise .wrap{grid-template-columns:1fr}#s7noise .legend{grid-template-columns:repeat(4,minmax(0,1fr))}}
+        @media(max-width:760px){#s7noise .wrap{grid-template-columns:1fr}#s7noise .maparea{grid-template-columns:minmax(0,1fr) 68px}#s7noise .leg{grid-template-columns:22px 1fr;font-size:8px;min-height:36px}#s7noise .sw{height:27px}}
       </style>
 
       <div class="wrap">
@@ -31353,8 +31355,10 @@ def _c3l2_stage7(lab,saved):
             <button id="selR" type="button">R1 · Receptor</button>
             <span class="tag" style="margin-left:auto">Arrastra el objeto sobre el plano</span>
           </div>
-          <canvas id="map" width="900" height="540" aria-label="Mapa acústico interactivo"></canvas>
-          <div class="legend" id="legend"></div>
+          <div class="maparea">
+            <canvas id="map" width="900" height="540" aria-label="Mapa acústico interactivo"></canvas>
+            <div class="legend"><div class="legend-title">dB(A)</div><div id="legend"></div></div>
+          </div>
         </div>
 
         <div class="side">
@@ -31376,6 +31380,10 @@ def _c3l2_stage7(lab,saved):
             <div class="metric">
               <small>Nivel calculado en R1</small>
               <strong id="rLevel">— dB</strong>
+            </div>
+            <div class="metric">
+              <small>Distancia horizontal F1–R1</small>
+              <strong id="frDistance">— m</strong>
             </div>
 
             <div style="margin-top:14px;border-top:1px solid #e7eef3;padding-top:10px">
@@ -31427,7 +31435,7 @@ def _c3l2_stage7(lab,saved):
           {max:999,label:'>85',c:'#000000'}
         ];
         const legend=root.querySelector('#legend');
-        legend.innerHTML=bands.map(b=>'<div class="leg"><div class="sw" style="background:'+b.c+'"></div>'+b.label+'</div>').join('');
+        legend.innerHTML=bands.slice().reverse().map(b=>'<div class="leg"><div class="sw" style="background:'+b.c+'"></div><span>'+b.label+'</span></div>').join('');
 
         const toPx=(x,y)=>[
           (x-world.xmin)/(world.xmax-world.xmin)*W,
@@ -31496,17 +31504,39 @@ def _c3l2_stage7(lab,saved):
           }
 
           const [sx,sy]=toPx(state.source.x,state.source.y);
+          const [rx,ry]=toPx(state.receiver.x,state.receiver.y);
+          const horizontalDistance=Math.hypot(state.receiver.x-state.source.x,state.receiver.y-state.source.y);
+
+          // Cota permanente F1–R1
+          ctx.save();
+          ctx.strokeStyle='rgba(23,50,74,.78)';
+          ctx.lineWidth=2;
+          ctx.setLineDash([8,6]);
+          ctx.beginPath();ctx.moveTo(sx,sy);ctx.lineTo(rx,ry);ctx.stroke();
+          ctx.setLineDash([]);
+          const mx=(sx+rx)/2,my=(sy+ry)/2;
+          const label='d = '+horizontalDistance.toFixed(1)+' m';
+          ctx.font='800 12px system-ui';
+          const tw=ctx.measureText(label).width;
+          ctx.fillStyle='rgba(255,255,255,.92)';
+          ctx.fillRect(mx-tw/2-6,my-18,tw+12,20);
+          ctx.fillStyle='#17324a';
+          ctx.fillText(label,mx-tw/2,my-4);
+          ctx.restore();
+
           ctx.beginPath();ctx.arc(sx,sy,11,0,Math.PI*2);
           ctx.fillStyle='#ffffff';ctx.fill();ctx.lineWidth=4;ctx.strokeStyle=state.selected==='F'?'#0b7aaa':'#213b4d';ctx.stroke();
-          ctx.fillStyle='#17324a';ctx.font='900 13px system-ui';ctx.fillText('F1',sx+15,sy-12);
+          ctx.fillStyle='#17324a';ctx.font='900 13px system-ui';
+          ctx.fillText('F1 · ('+state.source.x.toFixed(0)+', '+state.source.y.toFixed(0)+') m',sx+15,sy-12);
 
-          const [rx,ry]=toPx(state.receiver.x,state.receiver.y);
           ctx.save();ctx.translate(rx,ry);ctx.rotate(Math.PI/4);
           ctx.fillStyle='#fff';ctx.strokeStyle=state.selected==='R'?'#0b7aaa':'#213b4d';ctx.lineWidth=4;
           ctx.fillRect(-8,-8,16,16);ctx.strokeRect(-8,-8,16,16);ctx.restore();
           const rL=levelAt(state.receiver.x,state.receiver.y,true);
-          ctx.fillStyle='#17324a';ctx.font='900 13px system-ui';ctx.fillText('R1 · '+rL.toFixed(1)+' dB',rx+15,ry-12);
+          ctx.fillStyle='#17324a';ctx.font='900 13px system-ui';
+          ctx.fillText('R1 · '+rL.toFixed(1)+' dB · ('+state.receiver.x.toFixed(0)+', '+state.receiver.y.toFixed(0)+') m',rx+15,ry-12);
           root.querySelector('#rLevel').textContent=rL.toFixed(1)+' dB';
+          root.querySelector('#frDistance').textContent=horizontalDistance.toFixed(1)+' m';
         }
 
         let raf=0;
@@ -31576,9 +31606,9 @@ def _c3l2_stage7(lab,saved):
     components.html(_s7_interactive_html,height=820,scrolling=False)
 
     st.caption(
-        "La paleta utiliza las bandas cromáticas clásicas de ISO 1996-2:1987: verde para niveles bajos, "
-        "amarillo/ocre/naranjo en niveles intermedios, rojo/carmín en niveles altos y azul en los superiores. "
-        "La edición posterior de ISO 1996-2 ya no mantuvo esta definición cromática."
+        "La escala cromática queda en formato vertical, como en la representación clásica de mapas de ruido. "
+        "Al mover F1 cambia todo el campo acústico; al mover R1 no cambia la fuente ni el campo, sino el nivel "
+        "que el receptor lee en su nueva posición. La distancia F1–R1 permanece indicada sobre el plano."
     )
 
     st.markdown(
