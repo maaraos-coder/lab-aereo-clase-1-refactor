@@ -30404,60 +30404,415 @@ def _c3l2_stage5(lab,saved):
             )
 
 
+def _c3l2_idw_surface(points, X, Y, power=2.0):
+    """Superficie IDW para una lista de tuplas (x, y, z)."""
+    pts=np.asarray(points,dtype=float)
+    if pts.ndim!=2 or pts.shape[0]<1 or pts.shape[1]<3:
+        return np.full_like(X,np.nan,dtype=float)
+    dx=X[...,None]-pts[:,0]
+    dy=Y[...,None]-pts[:,1]
+    dist=np.sqrt(dx*dx+dy*dy)
+    exact=dist<1e-9
+    weights=1.0/np.maximum(dist,1e-9)**float(power)
+    Z=np.sum(weights*pts[:,2],axis=-1)/np.sum(weights,axis=-1)
+    if np.any(exact):
+        exact_any=np.any(exact,axis=-1)
+        exact_idx=np.argmax(exact,axis=-1)
+        Z=np.where(exact_any,pts[exact_idx,2],Z)
+    return Z
+
+
 def _c3l2_stage6(lab,saved):
-    _c3l2_header(6,"Mapas de ruido a partir de mediciones","Comprender cómo la distribución y calidad de los puntos condicionan una superficie interpolada.",30)
+    _c3l2_header(
+        6,
+        "Cómo construir un mapa de ruido a partir de mediciones",
+        "Aprender el flujo completo desde el diseño de la campaña hasta la interpolación, validación e interpretación de la superficie resultante.",
+        30,
+    )
 
     st.markdown("""
     <div class="c3l2-intro">
-      <div class="c3l2-k">PUNTOS MEDIDOS → SUPERFICIE ESTIMADA</div>
-      <div class="c3l2-title">El mapa no crea información nueva: organiza y estima espacialmente la información disponible.</div>
-      Si los puntos están mal distribuidos, la interpolación puede verse suave y convincente, pero seguir siendo poco representativa.
+      <div class="c3l2-k">CAMPAÑA → DATOS → INTERPOLACIÓN → MAPA</div>
+      <div class="c3l2-title">Un mapa por mediciones no se obtiene simplemente “pintando entre puntos”.</div>
+      Primero se define <b>qué descriptor se quiere representar</b>, luego se diseña una red de puntos,
+      se mide con un protocolo comparable, se revisan los datos y recién después se estima lo que ocurre
+      entre las ubicaciones instrumentadas. El mapa final debe distinguir siempre <b>medición directa</b>
+      de <b>estimación espacial</b>.
     </div>
     """,unsafe_allow_html=True)
 
+    st.markdown("### 1. Define exactamente qué quieres mapear")
+    st.markdown("""
+    Antes de salir a terreno debe existir una pregunta concreta. No es suficiente decir
+    “haré un mapa de ruido”. Hay que definir al menos:
+
+    - **Descriptor acústico:** por ejemplo LAeq,T, Lmax u otro indicador compatible con el objetivo.
+    - **Periodo representado:** horario, duración y condición operacional o de tránsito.
+    - **Área de estudio y escala espacial:** barrio, recinto, corredor vial, plaza, etc.
+    - **Protocolo común:** altura del micrófono, ubicación respecto de fachadas o vías, duración,
+      condiciones meteorológicas y registro de eventos.
+    - **Sistema de coordenadas:** cada medición debe quedar georreferenciada para poder ubicarla correctamente en el SIG.
+    """)
+    st.markdown(
+        '<div class="c3l2-note"><b>Regla de comparabilidad:</b> no conviene construir una sola '
+        'superficie mezclando puntos que representan periodos o condiciones operacionalmente incompatibles. '
+        'La interpolación no corrige una campaña mal diseñada.</div>',
+        unsafe_allow_html=True,
+    )
+
+    st.markdown("### 2. Diseña la red de medición antes de interpolar")
     candidates=[
-        (10,15,68),(30,15,66),(50,15,64),(70,15,63),(90,15,62),
-        (10,45,63),(30,45,61),(50,45,59),(70,45,57),(90,45,56),
-        (10,75,59),(30,75,57),(50,75,55),(70,75,54),(90,75,53),
+        (10,15,70),(30,15,69),(50,15,68),(70,15,70),(90,15,72),
+        (10,45,64),(30,45,63),(50,45,61),(70,45,64),(90,45,66),
+        (10,75,58),(30,75,57),(50,75,56),(70,75,58),(90,75,60),
     ]
-    design=st.segmented_control("Red de medición",["6 puntos concentrados","10 puntos distribuidos","15 puntos distribuidos"],default="10 puntos distribuidos",key="c3l2_s6_design")
+    design=st.segmented_control(
+        "Compara tres diseños de campaña",
+        ["6 puntos concentrados","10 puntos distribuidos","15 puntos distribuidos"],
+        default="10 puntos distribuidos",
+        key="c3l2_s6_design",
+    )
     if design=="6 puntos concentrados":
         idxs=[0,1,2,5,6,7]
+        coverage_label="Deficiente · sector izquierdo sobrerrepresentado"
     elif design=="10 puntos distribuidos":
         idxs=[0,2,4,5,7,9,10,12,14,8]
+        coverage_label="Buena · cobertura del gradiente y extremos"
     else:
         idxs=list(range(15))
+        coverage_label="Muy buena · malla más densa y homogénea"
     pts=[candidates[i] for i in idxs]
 
-    xx=np.linspace(0,100,60); yy=np.linspace(0,90,54)
-    X,Y=np.meshgrid(xx,yy); Z=_c3l2_idw_surface(pts,X,Y)
-    fig=go.Figure()
-    fig.add_trace(go.Contour(x=xx,y=yy,z=Z,contours=dict(showlabels=True),colorbar=dict(title="dB(A)"),name="Interpolación"))
-    fig.add_trace(go.Scatter(x=[p[0] for p in pts],y=[p[1] for p in pts],mode="markers+text",text=[f"M{i+1}<br>{p[2]} dB" for i,p in enumerate(pts)],textposition="top center",marker=dict(size=10),name="Puntos medidos"))
-    fig.update_layout(height=480,xaxis_title="Coordenada local X [m]",yaxis_title="Coordenada local Y [m]",margin=dict(l=20,r=20,t=25,b=20))
-    st.plotly_chart(fig,use_container_width=True)
-    st.caption("Ejemplo didáctico con interpolación IDW. Los marcadores son datos medidos; la superficie coloreada es una estimación entre ellos.")
+    point_fig=go.Figure()
+    point_fig.add_trace(go.Scatter(
+        x=[p[0] for p in pts],
+        y=[p[1] for p in pts],
+        mode="markers+text",
+        text=[f"M{i+1}<br>{p[2]} dB(A)" for i,p in enumerate(pts)],
+        textposition="top center",
+        marker=dict(size=13),
+        name="Puntos medidos",
+    ))
+    point_fig.add_shape(type="line",x0=0,y0=8,x1=100,y1=8,line=dict(width=8))
+    point_fig.add_annotation(x=50,y=4,text="Avenida principal",showarrow=False)
+    point_fig.add_shape(type="line",x0=96,y0=0,x1=96,y1=90,line=dict(width=5))
+    point_fig.add_annotation(x=94,y=62,text="Vía secundaria",textangle=-90,showarrow=False)
+    point_fig.update_layout(
+        height=430,
+        xaxis_title="Coordenada local X [m]",
+        yaxis_title="Coordenada local Y [m]",
+        xaxis=dict(range=[0,102]),
+        yaxis=dict(range=[0,92]),
+        margin=dict(l=20,r=20,t=20,b=20),
+        showlegend=False,
+    )
+    st.plotly_chart(point_fig,use_container_width=True,key="c3l2_s6_points_only")
 
-    a,b,c3=st.columns(3)
-    a.metric("Puntos medidos",len(pts))
-    b.metric("Cobertura","Concentrada" if design.startswith("6") else "Distribuida")
-    c3.metric("Método","IDW didáctico")
+    m1,m2,m3=st.columns(3)
+    m1.metric("Puntos medidos",len(pts))
+    m2.metric("Rango observado",f"{max(p[2] for p in pts)-min(p[2] for p in pts):.0f} dB")
+    m3.metric("Cobertura","Concentrada" if design.startswith("6") else "Distribuida")
+    st.caption(coverage_label)
 
-    st.markdown("### Control de calidad antes de interpolar")
-    anomaly=st.radio("M8 registró 76 dB(A), pero durante la medición pasó una ambulancia con sirena. ¿Qué harías antes de usar ese valor?",[
-        "Interpolarlo directamente porque es un dato real",
-        "Revisar el registro, el objetivo de la campaña y decidir documentadamente si repetir, excluir o tratar el evento",
-        "Reemplazarlo por el promedio de los demás sin dejar constancia",
-    ],index=None,key="c3l2_s6_anomaly")
-    interpretation=st.text_area("Explica por qué una zona alejada de los puntos medidos tiene mayor incertidumbre espacial.",height=90,key="c3l2_s6_interp")
-    if _c3l2_role()=="Alumno" and st.button("Guardar Etapa 6",type="primary",use_container_width=True,key="c3l2_s6_save"):
-        correct="Revisar el registro, el objetivo de la campaña y decidir documentadamente si repetir, excluir o tratar el evento"
-        if anomaly!=correct or len(interpretation.strip())<35:
-            st.warning("La interpolación debe venir después del control de calidad y de una red espacial representativa.")
+    st.markdown("""
+    La distribución importa tanto como la cantidad. Una campaña puede tener muchos puntos y, aun así,
+    representar mal el territorio si todos quedan agrupados en un mismo sector. En una red útil deben
+    capturarse **gradientes esperados**, cambios de uso de suelo, proximidad a fuentes y sectores
+    potencialmente silenciosos, evitando dejar grandes zonas sin apoyo de medición.
+    """)
+
+    st.markdown("### 3. Construye una tabla trazable de terreno")
+    table=pd.DataFrame([
+        {
+            "Punto":f"M{i+1}",
+            "X [m]":p[0],
+            "Y [m]":p[1],
+            "LAeq,T [dB(A)]":p[2],
+            "Hora":"18:00–19:00",
+            "Duración":"5 min",
+            "Condición":"Tránsito habitual",
+        }
+        for i,p in enumerate(pts)
+    ])
+    st.dataframe(table,hide_index=True,use_container_width=True)
+    st.caption(
+        "En una campaña real se agregarían, según el objetivo, fecha, coordenadas geográficas, altura del micrófono, "
+        "equipo, calibración, meteorología, flujo/operación, fotografías y observaciones de eventos."
+    )
+
+    st.markdown("### 4. Control de calidad: interpolar viene después")
+    anomaly=st.radio(
+        "Durante M8 pasó una ambulancia con sirena y el registro quedó 12 dB por sobre el patrón del sector. ¿Qué corresponde hacer?",
+        [
+            "Usarlo automáticamente porque todo dato medido debe interpolarse",
+            "Revisar el objetivo y la bitácora; decidir documentadamente si repetir, conservar o excluir el registro",
+            "Reemplazarlo por el promedio de los vecinos sin dejar constancia",
+        ],
+        index=None,
+        key="c3l2_s6_anomaly",
+    )
+    st.markdown("""
+    Un valor extremo **no se elimina solo porque sea alto**. Primero hay que saber si ese evento forma parte del
+    fenómeno que se pretende representar. Si el objetivo es caracterizar una condición habitual y la sirena es un
+    evento ajeno al escenario, puede justificarse repetir o excluir ese registro. Si el objetivo incluye esos eventos,
+    el dato puede ser perfectamente válido. La decisión debe quedar documentada.
+    """)
+
+    st.markdown("### 5. ¿Qué significa interpolar?")
+    st.markdown("""
+    Los puntos de medición son discretos. Para obtener una superficie continua se estima un valor en las posiciones
+    donde **no hubo un sonómetro**. Esa operación es la **interpolación espacial**.
+
+    En esta etapa usaremos **IDW — Inverse Distance Weighting** porque permite ver con claridad el mecanismo:
+    los puntos cercanos pesan más que los lejanos.
+    """)
+    st.latex(r"\hat L(x_0)=\frac{\sum_{i=1}^{n} w_i L_i}{\sum_{i=1}^{n} w_i}")
+    st.latex(r"w_i=\frac{1}{d_i^{p}}")
+    st.markdown("""
+    - **Lᵢ:** valor del descriptor medido en el punto i.
+    - **dᵢ:** distancia entre el punto i y la celda que se desea estimar.
+    - **p:** potencia de IDW. Al aumentar p, los vecinos más próximos dominan más el resultado.
+    - **L̂(x₀):** valor espacial estimado para esa celda; **no es una nueva medición**.
+    """)
+
+    power=st.slider(
+        "Potencia IDW · p",
+        min_value=1.0,
+        max_value=3.0,
+        value=2.0,
+        step=0.25,
+        key="c3l2_s6_power",
+        help="Valores mayores hacen que la influencia caiga más rápido con la distancia.",
+    )
+    st.caption(
+        "IDW es un método determinista y no incorpora por sí mismo un modelo físico de propagación acústica. "
+        "Su utilidad depende de la densidad, geometría y representatividad de los puntos."
+    )
+
+    st.markdown("### 6. De los puntos a la superficie continua")
+    xx=np.linspace(0,100,81)
+    yy=np.linspace(0,90,73)
+    X,Y=np.meshgrid(xx,yy)
+    Z=_c3l2_idw_surface(pts,X,Y,power=power)
+
+    map_fig=go.Figure()
+    map_fig.add_trace(go.Contour(
+        x=xx,y=yy,z=Z,
+        contours=dict(start=54,end=74,size=2,showlabels=True),
+        colorbar=dict(title="LAeq,T<br>dB(A)"),
+        name="Superficie IDW",
+        hovertemplate="X=%{x:.1f} m<br>Y=%{y:.1f} m<br>Estimado=%{z:.1f} dB(A)<extra></extra>",
+    ))
+    map_fig.add_trace(go.Scatter(
+        x=[p[0] for p in pts],
+        y=[p[1] for p in pts],
+        mode="markers+text",
+        text=[f"M{i+1} · {p[2]} dB" for i,p in enumerate(pts)],
+        textposition="top center",
+        marker=dict(size=11,line=dict(width=1)),
+        name="Mediciones",
+        hovertemplate="Punto medido<br>%{text}<extra></extra>",
+    ))
+    map_fig.update_layout(
+        height=520,
+        xaxis_title="Coordenada local X [m]",
+        yaxis_title="Coordenada local Y [m]",
+        margin=dict(l=20,r=20,t=25,b=20),
+        legend=dict(orientation="h",y=1.04),
+    )
+    st.plotly_chart(map_fig,use_container_width=True,key="c3l2_s6_idw_map")
+    st.markdown(
+        '<div class="c3l2-note"><b>Lectura correcta:</b> los círculos corresponden a posiciones realmente '
+        'medidas. Todos los demás colores son valores estimados por IDW a partir de esas mediciones.</div>',
+        unsafe_allow_html=True,
+    )
+
+    st.markdown("### 7. La cobertura también se puede visualizar")
+    nearest=np.full_like(X,np.inf,dtype=float)
+    for px,py,_ in pts:
+        nearest=np.minimum(nearest,np.sqrt((X-px)**2+(Y-py)**2))
+    coverage_fig=go.Figure(go.Contour(
+        x=xx,y=yy,z=nearest,
+        contours=dict(showlabels=True),
+        colorbar=dict(title="Distancia<br>al punto<br>más cercano [m]"),
+        hovertemplate="X=%{x:.1f} m<br>Y=%{y:.1f} m<br>Punto medido más cercano=%{z:.1f} m<extra></extra>",
+    ))
+    coverage_fig.add_trace(go.Scatter(
+        x=[p[0] for p in pts],y=[p[1] for p in pts],
+        mode="markers",marker=dict(size=10),name="Mediciones",
+    ))
+    coverage_fig.update_layout(
+        height=430,
+        xaxis_title="X [m]",yaxis_title="Y [m]",
+        margin=dict(l=20,r=20,t=20,b=20),
+    )
+    st.plotly_chart(coverage_fig,use_container_width=True,key="c3l2_s6_coverage_map")
+    st.caption(
+        "Esta figura no es una incertidumbre estadística formal. Es un indicador geométrico de apoyo: "
+        "cuanto más lejos queda una celda de cualquier medición, más cautela requiere la interpretación."
+    )
+
+    st.markdown("### 8. ¿Cómo saber si la interpolación es razonable?")
+    st.markdown("""
+    Una forma simple de comprobar el comportamiento del método es la **validación cruzada leave-one-out**:
+    se retira temporalmente un punto, se predice su valor usando los demás y luego se compara la predicción
+    con el valor realmente medido. Se repite para todos los puntos.
+    """)
+    def _idw_predict(train, x0, y0, p):
+        arr=np.asarray(train,dtype=float)
+        d=np.sqrt((arr[:,0]-x0)**2+(arr[:,1]-y0)**2)
+        if np.any(d<1e-9):
+            return float(arr[np.argmin(d),2])
+        w=1.0/np.maximum(d,1e-9)**float(p)
+        return float(np.sum(w*arr[:,2])/np.sum(w))
+
+    cv_rows=[]
+    errors=[]
+    for i,pnt in enumerate(pts):
+        train=[p for j,p in enumerate(pts) if j!=i]
+        pred=_idw_predict(train,pnt[0],pnt[1],power)
+        err=pred-pnt[2]
+        errors.append(err)
+        cv_rows.append({
+            "Punto":f"M{i+1}",
+            "Medido [dB(A)]":round(pnt[2],1),
+            "Predicho sin usar el punto [dB(A)]":round(pred,1),
+            "Error [dB]":round(err,1),
+        })
+    mae=float(np.mean(np.abs(errors))) if errors else float("nan")
+    rmse=float(np.sqrt(np.mean(np.square(errors)))) if errors else float("nan")
+    v1,v2,v3=st.columns(3)
+    v1.metric("MAE validación cruzada",f"{mae:.2f} dB")
+    v2.metric("RMSE validación cruzada",f"{rmse:.2f} dB")
+    v3.metric("Potencia evaluada",f"p = {power:.2f}")
+    with st.expander("Ver validación punto por punto"):
+        st.dataframe(pd.DataFrame(cv_rows),hide_index=True,use_container_width=True)
+    st.caption(
+        "Un error de validación cruzada menor es una señal favorable, pero no demuestra por sí solo que la campaña "
+        "represente todo el territorio ni todo el periodo temporal de interés."
+    )
+
+    st.markdown("### 9. IDW no es la única interpolación")
+    st.markdown("""
+    <div class="c3l2-grid">
+      <div class="c3l2-card blue">
+        <div class="c3l2-k">IDW</div>
+        <b>Determinista y fácil de interpretar.</b><br>
+        La influencia depende principalmente de la distancia. Es útil para enseñar y para casos donde
+        se justifica la continuidad espacial, pero puede producir “bullseyes” alrededor de puntos.
+      </div>
+      <div class="c3l2-card green">
+        <div class="c3l2-k">KRIGING</div>
+        <b>Geoestadístico.</b><br>
+        Modela la estructura de correlación espacial mediante un variograma y puede entregar una medida
+        de error o varianza de predicción. Requiere más datos y diagnóstico.
+      </div>
+      <div class="c3l2-card orange">
+        <div class="c3l2-k">SPLINE / VECINOS</div>
+        <b>Otras alternativas.</b><br>
+        Pueden generar superficies muy suaves o preservar vecindades locales. Su selección depende del
+        fenómeno, la geometría de muestreo y la validación, no de cuál “se vea mejor”.
+      </div>
+    </div>
+    """,unsafe_allow_html=True)
+    st.markdown(
+        '<div class="c3l2-warn"><b>No confundir dos operaciones:</b> interpolar valores observados de '
+        'LAeq,T en el espacio es una estimación cartográfica del descriptor. En cambio, combinar el aporte '
+        'simultáneo de varias fuentes en un receptor exige suma energética; no se suman decibeles aritméticamente.</div>',
+        unsafe_allow_html=True,
+    )
+
+    st.markdown("### 10. Límites del mapa")
+    st.markdown("""
+    Un mapa obtenido desde mediciones es defendible solo dentro del alcance de la campaña. Debe informarse, como mínimo:
+
+    - dónde están los puntos realmente medidos;
+    - qué descriptor y periodo representa cada valor;
+    - qué método de interpolación y parámetros se usaron;
+    - cuál fue la densidad y geometría de la red;
+    - cómo se trataron eventos atípicos o datos inválidos;
+    - dónde existen zonas con poco apoyo de medición;
+    - que fuera de la zona bien cubierta se entra en **extrapolación**, cuya interpretación es más débil;
+    - y que una superficie visualmente suave no implica exactitud física.
+    """)
+
+    q1=st.radio(
+        "Si una celda del mapa muestra 63 dB(A), pero allí nunca se instaló un sonómetro, ese valor corresponde a:",
+        [
+            "Una medición directa de 63 dB(A)",
+            "Una estimación espacial obtenida con el método de interpolación",
+            "La potencia sonora de la fuente dominante",
+        ],
+        index=None,
+        key="c3l2_s6_q1",
+    )
+    q2=st.radio(
+        "Si aumentas la potencia p de IDW manteniendo los mismos datos, ¿qué ocurre en general?",
+        [
+            "Los puntos cercanos adquieren mayor influencia",
+            "Todos los puntos pesan exactamente igual",
+            "La interpolación se transforma en una suma energética",
+        ],
+        index=None,
+        key="c3l2_s6_q2",
+    )
+    interpretation=st.text_area(
+        "Explica por qué una zona con pocos puntos cercanos debe interpretarse con mayor cautela y qué harías para mejorar el mapa.",
+        height=105,
+        key="c3l2_s6_interp",
+    )
+
+    if _c3l2_role()=="Alumno" and st.button(
+        "Guardar Etapa 6",
+        type="primary",
+        use_container_width=True,
+        key="c3l2_s6_save",
+    ):
+        correct_anomaly="Revisar el objetivo y la bitácora; decidir documentadamente si repetir, conservar o excluir el registro"
+        if (
+            anomaly!=correct_anomaly
+            or q1!="Una estimación espacial obtenida con el método de interpolación"
+            or q2!="Los puntos cercanos adquieren mayor influencia"
+            or len(interpretation.strip())<55
+        ):
+            st.warning(
+                "Revisa la secuencia campaña → control de calidad → interpolación → validación → interpretación."
+            )
         else:
-            _c3l2_complete(saved,6,{"design":design,"point_count":len(pts),"anomaly":anomaly,"interpretation":interpretation})
+            _c3l2_complete(saved,6,{
+                "design":design,
+                "point_count":len(pts),
+                "idw_power":power,
+                "cv_mae":round(mae,3),
+                "cv_rmse":round(rmse,3),
+                "anomaly":anomaly,
+                "q1":q1,
+                "q2":q2,
+                "interpretation":interpretation,
+            })
             st.success("Etapa 6 guardada.")
-    _c3l2_teacher_pauta("Etapa 6","Solo los puntos son mediciones directas. La superficie IDW es una estimación espacial. La pauta debe valorar cobertura, comparabilidad temporal, control de eventos atípicos y declaración de incertidumbre.")
+
+    _c3l2_teacher_pauta(
+        "Etapa 6",
+        """
+        **Resultado esperado:** el alumno debe poder reconstruir el flujo completo de un mapa por mediciones:
+        objetivo y descriptor → diseño de red → protocolo comparable → georreferenciación → control de calidad →
+        interpolación → validación → representación → declaración de limitaciones.
+
+        **IDW:** cada celda es un promedio ponderado por distancia y la potencia p controla cuánto dominan
+        los vecinos próximos. No existe una potencia universalmente correcta; debe justificarse y validarse.
+
+        **Puntos clave para la pauta:**
+        - Solo los marcadores son mediciones directas.
+        - La superficie es estimada y no agrega información física independiente.
+        - Una red concentrada puede producir un mapa visualmente continuo pero pobremente sustentado.
+        - El mapa de distancia al vecino más próximo es solo un indicador de cobertura, no una incertidumbre formal.
+        - La validación cruzada ayuda a comparar comportamiento predictivo, pero no reemplaza la representatividad temporal.
+        - IDW, kriging y spline son métodos distintos; la elección debe responder a los datos y al objetivo.
+        - Interpolar un descriptor en dB no debe confundirse con la suma energética de fuentes.
+        - Extrapolar fuera del soporte espacial de la campaña exige cautela explícita.
+        """
+    )
 
 
 def _c3l2_projection_grid(kind,lw,level_ref):
