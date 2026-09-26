@@ -30567,9 +30567,36 @@ def _c3l2_stage6(lab,saved):
         "equipo, calibración, meteorología, flujo/operación, fotografías y observaciones de eventos."
     )
 
-    st.markdown("### 4. Control de calidad: interpolar viene después")
+    st.markdown("### 4. Control de calidad: revisar antes de interpolar")
+    st.markdown("""
+    <div class="c3l2-grid">
+      <div class="c3l2-card orange">
+        <div class="c3l2-k">EVENTO OBSERVADO</div>
+        <b>P8 registró un nivel 12 dB mayor que el patrón operacional.</b><br>
+        Durante la medición ocurrió una purga extraordinaria del compresor.
+      </div>
+      <div class="c3l2-card blue">
+        <div class="c3l2-k">PREGUNTA TÉCNICA</div>
+        <b>¿Ese evento representa el escenario que queremos mapear?</b><br>
+        Antes de interpolar hay que revisar el objetivo de la campaña y la bitácora de terreno.
+      </div>
+      <div class="c3l2-card green">
+        <div class="c3l2-k">CRITERIO DE DECISIÓN</div>
+        <b>No se elimina un dato solo porque sea alto.</b><br>
+        La decisión debe ser técnica, trazable y coherente con el escenario que se pretende representar.
+      </div>
+    </div>
+    """,unsafe_allow_html=True)
+
+    st.markdown(
+        '<div class="c3l2-warn"><b>Situación:</b> si el mapa busca representar la <b>operación habitual</b> de la fábrica, '
+        'una purga extraordinaria podría no ser representativa. Si el objetivo incluye ese régimen de operación, '
+        'el registro podría ser completamente válido.</div>',
+        unsafe_allow_html=True,
+    )
+
     anomaly=st.radio(
-        "Durante P8 ocurrió una purga extraordinaria del compresor y el registro quedó 12 dB por sobre el patrón operacional. ¿Qué corresponde hacer?",
+        "¿Qué decisión corresponde tomar con el registro de P8?",
         [
             "Usarlo automáticamente porque todo dato medido debe interpolarse",
             "Revisar el objetivo y la bitácora; decidir documentadamente si repetir, conservar o excluir el registro",
@@ -30578,12 +30605,13 @@ def _c3l2_stage6(lab,saved):
         index=None,
         key="c3l2_s6_anomaly",
     )
+
     st.markdown("""
-    Un valor extremo **no se elimina solo porque sea alto**. Primero hay que saber si ese evento forma parte del
-    fenómeno que se pretende representar. Si el objetivo es caracterizar la operación habitual de la fábrica y la purga
-    fue extraordinaria, puede justificarse repetir o excluir ese registro. Si el objetivo incluye ese régimen de operación,
-    el dato puede ser perfectamente válido. La decisión debe quedar documentada.
-    """)
+    <div class="c3l2-note">
+      <b>Secuencia correcta:</b> detectar el valor atípico → revisar qué ocurrió en terreno → verificar si el evento
+      pertenece al escenario de estudio → decidir si se conserva, se repite o se excluye → dejar la decisión documentada.
+    </div>
+    """,unsafe_allow_html=True)
 
     st.markdown("### 5. ¿Qué significa interpolar?")
     st.markdown("""
