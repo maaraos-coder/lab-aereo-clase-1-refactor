@@ -7,6 +7,7 @@ from typing import Any, Dict, Iterable, List, Tuple
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
+from views.curso4_lab1 import CLASS_ID as _C4L1_CLASS_ID, render as _render_course4_lab1
 
 
 MODULE_DIR = Path(__file__).resolve().parent
@@ -33918,8 +33919,8 @@ def future_lab_view_impl(lab):
         # para evitar duplicidad y métricas contradictorias en la barra lateral.
         total_stages = len(lab["stages"])
         if st.session_state.get("role") == "Docente":
-            if class_id == _C3L1_CLASS_ID:
-                st.caption("Vista docente · Laboratorio 1 del Curso 3 completamente formativo, sin nota.")
+            if class_id in (_C3L1_CLASS_ID, _C4L1_CLASS_ID):
+                st.caption("Vista docente · Laboratorio 1 completamente formativo, sin nota.")
             else:
                 st.caption("Vista docente · el avance y los resultados se revisan desde ‘Evaluaciones entregadas’.")
 
@@ -34031,8 +34032,8 @@ def future_lab_view_impl(lab):
                         }).eq("id",class_id).execute()
                         _clear_course_cache()
                         st.rerun()
-            if class_id == _C3L1_CLASS_ID:
-                st.caption("Curso 3 · Laboratorio 1: las Etapas 0–10 son formativas y sin nota. La vista docente muestra pautas técnicas dentro de cada etapa.")
+            if class_id in (_C3L1_CLASS_ID, _C4L1_CLASS_ID):
+                st.caption("Las Etapas 0–10 de este laboratorio son formativas y sin nota.")
             else:
                 st.caption("Las evaluaciones de los alumnos se revisan en la vista ‘Evaluaciones entregadas’.")
 
@@ -34081,6 +34082,10 @@ def future_lab_view_impl(lab):
             _c2l2_stage5,_c2l2_stage6,_c2l2_stage7,_c2l2_stage8,_c2l2_stage9,_c2l2_stage10,
         ]
         renderers[selected](lab,saved)
+        return
+
+    if class_id == _C4L1_CLASS_ID:
+        _render_course4_lab1(lab, selected, saved, _save_future_state)
         return
 
     if class_id == _C3L1_CLASS_ID:
@@ -34247,6 +34252,8 @@ def future_print_view_impl(lab):
             6: _c2l2_stage6, 7: _c2l2_stage7, 8: _c2l2_stage8,
             9: _c2l2_stage9, 10: _c2l2_stage10,
         }
+    elif class_id == _C4L1_CLASS_ID:
+        renderers = {i: lambda lab, saved, i=i: _render_course4_lab1(lab, i, saved, _save_future_state) for i in range(11)}
     elif class_id == _C3L1_CLASS_ID:
         renderers = {
             0: _render_course3_lab1_stage0,
@@ -34367,6 +34374,10 @@ def future_projection_stage_impl(lab, stage):
             _c2l2_stage10,
         ]
         renderers[stage](lab, projection_saved)
+        return
+
+    if lab.get("id") == _C4L1_CLASS_ID:
+        _render_course4_lab1(lab, stage, projection_saved, _save_future_state)
         return
 
     if lab.get("id") == _C3L1_CLASS_ID:
