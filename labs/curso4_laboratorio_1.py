@@ -22,67 +22,67 @@ BS_PLANT = {
     "Excavadora hidráulica": {
         "en":"Tracked excavator","phase":"Movimiento de tierras","table":"C.2","ref":"19","page":"47 BS / 53 PDF",
         "power":"125 kW","size":"25 t","activity":"Excavación / movimiento de tierras","laeq10":77.0,
-        "bands":[95,84,79,73,70,68,64,57],"image":"excavadora_hidraulica.png",
+        "bands":[95,84,79,73,70,68,64,57],"image":"excavadora_hidraulica.webp",
     },
     "Retroexcavadora": {
         "en":"Wheeled backhoe loader","phase":"Movimiento de tierras","table":"C.2","ref":"8","page":"46 BS / 52 PDF",
         "power":"62 kW","size":"8 t","activity":"Preparación de terreno","laeq10":68.0,
-        "bands":[74,66,64,64,63,60,59,50],"image":"retroexcavadora.png",
+        "bands":[74,66,64,64,63,60,59,50],"image":"retroexcavadora.webp",
     },
     "Cargador frontal": {
         "en":"Wheeled loader","phase":"Movimiento de tierras","table":"C.2","ref":"27","page":"47 BS / 53 PDF",
         "power":"193 kW","size":"—","activity":"Carga de camiones","laeq10":80.0,
-        "bands":[85,83,76,75,75,72,72,61],"image":"cargador_frontal.png",
+        "bands":[85,83,76,75,75,72,72,61],"image":"cargador_frontal.webp",
     },
     "Camión tolva articulado": {
         "en":"Articulated dump truck","phase":"Movimiento de tierras","table":"C.2","ref":"32","page":"47 BS / 53 PDF",
         "power":"187 kW","size":"23 t","activity":"Descarga de material de relleno","laeq10":74.0,
-        "bands":[80,76,73,70,69,66,63,58],"image":"camion_tolva_articulado.png",
+        "bands":[80,76,73,70,69,66,63,58],"image":"camion_tolva_articulado.webp",
     },
     "Rodillo vibratorio": {
         "en":"Vibratory roller","phase":"Movimiento de tierras","table":"C.2","ref":"39","page":"47 BS / 53 PDF",
         "power":"29 kW","size":"4 t","activity":"Compactación / pasada","laeq10":74.0,
-        "metric":"LAmax","driveby":True,"bands":[88,83,69,68,67,65,62,59],"image":"rodillo_vibratorio.png",
+        "metric":"LAmax","driveby":True,"bands":[88,83,69,68,67,65,62,59],"image":"rodillo_vibratorio.webp",
     },
     "Camión mixer": {
         "en":"Concrete mixer truck","phase":"Estructura y hormigón","table":"C.4","ref":"20","page":"50 BS / 56 PDF",
         "power":"—","size":"—","activity":"Mezcla / operación de camión mixer","laeq10":80.0,
-        "bands":[83,74,66,69,70,78,60,55],"image":"camion_mixer.png",
+        "bands":[83,74,66,69,70,78,60,55],"image":"camion_mixer.webp",
     },
     "Bomba de hormigón": {
         "en":"Truck mounted concrete pump + boom arm","phase":"Estructura y hormigón","table":"C.4","ref":"29","page":"51 BS / 57 PDF",
         "power":"—","size":"26 t","activity":"Bombeo de hormigón","laeq10":80.0,
-        "bands":[83,77,75,75,74,75,67,63],"image":"bomba_hormigon.png",
+        "bands":[83,77,75,75,74,75,67,63],"image":"bomba_hormigon.webp",
     },
     "Grúa torre": {
         "en":"Tower crane","phase":"Estructura y hormigón","table":"C.4","ref":"48","page":"52 BS / 58 PDF",
         "power":"88 kW","size":"22 t","activity":"Izaje","laeq10":76.0,
-        "bands":[82,77,80,76,66,66,56,50],"image":"grua_torre.png",
+        "bands":[82,77,80,76,66,66,56,50],"image":"grua_torre.webp",
     },
     "Manipulador telescópico": {
         "en":"Telescopic handler","phase":"Estructura y hormigón","table":"C.4","ref":"54","page":"52 BS / 58 PDF",
         "power":"76 kW","size":"4 t","activity":"Manipulación / izaje de materiales","laeq10":79.0,
-        "bands":[79,73,66,65,78,66,54,47],"image":"manipulador_telescopico.png",
+        "bands":[79,73,66,65,78,66,54,47],"image":"manipulador_telescopico.webp",
     },
     "Martillo hidráulico": {
         "en":"Breaker mounted on wheeled backhoe","phase":"Demolición y faenas ruidosas","table":"C.1","ref":"1","page":"45 BS / 51 PDF",
         "power":"59 kW","size":"7,4 t + rompedor 380 kg","activity":"Rotura de hormigón","laeq10":92.0,
-        "bands":[79,82,81,82,86,86,86,85],"image":"martillo_hidraulico.png",
+        "bands":[79,82,81,82,86,86,86,85],"image":"martillo_hidraulico.webp",
     },
     "Martillo neumático": {
         "en":"Hand-held pneumatic breaker","phase":"Demolición y faenas ruidosas","table":"C.1","ref":"6","page":"45 BS / 51 PDF",
         "power":"—","size":"Manual","activity":"Rotura de hormigón","laeq10":83.0,
-        "bands":[83,83,81,74,73,76,78,77],"image":"martillo_neumatico.png",
+        "bands":[83,83,81,74,73,76,78,77],"image":"martillo_neumatico.webp",
     },
     "Sierra de corte de hormigón": {
         "en":"Petrol hand-held circular saw","phase":"Demolición y faenas ruidosas","table":"C.4","ref":"70","page":"53 BS / 59 PDF",
         "power":"3 kW","size":"9 kg · disco 300 mm","activity":"Corte de losa de hormigón","laeq10":91.0,
-        "bands":[72,89,81,80,80,82,86,85],"image":"sierra_corte_hormigon.png",
+        "bands":[72,89,81,80,80,82,86,85],"image":"sierra_corte_hormigon.webp",
     },
     "Generador diésel": {
         "en":"Diesel generator","phase":"Equipos auxiliares","table":"C.4","ref":"76","page":"53 BS / 59 PDF",
         "power":"6,5 kW","size":"—","activity":"Alimentación de instalaciones de faena","laeq10":61.0,
-        "bands":[80,74,57,54,53,48,45,37],"image":"generador_diesel.png",
+        "bands":[80,74,57,54,53,48,45,37],"image":"generador_diesel.webp",
     },
 }
 
