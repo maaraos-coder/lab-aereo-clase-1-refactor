@@ -17,36 +17,77 @@ CLASS_ID = "clase-07-construccion-lab-1"
 NOISEMAP_URL = "https://noisemap-akuzoft.vercel.app/"
 STAGE_MINUTES = [10,20,20,20,20,20,20,25,30,25,30]
 
+BSI_REFERENCE_URL = "https://knowledge.bsigroup.com/products/code-of-practice-for-noise-and-vibration-control-on-construction-and-open-sites-noise"
+_MACHINE_SPRITE_B64 = "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"
+_MACHINE_SPRITE_COLS = 5
+_MACHINE_TILE_W = 80
+_MACHINE_TILE_H = 55
+
 BS_PLANT = {
-    "Rompedor hidráulico montado en retroexcavadora": {
-        "laeq10": 88.0,
-        "activity": "Rotura de superficie de camino",
-        "detail": "Registro BS 5228-1 asociado a equipo de 67 kW.",
+    "Excavadora hidráulica": {
+        "en":"Tracked excavator","phase":"Movimiento de tierras","table":"C.2","ref":"19","page":"47 BS / 53 PDF",
+        "power":"125 kW","size":"25 t","activity":"Excavación / movimiento de tierras","laeq10":77.0,
+        "bands":[95,84,79,73,70,68,64,57],"sprite":0,
     },
-    "Mini excavadora con rompedor hidráulico": {
-        "laeq10": 83.0,
-        "activity": "Rotura de superficie de camino",
-        "detail": "Registro asociado a mini excavadora de 1,5 t.",
+    "Retroexcavadora": {
+        "en":"Wheeled backhoe loader","phase":"Movimiento de tierras","table":"C.2","ref":"8","page":"46 BS / 52 PDF",
+        "power":"62 kW","size":"8 t","activity":"Preparación de terreno","laeq10":68.0,
+        "bands":[74,66,64,64,63,60,59,50],"sprite":1,
     },
-    "Rompedor neumático manual": {
-        "laeq10": 86.0,
-        "activity": "Rotura de superficie de camino",
-        "detail": "Registro de actividad de rompimiento; revisar siempre la condición del equipo.",
+    "Cargador frontal": {
+        "en":"Wheeled loader","phase":"Movimiento de tierras","table":"C.2","ref":"27","page":"47 BS / 53 PDF",
+        "power":"193 kW","size":"—","activity":"Carga de camiones","laeq10":80.0,
+        "bands":[85,83,76,75,75,72,72,61],"sprite":2,
     },
-    "Excavadora sobre ruedas": {
-        "laeq10": 73.0,
-        "activity": "Movimiento de tierras",
-        "detail": "Registro de referencia: excavadora de 112 kW / 17 t.",
+    "Camión tolva articulado": {
+        "en":"Articulated dump truck","phase":"Movimiento de tierras","table":"C.2","ref":"32","page":"47 BS / 53 PDF",
+        "power":"187 kW","size":"23 t","activity":"Descarga de material de relleno","laeq10":74.0,
+        "bands":[80,76,73,70,69,66,63,58],"sprite":3,
     },
-    "Excavadora sobre orugas": {
-        "laeq10": 80.0,
-        "activity": "Movimiento de tierras",
-        "detail": "Registro de referencia: excavadora de 172 kW / 35 t.",
+    "Rodillo vibratorio": {
+        "en":"Vibratory roller","phase":"Movimiento de tierras","table":"C.2","ref":"39","page":"47 BS / 53 PDF",
+        "power":"29 kW","size":"4 t","activity":"Compactación / pasada","laeq10":74.0,
+        "metric":"LAmax","driveby":True,"bands":[88,83,69,68,67,65,62,59],"sprite":4,
     },
-    "Camión articulado": {
-        "laeq10": 81.0,
-        "activity": "Movimiento de tierras",
-        "detail": "Registro de referencia: camión articulado de aproximadamente 25 t.",
+    "Camión mixer": {
+        "en":"Concrete mixer truck","phase":"Estructura y hormigón","table":"C.4","ref":"20","page":"50 BS / 56 PDF",
+        "power":"—","size":"—","activity":"Mezcla / operación de camión mixer","laeq10":80.0,
+        "bands":[83,74,66,69,70,78,60,55],"sprite":5,
+    },
+    "Bomba de hormigón": {
+        "en":"Truck mounted concrete pump + boom arm","phase":"Estructura y hormigón","table":"C.4","ref":"29","page":"51 BS / 57 PDF",
+        "power":"—","size":"26 t","activity":"Bombeo de hormigón","laeq10":80.0,
+        "bands":[83,77,75,75,74,75,67,63],"sprite":6,
+    },
+    "Grúa torre": {
+        "en":"Tower crane","phase":"Estructura y hormigón","table":"C.4","ref":"48","page":"52 BS / 58 PDF",
+        "power":"88 kW","size":"22 t","activity":"Izaje","laeq10":76.0,
+        "bands":[82,77,80,76,66,66,56,50],"sprite":7,
+    },
+    "Manipulador telescópico": {
+        "en":"Telescopic handler","phase":"Estructura y hormigón","table":"C.4","ref":"54","page":"52 BS / 58 PDF",
+        "power":"76 kW","size":"4 t","activity":"Manipulación / izaje de materiales","laeq10":79.0,
+        "bands":[79,73,66,65,78,66,54,47],"sprite":8,
+    },
+    "Martillo hidráulico": {
+        "en":"Breaker mounted on wheeled backhoe","phase":"Demolición y faenas ruidosas","table":"C.1","ref":"1","page":"45 BS / 51 PDF",
+        "power":"59 kW","size":"7,4 t + rompedor 380 kg","activity":"Rotura de hormigón","laeq10":92.0,
+        "bands":[79,82,81,82,86,86,86,85],"sprite":9,
+    },
+    "Martillo neumático": {
+        "en":"Hand-held pneumatic breaker","phase":"Demolición y faenas ruidosas","table":"C.1","ref":"6","page":"45 BS / 51 PDF",
+        "power":"—","size":"Manual","activity":"Rotura de hormigón","laeq10":83.0,
+        "bands":[83,83,81,74,73,76,78,77],"sprite":10,
+    },
+    "Sierra de corte de hormigón": {
+        "en":"Petrol hand-held circular saw","phase":"Demolición y faenas ruidosas","table":"C.4","ref":"70","page":"53 BS / 59 PDF",
+        "power":"3 kW","size":"9 kg · disco 300 mm","activity":"Corte de losa de hormigón","laeq10":91.0,
+        "bands":[72,89,81,80,80,82,86,85],"sprite":11,
+    },
+    "Generador diésel": {
+        "en":"Diesel generator","phase":"Equipos auxiliares","table":"C.4","ref":"76","page":"53 BS / 59 PDF",
+        "power":"6,5 kW","size":"—","activity":"Alimentación de instalaciones de faena","laeq10":61.0,
+        "bands":[80,74,57,54,53,48,45,37],"sprite":12,
     },
 }
 
@@ -143,211 +184,171 @@ def _stage0(lab, saved):
         unsafe_allow_html=True,
     )
 
+def _machine_sprite_crop(index, large=False):
+    import base64
+    import io
+    from PIL import Image
+    raw = base64.b64decode(_MACHINE_SPRITE_B64)
+    sheet = Image.open(io.BytesIO(raw)).convert("RGB")
+    col = index % _MACHINE_SPRITE_COLS
+    row = index // _MACHINE_SPRITE_COLS
+    box = (
+        col * _MACHINE_TILE_W,
+        row * _MACHINE_TILE_H,
+        (col + 1) * _MACHINE_TILE_W,
+        (row + 1) * _MACHINE_TILE_H,
+    )
+    image = sheet.crop(box)
+    if large:
+        image = image.resize((480,330), Image.Resampling.LANCZOS)
+    else:
+        image = image.resize((240,165), Image.Resampling.LANCZOS)
+    return image
+
 def _stage1(lab, saved):
     _header(
         1,
         "Maquinaria de construcción y datos acústicos de referencia",
-        "Aprender a leer correctamente los datos de ruido de maquinaria de construcción antes de utilizarlos en una predicción.",
+        "Reconocer las máquinas más habituales de una obra y aprender a leer sus datos acústicos desde BS 5228-1:2009.",
     )
 
     st.markdown(
         """
         <div style="border:1px solid #cfe0ef;border-radius:18px;padding:18px 20px;
         background:linear-gradient(135deg,#f7fbff,#eef7ff);margin-bottom:1rem">
-          <div style="font-size:.75rem;font-weight:850;letter-spacing:.08em;color:#0b6ea8">
-            IDEA CENTRAL
-          </div>
+          <div style="font-size:.75rem;font-weight:850;letter-spacing:.08em;color:#0b6ea8">IDEA CENTRAL</div>
           <div style="font-size:1.2rem;font-weight:850;color:#10243b;margin:.35rem 0 .5rem">
-            Una “excavadora” no tiene un único nivel de ruido.
+            Primero reconoce la máquina; después interpreta el dato acústico.
           </div>
           <div style="color:#4b6074;line-height:1.55">
-            El nivel depende del tamaño de la máquina, potencia, actividad que realiza, carga,
-            estado de mantenimiento y forma de operación. Por eso BS 5228 entrega
-            <b>registros de equipos en actividades concretas</b>, no un número universal por nombre.
+            BS 5228 no asigna un único número a “una excavadora” o “un camión”.
+            Cada registro corresponde a un equipo, tamaño y actividad concretos.
           </div>
         </div>
         """,
         unsafe_allow_html=True,
     )
 
-    st.markdown("### 1 · ¿Qué es BS 5228-1?")
-    st.write(
-        "BS 5228-1 es una referencia para la predicción, medición y control del ruido "
-        "en obras de construcción y sitios abiertos. Su Anexo C reúne datos acústicos "
-        "de maquinaria y actividades de obra obtenidos en terreno."
-    )
+    top1, top2 = st.columns([1.7,1])
+    with top1:
+        st.markdown("### Biblioteca visual de maquinaria")
+        st.caption("Equipos frecuentes en obras de edificación. Selecciona uno para abrir su ficha acústica.")
+    with top2:
+        st.link_button("📘 Ficha oficial BS 5228-1", BSI_REFERENCE_URL, use_container_width=True)
+        st.caption("En cada ficha se indica la tabla, referencia y página del PDF del curso.")
 
-    c1, c2, c3 = st.columns(3)
-    with c1:
-        st.markdown(
-            """
-            <div style="border:1px solid #dbe7f0;border-radius:15px;padding:15px;height:150px;background:#fff">
-              <div style="font-weight:850;color:#0b5f98">¿QUÉ ENTREGA?</div>
-              <div style="font-size:1.45rem;font-weight:900;color:#172b3f;margin:.3rem 0">LAeq,T a 10 m</div>
-              <div style="color:#5f7080;line-height:1.4">Nivel A-ponderado medido durante una actividad representativa.</div>
-            </div>
-            """,
-            unsafe_allow_html=True,
-        )
-    with c2:
-        st.markdown(
-            """
-            <div style="border:1px solid #dbe7f0;border-radius:15px;padding:15px;height:150px;background:#fff">
-              <div style="font-weight:850;color:#0b5f98">¿QUÉ MÁS?</div>
-              <div style="font-size:1.45rem;font-weight:900;color:#172b3f;margin:.3rem 0">63 Hz → 8 kHz</div>
-              <div style="color:#5f7080;line-height:1.4">Muchas tablas incluyen niveles por bandas de octava a 10 m.</div>
-            </div>
-            """,
-            unsafe_allow_html=True,
-        )
-    with c3:
-        st.markdown(
-            """
-            <div style="border:1px solid #dbe7f0;border-radius:15px;padding:15px;height:150px;background:#fff">
-              <div style="font-weight:850;color:#0b5f98">¿QUÉ DEBES LEER?</div>
-              <div style="font-size:1.45rem;font-weight:900;color:#172b3f;margin:.3rem 0">Equipo + actividad</div>
-              <div style="color:#5f7080;line-height:1.4">Potencia, masa/capacidad y condición operacional forman parte del dato.</div>
-            </div>
-            """,
-            unsafe_allow_html=True,
-        )
+    phases=["Todas","Movimiento de tierras","Estructura y hormigón","Demolición y faenas ruidosas","Equipos auxiliares"]
+    phase=st.segmented_control("Filtrar por fase",phases,default="Todas",key="c4l1_s1_phase")
+    names=[n for n,v in BS_PLANT.items() if phase=="Todas" or v["phase"]==phase]
 
-    st.markdown("### 2 · Cómo leer una fila de la norma")
-    st.markdown(
-        """
-        Antes de usar un valor debes identificar, en este orden:
+    cols=st.columns(4)
+    for i,name in enumerate(names):
+        item=BS_PLANT[name]
+        with cols[i%4]:
+            with st.container(border=True):
+                st.image(_machine_sprite_crop(item["sprite"]),use_container_width=True)
+                st.markdown(f"**{name}**")
+                st.caption(f"{item['en']} · {item['phase']}")
+                if st.button("Ver ficha",key=f"c4l1_machine_{item['sprite']}",use_container_width=True):
+                    st.session_state["c4l1_selected_machine"]=name
 
-        1. **Actividad** que se estaba realizando.
-        2. **Tipo de equipo**.
-        3. **Potencia o tamaño** del equipo.
-        4. **Magnitud reportada**: normalmente LAeq,T a 10 m.
-        5. **Si es un equipo móvil marcado con asterisco**, el dato puede corresponder a LAmax de paso.
-        6. **Espectro por octavas**, cuando está disponible.
-        """
-    )
-    st.warning(
-        "No copies solo la última columna de la tabla. Si ignoras la actividad y el tamaño, "
-        "puedes asignar a tu proyecto un dato que no representa la maquinaria real."
-    )
+    selected=st.session_state.get("c4l1_selected_machine", names[0] if names else list(BS_PLANT)[0])
+    if selected not in BS_PLANT:
+        selected=list(BS_PLANT)[0]
+    item=BS_PLANT[selected]
 
-    st.markdown("### 3 · Explora registros reales de referencia")
-    selected_name = st.selectbox(
-        "Selecciona una máquina / actividad",
-        list(BS_PLANT),
-        key="c4l1_bs_stage1",
-    )
-    item = BS_PLANT[selected_name]
-
-    equipment_meta = {
-        "Rompedor hidráulico montado en retroexcavadora": ("67 kW", "Rotura de superficie de camino", "C.5 · ref. 1"),
-        "Mini excavadora con rompedor hidráulico": ("1,5 t", "Rotura de superficie de camino", "C.5 · ref. 2"),
-        "Rompedor neumático manual": ("Manual", "Rotura de superficie de camino", "C.5 · ref. 4"),
-        "Excavadora sobre ruedas": ("112 kW · 17 t", "Retiro de superficie rota", "C.5 · ref. 11"),
-        "Excavadora sobre orugas": ("172 kW · 35 t", "Movimiento de tierras", "C.5 · ref. 18"),
-        "Camión articulado": ("194 kW · 25 t", "Movimiento de tierras / circulación", "C.5 · ref. 16"),
-    }
-    power_size, activity, reference = equipment_meta[selected_name]
-
-    a, b, ccol, d = st.columns(4)
-    a.metric("LAeq,T / LAmax a 10 m", f"{item['laeq10']:.0f} dB(A)")
-    b.metric("Equipo / tamaño", power_size)
-    ccol.metric("Referencia", reference)
-    d.metric("LWA de trabajo*", f"{item['laeq10'] + 28:.0f} dB(A)")
-    st.caption(
-        "* Para las tablas C.1–C.11, BS 5228 indica que, salvo excepciones, "
-        "el LWA usado en ciertos métodos de predicción puede obtenerse sumando 28 dB(A) "
-        "al LAeq,T o LAmax a 10 m."
-    )
-
-    with st.container(border=True):
-        st.markdown(f"#### {selected_name}")
-        st.markdown(f"**Actividad representada:** {activity}")
-        st.write(item["detail"])
+    st.markdown("---")
+    left,right=st.columns([1.05,1.35],gap="large")
+    with left:
+        st.image(_machine_sprite_crop(item["sprite"],large=True),use_container_width=True)
+        st.markdown(f"## {selected}")
+        st.caption(item["en"])
+        st.markdown(f"**Fase típica:** {item['phase']}")
+        st.markdown(f"**Actividad del registro:** {item['activity']}")
+        st.markdown(f"**Potencia:** {item['power']}  ·  **Tamaño/capacidad:** {item['size']}")
         st.info(
-            "Este registro sirve como **dato de referencia**. Para un estudio real se debe "
-            "comprobar que la máquina, potencia/capacidad y modo de trabajo sean comparables."
+            "La imagen es una referencia visual didáctica. El dato acústico corresponde al registro BS 5228 indicado, "
+            "no necesariamente al modelo exacto representado en la imagen."
         )
 
-    st.markdown("### 4 · Una misma familia puede variar bastante")
-    comparison = pd.DataFrame([
-        ["Excavadora sobre ruedas", "112 kW · 17 t", 73],
-        ["Excavadora sobre orugas", "172 kW · 35 t", 80],
-        ["Mini excavadora con rompedor", "1,5 t", 83],
-        ["Retroexcavadora + rompedor hidráulico", "67 kW", 88],
-    ], columns=["Equipo / condición", "Tamaño o potencia", "Nivel a 10 m [dB(A)]"])
-    st.dataframe(comparison, use_container_width=True, hide_index=True)
-    st.markdown(
-        """
-        La diferencia no se explica solo por el tamaño. Cambia también **la actividad**:
-        excavar, circular, romper pavimento o trabajar en vacío no representan el mismo estado acústico.
-        """
+    with right:
+        st.markdown("### Datos de referencia · BS 5228-1:2009")
+        metric=item.get("metric","LAeq,T")
+        a,b,c1=st.columns(3)
+        a.metric(f"{metric} a 10 m",f"{item['laeq10']:.0f} dB(A)")
+        b.metric("LWA equivalente*",f"{item['laeq10']+28:.0f} dB(A)")
+        c1.metric("Fuente",f"Tabla {item['table']} · Ref. {item['ref']}")
+        if item.get("driveby"):
+            st.warning(
+                "Este registro está marcado con asterisco en BS 5228: corresponde a LAmax de pasada de maquinaria móvil, "
+                "no a un LAeq,T de actividad estacionaria."
+            )
+        st.caption(
+            "* En las Tablas C.1–C.11, BS 5228 indica que, salvo excepciones, el LWA utilizado en ciertos procedimientos "
+            "puede obtenerse sumando 28 dB(A) al dato broadband a 10 m."
+        )
+
+        st.markdown("#### Espectro por bandas de octava a 10 m")
+        bands=[63,125,250,500,1000,2000,4000,8000]
+        df=pd.DataFrame({
+            "Frecuencia [Hz]":[str(x) if x<1000 else f"{int(x/1000)}k" for x in bands],
+            "Nivel [dB]":item["bands"],
+        })
+        st.dataframe(df.T,use_container_width=True,hide_index=True)
+
+        st.markdown("#### Dónde encontrar el dato en el documento")
+        st.markdown(
+            f"**Anexo C · Tabla {item['table']} · referencia {item['ref']} · {item['page']}**"
+        )
+        st.code(f"Buscar en el PDF: Table {item['table']}  Ref {item['ref']}  {item['en']}",language=None)
+
+    st.markdown("### Cómo leer correctamente estos valores")
+    c1,c2,c3,c4=st.columns(4)
+    with c1:
+        st.markdown("**1 · Equipo**\n\nNo basta el nombre genérico.")
+    with c2:
+        st.markdown("**2 · Actividad**\n\nExcavar, romper, cargar o circular cambian el ruido.")
+    with c3:
+        st.markdown("**3 · Tamaño**\n\nPotencia, masa y capacidad ayudan a elegir un registro comparable.")
+    with c4:
+        st.markdown("**4 · Magnitud**\n\nDistingue LAeq,T, LAmax, bandas y LWA.")
+
+    st.warning(
+        "Los registros del Anexo C son mediciones de equipos específicos. La propia norma advierte que los valores pueden "
+        "ser mayores o menores según marca, mantenimiento, operación y procedimiento de trabajo."
     )
 
-    st.markdown("### 5 · ¿De dónde conviene obtener el dato de una máquina?")
-    st.markdown(
-        """
-        BS 5228 plantea una jerarquía práctica:
-
-        **1. Mejor opción:** medir un equipo similar, operando de forma comparable y durante un período representativo.  
-        **2. Si no existe medición:** usar datos de los anexos de BS 5228 para equipos y actividades equivalentes.  
-        **3. Otra posibilidad:** utilizar un nivel de potencia sonora declarado o reglamentario, ajustándolo al modo real de operación.
-        """
-    )
-
-    st.markdown("### 6 · Actividad de lectura crítica")
-    scenario = st.selectbox(
-        "Escenario",
+    st.markdown("### Actividad de lectura crítica")
+    scenario=st.selectbox(
+        "Situación de obra",
         [
-            "Obra con excavadora de 35 t realizando movimiento de tierras",
-            "Demolición de pavimento con rompedor hidráulico",
-            "Generador pequeño para iluminación de faena",
+            "Excavación de terreno con excavadora de aproximadamente 25 t",
+            "Hormigonado de estructura con camión mixer y bomba",
+            "Demolición localizada de hormigón con martillo hidráulico",
+            "Compactación de terreno con rodillo vibratorio",
         ],
         key="c4l1_s1_scenario",
     )
-    options = {
-        "Obra con excavadora de 35 t realizando movimiento de tierras": "Excavadora sobre orugas",
-        "Demolición de pavimento con rompedor hidráulico": "Rompedor hidráulico montado en retroexcavadora",
-        "Generador pequeño para iluminación de faena": None,
-    }
-    expected = options[scenario]
-
-    candidate = st.selectbox(
-        "¿Qué harías primero?",
+    expected={
+        "Excavación de terreno con excavadora de aproximadamente 25 t":"Excavadora hidráulica",
+        "Hormigonado de estructura con camión mixer y bomba":"Camión mixer",
+        "Demolición localizada de hormigón con martillo hidráulico":"Martillo hidráulico",
+        "Compactación de terreno con rodillo vibratorio":"Rodillo vibratorio",
+    }[scenario]
+    answer=st.selectbox(
+        "¿Qué criterio usarías para seleccionar el dato acústico?",
         [
-            "Usaría el valor más alto de toda la tabla para ser conservador.",
-            "Buscaría un registro con actividad, tipo y tamaño comparables.",
-            "Usaría cualquier valor del mismo nombre de máquina.",
-            "Convertiría directamente el dato a Lw sin revisar qué magnitud es.",
+            "Tomaría cualquier valor de una máquina con nombre parecido.",
+            "Escogería siempre el valor más alto de la tabla.",
+            "Buscaría equipo, tamaño y actividad comparables y documentaría la referencia.",
         ],
-        key="c4l1_s1_action",
+        key="c4l1_s1_answer",
     )
-    if st.button("Comprobar criterio", key="c4l1_s1_check", type="primary", use_container_width=True):
-        if candidate.startswith("Buscaría un registro"):
-            st.success(
-                "Correcto. Primero se busca representatividad del dato; después se realiza la conversión o predicción."
-            )
-            if expected:
-                st.caption(f"En la biblioteca de esta etapa, el registro más cercano sería: **{expected}**.")
-            else:
-                st.caption(
-                    "Para este caso convendría buscar específicamente los registros de generadores del Anexo C, "
-                    "porque la biblioteca resumida de esta etapa no contiene todos los equipos de la norma."
-                )
+    if st.button("Comprobar criterio",key="c4l1_s1_check",type="primary",use_container_width=True):
+        if answer.startswith("Buscaría"):
+            st.success(f"Correcto. Para este ejercicio, comienza revisando **{expected}** y su registro BS 5228.")
         else:
-            st.warning(
-                "No es suficiente coincidir en el nombre de la máquina ni escoger el valor mayor. "
-                "Debes justificar actividad, tamaño y magnitud."
-            )
-
-    st.markdown("### 7 · Qué debes llevarte de esta etapa")
-    q1, q2, q3 = st.columns(3)
-    with q1:
-        st.success("**Dato acústico ≠ nombre de máquina**\n\nLa condición de operación es parte del dato.")
-    with q2:
-        st.success("**10 m es una referencia**\n\nNo confundas LAeq,T a 10 m con LWA.")
-    with q3:
-        st.success("**Trazabilidad primero**\n\nRegistra tabla, referencia, equipo y actividad.")
-
+            st.warning("El dato debe ser representativo y trazable; el nombre genérico o el valor máximo por sí solos no bastan.")
 
 def _stage2(lab, saved):
     _header(
