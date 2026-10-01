@@ -17,7 +17,7 @@ CLASS_ID = "clase-07-construccion-lab-1"
 NOISEMAP_URL = "https://noisemap-akuzoft.vercel.app/"
 STAGE_MINUTES = [10,20,20,20,20,20,20,25,30,25,30]
 
-BS5228_PDF_FILENAME = "BS-5228-1-2009.pdf"
+BS5228_PDF_FILENAME = "BS-5228 Code of Practice for Noise and Vibration Control on Open Sites - Part 1 - Noise (2009)+A1-2014.pdf"
 BS_PLANT = {
     "Excavadora hidráulica": {
         "en":"Tracked excavator","phase":"Movimiento de tierras","table":"C.2","ref":"19","page":"47 BS / 53 PDF",
