@@ -17,7 +17,7 @@ CLASS_ID = "clase-07-construccion-lab-1"
 NOISEMAP_URL = "https://noisemap-akuzoft.vercel.app/"
 STAGE_MINUTES = [10,20,20,20,20,20,20,25,30,25,30]
 
-BSI_REFERENCE_URL = "https://pdfcoffee.com/no-copying-without-bsi-permission-except-as-permitted-by-copyright-law-code-of-practice-for-noise-and-vibration-control-on-construction-and-open-sites-pdf-free.html"
+BS5228_PDF_FILENAME = "BS-5228-1-2009.pdf"
 BS_PLANT = {
     "Excavadora hidráulica": {
         "en":"Tracked excavator","phase":"Movimiento de tierras","table":"C.2","ref":"19","page":"47 BS / 53 PDF",
@@ -222,8 +222,25 @@ def _stage1(lab, saved):
         st.markdown("### Biblioteca visual de maquinaria")
         st.caption("Equipos frecuentes en obras de edificación. Selecciona uno para abrir su ficha acústica.")
     with top2:
-        st.link_button("📘 Abrir norma BS 5228-1:2009 · PDF", BSI_REFERENCE_URL, use_container_width=True)
-        st.caption("Documento base del curso. En cada ficha se indica la tabla, referencia y página para localizar el registro en la norma.")
+        bs_pdf_path = PROJECT_ROOT / "assets" / "curso4_lab1" / BS5228_PDF_FILENAME
+        if bs_pdf_path.exists():
+            st.download_button(
+                "📘 Abrir / descargar norma BS 5228-1:2009 · PDF",
+                data=bs_pdf_path.read_bytes(),
+                file_name=BS5228_PDF_FILENAME,
+                mime="application/pdf",
+                use_container_width=True,
+                key="c4l1_bs5228_pdf",
+            )
+        else:
+            st.info(
+                "La norma BS 5228-1:2009 debe estar disponible en los materiales locales del curso. "
+                "No se utiliza ningún enlace externo de terceros."
+            )
+        st.caption(
+            "Documento base del curso. En cada ficha se indica la tabla, referencia y página "
+            "para localizar el registro en la norma."
+        )
 
     phases=["Todas","Movimiento de tierras","Estructura y hormigón","Demolición y faenas ruidosas","Equipos auxiliares"]
     phase=st.segmented_control("Filtrar por fase",phases,default="Todas",key="c4l1_s1_phase")
