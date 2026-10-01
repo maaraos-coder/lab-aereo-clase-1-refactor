@@ -347,37 +347,176 @@ def _stage1(lab, saved):
         "ser mayores o menores según marca, mantenimiento, operación y procedimiento de trabajo."
     )
 
-    st.markdown("### Actividad de lectura crítica")
-    scenario=st.selectbox(
-        "Situación de obra",
-        [
-            "Excavación de terreno con excavadora de aproximadamente 25 t",
-            "Hormigonado de estructura con camión mixer y bomba",
-            "Demolición localizada de hormigón con martillo hidráulico",
-            "Compactación de terreno con rodillo vibratorio",
-        ],
-        key="c4l1_s1_scenario",
+    st.markdown("---")
+    st.markdown(
+        """
+        <div style="border:1px solid #d9e7f3;border-radius:20px;padding:20px 22px;
+        background:linear-gradient(135deg,#fbfdff 0%,#f2f8fc 55%,#eef6ff 100%);
+        box-shadow:0 6px 18px rgba(30,70,110,.06);margin:8px 0 18px 0">
+          <div style="font-size:.72rem;font-weight:900;letter-spacing:.12em;color:#0b6ea8">
+            DESAFÍO APLICADO · CIERRE DE ETAPA 1
+          </div>
+          <div style="font-size:1.35rem;font-weight:900;color:#10243b;margin:.35rem 0 .45rem">
+            Selecciona el registro acústico correcto
+          </div>
+          <div style="color:#4b6074;line-height:1.55">
+            Reconoce la maquinaria, verifica actividad y tamaño, identifica el descriptor
+            y justifica por qué el registro BS 5228 representa el caso.
+          </div>
+        </div>
+        """,
+        unsafe_allow_html=True,
     )
-    expected={
-        "Excavación de terreno con excavadora de aproximadamente 25 t":"Excavadora hidráulica",
-        "Hormigonado de estructura con camión mixer y bomba":"Camión mixer",
-        "Demolición localizada de hormigón con martillo hidráulico":"Martillo hidráulico",
-        "Compactación de terreno con rodillo vibratorio":"Rodillo vibratorio",
-    }[scenario]
-    answer=st.selectbox(
-        "¿Qué criterio usarías para seleccionar el dato acústico?",
-        [
-            "Tomaría cualquier valor de una máquina con nombre parecido.",
-            "Escogería siempre el valor más alto de la tabla.",
-            "Buscaría equipo, tamaño y actividad comparables y documentaría la referencia.",
-        ],
-        key="c4l1_s1_answer",
+
+    scenarios = {
+        "Excavación": {
+            "title":"Excavación y movimiento de tierras",
+            "text":"Se realizará excavación general en una obra de edificación mediante una excavadora hidráulica sobre orugas de aproximadamente 25 t.",
+            "phase":"Movimiento de tierras",
+            "activity":"Excavación / movimiento de tierras",
+            "target":"Excavadora hidráulica",
+            "options":["Excavadora hidráulica","Retroexcavadora","Cargador frontal","Camión tolva articulado"],
+        },
+        "Hormigonado": {
+            "title":"Hormigonado de estructura",
+            "text":"Durante el hormigonado se utilizará un camión mixer como equipo principal de suministro de hormigón en obra.",
+            "phase":"Estructura y hormigón",
+            "activity":"Mezcla / suministro de hormigón",
+            "target":"Camión mixer",
+            "options":["Camión mixer","Bomba de hormigón","Manipulador telescópico","Generador diésel"],
+        },
+        "Demolición": {
+            "title":"Demolición localizada de hormigón",
+            "text":"Se requiere romper elementos de hormigón utilizando un martillo hidráulico montado sobre maquinaria.",
+            "phase":"Demolición y faenas ruidosas",
+            "activity":"Rotura de hormigón",
+            "target":"Martillo hidráulico",
+            "options":["Martillo hidráulico","Martillo neumático","Sierra de corte de hormigón","Excavadora hidráulica"],
+        },
+        "Compactación": {
+            "title":"Compactación de terreno",
+            "text":"Se ejecutará compactación mediante un rodillo vibratorio móvil en pasadas sucesivas sobre el terreno.",
+            "phase":"Movimiento de tierras",
+            "activity":"Compactación / pasada",
+            "target":"Rodillo vibratorio",
+            "options":["Rodillo vibratorio","Cargador frontal","Camión tolva articulado","Retroexcavadora"],
+        },
+    }
+
+    scenario_key = st.segmented_control(
+        "Escoge un escenario",
+        list(scenarios.keys()),
+        default="Excavación",
+        key="c4l1_s1_challenge_scenario",
     )
-    if st.button("Comprobar criterio",key="c4l1_s1_check",type="primary",use_container_width=True):
-        if answer.startswith("Buscaría"):
-            st.success(f"Correcto. Para este ejercicio, comienza revisando **{expected}** y su registro BS 5228.")
-        else:
-            st.warning("El dato debe ser representativo y trazable; el nombre genérico o el valor máximo por sí solos no bastan.")
+    sc = scenarios[scenario_key]
+
+    with st.container(border=True):
+        st.markdown(f"### 🏗️ {sc['title']}")
+        st.markdown(sc["text"])
+        p1,p2,p3 = st.columns(3)
+        p1.markdown(f"**Fase de obra**\n\n{sc['phase']}")
+        p2.markdown(f"**Actividad**\n\n{sc['activity']}")
+        p3.markdown("**Tu misión**\n\nElegir un registro BS 5228 representativo")
+
+    st.markdown("#### 1 · ¿Qué maquinaria representa mejor el escenario?")
+    st.caption("Selecciona visualmente una alternativa. Después podrás revisar si el descriptor acústico también es coherente.")
+    option_cols = st.columns(4)
+    for i,opt_name in enumerate(sc["options"]):
+        opt_item = BS_PLANT[opt_name]
+        with option_cols[i]:
+            with st.container(border=True):
+                opt_image = _machine_image_path(opt_item)
+                if opt_image:
+                    st.image(str(opt_image), use_container_width=True)
+                st.markdown(f"**{opt_name}**")
+                st.caption(f"{opt_item['phase']} · {opt_item['power']} · {opt_item['size']}")
+                if st.button(
+                    "Seleccionar",
+                    key=f"c4l1_s1_pick_{scenario_key}_{i}",
+                    use_container_width=True,
+                    type="primary" if st.session_state.get("c4l1_s1_machine_pick")==opt_name else "secondary",
+                ):
+                    st.session_state["c4l1_s1_machine_pick"] = opt_name
+
+    picked = st.session_state.get("c4l1_s1_machine_pick")
+    if picked:
+        picked_item = BS_PLANT[picked]
+        st.markdown("#### 2 · Interpreta el registro seleccionado")
+        with st.container(border=True):
+            q1,q2,q3,q4 = st.columns(4)
+            q1.metric("Equipo", picked)
+            q2.metric("Descriptor global", picked_item.get("metric","LAeq,T"))
+            q3.metric("Nivel a 10 m", f"{picked_item['laeq10']:.0f} dB(A)")
+            q4.metric("Referencia", f"{picked_item['table']} · Ref. {picked_item['ref']}")
+            st.caption(
+                f"Actividad del registro: {picked_item['activity']} · "
+                f"Potencia/tamaño: {picked_item['power']} · {picked_item['size']}"
+            )
+
+        descriptor_options = (
+            ["LAmax global + Lmax por bandas", "LAeq,T global + Lp,eq,T por bandas"]
+            if picked_item.get("driveby")
+            else ["LAeq,T global + Lp,eq,T por bandas", "LAmax global + Lmax por bandas"]
+        )
+        descriptor_answer = st.radio(
+            "¿Qué descriptor corresponde a este registro?",
+            descriptor_options,
+            horizontal=True,
+            key=f"c4l1_s1_descriptor_{scenario_key}_{picked}",
+        )
+
+        st.markdown("#### 3 · Justifica tu selección")
+        justification = st.text_area(
+            "Explica por qué el equipo y el registro seleccionado son —o no son— representativos del escenario.",
+            placeholder="Considera al menos: tipo de equipo, actividad, tamaño/potencia y descriptor acústico.",
+            height=110,
+            key=f"c4l1_s1_justification_{scenario_key}",
+        )
+
+        if st.button(
+            "Validar selección",
+            key=f"c4l1_s1_validate_{scenario_key}",
+            type="primary",
+            use_container_width=True,
+        ):
+            machine_ok = picked == sc["target"]
+            expected_descriptor = (
+                "LAmax global + Lmax por bandas"
+                if BS_PLANT[sc["target"]].get("driveby")
+                else "LAeq,T global + Lp,eq,T por bandas"
+            )
+            descriptor_ok = descriptor_answer == expected_descriptor
+            justification_ok = len(justification.strip()) >= 90
+
+            if machine_ok and descriptor_ok and justification_ok:
+                st.success(
+                    "Buena selección. El equipo coincide con la actividad planteada, el registro tiene trazabilidad "
+                    "en BS 5228 y el descriptor fue interpretado correctamente. Tu justificación también incorpora "
+                    "criterios suficientes para defender la elección."
+                )
+            else:
+                if not machine_ok:
+                    st.warning(
+                        f"Revisa la maquinaria. Para este escenario, el registro de partida más coherente es "
+                        f"**{sc['target']}**. El nombre genérico por sí solo no basta: debe coincidir la actividad y "
+                        "ser comparable en tamaño/potencia."
+                    )
+                elif not descriptor_ok:
+                    st.warning(
+                        f"La maquinaria es coherente, pero revisa el descriptor. Para este registro corresponde "
+                        f"**{expected_descriptor}**."
+                    )
+                else:
+                    st.info(
+                        "La selección técnica es correcta. Amplía un poco la justificación: menciona explícitamente "
+                        "equipo, actividad, tamaño/potencia y descriptor acústico."
+                    )
+
+        st.caption(
+            "Criterio profesional: BS 5228 entrega registros de equipos y actividades concretos. "
+            "La selección debe ser representativa y trazable, no una elección automática por nombre o por el valor más alto."
+        )
 
 def _stage2(lab, saved):
     _header(
