@@ -7,6 +7,7 @@ from typing import Any, Dict, Iterable, List, Tuple
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
+from labs import curso4_laboratorio_1 as _c4l1
 
 
 MODULE_DIR = Path(__file__).resolve().parent
@@ -34120,6 +34121,10 @@ def future_lab_view_impl(lab):
             _render_course3_lab2_stage10,
         ]
         renderers[selected](lab, saved)
+        return
+
+    if class_id == _c4l1.CLASS_ID:
+        _c4l1.run_stage(selected, lab, saved, globals())
         return
 
     title,objective,concept,activity=lab["stages"][selected]
