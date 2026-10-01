@@ -289,11 +289,24 @@ def _stage1(lab, saved):
 
         st.markdown("#### Espectro por bandas de octava a 10 m")
         bands=[63,125,250,500,1000,2000,4000,8000]
-        df=pd.DataFrame({
-            "Frecuencia [Hz]":[str(x) if x<1000 else f"{int(x/1000)}k" for x in bands],
-            "Nivel [dB]":item["bands"],
-        })
-        st.dataframe(df.T,use_container_width=True,hide_index=True)
+        band_labels=[str(x) if x<1000 else f"{int(x/1000)}k" for x in bands]
+        descriptor = "Lmax por banda [dB]" if item.get("driveby") else "Lp,eq,T por banda [dB]"
+        df=pd.DataFrame(
+            [band_labels, item["bands"]],
+            index=["Frecuencia central [Hz]", descriptor],
+            columns=["63 Hz","125 Hz","250 Hz","500 Hz","1 kHz","2 kHz","4 kHz","8 kHz"],
+        )
+        st.dataframe(df,use_container_width=True)
+        if item.get("driveby"):
+            st.caption(
+                "Descriptor espectral: niveles máximos de presión sonora Lmax por banda de octava, "
+                "medidos a 10 m durante la pasada. El valor global de la ficha corresponde a LAmax."
+            )
+        else:
+            st.caption(
+                "Descriptor espectral: niveles equivalentes de presión sonora Lp,eq,T por banda de octava "
+                "a 10 m durante la actividad. El valor global A-ponderado de la ficha corresponde a LAeq,T."
+            )
 
         st.markdown("#### Dónde encontrar el dato en el documento")
         st.markdown(
