@@ -159,40 +159,207 @@ def _stage1(lab, saved):
     _header(
         1,
         "Maquinaria de construcción y datos acústicos de referencia",
-        "Aprender a leer un dato de maquinaria como registro de una actividad y no como un valor universal del nombre del equipo.",
+        "Aprender a leer correctamente los datos de ruido de maquinaria de construcción antes de utilizarlos en una predicción.",
     )
-    st.markdown("### 1 · ¿Qué aporta BS 5228?")
-    st.write(
-        "BS 5228-1 reúne datos de ruido de construcción y sitios abiertos. "
-        "Sus tablas asocian nivel, equipo, capacidad, actividad y condición de operación."
-    )
-    st.markdown("### 2 · Biblioteca didáctica de registros")
-    _bs_selector("stage1")
-    st.markdown("### 3 · Comprueba la lectura")
-    choice = st.radio(
-        "¿Qué afirmación es técnicamente correcta?",
-        [
-            "Toda máquina del mismo tipo debe usar exactamente este nivel.",
-            "El nivel es un dato de referencia de esa actividad; debo documentar su procedencia y comprobar representatividad.",
-            "El nivel a 10 m puede ingresarse directamente como Lw sin ninguna conversión.",
-        ],
-        key="c4l1_s1_choice",
-    )
-    if st.button("Comprobar lectura", key="c4l1_s1_check", type="primary"):
-        if choice.startswith("El nivel es un dato"):
-            st.success("Correcto. La actividad, condición de operación y fuente documental forman parte del dato.")
-        else:
-            st.warning("Revisa la diferencia entre un nivel de referencia a distancia y una potencia sonora.")
-    st.markdown("### Ficha mínima de una fuente")
+
     st.markdown(
-        "- equipo y actividad;\n"
-        "- magnitud disponible y distancia/condición de referencia;\n"
-        "- capacidad o tamaño cuando corresponda;\n"
-        "- cantidad, ubicación y altura;\n"
-        "- directividad;\n"
-        "- porcentaje de funcionamiento;\n"
-        "- fuente documental o medición."
+        """
+        <div style="border:1px solid #cfe0ef;border-radius:18px;padding:18px 20px;
+        background:linear-gradient(135deg,#f7fbff,#eef7ff);margin-bottom:1rem">
+          <div style="font-size:.75rem;font-weight:850;letter-spacing:.08em;color:#0b6ea8">
+            IDEA CENTRAL
+          </div>
+          <div style="font-size:1.2rem;font-weight:850;color:#10243b;margin:.35rem 0 .5rem">
+            Una “excavadora” no tiene un único nivel de ruido.
+          </div>
+          <div style="color:#4b6074;line-height:1.55">
+            El nivel depende del tamaño de la máquina, potencia, actividad que realiza, carga,
+            estado de mantenimiento y forma de operación. Por eso BS 5228 entrega
+            <b>registros de equipos en actividades concretas</b>, no un número universal por nombre.
+          </div>
+        </div>
+        """,
+        unsafe_allow_html=True,
     )
+
+    st.markdown("### 1 · ¿Qué es BS 5228-1?")
+    st.write(
+        "BS 5228-1 es una referencia para la predicción, medición y control del ruido "
+        "en obras de construcción y sitios abiertos. Su Anexo C reúne datos acústicos "
+        "de maquinaria y actividades de obra obtenidos en terreno."
+    )
+
+    c1, c2, c3 = st.columns(3)
+    with c1:
+        st.markdown(
+            """
+            <div style="border:1px solid #dbe7f0;border-radius:15px;padding:15px;height:150px;background:#fff">
+              <div style="font-weight:850;color:#0b5f98">¿QUÉ ENTREGA?</div>
+              <div style="font-size:1.45rem;font-weight:900;color:#172b3f;margin:.3rem 0">LAeq,T a 10 m</div>
+              <div style="color:#5f7080;line-height:1.4">Nivel A-ponderado medido durante una actividad representativa.</div>
+            </div>
+            """,
+            unsafe_allow_html=True,
+        )
+    with c2:
+        st.markdown(
+            """
+            <div style="border:1px solid #dbe7f0;border-radius:15px;padding:15px;height:150px;background:#fff">
+              <div style="font-weight:850;color:#0b5f98">¿QUÉ MÁS?</div>
+              <div style="font-size:1.45rem;font-weight:900;color:#172b3f;margin:.3rem 0">63 Hz → 8 kHz</div>
+              <div style="color:#5f7080;line-height:1.4">Muchas tablas incluyen niveles por bandas de octava a 10 m.</div>
+            </div>
+            """,
+            unsafe_allow_html=True,
+        )
+    with c3:
+        st.markdown(
+            """
+            <div style="border:1px solid #dbe7f0;border-radius:15px;padding:15px;height:150px;background:#fff">
+              <div style="font-weight:850;color:#0b5f98">¿QUÉ DEBES LEER?</div>
+              <div style="font-size:1.45rem;font-weight:900;color:#172b3f;margin:.3rem 0">Equipo + actividad</div>
+              <div style="color:#5f7080;line-height:1.4">Potencia, masa/capacidad y condición operacional forman parte del dato.</div>
+            </div>
+            """,
+            unsafe_allow_html=True,
+        )
+
+    st.markdown("### 2 · Cómo leer una fila de la norma")
+    st.markdown(
+        """
+        Antes de usar un valor debes identificar, en este orden:
+
+        1. **Actividad** que se estaba realizando.
+        2. **Tipo de equipo**.
+        3. **Potencia o tamaño** del equipo.
+        4. **Magnitud reportada**: normalmente LAeq,T a 10 m.
+        5. **Si es un equipo móvil marcado con asterisco**, el dato puede corresponder a LAmax de paso.
+        6. **Espectro por octavas**, cuando está disponible.
+        """
+    )
+    st.warning(
+        "No copies solo la última columna de la tabla. Si ignoras la actividad y el tamaño, "
+        "puedes asignar a tu proyecto un dato que no representa la maquinaria real."
+    )
+
+    st.markdown("### 3 · Explora registros reales de referencia")
+    selected_name = st.selectbox(
+        "Selecciona una máquina / actividad",
+        list(BS_PLANT),
+        key="c4l1_bs_stage1",
+    )
+    item = BS_PLANT[selected_name]
+
+    equipment_meta = {
+        "Rompedor hidráulico montado en retroexcavadora": ("67 kW", "Rotura de superficie de camino", "C.5 · ref. 1"),
+        "Mini excavadora con rompedor hidráulico": ("1,5 t", "Rotura de superficie de camino", "C.5 · ref. 2"),
+        "Rompedor neumático manual": ("Manual", "Rotura de superficie de camino", "C.5 · ref. 4"),
+        "Excavadora sobre ruedas": ("112 kW · 17 t", "Retiro de superficie rota", "C.5 · ref. 11"),
+        "Excavadora sobre orugas": ("172 kW · 35 t", "Movimiento de tierras", "C.5 · ref. 18"),
+        "Camión articulado": ("194 kW · 25 t", "Movimiento de tierras / circulación", "C.5 · ref. 16"),
+    }
+    power_size, activity, reference = equipment_meta[selected_name]
+
+    a, b, ccol, d = st.columns(4)
+    a.metric("LAeq,T / LAmax a 10 m", f"{item['laeq10']:.0f} dB(A)")
+    b.metric("Equipo / tamaño", power_size)
+    ccol.metric("Referencia", reference)
+    d.metric("LWA de trabajo*", f"{item['laeq10'] + 28:.0f} dB(A)")
+    st.caption(
+        "* Para las tablas C.1–C.11, BS 5228 indica que, salvo excepciones, "
+        "el LWA usado en ciertos métodos de predicción puede obtenerse sumando 28 dB(A) "
+        "al LAeq,T o LAmax a 10 m."
+    )
+
+    with st.container(border=True):
+        st.markdown(f"#### {selected_name}")
+        st.markdown(f"**Actividad representada:** {activity}")
+        st.write(item["detail"])
+        st.info(
+            "Este registro sirve como **dato de referencia**. Para un estudio real se debe "
+            "comprobar que la máquina, potencia/capacidad y modo de trabajo sean comparables."
+        )
+
+    st.markdown("### 4 · Una misma familia puede variar bastante")
+    comparison = pd.DataFrame([
+        ["Excavadora sobre ruedas", "112 kW · 17 t", 73],
+        ["Excavadora sobre orugas", "172 kW · 35 t", 80],
+        ["Mini excavadora con rompedor", "1,5 t", 83],
+        ["Retroexcavadora + rompedor hidráulico", "67 kW", 88],
+    ], columns=["Equipo / condición", "Tamaño o potencia", "Nivel a 10 m [dB(A)]"])
+    st.dataframe(comparison, use_container_width=True, hide_index=True)
+    st.markdown(
+        """
+        La diferencia no se explica solo por el tamaño. Cambia también **la actividad**:
+        excavar, circular, romper pavimento o trabajar en vacío no representan el mismo estado acústico.
+        """
+    )
+
+    st.markdown("### 5 · ¿De dónde conviene obtener el dato de una máquina?")
+    st.markdown(
+        """
+        BS 5228 plantea una jerarquía práctica:
+
+        **1. Mejor opción:** medir un equipo similar, operando de forma comparable y durante un período representativo.  
+        **2. Si no existe medición:** usar datos de los anexos de BS 5228 para equipos y actividades equivalentes.  
+        **3. Otra posibilidad:** utilizar un nivel de potencia sonora declarado o reglamentario, ajustándolo al modo real de operación.
+        """
+    )
+
+    st.markdown("### 6 · Actividad de lectura crítica")
+    scenario = st.selectbox(
+        "Escenario",
+        [
+            "Obra con excavadora de 35 t realizando movimiento de tierras",
+            "Demolición de pavimento con rompedor hidráulico",
+            "Generador pequeño para iluminación de faena",
+        ],
+        key="c4l1_s1_scenario",
+    )
+    options = {
+        "Obra con excavadora de 35 t realizando movimiento de tierras": "Excavadora sobre orugas",
+        "Demolición de pavimento con rompedor hidráulico": "Rompedor hidráulico montado en retroexcavadora",
+        "Generador pequeño para iluminación de faena": None,
+    }
+    expected = options[scenario]
+
+    candidate = st.selectbox(
+        "¿Qué harías primero?",
+        [
+            "Usaría el valor más alto de toda la tabla para ser conservador.",
+            "Buscaría un registro con actividad, tipo y tamaño comparables.",
+            "Usaría cualquier valor del mismo nombre de máquina.",
+            "Convertiría directamente el dato a Lw sin revisar qué magnitud es.",
+        ],
+        key="c4l1_s1_action",
+    )
+    if st.button("Comprobar criterio", key="c4l1_s1_check", type="primary", use_container_width=True):
+        if candidate.startswith("Buscaría un registro"):
+            st.success(
+                "Correcto. Primero se busca representatividad del dato; después se realiza la conversión o predicción."
+            )
+            if expected:
+                st.caption(f"En la biblioteca de esta etapa, el registro más cercano sería: **{expected}**.")
+            else:
+                st.caption(
+                    "Para este caso convendría buscar específicamente los registros de generadores del Anexo C, "
+                    "porque la biblioteca resumida de esta etapa no contiene todos los equipos de la norma."
+                )
+        else:
+            st.warning(
+                "No es suficiente coincidir en el nombre de la máquina ni escoger el valor mayor. "
+                "Debes justificar actividad, tamaño y magnitud."
+            )
+
+    st.markdown("### 7 · Qué debes llevarte de esta etapa")
+    q1, q2, q3 = st.columns(3)
+    with q1:
+        st.success("**Dato acústico ≠ nombre de máquina**\n\nLa condición de operación es parte del dato.")
+    with q2:
+        st.success("**10 m es una referencia**\n\nNo confundas LAeq,T a 10 m con LWA.")
+    with q3:
+        st.success("**Trazabilidad primero**\n\nRegistra tabla, referencia, equipo y actividad.")
+
     _complete(lab, saved, 1)
 
 def _stage2(lab, saved):
