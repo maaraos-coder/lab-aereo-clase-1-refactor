@@ -34413,6 +34413,10 @@ def future_projection_stage_impl(lab, stage):
         renderers[stage](lab, projection_saved)
         return
 
+    if lab.get("id") == _c4l1.CLASS_ID:
+        _c4l1.run_stage(stage, lab, projection_saved, globals())
+        return
+
     title, objective, concept, activity = lab["stages"][stage]
     stage_minutes = 20 if stage not in (9, 10) else 35
     header(f"ETAPA {stage} · LABORATORIO {lab['number']}", title, objective)
