@@ -122,15 +122,22 @@ def _bs_selector(suffix):
         key=f"c4l1_bs_{suffix}",
     )
     item = BS_PLANT[name]
+    metric = item.get("metric", "LAeq,T")
     c1, c2 = st.columns([0.35, 0.65])
-    c1.metric("LAeq,T a 10 m", f"{item['laeq10']:.0f} dB(A)")
+    c1.metric(f"{metric} a 10 m", f"{item['laeq10']:.0f} dB(A)")
     with c2:
         st.markdown(f"**Actividad:** {item['activity']}")
-        st.caption(item["detail"])
-    st.info(
-        "El valor pertenece a un registro de actividad y condición concretos. "
-        "No debe transformarse en un nivel universal de toda máquina con el mismo nombre."
-    )
+        st.caption(
+            f"BS 5228-1:2009 · Tabla {item['table']} · Ref. {item['ref']} · "
+            f"{item['power']} · {item['size']}"
+        )
+    if item.get("driveby"):
+        st.warning("Registro móvil: el valor corresponde a LAmax de pasada a 10 m.")
+    else:
+        st.info(
+            "El valor pertenece a un registro de actividad y condición concretos. "
+            "No debe transformarse en un nivel universal de toda máquina con el mismo nombre."
+        )
     return name, item
 
 def _stage0(lab, saved):
