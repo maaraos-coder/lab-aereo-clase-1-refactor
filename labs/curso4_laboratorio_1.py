@@ -59,20 +59,9 @@ def _header(stage, title, purpose):
         duration_minutes=STAGE_MINUTES[stage],
     )
 
-def _save_done(lab, saved, stage):
-    saved[f"c4l1_done_{stage}"] = True
+def _save_stage_state(lab, saved, stage):
     saved[f"c4l1_updated_{stage}"] = _now()
     _save_future_state(lab["id"], saved)
-
-def _complete(lab, saved, stage):
-    if st.button(
-        "Marcar etapa como completada",
-        key=f"c4l1_complete_{stage}",
-        type="primary",
-        use_container_width=True,
-    ):
-        _save_done(lab, saved, stage)
-        st.success("Etapa registrada como completada.")
 
 def _model_button():
     st.link_button(
@@ -153,7 +142,6 @@ def _stage0(lab, saved):
         'Noise Map Lab se utiliza desde las etapas aplicadas; Streamlit conserva la guía, actividades y progreso.</div>',
         unsafe_allow_html=True,
     )
-    _complete(lab, saved, 0)
 
 def _stage1(lab, saved):
     _header(
@@ -360,7 +348,6 @@ def _stage1(lab, saved):
     with q3:
         st.success("**Trazabilidad primero**\n\nRegistra tabla, referencia, equipo y actividad.")
 
-    _complete(lab, saved, 1)
 
 def _stage2(lab, saved):
     _header(
@@ -389,7 +376,6 @@ def _stage2(lab, saved):
         "Q y G no son lo mismo: Q/Dc describe directividad o espacio de radiación; "
         "G caracteriza el efecto acústico del suelo."
     )
-    _complete(lab, saved, 2)
 
 def _stage3(lab, saved):
     _header(
@@ -413,7 +399,6 @@ def _stage3(lab, saved):
         "Compara el resultado del motor con la tabla ideal."
     )
     _model_button()
-    _complete(lab, saved, 3)
 
 def _stage4(lab, saved):
     _header(
@@ -437,7 +422,6 @@ def _stage4(lab, saved):
         "4. Mantén la fuente fija para comparar una sola variable cada vez."
     )
     _model_button()
-    _complete(lab, saved, 4)
 
 def _stage5(lab, saved):
     _header(
@@ -460,7 +444,6 @@ def _stage5(lab, saved):
         "La fuente dominante no tiene por qué ser la de mayor Lw si la geometría cambia."
     )
     _model_button()
-    _complete(lab, saved, 5)
 
 def _stage6(lab, saved):
     _header(
@@ -483,7 +466,6 @@ def _stage6(lab, saved):
         "Después combínalo con una fuente continua."
     )
     _model_button()
-    _complete(lab, saved, 6)
 
 def _stage7(lab, saved):
     _header(
@@ -512,7 +494,6 @@ def _stage7(lab, saved):
         "- registra el receptor antes y después."
     )
     _model_button()
-    _complete(lab, saved, 7)
 
 def _stage8(lab, saved):
     _header(
@@ -552,7 +533,7 @@ def _stage8(lab, saved):
     )
     if st.button("Guardar registro del modelo", key="c4l1_s8_save", type="primary"):
         saved["c4l1_stage8_note"] = note
-        _save_done(lab, saved, 8)
+        _save_stage_state(lab, saved, 8)
         st.success("Registro guardado.")
 
 def _stage9(lab, saved):
@@ -585,7 +566,7 @@ def _stage9(lab, saved):
             "reduction": reduction,
             "measures": measures,
         }
-        _save_done(lab, saved, 9)
+        _save_stage_state(lab, saved, 9)
         st.success("Comparación guardada.")
 
 def _stage10(lab, saved):
@@ -626,7 +607,7 @@ def _stage10(lab, saved):
         else:
             saved["c4l1_stage10_conclusion"] = conclusion
             saved["c4l1_stage10_checklist"] = checked
-            _save_done(lab, saved, 10)
+            _save_stage_state(lab, saved, 10)
             st.success("Caso integrador guardado. Por ahora permanece como actividad formativa.")
 
 _STAGES = [
