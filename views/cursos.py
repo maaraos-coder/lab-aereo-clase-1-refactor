@@ -34123,8 +34123,9 @@ def future_lab_view_impl(lab):
         renderers[selected](lab, saved)
         return
 
-    if class_id == _c4l1.CLASS_ID:
-        _c4l1.run_stage(selected, lab, saved, globals())
+    if str(class_id).strip() == "clase-07-construccion-lab-1" or "construccion-lab-1" in str(class_id):
+        from labs import curso4_laboratorio_1 as _c4l1_live
+        _c4l1_live.run_stage(selected, lab, saved, globals())
         return
 
     title,objective,concept,activity=lab["stages"][selected]
@@ -34413,8 +34414,9 @@ def future_projection_stage_impl(lab, stage):
         renderers[stage](lab, projection_saved)
         return
 
-    if lab.get("id") == _c4l1.CLASS_ID:
-        _c4l1.run_stage(stage, lab, projection_saved, globals())
+    if str(lab.get("id","")).strip() == "clase-07-construccion-lab-1" or "construccion-lab-1" in str(lab.get("id","")):
+        from labs import curso4_laboratorio_1 as _c4l1_live
+        _c4l1_live.run_stage(stage, lab, projection_saved, globals())
         return
 
     title, objective, concept, activity = lab["stages"][stage]
