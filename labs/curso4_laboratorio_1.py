@@ -18,76 +18,71 @@ NOISEMAP_URL = "https://noisemap-akuzoft.vercel.app/"
 STAGE_MINUTES = [10,20,20,20,20,20,20,25,30,25,30]
 
 BSI_REFERENCE_URL = "https://knowledge.bsigroup.com/products/code-of-practice-for-noise-and-vibration-control-on-construction-and-open-sites-noise"
-_MACHINE_SPRITE_B64 = "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"
-_MACHINE_SPRITE_COLS = 5
-_MACHINE_TILE_W = 80
-_MACHINE_TILE_H = 55
-
 BS_PLANT = {
     "Excavadora hidráulica": {
         "en":"Tracked excavator","phase":"Movimiento de tierras","table":"C.2","ref":"19","page":"47 BS / 53 PDF",
         "power":"125 kW","size":"25 t","activity":"Excavación / movimiento de tierras","laeq10":77.0,
-        "bands":[95,84,79,73,70,68,64,57],"sprite":0,
+        "bands":[95,84,79,73,70,68,64,57],"image":"excavadora_hidraulica.png",
     },
     "Retroexcavadora": {
         "en":"Wheeled backhoe loader","phase":"Movimiento de tierras","table":"C.2","ref":"8","page":"46 BS / 52 PDF",
         "power":"62 kW","size":"8 t","activity":"Preparación de terreno","laeq10":68.0,
-        "bands":[74,66,64,64,63,60,59,50],"sprite":1,
+        "bands":[74,66,64,64,63,60,59,50],"image":"retroexcavadora.png",
     },
     "Cargador frontal": {
         "en":"Wheeled loader","phase":"Movimiento de tierras","table":"C.2","ref":"27","page":"47 BS / 53 PDF",
         "power":"193 kW","size":"—","activity":"Carga de camiones","laeq10":80.0,
-        "bands":[85,83,76,75,75,72,72,61],"sprite":2,
+        "bands":[85,83,76,75,75,72,72,61],"image":"cargador_frontal.png",
     },
     "Camión tolva articulado": {
         "en":"Articulated dump truck","phase":"Movimiento de tierras","table":"C.2","ref":"32","page":"47 BS / 53 PDF",
         "power":"187 kW","size":"23 t","activity":"Descarga de material de relleno","laeq10":74.0,
-        "bands":[80,76,73,70,69,66,63,58],"sprite":3,
+        "bands":[80,76,73,70,69,66,63,58],"image":"camion_tolva_articulado.png",
     },
     "Rodillo vibratorio": {
         "en":"Vibratory roller","phase":"Movimiento de tierras","table":"C.2","ref":"39","page":"47 BS / 53 PDF",
         "power":"29 kW","size":"4 t","activity":"Compactación / pasada","laeq10":74.0,
-        "metric":"LAmax","driveby":True,"bands":[88,83,69,68,67,65,62,59],"sprite":4,
+        "metric":"LAmax","driveby":True,"bands":[88,83,69,68,67,65,62,59],"image":"rodillo_vibratorio.png",
     },
     "Camión mixer": {
         "en":"Concrete mixer truck","phase":"Estructura y hormigón","table":"C.4","ref":"20","page":"50 BS / 56 PDF",
         "power":"—","size":"—","activity":"Mezcla / operación de camión mixer","laeq10":80.0,
-        "bands":[83,74,66,69,70,78,60,55],"sprite":5,
+        "bands":[83,74,66,69,70,78,60,55],"image":"camion_mixer.png",
     },
     "Bomba de hormigón": {
         "en":"Truck mounted concrete pump + boom arm","phase":"Estructura y hormigón","table":"C.4","ref":"29","page":"51 BS / 57 PDF",
         "power":"—","size":"26 t","activity":"Bombeo de hormigón","laeq10":80.0,
-        "bands":[83,77,75,75,74,75,67,63],"sprite":6,
+        "bands":[83,77,75,75,74,75,67,63],"image":"bomba_hormigon.png",
     },
     "Grúa torre": {
         "en":"Tower crane","phase":"Estructura y hormigón","table":"C.4","ref":"48","page":"52 BS / 58 PDF",
         "power":"88 kW","size":"22 t","activity":"Izaje","laeq10":76.0,
-        "bands":[82,77,80,76,66,66,56,50],"sprite":7,
+        "bands":[82,77,80,76,66,66,56,50],"image":"grua_torre.png",
     },
     "Manipulador telescópico": {
         "en":"Telescopic handler","phase":"Estructura y hormigón","table":"C.4","ref":"54","page":"52 BS / 58 PDF",
         "power":"76 kW","size":"4 t","activity":"Manipulación / izaje de materiales","laeq10":79.0,
-        "bands":[79,73,66,65,78,66,54,47],"sprite":8,
+        "bands":[79,73,66,65,78,66,54,47],"image":"manipulador_telescopico.png",
     },
     "Martillo hidráulico": {
         "en":"Breaker mounted on wheeled backhoe","phase":"Demolición y faenas ruidosas","table":"C.1","ref":"1","page":"45 BS / 51 PDF",
         "power":"59 kW","size":"7,4 t + rompedor 380 kg","activity":"Rotura de hormigón","laeq10":92.0,
-        "bands":[79,82,81,82,86,86,86,85],"sprite":9,
+        "bands":[79,82,81,82,86,86,86,85],"image":"martillo_hidraulico.png",
     },
     "Martillo neumático": {
         "en":"Hand-held pneumatic breaker","phase":"Demolición y faenas ruidosas","table":"C.1","ref":"6","page":"45 BS / 51 PDF",
         "power":"—","size":"Manual","activity":"Rotura de hormigón","laeq10":83.0,
-        "bands":[83,83,81,74,73,76,78,77],"sprite":10,
+        "bands":[83,83,81,74,73,76,78,77],"image":"martillo_neumatico.png",
     },
     "Sierra de corte de hormigón": {
         "en":"Petrol hand-held circular saw","phase":"Demolición y faenas ruidosas","table":"C.4","ref":"70","page":"53 BS / 59 PDF",
         "power":"3 kW","size":"9 kg · disco 300 mm","activity":"Corte de losa de hormigón","laeq10":91.0,
-        "bands":[72,89,81,80,80,82,86,85],"sprite":11,
+        "bands":[72,89,81,80,80,82,86,85],"image":"sierra_corte_hormigon.png",
     },
     "Generador diésel": {
         "en":"Diesel generator","phase":"Equipos auxiliares","table":"C.4","ref":"76","page":"53 BS / 59 PDF",
         "power":"6,5 kW","size":"—","activity":"Alimentación de instalaciones de faena","laeq10":61.0,
-        "bands":[80,74,57,54,53,48,45,37],"sprite":12,
+        "bands":[80,74,57,54,53,48,45,37],"image":"generador_diesel.png",
     },
 }
 
@@ -191,26 +186,12 @@ def _stage0(lab, saved):
         unsafe_allow_html=True,
     )
 
-def _machine_sprite_crop(index, large=False):
-    import base64
-    import io
-    from PIL import Image
-    raw = base64.b64decode(_MACHINE_SPRITE_B64)
-    sheet = Image.open(io.BytesIO(raw)).convert("RGB")
-    col = index % _MACHINE_SPRITE_COLS
-    row = index // _MACHINE_SPRITE_COLS
-    box = (
-        col * _MACHINE_TILE_W,
-        row * _MACHINE_TILE_H,
-        (col + 1) * _MACHINE_TILE_W,
-        (row + 1) * _MACHINE_TILE_H,
-    )
-    image = sheet.crop(box)
-    if large:
-        image = image.resize((480,330), Image.Resampling.LANCZOS)
-    else:
-        image = image.resize((240,165), Image.Resampling.LANCZOS)
-    return image
+def _machine_image_path(item):
+    image_name = item.get("image")
+    if not image_name:
+        return None
+    path = PROJECT_ROOT / "assets" / "curso4_lab1" / image_name
+    return path if path.exists() else None
 
 def _stage1(lab, saved):
     _header(
@@ -253,10 +234,19 @@ def _stage1(lab, saved):
         item=BS_PLANT[name]
         with cols[i%4]:
             with st.container(border=True):
-                st.image(_machine_sprite_crop(item["sprite"]),use_container_width=True)
+                machine_image = _machine_image_path(item)
+                if machine_image:
+                    st.image(str(machine_image), use_container_width=True)
+                else:
+                    st.markdown(
+                        "<div style='height:150px;border:1px dashed #c8d7e5;border-radius:12px;"
+                        "display:flex;align-items:center;justify-content:center;background:#f7fafc;"
+                        "color:#7b8da0;font-size:.82rem'>Imagen en preparación</div>",
+                        unsafe_allow_html=True,
+                    )
                 st.markdown(f"**{name}**")
                 st.caption(f"{item['en']} · {item['phase']}")
-                if st.button("Ver ficha",key=f"c4l1_machine_{item['sprite']}",use_container_width=True):
+                if st.button("Ver ficha",key=f"c4l1_machine_{item['image']}",use_container_width=True):
                     st.session_state["c4l1_selected_machine"]=name
 
     selected=st.session_state.get("c4l1_selected_machine", names[0] if names else list(BS_PLANT)[0])
@@ -267,7 +257,9 @@ def _stage1(lab, saved):
     st.markdown("---")
     left,right=st.columns([1.05,1.35],gap="large")
     with left:
-        st.image(_machine_sprite_crop(item["sprite"],large=True),use_container_width=True)
+        machine_image = _machine_image_path(item)
+        if machine_image:
+            st.image(str(machine_image), use_container_width=True)
         st.markdown(f"## {selected}")
         st.caption(item["en"])
         st.markdown(f"**Fase típica:** {item['phase']}")
