@@ -357,11 +357,12 @@ def _stage1(lab, saved):
             DESAFÍO APLICADO · CIERRE DE ETAPA 1
           </div>
           <div style="font-size:1.35rem;font-weight:900;color:#10243b;margin:.35rem 0 .45rem">
-            Selecciona el registro acústico correcto
+            Interpreta la situación de obra y selecciona el registro
           </div>
           <div style="color:#4b6074;line-height:1.55">
-            Reconoce la maquinaria, verifica actividad y tamaño, identifica el descriptor
-            y justifica por qué el registro BS 5228 representa el caso.
+            El escenario no te dirá directamente la etapa ni la máquina.
+            Primero identifica dónde ocurre la actividad, luego elige la maquinaria
+            y finalmente verifica el registro acústico BS 5228.
           </div>
         </div>
         """,
@@ -369,33 +370,49 @@ def _stage1(lab, saved):
     )
 
     scenarios = {
-        "Excavación": {
-            "title":"Excavación y movimiento de tierras",
-            "text":"Se realizará excavación general en una obra de edificación mediante una excavadora hidráulica sobre orugas de aproximadamente 25 t.",
+        "Caso A": {
+            "title":"Situación de obra A",
+            "text":(
+                "En un proyecto de edificación se debe retirar material desde una zona previamente despejada, "
+                "conformar una excavación y depositar el material extraído sobre vehículos para su retiro. "
+                "La faena se realiza a nivel de terreno y requiere un equipo capaz de excavar, girar y descargar."
+            ),
             "phase":"Movimiento de tierras",
             "activity":"Excavación / movimiento de tierras",
             "target":"Excavadora hidráulica",
             "options":["Excavadora hidráulica","Retroexcavadora","Cargador frontal","Camión tolva articulado"],
         },
-        "Hormigonado": {
-            "title":"Hormigonado de estructura",
-            "text":"Durante el hormigonado se utilizará un camión mixer como equipo principal de suministro de hormigón en obra.",
+        "Caso B": {
+            "title":"Situación de obra B",
+            "text":(
+                "Durante una jornada se debe mantener una mezcla fresca en movimiento mientras es trasladada dentro "
+                "del proyecto hasta el punto de descarga. El vehículo permanece algunos minutos en espera, realiza "
+                "maniobras en el recinto y descarga el material antes de abandonar la obra."
+            ),
             "phase":"Estructura y hormigón",
             "activity":"Mezcla / suministro de hormigón",
             "target":"Camión mixer",
             "options":["Camión mixer","Bomba de hormigón","Manipulador telescópico","Generador diésel"],
         },
-        "Demolición": {
-            "title":"Demolición localizada de hormigón",
-            "text":"Se requiere romper elementos de hormigón utilizando un martillo hidráulico montado sobre maquinaria.",
+        "Caso C": {
+            "title":"Situación de obra C",
+            "text":(
+                "En una remodelación se deben retirar parcialmente elementos resistentes de hormigón. "
+                "El trabajo se ejecuta desde el exterior mediante un implemento acoplado a una máquina portadora, "
+                "produciendo impactos repetitivos de alta energía sobre el elemento a remover."
+            ),
             "phase":"Demolición y faenas ruidosas",
             "activity":"Rotura de hormigón",
             "target":"Martillo hidráulico",
             "options":["Martillo hidráulico","Martillo neumático","Sierra de corte de hormigón","Excavadora hidráulica"],
         },
-        "Compactación": {
-            "title":"Compactación de terreno",
-            "text":"Se ejecutará compactación mediante un rodillo vibratorio móvil en pasadas sucesivas sobre el terreno.",
+        "Caso D": {
+            "title":"Situación de obra D",
+            "text":(
+                "Luego de extender material granular en capas, se debe alcanzar una densificación uniforme antes "
+                "de continuar con la siguiente actividad. Un equipo recorre repetidamente la misma superficie y "
+                "transmite energía mecánica al terreno durante cada pasada."
+            ),
             "phase":"Movimiento de tierras",
             "activity":"Compactación / pasada",
             "target":"Rodillo vibratorio",
@@ -404,9 +421,9 @@ def _stage1(lab, saved):
     }
 
     scenario_key = st.segmented_control(
-        "Escoge un escenario",
+        "Selecciona un caso",
         list(scenarios.keys()),
-        default="Excavación",
+        default="Caso A",
         key="c4l1_s1_challenge_scenario",
     )
     sc = scenarios[scenario_key]
@@ -414,14 +431,31 @@ def _stage1(lab, saved):
     with st.container(border=True):
         st.markdown(f"### 🏗️ {sc['title']}")
         st.markdown(sc["text"])
-        p1,p2,p3 = st.columns(3)
-        p1.markdown(f"**Fase de obra**\n\n{sc['phase']}")
-        p2.markdown(f"**Actividad**\n\n{sc['activity']}")
-        p3.markdown("**Tu misión**\n\nElegir un registro BS 5228 representativo")
+        st.caption(
+            "No busques una palabra clave: interpreta la secuencia de trabajo, la función del equipo "
+            "y la forma en que opera dentro de la obra."
+        )
 
-    st.markdown("#### 1 · ¿Qué maquinaria representa mejor el escenario?")
-    st.caption("Selecciona visualmente una alternativa. Después podrás revisar si el descriptor acústico también es coherente.")
+    st.markdown("#### 1 · ¿En qué etapa de la obra ubicarías principalmente esta actividad?")
+    phase_options=[
+        "Movimiento de tierras",
+        "Estructura y hormigón",
+        "Demolición y faenas ruidosas",
+        "Equipos auxiliares",
+    ]
+    phase_answer=st.radio(
+        "Selecciona la etapa más representativa",
+        phase_options,
+        horizontal=True,
+        key=f"c4l1_s1_phase_answer_{scenario_key}",
+    )
+
+    st.markdown("#### 2 · ¿Qué maquinaria representa mejor la situación?")
+    st.caption(
+        "Ahora selecciona el equipo cuya función y forma de operación sean más coherentes con el escenario."
+    )
     option_cols = st.columns(4)
+    pick_key=f"c4l1_s1_machine_pick_{scenario_key}"
     for i,opt_name in enumerate(sc["options"]):
         opt_item = BS_PLANT[opt_name]
         with option_cols[i]:
@@ -430,19 +464,19 @@ def _stage1(lab, saved):
                 if opt_image:
                     st.image(str(opt_image), use_container_width=True)
                 st.markdown(f"**{opt_name}**")
-                st.caption(f"{opt_item['phase']} · {opt_item['power']} · {opt_item['size']}")
+                st.caption(f"{opt_item['power']} · {opt_item['size']}")
                 if st.button(
                     "Seleccionar",
                     key=f"c4l1_s1_pick_{scenario_key}_{i}",
                     use_container_width=True,
-                    type="primary" if st.session_state.get("c4l1_s1_machine_pick")==opt_name else "secondary",
+                    type="primary" if st.session_state.get(pick_key)==opt_name else "secondary",
                 ):
-                    st.session_state["c4l1_s1_machine_pick"] = opt_name
+                    st.session_state[pick_key] = opt_name
 
-    picked = st.session_state.get("c4l1_s1_machine_pick")
+    picked = st.session_state.get(pick_key)
     if picked:
         picked_item = BS_PLANT[picked]
-        st.markdown("#### 2 · Interpreta el registro seleccionado")
+        st.markdown("#### 3 · Revisa el registro acústico elegido")
         with st.container(border=True):
             q1,q2,q3,q4 = st.columns(4)
             q1.metric("Equipo", picked)
@@ -466,20 +500,24 @@ def _stage1(lab, saved):
             key=f"c4l1_s1_descriptor_{scenario_key}_{picked}",
         )
 
-        st.markdown("#### 3 · Justifica tu selección")
+        st.markdown("#### 4 · Justifica tu decisión")
         justification = st.text_area(
-            "Explica por qué el equipo y el registro seleccionado son —o no son— representativos del escenario.",
-            placeholder="Considera al menos: tipo de equipo, actividad, tamaño/potencia y descriptor acústico.",
-            height=110,
+            "Explica por qué ubicaste la actividad en esa etapa y por qué el registro seleccionado es representativo.",
+            placeholder=(
+                "Relaciona la situación de obra con la etapa, la función de la maquinaria, "
+                "su forma de operación y el descriptor acústico del registro."
+            ),
+            height=120,
             key=f"c4l1_s1_justification_{scenario_key}",
         )
 
         if st.button(
-            "Validar selección",
+            "Validar análisis",
             key=f"c4l1_s1_validate_{scenario_key}",
             type="primary",
             use_container_width=True,
         ):
+            phase_ok = phase_answer == sc["phase"]
             machine_ok = picked == sc["target"]
             expected_descriptor = (
                 "LAmax global + Lmax por bandas"
@@ -489,33 +527,36 @@ def _stage1(lab, saved):
             descriptor_ok = descriptor_answer == expected_descriptor
             justification_ok = len(justification.strip()) >= 90
 
-            if machine_ok and descriptor_ok and justification_ok:
+            if phase_ok and machine_ok and descriptor_ok and justification_ok:
                 st.success(
-                    "Buena selección. El equipo coincide con la actividad planteada, el registro tiene trazabilidad "
-                    "en BS 5228 y el descriptor fue interpretado correctamente. Tu justificación también incorpora "
-                    "criterios suficientes para defender la elección."
+                    "Análisis correcto. Identificaste la etapa de obra, seleccionaste una maquinaria coherente con "
+                    "la función descrita y verificaste correctamente el descriptor del registro BS 5228. "
+                    "La justificación entrega trazabilidad suficiente para sustentar la elección."
+                )
+            elif not phase_ok:
+                st.warning(
+                    f"Revisa primero la etapa de obra. Para este caso, la clasificación más representativa es "
+                    f"**{sc['phase']}**. Fíjate en qué parte de la secuencia constructiva ocurre la actividad."
+                )
+            elif not machine_ok:
+                st.warning(
+                    f"La etapa está bien identificada, pero revisa la función del equipo. "
+                    f"Para este escenario, el registro de partida más coherente es **{sc['target']}**."
+                )
+            elif not descriptor_ok:
+                st.warning(
+                    f"Etapa y maquinaria correctas. Falta interpretar bien el descriptor: "
+                    f"para este registro corresponde **{expected_descriptor}**."
                 )
             else:
-                if not machine_ok:
-                    st.warning(
-                        f"Revisa la maquinaria. Para este escenario, el registro de partida más coherente es "
-                        f"**{sc['target']}**. El nombre genérico por sí solo no basta: debe coincidir la actividad y "
-                        "ser comparable en tamaño/potencia."
-                    )
-                elif not descriptor_ok:
-                    st.warning(
-                        f"La maquinaria es coherente, pero revisa el descriptor. Para este registro corresponde "
-                        f"**{expected_descriptor}**."
-                    )
-                else:
-                    st.info(
-                        "La selección técnica es correcta. Amplía un poco la justificación: menciona explícitamente "
-                        "equipo, actividad, tamaño/potencia y descriptor acústico."
-                    )
+                st.info(
+                    "La selección técnica es correcta. Amplía la justificación relacionando explícitamente "
+                    "la etapa de obra, la función del equipo, la forma de operación y el descriptor acústico."
+                )
 
         st.caption(
-            "Criterio profesional: BS 5228 entrega registros de equipos y actividades concretos. "
-            "La selección debe ser representativa y trazable, no una elección automática por nombre o por el valor más alto."
+            "Criterio profesional: la selección de un registro BS 5228 debe surgir de la actividad real, "
+            "la maquinaria que la ejecuta y sus condiciones de operación; no de una palabra contenida en el enunciado."
         )
 
 def _stage2(lab, saved):
