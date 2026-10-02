@@ -20,7 +20,7 @@ def power_from_pressure(level, distance, q=2, attenuation=0):
 
 TITLES = [
     "Ruta de la obra", "Fases, fuentes y receptores", "Inventario de equipos",
-    "Presión y potencia sonora", "Propagación con distancia", "Suma de fuentes",
+    "Presión y potencia sonora", "Propagación exterior completa · Agr, Abar y Cmet", "Suma de fuentes",
     "Ciclos de trabajo", "Barreras temporales", "Escenario de obra",
     "Comprobación formativa", "Caso integrador formativo",
 ]
