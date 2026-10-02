@@ -1407,14 +1407,6 @@ def _stage3(lab, saved):
             st.caption("Noise Map Lab permite representar esta corrección de forma separada.")
 
     lp_partial=lwa+dc-a_div-a_atm
-    st.markdown("### 5 · Resultado acumulado hasta esta etapa")
-    st.latex(r"L_p = L_W + D_c - A_{div} - A_{atm}")
-    rr1,rr2,rr3,rr4,rr5=st.columns(5)
-    rr1.metric("Lw",f"{lwa:.1f} dB")
-    rr2.metric("+ Dc",f"{dc:+.1f} dB")
-    rr3.metric("- Adiv",f"{a_div:.1f} dB")
-    rr4.metric("- Aatm",f"{a_atm:.2f} dB")
-    rr5.metric("Lp receptor",f"{lp_partial:.1f} dB")
 
     st.markdown("---")
     st.markdown(
@@ -1423,24 +1415,96 @@ def _stage3(lab, saved):
         background:linear-gradient(135deg,#f8fbfe,#eef6fb);margin-bottom:1rem">
           <div style="font-size:.72rem;font-weight:900;letter-spacing:.1em;color:#0b6ea8">EJERCICIO ACUMULATIVO</div>
           <div style="font-size:1.2rem;font-weight:850;color:#16314b;margin:.35rem 0">
-            Completa la propagación hasta el receptor
+            Resuelve la propagación sin ver el resultado
           </div>
           <div style="color:#536b80">
-            Usa los valores visibles del escenario activo. Para este ejercicio considera Agr = 0 dB, Abar = 0 dB y Cmet = 0 dB.
+            Este caso es independiente del ejemplo guiado anterior. Se entregan solo los datos de entrada:
+            tú debes obtener Lw, Dc, Adiv, Aatm y finalmente Lp en el receptor.
           </div>
         </div>
         """,
         unsafe_allow_html=True,
     )
 
-    x1,x2,x3,x4,x5=st.columns(5)
-    ans_lw=x1.text_input("Lw [dB]",key="c4l1_s3_ex_lw",placeholder="dB")
-    ans_dc=x2.text_input("Dc [dB]",key="c4l1_s3_ex_dc",placeholder="dB")
-    ans_div=x3.text_input("Adiv [dB]",key="c4l1_s3_ex_div",placeholder="dB")
-    ans_atm=x4.text_input("Aatm [dB]",key="c4l1_s3_ex_atm",placeholder="dB")
-    ans_lp=x5.text_input("Lp final [dB]",key="c4l1_s3_ex_lp",placeholder="dB")
+    exercise_cases={
+        "Caso A · Excavadora":"Excavadora hidráulica",
+        "Caso B · Camión mixer":"Camión mixer",
+        "Caso C · Martillo hidráulico":"Martillo hidráulico",
+        "Caso D · Bomba de hormigón":"Bomba de hormigón",
+    }
+    ex_case=st.segmented_control(
+        "Selecciona un caso",
+        list(exercise_cases.keys()),
+        default="Caso A · Excavadora",
+        key="c4l1_s3_ex_case",
+    )
+    ex_name=exercise_cases[ex_case]
+    ex_item=BS_PLANT[ex_name]
 
-    if st.button("Comprobar ejercicio",key="c4l1_s3_check",type="primary",use_container_width=True):
+    exercise_settings={
+        "Caso A · Excavadora":{"distance":65,"q":2,"freq":1000,"temp":15,"rh":70},
+        "Caso B · Camión mixer":{"distance":90,"q":1,"freq":500,"temp":20,"rh":60},
+        "Caso C · Martillo hidráulico":{"distance":45,"q":4,"freq":2000,"temp":10,"rh":80},
+        "Caso D · Bomba de hormigón":{"distance":120,"q":2,"freq":1000,"temp":25,"rh":50},
+    }
+    exs=exercise_settings[ex_case]
+    ex_lw=float(ex_item["laeq10"])+28.0
+    ex_dc=10*math.log10(float(exs["q"]))
+    ex_div=20*math.log10(float(exs["distance"]))+11.0
+    ex_alpha=_alpha_iso_style_db_per_m(exs["freq"],exs["temp"],exs["rh"])
+    ex_atm=ex_alpha*float(exs["distance"])
+    ex_lp=ex_lw+ex_dc-ex_div-ex_atm
+
+    ex_img,ex_data=st.columns([.9,1.6],gap="large")
+    with ex_img:
+        with st.container(border=True):
+            pimg=_machine_image_path(ex_item)
+            if pimg:
+                st.image(str(pimg),use_container_width=True)
+            st.markdown(f"#### {ex_name}")
+            st.caption(ex_item["en"])
+    with ex_data:
+        st.markdown("#### Datos entregados")
+        data_html=f"""
+        <div style="display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px">
+          <div style="border:1px solid #dce7f0;border-radius:14px;padding:12px;background:#fff">
+            <div style="font-size:.72rem;color:#6a7e90">Nivel a 10 m</div>
+            <div style="font-size:1.15rem;font-weight:900;color:#18324a">{ex_item['laeq10']:.0f} dB(A)</div>
+          </div>
+          <div style="border:1px solid #dce7f0;border-radius:14px;padding:12px;background:#fff">
+            <div style="font-size:.72rem;color:#6a7e90">Distancia F–R</div>
+            <div style="font-size:1.15rem;font-weight:900;color:#18324a">{exs['distance']} m</div>
+          </div>
+          <div style="border:1px solid #dce7f0;border-radius:14px;padding:12px;background:#fff">
+            <div style="font-size:.72rem;color:#6a7e90">Directividad</div>
+            <div style="font-size:1.15rem;font-weight:900;color:#18324a">Q = {exs['q']}</div>
+          </div>
+          <div style="border:1px solid #dce7f0;border-radius:14px;padding:12px;background:#fff">
+            <div style="font-size:.72rem;color:#6a7e90">Frecuencia</div>
+            <div style="font-size:1.15rem;font-weight:900;color:#18324a">{exs['freq']} Hz</div>
+          </div>
+          <div style="border:1px solid #dce7f0;border-radius:14px;padding:12px;background:#fff">
+            <div style="font-size:.72rem;color:#6a7e90">Temperatura</div>
+            <div style="font-size:1.15rem;font-weight:900;color:#18324a">{exs['temp']} °C</div>
+          </div>
+          <div style="border:1px solid #dce7f0;border-radius:14px;padding:12px;background:#fff">
+            <div style="font-size:.72rem;color:#6a7e90">Humedad relativa</div>
+            <div style="font-size:1.15rem;font-weight:900;color:#18324a">{exs['rh']} %</div>
+          </div>
+        </div>
+        """
+        st.markdown(data_html,unsafe_allow_html=True)
+        st.caption("Para este ejercicio considera Agr = 0 dB, Abar = 0 dB y Cmet = 0 dB.")
+
+    st.markdown("#### Completa la cadena de cálculo")
+    x1,x2,x3,x4,x5=st.columns(5)
+    ans_lw=x1.text_input("Lw [dB]",key=f"c4l1_s3_ex_lw_{ex_case}",placeholder="Calcula")
+    ans_dc=x2.text_input("Dc [dB]",key=f"c4l1_s3_ex_dc_{ex_case}",placeholder="Calcula")
+    ans_div=x3.text_input("Adiv [dB]",key=f"c4l1_s3_ex_div_{ex_case}",placeholder="Calcula")
+    ans_atm=x4.text_input("Aatm [dB]",key=f"c4l1_s3_ex_atm_{ex_case}",placeholder="Calcula")
+    ans_lp=x5.text_input("Lp final [dB]",key=f"c4l1_s3_ex_lp_{ex_case}",placeholder="Calcula")
+
+    if st.button("Comprobar ejercicio",key=f"c4l1_s3_check_{ex_case}",type="primary",use_container_width=True):
         def _num(v):
             try:
                 return float(str(v).strip().replace(",","."))
@@ -1450,14 +1514,22 @@ def _stage3(lab, saved):
         if any(v is None for v in vals):
             st.warning("Completa los cinco valores antes de comprobar.")
         else:
-            exp=[lwa,dc,a_div,a_atm,lp_partial]
+            exp=[ex_lw,ex_dc,ex_div,ex_atm,ex_lp]
             tol=[0.2,0.2,0.2,0.05,0.3]
             ok=[abs(a-b)<=t for a,b,t in zip(vals,exp,tol)]
             labels=["Lw","Dc","Adiv","Aatm","Lp final"]
             if all(ok):
                 st.success("Correcto. La cadena de propagación está bien resuelta.")
+                st.markdown("#### Solución del caso")
+                r1,r2,r3,r4,r5=st.columns(5)
+                r1.metric("Lw",f"{ex_lw:.1f} dB")
+                r2.metric("+ Dc",f"{ex_dc:+.1f} dB")
+                r3.metric("- Adiv",f"{ex_div:.1f} dB")
+                r4.metric("- Aatm",f"{ex_atm:.2f} dB")
+                r5.metric("Lp receptor",f"{ex_lp:.1f} dB")
             else:
                 st.warning("Revisa: " + ", ".join(labels[i] for i,v in enumerate(ok) if not v) + ".")
+                st.caption("La app no muestra la solución completa mientras existan resultados incorrectos.")
 
     st.markdown("### Compruébalo en Noise Map Lab")
     st.markdown(
@@ -1470,16 +1542,15 @@ def _stage3(lab, saved):
         with st.expander("👩‍🏫 Pauta docente · Etapa 3",expanded=False):
             st.markdown(
                 f"""
-                **Máquina:** {name}  
-                **Lw de referencia:** {lwa:.1f} dB  
-                **Dc:** {dc:.1f} dB  
-                **Distancia:** {d} m  
-                **Adiv:** {a_div:.1f} dB  
-                **Frecuencia:** {freq} Hz  
-                **α atmosférico:** {alpha_km:.2f} dB/km  
-                **Aatm:** {a_atm:.2f} dB  
+                **Caso de ejercicio:** {ex_case} · {ex_name}  
+                **Nivel entregado a 10 m:** {ex_item['laeq10']:.1f} dB(A)  
+                **Lw esperado:** {ex_lw:.1f} dB  
+                **Q:** {exs['q']} → **Dc:** {ex_dc:.1f} dB  
+                **Distancia:** {exs['distance']} m → **Adiv:** {ex_div:.1f} dB  
+                **Frecuencia:** {exs['freq']} Hz · **T:** {exs['temp']} °C · **HR:** {exs['rh']} %  
+                **Aatm:** {ex_atm:.2f} dB  
                 **Agr = Abar = Cmet = 0 dB** en este ejercicio  
-                **Lp esperado:** **{lp_partial:.1f} dB**
+                **Lp esperado:** **{ex_lp:.1f} dB**
                 """
             )
             st.info(
