@@ -2282,6 +2282,21 @@ def _stage4(lab, saved):
     profile_status_bg="#eaf7ee" if complies else "#fff3e2"
     profile_status_color="#25623a" if complies else "#8a5710"
 
+    # Mantener siempre una etiqueta SVG válida. Cuando la barrera no bloquea
+    # la línea de visión no dejamos una línea vacía dentro del bloque HTML,
+    # porque Markdown puede cerrar el bloque SVG y mostrar el resto como código.
+    shadow_polygon=(
+        f'<polygon points="{x_b:.1f},{y_b:.1f} {x_r},{y_r:.1f} '
+        f'{x_r},{ground_y} {x_b:.1f},{ground_y}" '
+        'fill="rgba(226,139,45,0.11)"/>'
+        if ex_screens else '<g aria-hidden="true"></g>'
+    )
+    shadow_label=(
+        f'<text x="{(x_b+x_r)/2-72:.1f}" y="{ground_y-24:.1f}" '
+        'font-size="14" font-weight="800" fill="#9a6617">ZONA DE SOMBRA</text>'
+        if ex_screens else '<g aria-hidden="true"></g>'
+    )
+
     design_svg=f"""
     <div style="border:1px solid #d9e4ec;border-radius:20px;background:#fbfdff;padding:12px 14px;margin:.5rem 0 1rem">
       <div style="display:flex;justify-content:space-between;gap:12px;align-items:center;margin:2px 0 8px">
@@ -2295,7 +2310,7 @@ def _stage4(lab, saved):
         <rect x="0" y="0" width="900" height="340" rx="18" fill="#f8fbfd"/>
         <line x1="55" y1="{ground_y}" x2="845" y2="{ground_y}" stroke="#8c9a88" stroke-width="4"/>
         <rect x="{x_b-8:.1f}" y="{y_b:.1f}" width="16" height="{ground_y-y_b:.1f}" rx="3" fill="#485b68"/>
-        {'<polygon points="' + f'{x_b:.1f},{y_b:.1f} {x_r},{y_r:.1f} {x_r},{ground_y} {x_b:.1f},{ground_y}' + '" fill="rgba(226,139,45,0.11)"/>' if ex_screens else ''}
+        {shadow_polygon}
         <line x1="{x_s}" y1="{y_s:.1f}" x2="{x_r}" y2="{y_r:.1f}" stroke="#d9534f" stroke-width="3" stroke-dasharray="9 7"/>
         <polyline points="{x_s},{y_s:.1f} {x_b:.1f},{y_b:.1f} {x_r},{y_r:.1f}" fill="none" stroke="#e28b2d" stroke-width="4"/>
         <circle cx="{x_s}" cy="{y_s:.1f}" r="12" fill="#176b9b"/>
@@ -2311,7 +2326,7 @@ def _stage4(lab, saved):
         <line x1="{x_b:.1f}" y1="{ground_y+18}" x2="{x_r}" y2="{ground_y+18}" stroke="#9fb0bd" stroke-width="2"/>
         <text x="{(x_s+x_b)/2-22:.1f}" y="{ground_y+38}" font-size="13" fill="#6a7d8e">{ex_dfb:.1f} m</text>
         <text x="{(x_b+x_r)/2-22:.1f}" y="{ground_y+38}" font-size="13" fill="#6a7d8e">{ex_dbr:.1f} m</text>
-        {'<text x="' + f'{(x_b+x_r)/2-72:.1f}' + '" y="' + f'{ground_y-24:.1f}' + '" font-size="14" font-weight="800" fill="#9a6617">ZONA DE SOMBRA</text>' if ex_screens else ''}
+        {shadow_label}
       </svg>
     </div>
     """
