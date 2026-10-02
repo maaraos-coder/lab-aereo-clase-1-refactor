@@ -2460,132 +2460,524 @@ def _stage4(lab, saved):
 def _stage5(lab, saved):
     _header(
         5,
-        "Control en la fuente",
-        "Reconocer medidas que reducen la emisión acústica antes de que el sonido se propague hacia el receptor.",
+        "¿Cómo representar una obra como fuentes de ruido?",
+        "Traducir maquinaria y movimientos reales de obra a objetos acústicos coherentes antes de modelar en Noise Map Lab.",
     )
+
     st.markdown(
         """
-        <div style="border:1px solid #dce7f0;border-radius:20px;padding:20px 22px;background:linear-gradient(135deg,#fbfdff,#f3f8fd)">
-          <div style="font-size:.72rem;font-weight:900;color:#0b6ea8;letter-spacing:.1em">PRINCIPIO DE CONTROL</div>
-          <div style="font-size:1.2rem;font-weight:850;color:#17324a;margin:.3rem 0">Reducir primero donde se genera el ruido</div>
-          <div style="color:#5d7183">Una reducción aplicada a Lw actúa antes de la propagación. Por eso suele ser una estrategia robusta cuando puede implementarse correctamente.</div>
+        <div style="border:1px solid #d5e6f2;border-radius:22px;padding:20px 22px;
+        background:linear-gradient(135deg,#fbfdff,#eef6fb);box-shadow:0 8px 20px rgba(31,63,92,.05)">
+          <div style="font-size:.72rem;font-weight:900;color:#0b6ea8;letter-spacing:.1em">DEL EQUIPO REAL AL OBJETO DE CÁLCULO</div>
+          <div style="font-size:1.18rem;font-weight:850;color:#17324a;margin:.3rem 0">
+            No toda maquinaria se representa de la misma forma
+          </div>
+          <div style="color:#5d7183;line-height:1.55">
+            La elección depende de <b>cómo ocupa el espacio durante el período evaluado</b>.
+            En este laboratorio trabajaremos únicamente con <b>fuentes puntuales</b> y
+            <b>fuentes lineales/móviles</b>, que son las representaciones que utilizaremos después en Noise Map Lab.
+          </div>
         </div>
-        """,unsafe_allow_html=True
+        """,
+        unsafe_allow_html=True,
     )
-    measures=[
-        ("Reducción directa","Disminución declarada o medida de la emisión de la fuente."),
-        ("Silenciador","Atenúa principalmente conductos, escapes o ventilaciones; suele depender de la frecuencia."),
-        ("Encierro","Rodea la fuente con cerramientos y controla transmisión, aberturas y ventilación."),
-        ("Semiencierro","Deja una o más superficies abiertas; la orientación de la abertura se vuelve crítica."),
+
+    st.markdown("### 1 · Dos representaciones que utilizaremos")
+    source_cards=[
+        (
+            "FUENTE PUNTUAL",
+            "Equipo localizado",
+            "Representa una fuente cuya posición puede considerarse fija respecto de las distancias del problema.",
+            "Excavadora estacionaria · generador · bomba de hormigón",
+            "#eef6fb","#176b9b"
+        ),
+        (
+            "FUENTE LINEAL / MÓVIL",
+            "Movimiento repetido sobre una trayectoria",
+            "Representa una sucesión de posiciones de una fuente móvil a lo largo de un recorrido conocido durante el período evaluado.",
+            "Camiones por camino interior · maquinaria que recorre repetidamente una ruta",
+            "#fff7e9","#98651c"
+        ),
     ]
-    html='<div style="display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;margin:1rem 0">'
-    for title,desc in measures:
-        html+=f'<div style="border:1px solid #dce7f0;border-radius:16px;padding:15px;background:#fff"><div style="font-weight:850;color:#18324a">{title}</div><div style="font-size:.83rem;color:#64788b;margin-top:.3rem">{desc}</div></div>'
-    html+='</div>'
-    st.markdown(html,unsafe_allow_html=True)
+    sh='<div style="display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px;margin:.9rem 0 1rem">'
+    for tag,title,desc,examples,bg,color in source_cards:
+        sh+=(
+            f'<div style="border:1px solid #dce7ef;border-radius:19px;padding:17px;background:{bg}">'
+            f'<div style="font-size:.7rem;font-weight:900;letter-spacing:.08em;color:{color}">{tag}</div>'
+            f'<div style="font-size:1.02rem;font-weight:850;color:#213b50;margin:.25rem 0 .45rem">{title}</div>'
+            f'<div style="font-size:.83rem;color:#607586;line-height:1.5">{desc}</div>'
+            f'<div style="font-size:.77rem;color:{color};font-weight:800;margin-top:.65rem">{examples}</div>'
+            f'</div>'
+        )
+    sh+='</div>'
+    st.markdown(sh,unsafe_allow_html=True)
 
-    base=st.slider("Lw inicial [dB]",80,125,105,key="c4l1_s5_base")
-    reduction=st.slider("Reducción aplicada [dB]",0,30,10,key="c4l1_s5_red")
-    after=base-reduction
-    a,b=st.columns(2)
-    a.metric("Lw antes",f"{base:.1f} dB")
-    b.metric("Lw después",f"{after:.1f} dB",delta=f"-{reduction:.1f} dB")
-    st.caption("Una reducción de emisión debe estar respaldada por desempeño declarado, medición o un supuesto técnico explícito.")
+    st.info(
+        "Criterio central: no se clasifica por el nombre de la máquina, sino por su comportamiento espacial. "
+        "La misma máquina podría ser puntual si permanece estacionaria, o lineal/móvil si recorre repetidamente una trayectoria."
+    )
 
-    st.markdown("### Ejercicio breve")
-    ex_base=108.0
-    ex_red=12.0
-    ans=st.text_input("Una maquinaria tiene Lw = 108 dB y se aplica un control de 12 dB. ¿Cuál es el nuevo Lw?",key="c4l1_s5_ex",placeholder="dB")
-    if st.button("Comprobar",key="c4l1_s5_check"):
-        try: v=float(ans.replace(",","."))
-        except Exception: v=None
-        if v is None: st.warning("Ingresa un valor numérico.")
-        elif abs(v-(ex_base-ex_red))<=0.2: st.success("Correcto: 96 dB.")
-        else: st.warning("Revisa la reducción aplicada directamente sobre Lw.")
+    st.markdown("### 2 · Obra vista en planta")
+    svg="""
+    <div style="border:1px solid #d8e4ec;border-radius:20px;background:#fbfdff;padding:12px 14px;margin:.4rem 0 1rem">
+      <div style="font-size:.72rem;font-weight:900;color:#526a7e;letter-spacing:.08em;margin:2px 0 8px">
+        PLANTA DIDÁCTICA · ¿CÓMO REPRESENTARÍAS CADA ELEMENTO?
+      </div>
+      <svg viewBox="0 0 900 430" width="100%" style="display:block">
+        <rect x="0" y="0" width="900" height="430" rx="18" fill="#f7fafc"/>
+        <rect x="55" y="55" width="600" height="310" rx="18" fill="#f0f4f6" stroke="#9cadb8" stroke-width="3"/>
+        <text x="72" y="83" font-size="16" font-weight="800" fill="#607585">OBRA</text>
+
+        <rect x="690" y="105" width="150" height="120" rx="12" fill="#f9efe9" stroke="#c99b7d" stroke-width="3"/>
+        <text x="720" y="135" font-size="16" font-weight="800" fill="#8b5b3d">VIVIENDA</text>
+        <text x="718" y="158" font-size="13" fill="#8b5b3d">receptor sensible</text>
+
+        <circle cx="220" cy="180" r="24" fill="#3b83b2"/>
+        <text x="203" y="186" font-size="18" font-weight="900" fill="#fff">EX</text>
+        <text x="145" y="225" font-size="14" font-weight="800" fill="#2f607e">Excavadora estacionaria</text>
+
+        <rect x="380" y="145" width="48" height="48" rx="8" fill="#4f9a68"/>
+        <text x="390" y="176" font-size="17" font-weight="900" fill="#fff">G</text>
+        <text x="350" y="220" font-size="14" font-weight="800" fill="#3f7350">Generador</text>
+
+        <rect x="295" y="270" width="54" height="42" rx="8" fill="#7c72b8"/>
+        <text x="307" y="297" font-size="16" font-weight="900" fill="#fff">BH</text>
+        <text x="252" y="338" font-size="14" font-weight="800" fill="#5f568c">Bomba de hormigón</text>
+
+        <path d="M80 330 C170 350, 245 360, 355 340 S520 285, 625 300" fill="none" stroke="#d38c35" stroke-width="18" stroke-linecap="round" opacity=".25"/>
+        <path d="M80 330 C170 350, 245 360, 355 340 S520 285, 625 300" fill="none" stroke="#b87526" stroke-width="4" stroke-dasharray="10 8"/>
+        <rect x="480" y="292" width="46" height="28" rx="7" fill="#d38c35"/>
+        <circle cx="490" cy="322" r="6" fill="#6f542f"/><circle cx="516" cy="322" r="6" fill="#6f542f"/>
+        <text x="430" y="365" font-size="14" font-weight="800" fill="#96631f">Camión en recorrido interior</text>
+
+        <line x1="655" y1="165" x2="690" y2="165" stroke="#b7c4cc" stroke-width="2" stroke-dasharray="7 6"/>
+      </svg>
+    </div>
+    """
+    st.markdown(svg,unsafe_allow_html=True)
+
+    st.markdown("### 3 · Decide cómo modelar cada caso")
+    cases=[
+        ("Excavadora que permanece en una posición durante la actividad","Fuente puntual",
+         "Durante el período evaluado su posición puede considerarse fija."),
+        ("Generador instalado durante toda la jornada","Fuente puntual",
+         "Es una instalación estacionaria y se modela desde una posición definida."),
+        ("Bomba de hormigón estacionada durante el vaciado","Fuente puntual",
+         "Mientras opera permanece localizada respecto de los receptores."),
+        ("Camiones que circulan repetidamente por el mismo camino interior","Fuente lineal / móvil",
+         "La emisión se distribuye a lo largo de una trayectoria recorrida repetidamente."),
+        ("Cargador frontal que realiza viajes continuos entre acopio y frente","Fuente lineal / móvil",
+         "La trayectoria repetitiva es más representativa que una única posición fija."),
+    ]
+    correct=0
+    for i,(prompt,expected,why) in enumerate(cases):
+        with st.container(border=True):
+            q1,q2=st.columns([1.5,1])
+            q1.markdown(f"**{prompt}**")
+            choice=q2.radio(
+                "Representación",
+                ["Fuente puntual","Fuente lineal / móvil"],
+                index=None,
+                key=f"c4l1_s5_rep_{i}",
+                label_visibility="collapsed",
+            )
+            if choice:
+                if choice==expected:
+                    correct+=1
+                    st.success(f"Correcto · {why}")
+                else:
+                    st.warning(f"Revisa · {why}")
+
+    st.caption(
+        "La clasificación busca representar la ocupación espacial durante el período de cálculo; "
+        "no pretende describir cada movimiento instantáneo de la máquina."
+    )
+
+    st.markdown("### 4 · ¿Qué cambia conceptualmente?")
+    model_type=st.radio(
+        "Compara una misma emisión representada de dos formas",
+        ["Puntual","Lineal / móvil"],
+        horizontal=True,
+        key="c4l1_s5_compare_type",
+    )
+    if model_type=="Puntual":
+        st.markdown(
+            """
+            <div style="border:1px solid #cfe0ec;border-radius:18px;padding:17px;background:#f5faff">
+              <b style="color:#176b9b">PUNTUAL</b><br>
+              <span style="color:#5f7383;font-size:.86rem">
+              El modelo concentra la emisión en una posición. La distancia y geometría se calculan
+              desde ese punto hacia cada receptor. Es apropiado cuando el desplazamiento de la fuente
+              es pequeño frente a las distancias relevantes o cuando permanece estacionaria.
+              </span>
+            </div>
+            """,unsafe_allow_html=True
+        )
+    else:
+        st.markdown(
+            """
+            <div style="border:1px solid #eadbc3;border-radius:18px;padding:17px;background:#fffaf2">
+              <b style="color:#98651c">LINEAL / MÓVIL</b><br>
+              <span style="color:#746247;font-size:.86rem">
+              La emisión se asocia a una trayectoria. El receptor recibe contribuciones desde distintas
+              posiciones a lo largo del recorrido y el resultado representa el tránsito o movimiento
+              repetido durante el período evaluado.
+              </span>
+            </div>
+            """,unsafe_allow_html=True
+        )
+
+    st.success(
+        "Puente hacia Noise Map Lab: antes de dibujar una fuente, pregúntate si el equipo está "
+        "**localizado** o si su emisión debe representarse **a lo largo de una trayectoria**."
+    )
 
 
 def _stage6(lab, saved):
     _header(
         6,
-        "Control en la trayectoria y organización de la obra",
-        "Aplicar medidas de ubicación y trayectoria antes de combinar varias fuentes y tiempos de operación.",
+        "Diseño y control del ruido en una obra",
+        "Seleccionar controles por jerarquía y usar la geometría de la obra para reducir el nivel en receptores sensibles.",
     )
-    st.markdown(
-        "Una vez conocida la propagación, también puede reducirse el nivel **modificando la trayectoria**: aumentar distancia, "
-        "cambiar ubicación, aprovechar edificaciones existentes o incorporar pantallas temporales."
-    )
-    controls=[
-        ("Reubicar maquinaria","Aumentar la distancia a receptores sensibles puede reducir Adiv de forma simple."),
-        ("Organizar frentes","Evitar concentrar equipos ruidosos junto al mismo receptor."),
-        ("Usar obstáculos","Edificaciones, acopios o pantallas pueden modificar la línea de visión."),
-        ("Orientar la fuente","Escapes, aberturas y semiencierros deben orientarse lejos del receptor crítico."),
-    ]
-    html='<div style="display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;margin:.8rem 0">'
-    for title,desc in controls:
-        html+=f'<div style="border:1px solid #dce7f0;border-radius:16px;padding:15px;background:#fff"><div style="font-weight:850;color:#18324a">{title}</div><div style="font-size:.83rem;color:#64788b;margin-top:.3rem">{desc}</div></div>'
-    html+='</div>'
-    st.markdown(html,unsafe_allow_html=True)
 
-    lw=st.slider("Lw de referencia [dB]",85,125,108,key="c4l1_s6_lw")
-    d1=st.slider("Distancia inicial [m]",10,100,20,5,key="c4l1_s6_d1")
-    d2=st.slider("Distancia propuesta [m]",20,250,80,5,key="c4l1_s6_d2")
-    lp1=lw-(20*math.log10(d1)+11)
-    lp2=lw-(20*math.log10(d2)+11)
-    x,y,z=st.columns(3)
-    x.metric("Lp inicial",f"{lp1:.1f} dB")
-    y.metric("Lp reubicado",f"{lp2:.1f} dB")
-    z.metric("Reducción por distancia",f"{lp1-lp2:.1f} dB")
-    st.caption("Ejemplo aislado de divergencia geométrica; en una evaluación completa permanecen activos los demás términos de propagación.")
+    st.markdown(
+        """
+        <div style="border:1px solid #d9e6ef;border-radius:22px;padding:20px 22px;
+        background:linear-gradient(135deg,#fbfdff,#f3f8fb);margin-bottom:1rem">
+          <div style="font-size:.72rem;font-weight:900;color:#0b6ea8;letter-spacing:.1em">DISEÑO ACÚSTICO DE OBRA</div>
+          <div style="font-size:1.18rem;font-weight:850;color:#17324a;margin:.3rem 0">
+            Controlar no es “poner una barrera”: es decidir dónde conviene actuar
+          </div>
+          <div style="color:#5d7183;line-height:1.55">
+            Una solución eficaz puede reducir la emisión en la fuente, modificar la trayectoria
+            o reorganizar espacialmente la obra. La mejor estrategia suele combinar más de un nivel de control.
+          </div>
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
+
+    st.markdown("### 1 · Jerarquía de control")
+    hierarchy=[
+        (
+            "1 · CONTROL EN LA FUENTE",
+            "Actuar antes de la propagación",
+            ["Equipo menos ruidoso","Silenciador","Encierro","Semiencierro","Mantenimiento","Reducción de Lw"],
+            "#eef6fb","#176b9b"
+        ),
+        (
+            "2 · CONTROL EN LA TRAYECTORIA",
+            "Modificar cómo viaja el sonido",
+            ["Aumentar distancia","Cambiar orientación","Barreras","Aprovechar edificios/acopios","Reubicar instalaciones fijas"],
+            "#fff7e9","#98651c"
+        ),
+        (
+            "3 · CONTROL MEDIANTE PLANIFICACIÓN",
+            "Modificar la organización espacial/temporal",
+            ["Separar frentes ruidosos","Evitar concentrar fuentes junto al receptor","Elegir ubicaciones de equipos estacionarios"],
+            "#f5f2fb","#65549a"
+        ),
+    ]
+    hh='<div style="display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;margin:.6rem 0 1rem">'
+    for title,sub,items,bg,color in hierarchy:
+        lis="".join(f'<li style="margin:.22rem 0">{x}</li>' for x in items)
+        hh+=(
+            f'<div style="border:1px solid #dce5eb;border-radius:18px;padding:16px;background:{bg}">'
+            f'<div style="font-size:.72rem;font-weight:900;letter-spacing:.06em;color:{color}">{title}</div>'
+            f'<div style="font-size:.9rem;font-weight:800;color:#334c5f;margin:.3rem 0 .45rem">{sub}</div>'
+            f'<ul style="padding-left:1rem;margin:.2rem 0;color:#657684;font-size:.79rem;line-height:1.45">{lis}</ul>'
+            f'</div>'
+        )
+    hh+='</div>'
+    st.markdown(hh,unsafe_allow_html=True)
+
+    st.info(
+        "Orden de razonamiento: primero pregunta si puedes reducir Lw; después si puedes mejorar la trayectoria; "
+        "finalmente organiza la obra para evitar escenarios innecesariamente desfavorables."
+    )
+
+    st.markdown("### 2 · Caso de diseño en planta")
+    st.markdown(
+        "**Situación:** debes ubicar un generador estacionario dentro de la obra. "
+        "Existe una vivienda sensible al costado oriental. El generador tiene el mismo Lw en las tres alternativas; "
+        "lo que cambia es la geometría y la presencia de un obstáculo."
+    )
+
+    position=st.radio(
+        "Selecciona la ubicación del generador",
+        ["A · Cerca del receptor","B · Zona central","C · Detrás del edificio auxiliar"],
+        horizontal=True,
+        key="c4l1_s6_location",
+    )
+
+    configs={
+        "A · Cerca del receptor": dict(x=620,y=175,d=22,bar=0,desc="Muy próximo al receptor y sin obstáculo entre ambos."),
+        "B · Zona central": dict(x=390,y=245,d=55,bar=0,desc="Mayor distancia, pero todavía con línea de visión directa."),
+        "C · Detrás del edificio auxiliar": dict(x=185,y=265,d=92,bar=7,desc="Mayor distancia y con un edificio auxiliar usado como apantallamiento conceptual."),
+    }
+    cfg=configs[position]
+    lw=105.0
+    lp_free=lw-(20*math.log10(cfg["d"])+11)
+    lp_final=lp_free-cfg["bar"]
+
+    svg=f"""
+    <div style="border:1px solid #d8e4ec;border-radius:20px;background:#fbfdff;padding:12px 14px;margin:.5rem 0 1rem">
+      <div style="display:flex;justify-content:space-between;gap:12px;align-items:center;margin-bottom:7px">
+        <div style="font-size:.72rem;font-weight:900;color:#526a7e;letter-spacing:.08em">PLANTA · UBICACIÓN DEL GENERADOR</div>
+        <div style="font-size:.73rem;font-weight:850;color:#176b9b">{position}</div>
+      </div>
+      <svg viewBox="0 0 900 410" width="100%" style="display:block">
+        <rect x="0" y="0" width="900" height="410" rx="18" fill="#f7fafc"/>
+        <rect x="55" y="50" width="610" height="315" rx="18" fill="#f0f4f6" stroke="#9cadb8" stroke-width="3"/>
+        <text x="72" y="78" font-size="16" font-weight="800" fill="#607585">OBRA</text>
+
+        <rect x="700" y="110" width="145" height="125" rx="12" fill="#f9efe9" stroke="#c99b7d" stroke-width="3"/>
+        <text x="723" y="142" font-size="16" font-weight="900" fill="#8b5b3d">VIVIENDA</text>
+        <circle cx="700" cy="175" r="8" fill="#b34f4f"/>
+        <text x="712" y="180" font-size="13" font-weight="800" fill="#8b4545">R</text>
+
+        <rect x="245" y="120" width="115" height="150" rx="9" fill="#b7c6d0" stroke="#718694" stroke-width="3"/>
+        <text x="263" y="195" font-size="14" font-weight="900" fill="#445965">EDIFICIO</text>
+        <text x="268" y="214" font-size="12" fill="#536b78">AUXILIAR</text>
+
+        <circle cx="620" cy="175" r="18" fill="#d9e4eb"/><text x="611" y="181" font-size="13" font-weight="900" fill="#667784">A</text>
+        <circle cx="390" cy="245" r="18" fill="#d9e4eb"/><text x="381" y="251" font-size="13" font-weight="900" fill="#667784">B</text>
+        <circle cx="185" cy="265" r="18" fill="#d9e4eb"/><text x="176" y="271" font-size="13" font-weight="900" fill="#667784">C</text>
+
+        <circle cx="{cfg['x']}" cy="{cfg['y']}" r="24" fill="#176b9b"/>
+        <text x="{cfg['x']-11}" y="{cfg['y']+6}" font-size="17" font-weight="900" fill="#fff">G</text>
+        <line x1="{cfg['x']}" y1="{cfg['y']}" x2="700" y2="175" stroke="#d9534f" stroke-width="3" stroke-dasharray="9 7"/>
+      </svg>
+    </div>
+    """
+    st.markdown(svg,unsafe_allow_html=True)
+
+    m1,m2,m3,m4=st.columns(4)
+    m1.metric("Lw generador",f"{lw:.0f} dB")
+    m2.metric("Distancia al receptor",f"{cfg['d']} m")
+    m3.metric("Control de trayectoria",f"{cfg['bar']} dB")
+    m4.metric("Lp estimado",f"{lp_final:.1f} dB")
+
+    st.markdown(
+        f"**Lectura de la alternativa:** {cfg['desc']} "
+        "El cálculo mostrado usa divergencia geométrica y, para la alternativa C, una reducción conceptual adicional por apantallamiento."
+    )
+
+    if position.startswith("A"):
+        st.warning(
+            "Ubicación desfavorable: la corta distancia domina. Antes de pensar en un tratamiento complejo, "
+            "conviene revisar si el equipo puede alejarse del receptor."
+        )
+    elif position.startswith("B"):
+        st.info(
+            "La reubicación mejora el escenario por distancia, pero la trayectoria continúa directa. "
+            "Todavía existe margen para orientar o apantallar."
+        )
+    else:
+        st.success(
+            "La alternativa combina planificación y trayectoria: mayor distancia y uso de un obstáculo existente. "
+            "En un proyecto real la eficacia del apantallamiento debe calcularse con su geometría."
+        )
+
+    st.markdown("### 3 · Compara una medida en la fuente")
+    source_red=st.slider(
+        "Reducción adicional de Lw mediante selección/encierro/silenciador [dB]",
+        0,20,0,1,
+        key="c4l1_s6_source_red",
+    )
+    controlled=lp_final-source_red
+    x1,x2,x3=st.columns(3)
+    x1.metric("Lp por ubicación",f"{lp_final:.1f} dB")
+    x2.metric("Reducción en fuente",f"{source_red} dB")
+    x3.metric("Lp combinado",f"{controlled:.1f} dB")
+
+    st.caption(
+        "El ejercicio muestra por qué el diseño suele combinar decisiones: una buena ubicación puede reducir la necesidad "
+        "de controles más costosos en la fuente o en la trayectoria."
+    )
 
 
 def _stage7(lab, saved):
     _header(
         7,
         "Ciclos de operación, simultaneidad y suma energética",
-        "Representar una obra real combinando tiempo de funcionamiento y aportes simultáneos de varias maquinarias.",
+        "Convertir niveles instantáneos de maquinaria en aportes equivalentes del período y combinar varias fuentes de forma energética.",
     )
+
+    st.markdown(
+        """
+        <div style="border:1px solid #d9e6ef;border-radius:22px;padding:20px 22px;
+        background:linear-gradient(135deg,#fbfdff,#f3f8fb);margin-bottom:1rem">
+          <div style="font-size:.72rem;font-weight:900;color:#0b6ea8;letter-spacing:.1em">DEL INSTANTE AL PERÍODO DE EVALUACIÓN</div>
+          <div style="font-size:1.16rem;font-weight:850;color:#17324a;margin:.3rem 0">
+            Una obra no mantiene todas sus máquinas funcionando al 100 % todo el tiempo
+          </div>
+          <div style="color:#5d7183;line-height:1.55">
+            Para representar un período debemos corregir cada fuente por su tiempo activo y después
+            sumar energéticamente los aportes equivalentes.
+          </div>
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
+
     st.markdown("### 1 · Ciclo de operación")
-    st.latex(r"\Delta L_t=10\log_{10}(t/T)")
-    base=st.slider("Nivel durante operación [dB]",70,115,90,key="c4l1_s7_base")
+    with st.container(border=True):
+        st.latex(r"\Delta L_t=10\log_{10}\left(\frac{t}{T}\right)")
+        st.markdown(
+            "**t** es el tiempo durante el cual la máquina está activa y **T** el período total de evaluación. "
+            "Como t/T ≤ 1, la corrección temporal es cero o negativa."
+        )
+
+    duty_examples=[100,50,25,10]
+    ex_cols=st.columns(4)
+    for col,p in zip(ex_cols,duty_examples):
+        corr=10*math.log10(p/100)
+        col.metric(f"{p} % activo",f"{corr:.1f} dB",help="Corrección temporal respecto del nivel durante operación.")
+
+    base=st.slider("Nivel durante operación [dB(A)]",60,110,80,key="c4l1_s7_base")
     pct=st.slider("Tiempo activo [%]",1,100,25,key="c4l1_s7_pct")
     corr=10*math.log10(pct/100)
     eq=base+corr
     c1,c2,c3=st.columns(3)
-    c1.metric("Operación",f"{pct}%")
+    c1.metric("Nivel operativo",f"{base:.1f} dB(A)")
     c2.metric("Corrección temporal",f"{corr:.1f} dB")
-    c3.metric("Nivel equivalente",f"{eq:.1f} dB")
+    c3.metric("Aporte equivalente",f"{eq:.1f} dB(A)")
 
-    st.markdown("### 2 · Simultaneidad y suma energética")
-    st.markdown("Los decibeles **no se suman aritméticamente**. Cada aporte debe convertirse a energía, sumarse y volver a dB.")
-    st.latex(r"L_{\Sigma}=10\log_{10}\left(\sum_i10^{L_i/10}\right)")
-    a1,a2,a3=st.columns(3)
-    la=a1.slider("Excavadora · nivel operativo [dB]",55,100,78,key="c4l1_s7_a")
-    lb=a2.slider("Generador · nivel operativo [dB]",55,100,68,key="c4l1_s7_b")
-    lc=a3.slider("Martillo · nivel operativo [dB]",55,105,86,key="c4l1_s7_c")
-    t1,t2,t3=st.columns(3)
-    pa=t1.slider("Excavadora · activo [%]",1,100,70,key="c4l1_s7_pa")
-    pb=t2.slider("Generador · activo [%]",1,100,100,key="c4l1_s7_pb")
-    pc=t3.slider("Martillo · activo [%]",1,100,20,key="c4l1_s7_pc")
-    eqs=[la+10*math.log10(pa/100),lb+10*math.log10(pb/100),lc+10*math.log10(pc/100)]
+    st.markdown("### 2 · Simultaneidad")
+    st.markdown(
+        "El porcentaje activo describe **cuánto tiempo aporta cada fuente al período**, pero no significa que todas "
+        "funcionen simultáneamente en cada instante. Para un escenario real deben definirse ciclos y coincidencias "
+        "de operación de forma coherente con la faena."
+    )
+    st.info(
+        "Una fuente muy ruidosa que opera pocos minutos puede aportar menos energía al período que una fuente algo más silenciosa que funciona continuamente."
+    )
+
+    st.markdown("### 3 · Suma energética")
+    with st.container(border=True):
+        st.latex(r"L_{\Sigma}=10\log_{10}\left(\sum_i10^{L_i/10}\right)")
+        st.markdown(
+            "Los niveles equivalentes de cada fuente se convierten a energía, se suman y luego vuelven a expresarse en decibeles. "
+            "**Nunca se suman los dB aritméticamente.**"
+        )
+
+    st.markdown("### 4 · Caso aplicado de obra")
+    st.markdown(
+        "Calcula primero el aporte equivalente de cada máquina en el período y luego la suma energética total."
+    )
+
+    case_data=[
+        ("Excavadora",67.0,80),
+        ("Mixer",64.0,30),
+        ("Martillo",74.0,15),
+        ("Generador",59.0,100),
+    ]
+    rows=[]
+    for name,level,duty in case_data:
+        dt=10*math.log10(duty/100)
+        leq=level+dt
+        rows.append([name,level,duty,dt,leq])
+
+    df=pd.DataFrame(
+        rows,
+        columns=["Máquina","Nivel durante operación [dBA]","Tiempo activo [%]","ΔLt [dB]","Aporte equivalente [dBA]"]
+    )
+    st.dataframe(
+        df.style.format({
+            "Nivel durante operación [dBA]":"{:.1f}",
+            "ΔLt [dB]":"{:.1f}",
+            "Aporte equivalente [dBA]":"{:.1f}",
+        }),
+        use_container_width=True,
+        hide_index=True,
+    )
+
+    eqs=[r[4] for r in rows]
     total=10*math.log10(sum(10**(v/10) for v in eqs))
-    dominant=max(zip(["Excavadora","Generador","Martillo"],eqs),key=lambda x:x[1])
-    r1,r2,r3,r4=st.columns(4)
-    r1.metric("Excavadora eq.",f"{eqs[0]:.1f} dB")
-    r2.metric("Generador eq.",f"{eqs[1]:.1f} dB")
-    r3.metric("Martillo eq.",f"{eqs[2]:.1f} dB")
-    r4.metric("Total",f"{total:.1f} dB")
-    st.info(f"Fuente dominante en este período: **{dominant[0]}** con {dominant[1]:.1f} dB equivalentes.")
+    dominant_idx=max(range(len(rows)),key=lambda i:eqs[i])
+    dominant=rows[dominant_idx]
 
-    st.markdown("### Ejercicio aplicado")
-    st.markdown("Tres equipos aportan 74 dB, 70 dB y 66 dB equivalentes al mismo receptor. Calcula el nivel total.")
-    ans=st.text_input("Nivel total [dB]",key="c4l1_s7_ex",placeholder="dB")
-    expected=10*math.log10(sum(10**(v/10) for v in [74,70,66]))
-    if st.button("Comprobar ejercicio",key="c4l1_s7_check",type="primary"):
-        try: v=float(ans.replace(",","."))
-        except Exception: v=None
-        if v is None: st.warning("Ingresa un valor numérico.")
-        elif abs(v-expected)<=0.2: st.success(f"Correcto: {expected:.1f} dB.")
-        else: st.warning("Revisa la suma energética; no sumes los dB de forma aritmética.")
+    cards=st.columns(4)
+    for col,row in zip(cards,rows):
+        col.metric(row[0],f"{row[4]:.1f} dBA",delta=f"{row[3]:.1f} dB temporal")
+
+    st.markdown("#### Suma del período")
+    st.latex(
+        r"L_{\Sigma}=10\log_{10}\left("
+        + "+".join([f"10^{{{v:.1f}/10}}" for v in eqs])
+        + r"\right)"
+    )
+    r1,r2,r3=st.columns(3)
+    r1.metric("Nivel total del período",f"{total:.1f} dBA")
+    r2.metric("Fuente dominante",dominant[0])
+    r3.metric("Aporte dominante",f"{dominant[4]:.1f} dBA")
+
+    st.success(
+        f"En este período domina **{dominant[0]}**, con un aporte equivalente de **{dominant[4]:.1f} dBA**. "
+        "La fuente dominante se identifica después de considerar el tiempo activo, no solo mirando el nivel instantáneo."
+    )
+
+    st.markdown("### 5 · Comprueba tu cálculo")
+    answers=[]
+    qcols=st.columns(2)
+    with qcols[0]:
+        ans_exc=st.number_input(
+            "Aporte equivalente de Excavadora [dBA]",
+            min_value=0.0,max_value=120.0,value=60.0,step=0.1,
+            key="c4l1_s7_ans_exc"
+        )
+        ans_ham=st.number_input(
+            "Aporte equivalente de Martillo [dBA]",
+            min_value=0.0,max_value=120.0,value=60.0,step=0.1,
+            key="c4l1_s7_ans_ham"
+        )
+    with qcols[1]:
+        ans_total=st.number_input(
+            "Nivel total del período [dBA]",
+            min_value=0.0,max_value=120.0,value=60.0,step=0.1,
+            key="c4l1_s7_ans_total"
+        )
+        ans_dom=st.selectbox(
+            "¿Qué fuente domina el período?",
+            ["Selecciona","Excavadora","Mixer","Martillo","Generador"],
+            key="c4l1_s7_ans_dom"
+        )
+
+    if st.button("Comprobar caso aplicado",key="c4l1_s7_case_check",type="primary"):
+        checks=[
+            abs(ans_exc-rows[0][4])<=0.2,
+            abs(ans_ham-rows[2][4])<=0.2,
+            abs(ans_total-total)<=0.2,
+            ans_dom==dominant[0],
+        ]
+        if all(checks):
+            st.success("Correcto. Aplicaste la corrección temporal, la suma energética y la identificación de la fuente dominante.")
+        else:
+            msgs=[]
+            if not checks[0]: msgs.append("revisa la Excavadora")
+            if not checks[1]: msgs.append("revisa el Martillo")
+            if not checks[2]: msgs.append("revisa la suma energética")
+            if not checks[3]: msgs.append("revisa la fuente dominante")
+            st.warning("Aún hay diferencias: " + ", ".join(msgs) + ".")
+
+    if st.session_state.get("role")=="Docente":
+        with st.expander("👩‍🏫 Pauta docente · Etapa 7",expanded=False):
+            st.markdown(
+                f"""
+                **Resultados esperados**
+                - Excavadora: {rows[0][4]:.1f} dBA equivalentes.
+                - Mixer: {rows[1][4]:.1f} dBA equivalentes.
+                - Martillo: {rows[2][4]:.1f} dBA equivalentes.
+                - Generador: {rows[3][4]:.1f} dBA equivalentes.
+                - Total: {total:.1f} dBA.
+                - Fuente dominante del período: {dominant[0]}.
+                """
+            )
+            st.info(
+                "Conducción sugerida: compare primero el nivel instantáneo del Martillo con su aporte equivalente "
+                "y haga que el alumno explique por qué la duración puede cambiar la fuente dominante."
+            )
 
 
 def _stage8(lab, saved):
