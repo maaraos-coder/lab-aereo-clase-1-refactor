@@ -2601,8 +2601,8 @@ def _stage5(lab, saved):
          "Aquí interesa el flujo de vehículos sobre una vía: es el uso natural del objeto lineal CNOSSOS."),
         ("Camiones mixer que llegan repetidamente por una avenida de acceso","Tránsito asociado a la obra","Fuente lineal vial · CNOSSOS",
          "La vía puede representarse mediante el modelo de tránsito, usando sus parámetros de flujo y circulación."),
-        ("Cargador frontal que se desplaza entre dos puntos dentro del predio","Maquinaria móvil interna","Fuente puntual / escenario de posiciones",
-         "No conviene tratarlo automáticamente como tráfico CNOSSOS. Puede representarse mediante posiciones o escenarios de operación según el objetivo del análisis."),
+        ("Cargador frontal que se desplaza entre dos puntos dentro del predio","Maquinaria móvil interna","Varias posiciones puntuales",
+         "No conviene tratarlo automáticamente como tráfico CNOSSOS. Puede representarse mediante varias posiciones puntuales representativas o escenarios alternativos de operación, según el objetivo del análisis."),
     ]
 
     for i,(prompt,kind,expected,why) in enumerate(cases):
@@ -2625,7 +2625,7 @@ def _stage5(lab, saved):
 
             choice=st.radio(
                 "Selecciona representación",
-                ["Fuente puntual","Fuente lineal vial · CNOSSOS","Fuente puntual / escenario de posiciones"],
+                ["Fuente puntual","Fuente lineal vial · CNOSSOS","Varias posiciones puntuales"],
                 index=None,
                 key=f"c4l1_s5_rep_{i}",
                 horizontal=True,
