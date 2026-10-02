@@ -1593,19 +1593,55 @@ def _stage4(lab, saved):
     st.markdown("### 1 · Agr · efecto de suelo")
     st.markdown(
         "El término **Agr** aparece por la interacción entre el sonido directo y el sonido reflejado por el terreno. "
-        "No es una absorción fija: depende del tipo de superficie, la frecuencia, la distancia y las alturas de fuente y receptor."
+        "No es una absorción fija: depende del tipo de superficie, la frecuencia, la distancia y la geometría "
+        "entre fuente y receptor."
     )
+
     with st.container(border=True):
         st.latex(r"A_{gr}=A_s+A_m+A_r")
         st.markdown(
             "**As** representa la contribución de la zona próxima a la fuente, **Am** la región intermedia "
-            "y **Ar** la zona próxima al receptor. En el cálculo educativo, estos aportes se ajustan además "
-            "por la geometría fuente–receptor y por el factor de suelo G."
+            "y **Ar** la zona próxima al receptor."
         )
+
+        st.markdown("#### ¿Cómo se relaciona G con Agr?")
+        st.markdown(
+            "El factor **G** no es una atenuación en dB y tampoco un porcentaje de absorción. "
+            "G caracteriza acústicamente el terreno y entra en las expresiones que calculan "
+            "**As, Am y Ar**. Por eso la relación conceptual es:"
+        )
+        st.latex(r"G \;\longrightarrow\; A_s,\;A_m,\;A_r \;\longrightarrow\; A_{gr}")
+        st.latex(r"A_s=F_s(G_s,f,h_s,d_p)")
+        st.latex(r"A_m=F_m(G_m,f,h_s,h_r,d_p)")
+        st.latex(r"A_r=F_r(G_r,f,h_r,d_p)")
         st.caption(
-            "La expresión resume la estructura física del término de suelo; el cálculo numérico mostrado abajo "
-            "usa la formulación implementada para ISO 9613-2:2024."
+            "En el ejercicio se usa un único G para simplificar la exploración. En un caso real pueden existir "
+            "factores de suelo distintos para la región de la fuente, la región intermedia y la región del receptor."
         )
+
+    st.markdown("#### Geometría del cálculo")
+    geo1,geo2=st.columns([1.1,1])
+    with geo1:
+        st.markdown(
+            "- **hs [m]**: altura de la fuente sobre el terreno local.\n"
+            "- **hr [m]**: altura del receptor sobre el terreno local.\n"
+            "- **dp [m]**: distancia horizontal/proyectada fuente–receptor.\n"
+            "- **f [Hz]**: frecuencia de la banda evaluada."
+        )
+        st.info(
+            "El mismo G puede producir un Agr distinto si cambian hs, hr, dp o la frecuencia. "
+            "El efecto de suelo depende de superficie **y** geometría."
+        )
+    with geo2:
+        st.code(
+            "        Fuente                         Receptor\n"
+            "          ● hs                      hr ●\n"
+            "          |                            |\n"
+            "__________|____________________________|________ terreno\n"
+            "          <---------- dp ------------>",
+            language=None,
+        )
+
     g_cards=[
         ("G = 0","Suelo duro","Hormigón, pavimento, agua o superficie compacta."),
         ("G = 0,5","Terreno mixto","Combinación aproximada de sectores duros y porosos."),
@@ -1630,6 +1666,7 @@ def _stage4(lab, saved):
         gg=min(1.0,max(0.0,float(ground_factor)))
         bands=(63,125,250,500,1000,2000,4000,8000)
         ff=min(bands,key=lambda b:abs(math.log(max(float(frequency_hz),1.0)/b)))
+
         def aprime(h):
             return 1.5+3.0*math.exp(-0.12*(h-5.0)**2)*(1.0-math.exp(-dp/50.0))+5.7*math.exp(-0.09*h*h)*(1.0-math.exp(-2.8e-6*dp*dp))
         def bprime(h):
@@ -1638,33 +1675,75 @@ def _stage4(lab, saved):
             return 1.5+14.0*math.exp(-0.46*h*h)*(1.0-math.exp(-dp/50.0))
         def dprime(h):
             return 1.5+5.0*math.exp(-0.9*h*h)*(1.0-math.exp(-dp/50.0))
+
         def end_region(h):
-            if ff==63: return -1.5
-            if ff==125: return -1.5+gg*aprime(h)
-            if ff==250: return -1.5+gg*bprime(h)
-            if ff==500: return -1.5+gg*cprime(h)
-            if ff==1000: return -1.5+gg*dprime(h)
+            if ff==63:
+                return -1.5
+            if ff==125:
+                return -1.5+gg*aprime(h)
+            if ff==250:
+                return -1.5+gg*bprime(h)
+            if ff==500:
+                return -1.5+gg*cprime(h)
+            if ff==1000:
+                return -1.5+gg*dprime(h)
             return -1.5*(1.0-gg)
+
         q=0.0
         if dp>30.0*(hss+hrr):
             q=1.0-30.0*(hss+hrr)/dp
+
         a_s=end_region(hss)
         a_r=end_region(hrr)
         a_m=-3.0*q if ff==63 else -3.0*q*(1.0-gg)
-        a_prime=a_s+a_r+a_m
-        k_geo=(dp*dp+(hss-hrr)**2)/max(dp*dp+(hss+hrr)**2,1e-12)
-        energy_factor=1.0+(10.0**(-a_prime/10.0)-1.0)*k_geo
-        return -10.0*math.log10(max(energy_factor,1e-12))
 
+        # Suma estructural de las tres regiones del método.
+        a_sum=a_s+a_r+a_m
+
+        # Ajuste geométrico/energético usado por el simulador educativo.
+        k_geo=(dp*dp+(hss-hrr)**2)/max(dp*dp+(hss+hrr)**2,1e-12)
+        energy_factor=1.0+(10.0**(-a_sum/10.0)-1.0)*k_geo
+        agr=-10.0*math.log10(max(energy_factor,1e-12))
+        return agr,a_s,a_m,a_r,a_sum,q,k_geo,ff
+
+    st.markdown("#### Explora cómo G y la geometría modifican Agr")
     agr1,agr2,agr3,agr4,agr5=st.columns(5)
     g=agr1.slider("G",0.0,1.0,0.5,0.1,key="c4l1_s4_g")
     freq=agr2.selectbox("Frecuencia [Hz]",[63,125,250,500,1000,2000,4000,8000],index=3,key="c4l1_s4_freq")
-    distance=agr3.slider("Distancia [m]",10,250,80,5,key="c4l1_s4_distance")
-    hs=agr4.slider("hs [m]",0.5,8.0,1.5,0.5,key="c4l1_s4_hs")
-    hr=agr5.slider("hr [m]",1.0,20.0,1.5,0.5,key="c4l1_s4_hr")
-    agr=_ground_att_iso_edu(distance,hs,hr,g,freq)
-    st.metric("Agr del escenario",f"{agr:+.2f} dB")
-    st.caption("El signo puede resultar contraintuitivo porque Agr representa interferencia de caminos, no una absorción simple.")
+    distance=agr3.slider("dp · distancia [m]",10,250,80,5,key="c4l1_s4_distance")
+    hs=agr4.slider("hs · fuente [m]",0.5,8.0,1.5,0.5,key="c4l1_s4_hs")
+    hr=agr5.slider("hr · receptor [m]",1.0,20.0,1.5,0.5,key="c4l1_s4_hr")
+
+    agr,a_s,a_m,a_r,a_sum,q,k_geo,ff=_ground_att_iso_edu(distance,hs,hr,g,freq)
+
+    st.markdown("##### De los parámetros al resultado")
+    st.latex(
+        rf"G={g:.2f},\quad f={ff}\,\mathrm{{Hz}},\quad "
+        rf"d_p={distance}\,\mathrm{{m}},\quad h_s={hs:.1f}\,\mathrm{{m}},\quad h_r={hr:.1f}\,\mathrm{{m}}"
+    )
+    r1,r2,r3,r4=st.columns(4)
+    r1.metric("As · zona fuente",f"{a_s:+.2f} dB")
+    r2.metric("Am · zona intermedia",f"{a_m:+.2f} dB")
+    r3.metric("Ar · zona receptor",f"{a_r:+.2f} dB")
+    r4.metric("As + Am + Ar",f"{a_sum:+.2f} dB")
+
+    st.latex(
+        rf"A_s + A_m + A_r = ({a_s:+.2f}) + ({a_m:+.2f}) + ({a_r:+.2f}) = {a_sum:+.2f}\;\mathrm{{dB}}"
+    )
+    st.markdown(
+        "El simulador aplica después el ajuste geométrico/energético de la formulación implementada para representar "
+        "la interferencia entre camino directo y reflejado."
+    )
+    g1,g2,g3=st.columns(3)
+    g1.metric("q geométrico",f"{q:.3f}")
+    g2.metric("Factor geométrico",f"{k_geo:.3f}")
+    g3.metric("Agr del escenario",f"{agr:+.2f} dB")
+
+    st.caption(
+        "Así se puede seguir la cadena completa: G, frecuencia y geometría → As/Am/Ar → suma de contribuciones "
+        "→ ajuste geométrico → Agr. El signo puede resultar contraintuitivo porque Agr representa interferencia "
+        "de caminos, no una absorción simple."
+    )
 
     st.markdown("### 2 · Abar · barreras y difracción")
     st.markdown(
