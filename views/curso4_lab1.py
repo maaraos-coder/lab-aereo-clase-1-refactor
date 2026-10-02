@@ -65,82 +65,101 @@ def render(lab, stage, saved, save):
         st.metric("Lw estimado", f"{power_from_pressure(lp, r, q, a):.1f} dB(A)")
         st.caption("Campo ideal y fuente puntual. No aplicar esta inversión sin verificar reflexiones, fondo, directividad y condiciones de medida.")
     elif stage == 4:
-        st.markdown("#### 1 · Ecuación general de propagación exterior")
-        st.latex(r"L_p = L_W + D_c - A")
-        st.latex(r"A = A_{div} + A_{atm} + A_{gr} + A_{bar} + A_{misc}")
+        st.markdown("#### 1 · Agr · efecto de suelo")
         st.markdown(
-            "La divergencia geométrica es solo una parte de la propagación. "
-            "En esta etapa incorporamos explícitamente el **efecto de suelo** "
-            "\\(A_{gr}\\), además de recordar dónde entran la atmósfera y las barreras."
+            "El efecto de suelo aparece por la interferencia entre el sonido que llega "
+            "directamente al receptor y el sonido reflejado por el terreno. No es una "
+            "absorción fija: depende del tipo de superficie, la frecuencia y la geometría "
+            "fuente–receptor."
         )
 
-        st.markdown("#### 2 · ¿De dónde sale G en el efecto de suelo?")
-        st.markdown(
-            "En ISO 9613-2 el efecto de suelo se representa mediante un **factor de suelo G**, "
-            "que describe el comportamiento acústico de la superficie. **G no es una atenuación "
-            "en dB**: es un parámetro adimensional que entra en el cálculo de \\(A_{gr}\\)."
-        )
         st.latex(r"A_{gr}=A_s+A_m+A_r")
         st.markdown(
-            "- **\\(A_s\\)**: contribución de la región próxima a la fuente.\n"
-            "- **\\(A_m\\)**: contribución de la región intermedia.\n"
-            "- **\\(A_r\\)**: contribución de la región próxima al receptor.\n\n"
-            "Cada contribución depende de la frecuencia, la geometría y del factor de suelo "
-            "correspondiente a esa región."
+            "- **\\(A_s\\)**: contribución de la zona próxima a la fuente.\n"
+            "- **\\(A_m\\)**: contribución de la zona intermedia.\n"
+            "- **\\(A_r\\)**: contribución de la zona próxima al receptor."
         )
 
-        st.markdown("##### Geometría que utiliza el cálculo")
-        st.latex(r"h_s = \text{altura de la fuente sobre el terreno}")
-        st.latex(r"h_r = \text{altura del receptor sobre el terreno}")
+        st.markdown("##### ¿Cómo entra G en Agr?")
         st.markdown(
-            "- **\\(h_s\\)**: altura acústica de la **fuente** respecto del terreno local, en metros.\n"
-            "- **\\(h_r\\)**: altura acústica del **receptor** respecto del terreno local, en metros.\n"
-            "- **\\(d_p\\)**: distancia horizontal proyectada entre fuente y receptor.\n\n"
-            "Estas alturas intervienen porque el efecto de suelo depende de la relación entre "
-            "la onda directa y la reflejada por el terreno. Por eso el mismo valor de G puede "
-            "producir un \\(A_{gr}\\) distinto si cambian la altura de la fuente, la altura "
-            "del receptor o la distancia."
+            "El factor **G** no se suma directamente a \\(A_{gr}\\) ni representa un "
+            "porcentaje de absorción. **G modifica las contribuciones del suelo**. "
+            "La relación que debe leer el alumno es:"
         )
+        st.latex(r"A_s=F_s(G_s,\,f,\,h_s,\,d_p)")
+        st.latex(r"A_m=F_m(G_m,\,f,\,h_s,\,h_r,\,d_p)")
+        st.latex(r"A_r=F_r(G_r,\,f,\,h_r,\,d_p)")
+        st.latex(r"\boxed{A_{gr}=F_s+F_m+F_r}")
+        st.info(
+            "Lectura: G caracteriza acústicamente el terreno. Al cambiar G cambia As, Am "
+            "y/o Ar; al cambiar esas contribuciones cambia Agr. Por eso G = 0,5 no significa "
+            "que el suelo absorba 50 % del sonido."
+        )
+
+        st.markdown("##### ¿Qué significan hs, hr y dp?")
+        st.latex(r"h_s=\text{altura de la fuente sobre el terreno}")
+        st.latex(r"h_r=\text{altura del receptor sobre el terreno}")
+        st.latex(r"d_p=\text{distancia fuente–receptor proyectada sobre el terreno}")
+        st.markdown(
+            "- **\\(h_s\\)** [m]: altura acústica de la fuente respecto del terreno local.\n"
+            "- **\\(h_r\\)** [m]: altura acústica del receptor respecto del terreno local.\n"
+            "- **\\(d_p\\)** [m]: distancia horizontal/proyectada entre la base de la fuente y la del receptor.\n"
+            "- **\\(f\\)** [Hz]: frecuencia de la banda evaluada."
+        )
+
         st.code(
-            "        Fuente (hs)                         Receptor (hr)\n"
-            "            ●-----------------------------------●\n"
-            "            |                                   |\n"
-            "            |                                   |\n"
-            "____________|___________________________________|____________ terreno\n"
-            "             <----------- distancia dp --------->",
+            "        Fuente                                        Receptor\n"
+            "           ●  hs                                  hr  ●\n"
+            "           |                                          |\n"
+            "           |   trayectoria directa ---------------->   |\n"
+            "___________|__________________________________________|________ terreno\n"
+            "            \\________ trayectoria reflejada _______/\n"
+            "            <--------------  dp  ----------------->",
             language=None,
         )
-        st.info(
-            "Lectura rápida: G describe el tipo de suelo; hs y hr describen la geometría. "
-            "El modelo combina ambas cosas para obtener As y Ar y, junto con Am, calcular Agr."
-        )
 
-        left, right = st.columns([1, 1])
-        with left:
-            st.markdown(
-                "**Interpretación de G**\n\n"
-                "- **G = 0** → suelo acústicamente duro o reflectante: hormigón, pavimento o agua.\n"
-                "- **G = 1** → suelo poroso: pasto, tierra o suelo forestal.\n"
-                "- **0 < G < 1** → superficie mixta o equivalente."
-            )
-        with right:
-            g = st.slider(
-                "Factor de suelo G",
-                0.0, 1.0, 0.5, 0.1,
-                key=key+"g",
-                help="Parámetro adimensional. No corresponde directamente a una corrección en dB."
-            )
-            if g == 0:
-                st.info("G = 0: suelo duro. Predominan las reflexiones del terreno.")
-            elif g == 1:
-                st.success("G = 1: suelo poroso. El terreno presenta mayor interacción acústica.")
-            else:
-                st.info(f"G = {g:.1f}: condición intermedia o mixta.")
+        st.markdown("##### Interpretación de G")
+        g1, g2, g3 = st.columns(3)
+        with g1:
+            st.markdown("**G = 0 · suelo duro**")
+            st.caption("Hormigón, pavimento, agua o superficie compacta.")
+        with g2:
+            st.markdown("**G = 0,5 · terreno mixto**")
+            st.caption("Combinación aproximada de sectores duros y porosos.")
+        with g3:
+            st.markdown("**G = 1 · suelo poroso**")
+            st.caption("Pasto, suelo vegetal o tierra porosa.")
 
         st.warning(
-            "Importante: G no se multiplica directamente por una cantidad de dB. "
-            "El valor de G se utiliza dentro de las expresiones de ISO 9613-2 para obtener "
-            "As, Am y Ar y, finalmente, Agr."
+            "Importante: G es un parámetro adimensional del terreno. No es una atenuación "
+            "en dB y tampoco es un porcentaje de absorción."
+        )
+
+        st.markdown("##### Explora la geometría")
+        c1, c2, c3, c4, c5 = st.columns(5)
+        g = c1.slider("G", 0.0, 1.0, 0.5, 0.05, key=key+"g")
+        freq = c2.selectbox("Frecuencia [Hz]", [63,125,250,500,1000,2000,4000,8000], index=3, key=key+"freq")
+        dp = c3.slider("Distancia dp [m]", 5, 300, 80, 5, key=key+"dp")
+        hs = c4.slider("hs [m]", 0.5, 20.0, 1.5, 0.5, key=key+"hs")
+        hr = c5.slider("hr [m]", 0.5, 20.0, 1.5, 0.5, key=key+"hr")
+
+        st.markdown(
+            f"**Escenario actual:** G = {g:.2f}, f = {freq} Hz, dp = {dp} m, "
+            f"hs = {hs:.1f} m y hr = {hr:.1f} m."
+        )
+        st.caption(
+            "Estos controles muestran qué variables intervienen en el efecto de suelo. "
+            "No interpretes un cambio de G de forma aislada: Agr depende simultáneamente "
+            "de la superficie, la frecuencia y la geometría."
+        )
+
+        st.markdown("#### 2 · Agr dentro de la ecuación completa")
+        st.latex(r"L_p=L_W+D_c-A")
+        st.latex(r"A=A_{div}+A_{atm}+A_{gr}+A_{bar}+A_{misc}")
+        st.markdown(
+            "Una vez calculado \\(A_{gr}\\), ese término entra junto con las demás "
+            "atenuaciones de propagación. Por eso el efecto de suelo no reemplaza la "
+            "divergencia, la absorción atmosférica ni la difracción por barreras."
         )
 
         st.markdown("#### 3 · Antes de agregar suelo: efecto de la distancia")
@@ -156,8 +175,8 @@ def render(lab, stage, saved, save):
             y="Nivel [dB(A)]",
         )
         st.caption(
-            "Esta curva muestra únicamente divergencia geométrica para una fuente puntual ideal. "
-            "El efecto de suelo Agr se calcula aparte mediante As + Am + Ar; no está incluido en esta curva."
+            "Esta curva representa solo divergencia geométrica de una fuente puntual ideal. "
+            "Agr se calcula aparte a partir del efecto de suelo."
         )
     elif stage == 5:
         a = st.slider("Equipo A en el receptor [dB(A)]", 40, 100, 78, key=key+"a")
