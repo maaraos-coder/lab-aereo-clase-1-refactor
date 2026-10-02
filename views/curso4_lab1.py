@@ -65,11 +65,74 @@ def render(lab, stage, saved, save):
         st.metric("Lw estimado", f"{power_from_pressure(lp, r, q, a):.1f} dB(A)")
         st.caption("Campo ideal y fuente puntual. No aplicar esta inversión sin verificar reflexiones, fondo, directividad y condiciones de medida.")
     elif stage == 4:
+        st.markdown("#### 1 · Ecuación general de propagación exterior")
+        st.latex(r"L_p = L_W + D_c - A")
+        st.latex(r"A = A_{div} + A_{atm} + A_{gr} + A_{bar} + A_{misc}")
+        st.markdown(
+            "La divergencia geométrica es solo una parte de la propagación. "
+            "En esta etapa incorporamos explícitamente el **efecto de suelo** "
+            "\\(A_{gr}\\), además de recordar dónde entran la atmósfera y las barreras."
+        )
+
+        st.markdown("#### 2 · ¿De dónde sale G en el efecto de suelo?")
+        st.markdown(
+            "En ISO 9613-2 el efecto de suelo se representa mediante un **factor de suelo G**, "
+            "que describe el comportamiento acústico de la superficie. **G no es una atenuación "
+            "en dB**: es un parámetro adimensional que entra en el cálculo de \\(A_{gr}\\)."
+        )
+        st.latex(r"A_{gr}=A_s+A_m+A_r")
+        st.markdown(
+            "- **\\(A_s\\)**: contribución de la región próxima a la fuente.\n"
+            "- **\\(A_m\\)**: contribución de la región intermedia.\n"
+            "- **\\(A_r\\)**: contribución de la región próxima al receptor.\n\n"
+            "Cada contribución depende de la frecuencia, la geometría y del factor de suelo "
+            "correspondiente a esa región."
+        )
+
+        left, right = st.columns([1, 1])
+        with left:
+            st.markdown(
+                "**Interpretación de G**\n\n"
+                "- **G = 0** → suelo acústicamente duro o reflectante: hormigón, pavimento o agua.\n"
+                "- **G = 1** → suelo poroso: pasto, tierra o suelo forestal.\n"
+                "- **0 < G < 1** → superficie mixta o equivalente."
+            )
+        with right:
+            g = st.slider(
+                "Factor de suelo G",
+                0.0, 1.0, 0.5, 0.1,
+                key=key+"g",
+                help="Parámetro adimensional. No corresponde directamente a una corrección en dB."
+            )
+            if g == 0:
+                st.info("G = 0: suelo duro. Predominan las reflexiones del terreno.")
+            elif g == 1:
+                st.success("G = 1: suelo poroso. El terreno presenta mayor interacción acústica.")
+            else:
+                st.info(f"G = {g:.1f}: condición intermedia o mixta.")
+
+        st.warning(
+            "Importante: G no se multiplica directamente por una cantidad de dB. "
+            "El valor de G se utiliza dentro de las expresiones de ISO 9613-2 para obtener "
+            "As, Am y Ar y, finalmente, Agr."
+        )
+
+        st.markdown("#### 3 · Antes de agregar suelo: efecto de la distancia")
         st.latex(r"L_p(r_2)=L_p(r_1)-20\log_{10}(r_2/r_1)")
         lp = st.slider("Nivel a 10 m [dB(A)]", 50, 110, 80, key=key+"lp")
         distances = [10, 20, 40, 80]
-        st.line_chart({"Distancia [m]": distances, "Nivel [dB(A)]": [lp - 20 * math.log10(d/10) for d in distances]}, x="Distancia [m]", y="Nivel [dB(A)]")
-        st.caption("Fuente puntual ideal, sin absorción atmosférica ni obstáculos. A 20 m y 40 m la caída acumulada es 6,0 y 12,0 dB.")
+        st.line_chart(
+            {
+                "Distancia [m]": distances,
+                "Nivel [dB(A)]": [lp - 20 * math.log10(d/10) for d in distances],
+            },
+            x="Distancia [m]",
+            y="Nivel [dB(A)]",
+        )
+        st.caption(
+            "Esta curva muestra únicamente divergencia geométrica para una fuente puntual ideal. "
+            "El efecto de suelo Agr se calcula aparte mediante As + Am + Ar; no está incluido en esta curva."
+        )
     elif stage == 5:
         a = st.slider("Equipo A en el receptor [dB(A)]", 40, 100, 78, key=key+"a")
         b = st.slider("Equipo B en el receptor [dB(A)]", 40, 100, 75, key=key+"b")
