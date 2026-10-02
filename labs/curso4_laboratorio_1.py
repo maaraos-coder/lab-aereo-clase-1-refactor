@@ -1672,6 +1672,36 @@ def _stage4(lab, saved):
         "El sonido no se detiene en el borde: se difracta por sobre la barrera y alrededor de sus extremos. "
         "Por eso el parámetro clave es cuánto más largo resulta el camino difractado respecto del camino directo."
     )
+    st.markdown(
+        """
+        <div style="border:1px solid #eadfc8;border-radius:18px;padding:16px 18px;background:#fffaf2;margin:.45rem 0 1rem">
+          <div style="font-size:.75rem;font-weight:900;color:#9a6617;letter-spacing:.08em">ZONA DE SOMBRA ACÚSTICA</div>
+          <div style="font-size:.9rem;color:#6d5a3b;line-height:1.55;margin-top:.25rem">
+            Cuando la barrera corta la línea directa entre fuente y receptor se forma detrás de ella una
+            <b>zona de sombra acústica</b>. En esa región el receptor ya no recibe el camino directo dominante;
+            el sonido que llega lo hace principalmente por <b>difracción sobre el borde superior y alrededor de los extremos</b>.
+            La sombra no significa silencio: significa que el nivel queda reducido respecto del campo directo.
+          </div>
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
+
+    shadow_cards=[
+        ("Dentro de la sombra","La línea directa está bloqueada y la contribución difractada pasa a ser dominante."),
+        ("Cerca del borde","La reducción puede ser menor porque el receptor está próximo a la frontera entre zona iluminada y sombra."),
+        ("Más profundo en la sombra","A igualdad de frecuencia y geometría lateral, suele aumentar la diferencia de camino y puede aumentar Abar."),
+    ]
+    sh='<div style="display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;margin:.4rem 0 1rem">'
+    for title,desc in shadow_cards:
+        sh+=(
+            f'<div style="border:1px solid #eadfc8;border-radius:16px;padding:14px;background:#fff">'
+            f'<div style="font-size:.9rem;font-weight:850;color:#5d431d">{title}</div>'
+            f'<div style="font-size:.8rem;color:#746247;line-height:1.4;margin-top:.3rem">{desc}</div></div>'
+        )
+    sh+='</div>'
+    st.markdown(sh,unsafe_allow_html=True)
+
 
     with st.container(border=True):
         st.markdown("#### Geometría básica de la barrera")
@@ -1753,8 +1783,10 @@ def _stage4(lab, saved):
         <rect x="0" y="0" width="900" height="340" rx="18" fill="#f8fbfd"/>
         <line x1="55" y1="{ground_y}" x2="845" y2="{ground_y}" stroke="#8c9a88" stroke-width="4"/>
         <rect x="{x_b-8:.1f}" y="{y_b:.1f}" width="16" height="{ground_y-y_b:.1f}" rx="3" fill="#485b68"/>
+        {'<polygon points="' + f'{x_b:.1f},{y_b:.1f} {x_r},{y_r:.1f} {x_r},{ground_y} {x_b:.1f},{ground_y}' + '" fill="rgba(226,139,45,0.10)"/>' if screens else ''}
         <line x1="{x_s}" y1="{y_s:.1f}" x2="{x_r}" y2="{y_r:.1f}" stroke="{los_color}" stroke-width="3" stroke-dasharray="9 7"/>
         <polyline points="{x_s},{y_s:.1f} {x_b:.1f},{y_b:.1f} {x_r},{y_r:.1f}" fill="none" stroke="#e28b2d" stroke-width="4"/>
+        {'<text x="' + f'{(x_b+x_r)/2-70:.1f}' + '" y="' + f'{ground_y-24:.1f}' + '" font-size="14" font-weight="800" fill="#9a6617">ZONA DE SOMBRA</text>' if screens else ''}
         <circle cx="{x_s}" cy="{y_s:.1f}" r="12" fill="#176b9b"/>
         <circle cx="{x_r}" cy="{y_r:.1f}" r="12" fill="#2f7d4b"/>
         <circle cx="{x_b:.1f}" cy="{y_b:.1f}" r="7" fill="#e28b2d"/>
@@ -1791,7 +1823,8 @@ def _stage4(lab, saved):
 
     st.caption(
         "Este perfil es una versión docente simplificada del perfil fuente–barrera–receptor que se utilizará más adelante. "
-        "Aquí se muestra principalmente la difracción por el borde superior."
+        "Cuando la barrera bloquea la línea directa, el sombreado indica de forma conceptual la zona de sombra acústica; "
+        "el límite real de esa zona depende también de la geometría lateral y de la difracción por los extremos."
     )
 
     st.markdown("### 3 · Cmet · corrección meteorológica de largo plazo")
