@@ -635,19 +635,19 @@ def _stage2(lab, saved):
 
     st.markdown(
         """
-        <div style="border:1px solid #d9e7f3;border-radius:20px;padding:20px 22px;
-        background:linear-gradient(135deg,#fbfdff 0%,#f4f9fd 55%,#eef6ff 100%);
-        box-shadow:0 6px 18px rgba(30,70,110,.06);margin-bottom:1rem">
+        <div style="border:1px solid #d9e7f3;border-radius:22px;padding:22px 24px;
+        background:linear-gradient(135deg,#fbfdff 0%,#f3f8fd 52%,#edf6ff 100%);
+        box-shadow:0 8px 22px rgba(30,70,110,.07);margin-bottom:1rem">
           <div style="font-size:.72rem;font-weight:900;letter-spacing:.12em;color:#0b6ea8">
             IDEA CENTRAL
           </div>
-          <div style="font-size:1.28rem;font-weight:900;color:#10243b;margin:.35rem 0 .45rem">
+          <div style="font-size:1.32rem;font-weight:900;color:#10243b;margin:.4rem 0 .45rem">
             Del dato medido a 10 m al nivel de potencia sonora de entrada
           </div>
-          <div style="color:#4b6074;line-height:1.55">
+          <div style="color:#4b6074;line-height:1.6">
             En esta etapa no se vuelve a enseñar Lp y Lw desde cero.
-            El objetivo es aprender a tomar un registro BS 5228, reconocer su descriptor
-            y convertirlo en un dato utilizable dentro del modelo, conservando su trazabilidad.
+            El objetivo es aprender a tomar un registro BS 5228, reconocer su descriptor,
+            convertirlo a un dato de entrada y mantener siempre la trazabilidad de la fuente.
           </div>
         </div>
         """,
@@ -655,103 +655,127 @@ def _stage2(lab, saved):
     )
 
     st.markdown("### Ruta de trabajo")
-    r1,r2,r3,r4 = st.columns(4)
-    with r1:
-        st.markdown("**1 · Registro**\n\nSelecciona un equipo y su actividad.")
-    with r2:
-        st.markdown("**2 · Descriptor**\n\nDistingue LAeq,T de LAmax.")
-    with r3:
-        st.markdown("**3 · Conversión**\n\nAplica la regla práctica indicada en BS 5228.")
-    with r4:
-        st.markdown("**4 · Modelo**\n\nDefine si usarás broadband o bandas.")
+    st.markdown(
+        """
+        <div style="display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;margin:.25rem 0 1.15rem">
+          <div style="border:1px solid #dce7f0;border-radius:18px;padding:16px;background:#ffffff;
+          box-shadow:0 3px 10px rgba(30,70,110,.04)">
+            <div style="font-size:.72rem;font-weight:900;color:#0b6ea8;letter-spacing:.08em">PASO 1</div>
+            <div style="font-size:1.03rem;font-weight:850;color:#16314b;margin:.35rem 0">Registro</div>
+            <div style="font-size:.88rem;color:#5a6c7e;line-height:1.45">Selecciona el equipo y revisa su actividad de referencia.</div>
+          </div>
+          <div style="border:1px solid #dce7f0;border-radius:18px;padding:16px;background:#ffffff;
+          box-shadow:0 3px 10px rgba(30,70,110,.04)">
+            <div style="font-size:.72rem;font-weight:900;color:#0b6ea8;letter-spacing:.08em">PASO 2</div>
+            <div style="font-size:1.03rem;font-weight:850;color:#16314b;margin:.35rem 0">Descriptor</div>
+            <div style="font-size:.88rem;color:#5a6c7e;line-height:1.45">Distingue LAeq,T de LAmax antes de modelar.</div>
+          </div>
+          <div style="border:1px solid #dce7f0;border-radius:18px;padding:16px;background:#ffffff;
+          box-shadow:0 3px 10px rgba(30,70,110,.04)">
+            <div style="font-size:.72rem;font-weight:900;color:#0b6ea8;letter-spacing:.08em">PASO 3</div>
+            <div style="font-size:1.03rem;font-weight:850;color:#16314b;margin:.35rem 0">Conversión</div>
+            <div style="font-size:.88rem;color:#5a6c7e;line-height:1.45">Aplica la relación de referencia indicada por BS 5228.</div>
+          </div>
+          <div style="border:1px solid #dce7f0;border-radius:18px;padding:16px;background:#ffffff;
+          box-shadow:0 3px 10px rgba(30,70,110,.04)">
+            <div style="font-size:.72rem;font-weight:900;color:#0b6ea8;letter-spacing:.08em">PASO 4</div>
+            <div style="font-size:1.03rem;font-weight:850;color:#16314b;margin:.35rem 0">Modelo</div>
+            <div style="font-size:.88rem;color:#5a6c7e;line-height:1.45">Define si trabajarás con broadband o por bandas.</div>
+          </div>
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
 
-    name, item = _bs_selector("stage2")
+    st.markdown("### Selecciona una maquinaria de referencia")
+    st.caption("Se utiliza la misma biblioteca visual de la Etapa 1 para mantener continuidad entre reconocimiento, dato acústico y modelación.")
+
+    machine_names = list(BS_PLANT)
+    selected_name = st.selectbox(
+        "Maquinaria / actividad",
+        machine_names,
+        key="c4l1_s2_machine",
+        label_visibility="collapsed",
+    )
+    item = BS_PLANT[selected_name]
+    name = selected_name
     metric = item.get("metric", "LAeq,T")
     lwa = item["laeq10"] + 28.0
 
-    st.markdown("### 1 · Identifica correctamente el dato de partida")
-    a,b,c1,d = st.columns(4)
-    a.metric("Equipo", name)
-    b.metric("Descriptor original", metric)
-    c1.metric("Nivel a 10 m", f"{item['laeq10']:.0f} dB(A)")
-    d.metric("Referencia", f"{item['table']} · Ref. {item['ref']}")
-    st.caption(
-        f"Actividad del registro: {item['activity']} · Potencia/tamaño: {item['power']} · {item['size']}"
-    )
-    if item.get("driveby"):
-        st.warning(
-            "Este registro corresponde a una pasada móvil marcada con asterisco en BS 5228. "
-            "El valor global es LAmax y las bandas corresponden a Lmax; no representa el mismo tipo de dato "
-            "que un LAeq,T de una actividad estacionaria."
-        )
-    else:
-        st.info(
-            "Este registro corresponde a una actividad medida durante un período de operación. "
-            "El valor global es LAeq,T a 10 m."
-        )
+    visual_col, data_col = st.columns([1.0,1.45], gap="large")
+    with visual_col:
+        with st.container(border=True):
+            machine_image = _machine_image_path(item)
+            if machine_image:
+                st.image(str(machine_image), use_container_width=True)
+            st.markdown(f"### {name}")
+            st.caption(item["en"])
+            st.markdown(f"**Fase típica:** {item['phase']}")
+            st.markdown(f"**Actividad:** {item['activity']}")
+            st.markdown(f"**Potencia:** {item['power']}  ·  **Tamaño:** {item['size']}")
+    with data_col:
+        st.markdown("### 1 · Identifica correctamente el dato de partida")
+        a,b = st.columns(2)
+        a.metric("Descriptor original", metric)
+        b.metric("Nivel a 10 m", f"{item['laeq10']:.0f} dB(A)")
+        c1,d = st.columns(2)
+        c1.metric("Tabla", item["table"])
+        d.metric("Referencia", f"Ref. {item['ref']}")
+        st.caption(f"{item['page']} · Registro específico de la actividad indicada.")
+
+        if item.get("driveby"):
+            st.warning(
+                "Registro móvil: el valor global corresponde a LAmax de pasada y las bandas corresponden a Lmax. "
+                "No debe tratarse como si fuese un LAeq,T estacionario."
+            )
+        else:
+            st.info(
+                "Registro de actividad: el valor global corresponde a LAeq,T medido a 10 m durante la condición indicada."
+            )
 
     st.markdown("### 2 · Conversión práctica indicada por BS 5228")
-    st.latex(r"L_{WA} \approx L_{A,10\,m} + 28\ \mathrm{dB}")
-    st.caption(
-        "Para los registros de las Tablas C.1–C.11, BS 5228 indica que, salvo excepciones, "
-        "el nivel de potencia sonora A-ponderado utilizado en ciertos procedimientos de predicción "
-        "puede obtenerse sumando 28 dB(A) al nivel broadband a 10 m."
-    )
-
-    ex1,ex2 = st.columns([1.2,1])
-    with ex1:
+    conv_left, conv_right = st.columns([1.15,1], gap="large")
+    with conv_left:
+        with st.container(border=True):
+            st.latex(r"L_{WA} \approx L_{A,10\,m} + 28\ \mathrm{dB}")
+            st.caption(
+                "Para los registros de las Tablas C.1–C.11, BS 5228 indica que, salvo excepciones, "
+                "el nivel de potencia sonora A-ponderado utilizado en ciertos procedimientos de predicción "
+                "puede obtenerse sumando 28 dB(A) al nivel broadband a 10 m."
+            )
+    with conv_right:
         st.markdown(
             f"""
             <div style="border:1px solid #cfe3d6;border-radius:18px;padding:18px 20px;
-            background:#f7fcf8">
-              <div style="font-size:.72rem;font-weight:850;color:#2f7a49;letter-spacing:.08em">
-                CONVERSIÓN DEL REGISTRO SELECCIONADO
-              </div>
-              <div style="font-size:1.15rem;font-weight:850;color:#183625;margin:.45rem 0">
-                {name}
-              </div>
-              <div style="font-size:1rem;color:#385444;line-height:1.7">
-                {metric} a 10 m = <b>{item['laeq10']:.0f} dB(A)</b><br>
-                LWA ≈ {item['laeq10']:.0f} + 28<br>
-                <span style="font-size:1.35rem;font-weight:900">LWA ≈ {lwa:.0f} dB(A)</span>
-              </div>
+            background:linear-gradient(135deg,#f8fcf9,#f1f9f4)">
+              <div style="font-size:.72rem;font-weight:900;color:#2f7a49;letter-spacing:.08em">RESULTADO</div>
+              <div style="font-size:1rem;color:#385444;margin:.45rem 0">{metric} a 10 m = <b>{item['laeq10']:.0f} dB(A)</b></div>
+              <div style="font-size:1rem;color:#385444">{item['laeq10']:.0f} + 28</div>
+              <div style="font-size:1.55rem;font-weight:900;color:#183625;margin-top:.35rem">LWA ≈ {lwa:.0f} dB(A)</div>
             </div>
             """,
             unsafe_allow_html=True,
-        )
-    with ex2:
-        st.metric("LWA de entrada", f"{lwa:.0f} dB(A)")
-        st.caption(
-            "Este valor es la entrada broadband de referencia derivada del registro seleccionado. "
-            "Debe conservarse junto con la actividad y la fuente documental."
         )
 
     st.markdown("### 3 · ¿Qué dato debes ingresar al modelo?")
     m1,m2,m3 = st.columns(3)
     with m1:
         with st.container(border=True):
-            st.markdown("#### Broadband")
-            st.markdown(
-                f"Usa **LWA ≈ {lwa:.0f} dB(A)** cuando el ejercicio trabaje con un único valor global."
-            )
-            st.caption("Adecuado para ejercicios introductorios o comparaciones globales.")
+            st.markdown("#### 🔊 Broadband")
+            st.markdown(f"Usa **LWA ≈ {lwa:.0f} dB(A)** cuando el ejercicio trabaje con un único valor global.")
+            st.caption("Útil para comparaciones globales e introducción al modelo.")
     with m2:
         with st.container(border=True):
-            st.markdown("#### Por bandas")
-            st.markdown(
-                "Conserva el espectro de octavas cuando el cálculo necesite dependencia con la frecuencia."
-            )
-            st.caption("Especialmente útil para barreras, controles y análisis espectral.")
+            st.markdown("#### 🎚️ Por bandas")
+            st.markdown("Conserva el espectro de octavas cuando el cálculo necesite dependencia con la frecuencia.")
+            st.caption("Clave para barreras, controles y análisis espectral.")
     with m3:
         with st.container(border=True):
-            st.markdown("#### Trazabilidad")
-            st.markdown(
-                f"Registra **Tabla {item['table']} · Ref. {item['ref']}**, actividad, tamaño y descriptor original."
-            )
-            st.caption("El LWA no debe quedar separado del registro del cual proviene.")
+            st.markdown("#### 🧾 Trazabilidad")
+            st.markdown(f"Conserva **Tabla {item['table']} · Ref. {item['ref']}**, actividad, tamaño y descriptor original.")
+            st.caption("El LWA nunca debe quedar separado de su fuente documental.")
 
-    st.markdown("### Espectro del registro seleccionado")
-    bands = [63,125,250,500,1000,2000,4000,8000]
+    st.markdown("### 4 · Espectro del registro seleccionado")
     spectrum_descriptor = "Lmax por banda [dB]" if item.get("driveby") else "Lp,eq,T por banda [dB]"
     spectrum_df = pd.DataFrame(
         [item["bands"]],
@@ -760,22 +784,24 @@ def _stage2(lab, saved):
     )
     st.dataframe(spectrum_df, use_container_width=True)
     st.caption(
-        "No conviertas automáticamente cada banda sumando 28 dB como si esa operación fuera una regla espectral general. "
-        "Aquí la regla +28 dB(A) se presenta para el valor broadband A-ponderado indicado por la norma."
+        "La regla +28 dB(A) se presenta aquí para el valor broadband A-ponderado indicado por la norma. "
+        "No se aplica automáticamente a cada banda como si fuese una regla espectral general."
     )
 
     st.markdown("---")
     st.markdown(
         """
-        <div style="border:1px solid #eadfc8;border-radius:18px;padding:18px 20px;background:#fffaf1">
+        <div style="border:1px solid #eadfc8;border-radius:18px;padding:18px 20px;
+        background:linear-gradient(135deg,#fffaf2,#fff7e8)">
           <div style="font-size:.72rem;font-weight:900;letter-spacing:.1em;color:#9a6617">
             DESAFÍO RÁPIDO
           </div>
           <div style="font-size:1.2rem;font-weight:850;color:#4b3515;margin:.35rem 0">
-            ¿Este registro puede usarse como fuente estacionaria sin advertencias?
+            ¿Cómo documentarías este registro antes de modelar?
           </div>
           <div style="color:#6a5636">
-            Identifica primero el descriptor y luego decide cómo documentar el dato antes de modelar.
+            Identifica el descriptor y decide si el dato puede tratarse como actividad estacionaria
+            o si requiere una advertencia por corresponder a una pasada móvil.
           </div>
         </div>
         """,
@@ -790,7 +816,7 @@ def _stage2(lab, saved):
         key=f"c4l1_s2_descriptor_{name}",
     )
     use_choices = [
-        "Sí, puede tratarse como registro de actividad estacionaria sin observaciones adicionales.",
+        "Puede tratarse como registro de actividad estacionaria, manteniendo documentada su procedencia.",
         "Puede utilizarse como referencia, pero debe advertirse que corresponde a una pasada móvil / LAmax.",
     ]
     use_answer = st.radio(
@@ -809,20 +835,11 @@ def _stage2(lab, saved):
                 f"es aproximadamente **{lwa:.0f} dB(A)**."
             )
         elif not descriptor_ok:
-            st.warning(
-                f"Revisa primero el descriptor original del registro. En este caso corresponde a **{metric}**."
-            )
+            st.warning(f"Revisa primero el descriptor original del registro. En este caso corresponde a **{metric}**.")
         else:
-            if item.get("driveby"):
-                st.warning(
-                    "El descriptor es correcto, pero este registro procede de una pasada móvil. "
-                    "Puede servir como referencia, siempre que la hipótesis y la naturaleza LAmax del dato queden explícitas."
-                )
-            else:
-                st.warning(
-                    "El descriptor es correcto. Este registro corresponde a una actividad y puede utilizarse como "
-                    "dato de referencia estacionario dentro del ejercicio, manteniendo documentada su procedencia."
-                )
+            st.warning(
+                "El descriptor es correcto, pero revisa la forma de documentar el registro antes de incorporarlo al modelo."
+            )
 
     if st.session_state.get("role") == "Docente":
         with st.expander("👩‍🏫 Pauta docente · Etapa 2", expanded=False):
