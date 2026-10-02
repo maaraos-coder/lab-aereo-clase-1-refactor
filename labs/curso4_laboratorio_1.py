@@ -2036,11 +2036,53 @@ def _stage4(lab, saved):
             "**Cmet = 0 dB** en este esquema."
         )
         st.markdown(
-            "- **C0:** constante meteorológica de largo plazo para el sitio/dirección.\n"
-            "- **hs:** altura de la fuente sobre el terreno.\n"
-            "- **hr:** altura del receptor sobre el terreno.\n"
-            "- **dp:** distancia horizontal fuente–receptor."
+            "- **C0 [dB]:** parámetro meteorológico de largo plazo para el sitio y la dirección fuente–receptor.\n"
+            "- **hs [m]:** altura de la fuente sobre el terreno.\n"
+            "- **hr [m]:** altura del receptor sobre el terreno.\n"
+            "- **dp [m]:** distancia horizontal fuente–receptor."
         )
+
+    st.markdown("#### ¿De dónde sale C0?")
+    st.markdown(
+        """
+        <div style="border:1px solid #ddd8ef;border-radius:18px;padding:16px 18px;
+        background:linear-gradient(135deg,#fbf9ff,#f5f1fb);margin:.35rem 0 .85rem">
+          <div style="font-size:.76rem;font-weight:900;color:#65549a;letter-spacing:.08em">
+            C0 NO ES EL VIENTO DEL MOMENTO
+          </div>
+          <div style="font-size:.88rem;color:#625a76;line-height:1.55;margin-top:.3rem">
+            <b>C0 se obtiene o selecciona a partir de información meteorológica de largo plazo</b>
+            representativa del sitio y de la dirección de propagación. Resume estadísticamente
+            cuánto pesan las condiciones favorables de propagación asociadas al viento y a los
+            gradientes térmicos. Por eso no debe deducirse a partir de una sola medición de
+            temperatura, humedad o velocidad del viento.
+          </div>
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
+
+    c0_steps=[
+        ("1 · Define la dirección","Fuente → receptor","C0 puede cambiar entre receptores ubicados en direcciones distintas."),
+        ("2 · Reúne climatología","Viento + estabilidad térmica","Usa estadísticas representativas del periodo de evaluación, no el clima de una hora."),
+        ("3 · Obtén o adopta C0","Estudio / modelo / criterio declarado","El valor debe quedar documentado y ser coherente con el objetivo del cálculo."),
+    ]
+    c0h='<div style="display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;margin:.4rem 0 .9rem">'
+    for title,sub,desc in c0_steps:
+        c0h+=(
+            f'<div style="border:1px solid #e2deef;border-radius:16px;padding:14px;background:#fff">'
+            f'<div style="font-size:.87rem;font-weight:850;color:#443965">{title}</div>'
+            f'<div style="font-size:.76rem;font-weight:800;color:#766d8d;margin:.25rem 0">{sub}</div>'
+            f'<div style="font-size:.78rem;color:#716982;line-height:1.42">{desc}</div></div>'
+        )
+    c0h+='</div>'
+    st.markdown(c0h,unsafe_allow_html=True)
+
+    st.info(
+        "Si no existe una base meteorológica que permita justificar C0, no conviene inventarlo. "
+        "Para estudiar condiciones favorables puede utilizarse **C0 = 0 dB**, lo que deja **Cmet = 0 dB** "
+        "y no reduce el nivel calculado."
+    )
 
     st.markdown("#### ¿Cómo se interpreta?")
     interp_cards=[
@@ -2066,36 +2108,89 @@ def _stage4(lab, saved):
             return 0.0
         return float(c0)*max(0.0,1.0-lim/float(dp))
 
+    st.markdown("#### Selecciona cómo definir C0")
+    c0_mode=st.radio(
+        "Origen de C0",
+        [
+            "Condición favorable / conservadora · C0 = 0 dB",
+            "Valor conocido del proyecto o estudio meteorológico",
+            "Exploración didáctica de sensibilidad",
+        ],
+        horizontal=True,
+        key="c4l1_s4_c0_mode",
+    )
+
+    if c0_mode.startswith("Condición favorable"):
+        c0=0.0
+        st.success(
+            "**C0 = 0 dB.** No se aplica reducción meteorológica de largo plazo. "
+            "Este modo permite conservar el nivel calculado para condiciones favorables."
+        )
+    elif c0_mode.startswith("Valor conocido"):
+        c0=st.number_input(
+            "C0 documentado [dB]",
+            min_value=0.0,
+            max_value=10.0,
+            value=3.0,
+            step=0.1,
+            key="c4l1_s4_c0_known",
+            help="Ingresa el valor obtenido del estudio meteorológico, modelo o antecedente técnico del proyecto."
+        )
+        st.caption(
+            "Registra siempre la fuente del valor: periodo estadístico, estación o modelo utilizado y dirección fuente–receptor."
+        )
+    else:
+        c0=st.slider(
+            "C0 de exploración [dB]",
+            0.0,5.0,3.0,0.5,
+            key="c4l1_s4_c0_sensitivity",
+            help="Solo para observar sensibilidad. No representa una determinación normativa de C0."
+        )
+        st.warning(
+            "Modo didáctico: mueve C0 para observar cuánto influye en Cmet. "
+            "Este control no calcula C0 desde datos meteorológicos reales."
+        )
+
     st.markdown("#### Explora el efecto de la geometría")
-    cm1,cm2,cm3,cm4=st.columns(4)
+    cm1,cm2,cm3=st.columns(3)
     dp=cm1.slider("Distancia horizontal dp [m]",20,500,150,10,key="c4l1_s4_cmet_d")
     cm_hs=cm2.slider("Altura fuente hs [m]",0.5,10.0,1.5,0.5,key="c4l1_s4_cmet_hs")
     cm_hr=cm3.slider("Altura receptor hr [m]",1.0,20.0,1.5,0.5,key="c4l1_s4_cmet_hr")
-    c0=cm4.slider("C0 [dB]",0.0,5.0,3.0,0.5,key="c4l1_s4_c0")
+
     cmet=_cmet_edu(dp,cm_hs,cm_hr,c0)
     threshold=10.0*(cm_hs+cm_hr)
     applies=dp>threshold and c0>0
 
-    m1,m2,m3,m4=st.columns(4)
-    m1.metric("Umbral 10(hs+hr)",f"{threshold:.1f} m")
-    m2.metric("dp",f"{dp:.0f} m")
-    m3.metric("¿Aplica corrección?","Sí" if applies else "No")
-    m4.metric("Cmet",f"{cmet:.2f} dB")
+    st.latex(
+        rf"C_{{met}}={c0:.2f}\left[1-\frac{{10({cm_hs:.1f}+{cm_hr:.1f})}}{{{dp:.0f}}}\right]"
+    )
+
+    m1,m2,m3,m4,m5=st.columns(5)
+    m1.metric("C0 adoptado",f"{c0:.2f} dB")
+    m2.metric("Umbral 10(hs+hr)",f"{threshold:.1f} m")
+    m3.metric("dp",f"{dp:.0f} m")
+    m4.metric("¿Aplica Cmet?","Sí" if applies else "No")
+    m5.metric("Cmet",f"{cmet:.2f} dB")
 
     if applies:
         st.success(
             f"Como dp = {dp:.0f} m es mayor que 10(hs+hr) = {threshold:.1f} m, "
-            f"se aplica una corrección de **{cmet:.2f} dB**. En la ecuación general este valor se resta."
+            f"el C0 adoptado de {c0:.2f} dB genera **Cmet = {cmet:.2f} dB**. "
+            "Este valor se resta en la ecuación de propagación de largo plazo."
+        )
+    elif c0<=0:
+        st.info(
+            "C0 = 0 dB, por lo que **Cmet = 0 dB** independientemente de la distancia. "
+            "No se aplica una reducción meteorológica de largo plazo."
         )
     else:
         st.info(
-            f"Como dp = {dp:.0f} m no supera el umbral de {threshold:.1f} m, "
-            "en este esquema **Cmet = 0 dB**."
+            f"dp = {dp:.0f} m no supera 10(hs+hr) = {threshold:.1f} m; "
+            "por lo tanto, en este esquema **Cmet = 0 dB**."
         )
 
     st.caption(
-        "C0 no es la temperatura, la humedad ni la velocidad del viento del momento. "
-        "Es un parámetro de largo plazo asociado a la estadística meteorológica del sitio y de la dirección de propagación."
+        "Cadena de decisión: climatología y dirección fuente–receptor → C0 → geometría hs/hr/dp → Cmet → nivel de largo plazo."
     )
 
     st.markdown("### 4 · La ecuación ya está completa")
