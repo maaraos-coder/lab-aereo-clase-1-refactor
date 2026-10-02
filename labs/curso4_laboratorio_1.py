@@ -2461,7 +2461,7 @@ def _stage5(lab, saved):
     _header(
         5,
         "¿Cómo representar una obra como fuentes de ruido?",
-        "Traducir maquinaria y movimientos reales de obra a objetos acústicos coherentes antes de modelar en Noise Map Lab.",
+        "Traducir equipos estacionarios y tránsito asociado a la obra a objetos acústicos coherentes antes de modelar en Noise Map Lab.",
     )
 
     st.markdown(
@@ -2470,161 +2470,198 @@ def _stage5(lab, saved):
         background:linear-gradient(135deg,#fbfdff,#eef6fb);box-shadow:0 8px 20px rgba(31,63,92,.05)">
           <div style="font-size:.72rem;font-weight:900;color:#0b6ea8;letter-spacing:.1em">DEL EQUIPO REAL AL OBJETO DE CÁLCULO</div>
           <div style="font-size:1.18rem;font-weight:850;color:#17324a;margin:.3rem 0">
-            No toda maquinaria se representa de la misma forma
+            La representación depende del fenómeno que realmente queremos modelar
           </div>
           <div style="color:#5d7183;line-height:1.55">
-            La elección depende de <b>cómo ocupa el espacio durante el período evaluado</b>.
-            En este laboratorio trabajaremos únicamente con <b>fuentes puntuales</b> y
-            <b>fuentes lineales/móviles</b>, que son las representaciones que utilizaremos después en Noise Map Lab.
+            En este laboratorio utilizaremos <b>fuentes puntuales</b> para maquinaria localizada
+            y una <b>fuente lineal vial basada en CNOSSOS</b> para representar el tránsito asociado a la obra
+            sobre calles o vías de acceso.
           </div>
         </div>
         """,
         unsafe_allow_html=True,
     )
 
-    st.markdown("### 1 · Dos representaciones que utilizaremos")
+    st.markdown("### 1 · Dos objetos, dos fenómenos distintos")
     source_cards=[
         (
             "FUENTE PUNTUAL",
-            "Equipo localizado",
-            "Representa una fuente cuya posición puede considerarse fija respecto de las distancias del problema.",
-            "Excavadora estacionaria · generador · bomba de hormigón",
+            "Maquinaria localizada",
+            "Representa un equipo cuya posición de operación puede considerarse definida durante el período evaluado.",
+            "Excavadora estacionaria · generador · bomba de hormigón · martillo trabajando en un frente definido",
             "#eef6fb","#176b9b"
         ),
         (
-            "FUENTE LINEAL / MÓVIL",
-            "Movimiento repetido sobre una trayectoria",
-            "Representa una sucesión de posiciones de una fuente móvil a lo largo de un recorrido conocido durante el período evaluado.",
-            "Camiones por camino interior · maquinaria que recorre repetidamente una ruta",
+            "FUENTE LINEAL VIAL · CNOSSOS",
+            "Tránsito asociado a la obra",
+            "Representa vehículos que circulan por una vía. El modelo vial utiliza el flujo y las características del tránsito, no simplemente una máquina moviéndose.",
+            "Camiones de retiro de material · mixer · transporte de áridos · vehículos que entran/salen por calles exteriores",
             "#fff7e9","#98651c"
         ),
     ]
     sh='<div style="display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px;margin:.9rem 0 1rem">'
     for tag,title,desc,examples,bg,color in source_cards:
         sh+=(
-            f'<div style="border:1px solid #dce7ef;border-radius:19px;padding:17px;background:{bg}">'
+            f'<div style="border:1px solid #dce7ef;border-radius:19px;padding:18px;background:{bg};box-shadow:0 5px 14px rgba(40,70,95,.04)">'
             f'<div style="font-size:.7rem;font-weight:900;letter-spacing:.08em;color:{color}">{tag}</div>'
-            f'<div style="font-size:1.02rem;font-weight:850;color:#213b50;margin:.25rem 0 .45rem">{title}</div>'
-            f'<div style="font-size:.83rem;color:#607586;line-height:1.5">{desc}</div>'
-            f'<div style="font-size:.77rem;color:{color};font-weight:800;margin-top:.65rem">{examples}</div>'
+            f'<div style="font-size:1.03rem;font-weight:850;color:#213b50;margin:.3rem 0 .45rem">{title}</div>'
+            f'<div style="font-size:.83rem;color:#607586;line-height:1.52">{desc}</div>'
+            f'<div style="border-top:1px solid rgba(90,110,125,.15);font-size:.76rem;color:{color};font-weight:800;margin-top:.7rem;padding-top:.55rem">{examples}</div>'
             f'</div>'
         )
     sh+='</div>'
     st.markdown(sh,unsafe_allow_html=True)
 
-    st.info(
-        "Criterio central: no se clasifica por el nombre de la máquina, sino por su comportamiento espacial. "
-        "La misma máquina podría ser puntual si permanece estacionaria, o lineal/móvil si recorre repetidamente una trayectoria."
+    st.warning(
+        "No uses la fuente lineal CNOSSOS como una representación genérica de cualquier maquinaria que se desplaza. "
+        "Un cargador frontal o una excavadora que cambia de posición dentro de la obra no se transforma automáticamente en una fuente vial."
     )
 
-    st.markdown("### 2 · Obra vista en planta")
+    st.markdown("### 2 · Obra y tránsito asociado · vista en planta")
     svg=(
-        '<div style="border:1px solid #d8e4ec;border-radius:20px;background:#fbfdff;padding:12px 14px;margin:.4rem 0 1rem">'
-        '<div style="font-size:.72rem;font-weight:900;color:#526a7e;letter-spacing:.08em;margin:2px 0 8px">'
-        'PLANTA DIDÁCTICA · ¿CÓMO REPRESENTARÍAS CADA ELEMENTO?'
+        '<div style="border:1px solid #d8e4ec;border-radius:22px;background:#fbfdff;padding:14px 16px;margin:.45rem 0 1rem;box-shadow:0 7px 18px rgba(33,65,90,.05)">'
+        '<div style="display:flex;justify-content:space-between;align-items:center;gap:12px;margin:2px 0 10px">'
+        '<div style="font-size:.73rem;font-weight:900;color:#526a7e;letter-spacing:.08em">PLANTA DIDÁCTICA · OBRA + VÍA EXTERIOR</div>'
+        '<div style="font-size:.72rem;font-weight:850;color:#98651c;background:#fff5e6;border-radius:999px;padding:6px 10px">CNOSSOS → tránsito vial</div>'
         '</div>'
-        '<svg viewBox="0 0 900 430" width="100%" style="display:block">'
-        '<rect x="0" y="0" width="900" height="430" rx="18" fill="#f7fafc"/>'
-        '<rect x="55" y="55" width="600" height="310" rx="18" fill="#f0f4f6" stroke="#9cadb8" stroke-width="3"/>'
-        '<text x="72" y="83" font-size="16" font-weight="800" fill="#607585">OBRA</text>'
-        '<rect x="690" y="105" width="150" height="120" rx="12" fill="#f9efe9" stroke="#c99b7d" stroke-width="3"/>'
-        '<text x="720" y="135" font-size="16" font-weight="800" fill="#8b5b3d">VIVIENDA</text>'
-        '<text x="718" y="158" font-size="13" fill="#8b5b3d">receptor sensible</text>'
-        '<circle cx="220" cy="180" r="24" fill="#3b83b2"/>'
-        '<text x="203" y="186" font-size="18" font-weight="900" fill="#fff">EX</text>'
-        '<text x="145" y="225" font-size="14" font-weight="800" fill="#2f607e">Excavadora estacionaria</text>'
-        '<rect x="380" y="145" width="48" height="48" rx="8" fill="#4f9a68"/>'
-        '<text x="390" y="176" font-size="17" font-weight="900" fill="#fff">G</text>'
-        '<text x="350" y="220" font-size="14" font-weight="800" fill="#3f7350">Generador</text>'
-        '<rect x="295" y="270" width="54" height="42" rx="8" fill="#7c72b8"/>'
-        '<text x="307" y="297" font-size="16" font-weight="900" fill="#fff">BH</text>'
-        '<text x="252" y="338" font-size="14" font-weight="800" fill="#5f568c">Bomba de hormigón</text>'
-        '<path d="M80 330 C170 350,245 360,355 340 S520 285,625 300" fill="none" stroke="#d38c35" stroke-width="18" stroke-linecap="round" opacity=".25"/>'
-        '<path d="M80 330 C170 350,245 360,355 340 S520 285,625 300" fill="none" stroke="#b87526" stroke-width="4" stroke-dasharray="10 8"/>'
-        '<rect x="480" y="292" width="46" height="28" rx="7" fill="#d38c35"/>'
-        '<circle cx="490" cy="322" r="6" fill="#6f542f"/>'
-        '<circle cx="516" cy="322" r="6" fill="#6f542f"/>'
-        '<text x="430" y="365" font-size="14" font-weight="800" fill="#96631f">Camión en recorrido interior</text>'
-        '<line x1="655" y1="165" x2="690" y2="165" stroke="#b7c4cc" stroke-width="2" stroke-dasharray="7 6"/>'
+        '<svg viewBox="0 0 1000 520" width="100%" style="display:block">'
+        '<defs>'
+        '<marker id="arrowRoad" markerWidth="10" markerHeight="10" refX="7" refY="3" orient="auto" markerUnits="strokeWidth"><path d="M0,0 L0,6 L8,3 z" fill="#b87526"/></marker>'
+        '<filter id="shadowSmall" x="-20%" y="-20%" width="140%" height="140%"><feDropShadow dx="0" dy="4" stdDeviation="4" flood-opacity=".12"/></filter>'
+        '</defs>'
+        '<rect x="0" y="0" width="1000" height="520" rx="20" fill="#f8fbfd"/>'
+        '<rect x="54" y="48" width="690" height="330" rx="22" fill="#eef3f6" stroke="#9fb0bc" stroke-width="3"/>'
+        '<text x="76" y="80" font-size="17" font-weight="900" fill="#5e7382">PREDIO DE LA OBRA</text>'
+        '<rect x="785" y="85" width="160" height="125" rx="15" fill="#f9eee8" stroke="#c89b7d" stroke-width="3" filter="url(#shadowSmall)"/>'
+        '<text x="819" y="120" font-size="17" font-weight="900" fill="#885a3e">VIVIENDA</text>'
+        '<text x="809" y="145" font-size="13" fill="#936c55">receptor sensible</text>'
+        '<circle cx="785" cy="163" r="8" fill="#b34f4f"/><text x="798" y="168" font-size="13" font-weight="900" fill="#954343">R</text>'
+
+        '<circle cx="215" cy="180" r="31" fill="#3b83b2" filter="url(#shadowSmall)"/>'
+        '<text x="195" y="187" font-size="18" font-weight="900" fill="#fff">EX</text>'
+        '<rect x="124" y="224" width="183" height="40" rx="10" fill="#ffffff" stroke="#d5e2ea"/>'
+        '<text x="143" y="249" font-size="14" font-weight="850" fill="#2f607e">Excavadora · puntual</text>'
+
+        '<rect x="415" y="135" width="62" height="62" rx="12" fill="#4f9a68" filter="url(#shadowSmall)"/>'
+        '<text x="437" y="174" font-size="20" font-weight="900" fill="#fff">G</text>'
+        '<rect x="374" y="216" width="145" height="40" rx="10" fill="#ffffff" stroke="#d5e2ea"/>'
+        '<text x="399" y="241" font-size="14" font-weight="850" fill="#3f7350">Generador</text>'
+
+        '<rect x="300" y="280" width="66" height="52" rx="10" fill="#7c72b8" filter="url(#shadowSmall)"/>'
+        '<text x="317" y="313" font-size="17" font-weight="900" fill="#fff">BH</text>'
+        '<rect x="251" y="343" width="166" height="40" rx="10" fill="#ffffff" stroke="#d5e2ea"/>'
+        '<text x="268" y="368" font-size="14" font-weight="850" fill="#5f568c">Bomba · puntual</text>'
+
+        '<rect x="612" y="260" width="88" height="70" rx="10" fill="#dfe7ec" stroke="#8094a1" stroke-width="2"/>'
+        '<text x="628" y="291" font-size="13" font-weight="900" fill="#576d7a">PORTÓN</text>'
+        '<text x="625" y="309" font-size="11" fill="#6d7f89">acceso obra</text>'
+
+        '<rect x="0" y="405" width="1000" height="92" fill="#d5d9dc"/>'
+        '<line x1="0" y1="451" x2="1000" y2="451" stroke="#ffffff" stroke-width="4" stroke-dasharray="26 20"/>'
+        '<text x="28" y="430" font-size="14" font-weight="850" fill="#59646b">CALLE EXTERIOR / RUTA DE ACCESO</text>'
+        '<path d="M70 468 L275 468 L470 468 L665 468 L860 468" fill="none" stroke="#b87526" stroke-width="5" marker-end="url(#arrowRoad)"/>'
+        '<path d="M860 433 L690 433 L520 433 L350 433" fill="none" stroke="#b87526" stroke-width="5" marker-end="url(#arrowRoad)"/>'
+        '<rect x="545" y="432" width="64" height="30" rx="7" fill="#d38c35" filter="url(#shadowSmall)"/>'
+        '<rect x="589" y="438" width="24" height="24" rx="4" fill="#b87526"/>'
+        '<circle cx="558" cy="466" r="7" fill="#5f5140"/><circle cx="598" cy="466" r="7" fill="#5f5140"/>'
+        '<text x="635" y="482" font-size="13" font-weight="850" fill="#96631f">camiones de obra</text>'
+        '<path d="M655 405 L655 350" stroke="#b87526" stroke-width="4" stroke-dasharray="8 6" marker-end="url(#arrowRoad)"/>'
+        '<text x="670" y="388" font-size="12" font-weight="800" fill="#98651c">entrada / salida</text>'
         '</svg>'
+        '<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:9px">'
+        '<div style="border-radius:12px;padding:10px 12px;background:#eef6fb;color:#2b607f;font-size:.77rem"><b>Dentro de la obra:</b> equipos localizados → fuente puntual.</div>'
+        '<div style="border-radius:12px;padding:10px 12px;background:#fff7e9;color:#8b5e16;font-size:.77rem"><b>En la calle exterior:</b> flujo de camiones → fuente lineal vial CNOSSOS.</div>'
+        '</div>'
         '</div>'
     )
     st.markdown(svg,unsafe_allow_html=True)
 
-    st.markdown("### 3 · Decide cómo modelar cada caso")
+    st.markdown("### 3 · ¿Qué objeto crearías en Noise Map Lab?")
+    st.markdown(
+        """
+        <div style="border:1px solid #dce6ed;border-radius:18px;padding:15px 17px;background:#fff;margin:.3rem 0 .8rem">
+          <div style="font-size:.8rem;font-weight:900;color:#17324a">CRITERIO DE DECISIÓN</div>
+          <div style="font-size:.84rem;color:#637788;line-height:1.5;margin-top:.25rem">
+            Primero identifica el fenómeno. Si es un <b>equipo operando desde una posición</b>, crea una fuente puntual.
+            Si es <b>tránsito vial generado por la obra</b>, crea una fuente lineal CNOSSOS sobre la vía correspondiente.
+          </div>
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
+
     cases=[
-        ("Excavadora que permanece en una posición durante la actividad","Fuente puntual",
-         "Durante el período evaluado su posición puede considerarse fija."),
-        ("Generador instalado durante toda la jornada","Fuente puntual",
-         "Es una instalación estacionaria y se modela desde una posición definida."),
-        ("Bomba de hormigón estacionada durante el vaciado","Fuente puntual",
-         "Mientras opera permanece localizada respecto de los receptores."),
-        ("Camiones que circulan repetidamente por el mismo camino interior","Fuente lineal / móvil",
-         "La emisión se distribuye a lo largo de una trayectoria recorrida repetidamente."),
-        ("Cargador frontal que realiza viajes continuos entre acopio y frente","Fuente lineal / móvil",
-         "La trayectoria repetitiva es más representativa que una única posición fija."),
+        ("Excavadora trabajando desde un frente definido","Equipo en obra","Fuente puntual",
+         "Se representa desde su posición de operación durante el escenario evaluado."),
+        ("Generador instalado durante toda la jornada","Equipo estacionario","Fuente puntual",
+         "Su emisión se origina desde una ubicación fija."),
+        ("Bomba de hormigón estacionada durante un vaciado","Equipo estacionario","Fuente puntual",
+         "Durante la actividad permanece localizada respecto de los receptores."),
+        ("Camiones que retiran material y circulan por la calle exterior","Tránsito asociado a la obra","Fuente lineal vial · CNOSSOS",
+         "Aquí interesa el flujo de vehículos sobre una vía: es el uso natural del objeto lineal CNOSSOS."),
+        ("Camiones mixer que llegan repetidamente por una avenida de acceso","Tránsito asociado a la obra","Fuente lineal vial · CNOSSOS",
+         "La vía puede representarse mediante el modelo de tránsito, usando sus parámetros de flujo y circulación."),
+        ("Cargador frontal que se desplaza entre dos puntos dentro del predio","Maquinaria móvil interna","Fuente puntual / escenario de posiciones",
+         "No conviene tratarlo automáticamente como tráfico CNOSSOS. Puede representarse mediante posiciones o escenarios de operación según el objetivo del análisis."),
     ]
-    correct=0
-    for i,(prompt,expected,why) in enumerate(cases):
+
+    for i,(prompt,kind,expected,why) in enumerate(cases):
         with st.container(border=True):
-            q1,q2=st.columns([1.5,1])
-            q1.markdown(f"**{prompt}**")
-            choice=q2.radio(
-                "Representación",
-                ["Fuente puntual","Fuente lineal / móvil"],
+            head1,head2=st.columns([2.1,1])
+            with head1:
+                st.markdown(
+                    f"<div style='font-size:.72rem;font-weight:900;color:#6b7d89;letter-spacing:.06em'>{kind.upper()}</div>"
+                    f"<div style='font-size:.95rem;font-weight:850;color:#263f52;margin-top:.15rem'>{prompt}</div>",
+                    unsafe_allow_html=True,
+                )
+            with head2:
+                badge_bg="#eef6fb" if expected.startswith("Fuente puntual") else ("#fff7e9" if "CNOSSOS" in expected else "#f3f3f7")
+                badge_color="#176b9b" if expected.startswith("Fuente puntual") else ("#98651c" if "CNOSSOS" in expected else "#666078")
+                st.markdown(
+                    f"<div style='text-align:center;border-radius:999px;padding:7px 10px;background:{badge_bg};"
+                    f"color:{badge_color};font-size:.72rem;font-weight:900'>CASO {i+1}</div>",
+                    unsafe_allow_html=True,
+                )
+
+            choice=st.radio(
+                "Selecciona representación",
+                ["Fuente puntual","Fuente lineal vial · CNOSSOS","Fuente puntual / escenario de posiciones"],
                 index=None,
                 key=f"c4l1_s5_rep_{i}",
-                label_visibility="collapsed",
+                horizontal=True,
             )
             if choice:
                 if choice==expected:
-                    correct+=1
                     st.success(f"Correcto · {why}")
                 else:
                     st.warning(f"Revisa · {why}")
 
-    st.caption(
-        "La clasificación busca representar la ocupación espacial durante el período de cálculo; "
-        "no pretende describir cada movimiento instantáneo de la máquina."
-    )
-
-    st.markdown("### 4 · ¿Qué cambia conceptualmente?")
-    model_type=st.radio(
-        "Compara una misma emisión representada de dos formas",
-        ["Puntual","Lineal / móvil"],
-        horizontal=True,
-        key="c4l1_s5_compare_type",
-    )
-    if model_type=="Puntual":
-        st.markdown(
-            """
-            <div style="border:1px solid #cfe0ec;border-radius:18px;padding:17px;background:#f5faff">
-              <b style="color:#176b9b">PUNTUAL</b><br>
-              <span style="color:#5f7383;font-size:.86rem">
-              El modelo concentra la emisión en una posición. La distancia y geometría se calculan
-              desde ese punto hacia cada receptor. Es apropiado cuando el desplazamiento de la fuente
-              es pequeño frente a las distancias relevantes o cuando permanece estacionaria.
-              </span>
+    st.markdown("### 4 · Cuándo sí usar la fuente lineal CNOSSOS")
+    st.markdown(
+        """
+        <div style="display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;margin:.4rem 0 .8rem">
+          <div style="border:1px solid #d6eadc;border-radius:17px;padding:15px;background:#f3fbf5">
+            <div style="font-size:.75rem;font-weight:900;color:#2d7a4a">SÍ TIENE SENTIDO</div>
+            <div style="font-size:.83rem;color:#597064;line-height:1.5;margin-top:.35rem">
+              Viajes de camiones por calles exteriores, acceso a botadero, retiro de escombros,
+              transporte de áridos, mixer y otros flujos viales generados por la obra.
             </div>
-            """,unsafe_allow_html=True
-        )
-    else:
-        st.markdown(
-            """
-            <div style="border:1px solid #eadbc3;border-radius:18px;padding:17px;background:#fffaf2">
-              <b style="color:#98651c">LINEAL / MÓVIL</b><br>
-              <span style="color:#746247;font-size:.86rem">
-              La emisión se asocia a una trayectoria. El receptor recibe contribuciones desde distintas
-              posiciones a lo largo del recorrido y el resultado representa el tránsito o movimiento
-              repetido durante el período evaluado.
-              </span>
+          </div>
+          <div style="border:1px solid #ead9d1;border-radius:17px;padding:15px;background:#fff8f4">
+            <div style="font-size:.75rem;font-weight:900;color:#a05b3a">NO AUTOMÁTICAMENTE</div>
+            <div style="font-size:.83rem;color:#75645b;line-height:1.5;margin-top:.35rem">
+              Excavadora, cargador frontal o maquinaria que simplemente cambia de posición dentro del predio.
+              Ese movimiento no debe confundirse con un modelo de tráfico vial.
             </div>
-            """,unsafe_allow_html=True
-        )
+          </div>
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
 
     st.success(
-        "Puente hacia Noise Map Lab: antes de dibujar una fuente, pregúntate si el equipo está "
-        "**localizado** o si su emisión debe representarse **a lo largo de una trayectoria**."
+        "Puente hacia Noise Map Lab: **puntual = maquinaria localizada**; "
+        "**lineal CNOSSOS = tránsito vial asociado a la obra**. Esta distinción evita usar un objeto correcto para el fenómeno equivocado."
     )
 
 
