@@ -2518,42 +2518,37 @@ def _stage5(lab, saved):
     )
 
     st.markdown("### 2 · Obra vista en planta")
-    svg="""
-    <div style="border:1px solid #d8e4ec;border-radius:20px;background:#fbfdff;padding:12px 14px;margin:.4rem 0 1rem">
-      <div style="font-size:.72rem;font-weight:900;color:#526a7e;letter-spacing:.08em;margin:2px 0 8px">
-        PLANTA DIDÁCTICA · ¿CÓMO REPRESENTARÍAS CADA ELEMENTO?
-      </div>
-      <svg viewBox="0 0 900 430" width="100%" style="display:block">
-        <rect x="0" y="0" width="900" height="430" rx="18" fill="#f7fafc"/>
-        <rect x="55" y="55" width="600" height="310" rx="18" fill="#f0f4f6" stroke="#9cadb8" stroke-width="3"/>
-        <text x="72" y="83" font-size="16" font-weight="800" fill="#607585">OBRA</text>
-
-        <rect x="690" y="105" width="150" height="120" rx="12" fill="#f9efe9" stroke="#c99b7d" stroke-width="3"/>
-        <text x="720" y="135" font-size="16" font-weight="800" fill="#8b5b3d">VIVIENDA</text>
-        <text x="718" y="158" font-size="13" fill="#8b5b3d">receptor sensible</text>
-
-        <circle cx="220" cy="180" r="24" fill="#3b83b2"/>
-        <text x="203" y="186" font-size="18" font-weight="900" fill="#fff">EX</text>
-        <text x="145" y="225" font-size="14" font-weight="800" fill="#2f607e">Excavadora estacionaria</text>
-
-        <rect x="380" y="145" width="48" height="48" rx="8" fill="#4f9a68"/>
-        <text x="390" y="176" font-size="17" font-weight="900" fill="#fff">G</text>
-        <text x="350" y="220" font-size="14" font-weight="800" fill="#3f7350">Generador</text>
-
-        <rect x="295" y="270" width="54" height="42" rx="8" fill="#7c72b8"/>
-        <text x="307" y="297" font-size="16" font-weight="900" fill="#fff">BH</text>
-        <text x="252" y="338" font-size="14" font-weight="800" fill="#5f568c">Bomba de hormigón</text>
-
-        <path d="M80 330 C170 350, 245 360, 355 340 S520 285, 625 300" fill="none" stroke="#d38c35" stroke-width="18" stroke-linecap="round" opacity=".25"/>
-        <path d="M80 330 C170 350, 245 360, 355 340 S520 285, 625 300" fill="none" stroke="#b87526" stroke-width="4" stroke-dasharray="10 8"/>
-        <rect x="480" y="292" width="46" height="28" rx="7" fill="#d38c35"/>
-        <circle cx="490" cy="322" r="6" fill="#6f542f"/><circle cx="516" cy="322" r="6" fill="#6f542f"/>
-        <text x="430" y="365" font-size="14" font-weight="800" fill="#96631f">Camión en recorrido interior</text>
-
-        <line x1="655" y1="165" x2="690" y2="165" stroke="#b7c4cc" stroke-width="2" stroke-dasharray="7 6"/>
-      </svg>
-    </div>
-    """
+    svg=(
+        '<div style="border:1px solid #d8e4ec;border-radius:20px;background:#fbfdff;padding:12px 14px;margin:.4rem 0 1rem">'
+        '<div style="font-size:.72rem;font-weight:900;color:#526a7e;letter-spacing:.08em;margin:2px 0 8px">'
+        'PLANTA DIDÁCTICA · ¿CÓMO REPRESENTARÍAS CADA ELEMENTO?'
+        '</div>'
+        '<svg viewBox="0 0 900 430" width="100%" style="display:block">'
+        '<rect x="0" y="0" width="900" height="430" rx="18" fill="#f7fafc"/>'
+        '<rect x="55" y="55" width="600" height="310" rx="18" fill="#f0f4f6" stroke="#9cadb8" stroke-width="3"/>'
+        '<text x="72" y="83" font-size="16" font-weight="800" fill="#607585">OBRA</text>'
+        '<rect x="690" y="105" width="150" height="120" rx="12" fill="#f9efe9" stroke="#c99b7d" stroke-width="3"/>'
+        '<text x="720" y="135" font-size="16" font-weight="800" fill="#8b5b3d">VIVIENDA</text>'
+        '<text x="718" y="158" font-size="13" fill="#8b5b3d">receptor sensible</text>'
+        '<circle cx="220" cy="180" r="24" fill="#3b83b2"/>'
+        '<text x="203" y="186" font-size="18" font-weight="900" fill="#fff">EX</text>'
+        '<text x="145" y="225" font-size="14" font-weight="800" fill="#2f607e">Excavadora estacionaria</text>'
+        '<rect x="380" y="145" width="48" height="48" rx="8" fill="#4f9a68"/>'
+        '<text x="390" y="176" font-size="17" font-weight="900" fill="#fff">G</text>'
+        '<text x="350" y="220" font-size="14" font-weight="800" fill="#3f7350">Generador</text>'
+        '<rect x="295" y="270" width="54" height="42" rx="8" fill="#7c72b8"/>'
+        '<text x="307" y="297" font-size="16" font-weight="900" fill="#fff">BH</text>'
+        '<text x="252" y="338" font-size="14" font-weight="800" fill="#5f568c">Bomba de hormigón</text>'
+        '<path d="M80 330 C170 350,245 360,355 340 S520 285,625 300" fill="none" stroke="#d38c35" stroke-width="18" stroke-linecap="round" opacity=".25"/>'
+        '<path d="M80 330 C170 350,245 360,355 340 S520 285,625 300" fill="none" stroke="#b87526" stroke-width="4" stroke-dasharray="10 8"/>'
+        '<rect x="480" y="292" width="46" height="28" rx="7" fill="#d38c35"/>'
+        '<circle cx="490" cy="322" r="6" fill="#6f542f"/>'
+        '<circle cx="516" cy="322" r="6" fill="#6f542f"/>'
+        '<text x="430" y="365" font-size="14" font-weight="800" fill="#96631f">Camión en recorrido interior</text>'
+        '<line x1="655" y1="165" x2="690" y2="165" stroke="#b7c4cc" stroke-width="2" stroke-dasharray="7 6"/>'
+        '</svg>'
+        '</div>'
+    )
     st.markdown(svg,unsafe_allow_html=True)
 
     st.markdown("### 3 · Decide cómo modelar cada caso")
