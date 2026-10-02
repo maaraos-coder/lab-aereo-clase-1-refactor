@@ -2461,7 +2461,7 @@ def _stage5(lab, saved):
     _header(
         5,
         "¿Cómo representar una obra como fuentes de ruido?",
-        "Traducir equipos estacionarios y tránsito asociado a la obra a objetos acústicos coherentes antes de modelar en Noise Map Lab.",
+        "Traducir equipos estacionarios, frentes de trabajo y tránsito asociado a la obra a representaciones acústicas coherentes.",
     )
 
     st.markdown(
@@ -2473,7 +2473,7 @@ def _stage5(lab, saved):
             La representación depende del fenómeno que realmente queremos modelar
           </div>
           <div style="color:#5d7183;line-height:1.55">
-            En este laboratorio utilizaremos <b>fuentes puntuales</b> para maquinaria localizada
+            En esta etapa utilizaremos <b>fuentes puntuales</b> para maquinaria localizada
             y una <b>fuente lineal vial basada en CNOSSOS</b> para representar el tránsito asociado a la obra
             sobre calles o vías de acceso.
           </div>
@@ -2576,14 +2576,14 @@ def _stage5(lab, saved):
     )
     st.markdown(svg,unsafe_allow_html=True)
 
-    st.markdown("### 3 · ¿Qué objeto crearías en Noise Map Lab?")
+    st.markdown("### 3 · ¿Cómo representarías cada situación?")
     st.markdown(
         """
         <div style="border:1px solid #dce6ed;border-radius:18px;padding:15px 17px;background:#fff;margin:.3rem 0 .8rem">
           <div style="font-size:.8rem;font-weight:900;color:#17324a">CRITERIO DE DECISIÓN</div>
           <div style="font-size:.84rem;color:#637788;line-height:1.5;margin-top:.25rem">
-            Primero identifica el fenómeno. Si es un <b>equipo operando desde una posición</b>, crea una fuente puntual.
-            Si es <b>tránsito vial generado por la obra</b>, crea una fuente lineal CNOSSOS sobre la vía correspondiente.
+            Primero identifica el fenómeno. Si es un <b>equipo operando desde una posición</b>, represéntalo como fuente puntual.
+            Si es <b>tránsito vial generado por la obra</b>, represéntalo mediante una fuente lineal vial basada en CNOSSOS.
           </div>
         </div>
         """,
@@ -2758,7 +2758,7 @@ def _stage5(lab, saved):
     )
 
     st.success(
-        "Puente hacia Noise Map Lab: **puntual = maquinaria localizada**; una etapa completa puede modelarse con varias puntuales "
+        "Idea de cierre: **puntual = maquinaria localizada**; una etapa completa puede representarse con varias puntuales "
         "o, cuando sea técnicamente razonable, con una **puntual equivalente**. **Lineal CNOSSOS = tránsito vial asociado a la obra**."
     )
 
