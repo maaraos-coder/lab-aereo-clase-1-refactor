@@ -2680,6 +2680,52 @@ def _stage5(lab, saved):
     rh+='</div>'
     st.markdown(rh,unsafe_allow_html=True)
 
+    st.markdown("#### Representación visual")
+    eq_svg=(
+        '<div style="border:1px solid #d8e4ec;border-radius:20px;background:#fbfdff;padding:14px 16px;margin:.4rem 0 1rem;box-shadow:0 6px 16px rgba(33,65,90,.05)">'
+        '<div style="font-size:.72rem;font-weight:900;color:#526a7e;letter-spacing:.08em;margin:2px 0 10px">MISMA ETAPA DE OBRA · DOS FORMAS DE REPRESENTARLA</div>'
+        '<svg viewBox="0 0 1000 390" width="100%" style="display:block">'
+        '<defs>'
+        '<marker id="eqArrow" markerWidth="10" markerHeight="10" refX="7" refY="3" orient="auto" markerUnits="strokeWidth"><path d="M0,0 L0,6 L8,3 z" fill="#7f93a1"/></marker>'
+        '<filter id="eqShadow" x="-20%" y="-20%" width="140%" height="140%"><feDropShadow dx="0" dy="4" stdDeviation="4" flood-opacity=".12"/></filter>'
+        '</defs>'
+        '<rect x="0" y="0" width="1000" height="390" rx="18" fill="#f8fbfd"/>'
+
+        '<rect x="35" y="45" width="390" height="285" rx="18" fill="#eef6fb" stroke="#b8d5e7" stroke-width="2"/>'
+        '<text x="58" y="76" font-size="16" font-weight="900" fill="#176b9b">MODELO DETALLADO</text>'
+        '<text x="58" y="98" font-size="12" fill="#557487">Varias fuentes puntuales independientes</text>'
+        '<circle cx="135" cy="175" r="27" fill="#3b83b2" filter="url(#eqShadow)"/><text x="116" y="181" font-size="16" font-weight="900" fill="#fff">EX</text>'
+        '<circle cx="265" cy="145" r="27" fill="#4f9a68" filter="url(#eqShadow)"/><text x="254" y="151" font-size="16" font-weight="900" fill="#fff">G</text>'
+        '<circle cx="230" cy="255" r="27" fill="#7c72b8" filter="url(#eqShadow)"/><text x="211" y="261" font-size="15" font-weight="900" fill="#fff">BH</text>'
+        '<circle cx="345" cy="225" r="27" fill="#d38c35" filter="url(#eqShadow)"/><text x="327" y="231" font-size="15" font-weight="900" fill="#fff">M</text>'
+        '<text x="103" y="218" font-size="11" font-weight="800" fill="#2f607e">Excavadora</text>'
+        '<text x="246" y="188" font-size="11" font-weight="800" fill="#3f7350">Generador</text>'
+        '<text x="190" y="298" font-size="11" font-weight="800" fill="#5f568c">Bomba</text>'
+        '<text x="319" y="268" font-size="11" font-weight="800" fill="#96631f">Mixer</text>'
+        '<text x="74" y="317" font-size="11" fill="#6f8290">Cada fuente conserva posición, Lw y geometría propia</text>'
+
+        '<line x1="455" y1="190" x2="545" y2="190" stroke="#7f93a1" stroke-width="4" marker-end="url(#eqArrow)"/>'
+        '<text x="470" y="168" font-size="12" font-weight="850" fill="#687d8c">suma energética</text>'
+        '<text x="478" y="214" font-size="11" fill="#7b8d99">+ simplificación espacial</text>'
+
+        '<rect x="575" y="45" width="390" height="285" rx="18" fill="#f3f9f4" stroke="#bedfc6" stroke-width="2"/>'
+        '<text x="598" y="76" font-size="16" font-weight="900" fill="#2d7a4a">MODELO SIMPLIFICADO</text>'
+        '<text x="598" y="98" font-size="12" fill="#5f7867">Una fuente puntual equivalente</text>'
+        '<circle cx="770" cy="190" r="55" fill="#2d7a4a" filter="url(#eqShadow)"/>'
+        '<text x="730" y="184" font-size="15" font-weight="900" fill="#fff">Lw,eq</text>'
+        '<text x="742" y="207" font-size="13" font-weight="800" fill="#e9f6ec">puntual</text>'
+        '<line x1="770" y1="245" x2="770" y2="285" stroke="#2d7a4a" stroke-width="2" stroke-dasharray="6 5"/>'
+        '<text x="650" y="306" font-size="11" fill="#657a6b">Ubicación representativa del frente o etapa</text>'
+        '<text x="626" y="326" font-size="11" fill="#657a6b">La suma conserva energía total, pero reduce detalle espacial</text>'
+        '</svg>'
+        '<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:8px">'
+        '<div style="border-radius:12px;padding:10px 12px;background:#eef6fb;color:#2b607f;font-size:.77rem"><b>Detallado:</b> útil para estudiar contribuciones, distancias y barreras por equipo.</div>'
+        '<div style="border-radius:12px;padding:10px 12px;background:#f3f9f4;color:#406a4c;font-size:.77rem"><b>Equivalente:</b> útil cuando interesa representar globalmente una etapa o frente concentrado.</div>'
+        '</div>'
+        '</div>'
+    )
+    st.markdown(eq_svg,unsafe_allow_html=True)
+
     with st.container(border=True):
         st.markdown("#### Suma energética para construir la fuente equivalente")
         st.latex(r"L_{W,eq}=10\log_{10}\left(\sum_i 10^{L_{W,i}/10}\right)")
