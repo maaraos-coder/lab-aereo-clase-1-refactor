@@ -89,6 +89,32 @@ def render(lab, stage, saved, save):
             "correspondiente a esa región."
         )
 
+        st.markdown("##### Geometría que utiliza el cálculo")
+        st.latex(r"h_s = \text{altura de la fuente sobre el terreno}")
+        st.latex(r"h_r = \text{altura del receptor sobre el terreno}")
+        st.markdown(
+            "- **\\(h_s\\)**: altura acústica de la **fuente** respecto del terreno local, en metros.\n"
+            "- **\\(h_r\\)**: altura acústica del **receptor** respecto del terreno local, en metros.\n"
+            "- **\\(d_p\\)**: distancia horizontal proyectada entre fuente y receptor.\n\n"
+            "Estas alturas intervienen porque el efecto de suelo depende de la relación entre "
+            "la onda directa y la reflejada por el terreno. Por eso el mismo valor de G puede "
+            "producir un \\(A_{gr}\\) distinto si cambian la altura de la fuente, la altura "
+            "del receptor o la distancia."
+        )
+        st.code(
+            "        Fuente (hs)                         Receptor (hr)\n"
+            "            ●-----------------------------------●\n"
+            "            |                                   |\n"
+            "            |                                   |\n"
+            "____________|___________________________________|____________ terreno\n"
+            "             <----------- distancia dp --------->",
+            language=None,
+        )
+        st.info(
+            "Lectura rápida: G describe el tipo de suelo; hs y hr describen la geometría. "
+            "El modelo combina ambas cosas para obtener As y Ar y, junto con Am, calcular Agr."
+        )
+
         left, right = st.columns([1, 1])
         with left:
             st.markdown(
