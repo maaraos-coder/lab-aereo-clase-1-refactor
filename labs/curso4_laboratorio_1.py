@@ -1531,13 +1531,6 @@ def _stage3(lab, saved):
                 st.warning("Revisa: " + ", ".join(labels[i] for i,v in enumerate(ok) if not v) + ".")
                 st.caption("La app no muestra la solución completa mientras existan resultados incorrectos.")
 
-    st.markdown("### Compruébalo en Noise Map Lab")
-    st.markdown(
-        "Crea una fuente puntual con el **Lw de la máquina**, fija un receptor a la misma distancia, "
-        "usa la misma frecuencia, temperatura y humedad, y compara el desglose de propagación."
-    )
-    _model_button()
-
     if st.session_state.get("role")=="Docente":
         with st.expander("👩‍🏫 Pauta docente · Etapa 3",expanded=False):
             st.markdown(
