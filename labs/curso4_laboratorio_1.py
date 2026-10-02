@@ -1157,17 +1157,37 @@ def _stage3(lab, saved):
         unsafe_allow_html=True,
     )
 
-    st.markdown("### Ecuación de propagación utilizada como esquema de trabajo")
-    st.latex(r"L_p = L_W + D_c - A_{div} - A_{atm} - A_{gr} - A_{bar} - C_{met}")
+    st.markdown(
+        """
+        <div style="border:1px solid #cfddea;border-radius:22px;padding:20px 22px;
+        background:linear-gradient(135deg,#f7fbff,#eef5fb);box-shadow:0 8px 20px rgba(31,63,92,.06);
+        margin:.25rem 0 1rem">
+          <div style="font-size:.72rem;font-weight:900;letter-spacing:.1em;color:#0b6ea8">
+            ECUACIÓN GENERAL DE PROPAGACIÓN
+          </div>
+          <div style="font-size:.88rem;color:#607386;margin-top:.25rem">
+            Esquema usado por el modelador para seguir la energía desde la fuente hasta el receptor.
+          </div>
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
+    with st.container(border=True):
+        st.latex(r"L_p = L_W + D_c - A_{div} - A_{atm} - A_{gr} - A_{bar} - C_{met}")
+        st.caption(
+            "Cada término representa un mecanismo físico distinto. Los términos A reducen el nivel; "
+            "Dc puede aumentarlo o reducirlo según la dirección de radiación; Cmet representa una corrección "
+            "meteorológica de largo plazo."
+        )
 
     cards = [
-        ("Lw","Fuente","Nivel de potencia sonora de la maquinaria."),
-        ("Dc","Directividad","Corrección según la dirección de radiación."),
-        ("Adiv","Distancia","Pérdida por divergencia geométrica."),
-        ("Aatm","Atmósfera","Atenuación dependiente de frecuencia, T y HR."),
-        ("Agr","Suelo","Interferencia entre camino directo y reflejado."),
-        ("Abar","Barrera","Difracción y apantallamiento."),
-        ("Cmet","Meteorología","Corrección meteorológica de largo plazo."),
+        ("Lw","Fuente","Potencia acústica emitida por la maquinaria; no depende de la distancia al receptor."),
+        ("Dc","Directividad","Corrige la emisión cuando la fuente no radia con la misma intensidad en todas las direcciones."),
+        ("Adiv","Divergencia","Pérdida por expansión geométrica del frente de onda con la distancia."),
+        ("Aatm","Atmósfera","Pérdida por absorción molecular del aire; depende de frecuencia, temperatura, humedad y distancia."),
+        ("Agr","Suelo","Efecto de interferencia entre la onda directa y la reflejada por el terreno."),
+        ("Abar","Difracción","Reducción por obstáculos que interrumpen la línea de visión y obligan al sonido a rodearlos."),
+        ("Cmet","Meteorología","Ajuste de largo plazo por condiciones de propagación favorables o desfavorables."),
     ]
     html='<div style="display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px;margin:.3rem 0 1.2rem">'
     for symbol,title,desc in cards:
@@ -1204,8 +1224,15 @@ def _stage3(lab, saved):
     with right:
         st.markdown("### 1 · Directividad · Dc")
         st.markdown(
-            "Para comenzar, una fuente omnidireccional se representa con **Dc = 0 dB**. "
-            "Si existe una orientación preferente, Dc puede modificar el nivel en la dirección del receptor."
+            "La **directividad** describe cómo se reparte la energía acústica alrededor de la fuente. "
+            "Una fuente ideal omnidireccional radia de forma uniforme y se representa con **Dc = 0 dB**. "
+            "En equipos reales, carcasas, motores, escapes, aberturas o superficies cercanas pueden concentrar "
+            "más energía hacia ciertas direcciones."
+        )
+        st.markdown(
+            "**Lectura física:** si el receptor está en una dirección de mayor radiación, Dc es positivo y el nivel aumenta; "
+            "si está en una dirección menos favorecida, Dc puede ser menor. En esta etapa usamos Dc solo para comprender "
+            "dónde entra la orientación en la ecuación."
         )
         dc=st.select_slider(
             "Corrección de directividad Dc [dB]",
@@ -1216,7 +1243,17 @@ def _stage3(lab, saved):
         st.caption("En el ejercicio base usa 0 dB. El objetivo es entender dónde entra Dc en la ecuación.")
 
     st.markdown("### 2 · Divergencia geométrica · Adiv")
-    st.latex(r"A_{div}=20\log_{10}(d)+11")
+    st.markdown(
+        "La divergencia representa la **expansión espacial de la energía sonora**. A medida que el frente de onda "
+        "se aleja de una fuente puntual, la misma energía se distribuye sobre una superficie cada vez mayor. "
+        "Por eso el nivel disminuye incluso si no existe absorción atmosférica, suelo ni barreras."
+    )
+    with st.container(border=True):
+        st.latex(r"A_{div}=20\log_{10}(d)+11")
+        st.caption(
+            "d es la distancia tridimensional fuente–receptor en metros. El término +11 corresponde a la referencia "
+            "geométrica de propagación esférica utilizada en este tipo de cálculo."
+        )
     d=st.slider(
         "Distancia fuente–receptor [m]",
         5,200,40,5,
@@ -1245,8 +1282,14 @@ def _stage3(lab, saved):
 
     st.markdown("### 3 · Absorción atmosférica · Aatm")
     st.markdown(
-        "La atmósfera no atenúa todas las frecuencias por igual. El coeficiente depende de la frecuencia, "
-        "temperatura y humedad relativa. Noise Map Lab calcula este término por banda."
+        "El aire no es un medio perfectamente transparente al sonido. Parte de la energía acústica se transforma "
+        "en calor mediante procesos de relajación molecular, principalmente asociados al oxígeno y al nitrógeno. "
+        "Este efecto se vuelve más importante a **frecuencias altas** y a **distancias largas**."
+    )
+    st.markdown(
+        "El término se calcula como **Aatm = α · d**, donde α es el coeficiente de absorción atmosférica. "
+        "Ese coeficiente cambia con la **frecuencia**, la **temperatura**, la **humedad relativa** y, en una formulación completa, "
+        "también con la presión atmosférica."
     )
 
     def _alpha_iso_style_db_per_m(frequency_hz, temperature_c, humidity_pct, pressure_kpa=101.325):
@@ -1287,23 +1330,39 @@ def _stage3(lab, saved):
         "Su efecto aumenta con distancia y frecuencia."
     )
 
-    st.markdown("### 4 · Términos que se activarán después")
+    st.markdown("### 4 · Otros mecanismos de propagación")
+    st.markdown(
+        "Estos términos forman parte de la misma ecuación, pero se desarrollan con más detalle en las etapas siguientes. "
+        "Aquí interesa reconocer qué fenómeno físico representa cada uno y por qué no deben confundirse."
+    )
     p1,p2,p3=st.columns(3)
     with p1:
         with st.container(border=True):
-            st.markdown("#### 🌱 Agr · suelo")
-            st.markdown("Por ahora **Agr = 0 dB**.")
+            st.markdown("#### 🌱 Agr · efecto de suelo")
+            st.markdown(
+                "Surge de la **interferencia entre la onda directa y la onda reflejada por el terreno**. "
+                "Depende del tipo de suelo, frecuencia, distancia y alturas de fuente y receptor."
+            )
+            st.markdown("En este ejercicio: **Agr = 0 dB**.")
             st.caption("Se desarrolla en la Etapa 4 con G, alturas y geometría.")
     with p2:
         with st.container(border=True):
-            st.markdown("#### 🧱 Abar · barreras")
-            st.markdown("Por ahora **Abar = 0 dB**.")
+            st.markdown("#### 🧱 Abar · difracción")
+            st.markdown(
+                "Cuando un obstáculo corta la línea de visión, el sonido debe **difractarse alrededor de bordes y extremos**. "
+                "La reducción depende de la geometría fuente–barrera–receptor y de la frecuencia."
+            )
+            st.markdown("En este ejercicio: **Abar = 0 dB**.")
             st.caption("Se desarrolla en la Etapa 7 con difracción y perfil F–B–R.")
     with p3:
         with st.container(border=True):
             st.markdown("#### 🌦️ Cmet · meteorología")
-            st.markdown("Por ahora **Cmet = 0 dB**.")
-            st.caption("Noise Map Lab permite representar una corrección meteorológica de largo plazo.")
+            st.markdown(
+                "Representa una **corrección de largo plazo** asociada a condiciones meteorológicas que modifican "
+                "la propagación, como perfiles de viento y temperatura. No es lo mismo que Aatm."
+            )
+            st.markdown("En este ejercicio: **Cmet = 0 dB**.")
+            st.caption("Noise Map Lab permite representar esta corrección de forma separada.")
 
     lp_partial=lwa+dc-a_div-a_atm
     st.markdown("### 5 · Resultado acumulado hasta esta etapa")
