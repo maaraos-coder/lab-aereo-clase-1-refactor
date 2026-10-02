@@ -2814,20 +2814,21 @@ def _stage6(lab, saved):
     _header(
         6,
         "Diseño y control del ruido en una obra",
-        "Seleccionar controles por jerarquía y usar la geometría de la obra para reducir el nivel en receptores sensibles.",
+        "Seleccionar medidas de control según la fuente, su ubicación, la trayectoria de propagación y la organización de la faena.",
     )
 
     st.markdown(
         """
-        <div style="border:1px solid #d9e6ef;border-radius:22px;padding:20px 22px;
-        background:linear-gradient(135deg,#fbfdff,#f3f8fb);margin-bottom:1rem">
-          <div style="font-size:.72rem;font-weight:900;color:#0b6ea8;letter-spacing:.1em">DISEÑO ACÚSTICO DE OBRA</div>
-          <div style="font-size:1.18rem;font-weight:850;color:#17324a;margin:.3rem 0">
-            Controlar no es “poner una barrera”: es decidir dónde conviene actuar
+        <div style="border:1px solid #d7e5ef;border-radius:24px;padding:22px 24px;
+        background:linear-gradient(135deg,#fbfdff,#f1f7fb);box-shadow:0 8px 22px rgba(30,65,92,.06);margin-bottom:1rem">
+          <div style="font-size:.76rem;font-weight:900;color:#0b6ea8;letter-spacing:.1em">DISEÑO ACÚSTICO DE OBRA</div>
+          <div style="font-size:1.28rem;font-weight:880;color:#17324a;margin:.35rem 0 .5rem">
+            El control se diseña fuente por fuente y luego se integra en el escenario completo
           </div>
-          <div style="color:#5d7183;line-height:1.55">
-            Una solución eficaz puede reducir la emisión en la fuente, modificar la trayectoria
-            o reorganizar espacialmente la obra. La mejor estrategia suele combinar más de un nivel de control.
+          <div style="color:#5d7183;line-height:1.6;font-size:.92rem">
+            No todas las máquinas requieren la misma medida. Un equipo estacionario puede beneficiarse de un encierro;
+            una fuente direccional puede mejorar con orientación; y una maquinaria cercana al receptor puede requerir
+            reubicación, barrera o una combinación de controles.
           </div>
         </div>
         """,
@@ -2837,139 +2838,246 @@ def _stage6(lab, saved):
     st.markdown("### 1 · Jerarquía de control")
     hierarchy=[
         (
-            "1 · CONTROL EN LA FUENTE",
-            "Actuar antes de la propagación",
-            ["Equipo menos ruidoso","Silenciador","Encierro","Semiencierro","Mantenimiento","Reducción de Lw"],
+            "CONTROL EN LA FUENTE",
+            "Reducir la emisión",
+            "Actúa directamente sobre Lw antes de que el sonido se propague.",
+            ["equipo menos ruidoso","silenciador","encierro / semiencierro","mantenimiento"],
             "#eef6fb","#176b9b"
         ),
         (
-            "2 · CONTROL EN LA TRAYECTORIA",
-            "Modificar cómo viaja el sonido",
-            ["Aumentar distancia","Cambiar orientación","Barreras","Aprovechar edificios/acopios","Reubicar instalaciones fijas"],
+            "CONTROL EN LA TRAYECTORIA",
+            "Modificar el camino",
+            "Aumenta pérdidas o evita una trayectoria directa hacia el receptor.",
+            ["distancia","orientación","barreras","edificios / acopios"],
             "#fff7e9","#98651c"
         ),
         (
-            "3 · CONTROL MEDIANTE PLANIFICACIÓN",
-            "Modificar la organización espacial/temporal",
-            ["Separar frentes ruidosos","Evitar concentrar fuentes junto al receptor","Elegir ubicaciones de equipos estacionarios"],
+            "PLANIFICACIÓN",
+            "Modificar el escenario",
+            "Reduce la coincidencia de fuentes o evita ubicaciones innecesariamente desfavorables.",
+            ["reubicar equipos","separar frentes","evitar simultaneidad","definir zonas de trabajo"],
             "#f5f2fb","#65549a"
         ),
     ]
-    hh='<div style="display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;margin:.6rem 0 1rem">'
-    for title,sub,items,bg,color in hierarchy:
-        lis="".join(f'<li style="margin:.22rem 0">{x}</li>' for x in items)
+    hh='<div style="display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px;margin:.7rem 0 1rem">'
+    for title,sub,desc,items,bg,color in hierarchy:
+        lis="".join(f'<div style="margin:.22rem 0">• {x}</div>' for x in items)
         hh+=(
-            f'<div style="border:1px solid #dce5eb;border-radius:18px;padding:16px;background:{bg}">'
-            f'<div style="font-size:.72rem;font-weight:900;letter-spacing:.06em;color:{color}">{title}</div>'
-            f'<div style="font-size:.9rem;font-weight:800;color:#334c5f;margin:.3rem 0 .45rem">{sub}</div>'
-            f'<ul style="padding-left:1rem;margin:.2rem 0;color:#657684;font-size:.79rem;line-height:1.45">{lis}</ul>'
+            f'<div style="border:1px solid #dce5eb;border-radius:20px;padding:17px 18px;background:{bg};box-shadow:0 5px 14px rgba(40,70,95,.04)">'
+            f'<div style="font-size:.73rem;font-weight:900;letter-spacing:.07em;color:{color}">{title}</div>'
+            f'<div style="font-size:1rem;font-weight:850;color:#334c5f;margin:.3rem 0">{sub}</div>'
+            f'<div style="font-size:.81rem;color:#657684;line-height:1.48;margin-bottom:.55rem">{desc}</div>'
+            f'<div style="border-top:1px solid rgba(90,110,125,.14);padding-top:.45rem;font-size:.79rem;color:{color};font-weight:750">{lis}</div>'
             f'</div>'
         )
     hh+='</div>'
     st.markdown(hh,unsafe_allow_html=True)
 
-    st.info(
-        "Orden de razonamiento: primero pregunta si puedes reducir Lw; después si puedes mejorar la trayectoria; "
-        "finalmente organiza la obra para evitar escenarios innecesariamente desfavorables."
-    )
-
-    st.markdown("### 2 · Caso de diseño en planta")
     st.markdown(
-        "**Situación:** debes ubicar un generador estacionario dentro de la obra. "
-        "Existe una vivienda sensible al costado oriental. El generador tiene el mismo Lw en las tres alternativas; "
-        "lo que cambia es la geometría y la presencia de un obstáculo."
+        """
+        <div style="border:1px solid #dce6ed;border-radius:18px;padding:14px 17px;background:#fff;margin:.2rem 0 1rem">
+          <div style="font-size:.78rem;font-weight:900;color:#17324a">ORDEN DE RAZONAMIENTO</div>
+          <div style="font-size:.84rem;color:#637788;line-height:1.55;margin-top:.3rem">
+            1. ¿Puedo reducir la emisión en la fuente? &nbsp;→&nbsp;
+            2. ¿Puedo mejorar la trayectoria? &nbsp;→&nbsp;
+            3. ¿Puedo reorganizar la faena para evitar el escenario más desfavorable?
+          </div>
+        </div>
+        """,
+        unsafe_allow_html=True,
     )
 
-    position=st.radio(
-        "Selecciona la ubicación del generador",
-        ["A · Cerca del receptor","B · Zona central","C · Detrás del edificio auxiliar"],
-        horizontal=True,
-        key="c4l1_s6_location",
+    st.markdown("### 2 · Caso de diseño · obra con varias fuentes")
+    st.markdown(
+        "Observa el plano. Existe un **receptor residencial sensible** al costado oriental. "
+        "Las fuentes no tienen la misma ubicación ni el mismo tipo de emisión, por lo que la medida de control "
+        "más conveniente puede ser distinta para cada una."
     )
 
-    configs={
-        "A · Cerca del receptor": dict(x=620,y=175,d=22,bar=0,desc="Muy próximo al receptor y sin obstáculo entre ambos."),
-        "B · Zona central": dict(x=390,y=245,d=55,bar=0,desc="Mayor distancia, pero todavía con línea de visión directa."),
-        "C · Detrás del edificio auxiliar": dict(x=185,y=265,d=92,bar=7,desc="Mayor distancia y con un edificio auxiliar usado como apantallamiento conceptual."),
-    }
-    cfg=configs[position]
-    lw=105.0
-    lp_free=lw-(20*math.log10(cfg["d"])+11)
-    lp_final=lp_free-cfg["bar"]
-
-    svg=(
-        '<div style="border:1px solid #d8e4ec;border-radius:20px;background:#fbfdff;padding:12px 14px;margin:.5rem 0 1rem">'
-        '<div style="display:flex;justify-content:space-between;gap:12px;align-items:center;margin-bottom:7px">'
-        '<div style="font-size:.72rem;font-weight:900;color:#526a7e;letter-spacing:.08em">PLANTA · UBICACIÓN DEL GENERADOR</div>'
-        f'<div style="font-size:.73rem;font-weight:850;color:#176b9b">{position}</div>'
+    work_svg=(
+        '<div style="border:1px solid #d8e4ec;border-radius:22px;background:#fbfdff;padding:15px 17px;margin:.5rem 0 1rem;box-shadow:0 8px 20px rgba(33,65,90,.05)">'
+        '<div style="display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:10px">'
+        '<div style="font-size:.78rem;font-weight:900;color:#526a7e;letter-spacing:.08em">PLANTA DIDÁCTICA · FUENTES Y RECEPTOR</div>'
+        '<div style="font-size:.74rem;font-weight:850;color:#8b5b3d;background:#fff3eb;border-radius:999px;padding:6px 10px">R = receptor sensible</div>'
         '</div>'
-        '<svg viewBox="0 0 900 410" width="100%" style="display:block">'
-        '<rect x="0" y="0" width="900" height="410" rx="18" fill="#f7fafc"/>'
-        '<rect x="55" y="50" width="610" height="315" rx="18" fill="#f0f4f6" stroke="#9cadb8" stroke-width="3"/>'
-        '<text x="72" y="78" font-size="16" font-weight="800" fill="#607585">OBRA</text>'
-        '<rect x="700" y="110" width="145" height="125" rx="12" fill="#f9efe9" stroke="#c99b7d" stroke-width="3"/>'
-        '<text x="723" y="142" font-size="16" font-weight="900" fill="#8b5b3d">VIVIENDA</text>'
-        '<circle cx="700" cy="175" r="8" fill="#b34f4f"/>'
-        '<text x="712" y="180" font-size="13" font-weight="800" fill="#8b4545">R</text>'
-        '<rect x="245" y="120" width="115" height="150" rx="9" fill="#b7c6d0" stroke="#718694" stroke-width="3"/>'
-        '<text x="263" y="195" font-size="14" font-weight="900" fill="#445965">EDIFICIO</text>'
-        '<text x="268" y="214" font-size="12" fill="#536b78">AUXILIAR</text>'
-        '<circle cx="620" cy="175" r="18" fill="#d9e4eb"/>'
-        '<text x="611" y="181" font-size="13" font-weight="900" fill="#667784">A</text>'
-        '<circle cx="390" cy="245" r="18" fill="#d9e4eb"/>'
-        '<text x="381" y="251" font-size="13" font-weight="900" fill="#667784">B</text>'
-        '<circle cx="185" cy="265" r="18" fill="#d9e4eb"/>'
-        '<text x="176" y="271" font-size="13" font-weight="900" fill="#667784">C</text>'
-        f'<circle cx="{cfg["x"]}" cy="{cfg["y"]}" r="24" fill="#176b9b"/>'
-        f'<text x="{cfg["x"]-11}" y="{cfg["y"]+6}" font-size="17" font-weight="900" fill="#fff">G</text>'
-        f'<line x1="{cfg["x"]}" y1="{cfg["y"]}" x2="700" y2="175" stroke="#d9534f" stroke-width="3" stroke-dasharray="9 7"/>'
+        '<svg viewBox="0 0 1000 500" width="100%" style="display:block">'
+        '<defs><filter id="s6Shadow" x="-20%" y="-20%" width="140%" height="140%"><feDropShadow dx="0" dy="4" stdDeviation="4" flood-opacity=".12"/></filter></defs>'
+        '<rect x="0" y="0" width="1000" height="500" rx="20" fill="#f8fbfd"/>'
+        '<rect x="55" y="55" width="705" height="375" rx="22" fill="#eef3f6" stroke="#9fb0bc" stroke-width="3"/>'
+        '<text x="78" y="88" font-size="18" font-weight="900" fill="#5e7382">OBRA</text>'
+
+        '<rect x="800" y="120" width="150" height="155" rx="15" fill="#f9eee8" stroke="#c89b7d" stroke-width="3" filter="url(#s6Shadow)"/>'
+        '<text x="832" y="158" font-size="17" font-weight="900" fill="#885a3e">VIVIENDA</text>'
+        '<text x="825" y="182" font-size="13" fill="#936c55">receptor sensible</text>'
+        '<circle cx="800" cy="215" r="10" fill="#b34f4f"/><text x="817" y="220" font-size="14" font-weight="900" fill="#954343">R</text>'
+
+        '<rect x="245" y="120" width="135" height="170" rx="10" fill="#b7c6d0" stroke="#718694" stroke-width="3"/>'
+        '<text x="273" y="194" font-size="15" font-weight="900" fill="#445965">EDIFICIO</text>'
+        '<text x="276" y="216" font-size="13" fill="#536b78">AUXILIAR</text>'
+
+        '<circle cx="165" cy="165" r="34" fill="#4f9a68" filter="url(#s6Shadow)"/>'
+        '<text x="150" y="173" font-size="21" font-weight="900" fill="#fff">G</text>'
+        '<rect x="102" y="211" width="130" height="38" rx="10" fill="#fff" stroke="#d7e3ea"/>'
+        '<text x="125" y="235" font-size="14" font-weight="850" fill="#3f7350">Generador</text>'
+
+        '<circle cx="540" cy="145" r="34" fill="#d65f5f" filter="url(#s6Shadow)"/>'
+        '<text x="519" y="153" font-size="20" font-weight="900" fill="#fff">MH</text>'
+        '<rect x="463" y="191" width="155" height="38" rx="10" fill="#fff" stroke="#d7e3ea"/>'
+        '<text x="484" y="215" font-size="14" font-weight="850" fill="#9e4545">Martillo hidráulico</text>'
+
+        '<circle cx="640" cy="315" r="34" fill="#3b83b2" filter="url(#s6Shadow)"/>'
+        '<text x="618" y="323" font-size="20" font-weight="900" fill="#fff">EX</text>'
+        '<rect x="566" y="360" width="151" height="38" rx="10" fill="#fff" stroke="#d7e3ea"/>'
+        '<text x="588" y="384" font-size="14" font-weight="850" fill="#2f607e">Excavadora</text>'
+
+        '<circle cx="430" cy="335" r="34" fill="#7c72b8" filter="url(#s6Shadow)"/>'
+        '<text x="407" y="343" font-size="19" font-weight="900" fill="#fff">SC</text>'
+        '<rect x="354" y="380" width="153" height="38" rx="10" fill="#fff" stroke="#d7e3ea"/>'
+        '<text x="384" y="404" font-size="14" font-weight="850" fill="#5f568c">Sierra de corte</text>'
+
+        '<line x1="165" y1="165" x2="800" y2="215" stroke="#5e9a70" stroke-width="2.5" stroke-dasharray="9 7" opacity=".65"/>'
+        '<line x1="540" y1="145" x2="800" y2="215" stroke="#d65f5f" stroke-width="3" stroke-dasharray="9 7" opacity=".8"/>'
+        '<line x1="640" y1="315" x2="800" y2="215" stroke="#3b83b2" stroke-width="3" stroke-dasharray="9 7" opacity=".75"/>'
+        '<line x1="430" y1="335" x2="800" y2="215" stroke="#7c72b8" stroke-width="2.5" stroke-dasharray="9 7" opacity=".7"/>'
+
+        '<rect x="715" y="95" width="14" height="250" rx="4" fill="#576d78"/>'
+        '<text x="672" y="82" font-size="13" font-weight="850" fill="#526a7e">barrera posible</text>'
         '</svg>'
+        '<div style="display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:9px;margin-top:10px">'
+        '<div style="border-radius:12px;padding:10px;background:#eff8f1;color:#3f7350;font-size:.78rem"><b>G</b> · estacionario y relativamente alejado</div>'
+        '<div style="border-radius:12px;padding:10px;background:#fff1f1;color:#934747;font-size:.78rem"><b>MH</b> · ruidoso y próximo al receptor</div>'
+        '<div style="border-radius:12px;padding:10px;background:#eef6fb;color:#2f607e;font-size:.78rem"><b>EX</b> · móvil dentro del frente</div>'
+        '<div style="border-radius:12px;padding:10px;background:#f5f2fb;color:#5f568c;font-size:.78rem"><b>SC</b> · fuente localizada y direccional</div>'
+        '</div>'
         '</div>'
     )
-    st.markdown(svg,unsafe_allow_html=True)
+    st.markdown(work_svg,unsafe_allow_html=True)
 
-    m1,m2,m3,m4=st.columns(4)
-    m1.metric("Lw generador",f"{lw:.0f} dB")
-    m2.metric("Distancia al receptor",f"{cfg['d']} m")
-    m3.metric("Control de trayectoria",f"{cfg['bar']} dB")
-    m4.metric("Lp estimado",f"{lp_final:.1f} dB")
+    st.markdown("### 3 · Elige una medida principal para cada fuente")
+    st.markdown(
+        """
+        <div style="border:1px solid #dce6ed;border-radius:18px;padding:14px 17px;background:#fff;margin:.3rem 0 .8rem">
+          <div style="font-size:.78rem;font-weight:900;color:#17324a">OBJETIVO DEL EJERCICIO</div>
+          <div style="font-size:.84rem;color:#637788;line-height:1.52;margin-top:.3rem">
+            No busques una única solución para toda la obra. Selecciona la medida que mejor responde
+            al comportamiento de cada fuente y a su relación con el receptor.
+          </div>
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
+
+    control_cases=[
+        (
+            "Generador",
+            "Fuente estacionaria · operación prolongada",
+            ["Encierro acústico","Barrera temporal","Moverlo unos metros sin otro cambio","Solo reducir horario"],
+            "Encierro acústico",
+            "Al ser estacionario y de operación prolongada, un encierro bien diseñado puede actuar directamente sobre la emisión y mantener el control durante toda la jornada.",
+            "#4f9a68"
+        ),
+        (
+            "Martillo hidráulico",
+            "Fuente de alta emisión · cercana al receptor",
+            ["Barrera + reubicar el frente","Silenciador de escape","Encierro completo","Solo mantenimiento"],
+            "Barrera + reubicar el frente",
+            "La combinación de mayor distancia y control de trayectoria es más coherente para una fuente intensa que trabaja cerca del receptor.",
+            "#d65f5f"
+        ),
+        (
+            "Excavadora",
+            "Maquinaria móvil dentro del frente",
+            ["Reorganizar posición / frente","Encierro completo","Silenciador industrial genérico","Mantenerla junto al receptor"],
+            "Reorganizar posición / frente",
+            "La planificación espacial permite alejar las posiciones de operación más frecuentes del receptor sin forzar un control incompatible con su movilidad.",
+            "#3b83b2"
+        ),
+        (
+            "Sierra de corte",
+            "Fuente localizada y con orientación relevante",
+            ["Orientar + pantalla local","Alejar la vivienda","Encierro total sin ventilación","No aplicar control"],
+            "Orientar + pantalla local",
+            "La orientación y una pantalla próxima pueden reducir la propagación directa hacia el receptor sin impedir la operación del equipo.",
+            "#7c72b8"
+        ),
+    ]
+
+    correct_count=0
+    for i,(name,kind,options,expected,why,color) in enumerate(control_cases):
+        with st.container(border=True):
+            h1,h2=st.columns([1.8,1])
+            with h1:
+                st.markdown(
+                    f"<div style='font-size:.72rem;font-weight:900;color:{color};letter-spacing:.06em'>{kind.upper()}</div>"
+                    f"<div style='font-size:1rem;font-weight:880;color:#263f52;margin-top:.18rem'>{name}</div>",
+                    unsafe_allow_html=True,
+                )
+            with h2:
+                st.markdown(
+                    f"<div style='text-align:center;border-radius:999px;padding:7px 10px;background:#f3f6f8;"
+                    f"color:#607481;font-size:.72rem;font-weight:900'>FUENTE {i+1}</div>",
+                    unsafe_allow_html=True,
+                )
+
+            choice=st.radio(
+                "Medida principal",
+                options,
+                index=None,
+                horizontal=True,
+                key=f"c4l1_s6_control_{i}",
+            )
+            if choice:
+                if choice==expected:
+                    correct_count+=1
+                    st.success(f"Buena elección · {why}")
+                else:
+                    st.warning(f"Revisa la decisión · {why}")
+
+    st.markdown("### 4 · Integra las decisiones")
+    selected=[st.session_state.get(f"c4l1_s6_control_{i}") for i in range(len(control_cases))]
+    answered=sum(v is not None for v in selected)
+    if answered==0:
+        st.info("Selecciona al menos una medida para comenzar a construir la estrategia de control.")
+    else:
+        p1,p2,p3=st.columns(3)
+        p1.metric("Fuentes analizadas",f"{answered}/4")
+        p2.metric("Selecciones coherentes",f"{correct_count}/4")
+        p3.metric("Objetivo","Combinar controles")
+
+        if answered==4 and correct_count==4:
+            st.success(
+                "La estrategia combina controles en la fuente, trayectoria y planificación. "
+                "Ese enfoque es más robusto que aplicar la misma medida a todas las máquinas."
+            )
+        elif answered==4:
+            st.info(
+                "Ya definiste una estrategia completa. Revisa las retroalimentaciones y observa que una medida eficaz "
+                "depende del tipo de fuente y de su geometría respecto del receptor."
+            )
 
     st.markdown(
-        f"**Lectura de la alternativa:** {cfg['desc']} "
-        "El cálculo mostrado usa divergencia geométrica y, para la alternativa C, una reducción conceptual adicional por apantallamiento."
+        """
+        <div style="display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;margin:.8rem 0 .4rem">
+          <div style="border:1px solid #cfe0ec;border-radius:16px;padding:14px;background:#eef6fb">
+            <div style="font-size:.74rem;font-weight:900;color:#176b9b">FUENTE</div>
+            <div style="font-size:.82rem;color:#5e7384;margin-top:.3rem">Encierro, silenciador, selección de equipo y mantenimiento.</div>
+          </div>
+          <div style="border:1px solid #eadbc3;border-radius:16px;padding:14px;background:#fff7e9">
+            <div style="font-size:.74rem;font-weight:900;color:#98651c">TRAYECTORIA</div>
+            <div style="font-size:.82rem;color:#746247;margin-top:.3rem">Distancia, orientación, pantallas y obstáculos.</div>
+          </div>
+          <div style="border:1px solid #ddd8ef;border-radius:16px;padding:14px;background:#f5f2fb">
+            <div style="font-size:.74rem;font-weight:900;color:#65549a">PLANIFICACIÓN</div>
+            <div style="font-size:.82rem;color:#6f6880;margin-top:.3rem">Reubicar frentes, separar fuentes y gestionar simultaneidad.</div>
+          </div>
+        </div>
+        """,
+        unsafe_allow_html=True,
     )
-
-    if position.startswith("A"):
-        st.warning(
-            "Ubicación desfavorable: la corta distancia domina. Antes de pensar en un tratamiento complejo, "
-            "conviene revisar si el equipo puede alejarse del receptor."
-        )
-    elif position.startswith("B"):
-        st.info(
-            "La reubicación mejora el escenario por distancia, pero la trayectoria continúa directa. "
-            "Todavía existe margen para orientar o apantallar."
-        )
-    else:
-        st.success(
-            "La alternativa combina planificación y trayectoria: mayor distancia y uso de un obstáculo existente. "
-            "En un proyecto real la eficacia del apantallamiento debe calcularse con su geometría."
-        )
-
-    st.markdown("### 3 · Compara una medida en la fuente")
-    source_red=st.slider(
-        "Reducción adicional de Lw mediante selección/encierro/silenciador [dB]",
-        0,20,0,1,
-        key="c4l1_s6_source_red",
-    )
-    controlled=lp_final-source_red
-    x1,x2,x3=st.columns(3)
-    x1.metric("Lp por ubicación",f"{lp_final:.1f} dB")
-    x2.metric("Reducción en fuente",f"{source_red} dB")
-    x3.metric("Lp combinado",f"{controlled:.1f} dB")
 
     st.caption(
-        "El ejercicio muestra por qué el diseño suele combinar decisiones: una buena ubicación puede reducir la necesidad "
-        "de controles más costosos en la fuente o en la trayectoria."
+        "Una medida aislada rara vez resuelve por sí sola un escenario complejo. "
+        "El objetivo de diseño es combinar controles compatibles con la operación real de cada fuente."
     )
 
 
