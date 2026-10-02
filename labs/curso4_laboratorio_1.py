@@ -559,6 +559,73 @@ def _stage1(lab, saved):
             "la maquinaria que la ejecuta y sus condiciones de operación; no de una palabra contenida en el enunciado."
         )
 
+
+    if st.session_state.get("role") == "Docente":
+        with st.expander("👩‍🏫 Pauta docente · soluciones del desafío aplicado", expanded=False):
+            st.markdown(
+                "Use esta pauta después de que el curso haya discutido los casos. "
+                "La respuesta esperada combina **etapa de obra + maquinaria + descriptor + trazabilidad BS 5228**."
+            )
+
+            teacher_rows = []
+            for case_name, case_data in scenarios.items():
+                target_item = BS_PLANT[case_data["target"]]
+                expected_descriptor = (
+                    "LAmax global + Lmax por bandas"
+                    if target_item.get("driveby")
+                    else "LAeq,T global + Lp,eq,T por bandas"
+                )
+                teacher_rows.append({
+                    "Caso": case_name,
+                    "Etapa correcta": case_data["phase"],
+                    "Maquinaria": case_data["target"],
+                    "Descriptor": expected_descriptor,
+                    "BS 5228": f"Tabla {target_item['table']} · Ref. {target_item['ref']}",
+                })
+
+            st.dataframe(
+                pd.DataFrame(teacher_rows),
+                hide_index=True,
+                use_container_width=True,
+            )
+
+            teacher_notes = {
+                "Caso A": (
+                    "La secuencia describe excavación, giro y descarga de material sobre vehículos. "
+                    "La etapa principal es **Movimiento de tierras** y el equipo más representativo es la "
+                    "**Excavadora hidráulica**. Registro de referencia: BS 5228, Tabla C.2, Ref. 19; "
+                    "125 kW, 25 t, LAeq,T = 77 dB(A) a 10 m."
+                ),
+                "Caso B": (
+                    "La mezcla se mantiene en movimiento durante el traslado y luego se descarga dentro de la obra. "
+                    "Corresponde principalmente a **Estructura y hormigón** y la maquinaria es el **Camión mixer**. "
+                    "Registro de referencia: BS 5228, Tabla C.4, Ref. 20; LAeq,T = 80 dB(A) a 10 m."
+                ),
+                "Caso C": (
+                    "La clave es un implemento acoplado a una máquina portadora que produce impactos repetitivos "
+                    "para retirar hormigón. La etapa es **Demolición y faenas ruidosas** y el equipo es el "
+                    "**Martillo hidráulico**. Registro de referencia: BS 5228, Tabla C.1, Ref. 1; "
+                    "LAeq,T = 92 dB(A) a 10 m."
+                ),
+                "Caso D": (
+                    "La actividad consiste en densificar capas mediante pasadas repetidas que transmiten energía "
+                    "mecánica al terreno. Se clasifica en **Movimiento de tierras** y corresponde al "
+                    "**Rodillo vibratorio**. Registro de referencia: BS 5228, Tabla C.2, Ref. 39. "
+                    "Este registro está marcado como pasada móvil: LAmax = 74 dB(A) a 10 m y Lmax por bandas."
+                ),
+            }
+
+            for case_name in scenarios:
+                with st.container(border=True):
+                    st.markdown(f"#### {case_name} · solución comentada")
+                    st.markdown(teacher_notes[case_name])
+
+            st.info(
+                "Criterio de corrección sugerido: no exigir que la justificación reproduzca estas frases literalmente. "
+                "Considere correcta una respuesta que identifique coherentemente la etapa, la función del equipo, "
+                "la maquinaria seleccionada y el descriptor acústico correspondiente."
+            )
+
 def _stage2(lab, saved):
     _header(
         2,
