@@ -2636,7 +2636,105 @@ def _stage5(lab, saved):
                 else:
                     st.warning(f"Revisa · {why}")
 
-    st.markdown("### 4 · Cuándo sí usar la fuente lineal CNOSSOS")
+    st.markdown("### 4 · ¿Una fuente por máquina o una fuente puntual equivalente?")
+    st.markdown(
+        """
+        <div style="border:1px solid #dce6ed;border-radius:19px;padding:16px 18px;background:#fff;margin:.35rem 0 .8rem">
+          <div style="font-size:.78rem;font-weight:900;color:#17324a">DOS ESTRATEGIAS VÁLIDAS DENTRO DEL PREDIO</div>
+          <div style="font-size:.84rem;color:#637788;line-height:1.55;margin-top:.3rem">
+            Para una etapa de obra puedes modelar <b>cada maquinaria como una fuente puntual independiente</b>
+            o, si las fuentes están suficientemente concentradas y el objetivo es una estimación global,
+            reemplazarlas por <b>una fuente puntual equivalente</b> obtenida mediante suma energética.
+          </div>
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
+
+    rep_cards=[
+        (
+            "VARIAS FUENTES PUNTUALES",
+            "Mayor detalle espacial",
+            "Cada equipo conserva su posición, Lw, altura, tiempo activo y relación geométrica con barreras y receptores.",
+            "Úsalo cuando las máquinas están separadas, hay receptores cercanos o necesitas identificar contribuciones individuales.",
+            "#eef6fb","#176b9b"
+        ),
+        (
+            "UNA FUENTE PUNTUAL EQUIVALENTE",
+            "Simplificación por etapa o frente",
+            "Las potencias sonoras de varias máquinas se suman energéticamente y se asignan a una posición representativa del conjunto.",
+            "Úsalo para estimaciones globales cuando las fuentes están relativamente agrupadas y la geometría interna no cambia sustancialmente el resultado.",
+            "#f3f8f4","#2d7a4a"
+        ),
+    ]
+    rh='<div style="display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px;margin:.5rem 0 1rem">'
+    for title,sub,desc,use,bg,color in rep_cards:
+        rh+=(
+            f'<div style="border:1px solid #dce6df;border-radius:18px;padding:17px;background:{bg}">'
+            f'<div style="font-size:.74rem;font-weight:900;color:{color};letter-spacing:.06em">{title}</div>'
+            f'<div style="font-size:.95rem;font-weight:850;color:#314b3d;margin:.3rem 0">{sub}</div>'
+            f'<div style="font-size:.81rem;color:#61736a;line-height:1.48">{desc}</div>'
+            f'<div style="font-size:.78rem;color:{color};font-weight:800;margin-top:.65rem">{use}</div>'
+            f'</div>'
+        )
+    rh+='</div>'
+    st.markdown(rh,unsafe_allow_html=True)
+
+    with st.container(border=True):
+        st.markdown("#### Suma energética para construir la fuente equivalente")
+        st.latex(r"L_{W,eq}=10\log_{10}\left(\sum_i 10^{L_{W,i}/10}\right)")
+        st.markdown(
+            "No se suman los Lw aritméticamente. Primero se suma la energía acústica de cada maquinaria y "
+            "el resultado se expresa nuevamente en decibeles."
+        )
+
+    phases={
+        "Excavación":[("Excavadora",105.0),("Retroexcavadora",101.0),("Camión",101.0)],
+        "Obra gruesa":[("Bomba de hormigón",104.0),("Mixer",101.0),("Vibrador",97.0)],
+        "Terminaciones":[("Sierra de corte",106.0),("Taladro",98.0),("Generador",100.0)],
+    }
+    phase=st.selectbox("Etapa de obra",list(phases.keys()),key="c4l1_s5_phase_eq")
+    machines=phases[phase]
+    lw_eq=10*math.log10(sum(10**(lw/10) for _,lw in machines))
+
+    cols=st.columns(len(machines)+1)
+    for col,(name,lw_i) in zip(cols,machines):
+        col.metric(name,f"{lw_i:.0f} dB")
+    cols[-1].metric("Lw equivalente",f"{lw_eq:.1f} dB")
+
+    st.markdown(
+        f"Para esta simplificación de **{phase.lower()}**, las {len(machines)} máquinas pueden representarse "
+        f"por una fuente puntual equivalente de **Lw = {lw_eq:.1f} dB**, ubicada en una posición representativa "
+        "del frente o zona de trabajo."
+    )
+
+    st.markdown(
+        """
+        <div style="display:grid;grid-template-columns:1fr auto 1fr;gap:12px;align-items:center;margin:.75rem 0 1rem">
+          <div style="border:1px solid #d7e5ee;border-radius:16px;padding:14px;background:#f7fbfe;text-align:center">
+            <div style="font-size:.72rem;font-weight:900;color:#176b9b">MODELO DETALLADO</div>
+            <div style="font-size:.82rem;color:#607586;margin-top:.35rem">● Excavadora &nbsp; ● Camión &nbsp; ● Generador</div>
+            <div style="font-size:.75rem;color:#788894;margin-top:.3rem">posiciones y contribuciones separadas</div>
+          </div>
+          <div style="font-size:1.45rem;color:#8195a3;font-weight:900">→</div>
+          <div style="border:1px solid #d7e8dc;border-radius:16px;padding:14px;background:#f5fbf6;text-align:center">
+            <div style="font-size:.72rem;font-weight:900;color:#2d7a4a">MODELO SIMPLIFICADO</div>
+            <div style="font-size:.9rem;color:#496657;font-weight:850;margin-top:.35rem">● Lw equivalente</div>
+            <div style="font-size:.75rem;color:#788b7e;margin-top:.3rem">una posición representativa del frente</div>
+          </div>
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
+
+    st.warning(
+        "La fuente puntual equivalente es una aproximación espacial. No conviene usarla si las máquinas están muy separadas, "
+        "si una barrera afecta solo a algunas fuentes, si existen receptores muy cercanos o si necesitas conocer cuál equipo domina. "
+        "En esos casos mantén las fuentes puntuales independientes."
+    )
+
+    st.markdown("### 5 · Cuándo sí usar la fuente lineal CNOSSOS")
+
     st.markdown(
         """
         <div style="display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;margin:.4rem 0 .8rem">
@@ -2660,8 +2758,8 @@ def _stage5(lab, saved):
     )
 
     st.success(
-        "Puente hacia Noise Map Lab: **puntual = maquinaria localizada**; "
-        "**lineal CNOSSOS = tránsito vial asociado a la obra**. Esta distinción evita usar un objeto correcto para el fenómeno equivocado."
+        "Puente hacia Noise Map Lab: **puntual = maquinaria localizada**; una etapa completa puede modelarse con varias puntuales "
+        "o, cuando sea técnicamente razonable, con una **puntual equivalente**. **Lineal CNOSSOS = tránsito vial asociado a la obra**."
     )
 
 
