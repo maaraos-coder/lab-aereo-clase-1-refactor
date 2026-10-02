@@ -2194,11 +2194,70 @@ def _stage4(lab, saved):
     )
 
     st.markdown("### 4 · La ecuación ya está completa")
-    st.latex(r"L_p = L_W + D_c - A_{div} - A_{atm} - A_{gr} - A_{bar} - C_{met}")
     st.markdown(
-        "Desde este punto ya conocemos **qué representa cada término físico**. En las etapas siguientes dejaremos de "
-        "incorporar mecanismos de propagación nuevos y pasaremos a describir cómo funciona una obra real: medidas de control, "
-        "ciclos de operación y simultaneidad."
+        """
+        <div style="border:1px solid #cfddea;border-radius:22px;padding:20px 22px;
+        background:linear-gradient(135deg,#f7fbff,#eef5fb);
+        box-shadow:0 8px 20px rgba(31,63,92,.06);margin:.25rem 0 1rem">
+          <div style="font-size:.72rem;font-weight:900;letter-spacing:.1em;color:#0b6ea8">
+            CIERRE DEL MODELO DE PROPAGACIÓN
+          </div>
+          <div style="font-size:1.15rem;font-weight:850;color:#17324b;margin:.35rem 0 .45rem">
+            Todos los mecanismos principales ya están dentro de la ecuación
+          </div>
+          <div style="font-size:.9rem;color:#5b7184;line-height:1.55">
+            A partir de aquí el problema deja de ser “qué término falta” y pasa a ser
+            <b>cómo cambia cada término según el escenario real</b>.
+          </div>
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
+
+    with st.container(border=True):
+        st.latex(r"L_p = L_W + D_c - A_{div} - A_{atm} - A_{gr} - A_{bar} - C_{met}")
+
+        eq_cards=[
+            ("Lw","Emisión","Nivel de potencia sonora de la fuente.","#eef6fb","#176b9b"),
+            ("Dc","Directividad","Corrección por orientación o concentración de la emisión.","#f3f7fb","#46647a"),
+            ("Adiv","Distancia","Pérdida por divergencia geométrica.","#f7f8fa","#5d6670"),
+            ("Aatm","Atmósfera","Pérdida por absorción del aire.","#f7f8fa","#5d6670"),
+            ("Agr","Suelo","Interferencia entre camino directo y reflejado.","#eef9f1","#2d7a4a"),
+            ("Abar","Barrera","Atenuación por difracción y geometría de pantalla.","#fff7e9","#98651c"),
+            ("Cmet","Meteorología","Corrección estadística de largo plazo.","#f5f2fb","#65549a"),
+        ]
+        eqh='<div style="display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:8px;margin:.8rem 0 .45rem">'
+        for sym,title,desc,bg,color in eq_cards:
+            eqh+=(
+                f'<div style="border:1px solid #dce5eb;border-radius:14px;padding:11px 9px;background:{bg};min-height:116px">'
+                f'<div style="font-size:.84rem;font-weight:900;color:{color}">{sym}</div>'
+                f'<div style="font-size:.73rem;font-weight:800;color:#41576a;margin:.2rem 0 .3rem">{title}</div>'
+                f'<div style="font-size:.69rem;line-height:1.35;color:#687b89">{desc}</div></div>'
+            )
+        eqh+='</div>'
+        st.markdown(eqh,unsafe_allow_html=True)
+
+        st.markdown(
+            """
+            <div style="display:grid;grid-template-columns:1fr auto 1fr;align-items:center;gap:12px;
+            margin:.75rem 0 .2rem">
+              <div style="border-radius:14px;padding:12px 14px;background:#eef6fb;color:#245b7e;text-align:center">
+                <div style="font-size:.72rem;font-weight:900;letter-spacing:.06em">FUENTE</div>
+                <div style="font-size:.83rem;margin-top:.2rem">Lw + Dc</div>
+              </div>
+              <div style="font-size:1.25rem;color:#7a8f9e;font-weight:800">→</div>
+              <div style="border-radius:14px;padding:12px 14px;background:#f6f8fa;color:#485d6d;text-align:center">
+                <div style="font-size:.72rem;font-weight:900;letter-spacing:.06em">PROPAGACIÓN</div>
+                <div style="font-size:.83rem;margin-top:.2rem">Adiv + Aatm + Agr + Abar + Cmet</div>
+              </div>
+            </div>
+            """,
+            unsafe_allow_html=True,
+        )
+
+    st.success(
+        "Idea clave: el nivel en el receptor se obtiene combinando la emisión de la fuente con las pérdidas y correcciones "
+        "que aparecen durante la propagación. En las etapas siguientes usaremos esta ecuación para representar una obra real."
     )
 
     st.markdown("---")
