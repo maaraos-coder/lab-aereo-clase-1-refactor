@@ -1555,24 +1555,311 @@ def _stage4(lab, saved):
     _header(
         4,
         "Suelo, topografía y receptores en altura",
-        "Separar correctamente el efecto de suelo de la directividad y analizar la geometría tridimensional del receptor.",
+        "Comprender cómo el tipo de terreno y la geometría tridimensional fuente–receptor modifican la propagación sonora exterior.",
     )
-    c1, c2, c3 = st.columns(3)
-    g = c1.slider("Factor de suelo G", 0.0, 1.0, 0.0, 0.1, key="c4l1_s4_g")
-    hs = c2.slider("Altura fuente [m]", 0.1, 6.0, 1.5, 0.1, key="c4l1_s4_hs")
-    hr = c3.slider("Altura receptor [m]", 1.0, 12.0, 1.5, 0.5, key="c4l1_s4_hr")
+
     st.markdown(
-        f"**Escenario:** G={g:.1f}, fuente a {hs:.1f} m y receptor a {hr:.1f} m. "
-        "Las alturas se consideran respecto de la cota local del terreno."
+        """
+        <div style="border:1px solid #d9e7f3;border-radius:22px;padding:22px 24px;
+        background:linear-gradient(135deg,#fbfdff 0%,#f4f9f5 55%,#eef8f0 100%);
+        box-shadow:0 8px 22px rgba(30,80,55,.06);margin-bottom:1rem">
+          <div style="font-size:.72rem;font-weight:900;letter-spacing:.12em;color:#2b7a4b">IDEA CENTRAL</div>
+          <div style="font-size:1.3rem;font-weight:900;color:#173426;margin:.4rem 0 .5rem">
+            El suelo no es una “atenuación fija”
+          </div>
+          <div style="color:#526b5d;line-height:1.6">
+            El efecto de suelo surge de la interacción entre el sonido directo y el sonido reflejado por el terreno.
+            Su magnitud depende del tipo de superficie, la frecuencia, la distancia y las alturas de la fuente y del receptor.
+          </div>
+        </div>
+        """,
+        unsafe_allow_html=True,
     )
+
     st.markdown(
-        "### Ensayo guiado\n"
-        "1. Compara G=0 y G=1.\n"
-        "2. Cambia el receptor de 1,5 m a un piso superior.\n"
-        "3. Agrega curvas de nivel.\n"
-        "4. Mantén la fuente fija para comparar una sola variable cada vez."
+        """
+        <div style="border:1px solid #cfe3d4;border-radius:22px;padding:20px 22px;
+        background:linear-gradient(135deg,#f8fcf9,#edf7ef);margin:.25rem 0 1rem">
+          <div style="font-size:.72rem;font-weight:900;letter-spacing:.1em;color:#2b7a4b">REFERENCIA NORMATIVA</div>
+          <div style="font-size:.92rem;color:#4f6958;line-height:1.55;margin-top:.3rem">
+            El tratamiento del efecto de suelo mostrado en esta etapa sigue el enfoque de
+            <b>ISO 9613-2:2024, sección 7.3.1</b>, donde el término de suelo se representa como
+            <b>Agr</b> y depende de la geometría, la frecuencia y el factor de suelo <b>G</b>.
+          </div>
+        </div>
+        """,
+        unsafe_allow_html=True,
     )
-    _model_button()
+
+    st.markdown("### 1 · ¿Qué representa el factor de suelo G?")
+    st.markdown(
+        "El parámetro **G** describe el comportamiento acústico de la superficie. "
+        "No representa un porcentaje directo de absorción: **G = 0,5 no significa que el suelo absorba 50 % del sonido**."
+    )
+
+    g_cards=[
+        ("G = 0","Suelo duro","Hormigón, pavimento, agua o superficies muy compactas.","Predomina la reflexión"),
+        ("G = 0,5","Terreno mixto","Combinación aproximada de zonas duras y porosas.","Comportamiento intermedio"),
+        ("G = 1","Suelo poroso","Pasto, tierra suelta, suelo vegetal u otras superficies porosas.","Mayor efecto de suelo"),
+    ]
+    gh='<div style="display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;margin:.4rem 0 1rem">'
+    for gv,title,desc,note in g_cards:
+        gh+=(
+            f'<div style="border:1px solid #d8e7dc;border-radius:17px;padding:15px;background:#fff">'
+            f'<div style="font-size:.76rem;font-weight:900;color:#2b7a4b">{gv}</div>'
+            f'<div style="font-size:1rem;font-weight:850;color:#1c3b2a;margin:.25rem 0">{title}</div>'
+            f'<div style="font-size:.82rem;color:#607568;line-height:1.4">{desc}</div>'
+            f'<div style="font-size:.75rem;font-weight:800;color:#4d765c;margin-top:.45rem">{note}</div>'
+            f'</div>'
+        )
+    gh+='</div>'
+    st.markdown(gh,unsafe_allow_html=True)
+
+    st.info(
+        "En una modelación más detallada pueden distinguirse zonas próximas a la fuente, zona intermedia y zona del receptor. "
+        "En este laboratorio usamos un único valor G para toda la trayectoria para mantener el ejercicio controlado."
+    )
+
+    st.markdown("### 2 · Geometría 3D: altura local y distancia real")
+    st.markdown(
+        "La fuente y el receptor se ubican a una altura **sobre la cota local del terreno**. "
+        "Si ambas cotas de terreno son distintas, la separación real no coincide con la distancia horizontal del plano."
+    )
+
+    c1,c2,c3=st.columns(3)
+    ground_s=c1.slider("Cota terreno en fuente [m]",0.0,30.0,0.0,0.5,key="c4l1_s4_ground_s")
+    ground_r=c2.slider("Cota terreno en receptor [m]",0.0,30.0,4.0,0.5,key="c4l1_s4_ground_r")
+    horizontal=c3.slider("Distancia horizontal [m]",10,250,60,5,key="c4l1_s4_horizontal")
+
+    h1,h2=st.columns(2)
+    hs=h1.slider("Altura fuente sobre terreno [m]",0.1,8.0,1.5,0.1,key="c4l1_s4_hs")
+    hr=h2.slider("Altura receptor sobre terreno [m]",1.0,30.0,1.5,0.5,key="c4l1_s4_hr")
+
+    zs=ground_s+hs
+    zr=ground_r+hr
+    dz=zr-zs
+    d3=math.sqrt(float(horizontal)**2+dz**2)
+
+    geom_html=f"""
+    <div style="display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px;margin:.4rem 0 1rem">
+      <div style="border:1px solid #dce7f0;border-radius:15px;padding:13px;background:#fff">
+        <div style="font-size:.72rem;color:#718291">Altura absoluta fuente</div>
+        <div style="font-size:1.2rem;font-weight:900;color:#17324a">{zs:.1f} m</div>
+      </div>
+      <div style="border:1px solid #dce7f0;border-radius:15px;padding:13px;background:#fff">
+        <div style="font-size:.72rem;color:#718291">Altura absoluta receptor</div>
+        <div style="font-size:1.2rem;font-weight:900;color:#17324a">{zr:.1f} m</div>
+      </div>
+      <div style="border:1px solid #dce7f0;border-radius:15px;padding:13px;background:#fff">
+        <div style="font-size:.72rem;color:#718291">Diferencia vertical</div>
+        <div style="font-size:1.2rem;font-weight:900;color:#17324a">{dz:+.1f} m</div>
+      </div>
+      <div style="border:1px solid #dce7f0;border-radius:15px;padding:13px;background:#fff">
+        <div style="font-size:.72rem;color:#718291">Distancia 3D F–R</div>
+        <div style="font-size:1.2rem;font-weight:900;color:#17324a">{d3:.1f} m</div>
+      </div>
+    </div>
+    """
+    st.markdown(geom_html,unsafe_allow_html=True)
+    with st.container(border=True):
+        st.latex(r"d_{3D}=\sqrt{d_h^2+(z_R-z_S)^2}")
+        st.caption("dh es la distancia horizontal; zS y zR son las alturas absolutas de fuente y receptor.")
+
+    st.markdown("### 3 · Efecto de suelo · Agr")
+    st.markdown(
+        "En ISO 9613-2 el término **Agr** representa el efecto combinado del terreno en la propagación. "
+        "Su comportamiento puede variar con la banda de frecuencia y con la geometría. Por eso no corresponde "
+        "tratarlo como una corrección única e independiente del escenario."
+    )
+
+    def _ground_att_iso_edu(distance_m, source_height_m, receiver_height_m, ground_factor, frequency_hz):
+        dp=max(float(distance_m),1e-6)
+        hss=max(float(source_height_m),0.0)
+        hrr=max(float(receiver_height_m),0.0)
+        gg=min(1.0,max(0.0,float(ground_factor)))
+        bands=(63,125,250,500,1000,2000,4000,8000)
+        ff=min(bands,key=lambda b:abs(math.log(max(float(frequency_hz),1.0)/b)))
+        def aprime(h):
+            return 1.5+3.0*math.exp(-0.12*(h-5.0)**2)*(1.0-math.exp(-dp/50.0))+5.7*math.exp(-0.09*h*h)*(1.0-math.exp(-2.8e-6*dp*dp))
+        def bprime(h):
+            return 1.5+8.6*math.exp(-0.09*h*h)*(1.0-math.exp(-dp/50.0))
+        def cprime(h):
+            return 1.5+14.0*math.exp(-0.46*h*h)*(1.0-math.exp(-dp/50.0))
+        def dprime(h):
+            return 1.5+5.0*math.exp(-0.9*h*h)*(1.0-math.exp(-dp/50.0))
+        def end_region(h):
+            if ff==63: return -1.5
+            if ff==125: return -1.5+gg*aprime(h)
+            if ff==250: return -1.5+gg*bprime(h)
+            if ff==500: return -1.5+gg*cprime(h)
+            if ff==1000: return -1.5+gg*dprime(h)
+            return -1.5*(1.0-gg)
+        q=0.0
+        if dp>30.0*(hss+hrr):
+            q=1.0-30.0*(hss+hrr)/dp
+        a_s=end_region(hss)
+        a_r=end_region(hrr)
+        a_m=-3.0*q if ff==63 else -3.0*q*(1.0-gg)
+        a_prime=a_s+a_r+a_m
+        k_geo=(dp*dp+(hss-hrr)**2)/max(dp*dp+(hss+hrr)**2,1e-12)
+        energy_factor=1.0+(10.0**(-a_prime/10.0)-1.0)*k_geo
+        return -10.0*math.log10(max(energy_factor,1e-12))
+
+    gg1,gg2=st.columns(2)
+    g=gg1.slider("Factor de suelo G",0.0,1.0,0.5,0.1,key="c4l1_s4_g")
+    freq=gg2.selectbox("Frecuencia [Hz]",[63,125,250,500,1000,2000,4000,8000],index=3,key="c4l1_s4_freq")
+    agr=_ground_att_iso_edu(horizontal,hs,hr,g,freq)
+
+    gr1,gr2,gr3,gr4=st.columns(4)
+    gr1.metric("G",f"{g:.1f}")
+    gr2.metric("Frecuencia",f"{freq} Hz")
+    gr3.metric("Alturas hs / hr",f"{hs:.1f} / {hr:.1f} m")
+    gr4.metric("Agr",f"{agr:+.2f} dB")
+
+    st.caption(
+        "El signo de Agr puede resultar contraintuitivo: el efecto de suelo surge de una interferencia de caminos, "
+        "por lo que no debe interpretarse simplemente como 'absorción'."
+    )
+
+    st.markdown("#### Compara el mismo escenario con distintos suelos")
+    compare=[]
+    for gv in [0.0,0.5,1.0]:
+        compare.append((gv,_ground_att_iso_edu(horizontal,hs,hr,gv,freq)))
+    ch='<div style="display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;margin:.3rem 0 1rem">'
+    labels={0.0:"Duro",0.5:"Mixto",1.0:"Poroso"}
+    for gv,val in compare:
+        ch+=(
+            f'<div style="border:1px solid #d8e7dc;border-radius:16px;padding:14px;background:#fff;text-align:center">'
+            f'<div style="font-size:.72rem;color:#708577">G = {gv:.1f} · {labels[gv]}</div>'
+            f'<div style="font-size:1.35rem;font-weight:900;color:#245d3b;margin:.2rem 0">{val:+.2f} dB</div>'
+            f'<div style="font-size:.72rem;color:#839489">Agr a {freq} Hz</div></div>'
+        )
+    ch+='</div>'
+    st.markdown(ch,unsafe_allow_html=True)
+
+    st.markdown("### 4 · Receptores en altura")
+    st.markdown(
+        "Un receptor ubicado en un piso superior puede tener una geometría de propagación muy distinta a un receptor a 1,5 m. "
+        "Cambian la distancia tridimensional, el ángulo de llegada y el efecto de suelo. Por eso **la altura del receptor no es un dato decorativo**."
+    )
+    r_heights=[1.5,4.5,7.5,10.5,13.5]
+    rh_html='<div style="display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:9px;margin:.35rem 0 1rem">'
+    for idx,rhv in enumerate(r_heights,1):
+        aval=_ground_att_iso_edu(horizontal,hs,rhv,g,freq)
+        dval=math.sqrt(float(horizontal)**2+((ground_r+rhv)-(ground_s+hs))**2)
+        rh_html+=(
+            f'<div style="border:1px solid #dce7f0;border-radius:15px;padding:12px;background:#fff;text-align:center">'
+            f'<div style="font-size:.72rem;color:#6e8192">Receptor {idx}</div>'
+            f'<div style="font-size:1.05rem;font-weight:900;color:#17324a">{rhv:.1f} m</div>'
+            f'<div style="font-size:.74rem;color:#617586;margin-top:.25rem">d3D {dval:.1f} m</div>'
+            f'<div style="font-size:.74rem;color:#2b7a4b">Agr {aval:+.2f} dB</div></div>'
+        )
+    rh_html+='</div>'
+    st.markdown(rh_html,unsafe_allow_html=True)
+
+    st.markdown("---")
+    st.markdown(
+        """
+        <div style="border:1px solid #d8e6f0;border-radius:20px;padding:20px 22px;
+        background:linear-gradient(135deg,#f8fbfe,#eef6fb);margin-bottom:1rem">
+          <div style="font-size:.72rem;font-weight:900;letter-spacing:.1em;color:#0b6ea8">EJERCICIO APLICADO</div>
+          <div style="font-size:1.2rem;font-weight:850;color:#16314b;margin:.35rem 0">
+            Interpreta el terreno y la geometría antes de modelar
+          </div>
+          <div style="color:#536b80;line-height:1.5">
+            Resuelve un caso independiente. Debes identificar G, obtener las alturas absolutas,
+            calcular la distancia tridimensional y determinar Agr para la banda indicada.
+          </div>
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
+
+    cases={
+        "Caso A · Faena sobre pavimento":{
+            "surface":"Plataforma completamente pavimentada","g":0.0,"gs":2.0,"gr":6.0,"hs":1.5,"hr":7.5,"dh":75,"freq":500
+        },
+        "Caso B · Terreno mixto":{
+            "surface":"Trayectoria con sectores pavimentados y suelo vegetal","g":0.5,"gs":4.0,"gr":10.0,"hs":2.0,"hr":4.5,"dh":95,"freq":1000
+        },
+        "Caso C · Área verde":{
+            "surface":"Trayectoria predominantemente sobre pasto y tierra porosa","g":1.0,"gs":1.0,"gr":3.0,"hs":1.2,"hr":10.5,"dh":120,"freq":250
+        },
+    }
+    ex_case=st.segmented_control("Selecciona un caso",list(cases.keys()),default="Caso A · Faena sobre pavimento",key="c4l1_s4_case")
+    ex=cases[ex_case]
+    ex_zs=ex["gs"]+ex["hs"]
+    ex_zr=ex["gr"]+ex["hr"]
+    ex_d3=math.sqrt(float(ex["dh"])**2+(ex_zr-ex_zs)**2)
+    ex_agr=_ground_att_iso_edu(ex["dh"],ex["hs"],ex["hr"],ex["g"],ex["freq"])
+
+    st.markdown(
+        f"""
+        <div style="border:1px solid #dce7f0;border-radius:18px;padding:17px 19px;background:#fff;margin-bottom:.8rem">
+          <div style="font-size:.8rem;font-weight:900;color:#17324a">{ex_case}</div>
+          <div style="color:#5e7385;margin-top:.25rem"><b>Superficie:</b> {ex['surface']}</div>
+          <div style="color:#5e7385;margin-top:.2rem">
+            Cota fuente: {ex['gs']:.1f} m · hs: {ex['hs']:.1f} m ·
+            Cota receptor: {ex['gr']:.1f} m · hr: {ex['hr']:.1f} m ·
+            distancia horizontal: {ex['dh']} m · banda: {ex['freq']} Hz
+          </div>
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
+
+    ex1,ex2,ex3,ex4,ex5=st.columns(5)
+    ans_g=ex1.text_input("G",key=f"c4l1_s4_g_ans_{ex_case}",placeholder="0 a 1")
+    ans_zs=ex2.text_input("z fuente [m]",key=f"c4l1_s4_zs_{ex_case}",placeholder="m")
+    ans_zr=ex3.text_input("z receptor [m]",key=f"c4l1_s4_zr_{ex_case}",placeholder="m")
+    ans_d3=ex4.text_input("d3D [m]",key=f"c4l1_s4_d3_{ex_case}",placeholder="m")
+    ans_agr=ex5.text_input("Agr [dB]",key=f"c4l1_s4_agr_{ex_case}",placeholder="dB")
+
+    if st.button("Comprobar ejercicio",key=f"c4l1_s4_check_{ex_case}",type="primary",use_container_width=True):
+        def _num4(v):
+            try:
+                return float(str(v).strip().replace(",","."))
+            except Exception:
+                return None
+        vals=[_num4(v) for v in [ans_g,ans_zs,ans_zr,ans_d3,ans_agr]]
+        if any(v is None for v in vals):
+            st.warning("Completa los cinco resultados antes de comprobar.")
+        else:
+            exp=[ex["g"],ex_zs,ex_zr,ex_d3,ex_agr]
+            tol=[0.05,0.2,0.2,0.3,0.08]
+            ok=[abs(a-b)<=t for a,b,t in zip(vals,exp,tol)]
+            labs=["G","altura absoluta de fuente","altura absoluta de receptor","distancia 3D","Agr"]
+            if all(ok):
+                st.success("Correcto. Interpretaste correctamente la superficie y la geometría del caso.")
+                s1,s2,s3,s4,s5=st.columns(5)
+                s1.metric("G",f"{ex['g']:.1f}")
+                s2.metric("z fuente",f"{ex_zs:.1f} m")
+                s3.metric("z receptor",f"{ex_zr:.1f} m")
+                s4.metric("d3D",f"{ex_d3:.1f} m")
+                s5.metric("Agr",f"{ex_agr:+.2f} dB")
+            else:
+                st.warning("Revisa: "+", ".join(labs[i] for i,v in enumerate(ok) if not v)+".")
+                st.caption("La solución completa se muestra solo cuando todos los resultados son correctos.")
+
+    if st.session_state.get("role")=="Docente":
+        with st.expander("👩‍🏫 Pauta docente · Etapa 4",expanded=False):
+            st.markdown(
+                f"""
+                **Caso:** {ex_case}  
+                **Superficie:** {ex['surface']}  
+                **G esperado:** {ex['g']:.1f}  
+                **Altura absoluta fuente:** {ex_zs:.1f} m  
+                **Altura absoluta receptor:** {ex_zr:.1f} m  
+                **Distancia 3D:** {ex_d3:.1f} m  
+                **Frecuencia:** {ex['freq']} Hz  
+                **Agr esperado:** **{ex_agr:+.2f} dB**
+                """
+            )
+            st.info(
+                "Punto docente clave: G no es porcentaje de absorción. El alumno debe distinguir entre cota de terreno, "
+                "altura sobre terreno y altura absoluta, y comprender que Agr depende de la geometría y de la frecuencia."
+            )
+
 
 def _stage5(lab, saved):
     _header(
