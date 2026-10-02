@@ -2702,11 +2702,11 @@ def _stage5(lab, saved):
         '<text x="244" y="207" font-size="14" font-weight="850" fill="#3f7350">Generador</text>'
         '<text x="194" y="336" font-size="14" font-weight="850" fill="#5f568c">Bomba</text>'
         '<text x="330" y="289" font-size="14" font-weight="850" fill="#96631f">Mixer</text>'
-        '<text x="58" y="372" font-size="13" fill="#6f8290">Cada fuente conserva su posición, Lw y geometría propia.</text>'
+        '<text x="58" y="372" font-size="16" font-weight="700" fill="#5f7585">Cada fuente conserva su posición, Lw y geometría propia.</text>'
 
         '<line x1="455" y1="210" x2="545" y2="210" stroke="#7f93a1" stroke-width="5" marker-end="url(#eqArrow)"/>'
-        '<text x="462" y="180" font-size="14" font-weight="900" fill="#687d8c">SUMA ENERGÉTICA</text>'
-        '<text x="458" y="245" font-size="13" fill="#7b8d99">+ simplificación espacial</text>'
+        '<text x="462" y="180" font-size="16" font-weight="900" fill="#687d8c">SUMA ENERGÉTICA</text>'
+        '<text x="458" y="245" font-size="15" font-weight="700" fill="#6f8391">+ simplificación espacial</text>'
 
         '<rect x="567" y="42" width="405" height="315" rx="20" fill="#f3f9f4" stroke="#bedfc6" stroke-width="2.5"/>'
         '<text x="592" y="78" font-size="20" font-weight="900" fill="#2d7a4a">MODELO SIMPLIFICADO</text>'
@@ -2715,8 +2715,8 @@ def _stage5(lab, saved):
         '<text x="715" y="209" font-size="22" font-weight="900" fill="#fff">Lw,eq</text>'
         '<text x="738" y="239" font-size="16" font-weight="850" fill="#e9f6ec">puntual</text>'
         '<line x1="770" y1="283" x2="770" y2="320" stroke="#2d7a4a" stroke-width="2.5" stroke-dasharray="6 5"/>'
-        '<text x="630" y="342" font-size="13" fill="#657a6b">Ubicación representativa del frente o etapa</text>'
-        '<text x="602" y="367" font-size="13" fill="#657a6b">Conserva la energía total, pero reduce el detalle espacial.</text>'
+        '<text x="630" y="342" font-size="16" font-weight="700" fill="#5a7462">Ubicación representativa del frente o etapa</text>'
+        '<text x="602" y="367" font-size="16" font-weight="700" fill="#5a7462">Conserva la energía total, pero reduce el detalle espacial.</text>'
         '</svg>'
 
         '<div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-top:14px">'
