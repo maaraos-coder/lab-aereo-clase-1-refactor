@@ -2821,8 +2821,8 @@ def _stage6(lab, saved):
         """
         <div style="border:1px solid #d7e5ef;border-radius:24px;padding:22px 24px;
         background:linear-gradient(135deg,#fbfdff,#f1f7fb);box-shadow:0 8px 22px rgba(30,65,92,.06);margin-bottom:1rem">
-          <div style="font-size:.76rem;font-weight:900;color:#0b6ea8;letter-spacing:.1em">DISEÑO ACÚSTICO DE OBRA</div>
-          <div style="font-size:1.28rem;font-weight:880;color:#17324a;margin:.35rem 0 .5rem">
+          <div style="display:inline-block;font-size:.78rem;font-weight:900;color:#0b6ea8;letter-spacing:.1em;background:#eaf5fb;border-radius:999px;padding:6px 10px">DISEÑO ACÚSTICO DE OBRA</div>
+          <div style="font-size:1.38rem;font-weight:900;color:#17324a;margin:.55rem 0 .5rem">
             El control se diseña fuente por fuente y luego se integra en el escenario completo
           </div>
           <div style="color:#5d7183;line-height:1.6;font-size:.92rem">
@@ -2895,72 +2895,78 @@ def _stage6(lab, saved):
     )
 
     work_svg=(
-        '<div style="border:1px solid #d8e4ec;border-radius:22px;background:#fbfdff;padding:15px 17px;margin:.5rem 0 1rem;box-shadow:0 8px 20px rgba(33,65,90,.05)">'
-        '<div style="display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:10px">'
-        '<div style="font-size:.78rem;font-weight:900;color:#526a7e;letter-spacing:.08em">PLANTA DIDÁCTICA · FUENTES Y RECEPTOR</div>'
-        '<div style="font-size:.74rem;font-weight:850;color:#8b5b3d;background:#fff3eb;border-radius:999px;padding:6px 10px">R = receptor sensible</div>'
+        '<div style="border:1px solid #d8e4ec;border-radius:24px;background:#fbfdff;padding:18px 20px;margin:.55rem 0 1.1rem;box-shadow:0 10px 24px rgba(33,65,90,.06)">'
+        '<div style="display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:12px">'
+        '<div><div style="font-size:.82rem;font-weight:900;color:#526a7e;letter-spacing:.08em">PLANTA DE ANÁLISIS</div>'
+        '<div style="font-size:.84rem;color:#738590;margin-top:.2rem">Identifica qué control aplicarías a cada fuente antes de ver la respuesta.</div></div>'
+        '<div style="font-size:.78rem;font-weight:900;color:#8b5b3d;background:#fff3eb;border:1px solid #edd4c5;border-radius:999px;padding:7px 12px">R · receptor sensible</div>'
         '</div>'
-        '<svg viewBox="0 0 1000 500" width="100%" style="display:block">'
-        '<defs><filter id="s6Shadow" x="-20%" y="-20%" width="140%" height="140%"><feDropShadow dx="0" dy="4" stdDeviation="4" flood-opacity=".12"/></filter></defs>'
-        '<rect x="0" y="0" width="1000" height="500" rx="20" fill="#f8fbfd"/>'
-        '<rect x="55" y="55" width="705" height="375" rx="22" fill="#eef3f6" stroke="#9fb0bc" stroke-width="3"/>'
-        '<text x="78" y="88" font-size="18" font-weight="900" fill="#5e7382">OBRA</text>'
+        '<svg viewBox="0 0 1000 535" width="100%" style="display:block">'
+        '<defs><filter id="s6Shadow" x="-20%" y="-20%" width="140%" height="140%"><feDropShadow dx="0" dy="5" stdDeviation="5" flood-opacity=".13"/></filter></defs>'
+        '<rect x="0" y="0" width="1000" height="535" rx="22" fill="#f8fbfd"/>'
+        '<rect x="50" y="55" width="710" height="405" rx="24" fill="#eef3f6" stroke="#9fb0bc" stroke-width="3"/>'
+        '<text x="76" y="91" font-size="20" font-weight="900" fill="#5e7382">PREDIO DE LA OBRA</text>'
+        '<text x="76" y="117" font-size="13" font-weight="700" fill="#7b8c97">Escenario simplificado para selección de medidas de control</text>'
 
-        '<rect x="800" y="120" width="150" height="155" rx="15" fill="#f9eee8" stroke="#c89b7d" stroke-width="3" filter="url(#s6Shadow)"/>'
-        '<text x="832" y="158" font-size="17" font-weight="900" fill="#885a3e">VIVIENDA</text>'
-        '<text x="825" y="182" font-size="13" fill="#936c55">receptor sensible</text>'
-        '<circle cx="800" cy="215" r="10" fill="#b34f4f"/><text x="817" y="220" font-size="14" font-weight="900" fill="#954343">R</text>'
+        '<rect x="805" y="125" width="150" height="170" rx="16" fill="#f9eee8" stroke="#c89b7d" stroke-width="3" filter="url(#s6Shadow)"/>'
+        '<rect x="825" y="151" width="110" height="54" rx="8" fill="#fff8f3" stroke="#e4c8b7"/>'
+        '<text x="839" y="181" font-size="18" font-weight="900" fill="#885a3e">VIVIENDA</text>'
+        '<text x="828" y="228" font-size="13" font-weight="700" fill="#936c55">receptor residencial</text>'
+        '<circle cx="805" cy="252" r="12" fill="#b34f4f"/><text x="825" y="258" font-size="16" font-weight="900" fill="#954343">R</text>'
 
-        '<rect x="245" y="120" width="135" height="170" rx="10" fill="#b7c6d0" stroke="#718694" stroke-width="3"/>'
-        '<text x="273" y="194" font-size="15" font-weight="900" fill="#445965">EDIFICIO</text>'
-        '<text x="276" y="216" font-size="13" fill="#536b78">AUXILIAR</text>'
+        '<rect x="260" y="140" width="145" height="175" rx="12" fill="#b7c6d0" stroke="#718694" stroke-width="3" filter="url(#s6Shadow)"/>'
+        '<rect x="278" y="168" width="109" height="58" rx="8" fill="#d9e2e7"/>'
+        '<text x="289" y="198" font-size="16" font-weight="900" fill="#445965">EDIFICIO</text>'
+        '<text x="290" y="220" font-size="13" font-weight="800" fill="#536b78">AUXILIAR</text>'
 
-        '<circle cx="165" cy="165" r="34" fill="#4f9a68" filter="url(#s6Shadow)"/>'
-        '<text x="150" y="173" font-size="21" font-weight="900" fill="#fff">G</text>'
-        '<rect x="102" y="211" width="130" height="38" rx="10" fill="#fff" stroke="#d7e3ea"/>'
-        '<text x="125" y="235" font-size="14" font-weight="850" fill="#3f7350">Generador</text>'
+        '<circle cx="160" cy="185" r="38" fill="#4f9a68" filter="url(#s6Shadow)"/>'
+        '<circle cx="132" cy="157" r="14" fill="#ffffff" stroke="#4f9a68" stroke-width="3"/><text x="127" y="163" font-size="13" font-weight="900" fill="#3f7350">1</text>'
+        '<text x="144" y="193" font-size="22" font-weight="900" fill="#fff">G</text>'
+        '<rect x="94" y="236" width="135" height="42" rx="11" fill="#fff" stroke="#d7e3ea"/>'
+        '<text x="117" y="262" font-size="15" font-weight="900" fill="#3f7350">Generador</text>'
 
-        '<circle cx="540" cy="145" r="34" fill="#d65f5f" filter="url(#s6Shadow)"/>'
-        '<text x="519" y="153" font-size="20" font-weight="900" fill="#fff">MH</text>'
-        '<rect x="463" y="191" width="155" height="38" rx="10" fill="#fff" stroke="#d7e3ea"/>'
-        '<text x="484" y="215" font-size="14" font-weight="850" fill="#9e4545">Martillo hidráulico</text>'
+        '<circle cx="555" cy="155" r="38" fill="#d65f5f" filter="url(#s6Shadow)"/>'
+        '<circle cx="527" cy="127" r="14" fill="#ffffff" stroke="#d65f5f" stroke-width="3"/><text x="522" y="133" font-size="13" font-weight="900" fill="#9e4545">2</text>'
+        '<text x="531" y="163" font-size="21" font-weight="900" fill="#fff">MH</text>'
+        '<rect x="475" y="207" width="163" height="42" rx="11" fill="#fff" stroke="#d7e3ea"/>'
+        '<text x="494" y="233" font-size="15" font-weight="900" fill="#9e4545">Martillo hidráulico</text>'
 
-        '<circle cx="640" cy="315" r="34" fill="#3b83b2" filter="url(#s6Shadow)"/>'
-        '<text x="618" y="323" font-size="20" font-weight="900" fill="#fff">EX</text>'
-        '<rect x="566" y="360" width="151" height="38" rx="10" fill="#fff" stroke="#d7e3ea"/>'
-        '<text x="588" y="384" font-size="14" font-weight="850" fill="#2f607e">Excavadora</text>'
+        '<circle cx="645" cy="350" r="38" fill="#3b83b2" filter="url(#s6Shadow)"/>'
+        '<circle cx="617" cy="322" r="14" fill="#ffffff" stroke="#3b83b2" stroke-width="3"/><text x="612" y="328" font-size="13" font-weight="900" fill="#2f607e">3</text>'
+        '<text x="621" y="358" font-size="21" font-weight="900" fill="#fff">EX</text>'
+        '<rect x="570" y="402" width="151" height="42" rx="11" fill="#fff" stroke="#d7e3ea"/>'
+        '<text x="594" y="428" font-size="15" font-weight="900" fill="#2f607e">Excavadora</text>'
 
-        '<circle cx="430" cy="335" r="34" fill="#7c72b8" filter="url(#s6Shadow)"/>'
-        '<text x="407" y="343" font-size="19" font-weight="900" fill="#fff">SC</text>'
-        '<rect x="354" y="380" width="153" height="38" rx="10" fill="#fff" stroke="#d7e3ea"/>'
-        '<text x="384" y="404" font-size="14" font-weight="850" fill="#5f568c">Sierra de corte</text>'
+        '<circle cx="440" cy="365" r="38" fill="#7c72b8" filter="url(#s6Shadow)"/>'
+        '<circle cx="412" cy="337" r="14" fill="#ffffff" stroke="#7c72b8" stroke-width="3"/><text x="407" y="343" font-size="13" font-weight="900" fill="#5f568c">4</text>'
+        '<text x="415" y="373" font-size="20" font-weight="900" fill="#fff">SC</text>'
+        '<rect x="362" y="417" width="157" height="42" rx="11" fill="#fff" stroke="#d7e3ea"/>'
+        '<text x="389" y="443" font-size="15" font-weight="900" fill="#5f568c">Sierra de corte</text>'
 
-        '<line x1="165" y1="165" x2="800" y2="215" stroke="#5e9a70" stroke-width="2.5" stroke-dasharray="9 7" opacity=".65"/>'
-        '<line x1="540" y1="145" x2="800" y2="215" stroke="#d65f5f" stroke-width="3" stroke-dasharray="9 7" opacity=".8"/>'
-        '<line x1="640" y1="315" x2="800" y2="215" stroke="#3b83b2" stroke-width="3" stroke-dasharray="9 7" opacity=".75"/>'
-        '<line x1="430" y1="335" x2="800" y2="215" stroke="#7c72b8" stroke-width="2.5" stroke-dasharray="9 7" opacity=".7"/>'
-
-        '<rect x="715" y="95" width="14" height="250" rx="4" fill="#576d78"/>'
-        '<text x="672" y="82" font-size="13" font-weight="850" fill="#526a7e">barrera posible</text>'
+        '<line x1="160" y1="185" x2="805" y2="252" stroke="#5e9a70" stroke-width="2.5" stroke-dasharray="10 8" opacity=".48"/>'
+        '<line x1="555" y1="155" x2="805" y2="252" stroke="#d65f5f" stroke-width="3.5" stroke-dasharray="10 8" opacity=".72"/>'
+        '<line x1="645" y1="350" x2="805" y2="252" stroke="#3b83b2" stroke-width="3.2" stroke-dasharray="10 8" opacity=".65"/>'
+        '<line x1="440" y1="365" x2="805" y2="252" stroke="#7c72b8" stroke-width="2.8" stroke-dasharray="10 8" opacity=".58"/>'
+        '<text x="783" y="325" font-size="12" font-weight="800" fill="#83939d">trayectorias hacia R</text>'
         '</svg>'
-        '<div style="display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:9px;margin-top:10px">'
-        '<div style="border-radius:12px;padding:10px;background:#eff8f1;color:#3f7350;font-size:.78rem"><b>G</b> · estacionario y relativamente alejado</div>'
-        '<div style="border-radius:12px;padding:10px;background:#fff1f1;color:#934747;font-size:.78rem"><b>MH</b> · ruidoso y próximo al receptor</div>'
-        '<div style="border-radius:12px;padding:10px;background:#eef6fb;color:#2f607e;font-size:.78rem"><b>EX</b> · móvil dentro del frente</div>'
-        '<div style="border-radius:12px;padding:10px;background:#f5f2fb;color:#5f568c;font-size:.78rem"><b>SC</b> · fuente localizada y direccional</div>'
+        '<div style="display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:11px;margin-top:12px">'
+        '<div style="border:1px solid #d7eadc;border-radius:14px;padding:12px;background:#eff8f1;color:#3f7350;font-size:.84rem;line-height:1.4"><b>1 · Generador</b><br><span style="color:#62776a">estacionario · operación prolongada</span></div>'
+        '<div style="border:1px solid #f0d7d7;border-radius:14px;padding:12px;background:#fff1f1;color:#934747;font-size:.84rem;line-height:1.4"><b>2 · Martillo</b><br><span style="color:#806565">alta emisión · próximo a R</span></div>'
+        '<div style="border:1px solid #cfe0ec;border-radius:14px;padding:12px;background:#eef6fb;color:#2f607e;font-size:.84rem;line-height:1.4"><b>3 · Excavadora</b><br><span style="color:#637887">móvil dentro del frente</span></div>'
+        '<div style="border:1px solid #ddd8ef;border-radius:14px;padding:12px;background:#f5f2fb;color:#5f568c;font-size:.84rem;line-height:1.4"><b>4 · Sierra</b><br><span style="color:#726c82">localizada · orientación relevante</span></div>'
         '</div>'
         '</div>'
     )
     st.markdown(work_svg,unsafe_allow_html=True)
 
-    st.markdown("### 3 · Elige una medida principal para cada fuente")
+    st.markdown("### 3 · Diseña la estrategia de control")
     st.markdown(
         """
         <div style="border:1px solid #dce6ed;border-radius:18px;padding:14px 17px;background:#fff;margin:.3rem 0 .8rem">
           <div style="font-size:.78rem;font-weight:900;color:#17324a">OBJETIVO DEL EJERCICIO</div>
           <div style="font-size:.84rem;color:#637788;line-height:1.52;margin-top:.3rem">
-            No busques una única solución para toda la obra. Selecciona la medida que mejor responde
-            al comportamiento de cada fuente y a su relación con el receptor.
+            Analiza cada fuente por separado y selecciona la <b>medida principal</b> que aplicarías.
+            Después integra las decisiones: una obra real puede combinar controles en la fuente, trayectoria y planificación.
           </div>
         </div>
         """,
@@ -3008,8 +3014,8 @@ def _stage6(lab, saved):
             h1,h2=st.columns([1.8,1])
             with h1:
                 st.markdown(
-                    f"<div style='font-size:.72rem;font-weight:900;color:{color};letter-spacing:.06em'>{kind.upper()}</div>"
-                    f"<div style='font-size:1rem;font-weight:880;color:#263f52;margin-top:.18rem'>{name}</div>",
+                    f"<div style='display:inline-block;font-size:.74rem;font-weight:900;color:{color};letter-spacing:.06em;background:#f7f9fa;border-radius:999px;padding:5px 8px'>{kind.upper()}</div>"
+                    f"<div style='font-size:1.12rem;font-weight:900;color:#263f52;margin-top:.35rem'>{name}</div>",
                     unsafe_allow_html=True,
                 )
             with h2:
@@ -3020,7 +3026,7 @@ def _stage6(lab, saved):
                 )
 
             choice=st.radio(
-                "Medida principal",
+                "Selecciona la medida principal",
                 options,
                 index=None,
                 horizontal=True,
