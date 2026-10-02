@@ -1595,6 +1595,17 @@ def _stage4(lab, saved):
         "El término **Agr** aparece por la interacción entre el sonido directo y el sonido reflejado por el terreno. "
         "No es una absorción fija: depende del tipo de superficie, la frecuencia, la distancia y las alturas de fuente y receptor."
     )
+    with st.container(border=True):
+        st.latex(r"A_{gr}=A_s+A_m+A_r")
+        st.markdown(
+            "**As** representa la contribución de la zona próxima a la fuente, **Am** la región intermedia "
+            "y **Ar** la zona próxima al receptor. En el cálculo educativo, estos aportes se ajustan además "
+            "por la geometría fuente–receptor y por el factor de suelo G."
+        )
+        st.caption(
+            "La expresión resume la estructura física del término de suelo; el cálculo numérico mostrado abajo "
+            "usa la formulación implementada para ISO 9613-2:2024."
+        )
     g_cards=[
         ("G = 0","Suelo duro","Hormigón, pavimento, agua o superficie compacta."),
         ("G = 0,5","Terreno mixto","Combinación aproximada de sectores duros y porosos."),
@@ -1657,14 +1668,28 @@ def _stage4(lab, saved):
 
     st.markdown("### 2 · Abar · barreras y difracción")
     st.markdown(
-        "Una barrera produce atenuación cuando interrumpe la línea de visión directa entre fuente y receptor. "
-        "El sonido no desaparece: **se difracta** sobre el borde superior y alrededor de los extremos. "
-        "La atenuación aumenta cuando la ruta difractada es claramente más larga que la ruta directa y también depende de la frecuencia."
+        "Una barrera es efectiva cuando **interrumpe la línea de visión acústica** entre la fuente y el receptor. "
+        "El sonido no se detiene en el borde: se difracta por sobre la barrera y alrededor de sus extremos. "
+        "Por eso el parámetro clave es cuánto más largo resulta el camino difractado respecto del camino directo."
     )
+
+    with st.container(border=True):
+        st.markdown("#### Geometría básica de la barrera")
+        st.latex(r"z=(d_{FB}+d_{BR})-d_{FR}")
+        st.markdown(
+            "**z** es la diferencia de camino. Si la barrera sobresale claramente sobre la línea directa, "
+            "el recorrido F–B–R aumenta y también puede aumentar la atenuación por difracción."
+        )
+        st.latex(r"A_{bar}=10\log_{10}\left[1+\left(2+\frac{20}{\lambda}z\right)K_{met}\right]")
+        st.caption(
+            "Esta expresión reproduce el esquema didáctico usado aquí para la difracción superior. "
+            "λ es la longitud de onda y Kmet es un factor geométrico/meteorológico de la formulación."
+        )
+
     simple_cards=[
-        ("Línea de visión","Si fuente y receptor se ven por encima de la barrera, el apantallamiento es pequeño o nulo."),
-        ("Diferencia de camino z","Compara la ruta difractada F–B–R con la distancia directa F–R."),
-        ("Frecuencia","A igual geometría, la difracción cambia con la longitud de onda."),
+        ("1 · ¿La barrera tapa la visual?","Primero se compara la altura del borde con la línea recta fuente–receptor."),
+        ("2 · ¿Cuánto se alarga el camino?","Se calcula z comparando la ruta F–B–R con la ruta directa F–R."),
+        ("3 · ¿Qué frecuencia analizamos?","La longitud de onda cambia con la frecuencia y modifica la difracción."),
     ]
     bh='<div style="display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;margin:.4rem 0 1rem">'
     for title,desc in simple_cards:
@@ -1686,22 +1711,87 @@ def _stage4(lab, saved):
         argument=1.0+(2.0+(20.0/wavelength)*z)*k_met
         return min(max_db,max(0.0,10.0*math.log10(max(argument,1.0))))
 
-    b1,b2,b3,b4=st.columns(4)
-    d_fb=b1.slider("Fuente → barrera [m]",5,100,25,5,key="c4l1_s4_dfb")
-    d_br=b2.slider("Barrera → receptor [m]",5,150,35,5,key="c4l1_s4_dbr")
-    excess=b3.slider("Exceso de camino z [m]",0.0,2.0,0.35,0.05,key="c4l1_s4_z")
-    freq_bar=b4.selectbox("Frecuencia barrera [Hz]",[125,250,500,1000,2000,4000],index=2,key="c4l1_s4_bar_freq")
-    direct=float(d_fb+d_br)
-    ds=float(d_fb)+float(excess)/2.0
-    dr=float(d_br)+float(excess)/2.0
-    abar=_barrier_dz_edu(ds,dr,direct,freq_bar)
-    bb1,bb2,bb3=st.columns(3)
-    bb1.metric("Ruta directa",f"{direct:.1f} m")
-    bb2.metric("Diferencia de camino z",f"{excess:.2f} m")
-    bb3.metric("Abar",f"{abar:.1f} dB")
+    st.markdown("#### Perfil fuente – barrera – receptor")
+    p1,p2,p3,p4,p5,p6=st.columns(6)
+    hs_bar=p1.slider("Altura fuente [m]",0.5,6.0,1.5,0.5,key="c4l1_s4_bar_hs")
+    hb_bar=p2.slider("Altura barrera [m]",0.5,8.0,3.0,0.5,key="c4l1_s4_bar_hb")
+    hr_bar=p3.slider("Altura receptor [m]",0.5,12.0,1.5,0.5,key="c4l1_s4_bar_hr")
+    d_fb=p4.slider("F → B [m]",5,100,25,5,key="c4l1_s4_dfb")
+    d_br=p5.slider("B → R [m]",5,150,35,5,key="c4l1_s4_dbr")
+    freq_bar=p6.selectbox("Frecuencia [Hz]",[125,250,500,1000,2000,4000],index=2,key="c4l1_s4_bar_freq")
+
+    total_h=float(d_fb+d_br)
+    los_at_bar=float(hs_bar)+(float(hr_bar)-float(hs_bar))*(float(d_fb)/max(total_h,1e-9))
+    screens=float(hb_bar)>los_at_bar
+    d_fr=math.sqrt(total_h**2+(float(hr_bar)-float(hs_bar))**2)
+    d_sb=math.sqrt(float(d_fb)**2+(float(hb_bar)-float(hs_bar))**2)
+    d_br_path=math.sqrt(float(d_br)**2+(float(hb_bar)-float(hr_bar))**2)
+    z_path=(d_sb+d_br_path)-d_fr
+    abar=_barrier_dz_edu(d_sb,d_br_path,d_fr,freq_bar) if screens else 0.0
+
+    max_h=max(float(hs_bar),float(hb_bar),float(hr_bar),2.0)+1.5
+    x_s=90.0
+    x_r=810.0
+    x_b=x_s+(x_r-x_s)*(float(d_fb)/max(total_h,1e-9))
+    ground_y=285.0
+    top_y=55.0
+    scale_y=(ground_y-top_y)/max_h
+    y_s=ground_y-float(hs_bar)*scale_y
+    y_b=ground_y-float(hb_bar)*scale_y
+    y_r=ground_y-float(hr_bar)*scale_y
+    los_color="#d9534f" if screens else "#5f768a"
+    status_text="Barrera intercepta la línea de visión" if screens else "Barrera no intercepta la línea de visión"
+    status_bg="#eef8f1" if screens else "#fff6e8"
+    status_color="#2d6d42" if screens else "#8b5c13"
+
+    profile_svg=f"""
+    <div style="border:1px solid #d9e4ec;border-radius:20px;background:#fbfdff;padding:12px 14px;margin:.4rem 0 1rem">
+      <div style="font-size:.74rem;font-weight:900;color:#526a7e;letter-spacing:.08em;margin:2px 0 8px">
+        PERFIL F–B–R · CORTE LATERAL SIMPLIFICADO
+      </div>
+      <svg viewBox="0 0 900 340" width="100%" style="display:block;max-height:390px">
+        <rect x="0" y="0" width="900" height="340" rx="18" fill="#f8fbfd"/>
+        <line x1="55" y1="{ground_y}" x2="845" y2="{ground_y}" stroke="#8c9a88" stroke-width="4"/>
+        <rect x="{x_b-8:.1f}" y="{y_b:.1f}" width="16" height="{ground_y-y_b:.1f}" rx="3" fill="#485b68"/>
+        <line x1="{x_s}" y1="{y_s:.1f}" x2="{x_r}" y2="{y_r:.1f}" stroke="{los_color}" stroke-width="3" stroke-dasharray="9 7"/>
+        <polyline points="{x_s},{y_s:.1f} {x_b:.1f},{y_b:.1f} {x_r},{y_r:.1f}" fill="none" stroke="#e28b2d" stroke-width="4"/>
+        <circle cx="{x_s}" cy="{y_s:.1f}" r="12" fill="#176b9b"/>
+        <circle cx="{x_r}" cy="{y_r:.1f}" r="12" fill="#2f7d4b"/>
+        <circle cx="{x_b:.1f}" cy="{y_b:.1f}" r="7" fill="#e28b2d"/>
+        <text x="{x_s-18}" y="{y_s-20:.1f}" font-size="18" font-weight="800" fill="#176b9b">F</text>
+        <text x="{x_b-7:.1f}" y="{y_b-16:.1f}" font-size="18" font-weight="800" fill="#7c4d12">B</text>
+        <text x="{x_r-2}" y="{y_r-20:.1f}" font-size="18" font-weight="800" fill="#2f7d4b">R</text>
+        <text x="{(x_s+x_b)/2-30:.1f}" y="{min(y_s,y_b)-12:.1f}" font-size="14" fill="#8a5c1c">dFB</text>
+        <text x="{(x_b+x_r)/2-30:.1f}" y="{min(y_b,y_r)-12:.1f}" font-size="14" fill="#8a5c1c">dBR</text>
+        <text x="{(x_s+x_r)/2-35:.1f}" y="{(y_s+y_r)/2+28:.1f}" font-size="14" fill="#5f768a">dFR directo</text>
+        <line x1="{x_s}" y1="{ground_y+18}" x2="{x_b:.1f}" y2="{ground_y+18}" stroke="#9fb0bd" stroke-width="2"/>
+        <line x1="{x_b:.1f}" y1="{ground_y+18}" x2="{x_r}" y2="{ground_y+18}" stroke="#9fb0bd" stroke-width="2"/>
+        <text x="{(x_s+x_b)/2-28:.1f}" y="{ground_y+38}" font-size="13" fill="#6a7d8e">{d_fb} m</text>
+        <text x="{(x_b+x_r)/2-28:.1f}" y="{ground_y+38}" font-size="13" fill="#6a7d8e">{d_br} m</text>
+      </svg>
+      <div style="display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:9px;margin-top:4px">
+        <div style="border-radius:13px;padding:11px;background:{status_bg};color:{status_color};font-size:.78rem;font-weight:850">{status_text}</div>
+        <div style="border-radius:13px;padding:11px;background:#f2f6f9;color:#334f63;font-size:.78rem"><b>Altura LOS en B</b><br>{los_at_bar:.2f} m</div>
+        <div style="border-radius:13px;padding:11px;background:#fff7e9;color:#80571b;font-size:.78rem"><b>z</b><br>{z_path:.3f} m</div>
+        <div style="border-radius:13px;padding:11px;background:#eef5fb;color:#1b5b86;font-size:.78rem"><b>Abar</b><br>{abar:.1f} dB</div>
+      </div>
+    </div>
+    """
+    st.markdown(profile_svg,unsafe_allow_html=True)
+
+    st.markdown(
+        f"Para este perfil, la línea directa pasa a **{los_at_bar:.2f} m** en la posición de la barrera. "
+        f"La barrera mide **{hb_bar:.1f} m**, por lo que **{'sí' if screens else 'no'}** interrumpe la línea de visión."
+    )
+    bb1,bb2,bb3,bb4=st.columns(4)
+    bb1.metric("dFR directo",f"{d_fr:.2f} m")
+    bb2.metric("dFB + dBR",f"{d_sb+d_br_path:.2f} m")
+    bb3.metric("z",f"{z_path:.3f} m")
+    bb4.metric("Abar",f"{abar:.1f} dB")
+
     st.caption(
-        "Ejemplo didáctico de difracción superior. Una evaluación completa también debe considerar la geometría real, "
-        "los extremos laterales, la altura del borde y las limitaciones del método."
+        "Este perfil es una versión docente simplificada del perfil fuente–barrera–receptor que se utilizará más adelante. "
+        "Aquí se muestra principalmente la difracción por el borde superior."
     )
 
     st.markdown("### 3 · Cmet · corrección meteorológica de largo plazo")
@@ -1740,91 +1830,115 @@ def _stage4(lab, saved):
         """
         <div style="border:1px solid #d8e6f0;border-radius:20px;padding:20px 22px;
         background:linear-gradient(135deg,#f8fbfe,#eef6fb);margin-bottom:1rem">
-          <div style="font-size:.72rem;font-weight:900;letter-spacing:.1em;color:#0b6ea8">EJERCICIO DE CIERRE</div>
+          <div style="font-size:.72rem;font-weight:900;letter-spacing:.1em;color:#0b6ea8">EJERCICIO DE CIERRE · BARRERA ACÚSTICA</div>
           <div style="font-size:1.2rem;font-weight:850;color:#16314b;margin:.35rem 0">
-            Completa los tres términos que faltaban
+            Analiza el perfil y calcula Abar
           </div>
           <div style="color:#536b80;line-height:1.5">
-            Para el escenario indicado calcula Agr, Abar y Cmet. No se muestran los resultados antes de comprobar.
+            Resuelve un caso independiente. Debes comprobar si la barrera corta la línea de visión,
+            calcular la diferencia de camino z y obtener la atenuación por barrera.
           </div>
         </div>
         """,
         unsafe_allow_html=True,
     )
 
-    ex_cases={
-        "Caso A · Obra urbana":{"g":0.0,"freq":500,"d":90,"hs":1.5,"hr":1.5,"dfb":30,"dbr":60,"z":0.30,"fb":500,"c0":3.0},
-        "Caso B · Terreno mixto":{"g":0.5,"freq":1000,"d":130,"hs":2.0,"hr":4.5,"dfb":45,"dbr":85,"z":0.55,"fb":1000,"c0":3.0},
-        "Caso C · Suelo poroso":{"g":1.0,"freq":250,"d":170,"hs":1.2,"hr":1.5,"dfb":65,"dbr":105,"z":0.80,"fb":250,"c0":4.0},
+    barrier_cases={
+        "Caso A · Pantalla temporal":{"hs":1.5,"hb":3.5,"hr":1.5,"dfb":20.0,"dbr":30.0,"freq":500},
+        "Caso B · Receptor elevado":{"hs":1.5,"hb":4.0,"hr":6.0,"dfb":18.0,"dbr":42.0,"freq":1000},
+        "Caso C · Barrera cercana a la fuente":{"hs":2.0,"hb":5.0,"hr":1.5,"dfb":10.0,"dbr":55.0,"freq":2000},
     }
-    ex_case=st.segmented_control("Selecciona un caso",list(ex_cases.keys()),default="Caso A · Obra urbana",key="c4l1_s4_case")
-    ex=ex_cases[ex_case]
-    ex_agr=_ground_att_iso_edu(ex["d"],ex["hs"],ex["hr"],ex["g"],ex["freq"])
-    ex_ds=ex["dfb"]+ex["z"]/2.0
-    ex_dr=ex["dbr"]+ex["z"]/2.0
-    ex_abar=_barrier_dz_edu(ex_ds,ex_dr,ex["dfb"]+ex["dbr"],ex["fb"])
-    ex_cmet=_cmet_edu(ex["d"],ex["hs"],ex["hr"],ex["c0"])
+    ex_case=st.segmented_control(
+        "Selecciona un caso",
+        list(barrier_cases.keys()),
+        default="Caso A · Pantalla temporal",
+        key="c4l1_s4_barrier_case",
+    )
+    ex=barrier_cases[ex_case]
+    ex_total=ex["dfb"]+ex["dbr"]
+    ex_los=ex["hs"]+(ex["hr"]-ex["hs"])*(ex["dfb"]/ex_total)
+    ex_screens=ex["hb"]>ex_los
+    ex_direct=math.sqrt(ex_total**2+(ex["hr"]-ex["hs"])**2)
+    ex_ds=math.sqrt(ex["dfb"]**2+(ex["hb"]-ex["hs"])**2)
+    ex_dr=math.sqrt(ex["dbr"]**2+(ex["hb"]-ex["hr"])**2)
+    ex_z=(ex_ds+ex_dr)-ex_direct
+    ex_abar=_barrier_dz_edu(ex_ds,ex_dr,ex_direct,ex["freq"]) if ex_screens else 0.0
 
     st.markdown(
         f"""
         <div style="border:1px solid #dce7f0;border-radius:18px;padding:17px 19px;background:#fff;margin-bottom:.8rem">
           <div style="font-size:.8rem;font-weight:900;color:#17324a">{ex_case}</div>
           <div style="color:#5e7385;margin-top:.25rem">
-            Agr: G={ex['g']:.1f}, f={ex['freq']} Hz, d={ex['d']} m, hs={ex['hs']:.1f} m, hr={ex['hr']:.1f} m
+            hs={ex['hs']:.1f} m · hb={ex['hb']:.1f} m · hr={ex['hr']:.1f} m
           </div>
           <div style="color:#5e7385;margin-top:.2rem">
-            Abar: F–B={ex['dfb']} m, B–R={ex['dbr']} m, z={ex['z']:.2f} m, f={ex['fb']} Hz
-          </div>
-          <div style="color:#5e7385;margin-top:.2rem">
-            Cmet: d={ex['d']} m, hs={ex['hs']:.1f} m, hr={ex['hr']:.1f} m, C0={ex['c0']:.1f} dB
+            F–B={ex['dfb']:.0f} m · B–R={ex['dbr']:.0f} m · frecuencia={ex['freq']} Hz
           </div>
         </div>
         """,
         unsafe_allow_html=True,
     )
-    q1,q2,q3=st.columns(3)
-    ans_agr=q1.text_input("Agr [dB]",key=f"c4l1_s4_ans_agr_{ex_case}",placeholder="Calcula")
-    ans_abar=q2.text_input("Abar [dB]",key=f"c4l1_s4_ans_abar_{ex_case}",placeholder="Calcula")
-    ans_cmet=q3.text_input("Cmet [dB]",key=f"c4l1_s4_ans_cmet_{ex_case}",placeholder="Calcula")
 
-    if st.button("Comprobar ejercicio",key=f"c4l1_s4_check_{ex_case}",type="primary",use_container_width=True):
+    ans_screen=st.radio(
+        "¿La barrera interrumpe la línea de visión fuente–receptor?",
+        ["Sí","No"],
+        index=None,
+        horizontal=True,
+        key=f"c4l1_s4_bar_screen_{ex_case}",
+    )
+    e1,e2,e3=st.columns(3)
+    ans_los=e1.text_input("Altura de la línea de visión en B [m]",key=f"c4l1_s4_bar_los_{ex_case}",placeholder="m")
+    ans_z=e2.text_input("Diferencia de camino z [m]",key=f"c4l1_s4_bar_z_{ex_case}",placeholder="m")
+    ans_abar=e3.text_input("Abar [dB]",key=f"c4l1_s4_bar_abar_{ex_case}",placeholder="dB")
+
+    if st.button("Comprobar ejercicio",key=f"c4l1_s4_bar_check_{ex_case}",type="primary",use_container_width=True):
         def _num4(v):
             try:
                 return float(str(v).strip().replace(",","."))
             except Exception:
                 return None
-        vals=[_num4(v) for v in [ans_agr,ans_abar,ans_cmet]]
-        if any(v is None for v in vals):
-            st.warning("Completa Agr, Abar y Cmet antes de comprobar.")
+        los_v=_num4(ans_los)
+        z_v=_num4(ans_z)
+        abar_v=_num4(ans_abar)
+        if ans_screen is None or any(v is None for v in [los_v,z_v,abar_v]):
+            st.warning("Completa las cuatro respuestas antes de comprobar.")
         else:
-            exp=[ex_agr,ex_abar,ex_cmet]
-            tol=[0.08,0.25,0.08]
-            ok=[abs(a-b)<=t for a,b,t in zip(vals,exp,tol)]
-            labs=["Agr","Abar","Cmet"]
-            if all(ok):
-                st.success("Correcto. Cerraste correctamente los tres términos restantes de propagación.")
-                s1,s2,s3=st.columns(3)
-                s1.metric("Agr",f"{ex_agr:+.2f} dB")
-                s2.metric("Abar",f"{ex_abar:.1f} dB")
-                s3.metric("Cmet",f"{ex_cmet:.2f} dB")
+            ok_screen=ans_screen==("Sí" if ex_screens else "No")
+            ok_los=abs(los_v-ex_los)<=0.08
+            ok_z=abs(z_v-ex_z)<=0.015
+            ok_abar=abs(abar_v-ex_abar)<=0.25
+            checks=[ok_screen,ok_los,ok_z,ok_abar]
+            labels=["línea de visión","altura LOS en B","diferencia de camino z","Abar"]
+            if all(checks):
+                st.success("Correcto. Interpretaste la geometría y calculaste correctamente la atenuación de la barrera.")
+                r1,r2,r3,r4=st.columns(4)
+                r1.metric("Interrumpe LOS","Sí" if ex_screens else "No")
+                r2.metric("Altura LOS",f"{ex_los:.2f} m")
+                r3.metric("z",f"{ex_z:.3f} m")
+                r4.metric("Abar",f"{ex_abar:.1f} dB")
             else:
-                st.warning("Revisa: "+", ".join(labs[i] for i,v in enumerate(ok) if not v)+".")
-                st.caption("La solución completa se muestra solo cuando los tres resultados son correctos.")
+                st.warning("Revisa: "+", ".join(labels[i] for i,v in enumerate(checks) if not v)+".")
+                st.caption("La solución completa se muestra solo cuando todas las respuestas son correctas.")
 
     if st.session_state.get("role")=="Docente":
         with st.expander("👩‍🏫 Pauta docente · Etapa 4",expanded=False):
             st.markdown(
                 f"""
                 **Caso:** {ex_case}  
-                **Agr esperado:** {ex_agr:+.2f} dB  
-                **Abar esperado:** {ex_abar:.1f} dB  
-                **Cmet esperado:** {ex_cmet:.2f} dB
+                **Interrumpe línea de visión:** {'Sí' if ex_screens else 'No'}  
+                **Altura de la línea de visión en B:** {ex_los:.2f} m  
+                **dFR directo:** {ex_direct:.2f} m  
+                **dFB + dBR:** {ex_ds+ex_dr:.2f} m  
+                **z esperado:** {ex_z:.3f} m  
+                **Frecuencia:** {ex['freq']} Hz  
+                **Abar esperado:** **{ex_abar:.1f} dB**
                 """
             )
             st.info(
-                "Punto docente clave: Agr, Abar y Cmet representan mecanismos distintos. "
-                "Agr es efecto de suelo, Abar es difracción/apantallamiento y Cmet es una corrección meteorológica de largo plazo."
+                "Punto docente clave: antes de aplicar una ecuación de difracción, el alumno debe comprender la geometría. "
+                "La barrera debe analizarse mediante línea de visión, diferencia de camino y frecuencia."
             )
+
 
 
 def _stage5(lab, saved):
