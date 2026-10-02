@@ -1554,8 +1554,8 @@ def _stage3(lab, saved):
 def _stage4(lab, saved):
     _header(
         4,
-        "Efecto de suelo y topografía · Agr",
-        "Continuar la ecuación de propagación exterior incorporando el efecto de suelo Agr y la geometría del terreno.",
+        "Propagación exterior completa · Agr, Abar y Cmet",
+        "Cerrar la ecuación de propagación exterior incorporando efecto de suelo, difracción por barreras y corrección meteorológica.",
     )
 
     st.markdown(
@@ -1563,22 +1563,20 @@ def _stage4(lab, saved):
         <div style="border:1px solid #cfddea;border-radius:22px;padding:20px 22px;
         background:linear-gradient(135deg,#f7fbff,#eef5fb);box-shadow:0 8px 20px rgba(31,63,92,.06);
         margin:.25rem 0 1rem">
-          <div style="font-size:.72rem;font-weight:900;letter-spacing:.1em;color:#0b6ea8">
-            CONTINUAMOS LA ECUACIÓN DE PROPAGACIÓN
-          </div>
+          <div style="font-size:.72rem;font-weight:900;letter-spacing:.1em;color:#0b6ea8">CERRAMOS LA ECUACIÓN DE PROPAGACIÓN</div>
           <div style="font-size:.9rem;color:#607386;margin-top:.3rem">
-            En la etapa anterior revisamos <b>Dc</b>, <b>Adiv</b> y <b>Aatm</b>. Ahora incorporamos <b>Agr</b>.
+            Ya revisamos <b>Dc</b>, <b>Adiv</b> y <b>Aatm</b>. En esta etapa incorporamos los tres términos que faltan:
+            <b>Agr</b>, <b>Abar</b> y <b>Cmet</b>.
           </div>
         </div>
         """,
         unsafe_allow_html=True,
     )
     with st.container(border=True):
-        st.latex(r"L_p = L_W + D_c - A_{div} - A_{atm} - \mathbf{A_{gr}} - A_{bar} - C_{met}")
+        st.latex(r"L_p = L_W + D_c - A_{div} - A_{atm} - \mathbf{A_{gr}} - \mathbf{A_{bar}} - \mathbf{C_{met}}")
         st.markdown(
-            "**Término activo en esta etapa: Agr · efecto de suelo.**  "
-            "Después abordaremos Abar (barreras/difracción) y Cmet (meteorología) antes de pasar "
-            "a ciclos de operación, simultaneidad y control en la fuente."
+            "**Referencia:** enfoque de propagación exterior de **ISO 9613-2:2024**. "
+            "Los tres términos resaltados se trabajan en esta etapa."
         )
         progress_html = """
         <div style="display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:8px;margin-top:.5rem">
@@ -1586,124 +1584,33 @@ def _stage4(lab, saved):
           <div style="border-radius:12px;padding:9px;background:#edf6ff;color:#1d5e8a;text-align:center;font-size:.75rem;font-weight:850">✓ Adiv</div>
           <div style="border-radius:12px;padding:9px;background:#edf6ff;color:#1d5e8a;text-align:center;font-size:.75rem;font-weight:850">✓ Aatm</div>
           <div style="border:2px solid #58a66e;border-radius:12px;padding:8px;background:#eef9f1;color:#2c6c3e;text-align:center;font-size:.75rem;font-weight:900">AHORA · Agr</div>
-          <div style="border-radius:12px;padding:9px;background:#f6f7f8;color:#82909c;text-align:center;font-size:.75rem;font-weight:800">DESPUÉS · Abar</div>
-          <div style="border-radius:12px;padding:9px;background:#f6f7f8;color:#82909c;text-align:center;font-size:.75rem;font-weight:800">DESPUÉS · Cmet</div>
+          <div style="border:2px solid #d59a3c;border-radius:12px;padding:8px;background:#fff7e8;color:#8b5e16;text-align:center;font-size:.75rem;font-weight:900">AHORA · Abar</div>
+          <div style="border:2px solid #7c72b8;border-radius:12px;padding:8px;background:#f5f2fb;color:#5c4d8d;text-align:center;font-size:.75rem;font-weight:900">AHORA · Cmet</div>
         </div>
         """
         st.markdown(progress_html,unsafe_allow_html=True)
-    st.markdown(
-        """
-        <div style="border:1px solid #d9e7f3;border-radius:22px;padding:22px 24px;
-        background:linear-gradient(135deg,#fbfdff 0%,#f4f9f5 55%,#eef8f0 100%);
-        box-shadow:0 8px 22px rgba(30,80,55,.06);margin-bottom:1rem">
-          <div style="font-size:.72rem;font-weight:900;letter-spacing:.12em;color:#2b7a4b">IDEA CENTRAL</div>
-          <div style="font-size:1.3rem;font-weight:900;color:#173426;margin:.4rem 0 .5rem">
-            El suelo no es una “atenuación fija”
-          </div>
-          <div style="color:#526b5d;line-height:1.6">
-            El efecto de suelo surge de la interacción entre el sonido directo y el sonido reflejado por el terreno.
-            Su magnitud depende del tipo de superficie, la frecuencia, la distancia y las alturas de la fuente y del receptor.
-          </div>
-        </div>
-        """,
-        unsafe_allow_html=True,
-    )
 
+    st.markdown("### 1 · Agr · efecto de suelo")
     st.markdown(
-        """
-        <div style="border:1px solid #cfe3d4;border-radius:22px;padding:20px 22px;
-        background:linear-gradient(135deg,#f8fcf9,#edf7ef);margin:.25rem 0 1rem">
-          <div style="font-size:.72rem;font-weight:900;letter-spacing:.1em;color:#2b7a4b">REFERENCIA NORMATIVA</div>
-          <div style="font-size:.92rem;color:#4f6958;line-height:1.55;margin-top:.3rem">
-            El tratamiento del efecto de suelo mostrado en esta etapa sigue el enfoque de
-            <b>ISO 9613-2:2024, sección 7.3.1</b>, donde el término de suelo se representa como
-            <b>Agr</b> y depende de la geometría, la frecuencia y el factor de suelo <b>G</b>.
-          </div>
-        </div>
-        """,
-        unsafe_allow_html=True,
+        "El término **Agr** aparece por la interacción entre el sonido directo y el sonido reflejado por el terreno. "
+        "No es una absorción fija: depende del tipo de superficie, la frecuencia, la distancia y las alturas de fuente y receptor."
     )
-
-    st.markdown("### 1 · ¿Qué representa el factor de suelo G?")
-    st.markdown(
-        "El parámetro **G** describe el comportamiento acústico de la superficie. "
-        "No representa un porcentaje directo de absorción: **G = 0,5 no significa que el suelo absorba 50 % del sonido**."
-    )
-
     g_cards=[
-        ("G = 0","Suelo duro","Hormigón, pavimento, agua o superficies muy compactas.","Predomina la reflexión"),
-        ("G = 0,5","Terreno mixto","Combinación aproximada de zonas duras y porosas.","Comportamiento intermedio"),
-        ("G = 1","Suelo poroso","Pasto, tierra suelta, suelo vegetal u otras superficies porosas.","Mayor efecto de suelo"),
+        ("G = 0","Suelo duro","Hormigón, pavimento, agua o superficie compacta."),
+        ("G = 0,5","Terreno mixto","Combinación aproximada de sectores duros y porosos."),
+        ("G = 1","Suelo poroso","Pasto, suelo vegetal o tierra porosa."),
     ]
     gh='<div style="display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;margin:.4rem 0 1rem">'
-    for gv,title,desc,note in g_cards:
+    for gv,title,desc in g_cards:
         gh+=(
             f'<div style="border:1px solid #d8e7dc;border-radius:17px;padding:15px;background:#fff">'
             f'<div style="font-size:.76rem;font-weight:900;color:#2b7a4b">{gv}</div>'
             f'<div style="font-size:1rem;font-weight:850;color:#1c3b2a;margin:.25rem 0">{title}</div>'
-            f'<div style="font-size:.82rem;color:#607568;line-height:1.4">{desc}</div>'
-            f'<div style="font-size:.75rem;font-weight:800;color:#4d765c;margin-top:.45rem">{note}</div>'
-            f'</div>'
+            f'<div style="font-size:.82rem;color:#607568;line-height:1.4">{desc}</div></div>'
         )
     gh+='</div>'
     st.markdown(gh,unsafe_allow_html=True)
-
-    st.info(
-        "En una modelación más detallada pueden distinguirse zonas próximas a la fuente, zona intermedia y zona del receptor. "
-        "En este laboratorio usamos un único valor G para toda la trayectoria para mantener el ejercicio controlado."
-    )
-
-    st.markdown("### 2 · Geometría 3D: altura local y distancia real")
-    st.markdown(
-        "La fuente y el receptor se ubican a una altura **sobre la cota local del terreno**. "
-        "Si ambas cotas de terreno son distintas, la separación real no coincide con la distancia horizontal del plano."
-    )
-
-    c1,c2,c3=st.columns(3)
-    ground_s=c1.slider("Cota terreno en fuente [m]",0.0,30.0,0.0,0.5,key="c4l1_s4_ground_s")
-    ground_r=c2.slider("Cota terreno en receptor [m]",0.0,30.0,4.0,0.5,key="c4l1_s4_ground_r")
-    horizontal=c3.slider("Distancia horizontal [m]",10,250,60,5,key="c4l1_s4_horizontal")
-
-    h1,h2=st.columns(2)
-    hs=h1.slider("Altura fuente sobre terreno [m]",0.1,8.0,1.5,0.1,key="c4l1_s4_hs")
-    hr=h2.slider("Altura receptor sobre terreno [m]",1.0,30.0,1.5,0.5,key="c4l1_s4_hr")
-
-    zs=ground_s+hs
-    zr=ground_r+hr
-    dz=zr-zs
-    d3=math.sqrt(float(horizontal)**2+dz**2)
-
-    geom_html=f"""
-    <div style="display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px;margin:.4rem 0 1rem">
-      <div style="border:1px solid #dce7f0;border-radius:15px;padding:13px;background:#fff">
-        <div style="font-size:.72rem;color:#718291">Altura absoluta fuente</div>
-        <div style="font-size:1.2rem;font-weight:900;color:#17324a">{zs:.1f} m</div>
-      </div>
-      <div style="border:1px solid #dce7f0;border-radius:15px;padding:13px;background:#fff">
-        <div style="font-size:.72rem;color:#718291">Altura absoluta receptor</div>
-        <div style="font-size:1.2rem;font-weight:900;color:#17324a">{zr:.1f} m</div>
-      </div>
-      <div style="border:1px solid #dce7f0;border-radius:15px;padding:13px;background:#fff">
-        <div style="font-size:.72rem;color:#718291">Diferencia vertical</div>
-        <div style="font-size:1.2rem;font-weight:900;color:#17324a">{dz:+.1f} m</div>
-      </div>
-      <div style="border:1px solid #dce7f0;border-radius:15px;padding:13px;background:#fff">
-        <div style="font-size:.72rem;color:#718291">Distancia 3D F–R</div>
-        <div style="font-size:1.2rem;font-weight:900;color:#17324a">{d3:.1f} m</div>
-      </div>
-    </div>
-    """
-    st.markdown(geom_html,unsafe_allow_html=True)
-    with st.container(border=True):
-        st.latex(r"d_{3D}=\sqrt{d_h^2+(z_R-z_S)^2}")
-        st.caption("dh es la distancia horizontal; zS y zR son las alturas absolutas de fuente y receptor.")
-
-    st.markdown("### 3 · Efecto de suelo · Agr")
-    st.markdown(
-        "En ISO 9613-2 el término **Agr** representa el efecto combinado del terreno en la propagación. "
-        "Su comportamiento puede variar con la banda de frecuencia y con la geometría. Por eso no corresponde "
-        "tratarlo como una corrección única e independiente del escenario."
-    )
+    st.info("G no es porcentaje de absorción. G = 0,5 no significa que el terreno absorba 50 % del sonido.")
 
     def _ground_att_iso_edu(distance_m, source_height_m, receiver_height_m, ground_factor, frequency_hz):
         dp=max(float(distance_m),1e-6)
@@ -1738,109 +1645,147 @@ def _stage4(lab, saved):
         energy_factor=1.0+(10.0**(-a_prime/10.0)-1.0)*k_geo
         return -10.0*math.log10(max(energy_factor,1e-12))
 
-    gg1,gg2=st.columns(2)
-    g=gg1.slider("Factor de suelo G",0.0,1.0,0.5,0.1,key="c4l1_s4_g")
-    freq=gg2.selectbox("Frecuencia [Hz]",[63,125,250,500,1000,2000,4000,8000],index=3,key="c4l1_s4_freq")
-    agr=_ground_att_iso_edu(horizontal,hs,hr,g,freq)
+    agr1,agr2,agr3,agr4,agr5=st.columns(5)
+    g=agr1.slider("G",0.0,1.0,0.5,0.1,key="c4l1_s4_g")
+    freq=agr2.selectbox("Frecuencia [Hz]",[63,125,250,500,1000,2000,4000,8000],index=3,key="c4l1_s4_freq")
+    distance=agr3.slider("Distancia [m]",10,250,80,5,key="c4l1_s4_distance")
+    hs=agr4.slider("hs [m]",0.5,8.0,1.5,0.5,key="c4l1_s4_hs")
+    hr=agr5.slider("hr [m]",1.0,20.0,1.5,0.5,key="c4l1_s4_hr")
+    agr=_ground_att_iso_edu(distance,hs,hr,g,freq)
+    st.metric("Agr del escenario",f"{agr:+.2f} dB")
+    st.caption("El signo puede resultar contraintuitivo porque Agr representa interferencia de caminos, no una absorción simple.")
 
-    gr1,gr2,gr3,gr4=st.columns(4)
-    gr1.metric("G",f"{g:.1f}")
-    gr2.metric("Frecuencia",f"{freq} Hz")
-    gr3.metric("Alturas hs / hr",f"{hs:.1f} / {hr:.1f} m")
-    gr4.metric("Agr",f"{agr:+.2f} dB")
-
-    st.caption(
-        "El signo de Agr puede resultar contraintuitivo: el efecto de suelo surge de una interferencia de caminos, "
-        "por lo que no debe interpretarse simplemente como 'absorción'."
-    )
-
-    st.markdown("#### Compara el mismo escenario con distintos suelos")
-    compare=[]
-    for gv in [0.0,0.5,1.0]:
-        compare.append((gv,_ground_att_iso_edu(horizontal,hs,hr,gv,freq)))
-    ch='<div style="display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;margin:.3rem 0 1rem">'
-    labels={0.0:"Duro",0.5:"Mixto",1.0:"Poroso"}
-    for gv,val in compare:
-        ch+=(
-            f'<div style="border:1px solid #d8e7dc;border-radius:16px;padding:14px;background:#fff;text-align:center">'
-            f'<div style="font-size:.72rem;color:#708577">G = {gv:.1f} · {labels[gv]}</div>'
-            f'<div style="font-size:1.35rem;font-weight:900;color:#245d3b;margin:.2rem 0">{val:+.2f} dB</div>'
-            f'<div style="font-size:.72rem;color:#839489">Agr a {freq} Hz</div></div>'
-        )
-    ch+='</div>'
-    st.markdown(ch,unsafe_allow_html=True)
-
-    st.markdown("### 4 · Qué aporta la topografía al cálculo")
+    st.markdown("### 2 · Abar · barreras y difracción")
     st.markdown(
-        "La topografía importa porque modifica la **geometría real de propagación**: la cota local de la fuente y del receptor "
-        "cambia la distancia tridimensional y las alturas relativas utilizadas por los términos de propagación. "
-        "En esta etapa usamos la topografía solo para definir correctamente esa geometría; no la convertimos en un tema separado de receptores por piso."
+        "Una barrera produce atenuación cuando interrumpe la línea de visión directa entre fuente y receptor. "
+        "El sonido no desaparece: **se difracta** sobre el borde superior y alrededor de los extremos. "
+        "La atenuación aumenta cuando la ruta difractada es claramente más larga que la ruta directa y también depende de la frecuencia."
     )
-    topo1,topo2,topo3=st.columns(3)
-    topo1.metric("Cota local fuente",f"{ground_s:.1f} m")
-    topo2.metric("Cota local receptor",f"{ground_r:.1f} m")
-    topo3.metric("Distancia real F–R",f"{d3:.1f} m")
+    simple_cards=[
+        ("Línea de visión","Si fuente y receptor se ven por encima de la barrera, el apantallamiento es pequeño o nulo."),
+        ("Diferencia de camino z","Compara la ruta difractada F–B–R con la distancia directa F–R."),
+        ("Frecuencia","A igual geometría, la difracción cambia con la longitud de onda."),
+    ]
+    bh='<div style="display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;margin:.4rem 0 1rem">'
+    for title,desc in simple_cards:
+        bh+=(f'<div style="border:1px solid #eadfc8;border-radius:17px;padding:15px;background:#fff">'
+             f'<div style="font-size:.95rem;font-weight:850;color:#5b421e">{title}</div>'
+             f'<div style="font-size:.82rem;color:#746247;line-height:1.4;margin-top:.3rem">{desc}</div></div>')
+    bh+='</div>'
+    st.markdown(bh,unsafe_allow_html=True)
+
+    def _barrier_dz_edu(ds,dr,direct,frequency_hz,max_db=20.0):
+        wavelength=343.0/max(float(frequency_hz),1.0)
+        z=(float(ds)+float(dr))-float(direct)
+        z_min=-2.0*wavelength/20.0
+        if z<=z_min:
+            return 0.0
+        denom=max(2.0*(z-z_min),1e-12)
+        geometric=(max(ds,dr)*min(ds,dr)*max(direct,0.0))/denom
+        k_met=math.exp(-(1.0/2000.0)*math.sqrt(max(geometric,0.0)))
+        argument=1.0+(2.0+(20.0/wavelength)*z)*k_met
+        return min(max_db,max(0.0,10.0*math.log10(max(argument,1.0))))
+
+    b1,b2,b3,b4=st.columns(4)
+    d_fb=b1.slider("Fuente → barrera [m]",5,100,25,5,key="c4l1_s4_dfb")
+    d_br=b2.slider("Barrera → receptor [m]",5,150,35,5,key="c4l1_s4_dbr")
+    excess=b3.slider("Exceso de camino z [m]",0.0,2.0,0.35,0.05,key="c4l1_s4_z")
+    freq_bar=b4.selectbox("Frecuencia barrera [Hz]",[125,250,500,1000,2000,4000],index=2,key="c4l1_s4_bar_freq")
+    direct=float(d_fb+d_br)
+    ds=float(d_fb)+float(excess)/2.0
+    dr=float(d_br)+float(excess)/2.0
+    abar=_barrier_dz_edu(ds,dr,direct,freq_bar)
+    bb1,bb2,bb3=st.columns(3)
+    bb1.metric("Ruta directa",f"{direct:.1f} m")
+    bb2.metric("Diferencia de camino z",f"{excess:.2f} m")
+    bb3.metric("Abar",f"{abar:.1f} dB")
     st.caption(
-        "La altura acústicamente relevante se construye a partir de la cota del terreno y la altura física de la fuente/receptor. "
-        "Esto permite que Agr y los términos que veremos después trabajen con una geometría coherente."
+        "Ejemplo didáctico de difracción superior. Una evaluación completa también debe considerar la geometría real, "
+        "los extremos laterales, la altura del borde y las limitaciones del método."
     )
+
+    st.markdown("### 3 · Cmet · corrección meteorológica de largo plazo")
+    st.markdown(
+        "**Cmet no es absorción atmosférica.** Aatm representa pérdidas moleculares del aire; Cmet representa una corrección "
+        "estadística de propagación de largo plazo asociada a condiciones meteorológicas y a la relación entre distancia y alturas."
+    )
+    with st.container(border=True):
+        st.latex(r"C_{met}=C_0\left[1-\frac{10(h_s+h_r)}{d_p}\right]")
+        st.caption("Para distancias cortas respecto de las alturas, o si C0 = 0 dB, la corrección resulta 0 dB.")
+
+    def _cmet_edu(dp,hss,hrr,c0):
+        lim=10.0*(float(hss)+float(hrr))
+        if float(dp)<=lim or float(c0)<=0.0:
+            return 0.0
+        return float(c0)*max(0.0,1.0-lim/float(dp))
+
+    cm1,cm2,cm3,cm4=st.columns(4)
+    dp=cm1.slider("Distancia horizontal Cmet [m]",20,500,150,10,key="c4l1_s4_cmet_d")
+    cm_hs=cm2.slider("hs Cmet [m]",0.5,10.0,1.5,0.5,key="c4l1_s4_cmet_hs")
+    cm_hr=cm3.slider("hr Cmet [m]",1.0,20.0,1.5,0.5,key="c4l1_s4_cmet_hr")
+    c0=cm4.slider("C0 [dB]",0.0,5.0,3.0,0.5,key="c4l1_s4_c0")
+    cmet=_cmet_edu(dp,cm_hs,cm_hr,c0)
+    st.metric("Cmet",f"{cmet:.2f} dB")
+
+    st.markdown("### 4 · La ecuación ya está completa")
+    st.latex(r"L_p = L_W + D_c - A_{div} - A_{atm} - A_{gr} - A_{bar} - C_{met}")
+    st.markdown(
+        "Desde este punto ya conocemos **qué representa cada término físico**. En las etapas siguientes dejaremos de "
+        "incorporar mecanismos de propagación nuevos y pasaremos a describir cómo funciona una obra real: medidas de control, "
+        "ciclos de operación y simultaneidad."
+    )
+
     st.markdown("---")
     st.markdown(
         """
         <div style="border:1px solid #d8e6f0;border-radius:20px;padding:20px 22px;
         background:linear-gradient(135deg,#f8fbfe,#eef6fb);margin-bottom:1rem">
-          <div style="font-size:.72rem;font-weight:900;letter-spacing:.1em;color:#0b6ea8">EJERCICIO APLICADO</div>
+          <div style="font-size:.72rem;font-weight:900;letter-spacing:.1em;color:#0b6ea8">EJERCICIO DE CIERRE</div>
           <div style="font-size:1.2rem;font-weight:850;color:#16314b;margin:.35rem 0">
-            Interpreta el terreno y la geometría antes de modelar
+            Completa los tres términos que faltaban
           </div>
           <div style="color:#536b80;line-height:1.5">
-            Resuelve un caso independiente. Debes identificar G, reconstruir la geometría a partir de las cotas locales,
-            calcular la distancia tridimensional y determinar Agr para la banda indicada.
+            Para el escenario indicado calcula Agr, Abar y Cmet. No se muestran los resultados antes de comprobar.
           </div>
         </div>
         """,
         unsafe_allow_html=True,
     )
 
-    cases={
-        "Caso A · Faena sobre pavimento":{
-            "surface":"Plataforma completamente pavimentada","g":0.0,"gs":2.0,"gr":6.0,"hs":1.5,"hr":7.5,"dh":75,"freq":500
-        },
-        "Caso B · Terreno mixto":{
-            "surface":"Trayectoria con sectores pavimentados y suelo vegetal","g":0.5,"gs":4.0,"gr":10.0,"hs":2.0,"hr":4.5,"dh":95,"freq":1000
-        },
-        "Caso C · Área verde":{
-            "surface":"Trayectoria predominantemente sobre pasto y tierra porosa","g":1.0,"gs":1.0,"gr":3.0,"hs":1.2,"hr":10.5,"dh":120,"freq":250
-        },
+    ex_cases={
+        "Caso A · Obra urbana":{"g":0.0,"freq":500,"d":90,"hs":1.5,"hr":1.5,"dfb":30,"dbr":60,"z":0.30,"fb":500,"c0":3.0},
+        "Caso B · Terreno mixto":{"g":0.5,"freq":1000,"d":130,"hs":2.0,"hr":4.5,"dfb":45,"dbr":85,"z":0.55,"fb":1000,"c0":3.0},
+        "Caso C · Suelo poroso":{"g":1.0,"freq":250,"d":170,"hs":1.2,"hr":1.5,"dfb":65,"dbr":105,"z":0.80,"fb":250,"c0":4.0},
     }
-    ex_case=st.segmented_control("Selecciona un caso",list(cases.keys()),default="Caso A · Faena sobre pavimento",key="c4l1_s4_case")
-    ex=cases[ex_case]
-    ex_zs=ex["gs"]+ex["hs"]
-    ex_zr=ex["gr"]+ex["hr"]
-    ex_d3=math.sqrt(float(ex["dh"])**2+(ex_zr-ex_zs)**2)
-    ex_agr=_ground_att_iso_edu(ex["dh"],ex["hs"],ex["hr"],ex["g"],ex["freq"])
+    ex_case=st.segmented_control("Selecciona un caso",list(ex_cases.keys()),default="Caso A · Obra urbana",key="c4l1_s4_case")
+    ex=ex_cases[ex_case]
+    ex_agr=_ground_att_iso_edu(ex["d"],ex["hs"],ex["hr"],ex["g"],ex["freq"])
+    ex_ds=ex["dfb"]+ex["z"]/2.0
+    ex_dr=ex["dbr"]+ex["z"]/2.0
+    ex_abar=_barrier_dz_edu(ex_ds,ex_dr,ex["dfb"]+ex["dbr"],ex["fb"])
+    ex_cmet=_cmet_edu(ex["d"],ex["hs"],ex["hr"],ex["c0"])
 
     st.markdown(
         f"""
         <div style="border:1px solid #dce7f0;border-radius:18px;padding:17px 19px;background:#fff;margin-bottom:.8rem">
           <div style="font-size:.8rem;font-weight:900;color:#17324a">{ex_case}</div>
-          <div style="color:#5e7385;margin-top:.25rem"><b>Superficie:</b> {ex['surface']}</div>
+          <div style="color:#5e7385;margin-top:.25rem">
+            Agr: G={ex['g']:.1f}, f={ex['freq']} Hz, d={ex['d']} m, hs={ex['hs']:.1f} m, hr={ex['hr']:.1f} m
+          </div>
           <div style="color:#5e7385;margin-top:.2rem">
-            Cota fuente: {ex['gs']:.1f} m · hs: {ex['hs']:.1f} m ·
-            Cota receptor: {ex['gr']:.1f} m · hr: {ex['hr']:.1f} m ·
-            distancia horizontal: {ex['dh']} m · banda: {ex['freq']} Hz
+            Abar: F–B={ex['dfb']} m, B–R={ex['dbr']} m, z={ex['z']:.2f} m, f={ex['fb']} Hz
+          </div>
+          <div style="color:#5e7385;margin-top:.2rem">
+            Cmet: d={ex['d']} m, hs={ex['hs']:.1f} m, hr={ex['hr']:.1f} m, C0={ex['c0']:.1f} dB
           </div>
         </div>
         """,
         unsafe_allow_html=True,
     )
-
-    ex1,ex2,ex3,ex4,ex5=st.columns(5)
-    ans_g=ex1.text_input("G",key=f"c4l1_s4_g_ans_{ex_case}",placeholder="0 a 1")
-    ans_zs=ex2.text_input("z fuente [m]",key=f"c4l1_s4_zs_{ex_case}",placeholder="m")
-    ans_zr=ex3.text_input("z receptor [m]",key=f"c4l1_s4_zr_{ex_case}",placeholder="m")
-    ans_d3=ex4.text_input("d3D [m]",key=f"c4l1_s4_d3_{ex_case}",placeholder="m")
-    ans_agr=ex5.text_input("Agr [dB]",key=f"c4l1_s4_agr_{ex_case}",placeholder="dB")
+    q1,q2,q3=st.columns(3)
+    ans_agr=q1.text_input("Agr [dB]",key=f"c4l1_s4_ans_agr_{ex_case}",placeholder="Calcula")
+    ans_abar=q2.text_input("Abar [dB]",key=f"c4l1_s4_ans_abar_{ex_case}",placeholder="Calcula")
+    ans_cmet=q3.text_input("Cmet [dB]",key=f"c4l1_s4_ans_cmet_{ex_case}",placeholder="Calcula")
 
     if st.button("Comprobar ejercicio",key=f"c4l1_s4_check_{ex_case}",type="primary",use_container_width=True):
         def _num4(v):
@@ -1848,232 +1793,364 @@ def _stage4(lab, saved):
                 return float(str(v).strip().replace(",","."))
             except Exception:
                 return None
-        vals=[_num4(v) for v in [ans_g,ans_zs,ans_zr,ans_d3,ans_agr]]
+        vals=[_num4(v) for v in [ans_agr,ans_abar,ans_cmet]]
         if any(v is None for v in vals):
-            st.warning("Completa los cinco resultados antes de comprobar.")
+            st.warning("Completa Agr, Abar y Cmet antes de comprobar.")
         else:
-            exp=[ex["g"],ex_zs,ex_zr,ex_d3,ex_agr]
-            tol=[0.05,0.2,0.2,0.3,0.08]
+            exp=[ex_agr,ex_abar,ex_cmet]
+            tol=[0.08,0.25,0.08]
             ok=[abs(a-b)<=t for a,b,t in zip(vals,exp,tol)]
-            labs=["G","altura absoluta de fuente","altura absoluta de receptor","distancia 3D","Agr"]
+            labs=["Agr","Abar","Cmet"]
             if all(ok):
-                st.success("Correcto. Interpretaste correctamente la superficie y la geometría del caso.")
-                s1,s2,s3,s4,s5=st.columns(5)
-                s1.metric("G",f"{ex['g']:.1f}")
-                s2.metric("z fuente",f"{ex_zs:.1f} m")
-                s3.metric("z receptor",f"{ex_zr:.1f} m")
-                s4.metric("d3D",f"{ex_d3:.1f} m")
-                s5.metric("Agr",f"{ex_agr:+.2f} dB")
+                st.success("Correcto. Cerraste correctamente los tres términos restantes de propagación.")
+                s1,s2,s3=st.columns(3)
+                s1.metric("Agr",f"{ex_agr:+.2f} dB")
+                s2.metric("Abar",f"{ex_abar:.1f} dB")
+                s3.metric("Cmet",f"{ex_cmet:.2f} dB")
             else:
                 st.warning("Revisa: "+", ".join(labs[i] for i,v in enumerate(ok) if not v)+".")
-                st.caption("La solución completa se muestra solo cuando todos los resultados son correctos.")
+                st.caption("La solución completa se muestra solo cuando los tres resultados son correctos.")
 
     if st.session_state.get("role")=="Docente":
         with st.expander("👩‍🏫 Pauta docente · Etapa 4",expanded=False):
             st.markdown(
                 f"""
                 **Caso:** {ex_case}  
-                **Superficie:** {ex['surface']}  
-                **G esperado:** {ex['g']:.1f}  
-                **Altura absoluta fuente:** {ex_zs:.1f} m  
-                **Altura absoluta receptor:** {ex_zr:.1f} m  
-                **Distancia 3D:** {ex_d3:.1f} m  
-                **Frecuencia:** {ex['freq']} Hz  
-                **Agr esperado:** **{ex_agr:+.2f} dB**
+                **Agr esperado:** {ex_agr:+.2f} dB  
+                **Abar esperado:** {ex_abar:.1f} dB  
+                **Cmet esperado:** {ex_cmet:.2f} dB
                 """
             )
             st.info(
-                "Punto docente clave: G no es porcentaje de absorción. El alumno debe distinguir entre cota de terreno, "
-                "altura sobre terreno y altura absoluta, y comprender que Agr depende de la geometría y de la frecuencia."
+                "Punto docente clave: Agr, Abar y Cmet representan mecanismos distintos. "
+                "Agr es efecto de suelo, Abar es difracción/apantallamiento y Cmet es una corrección meteorológica de largo plazo."
             )
 
 
 def _stage5(lab, saved):
     _header(
         5,
-        "Múltiples máquinas y suma energética",
-        "Combinar fuentes simultáneas, identificar sus aportes y reconocer cuál domina en cada receptor.",
+        "Control en la fuente",
+        "Reconocer medidas que reducen la emisión acústica antes de que el sonido se propague hacia el receptor.",
     )
-    st.latex(r"L_{\\Sigma}=10\\log_{10}\\left(\\sum_i10^{L_i/10}\\right)")
-    c1, c2, c3 = st.columns(3)
-    a = c1.slider("Retroexcavadora [dB]", 50, 100, 72, key="c4l1_s5_a")
-    b = c2.slider("Generador [dB]", 50, 100, 68, key="c4l1_s5_b")
-    d = c3.slider("Martillo [dB]", 50, 100, 78, key="c4l1_s5_c")
-    total = 10 * math.log10(sum(10 ** (x / 10) for x in (a,b,d)))
-    dominant = max([("Retroexcavadora",a),("Generador",b),("Martillo",d)], key=lambda x:x[1])
-    m1, m2 = st.columns(2)
-    m1.metric("Nivel combinado", f"{total:.1f} dB")
-    m2.metric("Aporte mayor", f"{dominant[0]} · {dominant[1]} dB")
-    st.write(
-        "En Noise Map Lab revisa la contribución de cada fuente en el receptor. "
-        "La fuente dominante no tiene por qué ser la de mayor Lw si la geometría cambia."
+    st.markdown(
+        """
+        <div style="border:1px solid #dce7f0;border-radius:20px;padding:20px 22px;background:linear-gradient(135deg,#fbfdff,#f3f8fd)">
+          <div style="font-size:.72rem;font-weight:900;color:#0b6ea8;letter-spacing:.1em">PRINCIPIO DE CONTROL</div>
+          <div style="font-size:1.2rem;font-weight:850;color:#17324a;margin:.3rem 0">Reducir primero donde se genera el ruido</div>
+          <div style="color:#5d7183">Una reducción aplicada a Lw actúa antes de la propagación. Por eso suele ser una estrategia robusta cuando puede implementarse correctamente.</div>
+        </div>
+        """,unsafe_allow_html=True
     )
-    _model_button()
+    measures=[
+        ("Reducción directa","Disminución declarada o medida de la emisión de la fuente."),
+        ("Silenciador","Atenúa principalmente conductos, escapes o ventilaciones; suele depender de la frecuencia."),
+        ("Encierro","Rodea la fuente con cerramientos y controla transmisión, aberturas y ventilación."),
+        ("Semiencierro","Deja una o más superficies abiertas; la orientación de la abertura se vuelve crítica."),
+    ]
+    html='<div style="display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;margin:1rem 0">'
+    for title,desc in measures:
+        html+=f'<div style="border:1px solid #dce7f0;border-radius:16px;padding:15px;background:#fff"><div style="font-weight:850;color:#18324a">{title}</div><div style="font-size:.83rem;color:#64788b;margin-top:.3rem">{desc}</div></div>'
+    html+='</div>'
+    st.markdown(html,unsafe_allow_html=True)
+
+    base=st.slider("Lw inicial [dB]",80,125,105,key="c4l1_s5_base")
+    reduction=st.slider("Reducción aplicada [dB]",0,30,10,key="c4l1_s5_red")
+    after=base-reduction
+    a,b=st.columns(2)
+    a.metric("Lw antes",f"{base:.1f} dB")
+    b.metric("Lw después",f"{after:.1f} dB",delta=f"-{reduction:.1f} dB")
+    st.caption("Una reducción de emisión debe estar respaldada por desempeño declarado, medición o un supuesto técnico explícito.")
+
+    st.markdown("### Ejercicio breve")
+    ex_base=108.0
+    ex_red=12.0
+    ans=st.text_input("Una maquinaria tiene Lw = 108 dB y se aplica un control de 12 dB. ¿Cuál es el nuevo Lw?",key="c4l1_s5_ex",placeholder="dB")
+    if st.button("Comprobar",key="c4l1_s5_check"):
+        try: v=float(ans.replace(",","."))
+        except Exception: v=None
+        if v is None: st.warning("Ingresa un valor numérico.")
+        elif abs(v-(ex_base-ex_red))<=0.2: st.success("Correcto: 96 dB.")
+        else: st.warning("Revisa la reducción aplicada directamente sobre Lw.")
+
 
 def _stage6(lab, saved):
     _header(
         6,
-        "Ciclos de operación y simultaneidad",
-        "Incorporar la fracción de tiempo de funcionamiento sin confundir nivel operativo con nivel equivalente del período.",
+        "Control en la trayectoria y organización de la obra",
+        "Aplicar medidas de ubicación y trayectoria antes de combinar varias fuentes y tiempos de operación.",
     )
-    st.latex(r"\\Delta L_t=10\\log_{10}(t/T)")
-    c1, c2 = st.columns(2)
-    base = c1.slider("Nivel durante operación [dB]", 80, 125, 110, key="c4l1_s6_base")
-    pct = c2.slider("Tiempo activo [%]", 1, 100, 25, key="c4l1_s6_pct")
-    corr = 10 * math.log10(pct / 100)
-    eq = base + corr
-    m1, m2, m3 = st.columns(3)
-    m1.metric("Corrección temporal", f"{corr:.1f} dB")
-    m2.metric("Nivel equivalente", f"{eq:.1f} dB")
-    m3.metric("Operación", f"{pct}%")
     st.markdown(
-        "Prueba en Noise Map Lab el mismo martillo al 100 %, 50 %, 25 % y 10 %. "
-        "Después combínalo con una fuente continua."
+        "Una vez conocida la propagación, también puede reducirse el nivel **modificando la trayectoria**: aumentar distancia, "
+        "cambiar ubicación, aprovechar edificaciones existentes o incorporar pantallas temporales."
     )
-    _model_button()
+    controls=[
+        ("Reubicar maquinaria","Aumentar la distancia a receptores sensibles puede reducir Adiv de forma simple."),
+        ("Organizar frentes","Evitar concentrar equipos ruidosos junto al mismo receptor."),
+        ("Usar obstáculos","Edificaciones, acopios o pantallas pueden modificar la línea de visión."),
+        ("Orientar la fuente","Escapes, aberturas y semiencierros deben orientarse lejos del receptor crítico."),
+    ]
+    html='<div style="display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;margin:.8rem 0">'
+    for title,desc in controls:
+        html+=f'<div style="border:1px solid #dce7f0;border-radius:16px;padding:15px;background:#fff"><div style="font-weight:850;color:#18324a">{title}</div><div style="font-size:.83rem;color:#64788b;margin-top:.3rem">{desc}</div></div>'
+    html+='</div>'
+    st.markdown(html,unsafe_allow_html=True)
+
+    lw=st.slider("Lw de referencia [dB]",85,125,108,key="c4l1_s6_lw")
+    d1=st.slider("Distancia inicial [m]",10,100,20,5,key="c4l1_s6_d1")
+    d2=st.slider("Distancia propuesta [m]",20,250,80,5,key="c4l1_s6_d2")
+    lp1=lw-(20*math.log10(d1)+11)
+    lp2=lw-(20*math.log10(d2)+11)
+    x,y,z=st.columns(3)
+    x.metric("Lp inicial",f"{lp1:.1f} dB")
+    y.metric("Lp reubicado",f"{lp2:.1f} dB")
+    z.metric("Reducción por distancia",f"{lp1-lp2:.1f} dB")
+    st.caption("Ejemplo aislado de divergencia geométrica; en una evaluación completa permanecen activos los demás términos de propagación.")
+
 
 def _stage7(lab, saved):
     _header(
         7,
-        "Barreras, encierros y control en la fuente",
-        "Comprobar cuantitativamente cómo la geometría y la reducción de emisión modifican el nivel receptor.",
+        "Ciclos de operación, simultaneidad y suma energética",
+        "Representar una obra real combinando tiempo de funcionamiento y aportes simultáneos de varias maquinarias.",
     )
-    st.markdown("### Barrera · geometría F–B–R")
-    c1, c2, c3 = st.columns(3)
-    hs = c1.number_input("Altura fuente [m]", 0.1, 20.0, 1.5, 0.1, key="c4l1_s7_hs")
-    hb = c2.number_input("Altura barrera [m]", 0.1, 20.0, 2.0, 0.1, key="c4l1_s7_hb")
-    hr = c3.number_input("Altura receptor [m]", 0.1, 30.0, 1.5, 0.1, key="c4l1_s7_hr")
-    st.write(
-        f"Fuente {hs:.1f} m · barrera {hb:.1f} m · receptor {hr:.1f} m. "
-        "Primero comprueba línea de visión y después analiza el efecto de la frecuencia."
-    )
-    st.markdown("### Control en la fuente")
-    st.write(
-        "El modelador permite representar encierro, semiencierro, silenciador y combinaciones. "
-        "La reducción debe proceder de un desempeño declarado o de una hipótesis explícita."
-    )
-    st.markdown(
-        "- compara sin barrera / con barrera;\n"
-        "- repite a 125, 500, 1000 y 4000 Hz;\n"
-        "- aplica un control de fuente;\n"
-        "- registra el receptor antes y después."
-    )
-    _model_button()
+    st.markdown("### 1 · Ciclo de operación")
+    st.latex(r"\Delta L_t=10\log_{10}(t/T)")
+    base=st.slider("Nivel durante operación [dB]",70,115,90,key="c4l1_s7_base")
+    pct=st.slider("Tiempo activo [%]",1,100,25,key="c4l1_s7_pct")
+    corr=10*math.log10(pct/100)
+    eq=base+corr
+    c1,c2,c3=st.columns(3)
+    c1.metric("Operación",f"{pct}%")
+    c2.metric("Corrección temporal",f"{corr:.1f} dB")
+    c3.metric("Nivel equivalente",f"{eq:.1f} dB")
+
+    st.markdown("### 2 · Simultaneidad y suma energética")
+    st.markdown("Los decibeles **no se suman aritméticamente**. Cada aporte debe convertirse a energía, sumarse y volver a dB.")
+    st.latex(r"L_{\Sigma}=10\log_{10}\left(\sum_i10^{L_i/10}\right)")
+    a1,a2,a3=st.columns(3)
+    la=a1.slider("Excavadora · nivel operativo [dB]",55,100,78,key="c4l1_s7_a")
+    lb=a2.slider("Generador · nivel operativo [dB]",55,100,68,key="c4l1_s7_b")
+    lc=a3.slider("Martillo · nivel operativo [dB]",55,105,86,key="c4l1_s7_c")
+    t1,t2,t3=st.columns(3)
+    pa=t1.slider("Excavadora · activo [%]",1,100,70,key="c4l1_s7_pa")
+    pb=t2.slider("Generador · activo [%]",1,100,100,key="c4l1_s7_pb")
+    pc=t3.slider("Martillo · activo [%]",1,100,20,key="c4l1_s7_pc")
+    eqs=[la+10*math.log10(pa/100),lb+10*math.log10(pb/100),lc+10*math.log10(pc/100)]
+    total=10*math.log10(sum(10**(v/10) for v in eqs))
+    dominant=max(zip(["Excavadora","Generador","Martillo"],eqs),key=lambda x:x[1])
+    r1,r2,r3,r4=st.columns(4)
+    r1.metric("Excavadora eq.",f"{eqs[0]:.1f} dB")
+    r2.metric("Generador eq.",f"{eqs[1]:.1f} dB")
+    r3.metric("Martillo eq.",f"{eqs[2]:.1f} dB")
+    r4.metric("Total",f"{total:.1f} dB")
+    st.info(f"Fuente dominante en este período: **{dominant[0]}** con {dominant[1]:.1f} dB equivalentes.")
+
+    st.markdown("### Ejercicio aplicado")
+    st.markdown("Tres equipos aportan 74 dB, 70 dB y 66 dB equivalentes al mismo receptor. Calcula el nivel total.")
+    ans=st.text_input("Nivel total [dB]",key="c4l1_s7_ex",placeholder="dB")
+    expected=10*math.log10(sum(10**(v/10) for v in [74,70,66]))
+    if st.button("Comprobar ejercicio",key="c4l1_s7_check",type="primary"):
+        try: v=float(ans.replace(",","."))
+        except Exception: v=None
+        if v is None: st.warning("Ingresa un valor numérico.")
+        elif abs(v-expected)<=0.2: st.success(f"Correcto: {expected:.1f} dB.")
+        else: st.warning("Revisa la suma energética; no sumes los dB de forma aritmética.")
+
 
 def _stage8(lab, saved):
     _header(
         8,
-        "Modelo completo de una obra",
-        "Construir el escenario 50 × 40 m del material del curso y obtener un mapa con receptores y contribuciones.",
-    )
-    st.markdown("### Escenario base")
-    st.dataframe(
-        pd.DataFrame([
-            ["Retroexcavadora",10,20,5,88],
-            ["Generador diésel",25,25,5,82],
-            ["Martillo neumático",35,10,5,96],
-        ], columns=["Fuente","X [m]","Y [m]","Distancia referencia [m]","Lp [dB(A)]"]),
-        use_container_width=True,
-        hide_index=True,
+        "Caso profesional guiado · introducción a Noise Map Lab",
+        "Presentar la herramienta de modelación y desarrollar por primera vez un caso profesional completo y guiado.",
     )
     st.markdown(
-        "1. Estima o define Lw de cada fuente.\n"
-        "2. Crea y renombra las tres fuentes.\n"
-        "3. Ubica receptores al norte del predio.\n"
-        "4. Define área de cálculo y factor G.\n"
-        "5. Calcula el mapa y revisa contribuciones.\n"
-        "6. Identifica receptor crítico y fuente dominante."
+        """
+        <div style="border:1px solid #d9e7f3;border-radius:22px;padding:22px 24px;background:linear-gradient(135deg,#fbfdff,#eef6ff)">
+          <div style="font-size:.72rem;font-weight:900;letter-spacing:.1em;color:#0b6ea8">PRESENTACIÓN DE LA HERRAMIENTA</div>
+          <div style="font-size:1.25rem;font-weight:900;color:#17324a;margin:.35rem 0">Noise Map Lab</div>
+          <div style="color:#586f82;line-height:1.55">
+            A partir de esta etapa usaremos una herramienta educativa para integrar en un mismo escenario
+            fuentes, receptores, espectros, suelo, barreras, controles y resultados espaciales.
+          </div>
+        </div>
+        """,unsafe_allow_html=True
     )
-    st.markdown("### Extensión · tránsito de obra")
-    st.write(
-        "Puedes agregar una Fuente vial para el acceso de camiones e ingresar flujo y velocidad. "
-        "El tránsito queda separado de la maquinaria estacionaria."
-    )
+    st.warning("La herramienta tiene fines educativos y no sustituye una implementación certificada ni una evaluación acústica formal.")
+
+    st.markdown("### Qué reconocerás en la interfaz")
+    ui_cards=[
+        ("Fuente","Lw, espectro, altura, directividad, tiempo activo y control."),
+        ("Receptor","Posición y altura donde se calcula el nivel."),
+        ("Área de cálculo","Zona donde se construye el mapa de ruido."),
+        ("Terreno","Factor G, topografía y geometría del escenario."),
+        ("Barreras","Altura, posición y perfil fuente–barrera–receptor."),
+        ("Resultados","Nivel por receptor, contribuciones y mapa espacial."),
+    ]
+    html='<div style="display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;margin:1rem 0">'
+    for title,desc in ui_cards:
+        html+=f'<div style="border:1px solid #dce7f0;border-radius:16px;padding:15px;background:#fff"><div style="font-weight:850;color:#18324a">{title}</div><div style="font-size:.82rem;color:#64788b;margin-top:.3rem">{desc}</div></div>'
+    html+='</div>'
+    st.markdown(html,unsafe_allow_html=True)
     _model_button()
-    note = st.text_area(
-        "Registro técnico del escenario",
-        value=saved.get("c4l1_stage8_note", ""),
-        key="c4l1_s8_note",
-        placeholder="Receptor crítico, fuente dominante, nivel obtenido y supuestos principales.",
+
+    st.markdown("### Caso profesional guiado")
+    st.markdown(
+        "**Situación:** obra de edificación con una excavadora hidráulica, un camión mixer y un martillo hidráulico. "
+        "Existe un receptor residencial al norte del predio. El objetivo es construir el escenario, calcularlo e identificar "
+        "qué fuente domina en el receptor."
     )
-    if st.button("Guardar registro del modelo", key="c4l1_s8_save", type="primary"):
-        saved["c4l1_stage8_note"] = note
-        _save_stage_state(lab, saved, 8)
-        st.success("Registro guardado.")
+    case_df=pd.DataFrame([
+        ["Excavadora hidráulica", "BS 5228 C.2 Ref. 19", "100 %", "1,5 m"],
+        ["Camión mixer", "BS 5228 C.4 Ref. 20", "60 %", "1,5 m"],
+        ["Martillo hidráulico", "BS 5228 C.1 Ref. 1", "25 %", "1,5 m"],
+    ],columns=["Fuente","Referencia","Tiempo activo","Altura"])
+    st.dataframe(case_df,use_container_width=True,hide_index=True)
+
+    st.markdown(
+        "1. Crea y renombra las tres fuentes.\n"
+        "2. Ingresa el Lw o espectro trabajado en las etapas anteriores.\n"
+        "3. Asigna los tiempos activos indicados.\n"
+        "4. Define un receptor residencial y un área de cálculo.\n"
+        "5. Configura el terreno del caso.\n"
+        "6. Calcula y registra el nivel total y la contribución de cada fuente.\n"
+        "7. Identifica la fuente dominante."
+    )
+    note=st.text_area(
+        "Registro técnico del caso",
+        value=saved.get("c4l1_stage8_note",""),
+        key="c4l1_s8_note",
+        placeholder="Nivel total, fuente dominante, condiciones principales y observaciones del escenario.",
+        height=150,
+    )
+    if st.button("Guardar registro del caso",key="c4l1_s8_save",type="primary"):
+        if len(note.strip())<80:
+            st.warning("Desarrolla un registro técnico de al menos 80 caracteres.")
+        else:
+            saved["c4l1_stage8_note"]=note
+            _save_stage_state(lab,saved,8)
+            st.success("Registro guardado.")
+
 
 def _stage9(lab, saved):
     _header(
         9,
-        "Diseño y comparación de medidas de control",
-        "Seleccionar controles desde la fuente dominante y demostrar su reducción mediante comparación antes/después.",
+        "Comprensión · interpretación de propagación y modelación",
+        "Comprobar que el alumno comprende los conceptos antes del ejercicio integrador final.",
     )
-    before = st.number_input("Nivel receptor antes [dB(A)]", 40.0, 120.0, 72.0, 0.1, key="c4l1_s9_before")
-    after = st.number_input("Nivel receptor después [dB(A)]", 30.0, 120.0, 64.0, 0.1, key="c4l1_s9_after")
-    reduction = before - after
-    st.metric("Reducción obtenida", f"{reduction:.1f} dB")
-    measures = st.multiselect(
-        "Medidas aplicadas",
-        ["Reubicación","Reducción del tiempo activo","Barrera","Encierro","Silenciador","Cambio de equipo","Combinación"],
-        key="c4l1_s9_measures",
+    st.markdown(
+        """
+        <div style="border:1px solid #eadfc8;border-radius:20px;padding:20px 22px;background:linear-gradient(135deg,#fffaf3,#fff7e8)">
+          <div style="font-size:.72rem;font-weight:900;letter-spacing:.1em;color:#9a6617">10 PREGUNTAS DE COMPRENSIÓN</div>
+          <div style="font-size:1.2rem;font-weight:850;color:#4b3515;margin:.35rem 0">
+            Interpreta, no memorices
+          </div>
+          <div style="color:#6d5a3b">Las preguntas combinan conceptos de fuente, propagación, suelo, barreras, meteorología, ciclos y simultaneidad.</div>
+        </div>
+        """,unsafe_allow_html=True
     )
-    justification = st.text_area(
-        "Justificación técnica",
-        value=saved.get("c4l1_stage9_justification", ""),
-        key="c4l1_s9_justification",
-        placeholder="Indica fuente dominante, por qué seleccionaste la medida y qué cambió en el receptor.",
-    )
-    _model_button()
-    if st.button("Guardar comparación", key="c4l1_s9_save", type="primary"):
-        saved["c4l1_stage9_justification"] = justification
-        saved["c4l1_stage9_result"] = {
-            "before": before,
-            "after": after,
-            "reduction": reduction,
-            "measures": measures,
-        }
-        _save_stage_state(lab, saved, 9)
-        st.success("Comparación guardada.")
+    questions=[
+        ("Una fuente mantiene el mismo Lw pero el receptor duplica su distancia. ¿Qué término cambia principalmente?",
+         ["Dc","Adiv","Agr solamente","Tiempo activo"],1),
+        ("¿Qué describe mejor G = 0?",
+         ["Suelo duro/acústicamente reflectante","50 % de absorción","Fuente omnidireccional","Suelo totalmente poroso"],0),
+        ("Aatm aumenta especialmente cuando:",
+         ["Baja la potencia eléctrica del equipo","Aumentan distancia y frecuencia","G se hace 0","Q se hace 1"],1),
+        ("Si una barrera no corta la línea de visión fuente–receptor:",
+         ["Abar necesariamente es máxima","El apantallamiento puede ser pequeño o nulo","Cmet se duplica","Lw disminuye"],1),
+        ("¿Qué diferencia a Cmet de Aatm?",
+         ["Cmet es una corrección meteorológica de largo plazo; Aatm es absorción molecular","Son exactamente el mismo término","Cmet depende solo de G","Aatm solo se usa con barreras"],0),
+        ("Una máquina funciona 25 % del período. La corrección temporal es aproximadamente:",
+         ["0 dB","-3 dB","-6 dB","+6 dB"],2),
+        ("Dos fuentes de 70 dB cada una funcionando simultáneamente producen aproximadamente:",
+         ["70 dB","73 dB","140 dB","67 dB"],1),
+        ("¿Cuál es el efecto conceptual de un control aplicado directamente a la fuente?",
+         ["Reduce Lw antes de la propagación","Aumenta Adiv","Cambia automáticamente G","Elimina Cmet"],0),
+        ("La fuente dominante en un receptor:",
+         ["Siempre es la de mayor Lw","Puede depender de Lw, distancia, control y propagación","Siempre es la más cercana","Nunca cambia con el tiempo activo"],1),
+        ("¿Por qué conviene revisar contribuciones individuales en un modelo?",
+         ["Para identificar qué fuente explica mayor parte del nivel y orientar el control","Para sumar dB aritméticamente","Para eliminar la necesidad de receptores","Para reemplazar las mediciones"],0),
+    ]
+    answers=[]
+    for i,(q,opts,correct) in enumerate(questions,1):
+        answers.append(st.radio(f"{i}. {q}",opts,index=None,key=f"c4l1_s9_q{i}"))
+    if st.button("Comprobar respuestas",key="c4l1_s9_check",type="primary",use_container_width=True):
+        if any(a is None for a in answers):
+            st.warning("Responde las 10 preguntas antes de comprobar.")
+        else:
+            score=sum(1 for a,(_,opts,corr) in zip(answers,questions) if a==opts[corr])
+            st.metric("Resultado",f"{score}/10")
+            if score>=8: st.success("Muy buen dominio conceptual. Puedes pasar al caso integrador.")
+            elif score>=6: st.warning("Base suficiente, pero conviene revisar los conceptos que fallaste.")
+            else: st.error("Revisa las etapas anteriores antes del caso integrador.")
+            if st.session_state.get("role")=="Docente":
+                st.caption("Pauta: "+", ".join(f"{i+1}:{q[1][q[2]]}" for i,q in enumerate(questions)))
+
 
 def _stage10(lab, saved):
     _header(
         10,
-        "Caso integrador · predicción de ruido de construcción",
-        "Cerrar el laboratorio construyendo un escenario completo, diagnosticando el problema y justificando una medida de control.",
+        "Caso integrador · predicción profesional con Noise Map Lab",
+        "Integrar caracterización de fuentes, propagación, simultaneidad, diagnóstico y control en un escenario completo.",
     )
-    checklist = [
-        "Caractericé las fuentes y su procedencia acústica",
-        "Definí receptores y geometría",
-        "Documenté suelo/topografía y alturas",
-        "Consideré simultaneidad y ciclos de operación",
+    st.markdown(
+        """
+        <div style="border:1px solid #d9e7f3;border-radius:22px;padding:22px 24px;background:linear-gradient(135deg,#fbfdff,#eef6ff)">
+          <div style="font-size:.72rem;font-weight:900;letter-spacing:.1em;color:#0b6ea8">CASO FINAL</div>
+          <div style="font-size:1.25rem;font-weight:900;color:#17324a;margin:.35rem 0">Predicción de ruido de una obra de construcción</div>
+          <div style="color:#586f82;line-height:1.55">
+            Construye el escenario completo, identifica el receptor y la fuente dominante, aplica una medida de control
+            y documenta el cambio antes/después.
+          </div>
+        </div>
+        """,unsafe_allow_html=True
+    )
+    _model_button()
+
+    st.markdown("### Antecedentes del caso")
+    st.markdown(
+        "- Predio de obra: **60 × 45 m**.\n"
+        "- Receptor R1: vivienda al norte del predio.\n"
+        "- Receptor R2: oficina al este.\n"
+        "- Fuentes: excavadora hidráulica, bomba de hormigón, martillo hidráulico y generador diésel.\n"
+        "- Terreno: combinación de superficie dura y suelo poroso.\n"
+        "- Debes representar al menos una medida de control técnicamente justificada."
+    )
+    st.markdown("### Tareas")
+    checklist=[
+        "Caractericé las cuatro fuentes con antecedente acústico trazable",
+        "Definí Lw o espectro y altura de cada fuente",
+        "Definí R1 y R2",
+        "Configuré terreno y geometría",
+        "Incorporé ciclos de operación",
         "Calculé el escenario inicial",
         "Identifiqué receptor crítico y fuente dominante",
         "Apliqué una medida de control",
         "Recalculé el escenario",
-        "Comparé antes/después",
-        "Declaré supuestos y limitaciones",
+        "Comparé antes/después y declaré supuestos",
     ]
-    checked = [st.checkbox(item, key=f"c4l1_s10_check_{i}") for i, item in enumerate(checklist)]
-    conclusion = st.text_area(
+    checked=[st.checkbox(item,key=f"c4l1_s10_check_{i}") for i,item in enumerate(checklist)]
+    before=st.number_input("Nivel receptor crítico antes [dB(A)]",30.0,120.0,70.0,0.1,key="c4l1_s10_before")
+    after=st.number_input("Nivel receptor crítico después [dB(A)]",30.0,120.0,65.0,0.1,key="c4l1_s10_after")
+    st.metric("Reducción obtenida",f"{before-after:.1f} dB")
+    conclusion=st.text_area(
         "Conclusión técnica",
-        value=saved.get("c4l1_stage10_conclusion", ""),
+        value=saved.get("c4l1_stage10_conclusion",""),
         height=220,
         key="c4l1_s10_conclusion",
-        placeholder=(
-            "Describe fuente dominante, receptor crítico, medida aplicada, reducción obtenida, "
-            "supuestos del modelo y antecedentes necesarios para una evaluación formal."
-        ),
+        placeholder="Fuente dominante, receptor crítico, términos relevantes, medida de control aplicada, reducción obtenida, supuestos y limitaciones.",
     )
-    _model_button()
-    if st.button("Guardar caso integrador", key="c4l1_s10_save", type="primary", use_container_width=True):
+    if st.button("Guardar caso integrador",key="c4l1_s10_save",type="primary",use_container_width=True):
         if not all(checked):
-            st.warning("Completa la lista de verificación antes de cerrar el caso.")
-        elif len(conclusion.strip()) < 180:
+            st.warning("Completa la lista de verificación.")
+        elif len(conclusion.strip())<180:
             st.warning("Desarrolla una conclusión técnica de al menos 180 caracteres.")
         else:
-            saved["c4l1_stage10_conclusion"] = conclusion
-            saved["c4l1_stage10_checklist"] = checked
-            _save_stage_state(lab, saved, 10)
-            st.success("Caso integrador guardado. Por ahora permanece como actividad formativa.")
+            saved["c4l1_stage10_conclusion"]=conclusion
+            saved["c4l1_stage10_result"]={"before":before,"after":after,"reduction":before-after}
+            _save_stage_state(lab,saved,10)
+            st.success("Caso integrador guardado.")
+
 
 _STAGES = [
     _stage0, _stage1, _stage2, _stage3, _stage4, _stage5,
