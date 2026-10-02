@@ -775,18 +775,88 @@ def _stage2(lab, saved):
             st.markdown(f"Conserva **Tabla {item['table']} · Ref. {item['ref']}**, actividad, tamaño y descriptor original.")
             st.caption("El LWA nunca debe quedar separado de su fuente documental.")
 
-    st.markdown("### 4 · Espectro del registro seleccionado")
-    spectrum_descriptor = "Lmax por banda [dB]" if item.get("driveby") else "Lp,eq,T por banda [dB]"
-    spectrum_df = pd.DataFrame(
-        [item["bands"]],
-        index=[spectrum_descriptor],
-        columns=["63 Hz","125 Hz","250 Hz","500 Hz","1 kHz","2 kHz","4 kHz","8 kHz"],
+    st.markdown("### 4 · Del espectro de presión al espectro de potencia")
+    st.markdown(
+        "BS 5228 entrega en estas tablas **niveles de presión sonora por banda de octava a 10 m**. "
+        "Para utilizarlos como espectro de una fuente puntual en el modelador necesitamos expresar cada banda "
+        "como nivel de potencia sonora."
     )
-    st.dataframe(spectrum_df, use_container_width=True)
+
+    spec_a,spec_b = st.columns([1.1,1], gap="large")
+    with spec_a:
+        with st.container(border=True):
+            st.markdown("#### Conversión por banda")
+            st.latex(r"L_{W,f} \approx L_{p,f}(r)+10\log_{10}(2\pi r^2)")
+            st.markdown("Para **r = 10 m**:")
+            st.latex(r"10\log_{10}(2\pi\cdot10^2)=27.98\approx28\ \mathrm{dB}")
+            st.latex(r"\boxed{L_{W,f}\approx L_{p,f}(10\,m)+28}")
+            st.caption(
+                "Esta extensión por banda es una derivación geométrica para una fuente puntual radiando "
+                "sobre un plano reflectante (hemiespacio). La norma explicita el +28 dB(A) para el valor "
+                "broadband; aquí se aplica la misma relación geométrica a cada banda con finalidad didáctica."
+            )
+    with spec_b:
+        with st.container(border=True):
+            st.markdown("#### Qué significa")
+            st.markdown(
+                "El **+28 dB no cambia la forma del espectro**: todas las bandas se desplazan la misma cantidad. "
+                "Lo que cambia es la magnitud: pasamos de presión sonora medida a 10 m a potencia sonora equivalente de la fuente."
+            )
+            st.info(
+                "No se aplica ponderación A antes de esta conversión. Las bandas de la tabla se conservan como niveles "
+                "por octava; la ponderación A solo se usa después si queremos recomponer un LWA global."
+            )
+
+    octave_labels=["63 Hz","125 Hz","250 Hz","500 Hz","1 kHz","2 kHz","4 kHz","8 kHz"]
+    lw_bands=[float(v)+28.0 for v in item["bands"]]
+    source_band_descriptor = "Lmax a 10 m [dB]" if item.get("driveby") else "Lp,eq,T a 10 m [dB]"
+    power_band_descriptor = "Lw,max equivalente [dB]" if item.get("driveby") else "Lw,eq,T equivalente [dB]"
+    spectral_power_df=pd.DataFrame(
+        [item["bands"], [28.0]*8, lw_bands],
+        index=[source_band_descriptor, "Corrección geométrica [dB]", power_band_descriptor],
+        columns=octave_labels,
+    )
+    st.dataframe(spectral_power_df, use_container_width=True)
+
+    st.markdown("#### Ejemplo con una banda")
+    example_idx=3
+    example_freq=octave_labels[example_idx]
+    e1,e2,e3=st.columns(3)
+    e1.metric(f"{example_freq} · presión a 10 m", f"{item['bands'][example_idx]:.0f} dB")
+    e2.metric("Corrección geométrica", "+28 dB")
+    e3.metric(f"{example_freq} · potencia", f"{lw_bands[example_idx]:.0f} dB")
+    st.markdown(
+        f"Para **{name}**, en {example_freq}: "
+        f"**{item['bands'][example_idx]:.0f} + 28 = {lw_bands[example_idx]:.0f} dB** de potencia sonora equivalente en esa banda."
+    )
+
+    st.markdown("### 5 · Comprobación: recomponer el LWA desde las bandas")
+    a_corr=[-26.2,-16.1,-8.6,-3.2,0.0,1.2,1.0,-1.1]
+    lwa_band=[lw+a for lw,a in zip(lw_bands,a_corr)]
+    lwa_from_spectrum=10*math.log10(sum(10**(v/10) for v in lwa_band))
+    diff=lwa_from_spectrum-lwa
+    check_df=pd.DataFrame(
+        [lw_bands,a_corr,lwa_band],
+        index=["Lw por banda [dB]","Corrección A [dB]","LwA por banda [dB(A)]"],
+        columns=octave_labels,
+    )
+    st.dataframe(check_df, use_container_width=True)
+    st.latex(r"L_{WA}=10\log_{10}\left(\sum_f10^{(L_{W,f}+A_f)/10}\right)")
+    ck1,ck2,ck3=st.columns(3)
+    ck1.metric("LWA desde broadband + 28", f"{lwa:.1f} dB(A)")
+    ck2.metric("LWA recompuesto desde bandas", f"{lwa_from_spectrum:.1f} dB(A)")
+    ck3.metric("Diferencia", f"{diff:+.1f} dB")
     st.caption(
-        "La regla +28 dB(A) se presenta aquí para el valor broadband A-ponderado indicado por la norma. "
-        "No se aplica automáticamente a cada banda como si fuese una regla espectral general."
+        "Es normal obtener una pequeña diferencia porque los valores tabulados por banda están redondeados. "
+        "Esta comprobación permite verificar que el espectro convertido es coherente con el valor global."
     )
+
+    if item.get("driveby"):
+        st.warning(
+            "En registros de pasada móvil, las bandas originales corresponden a Lmax. La conversión mostrada produce "
+            "un espectro de potencia máxima equivalente para fines didácticos; no convierte automáticamente esa pasada "
+            "en una fuente estacionaria ni sustituye el tratamiento específico de fuentes móviles."
+        )
 
     st.markdown("---")
     st.markdown(
