@@ -1945,115 +1945,181 @@ def _stage4(lab, saved):
     st.markdown("---")
     st.markdown(
         """
-        <div style="border:1px solid #d8e6f0;border-radius:20px;padding:20px 22px;
+        <div style="border:1px solid #d8e6f0;border-radius:22px;padding:22px 24px;
         background:linear-gradient(135deg,#f8fbfe,#eef6fb);margin-bottom:1rem">
-          <div style="font-size:.72rem;font-weight:900;letter-spacing:.1em;color:#0b6ea8">EJERCICIO DE CIERRE · BARRERA ACÚSTICA</div>
-          <div style="font-size:1.2rem;font-weight:850;color:#16314b;margin:.35rem 0">
-            Analiza el perfil y calcula Abar
+          <div style="font-size:.72rem;font-weight:900;letter-spacing:.1em;color:#0b6ea8">
+            EJERCICIO DE DISEÑO · BARRERA ACÚSTICA
           </div>
-          <div style="color:#536b80;line-height:1.5">
-            Resuelve un caso independiente. Debes comprobar si la barrera corta la línea de visión,
-            calcular la diferencia de camino z y obtener la atenuación por barrera.
+          <div style="font-size:1.22rem;font-weight:850;color:#16314b;margin:.35rem 0">
+            Diseña una barrera para cumplir un objetivo acústico
+          </div>
+          <div style="color:#536b80;line-height:1.55">
+            Una fuente genera un nivel en el receptor superior al objetivo. Debes diseñar la barrera
+            ajustando su <b>altura</b> y su <b>ubicación</b> hasta lograr que el nivel final sea
+            <b>igual o inferior a 50 dBA</b>.
           </div>
         </div>
         """,
         unsafe_allow_html=True,
     )
 
-    barrier_cases={
-        "Caso A · Pantalla temporal":{"hs":1.5,"hb":3.5,"hr":1.5,"dfb":20.0,"dbr":30.0,"freq":500},
-        "Caso B · Receptor elevado":{"hs":1.5,"hb":4.0,"hr":6.0,"dfb":18.0,"dbr":42.0,"freq":1000},
-        "Caso C · Barrera cercana a la fuente":{"hs":2.0,"hb":5.0,"hr":1.5,"dfb":10.0,"dbr":55.0,"freq":2000},
-    }
-    ex_case=st.segmented_control(
-        "Selecciona un caso",
-        list(barrier_cases.keys()),
-        default="Caso A · Pantalla temporal",
-        key="c4l1_s4_barrier_case",
-    )
-    ex=barrier_cases[ex_case]
-    ex_total=ex["dfb"]+ex["dbr"]
-    ex_los=ex["hs"]+(ex["hr"]-ex["hs"])*(ex["dfb"]/ex_total)
-    ex_screens=ex["hb"]>ex_los
-    ex_direct=math.sqrt(ex_total**2+(ex["hr"]-ex["hs"])**2)
-    ex_ds=math.sqrt(ex["dfb"]**2+(ex["hb"]-ex["hs"])**2)
-    ex_dr=math.sqrt(ex["dbr"]**2+(ex["hb"]-ex["hr"])**2)
-    ex_z=(ex_ds+ex_dr)-ex_direct
-    ex_abar=_barrier_dz_edu(ex_ds,ex_dr,ex_direct,ex["freq"]) if ex_screens else 0.0
+    lp_without_barrier=56.0
+    lp_target=50.0
+    required_reduction=lp_without_barrier-lp_target
+
+    case1,case2,case3=st.columns(3)
+    case1.metric("Nivel sin barrera",f"{lp_without_barrier:.1f} dBA")
+    case2.metric("Objetivo",f"≤ {lp_target:.1f} dBA")
+    case3.metric("Reducción mínima requerida",f"{required_reduction:.1f} dB")
 
     st.markdown(
-        f"""
-        <div style="border:1px solid #dce7f0;border-radius:18px;padding:17px 19px;background:#fff;margin-bottom:.8rem">
-          <div style="font-size:.8rem;font-weight:900;color:#17324a">{ex_case}</div>
-          <div style="color:#5e7385;margin-top:.25rem">
-            hs={ex['hs']:.1f} m · hb={ex['hb']:.1f} m · hr={ex['hr']:.1f} m
-          </div>
-          <div style="color:#5e7385;margin-top:.2rem">
-            F–B={ex['dfb']:.0f} m · B–R={ex['dbr']:.0f} m · frecuencia={ex['freq']} Hz
+        """
+        <div style="border:1px solid #e1e8ef;border-radius:18px;padding:17px 19px;background:#fff;margin:.7rem 0 1rem">
+          <div style="font-size:.8rem;font-weight:900;color:#17324a">INSTRUCCIÓN</div>
+          <div style="color:#5e7385;line-height:1.5;margin-top:.25rem">
+            Modifica la geometría de la barrera. Observa cómo cambian la línea de visión,
+            la zona de sombra acústica, la diferencia de camino <b>z</b>, la atenuación <b>Abar</b>
+            y el nivel final estimado en el receptor.
           </div>
         </div>
         """,
         unsafe_allow_html=True,
     )
 
-    ans_screen=st.radio(
-        "¿La barrera interrumpe la línea de visión fuente–receptor?",
-        ["Sí","No"],
-        index=None,
-        horizontal=True,
-        key=f"c4l1_s4_bar_screen_{ex_case}",
+    st.markdown("### Variables de diseño")
+    d1,d2,d3,d4=st.columns(4)
+    ex_hs=d1.slider("Altura fuente hs [m]",0.5,6.0,1.5,0.5,key="c4l1_s4_design_hs")
+    ex_hr=d2.slider("Altura receptor hr [m]",0.5,10.0,1.5,0.5,key="c4l1_s4_design_hr")
+    ex_hb=d3.slider("Altura barrera hb [m]",0.5,8.0,2.5,0.1,key="c4l1_s4_design_hb")
+    ex_freq=d4.selectbox("Frecuencia [Hz]",[125,250,500,1000,2000,4000],index=2,key="c4l1_s4_design_freq")
+
+    d5,d6=st.columns(2)
+    ex_dfb=d5.slider("Distancia fuente → barrera [m]",2.0,40.0,10.0,0.5,key="c4l1_s4_design_dfb")
+    ex_dbr=d6.slider("Distancia barrera → receptor [m]",5.0,60.0,20.0,0.5,key="c4l1_s4_design_dbr")
+
+    ex_total=ex_dfb+ex_dbr
+    ex_los=ex_hs+(ex_hr-ex_hs)*(ex_dfb/max(ex_total,1e-9))
+    ex_screens=ex_hb>ex_los
+    ex_direct=math.sqrt(ex_total**2+(ex_hr-ex_hs)**2)
+    ex_ds=math.sqrt(ex_dfb**2+(ex_hb-ex_hs)**2)
+    ex_dr=math.sqrt(ex_dbr**2+(ex_hb-ex_hr)**2)
+    ex_z=(ex_ds+ex_dr)-ex_direct
+    ex_abar=_barrier_dz_edu(ex_ds,ex_dr,ex_direct,ex_freq) if ex_screens else 0.0
+    lp_with_barrier=lp_without_barrier-ex_abar
+    complies=lp_with_barrier<=lp_target
+
+    max_h=max(float(ex_hs),float(ex_hb),float(ex_hr),2.0)+1.5
+    x_s=90.0
+    x_r=810.0
+    x_b=x_s+(x_r-x_s)*(float(ex_dfb)/max(ex_total,1e-9))
+    ground_y=285.0
+    top_y=55.0
+    scale_y=(ground_y-top_y)/max_h
+    y_s=ground_y-float(ex_hs)*scale_y
+    y_b=ground_y-float(ex_hb)*scale_y
+    y_r=ground_y-float(ex_hr)*scale_y
+
+    profile_status="CUMPLE OBJETIVO" if complies else "AÚN NO CUMPLE"
+    profile_status_bg="#eaf7ee" if complies else "#fff3e2"
+    profile_status_color="#25623a" if complies else "#8a5710"
+
+    design_svg=f"""
+    <div style="border:1px solid #d9e4ec;border-radius:20px;background:#fbfdff;padding:12px 14px;margin:.5rem 0 1rem">
+      <div style="display:flex;justify-content:space-between;gap:12px;align-items:center;margin:2px 0 8px">
+        <div style="font-size:.74rem;font-weight:900;color:#526a7e;letter-spacing:.08em">
+          PERFIL DE DISEÑO · FUENTE – BARRERA – RECEPTOR
+        </div>
+        <div style="border-radius:999px;padding:7px 12px;background:{profile_status_bg};color:{profile_status_color};
+        font-size:.72rem;font-weight:900">{profile_status}</div>
+      </div>
+      <svg viewBox="0 0 900 340" width="100%" style="display:block;max-height:390px">
+        <rect x="0" y="0" width="900" height="340" rx="18" fill="#f8fbfd"/>
+        <line x1="55" y1="{ground_y}" x2="845" y2="{ground_y}" stroke="#8c9a88" stroke-width="4"/>
+        <rect x="{x_b-8:.1f}" y="{y_b:.1f}" width="16" height="{ground_y-y_b:.1f}" rx="3" fill="#485b68"/>
+        {'<polygon points="' + f'{x_b:.1f},{y_b:.1f} {x_r},{y_r:.1f} {x_r},{ground_y} {x_b:.1f},{ground_y}' + '" fill="rgba(226,139,45,0.11)"/>' if ex_screens else ''}
+        <line x1="{x_s}" y1="{y_s:.1f}" x2="{x_r}" y2="{y_r:.1f}" stroke="#d9534f" stroke-width="3" stroke-dasharray="9 7"/>
+        <polyline points="{x_s},{y_s:.1f} {x_b:.1f},{y_b:.1f} {x_r},{y_r:.1f}" fill="none" stroke="#e28b2d" stroke-width="4"/>
+        <circle cx="{x_s}" cy="{y_s:.1f}" r="12" fill="#176b9b"/>
+        <circle cx="{x_r}" cy="{y_r:.1f}" r="12" fill="#2f7d4b"/>
+        <circle cx="{x_b:.1f}" cy="{y_b:.1f}" r="7" fill="#e28b2d"/>
+        <text x="{x_s-18}" y="{y_s-20:.1f}" font-size="18" font-weight="800" fill="#176b9b">F</text>
+        <text x="{x_b-7:.1f}" y="{y_b-16:.1f}" font-size="18" font-weight="800" fill="#7c4d12">B</text>
+        <text x="{x_r-2}" y="{y_r-20:.1f}" font-size="18" font-weight="800" fill="#2f7d4b">R</text>
+        <text x="{(x_s+x_b)/2-28:.1f}" y="{min(y_s,y_b)-12:.1f}" font-size="14" fill="#8a5c1c">dFB</text>
+        <text x="{(x_b+x_r)/2-28:.1f}" y="{min(y_b,y_r)-12:.1f}" font-size="14" fill="#8a5c1c">dBR</text>
+        <text x="{(x_s+x_r)/2-38:.1f}" y="{(y_s+y_r)/2+28:.1f}" font-size="14" fill="#5f768a">camino directo</text>
+        <line x1="{x_s}" y1="{ground_y+18}" x2="{x_b:.1f}" y2="{ground_y+18}" stroke="#9fb0bd" stroke-width="2"/>
+        <line x1="{x_b:.1f}" y1="{ground_y+18}" x2="{x_r}" y2="{ground_y+18}" stroke="#9fb0bd" stroke-width="2"/>
+        <text x="{(x_s+x_b)/2-22:.1f}" y="{ground_y+38}" font-size="13" fill="#6a7d8e">{ex_dfb:.1f} m</text>
+        <text x="{(x_b+x_r)/2-22:.1f}" y="{ground_y+38}" font-size="13" fill="#6a7d8e">{ex_dbr:.1f} m</text>
+        {'<text x="' + f'{(x_b+x_r)/2-72:.1f}' + '" y="' + f'{ground_y-24:.1f}' + '" font-size="14" font-weight="800" fill="#9a6617">ZONA DE SOMBRA</text>' if ex_screens else ''}
+      </svg>
+    </div>
+    """
+    st.markdown(design_svg,unsafe_allow_html=True)
+
+    st.markdown("### Resultado del diseño")
+    rr1,rr2,rr3,rr4,rr5=st.columns(5)
+    rr1.metric("Línea de visión","Bloqueada" if ex_screens else "Libre")
+    rr2.metric("z",f"{ex_z:.3f} m")
+    rr3.metric("Abar",f"{ex_abar:.1f} dB")
+    rr4.metric("Lp final",f"{lp_with_barrier:.1f} dBA")
+    rr5.metric("Objetivo","Cumple" if complies else "No cumple")
+
+    if complies:
+        st.success(
+            f"Buen diseño. El nivel final estimado es **{lp_with_barrier:.1f} dBA**, "
+            f"por lo que cumple con el objetivo de **≤ {lp_target:.1f} dBA**."
+        )
+    else:
+        deficit=lp_with_barrier-lp_target
+        st.warning(
+            f"Aún no cumple. El nivel final estimado es **{lp_with_barrier:.1f} dBA**. "
+            f"Necesitas aproximadamente **{deficit:.1f} dB** adicionales de reducción."
+        )
+
+    st.markdown(
+        """
+        <div style="border:1px solid #eadfc8;border-radius:17px;padding:15px 17px;background:#fffaf2;margin-top:.8rem">
+          <div style="font-size:.78rem;font-weight:900;color:#8a5c13">PISTA DE DISEÑO</div>
+          <div style="font-size:.84rem;color:#6f5d3f;line-height:1.45;margin-top:.25rem">
+            No existe una única solución. Prueba cambiar la altura y la posición de la barrera.
+            Busca una geometría que bloquee la línea directa, genere una zona de sombra acústica
+            y entregue la reducción necesaria sin sobredimensionar innecesariamente la pantalla.
+          </div>
+        </div>
+        """,
+        unsafe_allow_html=True,
     )
-    e1,e2,e3=st.columns(3)
-    ans_los=e1.text_input("Altura de la línea de visión en B [m]",key=f"c4l1_s4_bar_los_{ex_case}",placeholder="m")
-    ans_z=e2.text_input("Diferencia de camino z [m]",key=f"c4l1_s4_bar_z_{ex_case}",placeholder="m")
-    ans_abar=e3.text_input("Abar [dB]",key=f"c4l1_s4_bar_abar_{ex_case}",placeholder="dB")
-
-    if st.button("Comprobar ejercicio",key=f"c4l1_s4_bar_check_{ex_case}",type="primary",use_container_width=True):
-        def _num4(v):
-            try:
-                return float(str(v).strip().replace(",","."))
-            except Exception:
-                return None
-        los_v=_num4(ans_los)
-        z_v=_num4(ans_z)
-        abar_v=_num4(ans_abar)
-        if ans_screen is None or any(v is None for v in [los_v,z_v,abar_v]):
-            st.warning("Completa las cuatro respuestas antes de comprobar.")
-        else:
-            ok_screen=ans_screen==("Sí" if ex_screens else "No")
-            ok_los=abs(los_v-ex_los)<=0.08
-            ok_z=abs(z_v-ex_z)<=0.015
-            ok_abar=abs(abar_v-ex_abar)<=0.25
-            checks=[ok_screen,ok_los,ok_z,ok_abar]
-            labels=["línea de visión","altura LOS en B","diferencia de camino z","Abar"]
-            if all(checks):
-                st.success("Correcto. Interpretaste la geometría y calculaste correctamente la atenuación de la barrera.")
-                r1,r2,r3,r4=st.columns(4)
-                r1.metric("Interrumpe LOS","Sí" if ex_screens else "No")
-                r2.metric("Altura LOS",f"{ex_los:.2f} m")
-                r3.metric("z",f"{ex_z:.3f} m")
-                r4.metric("Abar",f"{ex_abar:.1f} dB")
-            else:
-                st.warning("Revisa: "+", ".join(labels[i] for i,v in enumerate(checks) if not v)+".")
-                st.caption("La solución completa se muestra solo cuando todas las respuestas son correctas.")
-
     if st.session_state.get("role")=="Docente":
         with st.expander("👩‍🏫 Pauta docente · Etapa 4",expanded=False):
             st.markdown(
                 f"""
-                **Caso:** {ex_case}  
-                **Interrumpe línea de visión:** {'Sí' if ex_screens else 'No'}  
-                **Altura de la línea de visión en B:** {ex_los:.2f} m  
-                **dFR directo:** {ex_direct:.2f} m  
-                **dFB + dBR:** {ex_ds+ex_dr:.2f} m  
-                **z esperado:** {ex_z:.3f} m  
-                **Frecuencia:** {ex['freq']} Hz  
-                **Abar esperado:** **{ex_abar:.1f} dB**
+                **Ejercicio:** diseño de barrera acústica  
+                **Lp sin barrera:** {lp_without_barrier:.1f} dBA  
+                **Objetivo:** ≤ {lp_target:.1f} dBA  
+                **Reducción requerida:** {required_reduction:.1f} dB  
+
+                **Configuración actual**
+                - hs = {ex_hs:.1f} m
+                - hr = {ex_hr:.1f} m
+                - hb = {ex_hb:.1f} m
+                - dFB = {ex_dfb:.1f} m
+                - dBR = {ex_dbr:.1f} m
+                - frecuencia = {ex_freq} Hz
+
+                **Resultado**
+                - Línea de visión bloqueada: {"Sí" if ex_screens else "No"}
+                - Altura LOS en B: {ex_los:.2f} m
+                - z = {ex_z:.3f} m
+                - Abar = {ex_abar:.1f} dB
+                - Lp final = {lp_with_barrier:.1f} dBA
+                - Cumple: {"Sí" if complies else "No"}
                 """
             )
             st.info(
-                "Punto docente clave: antes de aplicar una ecuación de difracción, el alumno debe comprender la geometría. "
-                "La barrera debe analizarse mediante línea de visión, diferencia de camino y frecuencia."
+                "Objetivo docente: que el alumno diseñe una solución y no solo sustituya valores en una ecuación. "
+                "Debe relacionar geometría, línea de visión, zona de sombra acústica, diferencia de camino y reducción final."
             )
 
 
