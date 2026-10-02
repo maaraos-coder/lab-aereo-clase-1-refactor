@@ -2897,36 +2897,35 @@ def _stage6(lab, saved):
     lp_free=lw-(20*math.log10(cfg["d"])+11)
     lp_final=lp_free-cfg["bar"]
 
-    svg=f"""
-    <div style="border:1px solid #d8e4ec;border-radius:20px;background:#fbfdff;padding:12px 14px;margin:.5rem 0 1rem">
-      <div style="display:flex;justify-content:space-between;gap:12px;align-items:center;margin-bottom:7px">
-        <div style="font-size:.72rem;font-weight:900;color:#526a7e;letter-spacing:.08em">PLANTA · UBICACIÓN DEL GENERADOR</div>
-        <div style="font-size:.73rem;font-weight:850;color:#176b9b">{position}</div>
-      </div>
-      <svg viewBox="0 0 900 410" width="100%" style="display:block">
-        <rect x="0" y="0" width="900" height="410" rx="18" fill="#f7fafc"/>
-        <rect x="55" y="50" width="610" height="315" rx="18" fill="#f0f4f6" stroke="#9cadb8" stroke-width="3"/>
-        <text x="72" y="78" font-size="16" font-weight="800" fill="#607585">OBRA</text>
-
-        <rect x="700" y="110" width="145" height="125" rx="12" fill="#f9efe9" stroke="#c99b7d" stroke-width="3"/>
-        <text x="723" y="142" font-size="16" font-weight="900" fill="#8b5b3d">VIVIENDA</text>
-        <circle cx="700" cy="175" r="8" fill="#b34f4f"/>
-        <text x="712" y="180" font-size="13" font-weight="800" fill="#8b4545">R</text>
-
-        <rect x="245" y="120" width="115" height="150" rx="9" fill="#b7c6d0" stroke="#718694" stroke-width="3"/>
-        <text x="263" y="195" font-size="14" font-weight="900" fill="#445965">EDIFICIO</text>
-        <text x="268" y="214" font-size="12" fill="#536b78">AUXILIAR</text>
-
-        <circle cx="620" cy="175" r="18" fill="#d9e4eb"/><text x="611" y="181" font-size="13" font-weight="900" fill="#667784">A</text>
-        <circle cx="390" cy="245" r="18" fill="#d9e4eb"/><text x="381" y="251" font-size="13" font-weight="900" fill="#667784">B</text>
-        <circle cx="185" cy="265" r="18" fill="#d9e4eb"/><text x="176" y="271" font-size="13" font-weight="900" fill="#667784">C</text>
-
-        <circle cx="{cfg['x']}" cy="{cfg['y']}" r="24" fill="#176b9b"/>
-        <text x="{cfg['x']-11}" y="{cfg['y']+6}" font-size="17" font-weight="900" fill="#fff">G</text>
-        <line x1="{cfg['x']}" y1="{cfg['y']}" x2="700" y2="175" stroke="#d9534f" stroke-width="3" stroke-dasharray="9 7"/>
-      </svg>
-    </div>
-    """
+    svg=(
+        '<div style="border:1px solid #d8e4ec;border-radius:20px;background:#fbfdff;padding:12px 14px;margin:.5rem 0 1rem">'
+        '<div style="display:flex;justify-content:space-between;gap:12px;align-items:center;margin-bottom:7px">'
+        '<div style="font-size:.72rem;font-weight:900;color:#526a7e;letter-spacing:.08em">PLANTA · UBICACIÓN DEL GENERADOR</div>'
+        f'<div style="font-size:.73rem;font-weight:850;color:#176b9b">{position}</div>'
+        '</div>'
+        '<svg viewBox="0 0 900 410" width="100%" style="display:block">'
+        '<rect x="0" y="0" width="900" height="410" rx="18" fill="#f7fafc"/>'
+        '<rect x="55" y="50" width="610" height="315" rx="18" fill="#f0f4f6" stroke="#9cadb8" stroke-width="3"/>'
+        '<text x="72" y="78" font-size="16" font-weight="800" fill="#607585">OBRA</text>'
+        '<rect x="700" y="110" width="145" height="125" rx="12" fill="#f9efe9" stroke="#c99b7d" stroke-width="3"/>'
+        '<text x="723" y="142" font-size="16" font-weight="900" fill="#8b5b3d">VIVIENDA</text>'
+        '<circle cx="700" cy="175" r="8" fill="#b34f4f"/>'
+        '<text x="712" y="180" font-size="13" font-weight="800" fill="#8b4545">R</text>'
+        '<rect x="245" y="120" width="115" height="150" rx="9" fill="#b7c6d0" stroke="#718694" stroke-width="3"/>'
+        '<text x="263" y="195" font-size="14" font-weight="900" fill="#445965">EDIFICIO</text>'
+        '<text x="268" y="214" font-size="12" fill="#536b78">AUXILIAR</text>'
+        '<circle cx="620" cy="175" r="18" fill="#d9e4eb"/>'
+        '<text x="611" y="181" font-size="13" font-weight="900" fill="#667784">A</text>'
+        '<circle cx="390" cy="245" r="18" fill="#d9e4eb"/>'
+        '<text x="381" y="251" font-size="13" font-weight="900" fill="#667784">B</text>'
+        '<circle cx="185" cy="265" r="18" fill="#d9e4eb"/>'
+        '<text x="176" y="271" font-size="13" font-weight="900" fill="#667784">C</text>'
+        f'<circle cx="{cfg["x"]}" cy="{cfg["y"]}" r="24" fill="#176b9b"/>'
+        f'<text x="{cfg["x"]-11}" y="{cfg["y"]+6}" font-size="17" font-weight="900" fill="#fff">G</text>'
+        f'<line x1="{cfg["x"]}" y1="{cfg["y"]}" x2="700" y2="175" stroke="#d9534f" stroke-width="3" stroke-dasharray="9 7"/>'
+        '</svg>'
+        '</div>'
+    )
     st.markdown(svg,unsafe_allow_html=True)
 
     m1,m2,m3,m4=st.columns(4)
