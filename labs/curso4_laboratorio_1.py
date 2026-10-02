@@ -1554,10 +1554,43 @@ def _stage3(lab, saved):
 def _stage4(lab, saved):
     _header(
         4,
-        "Suelo, topografía y receptores en altura",
-        "Comprender cómo el tipo de terreno y la geometría tridimensional fuente–receptor modifican la propagación sonora exterior.",
+        "Efecto de suelo y topografía · Agr",
+        "Continuar la ecuación de propagación exterior incorporando el efecto de suelo Agr y la geometría del terreno.",
     )
 
+    st.markdown(
+        """
+        <div style="border:1px solid #cfddea;border-radius:22px;padding:20px 22px;
+        background:linear-gradient(135deg,#f7fbff,#eef5fb);box-shadow:0 8px 20px rgba(31,63,92,.06);
+        margin:.25rem 0 1rem">
+          <div style="font-size:.72rem;font-weight:900;letter-spacing:.1em;color:#0b6ea8">
+            CONTINUAMOS LA ECUACIÓN DE PROPAGACIÓN
+          </div>
+          <div style="font-size:.9rem;color:#607386;margin-top:.3rem">
+            En la etapa anterior revisamos <b>Dc</b>, <b>Adiv</b> y <b>Aatm</b>. Ahora incorporamos <b>Agr</b>.
+          </div>
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
+    with st.container(border=True):
+        st.latex(r"L_p = L_W + D_c - A_{div} - A_{atm} - \mathbf{A_{gr}} - A_{bar} - C_{met}")
+        st.markdown(
+            "**Término activo en esta etapa: Agr · efecto de suelo.**  "
+            "Después abordaremos Abar (barreras/difracción) y Cmet (meteorología) antes de pasar "
+            "a ciclos de operación, simultaneidad y control en la fuente."
+        )
+        progress_html = """
+        <div style="display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:8px;margin-top:.5rem">
+          <div style="border-radius:12px;padding:9px;background:#edf6ff;color:#1d5e8a;text-align:center;font-size:.75rem;font-weight:850">✓ Dc</div>
+          <div style="border-radius:12px;padding:9px;background:#edf6ff;color:#1d5e8a;text-align:center;font-size:.75rem;font-weight:850">✓ Adiv</div>
+          <div style="border-radius:12px;padding:9px;background:#edf6ff;color:#1d5e8a;text-align:center;font-size:.75rem;font-weight:850">✓ Aatm</div>
+          <div style="border:2px solid #58a66e;border-radius:12px;padding:8px;background:#eef9f1;color:#2c6c3e;text-align:center;font-size:.75rem;font-weight:900">AHORA · Agr</div>
+          <div style="border-radius:12px;padding:9px;background:#f6f7f8;color:#82909c;text-align:center;font-size:.75rem;font-weight:800">DESPUÉS · Abar</div>
+          <div style="border-radius:12px;padding:9px;background:#f6f7f8;color:#82909c;text-align:center;font-size:.75rem;font-weight:800">DESPUÉS · Cmet</div>
+        </div>
+        """
+        st.markdown(progress_html,unsafe_allow_html=True)
     st.markdown(
         """
         <div style="border:1px solid #d9e7f3;border-radius:22px;padding:22px 24px;
@@ -1737,26 +1770,20 @@ def _stage4(lab, saved):
     ch+='</div>'
     st.markdown(ch,unsafe_allow_html=True)
 
-    st.markdown("### 4 · Receptores en altura")
+    st.markdown("### 4 · Qué aporta la topografía al cálculo")
     st.markdown(
-        "Un receptor ubicado en un piso superior puede tener una geometría de propagación muy distinta a un receptor a 1,5 m. "
-        "Cambian la distancia tridimensional, el ángulo de llegada y el efecto de suelo. Por eso **la altura del receptor no es un dato decorativo**."
+        "La topografía importa porque modifica la **geometría real de propagación**: la cota local de la fuente y del receptor "
+        "cambia la distancia tridimensional y las alturas relativas utilizadas por los términos de propagación. "
+        "En esta etapa usamos la topografía solo para definir correctamente esa geometría; no la convertimos en un tema separado de receptores por piso."
     )
-    r_heights=[1.5,4.5,7.5,10.5,13.5]
-    rh_html='<div style="display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:9px;margin:.35rem 0 1rem">'
-    for idx,rhv in enumerate(r_heights,1):
-        aval=_ground_att_iso_edu(horizontal,hs,rhv,g,freq)
-        dval=math.sqrt(float(horizontal)**2+((ground_r+rhv)-(ground_s+hs))**2)
-        rh_html+=(
-            f'<div style="border:1px solid #dce7f0;border-radius:15px;padding:12px;background:#fff;text-align:center">'
-            f'<div style="font-size:.72rem;color:#6e8192">Receptor {idx}</div>'
-            f'<div style="font-size:1.05rem;font-weight:900;color:#17324a">{rhv:.1f} m</div>'
-            f'<div style="font-size:.74rem;color:#617586;margin-top:.25rem">d3D {dval:.1f} m</div>'
-            f'<div style="font-size:.74rem;color:#2b7a4b">Agr {aval:+.2f} dB</div></div>'
-        )
-    rh_html+='</div>'
-    st.markdown(rh_html,unsafe_allow_html=True)
-
+    topo1,topo2,topo3=st.columns(3)
+    topo1.metric("Cota local fuente",f"{ground_s:.1f} m")
+    topo2.metric("Cota local receptor",f"{ground_r:.1f} m")
+    topo3.metric("Distancia real F–R",f"{d3:.1f} m")
+    st.caption(
+        "La altura acústicamente relevante se construye a partir de la cota del terreno y la altura física de la fuente/receptor. "
+        "Esto permite que Agr y los términos que veremos después trabajen con una geometría coherente."
+    )
     st.markdown("---")
     st.markdown(
         """
@@ -1767,7 +1794,7 @@ def _stage4(lab, saved):
             Interpreta el terreno y la geometría antes de modelar
           </div>
           <div style="color:#536b80;line-height:1.5">
-            Resuelve un caso independiente. Debes identificar G, obtener las alturas absolutas,
+            Resuelve un caso independiente. Debes identificar G, reconstruir la geometría a partir de las cotas locales,
             calcular la distancia tridimensional y determinar Agr para la banda indicada.
           </div>
         </div>
