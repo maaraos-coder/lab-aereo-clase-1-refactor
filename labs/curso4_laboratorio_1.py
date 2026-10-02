@@ -1174,10 +1174,15 @@ def _stage3(lab, saved):
     )
     with st.container(border=True):
         st.latex(r"L_p = L_W + D_c - A_{div} - A_{atm} - A_{gr} - A_{bar} - C_{met}")
+        st.markdown(
+            "**Referencia normativa:** este esquema corresponde al enfoque de propagación exterior de "
+            "**ISO 9613-2:2024 · Acoustics — Attenuation of sound during propagation outdoors — Part 2: Engineering method**. "
+            "La absorción atmosférica empleada por Noise Map Lab se calcula a partir de la formulación de **ISO 9613-1**."
+        )
         st.caption(
-            "Cada término representa un mecanismo físico distinto. Los términos A reducen el nivel; "
-            "Dc puede aumentarlo o reducirlo según la dirección de radiación; Cmet representa una corrección "
-            "meteorológica de largo plazo."
+            "Noise Map Lab implementa estos mecanismos con fines educativos. La ecuación mostrada resume el flujo del motor: "
+            "Lw + directividad − divergencia − atmósfera − suelo − barrera − corrección meteorológica. "
+            "No se presenta como sustituto de una implementación certificada de la norma."
         )
 
     cards = [
@@ -1222,25 +1227,62 @@ def _stage3(lab, saved):
             st.markdown(f"**LWA de referencia:** {lwa:.1f} dB(A)")
             st.caption(f"Tabla {item['table']} · Ref. {item['ref']}")
     with right:
-        st.markdown("### 1 · Directividad · Dc")
+        st.markdown("### 1 · Directividad · Q y Dc")
         st.markdown(
-            "La **directividad** describe cómo se reparte la energía acústica alrededor de la fuente. "
-            "Una fuente ideal omnidireccional radia de forma uniforme y se representa con **Dc = 0 dB**. "
-            "En equipos reales, carcasas, motores, escapes, aberturas o superficies cercanas pueden concentrar "
-            "más energía hacia ciertas direcciones."
+            "La **directividad** indica si el sonido se reparte en todas las direcciones o si queda concentrado hacia una zona. "
+            "Para una explicación simple podemos usar el **factor de directividad Q**. Cuanto mayor es Q, menor es el espacio "
+            "hacia el que se reparte la misma potencia acústica y, por lo tanto, mayor es el nivel en esa dirección."
         )
+
         st.markdown(
-            "**Lectura física:** si el receptor está en una dirección de mayor radiación, Dc es positivo y el nivel aumenta; "
-            "si está en una dirección menos favorecida, Dc puede ser menor. En esta etapa usamos Dc solo para comprender "
-            "dónde entra la orientación en la ecuación."
+            """
+            <div style="border:1px solid #dbe7f0;border-radius:16px;padding:14px 16px;background:#f8fbfe;margin:.4rem 0 .8rem">
+              <div style="font-size:.78rem;font-weight:900;color:#0b6ea8">EN PALABRAS SIMPLES</div>
+              <div style="font-size:.9rem;color:#526b80;line-height:1.5;margin-top:.25rem">
+                Imagina una ampolleta: si ilumina hacia todos lados, la energía se reparte mucho.
+                Si colocas superficies que la obligan a radiar solo hacia una parte del espacio,
+                la misma energía queda más concentrada. Con el sonido ocurre algo parecido.
+              </div>
+            </div>
+            """,
+            unsafe_allow_html=True,
         )
-        dc=st.select_slider(
-            "Corrección de directividad Dc [dB]",
-            options=[0.0,1.5,3.0,4.5,6.0],
-            value=0.0,
-            key="c4l1_s3_dc",
+
+        q_cards=[
+            ("Q = 1","Espacio libre","La fuente ideal radia en todas direcciones.","Dc = 0 dB"),
+            ("Q = 2","Sobre un plano","La radiación queda aproximadamente en medio espacio.","Dc ≈ +3 dB"),
+            ("Q = 4","Encuentro de 2 planos","La radiación se concentra aproximadamente en un cuarto de espacio.","Dc ≈ +6 dB"),
+            ("Q = 8","Esquina de 3 planos","La radiación se concentra aproximadamente en un octavo de espacio.","Dc ≈ +9 dB"),
+        ]
+        q_html='<div style="display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:9px;margin:.35rem 0 .8rem">'
+        for qv,title,desc,dc_txt in q_cards:
+            q_html+=(
+                f'<div style="border:1px solid #dce7f0;border-radius:15px;padding:12px;background:#fff">'
+                f'<div style="font-size:.78rem;font-weight:900;color:#0b6ea8">{qv}</div>'
+                f'<div style="font-size:.92rem;font-weight:850;color:#18324a;margin:.2rem 0">{title}</div>'
+                f'<div style="font-size:.78rem;color:#64788b;line-height:1.35">{desc}</div>'
+                f'<div style="font-size:.78rem;font-weight:850;color:#2c6b45;margin-top:.35rem">{dc_txt}</div>'
+                f'</div>'
+            )
+        q_html+='</div>'
+        st.markdown(q_html,unsafe_allow_html=True)
+
+        q=st.segmented_control(
+            "Factor de directividad Q",
+            [1,2,4,8],
+            default=1,
+            key="c4l1_s3_q",
         )
-        st.caption("En el ejercicio base usa 0 dB. El objetivo es entender dónde entra Dc en la ecuación.")
+        dc=10*math.log10(float(q))
+        q1,q2=st.columns(2)
+        q1.metric("Q seleccionado",f"{q}")
+        q2.metric("Dc equivalente",f"{dc:+.1f} dB")
+        st.latex(r"D_c = 10\log_{10}(Q)")
+        st.caption(
+            "Los casos Q=1, 2, 4 y 8 son aproximaciones geométricas ideales para comprender la directividad. "
+            "En una máquina real, la directividad depende de su geometría, aberturas, superficies cercanas y orientación; "
+            "Noise Map Lab utiliza directamente Dc como corrección en dB."
+        )
 
     st.markdown("### 2 · Divergencia geométrica · Adiv")
     st.markdown(
