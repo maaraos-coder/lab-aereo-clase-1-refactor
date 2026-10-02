@@ -2814,146 +2814,151 @@ def _stage6(lab, saved):
     _header(
         6,
         "Diseño y control del ruido en una obra",
-        "Seleccionar medidas de control según la fuente, su ubicación, la trayectoria de propagación y la organización de la faena.",
+        "Seleccionar controles técnicamente aplicables según el tipo de fuente, su operación y la geometría respecto del receptor.",
     )
 
     st.markdown(
         """
         <div style="border:1px solid #d7e5ef;border-radius:24px;padding:22px 24px;
-        background:linear-gradient(135deg,#fbfdff,#f1f7fb);box-shadow:0 8px 22px rgba(30,65,92,.06);margin-bottom:1rem">
-          <div style="display:inline-block;font-size:.78rem;font-weight:900;color:#0b6ea8;letter-spacing:.1em;background:#eaf5fb;border-radius:999px;padding:6px 10px">DISEÑO ACÚSTICO DE OBRA</div>
-          <div style="font-size:1.38rem;font-weight:900;color:#17324a;margin:.55rem 0 .5rem">
-            El control se diseña fuente por fuente y luego se integra en el escenario completo
+        background:linear-gradient(135deg,#fbfdff,#f1f7fb);box-shadow:0 9px 24px rgba(30,65,92,.06);margin-bottom:1rem">
+          <div style="display:inline-block;font-size:.78rem;font-weight:900;color:#0b6ea8;letter-spacing:.1em;
+          background:#eaf5fb;border-radius:999px;padding:6px 10px">CONTROL ACÚSTICO APLICADO</div>
+          <div style="font-size:1.36rem;font-weight:900;color:#17324a;margin:.55rem 0 .5rem">
+            La medida correcta depende de cómo funciona realmente la fuente
           </div>
           <div style="color:#5d7183;line-height:1.6;font-size:.92rem">
-            No todas las máquinas requieren la misma medida. Un equipo estacionario puede beneficiarse de un encierro;
-            una fuente direccional puede mejorar con orientación; y una maquinaria cercana al receptor puede requerir
-            reubicación, barrera o una combinación de controles.
+            No sirve proponer un encierro para una máquina que debe desplazarse libremente, ni reubicar un equipo
+            que obligatoriamente debe trabajar junto al receptor. El diseño debe ser <b>acústicamente eficaz</b>
+            y al mismo tiempo <b>operacionalmente viable</b>.
           </div>
         </div>
         """,
         unsafe_allow_html=True,
     )
 
-    st.markdown("### 1 · Jerarquía de control")
-    hierarchy=[
+    st.markdown("### 1 · Controles que utilizaremos")
+    controls=[
         (
-            "CONTROL EN LA FUENTE",
-            "Reducir la emisión",
-            "Actúa directamente sobre Lw antes de que el sonido se propague.",
-            ["equipo menos ruidoso","silenciador","encierro / semiencierro","mantenimiento"],
+            "SILENCIADOR",
+            "Conductos, escapes o ventilación",
+            "Introduce una pérdida de inserción en la trayectoria de descarga. Su eficacia puede variar con la frecuencia.",
+            "Ej.: escape de generador o ventilación forzada.",
             "#eef6fb","#176b9b"
         ),
         (
-            "CONTROL EN LA TRAYECTORIA",
-            "Modificar el camino",
-            "Aumenta pérdidas o evita una trayectoria directa hacia el receptor.",
-            ["distancia","orientación","barreras","edificios / acopios"],
-            "#fff7e9","#98651c"
+            "ENCIERRO",
+            "Fuente fija que puede quedar rodeada",
+            "Reduce transmisión directa mediante cerramientos. Las puertas, juntas, ventilación y penetraciones condicionan el desempeño real.",
+            "Ej.: generador o equipo estacionario.",
+            "#f2f8f4","#2d7a4a"
         ),
         (
-            "PLANIFICACIÓN",
-            "Modificar el escenario",
-            "Reduce la coincidencia de fuentes o evita ubicaciones innecesariamente desfavorables.",
-            ["reubicar equipos","separar frentes","evitar simultaneidad","definir zonas de trabajo"],
+            "SEMIENCIERRO",
+            "Fuente que necesita una cara abierta",
+            "Rodea parcialmente la fuente. La superficie abierta y su orientación respecto del receptor pasan a ser críticas.",
+            "Ej.: sierra de corte fija con acceso del operador.",
+            "#fff8e9","#98651c"
+        ),
+        (
+            "ENCIERRO + SILENCIADOR",
+            "Fuente fija con ventilación o escape relevante",
+            "Combina transmisión por cerramiento y control de las vías de ventilación/escape.",
+            "Ej.: generador estacionario de operación prolongada.",
             "#f5f2fb","#65549a"
         ),
+        (
+            "BARRERA",
+            "Control sobre la trayectoria",
+            "Interrumpe la línea de visión y genera difracción. Su eficacia depende de altura, posición y geometría fuente–barrera–receptor.",
+            "Ej.: maquinaria que debe trabajar cerca del deslinde.",
+            "#fff2ed","#a05b3a"
+        ),
+        (
+            "REDUCCIÓN DIRECTA DOCUMENTADA",
+            "Representación de un control conocido",
+            "No es una medida física en sí misma. Se usa cuando ya existe una reducción medida, declarada o calculada que debe incorporarse al modelo.",
+            "Ej.: IL/TL conocido de un tratamiento específico.",
+            "#f3f5f7","#596b78"
+        ),
     ]
-    hh='<div style="display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px;margin:.7rem 0 1rem">'
-    for title,sub,desc,items,bg,color in hierarchy:
-        lis="".join(f'<div style="margin:.22rem 0">• {x}</div>' for x in items)
-        hh+=(
-            f'<div style="border:1px solid #dce5eb;border-radius:20px;padding:17px 18px;background:{bg};box-shadow:0 5px 14px rgba(40,70,95,.04)">'
-            f'<div style="font-size:.73rem;font-weight:900;letter-spacing:.07em;color:{color}">{title}</div>'
-            f'<div style="font-size:1rem;font-weight:850;color:#334c5f;margin:.3rem 0">{sub}</div>'
-            f'<div style="font-size:.81rem;color:#657684;line-height:1.48;margin-bottom:.55rem">{desc}</div>'
-            f'<div style="border-top:1px solid rgba(90,110,125,.14);padding-top:.45rem;font-size:.79rem;color:{color};font-weight:750">{lis}</div>'
+    ch='<div style="display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:13px;margin:.7rem 0 1rem">'
+    for title,use,desc,example,bg,color in controls:
+        ch+=(
+            f'<div style="border:1px solid #dce5eb;border-radius:19px;padding:16px 17px;background:{bg};box-shadow:0 4px 13px rgba(40,70,95,.04)">'
+            f'<div style="font-size:.75rem;font-weight:900;letter-spacing:.07em;color:{color}">{title}</div>'
+            f'<div style="font-size:.92rem;font-weight:850;color:#334c5f;margin:.32rem 0">{use}</div>'
+            f'<div style="font-size:.83rem;color:#657684;line-height:1.5">{desc}</div>'
+            f'<div style="border-top:1px solid rgba(90,110,125,.13);margin-top:.65rem;padding-top:.5rem;font-size:.78rem;color:{color};font-weight:800">{example}</div>'
             f'</div>'
         )
-    hh+='</div>'
-    st.markdown(hh,unsafe_allow_html=True)
+    ch+='</div>'
+    st.markdown(ch,unsafe_allow_html=True)
 
-    st.markdown(
-        """
-        <div style="border:1px solid #dce6ed;border-radius:18px;padding:14px 17px;background:#fff;margin:.2rem 0 1rem">
-          <div style="font-size:.78rem;font-weight:900;color:#17324a">ORDEN DE RAZONAMIENTO</div>
-          <div style="font-size:.84rem;color:#637788;line-height:1.55;margin-top:.3rem">
-            1. ¿Puedo reducir la emisión en la fuente? &nbsp;→&nbsp;
-            2. ¿Puedo mejorar la trayectoria? &nbsp;→&nbsp;
-            3. ¿Puedo reorganizar la faena para evitar el escenario más desfavorable?
-          </div>
-        </div>
-        """,
-        unsafe_allow_html=True,
+    st.info(
+        "Además de estos controles físicos, la planificación sigue siendo válida: evitar simultaneidad innecesaria, "
+        "elegir ubicaciones favorables cuando la operación lo permita y orientar aberturas o escapes lejos del receptor."
     )
 
-    st.markdown("### 2 · Caso de diseño · obra con varias fuentes")
+    st.markdown("### 2 · Caso de diseño · cuatro fuentes con restricciones reales")
     st.markdown(
-        "Observa el plano. Existe un **receptor residencial sensible** al costado oriental. "
-        "Las fuentes no tienen la misma ubicación ni el mismo tipo de emisión, por lo que la medida de control "
-        "más conveniente puede ser distinta para cada una."
+        "En el plano existe una vivienda sensible al costado oriental. Cada fuente tiene una condición operacional distinta. "
+        "El alumno debe elegir una solución que pueda aplicarse realmente en obra."
     )
 
     work_svg=(
         '<div style="border:1px solid #d8e4ec;border-radius:24px;background:#fbfdff;padding:18px 20px;margin:.55rem 0 1.1rem;box-shadow:0 10px 24px rgba(33,65,90,.06)">'
         '<div style="display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:12px">'
         '<div><div style="font-size:.82rem;font-weight:900;color:#526a7e;letter-spacing:.08em">PLANTA DE ANÁLISIS</div>'
-        '<div style="font-size:.84rem;color:#738590;margin-top:.2rem">Identifica qué control aplicarías a cada fuente antes de ver la respuesta.</div></div>'
+        '<div style="font-size:.85rem;color:#738590;margin-top:.2rem">La restricción operacional es parte del problema.</div></div>'
         '<div style="font-size:.78rem;font-weight:900;color:#8b5b3d;background:#fff3eb;border:1px solid #edd4c5;border-radius:999px;padding:7px 12px">R · receptor sensible</div>'
         '</div>'
-        '<svg viewBox="0 0 1000 535" width="100%" style="display:block">'
+        '<svg viewBox="0 0 1000 545" width="100%" style="display:block">'
         '<defs><filter id="s6Shadow" x="-20%" y="-20%" width="140%" height="140%"><feDropShadow dx="0" dy="5" stdDeviation="5" flood-opacity=".13"/></filter></defs>'
-        '<rect x="0" y="0" width="1000" height="535" rx="22" fill="#f8fbfd"/>'
-        '<rect x="50" y="55" width="710" height="405" rx="24" fill="#eef3f6" stroke="#9fb0bc" stroke-width="3"/>'
-        '<text x="76" y="91" font-size="20" font-weight="900" fill="#5e7382">PREDIO DE LA OBRA</text>'
-        '<text x="76" y="117" font-size="13" font-weight="700" fill="#7b8c97">Escenario simplificado para selección de medidas de control</text>'
+        '<rect x="0" y="0" width="1000" height="545" rx="22" fill="#f8fbfd"/>'
+        '<rect x="48" y="54" width="714" height="420" rx="24" fill="#eef3f6" stroke="#9fb0bc" stroke-width="3"/>'
+        '<text x="75" y="90" font-size="20" font-weight="900" fill="#5e7382">PREDIO DE LA OBRA</text>'
+        '<text x="75" y="116" font-size="13" font-weight="700" fill="#7b8c97">Selecciona controles compatibles con la operación de cada fuente</text>'
 
-        '<rect x="805" y="125" width="150" height="170" rx="16" fill="#f9eee8" stroke="#c89b7d" stroke-width="3" filter="url(#s6Shadow)"/>'
-        '<rect x="825" y="151" width="110" height="54" rx="8" fill="#fff8f3" stroke="#e4c8b7"/>'
-        '<text x="839" y="181" font-size="18" font-weight="900" fill="#885a3e">VIVIENDA</text>'
-        '<text x="828" y="228" font-size="13" font-weight="700" fill="#936c55">receptor residencial</text>'
-        '<circle cx="805" cy="252" r="12" fill="#b34f4f"/><text x="825" y="258" font-size="16" font-weight="900" fill="#954343">R</text>'
+        '<rect x="805" y="130" width="150" height="172" rx="16" fill="#f9eee8" stroke="#c89b7d" stroke-width="3" filter="url(#s6Shadow)"/>'
+        '<rect x="825" y="154" width="110" height="55" rx="8" fill="#fff8f3" stroke="#e4c8b7"/>'
+        '<text x="839" y="185" font-size="18" font-weight="900" fill="#885a3e">VIVIENDA</text>'
+        '<text x="826" y="234" font-size="13" font-weight="700" fill="#936c55">receptor residencial</text>'
+        '<circle cx="805" cy="260" r="12" fill="#b34f4f"/><text x="825" y="266" font-size="16" font-weight="900" fill="#954343">R</text>'
 
-        '<rect x="260" y="140" width="145" height="175" rx="12" fill="#b7c6d0" stroke="#718694" stroke-width="3" filter="url(#s6Shadow)"/>'
-        '<rect x="278" y="168" width="109" height="58" rx="8" fill="#d9e2e7"/>'
-        '<text x="289" y="198" font-size="16" font-weight="900" fill="#445965">EDIFICIO</text>'
-        '<text x="290" y="220" font-size="13" font-weight="800" fill="#536b78">AUXILIAR</text>'
+        '<circle cx="165" cy="180" r="40" fill="#4f9a68" filter="url(#s6Shadow)"/>'
+        '<circle cx="136" cy="151" r="14" fill="#fff" stroke="#4f9a68" stroke-width="3"/><text x="131" y="157" font-size="13" font-weight="900" fill="#3f7350">1</text>'
+        '<text x="149" y="188" font-size="22" font-weight="900" fill="#fff">G</text>'
+        '<rect x="91" y="234" width="150" height="45" rx="11" fill="#fff" stroke="#d7e3ea"/>'
+        '<text x="117" y="261" font-size="15" font-weight="900" fill="#3f7350">Generador</text>'
 
-        '<circle cx="160" cy="185" r="38" fill="#4f9a68" filter="url(#s6Shadow)"/>'
-        '<circle cx="132" cy="157" r="14" fill="#ffffff" stroke="#4f9a68" stroke-width="3"/><text x="127" y="163" font-size="13" font-weight="900" fill="#3f7350">1</text>'
-        '<text x="144" y="193" font-size="22" font-weight="900" fill="#fff">G</text>'
-        '<rect x="94" y="236" width="135" height="42" rx="11" fill="#fff" stroke="#d7e3ea"/>'
-        '<text x="117" y="262" font-size="15" font-weight="900" fill="#3f7350">Generador</text>'
+        '<circle cx="570" cy="160" r="40" fill="#d65f5f" filter="url(#s6Shadow)"/>'
+        '<circle cx="541" cy="131" r="14" fill="#fff" stroke="#d65f5f" stroke-width="3"/><text x="536" y="137" font-size="13" font-weight="900" fill="#9e4545">2</text>'
+        '<text x="546" y="168" font-size="21" font-weight="900" fill="#fff">MH</text>'
+        '<rect x="487" y="214" width="168" height="45" rx="11" fill="#fff" stroke="#d7e3ea"/>'
+        '<text x="506" y="241" font-size="15" font-weight="900" fill="#9e4545">Martillo hidráulico</text>'
 
-        '<circle cx="555" cy="155" r="38" fill="#d65f5f" filter="url(#s6Shadow)"/>'
-        '<circle cx="527" cy="127" r="14" fill="#ffffff" stroke="#d65f5f" stroke-width="3"/><text x="522" y="133" font-size="13" font-weight="900" fill="#9e4545">2</text>'
-        '<text x="531" y="163" font-size="21" font-weight="900" fill="#fff">MH</text>'
-        '<rect x="475" y="207" width="163" height="42" rx="11" fill="#fff" stroke="#d7e3ea"/>'
-        '<text x="494" y="233" font-size="15" font-weight="900" fill="#9e4545">Martillo hidráulico</text>'
+        '<circle cx="660" cy="365" r="40" fill="#3b83b2" filter="url(#s6Shadow)"/>'
+        '<circle cx="631" cy="336" r="14" fill="#fff" stroke="#3b83b2" stroke-width="3"/><text x="626" y="342" font-size="13" font-weight="900" fill="#2f607e">3</text>'
+        '<text x="636" y="373" font-size="21" font-weight="900" fill="#fff">EX</text>'
+        '<rect x="584" y="419" width="155" height="45" rx="11" fill="#fff" stroke="#d7e3ea"/>'
+        '<text x="608" y="446" font-size="15" font-weight="900" fill="#2f607e">Excavadora</text>'
 
-        '<circle cx="645" cy="350" r="38" fill="#3b83b2" filter="url(#s6Shadow)"/>'
-        '<circle cx="617" cy="322" r="14" fill="#ffffff" stroke="#3b83b2" stroke-width="3"/><text x="612" y="328" font-size="13" font-weight="900" fill="#2f607e">3</text>'
-        '<text x="621" y="358" font-size="21" font-weight="900" fill="#fff">EX</text>'
-        '<rect x="570" y="402" width="151" height="42" rx="11" fill="#fff" stroke="#d7e3ea"/>'
-        '<text x="594" y="428" font-size="15" font-weight="900" fill="#2f607e">Excavadora</text>'
+        '<circle cx="410" cy="365" r="40" fill="#7c72b8" filter="url(#s6Shadow)"/>'
+        '<circle cx="381" cy="336" r="14" fill="#fff" stroke="#7c72b8" stroke-width="3"/><text x="376" y="342" font-size="13" font-weight="900" fill="#5f568c">4</text>'
+        '<text x="384" y="373" font-size="20" font-weight="900" fill="#fff">SC</text>'
+        '<rect x="330" y="419" width="163" height="45" rx="11" fill="#fff" stroke="#d7e3ea"/>'
+        '<text x="355" y="446" font-size="15" font-weight="900" fill="#5f568c">Sierra de corte</text>'
 
-        '<circle cx="440" cy="365" r="38" fill="#7c72b8" filter="url(#s6Shadow)"/>'
-        '<circle cx="412" cy="337" r="14" fill="#ffffff" stroke="#7c72b8" stroke-width="3"/><text x="407" y="343" font-size="13" font-weight="900" fill="#5f568c">4</text>'
-        '<text x="415" y="373" font-size="20" font-weight="900" fill="#fff">SC</text>'
-        '<rect x="362" y="417" width="157" height="42" rx="11" fill="#fff" stroke="#d7e3ea"/>'
-        '<text x="389" y="443" font-size="15" font-weight="900" fill="#5f568c">Sierra de corte</text>'
-
-        '<line x1="160" y1="185" x2="805" y2="252" stroke="#5e9a70" stroke-width="2.5" stroke-dasharray="10 8" opacity=".48"/>'
-        '<line x1="555" y1="155" x2="805" y2="252" stroke="#d65f5f" stroke-width="3.5" stroke-dasharray="10 8" opacity=".72"/>'
-        '<line x1="645" y1="350" x2="805" y2="252" stroke="#3b83b2" stroke-width="3.2" stroke-dasharray="10 8" opacity=".65"/>'
-        '<line x1="440" y1="365" x2="805" y2="252" stroke="#7c72b8" stroke-width="2.8" stroke-dasharray="10 8" opacity=".58"/>'
-        '<text x="783" y="325" font-size="12" font-weight="800" fill="#83939d">trayectorias hacia R</text>'
+        '<line x1="165" y1="180" x2="805" y2="260" stroke="#5e9a70" stroke-width="2.5" stroke-dasharray="10 8" opacity=".45"/>'
+        '<line x1="570" y1="160" x2="805" y2="260" stroke="#d65f5f" stroke-width="3.5" stroke-dasharray="10 8" opacity=".72"/>'
+        '<line x1="660" y1="365" x2="805" y2="260" stroke="#3b83b2" stroke-width="3.3" stroke-dasharray="10 8" opacity=".67"/>'
+        '<line x1="410" y1="365" x2="805" y2="260" stroke="#7c72b8" stroke-width="2.8" stroke-dasharray="10 8" opacity=".6"/>'
         '</svg>'
         '<div style="display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:11px;margin-top:12px">'
-        '<div style="border:1px solid #d7eadc;border-radius:14px;padding:12px;background:#eff8f1;color:#3f7350;font-size:.84rem;line-height:1.4"><b>1 · Generador</b><br><span style="color:#62776a">estacionario · operación prolongada</span></div>'
-        '<div style="border:1px solid #f0d7d7;border-radius:14px;padding:12px;background:#fff1f1;color:#934747;font-size:.84rem;line-height:1.4"><b>2 · Martillo</b><br><span style="color:#806565">alta emisión · próximo a R</span></div>'
-        '<div style="border:1px solid #cfe0ec;border-radius:14px;padding:12px;background:#eef6fb;color:#2f607e;font-size:.84rem;line-height:1.4"><b>3 · Excavadora</b><br><span style="color:#637887">móvil dentro del frente</span></div>'
-        '<div style="border:1px solid #ddd8ef;border-radius:14px;padding:12px;background:#f5f2fb;color:#5f568c;font-size:.84rem;line-height:1.4"><b>4 · Sierra</b><br><span style="color:#726c82">localizada · orientación relevante</span></div>'
+        '<div style="border:1px solid #d7eadc;border-radius:14px;padding:12px;background:#eff8f1;color:#3f7350;font-size:.84rem;line-height:1.42"><b>1 · Generador</b><br><span style="color:#62776a">fijo · funciona gran parte de la jornada · posee escape/ventilación</span></div>'
+        '<div style="border:1px solid #f0d7d7;border-radius:14px;padding:12px;background:#fff1f1;color:#934747;font-size:.84rem;line-height:1.42"><b>2 · Martillo</b><br><span style="color:#806565">debe trabajar en ese punto · alta emisión · próximo a R</span></div>'
+        '<div style="border:1px solid #cfe0ec;border-radius:14px;padding:12px;background:#eef6fb;color:#2f607e;font-size:.84rem;line-height:1.42"><b>3 · Excavadora</b><br><span style="color:#637887">debe excavar junto al deslinde · no puede encerrarse</span></div>'
+        '<div style="border:1px solid #ddd8ef;border-radius:14px;padding:12px;background:#f5f2fb;color:#5f568c;font-size:.84rem;line-height:1.42"><b>4 · Sierra</b><br><span style="color:#726c82">fija durante el corte · necesita acceso frontal del operador</span></div>'
         '</div>'
         '</div>'
     )
@@ -2962,11 +2967,11 @@ def _stage6(lab, saved):
     st.markdown("### 3 · Diseña la estrategia de control")
     st.markdown(
         """
-        <div style="border:1px solid #dce6ed;border-radius:18px;padding:14px 17px;background:#fff;margin:.3rem 0 .8rem">
-          <div style="font-size:.78rem;font-weight:900;color:#17324a">OBJETIVO DEL EJERCICIO</div>
-          <div style="font-size:.84rem;color:#637788;line-height:1.52;margin-top:.3rem">
-            Analiza cada fuente por separado y selecciona la <b>medida principal</b> que aplicarías.
-            Después integra las decisiones: una obra real puede combinar controles en la fuente, trayectoria y planificación.
+        <div style="border:1px solid #dce6ed;border-radius:18px;padding:15px 18px;background:#fff;margin:.3rem 0 .8rem">
+          <div style="font-size:.8rem;font-weight:900;color:#17324a">OBJETIVO</div>
+          <div style="font-size:.86rem;color:#637788;line-height:1.55;margin-top:.3rem">
+            Elige la medida principal más realista para cada fuente. La respuesta debe respetar la restricción operacional
+            indicada en el plano; no basta con escoger el control de mayor reducción teórica.
           </div>
         </div>
         """,
@@ -2976,34 +2981,34 @@ def _stage6(lab, saved):
     control_cases=[
         (
             "Generador",
-            "Fuente estacionaria · operación prolongada",
-            ["Encierro acústico","Barrera temporal","Moverlo unos metros sin otro cambio","Solo reducir horario"],
-            "Encierro acústico",
-            "Al ser estacionario y de operación prolongada, un encierro bien diseñado puede actuar directamente sobre la emisión y mantener el control durante toda la jornada.",
+            "Fijo · escape y ventilación · operación prolongada",
+            ["Encierro + silenciador","Solo barrera","Semiencierro abierto hacia el receptor","Reubicarlo obligatoriamente"],
+            "Encierro + silenciador",
+            "Es una fuente fija y compatible con un cerramiento. El silenciador permite controlar además las vías de escape o ventilación, que de otro modo pueden limitar el desempeño del encierro.",
             "#4f9a68"
         ),
         (
             "Martillo hidráulico",
-            "Fuente de alta emisión · cercana al receptor",
-            ["Barrera + reubicar el frente","Silenciador de escape","Encierro completo","Solo mantenimiento"],
-            "Barrera + reubicar el frente",
-            "La combinación de mayor distancia y control de trayectoria es más coherente para una fuente intensa que trabaja cerca del receptor.",
+            "Alta emisión · debe operar en esa posición",
+            ["Barrera próxima a la fuente","Encierro completo","Silenciador de escape","Semiencierro fijo alrededor del equipo"],
+            "Barrera próxima a la fuente",
+            "Como el frente no puede reubicarse y el equipo necesita libertad de movimiento, una pantalla temporal correctamente dimensionada es una medida de trayectoria más viable.",
             "#d65f5f"
         ),
         (
             "Excavadora",
-            "Maquinaria móvil dentro del frente",
-            ["Reorganizar posición / frente","Encierro completo","Silenciador industrial genérico","Mantenerla junto al receptor"],
-            "Reorganizar posición / frente",
-            "La planificación espacial permite alejar las posiciones de operación más frecuentes del receptor sin forzar un control incompatible con su movilidad.",
+            "Debe excavar junto al deslinde · maquinaria móvil",
+            ["Barrera entre frente y receptor","Encierro completo","Semiencierro rígido","Moverla lejos del receptor"],
+            "Barrera entre frente y receptor",
+            "La ubicación viene impuesta por la excavación y la máquina debe moverse. Una barrera temporal puede actuar sobre la trayectoria sin impedir la operación; su eficacia dependerá de la geometría.",
             "#3b83b2"
         ),
         (
             "Sierra de corte",
-            "Fuente localizada y con orientación relevante",
-            ["Orientar + pantalla local","Alejar la vivienda","Encierro total sin ventilación","No aplicar control"],
-            "Orientar + pantalla local",
-            "La orientación y una pantalla próxima pueden reducir la propagación directa hacia el receptor sin impedir la operación del equipo.",
+            "Fuente fija · requiere acceso frontal",
+            ["Semiencierro con abertura opuesta al receptor","Encierro hermético sin acceso","Solo aumentar horario","Barrera lejana sin cambiar orientación"],
+            "Semiencierro con abertura opuesta al receptor",
+            "El semiencierro permite mantener acceso operativo y orientar la cara abierta en sentido contrario al receptor, reduciendo la propagación directa.",
             "#7c72b8"
         ),
     ]
@@ -3014,14 +3019,15 @@ def _stage6(lab, saved):
             h1,h2=st.columns([1.8,1])
             with h1:
                 st.markdown(
-                    f"<div style='display:inline-block;font-size:.74rem;font-weight:900;color:{color};letter-spacing:.06em;background:#f7f9fa;border-radius:999px;padding:5px 8px'>{kind.upper()}</div>"
-                    f"<div style='font-size:1.12rem;font-weight:900;color:#263f52;margin-top:.35rem'>{name}</div>",
+                    f"<div style='display:inline-block;font-size:.75rem;font-weight:900;color:{color};letter-spacing:.05em;"
+                    f"background:#f7f9fa;border-radius:999px;padding:5px 8px'>{kind.upper()}</div>"
+                    f"<div style='font-size:1.12rem;font-weight:900;color:#263f52;margin-top:.4rem'>{name}</div>",
                     unsafe_allow_html=True,
                 )
             with h2:
                 st.markdown(
-                    f"<div style='text-align:center;border-radius:999px;padding:7px 10px;background:#f3f6f8;"
-                    f"color:#607481;font-size:.72rem;font-weight:900'>FUENTE {i+1}</div>",
+                    f"<div style='text-align:center;border-radius:999px;padding:8px 11px;background:#f3f6f8;"
+                    f"color:#607481;font-size:.78rem;font-weight:900'>FUENTE {i+1}</div>",
                     unsafe_allow_html=True,
                 )
 
@@ -3037,53 +3043,67 @@ def _stage6(lab, saved):
                     correct_count+=1
                     st.success(f"Buena elección · {why}")
                 else:
-                    st.warning(f"Revisa la decisión · {why}")
+                    st.warning(f"Revisa la aplicabilidad · {why}")
 
-    st.markdown("### 4 · Integra las decisiones")
+    st.markdown("### 4 · ¿Dónde entra la reducción directa?")
+    with st.container(border=True):
+        st.markdown(
+            "**Reducción directa** se utiliza cuando ya conoces cuánto reduce un tratamiento concreto y quieres "
+            "incorporar ese desempeño sin representar explícitamente su mecanismo."
+        )
+        rd1,rd2=st.columns(2)
+        with rd1:
+            st.markdown(
+                """
+                **Ejemplo válido**  
+                Un proveedor ensaya un tratamiento y declara una reducción de 8 dB para la condición de uso evaluada.
+                Ese valor puede incorporarse como reducción directa, dejando documentado su origen.
+                """
+            )
+        with rd2:
+            st.markdown(
+                """
+                **No es válido**  
+                Elegir arbitrariamente “−10 dB” porque se instaló algún control sin conocer su desempeño real.
+                La reducción debe provenir de un dato medido, declarado o técnicamente justificado.
+                """
+            )
+
+    st.markdown("### 5 · Integra las decisiones")
     selected=[st.session_state.get(f"c4l1_s6_control_{i}") for i in range(len(control_cases))]
     answered=sum(v is not None for v in selected)
+
     if answered==0:
         st.info("Selecciona al menos una medida para comenzar a construir la estrategia de control.")
     else:
         p1,p2,p3=st.columns(3)
         p1.metric("Fuentes analizadas",f"{answered}/4")
-        p2.metric("Selecciones coherentes",f"{correct_count}/4")
-        p3.metric("Objetivo","Combinar controles")
+        p2.metric("Decisiones coherentes",f"{correct_count}/4")
+        p3.metric("Criterio","Viabilidad + acústica")
 
         if answered==4 and correct_count==4:
             st.success(
-                "La estrategia combina controles en la fuente, trayectoria y planificación. "
-                "Ese enfoque es más robusto que aplicar la misma medida a todas las máquinas."
+                "La estrategia es coherente con la operación real: encierro + silenciador para la fuente fija, "
+                "barreras para las fuentes móviles o forzadas a trabajar junto al receptor, y semiencierro orientado para la sierra."
             )
         elif answered==4:
             st.info(
-                "Ya definiste una estrategia completa. Revisa las retroalimentaciones y observa que una medida eficaz "
-                "depende del tipo de fuente y de su geometría respecto del receptor."
+                "Completaste las cuatro decisiones. Revisa las retroalimentaciones: una medida puede ser acústicamente potente "
+                "pero inaplicable si impide que la máquina realice su trabajo."
             )
 
     st.markdown(
         """
-        <div style="display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;margin:.8rem 0 .4rem">
-          <div style="border:1px solid #cfe0ec;border-radius:16px;padding:14px;background:#eef6fb">
-            <div style="font-size:.74rem;font-weight:900;color:#176b9b">FUENTE</div>
-            <div style="font-size:.82rem;color:#5e7384;margin-top:.3rem">Encierro, silenciador, selección de equipo y mantenimiento.</div>
-          </div>
-          <div style="border:1px solid #eadbc3;border-radius:16px;padding:14px;background:#fff7e9">
-            <div style="font-size:.74rem;font-weight:900;color:#98651c">TRAYECTORIA</div>
-            <div style="font-size:.82rem;color:#746247;margin-top:.3rem">Distancia, orientación, pantallas y obstáculos.</div>
-          </div>
-          <div style="border:1px solid #ddd8ef;border-radius:16px;padding:14px;background:#f5f2fb">
-            <div style="font-size:.74rem;font-weight:900;color:#65549a">PLANIFICACIÓN</div>
-            <div style="font-size:.82rem;color:#6f6880;margin-top:.3rem">Reubicar frentes, separar fuentes y gestionar simultaneidad.</div>
+        <div style="border:1px solid #d7e5ef;border-radius:20px;padding:16px 18px;
+        background:linear-gradient(135deg,#f9fcfe,#f3f8fb);margin:.9rem 0 .3rem">
+          <div style="font-size:.78rem;font-weight:900;color:#17324a;letter-spacing:.06em">IDEA DE CIERRE</div>
+          <div style="font-size:.88rem;color:#607586;line-height:1.55;margin-top:.35rem">
+            El control no se selecciona por una lista fija de “dB de reducción”. Primero se identifica
+            <b>qué mecanismo puede aplicarse físicamente</b>; después se cuantifica su desempeño y se incorpora al cálculo.
           </div>
         </div>
         """,
         unsafe_allow_html=True,
-    )
-
-    st.caption(
-        "Una medida aislada rara vez resuelve por sí sola un escenario complejo. "
-        "El objetivo de diseño es combinar controles compatibles con la operación real de cada fuente."
     )
 
 
