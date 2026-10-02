@@ -937,81 +937,199 @@ def _stage2(lab, saved):
     st.markdown("---")
     st.markdown(
         """
-        <div style="border:1px solid #eadfc8;border-radius:18px;padding:18px 20px;
-        background:linear-gradient(135deg,#fffaf2,#fff7e8)">
-          <div style="font-size:.72rem;font-weight:900;letter-spacing:.1em;color:#9a6617">
-            DESAFÍO RÁPIDO
+        <div style="border:1px solid #d8e6f0;border-radius:20px;padding:20px 22px;
+        background:linear-gradient(135deg,#f8fbfe,#eef6fb);margin-bottom:1rem">
+          <div style="font-size:.72rem;font-weight:900;letter-spacing:.1em;color:#0b6ea8">
+            EJERCICIO DE CONVERSIÓN
           </div>
-          <div style="font-size:1.2rem;font-weight:850;color:#4b3515;margin:.35rem 0">
-            ¿Cómo documentarías este registro antes de modelar?
+          <div style="font-size:1.25rem;font-weight:850;color:#16314b;margin:.35rem 0">
+            Completa el espectro de potencia sonora
           </div>
-          <div style="color:#6a5636">
-            Identifica el descriptor y decide si el dato puede tratarse como actividad estacionaria
-            o si requiere una advertencia por corresponder a una pasada móvil.
+          <div style="color:#536b80;line-height:1.55">
+            A partir de los niveles de presión sonora por banda medidos a 10 m,
+            calcula primero <b>Lw por banda</b>, luego aplica la <b>corrección A</b>
+            para obtener <b>LwA por banda</b> y finalmente realiza la suma energética total.
           </div>
         </div>
         """,
         unsafe_allow_html=True,
     )
 
-    descriptor_choices = ["LAeq,T", "LAmax"]
-    descriptor_answer = st.radio(
-        "Descriptor del registro seleccionado",
-        descriptor_choices,
-        horizontal=True,
-        key=f"c4l1_s2_descriptor_{name}",
+    practice_cases = {
+        "Caso 1": "Excavadora hidráulica",
+        "Caso 2": "Camión mixer",
+        "Caso 3": "Martillo hidráulico",
+        "Caso 4": "Rodillo vibratorio",
+    }
+    practice_case = st.segmented_control(
+        "Selecciona un caso de práctica",
+        list(practice_cases.keys()),
+        default="Caso 1",
+        key="c4l1_s2_practice_case",
     )
-    use_choices = [
-        "Puede tratarse como registro de actividad estacionaria, manteniendo documentada su procedencia.",
-        "Puede utilizarse como referencia, pero debe advertirse que corresponde a una pasada móvil / LAmax.",
-    ]
-    use_answer = st.radio(
-        "Interpretación para modelación",
-        use_choices,
-        key=f"c4l1_s2_use_{name}",
+    practice_name = practice_cases[practice_case]
+    practice_item = BS_PLANT[practice_name]
+    practice_metric = practice_item.get("metric","LAeq,T")
+    practice_lw = [float(v)+28.0 for v in practice_item["bands"]]
+    practice_a = [-26.2,-16.1,-8.6,-3.2,0.0,1.2,1.0,-1.1]
+    practice_lwa_bands = [lw+a for lw,a in zip(practice_lw,practice_a)]
+    practice_total = 10*math.log10(sum(10**(v/10) for v in practice_lwa_bands))
+
+    pc1,pc2 = st.columns([1,1.5],gap="large")
+    with pc1:
+        with st.container(border=True):
+            practice_image = _machine_image_path(practice_item)
+            if practice_image:
+                st.image(str(practice_image), use_container_width=True)
+            st.markdown(f"### {practice_name}")
+            st.caption(practice_item["en"])
+            st.markdown(f"**Actividad:** {practice_item['activity']}")
+            st.markdown(f"**Descriptor original:** {practice_metric}")
+            st.markdown(f"**Fuente:** Tabla {practice_item['table']} · Ref. {practice_item['ref']}")
+    with pc2:
+        st.markdown("#### Instrucciones")
+        st.markdown(
+            "1. Para cada banda, calcula **Lw = Lp(10 m) + 28 dB**.\n"
+            "2. Luego calcula **LwA = Lw + corrección A**.\n"
+            "3. Finalmente suma energéticamente todos los LwA por banda para obtener el **LWA total**."
+        )
+        st.latex(r"L_{WA}=10\log_{10}\left(\sum_f10^{L_{WA,f}/10}\right)")
+        if practice_item.get("driveby"):
+            st.warning(
+                "Este caso corresponde a una pasada móvil: las bandas de origen son Lmax. "
+                "La mecánica matemática del ejercicio es la misma, pero el descriptor debe conservarse."
+            )
+
+    st.markdown("#### Completa la tabla")
+    h1,h2,h3,h4,h5 = st.columns([.75,1.05,1.05,1.0,1.05])
+    h1.markdown("**Banda**")
+    h2.markdown("**Lp a 10 m**")
+    h3.markdown("**Lw**")
+    h4.markdown("**Corr. A**")
+    h5.markdown("**LwA**")
+
+    student_lw=[]
+    student_lwa=[]
+    for i,label in enumerate(octave_labels):
+        c1,c2,c3,c4,c5=st.columns([.75,1.05,1.05,1.0,1.05])
+        c1.markdown(f"**{label}**")
+        c2.markdown(f"{practice_item['bands'][i]:.0f} dB")
+        lw_txt=c3.text_input(
+            f"Lw {label}",
+            value="",
+            key=f"c4l1_s2_ex_lw_{practice_case}_{i}",
+            label_visibility="collapsed",
+            placeholder="dB",
+        )
+        c4.markdown(f"{practice_a[i]:+.1f} dB")
+        lwa_txt=c5.text_input(
+            f"LwA {label}",
+            value="",
+            key=f"c4l1_s2_ex_lwa_{practice_case}_{i}",
+            label_visibility="collapsed",
+            placeholder="dB(A)",
+        )
+        student_lw.append(lw_txt)
+        student_lwa.append(lwa_txt)
+
+    st.markdown("#### Suma energética final")
+    total_answer = st.text_input(
+        "LWA total [dB(A)]",
+        value="",
+        key=f"c4l1_s2_ex_total_{practice_case}",
+        placeholder="Ingresa el resultado total, por ejemplo 105.3",
     )
 
-    if st.button("Comprobar interpretación", key=f"c4l1_s2_check_{name}", type="primary", use_container_width=True):
-        descriptor_ok = descriptor_answer == metric
-        expected_use = use_choices[1] if item.get("driveby") else use_choices[0]
-        use_ok = use_answer == expected_use
-        if descriptor_ok and use_ok:
-            st.success(
-                f"Correcto. Para **{name}**, el descriptor es **{metric}** y el LWA broadband de referencia "
-                f"es aproximadamente **{lwa:.0f} dB(A)**."
-            )
-        elif not descriptor_ok:
-            st.warning(f"Revisa primero el descriptor original del registro. En este caso corresponde a **{metric}**.")
+    if st.button(
+        "Comprobar ejercicio",
+        key=f"c4l1_s2_ex_check_{practice_case}",
+        type="primary",
+        use_container_width=True,
+    ):
+        def _parse_num(value):
+            try:
+                return float(str(value).strip().replace(",","."))
+            except Exception:
+                return None
+
+        parsed_lw=[_parse_num(v) for v in student_lw]
+        parsed_lwa=[_parse_num(v) for v in student_lwa]
+        parsed_total=_parse_num(total_answer)
+
+        if any(v is None for v in parsed_lw+parsed_lwa) or parsed_total is None:
+            st.warning("Completa todos los valores de Lw, LwA y el LWA total antes de comprobar.")
         else:
-            st.warning(
-                "El descriptor es correcto, pero revisa la forma de documentar el registro antes de incorporarlo al modelo."
-            )
+            lw_ok=[abs(a-b)<=0.2 for a,b in zip(parsed_lw,practice_lw)]
+            lwa_ok=[abs(a-b)<=0.2 for a,b in zip(parsed_lwa,practice_lwa_bands)]
+            total_ok=abs(parsed_total-practice_total)<=0.3
+
+            correct_cells=sum(lw_ok)+sum(lwa_ok)+(1 if total_ok else 0)
+            total_cells=17
+            if correct_cells==total_cells:
+                st.success(
+                    f"Ejercicio correcto. Convertiste las 8 bandas a Lw, aplicaste la ponderación A "
+                    f"y obtuviste correctamente el LWA total de **{practice_total:.1f} dB(A)**."
+                )
+            else:
+                bad_lw=[octave_labels[i] for i,ok in enumerate(lw_ok) if not ok]
+                bad_lwa=[octave_labels[i] for i,ok in enumerate(lwa_ok) if not ok]
+                st.warning(f"Tienes **{correct_cells}/{total_cells}** resultados correctos.")
+                if bad_lw:
+                    st.write("Revisa **Lw** en: " + ", ".join(bad_lw) + ". Recuerda: Lw = Lp + 28.")
+                if bad_lwa:
+                    st.write("Revisa **LwA** en: " + ", ".join(bad_lwa) + ". Recuerda sumar algebraicamente la corrección A.")
+                if not total_ok:
+                    st.write("Revisa la **suma energética final**: no se suman los dB aritméticamente.")
 
     if st.session_state.get("role") == "Docente":
         with st.expander("👩‍🏫 Pauta docente · Etapa 2", expanded=False):
             st.markdown(
                 f"""
-                **Registro seleccionado:** {name}  
-                **Descriptor correcto:** {metric}  
-                **Dato broadband a 10 m:** {item['laeq10']:.0f} dB(A)  
-                **Conversión de referencia:** {item['laeq10']:.0f} + 28 = **{lwa:.0f} dB(A)**  
-                **Trazabilidad:** Tabla {item['table']} · Ref. {item['ref']}
+                **Ejercicio activo:** {practice_case} · {practice_name}  
+                **Descriptor original:** {practice_metric}  
+                **Regla por banda:** Lw = Lp(10 m) + 28 dB  
+                **Resultado total esperado:** **{practice_total:.1f} dB(A)**
                 """
             )
-            if item.get("driveby"):
+            teacher_solution = '<div style="overflow-x:auto"><div style="min-width:820px">'
+            teacher_solution += '<div style="display:grid;grid-template-columns:110px repeat(4,1fr);gap:7px">'
+            for head in ["Banda","Lp 10 m","Lw","Corr. A","LwA"]:
+                teacher_solution += (
+                    f'<div style="background:#20384e;color:#fff;border-radius:11px;padding:9px;'
+                    f'text-align:center;font-size:.78rem;font-weight:850">{head}</div>'
+                )
+            for i,label in enumerate(octave_labels):
+                vals=[
+                    label,
+                    f"{practice_item['bands'][i]:.0f}",
+                    f"{practice_lw[i]:.0f}",
+                    f"{practice_a[i]:+.1f}",
+                    f"{practice_lwa_bands[i]:.1f}",
+                ]
+                for j,val in enumerate(vals):
+                    bg="#eef8f1" if j in (2,4) else "#f7f9fb"
+                    col="#245f3a" if j in (2,4) else "#334c61"
+                    teacher_solution += (
+                        f'<div style="border:1px solid #dce6ee;border-radius:11px;padding:9px;'
+                        f'background:{bg};color:{col};text-align:center;font-size:.82rem;'
+                        f'font-weight:{850 if j in (2,4) else 650}">{val}</div>'
+                    )
+            teacher_solution += '</div></div></div>'
+            st.markdown(teacher_solution, unsafe_allow_html=True)
+            st.success(f"LWA total por suma energética = **{practice_total:.1f} dB(A)**")
+            st.caption(
+                "Tolerancia usada por la app: ±0,2 dB en cada celda de Lw y LwA, y ±0,3 dB en el resultado total."
+            )
+            if practice_item.get("driveby"):
                 st.warning(
-                    "Punto docente clave: el alumno debe reconocer que este caso es LAmax de pasada móvil. "
-                    "No debe presentarlo como si fuese un LAeq,T estacionario."
+                    "Punto docente clave: este caso proviene de Lmax de pasada móvil. "
+                    "La conversión matemática no cambia el descriptor original ni convierte el caso en estacionario."
                 )
             else:
                 st.info(
-                    "Punto docente clave: el alumno debe conservar actividad, tamaño/potencia y referencia del registro; "
-                    "el valor convertido no debe transformarse en un dato genérico de toda máquina del mismo tipo."
+                    "Punto docente clave: el alumno debe distinguir entre la conversión geométrica por banda "
+                    "y la ponderación A posterior, y realizar la suma final energéticamente."
                 )
-            st.caption(
-                "No se evalúa aquí directividad Q ni factor de suelo G. Esos parámetros pertenecen a etapas posteriores "
-                "de propagación y geometría, no a esta conversión documental."
-            )
 
 def _stage3(lab, saved):
     _header(
