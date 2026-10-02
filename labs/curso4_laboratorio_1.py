@@ -1177,12 +1177,12 @@ def _stage3(lab, saved):
         st.markdown(
             "**Referencia normativa:** este esquema corresponde al enfoque de propagación exterior de "
             "**ISO 9613-2:2024 · Acoustics — Attenuation of sound during propagation outdoors — Part 2: Engineering method**. "
-            "La absorción atmosférica empleada por Noise Map Lab se calcula a partir de la formulación de **ISO 9613-1**."
+            "La absorción atmosférica se determina mediante la formulación de **ISO 9613-1**."
         )
         st.caption(
-            "Noise Map Lab implementa estos mecanismos con fines educativos. La ecuación mostrada resume el flujo del motor: "
-            "Lw + directividad − divergencia − atmósfera − suelo − barrera − corrección meteorológica. "
-            "No se presenta como sustituto de una implementación certificada de la norma."
+            "La ecuación resume los principales mecanismos considerados en la propagación exterior: "
+            "potencia sonora, directividad, divergencia geométrica, absorción atmosférica, efecto de suelo, "
+            "difracción por barreras y corrección meteorológica de largo plazo."
         )
 
     cards = [
