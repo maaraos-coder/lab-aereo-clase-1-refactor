@@ -1135,24 +1135,256 @@ def _stage3(lab, saved):
     _header(
         3,
         "Propagación de maquinaria en aire libre",
-        "Comprobar la divergencia geométrica y usar Noise Map Lab para observar cómo cambia el nivel en distintos receptores.",
+        "Comprender cómo Noise Map Lab transforma el nivel de potencia sonora de una fuente en nivel de presión sonora en el receptor mediante los términos principales de propagación.",
     )
-    st.latex(r"A_{div}=20\\log_{10}(r)+11")
-    lw = st.slider("Lw de la fuente [dB(A)]", 80, 125, 105, key="c4l1_s3_lw")
-    distances = [5,10,20,40]
-    values = [lw - (20 * math.log10(d) + 11) for d in distances]
-    st.dataframe(
-        pd.DataFrame({"Distancia [m]": distances, "Lp ideal [dB]": [round(v,1) for v in values]}),
-        use_container_width=True,
-        hide_index=True,
+
+    st.markdown(
+        """
+        <div style="border:1px solid #d9e7f3;border-radius:22px;padding:22px 24px;
+        background:linear-gradient(135deg,#fbfdff 0%,#f3f8fd 55%,#eef6ff 100%);
+        box-shadow:0 8px 22px rgba(30,70,110,.06);margin-bottom:1rem">
+          <div style="font-size:.72rem;font-weight:900;letter-spacing:.12em;color:#0b6ea8">IDEA CENTRAL</div>
+          <div style="font-size:1.3rem;font-weight:900;color:#10243b;margin:.4rem 0 .5rem">
+            Del Lw de la máquina al Lp que recibe una persona
+          </div>
+          <div style="color:#4b6074;line-height:1.6">
+            Noise Map Lab calcula la propagación término por término. En esta etapa se desarrollan
+            directividad, divergencia geométrica y absorción atmosférica; suelo, barreras y meteorología
+            de largo plazo se profundizan más adelante.
+          </div>
+        </div>
+        """,
+        unsafe_allow_html=True,
     )
-    st.info("En este escenario ideal, duplicar la distancia reduce aproximadamente 6 dB.")
-    st.markdown("### Compruébalo en el modelador")
-    st.write(
-        "Crea una fuente puntual, renómbrala y coloca receptores a 5, 10, 20 y 40 m. "
-        "Compara el resultado del motor con la tabla ideal."
+
+    st.markdown("### Ecuación de propagación utilizada como esquema de trabajo")
+    st.latex(r"L_p = L_W + D_c - A_{div} - A_{atm} - A_{gr} - A_{bar} - C_{met}")
+
+    cards = [
+        ("Lw","Fuente","Nivel de potencia sonora de la maquinaria."),
+        ("Dc","Directividad","Corrección según la dirección de radiación."),
+        ("Adiv","Distancia","Pérdida por divergencia geométrica."),
+        ("Aatm","Atmósfera","Atenuación dependiente de frecuencia, T y HR."),
+        ("Agr","Suelo","Interferencia entre camino directo y reflejado."),
+        ("Abar","Barrera","Difracción y apantallamiento."),
+        ("Cmet","Meteorología","Corrección meteorológica de largo plazo."),
+    ]
+    html='<div style="display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px;margin:.3rem 0 1.2rem">'
+    for symbol,title,desc in cards:
+        html += (
+            f'<div style="border:1px solid #dce7f0;border-radius:17px;padding:14px;background:#fff">'
+            f'<div style="font-size:.72rem;font-weight:900;color:#0b6ea8">{symbol}</div>'
+            f'<div style="font-size:1rem;font-weight:850;color:#18324a;margin:.25rem 0">{title}</div>'
+            f'<div style="font-size:.82rem;color:#607386;line-height:1.4">{desc}</div></div>'
+        )
+    html+='</div>'
+    st.markdown(html, unsafe_allow_html=True)
+
+    st.markdown("### Selecciona una máquina")
+    name=st.selectbox(
+        "Maquinaria de referencia",
+        list(BS_PLANT),
+        key="c4l1_s3_machine",
+        label_visibility="collapsed",
+    )
+    item=BS_PLANT[name]
+    lwa=item["laeq10"]+28.0
+
+    left,right=st.columns([1,1.45],gap="large")
+    with left:
+        with st.container(border=True):
+            img=_machine_image_path(item)
+            if img:
+                st.image(str(img),use_container_width=True)
+            st.markdown(f"### {name}")
+            st.caption(item["en"])
+            st.markdown(f"**Actividad:** {item['activity']}")
+            st.markdown(f"**LWA de referencia:** {lwa:.1f} dB(A)")
+            st.caption(f"Tabla {item['table']} · Ref. {item['ref']}")
+    with right:
+        st.markdown("### 1 · Directividad · Dc")
+        st.markdown(
+            "Para comenzar, una fuente omnidireccional se representa con **Dc = 0 dB**. "
+            "Si existe una orientación preferente, Dc puede modificar el nivel en la dirección del receptor."
+        )
+        dc=st.select_slider(
+            "Corrección de directividad Dc [dB]",
+            options=[0.0,1.5,3.0,4.5,6.0],
+            value=0.0,
+            key="c4l1_s3_dc",
+        )
+        st.caption("En el ejercicio base usa 0 dB. El objetivo es entender dónde entra Dc en la ecuación.")
+
+    st.markdown("### 2 · Divergencia geométrica · Adiv")
+    st.latex(r"A_{div}=20\log_{10}(d)+11")
+    d=st.slider(
+        "Distancia fuente–receptor [m]",
+        5,200,40,5,
+        key="c4l1_s3_distance",
+    )
+    a_div=20*math.log10(float(d))+11.0
+    dv1,dv2,dv3=st.columns(3)
+    dv1.metric("Distancia",f"{d} m")
+    dv2.metric("Adiv",f"{a_div:.1f} dB")
+    dv3.metric("Lw + Dc - Adiv",f"{lwa+dc-a_div:.1f} dB")
+
+    st.markdown("#### ¿Qué ocurre al duplicar la distancia?")
+    dist_set=[5,10,20,40,80]
+    levels=[lwa+dc-(20*math.log10(x)+11.0) for x in dist_set]
+    rows='<div style="display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:10px;margin:.3rem 0 1rem">'
+    for dist,lev in zip(dist_set,levels):
+        rows += (
+            f'<div style="border:1px solid #dce7f0;border-radius:16px;padding:14px;background:#fff;text-align:center">'
+            f'<div style="font-size:.74rem;color:#6d8092">{dist} m</div>'
+            f'<div style="font-size:1.35rem;font-weight:900;color:#18324a;margin:.2rem 0">{lev:.1f} dB</div>'
+            f'<div style="font-size:.72rem;color:#8090a0">solo divergencia</div></div>'
+        )
+    rows+='</div>'
+    st.markdown(rows, unsafe_allow_html=True)
+    st.info("En campo libre ideal, cada duplicación de distancia reduce aproximadamente 6 dB por divergencia geométrica.")
+
+    st.markdown("### 3 · Absorción atmosférica · Aatm")
+    st.markdown(
+        "La atmósfera no atenúa todas las frecuencias por igual. El coeficiente depende de la frecuencia, "
+        "temperatura y humedad relativa. Noise Map Lab calcula este término por banda."
+    )
+
+    def _alpha_iso_style_db_per_m(frequency_hz, temperature_c, humidity_pct, pressure_kpa=101.325):
+        f=max(float(frequency_hz),1.0)
+        t=float(temperature_c)+273.15
+        t0=293.15
+        t01=273.16
+        p=max(float(pressure_kpa),1e-6)
+        p0=101.325
+        rh=min(100.0,max(0.0,float(humidity_pct)))
+        h=rh*(10.0**(-6.8346*((t01/t)**1.261)+4.6151))*(p0/p)
+        fr_o=(p/p0)*(24.0+4.04e4*h*(0.02+h)/max(0.391+h,1e-12))
+        fr_n=(p/p0)*((t/t0)**-0.5)*(9.0+280.0*h*math.exp(-4.17*(((t/t0)**(-1.0/3.0))-1.0)))
+        classical=1.84e-11*(p0/p)*math.sqrt(t/t0)
+        oxygen=0.01275*math.exp(-2239.1/t)/max(fr_o+(f*f/max(fr_o,1e-12)),1e-12)
+        nitrogen=0.1068*math.exp(-3352.0/t)/max(fr_n+(f*f/max(fr_n,1e-12)),1e-12)
+        molecular=((t/t0)**-2.5)*(oxygen+nitrogen)
+        return 8.686*(f*f)*(classical+molecular)
+
+    ac1,ac2,ac3=st.columns(3)
+    freq=ac1.selectbox(
+        "Frecuencia [Hz]",
+        [63,125,250,500,1000,2000,4000,8000],
+        index=3,
+        key="c4l1_s3_freq",
+    )
+    temp=ac2.slider("Temperatura [°C]",0,35,15,1,key="c4l1_s3_temp")
+    rh=ac3.slider("Humedad relativa [%]",20,100,70,5,key="c4l1_s3_rh")
+    alpha_m=_alpha_iso_style_db_per_m(freq,temp,rh)
+    alpha_km=alpha_m*1000.0
+    a_atm=alpha_m*float(d)
+    at1,at2,at3=st.columns(3)
+    at1.metric("Coeficiente α",f"{alpha_km:.2f} dB/km")
+    at2.metric("Aatm",f"{a_atm:.2f} dB")
+    at3.metric("Frecuencia analizada",f"{freq} Hz")
+    st.caption(
+        "Este cálculo replica la formulación educativa ISO 9613-1-style usada por el motor para la absorción atmosférica. "
+        "Su efecto aumenta con distancia y frecuencia."
+    )
+
+    st.markdown("### 4 · Términos que se activarán después")
+    p1,p2,p3=st.columns(3)
+    with p1:
+        with st.container(border=True):
+            st.markdown("#### 🌱 Agr · suelo")
+            st.markdown("Por ahora **Agr = 0 dB**.")
+            st.caption("Se desarrolla en la Etapa 4 con G, alturas y geometría.")
+    with p2:
+        with st.container(border=True):
+            st.markdown("#### 🧱 Abar · barreras")
+            st.markdown("Por ahora **Abar = 0 dB**.")
+            st.caption("Se desarrolla en la Etapa 7 con difracción y perfil F–B–R.")
+    with p3:
+        with st.container(border=True):
+            st.markdown("#### 🌦️ Cmet · meteorología")
+            st.markdown("Por ahora **Cmet = 0 dB**.")
+            st.caption("Noise Map Lab permite representar una corrección meteorológica de largo plazo.")
+
+    lp_partial=lwa+dc-a_div-a_atm
+    st.markdown("### 5 · Resultado acumulado hasta esta etapa")
+    st.latex(r"L_p = L_W + D_c - A_{div} - A_{atm}")
+    rr1,rr2,rr3,rr4,rr5=st.columns(5)
+    rr1.metric("Lw",f"{lwa:.1f} dB")
+    rr2.metric("+ Dc",f"{dc:+.1f} dB")
+    rr3.metric("- Adiv",f"{a_div:.1f} dB")
+    rr4.metric("- Aatm",f"{a_atm:.2f} dB")
+    rr5.metric("Lp receptor",f"{lp_partial:.1f} dB")
+
+    st.markdown("---")
+    st.markdown(
+        """
+        <div style="border:1px solid #d8e6f0;border-radius:20px;padding:20px 22px;
+        background:linear-gradient(135deg,#f8fbfe,#eef6fb);margin-bottom:1rem">
+          <div style="font-size:.72rem;font-weight:900;letter-spacing:.1em;color:#0b6ea8">EJERCICIO ACUMULATIVO</div>
+          <div style="font-size:1.2rem;font-weight:850;color:#16314b;margin:.35rem 0">
+            Completa la propagación hasta el receptor
+          </div>
+          <div style="color:#536b80">
+            Usa los valores visibles del escenario activo. Para este ejercicio considera Agr = 0 dB, Abar = 0 dB y Cmet = 0 dB.
+          </div>
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
+
+    x1,x2,x3,x4,x5=st.columns(5)
+    ans_lw=x1.text_input("Lw [dB]",key="c4l1_s3_ex_lw",placeholder="dB")
+    ans_dc=x2.text_input("Dc [dB]",key="c4l1_s3_ex_dc",placeholder="dB")
+    ans_div=x3.text_input("Adiv [dB]",key="c4l1_s3_ex_div",placeholder="dB")
+    ans_atm=x4.text_input("Aatm [dB]",key="c4l1_s3_ex_atm",placeholder="dB")
+    ans_lp=x5.text_input("Lp final [dB]",key="c4l1_s3_ex_lp",placeholder="dB")
+
+    if st.button("Comprobar ejercicio",key="c4l1_s3_check",type="primary",use_container_width=True):
+        def _num(v):
+            try:
+                return float(str(v).strip().replace(",","."))
+            except Exception:
+                return None
+        vals=[_num(v) for v in [ans_lw,ans_dc,ans_div,ans_atm,ans_lp]]
+        if any(v is None for v in vals):
+            st.warning("Completa los cinco valores antes de comprobar.")
+        else:
+            exp=[lwa,dc,a_div,a_atm,lp_partial]
+            tol=[0.2,0.2,0.2,0.05,0.3]
+            ok=[abs(a-b)<=t for a,b,t in zip(vals,exp,tol)]
+            labels=["Lw","Dc","Adiv","Aatm","Lp final"]
+            if all(ok):
+                st.success("Correcto. La cadena de propagación está bien resuelta.")
+            else:
+                st.warning("Revisa: " + ", ".join(labels[i] for i,v in enumerate(ok) if not v) + ".")
+
+    st.markdown("### Compruébalo en Noise Map Lab")
+    st.markdown(
+        "Crea una fuente puntual con el **Lw de la máquina**, fija un receptor a la misma distancia, "
+        "usa la misma frecuencia, temperatura y humedad, y compara el desglose de propagación."
     )
     _model_button()
+
+    if st.session_state.get("role")=="Docente":
+        with st.expander("👩‍🏫 Pauta docente · Etapa 3",expanded=False):
+            st.markdown(
+                f"""
+                **Máquina:** {name}  
+                **Lw de referencia:** {lwa:.1f} dB  
+                **Dc:** {dc:.1f} dB  
+                **Distancia:** {d} m  
+                **Adiv:** {a_div:.1f} dB  
+                **Frecuencia:** {freq} Hz  
+                **α atmosférico:** {alpha_km:.2f} dB/km  
+                **Aatm:** {a_atm:.2f} dB  
+                **Agr = Abar = Cmet = 0 dB** en este ejercicio  
+                **Lp esperado:** **{lp_partial:.1f} dB**
+                """
+            )
+            st.info(
+                "Conducción sugerida: haga que el alumno explique primero qué término cambia al mover el receptor, "
+                "cuál cambia al modificar la frecuencia y cuál depende de la orientación de la fuente."
+            )
 
 def _stage4(lab, saved):
     _header(
