@@ -1796,12 +1796,72 @@ def _stage4(lab, saved):
 
     st.markdown("### 3 · Cmet · corrección meteorológica de largo plazo")
     st.markdown(
-        "**Cmet no es absorción atmosférica.** Aatm representa pérdidas moleculares del aire; Cmet representa una corrección "
-        "estadística de propagación de largo plazo asociada a condiciones meteorológicas y a la relación entre distancia y alturas."
+        "Hasta ahora hemos calculado pérdidas asociadas a la **distancia, el aire, el suelo y las barreras**. "
+        "Pero la propagación exterior también cambia con las condiciones meteorológicas: el viento y los gradientes "
+        "de temperatura pueden curvar las trayectorias del sonido y hacer que determinadas direcciones sean más o menos favorables."
     )
+
+    st.markdown(
+        """
+        <div style="border:1px solid #ddd8ef;border-radius:18px;padding:16px 18px;background:#faf8ff;margin:.4rem 0 1rem">
+          <div style="font-size:.75rem;font-weight:900;color:#65549a;letter-spacing:.08em">IDEA SIMPLE</div>
+          <div style="font-size:.92rem;color:#574f6d;line-height:1.55;margin-top:.25rem">
+            <b>Cmet no intenta predecir el clima de un día específico.</b> Es una corrección de largo plazo:
+            representa que las condiciones favorables para que el sonido llegue al receptor no ocurren todo el tiempo.
+            Por eso se resta del nivel calculado para condiciones favorables.
+          </div>
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
+
+    met_cards=[
+        ("Aatm","Absorción del aire","Pérdida física por el medio atmosférico. Depende de frecuencia, temperatura, humedad y distancia."),
+        ("Cmet","Frecuencia de condiciones favorables","Corrección estadística de largo plazo asociada a viento, gradientes térmicos y geometría."),
+        ("C0","Magnitud meteorológica máxima","Representa cuánto puede pesar la corrección meteorológica del sitio/dirección cuando la distancia es suficientemente grande."),
+    ]
+    mh='<div style="display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;margin:.4rem 0 1rem">'
+    for sym,title,desc in met_cards:
+        mh+=(
+            f'<div style="border:1px solid #ddd8ef;border-radius:16px;padding:15px;background:#fff">'
+            f'<div style="font-size:.76rem;font-weight:900;color:#65549a">{sym}</div>'
+            f'<div style="font-size:.95rem;font-weight:850;color:#3f365f;margin:.2rem 0">{title}</div>'
+            f'<div style="font-size:.82rem;color:#6d6680;line-height:1.4">{desc}</div></div>'
+        )
+    mh+='</div>'
+    st.markdown(mh,unsafe_allow_html=True)
+
     with st.container(border=True):
+        st.markdown("#### Ecuación de Cmet")
         st.latex(r"C_{met}=C_0\left[1-\frac{10(h_s+h_r)}{d_p}\right]")
-        st.caption("Para distancias cortas respecto de las alturas, o si C0 = 0 dB, la corrección resulta 0 dB.")
+        st.markdown(
+            "La ecuación se aplica cuando **dp > 10(hs + hr)**. Si esa condición no se cumple, "
+            "**Cmet = 0 dB** en este esquema."
+        )
+        st.markdown(
+            "- **C0:** constante meteorológica de largo plazo para el sitio/dirección.\n"
+            "- **hs:** altura de la fuente sobre el terreno.\n"
+            "- **hr:** altura del receptor sobre el terreno.\n"
+            "- **dp:** distancia horizontal fuente–receptor."
+        )
+
+    st.markdown("#### ¿Cómo se interpreta?")
+    interp_cards=[
+        ("Receptor relativamente cerca","dp ≤ 10(hs + hr)","Cmet = 0 dB","La geometría cercana domina y no se aplica esta corrección."),
+        ("Distancia intermedia","dp > 10(hs + hr)","0 < Cmet < C0","La corrección comienza a crecer con la distancia."),
+        ("Distancia muy grande","dp ≫ 10(hs + hr)","Cmet → C0","La corrección se aproxima al valor máximo definido por C0."),
+    ]
+    ih='<div style="display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;margin:.4rem 0 1rem">'
+    for title,cond,res,desc in interp_cards:
+        ih+=(
+            f'<div style="border:1px solid #e2deef;border-radius:16px;padding:14px;background:#fff">'
+            f'<div style="font-size:.9rem;font-weight:850;color:#443965">{title}</div>'
+            f'<div style="font-size:.76rem;color:#766d8d;margin:.3rem 0">{cond}</div>'
+            f'<div style="font-size:1rem;font-weight:900;color:#65549a">{res}</div>'
+            f'<div style="font-size:.78rem;color:#716982;margin-top:.3rem">{desc}</div></div>'
+        )
+    ih+='</div>'
+    st.markdown(ih,unsafe_allow_html=True)
 
     def _cmet_edu(dp,hss,hrr,c0):
         lim=10.0*(float(hss)+float(hrr))
@@ -1809,13 +1869,37 @@ def _stage4(lab, saved):
             return 0.0
         return float(c0)*max(0.0,1.0-lim/float(dp))
 
+    st.markdown("#### Explora el efecto de la geometría")
     cm1,cm2,cm3,cm4=st.columns(4)
-    dp=cm1.slider("Distancia horizontal Cmet [m]",20,500,150,10,key="c4l1_s4_cmet_d")
-    cm_hs=cm2.slider("hs Cmet [m]",0.5,10.0,1.5,0.5,key="c4l1_s4_cmet_hs")
-    cm_hr=cm3.slider("hr Cmet [m]",1.0,20.0,1.5,0.5,key="c4l1_s4_cmet_hr")
+    dp=cm1.slider("Distancia horizontal dp [m]",20,500,150,10,key="c4l1_s4_cmet_d")
+    cm_hs=cm2.slider("Altura fuente hs [m]",0.5,10.0,1.5,0.5,key="c4l1_s4_cmet_hs")
+    cm_hr=cm3.slider("Altura receptor hr [m]",1.0,20.0,1.5,0.5,key="c4l1_s4_cmet_hr")
     c0=cm4.slider("C0 [dB]",0.0,5.0,3.0,0.5,key="c4l1_s4_c0")
     cmet=_cmet_edu(dp,cm_hs,cm_hr,c0)
-    st.metric("Cmet",f"{cmet:.2f} dB")
+    threshold=10.0*(cm_hs+cm_hr)
+    applies=dp>threshold and c0>0
+
+    m1,m2,m3,m4=st.columns(4)
+    m1.metric("Umbral 10(hs+hr)",f"{threshold:.1f} m")
+    m2.metric("dp",f"{dp:.0f} m")
+    m3.metric("¿Aplica corrección?","Sí" if applies else "No")
+    m4.metric("Cmet",f"{cmet:.2f} dB")
+
+    if applies:
+        st.success(
+            f"Como dp = {dp:.0f} m es mayor que 10(hs+hr) = {threshold:.1f} m, "
+            f"se aplica una corrección de **{cmet:.2f} dB**. En la ecuación general este valor se resta."
+        )
+    else:
+        st.info(
+            f"Como dp = {dp:.0f} m no supera el umbral de {threshold:.1f} m, "
+            "en este esquema **Cmet = 0 dB**."
+        )
+
+    st.caption(
+        "C0 no es la temperatura, la humedad ni la velocidad del viento del momento. "
+        "Es un parámetro de largo plazo asociado a la estadística meteorológica del sitio y de la dirección de propagación."
+    )
 
     st.markdown("### 4 · La ecuación ya está completa")
     st.latex(r"L_p = L_W + D_c - A_{div} - A_{atm} - A_{gr} - A_{bar} - C_{met}")
