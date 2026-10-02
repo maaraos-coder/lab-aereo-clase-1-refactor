@@ -811,12 +811,41 @@ def _stage2(lab, saved):
     lw_bands=[float(v)+28.0 for v in item["bands"]]
     source_band_descriptor = "Lmax a 10 m [dB]" if item.get("driveby") else "Lp,eq,T a 10 m [dB]"
     power_band_descriptor = "Lw,max equivalente [dB]" if item.get("driveby") else "Lw,eq,T equivalente [dB]"
-    spectral_power_df=pd.DataFrame(
-        [item["bands"], [28.0]*8, lw_bands],
-        index=[source_band_descriptor, "Corrección geométrica [dB]", power_band_descriptor],
-        columns=octave_labels,
+    st.markdown("#### Matriz espectral · presión → potencia")
+    st.caption("Cada columna representa una banda de octava. La fila inferior es el dato que utilizarás como potencia sonora equivalente.")
+
+    spectral_cards = '<div style="overflow-x:auto;padding-bottom:4px"><div style="min-width:860px">'
+    spectral_cards += '<div style="display:grid;grid-template-columns:180px repeat(8,1fr);gap:7px;align-items:stretch">'
+    spectral_cards += (
+        '<div style="border-radius:13px;padding:11px 12px;background:#16324a;color:#fff;'
+        'font-size:.78rem;font-weight:850;display:flex;align-items:center">Magnitud</div>'
     )
-    st.dataframe(spectral_power_df, use_container_width=True)
+    for label in octave_labels:
+        spectral_cards += (
+            f'<div style="border-radius:13px;padding:11px 6px;background:#16324a;color:#fff;'
+            f'text-align:center;font-size:.78rem;font-weight:850">{label}</div>'
+        )
+
+    spectral_rows = [
+        (source_band_descriptor, [float(v) for v in item["bands"]], "#f5f8fb", "#31495f", ""),
+        ("+ corrección geométrica", [28.0]*8, "#fff8e9", "#8a5b12", "+"),
+        (power_band_descriptor, lw_bands, "#eef8f1", "#23633b", ""),
+    ]
+    for row_name,row_values,row_bg,row_color,prefix in spectral_rows:
+        spectral_cards += (
+            f'<div style="border:1px solid #dce6ee;border-radius:13px;padding:11px 12px;'
+            f'background:{row_bg};color:{row_color};font-size:.76rem;font-weight:850;'
+            f'display:flex;align-items:center">{row_name}</div>'
+        )
+        for value in row_values:
+            value_text = f"{prefix}{value:.0f}" if prefix else f"{value:.0f}"
+            spectral_cards += (
+                f'<div style="border:1px solid #dce6ee;border-radius:13px;padding:11px 5px;'
+                f'background:{row_bg};color:{row_color};text-align:center;font-size:.92rem;'
+                f'font-weight:900">{value_text}</div>'
+            )
+    spectral_cards += '</div></div></div>'
+    st.markdown(spectral_cards, unsafe_allow_html=True)
 
     st.markdown("#### Ejemplo con una banda")
     example_idx=3
@@ -835,17 +864,64 @@ def _stage2(lab, saved):
     lwa_band=[lw+a for lw,a in zip(lw_bands,a_corr)]
     lwa_from_spectrum=10*math.log10(sum(10**(v/10) for v in lwa_band))
     diff=lwa_from_spectrum-lwa
-    check_df=pd.DataFrame(
-        [lw_bands,a_corr,lwa_band],
-        index=["Lw por banda [dB]","Corrección A [dB]","LwA por banda [dB(A)]"],
-        columns=octave_labels,
+    st.markdown("#### Matriz de ponderación A")
+    st.caption("Primero se conserva Lw por banda, luego se aplica la corrección A y finalmente se obtiene el aporte A-ponderado de cada banda.")
+
+    a_cards = '<div style="overflow-x:auto;padding-bottom:4px"><div style="min-width:860px">'
+    a_cards += '<div style="display:grid;grid-template-columns:180px repeat(8,1fr);gap:7px;align-items:stretch">'
+    a_cards += (
+        '<div style="border-radius:13px;padding:11px 12px;background:#24374a;color:#fff;'
+        'font-size:.78rem;font-weight:850;display:flex;align-items:center">Magnitud</div>'
     )
-    st.dataframe(check_df, use_container_width=True)
+    for label in octave_labels:
+        a_cards += (
+            f'<div style="border-radius:13px;padding:11px 6px;background:#24374a;color:#fff;'
+            f'text-align:center;font-size:.78rem;font-weight:850">{label}</div>'
+        )
+
+    a_rows = [
+        ("Lw por banda [dB]", lw_bands, "#f5f8fb", "#31495f"),
+        ("Corrección A [dB]", a_corr, "#f4f0fb", "#614a7d"),
+        ("LwA por banda [dB(A)]", lwa_band, "#eef6ff", "#1d5d8d"),
+    ]
+    for row_name,row_values,row_bg,row_color in a_rows:
+        a_cards += (
+            f'<div style="border:1px solid #dce6ee;border-radius:13px;padding:11px 12px;'
+            f'background:{row_bg};color:{row_color};font-size:.76rem;font-weight:850;'
+            f'display:flex;align-items:center">{row_name}</div>'
+        )
+        for value in row_values:
+            a_cards += (
+                f'<div style="border:1px solid #dce6ee;border-radius:13px;padding:11px 5px;'
+                f'background:{row_bg};color:{row_color};text-align:center;font-size:.92rem;'
+                f'font-weight:900">{value:+.1f}</div>'
+            )
+    a_cards += '</div></div></div>'
+    st.markdown(a_cards, unsafe_allow_html=True)
+
+    st.markdown("#### Resultado de la comprobación")
     st.latex(r"L_{WA}=10\log_{10}\left(\sum_f10^{(L_{W,f}+A_f)/10}\right)")
-    ck1,ck2,ck3=st.columns(3)
-    ck1.metric("LWA desde broadband + 28", f"{lwa:.1f} dB(A)")
-    ck2.metric("LWA recompuesto desde bandas", f"{lwa_from_spectrum:.1f} dB(A)")
-    ck3.metric("Diferencia", f"{diff:+.1f} dB")
+
+    result_cards = f"""
+    <div style="display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;margin:.4rem 0 .8rem">
+      <div style="border:1px solid #dce7f0;border-radius:17px;padding:16px;background:#ffffff">
+        <div style="font-size:.72rem;font-weight:850;color:#64788b">BROADBAND + 28</div>
+        <div style="font-size:1.55rem;font-weight:900;color:#17324a;margin-top:.25rem">{lwa:.1f} dB(A)</div>
+        <div style="font-size:.78rem;color:#708294;margin-top:.2rem">Referencia global</div>
+      </div>
+      <div style="border:1px solid #cfe2f1;border-radius:17px;padding:16px;background:#f5faff">
+        <div style="font-size:.72rem;font-weight:850;color:#4d728f">DESDE LAS BANDAS</div>
+        <div style="font-size:1.55rem;font-weight:900;color:#14537d;margin-top:.25rem">{lwa_from_spectrum:.1f} dB(A)</div>
+        <div style="font-size:.78rem;color:#708294;margin-top:.2rem">Suma energética A-ponderada</div>
+      </div>
+      <div style="border:1px solid #d7eadc;border-radius:17px;padding:16px;background:#f5fbf6">
+        <div style="font-size:.72rem;font-weight:850;color:#4b7b59">DIFERENCIA</div>
+        <div style="font-size:1.55rem;font-weight:900;color:#2e6840;margin-top:.25rem">{diff:+.1f} dB</div>
+        <div style="font-size:.78rem;color:#708294;margin-top:.2rem">Control de coherencia</div>
+      </div>
+    </div>
+    """
+    st.markdown(result_cards, unsafe_allow_html=True)
     st.caption(
         "Es normal obtener una pequeña diferencia porque los valores tabulados por banda están redondeados. "
         "Esta comprobación permite verificar que el espectro convertido es coherente con el valor global."
