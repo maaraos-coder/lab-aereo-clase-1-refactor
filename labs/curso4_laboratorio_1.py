@@ -1591,73 +1591,158 @@ def _stage4(lab, saved):
         st.markdown(progress_html,unsafe_allow_html=True)
 
     st.markdown("### 1 · Agr · efecto de suelo")
+
     st.markdown(
-        "El término **Agr** aparece por la interacción entre el sonido directo y el sonido reflejado por el terreno. "
-        "No es una absorción fija: depende del tipo de superficie, la frecuencia, la distancia y la geometría "
-        "entre fuente y receptor."
+        """
+        <div style="border:1px solid #cfe3d5;border-radius:22px;padding:19px 21px;
+        background:linear-gradient(135deg,#f7fcf8,#eef8f1);
+        box-shadow:0 8px 22px rgba(45,105,65,.06);margin:.2rem 0 1rem">
+          <div style="font-size:.72rem;font-weight:900;letter-spacing:.10em;color:#2d7a4a">
+            EFECTO DE SUELO · INTERFERENCIA DIRECTA + REFLEJADA
+          </div>
+          <div style="font-size:.94rem;color:#496756;line-height:1.6;margin-top:.35rem">
+            <b>Agr</b> representa la modificación del nivel sonoro producida por la interacción entre
+            la onda que llega directamente al receptor y la onda reflejada por el terreno.
+            No corresponde a una absorción fija del suelo: depende de la <b>frecuencia</b>,
+            del <b>tipo de terreno</b> y de la <b>geometría fuente–receptor</b>.
+          </div>
+        </div>
+        """,
+        unsafe_allow_html=True,
     )
 
     with st.container(border=True):
+        st.markdown("#### Estructura del término de suelo")
         st.latex(r"A_{gr}=A_s+A_m+A_r")
-        st.markdown(
-            "**As** representa la contribución de la zona próxima a la fuente, **Am** la región intermedia "
-            "y **Ar** la zona próxima al receptor."
-        )
-
-        st.markdown("#### ¿Cómo se relaciona G con Agr?")
-        st.markdown(
-            "El factor **G** no es una atenuación en dB y tampoco un porcentaje de absorción. "
-            "G caracteriza acústicamente el terreno y entra en las expresiones que calculan "
-            "**As, Am y Ar**. Por eso la relación conceptual es:"
-        )
-        st.latex(r"G \;\longrightarrow\; A_s,\;A_m,\;A_r \;\longrightarrow\; A_{gr}")
-        st.latex(r"A_s=F_s(G_s,f,h_s,d_p)")
-        st.latex(r"A_m=F_m(G_m,f,h_s,h_r,d_p)")
-        st.latex(r"A_r=F_r(G_r,f,h_r,d_p)")
         st.caption(
-            "En el ejercicio se usa un único G para simplificar la exploración. En un caso real pueden existir "
-            "factores de suelo distintos para la región de la fuente, la región intermedia y la región del receptor."
+            "El efecto total de suelo se construye a partir de tres contribuciones espaciales: "
+            "región de fuente, región intermedia y región de receptor."
         )
 
-    st.markdown("#### Geometría del cálculo")
-    geo1,geo2=st.columns([1.1,1])
-    with geo1:
-        st.markdown(
-            "- **hs [m]**: altura de la fuente sobre el terreno local.\n"
-            "- **hr [m]**: altura del receptor sobre el terreno local.\n"
-            "- **dp [m]**: distancia horizontal/proyectada fuente–receptor.\n"
-            "- **f [Hz]**: frecuencia de la banda evaluada."
-        )
+        agr_cards = [
+            (
+                "Aₛ · región de fuente",
+                "Contribución asociada al tramo de terreno próximo a la fuente sonora.",
+                "Representa cómo la interferencia entre el camino directo y el reflejado se modifica "
+                "en la zona donde se origina la propagación. Depende principalmente del factor de suelo "
+                "Gₛ, la frecuencia f, la altura de fuente hₛ y la geometría de propagación.",
+                "#edf8f0","#2d7a4a"
+            ),
+            (
+                "Aₘ · región intermedia",
+                "Contribución asociada al tramo central del recorrido entre fuente y receptor.",
+                "Representa el efecto acumulado del terreno situado entre las regiones extremas. "
+                "Su participación depende de la longitud de propagación, de las alturas de fuente y receptor, "
+                "del factor de suelo Gₘ y de la condición geométrica del trayecto.",
+                "#f4f8ed","#667d2e"
+            ),
+            (
+                "Aᵣ · región de receptor",
+                "Contribución asociada al tramo de terreno próximo al receptor.",
+                "Describe la influencia del terreno en la zona final de propagación, donde la onda directa "
+                "y la reflejada vuelven a combinarse antes de alcanzar el receptor. Depende principalmente "
+                "de Gᵣ, la frecuencia f, la altura de receptor hᵣ y la geometría.",
+                "#eef6fb","#286b91"
+            ),
+        ]
+        cards_html='<div style="display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;margin:.75rem 0 .45rem">'
+        for title,subtitle,desc,bg,color in agr_cards:
+            cards_html+=(
+                f'<div style="border:1px solid #d9e5dd;border-radius:18px;padding:16px;background:{bg}">'
+                f'<div style="font-size:.9rem;font-weight:900;color:{color}">{title}</div>'
+                f'<div style="font-size:.79rem;font-weight:750;color:#4e6256;margin:.35rem 0 .45rem">{subtitle}</div>'
+                f'<div style="font-size:.79rem;line-height:1.52;color:#627267">{desc}</div>'
+                f'</div>'
+            )
+        cards_html+='</div>'
+        st.markdown(cards_html,unsafe_allow_html=True)
+
         st.info(
-            "El mismo G puede producir un Agr distinto si cambian hs, hr, dp o la frecuencia. "
-            "El efecto de suelo depende de superficie **y** geometría."
+            "As, Am y Ar no son materiales ni coeficientes de absorción independientes. "
+            "Son contribuciones acústicas del terreno dentro del modelo de propagación."
+        )
+
+    st.markdown("#### ¿Cómo se relaciona G con Agr?")
+    st.markdown(
+        """
+        <div style="border-left:4px solid #4d9b68;padding:12px 15px;background:#f7fbf8;
+        border-radius:0 14px 14px 0;margin:.25rem 0 .8rem">
+          <div style="font-size:.89rem;color:#4a6252;line-height:1.55">
+            El factor <b>G</b> caracteriza el comportamiento acústico del terreno.
+            <b>No se suma directamente a Agr</b> y tampoco representa un porcentaje de absorción.
+            G interviene en el cálculo de las tres contribuciones del suelo y, a través de ellas,
+            modifica el valor final de Agr.
+          </div>
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
+
+    st.latex(r"G \;\longrightarrow\; A_s,\;A_m,\;A_r \;\longrightarrow\; A_{gr}")
+    eq1,eq2,eq3=st.columns(3)
+    with eq1:
+        st.latex(r"A_s=F_s(G_s,f,h_s,d_p)")
+    with eq2:
+        st.latex(r"A_m=F_m(G_m,f,h_s,h_r,d_p)")
+    with eq3:
+        st.latex(r"A_r=F_r(G_r,f,h_r,d_p)")
+
+    st.caption(
+        "En este laboratorio se utiliza un único valor G para simplificar la exploración. "
+        "En una modelación detallada pueden existir Gs, Gm y Gr diferentes si cambia el tipo de terreno a lo largo del trayecto."
+    )
+
+    st.markdown("#### Geometría que controla el efecto de suelo")
+    geo1,geo2=st.columns([1.05,1])
+    with geo1:
+        geo_html="""
+        <div style="border:1px solid #d9e4ec;border-radius:18px;padding:15px 17px;background:#fbfdff">
+          <div style="font-size:.78rem;font-weight:900;color:#315f7c;margin-bottom:.55rem">VARIABLES GEOMÉTRICAS</div>
+          <div style="font-size:.84rem;line-height:1.75;color:#536978">
+            <b>h<sub>s</sub> [m]</b> · altura acústica de la fuente respecto del terreno local.<br>
+            <b>h<sub>r</sub> [m]</b> · altura acústica del receptor respecto del terreno local.<br>
+            <b>d<sub>p</sub> [m]</b> · distancia horizontal o proyectada entre fuente y receptor.<br>
+            <b>f [Hz]</b> · frecuencia central de la banda evaluada.
+          </div>
+        </div>
+        """
+        st.markdown(geo_html,unsafe_allow_html=True)
+        st.info(
+            "Un mismo valor de G puede entregar un Agr diferente al cambiar hs, hr, dp o la frecuencia."
         )
     with geo2:
         st.code(
-            "        Fuente                         Receptor\n"
-            "          ● hs                      hr ●\n"
-            "          |                            |\n"
-            "__________|____________________________|________ terreno\n"
-            "          <---------- dp ------------>",
+            "                trayectoria directa\n"
+            "        Fuente -------------------------- Receptor\n"
+            "          ● hs                        hr ●\n"
+            "          |                              |\n"
+            "__________|______________________________|________ terreno\n"
+            "           \\_____ reflexión suelo _____/\n"
+            "          <-----------  dp  ------------>",
             language=None,
         )
 
+    st.markdown("#### Factor de suelo G")
     g_cards=[
-        ("G = 0","Suelo duro","Hormigón, pavimento, agua o superficie compacta."),
-        ("G = 0,5","Terreno mixto","Combinación aproximada de sectores duros y porosos."),
-        ("G = 1","Suelo poroso","Pasto, suelo vegetal o tierra porosa."),
+        ("G = 0","Suelo duro","Hormigón, pavimento, agua o superficie compacta.","#f6f7f8","#59636b"),
+        ("G = 0,5","Terreno mixto","Combinación aproximada de sectores duros y porosos.","#fff8eb","#98651c"),
+        ("G = 1","Suelo poroso","Pasto, suelo vegetal o tierra porosa.","#eef9f1","#2d7a4a"),
     ]
-    gh='<div style="display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;margin:.4rem 0 1rem">'
-    for gv,title,desc in g_cards:
+    gh='<div style="display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;margin:.4rem 0 .85rem">'
+    for gv,title,desc,bg,color in g_cards:
         gh+=(
-            f'<div style="border:1px solid #d8e7dc;border-radius:17px;padding:15px;background:#fff">'
-            f'<div style="font-size:.76rem;font-weight:900;color:#2b7a4b">{gv}</div>'
-            f'<div style="font-size:1rem;font-weight:850;color:#1c3b2a;margin:.25rem 0">{title}</div>'
-            f'<div style="font-size:.82rem;color:#607568;line-height:1.4">{desc}</div></div>'
+            f'<div style="border:1px solid #d8e2dc;border-radius:18px;padding:16px;background:{bg}">'
+            f'<div style="font-size:.76rem;font-weight:900;color:{color};letter-spacing:.04em">{gv}</div>'
+            f'<div style="font-size:1rem;font-weight:850;color:#283e32;margin:.3rem 0">{title}</div>'
+            f'<div style="font-size:.81rem;color:#65736a;line-height:1.45">{desc}</div></div>'
         )
     gh+='</div>'
     st.markdown(gh,unsafe_allow_html=True)
-    st.info("G no es porcentaje de absorción. G = 0,5 no significa que el terreno absorba 50 % del sonido.")
+
+    st.warning(
+        "G = 0,5 no significa que el terreno absorba el 50 % del sonido. "
+        "G es un parámetro adimensional utilizado por el modelo para representar el comportamiento acústico del suelo."
+    )
 
     def _ground_att_iso_edu(distance_m, source_height_m, receiver_height_m, ground_factor, frequency_hz):
         dp=max(float(distance_m),1e-6)
