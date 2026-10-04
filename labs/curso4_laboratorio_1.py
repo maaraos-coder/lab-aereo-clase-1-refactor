@@ -3158,186 +3158,368 @@ def _stage6(lab, saved):
     )
 
 
+def _s7_level(energy):
+    """Return a level from relative mean-square pressure; zero energy has no finite dB value."""
+    return 10 * math.log10(energy) if energy > 0 else None
+
+
+def _s7_schedule(sources, period=60, background=None):
+    """Integrate independent constant-level contributions over exact activity intervals."""
+    boundaries = sorted({0, period, *[t for source in sources for t in source["window"]]})
+    segments = []
+    for start, end in zip(boundaries, boundaries[1:]):
+        if end <= start:
+            continue
+        active = [source for source in sources if source["window"][0] <= start < source["window"][1]]
+        energy = sum(10 ** (source["level"] / 10) for source in active)
+        if background is not None:
+            energy += 10 ** (background / 10)
+        segments.append({
+            "start": start, "end": end, "energy": energy,
+            "level": _s7_level(energy), "active": [source["name"] for source in active],
+        })
+    mean_energy = sum((s["end"] - s["start"]) * s["energy"] for s in segments) / period
+    return segments, _s7_level(mean_energy)
+
+
+def _s7_timeline(sources, period=60):
+    """Responsive SVG with a text equivalent in the source controls and interval table."""
+    height = 68 + 54 * len(sources)
+    svg = (
+        f'<svg viewBox="0 0 840 {height}" width="100%" role="img" '
+        'aria-label="Cronograma de actividad de las fuentes; las barras indican minutos activos">'
+        '<rect width="840" height="100%" rx="16" fill="#f6f9fc"/>'
+    )
+    for minute in range(0, period + 1, 10):
+        x = 170 + 640 * minute / period
+        svg += (
+            f'<line x1="{x}" x2="{x}" y1="35" y2="{height-20}" stroke="#dce6ee"/>'
+            f'<text x="{x}" y="23" text-anchor="middle" font-size="12" fill="#526b7d">{minute} min</text>'
+        )
+    for i, source in enumerate(sources):
+        y = 48 + 54 * i
+        start, end = source["window"]
+        x = 170 + 640 * start / period
+        width = 640 * (end - start) / period
+        svg += (
+            f'<text x="14" y="{y+19}" font-size="14" font-weight="700" fill="#24445c">{source["name"]}</text>'
+            f'<rect x="170" y="{y}" width="640" height="30" rx="7" fill="#e8eff5"/>'
+        )
+        if width > 0:
+            svg += (
+                f'<rect x="{x}" y="{y}" width="{width}" height="30" rx="7" fill="{source["color"]}">'
+                f'<title>{source["name"]}: {start}–{end} min; {source["level"]:.1f} dB(A) durante operación</title></rect>'
+            )
+    st.markdown(svg + "</svg>", unsafe_allow_html=True)
+
+
+def _s7_section(number, title, purpose):
+    st.markdown(
+        f'<div style="border-top:1px solid #dce7ef;padding-top:22px;margin:24px 0 15px">'
+        f'<div style="font-size:.72rem;font-weight:850;letter-spacing:.1em;color:#176b9b">APLICACIÓN 0{number}</div>'
+        f'<h3 style="margin:.3rem 0 .45rem;color:#17324a;font-size:1.35rem">{title}</h3>'
+        f'<div style="font-size:.91rem;color:#526d80;line-height:1.6">{purpose}</div></div>',
+        unsafe_allow_html=True,
+    )
+
+
 def _stage7(lab, saved):
     _header(
         7,
-        "Ciclos de operación, simultaneidad y suma energética",
-        "Convertir niveles instantáneos de maquinaria en aportes equivalentes del período y combinar varias fuentes de forma energética.",
+        "Tiempo, simultaneidad y energía acústica",
+        "Explorar cómo los ciclos de trabajo cambian el aporte de cada fuente y cómo el cronograma modifica los niveles durante una hora de obra.",
     )
-
     st.markdown(
         """
-        <div style="border:1px solid #d9e6ef;border-radius:22px;padding:20px 22px;
-        background:linear-gradient(135deg,#fbfdff,#f3f8fb);margin-bottom:1rem">
-          <div style="font-size:.72rem;font-weight:900;color:#0b6ea8;letter-spacing:.1em">DEL INSTANTE AL PERÍODO DE EVALUACIÓN</div>
-          <div style="font-size:1.16rem;font-weight:850;color:#17324a;margin:.3rem 0">
-            Una obra no mantiene todas sus máquinas funcionando al 100 % todo el tiempo
+        <div style="border:1px solid #cfe0ed;border-radius:24px;padding:24px;
+        background:linear-gradient(125deg,#f8fcff,#eaf3fa);margin-bottom:18px">
+          <div style="font-size:.73rem;font-weight:850;letter-spacing:.12em;color:#176b9b">LABORATORIO INTERACTIVO · UN RECEPTOR · 60 MINUTOS</div>
+          <div style="font-size:1.5rem;font-weight:850;color:#17324a;margin:.6rem 0">
+            ¿Cuánto aporta una máquina que trabaja solo parte de la hora?
           </div>
-          <div style="color:#5d7183;line-height:1.55">
-            Para representar un período debemos corregir cada fuente por su tiempo activo y después
-            sumar energéticamente los aportes equivalentes.
+          <div style="color:#526d80;line-height:1.65">
+            Cambia tiempos y niveles, combina fuentes y organiza sus horarios.
+            Observa por separado el promedio energético del período y los niveles de cada intervalo.
           </div>
         </div>
         """,
         unsafe_allow_html=True,
     )
+    route = st.columns(3)
+    for col, title, description in zip(
+        route,
+        ["01 · Comprende", "02 · Experimenta", "03 · Resuelve"],
+        ["Define el período y el aporte temporal.", "Compara energía y coincidencias de operación.", "Justifica el resultado de un caso de obra."],
+    ):
+        with col:
+            with st.container(border=True):
+                st.markdown(f"**{title}**")
+                st.caption(description)
 
-    st.markdown("### 1 · Ciclo de operación")
+    _s7_section(1, "Define qué estás calculando", "Todos los aportes deben referirse al mismo receptor, descriptor y período.")
     with st.container(border=True):
-        st.latex(r"\Delta L_t=10\log_{10}\left(\frac{t}{T}\right)")
-        st.markdown(
-            "**t** es el tiempo durante el cual la máquina está activa y **T** el período total de evaluación. "
-            "Como t/T ≤ 1, la corrección temporal es cero o negativa."
-        )
-
-    duty_examples=[100,50,25,10]
-    ex_cols=st.columns(4)
-    for col,p in zip(ex_cols,duty_examples):
-        corr=10*math.log10(p/100)
-        col.metric(f"{p} % activo",f"{corr:.1f} dB",help="Corrección temporal respecto del nivel durante operación.")
-
-    base=st.slider("Nivel durante operación [dB(A)]",60,110,80,key="c4l1_s7_base")
-    pct=st.slider("Tiempo activo [%]",1,100,25,key="c4l1_s7_pct")
-    corr=10*math.log10(pct/100)
-    eq=base+corr
-    c1,c2,c3=st.columns(3)
-    c1.metric("Nivel operativo",f"{base:.1f} dB(A)")
-    c2.metric("Corrección temporal",f"{corr:.1f} dB")
-    c3.metric("Aporte equivalente",f"{eq:.1f} dB(A)")
-
-    st.markdown("### 2 · Simultaneidad")
-    st.markdown(
-        "El porcentaje activo describe **cuánto tiempo aporta cada fuente al período**, pero no significa que todas "
-        "funcionen simultáneamente en cada instante. Para un escenario real deben definirse ciclos y coincidencias "
-        "de operación de forma coherente con la faena."
-    )
-    st.info(
-        "Una fuente muy ruidosa que opera pocos minutos puede aportar menos energía al período que una fuente algo más silenciosa que funciona continuamente."
-    )
-
-    st.markdown("### 3 · Suma energética")
-    with st.container(border=True):
-        st.latex(r"L_{\Sigma}=10\log_{10}\left(\sum_i10^{L_i/10}\right)")
-        st.markdown(
-            "Los niveles equivalentes de cada fuente se convierten a energía, se suman y luego vuelven a expresarse en decibeles. "
-            "**Nunca se suman los dB aritméticamente.**"
-        )
-
-    st.markdown("### 4 · Caso aplicado de obra")
-    st.markdown(
-        "Calcula primero el aporte equivalente de cada máquina en el período y luego la suma energética total."
-    )
-
-    case_data=[
-        ("Excavadora",67.0,80),
-        ("Mixer",64.0,30),
-        ("Martillo",74.0,15),
-        ("Generador",59.0,100),
-    ]
-    rows=[]
-    for name,level,duty in case_data:
-        dt=10*math.log10(duty/100)
-        leq=level+dt
-        rows.append([name,level,duty,dt,leq])
-
-    df=pd.DataFrame(
-        rows,
-        columns=["Máquina","Nivel durante operación [dBA]","Tiempo activo [%]","ΔLt [dB]","Aporte equivalente [dBA]"]
-    )
-    st.dataframe(
-        df.style.format({
-            "Nivel durante operación [dBA]":"{:.1f}",
-            "ΔLt [dB]":"{:.1f}",
-            "Aporte equivalente [dBA]":"{:.1f}",
-        }),
-        use_container_width=True,
-        hide_index=True,
-    )
-
-    eqs=[r[4] for r in rows]
-    total=10*math.log10(sum(10**(v/10) for v in eqs))
-    dominant_idx=max(range(len(rows)),key=lambda i:eqs[i])
-    dominant=rows[dominant_idx]
-
-    cards=st.columns(4)
-    for col,row in zip(cards,rows):
-        col.metric(row[0],f"{row[4]:.1f} dBA",delta=f"{row[3]:.1f} dB temporal")
-
-    st.markdown("#### Suma del período")
-    st.latex(
-        r"L_{\Sigma}=10\log_{10}\left("
-        + "+".join([f"10^{{{v:.1f}/10}}" for v in eqs])
-        + r"\right)"
-    )
-    r1,r2,r3=st.columns(3)
-    r1.metric("Nivel total del período",f"{total:.1f} dBA")
-    r2.metric("Fuente dominante",dominant[0])
-    r3.metric("Aporte dominante",f"{dominant[4]:.1f} dBA")
-
-    st.success(
-        f"En este período domina **{dominant[0]}**, con un aporte equivalente de **{dominant[4]:.1f} dBA**. "
-        "La fuente dominante se identifica después de considerar el tiempo activo, no solo mirando el nivel instantáneo."
-    )
-
-    st.markdown("### 5 · Comprueba tu cálculo")
-    answers=[]
-    qcols=st.columns(2)
-    with qcols[0]:
-        ans_exc=st.number_input(
-            "Aporte equivalente de Excavadora [dBA]",
-            min_value=0.0,max_value=120.0,value=60.0,step=0.1,
-            key="c4l1_s7_ans_exc"
-        )
-        ans_ham=st.number_input(
-            "Aporte equivalente de Martillo [dBA]",
-            min_value=0.0,max_value=120.0,value=60.0,step=0.1,
-            key="c4l1_s7_ans_ham"
-        )
-    with qcols[1]:
-        ans_total=st.number_input(
-            "Nivel total del período [dBA]",
-            min_value=0.0,max_value=120.0,value=60.0,step=0.1,
-            key="c4l1_s7_ans_total"
-        )
-        ans_dom=st.selectbox(
-            "¿Qué fuente domina el período?",
-            ["Selecciona","Excavadora","Mixer","Martillo","Generador"],
-            key="c4l1_s7_ans_dom"
-        )
-
-    if st.button("Comprobar caso aplicado",key="c4l1_s7_case_check",type="primary"):
-        checks=[
-            abs(ans_exc-rows[0][4])<=0.2,
-            abs(ans_ham-rows[2][4])<=0.2,
-            abs(ans_total-total)<=0.2,
-            ans_dom==dominant[0],
-        ]
-        if all(checks):
-            st.success("Correcto. Aplicaste la corrección temporal, la suma energética y la identificación de la fuente dominante.")
-        else:
-            msgs=[]
-            if not checks[0]: msgs.append("revisa la Excavadora")
-            if not checks[1]: msgs.append("revisa el Martillo")
-            if not checks[2]: msgs.append("revisa la suma energética")
-            if not checks[3]: msgs.append("revisa la fuente dominante")
-            st.warning("Aún hay diferencias: " + ", ".join(msgs) + ".")
-
-    if st.session_state.get("role")=="Docente":
-        with st.expander("👩‍🏫 Pauta docente · Etapa 7",expanded=False):
+        a, b = st.columns(2, gap="large")
+        with a:
             st.markdown(
-                f"""
-                **Resultados esperados**
-                - Excavadora: {rows[0][4]:.1f} dBA equivalentes.
-                - Mixer: {rows[1][4]:.1f} dBA equivalentes.
-                - Martillo: {rows[2][4]:.1f} dBA equivalentes.
-                - Generador: {rows[3][4]:.1f} dBA equivalentes.
-                - Total: {total:.1f} dBA.
-                - Fuente dominante del período: {dominant[0]}.
-                """
+                "**Nivel durante operación, LAeq,t:** nivel equivalente del aporte de una máquina "
+                "mientras funciona, calculado o medido en el receptor.\n\n"
+                "**Período común, T:** aquí trabajamos con una hora. "
+                "Los minutos activos t pueden ser continuos o repartidos en varios ciclos."
             )
+        with b:
+            st.markdown(
+                "**Aporte equivalente, LAeq,T:** energía de esa fuente repartida sobre toda la hora.\n\n"
+                "**Supuestos del laboratorio:** receptor y geometría fijos; nivel constante mientras "
+                "cada fuente está activa; contribuciones independientes cuya energía se suma; "
+                "sin aporte propio de la máquina durante la parada."
+            )
+        st.latex(r"L_{Aeq,T}=10\log_{10}\left[\frac{1}{T}\sum_j\Delta t_j\,10^{L_{Aeq,j}/10}\right]")
+        st.caption(
+            "Δtj es la duración de cada intervalo de nivel constante. No se promedian los dB aritméticamente. "
+            "Si una máquina tiene varios modos de trabajo, calcula cada modo con su nivel y duración."
+        )
+
+    _s7_section(2, "Explora el tiempo activo", "Reduce los minutos de trabajo y observa cuánto cambia el aporte de una sola fuente.")
+    with st.container(border=True):
+        inputs, result = st.columns([1.1, 1], gap="large")
+        with inputs:
+            base = st.slider("Nivel de la fuente durante operación [dB(A)]", 40, 110, 80, key="c4l1_s7_v2_base")
+            active_minutes = st.slider("Minutos activos dentro de la hora", 0, 60, 15, key="c4l1_s7_v2_minutes")
+            use_background = st.checkbox("Incluir un ruido de fondo continuo", value=False, key="c4l1_s7_v2_background_on")
+            background = st.slider("Nivel del fondo continuo [dB(A)]", 20, 80, 45, key="c4l1_s7_v2_background", disabled=not use_background)
+        fraction = active_minutes / 60
+        source_energy = fraction * 10 ** (base / 10)
+        equivalent = _s7_level(source_energy)
+        correction = 10 * math.log10(fraction) if fraction > 0 else None
+        total = _s7_level(source_energy + (10 ** (background / 10) if use_background else 0))
+        with result:
+            st.metric("Tiempo activo", f"{fraction*100:.0f} %", help="t/T: minutos activos divididos por 60.")
+            st.metric("Corrección temporal", f"{correction:.2f} dB" if correction is not None else "Sin aporte")
+            st.metric("Aporte de la fuente en la hora", f"{equivalent:.2f} dB(A)" if equivalent is not None else "Sin aporte")
+            if use_background:
+                st.metric("Fuente + fondo en la hora", f"{total:.2f} dB(A)")
+        st.latex(r"L_{Aeq,T,i}=L_{Aeq,t_i,i}+10\log_{10}(t_i/T)")
+        examples = st.columns(4)
+        for col, percent in zip(examples, [100, 50, 25, 10]):
+            col.metric(f"{percent} % activo", f"{10*math.log10(percent/100):.2f} dB")
+        if active_minutes == 0:
             st.info(
-                "Conducción sugerida: compare primero el nivel instantáneo del Martillo con su aporte equivalente "
-                "y haga que el alumno explique por qué la duración puede cambiar la fuente dominante."
+                "La fuente no aporta energía a esta hora. Se muestra «Sin aporte»: log10(0) no tiene "
+                "un valor finito y no corresponde asignarle 0 dB. Si hay fondo, este sigue presente."
+            )
+        else:
+            st.markdown(
+                f"**Lectura:** {active_minutes} min a {base} dB(A) aportan **{equivalent:.2f} dB(A)** "
+                "al período de 60 min. La corrección cambia el aporte temporal; la máquina conserva "
+                "su nivel durante operación."
+            )
+        if use_background:
+            st.latex(r"L_{Aeq,T,\mathrm{total}}=10\log_{10}\left[(t/T)10^{L_{\mathrm{fuente}}/10}+10^{L_{\mathrm{fondo}}/10}\right]")
+            st.caption(
+                "El fondo se suma energéticamente durante toda la hora, incluso mientras opera la fuente. "
+                "El nivel de entrada de la fuente debe ser su aporte separado del fondo para evitar contarlo dos veces."
+            )
+
+    _s7_section(3, "Combina dos aportes equivalentes", "Introduce niveles ya referidos a toda la hora. Aquí no vuelvas a aplicar la corrección temporal.")
+    with st.container(border=True):
+        a, b = st.columns(2)
+        level_a = a.slider("Aporte equivalente A [dB(A)]", 40, 100, 70, key="c4l1_s7_v2_sum_a")
+        level_b = b.slider("Aporte equivalente B [dB(A)]", 40, 100, 70, key="c4l1_s7_v2_sum_b")
+        ea, eb = 10 ** (level_a / 10), 10 ** (level_b / 10)
+        combined = _s7_level(ea + eb)
+        a, b, c = st.columns(3)
+        a.metric("Suma energética", f"{combined:.2f} dB(A)")
+        b.metric("Incremento sobre el mayor", f"{combined-max(level_a,level_b):.2f} dB")
+        c.metric("Fracción energética de A", f"{100*ea/(ea+eb):.1f} %")
+        st.latex(r"L_{Aeq,T,\Sigma}=10\log_{10}\left(\sum_i10^{L_{Aeq,T,i}/10}\right)")
+        st.caption(
+            "Dos aportes iguales aumentan el total en 3,01 dB. Con una diferencia de 10 dB, "
+            "el menor aumenta el mayor aproximadamente 0,41 dB. Los porcentajes son fracciones "
+            "de energía acústica, no de sonoridad percibida."
+        )
+
+    _s7_section(4, "Descubre qué cambia con la simultaneidad", "Mantén iguales los tiempos activos y cambia solo la coincidencia de dos máquinas.")
+    with st.container(border=True):
+        st.markdown("**Experimento:** A y B aportan 70 dB(A) cada una mientras operan. Cada máquina trabaja 30 min de la hora.")
+        overlap = st.slider("Minutos de operación simultánea", 0, 30, 0, key="c4l1_s7_v2_overlap")
+        comparison_sources = [
+            {"name": "Máquina A", "level": 70, "window": (0, 30), "color": "#287bb0"},
+            {"name": "Máquina B", "level": 70, "window": (30-overlap, 60-overlap), "color": "#8a6bb5"},
+        ]
+        _s7_timeline(comparison_sources)
+        comparison_segments, comparison_level = _s7_schedule(comparison_sources)
+        interval_max = max(s["level"] for s in comparison_segments if s["level"] is not None)
+        a, b, c = st.columns(3)
+        a.metric("LAeq de la hora", f"{comparison_level:.2f} dB(A)")
+        b.metric("Mayor nivel de intervalo", f"{interval_max:.2f} dB(A)")
+        c.metric("Minutos sin estas fuentes", f"{overlap} min")
+        st.success(
+            "El LAeq de la hora permanece en 70,00 dB(A): cada fuente aporta la misma energía total. "
+            "Al aumentar la coincidencia aparecen intervalos de 73,01 dB(A), compensados por intervalos "
+            "sin aporte de estas fuentes."
+        )
+        st.caption(
+            "En este experimento se omite el fondo. «Sin aporte» no significa silencio real ni 0 dB. "
+            "El mayor nivel de intervalo no es un LAFmax medido: describe la suma de niveles constantes del modelo."
+        )
+        with st.expander("Por qué el promedio se conserva"):
+            st.latex(r"\frac{30}{60}10^{70/10}+\frac{30}{60}10^{70/10}=10^{70/10}")
+            st.markdown(
+                "Bajo los supuestos de suma energética y niveles constantes, el orden de los intervalos "
+                "no cambia la energía acumulada. Cambiar el tiempo activo, el modo de operación o la geometría "
+                "sí puede cambiar el LAeq. Separar tareas puede reducir las coincidencias ruidosas sin reducir "
+                "por sí solo el promedio de toda la hora."
+            )
+
+    _s7_section(5, "Diseña una hora de obra", "Ajusta los horarios y niveles de cuatro fuentes y revisa el resultado en el receptor R1.")
+    st.caption(
+        "Niveles didácticos de presión sonora en R1 durante operación; no son niveles universales "
+        "de máquinas ni potencias sonoras. El generador puede mantenerse continuo o detenerse."
+    )
+    specifications = [
+        ("Excavadora", 67, (0, 48), "#287bb0"),
+        ("Mixer", 64, (12, 30), "#5a9270"),
+        ("Martillo", 74, (30, 39), "#ce7452"),
+        ("Generador", 59, (0, 60), "#8a6bb5"),
+    ]
+    sources = []
+    controls = st.columns(2, gap="large")
+    for i, (name, level, window, color) in enumerate(specifications):
+        with controls[i % 2]:
+            with st.container(border=True):
+                st.markdown(f"**0{i+1} · {name}**")
+                selected_level = st.slider(
+                    f"Nivel de {name} en R1 [dB(A)]", 40, 100, level, key=f"c4l1_s7_v2_level_{i}"
+                )
+                selected_window = st.slider(
+                    f"Inicio y término de {name} [min]", 0, 60, window, key=f"c4l1_s7_v2_window_{i}"
+                )
+                st.caption(f"Tiempo activo: {selected_window[1]-selected_window[0]} min. Igualar los extremos deja la fuente inactiva.")
+                sources.append({"name": name, "level": selected_level, "window": selected_window, "color": color})
+    with st.container(border=True):
+        include_floor = st.checkbox("Agregar fondo continuo en R1", value=False, key="c4l1_s7_v2_floor_on")
+        floor = st.slider("Fondo en R1 [dB(A)]", 20, 80, 45, key="c4l1_s7_v2_floor", disabled=not include_floor)
+        _s7_timeline(sources)
+        segments, scenario_level = _s7_schedule(sources, background=floor if include_floor else None)
+        contributions = []
+        for source in sources:
+            duration = source["window"][1] - source["window"][0]
+            energy = duration / 60 * 10 ** (source["level"] / 10)
+            contributions.append({**source, "duration": duration, "energy": energy, "equivalent": _s7_level(energy)})
+        total_energy = sum(source["energy"] for source in contributions) + (10 ** (floor / 10) if include_floor else 0)
+        available = [source for source in contributions if source["energy"] > 0]
+        dominant = max(available, key=lambda source: source["energy"]) if available else None
+        finite_segments = [s["level"] for s in segments if s["level"] is not None]
+        a, b, c = st.columns(3)
+        reference_energy = sum((window[1]-window[0])/60 * 10**(level/10) for _, level, window, _ in specifications)
+        reference_level = _s7_level(reference_energy + (10**(floor/10) if include_floor else 0))
+        a.metric(
+            "LAeq,T en R1 · 60 min",
+            f"{scenario_level:.2f} dB(A)" if scenario_level is not None else "Sin aporte",
+            delta=f"{scenario_level-reference_level:+.2f} dB respecto del caso inicial" if scenario_level is not None else None,
+            delta_color="inverse",
+        )
+        b.metric("Mayor nivel de intervalo", f"{max(finite_segments):.2f} dB(A)" if finite_segments else "Sin aporte")
+        c.metric("Máquina con mayor aporte", dominant["name"] if dominant else "Ninguna")
+        st.dataframe(
+            pd.DataFrame([{
+                "Fuente": s["name"],
+                "Nivel operativo [dB(A)]": f'{s["level"]:.1f}',
+                "Tiempo activo [min]": s["duration"],
+                "Corrección [dB]": f'{10*math.log10(s["duration"]/60):.2f}' if s["duration"] else "Sin aporte",
+                "Aporte en 60 min [dB(A)]": f'{s["equivalent"]:.2f}' if s["equivalent"] is not None else "Sin aporte",
+                "Energía del total [%]": f'{100*s["energy"]/total_energy:.1f}' if total_energy else "—",
+            } for s in contributions]),
+            use_container_width=True, hide_index=True,
+        )
+        if include_floor:
+            st.caption(f"El fondo continuo también aporta {100*10**(floor/10)/total_energy:.1f} % de la energía total; no figura como máquina.")
+        st.caption("La comparación usa los niveles y horarios iniciales de las cuatro máquinas, con la misma configuración de fondo.")
+        st.markdown("**Distribución de energía de las máquinas durante la hora**")
+        st.bar_chart(
+            pd.DataFrame({"Fuente": [s["name"] for s in contributions],
+                          "Energía del total [%]": [100*s["energy"]/total_energy if total_energy else 0 for s in contributions]}).set_index("Fuente"),
+            use_container_width=True,
+        )
+        with st.expander("Detalle de los intervalos del cronograma"):
+            st.dataframe(
+                pd.DataFrame([{
+                    "Intervalo [min]": f'{s["start"]}–{s["end"]}',
+                    "Duración [min]": s["end"]-s["start"],
+                    "Máquinas activas": ", ".join(s["active"]) or "Ninguna",
+                    "Nivel de intervalo [dB(A)]": f'{s["level"]:.2f}' if s["level"] is not None else "Sin aporte",
+                } for s in segments]), use_container_width=True, hide_index=True,
+            )
+            st.caption("Se integra cada intervalo según su duración; los intervalos largos pesan más que los cortos.")
+        st.info(
+            "Prueba tres cambios: acorta el tiempo del martillo, desplaza su horario sin cambiar la duración "
+            "y detén el generador. Compara qué cambia en el LAeq y qué cambia solo en las coincidencias."
+        )
+
+    _s7_section(6, "Resuelve y comprueba", "Aplica el método a un caso fijo. Este ejercicio es independiente de los ajustes del simulador.")
+    case_data = [("Excavadora", 67.0, 80), ("Mixer", 64.0, 30), ("Martillo", 74.0, 15), ("Generador", 59.0, 100)]
+    with st.container(border=True):
+        st.markdown("**Caso:** un receptor fijo, T = 60 min y sin fondo en el cálculo. Todas las entradas son aportes de cada máquina en ese receptor.")
+        st.dataframe(
+            pd.DataFrame([{"Fuente": n, "Nivel operativo [dB(A)]": level, "Activo [%]": duty, "Activo [min]": 60*duty/100}
+                          for n, level, duty in case_data]),
+            use_container_width=True, hide_index=True,
+        )
+        st.markdown("Calcula los aportes equivalentes de excavadora y martillo, el total de la hora y la fuente dominante.")
+        with st.form("c4l1_s7_v2_exercise"):
+            a, b = st.columns(2)
+            with a:
+                ans_exc = st.number_input("Excavadora · aporte en la hora [dB(A)]", 0.0, 120.0, 60.0, 0.1, key="c4l1_s7_v2_ans_exc")
+                ans_ham = st.number_input("Martillo · aporte en la hora [dB(A)]", 0.0, 120.0, 60.0, 0.1, key="c4l1_s7_v2_ans_ham")
+            with b:
+                ans_total = st.number_input("Total de la hora [dB(A)]", 0.0, 120.0, 60.0, 0.1, key="c4l1_s7_v2_ans_total")
+                ans_dom = st.selectbox("Fuente dominante", ["Selecciona", "Excavadora", "Mixer", "Martillo", "Generador"], key="c4l1_s7_v2_ans_dom")
+            submitted = st.form_submit_button("Comprobar mi cálculo", type="primary", use_container_width=True)
+        equivalents = [level+10*math.log10(duty/100) for _, level, duty in case_data]
+        expected_total = _s7_level(sum(10**(level/10) for level in equivalents))
+        expected_name = case_data[max(range(len(equivalents)), key=lambda i: equivalents[i])][0]
+        if submitted:
+            checks = [
+                abs(ans_exc-equivalents[0]) <= .2,
+                abs(ans_ham-equivalents[2]) <= .2,
+                abs(ans_total-expected_total) <= .2,
+                ans_dom == expected_name,
+            ]
+            if all(checks):
+                st.success("Correcto: aplicaste el tiempo activo, sumaste energía e identificaste la contribución dominante.")
+            else:
+                pending = [label for label, passed in zip(["aporte de excavadora", "aporte de martillo", "suma total", "fuente dominante"], checks) if not passed]
+                st.warning("Revisa: " + ", ".join(pending) + ".")
+            with st.expander("Ver desarrollo del caso", expanded=True):
+                st.dataframe(
+                    pd.DataFrame([{"Fuente": row[0], "Corrección temporal [dB]": f"{10*math.log10(row[2]/100):.2f}",
+                                   "Aporte en 60 min [dB(A)]": f"{value:.2f}"} for row, value in zip(case_data, equivalents)]),
+                    use_container_width=True, hide_index=True,
+                )
+                st.markdown(f"**Total: {expected_total:.2f} dB(A). Fuente dominante: {expected_name}.**")
+                st.caption("Calcula con todos los decimales y redondea al final. Tolerancia de comprobación: ±0,2 dB.")
+            saved["c4l1_stage7_check"] = {"correct": sum(checks), "total": 4}
+            _save_stage_state(lab, saved, 7)
+
+    with st.expander("Criterios técnicos y referencias"):
+        st.markdown(
+            "**Para trasladar el cálculo a una obra:** declara receptor, período, descriptor, niveles por modo "
+            "de operación, tiempos activos, coincidencias y tratamiento del fondo. Un porcentaje activo no "
+            "describe por sí solo el cronograma.\n\n"
+            "No apliques dos veces el tiempo activo a un nivel que ya representa toda la hora. "
+            "No mezcles Lw, LAeq y LAmax como si fueran entradas equivalentes. "
+            "La suma de energías presupone fuentes no coherentes; una interacción entre máquinas que cambie "
+            "su emisión queda fuera de este modelo simplificado.\n\n"
+            "[FHWA · Construction Noise Handbook: Terminology]"
+            "(https://www.fhwa.dot.gov/environment/noise/construction_noise/handbook/handbook02.cfm)"
+        )
+    if st.session_state.get("role") == "Docente":
+        with st.expander("Pauta docente · Etapa 7"):
+            st.markdown(
+                f"**Caso fijo:** total {expected_total:.2f} dB(A); domina {expected_name}.\n\n"
+                "**Preguntas de conducción:** ¿por qué el promedio horario se mantiene cuando solo desplazas "
+                "un horario? ¿Qué ocurre al reducir la duración? ¿Por qué un nivel alto durante operación "
+                "no determina por sí solo la fuente dominante del período?"
             )
 
 
