@@ -2579,6 +2579,424 @@ def _stage5(lab, saved):
     st.markdown("### 3 · ¿Cómo representarías cada situación?")
     st.markdown(
         """
+        <div style="border:1px solid #dce6ed;border-radius:18px;padding:15px 17px;background:#fff;margin:.3rem 0 .8rem">
+          <div style="font-size:.8rem;font-weight:900;color:#17324a">CRITERIO DE DECISIÓN</div>
+          <div style="font-size:.84rem;color:#637788;line-height:1.5;margin-top:.25rem">
+            Primero identifica el fenómeno. Si es un <b>equipo operando desde una posición</b>, represéntalo como fuente puntual.
+            Si es <b>tránsito vial generado por la obra</b>, represéntalo mediante una fuente lineal vial basada en CNOSSOS.
+          </div>
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
+
+    cases=[
+        ("Excavadora trabajando desde un frente definido","Equipo en obra","Fuente puntual",
+         "Se representa desde su posición de operación durante el escenario evaluado."),
+        ("Generador instalado durante toda la jornada","Equipo estacionario","Fuente puntual",
+         "Su emisión se origina desde una ubicación fija."),
+        ("Bomba de hormigón estacionada durante un vaciado","Equipo estacionario","Fuente puntual",
+         "Durante la actividad permanece localizada respecto de los receptores."),
+        ("Camiones que retiran material y circulan por la calle exterior","Tránsito asociado a la obra","Fuente lineal vial · CNOSSOS",
+         "Aquí interesa el flujo de vehículos sobre una vía: es el uso natural del objeto lineal CNOSSOS."),
+        ("Camiones mixer que llegan repetidamente por una avenida de acceso","Tránsito asociado a la obra","Fuente lineal vial · CNOSSOS",
+         "La vía puede representarse mediante el modelo de tránsito, usando sus parámetros de flujo y circulación."),
+        ("Cargador frontal que se desplaza entre dos puntos dentro del predio","Maquinaria móvil interna","Varias posiciones puntuales",
+         "No conviene tratarlo automáticamente como tráfico CNOSSOS. Puede representarse mediante varias posiciones puntuales representativas o escenarios alternativos de operación, según el objetivo del análisis."),
+    ]
+
+    for i,(prompt,kind,expected,why) in enumerate(cases):
+        with st.container(border=True):
+            head1,head2=st.columns([2.1,1])
+            with head1:
+                st.markdown(
+                    f"<div style='font-size:.72rem;font-weight:900;color:#6b7d89;letter-spacing:.06em'>{kind.upper()}</div>"
+                    f"<div style='font-size:.95rem;font-weight:850;color:#263f52;margin-top:.15rem'>{prompt}</div>",
+                    unsafe_allow_html=True,
+                )
+            with head2:
+                badge_bg="#eef6fb" if expected.startswith("Fuente puntual") else ("#fff7e9" if "CNOSSOS" in expected else "#f3f3f7")
+                badge_color="#176b9b" if expected.startswith("Fuente puntual") else ("#98651c" if "CNOSSOS" in expected else "#666078")
+                st.markdown(
+                    f"<div style='text-align:center;border-radius:999px;padding:7px 10px;background:{badge_bg};"
+                    f"color:{badge_color};font-size:.72rem;font-weight:900'>CASO {i+1}</div>",
+                    unsafe_allow_html=True,
+                )
+
+            choice=st.radio(
+                "Selecciona representación",
+                ["Fuente puntual","Fuente lineal vial · CNOSSOS","Varias posiciones puntuales"],
+                index=None,
+                key=f"c4l1_s5_rep_{i}",
+                horizontal=True,
+            )
+            if choice:
+                if choice==expected:
+                    st.success(f"Correcto · {why}")
+                else:
+                    st.warning(f"Revisa · {why}")
+
+    st.markdown("### 4 · ¿Una fuente por máquina o una fuente puntual equivalente?")
+    st.markdown(
+        """
+        <div style="border:1px solid #dce6ed;border-radius:19px;padding:16px 18px;background:#fff;margin:.35rem 0 .8rem">
+          <div style="font-size:.78rem;font-weight:900;color:#17324a">DOS ESTRATEGIAS VÁLIDAS DENTRO DEL PREDIO</div>
+          <div style="font-size:.84rem;color:#637788;line-height:1.55;margin-top:.3rem">
+            Para una etapa de obra puedes modelar <b>cada maquinaria como una fuente puntual independiente</b>
+            o, si las fuentes están suficientemente concentradas y el objetivo es una estimación global,
+            reemplazarlas por <b>una fuente puntual equivalente</b> obtenida mediante suma energética.
+          </div>
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
+
+    rep_cards=[
+        (
+            "VARIAS FUENTES PUNTUALES",
+            "Mayor detalle espacial",
+            "Cada equipo conserva su posición, Lw, altura, tiempo activo y relación geométrica con barreras y receptores.",
+            "Úsalo cuando las máquinas están separadas, hay receptores cercanos o necesitas identificar contribuciones individuales.",
+            "#eef6fb","#176b9b"
+        ),
+        (
+            "UNA FUENTE PUNTUAL EQUIVALENTE",
+            "Simplificación por etapa o frente",
+            "Las potencias sonoras de varias máquinas se suman energéticamente y se asignan a una posición representativa del conjunto.",
+            "Úsalo para estimaciones globales cuando las fuentes están relativamente agrupadas y la geometría interna no cambia sustancialmente el resultado.",
+            "#f3f8f4","#2d7a4a"
+        ),
+    ]
+    rh='<div style="display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px;margin:.5rem 0 1rem">'
+    for title,sub,desc,use,bg,color in rep_cards:
+        rh+=(
+            f'<div style="border:1px solid #dce6df;border-radius:18px;padding:17px;background:{bg}">'
+            f'<div style="font-size:.74rem;font-weight:900;color:{color};letter-spacing:.06em">{title}</div>'
+            f'<div style="font-size:.95rem;font-weight:850;color:#314b3d;margin:.3rem 0">{sub}</div>'
+            f'<div style="font-size:.81rem;color:#61736a;line-height:1.48">{desc}</div>'
+            f'<div style="font-size:.78rem;color:{color};font-weight:800;margin-top:.65rem">{use}</div>'
+            f'</div>'
+        )
+    rh+='</div>'
+    st.markdown(rh,unsafe_allow_html=True)
+
+    st.markdown("#### Representación visual")
+    eq_svg=(
+        '<div style="border:1px solid #d8e4ec;border-radius:22px;background:#fbfdff;padding:18px 20px;margin:.5rem 0 1.1rem;box-shadow:0 8px 20px rgba(33,65,90,.06)">'
+        '<div style="font-size:.88rem;font-weight:900;color:#526a7e;letter-spacing:.07em;margin:2px 0 14px">MISMA ETAPA DE OBRA · DOS FORMAS DE REPRESENTARLA</div>'
+        '<svg viewBox="0 0 1000 430" width="100%" style="display:block">'
+        '<defs>'
+        '<marker id="eqArrow" markerWidth="11" markerHeight="11" refX="8" refY="3.5" orient="auto" markerUnits="strokeWidth"><path d="M0,0 L0,7 L9,3.5 z" fill="#7f93a1"/></marker>'
+        '<filter id="eqShadow" x="-20%" y="-20%" width="140%" height="140%"><feDropShadow dx="0" dy="4" stdDeviation="4" flood-opacity=".12"/></filter>'
+        '</defs>'
+        '<rect x="0" y="0" width="1000" height="430" rx="20" fill="#f8fbfd"/>'
+
+        '<rect x="28" y="42" width="405" height="315" rx="20" fill="#eef6fb" stroke="#b8d5e7" stroke-width="2.5"/>'
+        '<text x="54" y="78" font-size="20" font-weight="900" fill="#176b9b">MODELO DETALLADO</text>'
+        '<text x="54" y="104" font-size="15" font-weight="700" fill="#557487">Varias fuentes puntuales independientes</text>'
+        '<circle cx="132" cy="190" r="34" fill="#3b83b2" filter="url(#eqShadow)"/><text x="108" y="198" font-size="20" font-weight="900" fill="#fff">EX</text>'
+        '<circle cx="275" cy="155" r="34" fill="#4f9a68" filter="url(#eqShadow)"/><text x="260" y="163" font-size="20" font-weight="900" fill="#fff">G</text>'
+        '<circle cx="232" cy="285" r="34" fill="#7c72b8" filter="url(#eqShadow)"/><text x="207" y="293" font-size="19" font-weight="900" fill="#fff">BH</text>'
+        '<circle cx="360" cy="240" r="34" fill="#d38c35" filter="url(#eqShadow)"/><text x="341" y="248" font-size="19" font-weight="900" fill="#fff">M</text>'
+        '<text x="88" y="238" font-size="14" font-weight="850" fill="#2f607e">Excavadora</text>'
+        '<text x="244" y="207" font-size="14" font-weight="850" fill="#3f7350">Generador</text>'
+        '<text x="194" y="336" font-size="14" font-weight="850" fill="#5f568c">Bomba</text>'
+        '<text x="330" y="289" font-size="14" font-weight="850" fill="#96631f">Mixer</text>'
+        '<text x="58" y="372" font-size="16" font-weight="700" fill="#5f7585">Cada fuente conserva su posición, Lw y geometría propia.</text>'
+
+        '<line x1="455" y1="210" x2="545" y2="210" stroke="#7f93a1" stroke-width="5" marker-end="url(#eqArrow)"/>'
+        '<text x="462" y="180" font-size="16" font-weight="900" fill="#687d8c">SUMA ENERGÉTICA</text>'
+        '<text x="458" y="245" font-size="15" font-weight="700" fill="#6f8391">+ simplificación espacial</text>'
+
+        '<rect x="567" y="42" width="405" height="315" rx="20" fill="#f3f9f4" stroke="#bedfc6" stroke-width="2.5"/>'
+        '<text x="592" y="78" font-size="20" font-weight="900" fill="#2d7a4a">MODELO SIMPLIFICADO</text>'
+        '<text x="592" y="104" font-size="15" font-weight="700" fill="#5f7867">Una fuente puntual equivalente</text>'
+        '<circle cx="770" cy="215" r="68" fill="#2d7a4a" filter="url(#eqShadow)"/>'
+        '<text x="715" y="209" font-size="22" font-weight="900" fill="#fff">Lw,eq</text>'
+        '<text x="738" y="239" font-size="16" font-weight="850" fill="#e9f6ec">puntual</text>'
+        '<line x1="770" y1="283" x2="770" y2="320" stroke="#2d7a4a" stroke-width="2.5" stroke-dasharray="6 5"/>'
+        '<text x="630" y="342" font-size="16" font-weight="700" fill="#5a7462">Ubicación representativa del frente o etapa</text>'
+        '<text x="602" y="367" font-size="16" font-weight="700" fill="#5a7462">Conserva la energía total, pero reduce el detalle espacial.</text>'
+        '</svg>'
+
+        '<div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-top:14px">'
+        '<div style="border:1px solid #cfe0ec;border-radius:16px;padding:15px 16px;background:#eef6fb;color:#2b607f;font-size:.9rem;line-height:1.5"><div style="font-size:.78rem;font-weight:900;letter-spacing:.05em;margin-bottom:.3rem">MODELO DETALLADO</div><b>Útil cuando necesitas:</b><br>• estudiar contribuciones individuales<br>• conservar distancias distintas<br>• evaluar barreras por equipo</div>'
+        '<div style="border:1px solid #d4e7d8;border-radius:16px;padding:15px 16px;background:#f3f9f4;color:#406a4c;font-size:.9rem;line-height:1.5"><div style="font-size:.78rem;font-weight:900;letter-spacing:.05em;margin-bottom:.3rem">MODELO EQUIVALENTE</div><b>Útil cuando necesitas:</b><br>• representar globalmente una etapa<br>• simplificar un frente concentrado<br>• trabajar con una posición representativa</div>'
+        '</div>'
+        '</div>'
+    )
+    st.markdown(eq_svg,unsafe_allow_html=True)
+
+    with st.container(border=True):
+        st.markdown("#### Suma energética para construir la fuente equivalente")
+        st.latex(r"L_{W,eq}=10\log_{10}\left(\sum_i 10^{L_{W,i}/10}\right)")
+        st.markdown(
+            "No se suman los Lw aritméticamente. Primero se suma la energía acústica de cada maquinaria y "
+            "el resultado se expresa nuevamente en decibeles."
+        )
+
+    phases={
+        "Excavación":[("Excavadora",105.0),("Retroexcavadora",101.0),("Camión",101.0)],
+        "Obra gruesa":[("Bomba de hormigón",104.0),("Mixer",101.0),("Vibrador",97.0)],
+        "Terminaciones":[("Sierra de corte",106.0),("Taladro",98.0),("Generador",100.0)],
+    }
+    phase=st.selectbox("Etapa de obra",list(phases.keys()),key="c4l1_s5_phase_eq")
+    machines=phases[phase]
+    lw_eq=10*math.log10(sum(10**(lw/10) for _,lw in machines))
+
+    cols=st.columns(len(machines)+1)
+    for col,(name,lw_i) in zip(cols,machines):
+        col.metric(name,f"{lw_i:.0f} dB")
+    cols[-1].metric("Lw equivalente",f"{lw_eq:.1f} dB")
+
+    st.markdown(
+        f"Para esta simplificación de **{phase.lower()}**, las {len(machines)} máquinas pueden representarse "
+        f"por una fuente puntual equivalente de **Lw = {lw_eq:.1f} dB**, ubicada en una posición representativa "
+        "del frente o zona de trabajo."
+    )
+
+    st.markdown(
+        """
+        <div style="display:grid;grid-template-columns:1fr auto 1fr;gap:12px;align-items:center;margin:.75rem 0 1rem">
+          <div style="border:1px solid #d7e5ee;border-radius:16px;padding:14px;background:#f7fbfe;text-align:center">
+            <div style="font-size:.72rem;font-weight:900;color:#176b9b">MODELO DETALLADO</div>
+            <div style="font-size:.82rem;color:#607586;margin-top:.35rem">● Excavadora &nbsp; ● Camión &nbsp; ● Generador</div>
+            <div style="font-size:.75rem;color:#788894;margin-top:.3rem">posiciones y contribuciones separadas</div>
+          </div>
+          <div style="font-size:1.45rem;color:#8195a3;font-weight:900">→</div>
+          <div style="border:1px solid #d7e8dc;border-radius:16px;padding:14px;background:#f5fbf6;text-align:center">
+            <div style="font-size:.72rem;font-weight:900;color:#2d7a4a">MODELO SIMPLIFICADO</div>
+            <div style="font-size:.9rem;color:#496657;font-weight:850;margin-top:.35rem">● Lw equivalente</div>
+            <div style="font-size:.75rem;color:#788b7e;margin-top:.3rem">una posición representativa del frente</div>
+          </div>
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
+
+    st.warning(
+        "La fuente puntual equivalente es una aproximación espacial. No conviene usarla si las máquinas están muy separadas, "
+        "si una barrera afecta solo a algunas fuentes, si existen receptores muy cercanos o si necesitas conocer cuál equipo domina. "
+        "En esos casos mantén las fuentes puntuales independientes."
+    )
+
+    st.markdown("### 5 · Cuándo sí usar la fuente lineal CNOSSOS")
+
+    st.markdown(
+        """
+        <div style="display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;margin:.4rem 0 .8rem">
+          <div style="border:1px solid #d6eadc;border-radius:17px;padding:15px;background:#f3fbf5">
+            <div style="font-size:.75rem;font-weight:900;color:#2d7a4a">SÍ TIENE SENTIDO</div>
+            <div style="font-size:.83rem;color:#597064;line-height:1.5;margin-top:.35rem">
+              Viajes de camiones por calles exteriores, acceso a botadero, retiro de escombros,
+              transporte de áridos, mixer y otros flujos viales generados por la obra.
+            </div>
+          </div>
+          <div style="border:1px solid #ead9d1;border-radius:17px;padding:15px;background:#fff8f4">
+            <div style="font-size:.75rem;font-weight:900;color:#a05b3a">NO AUTOMÁTICAMENTE</div>
+            <div style="font-size:.83rem;color:#75645b;line-height:1.5;margin-top:.35rem">
+              Excavadora, cargador frontal o maquinaria que simplemente cambia de posición dentro del predio.
+              Ese movimiento no debe confundirse con un modelo de tráfico vial.
+            </div>
+          </div>
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
+
+    st.success(
+        "Idea de cierre: **puntual = maquinaria localizada**; una etapa completa puede representarse con varias puntuales "
+        "o, cuando sea técnicamente razonable, con una **puntual equivalente**. **Lineal CNOSSOS = tránsito vial asociado a la obra**."
+    )
+
+
+def _stage6(lab, saved):
+    _header(
+        6,
+        "Diseño y control del ruido en una obra",
+        "Seleccionar controles técnicamente aplicables según el tipo de fuente, su operación y la geometría respecto del receptor.",
+    )
+
+    st.markdown(
+        """
+        <div style="border:1px solid #d7e5ef;border-radius:24px;padding:22px 24px;
+        background:linear-gradient(135deg,#fbfdff,#f1f7fb);box-shadow:0 9px 24px rgba(30,65,92,.06);margin-bottom:1rem">
+          <div style="display:inline-block;font-size:.78rem;font-weight:900;color:#0b6ea8;letter-spacing:.1em;
+          background:#eaf5fb;border-radius:999px;padding:6px 10px">CONTROL ACÚSTICO APLICADO</div>
+          <div style="font-size:1.36rem;font-weight:900;color:#17324a;margin:.55rem 0 .5rem">
+            La medida correcta depende de cómo funciona realmente la fuente
+          </div>
+          <div style="color:#5d7183;line-height:1.6;font-size:.92rem">
+            No sirve proponer un encierro para una máquina que debe desplazarse libremente, ni reubicar un equipo
+            que obligatoriamente debe trabajar junto al receptor. El diseño debe ser <b>acústicamente eficaz</b>
+            y al mismo tiempo <b>operacionalmente viable</b>.
+          </div>
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
+
+    st.markdown("### 1 · Controles que utilizaremos")
+    controls=[
+        (
+            "SILENCIADOR",
+            "Conductos, escapes o ventilación",
+            "Introduce una pérdida de inserción en la trayectoria de descarga. Su eficacia puede variar con la frecuencia.",
+            "Ej.: escape de generador o ventilación forzada.",
+            "#eef6fb","#176b9b"
+        ),
+        (
+            "ENCIERRO",
+            "Fuente fija que puede quedar rodeada",
+            "Reduce transmisión directa mediante cerramientos. Las puertas, juntas, ventilación y penetraciones condicionan el desempeño real.",
+            "Ej.: generador o equipo estacionario.",
+            "#f2f8f4","#2d7a4a"
+        ),
+        (
+            "SEMIENCIERRO",
+            "Fuente que necesita una cara abierta",
+            "Rodea parcialmente la fuente. La superficie abierta y su orientación respecto del receptor pasan a ser críticas.",
+            "Ej.: sierra de corte fija con acceso del operador.",
+            "#fff8e9","#98651c"
+        ),
+        (
+            "ENCIERRO + SILENCIADOR",
+            "Fuente fija con ventilación o escape relevante",
+            "Combina transmisión por cerramiento y control de las vías de ventilación/escape.",
+            "Ej.: generador estacionario de operación prolongada.",
+            "#f5f2fb","#65549a"
+        ),
+        (
+            "BARRERA",
+            "Control sobre la trayectoria",
+            "Interrumpe la línea de visión y genera difracción. Su eficacia depende de altura, posición y geometría fuente–barrera–receptor.",
+            "Ej.: maquinaria que debe trabajar cerca del deslinde.",
+            "#fff2ed","#a05b3a"
+        ),
+        (
+            "REDUCCIÓN DIRECTA DOCUMENTADA",
+            "Representación de un control conocido",
+            "No es una medida física en sí misma. Se usa cuando ya existe una reducción medida, declarada o calculada que debe incorporarse al modelo.",
+            "Ej.: IL/TL conocido de un tratamiento específico.",
+            "#f3f5f7","#596b78"
+        ),
+    ]
+    st.caption(
+        "Una ficha por medida física: reconoce el mecanismo, su aplicación y sus restricciones."
+    )
+    image_names = (
+        "silenciador.png",
+        "encierro.png",
+        "semiencierro.png",
+        "encierro_silenciador.png",
+        "barrera.png",
+    )
+    for row_start in range(0, len(image_names), 2):
+        columns = st.columns(2)
+        for col, index in zip(columns, range(row_start, min(row_start + 2, len(image_names)))):
+            title, use, desc, example, bg, color = controls[index]
+            with col:
+                with st.container(border=True):
+                    image_path = PROJECT_ROOT / "assets" / "controles" / image_names[index]
+                    if image_path.is_file():
+                        st.image(str(image_path), use_container_width=True)
+                        st.caption(f"{title.capitalize()} · referencia visual didáctica.")
+                    else:
+                        st.markdown(
+                            '<div role="img" aria-label="Render en preparación" '
+                            'style="min-height:190px;border:1px dashed #c8d7e5;border-radius:12px;'
+                            'display:flex;align-items:center;justify-content:center;'
+                            f'background:{bg};color:{color};font-size:.88rem">'
+                            'Render individual en preparación</div>',
+                            unsafe_allow_html=True,
+                        )
+                    st.markdown(
+                        f'<div style="font-size:.75rem;font-weight:900;letter-spacing:.07em;color:{color};margin-top:.5rem">{title}</div>'
+                        f'<div style="font-size:1.02rem;font-weight:850;color:#334c5f;margin:.32rem 0">{use}</div>'
+                        f'<div style="font-size:.86rem;color:#657684;line-height:1.55">{desc}</div>'
+                        f'<div style="border-top:1px solid rgba(90,110,125,.13);margin-top:.65rem;padding-top:.5rem;font-size:.8rem;color:{color};font-weight:800">{example}</div>',
+                        unsafe_allow_html=True,
+                    )
+
+    title, use, desc, example, bg, color = controls[-1]
+    with st.container(border=True):
+        st.markdown(f"**{title}** · {use}")
+        st.markdown(desc)
+        st.caption(example)
+
+    st.info(
+        "Además de estos controles físicos, la planificación sigue siendo válida: evitar simultaneidad innecesaria, "
+        "elegir ubicaciones favorables cuando la operación lo permita y orientar aberturas o escapes lejos del receptor."
+    )
+
+    st.markdown("### 2 · Caso de diseño · cuatro fuentes con restricciones reales")
+    st.markdown(
+        "En el plano existe una vivienda sensible al costado oriental. Cada fuente tiene una condición operacional distinta. "
+        "El alumno debe elegir una solución que pueda aplicarse realmente en obra."
+    )
+
+    work_svg=(
+        '<div style="border:1px solid #d8e4ec;border-radius:24px;background:#fbfdff;padding:18px 20px;margin:.55rem 0 1.1rem;box-shadow:0 10px 24px rgba(33,65,90,.06)">'
+        '<div style="display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:12px">'
+        '<div><div style="font-size:.82rem;font-weight:900;color:#526a7e;letter-spacing:.08em">PLANTA DE ANÁLISIS</div>'
+        '<div style="font-size:.85rem;color:#738590;margin-top:.2rem">La restricción operacional es parte del problema.</div></div>'
+        '<div style="font-size:.78rem;font-weight:900;color:#8b5b3d;background:#fff3eb;border:1px solid #edd4c5;border-radius:999px;padding:7px 12px">R · receptor sensible</div>'
+        '</div>'
+        '<svg viewBox="0 0 1000 545" width="100%" style="display:block">'
+        '<defs><filter id="s6Shadow" x="-20%" y="-20%" width="140%" height="140%"><feDropShadow dx="0" dy="5" stdDeviation="5" flood-opacity=".13"/></filter></defs>'
+        '<rect x="0" y="0" width="1000" height="545" rx="22" fill="#f8fbfd"/>'
+        '<rect x="48" y="54" width="714" height="420" rx="24" fill="#eef3f6" stroke="#9fb0bc" stroke-width="3"/>'
+        '<text x="75" y="90" font-size="20" font-weight="900" fill="#5e7382">PREDIO DE LA OBRA</text>'
+        '<text x="75" y="116" font-size="13" font-weight="700" fill="#7b8c97">Selecciona controles compatibles con la operación de cada fuente</text>'
+
+        '<rect x="805" y="130" width="150" height="172" rx="16" fill="#f9eee8" stroke="#c89b7d" stroke-width="3" filter="url(#s6Shadow)"/>'
+        '<rect x="825" y="154" width="110" height="55" rx="8" fill="#fff8f3" stroke="#e4c8b7"/>'
+        '<text x="839" y="185" font-size="18" font-weight="900" fill="#885a3e">VIVIENDA</text>'
+        '<text x="826" y="234" font-size="13" font-weight="700" fill="#936c55">receptor residencial</text>'
+        '<circle cx="805" cy="260" r="12" fill="#b34f4f"/><text x="825" y="266" font-size="16" font-weight="900" fill="#954343">R</text>'
+
+        '<circle cx="165" cy="180" r="40" fill="#4f9a68" filter="url(#s6Shadow)"/>'
+        '<circle cx="136" cy="151" r="14" fill="#fff" stroke="#4f9a68" stroke-width="3"/><text x="131" y="157" font-size="13" font-weight="900" fill="#3f7350">1</text>'
+        '<text x="149" y="188" font-size="22" font-weight="900" fill="#fff">G</text>'
+        '<rect x="91" y="234" width="150" height="45" rx="11" fill="#fff" stroke="#d7e3ea"/>'
+        '<text x="117" y="261" font-size="15" font-weight="900" fill="#3f7350">Generador</text>'
+
+        '<circle cx="570" cy="160" r="40" fill="#d65f5f" filter="url(#s6Shadow)"/>'
+        '<circle cx="541" cy="131" r="14" fill="#fff" stroke="#d65f5f" stroke-width="3"/><text x="536" y="137" font-size="13" font-weight="900" fill="#9e4545">2</text>'
+        '<text x="546" y="168" font-size="21" font-weight="900" fill="#fff">MH</text>'
+        '<rect x="487" y="214" width="168" height="45" rx="11" fill="#fff" stroke="#d7e3ea"/>'
+        '<text x="506" y="241" font-size="15" font-weight="900" fill="#9e4545">Martillo hidráulico</text>'
+
+        '<circle cx="660" cy="365" r="40" fill="#3b83b2" filter="url(#s6Shadow)"/>'
+        '<circle cx="631" cy="336" r="14" fill="#fff" stroke="#3b83b2" stroke-width="3"/><text x="626" y="342" font-size="13" font-weight="900" fill="#2f607e">3</text>'
+        '<text x="636" y="373" font-size="21" font-weight="900" fill="#fff">EX</text>'
+        '<rect x="584" y="419" width="155" height="45" rx="11" fill="#fff" stroke="#d7e3ea"/>'
+        '<text x="608" y="446" font-size="15" font-weight="900" fill="#2f607e">Excavadora</text>'
+
+        '<circle cx="410" cy="365" r="40" fill="#7c72b8" filter="url(#s6Shadow)"/>'
+        '<circle cx="381" cy="336" r="14" fill="#fff" stroke="#7c72b8" stroke-width="3"/><text x="376" y="342" font-size="13" font-weight="900" fill="#5f568c">4</text>'
+        '<text x="384" y="373" font-size="20" font-weight="900" fill="#fff">SC</text>'
+        '<rect x="330" y="419" width="163" height="45" rx="11" fill="#fff" stroke="#d7e3ea"/>'
+        '<text x="355" y="446" font-size="15" font-weight="900" fill="#5f568c">Sierra de corte</text>'
+
+        '<line x1="165" y1="180" x2="805" y2="260" stroke="#5e9a70" stroke-width="2.5" stroke-dasharray="10 8" opacity=".45"/>'
+        '<line x1="570" y1="160" x2="805" y2="260" stroke="#d65f5f" stroke-width="3.5" stroke-dasharray="10 8" opacity=".72"/>'
+        '<line x1="660" y1="365" x2="805" y2="260" stroke="#3b83b2" stroke-width="3.3" stroke-dasharray="10 8" opacity=".67"/>'
+        '<line x1="410" y1="365" x2="805" y2="260" stroke="#7c72b8" stroke-width="2.8" stroke-dasharray="10 8" opacity=".6"/>'
+        '</svg>'
+        '<div style="display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:11px;margin-top:12px">'
+        '<div style="border:1px solid #d7eadc;border-radius:14px;padding:12px;background:#eff8f1;color:#3f7350;font-size:.84rem;line-height:1.42"><b>1 · Generador</b><br><span style="color:#62776a">fijo · funciona gran parte de la jornada · posee escape/ventilación</span></div>'
+        '<div style="border:1px solid #f0d7d7;border-radius:14px;padding:12px;background:#fff1f1;color:#934747;font-size:.84rem;line-height:1.42"><b>2 · Martillo</b><br><span style="color:#806565">debe trabajar en ese punto · alta emisión · próximo a R</span></div>'
+        '<div style="border:1px solid #cfe0ec;border-radius:14px;padding:12px;background:#eef6fb;color:#2f607e;font-size:.84rem;line-height:1.42"><b>3 · Excavadora</b><br><span style="color:#637887">debe excavar junto al deslinde · no puede encerrarse</span></div>'
+        '<div style="border:1px solid #ddd8ef;border-radius:14px;padding:12px;background:#f5f2fb;color:#5f568c;font-size:.84rem;line-height:1.42"><b>4 · Sierra</b><br><span style="color:#726c82">fija durante el corte · necesita acceso frontal del operador</span></div>'
+        '</div>'
+        '</div>'
+    )
+    st.markdown(work_svg,unsafe_allow_html=True)
+
+    st.markdown("### 3 · Diseña la estrategia de control")
+    st.markdown(
+        """
         <div style="border:1px solid #d4e3ed;border-radius:20px;padding:22px 24px;
         background:linear-gradient(120deg,#f7fbfd,#eef5fa);margin:.4rem 0 1.2rem">
           <div style="font-size:.72rem;font-weight:800;letter-spacing:.12em;color:#176b9b">TU TURNO · 4 DECISIONES</div>
