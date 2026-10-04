@@ -12,6 +12,6 @@ La galería de `labs/curso4_laboratorio_1.py` carga una imagen independiente por
 
 Cada PNG debe ser un render profesional separado, no un collage, una captura de interfaz ni un recorte de un mockup. Mantener encuadre, proporción horizontal (recomendado 4:3), fondo neutro e iluminación coherentes entre las cinco imágenes; evitar texto incrustado y reducciones en dB sin respaldo.
 
-No se incluyen imágenes ficticias: si falta un archivo, la tarjeta muestra “Render individual en preparación” y conserva su explicación. Al agregar el PNG con el nombre exacto, la siguiente ejecución de la etapa lo muestra automáticamente.
+Los cinco PNG independientes se generaron siguiendo la referencia visual del usuario. Son ilustraciones didácticas, no fotografías de instalaciones verificadas. Si falta un archivo, la tarjeta muestra “Render individual en preparación” y conserva su explicación. Al agregar el PNG con el nombre exacto, la siguiente ejecución de la etapa lo muestra automáticamente.
 
 La reducción directa documentada conserva una ficha textual: representa un desempeño conocido, no una sexta medida física. Los renders son referencias didácticas y no acreditan rendimiento acústico.
