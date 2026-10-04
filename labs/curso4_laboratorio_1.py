@@ -3076,28 +3076,62 @@ def _stage6(lab, saved):
                     st.warning(f"Revisa la aplicabilidad · {why}")
 
     st.markdown("### 4 · ¿Dónde entra la reducción directa?")
+    st.markdown(
+        "**Reducción directa** es la forma de incorporar un desempeño conocido al cálculo. "
+        "El control físico sigue siendo el tratamiento realizado sobre el equipo."
+    )
     with st.container(border=True):
+        st.markdown("#### Caso real documentado · mesa vibratoria para moldes de hormigón")
+        visual, explanation = st.columns([1.15, 1])
+        with visual:
+            example_image = PROJECT_ROOT / "assets" / "controles" / "reduccion_directa_mesa_vibratoria.png"
+            if example_image.is_file():
+                st.image(str(example_image), use_container_width=True)
+            else:
+                st.info("Render del tratamiento en preparación.")
+            st.caption(
+                "Render ilustrativo generado: muestra una mesa con tratamiento estructural. "
+                "No es una fotografía ni una reconstrucción exacta del equipo del caso."
+            )
+        with explanation:
+            st.markdown(
+                "**Situación:** durante las pruebas de un vibrador para fabricar productos de hormigón, "
+                "el ruido se aproximaba a 100 dB.\n\n"
+                "**Diagnóstico:** el bastidor radiaba vibraciones de alta frecuencia que no contribuían "
+                "a compactar el hormigón.\n\n"
+                "**Tratamiento:** se modificó la mesa para cambiar sus frecuencias naturales y amortiguar "
+                "esa vibración, conservando la vibración útil para la compactación."
+            )
+            st.metric("Reducción publicada para este caso", "15 dB")
+            st.markdown(
+                "[Fuente: HSE · Concrete vibrator]"
+                "(https://www.hse.gov.uk/noise/casestudies/concretevibrator.htm)"
+            )
+            st.caption("Información del caso: Redland Roof Tiles Ltd. e Industrial Noise and Vibration Centre Ltd.")
+
+        st.markdown("#### Cómo representa este caso la reducción directa")
         st.markdown(
-            "**Reducción directa** se utiliza cuando ya conoces cuánto reduce un tratamiento concreto y quieres "
-            "incorporar ese desempeño sin representar explícitamente su mecanismo."
+            "El **tratamiento estructural** es la medida física; los **15 dB documentados** describen "
+            "su resultado en el caso estudiado. Si un modelo no representa ese mecanismo, puede recurrir "
+            "a una reducción directa respaldada por un ensayo aplicable al equipo y a su condición de operación."
         )
-        rd1,rd2=st.columns(2)
-        with rd1:
-            st.markdown(
-                """
-                **Ejemplo válido**  
-                Un proveedor ensaya un tratamiento y declara una reducción de 8 dB para la condición de uso evaluada.
-                Ese valor puede incorporarse como reducción directa, dejando documentado su origen.
-                """
-            )
-        with rd2:
-            st.markdown(
-                """
-                **No es válido**  
-                Elegir arbitrariamente “−10 dB” porque se instaló algún control sin conocer su desempeño real.
-                La reducción debe provenir de un dato medido, declarado o técnicamente justificado.
-                """
-            )
+        st.info(
+            "HSE publica una reducción de ruido, pero la ficha no aporta un Lw antes/después, "
+            "una distancia de medida ni un descriptor temporal. Por eso, los 15 dB no deben trasladarse "
+            "automáticamente a la potencia sonora de otra máquina o al nivel de una vivienda."
+        )
+        st.markdown("#### Ejercicio de lectura del dato")
+        st.latex(r"\Delta L=L_{\mathrm{antes}}-L_{\mathrm{después}}=15\ \mathrm{dB}")
+        st.markdown(
+            "**Ejemplo aritmético didáctico:** si se midieran 100 dB antes y 85 dB después, "
+            "con el mismo descriptor, posición y operación, la diferencia sería 15 dB. "
+            "Los 85 dB son un valor ilustrativo, no un nivel final publicado por HSE."
+        )
+        st.markdown(
+            "**Qué documentar para usar una reducción directa:** equipo y tratamiento, fuente del dato, "
+            "descriptor acústico, posición de medida, operación y límites de aplicación. "
+            "No sumes nuevamente la misma reducción si el tratamiento ya está representado en el modelo."
+        )
 
 
     st.markdown(
