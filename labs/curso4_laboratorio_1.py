@@ -2881,18 +2881,48 @@ def _stage6(lab, saved):
             "#f3f5f7","#596b78"
         ),
     ]
-    ch='<div style="display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:13px;margin:.7rem 0 1rem">'
-    for title,use,desc,example,bg,color in controls:
-        ch+=(
-            f'<div style="border:1px solid #dce5eb;border-radius:19px;padding:16px 17px;background:{bg};box-shadow:0 4px 13px rgba(40,70,95,.04)">'
-            f'<div style="font-size:.75rem;font-weight:900;letter-spacing:.07em;color:{color}">{title}</div>'
-            f'<div style="font-size:.92rem;font-weight:850;color:#334c5f;margin:.32rem 0">{use}</div>'
-            f'<div style="font-size:.83rem;color:#657684;line-height:1.5">{desc}</div>'
-            f'<div style="border-top:1px solid rgba(90,110,125,.13);margin-top:.65rem;padding-top:.5rem;font-size:.78rem;color:{color};font-weight:800">{example}</div>'
-            f'</div>'
-        )
-    ch+='</div>'
-    st.markdown(ch,unsafe_allow_html=True)
+    st.caption(
+        "Una ficha por medida física: reconoce el mecanismo, su aplicación y sus restricciones."
+    )
+    image_names = (
+        "silenciador.png",
+        "encierro.png",
+        "semiencierro.png",
+        "encierro_silenciador.png",
+        "barrera.png",
+    )
+    for row_start in range(0, len(image_names), 2):
+        columns = st.columns(2)
+        for col, index in zip(columns, range(row_start, min(row_start + 2, len(image_names)))):
+            title, use, desc, example, bg, color = controls[index]
+            with col:
+                with st.container(border=True):
+                    image_path = PROJECT_ROOT / "assets" / "controles" / image_names[index]
+                    if image_path.is_file():
+                        st.image(str(image_path), use_container_width=True)
+                        st.caption(f"{title.capitalize()} · referencia visual didáctica.")
+                    else:
+                        st.markdown(
+                            '<div role="img" aria-label="Render en preparación" '
+                            'style="min-height:190px;border:1px dashed #c8d7e5;border-radius:12px;'
+                            'display:flex;align-items:center;justify-content:center;'
+                            f'background:{bg};color:{color};font-size:.88rem">'
+                            'Render individual en preparación</div>',
+                            unsafe_allow_html=True,
+                        )
+                    st.markdown(
+                        f'<div style="font-size:.75rem;font-weight:900;letter-spacing:.07em;color:{color};margin-top:.5rem">{title}</div>'
+                        f'<div style="font-size:1.02rem;font-weight:850;color:#334c5f;margin:.32rem 0">{use}</div>'
+                        f'<div style="font-size:.86rem;color:#657684;line-height:1.55">{desc}</div>'
+                        f'<div style="border-top:1px solid rgba(90,110,125,.13);margin-top:.65rem;padding-top:.5rem;font-size:.8rem;color:{color};font-weight:800">{example}</div>',
+                        unsafe_allow_html=True,
+                    )
+
+    title, use, desc, example, bg, color = controls[-1]
+    with st.container(border=True):
+        st.markdown(f"**{title}** · {use}")
+        st.markdown(desc)
+        st.caption(example)
 
     st.info(
         "Además de estos controles físicos, la planificación sigue siendo válida: evitar simultaneidad innecesaria, "
