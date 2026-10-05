@@ -3444,54 +3444,90 @@ def _stage7(lab, saved):
                 "(https://www.fhwa.dot.gov/ENVIRonment/noise/measurement/handbook.cfm)"
             )
 
-    _s7_section(3, "Combina dos aportes equivalentes", "Introduce niveles ya referidos a toda la hora. Aquí no vuelvas a aplicar la corrección temporal.")
+    _s7_section(3, "Suma dos máquinas con distintos tiempos", "Define el nivel durante operación y los minutos activos de cada máquina. Ambas aportan al mismo receptor durante una hora.")
+    machine_inputs = []
     for col, label, color in zip(st.columns(2, gap="large"), ["A", "B"], ["#287bb0", "#8a6bb5"]):
         with col:
             with st.container(border=True):
                 st.markdown(
-                    f'<div style="font-size:.72rem;font-weight:850;letter-spacing:.1em;color:{color}">APORTE {label}</div>'
-                    '<div style="font-size:1.05rem;font-weight:850;color:#17324a;margin:.45rem 0 .7rem">Nivel equivalente de la hora</div>',
+                    f'<div style="font-size:.72rem;font-weight:850;letter-spacing:.1em;color:{color}">MÁQUINA {label}</div>'
+                    '<div style="font-size:1.05rem;font-weight:850;color:#17324a;margin:.45rem 0 .7rem">Nivel y tiempo durante operación</div>',
                     unsafe_allow_html=True,
                 )
                 selected_level = st.slider(
-                    f"Aporte equivalente {label} [dB(A)]", 40, 100, 70, key=f"c4l1_s7_v2_sum_{label.lower()}"
+                    f"Máquina {label} · nivel durante operación [dB(A)]", 40, 100,
+                    70 if label == "A" else 75, key=f"c4l1_s7_v3_machine_{label.lower()}_level",
                 )
-                if label == "A":
-                    level_a = selected_level
-                else:
-                    level_b = selected_level
-    ea, eb = 10 ** (level_a / 10), 10 ** (level_b / 10)
-    combined = _s7_level(ea + eb)
-    share_a = 100*ea/(ea+eb)
+                minutes = st.slider(
+                    f"Máquina {label} · minutos activos de 60", 0, 60,
+                    40 if label == "A" else 10, key=f"c4l1_s7_v3_machine_{label.lower()}_minutes",
+                )
+                fraction = minutes / 60
+                energy = fraction * 10**(selected_level/10)
+                equivalent = _s7_level(energy)
+                correction = 10*math.log10(fraction) if minutes else None
+                a, b = st.columns(2)
+                a.metric("Tiempo activo", f"{fraction*100:.1f} %")
+                b.metric("Corrección temporal", f"{correction:.2f} dB" if correction is not None else "Sin aporte")
+                st.markdown(
+                    f'<div style="border:1px solid #dce7ef;border-radius:12px;padding:15px;background:#f7fafc">'
+                    f'<div style="font-size:.78rem;color:#627989">Aporte de {label} a toda la hora</div>'
+                    f'<div style="font-size:1.5rem;font-weight:850;color:{color};margin-top:.4rem">'
+                    + (f'{equivalent:.2f} <span style="font-size:.85rem">dB(A)</span>' if equivalent is not None else 'Sin aporte')
+                    + '</div></div>',
+                    unsafe_allow_html=True,
+                )
+                machine_inputs.append({"label": label, "level": selected_level, "minutes": minutes,
+                                       "energy": energy, "equivalent": equivalent})
+    total_energy = sum(machine["energy"] for machine in machine_inputs)
+    combined = _s7_level(total_energy)
+    share_a = 100*machine_inputs[0]["energy"]/total_energy if total_energy else 0
+    share_b = 100*machine_inputs[1]["energy"]/total_energy if total_energy else 0
+    result_value = f'{combined:.2f} <span style="font-size:1rem;font-weight:600">dB(A)</span>' if combined is not None else "Sin aporte"
     st.markdown(
         '<div style="border:1px solid #c9deed;border-radius:20px;padding:22px 24px;'
         'background:linear-gradient(125deg,#f3faff,#eef1fa);margin:14px 0">'
-        '<div style="font-size:.72rem;font-weight:850;letter-spacing:.1em;color:#176b9b">RESULTADO · SUMA ENERGÉTICA</div>'
-        f'<div style="font-size:2.5rem;font-weight:850;color:#17324a;margin:.55rem 0">{combined:.2f} '
-        '<span style="font-size:1rem;font-weight:600">dB(A)</span></div>'
-        f'<div style="font-size:.88rem;color:#526b7c">A = {level_a} dB(A) &nbsp; + &nbsp; B = {level_b} dB(A)'
-        ' · combinación de energías acústicas</div></div>',
+        '<div style="font-size:.72rem;font-weight:850;letter-spacing:.1em;color:#176b9b">RESULTADO · DOS MÁQUINAS · 60 MINUTOS</div>'
+        f'<div style="font-size:2.5rem;font-weight:850;color:#17324a;margin:.55rem 0">{result_value}</div>'
+        '<div style="font-size:.88rem;color:#526b7c">Primero se pondera cada máquina por su tiempo activo; '
+        'después se suman sus energías.</div></div>',
         unsafe_allow_html=True,
     )
     with st.container(border=True):
+        finite = [machine for machine in machine_inputs if machine["equivalent"] is not None]
         a, b = st.columns(2)
-        a.metric("Incremento sobre el mayor", f"{combined-max(level_a,level_b):.2f} dB")
-        b.metric("Fracción energética de A", f"{share_a:.1f} %")
+        a.metric("Incremento sobre el mayor aporte horario",
+                 f'{combined-max(machine["equivalent"] for machine in finite):.2f} dB' if finite else "Sin aporte")
+        dominant = max(finite, key=lambda machine: machine["energy"]) if finite else None
+        dominant_label = ("A y B · igual aporte" if len(finite) == 2 and abs(share_a-share_b) < 1e-9
+                          else f'Máquina {dominant["label"]}' if dominant else "Ninguna")
+        b.metric("Mayor contribución a la hora", dominant_label)
         st.markdown("**Cómo se reparte la energía del total**")
         st.markdown(
             '<div style="display:flex;height:18px;border-radius:999px;overflow:hidden;background:#e8eff5">'
             f'<div style="width:{share_a:.6f}%;background:#287bb0"></div>'
-            f'<div style="width:{100-share_a:.6f}%;background:#8a6bb5"></div></div>'
+            f'<div style="width:{share_b:.6f}%;background:#8a6bb5"></div></div>'
             '<div style="display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-top:8px;font-size:.84rem;font-weight:750">'
             f'<span style="color:#287bb0">A · {share_a:.1f} %</span>'
-            f'<span style="color:#8a6bb5">B · {100-share_a:.1f} %</span></div>',
+            f'<span style="color:#8a6bb5">B · {share_b:.1f} %</span></div>',
             unsafe_allow_html=True,
         )
-        st.latex(r"L_{Aeq,T,\Sigma}=10\log_{10}\left(\sum_i10^{L_{Aeq,T,i}/10}\right)")
+        st.caption("Porcentajes de energía acústica, no de sonoridad percibida. Con ambas máquinas detenidas no hay energía que repartir.")
+        st.markdown("**01 · Aporte temporal de cada máquina**")
+        st.latex(r"L_{Aeq,T,i}=L_{\mathrm{operación},i}+10\log_{10}(t_i/T)")
+        st.markdown("**02 · Total energético de la hora**")
+        st.latex(r"L_{Aeq,T,\Sigma}=10\log_{10}\left[\frac{t_A}{T}10^{L_A/10}+\frac{t_B}{T}10^{L_B/10}\right]")
+        if combined is not None:
+            terms = "+".join(f"({m['minutes']}/60)10^{{{m['level']}/10}}" for m in machine_inputs)
+            st.latex(r"L_{Aeq,60\,\mathrm{min}}=10\log_{10}\left[" + terms + r"\right]=" + f"{combined:.2f}" + r"\ \mathrm{dB(A)}")
+        st.info(
+            "Prueba una máquina más ruidosa que trabaja pocos minutos frente a otra menos ruidosa que "
+            "trabaja más tiempo. La dominante depende de ambas variables."
+        )
         st.caption(
-            "Dos aportes iguales aumentan el total en 3,01 dB. Con una diferencia de 10 dB, "
-            "el menor aumenta el mayor aproximadamente 0,41 dB. Los porcentajes son fracciones "
-            "de energía acústica, no de sonoridad percibida."
+            "Se suman aportes separados del fondo, con nivel constante durante operación y sin aporte "
+            "durante la parada. Los tiempos pueden solaparse y su suma superar 60 min. "
+            "Este cálculo da el promedio horario; la aplicación 4 permite explorar las coincidencias."
         )
 
     _s7_section(4, "Descubre qué cambia con la simultaneidad", "Mantén iguales los tiempos activos y cambia solo la coincidencia de dos máquinas.")
