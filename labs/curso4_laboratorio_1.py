@@ -4125,8 +4125,8 @@ def _stage8(lab, saved):
       <div style="color:#087ba0;font-weight:800;letter-spacing:.04em">HERRAMIENTA DEL EJERCICIO</div>
       <div style="font-size:1.55rem;font-weight:850;color:#173b53;margin:8px 0">Noise Map Lab</div>
       <div style="color:#45677c;line-height:1.65">
-        Construye cada etapa de la obra sobre el mapa, ubica las fuentes en sus frentes de trabajo,
-        configura sus alturas y calcula el nivel recibido en los mismos receptores.
+        Abre cada etapa con las fuentes ya posicionadas, selecciona tus propios receptores
+        y calcula el nivel recibido manteniendo esos puntos durante toda la comparación.
       </div>
     </div>
     """, unsafe_allow_html=True)
@@ -4139,27 +4139,18 @@ def _stage8(lab, saved):
 
     st.markdown("### 1 · Lee el encargo y reconoce el escenario")
     st.markdown(
-        "**Ciudad: Santiago · comuna de Santiago · Maimónides 551.** El contexto real corresponde al "
-        "proyecto **Edificio Maimónides**, expediente SEIA **2156472089** y RCA **202313001184/2023**. "
-        "El SEA registra el proyecto y SNIFA contiene antecedentes de seguimiento de ruido de construcción durante junio de 2026."
+        "**Caso didáctico · obra de edificación en Santiago.** Trabajarás sobre un predio simplificado de "
+        "**50 × 40 m** situado sobre el fondo cartográfico del **Parque Bicentenario de Cerrillos**. "
+        "La ubicación se utiliza únicamente como soporte espacial para el ejercicio."
     )
     st.markdown(
-        "[Consultar expediente SEA](https://seia.sea.gob.cl/expediente/expedientesEvaluacion.php?id_expediente=2156472089) · "
-        "[Ficha oficial y RCA](https://snifa.sma.gob.cl/UnidadFiscalizable/Ficha/22156) · "
-        "[Seguimiento de ruido de junio de 2026](https://snifa.sma.gob.cl/SeguimientoAmbiental/Ficha/1096387)"
-    )
-    st.caption(
-        "La evidencia pública documenta construcción en junio de 2026; no confirma que continúe actualmente. "
-        "El ejercicio reconstruye situaciones hipotéticas con fines didácticos."
-    )
-    st.markdown(
-        "**Encargo:** ubica el proyecto en Noise Map Lab y reconstruye tres momentos del proceso constructivo: "
+        "**Encargo:** reconstruye tres momentos del proceso constructivo en Noise Map Lab: "
         "**A) excavación y movimiento de tierras, B) obra gruesa a nivel de piso y C) obra gruesa en altura.** "
-        "Usa un predio didáctico de **50 × 40 m** y conserva los mismos tres receptores durante las tres simulaciones."
+        "Las fuentes ya estarán posicionadas en cada escenario; tu tarea será identificar y agregar receptores razonables en el entorno."
     )
     st.info(
-        "La dirección, nombre del proyecto y RCA son antecedentes documentales. Las dimensiones del predio, "
-        "posiciones, alturas de fuentes, receptores y simultaneidad son supuestos didácticos; no reproducen el estudio acústico del proyecto."
+        "Este caso no corresponde a una obra real ni a un expediente ambiental. La geometría del predio, las etapas, "
+        "las posiciones de maquinaria, sus alturas y la simultaneidad son supuestos pedagógicos diseñados exclusivamente para este laboratorio."
     )
     st.markdown(
         "**Recupera las etapas anteriores:** trazabilidad BS 5228 → Lp/Lw y espectro → propagación y geometría → "
@@ -4210,8 +4201,8 @@ def _stage8(lab, saved):
             help="Abre Noise Map Lab con el predio, las tres fuentes y los tres receptores cargados automáticamente.",
         )
         st.caption(
-            "Las coordenadas X/Y se interpretan en metros desde el origen local (0,0) del predio. "
-            "El botón las transforma automáticamente a posiciones sobre el mapa; no tienes que medirlas a ojo."
+            "El botón abre el predio de 50 × 40 m con las fuentes ya ubicadas y configuradas. "
+            "La posición interna de las máquinas forma parte del escenario y no tienes que reconstruirla manualmente."
         )
         rows = []
         for sid, name, x, y, height in equipment:
@@ -4219,14 +4210,14 @@ def _stage8(lab, saved):
             rows.append([
                 sid, name, item["activity"], f"{item['laeq10']:.0f}",
                 f"Tabla {item['table']} · Ref. {item['ref']}",
-                item["power"], item["size"], f"{x:.1f}", f"{y:.1f}", f"{height:.1f}",
+                item["power"], item["size"], f"{height:.1f}",
             ])
         st.dataframe(
             pd.DataFrame(
                 rows,
                 columns=[
                     "ID", "Fuente / actividad", "Condición BS 5228", "LAeq a 10 m [dB(A)]",
-                    "Referencia BS 5228-1:2009", "Potencia equipo", "Tamaño", "X [m]", "Y [m]", "Altura [m]",
+                    "Referencia BS 5228-1:2009", "Potencia equipo", "Tamaño", "Altura [m]",
                 ],
             ),
             hide_index=True,
@@ -4235,7 +4226,7 @@ def _stage8(lab, saved):
         if scenario_name.startswith("C"):
             st.caption(
                 "Las alturas de 15 m y 24 m son supuestos de modelación para estudiar propagación desde niveles elevados; "
-                "no son datos de la BS 5228 ni del proyecto Maimónides."
+                "no son datos de la BS 5228 ni del proyecto Parque Bicentenario de Cerrillos."
             )
 
     st.markdown("### 3 · Convierte los datos antes de modelar")
@@ -4271,14 +4262,16 @@ def _stage8(lab, saved):
         "Comprueba siempre el descriptor y la unidad del campo antes de modelar."
     )
 
-    st.markdown("### 4 · Construye el predio y los receptores")
-    _model_button()
+    st.markdown("### 4 · Selecciona los receptores")
     st.markdown(
-        "1. Usa el botón **Abrir este escenario ya posicionado en Noise Map Lab** de la etapa que quieras modelar.\n"
-        "2. Noise Map Lab cargará automáticamente el predio didáctico de **50 × 40 m**, las tres fuentes en sus X/Y y los tres receptores comunes.\n"
-        "3. Comprueba visualmente la ubicación y las alturas antes de calcular; no debes trasladar X/Y a mano.\n"
-        "4. Conserva los mismos tres receptores en A, B y C para que la comparación sea válida.\n"
-        "5. Si modificas manualmente una posición, documenta el cambio y utiliza exactamente la misma geometría cuando corresponda."
+        "1. Abre primero el escenario **A · Excavación** en Noise Map Lab. El predio de **50 × 40 m** y las fuentes aparecerán cargados automáticamente.\n"
+        "2. Observa el entorno cartográfico y selecciona **tres receptores representativos** fuera del predio.\n"
+        "3. Evita colocar los tres receptores en el mismo lado: busca condiciones diferentes de distancia y exposición.\n"
+        "4. Incluye al menos un receptor a nivel bajo y, cuando tenga sentido, otro receptor en altura.\n"
+        "5. Guarda esas ubicaciones y utilízalas **sin cambiar su posición** en los escenarios B y C."
+    )
+    st.info(
+        "Los receptores son parte de la tarea. Noise Map Lab no los precarga: debes agregarlos tú y justificar por qué son representativos."
     )
 
     receiver_record = saved.get("c4l1_stage8_receivers_v3", {})
@@ -4286,9 +4279,9 @@ def _stage8(lab, saved):
         st.markdown("#### Ficha de receptores")
         new_receivers = {}
         defaults = {
-            "R1": ("Fachada próxima al deslinde", 1.5),
-            "R2": ("Fachada de edificio vecino · piso intermedio", 7.5),
-            "R3": ("Fachada de edificio vecino · piso superior", 15.0),
+            "R1": ("Describe el receptor que seleccionaste", 1.5),
+            "R2": ("Describe el receptor que seleccionaste", 1.5),
+            "R3": ("Describe el receptor que seleccionaste", 1.5),
         }
         for rid, (default_desc, default_h) in defaults.items():
             c1, c2 = st.columns([0.72, 0.28])
@@ -4326,9 +4319,9 @@ def _stage8(lab, saved):
 
     st.markdown("### 5 · Modela las tres etapas")
     st.markdown(
-        "Crea **un proyecto o copia por etapa** para evitar mezclar fuentes. En cada caso, ubica únicamente las "
-        "tres fuentes indicadas en la tabla correspondiente. Mantén constantes el método, suelo, meteorología, "
-        "dominio de cálculo y receptores para que la comparación sea válida."
+        "Crea **un proyecto o copia por etapa**. Cada botón carga únicamente las tres fuentes correspondientes a esa fase. "
+        "Mantén constantes el método, suelo, meteorología, dominio de cálculo y, especialmente, los receptores que tú seleccionaste "
+        "en el escenario A para que la comparación sea válida."
     )
     st.markdown(
         "**Escenario A · Excavación:** representa un frente de excavación, una zona de carga y la salida/descarga del camión tolva.\n\n"
