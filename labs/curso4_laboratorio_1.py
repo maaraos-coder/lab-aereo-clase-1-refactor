@@ -4142,7 +4142,7 @@ def _stage8(lab, saved):
         "**Encargo:** ubica el proyecto en Noise Map Lab y estudia una fase didáctica de excavación "
         "y trabajos asociados. Sobre ese contexto usa un predio simplificado de 50 × 40 m, tres máquinas "
         "y tres receptores. Compara fuentes puntuales y una fuente equivalente del frente, y propone controles para una meta didáctica de 65 dB(A).")
-    st.info("La dirección, el nombre y la RCA son antecedentes documentales. La geometría, las máquinas, sus posiciones, los receptores y los porcentajes siguientes son supuestos didácticos; no reproducen el estudio acústico ni las mediciones del proyecto.")
+    st.info("La dirección, el nombre y la RCA son antecedentes documentales. La geometría, las máquinas, sus posiciones, los receptores iniciales siguientes son supuestos didácticos; no reproducen el estudio acústico ni las mediciones del proyecto.")
     st.markdown("**Recupera las etapas anteriores:** selección y trazabilidad BS 5228 → conversión Lp/Lw y espectro → propagación y geometría → suma de fuentes → controles → representación espacial del frente → modelación integrada.")
     st.dataframe(pd.DataFrame(
         [[sid, name, x, y, 1.5, lp, BS_PLANT[name]["table"] + " · Ref. " + BS_PLANT[name]["ref"]] for sid, name, x, y, lp in sources],
@@ -4165,48 +4165,86 @@ def _stage8(lab, saved):
         "Considera fachadas expuestas, ventanas y pisos superiores; no elijas solo el punto más cercano. "
         "Asigna R1, R2 y R3 sin registrar nombres de residentes.")
     st.info("Los tres puntos iniciales son ejemplos geométricos, no receptores verificados del proyecto. Sustitúyelos con tu levantamiento documental, indicando qué observaste y qué sigue siendo una hipótesis.")
-    with st.form("c4l1_s8_bs_receiver_form"):
+    st.markdown("**Coordenadas de Google Maps:** pega el par **latitud, longitud** del punto elegido. La latitud indica norte/sur y la longitud este/oeste; no se expresan en metros.")
+    st.caption("En Google Maps copia las coordenadas del punto sobre el mapa. Usa grados decimales con punto decimal, en orden latitud, longitud. No pegues un enlace abreviado.")
+    def parse_coordinates(value):
+        try:
+            parts = value.strip().strip("()").split(",")
+            if len(parts) != 2:
+                return None
+            latitude, longitude = map(float, parts)
+            if not (math.isfinite(latitude) and math.isfinite(longitude)
+                    and -90 < latitude < 90 and -180 <= longitude <= 180):
+                return None
+            return latitude, longitude
+        except (ValueError, TypeError):
+            return None
+
+    with st.form("c4l1_s8_bs_receiver_google_form"):
+        origin_text = st.text_input("Coordenadas de Google Maps del origen de la obra",
+            value=saved.get("c4l1_stage8_bs_origin_google", ""),
+            placeholder="Latitud, longitud del punto elegido como esquina suroeste",
+            help="Un único origen permite ubicar las máquinas del esquema y calcular automáticamente las distancias locales.",
+            key="c4l1_s8_bs_origin_google")
         selected = {}
         for rid, x, y in receivers:
-            st.markdown("**" + rid + " · ficha del receptor**")
-            description = st.text_input(rid + " · lugar, uso y punto evaluado",
-                value=receiver_record.get(rid, {}).get("description", ""),
-                placeholder="Ej.: fachada de vivienda al norte, ventana de segundo piso; indica tu evidencia",
-                key="c4l1_s8_bs_description_" + rid)
-            c1, c2, c3 = st.columns(3)
-            with c1:
-                rx = st.number_input(rid + " · X local [m]", value=float(x), step=1.,
-                    key="c4l1_s8_bs_rx_" + rid)
-            with c2:
-                ry = st.number_input(rid + " · Y local [m]", value=float(y), step=1.,
-                    key="c4l1_s8_bs_ry_" + rid)
-            with c3:
-                height = st.number_input(rid + " · altura sobre terreno [m]", min_value=0.,
-                    value=float(receiver_heights[rid]), step=.5, key="c4l1_s8_bs_rh_" + rid)
-            selected[rid] = {"description": description, "x": rx, "y": ry, "height": height}
-        provenance = st.text_area("Ubicación, origen local y evidencia de los receptores",
+            with st.container(border=True):
+                st.markdown("**" + rid + " · ficha del receptor**")
+                coordinates = st.text_input(rid + " · coordenadas de Google Maps",
+                    value=receiver_record.get(rid, {}).get("coordinates", ""),
+                    placeholder="Pega latitud, longitud",
+                    key="c4l1_s8_bs_google_" + rid)
+                description = st.text_area(rid + " · descripción del receptor",
+                    value=receiver_record.get(rid, {}).get("description", ""),
+                    placeholder="Describe el lugar, su uso y el punto que evaluarás: por ejemplo, fachada de una vivienda frente a la obra. Indica qué verificaste en el mapa.",
+                    key="c4l1_s8_bs_google_description_" + rid)
+                with st.expander("Altura del punto evaluado · opcional"):
+                    st.caption("Es la distancia vertical desde el terreno hasta el punto donde calculas el ruido. Para un receptor a nivel de primer piso se propone 1,5 m; una ventana en un piso superior requiere otra altura. Google Maps no entrega este dato con el par de coordenadas.")
+                    height = st.number_input(rid + " · altura del punto sobre el suelo [m]",
+                        min_value=0., value=float(receiver_heights[rid]), step=.5,
+                        key="c4l1_s8_bs_google_height_" + rid)
+                selected[rid] = {"description": description, "coordinates": coordinates, "height": height}
+        provenance = st.text_area("Descripción de la ubicación y evidencia consultada",
             value=saved.get("c4l1_stage8_bs_receiver_evidence", ""),
-            key="c4l1_s8_bs_receiver_evidence",
-            placeholder="GPS del origen, dirección/posición de cada punto, plano o imagen consultada, fecha y justificación de alturas. Distingue datos comprobados de supuestos.")
+            key="c4l1_s8_bs_google_evidence",
+            placeholder="Indica el origen elegido, el mapa o plano consultado y cómo identificaste los tres receptores. Distingue lo observado de los supuestos.")
         receiver_submit = st.form_submit_button("Guardar identificación de receptores")
     if receiver_submit:
-        if any(len(r["description"].strip()) < 20 for r in selected.values()) or len(provenance.strip()) < 80:
-            st.warning("Describe cada receptor (20 caracteres) y documenta ubicación y evidencia (80 caracteres).")
-        elif any((r["x"]-x)**2 + (r["y"]-y)**2 + (r["height"]-1.5)**2 < .01 for r in selected.values() for sid, name, x, y, lp in sources):
-            st.warning("El punto receptor no puede coincidir con una fuente puntual.")
-        elif len({(r["x"], r["y"], r["height"]) for r in selected.values()}) < 3:
-            st.warning("Define tres puntos receptores distintos.")
+        origin = parse_coordinates(origin_text)
+        parsed = {rid: parse_coordinates(r["coordinates"]) for rid, r in selected.items()}
+        if origin is None or any(point is None for point in parsed.values()):
+            st.warning("Completa el origen y los tres receptores con coordenadas válidas: latitud, longitud, usando punto decimal.")
+        elif any(len(r["description"].strip()) < 20 for r in selected.values()) or len(provenance.strip()) < 80:
+            st.warning("Describe cada receptor (20 caracteres) y documenta la evidencia (80 caracteres).")
         else:
-            saved["c4l1_stage8_bs_receivers"] = selected
-            saved["c4l1_stage8_bs_receiver_evidence"] = provenance
-            for key in ["c4l1_stage8_bs_baseline", "c4l1_stage8_bs_equivalent", "c4l1_stage8_bs_case"]:
-                saved.pop(key, None)
-            _save_stage_state(lab, saved, 8)
-            st.success("Receptores guardados. Continúa con esas posiciones y alturas en Noise Map Lab.")
-            st.rerun()
-    st.dataframe(pd.DataFrame([[rid, x, y, receiver_heights[rid]] for rid, x, y in receivers],
-        columns=["Receptor", "X [m]", "Y [m]", "Altura [m]"]),
-        hide_index=True, use_container_width=True)
+            # Local tangent-plane approximation for this small construction site.
+            lat0, lon0 = origin
+            for rid, r in selected.items():
+                lat, lon = parsed[rid]
+                r["latitude"], r["longitude"] = lat, lon
+                r["x"] = 6371000. * math.radians(lon-lon0) * math.cos(math.radians(lat0))
+                r["y"] = 6371000. * math.radians(lat-lat0)
+            if any(abs(r["x"]) > 2000 or abs(r["y"]) > 2000 for r in selected.values()):
+                st.warning("Los puntos quedan a más de 2 km del origen. Revisa signos, orden latitud/longitud y ubicación; el esquema local está pensado para el entorno de la obra.")
+            elif len({(r["latitude"], r["longitude"], r["height"]) for r in selected.values()}) < 3:
+                st.warning("Define tres puntos receptores distintos.")
+            elif any((r["x"]-x)**2+(r["y"]-y)**2+(r["height"]-1.5)**2 < .01
+                     for r in selected.values() for sid, name, x, y, lp in sources):
+                st.warning("El punto receptor no puede coincidir con una fuente puntual.")
+            else:
+                saved["c4l1_stage8_bs_receivers"] = selected
+                saved["c4l1_stage8_bs_origin_google"] = origin_text
+                saved["c4l1_stage8_bs_receiver_evidence"] = provenance
+                for key in ["c4l1_stage8_bs_baseline", "c4l1_stage8_bs_equivalent", "c4l1_stage8_bs_case"]:
+                    saved.pop(key, None)
+                _save_stage_state(lab, saved, 8)
+                st.success("Coordenadas y descripciones guardadas. Usa esos mismos puntos en Noise Map Lab.")
+                st.rerun()
+    st.caption("Las distancias locales necesarias para el esquema se calculan automáticamente desde el origen; no tienes que ingresar X ni Y.")
+    if receiver_record and all("coordinates" in r for r in receiver_record.values()):
+        st.dataframe(pd.DataFrame([[rid, r["coordinates"], r["description"]] for rid, r in receiver_record.items()],
+            columns=["Receptor", "Coordenadas Google Maps · latitud, longitud", "Descripción"]),
+            hide_index=True, use_container_width=True)
     # Site plan shares the exact coordinate system used in the exercise tables.
     svg = '<svg viewBox="0 0 660 430" role="img" aria-label="Plano de la obra y tres receptores" style="width:100%;max-height:430px;background:#f5f9fc;border-radius:18px">'
     def xy(x, y):
