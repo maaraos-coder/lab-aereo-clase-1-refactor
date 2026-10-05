@@ -3348,23 +3348,31 @@ def _stage7(lab, saved):
                 '<div style="font-size:1.08rem;font-weight:850;color:#17324a;margin:.4rem 0 .8rem">Nivel y duración de trabajo</div>',
                 unsafe_allow_html=True,
             )
-            base = st.slider("Nivel de la fuente durante operación [dB(A)]", 40, 110, 80, key="c4l1_s7_v2_base")
+            base = st.slider("Aporte de la máquina sola durante operación [dB(A)]", 40, 110, 80, key="c4l1_s7_v2_base")
             active_minutes = st.slider("Minutos activos dentro de la hora", 0, 60, 15, key="c4l1_s7_v2_minutes")
-            st.markdown("**Ruido de fondo · opcional**")
+            st.caption("Ingresa el aporte de la máquina en el receptor, separado del fondo.")
+            st.markdown("**Ambiente del receptor · opcional**")
             use_background = st.checkbox("Incluir un ruido de fondo continuo", value=False, key="c4l1_s7_v2_background_on")
-            background = st.slider("Nivel del fondo continuo [dB(A)]", 20, 80, 45, key="c4l1_s7_v2_background", disabled=not use_background)
+            background = 45
+            if use_background:
+                background = st.slider("Fondo sin la máquina [dB(A)]", 20, 80, 45, key="c4l1_s7_v2_background")
+                st.caption("Por ejemplo, tránsito lejano u otras actividades. Se supone constante durante los 60 min, con la máquina encendida o apagada.")
+            else:
+                st.caption("Se calcula únicamente el aporte de la máquina. Omitir el fondo no equivale a suponer un ambiente de 0 dB.")
     fraction = active_minutes / 60
     source_energy = fraction * 10 ** (base / 10)
     equivalent = _s7_level(source_energy)
     correction = 10 * math.log10(fraction) if fraction > 0 else None
     total = _s7_level(source_energy + (10 ** (background / 10) if use_background else 0))
     with result:
-        value = f"{equivalent:.2f}" if equivalent is not None else "Sin aporte"
-        unit = "dB(A) · LAeq,T" if equivalent is not None else "Fuente detenida"
+        displayed_level = total if use_background else equivalent
+        value = f"{displayed_level:.2f}" if displayed_level is not None else "Sin aporte"
+        unit = "dB(A) · LAeq,T" if displayed_level is not None else "Fuente detenida"
+        result_title = "RESULTADO · FUENTE + FONDO EN LA HORA" if use_background else "RESULTADO · APORTE DE LA MÁQUINA EN LA HORA"
         st.markdown(
             '<div style="border:1px solid #c9deed;border-radius:20px;padding:24px;'
             'background:linear-gradient(125deg,#f3faff,#e7f2fa);margin-bottom:14px">'
-            '<div style="font-size:.72rem;font-weight:850;letter-spacing:.1em;color:#176b9b">RESULTADO · APORTE EN LA HORA</div>'
+            f'<div style="font-size:.72rem;font-weight:850;letter-spacing:.1em;color:#176b9b">{result_title}</div>'
             f'<div style="font-size:2.65rem;font-weight:850;line-height:1.2;color:#17324a;margin:.8rem 0 .3rem">{value}</div>'
             f'<div style="font-size:.87rem;color:#526b7c">{unit}</div>'
             f'<div style="border-top:1px solid #c9deed;padding-top:13px;margin-top:18px;font-size:.88rem;color:#456275">'
@@ -3382,7 +3390,15 @@ def _stage7(lab, saved):
             )
             st.caption(f"{active_minutes} min de actividad · {60-active_minutes} min sin aporte de la fuente")
             if use_background:
-                st.metric("Fuente + fondo en la hora", f"{total:.2f} dB(A)")
+                st.metric("Máquina sola · aporte en la hora", f"{equivalent:.2f} dB(A)" if equivalent is not None else "Sin aporte")
+                st.metric("Incremento del promedio sobre el fondo", f"{total-background:.2f} dB")
+                operating_total = _s7_level(10**(base/10) + 10**(background/10))
+                st.dataframe(
+                    pd.DataFrame([
+                        {"Estado": "Máquina activa", "Duración [min]": active_minutes, "Nivel fuente + fondo [dB(A)]": f"{operating_total:.2f}" if active_minutes else "No ocurre"},
+                        {"Estado": "Máquina detenida", "Duración [min]": 60-active_minutes, "Nivel fuente + fondo [dB(A)]": f"{background:.2f}" if active_minutes < 60 else "No ocurre"},
+                    ]), use_container_width=True, hide_index=True,
+                )
     with st.container(border=True):
         st.markdown("**La relación entre tiempo y nivel**")
         st.latex(r"L_{Aeq,T,i}=L_{Aeq,t_i,i}+10\log_{10}(t_i/T)")
@@ -3407,9 +3423,25 @@ def _stage7(lab, saved):
             )
         if use_background:
             st.latex(r"L_{Aeq,T,\mathrm{total}}=10\log_{10}\left[(t/T)10^{L_{\mathrm{fuente}}/10}+10^{L_{\mathrm{fondo}}/10}\right]")
+            st.markdown(
+                "**Cómo se calcula:** durante la actividad se suman las energías de máquina y fondo; "
+                "durante la parada permanece solo el fondo. Se ponderan ambos intervalos por su duración. "
+                "La expresión anterior equivale a ese promedio porque el fondo está presente toda la hora."
+            )
+            st.info(
+                "Si ingresas un nivel medido con la máquina encendida que ya incluye el fondo, "
+                "no vuelvas a sumarlo: contarías dos veces su energía. Este simulador utiliza el aporte "
+                "de la máquina separado del fondo; no aplica una corrección de mediciones."
+            )
+            if active_minutes == 0:
+                st.caption(f"Con la máquina detenida toda la hora, el total coincide con el fondo: {background:.2f} dB(A).")
             st.caption(
-                "El fondo se suma energéticamente durante toda la hora, incluso mientras opera la fuente. "
-                "El nivel de entrada de la fuente debe ser su aporte separado del fondo para evitar contarlo dos veces."
+                "El total no puede quedar por debajo del fondo incluido. Todos los niveles deben corresponder "
+                "al mismo receptor y descriptor. Este cálculo energético no es una corrección normativa por ruido de fondo."
+            )
+            st.markdown(
+                "[Referencia: FHWA · Noise Measurement Handbook, ajuste por fondo]"
+                "(https://www.fhwa.dot.gov/ENVIRonment/noise/measurement/handbook.cfm)"
             )
 
     _s7_section(3, "Combina dos aportes equivalentes", "Introduce niveles ya referidos a toda la hora. Aquí no vuelvas a aplicar la corrección temporal.")
