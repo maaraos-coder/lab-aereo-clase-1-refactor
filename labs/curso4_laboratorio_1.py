@@ -3273,6 +3273,11 @@ def _stage7(lab, saved):
         "ponderados A; no mezcles estas entradas con Lw o LAmax. La máquina conserva su nivel durante "
         "operación aunque trabaje menos minutos."
     )
+    st.caption(
+        "Este modelo considera la máquina apagada durante la parada. Si queda en ralentí o mantiene "
+        "otra emisión, esa condición requiere su propio nivel y duración; no puede tratarse como aporte nulo. "
+        "El período de una hora es una elección didáctica, no un criterio automático de evaluación normativa."
+    )
 
     _s7_section(2, "Calcula el aporte equivalente del período", "La corrección temporal es un paso del cálculo; el aporte equivalente es su resultado. Aquí el período es una hora.")
     with st.container(border=True):
@@ -3361,7 +3366,7 @@ def _stage7(lab, saved):
             use_background = st.checkbox("Incluir un ruido de fondo continuo", value=False, key="c4l1_s7_v2_background_on")
             background = 45
             if use_background:
-                background = st.slider("Fondo sin la máquina [dB(A)]", 20, 80, 45, key="c4l1_s7_v2_background")
+                background = st.slider("Fondo continuo · LAeq en R1 [dB(A)]", 20, 80, 45, key="c4l1_s7_v2_background")
                 st.caption("Por ejemplo, tránsito lejano u otras actividades. Se supone constante durante los 60 min, con la máquina encendida o apagada.")
             else:
                 st.caption("Se calcula únicamente el aporte de la máquina. Omitir el fondo no equivale a suponer un ambiente de 0 dB.")
@@ -3442,7 +3447,8 @@ def _stage7(lab, saved):
                 st.caption(f"Con la máquina detenida toda la hora, el total coincide con el fondo: {background:.2f} dB(A).")
             st.caption(
                 "El total no puede quedar por debajo del fondo incluido. Todos los niveles deben corresponder "
-                "al mismo receptor y descriptor. Este cálculo energético no es una corrección normativa por ruido de fondo."
+                "al mismo receptor y descriptor. Usa un LAeq del fondo representativo de T, no un LA90 ni un LAmax. "
+                "Aquí se supone fondo constante: este cálculo energético no es una corrección normativa por ruido de fondo."
             )
             st.markdown(
                 "[Referencia: FHWA · Noise Measurement Handbook, ajuste por fondo]"
@@ -3582,13 +3588,15 @@ def _stage7(lab, saved):
         b.metric("Mayor nivel de intervalo", f"{interval_max:.2f} dB(A)")
         c.metric("Minutos sin estas fuentes", f"{overlap} min")
         st.success(
-            "El LAeq de la hora permanece en 70,00 dB(A): cada fuente aporta la misma energía total. "
-            "Al aumentar la coincidencia aparecen intervalos de 73,01 dB(A), compensados por intervalos "
-            "sin aporte de estas fuentes."
+            "El LAeq de la hora permanece en 70,00 dB(A): cada fuente conserva su energía acumulada. "
+            + (f"Hay {overlap} min con ambas máquinas: el nivel de esos intervalos es 73,01 dB(A), "
+               f"y hay {overlap} min sin aporte de ellas."
+               if overlap else "Sin coincidencia, una sola máquina opera en cada intervalo y el nivel es 70,00 dB(A) durante toda la hora.")
         )
         st.caption(
             "En este experimento se omite el fondo. «Sin aporte» no significa silencio real ni 0 dB. "
-            "El mayor nivel de intervalo no es un LAFmax medido: describe la suma de niveles constantes del modelo."
+            "El mayor nivel de intervalo no es un LAFmax medido: describe la suma de niveles constantes del modelo. "
+            "Separar horarios conserva el promedio solo si cada fuente mantiene su nivel y su tiempo activo dentro del mismo T."
         )
         with st.expander("Por qué el promedio se conserva"):
             st.latex(r"\frac{30}{60}10^{70/10}+\frac{30}{60}10^{70/10}=10^{70/10}")
@@ -3653,7 +3661,7 @@ def _stage7(lab, saved):
     st.markdown("#### Observa el cronograma y el resultado")
     with st.container(border=True):
         include_floor = st.checkbox("Agregar fondo continuo en R1", value=False, key="c4l1_s7_v2_floor_on")
-        floor = st.slider("Fondo en R1 [dB(A)]", 20, 80, 45, key="c4l1_s7_v2_floor", disabled=not include_floor)
+        floor = st.slider("Fondo continuo · LAeq en R1 [dB(A)]", 20, 80, 45, key="c4l1_s7_v2_floor", disabled=not include_floor)
         st.markdown(
             '<div style="font-size:.75rem;font-weight:850;letter-spacing:.08em;color:#526d80;margin:14px 0 8px">CRONOGRAMA · 0 A 60 MIN</div>',
             unsafe_allow_html=True,
@@ -3669,6 +3677,12 @@ def _stage7(lab, saved):
         total_energy = sum(source["energy"] for source in contributions) + (10 ** (floor / 10) if include_floor else 0)
         available = [source for source in contributions if source["energy"] > 0]
         dominant = max(available, key=lambda source: source["energy"]) if available else None
+        dominant_names = [
+            source["name"] for source in available
+            if math.isclose(source["energy"], dominant["energy"], rel_tol=1e-9)
+        ] if dominant else []
+        dominant_display = ("Empate: " + ", ".join(dominant_names) if len(dominant_names) > 1
+                            else dominant_names[0] if dominant_names else "Ninguna")
         finite_segments = [s["level"] for s in segments if s["level"] is not None]
         reference_energy = sum((window[1]-window[0])/60 * 10**(level/10) for _, level, window, _ in specifications)
         reference_level = _s7_level(reference_energy + (10**(floor/10) if include_floor else 0))
@@ -3693,7 +3707,7 @@ def _stage7(lab, saved):
         with b:
             with st.container(border=True):
                 st.caption("CONTRIBUCIÓN DOMINANTE")
-                st.metric("Máquina con mayor aporte", dominant["name"] if dominant else "Ninguna")
+                st.metric("Máquina con mayor aporte", dominant_display)
                 st.caption("Se identifica después de ponderar el tiempo activo.")
         st.markdown("#### Aportes de cada máquina")
         st.dataframe(
@@ -3804,6 +3818,26 @@ def _stage7(lab, saved):
                 unsafe_allow_html=True,
             )
         st.caption("j identifica un intervalo del cronograma; i identifica una máquina. La suma por intervalos integra el nivel total de cada tramo. La suma por máquinas combina sus aportes equivalentes calculados sobre el mismo T. Son dos formas compatibles de contabilizar la misma energía, bajo los supuestos del laboratorio.")
+
+        st.markdown("**Condiciones para usar la ecuación por intervalos**")
+        st.caption(
+            "Los intervalos j deben cubrir todo T sin huecos ni superposiciones: ΣΔtⱼ = T. "
+            "Su nivel corresponde al total presente en el receptor durante ese tramo, incluido el fondo "
+            "si se modela. Un tramo sin ninguna contribución tiene energía nula; no se representa como 0 dB."
+        )
+        st.markdown("**Si la máquina tiene varios modos, incluido el ralentí**")
+        st.latex(r"L_{Aeq,T,i}=10\log_{10}\left[\sum_k\frac{t_{i,k}}{T}\,10^{L_{Aeq,i,k}/10}\right]")
+        st.caption(
+            "k identifica un modo de la máquina i; tᵢ,ₖ es su duración y LAeq,i,k su nivel en el receptor. "
+            "Los modos no se superponen para la misma máquina. Incluye el ralentí con su nivel real; "
+            "si existe una parada sin aporte, su término energético es cero. Esta es una extensión "
+            "del método; los simuladores de esta etapa usan un solo modo activo por máquina."
+        )
+        st.caption(
+            "10^(L/10) representa el factor relativo de presión sonora cuadrática media ponderada A "
+            "respecto de la referencia acústica. Se usa como «energía relativa» para sumar contribuciones; "
+            "no es una cantidad de energía expresada en joules."
+        )
 
     _s7_section(6, "Resuelve y comprueba", "Resuelve un caso nuevo: transforma los porcentajes activos en tiempos y aportes equivalentes, y calcula el total.")
     case_data = [("Excavadora", 68.0, 60), ("Mixer", 65.0, 40), ("Martillo", 76.0, 10), ("Generador", 58.0, 100)]
