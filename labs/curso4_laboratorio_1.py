@@ -4720,6 +4720,39 @@ def _stage8(lab, saved):
         )
 
 
+def _save_course4_evaluation(stage, question_key, question_text, payload, auto_score, max_score, feedback):
+    if st.session_state.get("projection_mode"):
+        return False
+    client=_supabase()
+    if client is None:
+        return False
+    user_key=st.session_state.get("user_key")
+    if not user_key:
+        return False
+    now=_now()
+    data={
+        "course_id":COURSE_ID,
+        "class_id":"clase-07-construccion-lab-1",
+        "user_key":user_key,
+        "stage":stage,
+        "question_key":question_key,
+        "question_text":question_text,
+        "correct_answer":"Pauta docente asociada a la evaluación.",
+        "answer":payload,
+        "auto_level":"Completada",
+        "feedback":feedback,
+        "auto_score":float(auto_score),
+        "max_score":float(max_score),
+        "status":"submitted",
+        "updated_at":now,
+        "submitted_at":now,
+    }
+    client.table("responses").upsert(
+        data,on_conflict="class_id,user_key,question_key"
+    ).execute()
+    return True
+
+
 def _stage9(lab, saved):
     _header(
         9,
