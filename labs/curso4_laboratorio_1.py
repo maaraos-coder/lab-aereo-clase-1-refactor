@@ -4130,9 +4130,9 @@ def _stage8(lab, saved):
       </div>
     </div>
     """, unsafe_allow_html=True)
-    _model_button()
     st.caption(
-        "Abre Noise Map Lab en otra pestaña y mantén esta Etapa 8 visible como guía. "
+        "Más abajo encontrarás un botón específico para cada escenario. Cada uno abre Noise Map Lab "
+        "con el predio, las fuentes y los receptores ya posicionados. "
         "En este laboratorio no se diseñan controles de ruido: eso se trabajará en el Laboratorio 2."
     )
     st.info("Trabajo integrador · 3 etapas constructivas · 3 fuentes por etapa · 3 receptores comparables.")
@@ -4195,8 +4195,24 @@ def _stage8(lab, saved):
         "Para este ejercicio se seleccionaron registros LAeq estacionarios."
     )
 
+    scenario_links = {
+        "A · Excavación y movimiento de tierras": NOISEMAP_URL.rstrip("/") + "/?scenario=c3l1-s8-a",
+        "B · Obra gruesa a nivel de piso": NOISEMAP_URL.rstrip("/") + "/?scenario=c3l1-s8-b",
+        "C · Obra gruesa en altura": NOISEMAP_URL.rstrip("/") + "/?scenario=c3l1-s8-c",
+    }
+
     for scenario_name, equipment in scenarios.items():
         st.markdown(f"#### {scenario_name}")
+        st.link_button(
+            "🗺️ Abrir este escenario ya posicionado en Noise Map Lab",
+            scenario_links[scenario_name],
+            use_container_width=True,
+            help="Abre Noise Map Lab con el predio, las tres fuentes y los tres receptores cargados automáticamente.",
+        )
+        st.caption(
+            "Las coordenadas X/Y se interpretan en metros desde el origen local (0,0) del predio. "
+            "El botón las transforma automáticamente a posiciones sobre el mapa; no tienes que medirlas a ojo."
+        )
         rows = []
         for sid, name, x, y, height in equipment:
             item = BS_PLANT[name]
@@ -4258,11 +4274,11 @@ def _stage8(lab, saved):
     st.markdown("### 4 · Construye el predio y los receptores")
     _model_button()
     st.markdown(
-        "1. En **Buscar**, localiza **Maimónides 551, Santiago, Chile**.\n"
-        "2. Dibuja un predio didáctico de **50 × 40 m**. Usa un origen local (0,0) en la esquina suroeste.\n"
-        "3. Incorpora **tres receptores** y mantenlos exactamente iguales en los tres escenarios.\n"
-        "4. Utiliza al menos un receptor a **1,5 m**, otro asociado a un piso intermedio y otro a mayor altura.\n"
-        "5. Registra la ubicación y altura de cada receptor antes de comenzar las simulaciones."
+        "1. Usa el botón **Abrir este escenario ya posicionado en Noise Map Lab** de la etapa que quieras modelar.\n"
+        "2. Noise Map Lab cargará automáticamente el predio didáctico de **50 × 40 m**, las tres fuentes en sus X/Y y los tres receptores comunes.\n"
+        "3. Comprueba visualmente la ubicación y las alturas antes de calcular; no debes trasladar X/Y a mano.\n"
+        "4. Conserva los mismos tres receptores en A, B y C para que la comparación sea válida.\n"
+        "5. Si modificas manualmente una posición, documenta el cambio y utiliza exactamente la misma geometría cuando corresponda."
     )
 
     receiver_record = saved.get("c4l1_stage8_receivers_v3", {})
