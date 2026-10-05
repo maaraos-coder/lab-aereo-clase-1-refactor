@@ -4271,48 +4271,68 @@ def _stage8(lab, saved):
             "- Caso estacionario con las tres máquinas en operación. No se estudian ciclos ni correcciones temporales; sin fondo en el cálculo.\n"
             "- La estimación puntual de LWA no reemplaza una determinación normalizada de potencia sonora.")
 
-    st.markdown("### 2 · Estima la potencia sonora de cada máquina")
-    st.markdown("Primero calcula **LWA**, la emisión de la fuente. **LAeq operativo a 10 m** es el nivel de presión observado en una posición; son magnitudes diferentes.")
+    st.markdown("### 2 · Calcula la potencia · aplica las etapas 2 y 3")
+    st.markdown(
+        "**Tu tarea:** recupera el procedimiento de conversión de la Etapa 2 y la relación "
+        "entre potencia, presión, distancia y directividad de la Etapa 3. "
+        "A partir de los registros BS 5228, estima la potencia global de cada máquina y convierte "
+        "sus ocho bandas de presión a potencia. Justifica los supuestos antes de ingresar los datos en Noise Map Lab.")
     with st.container(border=True):
-        st.latex(r"L_{WA}\approx L_{pA,\mathrm{ref}}+10\log_{10}\!\left(\frac{4\pi r_{\mathrm{ref}}^2}{1\,\mathrm{m}^2}\right)-10\log_{10}(Q)+A_{\mathrm{atm,ref}}")
         st.markdown(
-            "**Variables:** LWA: nivel de potencia sonora ponderado A, en dB re 1 pW; "
-            "LpA,ref: nivel de presión sonora ponderado A durante operación, en dB re 20 µPa; "
-            "rref: distancia fuente–medición, en m; Q: factor de directividad adimensional; "
-            "Aatm,ref: pérdida atmosférica entre fuente y medición, en dB.")
-        st.caption("Aquí rref = 10 m, Q efectivo = 2 y Aatm,ref = 0 dB. Es una aproximación de fuente puntual en campo lejano, con correcciones efectivas constantes para este ejercicio.")
-    st.info("Al despejar LWA, la directividad se resta y la pérdida atmosférica se suma. No uses el valor de Lp a 10 m como si fuera LWA.")
-    st.markdown("#### Espectros BS 5228 que debes preparar")
-    st.caption("Bandas de presión sin ponderación A a 10 m. Verifica el registro en la norma y calcula LW por banda antes de ingresar las fuentes.")
+            "**Condiciones del ejercicio:** datos de presión a 10 m, fuente puntual en campo lejano, "
+            "radiación efectiva en hemiespacio (Q = 2) y sin corrección atmosférica adicional "
+            "en la conversión de referencia. Usa el redondeo de la Etapa 2.\n\n"
+            "**Qué entregar:** LWA global estimado desde el LAeq BS; LW por banda sin ponderación A; "
+            "y una explicación de la conversión, sus unidades y el tratamiento de Q.")
+        st.caption("LWA: potencia global ponderada A, en dB re 1 pW. LW,f: potencia sin ponderación de la banda f, en dB re 1 pW. Lp,f: presión por banda a 10 m, en dB re 20 µPa. f: frecuencia central en Hz. No mezcles presión, potencia ni descriptores ponderados y sin ponderar.")
+    st.markdown("#### Datos de entrada · espectros BS 5228")
     frequencies = [63, 125, 250, 500, 1000, 2000, 4000, 8000]
     st.dataframe(pd.DataFrame([[name, BS_PLANT[name]["table"], BS_PLANT[name]["ref"],
         BS_PLANT[name]["activity"], *BS_PLANT[name]["bands"]]
         for sid, name, x, y, lp in sources],
         columns=["Máquina", "Tabla", "Ref.", "Actividad BS", *[str(f) + " Hz · Lp [dB]" for f in frequencies]]),
         hide_index=True, use_container_width=True)
-    st.latex(r"L_{W,f}\approx L_{p,f}(10\,m)+28\ \mathrm{dB}")
-    st.markdown("**f** es la frecuencia central de la banda; **Lp,f** es presión por banda, en dB re 20 µPa; **LW,f** es potencia por banda, en dB re 1 pW. No confundas el espectro sin ponderar con el global LAeq ni con bandas ya ponderadas A.")
-    with st.form("c4l1_s8_power_form"):
-        powers = {}
-        for col, (sid, name, x, y, lp) in zip(st.columns(3), sources):
-            with col:
-                powers[sid] = st.number_input(name + " · LWA [dB re 1 pW]", value=None,
-                    step=.1, format="%.2f", key="c4l1_s8_bs_power_" + sid, placeholder="Tu cálculo")
-        power_submit = st.form_submit_button("Comprobar estimaciones")
-    if power_submit:
-        statuses = {sid: value is not None and abs(value - expected[sid]) <= .2
-                    for sid, value in powers.items()}
+    st.caption("Estas son entradas de presión; el alumno debe obtener las entradas de potencia. Consulta la norma y las etapas anteriores para resolverlo.")
+    with st.form("c4l1_s8_bs_student_power_form"):
+        powers, spectra = {}, {}
         for sid, name, x, y, lp in sources:
-            if statuses[sid]:
-                st.success(name + ": cálculo correcto.")
+            st.markdown("**" + sid + " · " + name + "**")
+            powers[sid] = st.number_input(name + " · LWA global estimado [dB re 1 pW]", value=None,
+                step=.1, format="%.2f", key="c4l1_s8_bs_student_global_" + sid, placeholder="Tu cálculo desde el global BS")
+            spectra[sid] = []
+            for start in (0, 4):
+                for col, index in zip(st.columns(4), range(start, start+4)):
+                    with col:
+                        spectra[sid].append(st.number_input(str(frequencies[index]) + " Hz · LW [dB re 1 pW]",
+                            value=None, step=.1, format="%.2f",
+                            key=f"c4l1_s8_bs_student_band_{sid}_{index}", placeholder="Calcula la potencia"))
+        justification = st.text_area("Explica cómo obtuviste la potencia",
+            key="c4l1_s8_bs_student_power_method",
+            placeholder="Procedimiento de las etapas 2 y 3, distancia de referencia, directividad, unidades y ponderación. Explica por qué el dato BS no se ingresa directamente como LW.")
+        power_submit = st.form_submit_button("Comprobar mis estimaciones")
+    if power_submit:
+        all_correct = True
+        for sid, name, x, y, lp in sources:
+            global_ok = powers[sid] is not None and abs(powers[sid]-expected[sid]) <= .2
+            bad_bands = [str(frequencies[i]) + " Hz" for i, value in enumerate(spectra[sid])
+                         if value is None or abs(value-(BS_PLANT[name]["bands"][i]+28.)) > .2]
+            all_correct = all_correct and global_ok and not bad_bands
+            if global_ok and not bad_bands:
+                st.success(name + ": estimaciones correctas.")
             else:
-                st.warning(name + ": completa o revisa distancia, signo de Q y signo de Aatm.")
-        if all(statuses.values()):
+                if not global_ok:
+                    st.warning(name + ": revisa el global y la conversión de presión a potencia de la Etapa 2.")
+                if bad_bands:
+                    st.warning(name + ": completa o revisa las bandas " + ", ".join(bad_bands) + ". Conserva el descriptor sin ponderación A.")
+        if all_correct and len(justification.strip()) >= 80:
             saved["c4l1_stage8_bs_power"] = dict(powers)
+            saved["c4l1_stage8_bs_student_spectra"] = spectra
+            saved["c4l1_stage8_bs_power_method"] = justification
             saved.pop("c4l1_stage8_bs_case", None)
             _save_stage_state(lab, saved, 8)
-            st.success("Estimaciones guardadas. Úsalas como entradas del modelo.")
-
+            st.success("Cálculos guardados. Usa tus espectros operativos en Octavas; no apliques otra vez la conversión en el modelador.")
+        elif all_correct:
+            st.warning("Completa la explicación del procedimiento con al menos 80 caracteres.")
     st.markdown("#### Representa el frente de trabajo · recupera la Etapa 5")
     st.markdown(
         "**Modelo A: tres fuentes puntuales.** Conserva el espectro, posición y altura de cada máquina. "
