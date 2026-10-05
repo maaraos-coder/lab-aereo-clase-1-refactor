@@ -640,7 +640,27 @@ def _teacher_course_results_impl(compact=False):
                     "reviewer":"c3l2_stage10",
                 },
             },
+        },        "Curso 4 · Factores del ruido en el proceso de construcción":{
+            "Laboratorio 1 · Evaluaciones formativas":{
+                "Etapa 9 · Cuestionario formativo":{
+                    "class_id":"clase-07-construccion-lab-1",
+                    "question_key":"c4_formative_comprehension",
+                    "stage":9,
+                    "maximum":10,
+                    "with_grade":False,
+                    "reviewer":"c4_stage9",
+                },
+                "Etapa 10 · Caso integrador final":{
+                    "class_id":"clase-07-construccion-lab-1",
+                    "question_key":"c4_formative_integrated_case",
+                    "stage":10,
+                    "maximum":100,
+                    "with_grade":False,
+                    "reviewer":"c4_stage10",
+                },
+            },
         },
+
     }
 
     course=st.selectbox(
