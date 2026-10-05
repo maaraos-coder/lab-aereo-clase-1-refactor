@@ -174,7 +174,8 @@ def _stage0(lab, saved):
         "Evalúa barreras, encierros y controles aplicados en la fuente.",
         "Construye el escenario completo de una obra y agrega tránsito de obra cuando corresponda.",
         "Modela excavación, obra gruesa en piso y obra gruesa en altura; compara niveles en receptores.",
-        "Integra caracterización, modelación, diagnóstico, control y limitaciones.",
+        "Comprueba conceptos clave mediante un cuestionario formativo.",
+        "Resuelve un caso abierto: busca referencias BS, define la estrategia de modelación y evalúa cumplimiento.",
     ]
     html = '<div class="route-grid">'
     for stage in range(1, 11):
@@ -4723,121 +4724,537 @@ def _stage8(lab, saved):
 def _stage9(lab, saved):
     _header(
         9,
-        "Comprensión · interpretación de propagación y modelación",
-        "Comprobar que el alumno comprende los conceptos antes del ejercicio integrador final.",
+        "Comprensión · cuestionario formativo",
+        "Comprobar que el alumno comprende los conceptos trabajados durante la clase antes del ejercicio integrador final.",
     )
+
     st.markdown(
         """
-        <div style="border:1px solid #eadfc8;border-radius:20px;padding:20px 22px;background:linear-gradient(135deg,#fffaf3,#fff7e8)">
-          <div style="font-size:.72rem;font-weight:900;letter-spacing:.1em;color:#9a6617">10 PREGUNTAS DE COMPRENSIÓN</div>
-          <div style="font-size:1.2rem;font-weight:850;color:#4b3515;margin:.35rem 0">
-            Interpreta, no memorices
+        <div style="border:1px solid #d9e7f3;border-radius:20px;padding:20px 22px;
+        background:linear-gradient(135deg,#fbfdff,#eef6ff)">
+          <div style="font-size:.72rem;font-weight:900;letter-spacing:.1em;color:#0b6ea8">EVALUACIÓN FORMATIVA</div>
+          <div style="font-size:1.25rem;font-weight:900;color:#17324a;margin:.35rem 0">
+            10 preguntas de comprensión
           </div>
-          <div style="color:#6d5a3b">Las preguntas combinan conceptos de fuente, propagación, suelo, barreras, meteorología, ciclos y simultaneidad.</div>
+          <div style="color:#586f82;line-height:1.55">
+            Aplica lo visto en BS 5228, conversión Lp/Lw, geometría, propagación,
+            suma energética, tiempo activo, receptores y lectura de modelos.
+          </div>
         </div>
-        """,unsafe_allow_html=True
+        """,
+        unsafe_allow_html=True,
     )
-    questions=[
-        ("Una fuente mantiene el mismo Lw pero el receptor duplica su distancia. ¿Qué término cambia principalmente?",
-         ["Dc","Adiv","Agr solamente","Tiempo activo"],1),
-        ("¿Qué describe mejor G = 0?",
-         ["Suelo duro/acústicamente reflectante","50 % de absorción","Fuente omnidireccional","Suelo totalmente poroso"],0),
-        ("Aatm aumenta especialmente cuando:",
-         ["Baja la potencia eléctrica del equipo","Aumentan distancia y frecuencia","G se hace 0","Q se hace 1"],1),
-        ("Si una barrera no corta la línea de visión fuente–receptor:",
-         ["Abar necesariamente es máxima","El apantallamiento puede ser pequeño o nulo","Cmet se duplica","Lw disminuye"],1),
-        ("¿Qué diferencia a Cmet de Aatm?",
-         ["Cmet es una corrección meteorológica de largo plazo; Aatm es absorción molecular","Son exactamente el mismo término","Cmet depende solo de G","Aatm solo se usa con barreras"],0),
-        ("Una máquina funciona 25 % del período. La corrección temporal es aproximadamente:",
-         ["0 dB","-3 dB","-6 dB","+6 dB"],2),
-        ("Dos fuentes de 70 dB cada una funcionando simultáneamente producen aproximadamente:",
-         ["70 dB","73 dB","140 dB","67 dB"],1),
-        ("¿Cuál es el efecto conceptual de un control aplicado directamente a la fuente?",
-         ["Reduce Lw antes de la propagación","Aumenta Adiv","Cambia automáticamente G","Elimina Cmet"],0),
-        ("La fuente dominante en un receptor:",
-         ["Siempre es la de mayor Lw","Puede depender de Lw, distancia, control y propagación","Siempre es la más cercana","Nunca cambia con el tiempo activo"],1),
-        ("¿Por qué conviene revisar contribuciones individuales en un modelo?",
-         ["Para identificar qué fuente explica mayor parte del nivel y orientar el control","Para sumar dB aritméticamente","Para eliminar la necesidad de receptores","Para reemplazar las mediciones"],0),
+
+    questions = [
+        (
+            "BS 5228 entrega un LAeq,T a 10 m para una actividad concreta. ¿Qué debes evitar?",
+            [
+                "Usarlo como valor universal para toda máquina del mismo nombre",
+                "Revisar tabla, referencia y actividad",
+                "Identificar potencia y tamaño del equipo",
+                "Distinguir LAeq,T de LAmax",
+            ],
+            0,
+            "Los registros de BS 5228 corresponden a equipos y actividades concretas, no a un valor universal por nombre de máquina.",
+        ),
+        (
+            "Si utilizas la aproximación didáctica trabajada en clase para registros estacionarios a 10 m, ¿cómo estimas LWA?",
+            [
+                "LWA = LAeq,10m − 28 dB",
+                "LWA = LAeq,10m + 28 dB",
+                "LWA = LAeq,10m + 3 dB",
+                "LWA = LAeq,10m",
+            ],
+            1,
+            "En este laboratorio se recupera la aproximación LWA ≈ LAeq,10m + 28 dB.",
+        ),
+        (
+            "Dos fuentes de 70 dB(A) aportan lo mismo en un receptor y funcionan simultáneamente. El total será aproximadamente:",
+            ["70 dB(A)", "73 dB(A)", "140 dB(A)", "67 dB(A)"],
+            1,
+            "Dos contribuciones iguales suman aproximadamente +3 dB, no se suman aritméticamente.",
+        ),
+        (
+            "Una máquina opera el 25 % de un período de evaluación. ¿Qué corrección temporal aproximada representa?",
+            ["0 dB", "−3 dB", "−6 dB", "+6 dB"],
+            2,
+            "10·log10(0,25) ≈ −6 dB.",
+        ),
+        (
+            "Si duplicas la distancia fuente–receptor en campo libre, el término que cambia principalmente es:",
+            ["Adiv", "Dc", "Lw", "Altura de la fuente"],
+            0,
+            "La divergencia geométrica aumenta con la distancia.",
+        ),
+        (
+            "¿Por qué una fuente en altura puede cambiar el receptor crítico?",
+            [
+                "Porque aumenta automáticamente su Lw",
+                "Porque cambia la geometría, línea de visión y distancia 3D respecto de receptores en distintos pisos",
+                "Porque elimina Aatm",
+                "Porque obliga a usar G = 1",
+            ],
+            1,
+            "La altura modifica la relación geométrica fuente–receptor, no la potencia intrínseca de la fuente.",
+        ),
+        (
+            "Si varias máquinas trabajan en una misma zona, ¿cuándo puede ser razonable representarlas como una fuente equivalente?",
+            [
+                "Siempre, sin justificar",
+                "Cuando su frente de trabajo es compacto y la simplificación no altera de forma relevante la geometría respecto de los receptores",
+                "Solo cuando tienen el mismo Lw",
+                "Nunca",
+            ],
+            1,
+            "Una fuente equivalente puede ser útil si la simplificación conserva el comportamiento espacial relevante.",
+        ),
+        (
+            "¿Qué debes mantener igual para comparar correctamente dos etapas constructivas?",
+            [
+                "Solo el nombre del proyecto",
+                "Receptores y criterios de cálculo, salvo la variable que se quiere comparar",
+                "Todas las fuentes",
+                "El resultado en dB",
+            ],
+            1,
+            "Una comparación válida requiere conservar condiciones comunes y cambiar principalmente el escenario constructivo.",
+        ),
+        (
+            "Un mapa muestra menor nivel en un receptor lejano, pero una fuente individual aporta más allí que otra fuente cercana. ¿Es posible?",
+            [
+                "No, la fuente más cercana siempre domina",
+                "Sí, la contribución depende de Lw, distancia, altura, actividad y propagación",
+                "No, porque todas las fuentes tienen el mismo Lw",
+                "Solo si se suma dB aritméticamente",
+            ],
+            1,
+            "La fuente dominante no depende únicamente de la distancia.",
+        ),
+        (
+            "Para declarar cumplimiento frente a un criterio máximo, ¿qué debe coincidir entre resultado y límite?",
+            [
+                "Solo la unidad dB",
+                "El descriptor, período de evaluación y ponderación aplicable",
+                "Solo la distancia de 10 m",
+                "El nombre de la fuente",
+            ],
+            1,
+            "No es correcto comparar magnitudes con descriptores o períodos distintos.",
+        ),
     ]
+
     answers=[]
-    for i,(q,opts,correct) in enumerate(questions,1):
-        answers.append(st.radio(f"{i}. {q}",opts,index=None,key=f"c4l1_s9_q{i}"))
-    if st.button("Comprobar respuestas",key="c4l1_s9_check",type="primary",use_container_width=True):
+    for i,(q,opts,correct,explanation) in enumerate(questions,1):
+        with st.container(border=True):
+            st.markdown(f"**{i}. {q}**")
+            answers.append(
+                st.radio(
+                    "Selecciona una alternativa",
+                    opts,
+                    index=None,
+                    key=f"c4l1_s9_q{i}",
+                    label_visibility="collapsed",
+                )
+            )
+
+    if st.button("Comprobar cuestionario",key="c4l1_s9_check",type="primary",use_container_width=True):
         if any(a is None for a in answers):
             st.warning("Responde las 10 preguntas antes de comprobar.")
         else:
-            score=sum(1 for a,(_,opts,corr) in zip(answers,questions) if a==opts[corr])
-            st.metric("Resultado",f"{score}/10")
-            if score>=8: st.success("Muy buen dominio conceptual. Puedes pasar al caso integrador.")
-            elif score>=6: st.warning("Base suficiente, pero conviene revisar los conceptos que fallaste.")
-            else: st.error("Revisa las etapas anteriores antes del caso integrador.")
-            if st.session_state.get("role")=="Docente":
-                st.caption("Pauta: "+", ".join(f"{i+1}:{q[1][q[2]]}" for i,q in enumerate(questions)))
+            score=sum(1 for a,(_,opts,corr,_) in zip(answers,questions) if a==opts[corr])
+            saved["c4l1_stage9_score"]=score
+            _save_stage_state(lab,saved,9)
+            c1,c2,c3=st.columns(3)
+            c1.metric("Resultado",f"{score}/10")
+            c2.metric("Porcentaje",f"{score*10}%")
+            c3.metric("Referencia formativa","8/10")
+            if score>=8:
+                st.success("Buen dominio conceptual. Puedes continuar al caso integrador.")
+            elif score>=6:
+                st.warning("Base suficiente, pero conviene revisar las respuestas incorrectas antes de continuar.")
+            else:
+                st.error("Revisa las etapas anteriores antes de resolver el caso integrador final.")
+
+            st.markdown("#### Retroalimentación")
+            for i,(answer,(q,opts,corr,explanation)) in enumerate(zip(answers,questions),1):
+                if answer==opts[corr]:
+                    st.success(f"{i}. Correcta · {explanation}")
+                else:
+                    st.error(f"{i}. Revisa este concepto · {explanation}")
+
+    with st.expander("👨‍🏫 Pauta docente · cuestionario"):
+        teacher_rows=[]
+        for i,(q,opts,corr,explanation) in enumerate(questions,1):
+            teacher_rows.append([i,q,opts[corr],explanation])
+        st.dataframe(
+            pd.DataFrame(teacher_rows,columns=["N°","Pregunta","Respuesta esperada","Fundamento"]),
+            hide_index=True,
+            use_container_width=True,
+        )
 
 
 def _stage10(lab, saved):
     _header(
         10,
-        "Caso integrador · predicción profesional con Noise Map Lab",
-        "Integrar caracterización de fuentes, propagación, simultaneidad, diagnóstico y control en un escenario completo.",
+        "Caso integrador final · modelación y evaluación de cumplimiento",
+        "Resolver un caso más abierto: buscar datos BS 5228, definir la estrategia de modelación, estimar niveles en receptores y evaluar criterios máximos.",
     )
+
     st.markdown(
         """
-        <div style="border:1px solid #d9e7f3;border-radius:22px;padding:22px 24px;background:linear-gradient(135deg,#fbfdff,#eef6ff)">
-          <div style="font-size:.72rem;font-weight:900;letter-spacing:.1em;color:#0b6ea8">CASO FINAL</div>
-          <div style="font-size:1.25rem;font-weight:900;color:#17324a;margin:.35rem 0">Predicción de ruido de una obra de construcción</div>
+        <div style="border:1px solid #d9e7f3;border-radius:22px;padding:22px 24px;
+        background:linear-gradient(135deg,#fbfdff,#eef6ff)">
+          <div style="font-size:.72rem;font-weight:900;letter-spacing:.1em;color:#0b6ea8">EJERCICIO INTEGRADOR FINAL</div>
+          <div style="font-size:1.3rem;font-weight:900;color:#17324a;margin:.35rem 0">Tú defines cómo modelar la obra</div>
           <div style="color:#586f82;line-height:1.55">
-            Construye el escenario completo, identifica el receptor y la fuente dominante, aplica una medida de control
-            y documenta el cambio antes/después.
+            Esta vez no recibirás las fuentes armadas. Solo se entrega el predio y la lista de maquinaria.
+            Deberás buscar los antecedentes acústicos, decidir cómo representar cada etapa, ubicar receptores,
+            ejecutar la predicción y verificar si se cumplen los criterios del ejercicio.
           </div>
         </div>
-        """,unsafe_allow_html=True
+        """,
+        unsafe_allow_html=True,
     )
-    _model_button()
 
-    st.markdown("### Antecedentes del caso")
+    st.markdown("### 1 · Abre el predio del caso")
+    stage10_url = NOISEMAP_URL.rstrip("/") + "/?scenario=c3l1-s10"
+    st.link_button(
+        "🗺️ Abrir predio de la Etapa 10 en Noise Map Lab",
+        stage10_url,
+        use_container_width=True,
+        help="Carga únicamente la demarcación del predio. Fuentes, receptores y área de cálculo los define el alumno.",
+    )
+    st.info(
+        "El predio didáctico mide **70 × 55 m** y está demarcado con líneas auxiliares. "
+        "No se entregan fuentes, receptores ni área de cálculo."
+    )
+
+    st.markdown("### 2 · Maquinaria disponible")
     st.markdown(
-        "- Predio de obra: **60 × 45 m**.\n"
-        "- Receptor R1: vivienda al norte del predio.\n"
-        "- Receptor R2: oficina al este.\n"
-        "- Fuentes: excavadora hidráulica, bomba de hormigón, martillo hidráulico y generador diésel.\n"
-        "- Terreno: combinación de superficie dura y suelo poroso.\n"
-        "- Debes representar al menos una medida de control técnicamente justificada."
+        "Busca en **BS 5228-1:2009, Anexo C** una referencia apropiada para cada equipo. "
+        "Debes justificar la tabla y referencia seleccionada según la actividad representada."
     )
-    st.markdown("### Tareas")
-    checklist=[
-        "Caractericé las cuatro fuentes con antecedente acústico trazable",
-        "Definí Lw o espectro y altura de cada fuente",
-        "Definí R1 y R2",
-        "Configuré terreno y geometría",
-        "Incorporé ciclos de operación",
-        "Calculé el escenario inicial",
-        "Identifiqué receptor crítico y fuente dominante",
-        "Apliqué una medida de control",
-        "Recalculé el escenario",
-        "Comparé antes/después y declaré supuestos",
+    machines=[
+        "Excavadora hidráulica",
+        "Camión tolva articulado",
+        "Martillo hidráulico",
+        "Camión mixer",
+        "Bomba de hormigón",
+        "Vibrador de inmersión",
+        "Grúa torre",
     ]
-    checked=[st.checkbox(item,key=f"c4l1_s10_check_{i}") for i,item in enumerate(checklist)]
-    before=st.number_input("Nivel receptor crítico antes [dB(A)]",30.0,120.0,70.0,0.1,key="c4l1_s10_before")
-    after=st.number_input("Nivel receptor crítico después [dB(A)]",30.0,120.0,65.0,0.1,key="c4l1_s10_after")
-    st.metric("Reducción obtenida",f"{before-after:.1f} dB")
-    conclusion=st.text_area(
-        "Conclusión técnica",
-        value=saved.get("c4l1_stage10_conclusion",""),
-        height=220,
-        key="c4l1_s10_conclusion",
-        placeholder="Fuente dominante, receptor crítico, términos relevantes, medida de control aplicada, reducción obtenida, supuestos y limitaciones.",
+    machine_phase={
+        "Excavadora hidráulica":"Excavación y movimiento de tierras",
+        "Camión tolva articulado":"Excavación y movimiento de tierras",
+        "Martillo hidráulico":"Rotura localizada / preparación",
+        "Camión mixer":"Hormigonado",
+        "Bomba de hormigón":"Hormigonado",
+        "Vibrador de inmersión":"Hormigonado / estructura",
+        "Grúa torre":"Obra gruesa y trabajo en altura",
+    }
+    df_machines=pd.DataFrame(
+        [[m,machine_phase[m]] for m in machines],
+        columns=["Maquinaria","Actividad que debes representar"],
     )
-    if st.button("Guardar caso integrador",key="c4l1_s10_save",type="primary",use_container_width=True):
-        if not all(checked):
-            st.warning("Completa la lista de verificación.")
-        elif len(conclusion.strip())<180:
-            st.warning("Desarrolla una conclusión técnica de al menos 180 caracteres.")
+    st.dataframe(df_machines,hide_index=True,use_container_width=True)
+
+    st.markdown("### 3 · Recupera las referencias BS 5228")
+    previous_bs=saved.get("c4l1_stage10_bs_v2",{})
+    bs_entries={}
+    with st.form("c4l1_s10_bs_v2_form"):
+        for machine in machines:
+            with st.container(border=True):
+                st.markdown(f"**{machine}**")
+                a,b,c1,d=st.columns([.8,.7,.9,.9])
+                with a:
+                    table=st.text_input(
+                        "Tabla",
+                        value=previous_bs.get(machine,{}).get("table",""),
+                        placeholder="Ej. C.2",
+                        key=f"c4l1_s10_table_{machine}",
+                    )
+                with b:
+                    ref=st.text_input(
+                        "Ref.",
+                        value=previous_bs.get(machine,{}).get("ref",""),
+                        placeholder="N°",
+                        key=f"c4l1_s10_ref_{machine}",
+                    )
+                with c1:
+                    lp10=st.number_input(
+                        "Nivel a 10 m [dB(A)]",
+                        value=previous_bs.get(machine,{}).get("lp10"),
+                        step=.1,
+                        format="%.1f",
+                        key=f"c4l1_s10_lp10_{machine}",
+                        placeholder="BS 5228",
+                    )
+                with d:
+                    lwa=st.number_input(
+                        "LWA estimado [dB]",
+                        value=previous_bs.get(machine,{}).get("lwa"),
+                        step=.1,
+                        format="%.1f",
+                        key=f"c4l1_s10_lwa_{machine}",
+                        placeholder="Calcula",
+                    )
+                bs_entries[machine]={"table":table,"ref":ref,"lp10":lp10,"lwa":lwa}
+        bs_justification=st.text_area(
+            "Justifica brevemente cómo seleccionaste las referencias",
+            value=saved.get("c4l1_stage10_bs_justification_v2",""),
+            placeholder="Explica cómo verificaste actividad, equipo, descriptor y condición del registro.",
+            height=110,
+            key="c4l1_s10_bs_justification_v2",
+        )
+        bs_submit=st.form_submit_button("Guardar búsqueda BS 5228",use_container_width=True)
+
+    if bs_submit:
+        incomplete=[
+            m for m,v in bs_entries.items()
+            if not v["table"].strip() or not v["ref"].strip() or v["lp10"] is None or v["lwa"] is None
+        ]
+        if incomplete:
+            st.warning("Completa tabla, referencia, nivel a 10 m y LWA para toda la maquinaria.")
+        elif len(bs_justification.strip())<80:
+            st.warning("Justifica la selección de referencias con al menos 80 caracteres.")
         else:
-            saved["c4l1_stage10_conclusion"]=conclusion
-            saved["c4l1_stage10_result"]={"before":before,"after":after,"reduction":before-after}
+            saved["c4l1_stage10_bs_v2"]=bs_entries
+            saved["c4l1_stage10_bs_justification_v2"]=bs_justification
             _save_stage_state(lab,saved,10)
-            st.success("Caso integrador guardado.")
+            st.success("Antecedentes BS 5228 guardados.")
+
+    st.markdown("### 4 · Define cómo representarás las etapas")
+    st.markdown(
+        "No existe una única representación correcta. Puedes modelar las máquinas como **fuentes individuales**, "
+        "agrupar un frente compacto mediante una **fuente equivalente**, o utilizar una combinación de ambos enfoques. "
+        "La decisión debe conservar una geometría acústicamente razonable."
+    )
+
+    strategy_saved=saved.get("c4l1_stage10_strategy_v2",{})
+    with st.form("c4l1_s10_strategy_v2_form"):
+        strategy={}
+        for code,title in [
+            ("A","Excavación / preparación"),
+            ("B","Hormigonado a nivel de piso"),
+            ("C","Obra gruesa en altura"),
+        ]:
+            with st.container(border=True):
+                st.markdown(f"**{code} · {title}**")
+                representation=st.radio(
+                    "Representación",
+                    ["Fuentes individuales","Fuente equivalente de frente","Modelo mixto"],
+                    index=None if not strategy_saved.get(code,{}).get("representation") else
+                        ["Fuentes individuales","Fuente equivalente de frente","Modelo mixto"].index(strategy_saved[code]["representation"]),
+                    key=f"c4l1_s10_strategy_{code}",
+                    horizontal=True,
+                )
+                justification=st.text_area(
+                    "Justificación",
+                    value=strategy_saved.get(code,{}).get("justification",""),
+                    placeholder="Explica qué máquinas usarás, dónde las ubicarás o cómo construirás la fuente equivalente.",
+                    key=f"c4l1_s10_strategy_note_{code}",
+                    height=90,
+                )
+                strategy[code]={"representation":representation,"justification":justification}
+        strategy_submit=st.form_submit_button("Guardar estrategia de modelación",use_container_width=True)
+
+    if strategy_submit:
+        if any(v["representation"] is None or len(v["justification"].strip())<60 for v in strategy.values()):
+            st.warning("Selecciona una estrategia y justifica cada etapa con al menos 60 caracteres.")
+        else:
+            saved["c4l1_stage10_strategy_v2"]=strategy
+            _save_stage_state(lab,saved,10)
+            st.success("Estrategia de modelación guardada.")
+
+    st.markdown("### 5 · Define los receptores y el descriptor de evaluación")
+    st.markdown(
+        "Selecciona tres receptores fuera del predio y documenta su posición y altura. "
+        "Para este ejercicio, el resultado de cada escenario se interpretará como **LAeq,15 min** "
+        "incorporando el porcentaje de tiempo activo que definas para las fuentes."
+    )
+
+    criteria=pd.DataFrame(
+        [
+            ["R1","Residencial",65.0,"LAeq,15 min"],
+            ["R2","Oficina / comercio",70.0,"LAeq,15 min"],
+            ["R3","Receptor sensible",60.0,"LAeq,15 min"],
+        ],
+        columns=["Receptor","Uso didáctico","Límite máximo [dB(A)]","Descriptor"],
+    )
+    st.dataframe(criteria,hide_index=True,use_container_width=True)
+    st.warning(
+        "Estos límites son **criterios didácticos del laboratorio** para practicar una evaluación de cumplimiento. "
+        "No corresponden a límites regulatorios ni deben citarse como exigencia legal."
+    )
+
+    receiver_saved=saved.get("c4l1_stage10_receivers_v2",{})
+    receiver_data={}
+    with st.form("c4l1_s10_receivers_v2_form"):
+        for rid,use_type,limit_value,_descriptor in criteria.itertuples(index=False,name=None):
+            with st.container(border=True):
+                c1,c2=st.columns([.72,.28])
+                with c1:
+                    description=st.text_input(
+                        f"{rid} · {use_type} · ubicación",
+                        value=receiver_saved.get(rid,{}).get("description",""),
+                        placeholder="Describe dónde lo colocaste respecto del predio",
+                        key=f"c4l1_s10_receiver_desc_{rid}",
+                    )
+                with c2:
+                    height_value=st.number_input(
+                        f"{rid} · altura [m]",
+                        min_value=.5,max_value=60.0,
+                        value=float(receiver_saved.get(rid,{}).get("height",1.5)),
+                        step=.5,key=f"c4l1_s10_receiver_h_{rid}",
+                    )
+                receiver_data[rid]={"description":description,"height":height_value}
+        receiver_submit=st.form_submit_button("Guardar receptores",use_container_width=True)
+
+    if receiver_submit:
+        if any(len(v["description"].strip())<20 for v in receiver_data.values()):
+            st.warning("Describe con mayor precisión la ubicación de los tres receptores.")
+        else:
+            saved["c4l1_stage10_receivers_v2"]=receiver_data
+            _save_stage_state(lab,saved,10)
+            st.success("Receptores guardados.")
+
+    st.markdown("### 6 · Modela y registra los resultados")
+    st.markdown(
+        "Construye los tres escenarios en Noise Map Lab. Mantén constantes los receptores y el área de cálculo. "
+        "Puedes cambiar posiciones de maquinaria entre etapas cuando sea coherente con el frente de trabajo."
+    )
+
+    result_saved=saved.get("c4l1_stage10_results_v2",{})
+    limit_map={"R1":65.0,"R2":70.0,"R3":60.0}
+    scenario_labels={
+        "A":"Excavación / preparación",
+        "B":"Hormigonado a nivel de piso",
+        "C":"Obra gruesa en altura",
+    }
+    results={}
+    with st.form("c4l1_s10_results_v2_form"):
+        for code,label in scenario_labels.items():
+            with st.container(border=True):
+                st.markdown(f"**{code} · {label}**")
+                cols=st.columns(3)
+                results[code]={}
+                for col,rid in zip(cols,["R1","R2","R3"]):
+                    with col:
+                        results[code][rid]=st.number_input(
+                            f"{rid} · LAeq,15 min [dB(A)]",
+                            value=result_saved.get(code,{}).get(rid),
+                            step=.1,
+                            format="%.1f",
+                            key=f"c4l1_s10_result_{code}_{rid}",
+                            placeholder="Resultado del modelo",
+                        )
+        common_settings=st.text_area(
+            "Configuración y supuestos comunes",
+            value=saved.get("c4l1_stage10_common_settings_v2",""),
+            placeholder="Área de cálculo, G, meteorología, alturas, tiempos activos, tratamiento de fuentes equivalentes y otros supuestos.",
+            height=120,
+            key="c4l1_s10_common_settings_v2",
+        )
+        result_submit=st.form_submit_button("Guardar y evaluar cumplimiento",use_container_width=True)
+
+    if result_submit:
+        flat=[results[s][r] for s in results for r in results[s]]
+        if any(v is None for v in flat):
+            st.warning("Completa los nueve resultados antes de evaluar.")
+        elif len(common_settings.strip())<100:
+            st.warning("Documenta la configuración y los supuestos con al menos 100 caracteres.")
+        else:
+            saved["c4l1_stage10_results_v2"]=results
+            saved["c4l1_stage10_common_settings_v2"]=common_settings
+            _save_stage_state(lab,saved,10)
+            st.success("Resultados guardados y evaluación actualizada.")
+
+    stored=saved.get("c4l1_stage10_results_v2",{})
+    if stored:
+        rows=[]
+        for code,label in scenario_labels.items():
+            for rid in ["R1","R2","R3"]:
+                level=float(stored[code][rid])
+                limit_value=limit_map[rid]
+                rows.append([
+                    code,
+                    label,
+                    rid,
+                    level,
+                    limit_value,
+                    "Cumple" if level<=limit_value else "No cumple",
+                    level-limit_value,
+                ])
+        compliance_df=pd.DataFrame(
+            rows,
+            columns=[
+                "Etapa","Escenario","Receptor","LAeq,15 min [dB(A)]",
+                "Límite [dB(A)]","Evaluación","Margen [dB]",
+            ],
+        )
+        st.markdown("#### Evaluación de cumplimiento")
+        st.dataframe(compliance_df,hide_index=True,use_container_width=True)
+
+        failures=compliance_df[compliance_df["Evaluación"]=="No cumple"]
+        if failures.empty:
+            st.success("Todos los receptores cumplen los criterios didácticos en los tres escenarios.")
+        else:
+            st.error(
+                f"Se identifican {len(failures)} combinaciones escenario–receptor que superan el criterio didáctico."
+            )
+
+    st.markdown("### 7 · Cierra el caso con una conclusión técnica")
+    conclusion=st.text_area(
+        "Conclusión integradora",
+        value=saved.get("c4l1_stage10_conclusion_v2",""),
+        height=220,
+        key="c4l1_s10_conclusion_v2",
+        placeholder=(
+            "Explica qué etapa fue más crítica, qué receptor resultó más expuesto, qué fuentes o frentes dominaron, "
+            "qué decisiones de modelación tomaste, qué escenarios cumplen o no y cuáles son las principales limitaciones del análisis."
+        ),
+    )
+    if st.button("Guardar caso integrador final",key="c4l1_s10_save_v2",type="primary",use_container_width=True):
+        if not saved.get("c4l1_stage10_results_v2"):
+            st.warning("Guarda primero los resultados de los tres escenarios.")
+        elif len(conclusion.strip())<220:
+            st.warning("Desarrolla una conclusión técnica de al menos 220 caracteres.")
+        else:
+            saved["c4l1_stage10_conclusion_v2"]=conclusion
+            _save_stage_state(lab,saved,10)
+            st.success("Caso integrador final guardado.")
+
+    with st.expander("👨‍🏫 Pauta docente · referencias y criterios de revisión"):
+        teacher_rows=[]
+        for machine in machines:
+            item=BS_PLANT[machine]
+            teacher_rows.append([
+                machine,
+                item["table"],
+                item["ref"],
+                item.get("metric","LAeq,T"),
+                item["laeq10"],
+                item["laeq10"]+28.0,
+                item["activity"],
+            ])
+        st.dataframe(
+            pd.DataFrame(
+                teacher_rows,
+                columns=["Maquinaria","Tabla","Ref.","Descriptor BS","Nivel a 10 m [dB(A)]","LWA didáctico [dB]","Actividad"],
+            ),
+            hide_index=True,
+            use_container_width=True,
+        )
+        st.markdown(
+            "**Criterios de corrección:** trazabilidad correcta de la BS; coherencia entre actividad y referencia; "
+            "conversión de nivel correctamente aplicada; estrategia espacial justificada; receptores representativos; "
+            "descriptor LAeq,15 min consistente con el criterio; comparación de cumplimiento correctamente interpretada."
+        )
+        st.caption(
+            "Se aceptan estrategias distintas —fuentes individuales, equivalentes o mixtas— si están técnicamente justificadas "
+            "y permiten reconstruir el razonamiento del alumno."
+        )
+
 
 
 _STAGES = [
