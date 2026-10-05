@@ -15,7 +15,7 @@ def _bind_runtime(runtime):
 
 CLASS_ID = "clase-07-construccion-lab-1"
 NOISEMAP_URL = "https://noisemap-akuzoft.vercel.app/"
-STAGE_MINUTES = [10,20,20,20,20,20,20,25,30,25,30]
+STAGE_MINUTES = [10,20,20,20,20,20,20,25,60,25,30]
 
 BS5228_PDF_FILENAME = "BS-5228 Code of Practice for Noise and Vibration Control on Open Sites - Part 1 - Noise (2009)+A1-2014.pdf"
 BS_PLANT = {
@@ -4104,77 +4104,264 @@ def _stage7(lab, saved):
 
 
 def _stage8(lab, saved):
-    _header(
-        8,
-        "Caso profesional guiado · introducción a Noise Map Lab",
-        "Presentar la herramienta de modelación y desarrollar por primera vez un caso profesional completo y guiado.",
-    )
-    st.markdown(
-        """
-        <div style="border:1px solid #d9e7f3;border-radius:22px;padding:22px 24px;background:linear-gradient(135deg,#fbfdff,#eef6ff)">
-          <div style="font-size:.72rem;font-weight:900;letter-spacing:.1em;color:#0b6ea8">PRESENTACIÓN DE LA HERRAMIENTA</div>
-          <div style="font-size:1.25rem;font-weight:900;color:#17324a;margin:.35rem 0">Noise Map Lab</div>
-          <div style="color:#586f82;line-height:1.55">
-            A partir de esta etapa usaremos una herramienta educativa para integrar en un mismo escenario
-            fuentes, receptores, espectros, suelo, barreras, controles y resultados espaciales.
-          </div>
-        </div>
-        """,unsafe_allow_html=True
-    )
-    st.warning("La herramienta tiene fines educativos y no sustituye una implementación certificada ni una evaluación acústica formal.")
-
-    st.markdown("### Qué reconocerás en la interfaz")
-    ui_cards=[
-        ("Fuente","Lw, espectro, altura, directividad, tiempo activo y control."),
-        ("Receptor","Posición y altura donde se calcula el nivel."),
-        ("Área de cálculo","Zona donde se construye el mapa de ruido."),
-        ("Terreno","Factor G, topografía y geometría del escenario."),
-        ("Barreras","Altura, posición y perfil fuente–barrera–receptor."),
-        ("Resultados","Nivel por receptor, contribuciones y mapa espacial."),
-    ]
-    html='<div style="display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;margin:1rem 0">'
-    for title,desc in ui_cards:
-        html+=f'<div style="border:1px solid #dce7f0;border-radius:16px;padding:15px;background:#fff"><div style="font-weight:850;color:#18324a">{title}</div><div style="font-size:.82rem;color:#64788b;margin-top:.3rem">{desc}</div></div>'
-    html+='</div>'
-    st.markdown(html,unsafe_allow_html=True)
+    _header(8, "Caso aplicado · de la medición al diseño de barreras",
+            "Resuelve un caso completo: estima la emisión, construye el modelo y justifica una propuesta de control.")
+    st.markdown("""
+    <div style="padding:22px;border:1px solid #cddfeb;border-radius:20px;background:linear-gradient(125deg,#eef7fc,#ffffff)">
+    <div style="color:#087ba0;font-weight:800">HERRAMIENTA DEL EJERCICIO</div>
+    <div style="font-size:1.5rem;font-weight:850;color:#173b53;margin:8px 0">Noise Map Lab</div>
+    <div style="color:#45677c;line-height:1.6">Construye la obra sobre el mapa, configura las fuentes y los receptores,
+    calcula la propagación y prueba tus barreras. Realiza ambos escenarios en esta aplicación y vuelve aquí
+    para registrar, comprobar y explicar tus resultados.</div></div>
+    """, unsafe_allow_html=True)
     _model_button()
+    st.caption("Recorrido: Buscar → Fuente / Receptor → General → Área → Calcular mapa → Resultados → Barrera / Corte → recalcular → Proyecto.")
+    st.info("Trabajo de 60 minutos · tres máquinas · tres receptores · dos escenarios comparables.")
+    sources = [("S1", "Retroexcavadora", 10., 20., 88.),
+               ("S2", "Generador diésel", 25., 25., 82.),
+               ("S3", "Martillo neumático", 35., 10., 96.)]
+    receivers = [("R1", 10., 55.), ("R2", 30., 55.), ("R3", 50., 55.)]
+    reference_r, reference_q, reference_atm, target = 5., 2., .5, 65.
+    expected = {sid: lp + 10 * math.log10(4 * math.pi * reference_r**2)
+                - 10 * math.log10(reference_q) + reference_atm
+                for sid, name, x, y, lp in sources}
 
-    st.markdown("### Caso profesional guiado")
+    st.markdown("### 1 · Lee el encargo y reconoce el escenario")
     st.markdown(
-        "**Situación:** obra de edificación con una excavadora hidráulica, un camión mixer y un martillo hidráulico. "
-        "Existe un receptor residencial al norte del predio. El objetivo es construir el escenario, calcularlo e identificar "
-        "qué fuente domina en el receptor."
-    )
-    case_df=pd.DataFrame([
-        ["Excavadora hidráulica", "BS 5228 C.2 Ref. 19", "100 %", "1,5 m"],
-        ["Camión mixer", "BS 5228 C.4 Ref. 20", "60 %", "1,5 m"],
-        ["Martillo hidráulico", "BS 5228 C.1 Ref. 1", "25 %", "1,5 m"],
-    ],columns=["Fuente","Referencia","Tiempo activo","Altura"])
-    st.dataframe(case_df,use_container_width=True,hide_index=True)
+        "Una obra ocupa un predio de **50 × 40 m**. Tres máquinas operan simultáneamente "
+        "durante **T = 60 min**, al 100 % de actividad. Tres receptores se ubican 15 m al norte "
+        "del límite del predio. Tu encargo es modelar el escenario inicial y proponer barreras "
+        "para alcanzar una **meta didáctica de 65 dB(A)** en los tres receptores.")
+    st.caption("Datos hipotéticos para aprendizaje. La meta no constituye por sí sola un límite legal ni una declaración de cumplimiento normativo.")
+    st.dataframe(pd.DataFrame(
+        [[sid, name, x, y, 1.5, lp] for sid, name, x, y, lp in sources],
+        columns=["ID", "Máquina", "X [m]", "Y [m]", "Altura [m]", "LAeq operativo a 5 m [dB(A)]"]),
+        hide_index=True, use_container_width=True)
+    st.dataframe(pd.DataFrame([[rid, x, y, 1.5] for rid, x, y in receivers],
+        columns=["Receptor", "X [m]", "Y [m]", "Altura [m]"]),
+        hide_index=True, use_container_width=True)
+    # Site plan shares the exact coordinate system used in the exercise tables.
+    svg = '<svg viewBox="0 0 660 430" role="img" aria-label="Plano de la obra y tres receptores" style="width:100%;max-height:430px;background:#f5f9fc;border-radius:18px">'
+    def xy(x, y):
+        return 65 + x * 8, 385 - y * 5.5
+    svg += '<rect x="65" y="165" width="400" height="220" fill="#e6f1f8" stroke="#6587a1" stroke-width="2"/>'
+    svg += '<text x="82" y="185" fill="#254d68" font-size="14">Predio 50 × 40 m</text>'
+    svg += '<path d="M65 82.5 H545" stroke="#a9becf" stroke-dasharray="6 5"/>'
+    for sid, name, x, y, lp in sources:
+        px, py = xy(x, y)
+        svg += f'<circle cx="{px}" cy="{py}" r="9" fill="#db8430"/><text x="{px+14}" y="{py+5}" font-size="14" fill="#254d68">{sid}</text>'
+    for rid, x, y in receivers:
+        px, py = xy(x, y)
+        svg += f'<circle cx="{px}" cy="{py}" r="9" fill="#087ba0"/><text x="{px-10}" y="{py-17}" font-size="14" fill="#254d68">{rid}</text>'
+    svg += '<text x="65" y="410" font-size="13" fill="#45677c">Origen (0,0) · X hacia el este · Y hacia el norte</text>'
+    svg += '<path d="M595 130 V75 L589 85 M595 75 L601 85" stroke="#254d68" stroke-width="2" fill="none"/><text x="588" y="64" fill="#254d68">N</text></svg>'
+    st.markdown(svg, unsafe_allow_html=True)
+    st.caption("Plano esquemático con escalas distintas en X e Y: usa las coordenadas de las tablas, no medidas tomadas de la imagen.")
+    with st.expander("Condiciones y alcance del caso"):
+        st.markdown(
+            "- Terreno plano; origen en la esquina suroeste; dominio de cálculo X = 0–60 m, Y = 0–60 m.\n"
+            "- Alturas sobre el terreno: fuentes y receptores a 1,5 m. Suelo inicialmente duro, G = 0.\n"
+            "- Mediciones de cada máquina aislada, sin fondo ni otras máquinas; nivel operativo constante.\n"
+            "- Para la estimación inicial se adopta Q = 2 y Aatm,ref = 0,5 dB a 5 m como datos didácticos.\n"
+            "- No se aplica corrección temporal adicional: todas operan durante el período completo.\n"
+            "- La estimación puntual de LWA no reemplaza una determinación normalizada de potencia sonora.")
 
+    st.markdown("### 2 · Estima la potencia sonora de cada máquina")
+    st.markdown("Primero calcula **LWA**, la emisión de la fuente. **LAeq operativo a 5 m** es el nivel de presión observado en una posición; son magnitudes diferentes.")
+    with st.container(border=True):
+        st.latex(r"L_{WA}\approx L_{pA,\mathrm{ref}}+10\log_{10}\!\left(\frac{4\pi r_{\mathrm{ref}}^2}{1\,\mathrm{m}^2}\right)-10\log_{10}(Q)+A_{\mathrm{atm,ref}}")
+        st.markdown(
+            "**Variables:** LWA: nivel de potencia sonora ponderado A, en dB re 1 pW; "
+            "LpA,ref: nivel de presión sonora ponderado A durante operación, en dB re 20 µPa; "
+            "rref: distancia fuente–medición, en m; Q: factor de directividad adimensional; "
+            "Aatm,ref: pérdida atmosférica entre fuente y medición, en dB.")
+        st.caption("Aquí rref = 5 m, Q = 2 y Aatm,ref = 0,5 dB. Es una aproximación de fuente puntual en campo lejano, con correcciones efectivas constantes para este ejercicio.")
+    st.info("Al despejar LWA, la directividad se resta y la pérdida atmosférica se suma. No uses el valor de Lp a 5 m como si fuera LWA.")
+    with st.form("c4l1_s8_power_form"):
+        powers = {}
+        for col, (sid, name, x, y, lp) in zip(st.columns(3), sources):
+            with col:
+                powers[sid] = st.number_input(name + " · LWA [dB re 1 pW]", value=None,
+                    step=.1, format="%.2f", key="c4l1_s8_power_" + sid, placeholder="Tu cálculo")
+        power_submit = st.form_submit_button("Comprobar estimaciones")
+    if power_submit:
+        statuses = {sid: value is not None and abs(value - expected[sid]) <= .2
+                    for sid, value in powers.items()}
+        for sid, name, x, y, lp in sources:
+            if statuses[sid]:
+                st.success(name + ": cálculo correcto.")
+            else:
+                st.warning(name + ": completa o revisa distancia, signo de Q y signo de Aatm.")
+        if all(statuses.values()):
+            saved["c4l1_stage8_power"] = dict(powers)
+            saved.pop("c4l1_stage8_case", None)
+            _save_stage_state(lab, saved, 8)
+            st.success("Estimaciones guardadas. Úsalas como entradas del modelo.")
+
+    st.markdown("### 3 · Construye el modelo inicial")
+    _model_button()
     st.markdown(
-        "1. Crea y renombra las tres fuentes.\n"
-        "2. Ingresa el Lw o espectro trabajado en las etapas anteriores.\n"
-        "3. Asigna los tiempos activos indicados.\n"
-        "4. Define un receptor residencial y un área de cálculo.\n"
-        "5. Configura el terreno del caso.\n"
-        "6. Calcula y registra el nivel total y la contribución de cada fuente.\n"
-        "7. Identifica la fuente dominante."
-    )
-    note=st.text_area(
-        "Registro técnico del caso",
-        value=saved.get("c4l1_stage8_note",""),
-        key="c4l1_s8_note",
-        placeholder="Nivel total, fuente dominante, condiciones principales y observaciones del escenario.",
-        height=150,
-    )
-    if st.button("Guardar registro del caso",key="c4l1_s8_save",type="primary"):
-        if len(note.strip())<80:
-            st.warning("Desarrolla un registro técnico de al menos 80 caracteres.")
+        "1. En **Buscar**, elige un lugar de trabajo o pega las coordenadas GPS del origen que acuerdes con el docente. "
+        "Las X/Y del caso son distancias locales en metros, no latitud y longitud. Mantén el norte hacia arriba.\n"
+        "2. Usa **Fuente (F)** y **Receptor (R)** para colocar los objetos. Nómbralos S1–S3 y R1–R3. "
+        "Usa **Auxiliar** para dibujar el predio; este dibujo no participa en el cálculo acústico. "
+        "Comprueba la geometría con **Dist. F–R** y registra cualquier desviación de colocación.\n"
+        "3. En cada ficha de fuente selecciona **Broadband**, ingresa tu **LwA**, altura 1,5 m, "
+        "**Ajuste = 0 dB**, **% tiempo activo = 100** y **Sin tratamiento**. Conserva las fuentes en **On**. "
+        "La ficha expresa directividad mediante **Dc [dB]**, no mediante Q: Dc = 10 log10(Q). "
+        "En este caso base usa **Dc = 0 dB** como directividad intrínseca y deja el plano reflectante al tratamiento de suelo del motor; no agregues automáticamente +3 dB por Q = 2. Documenta esta convención.\n"
+        "4. En **General**, selecciona el mismo método en ambos escenarios, **G = 0**, "
+        "temperatura 15 °C, humedad 70 % y **C₀ = 0**. Registra también las opciones de reflexiones y barreras.\n"
+        "5. Dibuja con **Área** un dominio de 60 × 60 m que incluya todos los receptores. "
+        "Pulsa **Calcular mapa** y abre **Resultados**. Guarda el escenario inicial mediante **Proyecto** y conserva su mapa.\n"
+        "6. Si Resultados no separa las contribuciones, registra el total con las tres fuentes en On; "
+        "luego deja solo una fuente en On, recalcula y copia su aporte en cada receptor. Repite para las otras dos. "
+        "Al terminar, vuelve a activar las tres y recalcula antes de diseñar las barreras.")
+    st.info("La colocación sobre el mapa debe conservar la geometría métrica del caso. Si trabajas por aproximación visual, declara la tolerancia y usa exactamente las mismas posiciones en los dos escenarios.")
+    with st.expander("Antes de calcular · evita supuestos incompatibles"):
+        st.markdown(
+            "**G y Q no son equivalentes:** G describe el suelo en el método de propagación; "
+            "Q describe la distribución direccional efectiva de la emisión. No cambies Q a 1 solamente por seleccionar un suelo absorbente.\n\n"
+            "**Reflexión:** Q = 2 se usa en la estimación como radiación hemisférica efectiva. "
+            "Revisa la convención del motor antes de trasladarlo: no dupliques esa misma reflexión "
+            "con una corrección adicional de +3 dB. Registra cómo la herramienta representa el plano reflectante.\n\n"
+            "**Espectro:** el caso base usa Broadband para ingresar LwA sin inventar bandas. Un único LWA no determina las bandas de octava. Si necesitas un "
+            "espectro, utiliza uno documentado y ajustado al LWA calculado, o solicita esos datos al docente. "
+            "No repitas LWA en cada banda ni supongas que 1000 Hz representa automáticamente un ruido de banda ancha.\n\n"
+            "**Barreras y frecuencia:** al interpretar la pérdida por difracción en Broadband, revisa en Modelo las hipótesis de la herramienta. Para un análisis espectral, acuerda un espectro documentado con el docente y úsalo en ambos escenarios; no cambies a Single 1000 Hz manteniendo una interpretación de banda ancha.\n\n"
+            "**Atmósfera:** 0,5 dB es el dato de inversión a 5 m del caso. No es una atenuación "
+            "constante válida para todas las distancias. Mantén iguales las condiciones atmosféricas en los dos escenarios.")
+    st.caption("Si se usa un espectro representativo, identifica su procedencia y deja claro que la predicción depende de esa hipótesis.")
+
+    st.markdown("### 4 · Registra y verifica el escenario sin barreras")
+    st.latex(r"L_{Aeq,T,\mathrm{total}}=10\log_{10}\!\left(\sum_{i=1}^{3}10^{L_{Aeq,T,i}/10}\right)")
+    st.caption("i identifica cada máquina; LAeq,T,i es su contribución en el mismo receptor y período T; LAeq,T,total es la suma energética. Todos los niveles se expresan en dB(A).")
+    st.markdown("Copia los resultados del modelo y comprueba la suma. Esta comprobación verifica la coherencia de tus datos; no valida por sí sola el motor de propagación.")
+    with st.form("c4l1_s8_baseline_form"):
+        baseline = {}
+        for rid, x, y in receivers:
+            st.markdown("**" + rid + " · contribuciones y total**")
+            row = []
+            for col, label in zip(st.columns(4), ["S1", "S2", "S3", "Total"]):
+                with col:
+                    row.append(st.number_input(rid + " · " + label + " [dB(A)]",
+                        value=None, step=.1, format="%.2f", key="c4l1_s8_before_" + rid + label))
+            baseline[rid] = row
+        assumptions = st.text_area("Configuración y trazabilidad",
+            placeholder="Motor, espectro y procedencia, convención de Q/reflexión, suelo, atmósfera y dónde guardaste el mapa inicial.",
+            key="c4l1_s8_assumptions")
+        baseline_submit = st.form_submit_button("Comprobar y guardar escenario inicial")
+    if baseline_submit:
+        valid = all(all(v is not None for v in row) for row in baseline.values())
+        if not valid:
+            st.warning("Completa las contribuciones y el total de los tres receptores.")
         else:
-            saved["c4l1_stage8_note"]=note
-            _save_stage_state(lab,saved,8)
-            st.success("Registro guardado.")
+            sums_ok = True
+            for rid, row in baseline.items():
+                total = 10 * math.log10(sum(10**(v/10) for v in row[:3]))
+                consistent = abs(total - row[3]) <= .3
+                sums_ok = sums_ok and consistent
+                dominant = sources[max(range(3), key=lambda i: row[i])][1]
+                st.write(f"{rid}: suma {'coherente' if consistent else 'por revisar'} · mayor contribución: {dominant}.")
+            if sums_ok and len(assumptions.strip()) >= 80:
+                saved["c4l1_stage8_baseline"] = {"levels": baseline, "assumptions": assumptions}
+                saved.pop("c4l1_stage8_case", None)
+                _save_stage_state(lab, saved, 8)
+                st.success("Escenario inicial guardado.")
+            elif sums_ok:
+                st.warning("Documenta la configuración con al menos 80 caracteres.")
+
+    st.markdown("### 5 · Diseña, prueba y compara las barreras")
+    st.markdown(
+        "Identifica el receptor crítico y las fuentes que más aportan. Diseña una o varias "
+        "barreras con extremos y altura definidos usando **Barrera**; registra su ficha y usa **Corte** para revisar que intercepten las trayectorias pertinentes "
+        "y considera el paso por los extremos. Pulsa **Calcular mapa** y consulta **Resultados**, manteniendo fuentes, actividad, suelo, "
+        "receptores, espectro y atmósfera iguales. Guarda el mapa final y una copia del modelo en **Proyecto**.")
+    initial = saved.get("c4l1_stage8_baseline", {}).get("levels", {})
+    if initial:
+        st.dataframe(pd.DataFrame([
+            [rid, row[3], max(0., row[3]-target)]
+            for rid, row in initial.items()],
+            columns=["Receptor", "Inicial [dB(A)]", "Reducción total mínima para la meta [dB]"]),
+            hide_index=True, use_container_width=True)
+    st.caption("La diferencia inicial − 65 es la reducción necesaria del total en el receptor; no es una atenuación que puedas aplicar automáticamente a cada máquina.")
+    with st.form("c4l1_s8_final_form"):
+        after = {}
+        for col, (rid, x, y) in zip(st.columns(3), receivers):
+            with col:
+                after[rid] = st.number_input(rid + " · con barreras [dB(A)]", value=None,
+                    step=.1, format="%.2f", key="c4l1_s8_after_" + rid)
+        barrier = st.text_area("Ficha de barreras",
+            placeholder="Por cada barrera: ID, extremos (X1,Y1)–(X2,Y2), altura, material/hipótesis, fuentes y receptores protegidos. Explica la iteración realizada.",
+            key="c4l1_s8_barriers", height=130)
+        conclusion = st.text_area("Conclusión técnica",
+            placeholder="Compara los receptores, identifica el crítico, explica el efecto de las barreras y las limitaciones. Si no alcanzas la meta, propone el siguiente control.",
+            key="c4l1_s8_conclusion", height=130)
+        evidence = st.text_area("Registro de evidencias",
+            placeholder="Nombre o ubicación de los mapas inicial/final y del archivo del modelo para entregarlos al docente.",
+            key="c4l1_s8_evidence")
+        final_submit = st.form_submit_button("Guardar comparación y propuesta")
+    if final_submit:
+        if not initial:
+            st.warning("Primero guarda el escenario inicial.")
+        elif not saved.get("c4l1_stage8_power"):
+            st.warning("Primero completa las estimaciones de potencia sonora.")
+        elif any(v is None for v in after.values()):
+            st.warning("Completa los tres niveles con barreras.")
+        elif len(barrier.strip()) < 80 or len(conclusion.strip()) < 80 or len(evidence.strip()) < 20:
+            st.warning("Desarrolla la ficha y la conclusión (80 caracteres cada una), e identifica las evidencias (20 caracteres).")
+        else:
+            comparison = [[rid, initial[rid][3], after[rid],
+                initial[rid][3]-after[rid], "Meta alcanzada" if after[rid] <= target else "Requiere revisión"]
+                for rid, x, y in receivers]
+            st.dataframe(pd.DataFrame(comparison, columns=["Receptor", "Inicial [dB(A)]",
+                "Final [dB(A)]", "Reducción obtenida [dB]", "Evaluación didáctica"]),
+                hide_index=True, use_container_width=True)
+            if any(after[rid] > initial[rid][3] for rid, x, y in receivers):
+                st.warning("Hay un aumento de nivel: revisa reflexiones, configuración y geometría; documenta su causa.")
+            saved["c4l1_stage8_case"] = {"version": 1, "after": after, "barriers": barrier,
+                "conclusion": conclusion, "evidence": evidence, "comparison": comparison}
+            saved["c4l1_stage8_note"] = conclusion
+            _save_stage_state(lab, saved, 8)
+            st.success("Propuesta guardada. El docente revisará los mapas, la geometría y las hipótesis; guardar el registro no certifica la predicción.")
+
+    st.markdown("### 6 · Defiende tus decisiones")
+    st.markdown(
+        "- ¿La máquina de mayor LWA domina necesariamente en todos los receptores? Usa contribuciones y distancias.\n"
+        "- ¿Por qué G = 0 y Q = 2 representan conceptos distintos?\n"
+        "- ¿Qué ocurre si se controla solo la fuente dominante y quedan las otras dos?\n"
+        "- ¿Por qué el cálculo de divergencia y el modelo con suelo, atmósfera y barreras pueden diferir?\n"
+        "- ¿Qué información adicional necesitarías para una evaluación normativa real?")
+    with st.expander("Pauta docente · solución de referencia y criterios de revisión"):
+        st.markdown("**Propósito:** evaluar el proceso y la trazabilidad, no una altura de barrera predeterminada. Reserve 10 min al cálculo, 20 al modelo inicial, 20 a iteraciones y 10 al informe.")
+        st.dataframe(pd.DataFrame([[name, lp, expected[sid]] for sid, name, x, y, lp in sources],
+            columns=["Fuente", "LpA a 5 m [dB(A)]", "LWA estimado [dB re 1 pW]"]),
+            hide_index=True, use_container_width=True)
+        st.markdown("**Despeje:** la corrección común es +22,46 dB. El martillo tiene la mayor emisión. Q = 2 reduce en 3,01 dB la potencia inferida respecto de Q = 1 para una misma presión; no es una reducción física aplicada a la máquina.")
+        rows = []
+        for rid, rx, ry in receivers:
+            levels = [expected[sid] + 10*math.log10(reference_q)
+                      - 10*math.log10(4*math.pi*((rx-x)**2+(ry-y)**2))
+                      for sid, name, x, y, lp in sources]
+            total = 10*math.log10(sum(10**(v/10) for v in levels))
+            rows.append([rid, *levels, total, max(0., total-target)])
+        st.markdown("**Control de orden de magnitud:** fuente puntual y Q efectivo = 2, sin pérdidas atmosféricas de propagación, efecto adicional del suelo ni barreras. Alturas iguales: distancia espacial = distancia horizontal. Estos valores no son la respuesta obligatoria de Noise Map Lab.")
+        st.dataframe(pd.DataFrame(rows, columns=["Receptor", "S1 [dB(A)]", "S2 [dB(A)]",
+            "S3 [dB(A)]", "Total geométrico [dB(A)]", "Total − meta [dB]"]).round(2),
+            hide_index=True, use_container_width=True)
+        st.markdown(
+            "**Revisión de barreras:** no hay una solución única con los datos entregados. "
+            "Pida extremos, altura, continuidad, material/hipótesis, espectro y capturas. Compruebe el perfil "
+            "fuente–barrera–receptor y el paso por extremos. No acepte una disminución uniforme inventada. "
+            "Si una fuente no queda protegida, su contribución puede limitar el resultado total.\n\n"
+            "**Evaluación sobre 20 puntos:** cálculo y unidades 4; geometría y configuración 4; "
+            "suma energética y receptor crítico 4; diseño e iteraciones comparables 5; "
+            "evidencias, limitaciones y conclusión 3. Un resultado sobre la meta puede obtener crédito "
+            "si está bien documentado y propone una corrección fundada.\n\n"
+            "**Errores a discutir:** sumar dB aritméticamente; confundir Lp con LWA; "
+            "duplicar la reflexión hemisférica; convertir G en Q; inventar un espectro de octavas; "
+            "comparar mapas con escalas o condiciones diferentes; declarar cumplimiento legal usando solo 65 dB(A).")
+        st.caption("La pauta permanece visible en un desplegable: no es un acceso docente protegido. Para una evaluación formal, gestione la entrega de respuestas fuera de esta vista.")
 
 
 def _stage9(lab, saved):
