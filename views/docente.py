@@ -520,6 +520,105 @@ def _teacher_lab1_final_results_impl(compact=False):
         }).eq("id",row["id"]).execute()
         st.success("Puntaje y observación docente guardados.")
 
+def _teacher_course4_review(rows, config, compact=False):
+    if not rows:
+        st.caption("Todavía no hay entregas del Curso 4 · Laboratorio 1.")
+        return
+    selected_idx=st.selectbox(
+        "Alumno",
+        range(len(rows)),
+        format_func=lambda i: (
+            (rows[i].get("users") or {}).get("display_name")
+            or (rows[i].get("users") or {}).get("email")
+            or rows[i].get("user_key","Alumno")
+        ),
+        key=f"teacher_c4_student_{config['stage']}_{'c' if compact else 'f'}",
+    )
+    row=rows[selected_idx]
+    payload=row.get("answer") or {}
+    if isinstance(payload,str):
+        try:
+            payload=json.loads(payload)
+        except Exception:
+            payload={}
+    if not isinstance(payload,dict):
+        payload={}
+    st.markdown("#### Entrega del alumno")
+    a,b,c1=st.columns(3)
+    a.metric("Puntaje automático",f"{float(row.get('auto_score') or 0):g}/{config['maximum']}")
+    b.metric("Estado","Revisada" if row.get("status")=="reviewed" or row.get("teacher_score") is not None else "Entregada")
+    c1.metric("Puntaje docente",f"{float(row.get('teacher_score')):g}/{config['maximum']}" if row.get("teacher_score") is not None else "Pendiente")
+
+    if config["stage"]==9:
+        answers=payload.get("answers") if isinstance(payload.get("answers"),dict) else {}
+        questions=payload.get("questions") if isinstance(payload.get("questions"),list) else []
+        for i,item in enumerate(questions):
+            chosen=answers.get(str(i),"Sin respuesta")
+            correct=item.get("correct_answer","—")
+            with st.expander(f"{i+1}. {'Correcta' if chosen==correct else 'Incorrecta'}",expanded=(i==0)):
+                st.markdown(f"**Pregunta:** {item.get('question','')}")
+                st.write(f"**Respuesta del alumno:** {chosen}")
+                st.success(f"**Pauta:** {correct}")
+                if item.get("explanation"):
+                    st.info(item["explanation"])
+        st.caption("Pauta: 1 punto por respuesta correcta · máximo 10 puntos. Evaluación formativa sin nota oficial.")
+        note=st.text_area("Observación docente",value=row.get("teacher_note") or "",key=f"teacher_c4_s9_note_{row['id']}")
+        if st.button("Guardar observación",use_container_width=True,key=f"teacher_c4_s9_save_{row['id']}"):
+            _supabase().table("responses").update({
+                "teacher_level":"Revisada",
+                "teacher_score":float(row.get("auto_score") or 0),
+                "teacher_note":note,
+                "status":"reviewed",
+                "updated_at":_now(),
+            }).eq("id",row["id"]).execute()
+            st.success("Revisión formativa de la Etapa 9 guardada.")
+        return
+
+    bs_entries=payload.get("bs_entries") if isinstance(payload.get("bs_entries"),dict) else {}
+    if bs_entries:
+        bs_rows=[]
+        for machine,data in bs_entries.items():
+            if isinstance(data,dict):
+                bs_rows.append([machine,data.get("table"),data.get("ref"),data.get("lp10"),data.get("lwa")])
+        st.dataframe(pd.DataFrame(bs_rows,columns=["Maquinaria","Tabla","Ref.","Nivel 10 m","LWA"]),hide_index=True,use_container_width=True)
+
+    st.markdown("**Conclusión del alumno**")
+    st.write(payload.get("conclusion") or "Sin conclusión.")
+
+    rubric=[
+        ("Trazabilidad BS 5228",20,"Referencia, actividad y descriptor correctamente justificados."),
+        ("Estrategia de modelación",20,"Representación coherente con la geometría del frente de trabajo."),
+        ("Geometría y receptores",20,"Receptores, alturas y área de cálculo consistentes."),
+        ("Resultados y cumplimiento",20,"LAeq,15 min e interpretación correcta de los límites didácticos."),
+        ("Conclusión técnica y limitaciones",20,"Diagnóstico, escenario crítico y limitaciones claramente expuestas."),
+    ]
+    st.markdown("##### Pauta docente · Etapa 10")
+    st.dataframe(pd.DataFrame(rubric,columns=["Criterio","Máximo","Respuesta esperada"]),hide_index=True,use_container_width=True)
+
+    saved_scores=payload.get("rubric_scores") if isinstance(payload.get("rubric_scores"),dict) else {}
+    awarded={}
+    for criterion,maximum,_ in rubric:
+        awarded[criterion]=st.number_input(
+            criterion,0.0,float(maximum),float(saved_scores.get(criterion,0.0)),1.0,
+            key=f"teacher_c4_s10_{row['id']}_{criterion}",
+        )
+    total=float(sum(awarded.values()))
+    st.metric("Puntaje formativo docente",f"{total:g}/100")
+    note=st.text_area("Observación docente",value=row.get("teacher_note") or "",key=f"teacher_c4_s10_note_{row['id']}")
+    if st.button("Guardar revisión y pauta",type="primary",use_container_width=True,key=f"teacher_c4_s10_save_{row['id']}"):
+        updated=dict(payload)
+        updated["rubric_scores"]=awarded
+        _supabase().table("responses").update({
+            "answer":updated,
+            "teacher_level":"Revisada",
+            "teacher_score":total,
+            "teacher_note":note,
+            "status":"reviewed",
+            "updated_at":_now(),
+        }).eq("id",row["id"]).execute()
+        st.success("Revisión formativa de la Etapa 10 guardada.")
+
+
 def _teacher_course_results_impl(compact=False):
     """Centro escalable de gestión de evaluaciones: Curso → Laboratorio → Evaluación."""
     if st.session_state.get("role")!="Docente":
