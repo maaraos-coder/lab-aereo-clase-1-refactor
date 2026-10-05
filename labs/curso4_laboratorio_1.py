@@ -3329,47 +3329,6 @@ def _stage7(lab, saved):
             "La ecuación con logaritmo se aplica para 0 < tᵢ ≤ T; si tᵢ = 0, no hay aporte de la máquina."
         )
 
-        for col, percent in zip(st.columns(4), [100, 50, 25, 10]):
-            with col:
-                st.markdown(
-                    '<div style="border:1px solid #dce7ef;border-radius:12px;padding:13px;background:#f7fafc;text-align:center">'
-                    f'<div style="font-size:.78rem;color:#627989">{percent} % activo</div>'
-                    f'<div style="font-size:1.18rem;font-weight:850;color:#24445c;margin-top:.3rem">{10*math.log10(percent/100):.2f} dB</div></div>',
-                    unsafe_allow_html=True,
-                )
-        if active_minutes == 0:
-            st.info(
-                "La fuente no aporta energía a esta hora. Se muestra «Sin aporte»: log10(0) no tiene "
-                "un valor finito y no corresponde asignarle 0 dB. Si hay fondo, este sigue presente."
-            )
-        else:
-            st.markdown(
-                f"**Lectura:** {active_minutes} min a {base} dB(A) aportan **{equivalent:.2f} dB(A)** "
-                "al período de 60 min. La corrección cambia el aporte temporal; la máquina conserva "
-                "su nivel durante operación."
-            )
-        if use_background:
-            st.latex(r"L_{Aeq,T,\mathrm{total}}=10\log_{10}\left[(t/T)10^{L_{\mathrm{fuente}}/10}+10^{L_{\mathrm{fondo}}/10}\right]")
-            st.markdown(
-                "**Cómo se calcula:** durante la actividad se suman las energías de máquina y fondo; "
-                "durante la parada permanece solo el fondo. Se ponderan ambos intervalos por su duración. "
-                "La expresión anterior equivale a ese promedio porque el fondo está presente toda la hora."
-            )
-            st.info(
-                "Si ingresas un nivel medido con la máquina encendida que ya incluye el fondo, "
-                "no vuelvas a sumarlo: contarías dos veces su energía. Este simulador utiliza el aporte "
-                "de la máquina separado del fondo; no aplica una corrección de mediciones."
-            )
-            if active_minutes == 0:
-                st.caption(f"Con la máquina detenida toda la hora, el total coincide con el fondo: {background:.2f} dB(A).")
-            st.caption(
-                "El total no puede quedar por debajo del fondo incluido. Todos los niveles deben corresponder "
-                "al mismo receptor y descriptor. Este cálculo energético no es una corrección normativa por ruido de fondo."
-            )
-            st.markdown(
-                "[Referencia: FHWA · Noise Measurement Handbook, ajuste por fondo]"
-                "(https://www.fhwa.dot.gov/ENVIRonment/noise/measurement/handbook.cfm)"
-            )
         st.markdown("**Ejemplo guiado · 80 dB(A) durante 15 min de una hora**")
         st.latex(r"\frac{t_i}{T}=\frac{15}{60}=0{,}25\qquad\Delta L_{t,i}=10\log_{10}(0{,}25)=-6{,}02\ \mathrm{dB}")
         st.latex(r"L_{Aeq,60\,\mathrm{min},i}=80+(-6{,}02)=73{,}98\ \mathrm{dB(A)}")
@@ -3448,6 +3407,47 @@ def _stage7(lab, saved):
                 )
     with st.container(border=True):
         st.markdown("**Referencias rápidas · efecto de la fracción activa en el mismo cálculo**")
+        for col, percent in zip(st.columns(4), [100, 50, 25, 10]):
+            with col:
+                st.markdown(
+                    '<div style="border:1px solid #dce7ef;border-radius:12px;padding:13px;background:#f7fafc;text-align:center">'
+                    f'<div style="font-size:.78rem;color:#627989">{percent} % activo</div>'
+                    f'<div style="font-size:1.18rem;font-weight:850;color:#24445c;margin-top:.3rem">{10*math.log10(percent/100):.2f} dB</div></div>',
+                    unsafe_allow_html=True,
+                )
+        if active_minutes == 0:
+            st.info(
+                "La fuente no aporta energía a esta hora. Se muestra «Sin aporte»: log10(0) no tiene "
+                "un valor finito y no corresponde asignarle 0 dB. Si hay fondo, este sigue presente."
+            )
+        else:
+            st.markdown(
+                f"**Lectura:** {active_minutes} min a {base} dB(A) aportan **{equivalent:.2f} dB(A)** "
+                "al período de 60 min. La corrección cambia el aporte temporal; la máquina conserva "
+                "su nivel durante operación."
+            )
+        if use_background:
+            st.latex(r"L_{Aeq,T,\mathrm{total}}=10\log_{10}\left[(t/T)10^{L_{\mathrm{fuente}}/10}+10^{L_{\mathrm{fondo}}/10}\right]")
+            st.markdown(
+                "**Cómo se calcula:** durante la actividad se suman las energías de máquina y fondo; "
+                "durante la parada permanece solo el fondo. Se ponderan ambos intervalos por su duración. "
+                "La expresión anterior equivale a ese promedio porque el fondo está presente toda la hora."
+            )
+            st.info(
+                "Si ingresas un nivel medido con la máquina encendida que ya incluye el fondo, "
+                "no vuelvas a sumarlo: contarías dos veces su energía. Este simulador utiliza el aporte "
+                "de la máquina separado del fondo; no aplica una corrección de mediciones."
+            )
+            if active_minutes == 0:
+                st.caption(f"Con la máquina detenida toda la hora, el total coincide con el fondo: {background:.2f} dB(A).")
+            st.caption(
+                "El total no puede quedar por debajo del fondo incluido. Todos los niveles deben corresponder "
+                "al mismo receptor y descriptor. Este cálculo energético no es una corrección normativa por ruido de fondo."
+            )
+            st.markdown(
+                "[Referencia: FHWA · Noise Measurement Handbook, ajuste por fondo]"
+                "(https://www.fhwa.dot.gov/ENVIRonment/noise/measurement/handbook.cfm)"
+            )
 
     _s7_section(3, "Suma dos máquinas con distintos tiempos", "Define el nivel durante operación y los minutos activos de cada máquina. Ambas aportan al mismo receptor durante una hora.")
     machine_inputs = []
