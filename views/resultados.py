@@ -642,14 +642,16 @@ def student_sidebar_summary(client, user_key):
           <div style="font-weight:800;font-size:.95rem;margin-bottom:.55rem">📘 PROGRESO DEL DIPLOMADO</div>
 
           <div style="display:flex;justify-content:space-between;gap:.5rem;font-size:.82rem">
-            <span>Curso 1 · evaluaciones</span><b>{official['completed']}/2</b>
-          </div>
-
-          <div style="display:flex;justify-content:space-between;gap:.5rem;font-size:.82rem;margin-top:.35rem">
             <span>Curso 1 · avance formativo</span><b>{formative_percent:.0f}%</b>
           </div>
 
           <div style="display:flex;justify-content:space-between;gap:.5rem;font-size:.82rem;margin-top:.35rem">
+            <span>Curso 1 · evaluaciones</span><b>{official['completed']}/2</b>
+          </div>
+
+          <div style="height:1px;background:rgba(255,255,255,.22);margin:.55rem 0 .45rem"></div>
+
+          <div style="display:flex;justify-content:space-between;gap:.5rem;font-size:.82rem">
             <span>Curso 2 · avance formativo</span><b>{c2_lab1_progress_pct:.0f}%</b>
           </div>
 
