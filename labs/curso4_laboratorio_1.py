@@ -4961,7 +4961,7 @@ def _course4_stage10_payload(saved, conclusion):
         "results":saved.get("c4l1_stage10_results_v2",{}),
         "common_settings":saved.get("c4l1_stage10_common_settings_v2",""),
         "limits":{"R1":65.0,"R2":70.0,"R3":60.0},
-        "descriptor":"LAeq,15 min",
+        "descriptor":"LAeq",
         "conclusion":conclusion,
         "teacher_rubric":{
             "Trazabilidad BS 5228":20,
@@ -5149,15 +5149,15 @@ def _stage10(lab, saved):
     st.markdown("### 5 · Define los receptores y el descriptor de evaluación")
     st.markdown(
         "Selecciona tres receptores fuera del predio y documenta su posición y altura. "
-        "Para este ejercicio, el resultado de cada escenario se interpretará como **LAeq,15 min**. "
+        "Para este ejercicio, el resultado de cada escenario se interpretará como **LAeq**. "
         "No debes aplicar correcciones por porcentaje de tiempo activo: modela las fuentes consideradas como operativas durante el escenario."
     )
 
     criteria=pd.DataFrame(
         [
-            ["R1","Residencial",65.0,"LAeq,15 min"],
-            ["R2","Oficina / comercio",70.0,"LAeq,15 min"],
-            ["R3","Receptor sensible",60.0,"LAeq,15 min"],
+            ["R1","Residencial",65.0,"LAeq"],
+            ["R2","Oficina / comercio",70.0,"LAeq"],
+            ["R3","Receptor sensible",60.0,"LAeq"],
         ],
         columns=["Receptor","Uso didáctico","Límite máximo [dB(A)]","Descriptor"],
     )
@@ -5221,7 +5221,7 @@ def _stage10(lab, saved):
                 for col,rid in zip(cols,["R1","R2","R3"]):
                     with col:
                         results[code][rid]=st.number_input(
-                            f"{rid} · LAeq,15 min [dB(A)]",
+                            f"{rid} · LAeq [dB(A)]",
                             value=result_saved.get(code,{}).get(rid),
                             step=.1,
                             format="%.1f",
@@ -5268,7 +5268,7 @@ def _stage10(lab, saved):
         compliance_df=pd.DataFrame(
             rows,
             columns=[
-                "Etapa","Escenario","Receptor","LAeq,15 min [dB(A)]",
+                "Etapa","Escenario","Receptor","LAeq [dB(A)]",
                 "Límite [dB(A)]","Evaluación","Margen [dB]",
             ],
         )
@@ -5342,7 +5342,7 @@ def _stage10(lab, saved):
         st.markdown(
             "**Criterios de corrección:** trazabilidad correcta de la BS; coherencia entre actividad y referencia; "
             "conversión de nivel correctamente aplicada; estrategia espacial justificada; receptores representativos; "
-            "descriptor LAeq,15 min consistente con el criterio; comparación de cumplimiento correctamente interpretada."
+            "descriptor LAeq consistente con el criterio; comparación de cumplimiento correctamente interpretada."
         )
         st.caption(
             "Se aceptan estrategias distintas —fuentes individuales, equivalentes o mixtas— si están técnicamente justificadas "
