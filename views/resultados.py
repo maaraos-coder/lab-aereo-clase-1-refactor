@@ -30,6 +30,7 @@ _LOCAL_NAMES = {
     "_render_readonly_answers_block", "_render_course2_lab1_submission",
     "_render_course2_lab2_stage9_submission", "_render_course2_lab2_stage10_submission",
     "_render_teacher_feedback", "_course3_lab2_delivery_rows", "_course3_lab2_official_summary",
+    "_course4_lab1_delivery_rows", "_render_course4_block",
     "student_sidebar_summary", "results_view",
 }
 
@@ -155,6 +156,19 @@ def _course3_lab2_official_summary(rows):
         "completed":completed,"reviewed":reviewed,
         "total":total,"grade":grade,
     }
+
+
+
+def _course4_lab1_delivery_rows(rows):
+    """Entregas formativas del Curso 4 · Laboratorio 1."""
+    return _latest_response_by_key(
+        rows,
+        "clase-07-construccion-lab-1",
+        {
+            "stage9": (9, "c4_formative_comprehension"),
+            "stage10": (10, "c4_formative_integrated_case"),
+        },
+    )
 
 
 def _results_catalog():
@@ -2182,6 +2196,104 @@ def _render_course3_block(rows, progress_rows):
                     f"Curso 3 · Puntaje final: {official['total']:.1f}/100 · "
                     f"Nota final: {official['grade']:.1f}"
                 )
+
+
+
+def _render_course4_block(rows, progress_rows):
+    """Curso 4 · Laboratorio 1: avance + dos entregas formativas."""
+    labs=[
+        lab for lab in FUTURE_LABS.values()
+        if lab.get("course")=="Factores del ruido en el proceso de construcción"
+    ]
+    lab1=next((lab for lab in labs if int(lab.get("number") or 0)==1),None)
+    p1=_future_lab_progress(lab1,progress_rows) if lab1 else {
+        "completed":0,"expected":11,"percent":0.0,"stage_rows":[]
+    }
+    deliveries=_course4_lab1_delivery_rows(rows)
+    delivered=sum(deliveries.get(k) is not None for k in ("stage9","stage10"))
+    label=(
+        f"Curso 4 · Factores del ruido en el proceso de construcción · "
+        f"{p1.get('percent',0):.0f}% de avance · {delivered}/2 entregas formativas"
+    )
+    with st.expander(label,expanded=True):
+        a,b,c1=st.columns(3)
+        a.metric("Avance del laboratorio",f"{p1.get('percent',0):.0f} %")
+        b.metric("Etapas completadas",f"{p1.get('completed',0)} de {p1.get('expected',11)}")
+        c1.metric("Entregas formativas",f"{delivered} de 2")
+
+        tabs=st.tabs(["Laboratorio","Etapa 9","Etapa 10"])
+        with tabs[0]:
+            _render_lab_progress_card(
+                "Laboratorio 1 · Ruido en construcción",
+                "Etapas 0–10 · aprendizaje y evaluación formativa",
+                p1.get("completed",0),p1.get("expected",11),p1.get("percent",0.0),
+                p1.get("stage_rows"),
+            )
+
+        with tabs[1]:
+            row=deliveries.get("stage9")
+            if row is None:
+                st.info("Aún no has enviado el cuestionario formativo de la Etapa 9.")
+            else:
+                payload=_student_result_payload(row.get("answer"))
+                if not isinstance(payload,dict):
+                    payload={}
+                score=float(row.get("auto_score") or payload.get("score") or 0)
+                st.metric("Resultado",f"{score:g}/10")
+                st.caption(f"Entrega: {_result_date(row.get('submitted_at') or row.get('updated_at'))}")
+                questions=payload.get("questions") if isinstance(payload.get("questions"),list) else []
+                answers=payload.get("answers") if isinstance(payload.get("answers"),dict) else {}
+                for i,item in enumerate(questions):
+                    chosen=answers.get(str(i),"Sin respuesta")
+                    correct=item.get("correct_answer","—")
+                    ok=chosen==correct
+                    with st.expander(f"{'✅' if ok else '❌'} Pregunta {i+1}"):
+                        st.markdown(f"**Pregunta:** {item.get('question','')}")
+                        st.write(f"**Tu respuesta:** {chosen}")
+                        st.info(f"**Pauta:** {correct}")
+                        if item.get("explanation"):
+                            st.caption(item["explanation"])
+
+        with tabs[2]:
+            row=deliveries.get("stage10")
+            if row is None:
+                st.info("Aún no has entregado el caso integrador de la Etapa 10.")
+            else:
+                payload=_student_result_payload(row.get("answer"))
+                if not isinstance(payload,dict):
+                    payload={}
+                reviewed=row.get("status")=="reviewed" or row.get("teacher_score") is not None
+                c2,c3=st.columns(2)
+                c2.metric("Estado","Revisada" if reviewed else "Pendiente de revisión")
+                c3.metric(
+                    "Puntaje docente",
+                    f"{float(row.get('teacher_score')):g}/100"
+                    if row.get("teacher_score") is not None else "Pendiente",
+                )
+                st.caption(f"Entrega: {_result_date(row.get('submitted_at') or row.get('updated_at'))}")
+                st.markdown("**Conclusión entregada**")
+                st.write(payload.get("conclusion") or "Sin conclusión registrada.")
+                results=payload.get("results") if isinstance(payload.get("results"),dict) else {}
+                if results:
+                    rows_out=[]
+                    for scenario,vals in results.items():
+                        if isinstance(vals,dict):
+                            for rid,value in vals.items():
+                                rows_out.append([scenario,rid,value])
+                    if rows_out:
+                        st.dataframe(
+                            pd.DataFrame(rows_out,columns=["Escenario","Receptor","LAeq,15 min [dB(A)]"]),
+                            hide_index=True,use_container_width=True,
+                        )
+                rubric=payload.get("teacher_rubric") if isinstance(payload.get("teacher_rubric"),dict) else {}
+                if rubric:
+                    st.markdown("**Pauta de revisión**")
+                    st.dataframe(
+                        pd.DataFrame([[k,v] for k,v in rubric.items()],columns=["Criterio","Puntaje máximo"]),
+                        hide_index=True,use_container_width=True,
+                    )
+                if row.get("teacher_note"):
+                    st.info("Comentario docente: "+str(row.get("teacher_note")))
 
 
 def results_view(client, catalog, user_key):
