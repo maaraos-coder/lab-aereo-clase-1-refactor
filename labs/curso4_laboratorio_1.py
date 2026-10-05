@@ -62,7 +62,7 @@ BS_PLANT = {
     "Vibrador de inmersión": {
         "en":"Poker vibrator","phase":"Estructura y hormigón","table":"C.4","ref":"33","page":"51 BS / 57 PDF",
         "power":"—","size":"—","activity":"Vibrado de hormigón","laeq10":78.0,
-        "bands":[82,80,80,73,69,72,70,65],"image":"vibrador_inmersion.svg",
+        "bands":[82,80,80,73,69,72,70,65],"image":"vibrador_inmersion.webp",
     },
     "Bomba + mixer a 5° piso": {
         "en":"Concrete pump + cement mixer truck","phase":"Estructura y hormigón","table":"C.4","ref":"25","page":"51 BS / 57 PDF",
