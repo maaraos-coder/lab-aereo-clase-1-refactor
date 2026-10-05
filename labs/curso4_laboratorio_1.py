@@ -3886,12 +3886,136 @@ def _stage7(lab, saved):
             "(https://www.fhwa.dot.gov/environment/noise/construction_noise/handbook/handbook02.cfm)"
         )
     if st.session_state.get("role") == "Docente":
-        with st.expander("Pauta docente · Etapa 7"):
+        with st.expander("Pauta docente detallada · ejercicio de la parte 6", expanded=False):
             st.markdown(
-                f"**Caso fijo:** total {expected_total:.2f} dB(A); domina {expected_name}.\n\n"
-                "**Preguntas de conducción:** ¿por qué el promedio horario se mantiene cuando solo desplazas "
-                "un horario? ¿Qué ocurre al reducir la duración? ¿Por qué un nivel alto durante operación "
-                "no determina por sí solo la fuente dominante del período?"
+                '<div style="border:1px solid #d4e3ed;border-radius:16px;padding:18px 20px;background:#f1f7fb">'
+                '<div style="font-size:.72rem;font-weight:850;letter-spacing:.1em;color:#176b9b">GUÍA DE CORRECCIÓN · USO DOCENTE</div>'
+                '<div style="font-size:1.15rem;font-weight:850;color:#17324a;margin:.5rem 0">Qué debe calcular el alumno y cómo acompañarlo</div>'
+                '<div style="font-size:.86rem;color:#526b7c;line-height:1.6">Esta pauta corresponde al caso nuevo de la parte 6, '
+                'no a los valores modificables del simulador. El alumno mantiene sus campos vacíos y recibe pistas al comprobar.</div></div>',
+                unsafe_allow_html=True,
+            )
+            st.markdown("#### 1 · Qué significa cada campo")
+            st.markdown(
+                "- **Minutos activos, tᵢ:** cuánto trabaja la máquina dentro de T = 60 min. "
+                "Se obtiene multiplicando el porcentaje activo, expresado como fracción, por 60.\n"
+                "- **Corrección temporal, ΔLt,i [dB]:** ajuste que reparte la energía de la actividad "
+                "sobre toda la hora. No es una reducción física del ruido de la máquina. "
+                "Es negativa si trabaja parte de la hora y cero si trabaja toda la hora.\n"
+                "- **Aporte en la hora, LAeq,T,i [dB(A)]:** nivel operativo más la corrección temporal. "
+                "Describe la contribución individual al promedio horario en R1.\n"
+                "- **Total de la hora:** suma energética de los cuatro aportes equivalentes; "
+                "no es su suma ni su promedio aritmético.\n"
+                "- **Fuente dominante:** máquina con la mayor contribución energética a la hora, "
+                "equivalente a la de mayor LAeq,T,i."
+            )
+            st.caption(
+                "Los niveles de entrada son de presión sonora en el mismo receptor, separados del fondo; "
+                "no son Lw ni LAmax. Se supone nivel constante durante operación y aporte nulo durante la parada."
+            )
+            st.markdown("#### 2 · Resultados para completar los campos")
+            teacher_energies = [10**(value/10) for value in equivalents]
+            teacher_energy_total = sum(teacher_energies)
+            teacher_rows = []
+            for (name, level, duty), equivalent, energy in zip(case_data, equivalents, teacher_energies):
+                teacher_rows.append({
+                    "Fuente": name,
+                    "Nivel operativo [dB(A)]": f"{level:.2f}",
+                    "Activo [%]": duty,
+                    "Minutos activos": f"{60*duty/100:.2f}",
+                    "Corrección temporal [dB]": f"{10*math.log10(duty/100):.2f}",
+                    "Aporte en la hora [dB(A)]": f"{equivalent:.2f}",
+                    "Energía del conjunto [%]": f"{100*energy/teacher_energy_total:.2f}",
+                })
+            st.dataframe(pd.DataFrame(teacher_rows), use_container_width=True, hide_index=True)
+            st.caption("Los resultados se calculan con todos los decimales y se redondean aquí a dos decimales.")
+            st.markdown("**Desarrollo por máquina**")
+            for (name, level, duty), equivalent in zip(case_data, equivalents):
+                with st.expander(f"{name} · desarrollo paso a paso"):
+                    minutes = 60*duty/100
+                    correction = 10*math.log10(duty/100)
+                    st.markdown("**Paso 1 · Convierte el porcentaje en minutos**")
+                    st.latex(r"t_i=\frac{p_i}{100}T=" + f"({duty}/100)\\times60={minutes:.0f}" + r"\ \mathrm{min}")
+                    st.markdown("**Paso 2 · Calcula la corrección temporal**")
+                    st.latex(r"\Delta L_{t,i}=10\log_{10}(t_i/T)=10\log_{10}" + f"({minutes:.0f}/60)={correction:.2f}" + r"\ \mathrm{dB}")
+                    st.markdown("**Paso 3 · Obtén el aporte equivalente de la hora**")
+                    st.latex(r"L_{Aeq,T,i}=L_{\mathrm{operación},i}+\Delta L_{t,i}=" + f"{level:.2f}+({correction:.2f})={equivalent:.2f}" + r"\ \mathrm{dB(A)}")
+                    st.caption(
+                        f"{name} conserva {level:.0f} dB(A) durante operación; "
+                        f"su energía repartida sobre 60 min equivale a {equivalent:.2f} dB(A)."
+                    )
+            st.markdown("#### 3 · Cómo calcular el total")
+            st.markdown(
+                "**Primero**, transforma cada aporte horario en energía relativa: Eᵢ = 10^(LAeq,T,i/10). "
+                "**Después**, suma las cuatro energías. **Finalmente**, aplica 10 log10 a esa suma. "
+                "No vuelvas a multiplicar por el tiempo activo: ya está incorporado en los aportes equivalentes."
+            )
+            st.dataframe(
+                pd.DataFrame([{"Fuente": row[0], "Energía relativa · sin unidad": f"{energy:,.2f}"}
+                              for row, energy in zip(case_data, teacher_energies)]),
+                use_container_width=True, hide_index=True,
+            )
+            st.latex(r"L_{Aeq,T,\Sigma}=10\log_{10}\left[\sum_i10^{L_{Aeq,T,i}/10}\right]")
+            st.latex(r"L_{Aeq,T,\Sigma}=10\log_{10}\left[" + f"{teacher_energy_total:.2f}" + r"\right]=" + f"{expected_total:.2f}" + r"\ \mathrm{dB(A)}")
+            st.success(f"Resultado esperado: {expected_total:.2f} dB(A). Fuente dominante: {expected_name}.")
+            st.markdown("#### 4 · Justificación que se espera del alumno")
+            st.markdown(
+                "El **martillo** trabaja pocos minutos, pero su nivel operativo alto produce el mayor aporte "
+                "equivalente de la hora. Su aporte es **66,00 dB(A)**, ligeramente superior al de la excavadora "
+                "(**65,78 dB(A)**). Aporta aproximadamente **41,20 %** de la energía total; "
+                "la excavadora aporta **39,18 %**. El generador opera toda la hora, pero su nivel menor "
+                "limita su contribución.\n\n"
+                "**Respuesta modelo:** «Domina el martillo porque, tras ponderar cada máquina por su tiempo "
+                "activo, su aporte horario es el mayor. La excavadora tiene un aporte muy cercano. "
+                "La selección considera nivel y duración, no solo el ruido durante operación»."
+            )
+            st.caption(
+                "La diferencia entre los dos mayores aportes es pequeña: esta es la conclusión del caso "
+                "numérico idealizado. En una obra real, la incertidumbre de niveles y tiempos puede cambiar el orden."
+            )
+            st.markdown("#### 5 · Criterios de corrección")
+            st.markdown(
+                "**Comprobación automática: 14 verificaciones**\n\n"
+                "- 4 tiempos activos: tolerancia ±0,1 min.\n"
+                "- 4 correcciones temporales y 4 aportes equivalentes: tolerancia ±0,2 dB.\n"
+                "- 1 total energético: tolerancia ±0,2 dB.\n"
+                "- 1 selección de fuente dominante: martillo.\n\n"
+                "**Justificación: revisión docente.** El mínimo de 40 caracteres solo exige desarrollar "
+                "la respuesta; no garantiza que sea técnicamente correcta."
+            )
+            st.dataframe(
+                pd.DataFrame([
+                    {"Criterio de la justificación": "Relaciona nivel y duración", "Puntos sugeridos": "0–2", "Logro completo": "Explica que la energía depende de ambas variables."},
+                    {"Criterio de la justificación": "Compara aportes equivalentes", "Puntos sugeridos": "0–2", "Logro completo": "Identifica el martillo y reconoce la cercanía con la excavadora."},
+                    {"Criterio de la justificación": "Interpreta el resultado", "Puntos sugeridos": "0–2", "Logro completo": "Distingue aporte horario de nivel operativo y evita sumar dB."},
+                ]), use_container_width=True, hide_index=True,
+            )
+            st.caption(
+                "Si necesitas una calificación: propuesta de 20 puntos, con 14 por cálculos y selección "
+                "y 6 por justificación. Es una rúbrica sugerida; la app registra las 14 verificaciones, "
+                "sin asignar automáticamente los puntos de la explicación."
+            )
+            st.markdown("#### 6 · Errores frecuentes y cómo orientarlos")
+            st.dataframe(
+                pd.DataFrame([
+                    {"Error observado": "Usa 60 en lugar de 0,60", "Orientación docente": "Pide expresar primero el porcentaje como fracción."},
+                    {"Error observado": "Confunde minutos con porcentaje", "Orientación docente": "Pregunta: ¿60 % de una hora cuántos minutos representa?"},
+                    {"Error observado": "Ingresa −0,10 dB para la excavadora", "Orientación docente": "No se ingresa la fracción como corrección: hay que calcular 10 log10(0,60), que da aproximadamente −2,22 dB."},
+                    {"Error observado": "Resta una corrección ya negativa", "Orientación docente": "El aporte es nivel operativo + corrección; restar un valor negativo aumentaría el nivel."},
+                    {"Error observado": "Aplica otra vez el porcentaje a LAeq,T", "Orientación docente": "El aporte horario ya incluye el tiempo; la suma final utiliza sus energías directamente."},
+                    {"Error observado": "Suma o promedia los dB", "Orientación docente": "Pide convertir cada aporte a energía, sumarlas y volver a decibeles."},
+                    {"Error observado": "Elige por el mayor nivel operativo", "Orientación docente": "Pide ordenar los aportes de toda la hora. En este caso el martillo domina, pero debe justificarse por su aporte equivalente."},
+                ]), use_container_width=True, hide_index=True,
+            )
+            st.markdown("#### 7 · Secuencia sugerida para acompañar al alumno")
+            st.markdown(
+                "1. Pide identificar T, el receptor y qué representa el nivel de entrada.\n"
+                "2. Revisa la conversión a minutos antes de permitir avanzar a la corrección.\n"
+                "3. Comprueba el signo de la corrección: debe ser ≤ 0; para el generador es 0.\n"
+                "4. Pide explicar por qué el nivel operativo no cambia cuando se reduce el tiempo.\n"
+                "5. Revisa la suma energética y pregunta si el total supera cada aporte individual.\n"
+                "6. Solicita comparar martillo y excavadora antes de justificar la dominante.\n"
+                "7. Usa las pistas de la comprobación para un segundo intento sin entregar la pauta al alumno."
             )
 
 
