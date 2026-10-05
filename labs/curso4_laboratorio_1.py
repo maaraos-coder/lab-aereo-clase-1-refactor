@@ -4132,7 +4132,7 @@ def _stage8(lab, saved):
     """, unsafe_allow_html=True)
     st.caption(
         "Más abajo encontrarás un botón específico para cada escenario. Cada uno abre Noise Map Lab "
-        "con el predio, las fuentes y los receptores ya posicionados. "
+        "con el predio y las fuentes ya posicionados. "
         "En este laboratorio no se diseñan controles de ruido: eso se trabajará en el Laboratorio 2."
     )
     st.info("Trabajo integrador · 3 etapas constructivas · 3 fuentes por etapa · 3 receptores comparables.")
@@ -4198,7 +4198,7 @@ def _stage8(lab, saved):
             "🗺️ Abrir este escenario ya posicionado en Noise Map Lab",
             scenario_links[scenario_name],
             use_container_width=True,
-            help="Abre Noise Map Lab con el predio, las tres fuentes y los tres receptores cargados automáticamente.",
+            help="Abre Noise Map Lab con el predio y las tres fuentes cargados automáticamente. Los receptores los selecciona el alumno.",
         )
         st.caption(
             "El botón abre el predio de 50 × 40 m con las fuentes ya ubicadas y configuradas. "
@@ -4226,7 +4226,7 @@ def _stage8(lab, saved):
         if scenario_name.startswith("C"):
             st.caption(
                 "Las alturas de 15 m y 24 m son supuestos de modelación para estudiar propagación desde niveles elevados; "
-                "no son datos de la BS 5228 ni del proyecto Parque Bicentenario de Cerrillos."
+                "no son datos de la BS 5228 ni representan una obra real del sector."
             )
 
     st.markdown("### 3 · Convierte los datos antes de modelar")
@@ -4330,8 +4330,8 @@ def _stage8(lab, saved):
         "Configura explícitamente las alturas indicadas."
     )
     st.info(
-        "Las coordenadas X/Y no pretenden reproducir la obra real. Su función es entregar una geometría común para que todos puedan "
-        "comparar correctamente distancia, distribución espacial y altura."
+        "Las posiciones internas de las fuentes son parte del escenario didáctico. Se mantienen iguales para todos los alumnos, "
+        "de modo que la comparación se concentre en la selección de receptores, la distancia, la distribución espacial y la altura."
     )
 
     st.markdown("### 6 · Registra los niveles calculados en los receptores")
