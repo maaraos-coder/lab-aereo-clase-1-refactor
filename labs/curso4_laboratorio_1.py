@@ -4342,7 +4342,7 @@ def _stage8(lab, saved):
                     f"🗺️ Abrir escenario {code}",
                     scenario_links[scenario_name],
                     use_container_width=True,
-                    help="Carga automáticamente el predio y las tres fuentes. Los receptores los selecciona el alumno.",
+                    help="Carga el predio, las posiciones y las alturas de las tres fuentes. El alumno debe ingresar los LwA calculados y seleccionar sus receptores.",
                 )
             rows = []
             for sid, name, x, y, height in equipment:
@@ -4361,7 +4361,7 @@ def _stage8(lab, saved):
                 use_container_width=True,
             )
             st.caption(
-                "La posición de las máquinas ya viene configurada en Noise Map Lab; no debes reconstruir coordenadas manualmente."
+                "Noise Map Lab carga únicamente la geometría del escenario: posición y altura. Debes ingresar tú mismo el LwA calculado de cada fuente antes de ejecutar el modelo."
             )
             if code == "C":
                 st.info("Las alturas de 15 m y 24 m son supuestos didácticos para estudiar propagación desde fuentes elevadas.")
@@ -4536,17 +4536,17 @@ def _stage8(lab, saved):
           <div class="s8-model-card">
             <div class="badge">ESCENARIO A</div>
             <div class="head">Excavación</div>
-            <div class="txt">Abre el preset, incorpora R1–R3, verifica alturas y ejecuta el cálculo.</div>
+            <div class="txt">Abre el preset, ingresa los LwA que calculaste, incorpora R1–R3 y ejecuta el cálculo.</div>
           </div>
           <div class="s8-model-card">
             <div class="badge">ESCENARIO B</div>
             <div class="head">Obra gruesa · piso</div>
-            <div class="txt">Carga la nueva fase y reproduce exactamente los mismos tres receptores.</div>
+            <div class="txt">Carga la nueva fase, ingresa sus LwA y reproduce exactamente los mismos tres receptores.</div>
           </div>
           <div class="s8-model-card">
             <div class="badge">ESCENARIO C</div>
             <div class="head">Obra gruesa · altura</div>
-            <div class="txt">Mantén R1–R3 y analiza qué cambia al elevar parte de las fuentes.</div>
+            <div class="txt">Ingresa los LwA, mantén R1–R3 y analiza qué cambia al elevar parte de las fuentes.</div>
           </div>
         </div>
         """,
