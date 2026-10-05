@@ -4160,6 +4160,36 @@ def _stage8(lab, saved):
             background:linear-gradient(135deg,#f0fbf6,#ffffff);color:#315e49;
             box-shadow:0 6px 18px rgba(49,94,73,.06)
         }
+        .s8-stepgrid{display:grid;grid-template-columns:repeat(5,1fr);gap:10px;margin:.45rem 0 .8rem}
+        .s8-step{
+            border:1px solid #d8e5ec;border-radius:15px;padding:12px 11px;background:#fff;
+            min-height:105px;box-shadow:0 4px 13px rgba(23,59,83,.045)
+        }
+        .s8-step .num{
+            width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;
+            background:#e9f7fb;color:#087ba0;font-weight:900;margin-bottom:.45rem
+        }
+        .s8-step .ttl{font-size:.83rem;font-weight:850;color:#173b53;margin-bottom:.2rem}
+        .s8-step .txt{font-size:.76rem;line-height:1.35;color:#667d8c}
+        .s8-model-flow{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin:.35rem 0 .7rem}
+        .s8-model-card{
+            border:1px solid #d6e4ec;border-radius:18px;padding:16px 17px;background:#fff;
+            box-shadow:0 5px 15px rgba(23,59,83,.05)
+        }
+        .s8-model-card .badge{font-size:.68rem;font-weight:900;letter-spacing:.09em;color:#087ba0}
+        .s8-model-card .head{font-size:1rem;font-weight:850;color:#173b53;margin:.25rem 0 .35rem}
+        .s8-model-card .txt{font-size:.82rem;color:#60798a;line-height:1.45}
+        .s8-analysis-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin:.35rem 0 .8rem}
+        .s8-analysis-card{
+            border:1px solid #dbe7ed;border-radius:16px;padding:13px 14px;background:linear-gradient(180deg,#fff,#f9fcfd);
+            min-height:110px
+        }
+        .s8-analysis-card .icon{font-size:1.1rem;margin-bottom:.25rem}
+        .s8-analysis-card .ttl{font-size:.82rem;font-weight:850;color:#173b53;margin-bottom:.25rem}
+        .s8-analysis-card .txt{font-size:.76rem;line-height:1.35;color:#687e8c}
+        @media(max-width:850px){
+            .s8-stepgrid,.s8-model-flow,.s8-analysis-grid{grid-template-columns:1fr}
+        }
         </style>
         """,
         unsafe_allow_html=True,
@@ -4445,20 +4475,32 @@ def _stage8(lab, saved):
         '<div class="s8-section"><b>4 · Selecciona tus receptores</b></div>',
         unsafe_allow_html=True,
     )
+    st.markdown(
+        """
+        <div class="s8-stepgrid">
+          <div class="s8-step"><div class="num">1</div><div class="ttl">Abre A · Excavación</div><div class="txt">Comienza con el escenario base ya cargado en Noise Map Lab.</div></div>
+          <div class="s8-step"><div class="num">2</div><div class="ttl">Observa el entorno</div><div class="txt">Busca usos humanos expuestos fuera del predio de 50 × 40 m.</div></div>
+          <div class="s8-step"><div class="num">3</div><div class="ttl">Elige 3 puntos</div><div class="txt">Selecciona receptores con distinta distancia y orientación respecto de la obra.</div></div>
+          <div class="s8-step"><div class="num">4</div><div class="ttl">Define la altura</div><div class="txt">Incluye al menos un receptor bajo y, si corresponde, otro en altura.</div></div>
+          <div class="s8-step"><div class="num">5</div><div class="ttl">Conserva la geometría</div><div class="txt">Usa exactamente R1, R2 y R3 en los escenarios B y C.</div></div>
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
     r1,r2,r3 = st.columns(3)
-    for col,title,copy in [
-        (r1,"R1 · Cercano","Busca una fachada o punto de uso humano próximo al predio."),
-        (r2,"R2 · Diferente orientación","Elige un punto en otro lado del predio para comparar geometrías."),
-        (r3,"R3 · Altura","Cuando sea razonable, incorpora un punto en un piso superior."),
+    for col,icon,title,copy in [
+        (r1,"📍","R1 · Próximo","Punto de uso humano cercano al predio."),
+        (r2,"↗️","R2 · Otra orientación","Punto ubicado en otro costado para comparar geometría."),
+        (r3,"🏢","R3 · En altura","Punto de piso superior cuando el entorno lo permita."),
     ]:
         with col:
             st.markdown(
-                f'<div class="s8-kpi"><div class="n" style="font-size:1rem">{title}</div><div class="t">{copy}</div></div>',
+                f'<div class="s8-kpi"><div class="n" style="font-size:1.05rem">{icon} {title}</div><div class="t">{copy}</div></div>',
                 unsafe_allow_html=True,
             )
     st.markdown(
-        '<div class="s8-note"><b>Regla clave:</b> los receptores no vienen precargados. '
-        'Debes seleccionarlos en el escenario A y conservar exactamente esas ubicaciones en B y C.</div>',
+        '<div class="s8-note"><b>Regla de comparación:</b> Noise Map Lab no precarga receptores. '
+        'Los defines una vez en A y luego conservas exactamente esas posiciones y alturas en B y C.</div>',
         unsafe_allow_html=True,
     )
 
@@ -4503,25 +4545,50 @@ def _stage8(lab, saved):
             st.success("Receptores guardados. Utiliza exactamente esos mismos puntos en A, B y C.")
 
     st.markdown(
-        '<div class="s8-section"><b>5 · Ejecuta la modelación</b></div>',
+        '<div class="s8-section"><b>5 · Modela las tres etapas</b></div>',
         unsafe_allow_html=True,
     )
-    m1,m2,m3 = st.columns(3)
-    for col,label,copy in [
-        (m1,"A · Excavación","Carga el escenario, agrega R1–R3 y calcula."),
-        (m2,"B · Obra gruesa · piso","Repite con los mismos receptores y configuración."),
-        (m3,"C · Obra gruesa · altura","Mantén R1–R3 y observa el efecto de las cotas."),
+    st.markdown(
+        """
+        <div class="s8-model-flow">
+          <div class="s8-model-card">
+            <div class="badge">ESCENARIO A</div>
+            <div class="head">Excavación</div>
+            <div class="txt">Abre el preset, incorpora R1–R3, verifica alturas y ejecuta el cálculo.</div>
+          </div>
+          <div class="s8-model-card">
+            <div class="badge">ESCENARIO B</div>
+            <div class="head">Obra gruesa · piso</div>
+            <div class="txt">Carga la nueva fase y reproduce exactamente los mismos tres receptores.</div>
+          </div>
+          <div class="s8-model-card">
+            <div class="badge">ESCENARIO C</div>
+            <div class="head">Obra gruesa · altura</div>
+            <div class="txt">Mantén R1–R3 y analiza qué cambia al elevar parte de las fuentes.</div>
+          </div>
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
+    st.markdown(
+        """
+        <div class="s8-note">
+          <b>Para que la comparación sea válida</b><br>
+          Mantén constantes el método de cálculo, suelo, meteorología, área de cálculo y receptores.
+          La variable que debe cambiar entre A, B y C es principalmente la <b>etapa constructiva y sus fuentes</b>.
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
+    check1,check2,check3,check4 = st.columns(4)
+    for col,label,value in [
+        (check1,"Método","igual"),
+        (check2,"Suelo y meteo","igual"),
+        (check3,"R1–R3","iguales"),
+        (check4,"Fuentes","cambian por etapa"),
     ]:
         with col:
-            st.markdown(
-                f'<div class="s8-scenario"><div class="s8-scenario-tag">MODELA</div>'
-                f'<div class="s8-scenario-title">{label}</div><div class="s8-scenario-copy">{copy}</div></div>',
-                unsafe_allow_html=True,
-            )
-    st.info(
-        "Mantén constantes método, suelo, meteorología, dominio de cálculo y receptores. "
-        "La única diferencia principal entre modelos debe ser la etapa constructiva representada."
-    )
+            st.metric(label,value)
 
     st.markdown(
         '<div class="s8-section"><b>6 · Registra y compara los resultados</b></div>',
@@ -4590,12 +4657,29 @@ def _stage8(lab, saved):
                 st.metric(rid,f"{values[stage]:.1f} dB(A)",delta=stage,delta_color="off")
 
     st.markdown(
-        '<div class="s8-section"><b>7 · Interpreta el comportamiento acústico</b></div>',
+        '<div class="s8-section"><b>7 · Interpreta lo que cambió</b></div>',
         unsafe_allow_html=True,
     )
     st.markdown(
-        "No basta con identificar el número mayor. Relaciona los resultados con **distancia, altura, posición de las fuentes y suma energética**."
+        "Usa los resultados para construir una explicación técnica. No basta con indicar cuál número fue mayor."
     )
+    st.markdown(
+        """
+        <div class="s8-analysis-grid">
+          <div class="s8-analysis-card"><div class="icon">🔊</div><div class="ttl">Etapa dominante</div><div class="txt">Identifica qué fase produce el mayor nivel en cada receptor.</div></div>
+          <div class="s8-analysis-card"><div class="icon">📏</div><div class="ttl">Distancia</div><div class="txt">Relaciona la separación fuente–receptor con los cambios observados.</div></div>
+          <div class="s8-analysis-card"><div class="icon">↕️</div><div class="ttl">Altura</div><div class="txt">Explica cómo influye que algunas fuentes estén en pisos superiores.</div></div>
+          <div class="s8-analysis-card"><div class="icon">Σ</div><div class="ttl">Contribución conjunta</div><div class="txt">Considera que el nivel total resulta de la suma energética de las fuentes.</div></div>
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
+    st.markdown(
+        '<div class="s8-note"><b>Pregunta guía:</b> ¿el receptor más cercano resulta siempre el más expuesto? '
+        'Justifica tu respuesta utilizando la geometría y los niveles obtenidos.</div>',
+        unsafe_allow_html=True,
+    )
+
     analysis_saved=saved.get("c4l1_stage8_analysis_v3","")
     with st.form("c4l1_s8_analysis_v3_form"):
         analysis=st.text_area(
