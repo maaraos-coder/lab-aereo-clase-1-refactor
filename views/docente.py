@@ -1182,6 +1182,9 @@ def _teacher_course_results_impl(compact=False):
                             + ("Sí" if payload.get("comprehension_saved") else "No")
                         )
 
+        elif reviewer in ("c4_stage9","c4_stage10"):
+            _teacher_course4_review(rows,config,compact=compact)
+
         elif reviewer in ("c3l2_stage9","c3l2_stage10"):
             if not rows:
                 st.caption("Todavía no hay entregas oficiales del Curso 3 · Laboratorio 2.")
