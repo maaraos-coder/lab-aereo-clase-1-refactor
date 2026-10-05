@@ -5149,8 +5149,8 @@ def _stage10(lab, saved):
     st.markdown("### 5 · Define los receptores y el descriptor de evaluación")
     st.markdown(
         "Selecciona tres receptores fuera del predio y documenta su posición y altura. "
-        "Para este ejercicio, el resultado de cada escenario se interpretará como **LAeq,15 min** "
-        "incorporando el porcentaje de tiempo activo que definas para las fuentes."
+        "Para este ejercicio, el resultado de cada escenario se interpretará como **LAeq,15 min**. "
+        "No debes aplicar correcciones por porcentaje de tiempo activo: modela las fuentes consideradas como operativas durante el escenario."
     )
 
     criteria=pd.DataFrame(
@@ -5231,7 +5231,7 @@ def _stage10(lab, saved):
         common_settings=st.text_area(
             "Configuración y supuestos comunes",
             value=saved.get("c4l1_stage10_common_settings_v2",""),
-            placeholder="Área de cálculo, G, meteorología, alturas, tiempos activos, tratamiento de fuentes equivalentes y otros supuestos.",
+            placeholder="Área de cálculo, G, meteorología, alturas, tratamiento de fuentes equivalentes y otros supuestos.",
             height=120,
             key="c4l1_s10_common_settings_v2",
         )
