@@ -4223,10 +4223,7 @@ def _stage8(lab, saved):
                 unsafe_allow_html=True,
             )
 
-    st.markdown(
-        '<div class="s8-section"><b>🗺️ Herramienta central · Noise Map Lab</b></div>',
-        unsafe_allow_html=True,
-    )
+    st.markdown("### Herramienta central · Noise Map Lab")
     tool_left, tool_right = st.columns([1.35, .65], gap="large")
     with tool_left:
         st.markdown(
@@ -4251,10 +4248,7 @@ def _stage8(lab, saved):
         )
         st.caption("Abre en otra pestaña y vuelve aquí para seguir la guía.")
 
-    st.markdown(
-        '<div class="s8-section"><b>1 · Comprende el encargo</b></div>',
-        unsafe_allow_html=True,
-    )
+    st.markdown("### 1 · Comprende el encargo")
     c1,c2 = st.columns([1.2,.8], gap="large")
     with c1:
         st.markdown(
@@ -4325,10 +4319,7 @@ def _stage8(lab, saved):
         "C · Obra gruesa en altura": ("C","Obra gruesa · altura","Actividad distribuida entre terreno y pisos superiores"),
     }
 
-    st.markdown(
-        '<div class="s8-section"><b>2 · Revisa las fuentes de cada escenario</b></div>',
-        unsafe_allow_html=True,
-    )
+    st.markdown("### 2 · Revisa las fuentes de cada escenario")
     st.markdown(
         "Los niveles provienen de **BS 5228-1:2009, Anexo C** y corresponden a condiciones de actividad específicas a 10 m."
     )
@@ -4375,10 +4366,7 @@ def _stage8(lab, saved):
             if code == "C":
                 st.info("Las alturas de 15 m y 24 m son supuestos didácticos para estudiar propagación desde fuentes elevadas.")
 
-    st.markdown(
-        '<div class="s8-section"><b>3 · Convierte los datos antes de modelar</b></div>',
-        unsafe_allow_html=True,
-    )
+    st.markdown("### 3 · Convierte los datos antes de modelar")
     eq1,eq2 = st.columns([.8,1.2], gap="large")
     with eq1:
         st.markdown(
@@ -4471,10 +4459,7 @@ def _stage8(lab, saved):
         )
         st.caption("Tolerancia sugerida: ±0,2 dB por redondeo.")
 
-    st.markdown(
-        '<div class="s8-section"><b>4 · Selecciona tus receptores</b></div>',
-        unsafe_allow_html=True,
-    )
+    st.markdown("### 4 · Selecciona tus receptores")
     st.markdown(
         """
         <div class="s8-stepgrid">
@@ -4544,10 +4529,7 @@ def _stage8(lab, saved):
             _save_stage_state(lab,saved,8)
             st.success("Receptores guardados. Utiliza exactamente esos mismos puntos en A, B y C.")
 
-    st.markdown(
-        '<div class="s8-section"><b>5 · Modela las tres etapas</b></div>',
-        unsafe_allow_html=True,
-    )
+    st.markdown("### 5 · Modela las tres etapas")
     st.markdown(
         """
         <div class="s8-model-flow">
@@ -4590,10 +4572,7 @@ def _stage8(lab, saved):
         with col:
             st.metric(label,value)
 
-    st.markdown(
-        '<div class="s8-section"><b>6 · Registra y compara los resultados</b></div>',
-        unsafe_allow_html=True,
-    )
+    st.markdown("### 6 · Registra y compara los resultados")
     previous=saved.get("c4l1_stage8_results_v3",{})
     with st.form("c4l1_s8_results_v3_form"):
         results={}
@@ -4656,10 +4635,7 @@ def _stage8(lab, saved):
             with col:
                 st.metric(rid,f"{values[stage]:.1f} dB(A)",delta=stage,delta_color="off")
 
-    st.markdown(
-        '<div class="s8-section"><b>7 · Interpreta lo que cambió</b></div>',
-        unsafe_allow_html=True,
-    )
+    st.markdown("### 7 · Interpreta lo que cambió")
     st.markdown(
         "Usa los resultados para construir una explicación técnica. No basta con indicar cuál número fue mayor."
     )
