@@ -3257,51 +3257,93 @@ def _stage7(lab, saved):
                 st.caption(description)
 
     _s7_section(1, "Define qué estás calculando", "Todos los aportes deben referirse al mismo receptor, descriptor y período.")
+    concepts = [
+        ("01", "Durante la operación", "LAeq,t", "Nivel equivalente del aporte de una máquina mientras funciona, calculado o medido en el receptor.", "#176b9b", "#eef7fc"),
+        ("02", "El período de evaluación", "T = 60 min", "Una hora común para todas las fuentes. Los minutos activos t pueden ser continuos o repartidos en varios ciclos.", "#65549a", "#f5f2fb"),
+        ("03", "El aporte a toda la hora", "LAeq,T", "La energía de esa fuente repartida sobre los 60 minutos, incluidos los momentos en que está detenida.", "#2d7a4a", "#eff8f2"),
+    ]
+    for col, (number, title, symbol, description, color, bg) in zip(st.columns(3, gap="medium"), concepts):
+        with col:
+            st.markdown(
+                f'<div style="border:1px solid #dce7ef;border-top:4px solid {color};border-radius:16px;'
+                f'padding:20px;background:{bg};min-height:225px;box-sizing:border-box">'
+                f'<div style="font-size:.72rem;font-weight:850;letter-spacing:.1em;color:{color}">CONCEPTO {number}</div>'
+                f'<div style="font-size:1.05rem;font-weight:850;color:#17324a;margin:.6rem 0">{title}</div>'
+                f'<div style="font-size:1.65rem;font-weight:850;color:{color};margin:.7rem 0">{symbol}</div>'
+                f'<div style="font-size:.88rem;line-height:1.65;color:#526b7c">{description}</div></div>',
+                unsafe_allow_html=True,
+            )
     with st.container(border=True):
-        a, b = st.columns(2, gap="large")
-        with a:
-            st.markdown(
-                "**Nivel durante operación, LAeq,t:** nivel equivalente del aporte de una máquina "
-                "mientras funciona, calculado o medido en el receptor.\n\n"
-                "**Período común, T:** aquí trabajamos con una hora. "
-                "Los minutos activos t pueden ser continuos o repartidos en varios ciclos."
-            )
-        with b:
-            st.markdown(
-                "**Aporte equivalente, LAeq,T:** energía de esa fuente repartida sobre toda la hora.\n\n"
-                "**Supuestos del laboratorio:** receptor y geometría fijos; nivel constante mientras "
-                "cada fuente está activa; contribuciones independientes cuya energía se suma; "
-                "sin aporte propio de la máquina durante la parada."
-            )
+        st.markdown("**El método · acumula energía, divide por el período y vuelve a decibeles**")
         st.latex(r"L_{Aeq,T}=10\log_{10}\left[\frac{1}{T}\sum_j\Delta t_j\,10^{L_{Aeq,j}/10}\right]")
         st.caption(
             "Δtj es la duración de cada intervalo de nivel constante. No se promedian los dB aritméticamente. "
             "Si una máquina tiene varios modos de trabajo, calcula cada modo con su nivel y duración."
         )
+        st.markdown(
+            '<div style="border-left:3px solid #9bb8ce;background:#f6f9fc;border-radius:0 12px 12px 0;'
+            'padding:14px 16px;margin-top:12px;color:#526b7c;font-size:.87rem;line-height:1.65">'
+            '<b style="color:#24445c">Supuestos de este laboratorio</b><br>'
+            'Receptor y geometría fijos · nivel constante durante la actividad · contribuciones independientes · '
+            'sin aporte propio de la máquina durante la parada.</div>',
+            unsafe_allow_html=True,
+        )
 
     _s7_section(2, "Explora el tiempo activo", "Reduce los minutos de trabajo y observa cuánto cambia el aporte de una sola fuente.")
-    with st.container(border=True):
-        inputs, result = st.columns([1.1, 1], gap="large")
-        with inputs:
+    inputs, result = st.columns([1.1, 1], gap="large")
+    with inputs:
+        with st.container(border=True):
+            st.markdown(
+                '<div style="font-size:.72rem;font-weight:850;letter-spacing:.1em;color:#176b9b">AJUSTA LA FUENTE</div>'
+                '<div style="font-size:1.08rem;font-weight:850;color:#17324a;margin:.4rem 0 .8rem">Nivel y duración de trabajo</div>',
+                unsafe_allow_html=True,
+            )
             base = st.slider("Nivel de la fuente durante operación [dB(A)]", 40, 110, 80, key="c4l1_s7_v2_base")
             active_minutes = st.slider("Minutos activos dentro de la hora", 0, 60, 15, key="c4l1_s7_v2_minutes")
+            st.markdown("**Ruido de fondo · opcional**")
             use_background = st.checkbox("Incluir un ruido de fondo continuo", value=False, key="c4l1_s7_v2_background_on")
             background = st.slider("Nivel del fondo continuo [dB(A)]", 20, 80, 45, key="c4l1_s7_v2_background", disabled=not use_background)
-        fraction = active_minutes / 60
-        source_energy = fraction * 10 ** (base / 10)
-        equivalent = _s7_level(source_energy)
-        correction = 10 * math.log10(fraction) if fraction > 0 else None
-        total = _s7_level(source_energy + (10 ** (background / 10) if use_background else 0))
-        with result:
-            st.metric("Tiempo activo", f"{fraction*100:.0f} %", help="t/T: minutos activos divididos por 60.")
-            st.metric("Corrección temporal", f"{correction:.2f} dB" if correction is not None else "Sin aporte")
-            st.metric("Aporte de la fuente en la hora", f"{equivalent:.2f} dB(A)" if equivalent is not None else "Sin aporte")
+    fraction = active_minutes / 60
+    source_energy = fraction * 10 ** (base / 10)
+    equivalent = _s7_level(source_energy)
+    correction = 10 * math.log10(fraction) if fraction > 0 else None
+    total = _s7_level(source_energy + (10 ** (background / 10) if use_background else 0))
+    with result:
+        value = f"{equivalent:.2f}" if equivalent is not None else "Sin aporte"
+        unit = "dB(A) · LAeq,T" if equivalent is not None else "Fuente detenida"
+        st.markdown(
+            '<div style="border:1px solid #c9deed;border-radius:20px;padding:24px;'
+            'background:linear-gradient(125deg,#f3faff,#e7f2fa);margin-bottom:14px">'
+            '<div style="font-size:.72rem;font-weight:850;letter-spacing:.1em;color:#176b9b">RESULTADO · APORTE EN LA HORA</div>'
+            f'<div style="font-size:2.65rem;font-weight:850;line-height:1.2;color:#17324a;margin:.8rem 0 .3rem">{value}</div>'
+            f'<div style="font-size:.87rem;color:#526b7c">{unit}</div>'
+            f'<div style="border-top:1px solid #c9deed;padding-top:13px;margin-top:18px;font-size:.88rem;color:#456275">'
+            f'{active_minutes} min activos de 60 · nivel operativo {base} dB(A)</div></div>',
+            unsafe_allow_html=True,
+        )
+        with st.container(border=True):
+            a, b = st.columns(2)
+            a.metric("Tiempo activo", f"{fraction*100:.0f} %", help="t/T: minutos activos divididos por 60.")
+            b.metric("Corrección temporal", f"{correction:.2f} dB" if correction is not None else "Sin aporte")
+            st.markdown(
+                '<div style="height:12px;border-radius:999px;background:#e8eff5;overflow:hidden">'
+                f'<div style="height:100%;width:{fraction*100:.4f}%;background:#287bb0"></div></div>',
+                unsafe_allow_html=True,
+            )
+            st.caption(f"{active_minutes} min de actividad · {60-active_minutes} min sin aporte de la fuente")
             if use_background:
                 st.metric("Fuente + fondo en la hora", f"{total:.2f} dB(A)")
+    with st.container(border=True):
+        st.markdown("**La relación entre tiempo y nivel**")
         st.latex(r"L_{Aeq,T,i}=L_{Aeq,t_i,i}+10\log_{10}(t_i/T)")
-        examples = st.columns(4)
-        for col, percent in zip(examples, [100, 50, 25, 10]):
-            col.metric(f"{percent} % activo", f"{10*math.log10(percent/100):.2f} dB")
+        for col, percent in zip(st.columns(4), [100, 50, 25, 10]):
+            with col:
+                st.markdown(
+                    '<div style="border:1px solid #dce7ef;border-radius:12px;padding:13px;background:#f7fafc;text-align:center">'
+                    f'<div style="font-size:.78rem;color:#627989">{percent} % activo</div>'
+                    f'<div style="font-size:1.18rem;font-weight:850;color:#24445c;margin-top:.3rem">{10*math.log10(percent/100):.2f} dB</div></div>',
+                    unsafe_allow_html=True,
+                )
         if active_minutes == 0:
             st.info(
                 "La fuente no aporta energía a esta hora. Se muestra «Sin aporte»: log10(0) no tiene "
@@ -3321,16 +3363,48 @@ def _stage7(lab, saved):
             )
 
     _s7_section(3, "Combina dos aportes equivalentes", "Introduce niveles ya referidos a toda la hora. Aquí no vuelvas a aplicar la corrección temporal.")
+    for col, label, color in zip(st.columns(2, gap="large"), ["A", "B"], ["#287bb0", "#8a6bb5"]):
+        with col:
+            with st.container(border=True):
+                st.markdown(
+                    f'<div style="font-size:.72rem;font-weight:850;letter-spacing:.1em;color:{color}">APORTE {label}</div>'
+                    '<div style="font-size:1.05rem;font-weight:850;color:#17324a;margin:.45rem 0 .7rem">Nivel equivalente de la hora</div>',
+                    unsafe_allow_html=True,
+                )
+                selected_level = st.slider(
+                    f"Aporte equivalente {label} [dB(A)]", 40, 100, 70, key=f"c4l1_s7_v2_sum_{label.lower()}"
+                )
+                if label == "A":
+                    level_a = selected_level
+                else:
+                    level_b = selected_level
+    ea, eb = 10 ** (level_a / 10), 10 ** (level_b / 10)
+    combined = _s7_level(ea + eb)
+    share_a = 100*ea/(ea+eb)
+    st.markdown(
+        '<div style="border:1px solid #c9deed;border-radius:20px;padding:22px 24px;'
+        'background:linear-gradient(125deg,#f3faff,#eef1fa);margin:14px 0">'
+        '<div style="font-size:.72rem;font-weight:850;letter-spacing:.1em;color:#176b9b">RESULTADO · SUMA ENERGÉTICA</div>'
+        f'<div style="font-size:2.5rem;font-weight:850;color:#17324a;margin:.55rem 0">{combined:.2f} '
+        '<span style="font-size:1rem;font-weight:600">dB(A)</span></div>'
+        f'<div style="font-size:.88rem;color:#526b7c">A = {level_a} dB(A) &nbsp; + &nbsp; B = {level_b} dB(A)'
+        ' · combinación de energías acústicas</div></div>',
+        unsafe_allow_html=True,
+    )
     with st.container(border=True):
         a, b = st.columns(2)
-        level_a = a.slider("Aporte equivalente A [dB(A)]", 40, 100, 70, key="c4l1_s7_v2_sum_a")
-        level_b = b.slider("Aporte equivalente B [dB(A)]", 40, 100, 70, key="c4l1_s7_v2_sum_b")
-        ea, eb = 10 ** (level_a / 10), 10 ** (level_b / 10)
-        combined = _s7_level(ea + eb)
-        a, b, c = st.columns(3)
-        a.metric("Suma energética", f"{combined:.2f} dB(A)")
-        b.metric("Incremento sobre el mayor", f"{combined-max(level_a,level_b):.2f} dB")
-        c.metric("Fracción energética de A", f"{100*ea/(ea+eb):.1f} %")
+        a.metric("Incremento sobre el mayor", f"{combined-max(level_a,level_b):.2f} dB")
+        b.metric("Fracción energética de A", f"{share_a:.1f} %")
+        st.markdown("**Cómo se reparte la energía del total**")
+        st.markdown(
+            '<div style="display:flex;height:18px;border-radius:999px;overflow:hidden;background:#e8eff5">'
+            f'<div style="width:{share_a:.6f}%;background:#287bb0"></div>'
+            f'<div style="width:{100-share_a:.6f}%;background:#8a6bb5"></div></div>'
+            '<div style="display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-top:8px;font-size:.84rem;font-weight:750">'
+            f'<span style="color:#287bb0">A · {share_a:.1f} %</span>'
+            f'<span style="color:#8a6bb5">B · {100-share_a:.1f} %</span></div>',
+            unsafe_allow_html=True,
+        )
         st.latex(r"L_{Aeq,T,\Sigma}=10\log_{10}\left(\sum_i10^{L_{Aeq,T,i}/10}\right)")
         st.caption(
             "Dos aportes iguales aumentan el total en 3,01 dB. Con una diferencia de 10 dB, "
