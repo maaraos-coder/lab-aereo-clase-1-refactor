@@ -5300,9 +5300,23 @@ def _stage10(lab, saved):
         elif len(conclusion.strip())<220:
             st.warning("Desarrolla una conclusión técnica de al menos 220 caracteres.")
         else:
+            payload=_course4_stage10_payload(saved,conclusion)
             saved["c4l1_stage10_conclusion_v2"]=conclusion
+            saved["c4l1_stage10_submission_v1"]=payload
             _save_stage_state(lab,saved,10)
-            st.success("Caso integrador final guardado.")
+            stored=_save_course4_evaluation(
+                10,
+                "c4_formative_integrated_case",
+                "Etapa 10 · Caso integrador final de ruido en construcción",
+                payload,
+                0,
+                100,
+                "Entrega recibida. Requiere revisión docente mediante pauta de 100 puntos.",
+            )
+            if stored:
+                st.success("Caso integrador entregado y registrado en Mi desempeño.")
+            else:
+                st.success("Caso integrador guardado en tu progreso.")
 
     with st.expander("👨‍🏫 Pauta docente · referencias y criterios de revisión"):
         teacher_rows=[]
