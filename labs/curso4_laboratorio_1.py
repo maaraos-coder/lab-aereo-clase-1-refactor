@@ -3273,19 +3273,69 @@ def _stage7(lab, saved):
                 f'<div style="font-size:.88rem;line-height:1.65;color:#526b7c">{description}</div></div>',
                 unsafe_allow_html=True,
             )
-    with st.container(border=True):
-        st.markdown("**El método · acumula energía, divide por el período y vuelve a decibeles**")
-        st.latex(r"L_{Aeq,T}=10\log_{10}\left[\frac{1}{T}\sum_j\Delta t_j\,10^{L_{Aeq,j}/10}\right]")
-        st.caption(
-            "Δtj es la duración de cada intervalo de nivel constante. No se promedian los dB aritméticamente. "
-            "Si una máquina tiene varios modos de trabajo, calcula cada modo con su nivel y duración."
-        )
+    st.markdown(
+        """
+        <style>
+        .st-key-c4l1_s7_equation {
+            border:1px solid #c9ddeb !important;
+            border-radius:22px !important;
+            background:linear-gradient(130deg,#f8fcff 0%,#edf5fb 100%);
+            padding:22px !important;
+            box-shadow:0 8px 24px rgba(30,65,92,.06);
+        }
+        .st-key-c4l1_s7_equation [data-testid="stLatex"] {
+            background:#fff;
+            border:1px solid #dce8f1;
+            border-radius:16px;
+            padding:22px 12px;
+            margin:8px 0 12px;
+            color:#17324a;
+            overflow-x:auto;
+        }
+        </style>
+        """,
+        unsafe_allow_html=True,
+    )
+    with st.container(key="c4l1_s7_equation", border=True):
         st.markdown(
-            '<div style="border-left:3px solid #9bb8ce;background:#f6f9fc;border-radius:0 12px 12px 0;'
-            'padding:14px 16px;margin-top:12px;color:#526b7c;font-size:.87rem;line-height:1.65">'
-            '<b style="color:#24445c">Supuestos de este laboratorio</b><br>'
-            'Receptor y geometría fijos · nivel constante durante la actividad · contribuciones independientes · '
-            'sin aporte propio de la máquina durante la parada.</div>',
+            '<div style="font-size:.72rem;font-weight:850;letter-spacing:.12em;color:#176b9b">'
+            'LA ECUACIÓN · PROMEDIO ENERGÉTICO</div>'
+            '<div style="font-size:1.2rem;font-weight:850;color:#17324a;margin:.5rem 0 .4rem">'
+            'De los intervalos de trabajo al nivel de toda la hora</div>'
+            '<div style="font-size:.88rem;color:#526b7c;line-height:1.6;margin-bottom:8px">'
+            'Cada intervalo aporta energía según su nivel y su duración.</div>',
+            unsafe_allow_html=True,
+        )
+        st.latex(r"L_{Aeq,T}=10\log_{10}\left[\frac{1}{T}\sum_j\Delta t_j\,10^{L_{Aeq,j}/10}\right]")
+        terms = [
+            ("T", "Período total", "60 min en este laboratorio."),
+            ("Δtⱼ", "Duración del intervalo", "Minutos con un nivel constante."),
+            ("L<sub>Aeq,j</sub>", "Nivel del intervalo", "Nivel equivalente en el receptor."),
+        ]
+        for col, (symbol, title, description) in zip(st.columns(3), terms):
+            with col:
+                st.markdown(
+                    '<div style="background:#fff;border:1px solid #dce8f1;border-radius:12px;padding:14px;min-height:125px">'
+                    f'<div style="font-size:1.3rem;font-weight:850;color:#176b9b">{symbol}</div>'
+                    f'<div style="font-size:.84rem;font-weight:800;color:#24445c;margin:.4rem 0">{title}</div>'
+                    f'<div style="font-size:.8rem;line-height:1.5;color:#627989">{description}</div></div>',
+                    unsafe_allow_html=True,
+                )
+        st.markdown(
+            '<div style="display:flex;flex-wrap:wrap;gap:8px;margin:16px 0 12px">'
+            '<span style="background:#deedf7;border-radius:9px;padding:8px 12px;color:#245b7c;font-size:.8rem;font-weight:750">01 · Convierte a energía</span>'
+            '<span style="background:#deedf7;border-radius:9px;padding:8px 12px;color:#245b7c;font-size:.8rem;font-weight:750">02 · Pondera por duración</span>'
+            '<span style="background:#deedf7;border-radius:9px;padding:8px 12px;color:#245b7c;font-size:.8rem;font-weight:750">03 · Suma y divide por T</span>'
+            '<span style="background:#deedf7;border-radius:9px;padding:8px 12px;color:#245b7c;font-size:.8rem;font-weight:750">04 · Vuelve a dB</span>'
+            '</div>'
+            '<div style="font-size:.85rem;line-height:1.6;color:#526b7c">'
+            '<b style="color:#24445c">Clave:</b> no promedies los dB aritméticamente. '
+            'Si la máquina tiene varios modos de trabajo, usa el nivel y la duración de cada modo. '
+            'T y Δtⱼ deben expresarse en la misma unidad.</div>'
+            '<div style="border-top:1px solid #c9ddeb;padding-top:12px;margin-top:14px;'
+            'color:#627989;font-size:.8rem;line-height:1.6">'
+            '<b>Supuestos del laboratorio:</b> receptor y geometría fijos · nivel constante durante la actividad · '
+            'contribuciones independientes · sin aporte propio de la máquina durante la parada.</div>',
             unsafe_allow_html=True,
         )
 
