@@ -620,6 +620,20 @@ def student_sidebar_summary(client, user_key):
         for k in ("final_comprehension","final_integrated_design")
     )
 
+    course4_labs=[
+        lab for lab in FUTURE_LABS.values()
+        if lab.get("course")=="Factores del ruido en el proceso de construcción"
+    ]
+    c4_lab1=next(
+        (lab for lab in course4_labs if int(lab.get("number") or 0)==1),
+        None,
+    )
+    c4_prog=_future_lab_progress(c4_lab1,future_progress) if c4_lab1 else {
+        "completed":0,"expected":11,"percent":0.0
+    }
+    c4_deliveries=_course4_lab1_delivery_rows(rows)
+    c4_delivered=sum(c4_deliveries.get(k) is not None for k in ("stage9","stage10"))
+
     st.markdown(
         f"""
         <div style="background:linear-gradient(145deg,#0b5b91,#0e91c7);border:1px solid #59d4ef;
@@ -650,6 +664,16 @@ def student_sidebar_summary(client, user_key):
 
           <div style="display:flex;justify-content:space-between;gap:.5rem;font-size:.82rem;margin-top:.35rem">
             <span>Curso 3 · evaluaciones</span><b>{c3_official_delivered}/2</b>
+          </div>
+
+          <div style="height:1px;background:rgba(255,255,255,.22);margin:.55rem 0 .45rem"></div>
+
+          <div style="display:flex;justify-content:space-between;gap:.5rem;font-size:.82rem">
+            <span>Curso 4 · avance</span><b>{c4_prog.get('percent',0):.0f}%</b>
+          </div>
+
+          <div style="display:flex;justify-content:space-between;gap:.5rem;font-size:.82rem;margin-top:.35rem">
+            <span>Curso 4 · entregas formativas</span><b>{c4_delivered}/2</b>
           </div>
 
         </div>
@@ -2312,6 +2336,7 @@ def results_view(client, catalog, user_key):
         LABORATORIES[2]["id"],
         "clase-03-impacto-instalaciones-lab-1",
         "clase-04-impacto-instalaciones-lab-2",
+        "clase-07-construccion-lab-1",
     ]
     try:
         rows=(
@@ -2361,12 +2386,25 @@ def results_view(client, catalog, user_key):
     }
     c3_official=_course3_lab2_official_summary(rows)
 
+    course4_labs=[
+        lab for lab in FUTURE_LABS.values()
+        if lab.get("course")=="Factores del ruido en el proceso de construcción"
+    ]
+    c4_lab1=next((lab for lab in course4_labs if int(lab.get("number") or 0)==1),None)
+    c4_prog=_future_lab_progress(c4_lab1,progress_rows) if c4_lab1 else {
+        "completed":0,"expected":0,"percent":0.0
+    }
+    c4_deliveries=_course4_lab1_delivery_rows(rows)
+    c4_delivered=sum(c4_deliveries.get(k) is not None for k in ("stage9","stage10"))
+
     courses_with_progress=0
     if c1_completed or official["completed"]:
         courses_with_progress+=1
     if c2_prog["completed"] or c2_delivered:
         courses_with_progress+=1
     if c3_prog["completed"] or c3_lab2_prog["completed"] or c3_official["completed"]:
+        courses_with_progress+=1
+    if c4_prog["completed"] or c4_delivered:
         courses_with_progress+=1
 
     labs_with_progress=sum(1 for item in course1_progress.values() if item["completed"])
@@ -2375,6 +2413,8 @@ def results_view(client, catalog, user_key):
     if c3_prog["completed"]:
         labs_with_progress+=1
     if c3_lab2_prog["completed"] or c3_official["completed"]:
+        labs_with_progress+=1
+    if c4_prog["completed"] or c4_delivered:
         labs_with_progress+=1
 
     st.markdown("## Resumen del Diplomado")
@@ -2397,6 +2437,7 @@ def results_view(client, catalog, user_key):
     _render_course1_block(rows)
     _render_course2_block(rows,progress_rows)
     _render_course3_block(rows,progress_rows)
+    _render_course4_block(rows,progress_rows)
 
 
 
