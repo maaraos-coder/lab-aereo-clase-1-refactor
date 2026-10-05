@@ -3755,50 +3755,123 @@ def _stage7(lab, saved):
             unsafe_allow_html=True,
         )
 
-    _s7_section(6, "Resuelve y comprueba", "Aplica el método a un caso fijo. Este ejercicio es independiente de los ajustes del simulador.")
-    case_data = [("Excavadora", 67.0, 80), ("Mixer", 64.0, 30), ("Martillo", 74.0, 15), ("Generador", 59.0, 100)]
+    _s7_section(6, "Resuelve y comprueba", "Resuelve un caso nuevo: transforma los porcentajes activos en tiempos y aportes equivalentes, y calcula el total.")
+    case_data = [("Excavadora", 68.0, 60), ("Mixer", 65.0, 40), ("Martillo", 76.0, 10), ("Generador", 58.0, 100)]
+    equivalents = [level+10*math.log10(duty/100) for _, level, duty in case_data]
+    expected_total = _s7_level(sum(10**(level/10) for level in equivalents))
+    expected_name = case_data[max(range(len(equivalents)), key=lambda i: equivalents[i])][0]
     with st.container(border=True):
-        st.markdown("**Caso:** un receptor fijo, T = 60 min y sin fondo en el cálculo. Todas las entradas son aportes de cada máquina en ese receptor.")
+        st.markdown(
+            '<div style="font-size:.72rem;font-weight:850;letter-spacing:.1em;color:#176b9b">DESAFÍO INDIVIDUAL · CASO NUEVO</div>'
+            '<div style="font-size:1.15rem;font-weight:850;color:#17324a;margin:.5rem 0">Evalúa una hora de trabajo en el receptor R1</div>',
+            unsafe_allow_html=True,
+        )
+        st.markdown(
+            "**Antecedentes:** T = 60 min; receptor fijo; sin fondo en el cálculo. "
+            "Los niveles corresponden a cada máquina sola durante operación en R1. "
+            "Supón niveles constantes y sin aporte de la máquina durante la parada."
+        )
         st.dataframe(
-            pd.DataFrame([{"Fuente": n, "Nivel operativo [dB(A)]": level, "Activo [%]": duty, "Activo [min]": 60*duty/100}
-                          for n, level, duty in case_data]),
+            pd.DataFrame([{"Fuente": name, "Nivel operativo [dB(A)]": level, "Tiempo activo [%]": duty}
+                          for name, level, duty in case_data]),
             use_container_width=True, hide_index=True,
         )
-        st.markdown("Calcula los aportes equivalentes de excavadora y martillo, el total de la hora y la fuente dominante.")
-        with st.form("c4l1_s7_v2_exercise"):
+        st.markdown(
+            "**Tu trabajo:** calcula los minutos activos, la corrección temporal y el aporte equivalente "
+            "de cada máquina. Después suma energéticamente los cuatro aportes e identifica la fuente dominante."
+        )
+        st.caption(
+            "Usa las ecuaciones de las partes anteriores. Conserva los decimales durante el cálculo y "
+            "redondea al final. La comprobación señala qué revisar sin mostrar los resultados."
+        )
+        with st.form("c4l1_s7_v3_exercise"):
+            answers = []
+            for i, (name, level, duty) in enumerate(case_data):
+                st.markdown(f"**0{i+1} · {name}**")
+                a, b, c = st.columns(3)
+                with a:
+                    minutes_answer = st.number_input(
+                        f"{name} · minutos activos", min_value=0.0, max_value=60.0,
+                        value=None, step=0.1, placeholder="Calcula t", key=f"c4l1_s7_v3_ex_minutes_{i}",
+                    )
+                with b:
+                    correction_answer = st.number_input(
+                        f"{name} · corrección temporal [dB]", min_value=-60.0, max_value=0.0,
+                        value=None, step=0.1, placeholder="Calcula ΔLt", key=f"c4l1_s7_v3_ex_correction_{i}",
+                    )
+                with c:
+                    equivalent_answer = st.number_input(
+                        f"{name} · aporte en la hora [dB(A)]", min_value=0.0, max_value=120.0,
+                        value=None, step=0.1, placeholder="Calcula LAeq,T", key=f"c4l1_s7_v3_ex_equivalent_{i}",
+                    )
+                answers.append((minutes_answer, correction_answer, equivalent_answer))
+            st.markdown("**Integra el resultado de las cuatro máquinas**")
             a, b = st.columns(2)
             with a:
-                ans_exc = st.number_input("Excavadora · aporte en la hora [dB(A)]", 0.0, 120.0, 60.0, 0.1, key="c4l1_s7_v2_ans_exc")
-                ans_ham = st.number_input("Martillo · aporte en la hora [dB(A)]", 0.0, 120.0, 60.0, 0.1, key="c4l1_s7_v2_ans_ham")
-            with b:
-                ans_total = st.number_input("Total de la hora [dB(A)]", 0.0, 120.0, 60.0, 0.1, key="c4l1_s7_v2_ans_total")
-                ans_dom = st.selectbox("Fuente dominante", ["Selecciona", "Excavadora", "Mixer", "Martillo", "Generador"], key="c4l1_s7_v2_ans_dom")
-            submitted = st.form_submit_button("Comprobar mi cálculo", type="primary", use_container_width=True)
-        equivalents = [level+10*math.log10(duty/100) for _, level, duty in case_data]
-        expected_total = _s7_level(sum(10**(level/10) for level in equivalents))
-        expected_name = case_data[max(range(len(equivalents)), key=lambda i: equivalents[i])][0]
-        if submitted:
-            checks = [
-                abs(ans_exc-equivalents[0]) <= .2,
-                abs(ans_ham-equivalents[2]) <= .2,
-                abs(ans_total-expected_total) <= .2,
-                ans_dom == expected_name,
-            ]
-            if all(checks):
-                st.success("Correcto: aplicaste el tiempo activo, sumaste energía e identificaste la contribución dominante.")
-            else:
-                pending = [label for label, passed in zip(["aporte de excavadora", "aporte de martillo", "suma total", "fuente dominante"], checks) if not passed]
-                st.warning("Revisa: " + ", ".join(pending) + ".")
-            with st.expander("Ver desarrollo del caso", expanded=True):
-                st.dataframe(
-                    pd.DataFrame([{"Fuente": row[0], "Corrección temporal [dB]": f"{10*math.log10(row[2]/100):.2f}",
-                                   "Aporte en 60 min [dB(A)]": f"{value:.2f}"} for row, value in zip(case_data, equivalents)]),
-                    use_container_width=True, hide_index=True,
+                ans_total = st.number_input(
+                    "Total de la hora [dB(A)]", min_value=0.0, max_value=120.0,
+                    value=None, step=0.1, placeholder="Suma las energías", key="c4l1_s7_v3_ex_total",
                 )
-                st.markdown(f"**Total: {expected_total:.2f} dB(A). Fuente dominante: {expected_name}.**")
-                st.caption("Calcula con todos los decimales y redondea al final. Tolerancia de comprobación: ±0,2 dB.")
-            saved["c4l1_stage7_check"] = {"correct": sum(checks), "total": 4}
-            _save_stage_state(lab, saved, 7)
+            with b:
+                ans_dom = st.selectbox(
+                    "Fuente dominante", ["Selecciona", "Excavadora", "Mixer", "Martillo", "Generador"],
+                    key="c4l1_s7_v3_ex_dominant",
+                )
+            explanation = st.text_area(
+                "Justifica por qué domina esa fuente",
+                placeholder="Relaciona el nivel durante operación con el tiempo activo.",
+                key="c4l1_s7_v3_ex_explanation",
+            )
+            submitted = st.form_submit_button("Comprobar mi ejercicio", type="primary", use_container_width=True)
+        if submitted:
+            incomplete = any(value is None for row in answers for value in row) or ans_total is None or ans_dom == "Selecciona"
+            if incomplete:
+                st.warning("Completa todos los cálculos y selecciona la fuente dominante antes de comprobar.")
+            elif len(explanation.strip()) < 40:
+                st.warning("Justifica tu elección con al menos 40 caracteres, relacionando nivel y duración.")
+            else:
+                checks, feedback = [], []
+                for (name, level, duty), (minutes_answer, correction_answer, equivalent_answer), expected_equivalent in zip(case_data, answers, equivalents):
+                    row_checks = [
+                        abs(minutes_answer-60*duty/100) <= .1,
+                        abs(correction_answer-10*math.log10(duty/100)) <= .2,
+                        abs(equivalent_answer-expected_equivalent) <= .2,
+                    ]
+                    checks.extend(row_checks)
+                    for label, passed, hint in zip(
+                        ["Tiempo activo", "Corrección temporal", "Aporte equivalente"], row_checks,
+                        ["Convierte el porcentaje en una fracción y multiplícala por T.",
+                         "Usa 10 log10(t/T); la corrección es cero o negativa.",
+                         "Suma la corrección temporal al nivel durante operación."],
+                    ):
+                        feedback.append({"Fuente": name, "Cálculo": label,
+                                         "Revisión": "Correcto" if passed else "Revisar",
+                                         "Orientación": "—" if passed else hint})
+                total_ok = abs(ans_total-expected_total) <= .2
+                dominant_ok = ans_dom == expected_name
+                checks.extend([total_ok, dominant_ok])
+                feedback.extend([
+                    {"Fuente": "Conjunto", "Cálculo": "Total de la hora", "Revisión": "Correcto" if total_ok else "Revisar",
+                     "Orientación": "—" if total_ok else "Convierte los cuatro aportes equivalentes a energía, suma y vuelve a dB."},
+                    {"Fuente": "Conjunto", "Cálculo": "Fuente dominante", "Revisión": "Correcto" if dominant_ok else "Revisar",
+                     "Orientación": "—" if dominant_ok else "Compara los aportes equivalentes de la hora, no solo los niveles operativos."},
+                ])
+                if all(checks):
+                    st.success("Correcto: resolviste los tiempos, las correcciones, los aportes y la suma energética.")
+                else:
+                    st.warning(f"Comprobaciones correctas: {sum(checks)}/{len(checks)}. Revisa las pistas y vuelve a intentarlo.")
+                st.dataframe(pd.DataFrame(feedback), use_container_width=True, hide_index=True)
+                st.caption(
+                    "Tolerancia: ±0,1 min y ±0,2 dB. La justificación se guarda para revisión docente; "
+                    "la comprobación automática valida los cálculos y la selección."
+                )
+                saved["c4l1_stage7_check"] = {
+                    "correct": sum(checks), "total": len(checks), "exercise_version": 3,
+                    "answers": {row[0]: {"minutes": answer[0], "correction": answer[1], "equivalent": answer[2]}
+                                for row, answer in zip(case_data, answers)},
+                    "total_answer": ans_total, "dominant_answer": ans_dom, "explanation": explanation,
+                }
+                _save_stage_state(lab, saved, 7)
 
     with st.expander("Criterios técnicos y referencias"):
         st.markdown(
