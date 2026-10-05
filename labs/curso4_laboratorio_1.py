@@ -3244,132 +3244,131 @@ def _stage7(lab, saved):
     for col, title, description in zip(
         route,
         ["01 · Comprende", "02 · Experimenta", "03 · Resuelve"],
-        ["Define el período y el aporte temporal.", "Compara energía y coincidencias de operación.", "Justifica el resultado de un caso de obra."],
+        ["Identifica las entradas y calcula el aporte equivalente.", "Compara energía y coincidencias de operación.", "Justifica el resultado de un caso de obra."],
     ):
         with col:
             with st.container(border=True):
                 st.markdown(f"**{title}**")
                 st.caption(description)
 
-    _s7_section(1, "Define qué estás calculando", "Todos los aportes deben referirse al mismo receptor, descriptor y período.")
+    _s7_section(1, "Identifica las entradas del cálculo", "Fija el receptor y el período; después identifica el nivel operativo y el tiempo activo de cada máquina.")
     concepts = [
-        ("01", "Durante la operación", "LAeq,t", "Nivel equivalente del aporte de una máquina mientras funciona, calculado o medido en el receptor.", "#176b9b", "#eef7fc"),
-        ("02", "El período de evaluación", "T = 60 min", "Una hora común para todas las fuentes. Los minutos activos t pueden ser continuos o repartidos en varios ciclos.", "#65549a", "#f5f2fb"),
-        ("03", "El aporte a toda la hora", "LAeq,T", "La energía de esa fuente repartida sobre los 60 minutos, incluidos los momentos en que está detenida.", "#2d7a4a", "#eff8f2"),
+        ("01", "Nivel durante operación", "L<sub>operación,i</sub>", "Nivel equivalente de la máquina i sola en el receptor mientras trabaja, separado del fondo. Se expresa en dB(A).", "#176b9b", "#eef7fc"),
+        ("02", "Tiempo activo", "t<sub>i</sub>", "Duración total de la actividad dentro del período. Puede reunir varios ciclos si todos tienen el mismo nivel operativo.", "#65549a", "#f5f2fb"),
+        ("03", "Período de evaluación", "T = 60 min", "Duración común del cálculo, que incluye actividad y parada. En esta etapa T es una hora; tᵢ y T usan la misma unidad.", "#2d7a4a", "#eff8f2"),
     ]
     for col, (number, title, symbol, description, color, bg) in zip(st.columns(3, gap="medium"), concepts):
         with col:
             st.markdown(
                 f'<div style="border:1px solid #dce7ef;border-top:4px solid {color};border-radius:16px;'
                 f'padding:20px;background:{bg};min-height:225px;box-sizing:border-box">'
-                f'<div style="font-size:.72rem;font-weight:850;letter-spacing:.1em;color:{color}">CONCEPTO {number}</div>'
+                f'<div style="font-size:.72rem;font-weight:850;letter-spacing:.1em;color:{color}">ENTRADA {number}</div>'
                 f'<div style="font-size:1.05rem;font-weight:850;color:#17324a;margin:.6rem 0">{title}</div>'
                 f'<div style="font-size:1.65rem;font-weight:850;color:{color};margin:.7rem 0">{symbol}</div>'
                 f'<div style="font-size:.88rem;line-height:1.65;color:#526b7c">{description}</div></div>',
                 unsafe_allow_html=True,
             )
-    st.markdown(
-        """
-        <style>
-        .st-key-c4l1_s7_equation {
-            border:1px solid #c9ddeb !important;
-            border-radius:22px !important;
-            background:linear-gradient(130deg,#f8fcff 0%,#edf5fb 100%);
-            padding:22px !important;
-            box-shadow:0 8px 24px rgba(30,65,92,.06);
-        }
-        .st-key-c4l1_s7_equation [data-testid="stLatex"] {
-            background:#fff;
-            border:1px solid #dce8f1;
-            border-radius:16px;
-            padding:22px 12px;
-            margin:8px 0 12px;
-            color:#17324a;
-            overflow-x:auto;
-        }
-        </style>
-        """,
-        unsafe_allow_html=True,
+    st.info(
+        "Todos los niveles se refieren al mismo receptor. Usamos niveles de presión sonora equivalentes "
+        "ponderados A; no mezcles estas entradas con Lw o LAmax. La máquina conserva su nivel durante "
+        "operación aunque trabaje menos minutos."
     )
-    with st.container(key="c4l1_s7_equation", border=True):
-        st.markdown(
-            '<div style="font-size:.72rem;font-weight:850;letter-spacing:.12em;color:#176b9b">'
-            'LA ECUACIÓN · PROMEDIO ENERGÉTICO</div>'
-            '<div style="font-size:1.2rem;font-weight:850;color:#17324a;margin:.5rem 0 .4rem">'
-            'De los intervalos de trabajo al nivel de toda la hora</div>'
-            '<div style="font-size:.88rem;color:#526b7c;line-height:1.6;margin-bottom:8px">'
-            'Cada intervalo aporta energía según su nivel y su duración.</div>',
-            unsafe_allow_html=True,
-        )
-        st.latex(r"L_{Aeq,T}=10\log_{10}\left[\frac{1}{T}\sum_j\Delta t_j\,10^{L_{Aeq,j}/10}\right]")
-        terms = [
-            ("T", "Período total", "60 min en este laboratorio."),
-            ("Δtⱼ", "Duración del intervalo", "Minutos con un nivel constante."),
-            ("L<sub>Aeq,j</sub>", "Nivel del intervalo", "Nivel equivalente en el receptor."),
-        ]
-        for col, (symbol, title, description) in zip(st.columns(3), terms):
-            with col:
-                st.markdown(
-                    '<div style="background:#fff;border:1px solid #dce8f1;border-radius:12px;padding:14px;min-height:125px">'
-                    f'<div style="font-size:1.3rem;font-weight:850;color:#176b9b">{symbol}</div>'
-                    f'<div style="font-size:.84rem;font-weight:800;color:#24445c;margin:.4rem 0">{title}</div>'
-                    f'<div style="font-size:.8rem;line-height:1.5;color:#627989">{description}</div></div>',
-                    unsafe_allow_html=True,
-                )
-        st.markdown(
-            '<div style="display:flex;flex-wrap:wrap;gap:8px;margin:16px 0 12px">'
-            '<span style="background:#deedf7;border-radius:9px;padding:8px 12px;color:#245b7c;font-size:.8rem;font-weight:750">01 · Convierte a energía</span>'
-            '<span style="background:#deedf7;border-radius:9px;padding:8px 12px;color:#245b7c;font-size:.8rem;font-weight:750">02 · Pondera por duración</span>'
-            '<span style="background:#deedf7;border-radius:9px;padding:8px 12px;color:#245b7c;font-size:.8rem;font-weight:750">03 · Suma y divide por T</span>'
-            '<span style="background:#deedf7;border-radius:9px;padding:8px 12px;color:#245b7c;font-size:.8rem;font-weight:750">04 · Vuelve a dB</span>'
-            '</div>'
-            '<div style="font-size:.85rem;line-height:1.6;color:#526b7c">'
-            '<b style="color:#24445c">Clave:</b> no promedies los dB aritméticamente. '
-            'Si la máquina tiene varios modos de trabajo, usa el nivel y la duración de cada modo. '
-            'T y Δtⱼ deben expresarse en la misma unidad.</div>'
-            '<div style="border-top:1px solid #c9ddeb;padding-top:12px;margin-top:14px;'
-            'color:#627989;font-size:.8rem;line-height:1.6">'
-            '<b>Supuestos del laboratorio:</b> receptor y geometría fijos · nivel constante durante la actividad · '
-            'contribuciones independientes · sin aporte propio de la máquina durante la parada.</div>',
-            unsafe_allow_html=True,
-        )
 
-    _s7_section(2, "Explora el tiempo activo", "Reduce los minutos de trabajo y observa cuánto cambia el aporte de una sola fuente.")
+    _s7_section(2, "Calcula el aporte equivalente del período", "La corrección temporal es un paso del cálculo; el aporte equivalente es su resultado. Aquí el período es una hora.")
     with st.container(border=True):
         st.markdown(
-            '<div style="font-size:.72rem;font-weight:850;letter-spacing:.1em;color:#176b9b">ANTES DE MOVER LOS CONTROLES</div>'
-            '<div style="font-size:1.2rem;font-weight:850;color:#17324a;margin:.5rem 0">Dos conceptos para pasar de la actividad a toda la hora</div>',
+            '<div style="font-size:.72rem;font-weight:850;letter-spacing:.1em;color:#176b9b">UN SOLO MÉTODO · DOS PASOS</div>'
+            '<div style="font-size:1.2rem;font-weight:850;color:#17324a;margin:.5rem 0">Del nivel operativo al aporte de toda la hora</div>',
             unsafe_allow_html=True,
         )
         st.markdown(
-            "Una máquina puede sonar a **80 dB(A) mientras trabaja**, pero funcionar solo **15 minutos** "
-            "dentro de una hora. Para describir su contribución a los **60 minutos completos**, "
-            "debemos repartir la energía de esos 15 minutos sobre toda la hora."
+            "**Qué queremos obtener:** el aporte equivalente del período, LAeq,T,i. "
+            "Es el nivel constante que, mantenido durante todo T, representaría la misma energía "
+            "que aporta la máquina en sus minutos activos. «Aporte de la hora» es el nombre abreviado "
+            "cuando T = 60 min, no una magnitud diferente."
         )
-        concept_a, concept_b = st.columns(2, gap="large")
-        with concept_a:
-            st.markdown("**1 · Corrección temporal, ΔLt,i [dB]**")
+        st.markdown("**Paso 1 · Calcula la corrección temporal**")
+        st.latex(r"\Delta L_{t,i}=10\log_{10}(t_i/T)")
+        st.markdown(
+            "La corrección temporal ΔLt,i es un ajuste en **dB** por la fracción activa tᵢ/T. "
+            "Vale 0 dB si la máquina trabaja todo T y es negativa si trabaja solo parte de T. "
+            "Ajusta el promedio del período; no reduce físicamente la emisión durante operación."
+        )
+        st.markdown("**Paso 2 · Suma ese ajuste al nivel durante operación**")
+        st.latex(r"L_{Aeq,T,i}=L_{\mathrm{operación},i}+\Delta L_{t,i}")
+        st.markdown(
+            "El resultado es el aporte equivalente de esa máquina, en **dB(A)**. "
+            "La expresión combinada es la misma relación entre tiempo y nivel, no un segundo cálculo:"
+        )
+        st.latex(r"L_{Aeq,T,i}=L_{\mathrm{operación},i}+10\log_{10}(t_i/T)")
+        parameter_definitions = [
+            ("L<sub>Aeq,T,i</sub>", "Aporte de la máquina i al período completo", "Nivel equivalente referido a toda la hora, incluidos los minutos sin actividad.", "dB(A)"),
+            ("L<sub>operación,i</sub>", "Nivel de la máquina i durante operación", "Aporte de la máquina sola en el receptor durante su tiempo activo, separado del fondo.", "dB(A)"),
+            ("t<sub>i</sub>", "Tiempo activo de la máquina i", "Suma de los minutos en que funciona dentro del período de evaluación.", "min"),
+            ("T", "Período total de evaluación", "Duración común sobre la que se reparte la energía. Aquí T = 60 min.", "min"),
+        ]
+        st.markdown("**Qué significa cada parámetro**")
+        parameter_columns = st.columns(2, gap="medium")
+        for index, (symbol, title, description, unit) in enumerate(parameter_definitions):
+            with parameter_columns[index % 2]:
+                st.markdown(
+                    '<div style="border:1px solid #dce8f1;border-radius:12px;padding:15px 16px;'
+                    'background:#f7fafc;margin-bottom:10px">'
+                    '<div style="display:flex;justify-content:space-between;gap:10px;align-items:center">'
+                    f'<span style="font-size:1.15rem;font-weight:850;color:#176b9b">{symbol}</span>'
+                    f'<span style="font-size:.75rem;color:#526b7c;background:#e8eff5;border-radius:7px;padding:4px 8px">{unit}</span>'
+                    '</div>'
+                    f'<div style="font-size:.86rem;font-weight:800;color:#24445c;margin:.6rem 0 .3rem">{title}</div>'
+                    f'<div style="font-size:.82rem;color:#627989;line-height:1.6">{description}</div></div>',
+                    unsafe_allow_html=True,
+                )
+        st.caption(
+            "i identifica la máquina; A indica ponderación A; eq indica nivel equivalente. "
+            "tᵢ/T es la fracción activa, sin unidades: usa la misma unidad para ambos tiempos. "
+            "El término 10 log10(tᵢ/T) es la corrección temporal ΔLt,i, expresada en dB. "
+            "La ecuación con logaritmo se aplica para 0 < tᵢ ≤ T; si tᵢ = 0, no hay aporte de la máquina."
+        )
+
+        for col, percent in zip(st.columns(4), [100, 50, 25, 10]):
+            with col:
+                st.markdown(
+                    '<div style="border:1px solid #dce7ef;border-radius:12px;padding:13px;background:#f7fafc;text-align:center">'
+                    f'<div style="font-size:.78rem;color:#627989">{percent} % activo</div>'
+                    f'<div style="font-size:1.18rem;font-weight:850;color:#24445c;margin-top:.3rem">{10*math.log10(percent/100):.2f} dB</div></div>',
+                    unsafe_allow_html=True,
+                )
+        if active_minutes == 0:
+            st.info(
+                "La fuente no aporta energía a esta hora. Se muestra «Sin aporte»: log10(0) no tiene "
+                "un valor finito y no corresponde asignarle 0 dB. Si hay fondo, este sigue presente."
+            )
+        else:
             st.markdown(
-                "Es el ajuste que considera la proporción de tiempo durante la que funciona la máquina. "
-                "Se calcula a partir de **tᵢ/T**, donde tᵢ es el tiempo activo y T el período completo."
+                f"**Lectura:** {active_minutes} min a {base} dB(A) aportan **{equivalent:.2f} dB(A)** "
+                "al período de 60 min. La corrección cambia el aporte temporal; la máquina conserva "
+                "su nivel durante operación."
             )
-            st.latex(r"\Delta L_{t,i}=10\log_{10}\left(\frac{t_i}{T}\right)")
-            st.caption(
-                "Si trabaja todo el período, tᵢ/T = 1 y la corrección es 0 dB. "
-                "Si trabaja solo parte del período, la corrección es negativa. "
-                "No es un silenciador ni una reducción física de su emisión."
-            )
-        with concept_b:
-            st.markdown("**2 · Aporte equivalente de la hora, LAeq,T,i [dB(A)]**")
+        if use_background:
+            st.latex(r"L_{Aeq,T,\mathrm{total}}=10\log_{10}\left[(t/T)10^{L_{\mathrm{fuente}}/10}+10^{L_{\mathrm{fondo}}/10}\right]")
             st.markdown(
-                "Es el nivel constante que, mantenido durante toda la hora, representaría la misma "
-                "energía acústica que aporta esa máquina durante sus minutos de actividad. "
-                "Se obtiene sumando la corrección temporal a su nivel durante operación."
+                "**Cómo se calcula:** durante la actividad se suman las energías de máquina y fondo; "
+                "durante la parada permanece solo el fondo. Se ponderan ambos intervalos por su duración. "
+                "La expresión anterior equivale a ese promedio porque el fondo está presente toda la hora."
             )
-            st.latex(r"L_{Aeq,T,i}=L_{\mathrm{operación},i}+\Delta L_{t,i}")
+            st.info(
+                "Si ingresas un nivel medido con la máquina encendida que ya incluye el fondo, "
+                "no vuelvas a sumarlo: contarías dos veces su energía. Este simulador utiliza el aporte "
+                "de la máquina separado del fondo; no aplica una corrección de mediciones."
+            )
+            if active_minutes == 0:
+                st.caption(f"Con la máquina detenida toda la hora, el total coincide con el fondo: {background:.2f} dB(A).")
             st.caption(
-                "Es la contribución de una sola máquina al promedio horario en el receptor. "
-                "Para calcular el total de varias máquinas hay que sumar sus energías."
+                "El total no puede quedar por debajo del fondo incluido. Todos los niveles deben corresponder "
+                "al mismo receptor y descriptor. Este cálculo energético no es una corrección normativa por ruido de fondo."
+            )
+            st.markdown(
+                "[Referencia: FHWA · Noise Measurement Handbook, ajuste por fondo]"
+                "(https://www.fhwa.dot.gov/ENVIRonment/noise/measurement/handbook.cfm)"
             )
         st.markdown("**Ejemplo guiado · 80 dB(A) durante 15 min de una hora**")
         st.latex(r"\frac{t_i}{T}=\frac{15}{60}=0{,}25\qquad\Delta L_{t,i}=10\log_{10}(0{,}25)=-6{,}02\ \mathrm{dB}")
@@ -3448,77 +3447,7 @@ def _stage7(lab, saved):
                     ]), use_container_width=True, hide_index=True,
                 )
     with st.container(border=True):
-        st.markdown("**La relación entre tiempo y nivel**")
-        st.latex(r"L_{Aeq,T,i}=L_{Aeq,t_i,i}+10\log_{10}(t_i/T)")
-        parameter_definitions = [
-            ("L<sub>Aeq,T,i</sub>", "Aporte de la máquina i al período completo", "Nivel equivalente referido a toda la hora, incluidos los minutos sin actividad.", "dB(A)"),
-            ("L<sub>Aeq,tᵢ,i</sub>", "Nivel de la máquina i durante operación", "Aporte de la máquina sola en el receptor durante su tiempo activo, separado del fondo.", "dB(A)"),
-            ("t<sub>i</sub>", "Tiempo activo de la máquina i", "Suma de los minutos en que funciona dentro del período de evaluación.", "min"),
-            ("T", "Período total de evaluación", "Duración común sobre la que se reparte la energía. Aquí T = 60 min.", "min"),
-        ]
-        st.markdown("**Qué significa cada parámetro**")
-        parameter_columns = st.columns(2, gap="medium")
-        for index, (symbol, title, description, unit) in enumerate(parameter_definitions):
-            with parameter_columns[index % 2]:
-                st.markdown(
-                    '<div style="border:1px solid #dce8f1;border-radius:12px;padding:15px 16px;'
-                    'background:#f7fafc;margin-bottom:10px">'
-                    '<div style="display:flex;justify-content:space-between;gap:10px;align-items:center">'
-                    f'<span style="font-size:1.15rem;font-weight:850;color:#176b9b">{symbol}</span>'
-                    f'<span style="font-size:.75rem;color:#526b7c;background:#e8eff5;border-radius:7px;padding:4px 8px">{unit}</span>'
-                    '</div>'
-                    f'<div style="font-size:.86rem;font-weight:800;color:#24445c;margin:.6rem 0 .3rem">{title}</div>'
-                    f'<div style="font-size:.82rem;color:#627989;line-height:1.6">{description}</div></div>',
-                    unsafe_allow_html=True,
-                )
-        st.caption(
-            "i identifica la máquina; A indica ponderación A; eq indica nivel equivalente. "
-            "tᵢ/T es la fracción activa, sin unidades: usa la misma unidad para ambos tiempos. "
-            "El término 10 log10(tᵢ/T) es la corrección temporal ΔLt,i, expresada en dB. "
-            "La ecuación con logaritmo se aplica para 0 < tᵢ ≤ T; si tᵢ = 0, no hay aporte de la máquina."
-        )
-
-        for col, percent in zip(st.columns(4), [100, 50, 25, 10]):
-            with col:
-                st.markdown(
-                    '<div style="border:1px solid #dce7ef;border-radius:12px;padding:13px;background:#f7fafc;text-align:center">'
-                    f'<div style="font-size:.78rem;color:#627989">{percent} % activo</div>'
-                    f'<div style="font-size:1.18rem;font-weight:850;color:#24445c;margin-top:.3rem">{10*math.log10(percent/100):.2f} dB</div></div>',
-                    unsafe_allow_html=True,
-                )
-        if active_minutes == 0:
-            st.info(
-                "La fuente no aporta energía a esta hora. Se muestra «Sin aporte»: log10(0) no tiene "
-                "un valor finito y no corresponde asignarle 0 dB. Si hay fondo, este sigue presente."
-            )
-        else:
-            st.markdown(
-                f"**Lectura:** {active_minutes} min a {base} dB(A) aportan **{equivalent:.2f} dB(A)** "
-                "al período de 60 min. La corrección cambia el aporte temporal; la máquina conserva "
-                "su nivel durante operación."
-            )
-        if use_background:
-            st.latex(r"L_{Aeq,T,\mathrm{total}}=10\log_{10}\left[(t/T)10^{L_{\mathrm{fuente}}/10}+10^{L_{\mathrm{fondo}}/10}\right]")
-            st.markdown(
-                "**Cómo se calcula:** durante la actividad se suman las energías de máquina y fondo; "
-                "durante la parada permanece solo el fondo. Se ponderan ambos intervalos por su duración. "
-                "La expresión anterior equivale a ese promedio porque el fondo está presente toda la hora."
-            )
-            st.info(
-                "Si ingresas un nivel medido con la máquina encendida que ya incluye el fondo, "
-                "no vuelvas a sumarlo: contarías dos veces su energía. Este simulador utiliza el aporte "
-                "de la máquina separado del fondo; no aplica una corrección de mediciones."
-            )
-            if active_minutes == 0:
-                st.caption(f"Con la máquina detenida toda la hora, el total coincide con el fondo: {background:.2f} dB(A).")
-            st.caption(
-                "El total no puede quedar por debajo del fondo incluido. Todos los niveles deben corresponder "
-                "al mismo receptor y descriptor. Este cálculo energético no es una corrección normativa por ruido de fondo."
-            )
-            st.markdown(
-                "[Referencia: FHWA · Noise Measurement Handbook, ajuste por fondo]"
-                "(https://www.fhwa.dot.gov/ENVIRonment/noise/measurement/handbook.cfm)"
-            )
+        st.markdown("**Referencias rápidas · efecto de la fracción activa en el mismo cálculo**")
 
     _s7_section(3, "Suma dos máquinas con distintos tiempos", "Define el nivel durante operación y los minutos activos de cada máquina. Ambas aportan al mismo receptor durante una hora.")
     machine_inputs = []
@@ -3589,7 +3518,7 @@ def _stage7(lab, saved):
             unsafe_allow_html=True,
         )
         st.caption("Porcentajes de energía acústica, no de sonoridad percibida. Con ambas máquinas detenidas no hay energía que repartir.")
-        st.markdown("**01 · Aporte temporal de cada máquina**")
+        st.markdown("**01 · Aplica el mismo método a cada máquina**")
         st.latex(r"L_{Aeq,T,i}=L_{\mathrm{operación},i}+10\log_{10}(t_i/T)")
         st.markdown("**02 · Total energético de la hora**")
         st.latex(r"L_{Aeq,T,\Sigma}=10\log_{10}\left[\frac{t_A}{T}10^{L_A/10}+\frac{t_B}{T}10^{L_B/10}\right]")
@@ -3807,6 +3736,74 @@ def _stage7(lab, saved):
             '</div></div>',
             unsafe_allow_html=True,
         )
+
+    with st.expander("Profundiza · promedio energético por intervalos"):
+        st.markdown(
+            """
+            <style>
+            .st-key-c4l1_s7_equation {
+                border:1px solid #c9ddeb !important;
+                border-radius:22px !important;
+                background:linear-gradient(130deg,#f8fcff 0%,#edf5fb 100%);
+                padding:22px !important;
+                box-shadow:0 8px 24px rgba(30,65,92,.06);
+            }
+            .st-key-c4l1_s7_equation [data-testid="stLatex"] {
+                background:#fff;
+                border:1px solid #dce8f1;
+                border-radius:16px;
+                padding:22px 12px;
+                margin:8px 0 12px;
+                color:#17324a;
+                overflow-x:auto;
+            }
+            </style>
+            """,
+            unsafe_allow_html=True,
+        )
+        with st.container(key="c4l1_s7_equation", border=True):
+            st.markdown(
+                '<div style="font-size:.72rem;font-weight:850;letter-spacing:.12em;color:#176b9b">'
+                'LA ECUACIÓN · PROMEDIO ENERGÉTICO</div>'
+                '<div style="font-size:1.2rem;font-weight:850;color:#17324a;margin:.5rem 0 .4rem">'
+                'De los intervalos de trabajo al nivel de toda la hora</div>'
+                '<div style="font-size:.88rem;color:#526b7c;line-height:1.6;margin-bottom:8px">'
+                'Cada intervalo aporta energía según su nivel y su duración.</div>',
+                unsafe_allow_html=True,
+            )
+            st.latex(r"L_{Aeq,T}=10\log_{10}\left[\frac{1}{T}\sum_j\Delta t_j\,10^{L_{Aeq,j}/10}\right]")
+            terms = [
+                ("T", "Período total", "60 min en este laboratorio."),
+                ("Δtⱼ", "Duración del intervalo", "Minutos con un nivel constante."),
+                ("L<sub>Aeq,j</sub>", "Nivel del intervalo", "Nivel equivalente en el receptor."),
+            ]
+            for col, (symbol, title, description) in zip(st.columns(3), terms):
+                with col:
+                    st.markdown(
+                        '<div style="background:#fff;border:1px solid #dce8f1;border-radius:12px;padding:14px;min-height:125px">'
+                        f'<div style="font-size:1.3rem;font-weight:850;color:#176b9b">{symbol}</div>'
+                        f'<div style="font-size:.84rem;font-weight:800;color:#24445c;margin:.4rem 0">{title}</div>'
+                        f'<div style="font-size:.8rem;line-height:1.5;color:#627989">{description}</div></div>',
+                        unsafe_allow_html=True,
+                    )
+            st.markdown(
+                '<div style="display:flex;flex-wrap:wrap;gap:8px;margin:16px 0 12px">'
+                '<span style="background:#deedf7;border-radius:9px;padding:8px 12px;color:#245b7c;font-size:.8rem;font-weight:750">01 · Convierte a energía</span>'
+                '<span style="background:#deedf7;border-radius:9px;padding:8px 12px;color:#245b7c;font-size:.8rem;font-weight:750">02 · Pondera por duración</span>'
+                '<span style="background:#deedf7;border-radius:9px;padding:8px 12px;color:#245b7c;font-size:.8rem;font-weight:750">03 · Suma y divide por T</span>'
+                '<span style="background:#deedf7;border-radius:9px;padding:8px 12px;color:#245b7c;font-size:.8rem;font-weight:750">04 · Vuelve a dB</span>'
+                '</div>'
+                '<div style="font-size:.85rem;line-height:1.6;color:#526b7c">'
+                '<b style="color:#24445c">Clave:</b> no promedies los dB aritméticamente. '
+                'Si la máquina tiene varios modos de trabajo, usa el nivel y la duración de cada modo. '
+                'T y Δtⱼ deben expresarse en la misma unidad.</div>'
+                '<div style="border-top:1px solid #c9ddeb;padding-top:12px;margin-top:14px;'
+                'color:#627989;font-size:.8rem;line-height:1.6">'
+                '<b>Supuestos del laboratorio:</b> receptor y geometría fijos · nivel constante durante la actividad · '
+                'contribuciones independientes · sin aporte propio de la máquina durante la parada.</div>',
+                unsafe_allow_html=True,
+            )
+        st.caption("j identifica un intervalo del cronograma; i identifica una máquina. La suma por intervalos integra el nivel total de cada tramo. La suma por máquinas combina sus aportes equivalentes calculados sobre el mismo T. Son dos formas compatibles de contabilizar la misma energía, bajo los supuestos del laboratorio.")
 
     _s7_section(6, "Resuelve y comprueba", "Resuelve un caso nuevo: transforma los porcentajes activos en tiempos y aportes equivalentes, y calcula el total.")
     case_data = [("Excavadora", 68.0, 60), ("Mixer", 65.0, 40), ("Martillo", 76.0, 10), ("Generador", 58.0, 100)]
