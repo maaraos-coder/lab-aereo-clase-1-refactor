@@ -3540,6 +3540,37 @@ def _stage7(lab, saved):
         st.latex(r"L_{Aeq,T,i}=L_{\mathrm{operación},i}+10\log_{10}(t_i/T)")
         st.markdown("**02 · Total energético de la hora**")
         st.latex(r"L_{Aeq,T,\Sigma}=10\log_{10}\left[\frac{t_A}{T}10^{L_A/10}+\frac{t_B}{T}10^{L_B/10}\right]")
+        st.markdown("**Variables de las dos ecuaciones**")
+        variable_definitions = [
+            ("L<sub>operación,i</sub> · L<sub>A</sub> · L<sub>B</sub>", "Nivel durante operación", "Aporte de la máquina i sola en el receptor. L_A y L_B son los niveles operativos de A y B, separados del fondo.", "dB(A)"),
+            ("t<sub>i</sub> · t<sub>A</sub> · t<sub>B</sub>", "Tiempo activo de cada máquina", "Minutos que funciona cada máquina dentro del período. A y B pueden tener distintas duraciones y trabajar simultáneamente.", "min"),
+            ("T", "Período total de evaluación", "Duración común sobre la que se promedian las energías. En este ejercicio T = 60 min.", "min"),
+            ("L<sub>Aeq,T,i</sub>", "Aporte equivalente de una máquina", "Energía de la máquina i repartida sobre todo T, después de aplicar su corrección temporal.", "dB(A)"),
+            ("L<sub>Aeq,T,Σ</sub>", "Nivel equivalente del conjunto", "Resultado de sumar las energías de A y B y promediarlas sobre el mismo período T.", "dB(A)"),
+            ("t<sub>i</sub>/T · t<sub>A</sub>/T · t<sub>B</sub>/T", "Fracción activa", "Proporción del período durante la que trabaja cada máquina. Usa la misma unidad para el numerador y el denominador.", "Sin unidad"),
+        ]
+        variable_columns = st.columns(2, gap="medium")
+        for index, (symbol, title, description, unit) in enumerate(variable_definitions):
+            with variable_columns[index % 2]:
+                st.markdown(
+                    '<div style="border:1px solid #dce8f1;border-radius:12px;padding:15px 16px;'
+                    'background:#f7fafc;margin-bottom:10px">'
+                    '<div style="display:flex;justify-content:space-between;gap:10px;align-items:center;flex-wrap:wrap">'
+                    f'<span style="font-size:1.1rem;font-weight:850;color:#176b9b">{symbol}</span>'
+                    f'<span style="font-size:.75rem;color:#526b7c;background:#e8eff5;border-radius:7px;padding:4px 8px">{unit}</span>'
+                    '</div>'
+                    f'<div style="font-size:.86rem;font-weight:800;color:#24445c;margin:.6rem 0 .3rem">{title}</div>'
+                    f'<div style="font-size:.82rem;color:#627989;line-height:1.6">{description}</div></div>',
+                    unsafe_allow_html=True,
+                )
+        st.caption(
+            "i identifica la máquina; A y B identifican las dos máquinas; Σ representa el conjunto. "
+            "En el descriptor LAeq, A indica ponderación A y eq indica nivel equivalente. "
+            "log10 es el logaritmo en base 10. El término 10 log10(tᵢ/T) es una corrección en dB. "
+            "Si tᵢ = 0, esa máquina aporta energía nula y se omite el logaritmo de cero."
+        )
+        st.markdown("**Sustitución con tus valores**")
+
         if combined is not None:
             terms = "+".join(f"({m['minutes']}/60)10^{{{m['level']}/10}}" for m in machine_inputs)
             st.latex(r"L_{Aeq,60\,\mathrm{min}}=10\log_{10}\left[" + terms + r"\right]=" + f"{combined:.2f}" + r"\ \mathrm{dB(A)}")
@@ -3550,7 +3581,7 @@ def _stage7(lab, saved):
         st.caption(
             "Se suman aportes separados del fondo, con nivel constante durante operación y sin aporte "
             "durante la parada. Los tiempos pueden solaparse y su suma superar 60 min. "
-            "Este cálculo da el promedio horario; la aplicación 4 permite explorar las coincidencias."
+            "Este cálculo da el promedio horario; la parte 4 permite explorar las coincidencias."
         )
 
     _s7_section(4, "Descubre qué cambia con la simultaneidad", "Mantén iguales los tiempos activos y cambia solo la coincidencia de dos máquinas.")
