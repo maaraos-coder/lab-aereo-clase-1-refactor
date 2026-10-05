@@ -4130,9 +4130,15 @@ def _stage8(lab, saved):
       </div>
     </div>
     """, unsafe_allow_html=True)
+    st.link_button(
+        "🗺️ Conocer Noise Map Lab",
+        NOISEMAP_URL,
+        use_container_width=True,
+        help="Abre la herramienta sin cargar un escenario del ejercicio, para que puedas recorrer su interfaz antes de comenzar."
+    )
     st.caption(
-        "Más abajo encontrarás un botón específico para cada escenario. Cada uno abre Noise Map Lab "
-        "con el predio y las fuentes ya posicionados. "
+        "Usa este botón para conocer la herramienta. Más abajo encontrarás un botón específico para cada escenario, "
+        "que abre Noise Map Lab con el predio y las fuentes ya posicionados. "
         "En este laboratorio no se diseñan controles de ruido: eso se trabajará en el Laboratorio 2."
     )
     st.info("Trabajo integrador · 3 etapas constructivas · 3 fuentes por etapa · 3 receptores comparables.")
