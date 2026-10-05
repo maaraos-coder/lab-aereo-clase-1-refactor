@@ -62,7 +62,7 @@ BS_PLANT = {
     "Vibrador de inmersión": {
         "en":"Poker vibrator","phase":"Estructura y hormigón","table":"C.4","ref":"33","page":"51 BS / 57 PDF",
         "power":"—","size":"—","activity":"Vibrado de hormigón","laeq10":78.0,
-        "bands":[82,80,80,73,69,72,70,65],"image":"vibrador_inmersion.webp",
+        "bands":[82,80,80,73,69,72,70,65],"image":"vibrador_inmersion.svg",
     },
     "Bomba + mixer a 5° piso": {
         "en":"Concrete pump + cement mixer truck","phase":"Estructura y hormigón","table":"C.4","ref":"25","page":"51 BS / 57 PDF",
@@ -273,7 +273,11 @@ def _stage1(lab, saved):
                     )
                 st.markdown(f"**{name}**")
                 st.caption(f"{item['en']} · {item['phase']}")
-                if st.button("Ver ficha",key=f"c4l1_machine_{item['image']}",use_container_width=True):
+                if st.button(
+                    "Ver ficha",
+                    key=f"c4l1_machine_{i}_{name}",
+                    use_container_width=True,
+                ):
                     st.session_state["c4l1_selected_machine"]=name
 
     selected=st.session_state.get("c4l1_selected_machine", names[0] if names else list(BS_PLANT)[0])
