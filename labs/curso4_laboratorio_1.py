@@ -3402,6 +3402,34 @@ def _stage7(lab, saved):
     with st.container(border=True):
         st.markdown("**La relación entre tiempo y nivel**")
         st.latex(r"L_{Aeq,T,i}=L_{Aeq,t_i,i}+10\log_{10}(t_i/T)")
+        parameter_definitions = [
+            ("L<sub>Aeq,T,i</sub>", "Aporte de la máquina i al período completo", "Nivel equivalente referido a toda la hora, incluidos los minutos sin actividad.", "dB(A)"),
+            ("L<sub>Aeq,tᵢ,i</sub>", "Nivel de la máquina i durante operación", "Aporte de la máquina sola en el receptor durante su tiempo activo, separado del fondo.", "dB(A)"),
+            ("t<sub>i</sub>", "Tiempo activo de la máquina i", "Suma de los minutos en que funciona dentro del período de evaluación.", "min"),
+            ("T", "Período total de evaluación", "Duración común sobre la que se reparte la energía. Aquí T = 60 min.", "min"),
+        ]
+        st.markdown("**Qué significa cada parámetro**")
+        parameter_columns = st.columns(2, gap="medium")
+        for index, (symbol, title, description, unit) in enumerate(parameter_definitions):
+            with parameter_columns[index % 2]:
+                st.markdown(
+                    '<div style="border:1px solid #dce8f1;border-radius:12px;padding:15px 16px;'
+                    'background:#f7fafc;margin-bottom:10px">'
+                    '<div style="display:flex;justify-content:space-between;gap:10px;align-items:center">'
+                    f'<span style="font-size:1.15rem;font-weight:850;color:#176b9b">{symbol}</span>'
+                    f'<span style="font-size:.75rem;color:#526b7c;background:#e8eff5;border-radius:7px;padding:4px 8px">{unit}</span>'
+                    '</div>'
+                    f'<div style="font-size:.86rem;font-weight:800;color:#24445c;margin:.6rem 0 .3rem">{title}</div>'
+                    f'<div style="font-size:.82rem;color:#627989;line-height:1.6">{description}</div></div>',
+                    unsafe_allow_html=True,
+                )
+        st.caption(
+            "i identifica la máquina; A indica ponderación A; eq indica nivel equivalente. "
+            "tᵢ/T es la fracción activa, sin unidades: usa la misma unidad para ambos tiempos. "
+            "El término 10 log10(tᵢ/T) es la corrección temporal ΔLt,i, expresada en dB. "
+            "La ecuación con logaritmo se aplica para 0 < tᵢ ≤ T; si tᵢ = 0, no hay aporte de la máquina."
+        )
+
         for col, percent in zip(st.columns(4), [100, 50, 25, 10]):
             with col:
                 st.markdown(
