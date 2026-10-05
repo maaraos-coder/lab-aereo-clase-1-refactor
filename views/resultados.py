@@ -551,6 +551,7 @@ def student_sidebar_summary(client, user_key):
         "clase-03-impacto-instalaciones-lab-1",
         "clase-04-impacto-instalaciones-lab-2",
         "clase-06-ruido-ambiental-lab-2",
+        "clase-07-construccion-lab-1",
     ]
     try:
         rows=(
