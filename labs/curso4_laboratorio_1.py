@@ -4951,6 +4951,28 @@ def _stage9(lab, saved):
         )
 
 
+def _course4_stage10_payload(saved, conclusion):
+    return {
+        "version":"c4l1_stage10_v1",
+        "bs_entries":saved.get("c4l1_stage10_bs_v2",{}),
+        "bs_justification":saved.get("c4l1_stage10_bs_justification_v2",""),
+        "strategy":saved.get("c4l1_stage10_strategy_v2",{}),
+        "receivers":saved.get("c4l1_stage10_receivers_v2",{}),
+        "results":saved.get("c4l1_stage10_results_v2",{}),
+        "common_settings":saved.get("c4l1_stage10_common_settings_v2",""),
+        "limits":{"R1":65.0,"R2":70.0,"R3":60.0},
+        "descriptor":"LAeq,15 min",
+        "conclusion":conclusion,
+        "teacher_rubric":{
+            "Trazabilidad BS 5228":20,
+            "Estrategia de modelación":20,
+            "Geometría y receptores":20,
+            "Resultados y cumplimiento":20,
+            "Conclusión técnica y limitaciones":20,
+        },
+    }
+
+
 def _stage10(lab, saved):
     _header(
         10,
