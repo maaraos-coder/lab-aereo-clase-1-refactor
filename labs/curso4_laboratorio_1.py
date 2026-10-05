@@ -4117,50 +4117,154 @@ def _stage8(lab, saved):
     _header(
         8,
         "Caso integrador · modelación por etapas de una obra",
-        "Construye tres etapas de obra en Noise Map Lab y compara los niveles calculados en receptores, usando datos trazables de BS 5228-1:2009."
+        "Integra trazabilidad, conversión, geometría y propagación en tres escenarios comparables de una obra de construcción."
     )
 
-    st.markdown("""
-    <div style="padding:22px;border:1px solid #cddfeb;border-radius:20px;background:linear-gradient(125deg,#eef7fc,#ffffff)">
-      <div style="color:#087ba0;font-weight:800;letter-spacing:.04em">HERRAMIENTA DEL EJERCICIO</div>
-      <div style="font-size:1.55rem;font-weight:850;color:#173b53;margin:8px 0">Noise Map Lab</div>
-      <div style="color:#45677c;line-height:1.65">
-        Abre cada etapa con las fuentes ya posicionadas, selecciona tus propios receptores
-        y calcula el nivel recibido manteniendo esos puntos durante toda la comparación.
-      </div>
-    </div>
-    """, unsafe_allow_html=True)
-    st.link_button(
-        "🗺️ Conocer Noise Map Lab",
-        NOISEMAP_URL,
-        use_container_width=True,
-        help="Abre la herramienta sin cargar un escenario del ejercicio, para que puedas recorrer su interfaz antes de comenzar."
+    st.markdown(
+        """
+        <style>
+        .s8-hero{
+            border:1px solid #cfe3ee;border-radius:24px;padding:24px 26px;
+            background:linear-gradient(135deg,#eef8fc 0%,#ffffff 58%,#f5fbfd 100%);
+            box-shadow:0 10px 28px rgba(23,59,83,.07);margin-bottom:.8rem;
+        }
+        .s8-eyebrow{font-size:.72rem;font-weight:900;letter-spacing:.11em;color:#087ba0;margin-bottom:.45rem}
+        .s8-title{font-size:1.65rem;font-weight:900;color:#173b53;line-height:1.15;margin-bottom:.55rem}
+        .s8-copy{color:#4d687a;line-height:1.65;font-size:.98rem}
+        .s8-section{
+            margin:1.4rem 0 .75rem;padding:13px 16px;border-radius:16px;
+            background:linear-gradient(90deg,#173b53,#245d79);color:#fff;
+            box-shadow:0 6px 18px rgba(23,59,83,.10);
+        }
+        .s8-section b{font-size:1.05rem}
+        .s8-kpi{
+            border:1px solid #d8e7ef;border-radius:18px;padding:15px 17px;
+            background:#fff;min-height:105px;box-shadow:0 5px 16px rgba(23,59,83,.055)
+        }
+        .s8-kpi .n{font-size:1.45rem;font-weight:900;color:#087ba0}
+        .s8-kpi .t{font-size:.83rem;color:#60798a;margin-top:.25rem}
+        .s8-scenario{
+            border:1px solid #d6e5ed;border-radius:20px;padding:18px 20px;
+            background:linear-gradient(180deg,#ffffff,#f8fbfd);margin:.4rem 0 .8rem;
+            box-shadow:0 7px 20px rgba(23,59,83,.055)
+        }
+        .s8-scenario-tag{font-size:.7rem;font-weight:900;letter-spacing:.08em;color:#087ba0}
+        .s8-scenario-title{font-size:1.12rem;font-weight:850;color:#173b53;margin:.25rem 0 .25rem}
+        .s8-scenario-copy{font-size:.9rem;color:#5b7485;line-height:1.5}
+        .s8-note{
+            border-left:4px solid #16a0bd;background:#f2fbfd;border-radius:12px;
+            padding:12px 14px;color:#3f6173;margin:.55rem 0
+        }
+        .s8-final{
+            border:1px solid #cde8dc;border-radius:20px;padding:18px 20px;
+            background:linear-gradient(135deg,#f0fbf6,#ffffff);color:#315e49;
+            box-shadow:0 6px 18px rgba(49,94,73,.06)
+        }
+        </style>
+        """,
+        unsafe_allow_html=True,
+    )
+
+    st.markdown(
+        """
+        <div class="s8-hero">
+          <div class="s8-eyebrow">CASO INTEGRADOR · ETAPA 8</div>
+          <div class="s8-title">De los datos BS 5228 al mapa de ruido</div>
+          <div class="s8-copy">
+            Trabajarás como si prepararas una modelación acústica real: recibirás las fuentes,
+            calcularás su potencia sonora, seleccionarás receptores y compararás tres momentos
+            constructivos manteniendo una geometría común.
+          </div>
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
+
+    k1,k2,k3,k4 = st.columns(4)
+    for col, number, text_value in [
+        (k1,"3","etapas constructivas"),
+        (k2,"3","fuentes por escenario"),
+        (k3,"3","receptores elegidos por ti"),
+        (k4,"BS 5228","trazabilidad acústica"),
+    ]:
+        with col:
+            st.markdown(
+                f'<div class="s8-kpi"><div class="n">{number}</div><div class="t">{text_value}</div></div>',
+                unsafe_allow_html=True,
+            )
+
+    st.markdown(
+        '<div class="s8-section"><b>🗺️ Herramienta central · Noise Map Lab</b></div>',
+        unsafe_allow_html=True,
+    )
+    tool_left, tool_right = st.columns([1.35, .65], gap="large")
+    with tool_left:
+        st.markdown(
+            """
+            <div class="s8-scenario">
+              <div class="s8-scenario-tag">ANTES DE COMENZAR</div>
+              <div class="s8-scenario-title">Conoce el modelador</div>
+              <div class="s8-scenario-copy">
+                Recorre la interfaz, identifica cómo se agregan fuentes y receptores y revisa
+                dónde se configura la altura antes de abrir los escenarios del ejercicio.
+              </div>
+            </div>
+            """,
+            unsafe_allow_html=True,
+        )
+    with tool_right:
+        st.link_button(
+            "🗺️ Conocer Noise Map Lab",
+            NOISEMAP_URL,
+            use_container_width=True,
+            help="Abre la herramienta limpia, sin cargar un escenario del ejercicio.",
+        )
+        st.caption("Abre en otra pestaña y vuelve aquí para seguir la guía.")
+
+    st.markdown(
+        '<div class="s8-section"><b>1 · Comprende el encargo</b></div>',
+        unsafe_allow_html=True,
+    )
+    c1,c2 = st.columns([1.2,.8], gap="large")
+    with c1:
+        st.markdown(
+            """
+            <div class="s8-scenario">
+              <div class="s8-scenario-tag">CASO DIDÁCTICO</div>
+              <div class="s8-scenario-title">Obra de edificación en Santiago</div>
+              <div class="s8-scenario-copy">
+                El predio simplificado mide <b>50 × 40 m</b> y se presenta sobre el fondo
+                cartográfico del <b>Parque Bicentenario de Cerrillos</b>. La ubicación funciona
+                únicamente como soporte espacial para el ejercicio.
+              </div>
+            </div>
+            """,
+            unsafe_allow_html=True,
+        )
+    with c2:
+        st.markdown(
+            """
+            <div class="s8-scenario">
+              <div class="s8-scenario-tag">TU MISIÓN</div>
+              <div class="s8-scenario-title">Comparar tres fases</div>
+              <div class="s8-scenario-copy">
+                A · Excavación<br>
+                B · Obra gruesa en piso<br>
+                C · Obra gruesa en altura
+              </div>
+            </div>
+            """,
+            unsafe_allow_html=True,
+        )
+
+    st.markdown(
+        '<div class="s8-note"><b>Importante:</b> no corresponde a una obra real ni a un expediente ambiental. '
+        'La geometría, posiciones, alturas y simultaneidad son supuestos pedagógicos.</div>',
+        unsafe_allow_html=True,
     )
     st.caption(
-        "Usa este botón para conocer la herramienta. Más abajo encontrarás un botón específico para cada escenario, "
-        "que abre Noise Map Lab con el predio y las fuentes ya posicionados. "
-        "En este laboratorio no se diseñan controles de ruido: eso se trabajará en el Laboratorio 2."
-    )
-    st.info("Trabajo integrador · 3 etapas constructivas · 3 fuentes por etapa · 3 receptores comparables.")
-
-    st.markdown("### 1 · Lee el encargo y reconoce el escenario")
-    st.markdown(
-        "**Caso didáctico · obra de edificación en Santiago.** Trabajarás sobre un predio simplificado de "
-        "**50 × 40 m** situado sobre el fondo cartográfico del **Parque Bicentenario de Cerrillos**. "
-        "La ubicación se utiliza únicamente como soporte espacial para el ejercicio."
-    )
-    st.markdown(
-        "**Encargo:** reconstruye tres momentos del proceso constructivo en Noise Map Lab: "
-        "**A) excavación y movimiento de tierras, B) obra gruesa a nivel de piso y C) obra gruesa en altura.** "
-        "Las fuentes ya estarán posicionadas en cada escenario; tu tarea será identificar y agregar receptores razonables en el entorno."
-    )
-    st.info(
-        "Este caso no corresponde a una obra real ni a un expediente ambiental. La geometría del predio, las etapas, "
-        "las posiciones de maquinaria, sus alturas y la simultaneidad son supuestos pedagógicos diseñados exclusivamente para este laboratorio."
-    )
-    st.markdown(
-        "**Recupera las etapas anteriores:** trazabilidad BS 5228 → Lp/Lw y espectro → propagación y geometría → "
-        "suma energética → altura de fuente y receptor → representación espacial → lectura de resultados."
+        "Recupera lo trabajado antes: BS 5228 → Lp/Lw y espectro → propagación → suma energética → "
+        "altura de fuente/receptor → representación espacial → lectura de resultados."
     )
 
     scenarios = {
@@ -4180,72 +4284,91 @@ def _stage8(lab, saved):
             ("GT-01", "Grúa torre", 34.0, 26.0, 24.0),
         ],
     }
-
-    st.markdown("### 2 · Datos de entrada entregados")
-    st.markdown(
-        "Los valores siguientes provienen de **BS 5228-1:2009, Anexo C**. Corresponden a registros de una actividad "
-        "y condición específicas a una distancia de **10 m**; no representan un valor universal para toda máquina del mismo nombre."
-    )
-    st.caption(
-        "BS 5228 indica que, para las Tablas C.1 a C.11, los datos de banda ancha corresponden normalmente al "
-        "LAeq de la actividad a 10 m; las entradas de pasada móvil se identifican como LAmax. "
-        "Para este ejercicio se seleccionaron registros LAeq estacionarios."
-    )
-
     scenario_links = {
         "A · Excavación y movimiento de tierras": NOISEMAP_URL.rstrip("/") + "/?scenario=c3l1-s8-a",
         "B · Obra gruesa a nivel de piso": NOISEMAP_URL.rstrip("/") + "/?scenario=c3l1-s8-b",
         "C · Obra gruesa en altura": NOISEMAP_URL.rstrip("/") + "/?scenario=c3l1-s8-c",
     }
+    scenario_meta = {
+        "A · Excavación y movimiento de tierras": ("A","Excavación","Movimiento de tierras y retiro de material"),
+        "B · Obra gruesa a nivel de piso": ("B","Obra gruesa · piso","Hormigonado y vibrado a nivel de terreno"),
+        "C · Obra gruesa en altura": ("C","Obra gruesa · altura","Actividad distribuida entre terreno y pisos superiores"),
+    }
+
+    st.markdown(
+        '<div class="s8-section"><b>2 · Revisa las fuentes de cada escenario</b></div>',
+        unsafe_allow_html=True,
+    )
+    st.markdown(
+        "Los niveles provienen de **BS 5228-1:2009, Anexo C** y corresponden a condiciones de actividad específicas a 10 m."
+    )
 
     for scenario_name, equipment in scenarios.items():
-        st.markdown(f"#### {scenario_name}")
-        st.link_button(
-            "🗺️ Abrir este escenario ya posicionado en Noise Map Lab",
-            scenario_links[scenario_name],
-            use_container_width=True,
-            help="Abre Noise Map Lab con el predio y las tres fuentes cargados automáticamente. Los receptores los selecciona el alumno.",
-        )
-        st.caption(
-            "El botón abre el predio de 50 × 40 m con las fuentes ya ubicadas y configuradas. "
-            "La posición interna de las máquinas forma parte del escenario y no tienes que reconstruirla manualmente."
-        )
-        rows = []
-        for sid, name, x, y, height in equipment:
-            item = BS_PLANT[name]
-            rows.append([
-                sid, name, item["activity"], f"{item['laeq10']:.0f}",
-                f"Tabla {item['table']} · Ref. {item['ref']}",
-                item["power"], item["size"], f"{height:.1f}",
-            ])
-        st.dataframe(
-            pd.DataFrame(
-                rows,
-                columns=[
-                    "ID", "Fuente / actividad", "Condición BS 5228", "LAeq a 10 m [dB(A)]",
-                    "Referencia BS 5228-1:2009", "Potencia equipo", "Tamaño", "Altura [m]",
-                ],
-            ),
-            hide_index=True,
-            use_container_width=True,
-        )
-        if scenario_name.startswith("C"):
-            st.caption(
-                "Las alturas de 15 m y 24 m son supuestos de modelación para estudiar propagación desde niveles elevados; "
-                "no son datos de la BS 5228 ni representan una obra real del sector."
+        code, short_title, desc = scenario_meta[scenario_name]
+        with st.container(border=True):
+            left,right = st.columns([1.45,.55], gap="large")
+            with left:
+                st.markdown(
+                    f"""
+                    <div class="s8-scenario-tag">ESCENARIO {code}</div>
+                    <div class="s8-scenario-title">{short_title}</div>
+                    <div class="s8-scenario-copy">{desc}</div>
+                    """,
+                    unsafe_allow_html=True,
+                )
+            with right:
+                st.link_button(
+                    f"🗺️ Abrir escenario {code}",
+                    scenario_links[scenario_name],
+                    use_container_width=True,
+                    help="Carga automáticamente el predio y las tres fuentes. Los receptores los selecciona el alumno.",
+                )
+            rows = []
+            for sid, name, x, y, height in equipment:
+                item = BS_PLANT[name]
+                rows.append([
+                    sid, name, item["activity"], f"{item['laeq10']:.0f}",
+                    f"C.{item['table'].split('.')[-1]} · Ref. {item['ref']}",
+                    f"{height:.1f}",
+                ])
+            st.dataframe(
+                pd.DataFrame(
+                    rows,
+                    columns=["ID","Fuente","Actividad BS 5228","LAeq 10 m [dB(A)]","Referencia","Altura [m]"],
+                ),
+                hide_index=True,
+                use_container_width=True,
             )
+            st.caption(
+                "La posición de las máquinas ya viene configurada en Noise Map Lab; no debes reconstruir coordenadas manualmente."
+            )
+            if code == "C":
+                st.info("Las alturas de 15 m y 24 m son supuestos didácticos para estudiar propagación desde fuentes elevadas.")
 
-    st.markdown("### 3 · Convierte los datos antes de modelar")
     st.markdown(
-        "Antes de abrir el modelo, transforma tú mismo los niveles de referencia de BS 5228 en una entrada de potencia sonora. "
-        "Recupera el procedimiento trabajado en las etapas anteriores y completa los valores para cada fuente."
+        '<div class="s8-section"><b>3 · Convierte los datos antes de modelar</b></div>',
+        unsafe_allow_html=True,
     )
-    st.latex(r"L_{WA}\approx L_{Aeq,10m}+28\ \mathrm{dB}")
-    st.caption(
-        "LAeq,10m: nivel de presión sonora de la actividad medido a 10 m, en dB(A). "
-        "LWA: nivel de potencia sonora ponderado A estimado, en dB re 1 pW. "
-        "Usa la aproximación didáctica indicada y redondea a 0,1 dB."
-    )
+    eq1,eq2 = st.columns([.8,1.2], gap="large")
+    with eq1:
+        st.markdown(
+            """
+            <div class="s8-scenario">
+              <div class="s8-scenario-tag">RELACIÓN DE TRABAJO</div>
+              <div class="s8-scenario-title">De presión a potencia</div>
+              <div class="s8-scenario-copy">
+                Calcula tú mismo el LWA de cada fuente. No copies una respuesta ya resuelta:
+                esta conversión forma parte del caso integrador.
+              </div>
+            </div>
+            """,
+            unsafe_allow_html=True,
+        )
+    with eq2:
+        st.latex(r"L_{WA}\approx L_{Aeq,10m}+28\ \mathrm{dB}")
+        st.caption(
+            "LAeq,10m = presión sonora de la actividad a 10 m. · LWA = potencia sonora ponderada A estimada."
+        )
 
     conversion_sources = []
     seen_sources = set()
@@ -4257,305 +4380,281 @@ def _stage8(lab, saved):
 
     stored_conversion = saved.get("c4l1_stage8_conversion_v4", {})
     with st.form("c4l1_s8_conversion_v4_form"):
-        st.markdown("#### Completa tus estimaciones de LWA")
         student_conversion = {}
-        for name in conversion_sources:
+        for index,name in enumerate(conversion_sources,1):
             item = BS_PLANT[name]
-            c1, c2, c3 = st.columns([1.5, 0.8, 0.9])
-            with c1:
-                st.markdown(f"**{name}**")
-                st.caption(
-                    f"BS 5228-1:2009 · Tabla {item['table']} · Ref. {item['ref']} · "
-                    f"{item['activity']}"
-                )
-            with c2:
-                st.metric("LAeq a 10 m", f"{item['laeq10']:.0f} dB(A)")
-            with c3:
-                student_conversion[name] = st.number_input(
-                    "Tu LWA [dB re 1 pW]",
-                    value=stored_conversion.get(name),
-                    step=0.1,
-                    format="%.1f",
-                    key="c4l1_s8_conversion_" + name.replace(" ", "_"),
-                    placeholder="Calcula",
-                )
-
+            with st.container(border=True):
+                c1,c2,c3 = st.columns([1.45,.7,.85])
+                with c1:
+                    st.markdown(f"**{index:02d} · {name}**")
+                    st.caption(f"Tabla {item['table']} · Ref. {item['ref']} · {item['activity']}")
+                with c2:
+                    st.metric("LAeq · 10 m", f"{item['laeq10']:.0f} dB(A)")
+                with c3:
+                    student_conversion[name] = st.number_input(
+                        "LWA calculado",
+                        value=stored_conversion.get(name),
+                        step=.1,
+                        format="%.1f",
+                        key="c4l1_s8_conversion_" + name.replace(" ","_"),
+                        placeholder="dB re 1 pW",
+                    )
         conversion_method = st.text_area(
             "Explica brevemente tu procedimiento",
-            value=saved.get("c4l1_stage8_conversion_method_v4", ""),
-            placeholder=(
-                "Indica qué relación utilizaste, qué representa el +28 dB y por qué el nivel a 10 m "
-                "no se ingresa directamente como potencia sonora."
-            ),
+            value=saved.get("c4l1_stage8_conversion_method_v4",""),
+            placeholder="Explica la relación utilizada, el significado del +28 dB y por qué LAeq a 10 m no es directamente LWA.",
             key="c4l1_s8_conversion_method_v4",
-            height=110,
+            height=105,
         )
-        conversion_submit = st.form_submit_button("Comprobar y guardar mis cálculos")
+        conversion_submit = st.form_submit_button("✓ Comprobar y guardar cálculos", use_container_width=True)
 
     if conversion_submit:
-        missing = [name for name, value in student_conversion.items() if value is None]
+        missing = [name for name,value in student_conversion.items() if value is None]
         if missing:
             st.warning("Completa el LWA de todas las fuentes antes de comprobar.")
         else:
             incorrect = []
-            for name, value in student_conversion.items():
-                expected_value = BS_PLANT[name]["laeq10"] + 28.0
-                if abs(float(value) - expected_value) > 0.2:
+            for name,value in student_conversion.items():
+                if abs(float(value)-(BS_PLANT[name]["laeq10"]+28.0)) > .2:
                     incorrect.append(name)
-
             if incorrect:
-                st.warning(
-                    "Revisa la conversión de: " + ", ".join(incorrect) + ". "
-                    "Recuerda aplicar la relación de esta etapa al nivel de referencia a 10 m."
-                )
+                st.warning("Revisa la conversión de: " + ", ".join(incorrect) + ".")
             elif len(conversion_method.strip()) < 60:
-                st.warning("Los valores son correctos. Completa además la explicación con al menos 60 caracteres.")
+                st.warning("Los valores son correctos. Completa también la explicación con al menos 60 caracteres.")
             else:
                 saved["c4l1_stage8_conversion_v4"] = dict(student_conversion)
                 saved["c4l1_stage8_conversion_method_v4"] = conversion_method
                 _save_stage_state(lab, saved, 8)
-                st.success("Conversión correcta. Usa estos LWA como referencia para configurar las fuentes en Noise Map Lab.")
+                st.success("Conversión correcta. Ya puedes continuar con la selección de receptores.")
 
-    st.warning(
-        "No ingreses el LAeq a 10 m directamente en un campo que solicite potencia sonora. "
-        "Comprueba siempre el descriptor y la unidad del campo antes de modelar."
-    )
-
-    with st.expander("Pauta docente · respuestas de la conversión"):
-        teacher_rows = []
+    with st.expander("👨‍🏫 Pauta docente · respuestas de la conversión"):
+        teacher_rows=[]
         for name in conversion_sources:
-            item = BS_PLANT[name]
-            teacher_rows.append([
-                name,
-                item["laeq10"],
-                item["laeq10"] + 28.0,
-                item["table"],
-                item["ref"],
-            ])
+            item=BS_PLANT[name]
+            teacher_rows.append([name,item["laeq10"],item["laeq10"]+28.0,item["table"],item["ref"]])
         st.dataframe(
             pd.DataFrame(
                 teacher_rows,
-                columns=[
-                    "Fuente",
-                    "LAeq a 10 m [dB(A)]",
-                    "LWA esperado [dB re 1 pW]",
-                    "Tabla BS 5228",
-                    "Ref.",
-                ],
+                columns=["Fuente","LAeq 10 m [dB(A)]","LWA esperado [dB re 1 pW]","Tabla","Ref."],
             ),
-            hide_index=True,
-            use_container_width=True,
+            hide_index=True,use_container_width=True,
         )
-        st.caption(
-            "Criterio de corrección: aceptar ±0,2 dB por redondeo. "
-            "La explicación debe reconocer que se está usando una aproximación didáctica de conversión desde presión a 10 m hacia potencia sonora."
-        )
+        st.caption("Tolerancia sugerida: ±0,2 dB por redondeo.")
 
-    st.markdown("### 4 · Selecciona los receptores")
     st.markdown(
-        "1. Abre primero el escenario **A · Excavación** en Noise Map Lab. El predio de **50 × 40 m** y las fuentes aparecerán cargados automáticamente.\n"
-        "2. Observa el entorno cartográfico y selecciona **tres receptores representativos** fuera del predio.\n"
-        "3. Evita colocar los tres receptores en el mismo lado: busca condiciones diferentes de distancia y exposición.\n"
-        "4. Incluye al menos un receptor a nivel bajo y, cuando tenga sentido, otro receptor en altura.\n"
-        "5. Guarda esas ubicaciones y utilízalas **sin cambiar su posición** en los escenarios B y C."
+        '<div class="s8-section"><b>4 · Selecciona tus receptores</b></div>',
+        unsafe_allow_html=True,
     )
-    st.info(
-        "Los receptores son parte de la tarea. Noise Map Lab no los precarga: debes agregarlos tú y justificar por qué son representativos."
+    r1,r2,r3 = st.columns(3)
+    for col,title,copy in [
+        (r1,"R1 · Cercano","Busca una fachada o punto de uso humano próximo al predio."),
+        (r2,"R2 · Diferente orientación","Elige un punto en otro lado del predio para comparar geometrías."),
+        (r3,"R3 · Altura","Cuando sea razonable, incorpora un punto en un piso superior."),
+    ]:
+        with col:
+            st.markdown(
+                f'<div class="s8-kpi"><div class="n" style="font-size:1rem">{title}</div><div class="t">{copy}</div></div>',
+                unsafe_allow_html=True,
+            )
+    st.markdown(
+        '<div class="s8-note"><b>Regla clave:</b> los receptores no vienen precargados. '
+        'Debes seleccionarlos en el escenario A y conservar exactamente esas ubicaciones en B y C.</div>',
+        unsafe_allow_html=True,
     )
 
-    receiver_record = saved.get("c4l1_stage8_receivers_v3", {})
+    receiver_record=saved.get("c4l1_stage8_receivers_v3",{})
     with st.form("c4l1_s8_receivers_v3_form"):
         st.markdown("#### Ficha de receptores")
-        new_receivers = {}
-        defaults = {
-            "R1": ("Describe el receptor que seleccionaste", 1.5),
-            "R2": ("Describe el receptor que seleccionaste", 1.5),
-            "R3": ("Describe el receptor que seleccionaste", 1.5),
-        }
-        for rid, (default_desc, default_h) in defaults.items():
-            c1, c2 = st.columns([0.72, 0.28])
-            with c1:
-                desc = st.text_input(
-                    f"{rid} · descripción",
-                    value=receiver_record.get(rid, {}).get("description", default_desc),
-                    key=f"c4l1_s8_v3_desc_{rid}",
-                )
-            with c2:
-                height = st.number_input(
-                    f"{rid} · altura [m]",
-                    min_value=0.5,
-                    max_value=60.0,
-                    value=float(receiver_record.get(rid, {}).get("height", default_h)),
-                    step=0.5,
-                    key=f"c4l1_s8_v3_h_{rid}",
-                )
-            new_receivers[rid] = {"description": desc, "height": height}
-        receiver_note = st.text_area(
-            "Ubicación de los receptores en el mapa",
-            value=saved.get("c4l1_stage8_receiver_note_v3", ""),
-            placeholder="Indica dónde ubicarlos, por qué son representativos y cómo mantendrás la misma posición en las tres etapas.",
+        new_receivers={}
+        for rid in ["R1","R2","R3"]:
+            with st.container(border=True):
+                c1,c2=st.columns([.72,.28])
+                with c1:
+                    desc=st.text_input(
+                        f"{rid} · descripción",
+                        value=receiver_record.get(rid,{}).get("description",""),
+                        placeholder="Ej.: fachada residencial al norte del predio",
+                        key=f"c4l1_s8_v3_desc_{rid}",
+                    )
+                with c2:
+                    height_value=st.number_input(
+                        f"{rid} · altura [m]",
+                        min_value=.5,max_value=60.0,
+                        value=float(receiver_record.get(rid,{}).get("height",1.5)),
+                        step=.5,key=f"c4l1_s8_v3_h_{rid}",
+                    )
+                new_receivers[rid]={"description":desc,"height":height_value}
+        receiver_note=st.text_area(
+            "Justificación de la selección",
+            value=saved.get("c4l1_stage8_receiver_note_v3",""),
+            placeholder="Explica dónde ubicaste los receptores, por qué son representativos y cómo conservarás la misma geometría.",
             key="c4l1_s8_v3_receiver_note",
+            height=105,
         )
-        save_receivers = st.form_submit_button("Guardar receptores")
+        save_receivers=st.form_submit_button("✓ Guardar receptores",use_container_width=True)
+
     if save_receivers:
-        if any(len(v["description"].strip()) < 10 for v in new_receivers.values()) or len(receiver_note.strip()) < 40:
+        if any(len(v["description"].strip())<10 for v in new_receivers.values()) or len(receiver_note.strip())<40:
             st.warning("Describe los tres receptores y justifica su ubicación con al menos 40 caracteres.")
         else:
-            saved["c4l1_stage8_receivers_v3"] = new_receivers
-            saved["c4l1_stage8_receiver_note_v3"] = receiver_note
-            _save_stage_state(lab, saved, 8)
-            st.success("Receptores guardados. Conserva estas mismas ubicaciones en A, B y C.")
+            saved["c4l1_stage8_receivers_v3"]=new_receivers
+            saved["c4l1_stage8_receiver_note_v3"]=receiver_note
+            _save_stage_state(lab,saved,8)
+            st.success("Receptores guardados. Utiliza exactamente esos mismos puntos en A, B y C.")
 
-    st.markdown("### 5 · Modela las tres etapas")
     st.markdown(
-        "Crea **un proyecto o copia por etapa**. Cada botón carga únicamente las tres fuentes correspondientes a esa fase. "
-        "Mantén constantes el método, suelo, meteorología, dominio de cálculo y, especialmente, los receptores que tú seleccionaste "
-        "en el escenario A para que la comparación sea válida."
+        '<div class="s8-section"><b>5 · Ejecuta la modelación</b></div>',
+        unsafe_allow_html=True,
     )
-    st.markdown(
-        "**Escenario A · Excavación:** representa un frente de excavación, una zona de carga y la salida/descarga del camión tolva.\n\n"
-        "**Escenario B · Obra gruesa en piso:** representa descarga de mixer, bombeo y vibrado del hormigón en un frente cercano al terreno.\n\n"
-        "**Escenario C · Obra gruesa en altura:** conserva el equipo de bombeo a nivel de terreno y lleva parte de la actividad a pisos elevados. "
-        "Configura explícitamente las alturas indicadas."
-    )
+    m1,m2,m3 = st.columns(3)
+    for col,label,copy in [
+        (m1,"A · Excavación","Carga el escenario, agrega R1–R3 y calcula."),
+        (m2,"B · Obra gruesa · piso","Repite con los mismos receptores y configuración."),
+        (m3,"C · Obra gruesa · altura","Mantén R1–R3 y observa el efecto de las cotas."),
+    ]:
+        with col:
+            st.markdown(
+                f'<div class="s8-scenario"><div class="s8-scenario-tag">MODELA</div>'
+                f'<div class="s8-scenario-title">{label}</div><div class="s8-scenario-copy">{copy}</div></div>',
+                unsafe_allow_html=True,
+            )
     st.info(
-        "Las posiciones internas de las fuentes son parte del escenario didáctico. Se mantienen iguales para todos los alumnos, "
-        "de modo que la comparación se concentre en la selección de receptores, la distancia, la distribución espacial y la altura."
+        "Mantén constantes método, suelo, meteorología, dominio de cálculo y receptores. "
+        "La única diferencia principal entre modelos debe ser la etapa constructiva representada."
     )
 
-    st.markdown("### 6 · Registra los niveles calculados en los receptores")
     st.markdown(
-        "Ejecuta **Calcular mapa** en Noise Map Lab para cada escenario y copia el nivel total calculado en R1, R2 y R3. "
-        "No apliques barreras, encierros, silenciadores ni reducciones de control en esta etapa."
+        '<div class="s8-section"><b>6 · Registra y compara los resultados</b></div>',
+        unsafe_allow_html=True,
     )
-    previous = saved.get("c4l1_stage8_results_v3", {})
+    previous=saved.get("c4l1_stage8_results_v3",{})
     with st.form("c4l1_s8_results_v3_form"):
-        results = {}
-        for scenario_key, scenario_label in [
-            ("A", "Excavación"),
-            ("B", "Obra gruesa en piso"),
-            ("C", "Obra gruesa en altura"),
+        results={}
+        for scenario_key,scenario_label in [
+            ("A","Excavación"),
+            ("B","Obra gruesa en piso"),
+            ("C","Obra gruesa en altura"),
         ]:
-            st.markdown(f"#### {scenario_key} · {scenario_label}")
-            results[scenario_key] = {}
-            cols = st.columns(3)
-            for col, rid in zip(cols, ["R1", "R2", "R3"]):
-                with col:
-                    results[scenario_key][rid] = st.number_input(
-                        f"{rid} · nivel total [dB(A)]",
-                        value=previous.get(scenario_key, {}).get(rid),
-                        step=0.1,
-                        format="%.1f",
-                        key=f"c4l1_s8_v3_{scenario_key}_{rid}",
-                        placeholder="Resultado del modelo",
-                    )
-        model_note = st.text_area(
-            "Configuración común usada en Noise Map Lab",
-            value=saved.get("c4l1_stage8_model_note_v3", ""),
-            placeholder="Método, G, meteorología, alturas de receptores, criterio de colocación y nombre de los tres proyectos o capturas.",
+            with st.container(border=True):
+                st.markdown(f"**{scenario_key} · {scenario_label}**")
+                results[scenario_key]={}
+                cols=st.columns(3)
+                for col,rid in zip(cols,["R1","R2","R3"]):
+                    with col:
+                        results[scenario_key][rid]=st.number_input(
+                            f"{rid} · dB(A)",
+                            value=previous.get(scenario_key,{}).get(rid),
+                            step=.1,format="%.1f",
+                            key=f"c4l1_s8_v3_{scenario_key}_{rid}",
+                            placeholder="Nivel total",
+                        )
+        model_note=st.text_area(
+            "Configuración común de los tres modelos",
+            value=saved.get("c4l1_stage8_model_note_v3",""),
+            placeholder="Método, G, meteorología, alturas, criterio de colocación y nombres de los proyectos/capturas.",
             key="c4l1_s8_v3_model_note",
-            height=120,
+            height=105,
         )
-        save_results = st.form_submit_button("Guardar comparación de escenarios")
+        save_results=st.form_submit_button("✓ Guardar comparación",use_container_width=True)
+
     if save_results:
-        flat = [results[s][r] for s in results for r in results[s]]
+        flat=[results[s][r] for s in results for r in results[s]]
         if any(v is None for v in flat):
-            st.warning("Completa los nueve niveles: R1, R2 y R3 para los tres escenarios.")
-        elif len(model_note.strip()) < 80:
+            st.warning("Completa los nueve niveles antes de guardar.")
+        elif len(model_note.strip())<80:
             st.warning("Documenta la configuración común con al menos 80 caracteres.")
         else:
-            saved["c4l1_stage8_results_v3"] = results
-            saved["c4l1_stage8_model_note_v3"] = model_note
-            _save_stage_state(lab, saved, 8)
+            saved["c4l1_stage8_results_v3"]=results
+            saved["c4l1_stage8_model_note_v3"]=model_note
+            _save_stage_state(lab,saved,8)
             st.success("Resultados guardados.")
 
-    stored_results = saved.get("c4l1_stage8_results_v3", {})
+    stored_results=saved.get("c4l1_stage8_results_v3",{})
     if stored_results:
-        comparison = pd.DataFrame(
-            [
-                [rid, stored_results["A"][rid], stored_results["B"][rid], stored_results["C"][rid]]
-                for rid in ["R1", "R2", "R3"]
-            ],
-            columns=["Receptor", "Excavación [dB(A)]", "Obra gruesa en piso [dB(A)]", "Obra gruesa en altura [dB(A)]"],
+        comparison=pd.DataFrame(
+            [[rid,stored_results["A"][rid],stored_results["B"][rid],stored_results["C"][rid]]
+             for rid in ["R1","R2","R3"]],
+            columns=["Receptor","Excavación [dB(A)]","Obra gruesa · piso [dB(A)]","Obra gruesa · altura [dB(A)]"],
         )
-        st.markdown("#### Comparación final")
-        st.dataframe(comparison, hide_index=True, use_container_width=True)
-        for rid in ["R1", "R2", "R3"]:
-            values = {
-                "Excavación": stored_results["A"][rid],
-                "Obra gruesa en piso": stored_results["B"][rid],
-                "Obra gruesa en altura": stored_results["C"][rid],
+        st.markdown("#### Comparación consolidada")
+        st.dataframe(comparison,hide_index=True,use_container_width=True)
+        cols=st.columns(3)
+        for col,rid in zip(cols,["R1","R2","R3"]):
+            values={
+                "Excavación":stored_results["A"][rid],
+                "Obra gruesa · piso":stored_results["B"][rid],
+                "Obra gruesa · altura":stored_results["C"][rid],
             }
-            dominant_stage = max(values, key=values.get)
-            st.write(f"**{rid}:** mayor nivel modelado en **{dominant_stage}** · {values[dominant_stage]:.1f} dB(A).")
+            stage=max(values,key=values.get)
+            with col:
+                st.metric(rid,f"{values[stage]:.1f} dB(A)",delta=stage,delta_color="off")
 
-    st.markdown("### 7 · Interpreta lo que cambió")
-    analysis_saved = saved.get("c4l1_stage8_analysis_v3", "")
+    st.markdown(
+        '<div class="s8-section"><b>7 · Interpreta el comportamiento acústico</b></div>',
+        unsafe_allow_html=True,
+    )
+    st.markdown(
+        "No basta con identificar el número mayor. Relaciona los resultados con **distancia, altura, posición de las fuentes y suma energética**."
+    )
+    analysis_saved=saved.get("c4l1_stage8_analysis_v3","")
     with st.form("c4l1_s8_analysis_v3_form"):
-        analysis = st.text_area(
+        analysis=st.text_area(
             "Conclusión técnica",
             value=analysis_saved,
             placeholder=(
                 "Explica qué etapa produjo el mayor nivel en cada receptor, qué fuente parece dominar, "
-                "cómo influyeron la distancia y la altura, y por qué el receptor más cercano no necesariamente "
+                "cómo influyeron la distancia y la altura y por qué el receptor más cercano no necesariamente "
                 "es el más expuesto en todos los escenarios."
             ),
-            height=170,
-            key="c4l1_s8_v3_analysis",
+            height=175,key="c4l1_s8_v3_analysis",
         )
-        submit_analysis = st.form_submit_button("Guardar conclusión")
+        submit_analysis=st.form_submit_button("✓ Guardar conclusión",use_container_width=True)
     if submit_analysis:
         if not saved.get("c4l1_stage8_results_v3"):
             st.warning("Guarda primero los resultados de los tres escenarios.")
-        elif len(analysis.strip()) < 140:
+        elif len(analysis.strip())<140:
             st.warning("Desarrolla la conclusión con al menos 140 caracteres.")
         else:
-            saved["c4l1_stage8_analysis_v3"] = analysis
-            saved["c4l1_stage8_note"] = analysis
-            _save_stage_state(lab, saved, 8)
+            saved["c4l1_stage8_analysis_v3"]=analysis
+            saved["c4l1_stage8_note"]=analysis
+            _save_stage_state(lab,saved,8)
             st.success("Conclusión guardada.")
 
-    st.markdown("### Resultado esperado")
     st.markdown(
-        "Al terminar debes tener **tres modelos comparables**, una tabla con los niveles en R1–R3 y una interpretación "
-        "de cómo cambian los resultados entre excavación, obra gruesa en piso y obra gruesa en altura."
+        """
+        <div class="s8-final">
+          <b>✓ Resultado esperado</b><br>
+          Al terminar tendrás tres modelos comparables, tres receptores seleccionados y justificados,
+          una tabla consolidada de niveles y una interpretación técnica de cómo cambia la exposición
+          entre excavación, obra gruesa en piso y obra gruesa en altura.
+        </div>
+        """,
+        unsafe_allow_html=True,
     )
-    st.success(
-        "**Cierre del Laboratorio 1:** aquí termina el diagnóstico mediante modelación. "
-        "Las medidas de control de ruido se desarrollarán en el Laboratorio 2."
-    )
+    st.caption("El control de ruido no forma parte de esta Etapa 8; se desarrollará en el Laboratorio 2.")
 
-    with st.expander("Pauta docente · referencias BS 5228 utilizadas"):
-        rows = []
-        for scenario_name, equipment in scenarios.items():
-            for sid, name, x, y, height in equipment:
-                item = BS_PLANT[name]
+    with st.expander("👨‍🏫 Pauta docente · referencias BS 5228 y respuestas"):
+        rows=[]
+        for scenario_name,equipment in scenarios.items():
+            for sid,name,x,y,height_value in equipment:
+                item=BS_PLANT[name]
                 rows.append([
-                    scenario_name.split(" · ", 1)[0],
-                    sid,
-                    name,
-                    item["activity"],
-                    item["laeq10"],
-                    item["laeq10"] + 28.0,
-                    item["table"],
-                    item["ref"],
-                    item["page"],
-                    height,
+                    scenario_name.split(" · ",1)[0],sid,name,item["activity"],item["laeq10"],
+                    item["laeq10"]+28.0,item["table"],item["ref"],item["page"],height_value,
                 ])
         st.dataframe(
             pd.DataFrame(
                 rows,
                 columns=[
-                    "Escenario", "ID", "Fuente", "Actividad", "LAeq 10 m [dB(A)]",
-                    "LWA estimado [dB]", "Tabla", "Ref.", "Página", "Altura didáctica [m]",
+                    "Escenario","ID","Fuente","Actividad","LAeq 10 m [dB(A)]",
+                    "LWA esperado [dB]","Tabla","Ref.","Página","Altura didáctica [m]",
                 ],
             ),
-            hide_index=True,
-            use_container_width=True,
+            hide_index=True,use_container_width=True,
         )
         st.caption(
-            "Los niveles BS corresponden a registros específicos. Las posiciones y alturas del caso son didácticas. "
-            "La aproximación +28 dB recupera el procedimiento ya trabajado en las etapas previas y no reemplaza una determinación normalizada de potencia sonora."
+            "Los niveles BS corresponden a registros específicos. Posiciones y alturas son didácticas. "
+            "La aproximación +28 dB recupera el procedimiento trabajado previamente."
         )
 
 
