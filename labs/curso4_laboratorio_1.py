@@ -4894,8 +4894,34 @@ def _stage9(lab, saved):
             st.warning("Responde las 10 preguntas antes de comprobar.")
         else:
             score=sum(1 for a,(_,opts,corr,_) in zip(answers,questions) if a==opts[corr])
+            payload={
+                "version":"c4l1_stage9_v1",
+                "answers":{str(i):answer for i,answer in enumerate(answers)},
+                "questions":[
+                    {
+                        "question":q,
+                        "options":opts,
+                        "correct":corr,
+                        "correct_answer":opts[corr],
+                        "explanation":explanation,
+                    }
+                    for q,opts,corr,explanation in questions
+                ],
+                "score":score,
+                "max_score":10,
+            }
             saved["c4l1_stage9_score"]=score
+            saved["c4l1_stage9_submission"]=payload
             _save_stage_state(lab,saved,9)
+            stored=_save_course4_evaluation(
+                9,
+                "c4_formative_comprehension",
+                "Etapa 9 · Cuestionario formativo de ruido en construcción",
+                payload,
+                score,
+                10,
+                f"Resultado automático: {score}/10 respuestas correctas.",
+            )
             c1,c2,c3=st.columns(3)
             c1.metric("Resultado",f"{score}/10")
             c2.metric("Porcentaje",f"{score*10}%")
