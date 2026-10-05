@@ -4237,36 +4237,119 @@ def _stage8(lab, saved):
 
     st.markdown("### 3 · Convierte los datos antes de modelar")
     st.markdown(
-        "Noise Map Lab trabaja con la emisión de la fuente. Recupera la conversión desarrollada previamente: "
-        "para los registros utilizados en este laboratorio, la aproximación didáctica es **LWA ≈ LAeq(10 m) + 28 dB**. "
-        "Si modelas por octavas, aplica la misma conversión a cada banda de presión de la referencia seleccionada."
+        "Antes de abrir el modelo, transforma tú mismo los niveles de referencia de BS 5228 en una entrada de potencia sonora. "
+        "Recupera el procedimiento trabajado en las etapas anteriores y completa los valores para cada fuente."
     )
     st.latex(r"L_{WA}\approx L_{Aeq,10m}+28\ \mathrm{dB}")
-    conversion_rows = []
-    used_names = []
+    st.caption(
+        "LAeq,10m: nivel de presión sonora de la actividad medido a 10 m, en dB(A). "
+        "LWA: nivel de potencia sonora ponderado A estimado, en dB re 1 pW. "
+        "Usa la aproximación didáctica indicada y redondea a 0,1 dB."
+    )
+
+    conversion_sources = []
+    seen_sources = set()
     for equipment in scenarios.values():
         for _sid, name, _x, _y, _height in equipment:
-            if name not in used_names:
-                used_names.append(name)
-                item = BS_PLANT[name]
-                conversion_rows.append([
-                    name,
-                    item["laeq10"],
-                    item["laeq10"] + 28.0,
-                    f"{item['table']} · Ref. {item['ref']}",
-                ])
-    st.dataframe(
-        pd.DataFrame(
-            conversion_rows,
-            columns=["Fuente", "LAeq a 10 m [dB(A)]", "LWA didáctico estimado [dB re 1 pW]", "BS 5228"],
-        ),
-        hide_index=True,
-        use_container_width=True,
-    )
+            if name not in seen_sources:
+                seen_sources.add(name)
+                conversion_sources.append(name)
+
+    stored_conversion = saved.get("c4l1_stage8_conversion_v4", {})
+    with st.form("c4l1_s8_conversion_v4_form"):
+        st.markdown("#### Completa tus estimaciones de LWA")
+        student_conversion = {}
+        for name in conversion_sources:
+            item = BS_PLANT[name]
+            c1, c2, c3 = st.columns([1.5, 0.8, 0.9])
+            with c1:
+                st.markdown(f"**{name}**")
+                st.caption(
+                    f"BS 5228-1:2009 · Tabla {item['table']} · Ref. {item['ref']} · "
+                    f"{item['activity']}"
+                )
+            with c2:
+                st.metric("LAeq a 10 m", f"{item['laeq10']:.0f} dB(A)")
+            with c3:
+                student_conversion[name] = st.number_input(
+                    "Tu LWA [dB re 1 pW]",
+                    value=stored_conversion.get(name),
+                    step=0.1,
+                    format="%.1f",
+                    key="c4l1_s8_conversion_" + name.replace(" ", "_"),
+                    placeholder="Calcula",
+                )
+
+        conversion_method = st.text_area(
+            "Explica brevemente tu procedimiento",
+            value=saved.get("c4l1_stage8_conversion_method_v4", ""),
+            placeholder=(
+                "Indica qué relación utilizaste, qué representa el +28 dB y por qué el nivel a 10 m "
+                "no se ingresa directamente como potencia sonora."
+            ),
+            key="c4l1_s8_conversion_method_v4",
+            height=110,
+        )
+        conversion_submit = st.form_submit_button("Comprobar y guardar mis cálculos")
+
+    if conversion_submit:
+        missing = [name for name, value in student_conversion.items() if value is None]
+        if missing:
+            st.warning("Completa el LWA de todas las fuentes antes de comprobar.")
+        else:
+            incorrect = []
+            for name, value in student_conversion.items():
+                expected_value = BS_PLANT[name]["laeq10"] + 28.0
+                if abs(float(value) - expected_value) > 0.2:
+                    incorrect.append(name)
+
+            if incorrect:
+                st.warning(
+                    "Revisa la conversión de: " + ", ".join(incorrect) + ". "
+                    "Recuerda aplicar la relación de esta etapa al nivel de referencia a 10 m."
+                )
+            elif len(conversion_method.strip()) < 60:
+                st.warning("Los valores son correctos. Completa además la explicación con al menos 60 caracteres.")
+            else:
+                saved["c4l1_stage8_conversion_v4"] = dict(student_conversion)
+                saved["c4l1_stage8_conversion_method_v4"] = conversion_method
+                _save_stage_state(lab, saved, 8)
+                st.success("Conversión correcta. Usa estos LWA como referencia para configurar las fuentes en Noise Map Lab.")
+
     st.warning(
         "No ingreses el LAeq a 10 m directamente en un campo que solicite potencia sonora. "
         "Comprueba siempre el descriptor y la unidad del campo antes de modelar."
     )
+
+    with st.expander("Pauta docente · respuestas de la conversión"):
+        teacher_rows = []
+        for name in conversion_sources:
+            item = BS_PLANT[name]
+            teacher_rows.append([
+                name,
+                item["laeq10"],
+                item["laeq10"] + 28.0,
+                item["table"],
+                item["ref"],
+            ])
+        st.dataframe(
+            pd.DataFrame(
+                teacher_rows,
+                columns=[
+                    "Fuente",
+                    "LAeq a 10 m [dB(A)]",
+                    "LWA esperado [dB re 1 pW]",
+                    "Tabla BS 5228",
+                    "Ref.",
+                ],
+            ),
+            hide_index=True,
+            use_container_width=True,
+        )
+        st.caption(
+            "Criterio de corrección: aceptar ±0,2 dB por redondeo. "
+            "La explicación debe reconocer que se está usando una aproximación didáctica de conversión desde presión a 10 m hacia potencia sonora."
+        )
 
     st.markdown("### 4 · Selecciona los receptores")
     st.markdown(
