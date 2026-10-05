@@ -3335,6 +3335,59 @@ def _stage7(lab, saved):
         )
 
     _s7_section(2, "Explora el tiempo activo", "Reduce los minutos de trabajo y observa cuánto cambia el aporte de una sola fuente.")
+    with st.container(border=True):
+        st.markdown(
+            '<div style="font-size:.72rem;font-weight:850;letter-spacing:.1em;color:#176b9b">ANTES DE MOVER LOS CONTROLES</div>'
+            '<div style="font-size:1.2rem;font-weight:850;color:#17324a;margin:.5rem 0">Dos conceptos para pasar de la actividad a toda la hora</div>',
+            unsafe_allow_html=True,
+        )
+        st.markdown(
+            "Una máquina puede sonar a **80 dB(A) mientras trabaja**, pero funcionar solo **15 minutos** "
+            "dentro de una hora. Para describir su contribución a los **60 minutos completos**, "
+            "debemos repartir la energía de esos 15 minutos sobre toda la hora."
+        )
+        concept_a, concept_b = st.columns(2, gap="large")
+        with concept_a:
+            st.markdown("**1 · Corrección temporal, ΔLt,i [dB]**")
+            st.markdown(
+                "Es el ajuste que considera la proporción de tiempo durante la que funciona la máquina. "
+                "Se calcula a partir de **tᵢ/T**, donde tᵢ es el tiempo activo y T el período completo."
+            )
+            st.latex(r"\Delta L_{t,i}=10\log_{10}\left(\frac{t_i}{T}\right)")
+            st.caption(
+                "Si trabaja todo el período, tᵢ/T = 1 y la corrección es 0 dB. "
+                "Si trabaja solo parte del período, la corrección es negativa. "
+                "No es un silenciador ni una reducción física de su emisión."
+            )
+        with concept_b:
+            st.markdown("**2 · Aporte equivalente de la hora, LAeq,T,i [dB(A)]**")
+            st.markdown(
+                "Es el nivel constante que, mantenido durante toda la hora, representaría la misma "
+                "energía acústica que aporta esa máquina durante sus minutos de actividad. "
+                "Se obtiene sumando la corrección temporal a su nivel durante operación."
+            )
+            st.latex(r"L_{Aeq,T,i}=L_{\mathrm{operación},i}+\Delta L_{t,i}")
+            st.caption(
+                "Es la contribución de una sola máquina al promedio horario en el receptor. "
+                "Para calcular el total de varias máquinas hay que sumar sus energías."
+            )
+        st.markdown("**Ejemplo guiado · 80 dB(A) durante 15 min de una hora**")
+        st.latex(r"\frac{t_i}{T}=\frac{15}{60}=0{,}25\qquad\Delta L_{t,i}=10\log_{10}(0{,}25)=-6{,}02\ \mathrm{dB}")
+        st.latex(r"L_{Aeq,60\,\mathrm{min},i}=80+(-6{,}02)=73{,}98\ \mathrm{dB(A)}")
+        st.markdown(
+            '<div style="border-left:3px solid #287bb0;border-radius:0 12px 12px 0;'
+            'padding:14px 16px;background:#eef6fc;color:#456275;font-size:.88rem;line-height:1.65">'
+            '<b>Interpretación:</b> durante sus 15 min de actividad, la máquina sigue aportando 80 dB(A). '
+            'Su aporte repartido sobre la hora equivale a 73,98 dB(A). '
+            'No se volvió más silenciosa: cambió el período sobre el que expresamos su energía.</div>',
+            unsafe_allow_html=True,
+        )
+        st.caption(
+            "Supuestos: nivel constante durante operación, sin aporte de la máquina durante la parada "
+            "y nivel de la máquina separado del fondo. Con 0 min activos no hay aporte; no se calcula log10(0). "
+            "Este ejemplo usa los valores iniciales del simulador y no resuelve el caso nuevo de la parte 6."
+        )
+    st.markdown("#### Ahora experimenta con el nivel y la duración")
     inputs, result = st.columns([1.1, 1], gap="large")
     with inputs:
         with st.container(border=True):
