@@ -7,6 +7,7 @@ from typing import Any, Dict, Iterable, List, Tuple
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
+from labs import curso4_laboratorio_1 as _c4l1
 
 
 MODULE_DIR = Path(__file__).resolve().parent
@@ -34117,6 +34118,11 @@ def future_lab_view_impl(lab):
         renderers[selected](lab, saved)
         return
 
+    if str(class_id).strip() == "clase-07-construccion-lab-1" or "construccion-lab-1" in str(class_id):
+        from labs import curso4_laboratorio_1 as _c4l1_live
+        _c4l1_live.run_stage(selected, lab, saved, globals())
+        return
+
     title,objective,concept,activity=lab["stages"][selected]
     stage_minutes=20 if selected not in (9,10) else 35
     header(f"ETAPA {selected} · LABORATORIO {lab['number']}",title,objective)
@@ -34401,6 +34407,11 @@ def future_projection_stage_impl(lab, stage):
             _render_course3_lab2_stage10,
         ]
         renderers[stage](lab, projection_saved)
+        return
+
+    if str(lab.get("id","")).strip() == "clase-07-construccion-lab-1" or "construccion-lab-1" in str(lab.get("id","")):
+        from labs import curso4_laboratorio_1 as _c4l1_live
+        _c4l1_live.run_stage(stage, lab, projection_saved, globals())
         return
 
     title, objective, concept, activity = lab["stages"][stage]

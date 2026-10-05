@@ -30,6 +30,7 @@ _LOCAL_NAMES = {
     "_render_readonly_answers_block", "_render_course2_lab1_submission",
     "_render_course2_lab2_stage9_submission", "_render_course2_lab2_stage10_submission",
     "_render_teacher_feedback", "_course3_lab2_delivery_rows", "_course3_lab2_official_summary",
+    "_course4_lab1_delivery_rows", "_render_course4_block",
     "student_sidebar_summary", "results_view",
 }
 
@@ -155,6 +156,19 @@ def _course3_lab2_official_summary(rows):
         "completed":completed,"reviewed":reviewed,
         "total":total,"grade":grade,
     }
+
+
+
+def _course4_lab1_delivery_rows(rows):
+    """Entregas formativas del Curso 4 · Laboratorio 1."""
+    return _latest_response_by_key(
+        rows,
+        "clase-07-construccion-lab-1",
+        {
+            "stage9": (9, "c4_formative_comprehension"),
+            "stage10": (10, "c4_formative_integrated_case"),
+        },
+    )
 
 
 def _results_catalog():
@@ -537,6 +551,7 @@ def student_sidebar_summary(client, user_key):
         "clase-03-impacto-instalaciones-lab-1",
         "clase-04-impacto-instalaciones-lab-2",
         "clase-06-ruido-ambiental-lab-2",
+        "clase-07-construccion-lab-1",
     ]
     try:
         rows=(
@@ -606,6 +621,20 @@ def student_sidebar_summary(client, user_key):
         for k in ("final_comprehension","final_integrated_design")
     )
 
+    course4_labs=[
+        lab for lab in FUTURE_LABS.values()
+        if lab.get("course")=="Factores del ruido en el proceso de construcción"
+    ]
+    c4_lab1=next(
+        (lab for lab in course4_labs if int(lab.get("number") or 0)==1),
+        None,
+    )
+    c4_prog=_future_lab_progress(c4_lab1,future_progress) if c4_lab1 else {
+        "completed":0,"expected":11,"percent":0.0
+    }
+    c4_deliveries=_course4_lab1_delivery_rows(rows)
+    c4_delivered=sum(c4_deliveries.get(k) is not None for k in ("stage9","stage10"))
+
     st.markdown(
         f"""
         <div style="background:linear-gradient(145deg,#0b5b91,#0e91c7);border:1px solid #59d4ef;
@@ -613,14 +642,16 @@ def student_sidebar_summary(client, user_key):
           <div style="font-weight:800;font-size:.95rem;margin-bottom:.55rem">📘 PROGRESO DEL DIPLOMADO</div>
 
           <div style="display:flex;justify-content:space-between;gap:.5rem;font-size:.82rem">
-            <span>Curso 1 · evaluaciones</span><b>{official['completed']}/2</b>
-          </div>
-
-          <div style="display:flex;justify-content:space-between;gap:.5rem;font-size:.82rem;margin-top:.35rem">
             <span>Curso 1 · avance formativo</span><b>{formative_percent:.0f}%</b>
           </div>
 
           <div style="display:flex;justify-content:space-between;gap:.5rem;font-size:.82rem;margin-top:.35rem">
+            <span>Curso 1 · evaluaciones</span><b>{official['completed']}/2</b>
+          </div>
+
+          <div style="height:1px;background:rgba(255,255,255,.22);margin:.55rem 0 .45rem"></div>
+
+          <div style="display:flex;justify-content:space-between;gap:.5rem;font-size:.82rem">
             <span>Curso 2 · avance formativo</span><b>{c2_lab1_progress_pct:.0f}%</b>
           </div>
 
@@ -636,6 +667,16 @@ def student_sidebar_summary(client, user_key):
 
           <div style="display:flex;justify-content:space-between;gap:.5rem;font-size:.82rem;margin-top:.35rem">
             <span>Curso 3 · evaluaciones</span><b>{c3_official_delivered}/2</b>
+          </div>
+
+          <div style="height:1px;background:rgba(255,255,255,.22);margin:.55rem 0 .45rem"></div>
+
+          <div style="display:flex;justify-content:space-between;gap:.5rem;font-size:.82rem">
+            <span>Curso 4 · avance</span><b>{c4_prog.get('percent',0):.0f}%</b>
+          </div>
+
+          <div style="display:flex;justify-content:space-between;gap:.5rem;font-size:.82rem;margin-top:.35rem">
+            <span>Curso 4 · entregas formativas</span><b>{c4_delivered}/2</b>
           </div>
 
         </div>
@@ -2048,6 +2089,91 @@ _C3_LAB1_STAGE_TITLES_RESULTS = {
 }
 
 
+def _render_course2_block(rows, progress_rows):
+    """Curso 2 · impacto e instalaciones: progreso formativo y evaluaciones oficiales."""
+    labs=[
+        lab for lab in FUTURE_LABS.values()
+        if lab.get("course")=="Control de ruido de impacto y ruido de instalaciones"
+    ]
+    lab1=next((lab for lab in labs if int(lab.get("number") or 0)==1),None)
+    lab2=next((lab for lab in labs if int(lab.get("number") or 0)==2),None)
+    p1=_future_lab_progress(lab1,progress_rows) if lab1 else {
+        "completed":0,"expected":11,"percent":0.0,"stage_rows":[]
+    }
+    p2=_future_lab_progress(lab2,progress_rows) if lab2 else {
+        "completed":0,"expected":11,"percent":0.0,"stage_rows":[]
+    }
+    lab1_deliveries=_course2_lab1_rows(rows)
+    lab1_done=sum(lab1_deliveries.get(k) is not None for k in ("final_comprehension","final_exam"))
+    official=_course2_lab2_official_summary(rows)
+    grade_text=f"{official['grade']:.1f}" if official["grade"] is not None else "Pendiente"
+
+    label=(
+        f"Curso 2 · Control de ruido de impacto y ruido de instalaciones · "
+        f"{p1.get('percent',0):.0f}% Lab 1 · Nota {grade_text}"
+    )
+    with st.expander(label,expanded=True):
+        a,b,c1=st.columns(3)
+        a.metric("Avance Lab. 1",f"{p1.get('percent',0):.0f} %")
+        b.metric("Entregas formativas Lab. 1",f"{lab1_done}/2")
+        c1.metric("Nota del curso",grade_text)
+
+        tabs=st.tabs(["Laboratorios","Lab 1 · formativas","Lab 2 · evaluaciones oficiales"])
+        with tabs[0]:
+            cols=st.columns(2)
+            with cols[0]:
+                _render_lab_progress_card(
+                    "Laboratorio 1 · Impacto e instalaciones",
+                    "Etapas 0–10 · aprendizaje y actividades formativas",
+                    p1.get("completed",0),p1.get("expected",11),p1.get("percent",0.0),
+                    p1.get("stage_rows"),
+                )
+            with cols[1]:
+                _render_lab_progress_card(
+                    "Laboratorio 2 · Medición, ponderación y diseño",
+                    "Etapas 9–10 corresponden a evaluaciones oficiales",
+                    p2.get("completed",0),p2.get("expected",11),p2.get("percent",0.0),
+                    p2.get("stage_rows"),
+                )
+
+        with tabs[1]:
+            for key,title in [
+                ("final_comprehension","Etapa 9 · Preguntas de comprensión"),
+                ("final_exam","Etapa 10 · Desafío integrador"),
+            ]:
+                row=lab1_deliveries.get(key)
+                if row is None:
+                    st.info(f"{title}: pendiente.")
+                else:
+                    with st.expander(f"✅ {title}"):
+                        if key=="final_comprehension":
+                            _c2_render_lab1_stage9_tabs(row)
+                        else:
+                            _c2_render_lab1_stage10_tabs(row)
+
+        with tabs[2]:
+            for key,title,maximum in [
+                ("stage9","Etapa 9 · Evaluación de comprensión",40),
+                ("stage10","Etapa 10 · Evaluación integradora",60),
+            ]:
+                row=official.get(key)
+                if row is None:
+                    st.info(f"{title}: pendiente.")
+                    continue
+                reviewed=row.get("status")=="reviewed" or row.get("teacher_score") is not None
+                score=_effective_row_score(row) if reviewed else None
+                summary=(
+                    f"✅ {title} · {score:g}/{maximum}"
+                    if reviewed else f"🕒 {title} · Entregada · Pendiente de revisión"
+                )
+                with st.expander(summary):
+                    if key=="stage9":
+                        _c2_render_lab2_stage9_submission(row)
+                    else:
+                        _c2_render_lab2_stage10_submission(row)
+                    _render_teacher_feedback(row,maximum)
+
+
 def _render_course3_block(rows, progress_rows):
     """Curso 3: Lab 1 formativo + Lab 2 con evaluaciones oficiales."""
     course3_labs=[
@@ -2184,6 +2310,104 @@ def _render_course3_block(rows, progress_rows):
                 )
 
 
+
+def _render_course4_block(rows, progress_rows):
+    """Curso 4 · Laboratorio 1: avance + dos entregas formativas."""
+    labs=[
+        lab for lab in FUTURE_LABS.values()
+        if lab.get("course")=="Factores del ruido en el proceso de construcción"
+    ]
+    lab1=next((lab for lab in labs if int(lab.get("number") or 0)==1),None)
+    p1=_future_lab_progress(lab1,progress_rows) if lab1 else {
+        "completed":0,"expected":11,"percent":0.0,"stage_rows":[]
+    }
+    deliveries=_course4_lab1_delivery_rows(rows)
+    delivered=sum(deliveries.get(k) is not None for k in ("stage9","stage10"))
+    label=(
+        f"Curso 4 · Factores del ruido en el proceso de construcción · "
+        f"{p1.get('percent',0):.0f}% de avance · {delivered}/2 entregas formativas"
+    )
+    with st.expander(label,expanded=True):
+        a,b,c1=st.columns(3)
+        a.metric("Avance del laboratorio",f"{p1.get('percent',0):.0f} %")
+        b.metric("Etapas completadas",f"{p1.get('completed',0)} de {p1.get('expected',11)}")
+        c1.metric("Entregas formativas",f"{delivered} de 2")
+
+        tabs=st.tabs(["Laboratorio","Etapa 9","Etapa 10"])
+        with tabs[0]:
+            _render_lab_progress_card(
+                "Laboratorio 1 · Ruido en construcción",
+                "Etapas 0–10 · aprendizaje y evaluación formativa",
+                p1.get("completed",0),p1.get("expected",11),p1.get("percent",0.0),
+                p1.get("stage_rows"),
+            )
+
+        with tabs[1]:
+            row=deliveries.get("stage9")
+            if row is None:
+                st.info("Aún no has enviado el cuestionario formativo de la Etapa 9.")
+            else:
+                payload=_student_result_payload(row.get("answer"))
+                if not isinstance(payload,dict):
+                    payload={}
+                score=float(row.get("auto_score") or payload.get("score") or 0)
+                st.metric("Resultado",f"{score:g}/10")
+                st.caption(f"Entrega: {_result_date(row.get('submitted_at') or row.get('updated_at'))}")
+                questions=payload.get("questions") if isinstance(payload.get("questions"),list) else []
+                answers=payload.get("answers") if isinstance(payload.get("answers"),dict) else {}
+                for i,item in enumerate(questions):
+                    chosen=answers.get(str(i),"Sin respuesta")
+                    correct=item.get("correct_answer","—")
+                    ok=chosen==correct
+                    with st.expander(f"{'✅' if ok else '❌'} Pregunta {i+1}"):
+                        st.markdown(f"**Pregunta:** {item.get('question','')}")
+                        st.write(f"**Tu respuesta:** {chosen}")
+                        st.info(f"**Pauta:** {correct}")
+                        if item.get("explanation"):
+                            st.caption(item["explanation"])
+
+        with tabs[2]:
+            row=deliveries.get("stage10")
+            if row is None:
+                st.info("Aún no has entregado el caso integrador de la Etapa 10.")
+            else:
+                payload=_student_result_payload(row.get("answer"))
+                if not isinstance(payload,dict):
+                    payload={}
+                reviewed=row.get("status")=="reviewed" or row.get("teacher_score") is not None
+                c2,c3=st.columns(2)
+                c2.metric("Estado","Revisada" if reviewed else "Pendiente de revisión")
+                c3.metric(
+                    "Puntaje docente",
+                    f"{float(row.get('teacher_score')):g}/100"
+                    if row.get("teacher_score") is not None else "Pendiente",
+                )
+                st.caption(f"Entrega: {_result_date(row.get('submitted_at') or row.get('updated_at'))}")
+                st.markdown("**Conclusión entregada**")
+                st.write(payload.get("conclusion") or "Sin conclusión registrada.")
+                results=payload.get("results") if isinstance(payload.get("results"),dict) else {}
+                if results:
+                    rows_out=[]
+                    for scenario,vals in results.items():
+                        if isinstance(vals,dict):
+                            for rid,value in vals.items():
+                                rows_out.append([scenario,rid,value])
+                    if rows_out:
+                        st.dataframe(
+                            pd.DataFrame(rows_out,columns=["Escenario","Receptor","LAeq,15 min [dB(A)]"]),
+                            hide_index=True,use_container_width=True,
+                        )
+                rubric=payload.get("teacher_rubric") if isinstance(payload.get("teacher_rubric"),dict) else {}
+                if rubric:
+                    st.markdown("**Pauta de revisión**")
+                    st.dataframe(
+                        pd.DataFrame([[k,v] for k,v in rubric.items()],columns=["Criterio","Puntaje máximo"]),
+                        hide_index=True,use_container_width=True,
+                    )
+                if row.get("teacher_note"):
+                    st.info("Comentario docente: "+str(row.get("teacher_note")))
+
+
 def results_view(client, catalog, user_key):
     """Mi desempeño organizado por curso y preparado para incorporar nuevos laboratorios."""
     header(
@@ -2200,6 +2424,8 @@ def results_view(client, catalog, user_key):
         LABORATORIES[2]["id"],
         "clase-03-impacto-instalaciones-lab-1",
         "clase-04-impacto-instalaciones-lab-2",
+        "clase-06-ruido-ambiental-lab-2",
+        "clase-07-construccion-lab-1",
     ]
     try:
         rows=(
@@ -2249,12 +2475,25 @@ def results_view(client, catalog, user_key):
     }
     c3_official=_course3_lab2_official_summary(rows)
 
+    course4_labs=[
+        lab for lab in FUTURE_LABS.values()
+        if lab.get("course")=="Factores del ruido en el proceso de construcción"
+    ]
+    c4_lab1=next((lab for lab in course4_labs if int(lab.get("number") or 0)==1),None)
+    c4_prog=_future_lab_progress(c4_lab1,progress_rows) if c4_lab1 else {
+        "completed":0,"expected":0,"percent":0.0
+    }
+    c4_deliveries=_course4_lab1_delivery_rows(rows)
+    c4_delivered=sum(c4_deliveries.get(k) is not None for k in ("stage9","stage10"))
+
     courses_with_progress=0
     if c1_completed or official["completed"]:
         courses_with_progress+=1
     if c2_prog["completed"] or c2_delivered:
         courses_with_progress+=1
     if c3_prog["completed"] or c3_lab2_prog["completed"] or c3_official["completed"]:
+        courses_with_progress+=1
+    if c4_prog["completed"] or c4_delivered:
         courses_with_progress+=1
 
     labs_with_progress=sum(1 for item in course1_progress.values() if item["completed"])
@@ -2263,6 +2502,8 @@ def results_view(client, catalog, user_key):
     if c3_prog["completed"]:
         labs_with_progress+=1
     if c3_lab2_prog["completed"] or c3_official["completed"]:
+        labs_with_progress+=1
+    if c4_prog["completed"] or c4_delivered:
         labs_with_progress+=1
 
     st.markdown("## Resumen del Diplomado")
@@ -2285,6 +2526,7 @@ def results_view(client, catalog, user_key):
     _render_course1_block(rows)
     _render_course2_block(rows,progress_rows)
     _render_course3_block(rows,progress_rows)
+    _render_course4_block(rows,progress_rows)
 
 
 
