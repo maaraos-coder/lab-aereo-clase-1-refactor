@@ -4361,7 +4361,8 @@ def _stage8(lab, saved):
                 use_container_width=True,
             )
             st.caption(
-                "Noise Map Lab carga únicamente la geometría del escenario: posición y altura. Debes ingresar tú mismo el LwA calculado de cada fuente antes de ejecutar el modelo."
+                "Noise Map Lab carga la posición y altura de las fuentes y demarca el predio con líneas auxiliares. "
+                "El área de cálculo no viene creada: debes dibujarla tú como parte del ejercicio, después de definir receptores e ingresar los LwA."
             )
             if code == "C":
                 st.info("Las alturas de 15 m y 24 m son supuestos didácticos para estudiar propagación desde fuentes elevadas.")
@@ -4484,8 +4485,9 @@ def _stage8(lab, saved):
                 unsafe_allow_html=True,
             )
     st.markdown(
-        '<div class="s8-note"><b>Regla de comparación:</b> Noise Map Lab no precarga receptores. '
-        'Los defines una vez en A y luego conservas exactamente esas posiciones y alturas en B y C.</div>',
+        '<div class="s8-note"><b>Regla de comparación:</b> Noise Map Lab no precarga receptores ni el área de cálculo. '
+        'Los receptores los defines una vez en A y los mantienes en B y C. Luego dibuja un área de cálculo que '
+        'incluya el predio y los tres receptores, manteniendo una extensión equivalente en los tres escenarios.</div>',
         unsafe_allow_html=True,
     )
 
@@ -4536,17 +4538,17 @@ def _stage8(lab, saved):
           <div class="s8-model-card">
             <div class="badge">ESCENARIO A</div>
             <div class="head">Excavación</div>
-            <div class="txt">Abre el preset, ingresa los LwA que calculaste, incorpora R1–R3 y ejecuta el cálculo.</div>
+            <div class="txt">Abre el preset, ingresa los LwA, incorpora R1–R3 y dibuja el área de cálculo antes de ejecutar.</div>
           </div>
           <div class="s8-model-card">
             <div class="badge">ESCENARIO B</div>
             <div class="head">Obra gruesa · piso</div>
-            <div class="txt">Carga la nueva fase, ingresa sus LwA y reproduce exactamente los mismos tres receptores.</div>
+            <div class="txt">Carga la nueva fase, ingresa sus LwA, conserva R1–R3 y vuelve a definir un área de cálculo equivalente.</div>
           </div>
           <div class="s8-model-card">
             <div class="badge">ESCENARIO C</div>
             <div class="head">Obra gruesa · altura</div>
-            <div class="txt">Ingresa los LwA, mantén R1–R3 y analiza qué cambia al elevar parte de las fuentes.</div>
+            <div class="txt">Ingresa los LwA, mantén R1–R3, dibuja el área de cálculo y analiza el efecto de la altura.</div>
           </div>
         </div>
         """,
