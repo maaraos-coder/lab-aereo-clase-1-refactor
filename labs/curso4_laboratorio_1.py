@@ -3214,13 +3214,8 @@ def _s7_timeline(sources, period=60):
 
 
 def _s7_section(number, title, purpose):
-    st.markdown(
-        f'<div style="border-top:1px solid #dce7ef;padding-top:22px;margin:24px 0 15px">'
-        f'<div style="font-size:.72rem;font-weight:850;letter-spacing:.1em;color:#176b9b">APLICACIÓN 0{number}</div>'
-        f'<h3 style="margin:.3rem 0 .45rem;color:#17324a;font-size:1.35rem">{title}</h3>'
-        f'<div style="font-size:.91rem;color:#526d80;line-height:1.6">{purpose}</div></div>',
-        unsafe_allow_html=True,
-    )
+    st.markdown(f"### {number} · {title}")
+    st.caption(purpose)
 
 
 def _stage7(lab, saved):
@@ -3592,6 +3587,18 @@ def _stage7(lab, saved):
             )
 
     _s7_section(5, "Diseña una hora de obra", "Ajusta los horarios y niveles de cuatro fuentes y revisa el resultado en el receptor R1.")
+    st.markdown(
+        '<div style="border:1px solid #cbdfea;border-radius:20px;padding:20px 24px;'
+        'background:linear-gradient(125deg,#f7fbfe,#eaf3fa);margin:8px 0 18px">'
+        '<div style="font-size:.72rem;font-weight:850;letter-spacing:.1em;color:#176b9b">SIMULADOR DE OBRA</div>'
+        '<div style="font-size:1.2rem;font-weight:850;color:#17324a;margin:.5rem 0">Cuatro máquinas, una hora y un receptor</div>'
+        '<div style="display:flex;flex-wrap:wrap;gap:8px;margin-top:12px">'
+        '<span style="background:#fff;border:1px solid #dce7ef;border-radius:999px;padding:6px 12px;color:#456275;font-size:.8rem">Receptor · R1</span>'
+        '<span style="background:#fff;border:1px solid #dce7ef;border-radius:999px;padding:6px 12px;color:#456275;font-size:.8rem">Período · 60 min</span>'
+        '<span style="background:#fff;border:1px solid #dce7ef;border-radius:999px;padding:6px 12px;color:#456275;font-size:.8rem">Entradas · nivel y horario</span>'
+        '</div></div>',
+        unsafe_allow_html=True,
+    )
     st.caption(
         "Niveles didácticos de presión sonora en R1 durante operación; no son niveles universales "
         "de máquinas ni potencias sonoras. El generador puede mantenerse continuo o detenerse."
@@ -3602,24 +3609,44 @@ def _stage7(lab, saved):
         ("Martillo", 74, (30, 39), "#ce7452"),
         ("Generador", 59, (0, 60), "#8a6bb5"),
     ]
+    st.markdown("#### Configura las fuentes")
     sources = []
     controls = st.columns(2, gap="large")
     for i, (name, level, window, color) in enumerate(specifications):
         with controls[i % 2]:
             with st.container(border=True):
-                st.markdown(f"**0{i+1} · {name}**")
+                st.markdown(
+                    f'<div style="border-left:4px solid {color};padding-left:12px;margin:4px 0 14px">'
+                    f'<div style="font-size:.7rem;font-weight:850;letter-spacing:.1em;color:{color}">FUENTE 0{i+1}</div>'
+                    f'<div style="font-size:1.2rem;font-weight:850;color:#17324a;margin-top:.3rem">{name}</div></div>',
+                    unsafe_allow_html=True,
+                )
                 selected_level = st.slider(
                     f"Nivel de {name} en R1 [dB(A)]", 40, 100, level, key=f"c4l1_s7_v2_level_{i}"
                 )
                 selected_window = st.slider(
                     f"Inicio y término de {name} [min]", 0, 60, window, key=f"c4l1_s7_v2_window_{i}"
                 )
-                st.caption(f"Tiempo activo: {selected_window[1]-selected_window[0]} min. Igualar los extremos deja la fuente inactiva.")
+                duration = selected_window[1]-selected_window[0]
+                st.markdown(
+                    '<div style="display:flex;justify-content:space-between;flex-wrap:wrap;gap:8px;'
+                    'background:#f4f8fb;border-radius:10px;padding:10px 12px;margin-top:8px;font-size:.8rem;color:#456275">'
+                    f'<span><b>{duration} min</b> activos · {duration/60*100:.0f} %</span>'
+                    f'<span>{selected_window[0]}–{selected_window[1]} min</span></div>',
+                    unsafe_allow_html=True,
+                )
+                st.caption("Igualar inicio y término deja la máquina inactiva.")
                 sources.append({"name": name, "level": selected_level, "window": selected_window, "color": color})
+    st.markdown("#### Observa el cronograma y el resultado")
     with st.container(border=True):
         include_floor = st.checkbox("Agregar fondo continuo en R1", value=False, key="c4l1_s7_v2_floor_on")
         floor = st.slider("Fondo en R1 [dB(A)]", 20, 80, 45, key="c4l1_s7_v2_floor", disabled=not include_floor)
+        st.markdown(
+            '<div style="font-size:.75rem;font-weight:850;letter-spacing:.08em;color:#526d80;margin:14px 0 8px">CRONOGRAMA · 0 A 60 MIN</div>',
+            unsafe_allow_html=True,
+        )
         _s7_timeline(sources)
+        st.caption("Cada color corresponde a una máquina. Las barras superpuestas en el tiempo indican operación simultánea.")
         segments, scenario_level = _s7_schedule(sources, background=floor if include_floor else None)
         contributions = []
         for source in sources:
@@ -3630,17 +3657,32 @@ def _stage7(lab, saved):
         available = [source for source in contributions if source["energy"] > 0]
         dominant = max(available, key=lambda source: source["energy"]) if available else None
         finite_segments = [s["level"] for s in segments if s["level"] is not None]
-        a, b, c = st.columns(3)
         reference_energy = sum((window[1]-window[0])/60 * 10**(level/10) for _, level, window, _ in specifications)
         reference_level = _s7_level(reference_energy + (10**(floor/10) if include_floor else 0))
-        a.metric(
-            "LAeq,T en R1 · 60 min",
-            f"{scenario_level:.2f} dB(A)" if scenario_level is not None else "Sin aporte",
-            delta=f"{scenario_level-reference_level:+.2f} dB respecto del caso inicial" if scenario_level is not None else None,
-            delta_color="inverse",
+        result_value = f'{scenario_level:.2f}' if scenario_level is not None else "Sin aporte"
+        difference = f'{scenario_level-reference_level:+.2f} dB respecto del caso inicial' if scenario_level is not None else "Todas las máquinas están detenidas; no se incluye fondo."
+        difference_color = "#2d7a4a" if scenario_level is not None and scenario_level <= reference_level else "#a05b3a"
+        st.markdown(
+            '<div style="border:1px solid #c9deed;border-radius:18px;padding:20px 24px;'
+            'background:linear-gradient(125deg,#f3faff,#edf2fa);margin:16px 0">'
+            '<div style="font-size:.72rem;font-weight:850;letter-spacing:.1em;color:#176b9b">RESULTADO EN R1 · PROMEDIO DE LA HORA</div>'
+            f'<div style="font-size:2.55rem;font-weight:850;color:#17324a;margin:.6rem 0">{result_value}'
+            + (' <span style="font-size:1rem;font-weight:600">dB(A)</span>' if scenario_level is not None else '')
+            + f'</div><div style="font-size:.86rem;font-weight:750;color:{difference_color}">{difference}</div></div>',
+            unsafe_allow_html=True,
         )
-        b.metric("Mayor nivel de intervalo", f"{max(finite_segments):.2f} dB(A)" if finite_segments else "Sin aporte")
-        c.metric("Máquina con mayor aporte", dominant["name"] if dominant else "Ninguna")
+        a, b = st.columns(2)
+        with a:
+            with st.container(border=True):
+                st.caption("INTERVALO MÁS RUIDOSO")
+                st.metric("Mayor nivel de intervalo", f"{max(finite_segments):.2f} dB(A)" if finite_segments else "Sin aporte")
+                st.caption("Nivel del modelo en un intervalo; no es un LAFmax medido.")
+        with b:
+            with st.container(border=True):
+                st.caption("CONTRIBUCIÓN DOMINANTE")
+                st.metric("Máquina con mayor aporte", dominant["name"] if dominant else "Ninguna")
+                st.caption("Se identifica después de ponderar el tiempo activo.")
+        st.markdown("#### Aportes de cada máquina")
         st.dataframe(
             pd.DataFrame([{
                 "Fuente": s["name"],
@@ -3655,7 +3697,7 @@ def _stage7(lab, saved):
         if include_floor:
             st.caption(f"El fondo continuo también aporta {100*10**(floor/10)/total_energy:.1f} % de la energía total; no figura como máquina.")
         st.caption("La comparación usa los niveles y horarios iniciales de las cuatro máquinas, con la misma configuración de fondo.")
-        st.markdown("**Distribución de energía de las máquinas durante la hora**")
+        st.markdown("#### Distribución de energía")
         st.bar_chart(
             pd.DataFrame({"Fuente": [s["name"] for s in contributions],
                           "Energía del total [%]": [100*s["energy"]/total_energy if total_energy else 0 for s in contributions]}).set_index("Fuente"),
@@ -3671,9 +3713,15 @@ def _stage7(lab, saved):
                 } for s in segments]), use_container_width=True, hide_index=True,
             )
             st.caption("Se integra cada intervalo según su duración; los intervalos largos pesan más que los cortos.")
-        st.info(
-            "Prueba tres cambios: acorta el tiempo del martillo, desplaza su horario sin cambiar la duración "
-            "y detén el generador. Compara qué cambia en el LAeq y qué cambia solo en las coincidencias."
+        st.markdown(
+            '<div style="border:1px solid #dce7ef;border-radius:14px;padding:16px 18px;background:#f6f9fc;margin-top:14px">'
+            '<div style="font-size:.75rem;font-weight:850;letter-spacing:.08em;color:#176b9b">EXPERIMENTA CON EL ESCENARIO</div>'
+            '<div style="color:#456275;font-size:.88rem;line-height:1.8;margin-top:8px">'
+            '<b>01 ·</b> Acorta el tiempo del martillo y observa el promedio.<br>'
+            '<b>02 ·</b> Desplaza su horario manteniendo la duración y revisa las coincidencias.<br>'
+            '<b>03 ·</b> Detén el generador y compara su aporte con el de las otras máquinas.'
+            '</div></div>',
+            unsafe_allow_html=True,
         )
 
     _s7_section(6, "Resuelve y comprueba", "Aplica el método a un caso fijo. Este ejercicio es independiente de los ajustes del simulador.")
