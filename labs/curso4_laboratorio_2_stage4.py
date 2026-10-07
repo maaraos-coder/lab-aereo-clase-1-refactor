@@ -188,19 +188,21 @@ def render(lab,saved,runtime):
     st.warning("Peor condición no significa inventar simultaneidades imposibles. Debe ser una condición crítica, pero técnicamente realizable según la etapa y el cronograma del proyecto.")
 
     st.markdown("#### Ejemplo visual · ¿cómo se representa el frente en el modelo?")
-    st.markdown(
+    import streamlit.components.v1 as components
+    components.html(
         """
         <div style="border:1px solid #cfe0ed;border-radius:20px;padding:18px;
-                    background:linear-gradient(135deg,#fbfdff,#f1f7fb);margin:.5rem 0 1rem">
-          <div style="font-size:.72rem;font-weight:900;letter-spacing:.08em;color:#087ba0;margin-bottom:.35rem">
+                    background:linear-gradient(135deg,#fbfdff,#f1f7fb);
+                    font-family:Arial,sans-serif">
+          <div style="font-size:12px;font-weight:900;letter-spacing:.08em;color:#087ba0;margin-bottom:6px">
             EJEMPLO CONCEPTUAL · MOVIMIENTO DE TIERRAS
           </div>
-          <div style="font-size:1.05rem;font-weight:850;color:#173b53;margin-bottom:.9rem">
+          <div style="font-size:18px;font-weight:800;color:#173b53;margin-bottom:12px">
             Varias máquinas simultáneas → una fuente equivalente del frente
           </div>
 
-          <svg viewBox="0 0 1100 470" width="100%" role="img"
-               aria-label="Esquema conceptual de una fuente equivalente de un frente de trabajo">
+          <svg viewBox="0 0 1100 470" width="100%" xmlns="http://www.w3.org/2000/svg"
+               role="img" aria-label="Esquema conceptual de una fuente equivalente de un frente de trabajo">
             <defs>
               <marker id="arrEq4" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto">
                 <path d="M0,0 L0,6 L9,3 z" fill="#526f80"></path>
@@ -251,7 +253,7 @@ def render(lab,saved,runtime):
             </text>
           </svg>
 
-          <div style="margin-top:.65rem;color:#526f80;line-height:1.55;font-size:.86rem">
+          <div style="margin-top:10px;color:#526f80;line-height:1.55;font-size:14px">
             <b>Lectura del esquema:</b> las máquinas que operan simultáneamente se representan acústicamente
             mediante una sola fuente equivalente. Para analizar la peor condición, esa fuente se ubica
             <b>dentro del sector real donde puede operar el frente</b>, en la posición físicamente posible
@@ -259,7 +261,8 @@ def render(lab,saved,runtime):
           </div>
         </div>
         """,
-        unsafe_allow_html=True,
+        height=520,
+        scrolling=False,
     )
 
     sources=saved.get("c4l2_s3_acoustic_sources") or []
