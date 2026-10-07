@@ -633,6 +633,25 @@ def _stage1(lab, saved):
                 "No se entrega una geometría estimada como si fuera documental."
             )
 
+            st.markdown("#### Maquinaria identificable · pauta docente")
+            teacher_machinery=[
+                {"Etapa / frente":"Movimiento de tierras","Maquinaria esperable":"Excavadora hidráulica","Actividad a contrastar":"Excavación / movimiento de material"},
+                {"Etapa / frente":"Movimiento de tierras","Maquinaria esperable":"Retroexcavadora","Actividad a contrastar":"Preparación / excavación localizada"},
+                {"Etapa / frente":"Movimiento de tierras","Maquinaria esperable":"Cargador frontal","Actividad a contrastar":"Carga de material"},
+                {"Etapa / frente":"Movimiento de tierras","Maquinaria esperable":"Camión tolva","Actividad a contrastar":"Transporte / descarga de material"},
+                {"Etapa / frente":"Movimiento de tierras","Maquinaria esperable":"Rodillo vibratorio","Actividad a contrastar":"Compactación"},
+                {"Etapa / frente":"Hormigón / obra gruesa","Maquinaria esperable":"Camión mixer","Actividad a contrastar":"Suministro / descarga de hormigón"},
+                {"Etapa / frente":"Hormigón / obra gruesa","Maquinaria esperable":"Bomba de hormigón","Actividad a contrastar":"Bombeo de hormigón"},
+                {"Etapa / frente":"Hormigón / obra gruesa","Maquinaria esperable":"Vibrador de inmersión","Actividad a contrastar":"Vibrado de hormigón"},
+                {"Etapa / frente":"Estructura / izaje","Maquinaria esperable":"Grúa torre","Actividad a contrastar":"Izaje / movimiento de materiales"},
+                {"Etapa / frente":"Equipos auxiliares","Maquinaria esperable":"Generador diésel","Actividad a contrastar":"Alimentación eléctrica temporal"},
+            ]
+            st.dataframe(pd.DataFrame(teacher_machinery),hide_index=True,use_container_width=True)
+            st.info(
+                "Esta pauta debe contrastarse con la versión vigente del expediente. Si una máquina no aparece, no se exige; "
+                "si aparece otro equipo, debe incorporarse y respaldarse documentalmente."
+            )
+
 def _stage2(lab, saved):
     from labs import curso4_laboratorio_2_stage2 as _stage2_module
     ctx={
