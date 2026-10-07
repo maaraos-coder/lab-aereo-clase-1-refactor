@@ -3,6 +3,7 @@
 import math
 import re
 import unicodedata
+from labs.curso4_laboratorio_1 import BS_PLANT
 
 OCTAVE_LABELS=["31,5 Hz","63 Hz","125 Hz","250 Hz","500 Hz","1 kHz","2 kHz","4 kHz"]
 
@@ -33,36 +34,172 @@ def _qty(value):
 def _teacher_pauta(st,pd,sources):
     if st.session_state.get("role")!="Docente":
         return
+
+    teacher_map=[
+        ("Movimiento de tierras","Excavadora hidráulica","Excavadora hidráulica"),
+        ("Movimiento de tierras","Retroexcavadora","Retroexcavadora"),
+        ("Movimiento de tierras","Cargador frontal","Cargador frontal"),
+        ("Movimiento de tierras","Camión tolva","Camión tolva articulado"),
+        ("Movimiento de tierras","Rodillo vibratorio","Rodillo vibratorio"),
+        ("Hormigón / obra gruesa","Camión mixer","Camión mixer"),
+        ("Hormigón / obra gruesa","Bomba de hormigón","Bomba de hormigón"),
+        ("Hormigón / obra gruesa","Vibrador de inmersión","Vibrador de inmersión"),
+        ("Estructura / izaje","Grúa torre","Grúa torre"),
+        ("Equipos auxiliares","Generador diésel","Generador diésel"),
+    ]
+
     with st.expander("👨‍🏫 Pauta docente · Etapa 4",expanded=False):
         st.markdown("""
-        **Criterio de corrección**
+        **Objetivo de corrección**
 
-        - La condición original se modela **sin medidas de control**.
+        La pauta debe permitir comprobar cómo se pasa desde la maquinaria seleccionada en la Etapa 3
+        a una **fuente equivalente por frente de trabajo**, todavía sin medidas de control.
+
         - Las máquinas se agrupan por **etapa/frente de trabajo**.
         - Solo deben sumarse fuentes que puedan operar simultáneamente en la condición crítica.
         - La suma se realiza **energéticamente y por banda de octava**.
-        - La fuente equivalente se ubica dentro del predio, en la posición **físicamente posible más próxima** al receptor objetivo.
-        - Cada etapa se guarda como un proyecto/escenario independiente en Noise Map Lab.
-        - El escenario original no debe sobrescribirse cuando posteriormente se incorporen medidas de control.
+        - La fuente equivalente se ubica dentro del predio, en la posición **físicamente posible más próxima**
+          al receptor objetivo.
+        - El escenario original debe guardarse antes de incorporar cualquier medida de control.
         """)
-        if not sources:
-            st.info("La pauta conceptual está disponible, pero aún no existen fuentes acústicas guardadas desde la Etapa 3.")
-            return
-        stages={}
-        for s in sources:
-            stages.setdefault(str(s.get("Etapa") or "Etapa no definida"),[]).append(s)
+
+        st.markdown("#### 1 · Maquinaria esperada y LWA de referencia")
         rows=[]
-        for stage,items in stages.items():
-            for s in items:
-                rows.append({
-                    "Etapa":stage,
-                    "Máquina":s.get("Máquina / equipo proyecto"),
-                    "Cantidad":s.get("Cantidad"),
-                    "BS":s.get("Referencia BS"),
-                    "LWA":round(float(s.get("LWA_global") or 0),1),
-                })
+        grouped={}
+        for stage_name,project_machine,bs_name in teacher_map:
+            item=BS_PLANT[bs_name]
+            lwa=float(item["laeq10"])+28.0
+            lw_bands=[float(v)+28.0 for v in item["bands"]]
+            grouped.setdefault(stage_name,[]).append({
+                "name":project_machine,
+                "bs":bs_name,
+                "item":item,
+                "lwa":lwa,
+                "bands":lw_bands,
+            })
+            rows.append({
+                "Etapa / frente":stage_name,
+                "Máquina proyecto":project_machine,
+                "Referencia BS":bs_name,
+                "Tabla / Ref.":f"{item['table']} · Ref. {item['ref']}",
+                "LWA individual [dB(A)]":round(lwa,1),
+            })
         st.dataframe(pd.DataFrame(rows),hide_index=True,use_container_width=True)
-        st.caption("La solución exacta de cada fuente equivalente depende de la simultaneidad que sea técnicamente defendible para ese frente.")
+
+        st.markdown("#### 2 · Suma energética esperada por frente")
+        summary=[]
+        expected_by_stage={}
+        for stage_name,items in grouped.items():
+            lwa_eq=_sum_db([x["lwa"] for x in items])
+            band_eq=[
+                _sum_db([x["bands"][idx] for x in items])
+                for idx in range(len(OCTAVE_LABELS))
+            ]
+            expected_by_stage[stage_name]={"lwa":lwa_eq,"bands":band_eq,"items":items}
+            summary.append({
+                "Frente":stage_name,
+                "N° máquinas":len(items),
+                "LWA equivalente [dB(A)]":round(lwa_eq,1),
+                "Criterio":"1 unidad de cada equipo de la pauta",
+            })
+        st.dataframe(pd.DataFrame(summary),hide_index=True,use_container_width=True)
+        st.caption(
+            "Estos valores son la solución docente para la pauta propuesta en la Etapa 3, "
+            "suponiendo una unidad de cada equipo y operación simultánea. Si el expediente declara cantidades "
+            "o simultaneidades diferentes, la solución debe ajustarse."
+        )
+
+        selected_stage=st.selectbox(
+            "Ver desarrollo por bandas de un frente",
+            list(expected_by_stage.keys()),
+            key="c4l2_s4_teacher_stage_detail",
+        )
+        detail=expected_by_stage[selected_stage]
+        band_rows={"Banda":OCTAVE_LABELS}
+        for machine in detail["items"]:
+            band_rows[machine["name"]]=[round(v,1) for v in machine["bands"]]
+        band_rows["Lw equivalente"]=[round(v,1) for v in detail["bands"]]
+        st.dataframe(pd.DataFrame(band_rows),hide_index=True,use_container_width=True)
+        st.success(
+            f"Resultado docente · **{selected_stage}**: "
+            f"LWA equivalente ≈ **{detail['lwa']:.1f} dB(A)**."
+        )
+
+        st.markdown("#### 3 · Ejemplo visual · de varias máquinas a una fuente equivalente")
+        st.markdown(
+            """
+            <div style="border:1px solid #cfe0ed;border-radius:20px;padding:18px 18px 12px;
+                        background:linear-gradient(135deg,#fbfdff,#f1f7fb);margin:.4rem 0 1rem">
+            <svg viewBox="0 0 1000 430" width="100%" role="img" aria-label="Esquema de ubicación de una fuente equivalente">
+              <defs>
+                <marker id="arrowEq" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto">
+                  <path d="M0,0 L0,6 L9,3 z" fill="#516b7c"></path>
+                </marker>
+              </defs>
+
+              <rect x="35" y="45" width="650" height="310" rx="22" fill="#efe4ce" stroke="#9d825b" stroke-width="3"/>
+              <text x="60" y="78" font-size="24" font-weight="700" fill="#173b53">Predio de construcción · FT1</text>
+              <text x="60" y="105" font-size="17" fill="#526f80">Ejemplo: Movimiento de tierras</text>
+
+              <rect x="95" y="150" width="150" height="52" rx="12" fill="#ffffff" stroke="#9db1be"/>
+              <text x="170" y="182" text-anchor="middle" font-size="17" fill="#173b53">Excavadora</text>
+
+              <rect x="285" y="125" width="145" height="52" rx="12" fill="#ffffff" stroke="#9db1be"/>
+              <text x="357" y="157" text-anchor="middle" font-size="17" fill="#173b53">Tolva</text>
+
+              <rect x="475" y="155" width="155" height="52" rx="12" fill="#ffffff" stroke="#9db1be"/>
+              <text x="552" y="187" text-anchor="middle" font-size="17" fill="#173b53">Cargador</text>
+
+              <rect x="170" y="255" width="155" height="52" rx="12" fill="#ffffff" stroke="#9db1be"/>
+              <text x="247" y="287" text-anchor="middle" font-size="17" fill="#173b53">Retroexcavadora</text>
+
+              <rect x="390" y="260" width="155" height="52" rx="12" fill="#ffffff" stroke="#9db1be"/>
+              <text x="467" y="292" text-anchor="middle" font-size="17" fill="#173b53">Rodillo</text>
+
+              <ellipse cx="374" cy="220" rx="250" ry="125" fill="none" stroke="#d94841" stroke-width="3" stroke-dasharray="10 8"/>
+              <circle cx="610" cy="235" r="13" fill="#e12727" stroke="#ffffff" stroke-width="4"/>
+              <text x="605" y="225" text-anchor="end" font-size="18" font-weight="700" fill="#b91c1c">Fuente equivalente</text>
+              <text x="605" y="248" text-anchor="end" font-size="15" fill="#b91c1c">posición crítica físicamente posible</text>
+
+              <rect x="785" y="185" width="150" height="105" rx="12" fill="#e6edf4" stroke="#69859a" stroke-width="3"/>
+              <text x="860" y="225" text-anchor="middle" font-size="22" font-weight="700" fill="#174f8c">R1</text>
+              <text x="860" y="253" text-anchor="middle" font-size="16" fill="#526f80">Receptor</text>
+
+              <line x1="625" y1="235" x2="780" y2="235" stroke="#516b7c" stroke-width="3" stroke-dasharray="8 6" marker-end="url(#arrowEq)"/>
+              <text x="702" y="217" text-anchor="middle" font-size="16" font-weight="700" fill="#344f60">Distancia F–R</text>
+
+              <text x="48" y="395" font-size="17" fill="#516b7c">
+                La fuente equivalente no tiene que quedar en el centro geométrico del grupo:
+                se ubica donde represente la condición crítica físicamente realizable del frente.
+              </text>
+            </svg>
+            </div>
+            """,
+            unsafe_allow_html=True,
+        )
+
+        st.info(
+            "Ejemplo de lectura: las máquinas pertenecen al mismo frente y se reemplazan acústicamente por una "
+            "fuente equivalente. Para evaluar la peor exposición, esa fuente se desplaza dentro del sector donde "
+            "el frente realmente puede operar hasta la posición físicamente posible más próxima al receptor crítico."
+        )
+
+        if sources:
+            st.markdown("#### 4 · Comparación con lo realizado por el alumno")
+            student_rows=[]
+            for s in sources:
+                student_rows.append({
+                    "Etapa":s.get("Etapa"),
+                    "Máquina":s.get("Máquina / equipo proyecto"),
+                    "Referencia BS":s.get("Referencia BS"),
+                    "LWA alumno":round(float(s.get("LWA_global") or 0),1),
+                })
+            st.dataframe(pd.DataFrame(student_rows),hide_index=True,use_container_width=True)
+        else:
+            st.caption(
+                "Aún no hay fuentes guardadas por el alumno en la Etapa 3. "
+                "La solución docente anterior permanece disponible igualmente."
+            )
 
 def render(lab,saved,runtime):
     st=runtime["st"]; pd=runtime["pd"]
