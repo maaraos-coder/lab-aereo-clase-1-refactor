@@ -151,11 +151,12 @@ def render(lab,saved,runtime):
         select_options={"¿Simultánea?":["Sí","No"]},
         numeric_columns=["Cantidad declarada","LWA [dB(A)]"],
         height=max(235,min(430,90+42*len(stage_sources))),
+        editable_columns=["¿Simultánea?"],
     )
     st.session_state[config_key]=cfg.where(pd.notna(cfg),None).to_dict("records")
     selected_names={str(r.get("Máquina")) for r in st.session_state[config_key] if r.get("¿Simultánea?")=="Sí"}
 
-    st.caption("Marca solo las máquinas que pueden operar simultáneamente en la condición crítica de esta etapa.")
+    st.caption("Los datos acústicos y cantidades provienen de la Etapa 3 y quedan bloqueados. En esta etapa solo debes decidir qué máquinas pueden operar simultáneamente en la condición crítica.")
 
     active=[]
     for s in stage_sources:
