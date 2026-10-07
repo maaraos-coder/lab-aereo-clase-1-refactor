@@ -4,6 +4,8 @@ Renderer específico del Laboratorio 2. La Etapa 1 reconstruye el proyecto real
 Conjunto Habitacional Eyzaguirre desde su expediente SEIA antes de modelar.
 """
 
+from st_aggrid import AgGrid, GridOptionsBuilder, GridUpdateMode
+
 _RUNTIME_PROTECTED = {"run_stage", "_bind_runtime", "_RUNTIME_PROTECTED"}
 
 def _bind_runtime(runtime):
@@ -36,6 +38,110 @@ def _header(stage, title, purpose):
 def _save(lab, saved, stage):
     saved[f"c4l2_updated_{stage}"] = _now()
     _save_future_state(lab["id"], saved)
+
+
+def _professional_grid(df, key, widths=None, select_options=None, numeric_columns=None, height=260):
+    """Grilla editable con encabezados claros y líneas visibles."""
+    widths=widths or {}
+    select_options=select_options or {}
+    numeric_columns=set(numeric_columns or [])
+    gb=GridOptionsBuilder.from_dataframe(df)
+
+    gb.configure_default_column(
+        editable=True,
+        sortable=False,
+        filter=False,
+        resizable=True,
+        wrapText=False,
+        suppressMovable=True,
+    )
+    for column in df.columns:
+        kwargs={"headerName":str(column).upper()}
+        if column in widths:
+            kwargs["width"]=widths[column]
+            kwargs["minWidth"]=max(80, int(widths[column]*0.75))
+        if column in select_options:
+            kwargs["cellEditor"]="agSelectCellEditor"
+            kwargs["cellEditorParams"]={"values":select_options[column]}
+        if column in numeric_columns:
+            kwargs["type"]=["numericColumn"]
+        gb.configure_column(column, **kwargs)
+
+    gb.configure_grid_options(
+        rowHeight=42,
+        headerHeight=46,
+        suppressHorizontalScroll=False,
+        singleClickEdit=True,
+        stopEditingWhenCellsLoseFocus=True,
+    )
+    options=gb.build()
+
+    custom_css={
+        ".ag-root-wrapper":{
+            "border":"1px solid #b8cad7 !important",
+            "border-radius":"12px !important",
+            "overflow":"hidden !important",
+            "box-shadow":"0 4px 14px rgba(23,59,83,.06) !important",
+        },
+        ".ag-header":{
+            "background":"#0b5f8f !important",
+            "border-bottom":"2px solid #084a70 !important",
+        },
+        ".ag-header-row":{
+            "background":"#0b5f8f !important",
+        },
+        ".ag-header-cell":{
+            "background":"#0b5f8f !important",
+            "color":"#ffffff !important",
+            "font-weight":"800 !important",
+            "font-size":"12px !important",
+            "letter-spacing":".035em !important",
+            "border-right":"1px solid rgba(255,255,255,.22) !important",
+        },
+        ".ag-header-cell-label":{
+            "justify-content":"flex-start !important",
+        },
+        ".ag-row":{
+            "border-bottom":"1px solid #d7e2e9 !important",
+        },
+        ".ag-row-even":{
+            "background":"#ffffff !important",
+        },
+        ".ag-row-odd":{
+            "background":"#f8fbfd !important",
+        },
+        ".ag-cell":{
+            "border-right":"1px solid #dfe8ee !important",
+            "display":"flex !important",
+            "align-items":"center !important",
+            "font-size":"13px !important",
+            "color":"#243746 !important",
+            "padding-left":"10px !important",
+            "padding-right":"10px !important",
+        },
+        ".ag-cell-focus":{
+            "border":"2px solid #1496c8 !important",
+            "box-shadow":"inset 0 0 0 1px #1496c8 !important",
+        },
+        ".ag-row-hover":{
+            "background":"#eef7fb !important",
+        },
+    }
+
+    result=AgGrid(
+        df,
+        gridOptions=options,
+        update_mode=GridUpdateMode.VALUE_CHANGED,
+        data_return_mode="AS_INPUT",
+        fit_columns_on_grid_load=False,
+        height=height,
+        key=key,
+        custom_css=custom_css,
+        theme="streamlit",
+        allow_unsafe_jscode=False,
+    )
+    data=result.get("data",df)
+    return pd.DataFrame(data)
 
 def _stage0(lab, saved):
     title, objective, concept, activity = lab["stages"][0]
@@ -207,18 +313,12 @@ def _stage1(lab, saved):
         {"Vértice":"V3","Latitud":None,"Longitud":None},
         {"Vértice":"V4","Latitud":None,"Longitud":None},
     ]
-    vertex_df=st.data_editor(
+    vertex_df=_professional_grid(
         pd.DataFrame(vertex_saved),
-        num_rows="dynamic",
-        hide_index=True,
-        use_container_width=True,
-        key="c4l2_s1_vertices_editor",
-        row_height=42,
-        column_config={
-            "Vértice":st.column_config.TextColumn("Vértice",help="Ej.: V1, V2, V3",width="small"),
-            "Latitud":st.column_config.NumberColumn("Latitud",format="%.6f",width="medium"),
-            "Longitud":st.column_config.NumberColumn("Longitud",format="%.6f",width="medium"),
-        },
+        key="c4l2_s1_vertices_grid",
+        widths={"Vértice":110,"Latitud":180,"Longitud":180},
+        numeric_columns=["Latitud","Longitud"],
+        height=245,
     )
 
     st.markdown("### 4 · Reconstruye las partes principales del proyecto")
@@ -241,19 +341,11 @@ def _stage1(lab, saved):
         {"Parte / obra":"","Cantidad":"","Ubicación / sector":"","Fuente documental":""},
         {"Parte / obra":"","Cantidad":"","Ubicación / sector":"","Fuente documental":""},
     ]
-    parts_df=st.data_editor(
+    parts_df=_professional_grid(
         pd.DataFrame(parts_saved),
-        num_rows="dynamic",
-        hide_index=True,
-        use_container_width=True,
-        key="c4l2_s1_parts_editor",
-        row_height=42,
-        column_config={
-            "Parte / obra":st.column_config.TextColumn("Parte / obra",help="Ej.: torre, estacionamiento, instalación de faena",width="medium"),
-            "Cantidad":st.column_config.TextColumn("Cantidad",width="small"),
-            "Ubicación / sector":st.column_config.TextColumn("Ubicación / sector",width="medium"),
-            "Fuente documental":st.column_config.TextColumn("Fuente documental",help="Documento o anexo donde lo identificaste",width="large"),
-        },
+        key="c4l2_s1_parts_grid",
+        widths={"Parte / obra":220,"Cantidad":110,"Ubicación / sector":220,"Fuente documental":280},
+        height=245,
     )
 
     st.markdown("### 5 · Reconstruye las etapas constructivas")
@@ -276,20 +368,12 @@ def _stage1(lab, saved):
         {"N°":3,"Etapa / frente":"","Actividad principal":"","Sector del predio":"","Documento de respaldo":""},
         {"N°":4,"Etapa / frente":"","Actividad principal":"","Sector del predio":"","Documento de respaldo":""},
     ]
-    phases_df=st.data_editor(
+    phases_df=_professional_grid(
         pd.DataFrame(phases_saved),
-        num_rows="dynamic",
-        hide_index=True,
-        use_container_width=True,
-        key="c4l2_s1_phases_editor",
-        row_height=42,
-        column_config={
-            "N°":st.column_config.NumberColumn("N°",min_value=1,step=1,width="small"),
-            "Etapa / frente":st.column_config.TextColumn("Etapa / frente",width="medium"),
-            "Actividad principal":st.column_config.TextColumn("Actividad principal",width="large"),
-            "Sector del predio":st.column_config.TextColumn("Sector del predio",width="medium"),
-            "Documento de respaldo":st.column_config.TextColumn("Documento de respaldo",width="large"),
-        },
+        key="c4l2_s1_phases_grid",
+        widths={"N°":85,"Etapa / frente":200,"Actividad principal":260,"Sector del predio":190,"Documento de respaldo":260},
+        numeric_columns=["N°"],
+        height=245,
     )
 
     st.markdown("### 6 · Identifica maquinaria y equipos")
@@ -312,21 +396,13 @@ def _stage1(lab, saved):
         {"Máquina / equipo":"","Cantidad":None,"Etapa asociada":"","Actividad":"","Tipo":"","Fuente documental":""},
         {"Máquina / equipo":"","Cantidad":None,"Etapa asociada":"","Actividad":"","Tipo":"","Fuente documental":""},
     ]
-    machinery_df=st.data_editor(
+    machinery_df=_professional_grid(
         pd.DataFrame(machinery_saved),
-        num_rows="dynamic",
-        hide_index=True,
-        use_container_width=True,
-        key="c4l2_s1_machinery_editor",
-        row_height=42,
-        column_config={
-            "Máquina / equipo":st.column_config.TextColumn("Máquina / equipo",width="medium"),
-            "Cantidad":st.column_config.NumberColumn("Cantidad",min_value=0,step=1,width="small"),
-            "Etapa asociada":st.column_config.TextColumn("Etapa asociada",width="medium"),
-            "Actividad":st.column_config.TextColumn("Actividad",width="large"),
-            "Tipo":st.column_config.SelectboxColumn("Tipo",options=["Fija","Móvil","Frente de trabajo","Auxiliar","No definido"],width="medium"),
-            "Fuente documental":st.column_config.TextColumn("Fuente documental",width="large"),
-        },
+        key="c4l2_s1_machinery_grid",
+        widths={"Máquina / equipo":210,"Cantidad":100,"Etapa asociada":180,"Actividad":240,"Tipo":160,"Fuente documental":250},
+        select_options={"Tipo":["Fija","Móvil","Frente de trabajo","Auxiliar","No definido"]},
+        numeric_columns=["Cantidad"],
+        height=245,
     )
 
     st.markdown("### 7 · Reconstruye el cronograma")
@@ -349,21 +425,12 @@ def _stage1(lab, saved):
         {"Etapa / actividad":"","Inicio":"","Término":"","Duración":"","¿Se superpone?":"","Observación":""},
         {"Etapa / actividad":"","Inicio":"","Término":"","Duración":"","¿Se superpone?":"","Observación":""},
     ]
-    chronology_df=st.data_editor(
+    chronology_df=_professional_grid(
         pd.DataFrame(chronology_saved),
-        num_rows="dynamic",
-        hide_index=True,
-        use_container_width=True,
-        key="c4l2_s1_chronology_editor",
-        row_height=42,
-        column_config={
-            "Etapa / actividad":st.column_config.TextColumn("Etapa / actividad",width="large"),
-            "Inicio":st.column_config.TextColumn("Inicio",help="Mes, semana o fecha según documento",width="small"),
-            "Término":st.column_config.TextColumn("Término",width="small"),
-            "Duración":st.column_config.TextColumn("Duración",width="small"),
-            "¿Se superpone?":st.column_config.SelectboxColumn("¿Se superpone?",options=["Sí","No","No indicado"],width="medium"),
-            "Observación":st.column_config.TextColumn("Observación",width="large"),
-        },
+        key="c4l2_s1_chronology_grid",
+        widths={"Etapa / actividad":220,"Inicio":120,"Término":120,"Duración":120,"¿Se superpone?":150,"Observación":280},
+        select_options={"¿Se superpone?":["Sí","No","No indicado"]},
+        height=245,
     )
 
     st.markdown("### 8 · Cierra la ficha del proyecto")
