@@ -143,6 +143,41 @@ def _professional_grid(df, key, widths=None, select_options=None, numeric_column
     data=result.get("data",df)
     return pd.DataFrame(data)
 
+def _dynamic_grid(saved_rows, state_key, grid_key, empty_row_factory, widths=None, select_options=None, numeric_columns=None, min_rows=1, add_label="➕ Agregar fila", remove_label="➖ Quitar última"):
+    """Grilla editable con controles para agregar o quitar filas preservando cambios."""
+    if state_key not in st.session_state:
+        st.session_state[state_key]=[dict(x) for x in saved_rows]
+
+    rows=st.session_state[state_key]
+    df=_professional_grid(
+        pd.DataFrame(rows),
+        key=grid_key,
+        widths=widths,
+        select_options=select_options,
+        numeric_columns=numeric_columns,
+        height=max(235,min(520,90+42*len(rows))),
+    )
+    st.session_state[state_key]=df.where(pd.notna(df),None).to_dict("records")
+
+    add_col,remove_col,info_col=st.columns([.22,.22,.56])
+    with add_col:
+        if st.button(add_label,use_container_width=True,key=f"{grid_key}_add"):
+            current=st.session_state[state_key]
+            current.append(empty_row_factory(len(current)+1))
+            st.session_state[state_key]=current
+            st.rerun()
+    with remove_col:
+        if st.button(remove_label,use_container_width=True,key=f"{grid_key}_remove",disabled=len(rows)<=min_rows):
+            current=st.session_state[state_key]
+            if len(current)>min_rows:
+                current.pop()
+                st.session_state[state_key]=current
+            st.rerun()
+    with info_col:
+        st.caption(f"Filas registradas: **{len(rows)}** · puedes agregar las que necesites.")
+
+    return pd.DataFrame(st.session_state[state_key])
+
 def _stage0(lab, saved):
     header(
         "ETAPA 0 · BIENVENIDA",
@@ -389,12 +424,15 @@ def _stage1(lab, saved):
         {"Vértice":"V3","Latitud":None,"Longitud":None},
         {"Vértice":"V4","Latitud":None,"Longitud":None},
     ]
-    vertex_df=_professional_grid(
-        pd.DataFrame(vertex_saved),
-        key="c4l2_s1_vertices_grid",
+    vertex_df=_dynamic_grid(
+        vertex_saved,
+        state_key="c4l2_s1_vertices_work",
+        grid_key="c4l2_s1_vertices_grid",
+        empty_row_factory=lambda n:{"Vértice":f"V{n}","Latitud":None,"Longitud":None},
         widths={"Vértice":110,"Latitud":180,"Longitud":180},
         numeric_columns=["Latitud","Longitud"],
-        height=245,
+        min_rows=3,
+        add_label="➕ Agregar vértice",
     )
 
     st.markdown("### 4 · Reconstruye las partes principales del proyecto")
@@ -418,11 +456,14 @@ def _stage1(lab, saved):
         {"Parte / obra":"","Cantidad":"","Ubicación / sector":"","Fuente documental":""},
         {"Parte / obra":"","Cantidad":"","Ubicación / sector":"","Fuente documental":""},
     ]
-    parts_df=_professional_grid(
-        pd.DataFrame(parts_saved),
-        key="c4l2_s1_parts_grid",
+    parts_df=_dynamic_grid(
+        parts_saved,
+        state_key="c4l2_s1_parts_work",
+        grid_key="c4l2_s1_parts_grid",
+        empty_row_factory=lambda n:{"Parte / obra":"","Cantidad":"","Ubicación / sector":"","Fuente documental":""},
         widths={"Parte / obra":220,"Cantidad":110,"Ubicación / sector":220,"Fuente documental":280},
-        height=245,
+        min_rows=1,
+        add_label="➕ Agregar parte / obra",
     )
 
     st.markdown("### 5 · Reconstruye las etapas constructivas")
@@ -446,12 +487,15 @@ def _stage1(lab, saved):
         {"N°":3,"Etapa / frente":"","Actividad principal":"","Sector del predio":"","Documento de respaldo":""},
         {"N°":4,"Etapa / frente":"","Actividad principal":"","Sector del predio":"","Documento de respaldo":""},
     ]
-    phases_df=_professional_grid(
-        pd.DataFrame(phases_saved),
-        key="c4l2_s1_phases_grid",
+    phases_df=_dynamic_grid(
+        phases_saved,
+        state_key="c4l2_s1_phases_work",
+        grid_key="c4l2_s1_phases_grid",
+        empty_row_factory=lambda n:{"N°":n,"Etapa / frente":"","Actividad principal":"","Sector del predio":"","Documento de respaldo":""},
         widths={"N°":85,"Etapa / frente":200,"Actividad principal":260,"Sector del predio":190,"Documento de respaldo":260},
         numeric_columns=["N°"],
-        height=245,
+        min_rows=1,
+        add_label="➕ Agregar etapa",
     )
 
     st.markdown("### 6 · Identifica maquinaria y equipos")
@@ -475,13 +519,16 @@ def _stage1(lab, saved):
         {"Máquina / equipo":"","Cantidad":None,"Etapa asociada":"","Actividad":"","Tipo":"","Fuente documental":""},
         {"Máquina / equipo":"","Cantidad":None,"Etapa asociada":"","Actividad":"","Tipo":"","Fuente documental":""},
     ]
-    machinery_df=_professional_grid(
-        pd.DataFrame(machinery_saved),
-        key="c4l2_s1_machinery_grid",
+    machinery_df=_dynamic_grid(
+        machinery_saved,
+        state_key="c4l2_s1_machinery_work",
+        grid_key="c4l2_s1_machinery_grid",
+        empty_row_factory=lambda n:{"Máquina / equipo":"","Cantidad":None,"Etapa asociada":"","Actividad":"","Tipo":"","Fuente documental":""},
         widths={"Máquina / equipo":210,"Cantidad":100,"Etapa asociada":180,"Actividad":240,"Tipo":160,"Fuente documental":250},
         select_options={"Tipo":["Fija","Móvil","Frente de trabajo","Auxiliar","No definido"]},
         numeric_columns=["Cantidad"],
-        height=245,
+        min_rows=1,
+        add_label="➕ Agregar equipo",
     )
 
     st.markdown("### 7 · Reconstruye el cronograma")
@@ -505,12 +552,15 @@ def _stage1(lab, saved):
         {"Etapa / actividad":"","Inicio":"","Término":"","Duración":"","¿Se superpone?":"","Observación":""},
         {"Etapa / actividad":"","Inicio":"","Término":"","Duración":"","¿Se superpone?":"","Observación":""},
     ]
-    chronology_df=_professional_grid(
-        pd.DataFrame(chronology_saved),
-        key="c4l2_s1_chronology_grid",
+    chronology_df=_dynamic_grid(
+        chronology_saved,
+        state_key="c4l2_s1_chronology_work",
+        grid_key="c4l2_s1_chronology_grid",
+        empty_row_factory=lambda n:{"Etapa / actividad":"","Inicio":"","Término":"","Duración":"","¿Se superpone?":"","Observación":""},
         widths={"Etapa / actividad":220,"Inicio":120,"Término":120,"Duración":120,"¿Se superpone?":150,"Observación":280},
         select_options={"¿Se superpone?":["Sí","No","No indicado"]},
-        height=245,
+        min_rows=1,
+        add_label="➕ Agregar actividad",
     )
 
     if st.button("✓ Guardar ficha del proyecto", type="primary", use_container_width=True, key="c4l2_s1_save"):
