@@ -147,71 +147,124 @@ def _stage1(lab, saved):
     )
 
     st.markdown("#### Registro de vértices")
-    vertex_text = st.text_area(
-        "Copia aquí las coordenadas de los vértices que obtengas del plano oficial",
-        value=saved.get("c4l2_s1_vertices",""),
-        placeholder=(
-            "Ejemplo de formato (no son coordenadas del proyecto):\n"
-            "V1 | lat ... | lon ...\nV2 | lat ... | lon ...\nV3 | lat ... | lon ..."
-        ),
-        height=140,
-        key="c4l2_s1_vertices_input",
+    st.caption("Agrega una fila por cada vértice del polígono oficial. Puedes sumar o eliminar filas según el plano.")
+    vertex_saved=saved.get("c4l2_s1_vertices_table") or [
+        {"Vértice":"V1","Latitud":None,"Longitud":None},
+        {"Vértice":"V2","Latitud":None,"Longitud":None},
+        {"Vértice":"V3","Latitud":None,"Longitud":None},
+        {"Vértice":"V4","Latitud":None,"Longitud":None},
+    ]
+    vertex_df=st.data_editor(
+        pd.DataFrame(vertex_saved),
+        num_rows="dynamic",
+        hide_index=True,
+        use_container_width=True,
+        key="c4l2_s1_vertices_editor",
+        column_config={
+            "Vértice":st.column_config.TextColumn("Vértice",help="Ej.: V1, V2, V3"),
+            "Latitud":st.column_config.NumberColumn("Latitud",format="%.6f"),
+            "Longitud":st.column_config.NumberColumn("Longitud",format="%.6f"),
+        },
     )
 
     st.markdown("### 4 · Reconstruye las partes principales del proyecto")
     st.markdown(
         "La ficha SEA informa 6 torres de 4 pisos, 360 departamentos, 277 estacionamientos vehiculares, "
         "106 estacionamientos de bicicletas, 4 locales comerciales y 3 sedes sociales. "
-        "Ahora revisa la Descripción del Proyecto y reconoce cómo se organiza físicamente la obra."
+        "Ahora revisa la Descripción del Proyecto y completa una fila por cada parte u obra que reconozcas."
     )
-    project_parts = st.text_area(
-        "Partes y obras que identificaste",
-        value=saved.get("c4l2_s1_parts",""),
-        placeholder="Torres, estacionamientos, circulaciones, áreas verdes, instalaciones de faena, accesos, obras exteriores, etc.",
-        height=120,
-        key="c4l2_s1_parts_input",
+    parts_saved=saved.get("c4l2_s1_parts_table") or [
+        {"Parte / obra":"","Cantidad":"","Ubicación / sector":"","Fuente documental":""},
+        {"Parte / obra":"","Cantidad":"","Ubicación / sector":"","Fuente documental":""},
+        {"Parte / obra":"","Cantidad":"","Ubicación / sector":"","Fuente documental":""},
+        {"Parte / obra":"","Cantidad":"","Ubicación / sector":"","Fuente documental":""},
+    ]
+    parts_df=st.data_editor(
+        pd.DataFrame(parts_saved),
+        num_rows="dynamic",
+        hide_index=True,
+        use_container_width=True,
+        key="c4l2_s1_parts_editor",
+        column_config={
+            "Parte / obra":st.column_config.TextColumn("Parte / obra",help="Ej.: torre, estacionamiento, instalación de faena"),
+            "Cantidad":st.column_config.TextColumn("Cantidad"),
+            "Ubicación / sector":st.column_config.TextColumn("Ubicación / sector"),
+            "Fuente documental":st.column_config.TextColumn("Fuente documental",help="Documento o anexo donde lo identificaste"),
+        },
     )
 
     st.markdown("### 5 · Reconstruye las etapas constructivas")
-    st.caption("No uses una secuencia genérica: contrástala con lo declarado en la Descripción del Proyecto y sus actualizaciones.")
-    phases = st.text_area(
-        "Etapas / frentes de trabajo identificados",
-        value=saved.get("c4l2_s1_phases",""),
-        placeholder=(
-            "Ej.: preparación / movimiento de tierras / fundaciones / estructura / terminaciones / urbanización. "
-            "Registra solo lo que puedas sustentar con el expediente."
-        ),
-        height=145,
-        key="c4l2_s1_phases_input",
+    st.caption("Completa la secuencia usando el expediente. Puedes agregar tantas filas como necesites.")
+    phases_saved=saved.get("c4l2_s1_phases_table") or [
+        {"N°":1,"Etapa / frente":"","Actividad principal":"","Sector del predio":"","Documento de respaldo":""},
+        {"N°":2,"Etapa / frente":"","Actividad principal":"","Sector del predio":"","Documento de respaldo":""},
+        {"N°":3,"Etapa / frente":"","Actividad principal":"","Sector del predio":"","Documento de respaldo":""},
+        {"N°":4,"Etapa / frente":"","Actividad principal":"","Sector del predio":"","Documento de respaldo":""},
+    ]
+    phases_df=st.data_editor(
+        pd.DataFrame(phases_saved),
+        num_rows="dynamic",
+        hide_index=True,
+        use_container_width=True,
+        key="c4l2_s1_phases_editor",
+        column_config={
+            "N°":st.column_config.NumberColumn("N°",min_value=1,step=1),
+            "Etapa / frente":st.column_config.TextColumn("Etapa / frente"),
+            "Actividad principal":st.column_config.TextColumn("Actividad principal"),
+            "Sector del predio":st.column_config.TextColumn("Sector del predio"),
+            "Documento de respaldo":st.column_config.TextColumn("Documento de respaldo"),
+        },
     )
 
     st.markdown("### 6 · Identifica maquinaria y equipos")
     st.markdown(
-        "Busca la maquinaria declarada tanto en la **Descripción del Proyecto** como en el antecedente de **Ruido y Vibraciones**. "
-        "En esta etapa todavía no necesitas buscar niveles BS 5228: primero identifica qué equipo existe y en qué fase opera."
+        "Busca la maquinaria declarada en la **Descripción del Proyecto** y en **Ruido y Vibraciones**. "
+        "En esta etapa todavía no necesitas niveles BS 5228."
     )
-    machinery = st.text_area(
-        "Maquinaria / equipos y etapa asociada",
-        value=saved.get("c4l2_s1_machinery",""),
-        placeholder=(
-            "Formato sugerido:\n"
-            "Equipo | cantidad si está declarada | etapa | actividad\n"
-            "Equipo | cantidad | etapa | actividad"
-        ),
-        height=170,
-        key="c4l2_s1_machinery_input",
+    machinery_saved=saved.get("c4l2_s1_machinery_table") or [
+        {"Máquina / equipo":"","Cantidad":None,"Etapa asociada":"","Actividad":"","Tipo":"","Fuente documental":""},
+        {"Máquina / equipo":"","Cantidad":None,"Etapa asociada":"","Actividad":"","Tipo":"","Fuente documental":""},
+        {"Máquina / equipo":"","Cantidad":None,"Etapa asociada":"","Actividad":"","Tipo":"","Fuente documental":""},
+        {"Máquina / equipo":"","Cantidad":None,"Etapa asociada":"","Actividad":"","Tipo":"","Fuente documental":""},
+    ]
+    machinery_df=st.data_editor(
+        pd.DataFrame(machinery_saved),
+        num_rows="dynamic",
+        hide_index=True,
+        use_container_width=True,
+        key="c4l2_s1_machinery_editor",
+        column_config={
+            "Máquina / equipo":st.column_config.TextColumn("Máquina / equipo"),
+            "Cantidad":st.column_config.NumberColumn("Cantidad",min_value=0,step=1),
+            "Etapa asociada":st.column_config.TextColumn("Etapa asociada"),
+            "Actividad":st.column_config.TextColumn("Actividad"),
+            "Tipo":st.column_config.SelectboxColumn("Tipo",options=["Fija","Móvil","Frente de trabajo","Auxiliar","No definido"]),
+            "Fuente documental":st.column_config.TextColumn("Fuente documental"),
+        },
     )
 
     st.markdown("### 7 · Reconstruye el cronograma")
-    chronology = st.text_area(
-        "Cronograma de construcción",
-        value=saved.get("c4l2_s1_chronology",""),
-        placeholder=(
-            "Registra duración total y secuencia de actividades. Indica qué etapas podrían superponerse "
-            "solo cuando el cronograma del expediente lo permita."
-        ),
-        height=145,
-        key="c4l2_s1_chronology_input",
+    st.caption("Una fila por actividad o etapa. Registra solo fechas o duraciones que puedas sustentar con el expediente.")
+    chronology_saved=saved.get("c4l2_s1_chronology_table") or [
+        {"Etapa / actividad":"","Inicio":"","Término":"","Duración":"","¿Se superpone?":"","Observación":""},
+        {"Etapa / actividad":"","Inicio":"","Término":"","Duración":"","¿Se superpone?":"","Observación":""},
+        {"Etapa / actividad":"","Inicio":"","Término":"","Duración":"","¿Se superpone?":"","Observación":""},
+        {"Etapa / actividad":"","Inicio":"","Término":"","Duración":"","¿Se superpone?":"","Observación":""},
+    ]
+    chronology_df=st.data_editor(
+        pd.DataFrame(chronology_saved),
+        num_rows="dynamic",
+        hide_index=True,
+        use_container_width=True,
+        key="c4l2_s1_chronology_editor",
+        column_config={
+            "Etapa / actividad":st.column_config.TextColumn("Etapa / actividad"),
+            "Inicio":st.column_config.TextColumn("Inicio",help="Mes, semana o fecha según documento"),
+            "Término":st.column_config.TextColumn("Término"),
+            "Duración":st.column_config.TextColumn("Duración"),
+            "¿Se superpone?":st.column_config.SelectboxColumn("¿Se superpone?",options=["Sí","No","No indicado"]),
+            "Observación":st.column_config.TextColumn("Observación"),
+        },
     )
 
     st.markdown("### 8 · Cierra la ficha del proyecto")
@@ -226,26 +279,46 @@ def _stage1(lab, saved):
     )
 
     if st.button("✓ Guardar ficha del proyecto", type="primary", use_container_width=True, key="c4l2_s1_save"):
+        def _records_without_empty_rows(df, main_column):
+            clean=df.copy()
+            clean=clean.where(pd.notna(clean),None)
+            return [
+                row for row in clean.to_dict("records")
+                if str(row.get(main_column) or "").strip()
+            ]
+
+        vertex_records=_records_without_empty_rows(vertex_df,"Vértice")
+        part_records=_records_without_empty_rows(parts_df,"Parte / obra")
+        phase_records=_records_without_empty_rows(phases_df,"Etapa / frente")
+        machinery_records=_records_without_empty_rows(machinery_df,"Máquina / equipo")
+        chronology_records=_records_without_empty_rows(chronology_df,"Etapa / actividad")
+
         missing=[]
-        if len(project_parts.strip()) < 60: missing.append("partes y obras")
-        if len(phases.strip()) < 60: missing.append("etapas constructivas")
-        if len(machinery.strip()) < 80: missing.append("maquinaria")
-        if len(chronology.strip()) < 60: missing.append("cronograma")
-        if len(synthesis.strip()) < 100: missing.append("síntesis")
+        valid_vertices=[
+            r for r in vertex_records
+            if r.get("Latitud") is not None and r.get("Longitud") is not None
+        ]
+        if len(valid_vertices) < 3: missing.append("al menos 3 vértices con latitud y longitud")
+        if len(part_records) < 3: missing.append("al menos 3 partes u obras")
+        if len(phase_records) < 3: missing.append("al menos 3 etapas constructivas")
+        if len(machinery_records) < 3: missing.append("al menos 3 máquinas o equipos")
+        if len(chronology_records) < 3: missing.append("al menos 3 filas del cronograma")
+        if len(synthesis.strip()) < 100: missing.append("síntesis técnica")
+
         if missing:
-            st.warning("Completa con mayor detalle: " + ", ".join(missing) + ".")
+            st.warning("Completa: " + ", ".join(missing) + ".")
         else:
             saved.update({
-                "c4l2_s1_vertices":vertex_text,
-                "c4l2_s1_parts":project_parts,
-                "c4l2_s1_phases":phases,
-                "c4l2_s1_machinery":machinery,
-                "c4l2_s1_chronology":chronology,
+                "c4l2_s1_vertices_table":vertex_records,
+                "c4l2_s1_parts_table":part_records,
+                "c4l2_s1_phases_table":phase_records,
+                "c4l2_s1_machinery_table":machinery_records,
+                "c4l2_s1_chronology_table":chronology_records,
                 "c4l2_s1_synthesis":synthesis,
                 "done_1":True,
             })
             _save(lab,saved,1)
-            st.success("Ficha guardada. Ya tienes la base documental para comenzar a transformar la obra en un modelo acústico.")
+            st.success("Ficha guardada. La información quedó estructurada para utilizarla en las siguientes etapas.")
 
     if st.session_state.get("role") == "Docente":
         with st.expander("👨‍🏫 Pauta docente · Etapa 1", expanded=False):
