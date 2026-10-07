@@ -583,6 +583,18 @@ def _stage1(lab, saved):
                 "No se entrega una geometría estimada como si fuera documental."
             )
 
+def _stage2(lab, saved):
+    from labs import curso4_laboratorio_2_stage2 as _stage2_module
+    ctx={
+        "st":st,
+        "pd":pd,
+        "header":header,
+        "_professional_grid":_professional_grid,
+        "_save":_save,
+        "NOISEMAP_URL":NOISEMAP_URL,
+    }
+    return _stage2_module.render(lab,saved,ctx)
+
 def _generic(stage, lab, saved):
     title, objective, concept, activity = lab["stages"][stage]
     _header(stage, title, objective)
@@ -601,4 +613,6 @@ def run_stage(stage, lab, saved, runtime):
         return _stage0(lab,saved)
     if stage==1:
         return _stage1(lab,saved)
+    if stage==2:
+        return _stage2(lab,saved)
     return _generic(stage,lab,saved)
