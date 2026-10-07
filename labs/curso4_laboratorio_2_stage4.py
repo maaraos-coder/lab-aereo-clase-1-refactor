@@ -48,7 +48,7 @@ def _teacher_pauta(st,pd,sources):
         ("Equipos auxiliares","Generador diésel","Generador diésel"),
     ]
 
-    with st.expander("👨‍🏫 Pauta docente · Etapa 4",expanded=False):
+    with st.expander("👨‍🏫 Pauta docente · Etapa 4",expanded=True):
         st.markdown("""
         **Objetivo de corrección**
 
