@@ -676,6 +676,18 @@ def _stage3(lab, saved):
     }
     return _stage3_module.render(lab,saved,ctx)
 
+def _stage4(lab, saved):
+    from labs import curso4_laboratorio_2_stage4 as _stage4_module
+    ctx={
+        "st":st,
+        "pd":pd,
+        "header":header,
+        "_professional_grid":_professional_grid,
+        "_save":_save,
+        "NOISEMAP_URL":NOISEMAP_URL,
+    }
+    return _stage4_module.render(lab,saved,ctx)
+
 def _generic(stage, lab, saved):
     title, objective, concept, activity = lab["stages"][stage]
     _header(stage, title, objective)
@@ -698,4 +710,6 @@ def run_stage(stage, lab, saved, runtime):
         return _stage2(lab,saved)
     if stage==3:
         return _stage3(lab,saved)
+    if stage==4:
+        return _stage4(lab,saved)
     return _generic(stage,lab,saved)
