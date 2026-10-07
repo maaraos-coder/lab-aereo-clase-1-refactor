@@ -54,14 +54,37 @@ def render(lab, saved, runtime):
     st.caption("En esta etapa registra la distancia mínima al límite del predio. La distancia fuente–receptor se trabajará cuando ubiquemos las fuentes.")
 
     st.markdown("### 4 · Registra los receptores identificados")
-    rows=saved.get("c4l2_s2_receptors_table") or [
+    default_rows=saved.get("c4l2_s2_receptors_table") or [
       {"Receptor":"R1","Uso / tipo":"","Descripción":"","Latitud":None,"Longitud":None,"Altura (m)":None,"Dist. al predio (m)":None,"Fuente documental":""},
       {"Receptor":"R2","Uso / tipo":"","Descripción":"","Latitud":None,"Longitud":None,"Altura (m)":None,"Dist. al predio (m)":None,"Fuente documental":""},
       {"Receptor":"R3","Uso / tipo":"","Descripción":"","Latitud":None,"Longitud":None,"Altura (m)":None,"Dist. al predio (m)":None,"Fuente documental":""},
     ]
+    if "c4l2_s2_receptors_work" not in st.session_state:
+      st.session_state["c4l2_s2_receptors_work"]=[dict(x) for x in default_rows]
+
+    rows=st.session_state["c4l2_s2_receptors_work"]
     grid=runtime["_professional_grid"](pd.DataFrame(rows),"c4l2_s2_receptors_grid",
       widths={"Receptor":105,"Uso / tipo":170,"Descripción":250,"Latitud":150,"Longitud":150,"Altura (m)":120,"Dist. al predio (m)":155,"Fuente documental":240},
-      numeric_columns=["Latitud","Longitud","Altura (m)","Dist. al predio (m)"],height=255)
+      numeric_columns=["Latitud","Longitud","Altura (m)","Dist. al predio (m)"],height=max(255,min(520,90+42*len(rows))))
+    st.session_state["c4l2_s2_receptors_work"]=grid.where(pd.notna(grid),None).to_dict("records")
+
+    add_col,remove_col,info_col=st.columns([.23,.23,.54])
+    with add_col:
+      if st.button("➕ Agregar receptor",use_container_width=True,key="c4l2_s2_add_receiver"):
+        current=st.session_state["c4l2_s2_receptors_work"]
+        n=len(current)+1
+        current.append({"Receptor":f"R{n}","Uso / tipo":"","Descripción":"","Latitud":None,"Longitud":None,"Altura (m)":None,"Dist. al predio (m)":None,"Fuente documental":""})
+        st.session_state["c4l2_s2_receptors_work"]=current
+        st.rerun()
+    with remove_col:
+      if st.button("➖ Quitar último",use_container_width=True,key="c4l2_s2_remove_receiver",disabled=len(rows)<=3):
+        current=st.session_state["c4l2_s2_receptors_work"]
+        if len(current)>3:
+          current.pop()
+          st.session_state["c4l2_s2_receptors_work"]=current
+        st.rerun()
+    with info_col:
+      st.caption(f"Receptores registrados: **{len(rows)}** · mínimo 3, sin máximo fijo.")
 
     st.markdown("### 5 · Ubícalos en Noise Map Lab")
     a,b=st.columns([.68,.32],gap="large")
@@ -80,13 +103,25 @@ def render(lab, saved, runtime):
     st.warning("No coloques todos los receptores a la misma altura por defecto: la altura es parte de la geometría del problema.")
 
     st.markdown("### 6 · Justifica la selección")
-    rel=saved.get("c4l2_s2_relevance_table") or [
-      {"Receptor":"R1","¿Por qué se selecciona?":"","Qué representa":"","Observación espacial":""},
-      {"Receptor":"R2","¿Por qué se selecciona?":"","Qué representa":"","Observación espacial":""},
-      {"Receptor":"R3","¿Por qué se selecciona?":"","Qué representa":"","Observación espacial":""},
-    ]
+    receptor_names=[str(x.get("Receptor") or f"R{i+1}") for i,x in enumerate(st.session_state["c4l2_s2_receptors_work"])]
+    saved_rel={str(x.get("Receptor")):x for x in (saved.get("c4l2_s2_relevance_table") or [])}
+    if "c4l2_s2_relevance_work" not in st.session_state:
+      st.session_state["c4l2_s2_relevance_work"]=[
+        dict(saved_rel.get(name,{"Receptor":name,"¿Por qué se selecciona?":"","Qué representa":"","Observación espacial":""}))
+        for name in receptor_names
+      ]
+    else:
+      current_rel={str(x.get("Receptor")):x for x in st.session_state["c4l2_s2_relevance_work"]}
+      st.session_state["c4l2_s2_relevance_work"]=[
+        dict(current_rel.get(name,saved_rel.get(name,{"Receptor":name,"¿Por qué se selecciona?":"","Qué representa":"","Observación espacial":""})))
+        for name in receptor_names
+      ]
+
+    rel=st.session_state["c4l2_s2_relevance_work"]
     relgrid=runtime["_professional_grid"](pd.DataFrame(rel),"c4l2_s2_relevance_grid",
-      widths={"Receptor":105,"¿Por qué se selecciona?":280,"Qué representa":240,"Observación espacial":300},height=235)
+      widths={"Receptor":105,"¿Por qué se selecciona?":280,"Qué representa":240,"Observación espacial":300},
+      height=max(235,min(500,90+42*len(rel))))
+    st.session_state["c4l2_s2_relevance_work"]=relgrid.where(pd.notna(relgrid),None).to_dict("records")
 
     if st.button("✓ Guardar receptores",type="primary",use_container_width=True,key="c4l2_s2_save"):
       def clean(df,main):
