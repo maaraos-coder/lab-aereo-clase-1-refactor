@@ -40,11 +40,12 @@ def _save(lab, saved, stage):
     _save_future_state(lab["id"], saved)
 
 
-def _professional_grid(df, key, widths=None, select_options=None, numeric_columns=None, height=260):
+def _professional_grid(df, key, widths=None, select_options=None, numeric_columns=None, height=260, editable_columns=None):
     """Grilla editable con encabezados claros y líneas visibles."""
     widths=widths or {}
     select_options=select_options or {}
     numeric_columns=set(numeric_columns or [])
+    editable_columns=None if editable_columns is None else set(editable_columns)
     gb=GridOptionsBuilder.from_dataframe(df)
 
     gb.configure_default_column(
@@ -57,6 +58,8 @@ def _professional_grid(df, key, widths=None, select_options=None, numeric_column
     )
     for column in df.columns:
         kwargs={"headerName":str(column).upper()}
+        if editable_columns is not None:
+            kwargs["editable"]=column in editable_columns
         if column in widths:
             kwargs["width"]=widths[column]
             kwargs["minWidth"]=max(80, int(widths[column]*0.75))
