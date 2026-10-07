@@ -68,6 +68,48 @@ def _stage1(lab, saved):
         unsafe_allow_html=True,
     )
 
+    st.markdown(
+        """
+        <style>
+        .c4l2-table-head{
+            display:flex;align-items:flex-start;gap:13px;
+            padding:15px 17px;margin:.55rem 0 .55rem;
+            border:1px solid #d8e6ee;border-radius:16px;
+            background:linear-gradient(135deg,#ffffff,#f7fbfd);
+            box-shadow:0 5px 16px rgba(23,59,83,.045);
+        }
+        .c4l2-table-icon{
+            width:38px;height:38px;border-radius:11px;
+            display:flex;align-items:center;justify-content:center;
+            background:#e9f7fb;color:#087ba0;font-size:1.05rem;
+            flex:0 0 38px;
+        }
+        .c4l2-table-kicker{
+            font-size:.68rem;font-weight:900;letter-spacing:.09em;
+            color:#087ba0;margin-bottom:.15rem;
+        }
+        .c4l2-table-title{
+            font-size:.98rem;font-weight:850;color:#173b53;
+            margin-bottom:.15rem;
+        }
+        .c4l2-table-copy{
+            font-size:.79rem;color:#667f8f;line-height:1.45;
+        }
+        div[data-testid="stDataFrame"]{
+            border:1px solid #d9e6ed !important;
+            border-radius:15px !important;
+            overflow:hidden !important;
+            box-shadow:0 4px 14px rgba(23,59,83,.04) !important;
+            margin-bottom:.75rem !important;
+        }
+        div[data-testid="stDataFrame"] [role="columnheader"]{
+            font-weight:800 !important;
+        }
+        </style>
+        """,
+        unsafe_allow_html=True,
+    )
+
     k1,k2,k3,k4 = st.columns(4)
     k1.metric("Expediente SEIA", "2165522433")
     k2.metric("Predio aprox.", "22.701 m²")
@@ -146,8 +188,19 @@ def _stage1(lab, saved):
         "Criterio de trabajo: **predio = líneas auxiliares**. El área de cálculo se definirá en una etapa posterior cuando ya existan fuentes y receptores."
     )
 
-    st.markdown("#### Registro de vértices")
-    st.caption("Agrega una fila por cada vértice del polígono oficial. Puedes sumar o eliminar filas según el plano.")
+    st.markdown(
+        """
+        <div class="c4l2-table-head">
+          <div class="c4l2-table-icon">📍</div>
+          <div>
+            <div class="c4l2-table-kicker">GEORREFERENCIACIÓN</div>
+            <div class="c4l2-table-title">Registro de vértices del predio</div>
+            <div class="c4l2-table-copy">Una fila por vértice del polígono oficial. Agrega o elimina filas según el plano y conserva el orden V1, V2, V3…</div>
+          </div>
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
     vertex_saved=saved.get("c4l2_s1_vertices_table") or [
         {"Vértice":"V1","Latitud":None,"Longitud":None},
         {"Vértice":"V2","Latitud":None,"Longitud":None},
@@ -160,18 +213,27 @@ def _stage1(lab, saved):
         hide_index=True,
         use_container_width=True,
         key="c4l2_s1_vertices_editor",
+        row_height=42,
         column_config={
-            "Vértice":st.column_config.TextColumn("Vértice",help="Ej.: V1, V2, V3"),
-            "Latitud":st.column_config.NumberColumn("Latitud",format="%.6f"),
-            "Longitud":st.column_config.NumberColumn("Longitud",format="%.6f"),
+            "Vértice":st.column_config.TextColumn("Vértice",help="Ej.: V1, V2, V3",width="small"),
+            "Latitud":st.column_config.NumberColumn("Latitud",format="%.6f",width="medium"),
+            "Longitud":st.column_config.NumberColumn("Longitud",format="%.6f",width="medium"),
         },
     )
 
     st.markdown("### 4 · Reconstruye las partes principales del proyecto")
     st.markdown(
-        "La ficha SEA informa 6 torres de 4 pisos, 360 departamentos, 277 estacionamientos vehiculares, "
-        "106 estacionamientos de bicicletas, 4 locales comerciales y 3 sedes sociales. "
-        "Ahora revisa la Descripción del Proyecto y completa una fila por cada parte u obra que reconozcas."
+        """
+        <div class="c4l2-table-head">
+          <div class="c4l2-table-icon">🏗️</div>
+          <div>
+            <div class="c4l2-table-kicker">PARTES Y OBRAS</div>
+            <div class="c4l2-table-title">Inventario físico del proyecto</div>
+            <div class="c4l2-table-copy">Registra cada parte u obra reconocida en la Descripción del Proyecto e indica cantidad, ubicación y documento donde la encontraste.</div>
+          </div>
+        </div>
+        """,
+        unsafe_allow_html=True,
     )
     parts_saved=saved.get("c4l2_s1_parts_table") or [
         {"Parte / obra":"","Cantidad":"","Ubicación / sector":"","Fuente documental":""},
@@ -185,16 +247,29 @@ def _stage1(lab, saved):
         hide_index=True,
         use_container_width=True,
         key="c4l2_s1_parts_editor",
+        row_height=42,
         column_config={
-            "Parte / obra":st.column_config.TextColumn("Parte / obra",help="Ej.: torre, estacionamiento, instalación de faena"),
-            "Cantidad":st.column_config.TextColumn("Cantidad"),
-            "Ubicación / sector":st.column_config.TextColumn("Ubicación / sector"),
-            "Fuente documental":st.column_config.TextColumn("Fuente documental",help="Documento o anexo donde lo identificaste"),
+            "Parte / obra":st.column_config.TextColumn("Parte / obra",help="Ej.: torre, estacionamiento, instalación de faena",width="medium"),
+            "Cantidad":st.column_config.TextColumn("Cantidad",width="small"),
+            "Ubicación / sector":st.column_config.TextColumn("Ubicación / sector",width="medium"),
+            "Fuente documental":st.column_config.TextColumn("Fuente documental",help="Documento o anexo donde lo identificaste",width="large"),
         },
     )
 
     st.markdown("### 5 · Reconstruye las etapas constructivas")
-    st.caption("Completa la secuencia usando el expediente. Puedes agregar tantas filas como necesites.")
+    st.markdown(
+        """
+        <div class="c4l2-table-head">
+          <div class="c4l2-table-icon">🧱</div>
+          <div>
+            <div class="c4l2-table-kicker">SECUENCIA CONSTRUCTIVA</div>
+            <div class="c4l2-table-title">Etapas y frentes de trabajo</div>
+            <div class="c4l2-table-copy">Ordena la secuencia según el expediente. Cada fila debe representar una etapa o frente con su actividad principal, sector y respaldo documental.</div>
+          </div>
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
     phases_saved=saved.get("c4l2_s1_phases_table") or [
         {"N°":1,"Etapa / frente":"","Actividad principal":"","Sector del predio":"","Documento de respaldo":""},
         {"N°":2,"Etapa / frente":"","Actividad principal":"","Sector del predio":"","Documento de respaldo":""},
@@ -207,19 +282,29 @@ def _stage1(lab, saved):
         hide_index=True,
         use_container_width=True,
         key="c4l2_s1_phases_editor",
+        row_height=42,
         column_config={
-            "N°":st.column_config.NumberColumn("N°",min_value=1,step=1),
-            "Etapa / frente":st.column_config.TextColumn("Etapa / frente"),
-            "Actividad principal":st.column_config.TextColumn("Actividad principal"),
-            "Sector del predio":st.column_config.TextColumn("Sector del predio"),
-            "Documento de respaldo":st.column_config.TextColumn("Documento de respaldo"),
+            "N°":st.column_config.NumberColumn("N°",min_value=1,step=1,width="small"),
+            "Etapa / frente":st.column_config.TextColumn("Etapa / frente",width="medium"),
+            "Actividad principal":st.column_config.TextColumn("Actividad principal",width="large"),
+            "Sector del predio":st.column_config.TextColumn("Sector del predio",width="medium"),
+            "Documento de respaldo":st.column_config.TextColumn("Documento de respaldo",width="large"),
         },
     )
 
     st.markdown("### 6 · Identifica maquinaria y equipos")
     st.markdown(
-        "Busca la maquinaria declarada en la **Descripción del Proyecto** y en **Ruido y Vibraciones**. "
-        "En esta etapa todavía no necesitas niveles BS 5228."
+        """
+        <div class="c4l2-table-head">
+          <div class="c4l2-table-icon">🚜</div>
+          <div>
+            <div class="c4l2-table-kicker">FUENTES POTENCIALES</div>
+            <div class="c4l2-table-title">Maquinaria y equipos declarados</div>
+            <div class="c4l2-table-copy">Busca los equipos en la Descripción del Proyecto y en Ruido y Vibraciones. Todavía no necesitas asignar niveles BS 5228.</div>
+          </div>
+        </div>
+        """,
+        unsafe_allow_html=True,
     )
     machinery_saved=saved.get("c4l2_s1_machinery_table") or [
         {"Máquina / equipo":"","Cantidad":None,"Etapa asociada":"","Actividad":"","Tipo":"","Fuente documental":""},
@@ -233,18 +318,31 @@ def _stage1(lab, saved):
         hide_index=True,
         use_container_width=True,
         key="c4l2_s1_machinery_editor",
+        row_height=42,
         column_config={
-            "Máquina / equipo":st.column_config.TextColumn("Máquina / equipo"),
-            "Cantidad":st.column_config.NumberColumn("Cantidad",min_value=0,step=1),
-            "Etapa asociada":st.column_config.TextColumn("Etapa asociada"),
-            "Actividad":st.column_config.TextColumn("Actividad"),
-            "Tipo":st.column_config.SelectboxColumn("Tipo",options=["Fija","Móvil","Frente de trabajo","Auxiliar","No definido"]),
-            "Fuente documental":st.column_config.TextColumn("Fuente documental"),
+            "Máquina / equipo":st.column_config.TextColumn("Máquina / equipo",width="medium"),
+            "Cantidad":st.column_config.NumberColumn("Cantidad",min_value=0,step=1,width="small"),
+            "Etapa asociada":st.column_config.TextColumn("Etapa asociada",width="medium"),
+            "Actividad":st.column_config.TextColumn("Actividad",width="large"),
+            "Tipo":st.column_config.SelectboxColumn("Tipo",options=["Fija","Móvil","Frente de trabajo","Auxiliar","No definido"],width="medium"),
+            "Fuente documental":st.column_config.TextColumn("Fuente documental",width="large"),
         },
     )
 
     st.markdown("### 7 · Reconstruye el cronograma")
-    st.caption("Una fila por actividad o etapa. Registra solo fechas o duraciones que puedas sustentar con el expediente.")
+    st.markdown(
+        """
+        <div class="c4l2-table-head">
+          <div class="c4l2-table-icon">🗓️</div>
+          <div>
+            <div class="c4l2-table-kicker">PROGRAMACIÓN DE OBRA</div>
+            <div class="c4l2-table-title">Cronograma resumido</div>
+            <div class="c4l2-table-copy">Una fila por actividad o etapa. Registra solo fechas, duraciones y superposiciones que puedas sostener con el expediente.</div>
+          </div>
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
     chronology_saved=saved.get("c4l2_s1_chronology_table") or [
         {"Etapa / actividad":"","Inicio":"","Término":"","Duración":"","¿Se superpone?":"","Observación":""},
         {"Etapa / actividad":"","Inicio":"","Término":"","Duración":"","¿Se superpone?":"","Observación":""},
@@ -257,13 +355,14 @@ def _stage1(lab, saved):
         hide_index=True,
         use_container_width=True,
         key="c4l2_s1_chronology_editor",
+        row_height=42,
         column_config={
-            "Etapa / actividad":st.column_config.TextColumn("Etapa / actividad"),
-            "Inicio":st.column_config.TextColumn("Inicio",help="Mes, semana o fecha según documento"),
-            "Término":st.column_config.TextColumn("Término"),
-            "Duración":st.column_config.TextColumn("Duración"),
-            "¿Se superpone?":st.column_config.SelectboxColumn("¿Se superpone?",options=["Sí","No","No indicado"]),
-            "Observación":st.column_config.TextColumn("Observación"),
+            "Etapa / actividad":st.column_config.TextColumn("Etapa / actividad",width="large"),
+            "Inicio":st.column_config.TextColumn("Inicio",help="Mes, semana o fecha según documento",width="small"),
+            "Término":st.column_config.TextColumn("Término",width="small"),
+            "Duración":st.column_config.TextColumn("Duración",width="small"),
+            "¿Se superpone?":st.column_config.SelectboxColumn("¿Se superpone?",options=["Sí","No","No indicado"],width="medium"),
+            "Observación":st.column_config.TextColumn("Observación",width="large"),
         },
     )
 
