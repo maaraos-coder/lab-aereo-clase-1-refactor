@@ -95,9 +95,9 @@ def render(lab,saved,runtime):
     En vez de modelar cada máquina como un escenario independiente, agruparemos las máquinas que pertenecen
     a una misma etapa y que pueden funcionar simultáneamente. Para cada banda de octava:
     """)
-    st.latex(r"L_{W,f,eq}=10\\log_{10}\\left(\\sum_i10^{L_{W,f,i}/10}\\right)")
+    st.latex(r"L_{W,f,eq}=10\log_{10}\left(\sum_i10^{L_{W,f,i}/10}\right)")
     st.markdown("Si existen varias unidades iguales operando simultáneamente:")
-    st.latex(r"L_{W,f,N}=L_{W,f}+10\\log_{10}(N)")
+    st.latex(r"L_{W,f,N}=L_{W,f}+10\log_{10}(N)")
     st.markdown("El resultado es el espectro de potencia sonora de la **fuente equivalente del frente de trabajo**.")
     st.warning("Peor condición no significa inventar simultaneidades imposibles. Debe ser una condición crítica, pero técnicamente realizable según la etapa y el cronograma del proyecto.")
 
