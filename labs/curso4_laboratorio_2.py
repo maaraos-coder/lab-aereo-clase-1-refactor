@@ -144,10 +144,76 @@ def _professional_grid(df, key, widths=None, select_options=None, numeric_column
     return pd.DataFrame(data)
 
 def _stage0(lab, saved):
-    title, objective, concept, activity = lab["stages"][0]
-    _header(0, title, objective)
-    st.markdown(concept)
-    st.info("Este laboratorio seguirá un proyecto real del SEIA a lo largo de sus etapas. La Etapa 1 comienza reconstruyendo el proyecto antes de cualquier modelación acústica.")
+    header(
+        "ETAPA 0 · BIENVENIDA",
+        "Laboratorio 2 · Proyecto real de ruido en construcción",
+        "Una ruta aplicada para reconstruir un proyecto real del SEIA y transformarlo progresivamente en un modelo acústico verificable.",
+        show_overview=False,
+        duration_minutes=10,
+    )
+
+    st.markdown(
+        '<div class="class-clock"><div><strong>⏱️ Ruta guiada del Laboratorio 2</strong>'
+        '<br><span>Proyecto real · Conjunto Habitacional Eyzaguirre</span>'
+        '</div><div><strong>SEIA 2165522433</strong></div></div>',
+        unsafe_allow_html=True,
+    )
+
+    st.markdown(
+        """
+        <div style="border:1px solid #cfe0ed;border-radius:22px;padding:22px 24px;
+        background:linear-gradient(135deg,#f8fcff,#edf6fb);margin:1rem 0">
+          <div style="font-size:.70rem;font-weight:900;letter-spacing:.09em;color:#087ba0">CASO CONDUCTOR DEL LABORATORIO</div>
+          <div style="font-size:1.32rem;font-weight:900;color:#173b53;margin:.35rem 0">
+            Conjunto Habitacional Eyzaguirre · Puente Alto
+          </div>
+          <div style="color:#526f80;line-height:1.6">
+            A diferencia del Laboratorio 1, aquí no trabajaremos con una obra hipotética.
+            La información se levantará desde el expediente ambiental real: ubicación, geometría,
+            partes y obras, etapas, maquinaria, cronograma y antecedentes acústicos.
+          </div>
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
+
+    st.markdown(
+        '<div class="section-band"><span>🗺️</span><h3>Tu ruta de aprendizaje</h3></div>',
+        unsafe_allow_html=True,
+    )
+
+    route=[
+        ("1","Conoce el proyecto","Abre el expediente, localiza el predio y reconstruye la ficha base de la obra.","25 min"),
+        ("2","Proyecto real · siguiente análisis","Continuaremos transformando los antecedentes del expediente en información utilizable para la modelación.","Por definir"),
+        ("3","Proyecto real · siguiente análisis","Se desarrollará sobre la misma obra y conservará la trazabilidad documental.","Por definir"),
+        ("4","Proyecto real · siguiente análisis","El proyecto Eyzaguirre seguirá siendo el caso conductor.","Por definir"),
+        ("5","Proyecto real · siguiente análisis","La información registrada en las etapas anteriores se reutilizará sin volver a ingresarla.","Por definir"),
+        ("6","Proyecto real · siguiente análisis","Se incorporarán progresivamente fuentes, receptores y decisiones de modelación.","Por definir"),
+        ("7","Proyecto real · siguiente análisis","El escenario acústico se construirá desde los antecedentes reales del expediente.","Por definir"),
+        ("8","Caso guiado del proyecto","Integrará los antecedentes documentales y el trabajo realizado en Noise Map Lab.","Por definir"),
+        ("9","Comprensión · cuestionario formativo","Mantiene la estructura de evaluación formativa utilizada en los demás laboratorios.","35 min"),
+        ("10","Caso integrador final","Aplicación individual sobre el proyecto real con entrega para revisión docente.","35 min"),
+    ]
+    html='<div class="route-grid">'
+    for num,title,desc,time in route:
+        html+=(
+            f'<div class="route-card"><span class="step">{num}</span><div>'
+            f'<b>{title}</b><p>{desc}</p>'
+            f'<span class="route-time">⏱️ {time}</span></div></div>'
+        )
+    st.markdown(html+"</div>",unsafe_allow_html=True)
+
+    st.markdown(
+        '<div class="good" style="margin-top:1rem"><b>Regla del laboratorio:</b> '
+        'todo dato utilizado en el modelo debe poder rastrearse hasta un documento, plano, anexo o tabla del expediente.</div>',
+        unsafe_allow_html=True,
+    )
+    st.markdown(
+        '<div class="warn" style="margin-top:.8rem"><b>Herramienta central:</b> '
+        'Noise Map Lab se utilizará para la representación espacial. Streamlit conservará la guía, las fichas y el progreso.</div>',
+        unsafe_allow_html=True,
+    )
+
 
 def _stage1(lab, saved):
     _header(
@@ -201,6 +267,12 @@ def _stage1(lab, saved):
         .c4l2-table-copy{
             font-size:.79rem;color:#667f8f;line-height:1.45;
         }
+        .c4l2-source{
+            margin-top:.48rem;padding-top:.45rem;border-top:1px dashed #c7d9e3;
+            font-size:.73rem;line-height:1.45;color:#36596d;
+        }
+        .c4l2-source b{color:#087ba0;}
+        .c4l2-source .page{font-weight:800;color:#173b53;}
         div[data-testid="stDataFrame"]{
             border:1px solid #d9e6ed !important;
             border-radius:15px !important;
@@ -223,6 +295,7 @@ def _stage1(lab, saved):
     k4.metric("Viviendas", "360")
 
     st.markdown("### 1 · Abre las fuentes oficiales")
+    st.caption("📌 Fuente: ficha electrónica oficial del SEA + Adenda Complementaria y anexos del 30-09-2026. La ficha web no tiene paginación; los anexos deben citarse por documento, sección y página del PDF utilizado.")
     c1,c2,c3 = st.columns(3)
     with c1:
         st.link_button("🔎 Ficha oficial SEIA", SEA_PROJECT_URL, use_container_width=True)
@@ -236,6 +309,7 @@ def _stage1(lab, saved):
     )
 
     st.markdown("### 2 · Reconoce la ubicación y la escala")
+    st.caption("📄 Dónde buscar: Ficha oficial SEA → “Descripción del Proyecto” (sin número de página) y Anexo 02 → localización, superficie y descripción general. Versión 30-09-2026.")
     left,right = st.columns([1.2,.8], gap="large")
     with left:
         st.markdown(
@@ -272,6 +346,7 @@ def _stage1(lab, saved):
     )
 
     st.markdown("### 3 · Lleva el proyecto a Noise Map Lab")
+    st.caption("📄 Dónde buscar: Anexo 01 → cartografía/KMZ/planos; Anexo 02 → localización y superficie. Usa el plano oficial para el perímetro: no reconstruyas vértices desde una coordenada central.")
     a,b = st.columns([.68,.32], gap="large")
     with a:
         st.markdown(
@@ -302,6 +377,7 @@ def _stage1(lab, saved):
             <div class="c4l2-table-kicker">GEORREFERENCIACIÓN</div>
             <div class="c4l2-table-title">Registro de vértices del predio</div>
             <div class="c4l2-table-copy">Una fila por vértice del polígono oficial. Agrega o elimina filas según el plano y conserva el orden V1, V2, V3…</div>
+            <div class="c4l2-source"><b>📄 Dónde buscar:</b> Anexo 01 · <b>Antecedentes del Proyecto</b> (cartografía/KMZ/planos) y Anexo 02 · <b>Actualización Capítulo 2 Descripción Proyecto</b>, apartado de localización y superficie. <span class="page">Versión 30-09-2026.</span> Busca en el PDF: “coordenadas”, “localización”, “superficie” o “Lote G-1”. La ficha SEA electrónica no tiene número de página.</div>
           </div>
         </div>
         """,
@@ -330,6 +406,7 @@ def _stage1(lab, saved):
             <div class="c4l2-table-kicker">PARTES Y OBRAS</div>
             <div class="c4l2-table-title">Inventario físico del proyecto</div>
             <div class="c4l2-table-copy">Registra cada parte u obra reconocida en la Descripción del Proyecto e indica cantidad, ubicación y documento donde la encontraste.</div>
+            <div class="c4l2-source"><b>📄 Dónde buscar:</b> Anexo 02 · <b>Actualización Capítulo 2 Descripción Proyecto</b>, apartado “Partes y obras del proyecto”. Complementa con <b>09_Ficha Resumen</b>. <span class="page">Versión 30-09-2026.</span> Usa el buscador del PDF con “partes y obras”, “torres”, “estacionamientos”, “locales” y “sedes”.</div>
           </div>
         </div>
         """,
@@ -357,6 +434,7 @@ def _stage1(lab, saved):
             <div class="c4l2-table-kicker">SECUENCIA CONSTRUCTIVA</div>
             <div class="c4l2-table-title">Etapas y frentes de trabajo</div>
             <div class="c4l2-table-copy">Ordena la secuencia según el expediente. Cada fila debe representar una etapa o frente con su actividad principal, sector y respaldo documental.</div>
+            <div class="c4l2-source"><b>📄 Dónde buscar:</b> Anexo 02 · <b>Actualización Capítulo 2 Descripción Proyecto</b>, capítulo de <b>fase de construcción / acciones</b>. Complementa con <b>09_Ficha Resumen</b>. <span class="page">Versión 30-09-2026.</span> Busca: “fase de construcción”, “acciones”, “excavación”, “obra gruesa”, “terminaciones”.</div>
           </div>
         </div>
         """,
@@ -385,6 +463,7 @@ def _stage1(lab, saved):
             <div class="c4l2-table-kicker">FUENTES POTENCIALES</div>
             <div class="c4l2-table-title">Maquinaria y equipos declarados</div>
             <div class="c4l2-table-copy">Busca los equipos en la Descripción del Proyecto y en Ruido y Vibraciones. Todavía no necesitas asignar niveles BS 5228.</div>
+            <div class="c4l2-source"><b>📄 Dónde buscar:</b> Anexo 02 · <b>Actualización Capítulo 2 Descripción Proyecto</b>, apartado de equipos y maquinarias; y Anexo 05 · <b>Ruido y Vibraciones</b>, tablas/escenarios de construcción. <span class="page">Versión 30-09-2026.</span> Busca: “maquinaria”, “equipos”, “fuentes”, “construcción” y “nivel de potencia”.</div>
           </div>
         </div>
         """,
@@ -414,6 +493,7 @@ def _stage1(lab, saved):
             <div class="c4l2-table-kicker">PROGRAMACIÓN DE OBRA</div>
             <div class="c4l2-table-title">Cronograma resumido</div>
             <div class="c4l2-table-copy">Una fila por actividad o etapa. Registra solo fechas, duraciones y superposiciones que puedas sostener con el expediente.</div>
+            <div class="c4l2-source"><b>📄 Dónde buscar:</b> Anexo 02 · <b>Actualización Capítulo 2 Descripción Proyecto</b>, apartado de <b>cronología / cronograma de construcción</b>; contrasta con <b>09_Ficha Resumen</b>. <span class="page">Versión 30-09-2026.</span> Busca: “cronograma”, “cronología”, “mes”, “inicio” y “duración”.</div>
           </div>
         </div>
         """,
@@ -434,6 +514,7 @@ def _stage1(lab, saved):
     )
 
     st.markdown("### 8 · Cierra la ficha del proyecto")
+    st.caption("📌 Base para la síntesis: utiliza únicamente la información que ya registraste y respaldaste en los puntos 3 a 7; no agregues datos sin trazabilidad documental.")
     synthesis = st.text_area(
         "Síntesis técnica",
         value=saved.get("c4l2_s1_synthesis",""),
