@@ -57,6 +57,68 @@ def _calc(item):
     lwa_global=item["laeq10"]+28.0
     return lp,lw,lwa_bands,lwa_spec,lwa_global
 
+def _render_teacher_pauta(st,pd):
+    if st.session_state.get("role")!="Docente":
+        return
+    with st.expander("👨‍🏫 Pauta docente · Etapa 3",expanded=False):
+        st.markdown("""
+        Revisar que cada maquinaria del proyecto tenga una referencia BS coherente con **equipo + tamaño/potencia + actividad**.
+        El alumno debe distinguir el dato original de presión a 10 m del nivel de potencia utilizado en el modelo,
+        mantener tabla/ref./página y conservar el descriptor original, especialmente en registros móviles.
+        """)
+
+        st.markdown("#### Referencias BS sugeridas por etapa")
+        teacher_map=[
+            ("Movimiento de tierras","Excavadora hidráulica","Excavadora hidráulica"),
+            ("Movimiento de tierras","Retroexcavadora","Retroexcavadora"),
+            ("Movimiento de tierras","Cargador frontal","Cargador frontal"),
+            ("Movimiento de tierras","Camión tolva","Camión tolva articulado"),
+            ("Movimiento de tierras","Rodillo vibratorio","Rodillo vibratorio"),
+            ("Hormigón / obra gruesa","Camión mixer","Camión mixer"),
+            ("Hormigón / obra gruesa","Bomba de hormigón","Bomba de hormigón"),
+            ("Hormigón / obra gruesa","Vibrador de inmersión","Vibrador de inmersión"),
+            ("Estructura / izaje","Grúa torre","Grúa torre"),
+            ("Equipos auxiliares","Generador diésel","Generador diésel"),
+        ]
+        rows=[]
+        for stage_name,project_machine,bs_name in teacher_map:
+            item=BS_PLANT[bs_name]
+            _,lw,_,_,lwa_global=_calc(item)
+            rows.append({
+                "Etapa":stage_name,
+                "Máquina proyecto":project_machine,
+                "Referencia BS":bs_name,
+                "Tabla / Ref.":f"{item['table']} · Ref. {item['ref']}",
+                "Página":item["page"],
+                "Descriptor":item.get("metric","LAeq,T"),
+                "Lp 10 m":f"{item['laeq10']:.0f} dB(A)",
+                "LWA ref.":f"{lwa_global:.0f} dB(A)",
+            })
+        st.dataframe(pd.DataFrame(rows),hide_index=True,use_container_width=True)
+
+        st.markdown("#### Espectros de potencia esperados")
+        selected_teacher=st.selectbox(
+            "Ver espectro de referencia",
+            [r[1] for r in teacher_map],
+            key="c4l2_s3_teacher_spectrum",
+        )
+        bs_name=next(x[2] for x in teacher_map if x[1]==selected_teacher)
+        item=BS_PLANT[bs_name]
+        _,lw,_,_,lwa_global=_calc(item)
+        st.dataframe(
+            pd.DataFrame({"Banda":OCTAVE_LABELS,"Lw [dB]":[round(v,1) for v in lw]}),
+            hide_index=True,
+            use_container_width=True,
+        )
+        st.caption(
+            f"BS 5228-1 · Tabla {item['table']} · Ref. {item['ref']} · {item['page']} · "
+            f"LWA broadband de referencia ≈ {lwa_global:.1f} dB(A)."
+        )
+        st.info(
+            "La selección final debe corresponder a la máquina, tamaño/potencia y actividad efectivamente declarados en el proyecto. "
+            "Si el expediente usa un equipo distinto, la pauta debe ajustarse al registro BS más representativo."
+        )
+
 def render(lab,saved,runtime):
     st=runtime["st"]; pd=runtime["pd"]
     runtime["header"](
@@ -119,6 +181,7 @@ def render(lab,saved,runtime):
     project_machines=[r for r in stage1_rows if str(r.get("Máquina / equipo") or "").strip()]
     if not project_machines:
         st.warning("Todavía no hay maquinaria guardada en la Etapa 1. Vuelve a la Etapa 1, completa la tabla de maquinaria y guarda la ficha antes de continuar.")
+        _render_teacher_pauta(st,pd)
         return
 
     st.caption(f"Se recuperaron **{len(project_machines)}** registros de maquinaria desde la Etapa 1. No necesitas volver a escribirlos.")
@@ -262,62 +325,4 @@ def render(lab,saved,runtime):
             runtime["_save"](lab,saved,3)
             st.success("Caracterización acústica guardada. Estos niveles quedan disponibles para la siguiente etapa.")
 
-    if st.session_state.get("role")=="Docente":
-        with st.expander("👨‍🏫 Pauta docente · Etapa 3"):
-            st.markdown("""
-            Revisar que cada maquinaria del proyecto tenga una referencia BS coherente con **equipo + tamaño/potencia + actividad**.
-            El alumno debe distinguir el dato original de presión a 10 m del nivel de potencia utilizado en el modelo,
-            mantener tabla/ref./página y conservar el descriptor original, especialmente en registros móviles.
-            """)
-
-            st.markdown("#### Referencias BS sugeridas por etapa")
-            teacher_map=[
-                ("Movimiento de tierras","Excavadora hidráulica","Excavadora hidráulica"),
-                ("Movimiento de tierras","Retroexcavadora","Retroexcavadora"),
-                ("Movimiento de tierras","Cargador frontal","Cargador frontal"),
-                ("Movimiento de tierras","Camión tolva","Camión tolva articulado"),
-                ("Movimiento de tierras","Rodillo vibratorio","Rodillo vibratorio"),
-                ("Hormigón / obra gruesa","Camión mixer","Camión mixer"),
-                ("Hormigón / obra gruesa","Bomba de hormigón","Bomba de hormigón"),
-                ("Hormigón / obra gruesa","Vibrador de inmersión","Vibrador de inmersión"),
-                ("Estructura / izaje","Grúa torre","Grúa torre"),
-                ("Equipos auxiliares","Generador diésel","Generador diésel"),
-            ]
-            rows=[]
-            for stage_name,project_machine,bs_name in teacher_map:
-                item=BS_PLANT[bs_name]
-                _,lw,_,lwa_spec,lwa_global=_calc(item)
-                rows.append({
-                    "Etapa":stage_name,
-                    "Máquina proyecto":project_machine,
-                    "Referencia BS":bs_name,
-                    "Tabla / Ref.":f"{item['table']} · Ref. {item['ref']}",
-                    "Página":item["page"],
-                    "Descriptor":item.get("metric","LAeq,T"),
-                    "Lp 10 m":f"{item['laeq10']:.0f} dB(A)",
-                    "LWA ref.":f"{lwa_global:.0f} dB(A)",
-                })
-            st.dataframe(pd.DataFrame(rows),hide_index=True,use_container_width=True)
-
-            st.markdown("#### Espectros de potencia esperados")
-            selected_teacher=st.selectbox(
-                "Ver espectro de referencia",
-                [r[1] for r in teacher_map],
-                key="c4l2_s3_teacher_spectrum",
-            )
-            bs_name=next(x[2] for x in teacher_map if x[1]==selected_teacher)
-            item=BS_PLANT[bs_name]
-            _,lw,_,_,lwa_global=_calc(item)
-            st.dataframe(
-                pd.DataFrame({"Banda":OCTAVE_LABELS,"Lw [dB]":[round(v,1) for v in lw]}),
-                hide_index=True,
-                use_container_width=True,
-            )
-            st.caption(
-                f"BS 5228-1 · Tabla {item['table']} · Ref. {item['ref']} · {item['page']} · "
-                f"LWA broadband de referencia ≈ {lwa_global:.1f} dB(A)."
-            )
-            st.info(
-                "La selección final debe corresponder a la máquina, tamaño/potencia y actividad efectivamente declarados en el proyecto. "
-                "Si el expediente usa un equipo distinto, la pauta debe ajustarse al registro BS más representativo."
-            )
+    _render_teacher_pauta(st,pd)
