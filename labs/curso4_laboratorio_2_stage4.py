@@ -188,82 +188,21 @@ def render(lab,saved,runtime):
     st.warning("Peor condición no significa inventar simultaneidades imposibles. Debe ser una condición crítica, pero técnicamente realizable según la etapa y el cronograma del proyecto.")
 
     st.markdown("#### Ejemplo visual · ¿cómo se representa el frente en el modelo?")
-    import streamlit.components.v1 as components
-    components.html(
-        """
-        <div style="border:1px solid #cfe0ed;border-radius:20px;padding:18px;
-                    background:linear-gradient(135deg,#fbfdff,#f1f7fb);
-                    font-family:Arial,sans-serif">
-          <div style="font-size:12px;font-weight:900;letter-spacing:.08em;color:#087ba0;margin-bottom:6px">
-            EJEMPLO CONCEPTUAL · MOVIMIENTO DE TIERRAS
-          </div>
-          <div style="font-size:18px;font-weight:800;color:#173b53;margin-bottom:12px">
-            Varias máquinas simultáneas → una fuente equivalente del frente
-          </div>
-
-          <svg viewBox="0 0 1100 470" width="100%" xmlns="http://www.w3.org/2000/svg"
-               role="img" aria-label="Esquema conceptual de una fuente equivalente de un frente de trabajo">
-            <defs>
-              <marker id="arrEq4" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto">
-                <path d="M0,0 L0,6 L9,3 z" fill="#526f80"></path>
-              </marker>
-            </defs>
-
-            <rect x="35" y="55" width="700" height="330" rx="24"
-                  fill="#efe5d3" stroke="#9f875f" stroke-width="3"/>
-            <text x="60" y="88" font-size="24" font-weight="700" fill="#173b53">Predio de construcción</text>
-            <text x="60" y="116" font-size="17" fill="#526f80">Frente FT1 · Movimiento de tierras</text>
-
-            <rect x="95" y="165" width="165" height="55" rx="12" fill="#fff" stroke="#9db1be"/>
-            <text x="177" y="198" text-anchor="middle" font-size="17" fill="#173b53">Excavadora</text>
-
-            <rect x="290" y="135" width="155" height="55" rx="12" fill="#fff" stroke="#9db1be"/>
-            <text x="367" y="168" text-anchor="middle" font-size="17" fill="#173b53">Camión tolva</text>
-
-            <rect x="500" y="170" width="160" height="55" rx="12" fill="#fff" stroke="#9db1be"/>
-            <text x="580" y="203" text-anchor="middle" font-size="17" fill="#173b53">Cargador</text>
-
-            <rect x="185" y="285" width="175" height="55" rx="12" fill="#fff" stroke="#9db1be"/>
-            <text x="272" y="318" text-anchor="middle" font-size="17" fill="#173b53">Retroexcavadora</text>
-
-            <rect x="420" y="292" width="150" height="55" rx="12" fill="#fff" stroke="#9db1be"/>
-            <text x="495" y="325" text-anchor="middle" font-size="17" fill="#173b53">Rodillo</text>
-
-            <ellipse cx="385" cy="240" rx="275" ry="135"
-                     fill="none" stroke="#d94841" stroke-width="3" stroke-dasharray="11 8"/>
-
-            <circle cx="675" cy="255" r="15" fill="#df2d2d" stroke="#fff" stroke-width="4"/>
-            <text x="663" y="238" text-anchor="end" font-size="18" font-weight="700" fill="#b91c1c">
-              Fuente equivalente
-            </text>
-            <text x="663" y="263" text-anchor="end" font-size="15" fill="#b91c1c">
-              posición crítica posible
-            </text>
-
-            <rect x="860" y="190" width="170" height="120" rx="14"
-                  fill="#e6edf4" stroke="#69859a" stroke-width="3"/>
-            <text x="945" y="232" text-anchor="middle" font-size="24" font-weight="800" fill="#174f8c">R1</text>
-            <text x="945" y="260" text-anchor="middle" font-size="17" fill="#526f80">Receptor</text>
-
-            <line x1="694" y1="255" x2="850" y2="255"
-                  stroke="#526f80" stroke-width="3" stroke-dasharray="8 6"
-                  marker-end="url(#arrEq4)"/>
-            <text x="772" y="235" text-anchor="middle" font-size="17" font-weight="700" fill="#344f60">
-              Distancia F–R
-            </text>
-          </svg>
-
-          <div style="margin-top:10px;color:#526f80;line-height:1.55;font-size:14px">
-            <b>Lectura del esquema:</b> las máquinas que operan simultáneamente se representan acústicamente
-            mediante una sola fuente equivalente. Para analizar la peor condición, esa fuente se ubica
-            <b>dentro del sector real donde puede operar el frente</b>, en la posición físicamente posible
-            más próxima al receptor crítico.
-          </div>
-        </div>
-        """,
-        height=520,
-        scrolling=False,
-    )
+    render_path=Path(__file__).resolve().parents[1] / "assets" / "curso4_lab2" / "fuente_equivalente_render.jpg"
+    if render_path.exists():
+        st.image(
+            str(render_path),
+            use_container_width=True,
+            caption=(
+                "Ejemplo conceptual: las máquinas que operan simultáneamente dentro de un frente de trabajo "
+                "se representan mediante una fuente equivalente ubicada en la posición crítica físicamente posible "
+                "respecto del receptor seleccionado."
+            ),
+        )
+    else:
+        st.info(
+            "El render ejemplificador no está disponible en los recursos locales del laboratorio."
+        )
 
     sources=saved.get("c4l2_s3_acoustic_sources") or []
     receptors=saved.get("c4l2_s2_receptors_table") or []
