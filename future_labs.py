@@ -277,7 +277,7 @@ COURSE_LABS = [
                 "focus": "Gestión, monitoreo, control y comunicación",
                 "stages": [
                     ("Ruta de gestión", "Integrar prevención, seguimiento y respuesta.", "El plan eficaz define responsabilidades, criterios, controles, monitoreo y escalamiento.", "Asigna responsables a cada acción."),
-                    ("Jerarquía de control", "Actuar primero donde el control es más eficaz.", "Sustitución, control en fuente, trayectoria, gestión temporal y receptor se combinan según el caso.", "Clasifica doce medidas."),
+                    ("Conoce el proyecto · Conjunto Habitacional Eyzaguirre", "Reconstruir ubicación, escala, etapas, maquinaria y cronograma desde el expediente SEIA.", "El laboratorio trabajará sobre un proyecto real. Antes de modelar, el alumno debe comprender el predio, las partes y obras, la secuencia constructiva y la maquinaria declarada.", "Abre el expediente, localiza el Lote G-1, reconstruye el predio con líneas auxiliares y completa la ficha técnica del proyecto."),
                     ("Selección de equipos", "Incorporar emisión en compras y arriendos.", "La comparación debe usar magnitudes y condiciones equivalentes, no solo potencia del motor.", "Elige entre tres equipos."),
                     ("Planificación horaria", "Reducir exposición y conflicto.", "Se consideran sensibilidad del receptor, duración, simultaneidad y comunicación; horario permitido no significa ausencia de molestia.", "Diseña una semana de faenas."),
                     ("Barreras temporales", "Especificar continuidad y geometría.", "Una barrera efectiva evita huecos, supera la línea de vista y se aproxima a fuente o receptor.", "Detecta fallas de montaje."),
