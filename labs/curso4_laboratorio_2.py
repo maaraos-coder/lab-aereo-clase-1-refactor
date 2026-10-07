@@ -513,18 +513,6 @@ def _stage1(lab, saved):
         height=245,
     )
 
-    st.markdown("### 8 · Cierra la ficha del proyecto")
-    st.caption("📌 Base para la síntesis: utiliza únicamente la información que ya registraste y respaldaste en los puntos 3 a 7; no agregues datos sin trazabilidad documental.")
-    synthesis = st.text_area(
-        "Síntesis técnica",
-        value=saved.get("c4l2_s1_synthesis",""),
-        placeholder=(
-            "Resume por qué la geometría, el cronograma y la maquinaria son necesarios antes de construir un modelo de ruido."
-        ),
-        height=125,
-        key="c4l2_s1_synthesis_input",
-    )
-
     if st.button("✓ Guardar ficha del proyecto", type="primary", use_container_width=True, key="c4l2_s1_save"):
         def _records_without_empty_rows(df, main_column):
             clean=df.copy()
@@ -550,7 +538,6 @@ def _stage1(lab, saved):
         if len(phase_records) < 3: missing.append("al menos 3 etapas constructivas")
         if len(machinery_records) < 3: missing.append("al menos 3 máquinas o equipos")
         if len(chronology_records) < 3: missing.append("al menos 3 filas del cronograma")
-        if len(synthesis.strip()) < 100: missing.append("síntesis técnica")
 
         if missing:
             st.warning("Completa: " + ", ".join(missing) + ".")
@@ -561,11 +548,10 @@ def _stage1(lab, saved):
                 "c4l2_s1_phases_table":phase_records,
                 "c4l2_s1_machinery_table":machinery_records,
                 "c4l2_s1_chronology_table":chronology_records,
-                "c4l2_s1_synthesis":synthesis,
                 "done_1":True,
             })
             _save(lab,saved,1)
-            st.success("Ficha guardada. La información quedó estructurada para utilizarla en las siguientes etapas.")
+            st.success("Información guardada. Los antecedentes quedan disponibles para las siguientes etapas del laboratorio.")
 
     if st.session_state.get("role") == "Docente":
         with st.expander("👨‍🏫 Pauta docente · Etapa 1", expanded=False):
