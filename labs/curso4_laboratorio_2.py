@@ -219,9 +219,9 @@ def _stage0(lab, saved):
 
     route=[
         ("1","Conoce el proyecto","Abre el expediente, localiza el predio y reconstruye la ficha base de la obra.","25 min"),
-        ("2","Proyecto real · siguiente análisis","Continuaremos transformando los antecedentes del expediente en información utilizable para la modelación.","Por definir"),
-        ("3","Proyecto real · siguiente análisis","Se desarrollará sobre la misma obra y conservará la trazabilidad documental.","Por definir"),
-        ("4","Proyecto real · siguiente análisis","El proyecto Eyzaguirre seguirá siendo el caso conductor.","Por definir"),
+        ("2","Identifica los receptores","Localiza los puntos sensibles del entorno y llévalos a Noise Map Lab con coordenadas, altura y distancia.","25 min"),
+        ("3","Caracteriza la maquinaria","Asocia las máquinas del proyecto con BS 5228 y obtiene Lw global y por bandas.","30 min"),
+        ("4","Modela la condición original","Agrupa máquinas por etapa, calcula fuentes equivalentes y guarda un escenario original por frente.","45 min"),
         ("5","Proyecto real · siguiente análisis","La información registrada en las etapas anteriores se reutilizará sin volver a ingresarla.","Por definir"),
         ("6","Proyecto real · siguiente análisis","Se incorporarán progresivamente fuentes, receptores y decisiones de modelación.","Por definir"),
         ("7","Proyecto real · siguiente análisis","El escenario acústico se construirá desde los antecedentes reales del expediente.","Por definir"),
