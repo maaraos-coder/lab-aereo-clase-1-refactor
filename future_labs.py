@@ -273,10 +273,10 @@ COURSE_LABS = [
                 "class_number": 8,
                 "id": "clase-08-construccion-lab-2",
                 "opens_at": "2026-10-17T00:00:00-03:00",
-                "source": "Curso 4 · Bloque 3, tareas y evaluación",
-                "focus": "Gestión, monitoreo, control y comunicación",
+                "source": "Curso 4 · Expediente SEIA 2165522433 · Conjunto Habitacional Eyzaguirre",
+                "focus": "Proyecto real · reconstrucción documental, modelación y evaluación acústica",
                 "stages": [
-                    ("Ruta de gestión", "Integrar prevención, seguimiento y respuesta.", "El plan eficaz define responsabilidades, criterios, controles, monitoreo y escalamiento.", "Asigna responsables a cada acción."),
+                    ("Introducción y ruta del laboratorio", "Comprender cómo se trabajará progresivamente con un proyecto real del SEIA.", "El laboratorio utiliza el Conjunto Habitacional Eyzaguirre como caso conductor y exige trazabilidad documental de cada dato utilizado.", "Revisa la ruta completa antes de comenzar."),
                     ("Conoce el proyecto · Conjunto Habitacional Eyzaguirre", "Reconstruir ubicación, escala, etapas, maquinaria y cronograma desde el expediente SEIA.", "El laboratorio trabajará sobre un proyecto real. Antes de modelar, el alumno debe comprender el predio, las partes y obras, la secuencia constructiva y la maquinaria declarada.", "Abre el expediente, localiza el Lote G-1, reconstruye el predio con líneas auxiliares y completa la ficha técnica del proyecto."),
                     ("Selección de equipos", "Incorporar emisión en compras y arriendos.", "La comparación debe usar magnitudes y condiciones equivalentes, no solo potencia del motor.", "Elige entre tres equipos."),
                     ("Planificación horaria", "Reducir exposición y conflicto.", "Se consideran sensibilidad del receptor, duración, simultaneidad y comunicación; horario permitido no significa ausencia de molestia.", "Diseña una semana de faenas."),
