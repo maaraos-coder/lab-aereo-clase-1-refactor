@@ -4,7 +4,9 @@ import math
 import re
 import unicodedata
 from pathlib import Path
+from io import BytesIO
 from labs.curso4_laboratorio_1 import BS_PLANT
+from PIL import Image, ImageDraw, ImageFont
 
 OCTAVE_LABELS=["31,5 Hz","63 Hz","125 Hz","250 Hz","500 Hz","1 kHz","2 kHz","4 kHz"]
 
@@ -31,6 +33,148 @@ def _qty(value):
         return max(1,q)
     except Exception:
         return 1
+
+
+def _render_font(size, bold=False):
+    candidates = (
+        "DejaVuSans-Bold.ttf" if bold else "DejaVuSans.ttf",
+        "/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf" if bold else "/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf",
+    )
+    for candidate in candidates:
+        try:
+            return ImageFont.truetype(candidate, size=size)
+        except Exception:
+            pass
+    return ImageFont.load_default()
+
+
+def _rounded_label(draw, xy, text, *, fill, text_fill=(255,255,255), font=None, pad_x=14, pad_y=8, radius=12):
+    font = font or _render_font(24, True)
+    x, y = xy
+    bbox = draw.textbbox((0,0), text, font=font)
+    w = bbox[2]-bbox[0] + pad_x*2
+    h = bbox[3]-bbox[1] + pad_y*2
+    draw.rounded_rectangle((x, y, x+w, y+h), radius=radius, fill=fill, outline=(255,255,255,220), width=2)
+    draw.text((x+pad_x, y+pad_y-2), text, font=font, fill=text_fill)
+    return (x, y, x+w, y+h)
+
+
+def _paste_machine(canvas, path, box):
+    if not path.exists():
+        return
+    img = Image.open(path).convert("RGBA")
+    x0,y0,x1,y1 = box
+    max_w,max_h = x1-x0,y1-y0
+    scale=min(max_w/img.width, max_h/img.height)
+    nw=max(1,int(img.width*scale)); nh=max(1,int(img.height*scale))
+    img=img.resize((nw,nh), Image.Resampling.LANCZOS)
+
+    # Fondo claro de apoyo para renders que no tengan transparencia.
+    card=Image.new("RGBA",(max_w,max_h),(255,255,255,220))
+    card_draw=ImageDraw.Draw(card)
+    card_draw.rounded_rectangle((0,0,max_w-1,max_h-1),radius=18,fill=(255,255,255,220),outline=(190,205,215,255),width=2)
+    canvas.alpha_composite(card,(x0,y0))
+    canvas.alpha_composite(img,(x0+(max_w-nw)//2,y0+(max_h-nh)//2))
+
+
+def _build_equivalent_source_render():
+    """Render raster HD para explicar frente de trabajo → fuente equivalente."""
+    W,H=1400,820
+    canvas=Image.new("RGBA",(W,H),(244,248,251,255))
+
+    root=Path(__file__).resolve().parents[1]
+    bg_path=root / "assets" / "c3l2_etapa1_render_profesional.webp"
+    if bg_path.exists():
+        try:
+            bg=Image.open(bg_path).convert("RGB")
+            scale=max(W/bg.width,H/bg.height)
+            bg=bg.resize((int(bg.width*scale),int(bg.height*scale)),Image.Resampling.LANCZOS)
+            left=(bg.width-W)//2; top=(bg.height-H)//2
+            bg=bg.crop((left,top,left+W,top+H)).convert("RGBA")
+            # Suaviza el fondo para privilegiar la lectura didáctica.
+            veil=Image.new("RGBA",(W,H),(244,248,251,110))
+            bg.alpha_composite(veil)
+            canvas=bg
+        except Exception:
+            pass
+
+    draw=ImageDraw.Draw(canvas,"RGBA")
+    title_font=_render_font(38,True)
+    sub_font=_render_font(24,False)
+    label_font=_render_font(22,True)
+    small_font=_render_font(19,False)
+    source_font=_render_font(24,True)
+
+    # Cabecera.
+    draw.rounded_rectangle((28,22,1372,114),radius=22,fill=(255,255,255,238),outline=(198,217,229,255),width=2)
+    draw.text((55,38),"Ejemplo visual · Fuente equivalente de un frente de trabajo",font=title_font,fill=(20,55,78,255))
+    draw.text((57,82),"FT1 · Movimiento de tierras · condición original sin medidas de control",font=sub_font,fill=(71,101,120,255))
+
+    # Área del frente.
+    front_box=(42,142,995,742)
+    draw.rounded_rectangle(front_box,radius=28,fill=(221,199,160,178),outline=(126,105,72,230),width=3)
+    draw.text((72,164),"PREDIO / SECTOR REAL DE OPERACIÓN DEL FRENTE",font=label_font,fill=(28,62,82,255))
+
+    # Borde discontinuo del frente.
+    try:
+        draw.ellipse((90,220,910,685),outline=(220,48,45,255),width=6)
+        # Oculta pequeños tramos para simular discontinuidad de forma robusta.
+        for ang in range(0,360,20):
+            import math as _m
+            a1=_m.radians(ang+9); a2=_m.radians(ang+17)
+            cx,cy=500,452; rx,ry=410,232
+            p1=(cx+rx*_m.cos(a1),cy+ry*_m.sin(a1))
+            p2=(cx+rx*_m.cos(a2),cy+ry*_m.sin(a2))
+            draw.line((p1,p2),fill=(221,199,160,240),width=9)
+    except Exception:
+        pass
+
+    assets=root / "assets" / "curso4_lab1"
+    machines=[
+        ("Excavadora", assets/"excavadora_hidraulica.webp",(125,280,320,435),(125,244)),
+        ("Camión tolva", assets/"camion_tolva_articulado.webp",(350,235,555,390),(354,198)),
+        ("Cargador", assets/"cargador_frontal.webp",(600,275,795,430),(616,238)),
+        ("Retroexcavadora", assets/"retroexcavadora.webp",(235,485,440,640),(220,648)),
+        ("Rodillo", assets/"rodillo_vibratorio.webp",(535,500,730,650),(552,657)),
+    ]
+    for name,path,box,label_xy in machines:
+        _paste_machine(canvas,path,box)
+        draw=ImageDraw.Draw(canvas,"RGBA")
+        _rounded_label(draw,label_xy,name,fill=(19,70,104,245),font=label_font)
+
+    # Fuente equivalente cerca del borde crítico del frente.
+    sx,sy=870,455
+    draw.ellipse((sx-27,sy-27,sx+27,sy+27),fill=(225,37,37,255),outline=(255,255,255,255),width=5)
+    _rounded_label(draw,(720,382),"Fuente equivalente",fill=(211,38,38,248),font=source_font)
+    draw.text((724,430),"posición crítica físicamente posible",font=small_font,fill=(153,24,24,255))
+
+    # Receptor.
+    rx,ry=1245,445
+    draw.rounded_rectangle((1125,280,1362,610),radius=22,fill=(233,240,246,245),outline=(99,130,151,255),width=3)
+    # Edificio simplificado como contexto receptor.
+    draw.rectangle((1175,365,1315,555),fill=(199,211,220,255),outline=(104,129,147,255),width=3)
+    for yy in (395,445,495):
+        for xx in (1195,1240,1285):
+            draw.rectangle((xx,yy,xx+22,yy+28),fill=(116,151,176,255))
+    draw.ellipse((rx-22,ry-22,rx+22,ry+22),fill=(20,105,210,255),outline=(255,255,255,255),width=5)
+    _rounded_label(draw,(1160,302),"R1 · Receptor",fill=(20,87,162,248),font=label_font)
+
+    # Línea F–R con punta.
+    draw.line((sx+32,sy,rx-28,ry),fill=(25,95,175,255),width=6)
+    draw.polygon([(rx-28,ry),(rx-51,ry-13),(rx-51,ry+13)],fill=(25,95,175,255))
+    _rounded_label(draw,(970,398),"Distancia F–R",fill=(255,255,255,245),text_fill=(25,68,99),font=label_font)
+
+    # Pie didáctico.
+    draw.rounded_rectangle((42,755,1360,805),radius=16,fill=(255,255,255,240),outline=(198,217,229,255),width=2)
+    draw.text((65,770),
+              "Las máquinas simultáneas se reemplazan acústicamente por una fuente equivalente, ubicada dentro del sector real de trabajo.",
+              font=small_font,fill=(62,88,105,255))
+
+    out=BytesIO()
+    canvas.convert("RGB").save(out,format="JPEG",quality=92,optimize=True,subsampling=0)
+    out.seek(0)
+    return out.getvalue()
+
 
 def _teacher_pauta(st,pd,sources):
     if st.session_state.get("role")!="Docente":
@@ -188,20 +332,20 @@ def render(lab,saved,runtime):
     st.warning("Peor condición no significa inventar simultaneidades imposibles. Debe ser una condición crítica, pero técnicamente realizable según la etapa y el cronograma del proyecto.")
 
     st.markdown("#### Ejemplo visual · ¿cómo se representa el frente en el modelo?")
-    render_path=Path(__file__).resolve().parents[1] / "assets" / "curso4_lab2" / "fuente_equivalente_render.jpg"
-    if render_path.exists():
+    try:
         st.image(
-            str(render_path),
+            _build_equivalent_source_render(),
             use_container_width=True,
             caption=(
-                "Ejemplo conceptual: las máquinas que operan simultáneamente dentro de un frente de trabajo "
-                "se representan mediante una fuente equivalente ubicada en la posición crítica físicamente posible "
-                "respecto del receptor seleccionado."
+                "Ejemplo conceptual en alta resolución: las máquinas que operan simultáneamente dentro de un frente "
+                "se reemplazan acústicamente por una fuente equivalente, ubicada en la posición crítica físicamente "
+                "posible respecto del receptor seleccionado."
             ),
         )
-    else:
+    except Exception as exc:
         st.info(
-            "El render ejemplificador no está disponible en los recursos locales del laboratorio."
+            "No fue posible construir el render didáctico en este momento. "
+            "La lógica de la etapa y los cálculos permanecen disponibles."
         )
 
     sources=saved.get("c4l2_s3_acoustic_sources") or []
