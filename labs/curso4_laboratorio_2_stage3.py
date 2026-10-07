@@ -98,6 +98,22 @@ def render(lab,saved,runtime):
 
     st.warning("No escribas un valor de presión a 10 m como si fuese Lw. Primero debes convertirlo y conservar la trazabilidad del registro original.")
 
+    st.markdown("### Consulta la BS 5228")
+    bs_path=runtime.get("BS5228_PATH")
+    if bs_path is not None and bs_path.exists():
+        st.download_button(
+            "📘 Abrir / descargar BS 5228-1",
+            data=bs_path.read_bytes(),
+            file_name=bs_path.name,
+            mime="application/pdf",
+            use_container_width=True,
+            key="c4l2_s3_bs_pdf",
+            help="Documento base para buscar tabla, referencia, actividad y espectro de cada maquinaria.",
+        )
+        st.caption("BS 5228-1:2009+A1:2014 · Anexo C · tablas de maquinaria y actividades de obra.")
+    else:
+        st.warning("No se encontró el PDF de BS 5228 entre los recursos del laboratorio.")
+
     st.markdown("### 2 · Recupera las máquinas de la Etapa 1")
     stage1_rows=saved.get("c4l2_s1_machinery_table") or []
     project_machines=[r for r in stage1_rows if str(r.get("Máquina / equipo") or "").strip()]

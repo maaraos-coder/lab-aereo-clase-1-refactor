@@ -653,6 +653,7 @@ def _stage3(lab, saved):
         "header":header,
         "_professional_grid":_professional_grid,
         "_save":_save,
+        "BS5228_PATH":PROJECT_ROOT / "assets" / "curso4_lab1" / "BS-5228 Code of Practice for Noise and Vibration Control on Open Sites - Part 1 - Noise (2009)+A1-2014.pdf",
     }
     return _stage3_module.render(lab,saved,ctx)
 
