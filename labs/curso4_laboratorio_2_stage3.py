@@ -2,7 +2,6 @@
 
 import math
 import unicodedata
-from pathlib import Path
 from labs.curso4_laboratorio_1 import BS_PLANT
 
 OCTAVE_LABELS=["31,5 Hz","63 Hz","125 Hz","250 Hz","500 Hz","1 kHz","2 kHz","4 kHz"]
@@ -295,36 +294,7 @@ def render(lab,saved,runtime):
         })
     st.dataframe(pd.DataFrame(summary),hide_index=True,use_container_width=True)
 
-    st.markdown("### 6 · ¿Cómo se utilizarán estas máquinas en el modelo?")
-    st.markdown("""
-    Una vez obtenidos los niveles de potencia sonora de cada maquinaria, en la etapa siguiente
-    las máquinas que puedan operar **simultáneamente dentro de un mismo frente de trabajo**
-    se combinarán mediante suma energética para formar una **fuente equivalente**.
-
-    El siguiente ejemplo muestra cómo varias máquinas de un frente de movimiento de tierras
-    se representan acústicamente mediante una única fuente equivalente, ubicada dentro del
-    sector real de operación en la posición crítica físicamente posible respecto del receptor.
-    """)
-
-    render_path=Path(__file__).resolve().parents[1] / "assets" / "curso4_lab2" / "render_fuente_equivalente_etapa3.jpg"
-    if render_path.exists():
-        st.image(
-            str(render_path),
-            use_container_width=True,
-            caption=(
-                "Ejemplo conceptual · Frente FT1 de movimiento de tierras: agrupación de maquinaria, "
-                "fuente equivalente, receptor R1 y distancia fuente–receptor."
-            ),
-        )
-    else:
-        st.info("No se encontró el render explicativo de fuente equivalente entre los recursos del laboratorio.")
-
-    st.info(
-        "En esta Etapa 3 todavía trabajamos con los niveles individuales de cada máquina. "
-        "La suma energética y la construcción del frente equivalente se desarrollan en la Etapa 4."
-    )
-
-    st.markdown("### 7 · Guarda la caracterización acústica")
+    st.markdown("### 6 · Guarda la caracterización acústica")
     st.caption("Al guardar, el laboratorio conserva la referencia BS y los espectros calculados para reutilizarlos cuando ubiquemos las fuentes en Noise Map Lab.")
     if st.button("✓ Guardar niveles de potencia",type="primary",use_container_width=True,key="c4l2_s3_save"):
         pending=[r for r in assign_records if r.get("Referencia BS") not in BS_PLANT]
