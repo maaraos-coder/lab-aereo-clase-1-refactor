@@ -99,6 +99,20 @@ def _teacher_result_rows():
     return rows
 
 
+def _student_result_template():
+    """Estructura Escenario–Receptor sin entregar resultados al alumno."""
+    rows=[]
+    for ref in _teacher_result_rows():
+        rows.append({
+            "Frente":ref.get("Frente"),
+            "Receptor":ref.get("Receptor"),
+            "Distancia F–R [m]":None,
+            **{b:None for b in OCTAVE_LABELS},
+            "LAeq [dB(A)]":None,
+        })
+    return rows
+
+
 def _teacher_solution_panel(st,pd):
     """Muestra la solución directamente en la vista docente, no en la proyección/alumno."""
     if st.session_state.get("role")!="Docente":
@@ -116,7 +130,7 @@ def _teacher_solution_panel(st,pd):
         Los datos de control aparecen completos aunque el alumno no haya recuperado fuentes
       </div>
       <div style="color:#526f80;line-height:1.55">
-        Esta solución corresponde al último informe (Adenda 2) y sirve para conducir la clase. La vista de Alumno
+        Esta solución corresponde al último informe (Adenda 2) y sirve únicamente como referencia de corrección. La tabla de trabajo inferior queda sin resultados, incluso en vista Docente. La vista de Alumno
         y la Proyección Zoom mantienen estos campos sin resolver.
       </div>
     </div>
@@ -271,28 +285,35 @@ def render(lab,saved,runtime):
 
     st.markdown("### 3 · Registra los resultados detallados")
     st.markdown("""
-    Para cada combinación **frente–receptor**, registra el nivel por bandas que entrega el modelo y el nivel global.
-    No copies únicamente el color del mapa: utiliza el valor numérico informado en el receptor.
+    Para cada combinación **frente–receptor**, debes obtener directamente desde **Noise Map Lab**:
+
+    - el **espectro por bandas** informado en el receptor;
+    - el **LAeq global [dB(A)]**;
+    - y, cuando corresponda, la **distancia fuente–receptor** utilizada en ese escenario.
+
+    La tabla solo entrega la combinación **Escenario–Receptor** como guía.  
+    **Los resultados acústicos no vienen precargados:** debes registrarlos a partir de tu propia modelación.
     """)
 
-    # En la vista docente, la tabla principal parte con la solución de control.
-    # Alumno y Proyección Zoom parten sin resultados revelados y deben desarrollarlos.
+    # La tabla de trabajo nunca entrega los resultados.
+    # Solo precarga la combinación Escenario–Receptor; espectro y LAeq deben ser
+    # obtenidos por el alumno desde Noise Map Lab.
+    blank_template=_student_result_template()
+
     if is_teacher:
-        saved_detail=_teacher_result_rows()
-        teacher_seed_version="adenda2_ruido_2026_09_23_v1"
+        saved_detail=saved.get("c4l2_s5_detailed_results") or blank_template
+        teacher_seed_version="adenda2_stage5_student_results_blank_v2"
         if st.session_state.get("c4l2_s5_teacher_seed_version")!=teacher_seed_version:
-            st.session_state["c4l2_s5_detail_work"]=[dict(x) for x in saved_detail]
+            st.session_state["c4l2_s5_detail_work"]=[dict(x) for x in blank_template]
             st.session_state["c4l2_s5_teacher_seed_version"]=teacher_seed_version
     elif is_projection:
-        saved_detail=[
-            {"Frente":"","Receptor":"","Distancia F–R [m]":None,
-             **{b:None for b in OCTAVE_LABELS},"LAeq [dB(A)]":None}
-        ]
+        saved_detail=blank_template
+        projection_seed_version="adenda2_stage5_projection_blank_v2"
+        if st.session_state.get("c4l2_s5_projection_seed_version")!=projection_seed_version:
+            st.session_state["c4l2_s5_detail_work"]=[dict(x) for x in blank_template]
+            st.session_state["c4l2_s5_projection_seed_version"]=projection_seed_version
     else:
-        saved_detail=saved.get("c4l2_s5_detailed_results") or [
-            {"Frente":"","Receptor":"","Distancia F–R [m]":None,
-             **{b:None for b in OCTAVE_LABELS},"LAeq [dB(A)]":None}
-        ]
+        saved_detail=saved.get("c4l2_s5_detailed_results") or blank_template
 
     def _empty_result_row(_n):
         return {
