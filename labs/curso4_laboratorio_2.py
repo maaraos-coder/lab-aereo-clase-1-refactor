@@ -421,12 +421,68 @@ def _stage1(lab, saved):
         """,
         unsafe_allow_html=True,
     )
+    is_teacher=st.session_state.get("role")=="Docente"
+
+    teacher_parts=[
+        {"Parte / obra":"Torres habitacionales","Cantidad":"6","Ubicación / sector":"Lote G-1","Fuente documental":"Anexo 02 · Descripción del Proyecto"},
+        {"Parte / obra":"Departamentos","Cantidad":"360","Ubicación / sector":"6 torres","Fuente documental":"Anexo 02 · Descripción del Proyecto"},
+        {"Parte / obra":"Estacionamientos vehiculares","Cantidad":"277","Ubicación / sector":"Proyecto","Fuente documental":"Ficha resumen / Descripción del Proyecto"},
+        {"Parte / obra":"Estacionamientos de bicicletas","Cantidad":"106","Ubicación / sector":"Proyecto","Fuente documental":"Ficha resumen / Descripción del Proyecto"},
+        {"Parte / obra":"Locales comerciales","Cantidad":"4","Ubicación / sector":"Proyecto","Fuente documental":"Anexo 02 · Descripción del Proyecto"},
+        {"Parte / obra":"Sedes sociales","Cantidad":"3","Ubicación / sector":"Proyecto","Fuente documental":"Anexo 02 · Descripción del Proyecto"},
+    ]
+    teacher_phases=[
+        {"N°":1,"Etapa / frente":"Movimiento de tierras","Actividad principal":"Excavación, carga, transporte y compactación","Sector del predio":"Frente móvil dentro del predio","Documento de respaldo":"Anexo 02 / Anexo 05"},
+        {"N°":2,"Etapa / frente":"Hormigón / obra gruesa","Actividad principal":"Suministro, bombeo y vibrado de hormigón","Sector del predio":"Frentes de edificación","Documento de respaldo":"Anexo 02 / Anexo 05"},
+        {"N°":3,"Etapa / frente":"Estructura / izaje","Actividad principal":"Izaje y movimiento de materiales","Sector del predio":"Área de torres","Documento de respaldo":"Anexo 02 / Anexo 05"},
+        {"N°":4,"Etapa / frente":"Equipos auxiliares","Actividad principal":"Apoyo y alimentación eléctrica temporal","Sector del predio":"Según frente de trabajo","Documento de respaldo":"Anexo 02 / Anexo 05"},
+    ]
+    teacher_machinery_rows=[
+        {"Máquina / equipo":"Excavadora hidráulica","Cantidad":None,"Etapa asociada":"Movimiento de tierras","Actividad":"Excavación / movimiento de material","Tipo":"Móvil","Fuente documental":"Anexo 02 / Anexo 05"},
+        {"Máquina / equipo":"Retroexcavadora","Cantidad":None,"Etapa asociada":"Movimiento de tierras","Actividad":"Preparación / excavación localizada","Tipo":"Móvil","Fuente documental":"Anexo 02 / Anexo 05"},
+        {"Máquina / equipo":"Cargador frontal","Cantidad":None,"Etapa asociada":"Movimiento de tierras","Actividad":"Carga de material","Tipo":"Móvil","Fuente documental":"Anexo 02 / Anexo 05"},
+        {"Máquina / equipo":"Camión tolva","Cantidad":None,"Etapa asociada":"Movimiento de tierras","Actividad":"Transporte / descarga de material","Tipo":"Móvil","Fuente documental":"Anexo 02 / Anexo 05"},
+        {"Máquina / equipo":"Rodillo vibratorio","Cantidad":None,"Etapa asociada":"Movimiento de tierras","Actividad":"Compactación","Tipo":"Móvil","Fuente documental":"Anexo 02 / Anexo 05"},
+        {"Máquina / equipo":"Camión mixer","Cantidad":None,"Etapa asociada":"Hormigón / obra gruesa","Actividad":"Suministro / descarga de hormigón","Tipo":"Móvil","Fuente documental":"Anexo 02 / Anexo 05"},
+        {"Máquina / equipo":"Bomba de hormigón","Cantidad":None,"Etapa asociada":"Hormigón / obra gruesa","Actividad":"Bombeo de hormigón","Tipo":"Móvil","Fuente documental":"Anexo 02 / Anexo 05"},
+        {"Máquina / equipo":"Vibrador de inmersión","Cantidad":None,"Etapa asociada":"Hormigón / obra gruesa","Actividad":"Vibrado de hormigón","Tipo":"Móvil","Fuente documental":"Anexo 02 / Anexo 05"},
+        {"Máquina / equipo":"Grúa torre","Cantidad":None,"Etapa asociada":"Estructura / izaje","Actividad":"Izaje / movimiento de materiales","Tipo":"Fija","Fuente documental":"Anexo 02 / Anexo 05"},
+        {"Máquina / equipo":"Generador diésel","Cantidad":None,"Etapa asociada":"Equipos auxiliares","Actividad":"Alimentación eléctrica temporal","Tipo":"Auxiliar","Fuente documental":"Anexo 02 / Anexo 05"},
+    ]
+    teacher_chronology=[
+        {"Etapa / actividad":"Movimiento de tierras","Inicio":"","Término":"","Duración":"","¿Se superpone?":"No indicado","Observación":"Secuencia de referencia; fechas exactas deben contrastarse con el cronograma oficial."},
+        {"Etapa / actividad":"Hormigón / obra gruesa","Inicio":"","Término":"","Duración":"","¿Se superpone?":"No indicado","Observación":"Completar fechas/duración solo con respaldo documental."},
+        {"Etapa / actividad":"Estructura / izaje","Inicio":"","Término":"","Duración":"","¿Se superpone?":"No indicado","Observación":"Completar fechas/duración solo con respaldo documental."},
+        {"Etapa / actividad":"Equipos auxiliares","Inicio":"","Término":"","Duración":"","¿Se superpone?":"No indicado","Observación":"Puede acompañar distintos frentes; verificar cronograma."},
+    ]
+
     vertex_saved=saved.get("c4l2_s1_vertices_table") or [
         {"Vértice":"V1","Latitud":None,"Longitud":None},
         {"Vértice":"V2","Latitud":None,"Longitud":None},
         {"Vértice":"V3","Latitud":None,"Longitud":None},
         {"Vértice":"V4","Latitud":None,"Longitud":None},
     ]
+    if is_teacher:
+        teacher_seed_map={
+            "c4l2_s1_parts_work":teacher_parts,
+            "c4l2_s1_phases_work":teacher_phases,
+            "c4l2_s1_machinery_work":teacher_machinery_rows,
+            "c4l2_s1_chronology_work":teacher_chronology,
+        }
+        for _key,_rows in teacher_seed_map.items():
+            current=st.session_state.get(_key)
+            if not current or all(
+                not any(str(v or "").strip() for v in row.values())
+                for row in current
+            ):
+                st.session_state[_key]=[dict(x) for x in _rows]
+
+    if is_teacher and not saved.get("c4l2_s1_vertices_table"):
+        st.info(
+            "Vista Docente: las coordenadas exactas de V1, V2, V3… no están almacenadas en el repositorio. "
+            "Por trazabilidad, esta tabla no se completa con coordenadas estimadas; debe llenarse desde el plano/KMZ oficial."
+        )
+
     vertex_df=_dynamic_grid(
         vertex_saved,
         state_key="c4l2_s1_vertices_work",
@@ -453,12 +509,14 @@ def _stage1(lab, saved):
         """,
         unsafe_allow_html=True,
     )
-    parts_saved=saved.get("c4l2_s1_parts_table") or [
-        {"Parte / obra":"","Cantidad":"","Ubicación / sector":"","Fuente documental":""},
-        {"Parte / obra":"","Cantidad":"","Ubicación / sector":"","Fuente documental":""},
-        {"Parte / obra":"","Cantidad":"","Ubicación / sector":"","Fuente documental":""},
-        {"Parte / obra":"","Cantidad":"","Ubicación / sector":"","Fuente documental":""},
-    ]
+    parts_saved=saved.get("c4l2_s1_parts_table") or (
+        teacher_parts if is_teacher else [
+            {"Parte / obra":"","Cantidad":"","Ubicación / sector":"","Fuente documental":""},
+            {"Parte / obra":"","Cantidad":"","Ubicación / sector":"","Fuente documental":""},
+            {"Parte / obra":"","Cantidad":"","Ubicación / sector":"","Fuente documental":""},
+            {"Parte / obra":"","Cantidad":"","Ubicación / sector":"","Fuente documental":""},
+        ]
+    )
     parts_df=_dynamic_grid(
         parts_saved,
         state_key="c4l2_s1_parts_work",
@@ -484,12 +542,14 @@ def _stage1(lab, saved):
         """,
         unsafe_allow_html=True,
     )
-    phases_saved=saved.get("c4l2_s1_phases_table") or [
-        {"N°":1,"Etapa / frente":"","Actividad principal":"","Sector del predio":"","Documento de respaldo":""},
-        {"N°":2,"Etapa / frente":"","Actividad principal":"","Sector del predio":"","Documento de respaldo":""},
-        {"N°":3,"Etapa / frente":"","Actividad principal":"","Sector del predio":"","Documento de respaldo":""},
-        {"N°":4,"Etapa / frente":"","Actividad principal":"","Sector del predio":"","Documento de respaldo":""},
-    ]
+    phases_saved=saved.get("c4l2_s1_phases_table") or (
+        teacher_phases if is_teacher else [
+            {"N°":1,"Etapa / frente":"","Actividad principal":"","Sector del predio":"","Documento de respaldo":""},
+            {"N°":2,"Etapa / frente":"","Actividad principal":"","Sector del predio":"","Documento de respaldo":""},
+            {"N°":3,"Etapa / frente":"","Actividad principal":"","Sector del predio":"","Documento de respaldo":""},
+            {"N°":4,"Etapa / frente":"","Actividad principal":"","Sector del predio":"","Documento de respaldo":""},
+        ]
+    )
     phases_df=_dynamic_grid(
         phases_saved,
         state_key="c4l2_s1_phases_work",
@@ -516,12 +576,14 @@ def _stage1(lab, saved):
         """,
         unsafe_allow_html=True,
     )
-    machinery_saved=saved.get("c4l2_s1_machinery_table") or [
-        {"Máquina / equipo":"","Cantidad":None,"Etapa asociada":"","Actividad":"","Tipo":"","Fuente documental":""},
-        {"Máquina / equipo":"","Cantidad":None,"Etapa asociada":"","Actividad":"","Tipo":"","Fuente documental":""},
-        {"Máquina / equipo":"","Cantidad":None,"Etapa asociada":"","Actividad":"","Tipo":"","Fuente documental":""},
-        {"Máquina / equipo":"","Cantidad":None,"Etapa asociada":"","Actividad":"","Tipo":"","Fuente documental":""},
-    ]
+    machinery_saved=saved.get("c4l2_s1_machinery_table") or (
+        teacher_machinery_rows if is_teacher else [
+            {"Máquina / equipo":"","Cantidad":None,"Etapa asociada":"","Actividad":"","Tipo":"","Fuente documental":""},
+            {"Máquina / equipo":"","Cantidad":None,"Etapa asociada":"","Actividad":"","Tipo":"","Fuente documental":""},
+            {"Máquina / equipo":"","Cantidad":None,"Etapa asociada":"","Actividad":"","Tipo":"","Fuente documental":""},
+            {"Máquina / equipo":"","Cantidad":None,"Etapa asociada":"","Actividad":"","Tipo":"","Fuente documental":""},
+        ]
+    )
     machinery_df=_dynamic_grid(
         machinery_saved,
         state_key="c4l2_s1_machinery_work",
@@ -549,12 +611,14 @@ def _stage1(lab, saved):
         """,
         unsafe_allow_html=True,
     )
-    chronology_saved=saved.get("c4l2_s1_chronology_table") or [
-        {"Etapa / actividad":"","Inicio":"","Término":"","Duración":"","¿Se superpone?":"","Observación":""},
-        {"Etapa / actividad":"","Inicio":"","Término":"","Duración":"","¿Se superpone?":"","Observación":""},
-        {"Etapa / actividad":"","Inicio":"","Término":"","Duración":"","¿Se superpone?":"","Observación":""},
-        {"Etapa / actividad":"","Inicio":"","Término":"","Duración":"","¿Se superpone?":"","Observación":""},
-    ]
+    chronology_saved=saved.get("c4l2_s1_chronology_table") or (
+        teacher_chronology if is_teacher else [
+            {"Etapa / actividad":"","Inicio":"","Término":"","Duración":"","¿Se superpone?":"","Observación":""},
+            {"Etapa / actividad":"","Inicio":"","Término":"","Duración":"","¿Se superpone?":"","Observación":""},
+            {"Etapa / actividad":"","Inicio":"","Término":"","Duración":"","¿Se superpone?":"","Observación":""},
+            {"Etapa / actividad":"","Inicio":"","Término":"","Duración":"","¿Se superpone?":"","Observación":""},
+        ]
+    )
     chronology_df=_dynamic_grid(
         chronology_saved,
         state_key="c4l2_s1_chronology_work",
