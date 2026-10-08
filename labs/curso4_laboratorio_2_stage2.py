@@ -177,7 +177,7 @@ def render(lab, saved, runtime):
       <div style="border:1px solid #bcd8e7;border-left:5px solid #0b7fa5;border-radius:18px;
                   padding:16px 18px;background:linear-gradient(135deg,#f8fcff,#edf7fb);margin:1rem 0">
         <div style="font-size:.70rem;font-weight:900;letter-spacing:.09em;color:#087ba0">
-          VISTA DOCENTE · REFERENCIA DE CORRECCIÓN
+          VISTA DOCENTE · ADENDA 2
         </div>
         <div style="font-size:1.04rem;font-weight:900;color:#173b53;margin:.25rem 0">
           Receptores y geometría esperada
@@ -203,7 +203,7 @@ def render(lab, saved, runtime):
       with st.expander("👨‍🏫 Criterios de revisión",expanded=False):
         st.markdown("""
         - El receptor debe entenderse como un **punto tridimensional**.
-        - Debe conservarse la identificación documental **R1, R2, R3...**.
+        - Debe conservarse la identificación documental **R01, R02, R03...**.
         - Registrar coordenadas, altura y distancia al predio.
         - Distinguir **distancia al predio** de **distancia fuente–receptor**.
         - Justificar por qué se selecciona cada receptor.
