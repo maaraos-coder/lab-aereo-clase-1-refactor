@@ -94,22 +94,17 @@ def _teacher_pauta(st,pd):
         st.success(f"Resultado docente · {chosen}: LWA equivalente ≈ **{data['lwa']:.1f} dB(A)**.")
 
         st.markdown("#### 3 · Control numérico simplificado de propagación")
-        st.markdown("""
-        Para disponer de un control independiente del software, la tabla siguiente utiliza únicamente la
-        **divergencia geométrica de una fuente puntual en campo libre**:
-
-        \[
-        A_{div}=20\log_{10}(r)+11
-        \]
-
-        \[
-        L_p \approx L_w-A_{div}
-        \]
-
-        Este control **no sustituye el resultado de Noise Map Lab**: no incorpora efectos adicionales de suelo,
-        obstáculos, reflexión, difracción ni absorción atmosférica. Sirve para detectar errores gruesos de ingreso
-        o de distancia.
-        """)
+        st.markdown(
+            "Para disponer de un control independiente del software, la tabla siguiente utiliza únicamente la "
+            "**divergencia geométrica de una fuente puntual en campo libre**:"
+        )
+        st.latex(r"A_{div}=20\log_{10}(r)+11")
+        st.latex(r"L_p \approx L_w-A_{div}")
+        st.markdown(
+            "Este control **no sustituye el resultado de Noise Map Lab**: no incorpora efectos adicionales de suelo, "
+            "obstáculos, reflexión, difracción ni absorción atmosférica. Sirve para detectar errores gruesos de ingreso "
+            "o de distancia."
+        )
         check=[]
         for front,data in fronts.items():
             for r in (10,25,50):
@@ -249,16 +244,29 @@ def render(lab,saved,runtime):
                    **{b:None for b in OCTAVE_LABELS},"LAeq [dB(A)]":None}]
         saved_detail=seed
 
-    detail_df=runtime["_professional_grid"](
-        pd.DataFrame(saved_detail),
-        key="c4l2_s5_detail_grid",
+    def _empty_result_row(_n):
+        return {
+            "Frente":"",
+            "Receptor":"",
+            "Distancia F–R [m]":None,
+            **{b:None for b in OCTAVE_LABELS},
+            "LAeq [dB(A)]":None,
+        }
+
+    detail_df=runtime["_dynamic_grid"](
+        saved_detail,
+        state_key="c4l2_s5_detail_work",
+        grid_key="c4l2_s5_detail_grid",
+        empty_row_factory=_empty_result_row,
         widths={
             "Frente":190,"Receptor":110,"Distancia F–R [m]":155,
             **{b:105 for b in OCTAVE_LABELS},
             "LAeq [dB(A)]":135,
         },
         numeric_columns=["Distancia F–R [m]"]+OCTAVE_LABELS+["LAeq [dB(A)]"],
-        height=max(260,min(560,100+42*len(saved_detail))),
+        min_rows=1,
+        add_label="➕ Agregar resultado",
+        remove_label="➖ Quitar última fila",
     )
     detail_records=detail_df.where(pd.notna(detail_df),None).to_dict("records")
 
