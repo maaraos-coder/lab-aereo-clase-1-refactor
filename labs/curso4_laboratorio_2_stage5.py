@@ -50,26 +50,28 @@ def _teacher_fronts():
 
 
 def _teacher_result_rows():
-    """Solución numérica docente de control, independiente de avances del alumno."""
-    fronts=_teacher_fronts()
+    """Resultados oficiales del escenario crítico informados en el Anexo 03.2."""
+    official=[
+        ("R1",67,63),
+        ("R2",5,58),
+        ("R3",16,81),
+        ("R4",15,61),
+        ("R5",15,66),
+        ("R6",7,62),
+        ("R7",5,50),
+        ("R8",5,62),
+        ("R9",13,60),
+    ]
     rows=[]
-    # Tres distancias de control para cada frente. Es un chequeo en campo libre,
-    # no reemplaza el resultado final de Noise Map Lab.
-    for front,data in fronts.items():
-        for idx,r in enumerate((10,25,50),start=1):
-            adiv=20*math.log10(r)+11
-            lp_bands=[v-adiv for v in data["bands"]]
-            lwa_bands=[v+a for v,a in zip(lp_bands,A_CORR)]
-            laeq=_sum_db(lwa_bands)
-            row={
-                "Frente":front,
-                "Receptor":f"R{idx}",
-                "Distancia F–R [m]":r,
-            }
-            for label,val in zip(OCTAVE_LABELS,lp_bands):
-                row[label]=round(val,1)
-            row["LAeq [dB(A)]"]=round(laeq,1)
-            rows.append(row)
+    for receptor,dist,laeq in official:
+        row={
+            "Frente":"Escenario crítico · construcción",
+            "Receptor":receptor,
+            "Distancia F–R [m]":dist,
+            **{b:None for b in OCTAVE_LABELS},
+            "LAeq [dB(A)]":laeq,
+        }
+        rows.append(row)
     return rows
 
 
@@ -124,18 +126,24 @@ def _teacher_solution_panel(st,pd):
     )
     st.caption(f"{chosen} · LWA equivalente ≈ {data['lwa']:.1f} dB(A).")
 
-    st.markdown("#### Control de propagación de referencia")
-    st.markdown(
-        "Como verificación independiente del software se utiliza la divergencia geométrica de una "
-        "fuente puntual en campo libre. Este control no reemplaza Noise Map Lab."
-    )
-    st.latex(r"A_{div}=20\log_{10}(r)+11")
-    st.latex(r"L_p\approx L_w-A_{div}")
+    st.markdown("#### Resultados oficiales de modelación · escenario crítico")
     st.dataframe(pd.DataFrame(_teacher_result_rows()),hide_index=True,use_container_width=True)
-    st.caption(
-        "Los resultados de esta tabla son controles docentes en campo libre a 10, 25 y 50 m. "
-        "El valor definitivo del ejercicio corresponde al modelo realizado en Noise Map Lab."
+    st.success(
+        "El mayor nivel informado corresponde a **R3 = 81 dB(A)**. "
+        "R5 alcanza **66 dB(A)**. En la evaluación normativa del informe, ambos superan el límite diurno de 65 dB(A) para Zona III."
     )
+    st.caption(
+        "Referencia documental: Anexo 03.2, Tabla 13 (resultados de modelación acústica, pág. 42) "
+        "y Tabla 17 (evaluación D.S. N°38/2011, pág. 52). "
+        "El informe sólo publica el nivel global por receptor; por eso las bandas quedan para obtenerse desde Noise Map Lab."
+    )
+
+    with st.expander("Control aritmético opcional · divergencia geométrica",expanded=False):
+        st.markdown(
+            "Este cálculo sirve únicamente para revisar órdenes de magnitud y no sustituye la modelación ISO 9613."
+        )
+        st.latex(r"A_{div}=20\log_{10}(r)+11")
+        st.latex(r"L_p\approx L_w-A_{div}")
 
 
 def _teacher_pauta(st,pd):
@@ -302,9 +310,9 @@ def render(lab,saved,runtime):
             value=str(
                 saved.get("c4l2_s5_spatial_note")
                 or (
-                    "El mayor nivel se presenta en el receptor más próximo al frente de trabajo. "
-                    "El nivel disminuye al aumentar la distancia fuente–receptor; la condición crítica "
-                    "debe confirmarse con la geometría real del modelo."
+                    "En el informe, el mayor nivel del escenario crítico se obtiene en R3 con 81 dB(A), seguido por R5 con 66 dB(A). "
+                    "La condición crítica no depende sólo de la distancia al predio, sino también de la ubicación de los frentes "
+                    "y de la superposición de actividades del mes 2 del año 3."
                     if is_teacher else ""
                 )
             ),
@@ -318,8 +326,8 @@ def render(lab,saved,runtime):
             value=str(
                 saved.get("c4l2_s5_spectral_note")
                 or (
-                    "El espectro permite reconocer qué bandas dominan el aporte de cada frente. "
-                    "La selección posterior de controles debe considerar esas bandas dominantes y no solo el LAeq global."
+                    "El informe publicado entrega niveles globales por receptor, no el espectro de recepción. "
+                    "Las bandas deben extraerse del modelo desarrollado en Noise Map Lab para fundamentar la selección de medidas de control."
                     if is_teacher else ""
                 )
             ),
