@@ -416,6 +416,24 @@ def render(lab,saved,runtime):
     )
 
 
+    st.markdown("#### Condiciones de modelación del último informe")
+    st.markdown("""
+    La Adenda 2 utiliza **ISO 9613** con las siguientes condiciones de cálculo. Estos parámetros
+    son antecedentes del caso y deben reproducirse, cuando corresponda, en el modelo del alumno:
+    """)
+    st.dataframe(
+        pd.DataFrame([
+            {"Parámetro":"Temperatura","Valor":"10 °C"},
+            {"Parámetro":"Humedad relativa","Valor":"70 %"},
+            {"Parámetro":"Dirección del viento","Valor":"±45° en dirección al receptor"},
+            {"Parámetro":"Velocidad del viento","Valor":"1 a 5 m/s"},
+            {"Parámetro":"Orden de reflexiones","Valor":"1"},
+        ]),
+        hide_index=True,
+        use_container_width=True,
+    )
+    st.caption("Referencia: Anexo 05 · Adenda 2 · Tabla 26.")
+
     st.markdown("#### Ejemplo visual · ¿cómo se representa el frente en el modelo?")
     render_path=Path(__file__).resolve().parents[1] / "assets" / "curso4_lab2" / "render_fuente_equivalente_etapa4.jpg"
     if render_path.exists():
