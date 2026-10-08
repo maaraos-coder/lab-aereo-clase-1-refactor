@@ -266,6 +266,34 @@ def _teacher_pauta(st,pd,sources):
         f"LWA equivalente ≈ **{detail['lwa']:.1f} dB(A)**."
     )
 
+    st.markdown("#### Escenario crítico informado en el expediente")
+    st.markdown("""
+    El Anexo 03.2 identifica como escenario más crítico el **mes 2 del año 3**, por la superposición de:
+
+    - **Etapa 1:** Terminaciones, Obras exteriores, Pavimentación y Obras de mitigación vial (IMIV).
+    - **Etapas 2 y 3:** Terminaciones, Agua potable y alcantarillado de aguas servidas y Aguas lluvias.
+
+    La suma logarítmica mensual informada para ese escenario es:
+    """)
+    st.metric("Lw total escenario crítico", "121,5 dB(A)")
+    st.markdown("##### Niveles de potencia por actividad informados")
+    st.dataframe(
+        pd.DataFrame([
+            {"Actividad":"Terminaciones","Lw actividad [dB(A)]":108},
+            {"Actividad":"Obras exteriores","Lw actividad [dB(A)]":111},
+            {"Actividad":"Agua potable y alcantarillado de aguas servidas","Lw actividad [dB(A)]":112},
+            {"Actividad":"Aguas lluvias","Lw actividad [dB(A)]":113},
+            {"Actividad":"Pavimentación","Lw actividad [dB(A)]":111},
+            {"Actividad":"Obras de mitigación vial (IMIV)","Lw actividad [dB(A)]":113},
+        ]),
+        hide_index=True,
+        use_container_width=True,
+    )
+    st.caption(
+        "Referencia documental: Anexo 03.2, Tablas 9 y descripción del escenario crítico, págs. 30–33. "
+        "Los frentes de trabajo se ubican próximos a los receptores más cercanos para representar la peor condición físicamente posible."
+    )
+
     with st.expander("👨‍🏫 Criterios de revisión",expanded=False):
         st.markdown("""
         - Agrupar por **etapa/frente de trabajo**.
