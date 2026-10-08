@@ -321,15 +321,97 @@ def render(lab,saved,runtime):
     """,unsafe_allow_html=True)
 
     st.markdown("### 1 · ¿Qué es una fuente equivalente de un frente?")
+
     st.markdown("""
-    En vez de modelar cada máquina como un escenario independiente, agruparemos las máquinas que pertenecen
-    a una misma etapa y que pueden funcionar simultáneamente. Para cada banda de octava:
-    """)
-    st.latex(r"L_{W,f,eq}=10\log_{10}\left(\sum_i10^{L_{W,f,i}/10}\right)")
-    st.markdown("Si existen varias unidades iguales operando simultáneamente:")
+    <style>
+    div[data-testid="stLatex"]{
+        border:1px solid #b9d9e8;
+        border-left:5px solid #0b7fa5;
+        border-radius:16px;
+        padding:16px 18px;
+        margin:.25rem 0 .75rem 0;
+        background:linear-gradient(135deg,#f7fcff 0%,#edf7fb 100%);
+    }
+    div[data-testid="stLatex"] > div{
+        margin:auto;
+    }
+    </style>
+    <div style="border:1px solid #cfe0ed;border-radius:18px;padding:18px 20px;
+                background:linear-gradient(135deg,#fbfdff,#f2f8fb);margin:.25rem 0 1rem">
+      <div style="font-size:.70rem;font-weight:900;letter-spacing:.09em;color:#087ba0">
+        CONCEPTO CLAVE
+      </div>
+      <div style="font-size:1.05rem;font-weight:850;color:#173b53;margin:.3rem 0 .35rem">
+        Varias máquinas simultáneas pueden representarse mediante una sola fuente equivalente
+      </div>
+      <div style="color:#526f80;line-height:1.6">
+        En vez de modelar cada máquina como un escenario independiente, agruparemos las fuentes que
+        pertenecen a un mismo frente de trabajo y que pueden operar <b>simultáneamente</b>.
+        La combinación debe realizarse <b>energéticamente y por cada banda de octava</b>.
+      </div>
+    </div>
+    """,unsafe_allow_html=True)
+
+    st.markdown("""
+    <div style="font-size:.72rem;font-weight:900;letter-spacing:.08em;color:#087ba0;margin-top:.35rem">
+      ECUACIÓN 1 · SUMA ENERGÉTICA DEL FRENTE
+    </div>
+    <div style="font-size:.94rem;color:#526f80;margin:.15rem 0 .2rem">
+      Combina los niveles de potencia sonora de todas las máquinas que operan simultáneamente en una misma banda.
+    </div>
+    """,unsafe_allow_html=True)
+    st.latex(r"L_{W,f,eq}=10\log_{10}\left(\sum_i 10^{L_{W,f,i}/10}\right)")
+
+    st.markdown("""
+    <div style="font-size:.72rem;font-weight:900;letter-spacing:.08em;color:#087ba0;margin-top:.7rem">
+      ECUACIÓN 2 · VARIAS UNIDADES DEL MISMO EQUIPO
+    </div>
+    <div style="font-size:.94rem;color:#526f80;margin:.15rem 0 .2rem">
+      Corrige el nivel cuando existen <b>N unidades idénticas</b> operando simultáneamente.
+    </div>
+    """,unsafe_allow_html=True)
     st.latex(r"L_{W,f,N}=L_{W,f}+10\log_{10}(N)")
-    st.markdown("El resultado es el espectro de potencia sonora de la **fuente equivalente del frente de trabajo**.")
-    st.warning("Peor condición no significa inventar simultaneidades imposibles. Debe ser una condición crítica, pero técnicamente realizable según la etapa y el cronograma del proyecto.")
+
+    st.markdown("#### ¿Qué significa cada parámetro?")
+    p1,p2=st.columns(2,gap="medium")
+    with p1:
+        st.markdown("""
+        <div style="border:1px solid #d7e4ec;border-radius:16px;padding:15px 17px;background:#fbfdff;height:100%">
+          <div style="font-weight:850;color:#173b53;margin-bottom:.55rem">Suma energética</div>
+          <div style="color:#526f80;line-height:1.65">
+            <b>L<sub>W,f,eq</sub></b> · nivel de potencia sonora equivalente del frente en la banda <i>f</i> [dB].<br>
+            <b>L<sub>W,f,i</sub></b> · nivel de potencia sonora de la fuente o máquina <i>i</i> en la banda <i>f</i> [dB].<br>
+            <b>i</b> · índice de cada máquina o fuente considerada simultánea.<br>
+            <b>Σ</b> · suma energética de todas las fuentes seleccionadas.
+          </div>
+        </div>
+        """,unsafe_allow_html=True)
+    with p2:
+        st.markdown("""
+        <div style="border:1px solid #d7e4ec;border-radius:16px;padding:15px 17px;background:#fbfdff;height:100%">
+          <div style="font-weight:850;color:#173b53;margin-bottom:.55rem">Unidades idénticas</div>
+          <div style="color:#526f80;line-height:1.65">
+            <b>L<sub>W,f,N</sub></b> · nivel total en la banda <i>f</i> para <i>N</i> unidades iguales [dB].<br>
+            <b>L<sub>W,f</sub></b> · nivel de potencia sonora de una sola unidad en la banda <i>f</i> [dB].<br>
+            <b>N</b> · número de unidades idénticas operando simultáneamente.<br>
+            <b>f</b> · banda de octava analizada: 31,5 Hz a 4 kHz.
+          </div>
+        </div>
+        """,unsafe_allow_html=True)
+
+    st.markdown("""
+    <div style="border-left:4px solid #2b7a4b;background:#f3faf6;border-radius:12px;
+                padding:12px 15px;margin:.85rem 0 .7rem;color:#355c46;line-height:1.55">
+      <b>Resultado:</b> al repetir la suma para cada banda de octava se obtiene el
+      <b>espectro de potencia sonora de la fuente equivalente del frente de trabajo</b>.
+    </div>
+    """,unsafe_allow_html=True)
+
+    st.warning(
+        "Peor condición no significa inventar simultaneidades imposibles. "
+        "La condición debe ser crítica, pero técnicamente realizable según la etapa, "
+        "el frente de trabajo y el cronograma del proyecto."
+    )
 
     st.markdown("#### Ejemplo visual · ¿cómo se representa el frente en el modelo?")
     render_path=Path(__file__).resolve().parents[1] / "assets" / "curso4_lab2" / "render_fuente_equivalente_etapa4.jpg"
