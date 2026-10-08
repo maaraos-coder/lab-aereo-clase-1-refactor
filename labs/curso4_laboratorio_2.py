@@ -414,7 +414,7 @@ def _stage1(lab, saved):
           <div>
             <div class="c4l2-table-kicker">GEORREFERENCIACIÓN</div>
             <div class="c4l2-table-title">Registro de vértices del predio</div>
-            <div class="c4l2-table-copy">Una fila por vértice del polígono oficial. En el expediente los vértices del proyecto están identificados como A, B, C, D, E y F.</div>
+            <div class="c4l2-table-copy">Una fila por vértice del polígono oficial. En el expediente los vértices del proyecto están identificados como A, B, C, D, E, F, G, H, I, J, K, L, M y N.</div>
             <div class="c4l2-source"><b>📄 Dónde buscar:</b> Anexo 01 · <b>Antecedentes del Proyecto</b> (cartografía/KMZ/planos) y Anexo 02 · <b>Actualización Capítulo 2 Descripción Proyecto</b>, apartado de localización y superficie. <span class="page">Versión 30-09-2026.</span> Busca en el PDF: “coordenadas”, “localización”, “superficie” o “Lote G-1”. La ficha SEA electrónica no tiene número de página.</div>
           </div>
         </div>
@@ -429,6 +429,14 @@ def _stage1(lab, saved):
         {"Vértice":"D","Latitud":-33.6125562,"Longitud":-70.5706021},
         {"Vértice":"E","Latitud":-33.6128998,"Longitud":-70.5705329},
         {"Vértice":"F","Latitud":-33.6127983,"Longitud":-70.5700029},
+        {"Vértice":"G","Latitud":-33.6131420,"Longitud":-70.5699229},
+        {"Vértice":"H","Latitud":-33.6132253,"Longitud":-70.5704633},
+        {"Vértice":"I","Latitud":-33.6135960,"Longitud":-70.5703838},
+        {"Vértice":"J","Latitud":-33.6135037,"Longitud":-70.5698432},
+        {"Vértice":"K","Latitud":-33.6138563,"Longitud":-70.5697742},
+        {"Vértice":"L","Latitud":-33.6139396,"Longitud":-70.5703146},
+        {"Vértice":"M","Latitud":-33.6143826,"Longitud":-70.5702257},
+        {"Vértice":"N","Latitud":-33.6145330,"Longitud":-70.5711661},
     ]
 
     teacher_parts=[
@@ -440,29 +448,46 @@ def _stage1(lab, saved):
         {"Parte / obra":"Sedes sociales","Cantidad":"3","Ubicación / sector":"Proyecto","Fuente documental":"Anexo 02 · Descripción del Proyecto"},
     ]
     teacher_phases=[
-        {"N°":1,"Etapa / frente":"Movimiento de tierras","Actividad principal":"Excavación, carga, transporte y compactación","Sector del predio":"Frente móvil dentro del predio","Documento de respaldo":"Anexo 02 / Anexo 05"},
-        {"N°":2,"Etapa / frente":"Hormigón / obra gruesa","Actividad principal":"Suministro, bombeo y vibrado de hormigón","Sector del predio":"Frentes de edificación","Documento de respaldo":"Anexo 02 / Anexo 05"},
-        {"N°":3,"Etapa / frente":"Estructura / izaje","Actividad principal":"Izaje y movimiento de materiales","Sector del predio":"Área de torres","Documento de respaldo":"Anexo 02 / Anexo 05"},
-        {"N°":4,"Etapa / frente":"Equipos auxiliares","Actividad principal":"Apoyo y alimentación eléctrica temporal","Sector del predio":"Según frente de trabajo","Documento de respaldo":"Anexo 02 / Anexo 05"},
+        {"N°":1,"Etapa / frente":"Etapa constructiva 1","Actividad principal":"Construcción de edificios 1 y 5 e instalaciones asociadas","Sector del predio":"Edificios 1 y 5","Documento de respaldo":"Cap. 2 · Tabla 3 / Figuras 2 y 3"},
+        {"N°":2,"Etapa / frente":"Etapa constructiva 2","Actividad principal":"Construcción de edificios 2 y 3 e instalaciones asociadas","Sector del predio":"Edificios 2 y 3","Documento de respaldo":"Cap. 2 · Tabla 3 / Figuras 2 y 3"},
+        {"N°":3,"Etapa / frente":"Etapa constructiva 3","Actividad principal":"Construcción de edificios 4 y 6 e instalaciones asociadas","Sector del predio":"Edificios 4 y 6","Documento de respaldo":"Cap. 2 · Tabla 3 / Figuras 2 y 3"},
     ]
+
     teacher_machinery_rows=[
-        {"Máquina / equipo":"Excavadora hidráulica","Cantidad":None,"Etapa asociada":"Movimiento de tierras","Actividad":"Excavación / movimiento de material","Tipo":"Móvil","Fuente documental":"Anexo 02 / Anexo 05"},
-        {"Máquina / equipo":"Retroexcavadora","Cantidad":None,"Etapa asociada":"Movimiento de tierras","Actividad":"Preparación / excavación localizada","Tipo":"Móvil","Fuente documental":"Anexo 02 / Anexo 05"},
-        {"Máquina / equipo":"Cargador frontal","Cantidad":None,"Etapa asociada":"Movimiento de tierras","Actividad":"Carga de material","Tipo":"Móvil","Fuente documental":"Anexo 02 / Anexo 05"},
-        {"Máquina / equipo":"Camión tolva","Cantidad":None,"Etapa asociada":"Movimiento de tierras","Actividad":"Transporte / descarga de material","Tipo":"Móvil","Fuente documental":"Anexo 02 / Anexo 05"},
-        {"Máquina / equipo":"Rodillo vibratorio","Cantidad":None,"Etapa asociada":"Movimiento de tierras","Actividad":"Compactación","Tipo":"Móvil","Fuente documental":"Anexo 02 / Anexo 05"},
-        {"Máquina / equipo":"Camión mixer","Cantidad":None,"Etapa asociada":"Hormigón / obra gruesa","Actividad":"Suministro / descarga de hormigón","Tipo":"Móvil","Fuente documental":"Anexo 02 / Anexo 05"},
-        {"Máquina / equipo":"Bomba de hormigón","Cantidad":None,"Etapa asociada":"Hormigón / obra gruesa","Actividad":"Bombeo de hormigón","Tipo":"Móvil","Fuente documental":"Anexo 02 / Anexo 05"},
-        {"Máquina / equipo":"Vibrador de inmersión","Cantidad":None,"Etapa asociada":"Hormigón / obra gruesa","Actividad":"Vibrado de hormigón","Tipo":"Móvil","Fuente documental":"Anexo 02 / Anexo 05"},
-        {"Máquina / equipo":"Grúa torre","Cantidad":None,"Etapa asociada":"Estructura / izaje","Actividad":"Izaje / movimiento de materiales","Tipo":"Fija","Fuente documental":"Anexo 02 / Anexo 05"},
-        {"Máquina / equipo":"Generador diésel","Cantidad":None,"Etapa asociada":"Equipos auxiliares","Actividad":"Alimentación eléctrica temporal","Tipo":"Auxiliar","Fuente documental":"Anexo 02 / Anexo 05"},
+        {"Máquina / equipo":"Camión grúa","Cantidad":1,"Etapa asociada":"Etapa 1","Actividad":"Instalación de faena · Montaje","Tipo":"Móvil","Fuente documental":"Anexo 03.2 · Tabla 7 · pág. 25"},
+        {"Máquina / equipo":"Rodillo compactador","Cantidad":1,"Etapa asociada":"Etapa 1","Actividad":"Instalación de faena · Habilitación de caminos temporales","Tipo":"Móvil","Fuente documental":"Anexo 03.2 · Tabla 7 · pág. 25"},
+        {"Máquina / equipo":"Minicargador","Cantidad":1,"Etapa asociada":"Etapa 1 / 1-2-3","Actividad":"Instalación de faena / preparación del terreno","Tipo":"Móvil","Fuente documental":"Anexo 03.2 · Tabla 7 · pág. 25"},
+        {"Máquina / equipo":"Camión 3/4","Cantidad":1,"Etapa asociada":"Etapa 1 / 1-2-3","Actividad":"Instalación / nivelación / terminaciones","Tipo":"Móvil","Fuente documental":"Anexo 03.2 · Tablas 7 · págs. 25-27"},
+        {"Máquina / equipo":"Retroexcavadora","Cantidad":1,"Etapa asociada":"Etapas 1-2-3","Actividad":"Escarpe / obras exteriores / IMIV","Tipo":"Móvil","Fuente documental":"Anexo 03.2 · Tablas 7 · págs. 25-27"},
+        {"Máquina / equipo":"Camión tolva","Cantidad":1,"Etapa asociada":"Etapas 1-2-3","Actividad":"Escarpe / excavación / aguas lluvias","Tipo":"Móvil","Fuente documental":"Anexo 03.2 · Tablas 7 · págs. 25-27"},
+        {"Máquina / equipo":"Excavadora","Cantidad":1,"Etapa asociada":"Etapas 1-2-3","Actividad":"Excavación / aguas lluvias / IMIV","Tipo":"Móvil","Fuente documental":"Anexo 03.2 · Tablas 7 · págs. 25-27"},
+        {"Máquina / equipo":"Motoniveladora","Cantidad":1,"Etapa asociada":"Etapas 1-2-3","Actividad":"Nivelación","Tipo":"Móvil","Fuente documental":"Anexo 03.2 · Tabla 7 · pág. 25"},
+        {"Máquina / equipo":"Camión mixer","Cantidad":1,"Etapa asociada":"Etapas 1-2-3","Actividad":"Rellenos / exteriores / pavimentación / redes","Tipo":"Móvil","Fuente documental":"Anexo 03.2 · Tablas 7 · págs. 25-27"},
+        {"Máquina / equipo":"Alzahombres","Cantidad":1,"Etapa asociada":"Etapas 1-2-3","Actividad":"Obra gruesa / terminaciones / redes","Tipo":"Móvil","Fuente documental":"Anexo 03.2 · Tablas 7 · págs. 25-26"},
+        {"Máquina / equipo":"Betonera","Cantidad":1,"Etapa asociada":"Etapas 1-2-3","Actividad":"Terminaciones / agua potable y alcantarillado","Tipo":"Móvil","Fuente documental":"Anexo 03.2 · Tablas 7 · págs. 25-26"},
+        {"Máquina / equipo":"Compresor","Cantidad":1,"Etapa asociada":"Etapas 1-2-3","Actividad":"Terminaciones","Tipo":"Móvil","Fuente documental":"Anexo 03.2 · Tabla 7 · pág. 25"},
+        {"Máquina / equipo":"Mezclador mortero","Cantidad":1,"Etapa asociada":"Etapas 1-2-3","Actividad":"Terminaciones","Tipo":"Móvil","Fuente documental":"Anexo 03.2 · Tabla 7 · pág. 25"},
+        {"Máquina / equipo":"Soldador MIG","Cantidad":1,"Etapa asociada":"Etapas 1-2-3","Actividad":"Terminaciones / instalaciones domiciliarias","Tipo":"Móvil","Fuente documental":"Anexo 03.2 · Tablas 7 · págs. 25-26"},
+        {"Máquina / equipo":"Minicargador frontal","Cantidad":1,"Etapa asociada":"Etapas 1-2-3","Actividad":"Terminaciones / aguas lluvias / IMIV","Tipo":"Móvil","Fuente documental":"Anexo 03.2 · Tablas 7 · págs. 25-27"},
+        {"Máquina / equipo":"Regla vibradora","Cantidad":1,"Etapa asociada":"Etapas 1-2-3","Actividad":"Instalaciones / exteriores / pavimentación / IMIV","Tipo":"Móvil","Fuente documental":"Anexo 03.2 · Tablas 7 · págs. 26-27"},
+        {"Máquina / equipo":"Rodillo","Cantidad":1,"Etapa asociada":"Etapas 1-2-3","Actividad":"Obras exteriores / pavimentación / IMIV","Tipo":"Móvil","Fuente documental":"Anexo 03.2 · Tablas 7 · págs. 26-27"},
+        {"Máquina / equipo":"Bomba de hormigón","Cantidad":1,"Etapa asociada":"Etapas 1-2-3","Actividad":"Obras exteriores / pavimentación / IMIV","Tipo":"Móvil","Fuente documental":"Anexo 03.2 · Tablas 7 · págs. 26-27"},
+        {"Máquina / equipo":"Vibrador de inmersión","Cantidad":1,"Etapa asociada":"Etapas 1-2-3","Actividad":"Obras exteriores / pavimentación / IMIV","Tipo":"Móvil","Fuente documental":"Anexo 03.2 · Tablas 7 · págs. 26-27"},
+        {"Máquina / equipo":"Tractocamión","Cantidad":1,"Etapa asociada":"Etapas 1-2-3","Actividad":"Obras exteriores / pavimentación / IMIV","Tipo":"Móvil","Fuente documental":"Anexo 03.2 · Tablas 7 · págs. 26-27"},
+        {"Máquina / equipo":"Cama baja","Cantidad":1,"Etapa asociada":"Etapas 1-2-3","Actividad":"Agua potable y alcantarillado","Tipo":"Móvil","Fuente documental":"Anexo 03.2 · Tabla 7 · pág. 26"},
+        {"Máquina / equipo":"Camión aljibe","Cantidad":1,"Etapa asociada":"Etapas 1-2-3","Actividad":"Agua potable y alcantarillado","Tipo":"Móvil","Fuente documental":"Anexo 03.2 · Tabla 7 · pág. 26"},
+        {"Máquina / equipo":"Camión pluma","Cantidad":1,"Etapa asociada":"Etapas 1-2-3","Actividad":"Aguas lluvias","Tipo":"Móvil","Fuente documental":"Anexo 03.2 · Tabla 7 · pág. 26"},
+        {"Máquina / equipo":"Densímetro nuclear","Cantidad":1,"Etapa asociada":"Etapas 1-2-3","Actividad":"Aguas lluvias","Tipo":"Instrumento","Fuente documental":"Anexo 03.2 · Tabla 7 · pág. 26"},
+        {"Máquina / equipo":"Martillo demoledor","Cantidad":1,"Etapa asociada":"Etapas 1-2-3","Actividad":"Aguas lluvias / IMIV","Tipo":"Móvil","Fuente documental":"Anexo 03.2 · Tablas 7 · págs. 26-27"},
     ]
+
     teacher_chronology=[
-        {"Etapa / actividad":"Movimiento de tierras","Inicio":"","Término":"","Duración":"","¿Se superpone?":"No indicado","Observación":"Secuencia de referencia; fechas exactas deben contrastarse con el cronograma oficial."},
-        {"Etapa / actividad":"Hormigón / obra gruesa","Inicio":"","Término":"","Duración":"","¿Se superpone?":"No indicado","Observación":"Completar fechas/duración solo con respaldo documental."},
-        {"Etapa / actividad":"Estructura / izaje","Inicio":"","Término":"","Duración":"","¿Se superpone?":"No indicado","Observación":"Completar fechas/duración solo con respaldo documental."},
-        {"Etapa / actividad":"Equipos auxiliares","Inicio":"","Término":"","Duración":"","¿Se superpone?":"No indicado","Observación":"Puede acompañar distintos frentes; verificar cronograma."},
+        {"Etapa / actividad":"Etapa constructiva 1","Inicio":"2° semestre 2025","Término":"1° semestre 2027","Duración":"","¿Se superpone?":"Sí","Observación":"Edificios 1 y 5. Inicio por movimiento de tierra y acondicionamiento; término con recepción municipal."},
+        {"Etapa / actividad":"Etapa constructiva 2","Inicio":"1° semestre 2026","Término":"2° semestre 2027","Duración":"","¿Se superpone?":"Sí","Observación":"Edificios 2 y 3. Inicio por movimiento de tierra y acondicionamiento; término con recepción municipal."},
+        {"Etapa / actividad":"Etapa constructiva 3","Inicio":"2° semestre 2026","Término":"1° semestre 2028","Duración":"","¿Se superpone?":"Sí","Observación":"Edificios 4 y 6. Inicio por movimiento de tierra y acondicionamiento; término con recepción municipal."},
+        {"Etapa / actividad":"Fase de construcción","Inicio":"Septiembre 2025","Término":"Enero 2028 aprox.","Duración":"29 meses","¿Se superpone?":"Sí","Observación":"La carta Gantt confirma superposición de actividades durante la ejecución."},
     ]
+
 
     vertex_saved=saved.get("c4l2_s1_vertices_table") or (
         teacher_vertices if is_teacher else [
@@ -489,7 +514,7 @@ def _stage1(lab, saved):
 
     if is_teacher:
         st.success(
-            "Vista Docente: vértices oficiales A–F cargados desde la Tabla 7 del Capítulo 2 "
+            "Vista Docente: vértices oficiales A–N cargados desde la Tabla 7 del Capítulo 2 "
             "(coordenadas UTM WGS84 Huso 19S) y convertidos a latitud/longitud para Noise Map Lab."
         )
 
