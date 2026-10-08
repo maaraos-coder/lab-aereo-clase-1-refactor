@@ -139,9 +139,38 @@ def render(lab, saved, runtime):
         st.success("Receptores guardados para las siguientes etapas.")
 
     if st.session_state.get("role")=="Docente":
-      with st.expander("👨‍🏫 Pauta docente · Etapa 2"):
+      st.markdown("""
+      <div style="border:1px solid #bcd8e7;border-left:5px solid #0b7fa5;border-radius:18px;
+                  padding:16px 18px;background:linear-gradient(135deg,#f8fcff,#edf7fb);margin:1rem 0">
+        <div style="font-size:.70rem;font-weight:900;letter-spacing:.09em;color:#087ba0">
+          VISTA DOCENTE · REFERENCIA DE CORRECCIÓN
+        </div>
+        <div style="font-size:1.04rem;font-weight:900;color:#173b53;margin:.25rem 0">
+          Receptores y geometría esperada
+        </div>
+        <div style="color:#526f80;line-height:1.5">
+          La vista docente muestra los criterios y, cuando existen datos guardados, los receptores registrados.
+          Alumno y Proyección Zoom deben identificar y documentar los puntos desde el expediente.
+        </div>
+      </div>
+      """,unsafe_allow_html=True)
+
+      teacher_receptors=saved.get("c4l2_s2_receptors_table") or []
+      if teacher_receptors:
+        st.markdown("#### Receptores registrados · vista docente")
+        st.dataframe(pd.DataFrame(teacher_receptors),hide_index=True,use_container_width=True)
+      else:
+        st.info(
+          "No se muestran coordenadas inventadas como solución. La posición exacta de R1, R2, R3… "
+          "debe provenir del Anexo de Ruido y Vibraciones y de la cartografía oficial del proyecto."
+        )
+
+      with st.expander("👨‍🏫 Criterios de revisión",expanded=False):
         st.markdown("""
-        Revisar que el alumno entienda el receptor como un **punto tridimensional**, conserve la identificación documental,
-        registre coordenadas, altura y distancia, distinga distancia al predio de distancia fuente–receptor,
-        justifique cada punto y lo reproduzca en Noise Map Lab.
+        - El receptor debe entenderse como un **punto tridimensional**.
+        - Debe conservarse la identificación documental **R1, R2, R3...**.
+        - Registrar coordenadas, altura y distancia al predio.
+        - Distinguir **distancia al predio** de **distancia fuente–receptor**.
+        - Justificar por qué se selecciona cada receptor.
+        - Reproducir correctamente cada punto en Noise Map Lab.
         """)
