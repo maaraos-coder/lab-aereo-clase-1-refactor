@@ -232,6 +232,25 @@ def render(lab,saved,runtime):
         "Por ejemplo, no corresponde proponer simplemente alejar una excavadora si la excavación debe realizarse junto al deslinde."
     )
 
+    role=st.session_state.get("role")
+    is_teacher=role=="Docente"
+    stage5_rows=saved.get("c4l2_s5_detailed_results") or []
+    has_stage5_results=bool(saved.get("done_5")) and any(
+        _num(r.get("LAeq [dB(A)]")) is not None for r in stage5_rows
+    )
+
+    if not is_teacher and not has_stage5_results:
+        st.markdown("### 3 · Diseño de medidas de control")
+        st.warning(
+            "Esta parte se habilita después de completar y guardar la **Etapa 5**. "
+            "Todavía no existen resultados originales guardados para recuperar en esta vista."
+        )
+        st.info(
+            "Vuelve a la Etapa 5, registra los resultados obtenidos en Noise Map Lab y presiona "
+            "**Guardar resultados detallados**. Luego regresa a la Etapa 6."
+        )
+        return
+
     st.markdown("### 3 · Selecciona la estrategia para cada frente")
     saved_rows=saved.get("c4l2_s6_control_design") or _student_design_rows(saved)
     design_df=runtime["_professional_grid"](
