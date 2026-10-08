@@ -126,6 +126,46 @@ def _render_teacher_pauta(st,pd):
         f"LWA broadband de referencia ≈ {lwa_global:.1f} dB(A)."
     )
 
+    st.markdown("#### Valores de potencia acústica informados en el Anexo 03.2")
+    report_sources=[
+        ("Camión tolva",[108,104,101,98,97,94,91,86],102,"BS 5228-1 · C.2 Ref.32 pág.47"),
+        ("Excavadora",[102,108,103,101,97,94,88,79],103,"BS 5228-1 · C.4 Ref.64 pág.53"),
+        ("Camión aljibe",[108,109,103,107,101,102,98,93],109,"BS 5228-1 · C.6 Ref.37 pág.58"),
+        ("Camión pluma",[109,106,104,102,100,97,92,84],105,"BS 5228-1 · C.4 Ref.53 pág.52"),
+        ("Camión grúa",[108,104,99,91,92,91,84,78],98,"BS 5228-1 · C.4 Ref.43 pág.52"),
+        ("Retroexcavadora",[102,94,92,92,91,88,87,78],96,"BS 5228-1 · C.2 Ref.8 pág.46"),
+        ("Alzahombres",[107,101,94,93,106,94,82,75],107,"BS 5228-1 · C.4 Ref.54 pág.52"),
+        ("Camión mixer",[97,94,98,99,97,92,86,28],101,"BS 5228-1 · C.4 Ref.18 pág.50"),
+        ("Rodillo compactador",[118,110,101,100,98,93,87,82],103,"BS 5228-1 · C.5 Ref.22 pág.56"),
+        ("Rodillo",[110,106,95,99,95,92,88,85],101,"BS 5228-1 · C.2 Ref.40 pág.47"),
+        ("Camión cama baja",[108,97,94,98,99,97,92,86],106,"Fuente propia del consultor"),
+        ("Compresor",[79,82,87,82,83,78,75,73],87,"Fuente propia del consultor"),
+        ("Martillo demoledor",[82,84,85,88,94,98,101,102],107,"Fuente propia del consultor"),
+        ("Soldador MIG",[80,73,75,75,76,79,83,87],90,"Fuente propia del consultor"),
+        ("Regla vibradora",[88,93,82,92,90,88,85,82],95,"Fuente propia del consultor"),
+        ("Mezclador mortero",[64,63,70,68,73,79,84,91],92,"Fuente propia del consultor"),
+        ("Tractocamión",[107,99,106,103,106,98,89,83],108,"Fuente propia del consultor"),
+        ("Unidad motriz (vibrador)",[106,103,100,91,86,88,87,85],97,"Fuente propia del consultor"),
+        ("Bomba de hormigón",[104,102,97,90,92,91,86,82],98,"Fuente propia del consultor"),
+        ("Betonera",[75,78,82,87,90,93,91,91],98,"Fuente propia del consultor"),
+        ("Camión 3/4",[91,96,86,85,88,86,85,78],93,"Fuente propia del consultor"),
+        ("Minicargador",[96,95,91,90,90,89,82,81],95,"Fuente propia del consultor"),
+        ("Motoniveladora",[106,105,101,97,102,96,92,83],105,"Fuente propia del consultor"),
+    ]
+    report_rows=[]
+    for name,bands,lwa,source in report_sources:
+        row={"Fuente de ruido":name}
+        for label,val in zip(["63 Hz","125 Hz","250 Hz","500 Hz","1 kHz","2 kHz","4 kHz","8 kHz"],bands):
+            row[label]=val
+        row["Lw [dB(A)]"]=lwa
+        row["Fuente"]=source
+        report_rows.append(row)
+    st.dataframe(pd.DataFrame(report_rows),hide_index=True,use_container_width=True)
+    st.caption(
+        "Referencia documental: Anexo 03.2, Tabla 8, págs. 28–29. "
+        "Estos valores sirven para corregir la selección del alumno; no deben mostrarse en Alumno ni Proyección Zoom."
+    )
+
     with st.expander("👨‍🏫 Criterios de revisión",expanded=False):
         st.markdown("""
         - La referencia debe ser coherente con **equipo + tamaño/potencia + actividad**.
