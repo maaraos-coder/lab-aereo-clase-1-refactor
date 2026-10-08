@@ -56,47 +56,48 @@ def render(lab, saved, runtime):
     st.markdown("### 4 · Registra los receptores identificados")
     is_teacher=st.session_state.get("role")=="Docente"
     teacher_receptors=[
-      {"Receptor":"R1","Uso / tipo":"Complejo educacional","Descripción":"Punto de proyección en patio del Complejo Educacional Consolidada","Latitud":-33.6119671,"Longitud":-70.5708285,"Altura (m)":1.5,"Dist. al predio (m)":67,"Fuente documental":"Anexo 03.2 · Tabla 4 · pág. 17"},
-      {"Receptor":"R2","Uso / tipo":"Vivienda","Descripción":"Punto de proyección en patio de vivienda","Latitud":-33.6127289,"Longitud":-70.5704974,"Altura (m)":1.5,"Dist. al predio (m)":5,"Fuente documental":"Anexo 03.2 · Tabla 4 · pág. 17"},
-      {"Receptor":"R3","Uso / tipo":"Vivienda","Descripción":"Punto de proyección en patio de vivienda","Latitud":-33.6128730,"Longitud":-70.5697995,"Altura (m)":1.5,"Dist. al predio (m)":16,"Fuente documental":"Anexo 03.2 · Tabla 4 · pág. 17"},
-      {"Receptor":"R4","Uso / tipo":"Vivienda","Descripción":"Punto de proyección en patio de vivienda","Latitud":-33.6134444,"Longitud":-70.5702517,"Altura (m)":1.5,"Dist. al predio (m)":15,"Fuente documental":"Anexo 03.2 · Tabla 4 · pág. 17"},
-      {"Receptor":"R5","Uso / tipo":"Vivienda","Descripción":"Punto de proyección en patio de vivienda","Latitud":-33.6137228,"Longitud":-70.5696316,"Altura (m)":1.5,"Dist. al predio (m)":15,"Fuente documental":"Anexo 03.2 · Tabla 4 · pág. 17"},
-      {"Receptor":"R6","Uso / tipo":"Vivienda","Descripción":"Punto de proyección en patio de vivienda","Latitud":-33.6139859,"Longitud":-70.5702185,"Altura (m)":1.5,"Dist. al predio (m)":7,"Fuente documental":"Anexo 03.2 · Tabla 4 · pág. 17"},
-      {"Receptor":"R7","Uso / tipo":"Vivienda","Descripción":"Punto de proyección en patio de vivienda","Latitud":-33.6144599,"Longitud":-70.5705289,"Altura (m)":1.5,"Dist. al predio (m)":5,"Fuente documental":"Anexo 03.2 · Tabla 4 · pág. 17"},
-      {"Receptor":"R8","Uso / tipo":"Vivienda","Descripción":"Punto de proyección en patio de vivienda","Latitud":-33.6145446,"Longitud":-70.5709615,"Altura (m)":1.5,"Dist. al predio (m)":5,"Fuente documental":"Anexo 03.2 · Tabla 4 · pág. 17"},
-      {"Receptor":"R9","Uso / tipo":"Vivienda","Descripción":"Punto de proyección en patio de vivienda","Latitud":-33.6139433,"Longitud":-70.5714464,"Altura (m)":1.5,"Dist. al predio (m)":13,"Fuente documental":"Anexo 03.2 · Tabla 4 · pág. 17"},
+      {"Receptor":"R01","Uso / tipo":"Complejo educacional","Descripción":"Complejo Educacional Consolidada","Latitud":-33.6119671,"Longitud":-70.5708285,"Altura (m)":1.5,"Dist. al predio (m)":67,"Condición deslinde":"No colindante","Zona D.S.38":"Zona III","Límite diurno [dB(A)]":65,"Fuente documental":"Anexo 05 · Tabla 5 / Tabla 9"},
+      {"Receptor":"R02","Uso / tipo":"Vivienda","Descripción":"Vivienda","Latitud":-33.6127289,"Longitud":-70.5704974,"Altura (m)":1.5,"Dist. al predio (m)":0,"Condición deslinde":"Colindante","Zona D.S.38":"Zona III","Límite diurno [dB(A)]":65,"Fuente documental":"Anexo 05 · Tabla 5 / Tabla 9"},
+      {"Receptor":"R03","Uso / tipo":"Vivienda","Descripción":"Vivienda","Latitud":-33.6128730,"Longitud":-70.5697995,"Altura (m)":1.5,"Dist. al predio (m)":16,"Condición deslinde":"No colindante","Zona D.S.38":"Zona III","Límite diurno [dB(A)]":65,"Fuente documental":"Anexo 05 · Tabla 5 / Tabla 9"},
+      {"Receptor":"R04","Uso / tipo":"Vivienda","Descripción":"Vivienda","Latitud":-33.6134444,"Longitud":-70.5702517,"Altura (m)":1.5,"Dist. al predio (m)":0,"Condición deslinde":"Colindante","Zona D.S.38":"Zona III","Límite diurno [dB(A)]":65,"Fuente documental":"Anexo 05 · Tabla 5 / Tabla 9"},
+      {"Receptor":"R05","Uso / tipo":"Vivienda","Descripción":"Vivienda","Latitud":-33.6137228,"Longitud":-70.5696316,"Altura (m)":1.5,"Dist. al predio (m)":15,"Condición deslinde":"No colindante","Zona D.S.38":"Zona III","Límite diurno [dB(A)]":65,"Fuente documental":"Anexo 05 · Tabla 5 / Tabla 9"},
+      {"Receptor":"R06","Uso / tipo":"Vivienda","Descripción":"Vivienda","Latitud":-33.6139859,"Longitud":-70.5702185,"Altura (m)":1.5,"Dist. al predio (m)":0,"Condición deslinde":"Colindante","Zona D.S.38":"Zona III","Límite diurno [dB(A)]":65,"Fuente documental":"Anexo 05 · Tabla 5 / Tabla 9"},
+      {"Receptor":"R07","Uso / tipo":"Vivienda","Descripción":"Vivienda","Latitud":-33.6144599,"Longitud":-70.5705289,"Altura (m)":1.5,"Dist. al predio (m)":0,"Condición deslinde":"Colindante","Zona D.S.38":"Zona III","Límite diurno [dB(A)]":65,"Fuente documental":"Anexo 05 · Tabla 5 / Tabla 9"},
+      {"Receptor":"R08","Uso / tipo":"Vivienda","Descripción":"Vivienda","Latitud":-33.6145446,"Longitud":-70.5709615,"Altura (m)":1.5,"Dist. al predio (m)":0,"Condición deslinde":"Colindante","Zona D.S.38":"Zona III","Límite diurno [dB(A)]":65,"Fuente documental":"Anexo 05 · Tabla 5 / Tabla 9"},
+      {"Receptor":"R09","Uso / tipo":"Vivienda","Descripción":"Vivienda","Latitud":-33.6139433,"Longitud":-70.5714464,"Altura (m)":1.5,"Dist. al predio (m)":0,"Condición deslinde":"Colindante","Zona D.S.38":"Zona III","Límite diurno [dB(A)]":65,"Fuente documental":"Anexo 05 · Tabla 5 / Tabla 9"},
     ]
     teacher_relevance=[
-      {"Receptor":"R1","¿Por qué se selecciona?":"Receptor sensible próximo al proyecto","Qué representa":"Complejo educacional","Observación espacial":"Ubicado al norte del predio; distancia mínima aproximada 67 m."},
-      {"Receptor":"R2","¿Por qué se selecciona?":"Vivienda inmediatamente próxima al límite","Qué representa":"Vivienda","Observación espacial":"Distancia mínima aproximada 5 m."},
-      {"Receptor":"R3","¿Por qué se selecciona?":"Vivienda sensible cercana al frente oriental","Qué representa":"Vivienda","Observación espacial":"Distancia mínima aproximada 16 m."},
-      {"Receptor":"R4","¿Por qué se selecciona?":"Vivienda sensible cercana al frente oriental","Qué representa":"Vivienda","Observación espacial":"Distancia mínima aproximada 15 m."},
-      {"Receptor":"R5","¿Por qué se selecciona?":"Vivienda sensible cercana al frente oriental","Qué representa":"Vivienda","Observación espacial":"Distancia mínima aproximada 15 m."},
-      {"Receptor":"R6","¿Por qué se selecciona?":"Vivienda inmediatamente próxima al límite","Qué representa":"Vivienda","Observación espacial":"Distancia mínima aproximada 7 m."},
-      {"Receptor":"R7","¿Por qué se selecciona?":"Vivienda inmediatamente próxima al límite sur","Qué representa":"Vivienda","Observación espacial":"Distancia mínima aproximada 5 m."},
-      {"Receptor":"R8","¿Por qué se selecciona?":"Vivienda inmediatamente próxima al límite sur","Qué representa":"Vivienda","Observación espacial":"Distancia mínima aproximada 5 m."},
-      {"Receptor":"R9","¿Por qué se selecciona?":"Vivienda sensible cercana al límite occidental","Qué representa":"Vivienda","Observación espacial":"Distancia mínima aproximada 13 m."},
+      {"Receptor":"R01","¿Por qué se selecciona?":"Receptor sensible dentro del área de influencia","Qué representa":"Complejo educacional","Observación espacial":"No colindante; distancia al proyecto 67 m."},
+      {"Receptor":"R02","¿Por qué se selecciona?":"Receptor residencial inmediatamente expuesto","Qué representa":"Vivienda","Observación espacial":"Colindante al proyecto; para modelación de ruido se evalúa a 3,5 m del deslinde."},
+      {"Receptor":"R03","¿Por qué se selecciona?":"Receptor residencial próximo","Qué representa":"Vivienda","Observación espacial":"Distancia al proyecto 16 m."},
+      {"Receptor":"R04","¿Por qué se selecciona?":"Receptor residencial inmediatamente expuesto","Qué representa":"Vivienda","Observación espacial":"Colindante al proyecto; para modelación de ruido se evalúa a 3,5 m del deslinde."},
+      {"Receptor":"R05","¿Por qué se selecciona?":"Receptor residencial próximo","Qué representa":"Vivienda","Observación espacial":"Distancia al proyecto 15 m."},
+      {"Receptor":"R06","¿Por qué se selecciona?":"Receptor residencial inmediatamente expuesto","Qué representa":"Vivienda","Observación espacial":"Colindante al proyecto; para modelación de ruido se evalúa a 3,5 m del deslinde."},
+      {"Receptor":"R07","¿Por qué se selecciona?":"Receptor residencial inmediatamente expuesto","Qué representa":"Vivienda","Observación espacial":"Colindante al proyecto; para modelación de ruido se evalúa a 3,5 m del deslinde."},
+      {"Receptor":"R08","¿Por qué se selecciona?":"Receptor residencial inmediatamente expuesto","Qué representa":"Vivienda","Observación espacial":"Colindante al proyecto; para modelación de ruido se evalúa a 3,5 m del deslinde."},
+      {"Receptor":"R09","¿Por qué se selecciona?":"Receptor residencial inmediatamente expuesto","Qué representa":"Vivienda","Observación espacial":"Colindante al proyecto; para modelación de ruido se evalúa a 3,5 m del deslinde."},
     ]
 
     default_rows=saved.get("c4l2_s2_receptors_table") or (
       teacher_receptors if is_teacher else [
-        {"Receptor":"R1","Uso / tipo":"","Descripción":"","Latitud":None,"Longitud":None,"Altura (m)":None,"Dist. al predio (m)":None,"Fuente documental":""},
-        {"Receptor":"R2","Uso / tipo":"","Descripción":"","Latitud":None,"Longitud":None,"Altura (m)":None,"Dist. al predio (m)":None,"Fuente documental":""},
-        {"Receptor":"R3","Uso / tipo":"","Descripción":"","Latitud":None,"Longitud":None,"Altura (m)":None,"Dist. al predio (m)":None,"Fuente documental":""},
+        {"Receptor":"R01","Uso / tipo":"","Descripción":"","Latitud":None,"Longitud":None,"Altura (m)":None,"Dist. al predio (m)":None,"Condición deslinde":"","Zona D.S.38":"","Límite diurno [dB(A)]":None,"Fuente documental":""},
+        {"Receptor":"R02","Uso / tipo":"","Descripción":"","Latitud":None,"Longitud":None,"Altura (m)":None,"Dist. al predio (m)":None,"Condición deslinde":"","Zona D.S.38":"","Límite diurno [dB(A)]":None,"Fuente documental":""},
+        {"Receptor":"R03","Uso / tipo":"","Descripción":"","Latitud":None,"Longitud":None,"Altura (m)":None,"Dist. al predio (m)":None,"Condición deslinde":"","Zona D.S.38":"","Límite diurno [dB(A)]":None,"Fuente documental":""},
       ]
     )
-    if is_teacher and not saved.get("c4l2_s2_receptors_table"):
-      current=st.session_state.get("c4l2_s2_receptors_work")
-      has_content=bool(current) and any(str(x.get("Descripción") or "").strip() for x in current)
-      if not has_content:
+    if is_teacher:
+      teacher_seed_version="adenda2_ruido_2026_09_23_v1"
+      if st.session_state.get("c4l2_s2_teacher_seed_version")!=teacher_seed_version:
         st.session_state["c4l2_s2_receptors_work"]=[dict(x) for x in teacher_receptors]
+        st.session_state["c4l2_s2_relevance_work"]=[dict(x) for x in teacher_relevance]
+        st.session_state["c4l2_s2_teacher_seed_version"]=teacher_seed_version
     if "c4l2_s2_receptors_work" not in st.session_state:
       st.session_state["c4l2_s2_receptors_work"]=[dict(x) for x in default_rows]
 
     rows=st.session_state["c4l2_s2_receptors_work"]
     grid=runtime["_professional_grid"](pd.DataFrame(rows),"c4l2_s2_receptors_grid",
-      widths={"Receptor":105,"Uso / tipo":170,"Descripción":250,"Latitud":150,"Longitud":150,"Altura (m)":120,"Dist. al predio (m)":155,"Fuente documental":240},
-      numeric_columns=["Latitud","Longitud","Altura (m)","Dist. al predio (m)"],height=max(255,min(520,90+42*len(rows))))
+      widths={"Receptor":105,"Uso / tipo":170,"Descripción":220,"Latitud":145,"Longitud":145,"Altura (m)":110,"Dist. al predio (m)":145,"Condición deslinde":150,"Zona D.S.38":120,"Límite diurno [dB(A)]":170,"Fuente documental":230},
+      numeric_columns=["Latitud","Longitud","Altura (m)","Dist. al predio (m)","Límite diurno [dB(A)]"],height=max(255,min(520,90+42*len(rows))))
     st.session_state["c4l2_s2_receptors_work"]=grid.where(pd.notna(grid),None).to_dict("records")
 
     add_col,remove_col,info_col=st.columns([.23,.23,.54])
@@ -104,7 +105,7 @@ def render(lab, saved, runtime):
       if st.button("➕ Agregar receptor",use_container_width=True,key="c4l2_s2_add_receiver"):
         current=st.session_state["c4l2_s2_receptors_work"]
         n=len(current)+1
-        current.append({"Receptor":f"R{n}","Uso / tipo":"","Descripción":"","Latitud":None,"Longitud":None,"Altura (m)":None,"Dist. al predio (m)":None,"Fuente documental":""})
+        current.append({"Receptor":f"R{n:02d}","Uso / tipo":"","Descripción":"","Latitud":None,"Longitud":None,"Altura (m)":None,"Dist. al predio (m)":None,"Condición deslinde":"","Zona D.S.38":"","Límite diurno [dB(A)]":None,"Fuente documental":""})
         st.session_state["c4l2_s2_receptors_work"]=current
         st.rerun()
     with remove_col:
@@ -124,14 +125,14 @@ def render(lab, saved, runtime):
       1. Abre el proyecto iniciado en la Etapa 1.
       2. Mantén visible el límite del predio.
       3. Agrega un objeto **Receptor** para cada punto.
-      4. Nómbralos **R1, R2, R3...** respetando la identificación del expediente.
+      4. Nómbralos **R01, R02, R03...** respetando la identificación del expediente.
       5. Ajusta la **altura** según el punto representado.
       6. Verifica posición, coordenadas y distancia al predio.
       7. Guarda el proyecto.
       """)
     with b:
       st.link_button("🗺️ Abrir Noise Map Lab",runtime["NOISEMAP_URL"],use_container_width=True)
-    st.warning("No coloques todos los receptores a la misma altura por defecto: la altura es parte de la geometría del problema.")
+    st.warning("En esta Adenda 2 los receptores basales R01–R09 se documentan a 1,5 m. Para los receptores colindantes, el modelo de ruido considera el punto de evaluación a 3,5 m del deslinde del proyecto.")
 
     st.markdown("### 6 · Justifica la selección")
     receptor_names=[str(x.get("Receptor") or f"R{i+1}") for i,x in enumerate(st.session_state["c4l2_s2_receptors_work"])]
