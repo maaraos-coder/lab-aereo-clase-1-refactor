@@ -440,45 +440,47 @@ def _stage1(lab, saved):
     ]
 
     teacher_parts=[
-        {"Parte / obra":"Torres habitacionales","Cantidad":"6","Ubicación / sector":"Lote G-1","Fuente documental":"Anexo 02 · Descripción del Proyecto"},
-        {"Parte / obra":"Departamentos","Cantidad":"360","Ubicación / sector":"6 torres","Fuente documental":"Anexo 02 · Descripción del Proyecto"},
-        {"Parte / obra":"Estacionamientos vehiculares","Cantidad":"277","Ubicación / sector":"Proyecto","Fuente documental":"Ficha resumen / Descripción del Proyecto"},
-        {"Parte / obra":"Estacionamientos de bicicletas","Cantidad":"106","Ubicación / sector":"Proyecto","Fuente documental":"Ficha resumen / Descripción del Proyecto"},
-        {"Parte / obra":"Locales comerciales","Cantidad":"4","Ubicación / sector":"Proyecto","Fuente documental":"Anexo 02 · Descripción del Proyecto"},
-        {"Parte / obra":"Sedes sociales","Cantidad":"3","Ubicación / sector":"Proyecto","Fuente documental":"Anexo 02 · Descripción del Proyecto"},
+        {"Parte / obra":"Torres habitacionales","Cantidad":"6","Ubicación / sector":"Predio del proyecto","Fuente documental":"Anexo 05 · Estudio Ruido y Vibraciones · 5.1"},
+        {"Parte / obra":"Departamentos","Cantidad":"360","Ubicación / sector":"6 torres de 4 pisos","Fuente documental":"Anexo 05 · Estudio Ruido y Vibraciones · 5.1"},
+        {"Parte / obra":"Estacionamientos vehiculares","Cantidad":"276","Ubicación / sector":"Superficie y subterráneo","Fuente documental":"Anexo 05 · Estudio Ruido y Vibraciones · 5.1"},
+        {"Parte / obra":"Estacionamientos de bicicletas","Cantidad":"138","Ubicación / sector":"Proyecto","Fuente documental":"Anexo 05 · Estudio Ruido y Vibraciones · 5.1"},
+        {"Parte / obra":"Locales comerciales","Cantidad":"4","Ubicación / sector":"Proyecto","Fuente documental":"Anexo 05 · Estudio Ruido y Vibraciones · 5.1"},
+        {"Parte / obra":"Sedes sociales","Cantidad":"3","Ubicación / sector":"Proyecto","Fuente documental":"Anexo 05 · Estudio Ruido y Vibraciones · 5.1"},
+        {"Parte / obra":"Superficie del terreno","Cantidad":"22.701 m² aprox.","Ubicación / sector":"Puente Alto","Fuente documental":"Anexo 05 · Estudio Ruido y Vibraciones · 5.1"},
     ]
+
     teacher_phases=[
-        {"N°":1,"Etapa / frente":"Etapa constructiva 1","Actividad principal":"Construcción de edificios 1 y 5 e instalaciones asociadas","Sector del predio":"Edificios 1 y 5","Documento de respaldo":"Cap. 2 · Tabla 3 / Figuras 2 y 3"},
-        {"N°":2,"Etapa / frente":"Etapa constructiva 2","Actividad principal":"Construcción de edificios 2 y 3 e instalaciones asociadas","Sector del predio":"Edificios 2 y 3","Documento de respaldo":"Cap. 2 · Tabla 3 / Figuras 2 y 3"},
-        {"N°":3,"Etapa / frente":"Etapa constructiva 3","Actividad principal":"Construcción de edificios 4 y 6 e instalaciones asociadas","Sector del predio":"Edificios 4 y 6","Documento de respaldo":"Cap. 2 · Tabla 3 / Figuras 2 y 3"},
+        {"N°":1,"Etapa / frente":"Escenario 1 · Movimiento de tierra","Actividad principal":"Movimiento de tierra","Sector del predio":"Frentes de trabajo más cercanos a cada receptor","Documento de respaldo":"Anexo 05 · 5.2 / Tabla 13 / Figura 10"},
+        {"N°":2,"Etapa / frente":"Escenario 2 · Obra gruesa, terminaciones y urbanización","Actividad principal":"Obra gruesa a nivel de suelo y altura, terminaciones y urbanización","Sector del predio":"Frentes distribuidos dentro del proyecto","Documento de respaldo":"Anexo 05 · 5.2 / Tablas 14–17 / Figura 11"},
+        {"N°":3,"Etapa / frente":"Escenario 3 · Obras IMIV","Actividad principal":"Obras de mitigación vial","Sector del predio":"Vía pública y frentes IMIV próximos","Documento de respaldo":"Anexo 05 · 5.2 / Tabla 18 / Figura 12"},
     ]
 
     teacher_machinery_rows=[
-        {"Máquina / equipo":"Camión grúa","Cantidad":1,"Etapa asociada":"Etapa 1","Actividad":"Instalación de faena · Montaje","Tipo":"Móvil","Fuente documental":"Anexo 03.2 · Tabla 7 · pág. 25"},
-        {"Máquina / equipo":"Rodillo compactador","Cantidad":1,"Etapa asociada":"Etapa 1","Actividad":"Instalación de faena · Habilitación de caminos temporales","Tipo":"Móvil","Fuente documental":"Anexo 03.2 · Tabla 7 · pág. 25"},
-        {"Máquina / equipo":"Minicargador","Cantidad":1,"Etapa asociada":"Etapa 1 / 1-2-3","Actividad":"Instalación de faena / preparación del terreno","Tipo":"Móvil","Fuente documental":"Anexo 03.2 · Tabla 7 · pág. 25"},
-        {"Máquina / equipo":"Camión 3/4","Cantidad":1,"Etapa asociada":"Etapa 1 / 1-2-3","Actividad":"Instalación / nivelación / terminaciones","Tipo":"Móvil","Fuente documental":"Anexo 03.2 · Tablas 7 · págs. 25-27"},
-        {"Máquina / equipo":"Retroexcavadora","Cantidad":1,"Etapa asociada":"Etapas 1-2-3","Actividad":"Escarpe / obras exteriores / IMIV","Tipo":"Móvil","Fuente documental":"Anexo 03.2 · Tablas 7 · págs. 25-27"},
-        {"Máquina / equipo":"Camión tolva","Cantidad":1,"Etapa asociada":"Etapas 1-2-3","Actividad":"Escarpe / excavación / aguas lluvias","Tipo":"Móvil","Fuente documental":"Anexo 03.2 · Tablas 7 · págs. 25-27"},
-        {"Máquina / equipo":"Excavadora","Cantidad":1,"Etapa asociada":"Etapas 1-2-3","Actividad":"Excavación / aguas lluvias / IMIV","Tipo":"Móvil","Fuente documental":"Anexo 03.2 · Tablas 7 · págs. 25-27"},
-        {"Máquina / equipo":"Motoniveladora","Cantidad":1,"Etapa asociada":"Etapas 1-2-3","Actividad":"Nivelación","Tipo":"Móvil","Fuente documental":"Anexo 03.2 · Tabla 7 · pág. 25"},
-        {"Máquina / equipo":"Camión mixer","Cantidad":1,"Etapa asociada":"Etapas 1-2-3","Actividad":"Rellenos / exteriores / pavimentación / redes","Tipo":"Móvil","Fuente documental":"Anexo 03.2 · Tablas 7 · págs. 25-27"},
-        {"Máquina / equipo":"Alzahombres","Cantidad":1,"Etapa asociada":"Etapas 1-2-3","Actividad":"Obra gruesa / terminaciones / redes","Tipo":"Móvil","Fuente documental":"Anexo 03.2 · Tablas 7 · págs. 25-26"},
-        {"Máquina / equipo":"Betonera","Cantidad":1,"Etapa asociada":"Etapas 1-2-3","Actividad":"Terminaciones / agua potable y alcantarillado","Tipo":"Móvil","Fuente documental":"Anexo 03.2 · Tablas 7 · págs. 25-26"},
-        {"Máquina / equipo":"Compresor","Cantidad":1,"Etapa asociada":"Etapas 1-2-3","Actividad":"Terminaciones","Tipo":"Móvil","Fuente documental":"Anexo 03.2 · Tabla 7 · pág. 25"},
-        {"Máquina / equipo":"Mezclador mortero","Cantidad":1,"Etapa asociada":"Etapas 1-2-3","Actividad":"Terminaciones","Tipo":"Móvil","Fuente documental":"Anexo 03.2 · Tabla 7 · pág. 25"},
-        {"Máquina / equipo":"Soldador MIG","Cantidad":1,"Etapa asociada":"Etapas 1-2-3","Actividad":"Terminaciones / instalaciones domiciliarias","Tipo":"Móvil","Fuente documental":"Anexo 03.2 · Tablas 7 · págs. 25-26"},
-        {"Máquina / equipo":"Minicargador frontal","Cantidad":1,"Etapa asociada":"Etapas 1-2-3","Actividad":"Terminaciones / aguas lluvias / IMIV","Tipo":"Móvil","Fuente documental":"Anexo 03.2 · Tablas 7 · págs. 25-27"},
-        {"Máquina / equipo":"Regla vibradora","Cantidad":1,"Etapa asociada":"Etapas 1-2-3","Actividad":"Instalaciones / exteriores / pavimentación / IMIV","Tipo":"Móvil","Fuente documental":"Anexo 03.2 · Tablas 7 · págs. 26-27"},
-        {"Máquina / equipo":"Rodillo","Cantidad":1,"Etapa asociada":"Etapas 1-2-3","Actividad":"Obras exteriores / pavimentación / IMIV","Tipo":"Móvil","Fuente documental":"Anexo 03.2 · Tablas 7 · págs. 26-27"},
-        {"Máquina / equipo":"Bomba de hormigón","Cantidad":1,"Etapa asociada":"Etapas 1-2-3","Actividad":"Obras exteriores / pavimentación / IMIV","Tipo":"Móvil","Fuente documental":"Anexo 03.2 · Tablas 7 · págs. 26-27"},
-        {"Máquina / equipo":"Vibrador de inmersión","Cantidad":1,"Etapa asociada":"Etapas 1-2-3","Actividad":"Obras exteriores / pavimentación / IMIV","Tipo":"Móvil","Fuente documental":"Anexo 03.2 · Tablas 7 · págs. 26-27"},
-        {"Máquina / equipo":"Tractocamión","Cantidad":1,"Etapa asociada":"Etapas 1-2-3","Actividad":"Obras exteriores / pavimentación / IMIV","Tipo":"Móvil","Fuente documental":"Anexo 03.2 · Tablas 7 · págs. 26-27"},
-        {"Máquina / equipo":"Cama baja","Cantidad":1,"Etapa asociada":"Etapas 1-2-3","Actividad":"Agua potable y alcantarillado","Tipo":"Móvil","Fuente documental":"Anexo 03.2 · Tabla 7 · pág. 26"},
-        {"Máquina / equipo":"Camión aljibe","Cantidad":1,"Etapa asociada":"Etapas 1-2-3","Actividad":"Agua potable y alcantarillado","Tipo":"Móvil","Fuente documental":"Anexo 03.2 · Tabla 7 · pág. 26"},
-        {"Máquina / equipo":"Camión pluma","Cantidad":1,"Etapa asociada":"Etapas 1-2-3","Actividad":"Aguas lluvias","Tipo":"Móvil","Fuente documental":"Anexo 03.2 · Tabla 7 · pág. 26"},
-        {"Máquina / equipo":"Densímetro nuclear","Cantidad":1,"Etapa asociada":"Etapas 1-2-3","Actividad":"Aguas lluvias","Tipo":"Instrumento","Fuente documental":"Anexo 03.2 · Tabla 7 · pág. 26"},
-        {"Máquina / equipo":"Martillo demoledor","Cantidad":1,"Etapa asociada":"Etapas 1-2-3","Actividad":"Aguas lluvias / IMIV","Tipo":"Móvil","Fuente documental":"Anexo 03.2 · Tablas 7 · págs. 26-27"},
+        {"Máquina / equipo":"Minicargador","Cantidad":1,"Etapa asociada":"Escenario 1 · Movimiento de tierra","Actividad":"Movimiento de tierra","Tipo":"Móvil","Fuente documental":"Anexo 05 · Tabla 13"},
+        {"Máquina / equipo":"Retroexcavadora","Cantidad":1,"Etapa asociada":"Escenario 1 · Movimiento de tierra","Actividad":"Movimiento de tierra","Tipo":"Móvil","Fuente documental":"Anexo 05 · Tabla 13"},
+        {"Máquina / equipo":"Excavadora","Cantidad":1,"Etapa asociada":"Escenario 1 · Movimiento de tierra","Actividad":"Movimiento de tierra","Tipo":"Móvil","Fuente documental":"Anexo 05 · Tabla 13"},
+
+        {"Máquina / equipo":"Rodillo compactador","Cantidad":1,"Etapa asociada":"Escenario 2 · Obra gruesa suelo","Actividad":"Obra gruesa a nivel de suelo","Tipo":"Móvil","Fuente documental":"Anexo 05 · Tabla 14"},
+        {"Máquina / equipo":"Minicargador","Cantidad":1,"Etapa asociada":"Escenario 2 · Obra gruesa suelo","Actividad":"Obra gruesa a nivel de suelo","Tipo":"Móvil","Fuente documental":"Anexo 05 · Tabla 14"},
+        {"Máquina / equipo":"Retroexcavadora","Cantidad":1,"Etapa asociada":"Escenario 2 · Obra gruesa suelo","Actividad":"Obra gruesa a nivel de suelo","Tipo":"Móvil","Fuente documental":"Anexo 05 · Tabla 14"},
+        {"Máquina / equipo":"Camión mixer + bomba hormigón","Cantidad":1,"Etapa asociada":"Escenario 2 · Obra gruesa suelo","Actividad":"Obra gruesa a nivel de suelo","Tipo":"Móvil","Fuente documental":"Anexo 05 · Tabla 14"},
+
+        {"Máquina / equipo":"Grúa pluma","Cantidad":1,"Etapa asociada":"Escenario 2 · Obra gruesa altura","Actividad":"Obra gruesa en altura","Tipo":"Móvil","Fuente documental":"Anexo 05 · Tabla 15"},
+        {"Máquina / equipo":"Vibrador de inmersión","Cantidad":1,"Etapa asociada":"Escenario 2 · Obra gruesa altura","Actividad":"Obra gruesa en altura","Tipo":"Móvil","Fuente documental":"Anexo 05 · Tabla 15"},
+
+        {"Máquina / equipo":"Rodillo compactador","Cantidad":1,"Etapa asociada":"Escenario 2 · Urbanización","Actividad":"Urbanización","Tipo":"Móvil","Fuente documental":"Anexo 05 · Tabla 16"},
+        {"Máquina / equipo":"Minicargador","Cantidad":1,"Etapa asociada":"Escenario 2 · Urbanización","Actividad":"Urbanización","Tipo":"Móvil","Fuente documental":"Anexo 05 · Tabla 16"},
+        {"Máquina / equipo":"Retroexcavadora","Cantidad":1,"Etapa asociada":"Escenario 2 · Urbanización","Actividad":"Urbanización","Tipo":"Móvil","Fuente documental":"Anexo 05 · Tabla 16"},
+        {"Máquina / equipo":"Motoniveladora","Cantidad":1,"Etapa asociada":"Escenario 2 · Urbanización","Actividad":"Urbanización","Tipo":"Móvil","Fuente documental":"Anexo 05 · Tabla 16"},
+        {"Máquina / equipo":"Camión mixer + bomba hormigón","Cantidad":1,"Etapa asociada":"Escenario 2 · Urbanización","Actividad":"Urbanización","Tipo":"Móvil","Fuente documental":"Anexo 05 · Tabla 16"},
+
+        {"Máquina / equipo":"Minicargador","Cantidad":1,"Etapa asociada":"Escenario 2 · Terminaciones","Actividad":"Terminaciones","Tipo":"Móvil","Fuente documental":"Anexo 05 · Tabla 17"},
+        {"Máquina / equipo":"Alzahombre","Cantidad":1,"Etapa asociada":"Escenario 2 · Terminaciones","Actividad":"Terminaciones","Tipo":"Móvil","Fuente documental":"Anexo 05 · Tabla 17"},
+
+        {"Máquina / equipo":"Cango","Cantidad":1,"Etapa asociada":"Escenario 3 · Obras IMIV","Actividad":"Obras IMIV","Tipo":"Móvil","Fuente documental":"Anexo 05 · Tabla 18"},
+        {"Máquina / equipo":"Camión mixer + bomba hormigón","Cantidad":1,"Etapa asociada":"Escenario 3 · Obras IMIV","Actividad":"Obras IMIV","Tipo":"Móvil","Fuente documental":"Anexo 05 · Tabla 18"},
+        {"Máquina / equipo":"Vibrador de inmersión","Cantidad":1,"Etapa asociada":"Escenario 3 · Obras IMIV","Actividad":"Obras IMIV","Tipo":"Móvil","Fuente documental":"Anexo 05 · Tabla 18"},
+        {"Máquina / equipo":"Rodillo compactador","Cantidad":1,"Etapa asociada":"Escenario 3 · Obras IMIV","Actividad":"Obras IMIV","Tipo":"Móvil","Fuente documental":"Anexo 05 · Tabla 18"},
     ]
 
     teacher_chronology=[
@@ -501,7 +503,7 @@ def _stage1(lab, saved):
         # Fuerza una sola actualización de los datos docentes cuando cambia la
         # solución oficial del expediente, evitando que session_state conserve
         # versiones antiguas de las tablas.
-        teacher_seed_version="expediente_oficial_2026_10_08_v3"
+        teacher_seed_version="adenda2_ruido_2026_09_23_v1"
         teacher_seed_map={
             "c4l2_s1_vertices_work":(teacher_vertices,"Vértice","c4l2_s1_vertices_table"),
             "c4l2_s1_parts_work":(teacher_parts,"Parte / obra","c4l2_s1_parts_table"),
