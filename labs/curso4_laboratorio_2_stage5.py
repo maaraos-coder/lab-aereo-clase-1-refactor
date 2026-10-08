@@ -49,87 +49,110 @@ def _teacher_fronts():
     return out
 
 
-def _teacher_pauta(st,pd):
+def _teacher_result_rows():
+    """Solución numérica docente de control, independiente de avances del alumno."""
+    fronts=_teacher_fronts()
+    rows=[]
+    # Tres distancias de control para cada frente. Es un chequeo en campo libre,
+    # no reemplaza el resultado final de Noise Map Lab.
+    for front,data in fronts.items():
+        for idx,r in enumerate((10,25,50),start=1):
+            adiv=20*math.log10(r)+11
+            lp_bands=[v-adiv for v in data["bands"]]
+            lwa_bands=[v+a for v,a in zip(lp_bands,A_CORR)]
+            laeq=_sum_db(lwa_bands)
+            row={
+                "Frente":front,
+                "Receptor":f"R{idx}",
+                "Distancia F–R [m]":r,
+            }
+            for label,val in zip(OCTAVE_LABELS,lp_bands):
+                row[label]=round(val,1)
+            row["LAeq [dB(A)]"]=round(laeq,1)
+            rows.append(row)
+    return rows
+
+
+def _teacher_solution_panel(st,pd):
+    """Muestra la solución directamente en la vista docente, no en la proyección/alumno."""
     if st.session_state.get("role")!="Docente":
         return
 
     fronts=_teacher_fronts()
-    with st.expander("👨‍🏫 Pauta docente · Etapa 5",expanded=False):
+    st.markdown("""
+    <div style="border:1px solid #bcd8e7;border-left:5px solid #0b7fa5;border-radius:18px;
+                padding:17px 19px;background:linear-gradient(135deg,#f8fcff,#edf7fb);
+                margin:.7rem 0 1rem">
+      <div style="font-size:.70rem;font-weight:900;letter-spacing:.09em;color:#087ba0">
+        VISTA DOCENTE · SOLUCIÓN DE REFERENCIA
+      </div>
+      <div style="font-size:1.05rem;font-weight:900;color:#173b53;margin:.3rem 0">
+        Los datos de control aparecen completos aunque el alumno no haya recuperado fuentes
+      </div>
+      <div style="color:#526f80;line-height:1.55">
+        Esta solución sirve para conducir la clase y revisar órdenes de magnitud. La vista de Alumno
+        y la Proyección Zoom mantienen estos campos sin resolver.
+      </div>
+    </div>
+    """,unsafe_allow_html=True)
+
+    st.markdown("#### Fuentes equivalentes de referencia")
+    summary=[]
+    for front,data in fronts.items():
+        summary.append({
+            "Frente":front,
+            "N° equipos":len(data["machines"]),
+            "LWA equivalente [dB(A)]":round(data["lwa"],1),
+            "Equipos":" · ".join(data["machines"]),
+        })
+    st.dataframe(pd.DataFrame(summary),hide_index=True,use_container_width=True)
+
+    st.markdown("#### Espectro equivalente de referencia")
+    chosen=st.selectbox(
+        "Frente a revisar",
+        list(fronts.keys()),
+        key="c4l2_s5_teacher_front_main",
+    )
+    data=fronts[chosen]
+    st.dataframe(
+        pd.DataFrame({
+            "Banda":OCTAVE_LABELS,
+            "Lw equivalente [dB]":[round(x,1) for x in data["bands"]],
+        }),
+        hide_index=True,
+        use_container_width=True,
+    )
+    st.caption(f"{chosen} · LWA equivalente ≈ {data['lwa']:.1f} dB(A).")
+
+    st.markdown("#### Control de propagación de referencia")
+    st.markdown(
+        "Como verificación independiente del software se utiliza la divergencia geométrica de una "
+        "fuente puntual en campo libre. Este control no reemplaza Noise Map Lab."
+    )
+    st.latex(r"A_{div}=20\log_{10}(r)+11")
+    st.latex(r"L_p\approx L_w-A_{div}")
+    st.dataframe(pd.DataFrame(_teacher_result_rows()),hide_index=True,use_container_width=True)
+    st.caption(
+        "Los resultados de esta tabla son controles docentes en campo libre a 10, 25 y 50 m. "
+        "El valor definitivo del ejercicio corresponde al modelo realizado en Noise Map Lab."
+    )
+
+
+def _teacher_pauta(st,pd):
+    if st.session_state.get("role")!="Docente":
+        return
+    with st.expander("👨‍🏫 Pauta docente · criterios de revisión",expanded=False):
         st.markdown("""
-        Esta pauta se muestra **aunque el alumno todavía no haya recuperado fuentes ni resultados de la Etapa 4**.
-        Corresponde a la solución docente de referencia construida con la selección de maquinaria propuesta en las
-        etapas anteriores.
+        La solución numérica ya se muestra directamente en la **vista Docente** de esta etapa.
+        Utiliza esta pauta solo como lista de comprobación:
 
-        Para el caso docente se adopta un **terreno aproximadamente plano**. Por lo tanto, en esta etapa no se exige
-        introducir curvas de nivel ni cotas topográficas. Esta simplificación es propia del ejercicio y no debe
-        generalizarse a proyectos donde existan desniveles, taludes o diferencias de elevación relevantes.
+        - El escenario evaluado corresponde a la **condición original sin medidas de control**.
+        - Se identifica correctamente **frente, receptor, distancia F–R y alturas**.
+        - Los resultados se registran **por banda de octava y globales**.
+        - El receptor crítico se determina por el **mayor nivel modelado**, no por apreciación visual.
+        - El escenario original se conserva para compararlo posteriormente con las medidas de control.
+        - El control en campo libre sirve solo para revisar órdenes de magnitud y no sustituye Noise Map Lab.
         """)
-
-        st.markdown("#### 1 · Fuentes equivalentes esperadas por frente")
-        rows=[]
-        for front,data in fronts.items():
-            rows.append({
-                "Frente":front,
-                "N° equipos":len(data["machines"]),
-                "LWA equivalente [dB(A)]":round(data["lwa"],1),
-                "Equipos":" · ".join(data["machines"]),
-            })
-        st.dataframe(pd.DataFrame(rows),hide_index=True,use_container_width=True)
-
-        st.markdown("#### 2 · Espectro equivalente esperado")
-        chosen=st.selectbox(
-            "Frente de referencia",
-            list(fronts.keys()),
-            key="c4l2_s5_teacher_front",
-        )
-        data=fronts[chosen]
-        st.dataframe(
-            pd.DataFrame({
-                "Banda":OCTAVE_LABELS,
-                "Lw equivalente [dB]":[round(x,1) for x in data["bands"]],
-            }),
-            hide_index=True,
-            use_container_width=True,
-        )
-        st.success(f"Resultado docente · {chosen}: LWA equivalente ≈ **{data['lwa']:.1f} dB(A)**.")
-
-        st.markdown("#### 3 · Control numérico simplificado de propagación")
-        st.markdown(
-            "Para disponer de un control independiente del software, la tabla siguiente utiliza únicamente la "
-            "**divergencia geométrica de una fuente puntual en campo libre**:"
-        )
-        st.latex(r"A_{div}=20\log_{10}(r)+11")
-        st.latex(r"L_p \approx L_w-A_{div}")
-        st.markdown(
-            "Este control **no sustituye el resultado de Noise Map Lab**: no incorpora efectos adicionales de suelo, "
-            "obstáculos, reflexión, difracción ni absorción atmosférica. Sirve para detectar errores gruesos de ingreso "
-            "o de distancia."
-        )
-        check=[]
-        for front,data in fronts.items():
-            for r in (10,25,50):
-                adiv=20*math.log10(r)+11
-                check.append({
-                    "Frente":front,
-                    "Distancia [m]":r,
-                    "Adiv [dB]":round(adiv,1),
-                    "LpA control [dB(A)]":round(data["lwa"]-adiv,1),
-                })
-        st.dataframe(pd.DataFrame(check),hide_index=True,use_container_width=True)
-        st.caption(
-            "Los valores anteriores son controles aritméticos de referencia. La corrección final se realiza "
-            "con los resultados detallados obtenidos del modelo para la geometría efectivamente utilizada."
-        )
-
-        st.markdown("#### 4 · Qué debe revisar el docente")
-        st.markdown("""
-        - Que el alumno haya usado el **escenario original sin medidas de control**.
-        - Que identifique correctamente **frente, receptor, distancia F–R y alturas**.
-        - Que registre resultados **por banda de octava y globales**.
-        - Que el receptor crítico se determine por el **mayor nivel modelado**, no por apreciación visual.
-        - Que conserve el escenario original para compararlo posteriormente con las medidas de control.
-        """)
-
 
 def render(lab,saved,runtime):
     st=runtime["st"]; pd=runtime["pd"]
@@ -176,6 +199,13 @@ def render(lab,saved,runtime):
         "taludes, cortes o diferencias importantes de elevación, la topografía sí debe incorporarse."
     )
 
+    role=st.session_state.get("role")
+    is_teacher=role=="Docente"
+    is_projection=role=="Proyección" or bool(st.session_state.get("projection_mode"))
+
+    # La solución se revela solo en la vista docente.
+    _teacher_solution_panel(st,pd)
+
     stage4_fronts=saved.get("c4l2_s4_fronts") or {}
     stage4_results=saved.get("c4l2_s4_results") or {}
     sources=saved.get("c4l2_s3_acoustic_sources") or []
@@ -208,41 +238,20 @@ def render(lab,saved,runtime):
     No copies únicamente el color del mapa: utiliza el valor numérico informado en el receptor.
     """)
 
-    saved_detail=saved.get("c4l2_s5_detailed_results") or []
-    if not saved_detail:
-        seed=[]
-        if stage4_results:
-            for front,rows in stage4_results.items():
-                for row in rows or []:
-                    base={
-                        "Frente":front,
-                        "Receptor":row.get("Receptor"),
-                        "Distancia F–R [m]":row.get("Distancia F–R [m]"),
-                    }
-                    for b in OCTAVE_LABELS:
-                        base[b]=None
-                    base["LAeq [dB(A)]"]=row.get("LAeq predicho [dB(A)]")
-                    seed.append(base)
-        elif receptors:
-            fronts=[]
-            for s in sources:
-                n=str(s.get("Etapa") or "").strip()
-                if n and n not in fronts:
-                    fronts.append(n)
-            if not fronts:
-                fronts=["Frente 1"]
-            for front in fronts:
-                for r in receptors:
-                    if str(r.get("Receptor") or "").strip():
-                        base={"Frente":front,"Receptor":r.get("Receptor"),"Distancia F–R [m]":None}
-                        for b in OCTAVE_LABELS:
-                            base[b]=None
-                        base["LAeq [dB(A)]"]=None
-                        seed.append(base)
-        else:
-            seed=[{"Frente":"FT1","Receptor":"R1","Distancia F–R [m]":None,
-                   **{b:None for b in OCTAVE_LABELS},"LAeq [dB(A)]":None}]
-        saved_detail=seed
+    # En la vista docente, la tabla principal parte con la solución de control.
+    # Alumno y Proyección Zoom parten sin resultados revelados y deben desarrollarlos.
+    if is_teacher:
+        saved_detail=saved.get("c4l2_s5_detailed_results") or _teacher_result_rows()
+    elif is_projection:
+        saved_detail=[
+            {"Frente":"","Receptor":"","Distancia F–R [m]":None,
+             **{b:None for b in OCTAVE_LABELS},"LAeq [dB(A)]":None}
+        ]
+    else:
+        saved_detail=saved.get("c4l2_s5_detailed_results") or [
+            {"Frente":"","Receptor":"","Distancia F–R [m]":None,
+             **{b:None for b in OCTAVE_LABELS},"LAeq [dB(A)]":None}
+        ]
 
     def _empty_result_row(_n):
         return {
@@ -290,7 +299,15 @@ def render(lab,saved,runtime):
     with a:
         spatial=st.text_area(
             "Lectura espacial del mapa",
-            value=str(saved.get("c4l2_s5_spatial_note") or ""),
+            value=str(
+                saved.get("c4l2_s5_spatial_note")
+                or (
+                    "El mayor nivel se presenta en el receptor más próximo al frente de trabajo. "
+                    "El nivel disminuye al aumentar la distancia fuente–receptor; la condición crítica "
+                    "debe confirmarse con la geometría real del modelo."
+                    if is_teacher else ""
+                )
+            ),
             placeholder="Ej.: el mayor nivel se concentra en el borde del frente próximo a R1 y disminuye al aumentar la distancia...",
             key="c4l2_s5_spatial_note_work",
             height=130,
@@ -298,7 +315,14 @@ def render(lab,saved,runtime):
     with b:
         spectral=st.text_area(
             "Lectura espectral",
-            value=str(saved.get("c4l2_s5_spectral_note") or ""),
+            value=str(
+                saved.get("c4l2_s5_spectral_note")
+                or (
+                    "El espectro permite reconocer qué bandas dominan el aporte de cada frente. "
+                    "La selección posterior de controles debe considerar esas bandas dominantes y no solo el LAeq global."
+                    if is_teacher else ""
+                )
+            ),
             placeholder="Ej.: predominan las bandas de 125–500 Hz, asociadas al conjunto de maquinaria pesada...",
             key="c4l2_s5_spectral_note_work",
             height=130,
