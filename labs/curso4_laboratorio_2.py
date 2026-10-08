@@ -498,6 +498,10 @@ def _stage1(lab, saved):
         ]
     )
     if is_teacher:
+        # Fuerza una sola actualización de los datos docentes cuando cambia la
+        # solución oficial del expediente, evitando que session_state conserve
+        # versiones antiguas de las tablas.
+        teacher_seed_version="expediente_oficial_2026_10_08_v3"
         teacher_seed_map={
             "c4l2_s1_vertices_work":(teacher_vertices,"Vértice","c4l2_s1_vertices_table"),
             "c4l2_s1_parts_work":(teacher_parts,"Parte / obra","c4l2_s1_parts_table"),
@@ -505,12 +509,10 @@ def _stage1(lab, saved):
             "c4l2_s1_machinery_work":(teacher_machinery_rows,"Máquina / equipo","c4l2_s1_machinery_table"),
             "c4l2_s1_chronology_work":(teacher_chronology,"Etapa / actividad","c4l2_s1_chronology_table"),
         }
-        for _key,(_rows,_main,_saved_key) in teacher_seed_map.items():
-            current=st.session_state.get(_key)
-            has_saved=bool(saved.get(_saved_key))
-            has_content=bool(current) and any(str(row.get(_main) or "").strip() for row in current)
-            if not has_saved and not has_content:
+        if st.session_state.get("c4l2_s1_teacher_seed_version")!=teacher_seed_version:
+            for _key,(_rows,_main,_saved_key) in teacher_seed_map.items():
                 st.session_state[_key]=[dict(x) for x in _rows]
+            st.session_state["c4l2_s1_teacher_seed_version"]=teacher_seed_version
 
     if is_teacher:
         st.success(
