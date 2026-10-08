@@ -4,6 +4,7 @@ import math
 from labs.curso4_laboratorio_1 import BS_PLANT
 
 OCTAVE_LABELS=["31,5 Hz","63 Hz","125 Hz","250 Hz","500 Hz","1 kHz","2 kHz","4 kHz"]
+REPORT_BANDS=["63 Hz","125 Hz","250 Hz","500 Hz","1 kHz","2 kHz","4 kHz","8 kHz"]
 A_CORR=[-39.4,-26.2,-16.1,-8.6,-3.2,0.0,1.2,1.0]
 
 
@@ -22,56 +23,79 @@ def _sum_db(values):
 
 
 def _teacher_fronts():
-    teacher_map=[
-        ("Movimiento de tierras","Excavadora hidráulica"),
-        ("Movimiento de tierras","Retroexcavadora"),
-        ("Movimiento de tierras","Cargador frontal"),
-        ("Movimiento de tierras","Camión tolva articulado"),
-        ("Movimiento de tierras","Rodillo vibratorio"),
-        ("Hormigón / obra gruesa","Camión mixer"),
-        ("Hormigón / obra gruesa","Bomba de hormigón"),
-        ("Hormigón / obra gruesa","Vibrador de inmersión"),
-        ("Estructura / izaje","Grúa torre"),
-        ("Equipos auxiliares","Generador diésel"),
-    ]
-    grouped={}
-    for front,bs_name in teacher_map:
-        item=BS_PLANT[bs_name]
-        bands=[float(v)+28.0 for v in item["bands"]]
-        grouped.setdefault(front,[]).append((bs_name,bands))
-
-    out={}
-    for front,items in grouped.items():
-        eq=[_sum_db([x[1][i] for x in items]) for i in range(8)]
-        lwa_bands=[v+a for v,a in zip(eq,A_CORR)]
-        lwa=_sum_db(lwa_bands)
-        out[front]={"bands":eq,"lwa":lwa,"machines":[x[0] for x in items]}
-    return out
+    """Frentes y totales publicados en la Adenda 2."""
+    return {
+        "Escenario 1 · Movimiento de tierra":{
+            "bands_nps":[54,65,62,68,69,69,65,54],
+            "npseq":75,
+            "machines":["Minicargador","Retroexcavadora","Excavadora"],
+            "table":"13",
+        },
+        "Escenario 2 · Obra gruesa suelo":{
+            "bands_nps":[57,64,69,74,74,73,68,62],
+            "npseq":80,
+            "machines":["Rodillo compactador","Minicargador","Retroexcavadora","Camión mixer + bomba hormigón"],
+            "table":"14",
+        },
+        "Escenario 2 · Obra gruesa altura":{
+            "bands_nps":[52,56,63,64,65,64,60,55],
+            "npseq":71,
+            "machines":["Grúa pluma","Vibrador de inmersión"],
+            "table":"15",
+        },
+        "Escenario 2 · Urbanización":{
+            "bands_nps":[57,65,70,74,74,73,68,62],
+            "npseq":80,
+            "machines":["Rodillo compactador","Minicargador","Retroexcavadora","Motoniveladora","Camión mixer + bomba hormigón"],
+            "table":"16",
+        },
+        "Escenario 2 · Terminaciones":{
+            "bands_nps":[52,60,57,62,64,64,60,50],
+            "npseq":70,
+            "machines":["Minicargador","Alzahombre"],
+            "table":"17",
+        },
+        "Escenario 3 · Obras IMIV":{
+            "bands_nps":[57,64,71,75,75,74,70,64],
+            "npseq":80,
+            "machines":["Cango","Camión mixer + bomba hormigón","Vibrador de inmersión","Rodillo compactador"],
+            "table":"18",
+        },
+    }
 
 
 def _teacher_result_rows():
-    """Resultados oficiales del escenario crítico informados en el Anexo 03.2."""
-    official=[
-        ("R1",67,63),
-        ("R2",5,58),
-        ("R3",16,81),
-        ("R4",15,61),
-        ("R5",15,66),
-        ("R6",7,62),
-        ("R7",5,50),
-        ("R8",5,62),
-        ("R9",13,60),
-    ]
+    """Resultados sin medidas de control publicados en la Adenda 2, Tabla 27."""
+    matrix={
+        "R01":{"Escenario 1":51,"Escenario 2":48,"Escenario 3":66},
+        "R02":{"Escenario 1":66,"Escenario 2":72,"Escenario 3":70},
+        "R03":{"Escenario 1":59,"Escenario 2":67,"Escenario 3":64},
+        "R04":{"Escenario 1":65,"Escenario 2":71,"Escenario 3":45},
+        "R05":{"Escenario 1":59,"Escenario 2":67,"Escenario 3":64},
+        "R06":{"Escenario 1":64,"Escenario 2":72,"Escenario 3":58},
+        "R07":{"Escenario 1":62,"Escenario 2":69,"Escenario 3":59},
+        "R08":{"Escenario 1":62,"Escenario 2":67,"Escenario 3":48},
+        "R09":{"Escenario 1":55,"Escenario 2":59,"Escenario 3":45},
+        "RIMIV01":{"Escenario 3":74},
+        "RIMIV02":{"Escenario 3":70},
+        "RIMIV03":{"Escenario 3":73},
+        "RIMIV04":{"Escenario 3":73},
+        "RIMIV05":{"Escenario 3":78},
+        "RIMIV06":{"Escenario 3":78},
+        "RIMIV07":{"Escenario 3":77},
+        "RIMIV08":{"Escenario 3":73},
+        "RIMIV09":{"Escenario 3":76},
+    }
     rows=[]
-    for receptor,dist,laeq in official:
-        row={
-            "Frente":"Escenario crítico · construcción",
-            "Receptor":receptor,
-            "Distancia F–R [m]":dist,
-            **{b:None for b in OCTAVE_LABELS},
-            "LAeq [dB(A)]":laeq,
-        }
-        rows.append(row)
+    for receptor,scenarios in matrix.items():
+        for scenario,laeq in scenarios.items():
+            rows.append({
+                "Frente":scenario,
+                "Receptor":receptor,
+                "Distancia F–R [m]":None,
+                **{b:None for b in OCTAVE_LABELS},
+                "LAeq [dB(A)]":laeq,
+            })
     return rows
 
 
@@ -92,24 +116,26 @@ def _teacher_solution_panel(st,pd):
         Los datos de control aparecen completos aunque el alumno no haya recuperado fuentes
       </div>
       <div style="color:#526f80;line-height:1.55">
-        Esta solución sirve para conducir la clase y revisar órdenes de magnitud. La vista de Alumno
+        Esta solución corresponde al último informe (Adenda 2) y sirve para conducir la clase. La vista de Alumno
         y la Proyección Zoom mantienen estos campos sin resolver.
       </div>
     </div>
     """,unsafe_allow_html=True)
 
-    st.markdown("#### Fuentes equivalentes de referencia")
+    st.markdown("#### Frentes de referencia · Adenda 2")
     summary=[]
     for front,data in fronts.items():
         summary.append({
             "Frente":front,
             "N° equipos":len(data["machines"]),
-            "LWA equivalente [dB(A)]":round(data["lwa"],1),
+            "NPSeq total @10 m [dB(A)]":data["npseq"],
+            "LWA aprox. [+28]":data["npseq"]+28,
+            "Tabla Adenda 2":data["table"],
             "Equipos":" · ".join(data["machines"]),
         })
     st.dataframe(pd.DataFrame(summary),hide_index=True,use_container_width=True)
 
-    st.markdown("#### Espectro equivalente de referencia")
+    st.markdown("#### Espectro total publicado a 10 m")
     chosen=st.selectbox(
         "Frente a revisar",
         list(fronts.keys()),
@@ -118,24 +144,27 @@ def _teacher_solution_panel(st,pd):
     data=fronts[chosen]
     st.dataframe(
         pd.DataFrame({
-            "Banda":OCTAVE_LABELS,
-            "Lw equivalente [dB]":[round(x,1) for x in data["bands"]],
+            "Banda":REPORT_BANDS,
+            "NPS total @10 m [dB(A) banda]":data["bands_nps"],
         }),
         hide_index=True,
         use_container_width=True,
     )
-    st.caption(f"{chosen} · LWA equivalente ≈ {data['lwa']:.1f} dB(A).")
+    st.caption(
+        f"{chosen} · NPSeq total @10 m = {data['npseq']} dB(A). "
+        "La Adenda 2 publica bandas entre 63 Hz y 8 kHz."
+    )
 
-    st.markdown("#### Resultados oficiales de modelación · escenario crítico")
+    st.markdown("#### Resultados oficiales sin medidas de control · Tabla 27")
     st.dataframe(pd.DataFrame(_teacher_result_rows()),hide_index=True,use_container_width=True)
     st.success(
-        "El mayor nivel informado corresponde a **R3 = 81 dB(A)**. "
-        "R5 alcanza **66 dB(A)**. En la evaluación normativa del informe, ambos superan el límite diurno de 65 dB(A) para Zona III."
+        "Máximo de la Adenda 2 sin control: **78 dB(A)** en RIMIV05 y RIMIV06 (Escenario 3). "
+        "Entre R01–R09, el mayor valor es **72 dB(A)** en R02 y R06 (Escenario 2). "
+        "El límite diurno de todos los receptores R01–R09 es 65 dB(A), Zona III."
     )
     st.caption(
-        "Referencia documental: Anexo 03.2, Tabla 13 (resultados de modelación acústica, pág. 42) "
-        "y Tabla 17 (evaluación D.S. N°38/2011, pág. 52). "
-        "El informe sólo publica el nivel global por receptor; por eso las bandas quedan para obtenerse desde Noise Map Lab."
+        "Referencia documental: Anexo 05 · Adenda 2, Tabla 27, págs. 53–54. "
+        "El informe publica niveles globales por receptor; los espectros en recepción deben obtenerse del modelo del alumno."
     )
 
     with st.expander("Control aritmético opcional · divergencia geométrica",expanded=False):
@@ -310,9 +339,9 @@ def render(lab,saved,runtime):
             value=str(
                 saved.get("c4l2_s5_spatial_note")
                 or (
-                    "En el informe, el mayor nivel del escenario crítico se obtiene en R3 con 81 dB(A), seguido por R5 con 66 dB(A). "
-                    "La condición crítica no depende sólo de la distancia al predio, sino también de la ubicación de los frentes "
-                    "y de la superposición de actividades del mes 2 del año 3."
+                    "En la Adenda 2, el máximo sin control es 78 dB(A) en RIMIV05 y RIMIV06 para el Escenario 3. "
+                    "Entre R01–R09, R02 y R06 alcanzan 72 dB(A) en el Escenario 2. "
+                    "La condición crítica depende de la ubicación de los frentes y de la geometría respecto de cada receptor."
                     if is_teacher else ""
                 )
             ),
