@@ -62,6 +62,37 @@ def _calc(item):
     lwa_global=item["laeq10"]+28.0
     return lp,lw,lwa_bands,lwa_spec,lwa_global
 
+def _adenda2_machines():
+    """Maquinaria de construcción utilizada en los escenarios 1–3 de la Adenda 2."""
+    return [
+        {"Máquina / equipo":"Minicargador","Cantidad":1,"Etapa asociada":"Escenario 1 · Movimiento de tierra"},
+        {"Máquina / equipo":"Retroexcavadora","Cantidad":1,"Etapa asociada":"Escenario 1 · Movimiento de tierra"},
+        {"Máquina / equipo":"Excavadora","Cantidad":1,"Etapa asociada":"Escenario 1 · Movimiento de tierra"},
+
+        {"Máquina / equipo":"Rodillo compactador","Cantidad":1,"Etapa asociada":"Escenario 2 · Obra gruesa suelo"},
+        {"Máquina / equipo":"Minicargador","Cantidad":1,"Etapa asociada":"Escenario 2 · Obra gruesa suelo"},
+        {"Máquina / equipo":"Retroexcavadora","Cantidad":1,"Etapa asociada":"Escenario 2 · Obra gruesa suelo"},
+        {"Máquina / equipo":"Camión mixer + bomba hormigón","Cantidad":1,"Etapa asociada":"Escenario 2 · Obra gruesa suelo"},
+
+        {"Máquina / equipo":"Grúa pluma","Cantidad":1,"Etapa asociada":"Escenario 2 · Obra gruesa altura"},
+        {"Máquina / equipo":"Vibrador de inmersión","Cantidad":1,"Etapa asociada":"Escenario 2 · Obra gruesa altura"},
+
+        {"Máquina / equipo":"Rodillo compactador","Cantidad":1,"Etapa asociada":"Escenario 2 · Urbanización"},
+        {"Máquina / equipo":"Minicargador","Cantidad":1,"Etapa asociada":"Escenario 2 · Urbanización"},
+        {"Máquina / equipo":"Retroexcavadora","Cantidad":1,"Etapa asociada":"Escenario 2 · Urbanización"},
+        {"Máquina / equipo":"Motoniveladora","Cantidad":1,"Etapa asociada":"Escenario 2 · Urbanización"},
+        {"Máquina / equipo":"Camión mixer + bomba hormigón","Cantidad":1,"Etapa asociada":"Escenario 2 · Urbanización"},
+
+        {"Máquina / equipo":"Minicargador","Cantidad":1,"Etapa asociada":"Escenario 2 · Terminaciones"},
+        {"Máquina / equipo":"Alzahombre","Cantidad":1,"Etapa asociada":"Escenario 2 · Terminaciones"},
+
+        {"Máquina / equipo":"Cango","Cantidad":1,"Etapa asociada":"Escenario 3 · Obras IMIV"},
+        {"Máquina / equipo":"Camión mixer + bomba hormigón","Cantidad":1,"Etapa asociada":"Escenario 3 · Obras IMIV"},
+        {"Máquina / equipo":"Vibrador de inmersión","Cantidad":1,"Etapa asociada":"Escenario 3 · Obras IMIV"},
+        {"Máquina / equipo":"Rodillo compactador","Cantidad":1,"Etapa asociada":"Escenario 3 · Obras IMIV"},
+    ]
+
+
 def _render_teacher_pauta(st,pd):
     if st.session_state.get("role")!="Docente":
         return
@@ -227,7 +258,10 @@ def render(lab,saved,runtime):
         st.warning("No se encontró el PDF de BS 5228 entre los recursos del laboratorio.")
 
     st.markdown("### 2 · Recupera las máquinas de la Etapa 1")
-    stage1_rows=saved.get("c4l2_s1_machinery_table") or []
+    if st.session_state.get("role")=="Docente":
+        stage1_rows=_adenda2_machines()
+    else:
+        stage1_rows=saved.get("c4l2_s1_machinery_table") or []
     project_machines=[r for r in stage1_rows if str(r.get("Máquina / equipo") or "").strip()]
     if not project_machines:
         st.warning("Todavía no hay maquinaria guardada en la Etapa 1. Vuelve a la Etapa 1, completa la tabla de maquinaria y guarda la ficha antes de continuar.")
@@ -236,11 +270,15 @@ def render(lab,saved,runtime):
 
     st.caption(f"Se recuperaron **{len(project_machines)}** registros de maquinaria desde la Etapa 1. No necesitas volver a escribirlos.")
 
-    assignments_saved={str(x.get("Máquina / equipo proyecto")):x for x in (saved.get("c4l2_s3_bs_assignments") or [])}
+    assignments_saved={
+        f"{str(x.get('Máquina / equipo proyecto') or '')}|{str(x.get('Etapa') or '')}":x
+        for x in (saved.get("c4l2_s3_bs_assignments") or [])
+    }
     assignment_rows=[]
     for r in project_machines:
         project_name=str(r.get("Máquina / equipo") or "").strip()
-        old=assignments_saved.get(project_name,{})
+        project_stage=str(r.get("Etapa asociada") or "")
+        old=assignments_saved.get(f"{project_name}|{project_stage}",{})
         assignment_rows.append({
             "Máquina / equipo proyecto":project_name,
             "Cantidad":r.get("Cantidad"),
