@@ -38,6 +38,11 @@ def _suggest_bs(project_name):
         "sierra de corte":"Sierra de corte de hormigón",
         "generador":"Generador diésel",
         "generador diesel":"Generador diésel",
+        "camion mixer + bomba hormigon":"Camión mixer",
+        "grua pluma":"Grúa torre",
+        "alzahombre":"Manipulador telescópico",
+        "cango":"Martillo neumático",
+        "motoniveladora":"Rodillo vibratorio",
     }
     if n in aliases:
         return aliases[n]
@@ -65,113 +70,102 @@ def _render_teacher_pauta(st,pd):
     <div style="border:1px solid #bcd8e7;border-left:5px solid #0b7fa5;border-radius:18px;
                 padding:16px 18px;background:linear-gradient(135deg,#f8fcff,#edf7fb);margin:.8rem 0 1rem">
       <div style="font-size:.70rem;font-weight:900;letter-spacing:.09em;color:#087ba0">
-        VISTA DOCENTE · SOLUCIÓN DE REFERENCIA
+        VISTA DOCENTE · ADENDA 2
       </div>
       <div style="font-size:1.04rem;font-weight:900;color:#173b53;margin:.25rem 0">
-        Referencias BS y espectros esperados
+        Fuentes y niveles de referencia del último informe de ruido
       </div>
       <div style="color:#526f80;line-height:1.5">
-        Esta información se muestra únicamente al docente. Alumno y Proyección Zoom deben
-        seleccionar la referencia BS y desarrollar la caracterización.
+        Los valores siguientes corresponden al Anexo 05 · Estudio Ruido y Vibraciones,
+        versión 02 (Adenda 2, 23-09-2026). Alumno y Proyección Zoom deben desarrollar
+        la búsqueda y conversión sin ver esta solución.
       </div>
     </div>
     """,unsafe_allow_html=True)
 
-    teacher_map=[
-        ("Movimiento de tierras","Excavadora hidráulica","Excavadora hidráulica"),
-        ("Movimiento de tierras","Retroexcavadora","Retroexcavadora"),
-        ("Movimiento de tierras","Cargador frontal","Cargador frontal"),
-        ("Movimiento de tierras","Camión tolva","Camión tolva articulado"),
-        ("Movimiento de tierras","Rodillo vibratorio","Rodillo vibratorio"),
-        ("Hormigón / obra gruesa","Camión mixer","Camión mixer"),
-        ("Hormigón / obra gruesa","Bomba de hormigón","Bomba de hormigón"),
-        ("Hormigón / obra gruesa","Vibrador de inmersión","Vibrador de inmersión"),
-        ("Estructura / izaje","Grúa torre","Grúa torre"),
-        ("Equipos auxiliares","Generador diésel","Generador diésel"),
+    report_sources=[
+        ("Escenario 1 · Movimiento de tierra","Minicargador","C4","14",[68,67,63,62,62,61,54,47],67),
+        ("Escenario 1 · Movimiento de tierra","Retroexcavadora","C2","8",[74,66,64,64,63,60,59,50],68),
+        ("Escenario 1 · Movimiento de tierra","Excavadora","C2","23",[79,81,68,69,66,65,61,52],73),
+
+        ("Escenario 2 · Obra gruesa suelo","Rodillo compactador","C2","40",[82,78,67,71,67,64,60,57],73),
+        ("Escenario 2 · Obra gruesa suelo","Minicargador","C4","14",[68,67,63,62,62,61,54,47],67),
+        ("Escenario 2 · Obra gruesa suelo","Retroexcavadora","C2","8",[74,66,64,64,63,60,59,50],68),
+        ("Escenario 2 · Obra gruesa suelo","Camión mixer + bomba hormigón","C4","32",[73,73,77,76,72,70,65,62],78),
+
+        ("Escenario 2 · Obra gruesa altura","Grúa pluma","C4","46",[78,69,67,64,62,57,49,40],67),
+        ("Escenario 2 · Obra gruesa altura","Vibrador de inmersión","C4","34",[62,70,70,64,62,61,59,56],69),
+
+        ("Escenario 2 · Urbanización","Rodillo compactador","C2","40",[82,78,67,71,67,64,60,57],73),
+        ("Escenario 2 · Urbanización","Minicargador","C4","14",[68,67,63,62,62,61,54,47],67),
+        ("Escenario 2 · Urbanización","Retroexcavadora","C2","8",[74,66,64,64,63,60,59,50],68),
+        ("Escenario 2 · Urbanización","Motoniveladora","Consultor","—",[72,75,67,59,60,56,49,44],65),
+        ("Escenario 2 · Urbanización","Camión mixer + bomba hormigón","C4","32",[73,73,77,76,72,70,65,62],78),
+
+        ("Escenario 2 · Terminaciones","Minicargador","C4","14",[68,67,63,62,62,61,54,47],67),
+        ("Escenario 2 · Terminaciones","Alzahombre","C4","57",[78,76,62,63,60,59,58,49],67),
+
+        ("Escenario 3 · Obras IMIV","Cango","C1","8",[77,72,73,69,68,66,64,60],74),
+        ("Escenario 3 · Obras IMIV","Camión mixer + bomba hormigón","C4","32",[73,73,77,76,72,70,65,62],78),
+        ("Escenario 3 · Obras IMIV","Vibrador de inmersión","C4","34",[62,70,70,64,62,61,59,56],69),
+        ("Escenario 3 · Obras IMIV","Rodillo compactador","C2","40",[82,78,67,71,67,64,60,57],73),
     ]
 
-    st.markdown("#### Referencias BS sugeridas por etapa")
+    band_labels=["63 Hz","125 Hz","250 Hz","500 Hz","1 kHz","2 kHz","4 kHz","8 kHz"]
     rows=[]
-    for stage_name,project_machine,bs_name in teacher_map:
-        item=BS_PLANT[bs_name]
-        _,lw,_,_,lwa_global=_calc(item)
-        rows.append({
-            "Etapa":stage_name,
-            "Máquina proyecto":project_machine,
-            "Referencia BS":bs_name,
-            "Tabla / Ref.":f"{item['table']} · Ref. {item['ref']}",
-            "Página":item["page"],
-            "Descriptor":item.get("metric","LAeq,T"),
-            "Lp 10 m":f"{item['laeq10']:.0f} dB(A)",
-            "LWA ref.":f"{lwa_global:.0f} dB(A)",
-        })
+    for front,name,table,item,bands,npseq in report_sources:
+        row={
+            "Frente / escenario":front,
+            "Máquina":name,
+            "Tabla":table,
+            "Ítem":item,
+            "NPSeq @10 m [dB(A)]":npseq,
+            "LWA aprox. [+28]":npseq+28,
+        }
+        for label,val in zip(band_labels,bands):
+            row[label]=val
+        rows.append(row)
+
+    st.markdown("#### Valores oficiales a 10 m · Tablas 13 a 18")
     st.dataframe(pd.DataFrame(rows),hide_index=True,use_container_width=True)
 
-    st.markdown("#### Espectros de potencia esperados")
-    selected_teacher=st.selectbox(
-        "Ver espectro de referencia",
-        [r[1] for r in teacher_map],
-        key="c4l2_s3_teacher_spectrum",
-    )
-    bs_name=next(x[2] for x in teacher_map if x[1]==selected_teacher)
-    item=BS_PLANT[bs_name]
-    _,lw,_,_,lwa_global=_calc(item)
-    st.dataframe(
-        pd.DataFrame({"Banda":OCTAVE_LABELS,"Lw [dB]":[round(v,1) for v in lw]}),
-        hide_index=True,
-        use_container_width=True,
-    )
+    totals=[
+        {"Frente / escenario":"Escenario 1 · Movimiento de tierra","NPSeq total @10 m [dB(A)]":75,"LWA equivalente aprox. [dB(A)]":103},
+        {"Frente / escenario":"Escenario 2 · Obra gruesa suelo","NPSeq total @10 m [dB(A)]":80,"LWA equivalente aprox. [dB(A)]":108},
+        {"Frente / escenario":"Escenario 2 · Obra gruesa altura","NPSeq total @10 m [dB(A)]":71,"LWA equivalente aprox. [dB(A)]":99},
+        {"Frente / escenario":"Escenario 2 · Urbanización","NPSeq total @10 m [dB(A)]":80,"LWA equivalente aprox. [dB(A)]":108},
+        {"Frente / escenario":"Escenario 2 · Terminaciones","NPSeq total @10 m [dB(A)]":70,"LWA equivalente aprox. [dB(A)]":98},
+        {"Frente / escenario":"Escenario 3 · Obras IMIV","NPSeq total @10 m [dB(A)]":80,"LWA equivalente aprox. [dB(A)]":108},
+    ]
+    st.markdown("#### Totales oficiales por frente")
+    st.dataframe(pd.DataFrame(totals),hide_index=True,use_container_width=True)
     st.caption(
-        f"BS 5228-1 · Tabla {item['table']} · Ref. {item['ref']} · {item['page']} · "
-        f"LWA broadband de referencia ≈ {lwa_global:.1f} dB(A)."
+        "Los NPSeq @10 m y sus espectros provienen directamente de la Adenda 2. "
+        "La columna LWA aproximada aplica la misma conversión docente +28 dB utilizada en este laboratorio; "
+        "no es un valor tabulado por el consultor."
     )
 
-    st.markdown("#### Valores de potencia acústica informados en el Anexo 03.2")
-    report_sources=[
-        ("Camión tolva",[108,104,101,98,97,94,91,86],102,"BS 5228-1 · C.2 Ref.32 pág.47"),
-        ("Excavadora",[102,108,103,101,97,94,88,79],103,"BS 5228-1 · C.4 Ref.64 pág.53"),
-        ("Camión aljibe",[108,109,103,107,101,102,98,93],109,"BS 5228-1 · C.6 Ref.37 pág.58"),
-        ("Camión pluma",[109,106,104,102,100,97,92,84],105,"BS 5228-1 · C.4 Ref.53 pág.52"),
-        ("Camión grúa",[108,104,99,91,92,91,84,78],98,"BS 5228-1 · C.4 Ref.43 pág.52"),
-        ("Retroexcavadora",[102,94,92,92,91,88,87,78],96,"BS 5228-1 · C.2 Ref.8 pág.46"),
-        ("Alzahombres",[107,101,94,93,106,94,82,75],107,"BS 5228-1 · C.4 Ref.54 pág.52"),
-        ("Camión mixer",[97,94,98,99,97,92,86,28],101,"BS 5228-1 · C.4 Ref.18 pág.50"),
-        ("Rodillo compactador",[118,110,101,100,98,93,87,82],103,"BS 5228-1 · C.5 Ref.22 pág.56"),
-        ("Rodillo",[110,106,95,99,95,92,88,85],101,"BS 5228-1 · C.2 Ref.40 pág.47"),
-        ("Camión cama baja",[108,97,94,98,99,97,92,86],106,"Fuente propia del consultor"),
-        ("Compresor",[79,82,87,82,83,78,75,73],87,"Fuente propia del consultor"),
-        ("Martillo demoledor",[82,84,85,88,94,98,101,102],107,"Fuente propia del consultor"),
-        ("Soldador MIG",[80,73,75,75,76,79,83,87],90,"Fuente propia del consultor"),
-        ("Regla vibradora",[88,93,82,92,90,88,85,82],95,"Fuente propia del consultor"),
-        ("Mezclador mortero",[64,63,70,68,73,79,84,91],92,"Fuente propia del consultor"),
-        ("Tractocamión",[107,99,106,103,106,98,89,83],108,"Fuente propia del consultor"),
-        ("Unidad motriz (vibrador)",[106,103,100,91,86,88,87,85],97,"Fuente propia del consultor"),
-        ("Bomba de hormigón",[104,102,97,90,92,91,86,82],98,"Fuente propia del consultor"),
-        ("Betonera",[75,78,82,87,90,93,91,91],98,"Fuente propia del consultor"),
-        ("Camión 3/4",[91,96,86,85,88,86,85,78],93,"Fuente propia del consultor"),
-        ("Minicargador",[96,95,91,90,90,89,82,81],95,"Fuente propia del consultor"),
-        ("Motoniveladora",[106,105,101,97,102,96,92,83],105,"Fuente propia del consultor"),
-    ]
-    report_rows=[]
-    for name,bands,lwa,source in report_sources:
-        row={"Fuente de ruido":name}
-        for label,val in zip(["63 Hz","125 Hz","250 Hz","500 Hz","1 kHz","2 kHz","4 kHz","8 kHz"],bands):
-            row[label]=val
-        row["Lw [dB(A)]"]=lwa
-        row["Fuente"]=source
-        report_rows.append(row)
-    st.dataframe(pd.DataFrame(report_rows),hide_index=True,use_container_width=True)
-    st.caption(
-        "Referencia documental: Anexo 03.2, Tabla 8, págs. 28–29. "
-        "Estos valores sirven para corregir la selección del alumno; no deben mostrarse en Alumno ni Proyección Zoom."
+    chosen=st.selectbox(
+        "Ver desarrollo de un frente",
+        [x["Frente / escenario"] for x in totals],
+        key="c4l2_s3_teacher_adenda_front",
     )
+    selected=[x for x in report_sources if x[0]==chosen]
+    detail=[]
+    for _,name,table,item,bands,npseq in selected:
+        d={"Máquina":name,"Ref.":f"{table} · {item}","NPSeq [dB(A)]":npseq}
+        for label,val in zip(band_labels,bands):
+            d[label]=val
+        detail.append(d)
+    st.dataframe(pd.DataFrame(detail),hide_index=True,use_container_width=True)
 
     with st.expander("👨‍🏫 Criterios de revisión",expanded=False):
         st.markdown("""
-        - La referencia debe ser coherente con **equipo + tamaño/potencia + actividad**.
-        - Debe conservarse tabla, referencia, página y descriptor original.
-        - El alumno debe distinguir el dato de presión a 10 m del nivel de potencia usado en el modelo.
-        - Si el expediente usa un equipo distinto, debe seleccionarse el registro BS más representativo.
+        - El alumno debe conservar **tabla, ítem, máquina y actividad** de la referencia seleccionada.
+        - El dato del informe es **NPS/NPSeq a 10 m**, no potencia sonora.
+        - Para el ejercicio, la conversión a potencia se desarrolla explícitamente antes de ingresar la fuente al modelo.
+        - En **IMIV** la Adenda 2 exige posteriormente uso secuencial de maquinaria; esa condición se aplicará en la etapa de medidas de control.
+        - La Motoniveladora corresponde a una medición del **consultor**, no a una referencia BS 5228.
         """)
 
 
@@ -180,7 +174,7 @@ def render(lab,saved,runtime):
     runtime["header"](
         "ETAPA 3 · LABORATORIO 2",
         "Niveles de potencia sonora de la maquinaria",
-        "Vincular las máquinas identificadas en la Etapa 1 con referencias trazables de BS 5228 y obtener niveles de potencia sonora globales y por bandas para modelación.",
+        "Vincular las máquinas identificadas en la Etapa 1 con referencias trazables y obtener niveles de potencia sonora globales y por bandas, usando como contraste la Adenda 2 del Estudio de Ruido y Vibraciones.",
         show_overview=False,
         duration_minutes=30,
     )
