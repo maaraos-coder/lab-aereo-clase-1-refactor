@@ -31,7 +31,7 @@ def render(lab, saved, runtime):
     No es solo una casa o edificio: es una **posición tridimensional** definida por coordenadas y altura.
 
     Para describirlo necesitamos: **ubicación**, **altura sobre terreno**, **uso o sensibilidad**,
-    **descripción física**, **distancia respecto del proyecto** e identificador **R1, R2, R3...**
+    **descripción física**, **distancia respecto del proyecto** e identificador **R01, R02, R03...**
     """)
     st.info("Un mismo edificio puede requerir más de un receptor si interesa analizar distintos pisos o fachadas.")
 
@@ -183,21 +183,22 @@ def render(lab, saved, runtime):
           Receptores y geometría esperada
         </div>
         <div style="color:#526f80;line-height:1.5">
-          La vista docente muestra los criterios y, cuando existen datos guardados, los receptores registrados.
+          La vista docente muestra directamente los receptores oficiales de la **Adenda 2**, incluso si el alumno aún no ha guardado la etapa.
           Alumno y Proyección Zoom deben identificar y documentar los puntos desde el expediente.
         </div>
       </div>
       """,unsafe_allow_html=True)
 
-      teacher_receptors=saved.get("c4l2_s2_receptors_table") or []
-      if teacher_receptors:
-        st.markdown("#### Receptores registrados · vista docente")
-        st.dataframe(pd.DataFrame(teacher_receptors),hide_index=True,use_container_width=True)
-      else:
-        st.info(
-          "No se muestran coordenadas inventadas como solución. La posición exacta de R1, R2, R3… "
-          "debe provenir del Anexo de Ruido y Vibraciones y de la cartografía oficial del proyecto."
-        )
+      st.markdown("#### Receptores oficiales · Adenda 2")
+      st.dataframe(
+        pd.DataFrame(st.session_state.get("c4l2_s2_receptors_work") or teacher_receptors),
+        hide_index=True,
+        use_container_width=True,
+      )
+      st.caption(
+        "Anexo 05 · Tabla 5: R01–R09. Los receptores colindantes se documentan como 'Colindante'; "
+        "en la tabla de trabajo se representan con distancia 0 m al deslinde y la condición se conserva en una columna separada."
+      )
 
       with st.expander("👨‍🏫 Criterios de revisión",expanded=False):
         st.markdown("""
