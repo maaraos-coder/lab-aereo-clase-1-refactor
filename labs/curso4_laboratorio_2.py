@@ -698,6 +698,7 @@ def _stage5(lab, saved):
         "pd":pd,
         "header":header,
         "_professional_grid":_professional_grid,
+        "_dynamic_grid":_dynamic_grid,
         "_save":_save,
         "NOISEMAP_URL":NOISEMAP_URL,
     }
