@@ -607,53 +607,64 @@ def _stage1(lab, saved):
             st.success("Información guardada. Los antecedentes quedan disponibles para las siguientes etapas del laboratorio.")
 
     if st.session_state.get("role") == "Docente":
-        with st.expander("👨‍🏫 Pauta docente · Etapa 1", expanded=False):
-            st.markdown(
-                """
-                **Datos mínimos documentados que deben reconocer**
+        st.markdown("""
+        <div style="border:1px solid #bcd8e7;border-left:5px solid #0b7fa5;border-radius:18px;
+                    padding:16px 18px;background:linear-gradient(135deg,#f8fcff,#edf7fb);margin:1rem 0">
+          <div style="font-size:.70rem;font-weight:900;letter-spacing:.09em;color:#087ba0">
+            VISTA DOCENTE · SOLUCIÓN DE REFERENCIA
+          </div>
+          <div style="font-size:1.04rem;font-weight:900;color:#173b53;margin:.25rem 0">
+            Datos mínimos documentados del proyecto
+          </div>
+          <div style="color:#526f80;line-height:1.5">
+            Esta información se muestra solo al docente. Alumno y Proyección Zoom deben reconstruirla
+            desde el expediente del proyecto.
+          </div>
+        </div>
+        """,unsafe_allow_html=True)
 
-                - Proyecto: Conjunto Habitacional Eyzaguirre.
-                - Expediente: 2165522433.
-                - Titular: Entidad Patrocinante Unión Ltda.
-                - Dirección: Av. Eyzaguirre N.º 0355, Lote G-1, Puente Alto.
-                - Superficie aproximada: 22.701 m².
-                - 6 torres de 4 pisos.
-                - 360 departamentos.
-                - 277 estacionamientos vehiculares.
-                - 106 estacionamientos de bicicletas.
-                - 4 locales comerciales.
-                - 3 sedes sociales.
-                - Accesos vehiculares informados por calle Carlos Aguirre Luco.
+        st.markdown("""
+        - **Proyecto:** Conjunto Habitacional Eyzaguirre.
+        - **Expediente:** 2165522433.
+        - **Titular:** Entidad Patrocinante Unión Ltda.
+        - **Dirección:** Av. Eyzaguirre N.º 0355, Lote G-1, Puente Alto.
+        - **Superficie aproximada:** 22.701 m².
+        - **Edificación:** 6 torres de 4 pisos.
+        - **Viviendas:** 360 departamentos.
+        - **Estacionamientos vehiculares:** 277.
+        - **Estacionamientos de bicicletas:** 106.
+        - **Locales comerciales:** 4.
+        - **Sedes sociales:** 3.
+        - **Accesos vehiculares informados:** calle Carlos Aguirre Luco.
+        """)
 
-                **Revisión espacial**
+        st.markdown("#### Maquinaria identificable · solución docente")
+        teacher_machinery=[
+            {"Etapa / frente":"Movimiento de tierras","Maquinaria esperable":"Excavadora hidráulica","Actividad a contrastar":"Excavación / movimiento de material"},
+            {"Etapa / frente":"Movimiento de tierras","Maquinaria esperable":"Retroexcavadora","Actividad a contrastar":"Preparación / excavación localizada"},
+            {"Etapa / frente":"Movimiento de tierras","Maquinaria esperable":"Cargador frontal","Actividad a contrastar":"Carga de material"},
+            {"Etapa / frente":"Movimiento de tierras","Maquinaria esperable":"Camión tolva","Actividad a contrastar":"Transporte / descarga de material"},
+            {"Etapa / frente":"Movimiento de tierras","Maquinaria esperable":"Rodillo vibratorio","Actividad a contrastar":"Compactación"},
+            {"Etapa / frente":"Hormigón / obra gruesa","Maquinaria esperable":"Camión mixer","Actividad a contrastar":"Suministro / descarga de hormigón"},
+            {"Etapa / frente":"Hormigón / obra gruesa","Maquinaria esperable":"Bomba de hormigón","Actividad a contrastar":"Bombeo de hormigón"},
+            {"Etapa / frente":"Hormigón / obra gruesa","Maquinaria esperable":"Vibrador de inmersión","Actividad a contrastar":"Vibrado de hormigón"},
+            {"Etapa / frente":"Estructura / izaje","Maquinaria esperable":"Grúa torre","Actividad a contrastar":"Izaje / movimiento de materiales"},
+            {"Etapa / frente":"Equipos auxiliares","Maquinaria esperable":"Generador diésel","Actividad a contrastar":"Alimentación eléctrica temporal"},
+        ]
+        st.dataframe(pd.DataFrame(teacher_machinery),hide_index=True,use_container_width=True)
 
-                El alumno debe distinguir correctamente entre **punto de referencia**, **vértices del predio**
-                y **área de cálculo**. No se debe aceptar un polígono inventado a partir de una coordenada central.
-                """
-            )
+        with st.expander("👨‍🏫 Criterios de revisión",expanded=False):
+            st.markdown("""
+            - Distinguir **punto de referencia**, **vértices del predio** y **área de cálculo**.
+            - No aceptar un polígono inventado a partir de una coordenada central.
+            - La geometría exacta debe provenir del plano/georreferenciación oficial.
+            - Si una máquina no aparece en el expediente, no se exige; si aparece otro equipo, debe incorporarse.
+            """)
             st.warning(
-                "La tabla exacta de vértices debe provenir del plano/georreferenciación oficial del expediente. "
+                "La tabla exacta de vértices debe provenir del expediente. "
                 "No se entrega una geometría estimada como si fuera documental."
             )
 
-            st.markdown("#### Maquinaria identificable · pauta docente")
-            teacher_machinery=[
-                {"Etapa / frente":"Movimiento de tierras","Maquinaria esperable":"Excavadora hidráulica","Actividad a contrastar":"Excavación / movimiento de material"},
-                {"Etapa / frente":"Movimiento de tierras","Maquinaria esperable":"Retroexcavadora","Actividad a contrastar":"Preparación / excavación localizada"},
-                {"Etapa / frente":"Movimiento de tierras","Maquinaria esperable":"Cargador frontal","Actividad a contrastar":"Carga de material"},
-                {"Etapa / frente":"Movimiento de tierras","Maquinaria esperable":"Camión tolva","Actividad a contrastar":"Transporte / descarga de material"},
-                {"Etapa / frente":"Movimiento de tierras","Maquinaria esperable":"Rodillo vibratorio","Actividad a contrastar":"Compactación"},
-                {"Etapa / frente":"Hormigón / obra gruesa","Maquinaria esperable":"Camión mixer","Actividad a contrastar":"Suministro / descarga de hormigón"},
-                {"Etapa / frente":"Hormigón / obra gruesa","Maquinaria esperable":"Bomba de hormigón","Actividad a contrastar":"Bombeo de hormigón"},
-                {"Etapa / frente":"Hormigón / obra gruesa","Maquinaria esperable":"Vibrador de inmersión","Actividad a contrastar":"Vibrado de hormigón"},
-                {"Etapa / frente":"Estructura / izaje","Maquinaria esperable":"Grúa torre","Actividad a contrastar":"Izaje / movimiento de materiales"},
-                {"Etapa / frente":"Equipos auxiliares","Maquinaria esperable":"Generador diésel","Actividad a contrastar":"Alimentación eléctrica temporal"},
-            ]
-            st.dataframe(pd.DataFrame(teacher_machinery),hide_index=True,use_container_width=True)
-            st.info(
-                "Esta pauta debe contrastarse con la versión vigente del expediente. Si una máquina no aparece, no se exige; "
-                "si aparece otro equipo, debe incorporarse y respaldarse documentalmente."
-            )
 
 def _stage2(lab, saved):
     from labs import curso4_laboratorio_2_stage2 as _stage2_module
