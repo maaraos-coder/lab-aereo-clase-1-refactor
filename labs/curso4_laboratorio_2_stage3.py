@@ -6,6 +6,63 @@ from labs.curso4_laboratorio_1 import BS_PLANT
 
 OCTAVE_LABELS=["31,5 Hz","63 Hz","125 Hz","250 Hz","500 Hz","1 kHz","2 kHz","4 kHz"]
 A_CORR=[-39.4,-26.2,-16.1,-8.6,-3.2,0.0,1.2,1.0]
+REPORT_BANDS=["63 Hz","125 Hz","250 Hz","500 Hz","1 kHz","2 kHz","4 kHz","8 kHz"]
+ADENDA_A_CORR=[-26.2,-16.1,-8.6,-3.2,0.0,1.2,1.0,-1.1]
+
+ADENDA2_SOURCES={
+    "Adenda 2 · Minicargador · C.4 ítem 14":{
+        "bands":[68,67,63,62,62,61,54,47],"laeq10":67,"table":"C.4","ref":"14",
+        "page":"Adenda 2 · Tabla 13/14/16/17","activity":"Movimiento de tierra / obra gruesa / urbanización / terminaciones",
+        "power":"—","size":"—","metric":"NPSeq","band_labels":REPORT_BANDS,"a_corr":ADENDA_A_CORR,
+    },
+    "Adenda 2 · Retroexcavadora · C.2 ítem 8":{
+        "bands":[74,66,64,64,63,60,59,50],"laeq10":68,"table":"C.2","ref":"8",
+        "page":"Adenda 2 · Tabla 13/14/16","activity":"Movimiento de tierra / obra gruesa / urbanización",
+        "power":"—","size":"—","metric":"NPSeq","band_labels":REPORT_BANDS,"a_corr":ADENDA_A_CORR,
+    },
+    "Adenda 2 · Excavadora · C.2 ítem 23":{
+        "bands":[79,81,68,69,66,65,61,52],"laeq10":73,"table":"C.2","ref":"23",
+        "page":"Adenda 2 · Tabla 13","activity":"Movimiento de tierra",
+        "power":"—","size":"—","metric":"NPSeq","band_labels":REPORT_BANDS,"a_corr":ADENDA_A_CORR,
+    },
+    "Adenda 2 · Rodillo compactador · C.2 ítem 40":{
+        "bands":[82,78,67,71,67,64,60,57],"laeq10":73,"table":"C.2","ref":"40",
+        "page":"Adenda 2 · Tabla 14/16/18","activity":"Obra gruesa / urbanización / IMIV",
+        "power":"—","size":"—","metric":"NPSeq","band_labels":REPORT_BANDS,"a_corr":ADENDA_A_CORR,
+    },
+    "Adenda 2 · Camión mixer + bomba · C.4 ítem 32":{
+        "bands":[73,73,77,76,72,70,65,62],"laeq10":78,"table":"C.4","ref":"32",
+        "page":"Adenda 2 · Tabla 14/16/18","activity":"Obra gruesa / urbanización / IMIV",
+        "power":"—","size":"—","metric":"NPSeq","band_labels":REPORT_BANDS,"a_corr":ADENDA_A_CORR,
+    },
+    "Adenda 2 · Grúa pluma · C.4 ítem 46":{
+        "bands":[78,69,67,64,62,57,49,40],"laeq10":67,"table":"C.4","ref":"46",
+        "page":"Adenda 2 · Tabla 15","activity":"Obra gruesa en altura",
+        "power":"—","size":"—","metric":"NPSeq","band_labels":REPORT_BANDS,"a_corr":ADENDA_A_CORR,
+    },
+    "Adenda 2 · Vibrador de inmersión · C.4 ítem 34":{
+        "bands":[62,70,70,64,62,61,59,56],"laeq10":69,"table":"C.4","ref":"34",
+        "page":"Adenda 2 · Tabla 15/18","activity":"Obra gruesa en altura / IMIV",
+        "power":"—","size":"—","metric":"NPSeq","band_labels":REPORT_BANDS,"a_corr":ADENDA_A_CORR,
+    },
+    "Adenda 2 · Motoniveladora · consultor":{
+        "bands":[72,75,67,59,60,56,49,44],"laeq10":65,"table":"Consultor","ref":"—",
+        "page":"Adenda 2 · Tabla 16","activity":"Urbanización",
+        "power":"—","size":"—","metric":"NPSeq","band_labels":REPORT_BANDS,"a_corr":ADENDA_A_CORR,
+    },
+    "Adenda 2 · Alzahombre · C.4 ítem 57":{
+        "bands":[78,76,62,63,60,59,58,49],"laeq10":67,"table":"C.4","ref":"57",
+        "page":"Adenda 2 · Tabla 17","activity":"Terminaciones",
+        "power":"—","size":"—","metric":"NPSeq","band_labels":REPORT_BANDS,"a_corr":ADENDA_A_CORR,
+    },
+    "Adenda 2 · Cango · C.1 ítem 8":{
+        "bands":[77,72,73,69,68,66,64,60],"laeq10":74,"table":"C.1","ref":"8",
+        "page":"Adenda 2 · Tabla 18","activity":"Obras IMIV",
+        "power":"—","size":"—","metric":"NPSeq","band_labels":REPORT_BANDS,"a_corr":ADENDA_A_CORR,
+    },
+}
+
+SOURCE_CATALOG={**BS_PLANT,**ADENDA2_SOURCES}
 
 def _norm(value):
     text=str(value or "").strip().lower()
@@ -17,9 +74,17 @@ def _norm(value):
 def _suggest_bs(project_name):
     n=_norm(project_name)
     aliases={
-        "excavadora":"Excavadora hidráulica",
+        "minicargador":"Adenda 2 · Minicargador · C.4 ítem 14",
+        "retroexcavadora":"Adenda 2 · Retroexcavadora · C.2 ítem 8",
+        "excavadora":"Adenda 2 · Excavadora · C.2 ítem 23",
+        "rodillo compactador":"Adenda 2 · Rodillo compactador · C.2 ítem 40",
+        "camion mixer + bomba hormigon":"Adenda 2 · Camión mixer + bomba · C.4 ítem 32",
+        "grua pluma":"Adenda 2 · Grúa pluma · C.4 ítem 46",
+        "vibrador de inmersion":"Adenda 2 · Vibrador de inmersión · C.4 ítem 34",
+        "motoniveladora":"Adenda 2 · Motoniveladora · consultor",
+        "alzahombre":"Adenda 2 · Alzahombre · C.4 ítem 57",
+        "cango":"Adenda 2 · Cango · C.1 ítem 8",
         "excavadora hidraulica":"Excavadora hidráulica",
-        "retroexcavadora":"Retroexcavadora",
         "cargador frontal":"Cargador frontal",
         "camion tolva":"Camión tolva articulado",
         "tolva":"Camión tolva articulado",
@@ -31,25 +96,20 @@ def _suggest_bs(project_name):
         "bomba hormigon":"Bomba de hormigón",
         "grua torre":"Grúa torre",
         "vibrador":"Vibrador de inmersión",
-        "vibrador de inmersion":"Vibrador de inmersión",
         "manipulador telescopico":"Manipulador telescópico",
         "martillo hidraulico":"Martillo hidráulico",
         "martillo neumatico":"Martillo neumático",
         "sierra de corte":"Sierra de corte de hormigón",
         "generador":"Generador diésel",
         "generador diesel":"Generador diésel",
-        "camion mixer + bomba hormigon":"Camión mixer",
-        "grua pluma":"Grúa torre",
-        "alzahombre":"Manipulador telescópico",
-        "cango":"Martillo neumático",
-        "motoniveladora":"Rodillo vibratorio",
+
     }
     if n in aliases:
         return aliases[n]
     for key,val in aliases.items():
         if key in n or n in key:
             return val
-    for name in BS_PLANT:
+    for name in SOURCE_CATALOG:
         if _norm(name)==n:
             return name
     return "Seleccionar referencia BS"
@@ -57,7 +117,8 @@ def _suggest_bs(project_name):
 def _calc(item):
     lp=list(item["bands"])
     lw=[v+28.0 for v in lp]
-    lwa_bands=[v+a for v,a in zip(lw,A_CORR)]
+    a_corr=item.get("a_corr",A_CORR)
+    lwa_bands=[v+a for v,a in zip(lw,a_corr)]
     lwa_spec=10*math.log10(sum(10**(v/10) for v in lwa_bands))
     lwa_global=item["laeq10"]+28.0
     return lp,lw,lwa_bands,lwa_spec,lwa_global
@@ -300,7 +361,7 @@ def render(lab,saved,runtime):
     </div></div>
     """,unsafe_allow_html=True)
 
-    bs_options=["Seleccionar referencia BS"]+list(BS_PLANT.keys())
+    bs_options=["Seleccionar referencia BS"]+list(SOURCE_CATALOG.keys())
     assign_df=runtime["_professional_grid"](
         pd.DataFrame(assignment_rows),
         key="c4l2_s3_assign_grid",
@@ -312,7 +373,7 @@ def render(lab,saved,runtime):
     assign_records=assign_df.where(pd.notna(assign_df),None).to_dict("records")
 
     st.markdown("### 3 · Revisa la referencia antes de aceptarla")
-    valid_refs=[r for r in assign_records if r.get("Referencia BS") in BS_PLANT]
+    valid_refs=[r for r in assign_records if r.get("Referencia BS") in SOURCE_CATALOG]
     if not valid_refs:
         st.info("Selecciona al menos una referencia BS en la tabla anterior para revisar sus antecedentes acústicos.")
     else:
@@ -320,7 +381,7 @@ def render(lab,saved,runtime):
         chosen_label=st.selectbox("Máquina a revisar",labels,key="c4l2_s3_review_machine")
         idx=labels.index(chosen_label)
         chosen=valid_refs[idx]
-        item=BS_PLANT[chosen["Referencia BS"]]
+        item=SOURCE_CATALOG[chosen["Referencia BS"]]
         metric=item.get("metric","LAeq,T")
         lp,lw,lwa_bands,lwa_spec,lwa_global=_calc(item)
 
@@ -336,7 +397,9 @@ def render(lab,saved,runtime):
 
         st.markdown("### 4 · Obtén el espectro de potencia sonora")
         spec_rows=[]
-        for f_label,lpv,lwv,ac,lwav in zip(OCTAVE_LABELS,lp,lw,A_CORR,lwa_bands):
+        band_labels=item.get("band_labels",OCTAVE_LABELS)
+        a_corr=item.get("a_corr",A_CORR)
+        for f_label,lpv,lwv,ac,lwav in zip(band_labels,lp,lw,a_corr,lwa_bands):
             spec_rows.append({
                 "Banda":f_label,
                 "Lp a 10 m [dB]":lpv,
@@ -373,7 +436,7 @@ def render(lab,saved,runtime):
                 "LWA [dB(A)]":None,
             })
             continue
-        item=BS_PLANT[ref]
+        item=SOURCE_CATALOG[ref]
         _,_,_,_,lwa_global=_calc(item)
         summary.append({
             "Máquina proyecto":r.get("Máquina / equipo proyecto"),
@@ -388,13 +451,13 @@ def render(lab,saved,runtime):
     st.markdown("### 6 · Guarda la caracterización acústica")
     st.caption("Al guardar, el laboratorio conserva la referencia BS y los espectros calculados para reutilizarlos cuando ubiquemos las fuentes en Noise Map Lab.")
     if st.button("✓ Guardar niveles de potencia",type="primary",use_container_width=True,key="c4l2_s3_save"):
-        pending=[r for r in assign_records if r.get("Referencia BS") not in BS_PLANT]
+        pending=[r for r in assign_records if r.get("Referencia BS") not in SOURCE_CATALOG]
         if pending:
             st.warning(f"Falta seleccionar una referencia BS válida para **{len(pending)}** máquina(s).")
         else:
             acoustic=[]
             for r in assign_records:
-                item=BS_PLANT[r["Referencia BS"]]
+                item=SOURCE_CATALOG[r["Referencia BS"]]
                 lp,lw,lwa_bands,lwa_spec,lwa_global=_calc(item)
                 acoustic.append({
                     **r,
