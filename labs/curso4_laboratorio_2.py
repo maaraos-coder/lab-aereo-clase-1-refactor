@@ -414,7 +414,7 @@ def _stage1(lab, saved):
           <div>
             <div class="c4l2-table-kicker">GEORREFERENCIACIÓN</div>
             <div class="c4l2-table-title">Registro de vértices del predio</div>
-            <div class="c4l2-table-copy">Una fila por vértice del polígono oficial. Agrega o elimina filas según el plano y conserva el orden V1, V2, V3…</div>
+            <div class="c4l2-table-copy">Una fila por vértice del polígono oficial. En el expediente los vértices del proyecto están identificados como A, B, C, D, E y F.</div>
             <div class="c4l2-source"><b>📄 Dónde buscar:</b> Anexo 01 · <b>Antecedentes del Proyecto</b> (cartografía/KMZ/planos) y Anexo 02 · <b>Actualización Capítulo 2 Descripción Proyecto</b>, apartado de localización y superficie. <span class="page">Versión 30-09-2026.</span> Busca en el PDF: “coordenadas”, “localización”, “superficie” o “Lote G-1”. La ficha SEA electrónica no tiene número de página.</div>
           </div>
         </div>
@@ -422,6 +422,14 @@ def _stage1(lab, saved):
         unsafe_allow_html=True,
     )
     is_teacher=st.session_state.get("role")=="Docente"
+    teacher_vertices=[
+        {"Vértice":"A","Latitud":-33.6126705,"Longitud":-70.5715419},
+        {"Vértice":"B","Latitud":-33.6124714,"Longitud":-70.5701802},
+        {"Vértice":"C","Latitud":-33.6124894,"Longitud":-70.5701805},
+        {"Vértice":"D","Latitud":-33.6125562,"Longitud":-70.5706021},
+        {"Vértice":"E","Latitud":-33.6128998,"Longitud":-70.5705329},
+        {"Vértice":"F","Latitud":-33.6127983,"Longitud":-70.5700029},
+    ]
 
     teacher_parts=[
         {"Parte / obra":"Torres habitacionales","Cantidad":"6","Ubicación / sector":"Lote G-1","Fuente documental":"Anexo 02 · Descripción del Proyecto"},
@@ -456,14 +464,17 @@ def _stage1(lab, saved):
         {"Etapa / actividad":"Equipos auxiliares","Inicio":"","Término":"","Duración":"","¿Se superpone?":"No indicado","Observación":"Puede acompañar distintos frentes; verificar cronograma."},
     ]
 
-    vertex_saved=saved.get("c4l2_s1_vertices_table") or [
-        {"Vértice":"V1","Latitud":None,"Longitud":None},
-        {"Vértice":"V2","Latitud":None,"Longitud":None},
-        {"Vértice":"V3","Latitud":None,"Longitud":None},
-        {"Vértice":"V4","Latitud":None,"Longitud":None},
-    ]
+    vertex_saved=saved.get("c4l2_s1_vertices_table") or (
+        teacher_vertices if is_teacher else [
+            {"Vértice":"V1","Latitud":None,"Longitud":None},
+            {"Vértice":"V2","Latitud":None,"Longitud":None},
+            {"Vértice":"V3","Latitud":None,"Longitud":None},
+            {"Vértice":"V4","Latitud":None,"Longitud":None},
+        ]
+    )
     if is_teacher:
         teacher_seed_map={
+            "c4l2_s1_vertices_work":(teacher_vertices,"Vértice","c4l2_s1_vertices_table"),
             "c4l2_s1_parts_work":(teacher_parts,"Parte / obra","c4l2_s1_parts_table"),
             "c4l2_s1_phases_work":(teacher_phases,"Etapa / frente","c4l2_s1_phases_table"),
             "c4l2_s1_machinery_work":(teacher_machinery_rows,"Máquina / equipo","c4l2_s1_machinery_table"),
@@ -476,10 +487,10 @@ def _stage1(lab, saved):
             if not has_saved and not has_content:
                 st.session_state[_key]=[dict(x) for x in _rows]
 
-    if is_teacher and not saved.get("c4l2_s1_vertices_table"):
-        st.info(
-            "Vista Docente: las coordenadas exactas de V1, V2, V3… no están almacenadas en el repositorio. "
-            "Por trazabilidad, esta tabla no se completa con coordenadas estimadas; debe llenarse desde el plano/KMZ oficial."
+    if is_teacher:
+        st.success(
+            "Vista Docente: vértices oficiales A–F cargados desde la Tabla 7 del Capítulo 2 "
+            "(coordenadas UTM WGS84 Huso 19S) y convertidos a latitud/longitud para Noise Map Lab."
         )
 
     vertex_df=_dynamic_grid(
