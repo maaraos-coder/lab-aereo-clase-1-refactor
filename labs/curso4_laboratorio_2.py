@@ -225,7 +225,7 @@ def _stage0(lab, saved):
         ("2","Identifica los receptores","Localiza los puntos sensibles del entorno y llévalos a Noise Map Lab con coordenadas, altura y distancia.","25 min"),
         ("3","Caracteriza la maquinaria","Asocia las máquinas del proyecto con BS 5228 y obtiene Lw global y por bandas.","30 min"),
         ("4","Modela la condición original","Agrupa máquinas por etapa, calcula fuentes equivalentes y guarda un escenario original por frente.","45 min"),
-        ("5","Proyecto real · siguiente análisis","La información registrada en las etapas anteriores se reutilizará sin volver a ingresarla.","Por definir"),
+        ("5","Resultados de la condición original","Extrae niveles globales y por bandas, identifica la condición crítica y conserva la línea base antes de aplicar controles.","35 min"),
         ("6","Proyecto real · siguiente análisis","Se incorporarán progresivamente fuentes, receptores y decisiones de modelación.","Por definir"),
         ("7","Proyecto real · siguiente análisis","El escenario acústico se construirá desde los antecedentes reales del expediente.","Por definir"),
         ("8","Caso guiado del proyecto","Integrará los antecedentes documentales y el trabajo realizado en Noise Map Lab.","Por definir"),
@@ -691,6 +691,18 @@ def _stage4(lab, saved):
     }
     return _stage4_module.render(lab,saved,ctx)
 
+def _stage5(lab, saved):
+    from labs import curso4_laboratorio_2_stage5 as _stage5_module
+    ctx={
+        "st":st,
+        "pd":pd,
+        "header":header,
+        "_professional_grid":_professional_grid,
+        "_save":_save,
+        "NOISEMAP_URL":NOISEMAP_URL,
+    }
+    return _stage5_module.render(lab,saved,ctx)
+
 def _generic(stage, lab, saved):
     title, objective, concept, activity = lab["stages"][stage]
     _header(stage, title, objective)
@@ -715,4 +727,6 @@ def run_stage(stage, lab, saved, runtime):
         return _stage3(lab,saved)
     if stage==4:
         return _stage4(lab,saved)
+    if stage==5:
+        return _stage5(lab,saved)
     return _generic(stage,lab,saved)
