@@ -56,8 +56,16 @@ def _original_maxima(saved):
     return out
 
 
-def _student_design_rows(saved):
-    maxima=_original_maxima(saved)
+def _teacher_reference_maxima():
+    """Máximos de referencia de la condición original usados solo en vista Docente."""
+    return {
+        "Escenario 1":{"laeq":66.0,"receptor":"R02"},
+        "Escenario 2":{"laeq":72.0,"receptor":"R02 / R06"},
+        "Escenario 3":{"laeq":78.0,"receptor":"RIMIV05 / RIMIV06"},
+    }
+
+
+def _build_design_rows(maxima):
     rows=[]
     for base in FRONT_TEMPLATE:
         key=_scenario_key(base["Frente / condición"])
@@ -77,6 +85,14 @@ def _student_design_rows(saved):
             "Proyecto controlado":"",
         })
     return rows
+
+
+def _student_design_rows(saved):
+    return _build_design_rows(_original_maxima(saved))
+
+
+def _teacher_design_rows():
+    return _build_design_rows(_teacher_reference_maxima())
 
 
 def _teacher_solution(st,pd):
@@ -312,10 +328,16 @@ def render(lab,saved,runtime):
         return
 
     st.markdown("### 4 · Diseña la estrategia para cada frente")
-    saved_rows=saved.get("c4l2_s6_control_design") or _student_design_rows(saved)
+    if is_teacher:
+        saved_rows=saved.get("c4l2_s6_control_design") or _teacher_design_rows()
+        design_grid_key="c4l2_s6_design_grid_teacher_v2"
+    else:
+        saved_rows=saved.get("c4l2_s6_control_design") or _student_design_rows(saved)
+        design_grid_key="c4l2_s6_design_grid_student_v2"
+
     design_df=runtime["_professional_grid"](
         pd.DataFrame(saved_rows),
-        key="c4l2_s6_design_grid",
+        key=design_grid_key,
         widths={
             "Frente / condición":260,
             "Tipo de trabajo":150,
@@ -334,10 +356,16 @@ def render(lab,saved,runtime):
     )
     design_records=design_df.where(pd.notna(design_df),None).to_dict("records")
 
-    st.caption(
-        "Los niveles originales se recuperan de tu Etapa 5. Selecciona una medida, justifica por qué es aplicable "
-        "y define el nombre del proyecto controlado que guardarás en Noise Map Lab."
-    )
+    if is_teacher:
+        st.caption(
+            "Vista Docente: receptor crítico, LAeq y excedencia se recuperan de la solución de referencia de la Etapa 5. "
+            "La medida, justificación y proyecto controlado quedan deliberadamente sin resolver."
+        )
+    else:
+        st.caption(
+            "Los niveles originales se recuperan de tu Etapa 5 guardada. Selecciona una medida, justifica por qué es aplicable "
+            "y define el nombre del proyecto controlado que guardarás en Noise Map Lab."
+        )
 
     st.markdown("### 5 · Configura tu medida en detalle")
     labels=[str(r.get("Frente / condición") or "") for r in design_records]
