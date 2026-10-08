@@ -180,138 +180,114 @@ def _teacher_pauta(st,pd,sources):
     if st.session_state.get("role")!="Docente":
         return
 
-    teacher_map=[
-        ("Movimiento de tierras","Excavadora hidráulica","Excavadora hidráulica"),
-        ("Movimiento de tierras","Retroexcavadora","Retroexcavadora"),
-        ("Movimiento de tierras","Cargador frontal","Cargador frontal"),
-        ("Movimiento de tierras","Camión tolva","Camión tolva articulado"),
-        ("Movimiento de tierras","Rodillo vibratorio","Rodillo vibratorio"),
-        ("Hormigón / obra gruesa","Camión mixer","Camión mixer"),
-        ("Hormigón / obra gruesa","Bomba de hormigón","Bomba de hormigón"),
-        ("Hormigón / obra gruesa","Vibrador de inmersión","Vibrador de inmersión"),
-        ("Estructura / izaje","Grúa torre","Grúa torre"),
-        ("Equipos auxiliares","Generador diésel","Generador diésel"),
-    ]
-
     st.markdown("""
     <div style="border:1px solid #bcd8e7;border-left:5px solid #0b7fa5;border-radius:18px;
                 padding:16px 18px;background:linear-gradient(135deg,#f8fcff,#edf7fb);margin:.8rem 0 1rem">
       <div style="font-size:.70rem;font-weight:900;letter-spacing:.09em;color:#087ba0">
-        VISTA DOCENTE · SOLUCIÓN DE REFERENCIA
+        VISTA DOCENTE · ADENDA 2
       </div>
       <div style="font-size:1.04rem;font-weight:900;color:#173b53;margin:.25rem 0">
-        Fuente equivalente esperada por frente
+        Frentes equivalentes y condición original del último informe
       </div>
       <div style="color:#526f80;line-height:1.5">
-        Esta solución permanece visible aunque el alumno todavía no haya guardado fuentes en la Etapa 3.
-        Alumno y Proyección Zoom deben desarrollar la suma y la ubicación del frente.
+        La Adenda 2 modela una maquinaria de cada tipo operando simultáneamente,
+        concentrada en un punto y ubicada en el sector del proyecto más cercano a cada receptor.
+        Esa es la lógica de peor condición que debe reproducir el alumno.
       </div>
     </div>
     """,unsafe_allow_html=True)
 
-    st.markdown("#### Maquinaria esperada y LWA de referencia")
-    rows=[]
-    grouped={}
-    for stage_name,project_machine,bs_name in teacher_map:
-        item=BS_PLANT[bs_name]
-        lwa=float(item["laeq10"])+28.0
-        lw_bands=[float(v)+28.0 for v in item["bands"]]
-        grouped.setdefault(stage_name,[]).append({
-            "name":project_machine,
-            "bs":bs_name,
-            "item":item,
-            "lwa":lwa,
-            "bands":lw_bands,
-        })
-        rows.append({
-            "Etapa / frente":stage_name,
-            "Máquina proyecto":project_machine,
-            "Referencia BS":bs_name,
-            "Tabla / Ref.":f"{item['table']} · Ref. {item['ref']}",
-            "LWA individual [dB(A)]":round(lwa,1),
-        })
-    st.dataframe(pd.DataFrame(rows),hide_index=True,use_container_width=True)
-
-    st.markdown("#### Suma energética esperada por frente")
-    summary=[]
-    expected_by_stage={}
-    for stage_name,items in grouped.items():
-        lwa_eq=_sum_db([x["lwa"] for x in items])
-        band_eq=[
-            _sum_db([x["bands"][idx] for x in items])
-            for idx in range(len(OCTAVE_LABELS))
-        ]
-        expected_by_stage[stage_name]={"lwa":lwa_eq,"bands":band_eq,"items":items}
-        summary.append({
-            "Frente":stage_name,
-            "N° máquinas":len(items),
-            "LWA equivalente [dB(A)]":round(lwa_eq,1),
-            "Criterio":"1 unidad de cada equipo de la pauta",
-        })
-    st.dataframe(pd.DataFrame(summary),hide_index=True,use_container_width=True)
-
-    selected_stage=st.selectbox(
-        "Ver desarrollo por bandas de un frente",
-        list(expected_by_stage.keys()),
-        key="c4l2_s4_teacher_stage_detail",
-    )
-    detail=expected_by_stage[selected_stage]
-    band_rows={"Banda":OCTAVE_LABELS}
-    for machine in detail["items"]:
-        band_rows[machine["name"]]=[round(v,1) for v in machine["bands"]]
-    band_rows["Lw equivalente"]=[round(v,1) for v in detail["bands"]]
-    st.dataframe(pd.DataFrame(band_rows),hide_index=True,use_container_width=True)
-    st.success(
-        f"Resultado docente · **{selected_stage}**: "
-        f"LWA equivalente ≈ **{detail['lwa']:.1f} dB(A)**."
+    fronts=[
+        {
+            "Frente":"Escenario 1 · Movimiento de tierra",
+            "Equipos":"Minicargador · Retroexcavadora · Excavadora",
+            "NPSeq total @10 m":75,
+            "LWA aprox. [+28]":103,
+            "Tabla":"13",
+        },
+        {
+            "Frente":"Escenario 2 · Obra gruesa suelo",
+            "Equipos":"Rodillo compactador · Minicargador · Retroexcavadora · Camión mixer + bomba",
+            "NPSeq total @10 m":80,
+            "LWA aprox. [+28]":108,
+            "Tabla":"14",
+        },
+        {
+            "Frente":"Escenario 2 · Obra gruesa altura",
+            "Equipos":"Grúa pluma · Vibrador de inmersión",
+            "NPSeq total @10 m":71,
+            "LWA aprox. [+28]":99,
+            "Tabla":"15",
+        },
+        {
+            "Frente":"Escenario 2 · Urbanización",
+            "Equipos":"Rodillo compactador · Minicargador · Retroexcavadora · Motoniveladora · Camión mixer + bomba",
+            "NPSeq total @10 m":80,
+            "LWA aprox. [+28]":108,
+            "Tabla":"16",
+        },
+        {
+            "Frente":"Escenario 2 · Terminaciones",
+            "Equipos":"Minicargador · Alzahombre",
+            "NPSeq total @10 m":70,
+            "LWA aprox. [+28]":98,
+            "Tabla":"17",
+        },
+        {
+            "Frente":"Escenario 3 · Obras IMIV",
+            "Equipos":"Cango · Camión mixer + bomba · Vibrador de inmersión · Rodillo compactador",
+            "NPSeq total @10 m":80,
+            "LWA aprox. [+28]":108,
+            "Tabla":"18",
+        },
+    ]
+    st.markdown("#### Frentes equivalentes esperados")
+    st.dataframe(pd.DataFrame(fronts),hide_index=True,use_container_width=True)
+    st.caption(
+        "Los NPSeq totales son los publicados por el consultor. La columna LWA [+28] corresponde "
+        "a la conversión docente utilizada en este laboratorio, no a un valor tabulado en la Adenda."
     )
 
-    st.markdown("#### Escenario crítico informado en el expediente")
-    st.markdown("""
-    El Anexo 03.2 identifica como escenario más crítico el **mes 2 del año 3**, por la superposición de:
-
-    - **Etapa 1:** Terminaciones, Obras exteriores, Pavimentación y Obras de mitigación vial (IMIV).
-    - **Etapas 2 y 3:** Terminaciones, Agua potable y alcantarillado de aguas servidas y Aguas lluvias.
-
-    La suma logarítmica mensual informada para ese escenario es:
-    """)
-    st.metric("Lw total escenario crítico", "121,5 dB(A)")
-    st.markdown("##### Niveles de potencia por actividad informados")
+    st.markdown("#### Parámetros de modelación del informe")
     st.dataframe(
         pd.DataFrame([
-            {"Actividad":"Terminaciones","Lw actividad [dB(A)]":108},
-            {"Actividad":"Obras exteriores","Lw actividad [dB(A)]":111},
-            {"Actividad":"Agua potable y alcantarillado de aguas servidas","Lw actividad [dB(A)]":112},
-            {"Actividad":"Aguas lluvias","Lw actividad [dB(A)]":113},
-            {"Actividad":"Pavimentación","Lw actividad [dB(A)]":111},
-            {"Actividad":"Obras de mitigación vial (IMIV)","Lw actividad [dB(A)]":113},
+            {"Parámetro":"Método","Valor":"ISO 9613"},
+            {"Parámetro":"Temperatura","Valor":"10 °C"},
+            {"Parámetro":"Humedad relativa","Valor":"70 %"},
+            {"Parámetro":"Dirección del viento","Valor":"±45° en dirección al receptor"},
+            {"Parámetro":"Velocidad del viento","Valor":"1 a 5 m/s"},
+            {"Parámetro":"Orden de reflexiones","Valor":"1"},
+            {"Parámetro":"Condición de frentes","Valor":"1 maquinaria de cada tipo, simultánea, concentrada en un punto"},
+            {"Parámetro":"Ubicación","Valor":"Sector físicamente posible más cercano a cada receptor"},
         ]),
         hide_index=True,
         use_container_width=True,
     )
-    st.caption(
-        "Referencia documental: Anexo 03.2, Tablas 9 y descripción del escenario crítico, págs. 30–33. "
-        "Los frentes de trabajo se ubican próximos a los receptores más cercanos para representar la peor condición físicamente posible."
+
+    st.info(
+        "Para receptores colindantes, la Adenda 2 ubica el punto de evaluación de ruido a **3,5 m del deslinde**. "
+        "No debe confundirse esa distancia con la distancia fuente–receptor que se obtiene de la geometría del modelo."
     )
 
     with st.expander("👨‍🏫 Criterios de revisión",expanded=False):
         st.markdown("""
-        - Agrupar por **etapa/frente de trabajo**.
-        - Sumar solo fuentes que puedan operar simultáneamente.
-        - Realizar la suma **energéticamente y por banda de octava**.
-        - Ubicar la fuente equivalente en la posición crítica **físicamente posible**.
-        - Guardar el escenario original antes de aplicar medidas de control.
+        - Modelar **sin medidas de control** en esta etapa.
+        - Separar correctamente Escenario 1, los frentes del Escenario 2 y Escenario 3.
+        - Considerar **una unidad de cada tipo** cuando corresponde a la condición simultánea del informe.
+        - Concentrar cada frente equivalente en una posición físicamente posible y desfavorable respecto del receptor.
+        - Guardar los escenarios originales para compararlos después con las medidas de control.
+        - En IMIV, la condición secuencial corresponde a la etapa posterior de control; la condición original del informe se conserva para comparar.
         """)
         if sources:
             student_rows=[]
-            for s in sources:
+            for src in sources:
                 student_rows.append({
-                    "Etapa":s.get("Etapa"),
-                    "Máquina":s.get("Máquina / equipo proyecto"),
-                    "Referencia BS":s.get("Referencia BS"),
-                    "LWA alumno":round(float(s.get("LWA_global") or 0),1),
+                    "Frente":src.get("Etapa"),
+                    "Máquina":src.get("Máquina / equipo proyecto"),
+                    "Referencia":src.get("Referencia BS"),
+                    "LWA alumno":round(float(src.get("LWA_global") or 0),1),
                 })
-            st.markdown("##### Comparación con lo realizado por el alumno")
+            st.markdown("##### Comparación con lo desarrollado por el alumno")
             st.dataframe(pd.DataFrame(student_rows),hide_index=True,use_container_width=True)
 
 
@@ -320,7 +296,7 @@ def render(lab,saved,runtime):
     runtime["header"](
         "ETAPA 4 · LABORATORIO 2",
         "Modela la condición original · frentes de trabajo",
-        "Construir la peor condición de exposición sonora sin medidas de control, agrupando las máquinas por etapa en fuentes equivalentes y guardando un escenario original por frente.",
+        "Construir la condición original sin medidas de control de los Escenarios 1–3 de la Adenda 2, agrupando las máquinas por frente equivalente y ubicándolas en la posición desfavorable físicamente posible.",
         show_overview=False,
         duration_minutes=45,
     )
@@ -333,7 +309,7 @@ def render(lab,saved,runtime):
         Primero necesitamos saber cuánto ruido produce la obra antes de intervenirla
       </div>
       <div style="color:#526f80;line-height:1.6">
-        Cada etapa constructiva se representará mediante un <b>frente de trabajo</b>.
+        Cada escenario constructivo se descompone en uno o más <b>frentes de trabajo</b>.
         Las máquinas que puedan operar simultáneamente se combinarán mediante suma energética para formar
         una <b>fuente equivalente</b>. Ese frente se ubicará en la posición físicamente posible más próxima
         al receptor objetivo, todavía <b>sin barreras, encierros, silenciadores ni otras medidas de control</b>.
@@ -433,6 +409,12 @@ def render(lab,saved,runtime):
         "La condición debe ser crítica, pero técnicamente realizable según la etapa, "
         "el frente de trabajo y el cronograma del proyecto."
     )
+    st.info(
+        "Adenda 2: el consultor modela la operación simultánea de una maquinaria de cada tipo, "
+        "concentrada en un punto y ubicada en el sector del proyecto más cercano a cada receptor. "
+        "Ese criterio se utilizará como referencia docente."
+    )
+
 
     st.markdown("#### Ejemplo visual · ¿cómo se representa el frente en el modelo?")
     render_path=Path(__file__).resolve().parents[1] / "assets" / "curso4_lab2" / "render_fuente_equivalente_etapa4.jpg"
