@@ -332,20 +332,19 @@ def render(lab,saved,runtime):
     st.warning("Peor condición no significa inventar simultaneidades imposibles. Debe ser una condición crítica, pero técnicamente realizable según la etapa y el cronograma del proyecto.")
 
     st.markdown("#### Ejemplo visual · ¿cómo se representa el frente en el modelo?")
-    try:
+    render_path=Path(__file__).resolve().parents[1] / "assets" / "curso4_lab2" / "render_fuente_equivalente_etapa4.jpg"
+    if render_path.exists():
         st.image(
-            _build_equivalent_source_render(),
+            str(render_path),
             use_container_width=True,
             caption=(
-                "Ejemplo conceptual: las máquinas que operan simultáneamente dentro de un frente "
-                "se reemplazan acústicamente por una fuente equivalente, ubicada en la posición crítica "
-                "físicamente posible respecto del receptor seleccionado."
+                "Ejemplo conceptual · Frente FT1 de movimiento de tierras: las máquinas que operan simultáneamente "
+                "se agrupan en una fuente equivalente ubicada en la posición crítica físicamente posible respecto de R1."
             ),
         )
-    except Exception:
+    else:
         st.info(
-            "No fue posible construir el render didáctico en este momento. "
-            "La lógica de la etapa y los cálculos permanecen disponibles."
+            "No se encontró el render explicativo de la fuente equivalente entre los recursos del laboratorio."
         )
 
     sources=saved.get("c4l2_s3_acoustic_sources") or []
