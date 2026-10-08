@@ -278,7 +278,11 @@ def render(lab,saved,runtime):
     # En la vista docente, la tabla principal parte con la solución de control.
     # Alumno y Proyección Zoom parten sin resultados revelados y deben desarrollarlos.
     if is_teacher:
-        saved_detail=saved.get("c4l2_s5_detailed_results") or _teacher_result_rows()
+        saved_detail=_teacher_result_rows()
+        teacher_seed_version="adenda2_ruido_2026_09_23_v1"
+        if st.session_state.get("c4l2_s5_teacher_seed_version")!=teacher_seed_version:
+            st.session_state["c4l2_s5_detail_work"]=[dict(x) for x in saved_detail]
+            st.session_state["c4l2_s5_teacher_seed_version"]=teacher_seed_version
     elif is_projection:
         saved_detail=[
             {"Frente":"","Receptor":"","Distancia F–R [m]":None,
