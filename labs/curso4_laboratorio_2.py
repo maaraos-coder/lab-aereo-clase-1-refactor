@@ -464,17 +464,16 @@ def _stage1(lab, saved):
     ]
     if is_teacher:
         teacher_seed_map={
-            "c4l2_s1_parts_work":teacher_parts,
-            "c4l2_s1_phases_work":teacher_phases,
-            "c4l2_s1_machinery_work":teacher_machinery_rows,
-            "c4l2_s1_chronology_work":teacher_chronology,
+            "c4l2_s1_parts_work":(teacher_parts,"Parte / obra","c4l2_s1_parts_table"),
+            "c4l2_s1_phases_work":(teacher_phases,"Etapa / frente","c4l2_s1_phases_table"),
+            "c4l2_s1_machinery_work":(teacher_machinery_rows,"Máquina / equipo","c4l2_s1_machinery_table"),
+            "c4l2_s1_chronology_work":(teacher_chronology,"Etapa / actividad","c4l2_s1_chronology_table"),
         }
-        for _key,_rows in teacher_seed_map.items():
+        for _key,(_rows,_main,_saved_key) in teacher_seed_map.items():
             current=st.session_state.get(_key)
-            if not current or all(
-                not any(str(v or "").strip() for v in row.values())
-                for row in current
-            ):
+            has_saved=bool(saved.get(_saved_key))
+            has_content=bool(current) and any(str(row.get(_main) or "").strip() for row in current)
+            if not has_saved and not has_content:
                 st.session_state[_key]=[dict(x) for x in _rows]
 
     if is_teacher and not saved.get("c4l2_s1_vertices_table"):
