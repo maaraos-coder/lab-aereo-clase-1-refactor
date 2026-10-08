@@ -54,11 +54,42 @@ def render(lab, saved, runtime):
     st.caption("En esta etapa registra la distancia mínima al límite del predio. La distancia fuente–receptor se trabajará cuando ubiquemos las fuentes.")
 
     st.markdown("### 4 · Registra los receptores identificados")
-    default_rows=saved.get("c4l2_s2_receptors_table") or [
-      {"Receptor":"R1","Uso / tipo":"","Descripción":"","Latitud":None,"Longitud":None,"Altura (m)":None,"Dist. al predio (m)":None,"Fuente documental":""},
-      {"Receptor":"R2","Uso / tipo":"","Descripción":"","Latitud":None,"Longitud":None,"Altura (m)":None,"Dist. al predio (m)":None,"Fuente documental":""},
-      {"Receptor":"R3","Uso / tipo":"","Descripción":"","Latitud":None,"Longitud":None,"Altura (m)":None,"Dist. al predio (m)":None,"Fuente documental":""},
+    is_teacher=st.session_state.get("role")=="Docente"
+    teacher_receptors=[
+      {"Receptor":"R1","Uso / tipo":"Complejo educacional","Descripción":"Punto de proyección en patio del Complejo Educacional Consolidada","Latitud":-33.6119671,"Longitud":-70.5708285,"Altura (m)":1.5,"Dist. al predio (m)":67,"Fuente documental":"Anexo 03.2 · Tabla 4 · pág. 17"},
+      {"Receptor":"R2","Uso / tipo":"Vivienda","Descripción":"Punto de proyección en patio de vivienda","Latitud":-33.6127289,"Longitud":-70.5704974,"Altura (m)":1.5,"Dist. al predio (m)":5,"Fuente documental":"Anexo 03.2 · Tabla 4 · pág. 17"},
+      {"Receptor":"R3","Uso / tipo":"Vivienda","Descripción":"Punto de proyección en patio de vivienda","Latitud":-33.6128730,"Longitud":-70.5697995,"Altura (m)":1.5,"Dist. al predio (m)":16,"Fuente documental":"Anexo 03.2 · Tabla 4 · pág. 17"},
+      {"Receptor":"R4","Uso / tipo":"Vivienda","Descripción":"Punto de proyección en patio de vivienda","Latitud":-33.6134444,"Longitud":-70.5702517,"Altura (m)":1.5,"Dist. al predio (m)":15,"Fuente documental":"Anexo 03.2 · Tabla 4 · pág. 17"},
+      {"Receptor":"R5","Uso / tipo":"Vivienda","Descripción":"Punto de proyección en patio de vivienda","Latitud":-33.6137228,"Longitud":-70.5696316,"Altura (m)":1.5,"Dist. al predio (m)":15,"Fuente documental":"Anexo 03.2 · Tabla 4 · pág. 17"},
+      {"Receptor":"R6","Uso / tipo":"Vivienda","Descripción":"Punto de proyección en patio de vivienda","Latitud":-33.6139859,"Longitud":-70.5702185,"Altura (m)":1.5,"Dist. al predio (m)":7,"Fuente documental":"Anexo 03.2 · Tabla 4 · pág. 17"},
+      {"Receptor":"R7","Uso / tipo":"Vivienda","Descripción":"Punto de proyección en patio de vivienda","Latitud":-33.6144599,"Longitud":-70.5705289,"Altura (m)":1.5,"Dist. al predio (m)":5,"Fuente documental":"Anexo 03.2 · Tabla 4 · pág. 17"},
+      {"Receptor":"R8","Uso / tipo":"Vivienda","Descripción":"Punto de proyección en patio de vivienda","Latitud":-33.6145446,"Longitud":-70.5709615,"Altura (m)":1.5,"Dist. al predio (m)":5,"Fuente documental":"Anexo 03.2 · Tabla 4 · pág. 17"},
+      {"Receptor":"R9","Uso / tipo":"Vivienda","Descripción":"Punto de proyección en patio de vivienda","Latitud":-33.6139433,"Longitud":-70.5714464,"Altura (m)":1.5,"Dist. al predio (m)":13,"Fuente documental":"Anexo 03.2 · Tabla 4 · pág. 17"},
     ]
+    teacher_relevance=[
+      {"Receptor":"R1","¿Por qué se selecciona?":"Receptor sensible próximo al proyecto","Qué representa":"Complejo educacional","Observación espacial":"Ubicado al norte del predio; distancia mínima aproximada 67 m."},
+      {"Receptor":"R2","¿Por qué se selecciona?":"Vivienda inmediatamente próxima al límite","Qué representa":"Vivienda","Observación espacial":"Distancia mínima aproximada 5 m."},
+      {"Receptor":"R3","¿Por qué se selecciona?":"Vivienda sensible cercana al frente oriental","Qué representa":"Vivienda","Observación espacial":"Distancia mínima aproximada 16 m."},
+      {"Receptor":"R4","¿Por qué se selecciona?":"Vivienda sensible cercana al frente oriental","Qué representa":"Vivienda","Observación espacial":"Distancia mínima aproximada 15 m."},
+      {"Receptor":"R5","¿Por qué se selecciona?":"Vivienda sensible cercana al frente oriental","Qué representa":"Vivienda","Observación espacial":"Distancia mínima aproximada 15 m."},
+      {"Receptor":"R6","¿Por qué se selecciona?":"Vivienda inmediatamente próxima al límite","Qué representa":"Vivienda","Observación espacial":"Distancia mínima aproximada 7 m."},
+      {"Receptor":"R7","¿Por qué se selecciona?":"Vivienda inmediatamente próxima al límite sur","Qué representa":"Vivienda","Observación espacial":"Distancia mínima aproximada 5 m."},
+      {"Receptor":"R8","¿Por qué se selecciona?":"Vivienda inmediatamente próxima al límite sur","Qué representa":"Vivienda","Observación espacial":"Distancia mínima aproximada 5 m."},
+      {"Receptor":"R9","¿Por qué se selecciona?":"Vivienda sensible cercana al límite occidental","Qué representa":"Vivienda","Observación espacial":"Distancia mínima aproximada 13 m."},
+    ]
+
+    default_rows=saved.get("c4l2_s2_receptors_table") or (
+      teacher_receptors if is_teacher else [
+        {"Receptor":"R1","Uso / tipo":"","Descripción":"","Latitud":None,"Longitud":None,"Altura (m)":None,"Dist. al predio (m)":None,"Fuente documental":""},
+        {"Receptor":"R2","Uso / tipo":"","Descripción":"","Latitud":None,"Longitud":None,"Altura (m)":None,"Dist. al predio (m)":None,"Fuente documental":""},
+        {"Receptor":"R3","Uso / tipo":"","Descripción":"","Latitud":None,"Longitud":None,"Altura (m)":None,"Dist. al predio (m)":None,"Fuente documental":""},
+      ]
+    )
+    if is_teacher and not saved.get("c4l2_s2_receptors_table"):
+      current=st.session_state.get("c4l2_s2_receptors_work")
+      has_content=bool(current) and any(str(x.get("Descripción") or "").strip() for x in current)
+      if not has_content:
+        st.session_state["c4l2_s2_receptors_work"]=[dict(x) for x in teacher_receptors]
     if "c4l2_s2_receptors_work" not in st.session_state:
       st.session_state["c4l2_s2_receptors_work"]=[dict(x) for x in default_rows]
 
@@ -105,6 +136,8 @@ def render(lab, saved, runtime):
     st.markdown("### 6 · Justifica la selección")
     receptor_names=[str(x.get("Receptor") or f"R{i+1}") for i,x in enumerate(st.session_state["c4l2_s2_receptors_work"])]
     saved_rel={str(x.get("Receptor")):x for x in (saved.get("c4l2_s2_relevance_table") or [])}
+    if is_teacher and not saved_rel:
+      saved_rel={str(x.get("Receptor")):x for x in teacher_relevance}
     if "c4l2_s2_relevance_work" not in st.session_state:
       st.session_state["c4l2_s2_relevance_work"]=[
         dict(saved_rel.get(name,{"Receptor":name,"¿Por qué se selecciona?":"","Qué representa":"","Observación espacial":""}))
