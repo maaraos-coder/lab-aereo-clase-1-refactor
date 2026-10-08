@@ -395,7 +395,7 @@ def _stage1(lab, saved):
             2. Busca **“Avenida Eyzaguirre 355, Puente Alto”** o usa la coordenada de referencia.
             3. Contrasta el mapa con el plano/antecedente cartográfico del expediente.
             4. Cuando identifiques el polígono oficial, reconstruye su perímetro con **líneas auxiliares**.
-            5. Nombra los vértices **V1, V2, V3…** y registra sus coordenadas.
+            5. Respeta la identificación documental de los vértices **A, B, C… N** y registra sus coordenadas.
             6. **No dibujes todavía el área de cálculo.** El límite del predio y el dominio acústico son objetos distintos.
             """
         )
@@ -720,8 +720,7 @@ def _stage1(lab, saved):
             Datos mínimos documentados del proyecto
           </div>
           <div style="color:#526f80;line-height:1.5">
-            Esta información se muestra solo al docente. Alumno y Proyección Zoom deben reconstruirla
-            desde el expediente del proyecto.
+            Esta información se muestra solo al docente y está actualizada con el **Anexo 05 · Estudio Ruido y Vibraciones, Versión 02 · Adenda 2 (23-09-2026)**. Alumno y Proyección Zoom deben reconstruirla desde el expediente.
           </div>
         </div>
         """,unsafe_allow_html=True)
@@ -734,27 +733,26 @@ def _stage1(lab, saved):
         - **Superficie aproximada:** 22.701 m².
         - **Edificación:** 6 torres de 4 pisos.
         - **Viviendas:** 360 departamentos.
-        - **Estacionamientos vehiculares:** 277.
-        - **Estacionamientos de bicicletas:** 106.
+        - **Estacionamientos vehiculares:** 276.
+        - **Estacionamientos de bicicletas:** 138.
         - **Locales comerciales:** 4.
         - **Sedes sociales:** 3.
         - **Accesos vehiculares informados:** calle Carlos Aguirre Luco.
         """)
 
         st.markdown("#### Maquinaria identificable · solución docente")
-        teacher_machinery=[
-            {"Etapa / frente":"Movimiento de tierras","Maquinaria esperable":"Excavadora hidráulica","Actividad a contrastar":"Excavación / movimiento de material"},
-            {"Etapa / frente":"Movimiento de tierras","Maquinaria esperable":"Retroexcavadora","Actividad a contrastar":"Preparación / excavación localizada"},
-            {"Etapa / frente":"Movimiento de tierras","Maquinaria esperable":"Cargador frontal","Actividad a contrastar":"Carga de material"},
-            {"Etapa / frente":"Movimiento de tierras","Maquinaria esperable":"Camión tolva","Actividad a contrastar":"Transporte / descarga de material"},
-            {"Etapa / frente":"Movimiento de tierras","Maquinaria esperable":"Rodillo vibratorio","Actividad a contrastar":"Compactación"},
-            {"Etapa / frente":"Hormigón / obra gruesa","Maquinaria esperable":"Camión mixer","Actividad a contrastar":"Suministro / descarga de hormigón"},
-            {"Etapa / frente":"Hormigón / obra gruesa","Maquinaria esperable":"Bomba de hormigón","Actividad a contrastar":"Bombeo de hormigón"},
-            {"Etapa / frente":"Hormigón / obra gruesa","Maquinaria esperable":"Vibrador de inmersión","Actividad a contrastar":"Vibrado de hormigón"},
-            {"Etapa / frente":"Estructura / izaje","Maquinaria esperable":"Grúa torre","Actividad a contrastar":"Izaje / movimiento de materiales"},
-            {"Etapa / frente":"Equipos auxiliares","Maquinaria esperable":"Generador diésel","Actividad a contrastar":"Alimentación eléctrica temporal"},
-        ]
-        st.dataframe(pd.DataFrame(teacher_machinery),hide_index=True,use_container_width=True)
+        st.dataframe(
+            pd.DataFrame([
+                {"Frente / escenario":"Escenario 1 · Movimiento de tierra","Maquinaria":"Minicargador · Retroexcavadora · Excavadora","Referencia":"Anexo 05 · Tabla 13"},
+                {"Frente / escenario":"Escenario 2 · Obra gruesa suelo","Maquinaria":"Rodillo compactador · Minicargador · Retroexcavadora · Camión mixer + bomba hormigón","Referencia":"Anexo 05 · Tabla 14"},
+                {"Frente / escenario":"Escenario 2 · Obra gruesa altura","Maquinaria":"Grúa pluma · Vibrador de inmersión","Referencia":"Anexo 05 · Tabla 15"},
+                {"Frente / escenario":"Escenario 2 · Urbanización","Maquinaria":"Rodillo compactador · Minicargador · Retroexcavadora · Motoniveladora · Camión mixer + bomba hormigón","Referencia":"Anexo 05 · Tabla 16"},
+                {"Frente / escenario":"Escenario 2 · Terminaciones","Maquinaria":"Minicargador · Alzahombre","Referencia":"Anexo 05 · Tabla 17"},
+                {"Frente / escenario":"Escenario 3 · Obras IMIV","Maquinaria":"Cango · Camión mixer + bomba hormigón · Vibrador de inmersión · Rodillo compactador","Referencia":"Anexo 05 · Tabla 18"},
+            ]),
+            hide_index=True,
+            use_container_width=True,
+        )
 
         with st.expander("👨‍🏫 Criterios de revisión",expanded=False):
             st.markdown("""
