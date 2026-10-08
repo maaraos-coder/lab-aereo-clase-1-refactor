@@ -193,92 +193,88 @@ def _teacher_pauta(st,pd,sources):
         ("Equipos auxiliares","Generador diésel","Generador diésel"),
     ]
 
-    with st.expander("👨‍🏫 Pauta docente · Etapa 4",expanded=False):
+    st.markdown("""
+    <div style="border:1px solid #bcd8e7;border-left:5px solid #0b7fa5;border-radius:18px;
+                padding:16px 18px;background:linear-gradient(135deg,#f8fcff,#edf7fb);margin:.8rem 0 1rem">
+      <div style="font-size:.70rem;font-weight:900;letter-spacing:.09em;color:#087ba0">
+        VISTA DOCENTE · SOLUCIÓN DE REFERENCIA
+      </div>
+      <div style="font-size:1.04rem;font-weight:900;color:#173b53;margin:.25rem 0">
+        Fuente equivalente esperada por frente
+      </div>
+      <div style="color:#526f80;line-height:1.5">
+        Esta solución permanece visible aunque el alumno todavía no haya guardado fuentes en la Etapa 3.
+        Alumno y Proyección Zoom deben desarrollar la suma y la ubicación del frente.
+      </div>
+    </div>
+    """,unsafe_allow_html=True)
+
+    st.markdown("#### Maquinaria esperada y LWA de referencia")
+    rows=[]
+    grouped={}
+    for stage_name,project_machine,bs_name in teacher_map:
+        item=BS_PLANT[bs_name]
+        lwa=float(item["laeq10"])+28.0
+        lw_bands=[float(v)+28.0 for v in item["bands"]]
+        grouped.setdefault(stage_name,[]).append({
+            "name":project_machine,
+            "bs":bs_name,
+            "item":item,
+            "lwa":lwa,
+            "bands":lw_bands,
+        })
+        rows.append({
+            "Etapa / frente":stage_name,
+            "Máquina proyecto":project_machine,
+            "Referencia BS":bs_name,
+            "Tabla / Ref.":f"{item['table']} · Ref. {item['ref']}",
+            "LWA individual [dB(A)]":round(lwa,1),
+        })
+    st.dataframe(pd.DataFrame(rows),hide_index=True,use_container_width=True)
+
+    st.markdown("#### Suma energética esperada por frente")
+    summary=[]
+    expected_by_stage={}
+    for stage_name,items in grouped.items():
+        lwa_eq=_sum_db([x["lwa"] for x in items])
+        band_eq=[
+            _sum_db([x["bands"][idx] for x in items])
+            for idx in range(len(OCTAVE_LABELS))
+        ]
+        expected_by_stage[stage_name]={"lwa":lwa_eq,"bands":band_eq,"items":items}
+        summary.append({
+            "Frente":stage_name,
+            "N° máquinas":len(items),
+            "LWA equivalente [dB(A)]":round(lwa_eq,1),
+            "Criterio":"1 unidad de cada equipo de la pauta",
+        })
+    st.dataframe(pd.DataFrame(summary),hide_index=True,use_container_width=True)
+
+    selected_stage=st.selectbox(
+        "Ver desarrollo por bandas de un frente",
+        list(expected_by_stage.keys()),
+        key="c4l2_s4_teacher_stage_detail",
+    )
+    detail=expected_by_stage[selected_stage]
+    band_rows={"Banda":OCTAVE_LABELS}
+    for machine in detail["items"]:
+        band_rows[machine["name"]]=[round(v,1) for v in machine["bands"]]
+    band_rows["Lw equivalente"]=[round(v,1) for v in detail["bands"]]
+    st.dataframe(pd.DataFrame(band_rows),hide_index=True,use_container_width=True)
+    st.success(
+        f"Resultado docente · **{selected_stage}**: "
+        f"LWA equivalente ≈ **{detail['lwa']:.1f} dB(A)**."
+    )
+
+    with st.expander("👨‍🏫 Criterios de revisión",expanded=False):
         st.markdown("""
-        **Objetivo de corrección**
-
-        La pauta debe permitir comprobar cómo se pasa desde la maquinaria seleccionada en la Etapa 3
-        a una **fuente equivalente por frente de trabajo**, todavía sin medidas de control.
-
-        - Las máquinas se agrupan por **etapa/frente de trabajo**.
-        - Solo deben sumarse fuentes que puedan operar simultáneamente en la condición crítica.
-        - La suma se realiza **energéticamente y por banda de octava**.
-        - La fuente equivalente se ubica dentro del predio, en la posición **físicamente posible más próxima**
-          al receptor objetivo.
-        - El escenario original debe guardarse antes de incorporar cualquier medida de control.
+        - Agrupar por **etapa/frente de trabajo**.
+        - Sumar solo fuentes que puedan operar simultáneamente.
+        - Realizar la suma **energéticamente y por banda de octava**.
+        - Ubicar la fuente equivalente en la posición crítica **físicamente posible**.
+        - Guardar el escenario original antes de aplicar medidas de control.
         """)
-
-        st.markdown("#### 1 · Maquinaria esperada y LWA de referencia")
-        rows=[]
-        grouped={}
-        for stage_name,project_machine,bs_name in teacher_map:
-            item=BS_PLANT[bs_name]
-            lwa=float(item["laeq10"])+28.0
-            lw_bands=[float(v)+28.0 for v in item["bands"]]
-            grouped.setdefault(stage_name,[]).append({
-                "name":project_machine,
-                "bs":bs_name,
-                "item":item,
-                "lwa":lwa,
-                "bands":lw_bands,
-            })
-            rows.append({
-                "Etapa / frente":stage_name,
-                "Máquina proyecto":project_machine,
-                "Referencia BS":bs_name,
-                "Tabla / Ref.":f"{item['table']} · Ref. {item['ref']}",
-                "LWA individual [dB(A)]":round(lwa,1),
-            })
-        st.dataframe(pd.DataFrame(rows),hide_index=True,use_container_width=True)
-
-        st.markdown("#### 2 · Suma energética esperada por frente")
-        summary=[]
-        expected_by_stage={}
-        for stage_name,items in grouped.items():
-            lwa_eq=_sum_db([x["lwa"] for x in items])
-            band_eq=[
-                _sum_db([x["bands"][idx] for x in items])
-                for idx in range(len(OCTAVE_LABELS))
-            ]
-            expected_by_stage[stage_name]={"lwa":lwa_eq,"bands":band_eq,"items":items}
-            summary.append({
-                "Frente":stage_name,
-                "N° máquinas":len(items),
-                "LWA equivalente [dB(A)]":round(lwa_eq,1),
-                "Criterio":"1 unidad de cada equipo de la pauta",
-            })
-        st.dataframe(pd.DataFrame(summary),hide_index=True,use_container_width=True)
-        st.caption(
-            "Estos valores son la solución docente para la pauta propuesta en la Etapa 3, "
-            "suponiendo una unidad de cada equipo y operación simultánea. Si el expediente declara cantidades "
-            "o simultaneidades diferentes, la solución debe ajustarse."
-        )
-
-        selected_stage=st.selectbox(
-            "Ver desarrollo por bandas de un frente",
-            list(expected_by_stage.keys()),
-            key="c4l2_s4_teacher_stage_detail",
-        )
-        detail=expected_by_stage[selected_stage]
-        band_rows={"Banda":OCTAVE_LABELS}
-        for machine in detail["items"]:
-            band_rows[machine["name"]]=[round(v,1) for v in machine["bands"]]
-        band_rows["Lw equivalente"]=[round(v,1) for v in detail["bands"]]
-        st.dataframe(pd.DataFrame(band_rows),hide_index=True,use_container_width=True)
-        st.success(
-            f"Resultado docente · **{selected_stage}**: "
-            f"LWA equivalente ≈ **{detail['lwa']:.1f} dB(A)**."
-        )
-
-        st.markdown("#### 3 · Criterio espacial de corrección")
-        st.info(
-            "El alumno debe ubicar la fuente equivalente dentro del sector donde el frente realmente puede operar, "
-            "buscando la posición físicamente posible más próxima al receptor crítico. El render explicativo se muestra "
-            "en la sección superior de la etapa, como parte de la instrucción al alumno."
-        )
-
         if sources:
-            st.markdown("#### 4 · Comparación con lo realizado por el alumno")
             student_rows=[]
             for s in sources:
                 student_rows.append({
@@ -287,12 +283,9 @@ def _teacher_pauta(st,pd,sources):
                     "Referencia BS":s.get("Referencia BS"),
                     "LWA alumno":round(float(s.get("LWA_global") or 0),1),
                 })
+            st.markdown("##### Comparación con lo realizado por el alumno")
             st.dataframe(pd.DataFrame(student_rows),hide_index=True,use_container_width=True)
-        else:
-            st.caption(
-                "Aún no hay fuentes guardadas por el alumno en la Etapa 3. "
-                "La solución docente anterior permanece disponible igualmente."
-            )
+
 
 def render(lab,saved,runtime):
     st=runtime["st"]; pd=runtime["pd"]
