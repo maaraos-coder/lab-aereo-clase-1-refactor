@@ -2195,6 +2195,14 @@ st.session_state.pop("projection_mode",None)
 if not st.session_state.get("access"):
     login();st.stop()
 
+# Mostrar también el aviso al iniciar sesión, antes de Mis clases.
+if st.session_state.get("role") == "Alumno" and not st.session_state.get("_pending_popup_login_checked"):
+    from views.pending_popup import show_on_entry
+    entry_id = st.session_state.get("future_lab_id") or CLASS_ID
+    show_on_entry(globals(), entry_id)
+    if st.session_state.get("_pending_popup_lab") == entry_id:
+        st.session_state["_pending_popup_login_checked"] = True
+
 # Laboratories 3–10 use their own renderer and class identifier.
 future_lab_id=st.session_state.get("future_lab_id")
 if future_lab_id in FUTURE_LABS:
