@@ -1352,14 +1352,7 @@ def _teacher_course_results_impl(compact=False):
                     key=f"teacher_c2l2_student_{config['stage']}",
                 )
                 row=rows[selected_idx]
-                payload=row.get("answer") or {}
-                if isinstance(payload,str):
-                    try:
-                        payload=json.loads(payload)
-                    except Exception:
-                        payload={}
-                if not isinstance(payload,dict):
-                    payload={}
+                payload=_decode_answer_payload(row.get("answer") or {})
                 score=float(
                     row.get("teacher_score")
                     if row.get("teacher_score") is not None
@@ -1368,7 +1361,7 @@ def _teacher_course_results_impl(compact=False):
                 st.markdown("#### Resumen de la entrega")
                 a,b,c=st.columns(3)
                 a.metric("Puntaje vigente",f"{score:g}/{config['maximum']}")
-                b.metric("Nota",f"{_grade_from_percent(score/config['maximum']*100):.1f}")
+                b.metric("Nota",f"{_grade_from_percent(score/config['maximum']*100):.1f}" if row.get("teacher_score") is not None or row.get("status")=="reviewed" else "Pendiente")
                 c.metric("Estado","Revisada" if row.get("teacher_score") is not None or row.get("status")=="reviewed" else "Pendiente")
                 if reviewer=="c2l2_stage9":
                     answers=payload.get("answers",{}) if isinstance(payload.get("answers",{}),dict) else {}
@@ -1385,6 +1378,47 @@ def _teacher_course_results_impl(compact=False):
                     st.write(f"**Medidas:** {', '.join(pump.get('controls') or []) or '—'}")
                     st.write(f"**Conclusión:** {payload.get('conclusion') or '—'}")
                     st.write(f"**Diseño automático:** {payload.get('design_score',0)}/40 · **Comprensión:** {payload.get('comprehension_score',0)}/20")
+
+                    st.markdown("#### Desarrollo técnico completo del alumno")
+                    for label, field in (
+                        ("Origen de los datos del piso", "floor_source"),
+                        ("Posición de referencia [dB]", "reference_shift"),
+                        ("Interpretación del piso y C_I", "interpretation"),
+                    ):
+                        st.markdown(f"**{label}**")
+                        value = payload.get(field)
+                        st.write(value if value is not None and value != "" else "Sin respuesta registrada")
+                    for label, field in (
+                        ("Velocidad de la bomba [rpm]", "rpm"),
+                        ("Masa [kg]", "mass_kg"), ("Número de apoyos", "supports"),
+                        ("Razón de frecuencias r = fₑ/fₙ", "r"),
+                        ("Interpretación del camino paralelo", "parallel_path"),
+                    ):
+                        st.markdown(f"**{label}**")
+                        value = pump.get(field)
+                        st.write(value if value is not None and value != "" else "Sin respuesta registrada")
+
+                    st.markdown("#### Preguntas de comprensión · respuestas entregadas")
+                    from views.cursos import _C2L2_S10_Q
+                    answers = payload.get("answers") if isinstance(payload.get("answers"), dict) else {}
+                    for i, question in enumerate(_C2L2_S10_Q):
+                        selected = answers.get(str(i)) or answers.get(i)
+                        expected = question[1][question[2]]
+                        with st.container(border=True):
+                            st.markdown(f"**{i+1}. {question[0]}**")
+                            st.markdown("**Respuesta del alumno**")
+                            st.write(selected or "Sin respuesta registrada")
+                            if selected:
+                                st.caption("Correcta · 4/4 puntos" if selected == expected else "Incorrecta · 0/4 puntos")
+                            with st.expander("Ver respuesta esperada"):
+                                st.write(expected)
+                    with st.expander("Entrega original completa · respaldo"):
+                        st.json(payload)
+                        st.download_button(
+                            "Descargar entrega JSON", json.dumps(payload, ensure_ascii=False, indent=2),
+                            file_name=f"curso2_lab2_etapa10_{row['id']}.json", mime="application/json",
+                            key=f"teacher_c2l2_payload_{row['id']}",
+                        )
 
                     # -------------------------------------------------------
                     # Pauta docente integrada en el Centro de evaluaciones
