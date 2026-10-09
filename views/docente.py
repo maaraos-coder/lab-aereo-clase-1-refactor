@@ -1244,24 +1244,63 @@ def _teacher_course_results_impl(compact=False):
                             st.success(f"**Pauta:** {expected[i]}")
                     st.caption(f"Puntaje automático registrado: {float(row.get('auto_score') or 0):g}/40.")
                 else:
-                    points=payload.get("points") if isinstance(payload.get("points"),list) else []
-                    measured=[p for p in points if isinstance(p,dict) and isinstance(p.get("laeq"),(int,float))]
                     st.markdown("#### Desarrollo entregado")
-                    st.write(f"**Sector:** {payload.get('sector') or '—'}")
-                    st.write(f"**Vía principal:** {payload.get('principal') or '—'}")
-                    st.write(f"**Vía secundaria:** {payload.get('secondary') or '—'}")
-                    st.write(f"**Periodo:** {payload.get('period_plan') or '—'}")
-                    st.write(f"**Objetivo:** {payload.get('objective') or '—'}")
-                    st.write(f"**Puntos medidos:** {len(measured)}")
-                    if measured:
-                        st.dataframe(pd.DataFrame([{
-                            "Punto":p.get("id"),"Sector":p.get("route"),"LAeq":p.get("laeq"),
-                            "Lmax":p.get("lmax"),"Duración":p.get("duration"),
-                            "Hora":p.get("time"),"Observación":p.get("notes"),
-                        } for p in measured]),hide_index=True,use_container_width=True)
-                    st.markdown("**Interpretación**"); st.write(payload.get("interpretation") or "—")
+                    for label, field in (
+                        ("Sector", "sector"), ("Vía principal", "principal"),
+                        ("Vía secundaria", "secondary"), ("Descripción del lugar", "site_description"),
+                        ("Aplicación utilizada", "app_name"), ("Fecha de medición", "measurement_date"),
+                    ):
+                        st.markdown(f"**{label}**")
+                        st.write(payload.get(field) or "—")
+                    st.markdown("**Periodo de medición**")
+                    st.write(payload.get("period") or payload.get("period_plan") or "—")
+                    st.markdown("**Objetivo**")
+                    st.write(payload.get("objective") or "—")
+                    st.markdown("**Metodología**")
+                    st.write(payload.get("methodology") or "—")
+                    for label, field in (("Ubicación en Google Maps", "maps_url"), ("Evidencias de terreno", "evidence_url")):
+                        url = str(payload.get(field) or "").strip()
+                        if url.startswith(("https://", "http://")):
+                            st.link_button(label, url)
+                        elif url:
+                            st.write(f"**{label}:** {url}")
+                    measurements = payload.get("measurements")
+                    if isinstance(measurements, list):
+                        measurements = [r for r in measurements if isinstance(r, dict)]
+                        complete = [r for r in measurements
+                                    if isinstance(r.get("Leq [dB(A)]"), (int, float))
+                                    and isinstance(r.get("Lmax [dB(A)]"), (int, float))]
+                        st.markdown("#### Registro completo de mediciones")
+                        st.caption(f"{len(complete)} registros completos de {len(measurements)} guardados.")
+                        if measurements:
+                            st.dataframe(pd.DataFrame(measurements), hide_index=True, use_container_width=True)
+                        st.markdown("#### Mapa vial entregado")
+                        interval = payload.get("map_interval", 5)
+                        st.caption(f"Intervalo de representación guardado: {interval} dB.")
+                        from views.measurement_map import render_road_map
+                        render_road_map(
+                            complete, payload.get("intersection_lat"), payload.get("intersection_lon"),
+                            interval, key=f"teacher_c3l2_map_{row['id']}",
+                        )
+                    else:
+                        # Compatibilidad con entregas anteriores al registro vial v2.
+                        points = payload.get("points") if isinstance(payload.get("points"), list) else []
+                        points = [p for p in points if isinstance(p, dict)]
+                        st.markdown("#### Puntos registrados (versión anterior)")
+                        if points:
+                            st.dataframe(pd.DataFrame(points), hide_index=True, use_container_width=True)
+                        st.info("Esta entrega antigua no contiene el registro vial georreferenciado necesario para reconstruir el mapa actual.")
+                    st.markdown("**Análisis e interpretación**")
+                    st.write(payload.get("analysis") or payload.get("interpretation") or "—")
                     st.markdown("**Limitaciones**"); st.write(payload.get("limitations") or "—")
                     st.markdown("**Conclusión**"); st.write(payload.get("conclusion") or "—")
+                    with st.expander("Entrega original completa · descargar respaldo"):
+                        st.json(payload)
+                        st.download_button(
+                            "Descargar entrega JSON", json.dumps(payload, ensure_ascii=False, indent=2),
+                            file_name=f"curso3_lab2_entrega_{row['id']}.json", mime="application/json",
+                            key=f"teacher_c3l2_payload_{row['id']}",
+                        )
                     with st.expander("📘 Rúbrica docente · 60 puntos",expanded=True):
                         rubric=[
                             ("Diseño y objetivo de campaña",10),
