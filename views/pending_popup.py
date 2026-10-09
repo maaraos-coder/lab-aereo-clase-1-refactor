@@ -41,7 +41,6 @@ def show_on_entry(runtime, class_id):
         return
     if st.session_state.get("_pending_popup_lab") == class_id:
         return
-    st.session_state["_pending_popup_lab"] = class_id
     client = runtime["_supabase"]()
     user_key = st.session_state.get("user_key")
     if client is None or not user_key:
@@ -53,12 +52,13 @@ def show_on_entry(runtime, class_id):
                      .select("class_id,stage,question_key,status,submitted_at,teacher_score")
                      .eq("user_key", user_key).in_("class_id", sorted(OFFICIAL_CLASSES))
                      .execute().data or [])
-        openings = {lab["id"]: lab.get("opens_at")
-                    for course in runtime["ACADEMIC_COURSES"] for lab in course["labs"]}
+        openings = {runtime["LABORATORIES"][lab["number"]]["id"]: lab.get("opens_at")
+                    for lab in runtime["ACADEMIC_COURSES"][0]["labs"]}
         openings.update({lab["id"]: lab.get("opens_at") for lab in runtime["FUTURE_LABS"].values()})
         items = pending_items(catalog, classes, responses, runtime["_is_open"], openings)
     except Exception:
         # Una consulta fallida no debe impedir entrar a los contenidos.
         return
+    st.session_state["_pending_popup_lab"] = class_id
     if items:
         _dialog(st.session_state.get("name") or "alumno", items)
