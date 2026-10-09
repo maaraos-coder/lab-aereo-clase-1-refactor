@@ -2105,6 +2105,7 @@ def student_sidebar_summary(client, user_key):
     return _result_views.run_view("student_sidebar_summary", globals(), client, user_key)
 
 def course_dashboard():
+    st.session_state.pop("_pending_popup_lab", None)
     return _course_views.run_view("course_dashboard", globals())
 
 def _future_saved(class_id):
@@ -2114,6 +2115,8 @@ def _save_future_state(class_id, state):
     return _course_views.run_view("_save_future_state", globals(), class_id, state)
 
 def future_lab_view(lab):
+    from views.pending_popup import show_on_entry
+    show_on_entry(globals(), lab["id"])
     return _course_views.run_view("future_lab_view", globals(), lab)
 
 def future_print_view(lab):
@@ -2525,6 +2528,8 @@ elif view==view_options[2]:
     load_user_progress(st.session_state.get("user_key"))
 
     st.caption(f"Curso: Aislamiento a ruido aéreo · Laboratorio {ACTIVE_LAB} de 2")
+    from views.pending_popup import show_on_entry
+    show_on_entry(globals(), CLASS_ID)
     LAB_STAGE_FUNCTIONS[ACTIVE_LAB][idx]()
 
 # Autosave after every interaction. Closing the browser or changing tabs does not erase work.
