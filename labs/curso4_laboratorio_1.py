@@ -5,6 +5,8 @@ Noise Map Lab permanece como aplicación externa; esta vista conserva guía,
 actividades y progreso.
 """
 
+import streamlit.components.v1 as components
+
 _RUNTIME_PROTECTED = {"run_stage", "_bind_runtime", "_RUNTIME_PROTECTED"}
 
 def _bind_runtime(runtime):
@@ -1987,23 +1989,13 @@ def _stage4(lab, saved):
       </div>
     </div>
     """
-    # Streamlit can still expose part of a multiline inline SVG as text in
-    # some render paths. Encode only the SVG as a data URI and keep the
-    # surrounding cards as normal HTML; this makes the profile render atomic.
-    import base64
-    svg_start = profile_svg.find("<svg")
-    svg_end = profile_svg.find("</svg>", svg_start)
-    if svg_start >= 0 and svg_end >= 0:
-        svg_end += len("</svg>")
-        svg_markup = profile_svg[svg_start:svg_end]
-        svg_b64 = base64.b64encode(svg_markup.encode("utf-8")).decode("ascii")
-        svg_img = (
-            f'<img src="data:image/svg+xml;base64,{svg_b64}" '
-            'alt="Perfil fuente barrera receptor" '
-            'style="display:block;width:100%;height:auto;max-height:390px;object-fit:contain"/>'
-        )
-        profile_svg = profile_svg[:svg_start] + svg_img + profile_svg[svg_end:]
-    st.html(profile_svg)
+    # Render the dynamic SVG in an isolated Streamlit HTML component.
+    # This avoids both Markdown parsing and sanitization/data-URI issues.
+    components.html(
+        profile_svg,
+        height=455,
+        scrolling=False,
+    )
 
     st.markdown(
         f"Para este perfil, la línea directa pasa a **{los_at_bar:.2f} m** en la posición de la barrera. "
