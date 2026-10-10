@@ -34123,6 +34123,16 @@ def future_print_view_impl(lab):
             9: _render_course3_lab2_stage9,
             10: _render_course3_lab2_stage10,
         }
+    elif str(class_id).strip() == "clase-07-construccion-lab-1" or "construccion-lab-1" in str(class_id):
+        # Curso 4 · Laboratorio 1: reutiliza exactamente los renderizadores
+        # reales de las etapas. print/projection_mode evita persistir respuestas.
+        renderers = {
+            stage: (lambda stage_index: (
+                lambda current_lab, current_saved:
+                    _c4l1.run_stage(stage_index, current_lab, current_saved, globals())
+            ))(stage)
+            for stage in range(11)
+        }
     else:
         st.warning("El apunte visual todavía no está integrado para este laboratorio.")
         return
