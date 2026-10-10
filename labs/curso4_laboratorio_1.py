@@ -1987,7 +1987,10 @@ def _stage4(lab, saved):
       </div>
     </div>
     """
-    st.markdown(profile_svg,unsafe_allow_html=True)
+    # Render as raw HTML instead of Markdown. Markdown parsing can break
+    # multiline SVG content and expose tags such as <line>, <polyline> and
+    # <circle> as visible text below the figure.
+    st.html(profile_svg)
 
     st.markdown(
         f"Para este perfil, la línea directa pasa a **{los_at_bar:.2f} m** en la posición de la barrera. "
