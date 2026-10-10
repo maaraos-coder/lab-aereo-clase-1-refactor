@@ -1997,7 +1997,11 @@ def _stage4(lab, saved):
       </div>
     </div>
     """
-    st.markdown(profile_svg,unsafe_allow_html=True)
+    components.html(
+        profile_svg,
+        height=500,
+        scrolling=False,
+    )
 
     st.markdown(
         f"Para este perfil, la línea directa pasa a **{los_at_bar:.2f} m** en la posición de la barrera. "
