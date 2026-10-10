@@ -1987,9 +1987,22 @@ def _stage4(lab, saved):
       </div>
     </div>
     """
-    # Render as raw HTML instead of Markdown. Markdown parsing can break
-    # multiline SVG content and expose tags such as <line>, <polyline> and
-    # <circle> as visible text below the figure.
+    # Streamlit can still expose part of a multiline inline SVG as text in
+    # some render paths. Encode only the SVG as a data URI and keep the
+    # surrounding cards as normal HTML; this makes the profile render atomic.
+    import base64
+    svg_start = profile_svg.find("<svg")
+    svg_end = profile_svg.find("</svg>", svg_start)
+    if svg_start >= 0 and svg_end >= 0:
+        svg_end += len("</svg>")
+        svg_markup = profile_svg[svg_start:svg_end]
+        svg_b64 = base64.b64encode(svg_markup.encode("utf-8")).decode("ascii")
+        svg_img = (
+            f'<img src="data:image/svg+xml;base64,{svg_b64}" '
+            'alt="Perfil fuente barrera receptor" '
+            'style="display:block;width:100%;height:auto;max-height:390px;object-fit:contain"/>'
+        )
+        profile_svg = profile_svg[:svg_start] + svg_img + profile_svg[svg_end:]
     st.html(profile_svg)
 
     st.markdown(
