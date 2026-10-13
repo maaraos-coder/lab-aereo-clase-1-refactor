@@ -2,16 +2,12 @@
 
 MEASURE_OPTIONS=[
     "Seleccionar medida",
-    "Barrera acústica perimetral",
-    "Cierre de vanos",
-    "Semiencierro",
-    "Encierro completo",
-    "Silenciador",
-    "Encierro + silenciador",
+    "Barrera acústica",
     "Reducción directa",
-    "Secuencialidad operacional",
-    "Barrera trasladable IMIV",
-    "Reemplazo / restricción de maquinaria",
+    "Silenciador",
+    "Encierro completo",
+    "Semiencierro",
+    "Encierro + silenciador",
 ]
 
 FRONT_TEMPLATE=[
@@ -244,6 +240,15 @@ def render(lab,saved,runtime):
         saved_rows=saved.get("c4l2_s6_control_design") or _student_design_rows(saved)
         design_grid_key="c4l2_s6_design_grid_student_v2"
 
+    # Unify previously named barrier variants; unsupported choices require a new selection.
+    saved_rows=[dict(row) for row in saved_rows]
+    for row in saved_rows:
+        previous=row.get("Medida seleccionada")
+        if previous in ("Barrera acústica perimetral","Barrera trasladable IMIV"):
+            row["Medida seleccionada"]="Barrera acústica"
+        elif previous not in MEASURE_OPTIONS:
+            row["Medida seleccionada"]="Seleccionar medida"
+
     design_df=runtime["_professional_grid"](
         pd.DataFrame(saved_rows),
         key=design_grid_key,
@@ -285,6 +290,8 @@ def render(lab,saved,runtime):
     import hashlib
     prefix="c4l2_s6_applied_"+hashlib.sha1((str(role)+selected_front+measure).encode()).hexdigest()[:12]
     cfg_saved=(saved.get("c4l2_s6_measure_config") or {}).get(selected_front,{})
+    if measure=="Barrera acústica" and cfg_saved.get("medida") in ("Barrera acústica perimetral","Barrera trasladable IMIV"):
+        cfg_saved=dict(cfg_saved,medida=measure)
     if cfg_saved.get("medida")!=measure:
         cfg_saved={}
     cfg={}
@@ -292,12 +299,10 @@ def render(lab,saved,runtime):
     treatment_kinds={
         "Encierro completo":"enclosure","Semiencierro":"semi",
         "Encierro + silenciador":"enclosure_silencer","Silenciador":"silencer",
-        "Reducción directa":"direct","Cierre de vanos":"enclosure",
+        "Reducción directa":"direct",
     }
     if measure in treatment_kinds:
         initial=cfg_saved.get("treatment") or control_model.default_treatment(treatment_kinds[measure])
-        if measure=="Cierre de vanos":
-            st.info("Representa la envolvente y modifica el estado y TL de la cara que contiene los vanos. Conserva las otras caras y compara antes/después en el mapa.")
         if st.button("Usar parámetros de la práctica",key=prefix+"_copy"):
             if study_cfg["noise_control_type"]!=treatment_kinds[measure]:
                 st.warning("Selecciona en la práctica el mismo tipo de tratamiento que elegiste para este frente.")
@@ -311,37 +316,10 @@ def render(lab,saved,runtime):
                 st.rerun()
         treatment,calc=workshop.render_designer(st,pd,prefix,initial,fixed_kind=treatment_kinds[measure])
         cfg["treatment"]=treatment
-    elif measure in ("Barrera acústica perimetral","Barrera trasladable IMIV"):
+    elif measure=="Barrera acústica":
         cfg,calc=workshop.render_barrier_calculator(st,pd,prefix,cfg_saved)
         cfg["ubicacion"]=st.text_input("Ubicación / tramo protegido",value=str(cfg_saved.get("ubicacion") or ""),key=prefix+"_location")
         cfg["densidad_kgm2"]=st.number_input("Masa superficial del panel [kg/m²]",min_value=1.,max_value=200.,value=float(cfg_saved.get("densidad_kgm2",10.)),step=1.,key=prefix+"_mass")
-    elif measure=="Secuencialidad operacional":
-        st.markdown("Ingresa las contribuciones individuales en el mismo receptor, obtenidas del escenario original. Calcula la suma antes y después de modificar la simultaneidad.")
-        seed=cfg_saved.get("fuentes") or [{"Fuente":"Máquina "+str(i+1),"Lp en R [dB(A)]":70.0,"Activa antes":True,"Activa después":i==0} for i in range(4)]
-        edited=st.data_editor(pd.DataFrame(seed),hide_index=True,num_rows="dynamic",use_container_width=True,key=prefix+"_sources")
-        records=edited.where(pd.notna(edited),None).to_dict("records")
-        valid=[r for r in records if _num(r.get("Lp en R [dB(A)]")) is not None]
-        before=control_model.energy_sum([_num(r["Lp en R [dB(A)]"]) for r in valid if r.get("Activa antes")])
-        after=control_model.energy_sum([_num(r["Lp en R [dB(A)]"]) for r in valid if r.get("Activa después")])
-        if before is not None and after is not None:
-            workshop._metrics(st,before,after)
-            calc={"original_dba":before,"controlled_dba":after}
-        else: st.warning("Activa al menos una fuente válida en cada condición para calcular la comparación.")
-        cfg["fuentes"]=records
-        cfg["programacion"]=st.text_area("Cómo se ejecutará el trabajo de forma secuencial",value=str(cfg_saved.get("programacion") or ""),key=prefix+"_schedule")
-        st.caption("El cálculo representa simultaneidad instantánea; no aplica porcentajes de tiempo ni cambia la potencia de una máquina por cambiar su horario.")
-    elif measure=="Reemplazo / restricción de maquinaria":
-        a,b=st.columns(2)
-        cfg["equipo_original"]=a.text_input("Equipo original",value=str(cfg_saved.get("equipo_original") or ""),key=prefix+"_old")
-        cfg["equipo_reemplazo"]=b.text_input("Equipo de reemplazo",value=str(cfg_saved.get("equipo_reemplazo") or ""),key=prefix+"_new")
-        old=a.number_input("LwA original [dB(A)]",min_value=0.,max_value=160.,value=float(cfg_saved.get("lwa_original",105.)),key=prefix+"_old_lw")
-        new=b.number_input("LwA reemplazo [dB(A)]",min_value=0.,max_value=160.,value=float(cfg_saved.get("lwa_reemplazo",97.)),key=prefix+"_new_lw")
-        cfg.update(lwa_original=old,lwa_reemplazo=new)
-        st.metric("Reducción propia de la fuente [dB]",f"{old-new:.1f}")
-        cfg["respaldo"]=st.text_input("Ficha técnica o medición que respalda los niveles",value=str(cfg_saved.get("respaldo") or ""),key=prefix+"_evidence")
-        cfg["restriccion"]=st.text_area("Restricción operacional y viabilidad",value=str(cfg_saved.get("restriccion") or ""),key=prefix+"_rule")
-        calc={"delta_lwa_db":old-new}
-        st.caption("Actualiza la fuente en el mapa; la reducción total en R también depende de las demás fuentes.")
     else:
         st.info("Selecciona una medida en la tabla anterior para habilitar su cálculo y configuración.")
     if measure!="Seleccionar medida":

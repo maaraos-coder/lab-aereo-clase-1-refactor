@@ -155,50 +155,37 @@ def render_designer(st,pd,prefix,initial=None,fixed_kind=None):
 
 def render_examples(st,pd):
     st.markdown('### 2 · Ejemplos resueltos de cada medida')
-    st.caption('Datos docentes ilustrativos. La selección de medidas para Eyzaguirre queda a cargo del alumno.')
+    st.caption('Medidas implementadas en Noise Map Lab. Datos docentes ilustrativos; el alumno diseña su solución para Eyzaguirre.')
     examples=[
-        ('Barrera acústica perimetral','Excavadora junto al deslinde: pantalla continua de 3 m de alto y 20 m de largo, a 5 m de F; R a 20 m. No se desplaza el frente de trabajo.','barrera',None),
-        ('Barrera trasladable IMIV','Cango en vía pública: pantalla de 2,5 m × 6 m, a 2 m de F; R a 10 m. Verifica extremos libres y estabilidad.','barrera',None),
+        ('Barrera acústica','Excavadora junto al deslinde: pantalla continua de 3 m de alto y 20 m de largo, a 5 m de F; R a 20 m. El frente de trabajo conserva su ubicación.','barrera',None),
         ('Reducción directa','Equipo fijo: reducción técnica acreditada de 8 dB por banda.','reduccion_directa_mesa_vibratoria','direct'),
         ('Silenciador','Descarga canalizada de un equipo: IL = 3, 6, 10, 15, 20, 22, 20, 16 dB entre 63 y 8000 Hz.','silenciador','silencer'),
         ('Encierro completo','Equipo fijo que admite encapsulado: 2 × 2 × 2,5 m; seis caras cerradas, Rw 30 dB y absorción media.','encierro','enclosure'),
         ('Semiencierro','Puesto fijo de corte: mismo volumen, fondo abierto y orientado al lado opuesto al receptor; compara R al frente y detrás.','semiencierro','semi'),
         ('Encierro + silenciador','Equipo fijo con ventilación: mismo encierro, conducto de 0,10 m² en el fondo y espectro IL del silenciador.','encierro_silenciador','enclosure_silencer'),
-        ('Cierre de vanos','Trabajo interior: cara frontal con 25% abierto → cara cerrada, Rw 30 dB; compara el mismo receptor.','encierro',None),
-        ('Secuencialidad operacional','Cuatro máquinas idénticas de 70 dB(A) cada una en R → una máquina simultánea. Mantén la tarea y justifica la programación.','',None),
-        ('Reemplazo / restricción de maquinaria','Equipo original LwA=105 dB(A) → reemplazo LwA=97 dB(A). Su reducción propia es 8 dB; revisa el aporte de las otras fuentes.','reduccion_directa_mesa_vibratoria',None),
     ]
-    for title,description,image,kind in examples:
-        with st.expander(title,expanded=False):
-            st.markdown(description)
-            asset=Path(__file__).resolve().parents[1]/'assets'/'controles'/(image+'.png')
-            if image and asset.exists(): st.image(str(asset),width=420)
-            if title.startswith('Barrera'):
-                if 'IMIV' in title: rows,before,after,los,delta=model.barrier_results(2.5,6.,2.,10.)
-                else: rows,before,after,los,delta=model.barrier_results()
-                st.markdown(f'Visual F–R en la pantalla: **{los:.2f} m**. Diferencia de recorrido sobre el borde: **{delta:.3f} m**.')
-                _metrics(st,before,after); _table(st,pd,rows)
-                st.caption('Mismo cálculo de pantalla finita de Noise Map Lab: borde superior, ambos extremos y transición cerca de extremos; G=0, límite de atenuación 20 dB. Abar no es el TL del panel.')
-            elif kind:
-                cfg=model.default_treatment(kind)
-                rows,before,after=model.treatment_results(cfg)
-                _metrics(st,before,after); _table(st,pd,rows)
-                if kind=='semi':
-                    _,_,back=model.treatment_results(cfg,bearing=180.)
-                    st.markdown(f'Receptor al lado de la cara abierta: **{back:.1f} dB(A)**. La orientación modifica el resultado.')
-            elif title=='Cierre de vanos':
-                opened=model.default_treatment(); opened['enclosure_faces']['front'].update(state='partial',opening_pct=25.)
-                closed=model.default_treatment()
-                _,_,before=model.treatment_results(opened); _,_,after=model.treatment_results(closed)
-                a,b,c=st.columns(3); a.metric('Vano abierto [dB(A)]',f'{before:.1f}'); b.metric('Vano cerrado [dB(A)]',f'{after:.1f}'); c.metric('Reducción [dB]',f'{before-after:.1f}')
-                st.caption('Esta comparación modifica una superficie de una envolvente; conserva la geometría y absorción interior.')
-            elif title=='Secuencialidad operacional':
-                st.latex(r'L_{antes}=70+10\log_{10}(4)=76.02\ dB(A),\quad L_{despues}=70\ dB(A),\quad\Delta=6.02\ dB')
-                st.caption('Para máquinas distintas suma sus contribuciones energéticamente. Cambiar el horario, por sí solo, no reduce la emisión instantánea.')
-            else:
-                st.latex(r'\Delta L_w=105-97=8\ dB')
-                st.caption('La reducción de la fuente no equivale a restar 8 dB al total de varias fuentes en el receptor.')
-    st.info('Los ejemplos de tratamientos usan terreno plano y campo libre. Los renders ilustran la construcción; los datos numéricos de cada ejemplo se indican en su texto.')
+    for number,(title,description,image,kind) in enumerate(examples,1):
+        with st.container(border=True):
+            st.markdown(f'#### {number} · {title}')
+            visual,explanation=st.columns([1,2])
+            with visual:
+                asset=Path(__file__).resolve().parents[1]/'assets'/'controles'/(image+'.png')
+                if asset.exists(): st.image(str(asset),use_container_width=True)
+            with explanation:
+                st.markdown(description)
+                if kind is None:
+                    rows,before,after,los,delta=model.barrier_results()
+                    st.markdown(f'Visual F–R en la pantalla: **{los:.2f} m**. Diferencia de recorrido sobre el borde: **{delta:.3f} m**.')
+                    st.caption('Pantalla finita: borde superior, ambos extremos y transición cerca de extremos; G=0, límite de atenuación 20 dB. Abar no es el TL del panel.')
+                else:
+                    cfg=model.default_treatment(kind)
+                    rows,before,after=model.treatment_results(cfg)
+                    if kind=='semi':
+                        _,_,back=model.treatment_results(cfg,bearing=180.)
+                        st.markdown(f'Receptor al lado de la cara abierta: **{back:.1f} dB(A)**. La orientación modifica el resultado.')
+            _metrics(st,before,after)
+            _table(st,pd,rows)
+    st.info('Los ejemplos usan terreno plano y campo libre. Los renders ilustran la construcción; los datos numéricos de cada ejemplo se indican en su texto.')
 
 
 def render_barrier_calculator(st,pd,prefix,initial=None):
