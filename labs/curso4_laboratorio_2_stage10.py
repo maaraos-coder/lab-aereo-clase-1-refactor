@@ -86,6 +86,84 @@ def _practical_score(row):
     return None
 
 
+def _report_typography(st):
+    """Jerarquía tipográfica sobria para la lectura del informe en pantalla."""
+    st.markdown("""
+    <style>
+      [data-testid="stMain"] {
+        --c4-report-display: "Aptos Display", "Segoe UI Variable Display", "Segoe UI", sans-serif;
+        --c4-report-body: "Aptos", "Segoe UI Variable Text", "Segoe UI", sans-serif;
+      }
+      [data-testid="stMain"] h1,
+      [data-testid="stMain"] h2,
+      [data-testid="stMain"] h3,
+      [data-testid="stMain"] h4 {
+        font-family:var(--c4-report-display) !important;
+        color:#102f46;
+        letter-spacing:-.025em;
+        line-height:1.16;
+        text-wrap:balance;
+      }
+      [data-testid="stMain"] h1 { font-weight:850 !important; }
+      [data-testid="stMain"] h2 { font-weight:820 !important; }
+      [data-testid="stMain"] h3 {
+        font-size:1.18rem !important;
+        font-weight:800 !important;
+        margin-top:1.4rem !important;
+      }
+      [data-testid="stMain"] h4 { font-weight:780 !important; }
+      [data-testid="stMain"] p,
+      [data-testid="stMain"] li,
+      [data-testid="stMain"] label,
+      [data-testid="stMain"] [data-testid="stCaptionContainer"] {
+        font-family:var(--c4-report-body) !important;
+        letter-spacing:-.006em;
+        line-height:1.62;
+      }
+      [data-testid="stMain"] strong {
+        font-family:var(--c4-report-display) !important;
+        color:#173b53;
+        font-weight:780;
+        letter-spacing:-.012em;
+      }
+      [data-testid="stMain"] [data-testid="stMetricLabel"] p {
+        font-size:.72rem !important;
+        font-weight:750 !important;
+        letter-spacing:.035em !important;
+        text-transform:uppercase;
+        color:#587487;
+      }
+      [data-testid="stMain"] [data-testid="stMetricValue"] {
+        font-family:var(--c4-report-display) !important;
+        color:#102f46;
+        font-weight:780;
+        letter-spacing:-.035em;
+      }
+      [data-testid="stMain"] div[data-testid="stDataFrame"] {
+        font-family:var(--c4-report-body) !important;
+        border-radius:14px;
+        overflow:hidden;
+        box-shadow:0 4px 16px rgba(23,59,83,.045);
+      }
+      [data-testid="stMain"] button {
+        font-family:var(--c4-report-display) !important;
+        font-weight:750 !important;
+        letter-spacing:-.01em;
+      }
+      [data-testid="stMain"] .c4-report-cover,
+      [data-testid="stMain"] .c4-report-section,
+      [data-testid="stMain"] .c4-report-intro,
+      [data-testid="stMain"] .c4-report-summary {
+        font-family:var(--c4-report-body) !important;
+      }
+      [data-testid="stMain"] .c4-report-cover > div,
+      [data-testid="stMain"] .c4-report-section > div {
+        font-family:inherit;
+      }
+    </style>
+    """,unsafe_allow_html=True)
+
+
 def _table_records(value,identity="Ítem"):
     """Convierte listas o diccionarios guardados en filas legibles de informe."""
     if isinstance(value,list):
@@ -138,7 +216,7 @@ def _report_cover(st,meta):
         or "Alumno/a del diplomado"
     ))
     st.markdown(f"""
-    <div style="border:1px solid #b9d4e2;border-radius:24px;overflow:hidden;margin:.5rem 0 1.4rem;
+    <div class="c4-report-cover" style="border:1px solid #b9d4e2;border-radius:24px;overflow:hidden;margin:.5rem 0 1.4rem;
                 box-shadow:0 12px 34px rgba(23,59,83,.09);background:white">
       <div style="height:9px;background:linear-gradient(90deg,#075985,#0b91b8,#57c4d3)"></div>
       <div style="padding:26px 28px 22px">
@@ -252,7 +330,7 @@ def _section_header(st,stage,title,points,complete=True):
     state="EVIDENCIA RECUPERADA" if complete else "EVIDENCIA PENDIENTE"
     state_color="#087ba0" if complete else "#9a6700"
     st.markdown(f"""
-    <div style="margin:1.45rem 0 .7rem;border:1px solid #c9dce8;border-left:6px solid {state_color};
+    <div class="c4-report-section" style="margin:1.45rem 0 .7rem;border:1px solid #c9dce8;border-left:6px solid {state_color};
                 border-radius:18px;padding:16px 18px;background:linear-gradient(135deg,#fbfdff,#eef7fb)">
       <div style="display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap">
         <div>
@@ -281,7 +359,7 @@ def _render_integrated_report(st,pd,report,done=None,quiz_score=None):
     maps=report.get("maps") or {}
     _report_cover(st,report.get("report_meta") or {})
     st.markdown("""
-    <div style="border:1px solid #d3e2ea;border-radius:18px;padding:18px 20px;background:#fbfdff;margin-bottom:1rem">
+    <div class="c4-report-intro" style="border:1px solid #d3e2ea;border-radius:18px;padding:18px 20px;background:#fbfdff;margin-bottom:1rem">
       <div style="font-size:.69rem;font-weight:900;letter-spacing:.09em;color:#087ba0">OBJETO Y ALCANCE DEL INFORME</div>
       <div style="font-size:1.03rem;font-weight:900;color:#173b53;margin:.3rem 0 .5rem">
         Evaluación de la condición acústica original y de la solución de control
@@ -380,7 +458,7 @@ def _render_integrated_report(st,pd,report,done=None,quiz_score=None):
         st.metric("Resultado automático del cuestionario",f"{float(quiz_score):g} / 30 puntos")
 
     st.markdown("""
-    <div style="margin:1.2rem 0;border:1px solid #bcd8e7;border-radius:20px;padding:18px 20px;
+    <div class="c4-report-summary" style="margin:1.2rem 0;border:1px solid #bcd8e7;border-radius:20px;padding:18px 20px;
                 background:linear-gradient(135deg,#eaf7fb,#f8fcff)">
       <div style="font-size:.68rem;font-weight:900;letter-spacing:.09em;color:#087ba0">ESTRUCTURA DE LA NOTA FINAL</div>
       <div style="font-size:1.12rem;font-weight:900;color:#173b53;margin:.35rem 0">Informe técnico 70 puntos + cuestionario 30 puntos = 100 puntos</div>
@@ -495,6 +573,7 @@ def _submission_payload(saved):
 
 def render(lab,saved,runtime):
     st=runtime["st"]; pd=runtime["pd"]
+    _report_typography(st)
     runtime["header"](
         "ETAPA 10 · LABORATORIO 2",
         "Entrega y evaluación integral",
