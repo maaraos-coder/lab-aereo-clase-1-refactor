@@ -586,6 +586,13 @@ DEFAULT_IL = dict(zip(map(str,OCTAVE_BANDS), (3,6,10,15,20,22,20,16)))
 EXAMPLE_LW = dict(zip(map(str,OCTAVE_BANDS), (90,94,98,100,98,94,90,86)))
 
 
+def mass_law_tl_spectrum(density_kgm3, thickness_mm, layers=1):
+    """Estimate octave-band TL for bonded layers behaving as one simple leaf."""
+    surface_mass=max(float(density_kgm3),0.0)*max(float(thickness_mm),0.0)/1000.0*max(int(layers),1)
+    tl={str(f):max(0.0,20.0*math.log10(max(surface_mass*f,1e-12))-47.0) for f in OCTAVE_BANDS}
+    return surface_mass,tl
+
+
 def default_treatment(kind='enclosure'):
     faces={name:{'state':'closed','opening_pct':25,'acoustic_mode':'rw','rw_db':30.0,'tl_db':dict(DEFAULT_TL)} for name in FACE_LABELS}
     if kind=='semi':

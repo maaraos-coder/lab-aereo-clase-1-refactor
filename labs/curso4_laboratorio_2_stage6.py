@@ -198,14 +198,22 @@ def render(lab,saved,runtime):
         "El proyecto Eyzaguirre es el caso de aplicación. Diseña y justifica tus propias medidas "
         "a partir de la Etapa 5; los ejemplos no constituyen una solución obligatoria del proyecto."
     )
-    st.markdown("### 3 · Diseñador de tratamientos · igual que Noise Map Lab")
+    tl_config,tl_spectrum=workshop.render_tl_calculator(
+        st,pd,"c4l2_s6_tl_material_v1",saved.get("c4l2_s6_tl_calculator")
+    )
+    if st.button("Guardar diseño del panel",key="c4l2_s6_tl_save"):
+        saved["c4l2_s6_tl_calculator"]=tl_config
+        runtime["_save"](lab,saved,6)
+        st.success("Panel y espectro TL guardados para utilizarlos en el diseñador.")
+
+    st.markdown("### 4 · Diseñador de tratamientos · igual que Noise Map Lab")
     st.markdown(
         "Configura geometría, seis superficies, Rw o TL por bandas, absorción interior y ventilación. "
         "El resultado se obtiene del balance energético y de la emisión de cada cara. "
         "Después aplica estos mismos parámetros al frente elegido en la sección 5."
     )
     study_cfg,study_results=workshop.render_designer(
-        st,pd,"c4l2_s6_study_v3",saved.get("c4l2_s6_treatment_study")
+        st,pd,"c4l2_s6_study_v3",saved.get("c4l2_s6_treatment_study"),suggested_tl=tl_spectrum
     )
     if st.button("Guardar cálculo de práctica",key="c4l2_s6_study_save"):
         saved["c4l2_s6_treatment_study"]=study_cfg
@@ -221,7 +229,7 @@ def render(lab,saved,runtime):
     )
 
     if not is_teacher and not has_stage5_results:
-        st.markdown("### 4 · Diseño aplicado al caso")
+        st.markdown("### 5 · Diseño aplicado al caso")
         st.warning(
             "Esta parte se habilita después de completar y guardar la **Etapa 5**. "
             "Todavía no existen resultados originales guardados para recuperar en esta vista."
@@ -232,7 +240,7 @@ def render(lab,saved,runtime):
         )
         return
 
-    st.markdown("### 4 · Diseña la estrategia para cada frente")
+    st.markdown("### 5 · Diseña la estrategia para cada frente")
     if is_teacher:
         saved_rows=saved.get("c4l2_s6_control_design") or _teacher_design_rows()
         design_grid_key="c4l2_s6_design_grid_teacher_v2"
@@ -281,7 +289,7 @@ def render(lab,saved,runtime):
             "y define el nombre del proyecto controlado que guardarás en Noise Map Lab."
         )
 
-    st.markdown("### 5 · Configura tu medida en detalle")
+    st.markdown("### 6 · Configura tu medida en detalle")
     labels=[str(r.get("Frente / condición") or "") for r in design_records]
     selected_front=st.selectbox("Frente a configurar",labels,key="c4l2_s6_front_detail")
     selected=next((r for r in design_records if str(r.get("Frente / condición"))==selected_front),{})
@@ -314,7 +322,9 @@ def render(lab,saved,runtime):
                     if str(key).startswith(prefix): del st.session_state[key]
                 runtime["_save"](lab,saved,6)
                 st.rerun()
-        treatment,calc=workshop.render_designer(st,pd,prefix,initial,fixed_kind=treatment_kinds[measure])
+        treatment,calc=workshop.render_designer(
+            st,pd,prefix,initial,fixed_kind=treatment_kinds[measure],suggested_tl=tl_spectrum
+        )
         cfg["treatment"]=treatment
     elif measure=="Barrera acústica":
         cfg,calc=workshop.render_barrier_calculator(st,pd,prefix,cfg_saved)
@@ -336,7 +346,7 @@ def render(lab,saved,runtime):
                 runtime["_save"](lab,saved,6)
                 st.success("Parámetros y cálculo de este frente guardados. Puedes configurar otro frente.")
 
-    st.markdown("### 6 · Implementa una copia controlada en Noise Map Lab")
+    st.markdown("### 7 · Implementa una copia controlada en Noise Map Lab")
     st.markdown("""
     1. Abre el **proyecto original** correspondiente al frente.
     2. **Duplica / guarda con otro nombre** antes de modificarlo.
@@ -346,7 +356,7 @@ def render(lab,saved,runtime):
     """)
     st.link_button("🗺️ Abrir Noise Map Lab",runtime["NOISEMAP_URL"],use_container_width=True)
 
-    st.markdown("### 7 · Verificación antes de guardar")
+    st.markdown("### 8 · Verificación antes de guardar")
     v1=st.checkbox("Conservé intacto el escenario original.",key="c4l2_s6_check_original")
     v2=st.checkbox("La medida es físicamente compatible con la actividad constructiva.",key="c4l2_s6_check_viable")
     v3=st.checkbox("La medida está correctamente ubicada respecto de la fuente y el receptor.",key="c4l2_s6_check_geometry")

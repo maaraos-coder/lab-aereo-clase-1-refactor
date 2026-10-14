@@ -8,6 +8,15 @@ from labs import curso4_control_models as model
 KINDS={'Reducción directa':'direct','Silenciador':'silencer','Encierro completo':'enclosure','Semiencierro':'semi','Encierro + silenciador':'enclosure_silencer'}
 LININGS={'Sin revestimiento':'unlined','Absorción baja':'low','Absorción media':'medium','Absorción alta':'high','Personalizada':'custom'}
 STATES={'Cerrada':'closed','Abierta':'open','Parcial':'partial'}
+MATERIALS={
+    'OSB':{'density':650.0,'thickness':18.0,'note':'Tablero estructural de virutas orientadas'},
+    'Terciado estructural':{'density':550.0,'thickness':15.0,'note':'Tablero contrachapado de madera'},
+    'MDF':{'density':750.0,'thickness':15.0,'note':'Tablero de fibra de densidad media'},
+    'Yeso-cartón':{'density':800.0,'thickness':12.5,'note':'Placa estándar; usar ficha real si se conoce'},
+    'Fibrocemento':{'density':1350.0,'thickness':8.0,'note':'Placa cementicia genérica'},
+    'Acero':{'density':7850.0,'thickness':1.0,'note':'Plancha continua de acero'},
+    'Personalizado':{'density':700.0,'thickness':10.0,'note':'Ingresa densidad y espesor del producto'},
+}
 
 
 def _table(st,pd,rows):
@@ -31,6 +40,70 @@ def _spectrum(st,pd,key,label,values,maximum=100.0):
     return result
 
 
+def render_tl_calculator(st,pd,prefix,initial=None):
+    """Educational single-leaf mass-law calculator feeding the map TL spectrum."""
+    initial=dict(initial or {})
+    st.markdown('### 3 · Calculadora de TL para diseñar el encierro')
+    st.markdown(
+        'Selecciona el material y construye el panel que utilizarás en las caras del encierro. '
+        'La calculadora obtiene la **masa superficial** y un **TL estimado por bandas** que luego puedes aplicar directamente en el diseñador de Noise Map Lab.'
+    )
+    st.dataframe(pd.DataFrame([
+        {'Material':name,'Densidad nominal [kg/m³]':data['density'],'Espesor inicial [mm]':data['thickness'],'Referencia de uso':data['note']}
+        for name,data in MATERIALS.items() if name!='Personalizado'
+    ]),hide_index=True,use_container_width=True)
+
+    material_names=list(MATERIALS)
+    material=st.selectbox(
+        'Material del panel',material_names,
+        index=material_names.index(initial.get('material','OSB')) if initial.get('material','OSB') in material_names else 0,
+        key=prefix+'_material',
+    )
+    preset=MATERIALS[material]
+    a,b,c=st.columns(3)
+    density=a.number_input(
+        'Densidad [kg/m³]',min_value=50.0,max_value=10000.0,
+        value=float(initial.get('density',preset['density'])) if initial.get('material')==material else preset['density'],
+        step=10.0,key=prefix+'_'+material+'_density',
+    )
+    thickness=b.number_input(
+        'Espesor por capa [mm]',min_value=.1,max_value=100.0,
+        value=float(initial.get('thickness_mm',preset['thickness'])) if initial.get('material')==material else preset['thickness'],
+        step=.5,key=prefix+'_'+material+'_thickness',
+    )
+    layers=c.number_input(
+        'Número de capas unidas',min_value=1,max_value=10,
+        value=int(initial.get('layers',1)) if initial.get('material')==material else 1,
+        step=1,key=prefix+'_'+material+'_layers',
+    )
+    d,e=st.columns(2)
+    panel_width=d.number_input('Ancho del panel [m]',min_value=.1,max_value=20.0,value=float(initial.get('panel_width_m',1.22)),step=.01,key=prefix+'_width')
+    panel_height=e.number_input('Alto del panel [m]',min_value=.1,max_value=20.0,value=float(initial.get('panel_height_m',2.44)),step=.01,key=prefix+'_height')
+
+    surface_mass,tl=model.mass_law_tl_spectrum(density,thickness,layers)
+    panel_area=panel_width*panel_height
+    panel_weight=surface_mass*panel_area
+    m1,m2,m3=st.columns(3)
+    m1.metric('Masa superficial',f'{surface_mass:.1f} kg/m²')
+    m2.metric('Superficie del panel',f'{panel_area:.2f} m²')
+    m3.metric('Peso estimado del panel',f'{panel_weight:.1f} kg')
+    st.latex(r'm_s=\rho\,e\,n')
+    st.latex(r'TL(f)\approx20\log_{10}(m_s f)-47')
+    st.dataframe(pd.DataFrame([
+        {'Banda [Hz]':f,'TL estimado [dB]':round(tl[str(f)],1)} for f in model.OCTAVE_BANDS
+    ]),hide_index=True,use_container_width=True)
+    if surface_mass<10:
+        st.warning('La masa superficial es inferior a 10 kg/m². Revisa además que el panel sea continuo, sin ranuras y estructuralmente apto para funcionar como cerramiento acústico.')
+    st.warning(
+        'Resultado orientativo mediante ley de masa para una hoja simple, homogénea y estanca. No representa resonancia, frecuencia crítica, juntas, puertas, transmisión estructural ni una cámara entre placas. '
+        'Si existe un ensayo o ficha certificada del sistema completo, usa ese espectro TL en vez de esta estimación.'
+    )
+    config={'material':material,'density':density,'thickness_mm':thickness,'layers':layers,
+            'panel_width_m':panel_width,'panel_height_m':panel_height,'surface_mass_kgm2':surface_mass,
+            'panel_weight_kg':panel_weight,'tl_db':tl}
+    return config,tl
+
+
 def _geometry_plot(st,config,key):
     import plotly.graph_objects as go
     l=config['enclosure_length_m']; w=config['enclosure_width_m']; h=config['enclosure_height_m']
@@ -52,7 +125,7 @@ def _geometry_plot(st,config,key):
     st.caption(f'Frente = azimut {config["enclosure_azimuth_deg"]:.0f}° desde el norte; fondo = lado opuesto. Naranja indica una cara abierta. La rotación se aplica en el cálculo; la vista muestra los ejes locales.')
 
 
-def render_designer(st,pd,prefix,initial=None,fixed_kind=None):
+def render_designer(st,pd,prefix,initial=None,fixed_kind=None,suggested_tl=None):
     initial=deepcopy(initial or model.default_treatment())
     labels=list(KINDS)
     if fixed_kind:
@@ -106,7 +179,17 @@ def render_designer(st,pd,prefix,initial=None,fixed_kind=None):
                     face['acoustic_mode']='spectrum' if acoustic=='TL por bandas' else 'rw'
                     face['rw_db']=d.number_input('Rw [dB]',min_value=0.,max_value=100.,value=float(face.get('rw_db',30)),disabled=face['state']=='open' or face['acoustic_mode']=='spectrum',key=prefix+'_'+name+'_rw')
                     if face['acoustic_mode']=='spectrum' and face['state']!='open':
-                        face['tl_db']=_spectrum(st,pd,prefix+'_'+name+'_tl','TL del panel por bandas [dB]',face.get('tl_db',model.DEFAULT_TL))
+                        use_calculated=bool(suggested_tl) and st.checkbox(
+                            'Usar TL de la calculadora',
+                            value=bool(face.get('use_calculated_tl',False)),
+                            key=prefix+'_'+name+'_use_calculated_tl',
+                        )
+                        face['use_calculated_tl']=use_calculated
+                        if use_calculated:
+                            face['tl_db']={str(f):float(suggested_tl[str(f)]) for f in model.OCTAVE_BANDS}
+                            _table(st,pd,[{'Hz':f,'TL aplicado desde calculadora [dB]':face['tl_db'][str(f)]} for f in model.OCTAVE_BANDS])
+                        else:
+                            face['tl_db']=_spectrum(st,pd,prefix+'_'+name+'_tl','TL del panel por bandas [dB]',face.get('tl_db',model.DEFAULT_TL))
                     else:
                         _table(st,pd,[{'Hz':f,'TL panel estimado [dB]':model._rw_estimated_tl_db(face['rw_db'],f),'% abierta efectivo':face['opening_pct']} for f in model.OCTAVE_BANDS])
                 cfg['enclosure_faces'][name]=face

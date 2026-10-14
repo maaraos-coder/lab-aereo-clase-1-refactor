@@ -4,6 +4,12 @@ import unittest
 from labs import curso4_control_models as m
 
 class TreatmentTests(unittest.TestCase):
+    def test_mass_law_material_calculator(self):
+        surface_mass,tl=m.mass_law_tl_spectrum(650,18,1)
+        self.assertAlmostEqual(surface_mass,11.7)
+        self.assertAlmostEqual(tl['500'],20*math.log10(11.7*500)-47)
+        self.assertGreater(tl['1000'],tl['500'])
+
     def test_direct_reduction_is_energy_consistent(self):
         _,before,after=m.treatment_results(m.default_treatment('direct'))
         self.assertAlmostEqual(before-after,8.0,places=8)
