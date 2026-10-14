@@ -156,6 +156,10 @@ def _report_typography(st):
         margin-top:1.4rem !important;
       }
       [data-testid="stMain"] h4 { font-weight:780 !important; }
+      [data-testid="stMain"] .hero h1,
+      [data-testid="stMain"] .hero h1 * {
+        color:#ffffff !important;
+      }
       [data-testid="stMain"] p,
       [data-testid="stMain"] li,
       [data-testid="stMain"] label,
@@ -218,7 +222,7 @@ def _table_records(value,identity="Ítem"):
             if isinstance(item,dict):
                 rows.append({identity:key,**item})
             else:
-                rows.append({identity:key,"Detalle":item})
+                rows.append({identity:key,"Detalle":"" if item is None else str(item)})
     else:
         rows=[]
     cleaned=[]
@@ -255,8 +259,8 @@ def _report_text(st,title,value):
 
 def _report_cover(st,meta):
     author=html.escape(str(
-        st.session_state.get("name")
-        or (meta or {}).get("author")
+        (meta or {}).get("author")
+        or st.session_state.get("name")
         or "Alumno/a del diplomado"
     ))
     st.markdown(f"""
@@ -334,13 +338,29 @@ def _section_header(st,stage,title,points,complete=True):
     """,unsafe_allow_html=True)
 
 
-def _render_integrated_report(st,pd,report,done=None,quiz_score=None):
+def _map_requirement(st,stage):
+    expected={
+        4:"Mapa de la condición original con fuentes, receptores, escala cromática, frente activo y proyecto guardado.",
+        6:"Mapa donde se reconozcan ubicación, dimensiones y orientación de las medidas implementadas.",
+        7:"Mapas original y controlado con la misma extensión, escala, receptores y resolución de cálculo.",
+    }
+    st.markdown("**Evidencia cartográfica que debe acompañar la pauta**")
+    st.info(expected[stage]+" La pauta numérica permite corregir el resultado; el mapa debe verificarse en la entrega individual del alumno.")
+
+
+def _render_integrated_report(st,pd,report,done=None,quiz_score=None,reference_mode=False):
     """Informe continuo con todas las evidencias de las Etapas 1 a 8."""
     done=done or {}
     reference=report.get("reference") or {}
     maps=report.get("maps") or {}
     _report_cover(st,report.get("report_meta") or {})
-    st.markdown("""
+    evidence_origin=(
+        "Los antecedentes originales corresponden al caso de referencia y la solución controlada presenta un desarrollo "
+        "pedagógico completo para orientar la corrección docente."
+        if reference_mode else
+        "La información proviene de los registros guardados por el alumno y de los resultados obtenidos mediante Noise Map Lab."
+    )
+    st.markdown(f"""
     <div class="c4-report-intro" style="border:1px solid #d3e2ea;border-radius:18px;padding:18px 20px;background:#fbfdff;margin-bottom:1rem">
       <div style="font-size:.69rem;font-weight:900;letter-spacing:.09em;color:#087ba0">OBJETO Y ALCANCE DEL INFORME</div>
       <div style="font-size:1.03rem;font-weight:900;color:#173b53;margin:.3rem 0 .5rem">
@@ -349,8 +369,7 @@ def _render_integrated_report(st,pd,report,done=None,quiz_score=None):
       <div style="color:#526f80;line-height:1.65;font-size:.84rem">
         Este informe consolida el trabajo desarrollado durante el laboratorio: antecedentes del proyecto,
         receptores, caracterización de fuentes, construcción del modelo original, análisis de resultados,
-        diseño de medidas de control y verificación de la condición controlada. La información proviene de
-        los registros guardados por el alumno y de los resultados obtenidos mediante Noise Map Lab.
+        diseño de medidas de control y verificación de la condición controlada. {evidence_origin}
         <br><br>
         La revisión se organiza en ocho secciones técnicas con un total de 70 puntos. El cuestionario individual
         aporta 30 puntos adicionales. Los límites diurno y nocturno se utilizan exclusivamente como referencia
@@ -391,7 +410,8 @@ def _render_integrated_report(st,pd,report,done=None,quiz_score=None):
     _report_table(st,pd,"Escenarios y frentes originales",s4.get("scenarios") or s4.get("fronts"),"Frente")
     _report_table(st,pd,"Configuración acústica de los frentes",s4.get("front_configs"),"Frente")
     _report_table(st,pd,"Resultados por receptor",s4.get("results"),"Frente")
-    _render_maps(st,"Mapas de la condición original",maps.get("original"))
+    if reference_mode:_map_requirement(st,4)
+    else:_render_maps(st,"Mapas de la condición original",maps.get("original"))
 
     _section_header(st,5,RUBRIC[4][1],RUBRIC[4][2],done.get(5,True))
     a,b=st.columns(2)
@@ -412,7 +432,8 @@ def _render_integrated_report(st,pd,report,done=None,quiz_score=None):
     _report_table(st,pd,"Diseño del panel y cálculo de TL",s6.get("tl_calculator"),"Parámetro")
     _report_table(st,pd,"Estudio del tratamiento acústico",s6.get("treatment_study"),"Parámetro")
     _report_table(st,pd,"Resultados del estudio de tratamiento",s6.get("treatment_results"),"Resultado")
-    _render_maps(st,"Mapas con las medidas de control implementadas",maps.get("control"))
+    if reference_mode:_map_requirement(st,6)
+    else:_render_maps(st,"Mapas con las medidas de control implementadas",maps.get("control"))
 
     _section_header(st,7,RUBRIC[6][1],RUBRIC[6][2],done.get(7,True))
     s7=report.get("stage_7") or {}
@@ -420,7 +441,8 @@ def _render_integrated_report(st,pd,report,done=None,quiz_score=None):
     _report_table(st,pd,"Comparación original–controlada",s7.get("comparison"),"Comparación")
     _report_table(st,pd,"Comprobación de comparabilidad",s7.get("comparability"),"Comprobación")
     _report_table(st,pd,"Proyectos controlados utilizados",s7.get("project_names"),"Frente")
-    _render_maps(st,"Mapas de la condición controlada y comparación",maps.get("comparison"))
+    if reference_mode:_map_requirement(st,7)
+    else:_render_maps(st,"Mapas de la condición controlada y comparación",maps.get("comparison"))
     _report_text(st,"Evaluación de la efectividad",s7.get("effectiveness"))
     _report_text(st,"Diferencias observadas entre ambos modelos",s7.get("differences"))
 
@@ -435,7 +457,10 @@ def _render_integrated_report(st,pd,report,done=None,quiz_score=None):
 
     _section_header(st,9,"Cuestionario oficial de comprensión",30,quiz_score is not None)
     if quiz_score is None:
-        st.info("El puntaje del cuestionario se incorporará cuando se complete y envíe la Etapa 9.")
+        if reference_mode:
+            st.info("La pauta con las diez respuestas correctas se presenta inmediatamente después del informe desarrollado.")
+        else:
+            st.info("El puntaje del cuestionario se incorporará cuando se complete y envíe la Etapa 9.")
     else:
         st.metric("Resultado automático del cuestionario",f"{float(quiz_score):g} / 30 puntos")
 
@@ -454,30 +479,59 @@ def _teacher_view(st,pd,saved):
     <div style="border:1px solid #bcd8e7;border-left:5px solid #0b7fa5;border-radius:18px;padding:17px 19px;
                 background:linear-gradient(135deg,#f8fcff,#edf7fb);margin:.7rem 0 1rem">
       <div style="font-size:.70rem;font-weight:900;letter-spacing:.09em;color:#087ba0">VISTA DOCENTE · EVALUACIÓN INTEGRAL</div>
-      <div style="font-size:1.05rem;font-weight:900;color:#173b53;margin:.3rem 0">70 puntos de desarrollo práctico + 30 puntos de cuestionario</div>
-      <div style="color:#526f80;line-height:1.55">La Etapa 10 no agrega un ejercicio nuevo. Consolida las evidencias de las Etapas 1 a 8 y deja el expediente bloqueado para revisión. El cuestionario de la Etapa 9 se corrige automáticamente.</div>
+      <div style="font-size:1.05rem;font-weight:900;color:#173b53;margin:.3rem 0">Solución desarrollada completa + criterios de corrección</div>
+      <div style="color:#526f80;line-height:1.55">Esta vista contiene un desarrollo técnico de referencia para las Etapas 1 a 8. Permite comparar la entrega de cada alumno con una respuesta completa y coherente, sin mostrar la solución en las vistas Alumno o Proyección Zoom.</div>
     </div>
     """,unsafe_allow_html=True)
     a,b,c=st.columns(3)
     a.metric("Desarrollo práctico","70 puntos")
     b.metric("Cuestionario","30 puntos")
     c.metric("Total","100 puntos")
+    st.markdown("### Pauta desarrollada · solución de referencia")
+    st.markdown(
+        "El desarrollo siguiente resuelve el laboratorio completo. Los resultados originales provienen del caso "
+        "de referencia; la estrategia de control constituye una solución pedagógica coherente con las medidas "
+        "implementadas en Noise Map Lab. Se pueden aceptar soluciones alternativas si están bien calculadas y justificadas."
+    )
+    from labs.curso4_lab2_reference_solution import build_reference_report
+    reference_report=build_reference_report()
+    _render_integrated_report(
+        st,pd,reference_report,
+        done={stage:True for stage in range(1,9)},
+        quiz_score=None,
+        reference_mode=True,
+    )
+
+    from labs.curso4_laboratorio_2_stage9 import QUESTIONS
+    st.markdown("### Etapa 9 · pauta del cuestionario")
+    st.dataframe(pd.DataFrame([
+        {
+            "N°":index,
+            "Tema":question[0],
+            "Respuesta correcta":question[2][question[3]],
+            "Puntaje":3,
+            "Fundamento":question[4],
+        }
+        for index,question in enumerate(QUESTIONS,1)
+    ]),hide_index=True,use_container_width=True)
+
+    with st.expander("📋 Ver pauta de corrección y distribución de los 70 puntos",expanded=False):
+        st.markdown(
+            "Utiliza estos criterios para asignar el puntaje a la entrega individual del alumno en "
+            "**Evaluaciones entregadas**. La solución desarrollada anterior es la referencia técnica."
+        )
+        for stage,criterion,points in RUBRIC:
+            st.markdown(f"#### Etapa {stage} · {criterion} · {points} puntos")
+            guide=TEACHER_GUIDE[stage]
+            st.dataframe(pd.DataFrame([
+                {"Criterio de corrección":label,"Puntaje máximo":score}
+                for label,score in guide
+            ]),hide_index=True,use_container_width=True)
+            st.caption(f"Subtotal Etapa {stage}: {sum(score for _,score in guide)} de {points} puntos.")
+
     st.markdown("#### Conversión a nota")
     st.write("Exigencia del 60 %: 60 puntos equivalen a nota 4,0 y 100 puntos a nota 7,0.")
-    st.info("Revisa cada entrega en **Evaluaciones entregadas**, asigna el puntaje práctico sobre 70 y publica la retroalimentación. La nota final se calculará con ese puntaje más el resultado del cuestionario.")
-    st.markdown("### Pauta docente de corrección · 70 puntos")
-    st.markdown(
-        "La pauta siguiente corresponde a la evaluación del informe práctico. Cada criterio debe revisarse "
-        "en la entrega individual del alumno, disponible en **Evaluaciones entregadas**."
-    )
-    for stage,criterion,points in RUBRIC:
-        _section_header(st,stage,criterion,points,True)
-        guide=TEACHER_GUIDE[stage]
-        st.dataframe(pd.DataFrame([
-            {"Criterio de corrección":label,"Puntaje máximo":score}
-            for label,score in guide
-        ]),hide_index=True,use_container_width=True)
-        st.caption(f"Subtotal Etapa {stage}: {sum(score for _,score in guide)} de {points} puntos.")
+    st.info("Revisa cada entrega en **Evaluaciones entregadas**, asigna el puntaje práctico sobre 70 y publica la retroalimentación. La nota final se calcula sumando ese puntaje y el cuestionario automático.")
 
     st.markdown("### Cierre de la evaluación")
     st.dataframe(pd.DataFrame([
@@ -485,10 +539,7 @@ def _teacher_view(st,pd,saved):
         {"Componente":"Cuestionario · Etapa 9","Puntaje máximo":30,"Tipo de corrección":"Automática"},
         {"Componente":"Resultado final","Puntaje máximo":100,"Tipo de corrección":"Cálculo de nota"},
     ]),hide_index=True,use_container_width=True)
-    st.info(
-        "La vista Docente muestra la pauta general. Para ver las tablas, textos y mapas de un alumno específico, "
-        "abre su entrega de la Etapa 10 desde **Evaluaciones entregadas**."
-    )
+    st.info("Para contrastar esta solución con las tablas, textos y mapas de un alumno, abre su entrega de la Etapa 10 desde **Evaluaciones entregadas**.")
 
 
 def _evidence_summary(saved):

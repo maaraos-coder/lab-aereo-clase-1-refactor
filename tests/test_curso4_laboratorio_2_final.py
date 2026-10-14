@@ -4,6 +4,7 @@ from labs import curso4_laboratorio_2_stage7 as stage7
 from labs import curso4_laboratorio_2_stage8 as stage8
 from labs import curso4_laboratorio_2_stage9 as stage9
 from labs import curso4_laboratorio_2_stage10 as stage10
+from labs.curso4_lab2_reference_solution import build_reference_report
 
 
 class Curso4Laboratorio2FinalTests(unittest.TestCase):
@@ -68,6 +69,15 @@ class Curso4Laboratorio2FinalTests(unittest.TestCase):
             for stage,criteria in stage10.TEACHER_GUIDE.items()
         }
         self.assertEqual(actual,expected)
+
+    def test_teacher_reference_contains_complete_development(self):
+        report=build_reference_report()
+        for stage in range(1,9):
+            self.assertTrue(report.get(f"stage_{stage}"))
+        comparisons=report["stage_7"]["comparison"]
+        self.assertTrue(comparisons)
+        self.assertLessEqual(max(row["Controlado [dB(A)]"] for row in comparisons),65)
+        self.assertEqual(len(report["stage_6"]["design"]),6)
 
 
 if __name__=="__main__":
