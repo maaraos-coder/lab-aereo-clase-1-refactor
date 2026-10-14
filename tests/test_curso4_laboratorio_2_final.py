@@ -44,6 +44,23 @@ class Curso4Laboratorio2FinalTests(unittest.TestCase):
         self.assertEqual(stage10._grade(60),4.0)
         self.assertEqual(stage10._grade(100),7.0)
 
+    def test_integrated_report_recovers_real_stage_keys_and_maps(self):
+        saved={
+            "c4l2_s1_chronology_table":[{"Actividad":"Excavación"}],
+            "c4l2_s2_relevance_table":[{"Receptor":"R1"}],
+            "c4l2_s3_bs_assignments":[{"Equipo":"Excavadora"}],
+            "c4l2_s4_scenarios":[{"Frente":"FT1"}],
+            "c4l2_s4_front_configs":{"FT1":{"grid":5}},
+            "c4l2_s6_tl_calculator":{"material":"OSB"},
+            "c4l2_s7_comparability":{"sources":True},
+            "c4l2_s8_checks":{"verified":True},
+            "c4l2_s10_maps":{"original":[{"name":"mapa.webp","data":"AA=="}]},
+        }
+        report=stage10._submission_payload(saved)
+        self.assertEqual(report["stage_4"]["scenarios"][0]["Frente"],"FT1")
+        self.assertEqual(report["stage_6"]["tl_calculator"]["material"],"OSB")
+        self.assertEqual(report["maps"]["original"][0]["name"],"mapa.webp")
+
 
 if __name__=="__main__":
     unittest.main()

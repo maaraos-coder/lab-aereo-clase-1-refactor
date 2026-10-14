@@ -1,5 +1,8 @@
 """Etapa 10 · Entrega y evaluación integral del Laboratorio 2."""
 
+import base64
+import html
+import io
 import json
 
 
@@ -88,6 +91,119 @@ def _report_text(st,title,value):
         st.caption("Sin desarrollo registrado.")
 
 
+def _report_cover(st,meta):
+    author=html.escape(str((meta or {}).get("author") or "Alumno/a del diplomado"))
+    st.markdown(f"""
+    <div style="border:1px solid #b9d4e2;border-radius:24px;overflow:hidden;margin:.5rem 0 1.4rem;
+                box-shadow:0 12px 34px rgba(23,59,83,.09);background:white">
+      <div style="height:9px;background:linear-gradient(90deg,#075985,#0b91b8,#57c4d3)"></div>
+      <div style="padding:26px 28px 22px">
+        <div style="display:flex;justify-content:space-between;gap:20px;align-items:flex-start;flex-wrap:wrap">
+          <div>
+            <div style="font-size:.68rem;font-weight:900;letter-spacing:.13em;color:#0b7fa5">CURSO 4 · LABORATORIO 2</div>
+            <div style="font-size:1.65rem;line-height:1.18;font-weight:950;color:#102f46;margin:.45rem 0 .55rem">
+              INFORME TÉCNICO DE MODELACIÓN<br>Y CONTROL DE RUIDO
+            </div>
+            <div style="font-size:1rem;font-weight:800;color:#31566d">Conjunto Habitacional Eyzaguirre · Puente Alto</div>
+          </div>
+          <div style="border:1px solid #c9dce8;border-radius:14px;padding:12px 15px;background:#f3f9fc;min-width:190px">
+            <div style="font-size:.62rem;font-weight:900;letter-spacing:.08em;color:#678397">DOCUMENTO</div>
+            <div style="font-size:.95rem;font-weight:900;color:#173b53">C4–L2 · INFORME FINAL</div>
+            <div style="font-size:.76rem;color:#587487;margin-top:.4rem">Puntaje total: 100 puntos</div>
+          </div>
+        </div>
+        <div style="border-top:1px solid #dce9ef;margin-top:20px;padding-top:14px;display:grid;
+                    grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px;color:#526f80;font-size:.79rem">
+          <div><b style="color:#173b53">Preparado por</b><br>{author}</div>
+          <div><b style="color:#173b53">Metodología</b><br>Modelación en Noise Map Lab</div>
+          <div><b style="color:#173b53">Referencia educativa</b><br>DS N.º 38/2011 del MMA</div>
+        </div>
+      </div>
+    </div>
+    """,unsafe_allow_html=True)
+
+
+def _render_maps(st,title,maps):
+    st.markdown(f"**{title}**")
+    if not maps:
+        st.caption("No se adjuntaron mapas en esta parte del informe.")
+        return
+    columns=st.columns(2)
+    for index,item in enumerate(maps):
+        try:
+            raw=base64.b64decode(str(item.get("data") or ""))
+        except Exception:
+            raw=b""
+        if raw:
+            columns[index%2].image(
+                raw,
+                caption=str(item.get("caption") or item.get("name") or f"Mapa {index+1}"),
+                use_container_width=True,
+            )
+
+
+def _compress_map(uploaded):
+    """Normaliza capturas del mapa para poder guardarlas dentro de la entrega."""
+    from PIL import Image
+    image=Image.open(uploaded).convert("RGB")
+    image.thumbnail((1800,1400))
+    output=io.BytesIO()
+    image.save(output,format="WEBP",quality=88,method=4)
+    return {
+        "name":str(uploaded.name).rsplit(".",1)[0]+".webp",
+        "caption":str(uploaded.name).rsplit(".",1)[0].replace("_"," "),
+        "mime":"image/webp",
+        "data":base64.b64encode(output.getvalue()).decode("ascii"),
+    }
+
+
+def _map_upload_panel(st,saved,runtime,lab):
+    st.markdown("### 2 · Adjunta los mapas de Noise Map Lab")
+    st.markdown(
+        "Carga las capturas o mapas exportados para que formen parte del informe final. "
+        "Puedes adjuntar varios archivos PNG, JPG o WEBP en cada apartado."
+    )
+    current=saved.get("c4l2_s10_maps") or {}
+    groups=[
+        ("original","Etapa 4 · Condición original"),
+        ("control","Etapa 6 · Medidas de control implementadas"),
+        ("comparison","Etapa 7 · Condición controlada y comparación"),
+    ]
+    uploads={}
+    for key,label in groups:
+        uploads[key]=st.file_uploader(
+            label,type=["png","jpg","jpeg","webp"],accept_multiple_files=True,
+            key=f"c4l2_s10_upload_{key}",
+        )
+        st.caption(f"Mapas guardados actualmente: {len(current.get(key) or [])}")
+    save_col,clear_col=st.columns([.7,.3])
+    with save_col:
+        save_maps=st.button("Guardar mapas en el informe",type="primary",use_container_width=True,key="c4l2_s10_save_maps")
+    with clear_col:
+        clear_maps=st.button("Quitar todos los mapas",use_container_width=True,key="c4l2_s10_clear_maps")
+    if save_maps:
+        updated={key:list(current.get(key) or []) for key,_ in groups}
+        try:
+            changed=False
+            for key,_ in groups:
+                if uploads[key]:
+                    updated[key]=[_compress_map(item) for item in uploads[key]]
+                    changed=True
+            if not changed:
+                st.warning("Selecciona al menos un mapa antes de guardar.")
+            else:
+                saved["c4l2_s10_maps"]=updated
+                runtime["_save"](lab,saved,10)
+                st.success("Mapas incorporados al informe final.")
+                st.rerun()
+        except Exception as exc:
+            st.error(f"No fue posible procesar uno de los mapas: {exc}")
+    if clear_maps:
+        saved["c4l2_s10_maps"]={}
+        runtime["_save"](lab,saved,10)
+        st.rerun()
+
+
 def _section_header(st,stage,title,points,complete=True):
     state="EVIDENCIA RECUPERADA" if complete else "EVIDENCIA PENDIENTE"
     state_color="#087ba0" if complete else "#9a6700"
@@ -114,6 +230,17 @@ def _render_integrated_report(st,pd,report,done=None,quiz_score=None):
     """Informe continuo con todas las evidencias de las Etapas 1 a 8."""
     done=done or {}
     reference=report.get("reference") or {}
+    maps=report.get("maps") or {}
+    _report_cover(st,report.get("report_meta") or {})
+    st.markdown("### Resumen de evaluación del informe")
+    st.dataframe(pd.DataFrame([
+        {
+            "Sección":f"{stage}. {criterion}",
+            "Estado":"Evidencia recuperada" if done.get(stage,True) else "Pendiente",
+            "Puntaje máximo":points,
+        }
+        for stage,criterion,points in RUBRIC
+    ]),hide_index=True,use_container_width=True)
 
     _section_header(st,1,RUBRIC[0][1],RUBRIC[0][2],done.get(1,True))
     s1=report.get("stage_1") or {}
@@ -121,17 +248,24 @@ def _render_integrated_report(st,pd,report,done=None,quiz_score=None):
     _report_table(st,pd,"Partes y sectores del proyecto",s1.get("parts"),"Parte")
     _report_table(st,pd,"Etapas o fases constructivas",s1.get("phases"),"Etapa")
     _report_table(st,pd,"Maquinaria identificada",s1.get("machinery"),"Equipo")
+    _report_table(st,pd,"Cronología y secuencia de actividades",s1.get("chronology"),"Actividad")
 
     _section_header(st,2,RUBRIC[1][1],RUBRIC[1][2],done.get(2,True))
-    _report_table(st,pd,"Receptores seleccionados",(report.get("stage_2") or {}).get("receptors"),"Receptor")
+    s2=report.get("stage_2") or {}
+    _report_table(st,pd,"Receptores seleccionados",s2.get("receptors"),"Receptor")
+    _report_table(st,pd,"Justificación y relevancia de los receptores",s2.get("relevance"),"Receptor")
 
     _section_header(st,3,RUBRIC[2][1],RUBRIC[2][2],done.get(3,True))
-    _report_table(st,pd,"Fuentes acústicas, espectros y niveles de potencia",(report.get("stage_3") or {}).get("sources"),"Fuente")
+    s3=report.get("stage_3") or {}
+    _report_table(st,pd,"Fuentes acústicas, espectros y niveles de potencia",s3.get("sources"),"Fuente")
+    _report_table(st,pd,"Asignaciones y referencias de la BS 5228",s3.get("bs_assignments"),"Equipo")
 
     _section_header(st,4,RUBRIC[3][1],RUBRIC[3][2],done.get(4,True))
     s4=report.get("stage_4") or {}
-    _report_table(st,pd,"Configuración de los frentes originales",s4.get("fronts"),"Frente")
-    _report_table(st,pd,"Resultados y proyectos guardados",s4.get("results"),"Frente")
+    _report_table(st,pd,"Escenarios y frentes originales",s4.get("scenarios") or s4.get("fronts"),"Frente")
+    _report_table(st,pd,"Configuración acústica de los frentes",s4.get("front_configs"),"Frente")
+    _report_table(st,pd,"Resultados por receptor",s4.get("results"),"Frente")
+    _render_maps(st,"Mapas de la condición original",maps.get("original"))
 
     _section_header(st,5,RUBRIC[4][1],RUBRIC[4][2],done.get(5,True))
     a,b=st.columns(2)
@@ -149,11 +283,18 @@ def _render_integrated_report(st,pd,report,done=None,quiz_score=None):
     s6=report.get("stage_6") or {}
     _report_table(st,pd,"Estrategia de control por frente",s6.get("design"),"Frente")
     _report_table(st,pd,"Configuración y cálculo de las medidas",s6.get("configurations"),"Frente")
+    _report_table(st,pd,"Diseño del panel y cálculo de TL",s6.get("tl_calculator"),"Parámetro")
+    _report_table(st,pd,"Estudio del tratamiento acústico",s6.get("treatment_study"),"Parámetro")
+    _report_table(st,pd,"Resultados del estudio de tratamiento",s6.get("treatment_results"),"Resultado")
+    _render_maps(st,"Mapas con las medidas de control implementadas",maps.get("control"))
 
     _section_header(st,7,RUBRIC[6][1],RUBRIC[6][2],done.get(7,True))
     s7=report.get("stage_7") or {}
     _report_table(st,pd,"Resultados de la condición controlada",s7.get("controlled_results"),"Resultado")
     _report_table(st,pd,"Comparación original–controlada",s7.get("comparison"),"Comparación")
+    _report_table(st,pd,"Comprobación de comparabilidad",s7.get("comparability"),"Comprobación")
+    _report_table(st,pd,"Proyectos controlados utilizados",s7.get("project_names"),"Frente")
+    _render_maps(st,"Mapas de la condición controlada y comparación",maps.get("comparison"))
     _report_text(st,"Evaluación de la efectividad",s7.get("effectiveness"))
     _report_text(st,"Diferencias observadas entre ambos modelos",s7.get("differences"))
 
@@ -164,6 +305,7 @@ def _render_integrated_report(st,pd,report,done=None,quiz_score=None):
     _report_text(st,"Plan de implementación",s8.get("implementation"))
     _report_text(st,"Limitaciones y supuestos",s8.get("limitations"))
     _report_text(st,"Plan de verificación",s8.get("verification"))
+    _report_table(st,pd,"Lista de verificación del cierre",s8.get("checks"),"Comprobación")
 
     _section_header(st,9,"Cuestionario oficial de comprensión",30,quiz_score is not None)
     if quiz_score is None:
@@ -210,7 +352,7 @@ def _evidence_summary(saved):
         "vertices":len(saved.get("c4l2_s1_vertices_table") or []),
         "receptors":len(saved.get("c4l2_s2_receptors_table") or []),
         "sources":len(saved.get("c4l2_s3_acoustic_sources") or []),
-        "original_fronts":len(saved.get("c4l2_s4_fronts") or {}),
+        "original_fronts":len(saved.get("c4l2_s4_scenarios") or saved.get("c4l2_s4_front_configs") or {}),
         "original_results":len(saved.get("c4l2_s5_detailed_results") or []),
         "control_strategies":len(saved.get("c4l2_s6_control_design") or []),
         "controlled_results":len(saved.get("c4l2_s7_controlled_results") or []),
@@ -220,7 +362,9 @@ def _evidence_summary(saved):
 
 def _submission_payload(saved):
     return {
-        "version":"c4l2_stage10_v1",
+        "version":"c4l2_stage10_v2_report",
+        "report_meta":saved.get("c4l2_s10_report_meta") or {},
+        "maps":saved.get("c4l2_s10_maps") or {},
         "rubric":[{"stage":stage,"criterion":criterion,"max_score":points} for stage,criterion,points in RUBRIC],
         "practical_max_score":70,
         "quiz_max_score":30,
@@ -235,10 +379,21 @@ def _submission_payload(saved):
             "parts":saved.get("c4l2_s1_parts_table") or [],
             "phases":saved.get("c4l2_s1_phases_table") or [],
             "machinery":saved.get("c4l2_s1_machinery_table") or [],
+            "chronology":saved.get("c4l2_s1_chronology_table") or [],
         },
-        "stage_2":{"receptors":saved.get("c4l2_s2_receptors_table") or []},
-        "stage_3":{"sources":saved.get("c4l2_s3_acoustic_sources") or []},
-        "stage_4":{"fronts":saved.get("c4l2_s4_fronts") or {},"results":saved.get("c4l2_s4_results") or {}},
+        "stage_2":{
+            "receptors":saved.get("c4l2_s2_receptors_table") or [],
+            "relevance":saved.get("c4l2_s2_relevance_table") or [],
+        },
+        "stage_3":{
+            "sources":saved.get("c4l2_s3_acoustic_sources") or [],
+            "bs_assignments":saved.get("c4l2_s3_bs_assignments") or [],
+        },
+        "stage_4":{
+            "scenarios":saved.get("c4l2_s4_scenarios") or [],
+            "front_configs":saved.get("c4l2_s4_front_configs") or {},
+            "results":saved.get("c4l2_s4_results") or {},
+        },
         "stage_5":{
             "results":saved.get("c4l2_s5_detailed_results") or [],
             "critical":saved.get("c4l2_s5_critical") or {},
@@ -248,10 +403,15 @@ def _submission_payload(saved):
         "stage_6":{
             "design":saved.get("c4l2_s6_control_design") or [],
             "configurations":saved.get("c4l2_s6_measure_config") or {},
+            "tl_calculator":saved.get("c4l2_s6_tl_calculator") or {},
+            "treatment_study":saved.get("c4l2_s6_treatment_study") or {},
+            "treatment_results":saved.get("c4l2_s6_treatment_study_results") or {},
         },
         "stage_7":{
             "controlled_results":saved.get("c4l2_s7_controlled_results") or [],
             "comparison":saved.get("c4l2_s7_comparison") or [],
+            "comparability":saved.get("c4l2_s7_comparability") or {},
+            "project_names":saved.get("c4l2_s7_project_names") or {},
             "effectiveness":saved.get("c4l2_s7_effectiveness") or "",
             "differences":saved.get("c4l2_s7_differences") or "",
         },
@@ -261,6 +421,7 @@ def _submission_payload(saved):
             "implementation":saved.get("c4l2_s8_implementation") or "",
             "limitations":saved.get("c4l2_s8_limitations") or "",
             "verification":saved.get("c4l2_s8_verification") or "",
+            "checks":saved.get("c4l2_s8_checks") or {},
         },
         "stage_9":saved.get("c4l2_s9_submission") or {},
     }
@@ -281,6 +442,14 @@ def render(lab,saved,runtime):
       <div style="color:#526f80;line-height:1.6">La plataforma reúne las evidencias guardadas en las Etapas 1 a 8. El desarrollo práctico vale 70 puntos y el cuestionario de la Etapa 9 vale 30 puntos.</div>
     </div>
     """,unsafe_allow_html=True)
+    if not saved.get("c4l2_s10_report_meta"):
+        author=(
+            st.session_state.get("user_name")
+            or st.session_state.get("student_name")
+            or st.session_state.get("user_key")
+            or "Alumno/a del diplomado"
+        )
+        saved["c4l2_s10_report_meta"]={"author":str(author)}
 
     if st.session_state.get("role")=="Docente":
         _teacher_view(st,pd,saved)
@@ -333,7 +502,9 @@ def render(lab,saved,runtime):
     b.metric("Cuestionario",f"{quiz_score:g}/30" if saved.get("done_9") or quiz_row else "Pendiente")
     c.metric("Puntaje práctico máximo","70 puntos")
 
-    st.markdown("### 2 · Revisa el informe técnico consolidado")
+    _map_upload_panel(st,saved,runtime,lab)
+
+    st.markdown("### 3 · Revisa el informe técnico consolidado")
     st.caption(
         "Este es el informe que se enviará al docente. Cada capítulo recupera el trabajo guardado en la etapa "
         "correspondiente y muestra el puntaje máximo que puede obtener."
@@ -344,7 +515,7 @@ def render(lab,saved,runtime):
     _render_integrated_report(st,pd,report,done,quiz_visible)
     st.caption("El docente asignará el puntaje después de revisar la calidad técnica, coherencia y trazabilidad de cada sección. Completar campos no otorga automáticamente el puntaje máximo.")
 
-    st.markdown("### 3 · Entrega definitiva")
+    st.markdown("### 4 · Entrega definitiva")
 
     declaration=st.checkbox(
         "Declaro que revisé el expediente, que los resultados corresponden a mis modelos y que esta es mi entrega definitiva.",
