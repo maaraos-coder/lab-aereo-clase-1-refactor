@@ -95,6 +95,94 @@ def _teacher_design_rows():
     return _build_design_rows(_teacher_reference_maxima())
 
 
+def _strategy_editor(st,pd,rows,key):
+    """Editor nativo y compacto para evitar grillas embebidas en blanco."""
+    columns=[
+        "Frente / condición","Tipo de trabajo","Receptor crítico",
+        "LAeq original [dB(A)]","Límite [dB(A)]","Excedencia [dB]",
+        "Medida seleccionada","Justificación","Proyecto controlado",
+    ]
+    frame=pd.DataFrame(rows)
+    for column in columns:
+        if column not in frame.columns:
+            frame[column]=None
+    frame=frame[columns]
+
+    exceedances=pd.to_numeric(frame["Excedencia [dB]"],errors="coerce")
+    critical=(exceedances>0).sum()
+    maximum=exceedances.max()
+    maximum_text=f"{maximum:.1f} dB" if pd.notna(maximum) else "—"
+
+    st.markdown(
+        """
+        <style>
+          div[data-testid="stDataEditor"] {
+            border:1px solid #c8dbe7;
+            border-radius:16px;
+            overflow:hidden;
+            box-shadow:0 8px 24px rgba(23,59,83,.07);
+          }
+          div[data-testid="stDataEditor"] [role="columnheader"] {
+            background:#edf7fb;
+            color:#173b53;
+            font-weight:800;
+          }
+        </style>
+        <div style="border:1px solid #cfe0ed;border-radius:18px;padding:17px 19px;
+                    background:linear-gradient(135deg,#f9fcfe,#eef7fb);margin:.35rem 0 .8rem">
+          <div style="font-size:.68rem;font-weight:900;letter-spacing:.09em;color:#087ba0">
+            MATRIZ DE DECISIÓN
+          </div>
+          <div style="font-size:1.03rem;font-weight:900;color:#173b53;margin:.25rem 0">
+            Una estrategia trazable para cada frente
+          </div>
+          <div style="color:#526f80;line-height:1.5">
+            Los datos acústicos vienen de la Etapa 5. Completa únicamente la medida,
+            su justificación técnica y el nombre de la copia controlada.
+          </div>
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
+    m1,m2,m3=st.columns(3)
+    m1.metric("Frentes evaluados",len(frame))
+    m2.metric("Con excedencia",int(critical))
+    m3.metric("Excedencia máxima",maximum_text)
+
+    edited=st.data_editor(
+        frame,
+        key=key,
+        hide_index=True,
+        use_container_width=True,
+        height=max(300,46+42*len(frame)),
+        disabled=[
+            "Frente / condición","Tipo de trabajo","Receptor crítico",
+            "LAeq original [dB(A)]","Límite [dB(A)]","Excedencia [dB]",
+        ],
+        column_config={
+            "Frente / condición":st.column_config.TextColumn("Frente / condición",width="large"),
+            "Tipo de trabajo":st.column_config.TextColumn("Trabajo",width="medium"),
+            "Receptor crítico":st.column_config.TextColumn("Receptor",width="small"),
+            "LAeq original [dB(A)]":st.column_config.NumberColumn("LAeq original",format="%.1f dB(A)",width="small"),
+            "Límite [dB(A)]":st.column_config.NumberColumn("Límite",format="%.1f dB(A)",width="small"),
+            "Excedencia [dB]":st.column_config.NumberColumn("Excedencia",format="%.1f dB",width="small"),
+            "Medida seleccionada":st.column_config.SelectboxColumn(
+                "Medida de control",options=MEASURE_OPTIONS,required=True,width="medium",
+            ),
+            "Justificación":st.column_config.TextColumn(
+                "Justificación técnica",help="Explica por qué la medida es aplicable a este frente.",width="large",
+            ),
+            "Proyecto controlado":st.column_config.TextColumn(
+                "Nombre de la copia controlada",width="medium",
+            ),
+        },
+        num_rows="fixed",
+    )
+    configured=(edited["Medida seleccionada"].fillna("")!="Seleccionar medida").sum()
+    st.caption(f"{int(configured)} de {len(frame)} frentes ya tienen una medida seleccionada.")
+    return edited
+
+
 def _teacher_solution(st,pd):
     if st.session_state.get("role")!="Docente":
         return
@@ -257,25 +345,7 @@ def render(lab,saved,runtime):
         elif previous not in MEASURE_OPTIONS:
             row["Medida seleccionada"]="Seleccionar medida"
 
-    design_df=runtime["_professional_grid"](
-        pd.DataFrame(saved_rows),
-        key=design_grid_key,
-        widths={
-            "Frente / condición":260,
-            "Tipo de trabajo":150,
-            "Receptor crítico":120,
-            "LAeq original [dB(A)]":165,
-            "Límite [dB(A)]":125,
-            "Excedencia [dB]":135,
-            "Medida seleccionada":235,
-            "Justificación":340,
-            "Proyecto controlado":235,
-        },
-        select_options={"Medida seleccionada":MEASURE_OPTIONS},
-        numeric_columns=["LAeq original [dB(A)]","Límite [dB(A)]","Excedencia [dB]"],
-        height=430,
-        editable_columns=["Medida seleccionada","Justificación","Proyecto controlado"],
-    )
+    design_df=_strategy_editor(st,pd,saved_rows,design_grid_key)
     design_records=design_df.where(pd.notna(design_df),None).to_dict("records")
 
     if is_teacher:
