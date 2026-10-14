@@ -40,6 +40,69 @@ def _save(lab, saved, stage):
     _save_future_state(lab["id"], saved)
 
 
+def _evaluation_row(stage,question_key):
+    """Recupera la entrega oficial del usuario actual, si existe."""
+    if st.session_state.get("projection_mode"):
+        return None
+    client=_supabase()
+    user_key=st.session_state.get("user_key")
+    if client is None or not user_key:
+        return None
+    try:
+        response=(
+            client.table("responses").select("*")
+            .eq("class_id",CLASS_ID).eq("user_key",user_key)
+            .eq("stage",int(stage)).eq("question_key",question_key)
+            .limit(1).execute()
+        )
+        rows=getattr(response,"data",None) or []
+        return rows[0] if rows else None
+    except Exception:
+        return None
+
+
+def _submit_evaluation(stage,question_key,question_text,payload,auto_score,max_score,feedback,auto_level="Finalizada"):
+    """Registra una entrega evaluada compatible con Evaluaciones entregadas."""
+    if st.session_state.get("projection_mode"):
+        return False
+    client=_supabase()
+    user_key=st.session_state.get("user_key")
+    if client is None or not user_key:
+        return False
+    now=_now()
+    question_id=f"{CLASS_ID}-{question_key}-v1"
+    client.table("questions").upsert({
+        "id":question_id,
+        "class_id":CLASS_ID,
+        "stage":int(stage),
+        "question_key":question_key,
+        "question_text":question_text,
+        "correct_answer":"Pauta docente asociada a la evaluación.",
+        "max_score":float(max_score),
+        "content_version":1,
+        "active":True,
+        "updated_at":now,
+    },on_conflict="id").execute()
+    client.table("responses").upsert({
+        "course_id":globals().get("COURSE_ID","diplomado-acustica-edificacion"),
+        "class_id":CLASS_ID,
+        "user_key":user_key,
+        "stage":int(stage),
+        "question_key":question_key,
+        "question_text":question_text,
+        "correct_answer":"Pauta docente asociada a la evaluación.",
+        "answer":payload,
+        "auto_level":auto_level,
+        "feedback":feedback,
+        "auto_score":float(auto_score),
+        "max_score":float(max_score),
+        "status":"submitted",
+        "updated_at":now,
+        "submitted_at":now,
+    },on_conflict="class_id,user_key,question_key").execute()
+    return True
+
+
 def _professional_grid(df, key, widths=None, select_options=None, numeric_columns=None, height=260, editable_columns=None):
     """Grilla editable con encabezados claros y líneas visibles."""
     widths=widths or {}
@@ -829,6 +892,32 @@ def _stage6(lab, saved):
     }
     return _stage6_module.render(lab,saved,ctx)
 
+def _stage7(lab, saved):
+    from labs import curso4_laboratorio_2_stage7 as _stage7_module
+    ctx={"st":st,"pd":pd,"header":header,"_save":_save,"NOISEMAP_URL":NOISEMAP_URL}
+    return _stage7_module.render(lab,saved,ctx)
+
+def _stage8(lab, saved):
+    from labs import curso4_laboratorio_2_stage8 as _stage8_module
+    ctx={"st":st,"pd":pd,"header":header,"_save":_save,"NOISEMAP_URL":NOISEMAP_URL}
+    return _stage8_module.render(lab,saved,ctx)
+
+def _stage9(lab, saved):
+    from labs import curso4_laboratorio_2_stage9 as _stage9_module
+    ctx={
+        "st":st,"pd":pd,"header":header,"_save":_save,
+        "_evaluation_row":_evaluation_row,"_submit_evaluation":_submit_evaluation,
+    }
+    return _stage9_module.render(lab,saved,ctx)
+
+def _stage10(lab, saved):
+    from labs import curso4_laboratorio_2_stage10 as _stage10_module
+    ctx={
+        "st":st,"pd":pd,"header":header,"_save":_save,
+        "_evaluation_row":_evaluation_row,"_submit_evaluation":_submit_evaluation,
+    }
+    return _stage10_module.render(lab,saved,ctx)
+
 def _generic(stage, lab, saved):
     title, objective, concept, activity = lab["stages"][stage]
     _header(stage, title, objective)
@@ -857,4 +946,12 @@ def run_stage(stage, lab, saved, runtime):
         return _stage5(lab,saved)
     if stage==6:
         return _stage6(lab,saved)
+    if stage==7:
+        return _stage7(lab,saved)
+    if stage==8:
+        return _stage8(lab,saved)
+    if stage==9:
+        return _stage9(lab,saved)
+    if stage==10:
+        return _stage10(lab,saved)
     return _generic(stage,lab,saved)
