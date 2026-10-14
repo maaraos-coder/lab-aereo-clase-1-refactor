@@ -2,7 +2,6 @@
 
 import base64
 import html
-import io
 import json
 
 
@@ -55,6 +54,51 @@ SECTION_INTROS={
         "El cuestionario comprueba individualmente la comprensión de los conceptos aplicados durante el laboratorio. "
         "Su resultado se incorpora automáticamente al puntaje final una vez enviada la evaluación."
     ),
+}
+
+TEACHER_GUIDE={
+    1:[
+        ("Identificación y delimitación del proyecto",2),
+        ("Trazabilidad de antecedentes, partes y fases",2),
+        ("Coherencia de la maquinaria identificada",1),
+    ],
+    2:[
+        ("Selección representativa de receptores",2),
+        ("Coordenadas, alturas, distancias y descripción",2),
+        ("Justificación de relevancia acústica",1),
+    ],
+    3:[
+        ("Correspondencia entre actividades, maquinaria y referencia BS",3),
+        ("Potencias y espectros correctamente registrados",4),
+        ("Consistencia y trazabilidad de los datos acústicos",3),
+    ],
+    4:[
+        ("Construcción de fuentes equivalentes",3),
+        ("Geometría, receptores y configuración de cálculo",3),
+        ("Resultados por receptor y mapas de la condición original",4),
+    ],
+    5:[
+        ("Resultados globales y espectrales completos",4),
+        ("Identificación de la condición y receptor críticos",3),
+        ("Interpretación espacial, espectral y respecto del límite",3),
+    ],
+    6:[
+        ("Selección y justificación de medidas por frente",4),
+        ("Diseño, materiales y cálculo de TL o atenuación",5),
+        ("Implementación y evidencia gráfica en Noise Map Lab",4),
+        ("Viabilidad constructiva y coherencia técnica",2),
+    ],
+    7:[
+        ("Comparabilidad entre modelos",2),
+        ("Resultados controlados completos",3),
+        ("Cálculo de reducción, margen y resultado",3),
+        ("Mapas comparables e interpretación de la efectividad",2),
+    ],
+    8:[
+        ("Optimización y definición de la solución final",2),
+        ("Conclusión técnica",1),
+        ("Implementación, limitaciones y verificación",2),
+    ],
 }
 
 
@@ -264,68 +308,6 @@ def _render_maps(st,title,maps):
             )
 
 
-def _compress_map(uploaded):
-    """Normaliza capturas del mapa para poder guardarlas dentro de la entrega."""
-    from PIL import Image
-    image=Image.open(uploaded).convert("RGB")
-    image.thumbnail((1800,1400))
-    output=io.BytesIO()
-    image.save(output,format="WEBP",quality=88,method=4)
-    return {
-        "name":str(uploaded.name).rsplit(".",1)[0]+".webp",
-        "caption":str(uploaded.name).rsplit(".",1)[0].replace("_"," "),
-        "mime":"image/webp",
-        "data":base64.b64encode(output.getvalue()).decode("ascii"),
-    }
-
-
-def _map_upload_panel(st,saved,runtime,lab):
-    st.markdown("### 2 · Adjunta los mapas de Noise Map Lab")
-    st.markdown(
-        "Carga las capturas o mapas exportados para que formen parte del informe final. "
-        "Puedes adjuntar varios archivos PNG, JPG o WEBP en cada apartado."
-    )
-    current=saved.get("c4l2_s10_maps") or {}
-    groups=[
-        ("original","Etapa 4 · Condición original"),
-        ("control","Etapa 6 · Medidas de control implementadas"),
-        ("comparison","Etapa 7 · Condición controlada y comparación"),
-    ]
-    uploads={}
-    for key,label in groups:
-        uploads[key]=st.file_uploader(
-            label,type=["png","jpg","jpeg","webp"],accept_multiple_files=True,
-            key=f"c4l2_s10_upload_{key}",
-        )
-        st.caption(f"Mapas guardados actualmente: {len(current.get(key) or [])}")
-    save_col,clear_col=st.columns([.7,.3])
-    with save_col:
-        save_maps=st.button("Guardar mapas en el informe",type="primary",use_container_width=True,key="c4l2_s10_save_maps")
-    with clear_col:
-        clear_maps=st.button("Quitar todos los mapas",use_container_width=True,key="c4l2_s10_clear_maps")
-    if save_maps:
-        updated={key:list(current.get(key) or []) for key,_ in groups}
-        try:
-            changed=False
-            for key,_ in groups:
-                if uploads[key]:
-                    updated[key]=[_compress_map(item) for item in uploads[key]]
-                    changed=True
-            if not changed:
-                st.warning("Selecciona al menos un mapa antes de guardar.")
-            else:
-                saved["c4l2_s10_maps"]=updated
-                runtime["_save"](lab,saved,10)
-                st.success("Mapas incorporados al informe final.")
-                st.rerun()
-        except Exception as exc:
-            st.error(f"No fue posible procesar uno de los mapas: {exc}")
-    if clear_maps:
-        saved["c4l2_s10_maps"]={}
-        runtime["_save"](lab,saved,10)
-        st.rerun()
-
-
 def _section_header(st,stage,title,points,complete=True):
     state="EVIDENCIA RECUPERADA" if complete else "EVIDENCIA PENDIENTE"
     state_color="#087ba0" if complete else "#9a6700"
@@ -483,12 +465,30 @@ def _teacher_view(st,pd,saved):
     st.markdown("#### Conversión a nota")
     st.write("Exigencia del 60 %: 60 puntos equivalen a nota 4,0 y 100 puntos a nota 7,0.")
     st.info("Revisa cada entrega en **Evaluaciones entregadas**, asigna el puntaje práctico sobre 70 y publica la retroalimentación. La nota final se calculará con ese puntaje más el resultado del cuestionario.")
-    st.markdown("### Informe integral que recibirá el docente")
-    st.caption("Cada capítulo muestra su puntaje máximo y recupera la evidencia guardada en la etapa correspondiente.")
-    report=_submission_payload(saved)
-    done={stage:bool(saved.get(f"done_{stage}")) for stage in range(1,9)}
-    quiz=float(saved.get("c4l2_s9_score") or 0) if saved.get("done_9") else None
-    _render_integrated_report(st,pd,report,done,quiz)
+    st.markdown("### Pauta docente de corrección · 70 puntos")
+    st.markdown(
+        "La pauta siguiente corresponde a la evaluación del informe práctico. Cada criterio debe revisarse "
+        "en la entrega individual del alumno, disponible en **Evaluaciones entregadas**."
+    )
+    for stage,criterion,points in RUBRIC:
+        _section_header(st,stage,criterion,points,True)
+        guide=TEACHER_GUIDE[stage]
+        st.dataframe(pd.DataFrame([
+            {"Criterio de corrección":label,"Puntaje máximo":score}
+            for label,score in guide
+        ]),hide_index=True,use_container_width=True)
+        st.caption(f"Subtotal Etapa {stage}: {sum(score for _,score in guide)} de {points} puntos.")
+
+    st.markdown("### Cierre de la evaluación")
+    st.dataframe(pd.DataFrame([
+        {"Componente":"Informe práctico · Etapas 1 a 8","Puntaje máximo":70,"Tipo de corrección":"Docente"},
+        {"Componente":"Cuestionario · Etapa 9","Puntaje máximo":30,"Tipo de corrección":"Automática"},
+        {"Componente":"Resultado final","Puntaje máximo":100,"Tipo de corrección":"Cálculo de nota"},
+    ]),hide_index=True,use_container_width=True)
+    st.info(
+        "La vista Docente muestra la pauta general. Para ver las tablas, textos y mapas de un alumno específico, "
+        "abre su entrega de la Etapa 10 desde **Evaluaciones entregadas**."
+    )
 
 
 def _evidence_summary(saved):
@@ -648,7 +648,26 @@ def render(lab,saved,runtime):
     b.metric("Cuestionario",f"{quiz_score:g}/30" if saved.get("done_9") or quiz_row else "Pendiente")
     c.metric("Puntaje práctico máximo","70 puntos")
 
-    _map_upload_panel(st,saved,runtime,lab)
+    st.markdown("### 2 · Evidencias gráficas recuperadas")
+    report_maps=saved.get("c4l2_s10_maps") or {}
+    st.dataframe(pd.DataFrame([
+        {
+            "Etapa":"4 · Condición original",
+            "Mapas incorporados":len(report_maps.get("original") or []),
+            "Estado":"Disponible" if report_maps.get("original") else "Pendiente",
+        },
+        {
+            "Etapa":"6 · Medidas implementadas",
+            "Mapas incorporados":len(report_maps.get("control") or []),
+            "Estado":"Disponible" if report_maps.get("control") else "Pendiente",
+        },
+        {
+            "Etapa":"7 · Condición controlada",
+            "Mapas incorporados":len(report_maps.get("comparison") or []),
+            "Estado":"Disponible" if report_maps.get("comparison") else "Pendiente",
+        },
+    ]),hide_index=True,use_container_width=True)
+    st.caption("Los mapas se cargan en las Etapas 4, 6 y 7 y se incorporan automáticamente al informe.")
 
     st.markdown("### 3 · Revisa el informe técnico consolidado")
     st.caption(

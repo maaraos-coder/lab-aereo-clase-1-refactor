@@ -436,7 +436,20 @@ def render(lab,saved,runtime):
     """)
     st.link_button("🗺️ Abrir Noise Map Lab",runtime["NOISEMAP_URL"],use_container_width=True)
 
-    st.markdown("### 8 · Verificación antes de guardar")
+    from labs.curso4_lab2_maps import render_uploader
+    render_uploader(
+        st,saved,runtime,lab,
+        group="control",
+        title="8 · Adjunta los mapas con las medidas implementadas",
+        description=(
+            "Sube capturas donde se observe la ubicación y geometría de la barrera, encierro, semiencierro o silenciador "
+            "incorporado. Si la medida tiene orientación o aberturas, agrega también una vista de corte."
+        ),
+        stage=6,
+        key="c4l2_s6_control_maps",
+    )
+
+    st.markdown("### 9 · Verificación antes de guardar")
     v1=st.checkbox("Conservé intacto el escenario original.",key="c4l2_s6_check_original")
     v2=st.checkbox("La medida es físicamente compatible con la actividad constructiva.",key="c4l2_s6_check_viable")
     v3=st.checkbox("La medida está correctamente ubicada respecto de la fuente y el receptor.",key="c4l2_s6_check_geometry")

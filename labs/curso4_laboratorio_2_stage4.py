@@ -670,4 +670,17 @@ def render(lab,saved,runtime):
     else:
         st.info("Aún no has guardado escenarios originales.")
 
+    from labs.curso4_lab2_maps import render_uploader
+    render_uploader(
+        st,saved,runtime,lab,
+        group="original",
+        title="8 · Adjunta los mapas de la condición original",
+        description=(
+            "Incorpora los mapas obtenidos antes de aplicar medidas de control. Incluye, cuando corresponda, "
+            "la vista general de niveles, la ubicación de fuentes y receptores y una vista de corte representativa."
+        ),
+        stage=4,
+        key="c4l2_s4_original_maps",
+    )
+
     _teacher_pauta(st,pd,sources)

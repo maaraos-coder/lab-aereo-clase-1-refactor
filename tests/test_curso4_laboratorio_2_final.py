@@ -61,6 +61,14 @@ class Curso4Laboratorio2FinalTests(unittest.TestCase):
         self.assertEqual(report["stage_6"]["tl_calculator"]["material"],"OSB")
         self.assertEqual(report["maps"]["original"][0]["name"],"mapa.webp")
 
+    def test_teacher_guide_matches_practical_rubric(self):
+        expected={stage:points for stage,_,points in stage10.RUBRIC}
+        actual={
+            stage:sum(points for _,points in criteria)
+            for stage,criteria in stage10.TEACHER_GUIDE.items()
+        }
+        self.assertEqual(actual,expected)
+
 
 if __name__=="__main__":
     unittest.main()

@@ -233,6 +233,19 @@ def render(lab,saved,runtime):
         placeholder="Considera geometría, aberturas, orientación, contribución de otras fuentes y propagación.",
     )
 
+    from labs.curso4_lab2_maps import render_uploader
+    render_uploader(
+        st,saved,runtime,lab,
+        group="comparison",
+        title="6 · Adjunta los mapas de la condición controlada",
+        description=(
+            "Incorpora los mapas finales utilizados para comparar la condición original y la controlada. "
+            "Procura mantener la misma extensión, escala y resolución para que la diferencia sea verificable."
+        ),
+        stage=7,
+        key="c4l2_s7_comparison_maps",
+    )
+
     if st.button("✓ Guardar y completar comparación",type="primary",use_container_width=True,key="c4l2_s7_complete"):
         stored_controlled=saved.get("c4l2_s7_controlled_results") or []
         stored_comparisons=_comparison_rows(original_rows,stored_controlled,reference_limit)
