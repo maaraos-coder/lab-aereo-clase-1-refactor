@@ -175,7 +175,7 @@ def _teacher_solution_panel(st,pd):
     st.success(
         "Máximo de la Adenda 2 sin control: **78 dB(A)** en RIMIV05 y RIMIV06 (Escenario 3). "
         "Entre R01–R09, el mayor valor es **72 dB(A)** en R02 y R06 (Escenario 2). "
-        "Para este laboratorio se utilizará como referencia educativa un límite de 65 dB(A) en periodo diurno."
+        "Para este laboratorio se utilizará como referencia normativa un límite de 65 dB(A) en periodo diurno."
     )
     st.caption(
         "Referencia documental: Anexo 05 · Adenda 2, Tabla 27, págs. 53–54. "
@@ -274,7 +274,7 @@ def render(lab,saved,runtime):
     c_limit.metric("Límite de referencia",f"{reference_limit:.0f} dB(A)")
     c_period.metric("Periodo seleccionado",f"{period} · {period_hours}")
     st.caption(
-        "Criterio educativo tomado como referencia del DS N.º 38/2011 del MMA. "
+        "Límite adoptado como referencia normativa para el desarrollo del laboratorio. "
         "La comparación corresponde a niveles modelados en Noise Map Lab y no reemplaza una verificación normativa mediante medición."
     )
 

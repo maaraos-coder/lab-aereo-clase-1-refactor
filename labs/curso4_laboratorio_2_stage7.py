@@ -117,8 +117,8 @@ def render(lab,saved,runtime):
     b.metric("Periodo",reference_period)
     c.metric("Límite de referencia",f"{reference_limit:.0f} dB(A)")
     st.caption(
-        "Referencia educativa del laboratorio: 65 dB(A) diurno y 50 dB(A) nocturno, "
-        "tomando el DS N.º 38/2011 del MMA solo como referencia. El resultado corresponde a una comparación modelada."
+        "Referencia normativa del laboratorio: 65 dB(A) diurno y 50 dB(A) nocturno. "
+        "El resultado corresponde a una comparación modelada."
     )
     if not original_valid:
         st.warning("Primero debes registrar y guardar resultados originales en la Etapa 5.")

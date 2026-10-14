@@ -17,6 +17,46 @@ RUBRIC=[
     (8,"Optimización y cierre técnico",5),
 ]
 
+SECTION_INTROS={
+    1:(
+        "Se presentan los antecedentes utilizados para comprender el proyecto, delimitar el área de estudio y "
+        "reconocer la secuencia constructiva. La evaluación considera la trazabilidad de la información, la correcta "
+        "identificación de las obras y la coherencia de la maquinaria asociada a cada fase."
+    ),
+    2:(
+        "Se identifican los receptores acústicos relevantes y se documentan su ubicación, altura, uso y relación "
+        "espacial con el proyecto. Se evalúa que la selección sea representativa y esté técnicamente justificada."
+    ),
+    3:(
+        "Se caracterizan las fuentes de ruido empleadas en la modelación mediante niveles de potencia y espectros "
+        "por bandas. Se revisa la correspondencia entre cada actividad, la maquinaria seleccionada y sus datos acústicos."
+    ),
+    4:(
+        "Se documenta la construcción de los escenarios originales en Noise Map Lab, conservando geometría, fuentes, "
+        "receptores y parámetros de cálculo. Los resultados representan la condición de referencia antes de incorporar controles."
+    ),
+    5:(
+        "Se analizan los niveles obtenidos en los receptores, su comportamiento espectral y la condición más desfavorable. "
+        "La comparación utiliza los límites diurno y nocturno definidos como referencia normativa del laboratorio."
+    ),
+    6:(
+        "Se fundamentan las medidas de control seleccionadas para cada frente y se documentan sus parámetros de diseño. "
+        "La evaluación considera la viabilidad constructiva, el cálculo acústico y la correcta implementación en el modelo."
+    ),
+    7:(
+        "Se comparan los modelos original y controlado bajo condiciones equivalentes. Se cuantifica la reducción obtenida, "
+        "el margen respecto del límite y la efectividad real de la solución en los receptores evaluados."
+    ),
+    8:(
+        "Se presenta la solución técnica definitiva después de revisar los resultados controlados. El cierre reúne los ajustes, "
+        "la estrategia de implementación, las limitaciones del estudio y el plan de verificación propuesto."
+    ),
+    9:(
+        "El cuestionario comprueba individualmente la comprensión de los conceptos aplicados durante el laboratorio. "
+        "Su resultado se incorpora automáticamente al puntaje final una vez enviada la evaluación."
+    ),
+}
+
 
 def _grade(score,max_score=100.0):
     percentage=100*float(score)/float(max_score)
@@ -226,6 +266,10 @@ def _section_header(st,stage,title,points,complete=True):
           PUNTAJE MÁXIMO · {points} PTOS
         </div>
       </div>
+      <div style="margin-top:12px;padding-top:11px;border-top:1px solid #d9e7ee;color:#526f80;
+                  font-size:.82rem;line-height:1.58;max-width:1050px">
+        {SECTION_INTROS.get(stage,"")}
+      </div>
     </div>
     """,unsafe_allow_html=True)
 
@@ -236,6 +280,24 @@ def _render_integrated_report(st,pd,report,done=None,quiz_score=None):
     reference=report.get("reference") or {}
     maps=report.get("maps") or {}
     _report_cover(st,report.get("report_meta") or {})
+    st.markdown("""
+    <div style="border:1px solid #d3e2ea;border-radius:18px;padding:18px 20px;background:#fbfdff;margin-bottom:1rem">
+      <div style="font-size:.69rem;font-weight:900;letter-spacing:.09em;color:#087ba0">OBJETO Y ALCANCE DEL INFORME</div>
+      <div style="font-size:1.03rem;font-weight:900;color:#173b53;margin:.3rem 0 .5rem">
+        Evaluación de la condición acústica original y de la solución de control
+      </div>
+      <div style="color:#526f80;line-height:1.65;font-size:.84rem">
+        Este informe consolida el trabajo desarrollado durante el laboratorio: antecedentes del proyecto,
+        receptores, caracterización de fuentes, construcción del modelo original, análisis de resultados,
+        diseño de medidas de control y verificación de la condición controlada. La información proviene de
+        los registros guardados por el alumno y de los resultados obtenidos mediante Noise Map Lab.
+        <br><br>
+        La revisión se organiza en ocho secciones técnicas con un total de 70 puntos. El cuestionario individual
+        aporta 30 puntos adicionales. Los límites diurno y nocturno se utilizan exclusivamente como referencia
+        normativa para interpretar los resultados modelados.
+      </div>
+    </div>
+    """,unsafe_allow_html=True)
     st.markdown("### Resumen de evaluación del informe")
     st.dataframe(pd.DataFrame([
         {
@@ -375,7 +437,7 @@ def _submission_payload(saved):
         "reference":{
             "period":saved.get("c4l2_s5_reference_period") or "Diurno",
             "limit_db":saved.get("c4l2_s5_reference_limit_db") or 65.0,
-            "standard":"DS N.º 38/2011 del MMA · referencia educativa",
+            "standard":"Referencia normativa del laboratorio",
         },
         "evidence_summary":_evidence_summary(saved),
         "stage_1":{

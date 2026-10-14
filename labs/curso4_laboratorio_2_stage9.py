@@ -31,12 +31,12 @@ QUESTIONS=[
     ("Suma energética","Dos fuentes independientes aportan 70 dB(A) cada una en un receptor. El total aproximado es:",[
         "70 dB(A)","73 dB(A)","140 dB(A)","67 dB(A)",
     ],1,"Dos contribuciones iguales sumadas energéticamente producen aproximadamente +3 dB."),
-    ("Límite de referencia","Los límites usados como referencia educativa en este laboratorio son:",[
+    ("Límite de referencia","Los límites usados como referencia normativa en este laboratorio son:",[
         "55 dB(A) diurno y 45 dB(A) nocturno",
         "60 dB(A) diurno y 50 dB(A) nocturno",
         "65 dB(A) diurno y 50 dB(A) nocturno",
         "70 dB(A) diurno y 60 dB(A) nocturno",
-    ],2,"El laboratorio utiliza 65 dB(A) diurno y 50 dB(A) nocturno como límites de referencia educativa, tomando como referencia el DS N.º 38/2011 del MMA."),
+    ],2,"El laboratorio utiliza 65 dB(A) diurno y 50 dB(A) nocturno como límites de referencia normativa para el ejercicio."),
     ("Periodo de referencia","Si el escenario se evalúa en periodo nocturno, ¿qué límite debe usarse en este laboratorio?",[
         "65 dB(A)",
         "50 dB(A)",
