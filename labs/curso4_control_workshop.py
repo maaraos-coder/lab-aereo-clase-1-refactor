@@ -8,6 +8,14 @@ from labs import curso4_control_models as model
 KINDS={'Reducción directa':'direct','Silenciador':'silencer','Encierro completo':'enclosure','Semiencierro':'semi','Encierro + silenciador':'enclosure_silencer'}
 LININGS={'Sin revestimiento':'unlined','Absorción baja':'low','Absorción media':'medium','Absorción alta':'high','Personalizada':'custom'}
 STATES={'Cerrada':'closed','Abierta':'open','Parcial':'partial'}
+FACE_ICONS={'front':'⬆','back':'⬇','left':'⬅','right':'➡','roof':'▱','floor':'▰'}
+TREATMENT_META={
+    'direct':('◉','Reducción en la fuente','Aplica una reducción respaldada al nivel de potencia de la fuente.'),
+    'silencer':('▰','Silenciador','Define la pérdida por inserción del elemento por bandas de octava.'),
+    'enclosure':('▣','Encierro completo','Configura las seis superficies, el revestimiento interior y la orientación.'),
+    'semi':('◩','Semiencierro','Mantiene una o más caras abiertas o parciales y considera su orientación.'),
+    'enclosure_silencer':('▣◖','Encierro + silenciador','Combina las superficies del encierro con una ventilación silenciada.'),
+}
 MATERIALS={
     'OSB':{'density':650.0,'thickness':18.0,'note':'Tablero estructural de virutas orientadas'},
     'Terciado estructural':{'density':550.0,'thickness':15.0,'note':'Tablero contrachapado de madera'},
@@ -21,6 +29,42 @@ MATERIALS={
 
 def _table(st,pd,rows):
     st.dataframe(pd.DataFrame(rows).round(2),hide_index=True,use_container_width=True)
+
+
+def _designer_styles(st):
+    st.markdown("""
+    <style>
+      .treatment-hero{border:1px solid #cfe0ea;border-radius:18px;padding:16px 18px;
+        background:linear-gradient(135deg,#f8fcff 0%,#eef7fb 100%);margin:.25rem 0 .85rem}
+      .treatment-hero-top{display:flex;align-items:center;gap:13px}
+      .treatment-hero-icon{width:46px;height:46px;border-radius:14px;background:#0b7898;color:white;
+        display:flex;align-items:center;justify-content:center;font-size:1.45rem;font-weight:900;
+        box-shadow:0 7px 18px rgba(11,120,152,.20)}
+      .treatment-hero small{display:block;color:#08789b;font-size:.67rem;font-weight:900;
+        letter-spacing:.1em;text-transform:uppercase;margin-bottom:2px}
+      .treatment-hero strong{display:block;color:#173b53;font-size:1.02rem}
+      .treatment-hero p{color:#567181;line-height:1.5;margin:7px 0 0 59px;font-size:.88rem}
+      .surface-intro{border-left:4px solid #0b7898;border-radius:12px;padding:11px 14px;
+        background:#f3f8fb;color:#496777;margin:.15rem 0 .8rem}
+      .surface-intro strong{color:#173b53}
+      .face-summary{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:7px;margin:.2rem 0 1rem}
+      .face-chip{border:1px solid #d7e4eb;border-radius:12px;padding:9px 7px;background:white;text-align:center;
+        box-shadow:0 2px 8px rgba(31,61,78,.05)}
+      .face-chip b{display:block;color:#173b53;font-size:.76rem;margin-bottom:3px}
+      .face-chip span{font-size:.67rem;color:#6b8290}
+      .face-chip.open{border-color:#f0bd7b;background:#fff8ed}.face-chip.partial{border-color:#87d2ca;background:#f0fbf9}
+      .stTabs [data-baseweb="tab-list"]{gap:7px;background:#eef4f7;padding:5px;border-radius:13px}
+      .stTabs [data-baseweb="tab"]{border-radius:9px;padding:8px 14px;height:auto;color:#496777}
+      .stTabs [aria-selected="true"]{background:white;color:#08789b!important;
+        box-shadow:0 2px 8px rgba(30,67,87,.12)}
+      div[data-testid="stExpander"]{border:1px solid #d5e2e9!important;border-radius:14px!important;
+        background:#fff!important;overflow:hidden;box-shadow:0 3px 12px rgba(31,61,78,.05);margin:.48rem 0}
+      div[data-testid="stExpander"] details>summary{background:linear-gradient(90deg,#f7fafc,#fff);padding:.15rem .35rem}
+      div[data-testid="stExpander"] details[open]>summary{border-bottom:1px solid #e1eaf0;background:#f1f8fb}
+      div[data-testid="stVerticalBlockBorderWrapper"]{border-radius:16px!important;border-color:#d7e4eb!important}
+      @media(max-width:900px){.face-summary{grid-template-columns:repeat(3,minmax(0,1fr))}}
+    </style>
+    """,unsafe_allow_html=True)
 
 
 def _metrics(st,before,after):
@@ -126,6 +170,7 @@ def _geometry_plot(st,config,key):
 
 
 def render_designer(st,pd,prefix,initial=None,fixed_kind=None,suggested_tl=None):
+    _designer_styles(st)
     initial=deepcopy(initial or model.default_treatment())
     labels=list(KINDS)
     if fixed_kind:
@@ -133,6 +178,16 @@ def render_designer(st,pd,prefix,initial=None,fixed_kind=None,suggested_tl=None)
     default=next((k for k,v in KINDS.items() if v==initial.get('noise_control_type')),labels[2])
     label=st.selectbox('Tipo de tratamiento',labels,index=labels.index(default),disabled=fixed_kind is not None,key=prefix+'_kind')
     kind=KINDS[label]
+    icon,short_title,short_copy=TREATMENT_META[kind]
+    st.markdown(f"""
+    <div class="treatment-hero">
+      <div class="treatment-hero-top">
+        <div class="treatment-hero-icon">{icon}</div>
+        <div><small>Tratamiento seleccionado</small><strong>{short_title}</strong></div>
+      </div>
+      <p>{short_copy}</p>
+    </div>
+    """,unsafe_allow_html=True)
     prefix=prefix+'_'+kind
     cfg=deepcopy(initial)
     cfg['noise_control_type']=kind
@@ -166,10 +221,28 @@ def render_designer(st,pd,prefix,initial=None,fixed_kind=None,suggested_tl=None)
             st.caption('La reducción directa debe provenir de datos técnicos o mediciones. El silenciador se aplica a una emisión canalizada compatible con el equipo.')
     if enclosed:
         with tabs[1]:
-            st.markdown('**Seis caras independientes, igual que en Noise Map Lab.**')
+            st.markdown('''
+            <div class="surface-intro">
+              <strong>Seis superficies independientes</strong><br>
+              Cada cara puede ser cerrada, abierta o parcial y tener su propio Rw o espectro TL.
+            </div>
+            ''',unsafe_allow_html=True)
+            face_chips=[]
+            for face_name,face_title in model.FACE_LABELS.items():
+                preview=cfg['enclosure_faces'][face_name]
+                state_value=preview.get('state','closed')
+                state_text=next((title for title,value in STATES.items() if value==state_value),'Cerrada')
+                acoustic_text='Abierta' if state_value=='open' else ('TL bandas' if preview.get('acoustic_mode')=='spectrum' else f"Rw {float(preview.get('rw_db') or 0):.0f} dB")
+                face_chips.append(
+                    f'<div class="face-chip {state_value}"><b>{FACE_ICONS[face_name]} {face_title}</b><span>{state_text} · {acoustic_text}</span></div>'
+                )
+            st.markdown('<div class="face-summary">'+''.join(face_chips)+'</div>',unsafe_allow_html=True)
             for name,face_label in model.FACE_LABELS.items():
                 face=deepcopy(cfg['enclosure_faces'][name])
-                with st.expander(face_label,expanded=name=='front'):
+                state_preview=next((title for title,value in STATES.items() if value==face.get('state','closed')),'Cerrada')
+                mode_preview='Abierta' if face.get('state')=='open' else ('TL por bandas' if face.get('acoustic_mode')=='spectrum' else f"Rw {float(face.get('rw_db') or 0):.0f} dB")
+                with st.expander(f"{FACE_ICONS[name]}  {face_label}   ·   {state_preview}   ·   {mode_preview}",expanded=name=='front'):
+                    st.caption(f'Configura la superficie **{face_label.lower()}** del cerramiento.')
                     a,b,c,d=st.columns(4)
                     state=a.selectbox('Estado',list(STATES),index=list(STATES.values()).index(face.get('state','closed')),key=prefix+'_'+name+'_state')
                     face['state']=STATES[state]
