@@ -92,7 +92,11 @@ def _report_text(st,title,value):
 
 
 def _report_cover(st,meta):
-    author=html.escape(str((meta or {}).get("author") or "Alumno/a del diplomado"))
+    author=html.escape(str(
+        st.session_state.get("name")
+        or (meta or {}).get("author")
+        or "Alumno/a del diplomado"
+    ))
     st.markdown(f"""
     <div style="border:1px solid #b9d4e2;border-radius:24px;overflow:hidden;margin:.5rem 0 1.4rem;
                 box-shadow:0 12px 34px rgba(23,59,83,.09);background:white">
@@ -116,7 +120,7 @@ def _report_cover(st,meta):
                     grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px;color:#526f80;font-size:.79rem">
           <div><b style="color:#173b53">Preparado por</b><br>{author}</div>
           <div><b style="color:#173b53">Metodología</b><br>Modelación en Noise Map Lab</div>
-          <div><b style="color:#173b53">Referencia educativa</b><br>DS N.º 38/2011 del MMA</div>
+          <div><b style="color:#173b53">Contexto académico</b><br>Diplomado · Curso 4 · Laboratorio 2</div>
         </div>
       </div>
     </div>
@@ -442,14 +446,15 @@ def render(lab,saved,runtime):
       <div style="color:#526f80;line-height:1.6">La plataforma reúne las evidencias guardadas en las Etapas 1 a 8. El desarrollo práctico vale 70 puntos y el cuestionario de la Etapa 9 vale 30 puntos.</div>
     </div>
     """,unsafe_allow_html=True)
-    if not saved.get("c4l2_s10_report_meta"):
-        author=(
-            st.session_state.get("user_name")
-            or st.session_state.get("student_name")
-            or st.session_state.get("user_key")
-            or "Alumno/a del diplomado"
-        )
-        saved["c4l2_s10_report_meta"]={"author":str(author)}
+    author=(
+        st.session_state.get("name")
+        or st.session_state.get("user_name")
+        or st.session_state.get("student_name")
+        or "Alumno/a del diplomado"
+    )
+    # El nombre visible del usuario reemplaza cualquier identificador interno
+    # que haya quedado guardado en una versión anterior del informe.
+    saved["c4l2_s10_report_meta"]={"author":str(author)}
 
     if st.session_state.get("role")=="Docente":
         _teacher_view(st,pd,saved)
