@@ -263,8 +263,8 @@ def render(lab,saved,runtime):
     if reference_limit is None:
         reference_limit=50.0 if reference_period=="Nocturno" else 65.0
     st.info(
-        f"Criterio recuperado de la Etapa 5: **Zona III · periodo {reference_period.lower()} · "
-        f"{reference_limit:.0f} dB(A)**, utilizado como referencia educativa del DS N.º 38/2011 del MMA."
+        f"Criterio recuperado de la Etapa 5: **periodo {reference_period.lower()} · "
+        f"límite de {reference_limit:.0f} dB(A)**, utilizado como referencia educativa del DS N.º 38/2011 del MMA."
     )
     maxima=_original_maxima(saved)
     if maxima:

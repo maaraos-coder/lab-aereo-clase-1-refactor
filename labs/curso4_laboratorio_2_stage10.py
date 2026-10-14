@@ -85,7 +85,6 @@ def _submission_payload(saved):
         "practical_max_score":70,
         "quiz_max_score":30,
         "reference":{
-            "zone":"Zona III",
             "period":saved.get("c4l2_s5_reference_period") or "Diurno",
             "limit_db":saved.get("c4l2_s5_reference_limit_db") or 65.0,
             "standard":"DS N.º 38/2011 del MMA · referencia educativa",

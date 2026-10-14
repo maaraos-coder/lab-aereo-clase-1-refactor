@@ -56,15 +56,15 @@ def render(lab, saved, runtime):
     st.markdown("### 4 · Registra los receptores identificados")
     is_teacher=st.session_state.get("role")=="Docente"
     teacher_receptors=[
-      {"Receptor":"R01","Uso / tipo":"Complejo educacional","Descripción":"Complejo Educacional Consolidada","Latitud":-33.6119671,"Longitud":-70.5708285,"Altura (m)":1.5,"Dist. al predio (m)":67,"Condición deslinde":"No colindante","Zona D.S.38":"Zona III","Límite diurno [dB(A)]":65,"Fuente documental":"Anexo 05 · Tabla 5 / Tabla 9"},
-      {"Receptor":"R02","Uso / tipo":"Vivienda","Descripción":"Vivienda","Latitud":-33.6127289,"Longitud":-70.5704974,"Altura (m)":1.5,"Dist. al predio (m)":0,"Condición deslinde":"Colindante","Zona D.S.38":"Zona III","Límite diurno [dB(A)]":65,"Fuente documental":"Anexo 05 · Tabla 5 / Tabla 9"},
-      {"Receptor":"R03","Uso / tipo":"Vivienda","Descripción":"Vivienda","Latitud":-33.6128730,"Longitud":-70.5697995,"Altura (m)":1.5,"Dist. al predio (m)":16,"Condición deslinde":"No colindante","Zona D.S.38":"Zona III","Límite diurno [dB(A)]":65,"Fuente documental":"Anexo 05 · Tabla 5 / Tabla 9"},
-      {"Receptor":"R04","Uso / tipo":"Vivienda","Descripción":"Vivienda","Latitud":-33.6134444,"Longitud":-70.5702517,"Altura (m)":1.5,"Dist. al predio (m)":0,"Condición deslinde":"Colindante","Zona D.S.38":"Zona III","Límite diurno [dB(A)]":65,"Fuente documental":"Anexo 05 · Tabla 5 / Tabla 9"},
-      {"Receptor":"R05","Uso / tipo":"Vivienda","Descripción":"Vivienda","Latitud":-33.6137228,"Longitud":-70.5696316,"Altura (m)":1.5,"Dist. al predio (m)":15,"Condición deslinde":"No colindante","Zona D.S.38":"Zona III","Límite diurno [dB(A)]":65,"Fuente documental":"Anexo 05 · Tabla 5 / Tabla 9"},
-      {"Receptor":"R06","Uso / tipo":"Vivienda","Descripción":"Vivienda","Latitud":-33.6139859,"Longitud":-70.5702185,"Altura (m)":1.5,"Dist. al predio (m)":0,"Condición deslinde":"Colindante","Zona D.S.38":"Zona III","Límite diurno [dB(A)]":65,"Fuente documental":"Anexo 05 · Tabla 5 / Tabla 9"},
-      {"Receptor":"R07","Uso / tipo":"Vivienda","Descripción":"Vivienda","Latitud":-33.6144599,"Longitud":-70.5705289,"Altura (m)":1.5,"Dist. al predio (m)":0,"Condición deslinde":"Colindante","Zona D.S.38":"Zona III","Límite diurno [dB(A)]":65,"Fuente documental":"Anexo 05 · Tabla 5 / Tabla 9"},
-      {"Receptor":"R08","Uso / tipo":"Vivienda","Descripción":"Vivienda","Latitud":-33.6145446,"Longitud":-70.5709615,"Altura (m)":1.5,"Dist. al predio (m)":0,"Condición deslinde":"Colindante","Zona D.S.38":"Zona III","Límite diurno [dB(A)]":65,"Fuente documental":"Anexo 05 · Tabla 5 / Tabla 9"},
-      {"Receptor":"R09","Uso / tipo":"Vivienda","Descripción":"Vivienda","Latitud":-33.6139433,"Longitud":-70.5714464,"Altura (m)":1.5,"Dist. al predio (m)":0,"Condición deslinde":"Colindante","Zona D.S.38":"Zona III","Límite diurno [dB(A)]":65,"Fuente documental":"Anexo 05 · Tabla 5 / Tabla 9"},
+      {"Receptor":"R01","Uso / tipo":"Complejo educacional","Descripción":"Complejo Educacional Consolidada","Latitud":-33.6119671,"Longitud":-70.5708285,"Altura (m)":1.5,"Dist. al predio (m)":67,"Condición deslinde":"No colindante","Límite diurno [dB(A)]":65,"Límite nocturno [dB(A)]":50,"Fuente documental":"Anexo 05 · Tabla 5 / Tabla 9"},
+      {"Receptor":"R02","Uso / tipo":"Vivienda","Descripción":"Vivienda","Latitud":-33.6127289,"Longitud":-70.5704974,"Altura (m)":1.5,"Dist. al predio (m)":0,"Condición deslinde":"Colindante","Límite diurno [dB(A)]":65,"Límite nocturno [dB(A)]":50,"Fuente documental":"Anexo 05 · Tabla 5 / Tabla 9"},
+      {"Receptor":"R03","Uso / tipo":"Vivienda","Descripción":"Vivienda","Latitud":-33.6128730,"Longitud":-70.5697995,"Altura (m)":1.5,"Dist. al predio (m)":16,"Condición deslinde":"No colindante","Límite diurno [dB(A)]":65,"Límite nocturno [dB(A)]":50,"Fuente documental":"Anexo 05 · Tabla 5 / Tabla 9"},
+      {"Receptor":"R04","Uso / tipo":"Vivienda","Descripción":"Vivienda","Latitud":-33.6134444,"Longitud":-70.5702517,"Altura (m)":1.5,"Dist. al predio (m)":0,"Condición deslinde":"Colindante","Límite diurno [dB(A)]":65,"Límite nocturno [dB(A)]":50,"Fuente documental":"Anexo 05 · Tabla 5 / Tabla 9"},
+      {"Receptor":"R05","Uso / tipo":"Vivienda","Descripción":"Vivienda","Latitud":-33.6137228,"Longitud":-70.5696316,"Altura (m)":1.5,"Dist. al predio (m)":15,"Condición deslinde":"No colindante","Límite diurno [dB(A)]":65,"Límite nocturno [dB(A)]":50,"Fuente documental":"Anexo 05 · Tabla 5 / Tabla 9"},
+      {"Receptor":"R06","Uso / tipo":"Vivienda","Descripción":"Vivienda","Latitud":-33.6139859,"Longitud":-70.5702185,"Altura (m)":1.5,"Dist. al predio (m)":0,"Condición deslinde":"Colindante","Límite diurno [dB(A)]":65,"Límite nocturno [dB(A)]":50,"Fuente documental":"Anexo 05 · Tabla 5 / Tabla 9"},
+      {"Receptor":"R07","Uso / tipo":"Vivienda","Descripción":"Vivienda","Latitud":-33.6144599,"Longitud":-70.5705289,"Altura (m)":1.5,"Dist. al predio (m)":0,"Condición deslinde":"Colindante","Límite diurno [dB(A)]":65,"Límite nocturno [dB(A)]":50,"Fuente documental":"Anexo 05 · Tabla 5 / Tabla 9"},
+      {"Receptor":"R08","Uso / tipo":"Vivienda","Descripción":"Vivienda","Latitud":-33.6145446,"Longitud":-70.5709615,"Altura (m)":1.5,"Dist. al predio (m)":0,"Condición deslinde":"Colindante","Límite diurno [dB(A)]":65,"Límite nocturno [dB(A)]":50,"Fuente documental":"Anexo 05 · Tabla 5 / Tabla 9"},
+      {"Receptor":"R09","Uso / tipo":"Vivienda","Descripción":"Vivienda","Latitud":-33.6139433,"Longitud":-70.5714464,"Altura (m)":1.5,"Dist. al predio (m)":0,"Condición deslinde":"Colindante","Límite diurno [dB(A)]":65,"Límite nocturno [dB(A)]":50,"Fuente documental":"Anexo 05 · Tabla 5 / Tabla 9"},
     ]
     teacher_relevance=[
       {"Receptor":"R01","¿Por qué se selecciona?":"Receptor sensible dentro del área de influencia","Qué representa":"Complejo educacional","Observación espacial":"No colindante; distancia al proyecto 67 m."},
@@ -80,11 +80,13 @@ def render(lab, saved, runtime):
 
     default_rows=saved.get("c4l2_s2_receptors_table") or (
       teacher_receptors if is_teacher else [
-        {"Receptor":"R01","Uso / tipo":"","Descripción":"","Latitud":None,"Longitud":None,"Altura (m)":None,"Dist. al predio (m)":None,"Condición deslinde":"","Zona D.S.38":"","Límite diurno [dB(A)]":None,"Fuente documental":""},
-        {"Receptor":"R02","Uso / tipo":"","Descripción":"","Latitud":None,"Longitud":None,"Altura (m)":None,"Dist. al predio (m)":None,"Condición deslinde":"","Zona D.S.38":"","Límite diurno [dB(A)]":None,"Fuente documental":""},
-        {"Receptor":"R03","Uso / tipo":"","Descripción":"","Latitud":None,"Longitud":None,"Altura (m)":None,"Dist. al predio (m)":None,"Condición deslinde":"","Zona D.S.38":"","Límite diurno [dB(A)]":None,"Fuente documental":""},
+        {"Receptor":"R01","Uso / tipo":"","Descripción":"","Latitud":None,"Longitud":None,"Altura (m)":None,"Dist. al predio (m)":None,"Condición deslinde":"","Límite diurno [dB(A)]":None,"Límite nocturno [dB(A)]":None,"Fuente documental":""},
+        {"Receptor":"R02","Uso / tipo":"","Descripción":"","Latitud":None,"Longitud":None,"Altura (m)":None,"Dist. al predio (m)":None,"Condición deslinde":"","Límite diurno [dB(A)]":None,"Límite nocturno [dB(A)]":None,"Fuente documental":""},
+        {"Receptor":"R03","Uso / tipo":"","Descripción":"","Latitud":None,"Longitud":None,"Altura (m)":None,"Dist. al predio (m)":None,"Condición deslinde":"","Límite diurno [dB(A)]":None,"Límite nocturno [dB(A)]":None,"Fuente documental":""},
       ]
     )
+    # Compatibilidad con avances guardados antes de retirar la clasificación por zona.
+    default_rows=[{k:v for k,v in row.items() if k!="Zona D.S.38"} for row in default_rows]
     if is_teacher:
       teacher_seed_version="adenda2_ruido_2026_09_23_v1"
       if st.session_state.get("c4l2_s2_teacher_seed_version")!=teacher_seed_version:
@@ -93,11 +95,15 @@ def render(lab, saved, runtime):
         st.session_state["c4l2_s2_teacher_seed_version"]=teacher_seed_version
     if "c4l2_s2_receptors_work" not in st.session_state:
       st.session_state["c4l2_s2_receptors_work"]=[dict(x) for x in default_rows]
+    st.session_state["c4l2_s2_receptors_work"]=[
+      {k:v for k,v in row.items() if k!="Zona D.S.38"}
+      for row in st.session_state["c4l2_s2_receptors_work"]
+    ]
 
     rows=st.session_state["c4l2_s2_receptors_work"]
     grid=runtime["_professional_grid"](pd.DataFrame(rows),"c4l2_s2_receptors_grid",
-      widths={"Receptor":105,"Uso / tipo":170,"Descripción":220,"Latitud":145,"Longitud":145,"Altura (m)":110,"Dist. al predio (m)":145,"Condición deslinde":150,"Zona D.S.38":120,"Límite diurno [dB(A)]":170,"Fuente documental":230},
-      numeric_columns=["Latitud","Longitud","Altura (m)","Dist. al predio (m)","Límite diurno [dB(A)]"],height=max(255,min(520,90+42*len(rows))))
+      widths={"Receptor":105,"Uso / tipo":170,"Descripción":220,"Latitud":145,"Longitud":145,"Altura (m)":110,"Dist. al predio (m)":145,"Condición deslinde":150,"Límite diurno [dB(A)]":170,"Límite nocturno [dB(A)]":180,"Fuente documental":230},
+      numeric_columns=["Latitud","Longitud","Altura (m)","Dist. al predio (m)","Límite diurno [dB(A)]","Límite nocturno [dB(A)]"],height=max(255,min(520,90+42*len(rows))))
     st.session_state["c4l2_s2_receptors_work"]=grid.where(pd.notna(grid),None).to_dict("records")
 
     add_col,remove_col,info_col=st.columns([.23,.23,.54])
@@ -105,7 +111,7 @@ def render(lab, saved, runtime):
       if st.button("➕ Agregar receptor",use_container_width=True,key="c4l2_s2_add_receiver"):
         current=st.session_state["c4l2_s2_receptors_work"]
         n=len(current)+1
-        current.append({"Receptor":f"R{n:02d}","Uso / tipo":"","Descripción":"","Latitud":None,"Longitud":None,"Altura (m)":None,"Dist. al predio (m)":None,"Condición deslinde":"","Zona D.S.38":"","Límite diurno [dB(A)]":None,"Fuente documental":""})
+        current.append({"Receptor":f"R{n:02d}","Uso / tipo":"","Descripción":"","Latitud":None,"Longitud":None,"Altura (m)":None,"Dist. al predio (m)":None,"Condición deslinde":"","Límite diurno [dB(A)]":None,"Límite nocturno [dB(A)]":None,"Fuente documental":""})
         st.session_state["c4l2_s2_receptors_work"]=current
         st.rerun()
     with remove_col:
