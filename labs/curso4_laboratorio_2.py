@@ -732,20 +732,30 @@ def _stage1(lab, saved):
         add_label="➕ Agregar actividad",
     )
 
-    if st.button("✓ Guardar ficha del proyecto", type="primary", use_container_width=True, key="c4l2_s1_save"):
-        def _records_without_empty_rows(df, main_column):
-            clean=df.copy()
-            clean=clean.where(pd.notna(clean),None)
-            return [
-                row for row in clean.to_dict("records")
-                if str(row.get(main_column) or "").strip()
-            ]
+    def _records_without_empty_rows(df, main_column):
+        clean=df.copy()
+        clean=clean.where(pd.notna(clean),None)
+        return [
+            row for row in clean.to_dict("records")
+            if str(row.get(main_column) or "").strip()
+        ]
 
-        vertex_records=_records_without_empty_rows(vertex_df,"Vértice")
-        part_records=_records_without_empty_rows(parts_df,"Parte / obra")
-        phase_records=_records_without_empty_rows(phases_df,"Etapa / frente")
-        machinery_records=_records_without_empty_rows(machinery_df,"Máquina / equipo")
-        chronology_records=_records_without_empty_rows(chronology_df,"Etapa / actividad")
+    vertex_records=_records_without_empty_rows(vertex_df,"Vértice")
+    part_records=_records_without_empty_rows(parts_df,"Parte / obra")
+    phase_records=_records_without_empty_rows(phases_df,"Etapa / frente")
+    machinery_records=_records_without_empty_rows(machinery_df,"Máquina / equipo")
+    chronology_records=_records_without_empty_rows(chronology_df,"Etapa / actividad")
+
+    from labs.curso4_lab2_drafts import render_draft_save
+    render_draft_save(st,saved,{"_save":_save},lab,1,{
+        "c4l2_s1_vertices_table":vertex_records,
+        "c4l2_s1_parts_table":part_records,
+        "c4l2_s1_phases_table":phase_records,
+        "c4l2_s1_machinery_table":machinery_records,
+        "c4l2_s1_chronology_table":chronology_records,
+    },"c4l2_s1_save_draft")
+
+    if st.button("✓ Validar y finalizar la Etapa 1", type="primary", use_container_width=True, key="c4l2_s1_save"):
 
         missing=[]
         valid_vertices=[

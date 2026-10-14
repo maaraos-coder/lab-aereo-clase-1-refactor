@@ -158,7 +158,7 @@ def render(lab,saved,runtime):
             st.radio("Selecciona una alternativa",q[2],index=None,key=f"c4l2_s9_q{i-1}",label_visibility="collapsed")
 
     c1,c2=st.columns(2)
-    if c1.button("Guardar borrador",use_container_width=True,key="c4l2_s9_draft"):
+    if c1.button("💾 Guardar avance de esta etapa",use_container_width=True,key="c4l2_s9_draft"):
         answers={str(i):st.session_state.get(f"c4l2_s9_q{i}") for i in range(len(QUESTIONS))}
         saved["c4l2_s9_answers"]=answers
         runtime["_save"](lab,saved,9)

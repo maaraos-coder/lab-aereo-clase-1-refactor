@@ -442,7 +442,16 @@ def render(lab,saved,runtime):
     """,unsafe_allow_html=True)
 
     st.markdown("### 7 · Guarda los resultados originales")
-    if st.button("✓ Guardar resultados detallados",type="primary",use_container_width=True,key="c4l2_s5_save"):
+    from labs.curso4_lab2_drafts import render_draft_save
+    render_draft_save(st,saved,runtime,lab,5,{
+        "c4l2_s5_detailed_results":detail_records,
+        "c4l2_s5_spatial_note":spatial,
+        "c4l2_s5_spectral_note":spectral,
+        "c4l2_s5_reference_period":period,
+        "c4l2_s5_reference_limit_db":reference_limit,
+    },"c4l2_s5_save_draft")
+
+    if st.button("✓ Validar y finalizar la Etapa 5",type="primary",use_container_width=True,key="c4l2_s5_save"):
         if not valid:
             st.warning("Registra al menos un resultado global de LAeq antes de guardar.")
         elif not str(spatial or "").strip() or not str(spectral or "").strip():

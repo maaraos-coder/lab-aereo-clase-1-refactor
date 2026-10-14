@@ -469,6 +469,7 @@ def render(lab,saved,runtime):
     stage_index=stages.index(stage)+1
     stage_sources=[s for s in sources if str(s.get("Etapa") or "Etapa no definida").strip()==stage]
     front_name=f"FT{stage_index} · {stage}"
+    stage_draft=(saved.get("c4l2_s4_drafts") or {}).get(stage,{})
 
     st.markdown(f"#### {front_name}")
     config_key=f"c4l2_s4_cfg_{_safe_name(stage)}"
@@ -525,7 +526,7 @@ def render(lab,saved,runtime):
     st.dataframe(pd.DataFrame(band_matrix),hide_index=True,use_container_width=True)
 
     answer_key=f"c4l2_s4_answers_{_safe_name(stage)}"
-    saved_answers=st.session_state.get(answer_key,{})
+    saved_answers=st.session_state.get(answer_key) or stage_draft.get("answers") or {}
     st.markdown("#### Ingresa tu Lw equivalente por banda")
     answers={}
     cols=st.columns(4)
@@ -570,16 +571,17 @@ def render(lab,saved,runtime):
     rec_lookup={str(r.get("Receptor")):r for r in receptors}
     a,b,c=st.columns(3)
     with a:
-        target_rec=st.selectbox("Receptor objetivo",rec_options,key=f"c4l2_s4_target_{_safe_name(stage)}")
+        draft_target=str(stage_draft.get("target_receptor") or "")
+        target_rec=st.selectbox("Receptor objetivo",rec_options,index=rec_options.index(draft_target) if draft_target in rec_options else 0,key=f"c4l2_s4_target_{_safe_name(stage)}")
     with b:
-        distance=st.number_input("Distancia fuente–receptor [m]",min_value=0.1,value=10.0,step=0.5,key=f"c4l2_s4_dist_{_safe_name(stage)}")
+        distance=st.number_input("Distancia fuente–receptor [m]",min_value=0.1,value=float(stage_draft.get("distance") or 10.0),step=0.5,key=f"c4l2_s4_dist_{_safe_name(stage)}")
     with c:
-        source_h=st.number_input("Altura fuente equivalente [m]",min_value=0.1,value=1.5,step=0.1,key=f"c4l2_s4_height_{_safe_name(stage)}")
+        source_h=st.number_input("Altura fuente equivalente [m]",min_value=0.1,value=float(stage_draft.get("source_height") or 1.5),step=0.1,key=f"c4l2_s4_height_{_safe_name(stage)}")
 
     rec=rec_lookup.get(target_rec,{})
     st.caption(f"Receptor seleccionado: {target_rec} · {rec.get('Descripción','')} · altura receptor: {rec.get('Altura (m)','—')} m")
 
-    sector=st.text_input("Ubicación / sector del frente dentro del predio",key=f"c4l2_s4_sector_{_safe_name(stage)}",placeholder="Ej.: borde poniente del frente de excavación, próximo a R2")
+    sector=st.text_input("Ubicación / sector del frente dentro del predio",value=str(stage_draft.get("sector") or ""),key=f"c4l2_s4_sector_{_safe_name(stage)}",placeholder="Ej.: borde poniente del frente de excavación, próximo a R2")
 
     st.link_button("🗺️ Abrir Noise Map Lab",runtime["NOISEMAP_URL"],use_container_width=True)
 
@@ -587,7 +589,7 @@ def render(lab,saved,runtime):
     suggested=f"Eyzaguirre_FT{stage_index}_{_safe_name(stage)}_Original"
     project_name=st.text_input(
         "Nombre del proyecto en Noise Map Lab",
-        value=suggested,
+        value=str(stage_draft.get("project_name") or suggested),
         key=f"c4l2_s4_project_{_safe_name(stage)}",
     )
     st.markdown("""
@@ -596,12 +598,13 @@ def render(lab,saved,runtime):
     """)
     confirmed=st.checkbox(
         "Confirmo que guardé este escenario original en Noise Map Lab",
+        value=bool(stage_draft.get("confirmed")),
         key=f"c4l2_s4_savedmap_{_safe_name(stage)}",
     )
 
     st.markdown("### 6 · Registra los resultados de la condición original")
     result_key=f"c4l2_s4_results_{_safe_name(stage)}"
-    existing_results=(saved.get("c4l2_s4_results") or {}).get(stage)
+    existing_results=(saved.get("c4l2_s4_results") or {}).get(stage) or stage_draft.get("results")
     result_rows=existing_results or [
         {"Receptor":r.get("Receptor"),"Distancia F–R [m]":None,"LAeq predicho [dB(A)]":None}
         for r in receptors if str(r.get("Receptor") or "").strip()
@@ -614,7 +617,20 @@ def render(lab,saved,runtime):
         height=max(235,min(430,90+42*len(result_rows))),
     )
 
-    if st.button("✓ Guardar escenario original de esta etapa",type="primary",use_container_width=True,key=f"c4l2_s4_save_{_safe_name(stage)}"):
+    clean_results=results_df.where(pd.notna(results_df),None).to_dict("records")
+    drafts=dict(saved.get("c4l2_s4_drafts") or {})
+    drafts[stage]={
+        "answers":answers,"target_receptor":target_rec,"distance":distance,
+        "source_height":source_h,"sector":sector,"project_name":project_name,
+        "confirmed":confirmed,"results":clean_results,
+    }
+    from labs.curso4_lab2_drafts import render_draft_save
+    render_draft_save(st,saved,runtime,lab,4,{
+        "c4l2_s4_drafts":drafts,
+        "c4l2_s4_front_configs":{**(saved.get("c4l2_s4_front_configs") or {}),stage:st.session_state[config_key]},
+    },f"c4l2_s4_save_draft_{_safe_name(stage)}")
+
+    if st.button("✓ Validar y finalizar este escenario",type="primary",use_container_width=True,key=f"c4l2_s4_save_{_safe_name(stage)}"):
         parsed=[_parse_num(answers[x]) for x in OCTAVE_LABELS]
         missing=[]
         if not st.session_state.get(f"{check_key}_ok",False):
@@ -625,7 +641,6 @@ def render(lab,saved,runtime):
             missing.append("nombre del proyecto")
         if not confirmed:
             missing.append("confirmación de guardado en Noise Map Lab")
-        clean_results=results_df.where(pd.notna(results_df),None).to_dict("records")
         if not any(r.get("LAeq predicho [dB(A)]") is not None for r in clean_results):
             missing.append("al menos un resultado predicho")
         if missing:

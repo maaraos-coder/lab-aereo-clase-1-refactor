@@ -246,7 +246,22 @@ def render(lab,saved,runtime):
         key="c4l2_s7_comparison_maps",
     )
 
-    if st.button("✓ Guardar y completar comparación",type="primary",use_container_width=True,key="c4l2_s7_complete"):
+    edited_records=edited.where(pd.notna(edited),None).to_dict("records")
+    edited_map={_key(row):row for row in edited_records}
+    controlled_draft=[edited_map.get(_key(row),row) for row in controlled_all]
+    project_names[selected_front]=project_name
+    draft_comparisons=_comparison_rows(original_rows,controlled_draft,reference_limit)
+    from labs.curso4_lab2_drafts import render_draft_save
+    render_draft_save(st,saved,runtime,lab,7,{
+        "c4l2_s7_controlled_results":controlled_draft,
+        "c4l2_s7_project_names":project_names,
+        "c4l2_s7_comparability":checks,
+        "c4l2_s7_comparison":draft_comparisons,
+        "c4l2_s7_effectiveness":effectiveness,
+        "c4l2_s7_differences":differences,
+    },"c4l2_s7_save_draft")
+
+    if st.button("✓ Validar y finalizar la Etapa 7",type="primary",use_container_width=True,key="c4l2_s7_complete"):
         stored_controlled=saved.get("c4l2_s7_controlled_results") or []
         stored_comparisons=_comparison_rows(original_rows,stored_controlled,reference_limit)
         missing=[row for row in stored_comparisons if _num(row.get("Controlado [dB(A)]")) is None]

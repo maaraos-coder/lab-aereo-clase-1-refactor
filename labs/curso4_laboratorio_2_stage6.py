@@ -333,6 +333,12 @@ def render(lab,saved,runtime):
             "Vuelve a la Etapa 5, registra los resultados obtenidos en Noise Map Lab y presiona "
             "**Guardar resultados detallados**. Luego regresa a la Etapa 6."
         )
+        from labs.curso4_lab2_drafts import render_draft_save
+        render_draft_save(st,saved,runtime,lab,6,{
+            "c4l2_s6_tl_calculator":tl_config,
+            "c4l2_s6_treatment_study":study_cfg,
+            "c4l2_s6_treatment_study_results":study_results,
+        },"c4l2_s6_save_draft")
         return
 
     st.markdown("### 5 · Diseña la estrategia para cada frente")
@@ -450,12 +456,26 @@ def render(lab,saved,runtime):
     )
 
     st.markdown("### 9 · Verificación antes de guardar")
-    v1=st.checkbox("Conservé intacto el escenario original.",key="c4l2_s6_check_original")
-    v2=st.checkbox("La medida es físicamente compatible con la actividad constructiva.",key="c4l2_s6_check_viable")
-    v3=st.checkbox("La medida está correctamente ubicada respecto de la fuente y el receptor.",key="c4l2_s6_check_geometry")
-    v4=st.checkbox("Guardé el escenario controlado con un nombre diferente.",key="c4l2_s6_check_copy")
+    saved_checks=saved.get("c4l2_s6_checks") or {}
+    v1=st.checkbox("Conservé intacto el escenario original.",value=bool(saved_checks.get("original")),key="c4l2_s6_check_original")
+    v2=st.checkbox("La medida es físicamente compatible con la actividad constructiva.",value=bool(saved_checks.get("viable")),key="c4l2_s6_check_viable")
+    v3=st.checkbox("La medida está correctamente ubicada respecto de la fuente y el receptor.",value=bool(saved_checks.get("geometry")),key="c4l2_s6_check_geometry")
+    v4=st.checkbox("Guardé el escenario controlado con un nombre diferente.",value=bool(saved_checks.get("copy")),key="c4l2_s6_check_copy")
 
-    if st.button("✓ Guardar diseño de control",type="primary",use_container_width=True,key="c4l2_s6_save"):
+    configs=dict(saved.get("c4l2_s6_measure_config") or {})
+    if selected_front and measure!="Seleccionar medida":
+        configs[selected_front]={"medida":measure,**cfg}
+    from labs.curso4_lab2_drafts import render_draft_save
+    render_draft_save(st,saved,runtime,lab,6,{
+        "c4l2_s6_tl_calculator":tl_config,
+        "c4l2_s6_treatment_study":study_cfg,
+        "c4l2_s6_treatment_study_results":study_results,
+        "c4l2_s6_control_design":design_records,
+        "c4l2_s6_measure_config":configs,
+        "c4l2_s6_checks":{"original":v1,"viable":v2,"geometry":v3,"copy":v4},
+    },"c4l2_s6_save_draft")
+
+    if st.button("✓ Validar y finalizar la Etapa 6",type="primary",use_container_width=True,key="c4l2_s6_save"):
         incomplete=[
             r for r in design_records
             if str(r.get("Medida seleccionada") or "")=="Seleccionar medida"

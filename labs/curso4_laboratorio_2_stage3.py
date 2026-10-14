@@ -450,7 +450,12 @@ def render(lab,saved,runtime):
 
     st.markdown("### 6 · Guarda la caracterización acústica")
     st.caption("Al guardar, el laboratorio conserva la referencia BS y los espectros calculados para reutilizarlos cuando ubiquemos las fuentes en Noise Map Lab.")
-    if st.button("✓ Guardar niveles de potencia",type="primary",use_container_width=True,key="c4l2_s3_save"):
+    from labs.curso4_lab2_drafts import render_draft_save
+    render_draft_save(st,saved,runtime,lab,3,{
+        "c4l2_s3_bs_assignments":assign_records,
+    },"c4l2_s3_save_draft")
+
+    if st.button("✓ Validar y finalizar la Etapa 3",type="primary",use_container_width=True,key="c4l2_s3_save"):
         pending=[r for r in assign_records if r.get("Referencia BS") not in SOURCE_CATALOG]
         if pending:
             st.warning(f"Falta seleccionar una referencia BS válida para **{len(pending)}** máquina(s).")

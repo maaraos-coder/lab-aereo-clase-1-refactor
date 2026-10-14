@@ -163,11 +163,18 @@ def render(lab, saved, runtime):
       height=max(235,min(500,90+42*len(rel))))
     st.session_state["c4l2_s2_relevance_work"]=relgrid.where(pd.notna(relgrid),None).to_dict("records")
 
-    if st.button("✓ Guardar receptores",type="primary",use_container_width=True,key="c4l2_s2_save"):
-      def clean(df,main):
-        d=df.copy().where(pd.notna(df),None)
-        return [x for x in d.to_dict("records") if str(x.get(main) or "").strip()]
-      recs=clean(grid,"Receptor"); rels=clean(relgrid,"Receptor")
+    def clean(df,main):
+      d=df.copy().where(pd.notna(df),None)
+      return [x for x in d.to_dict("records") if str(x.get(main) or "").strip()]
+    recs=clean(grid,"Receptor"); rels=clean(relgrid,"Receptor")
+
+    from labs.curso4_lab2_drafts import render_draft_save
+    render_draft_save(st,saved,runtime,lab,2,{
+      "c4l2_s2_receptors_table":recs,
+      "c4l2_s2_relevance_table":rels,
+    },"c4l2_s2_save_draft")
+
+    if st.button("✓ Validar y finalizar la Etapa 2",type="primary",use_container_width=True,key="c4l2_s2_save"):
       valid=[x for x in recs if x.get("Latitud") is not None and x.get("Longitud") is not None and x.get("Altura (m)") is not None and x.get("Dist. al predio (m)") is not None and str(x.get("Descripción") or "").strip()]
       if len(valid)<3 or len([x for x in rels if str(x.get("¿Por qué se selecciona?") or "").strip()])<3:
         st.warning("Completa al menos 3 receptores con coordenadas, altura, distancia, descripción y justificación.")
