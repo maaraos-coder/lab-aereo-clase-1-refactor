@@ -6,6 +6,7 @@ from labs.curso4_laboratorio_1 import BS_PLANT
 OCTAVE_LABELS=["31,5 Hz","63 Hz","125 Hz","250 Hz","500 Hz","1 kHz","2 kHz","4 kHz"]
 REPORT_BANDS=["63 Hz","125 Hz","250 Hz","500 Hz","1 kHz","2 kHz","4 kHz","8 kHz"]
 A_CORR=[-39.4,-26.2,-16.1,-8.6,-3.2,0.0,1.2,1.0]
+REFERENCE_LIMITS={"Diurno":65.0,"Nocturno":50.0}
 
 
 def _num(v):
@@ -174,7 +175,7 @@ def _teacher_solution_panel(st,pd):
     st.success(
         "Máximo de la Adenda 2 sin control: **78 dB(A)** en RIMIV05 y RIMIV06 (Escenario 3). "
         "Entre R01–R09, el mayor valor es **72 dB(A)** en R02 y R06 (Escenario 2). "
-        "El límite diurno de todos los receptores R01–R09 es 65 dB(A), Zona III."
+        "Como referencia del DS N.º 38/2011 del MMA, para Zona III se utilizará 65 dB(A) en periodo diurno."
     )
     st.caption(
         "Referencia documental: Anexo 05 · Adenda 2, Tabla 27, págs. 53–54. "
@@ -257,12 +258,32 @@ def render(lab,saved,runtime):
     # La solución se revela solo en la vista docente.
     _teacher_solution_panel(st,pd)
 
+    st.markdown("### 2 · Define el límite de referencia")
+    saved_period=str(saved.get("c4l2_s5_reference_period") or "Diurno")
+    if saved_period not in REFERENCE_LIMITS:
+        saved_period="Diurno"
+    period=st.segmented_control(
+        "Periodo de evaluación",
+        list(REFERENCE_LIMITS),
+        default=saved_period,
+        key="c4l2_s5_reference_period_work",
+    ) or saved_period
+    reference_limit=REFERENCE_LIMITS[period]
+    period_hours="07:00–21:00" if period=="Diurno" else "21:00–07:00"
+    c_limit,c_period=st.columns(2)
+    c_limit.metric("Límite de referencia · Zona III",f"{reference_limit:.0f} dB(A)")
+    c_period.metric("Periodo seleccionado",f"{period} · {period_hours}")
+    st.caption(
+        "Criterio educativo tomado como referencia del DS N.º 38/2011 del MMA. "
+        "La comparación corresponde a niveles modelados en Noise Map Lab y no reemplaza una verificación normativa mediante medición."
+    )
+
     stage4_fronts=saved.get("c4l2_s4_fronts") or {}
     stage4_results=saved.get("c4l2_s4_results") or {}
     sources=saved.get("c4l2_s3_acoustic_sources") or []
     receptors=saved.get("c4l2_s2_receptors_table") or []
 
-    st.markdown("### 2 · Recupera los escenarios originales")
+    st.markdown("### 3 · Recupera los escenarios originales")
     if stage4_fronts:
         overview=[]
         for front,cfg in stage4_fronts.items():
@@ -283,7 +304,7 @@ def render(lab,saved,runtime):
 
     st.link_button("🗺️ Abrir Noise Map Lab",runtime["NOISEMAP_URL"],use_container_width=True)
 
-    st.markdown("### 3 · Registra los resultados detallados")
+    st.markdown("### 4 · Registra los resultados detallados")
     st.markdown("""
     Para cada combinación **frente–receptor**, debes obtener directamente desde **Noise Map Lab**:
 
@@ -341,22 +362,44 @@ def render(lab,saved,runtime):
     )
     detail_records=detail_df.where(pd.notna(detail_df),None).to_dict("records")
 
-    st.markdown("### 4 · Identifica la condición crítica")
+    st.markdown("### 5 · Evalúa la condición original")
     valid=[r for r in detail_records if _num(r.get("LAeq [dB(A)]")) is not None]
     if valid:
+        evaluation=[]
+        for row in valid:
+            laeq=_num(row.get("LAeq [dB(A)]"))
+            difference=laeq-reference_limit
+            evaluation.append({
+                "Frente":row.get("Frente"),
+                "Receptor":row.get("Receptor"),
+                "LAeq modelado [dB(A)]":round(laeq,1),
+                "Límite de referencia [dB(A)]":reference_limit,
+                "Excedencia [dB]":round(max(0.0,difference),1),
+                "Margen [dB]":round(max(0.0,-difference),1),
+                "Resultado":"Sobre el límite" if difference>0 else ("En el límite" if difference==0 else "Bajo el límite"),
+            })
+        st.dataframe(pd.DataFrame(evaluation),hide_index=True,use_container_width=True)
         critical=max(valid,key=lambda r:_num(r.get("LAeq [dB(A)]")))
-        c1,c2,c3=st.columns(3)
+        critical_laeq=_num(critical.get("LAeq [dB(A)]"))
+        critical_difference=critical_laeq-reference_limit
+        c1,c2,c3,c4=st.columns(4)
         c1.metric("Frente crítico",str(critical.get("Frente") or "—"))
         c2.metric("Receptor crítico",str(critical.get("Receptor") or "—"))
-        c3.metric("Mayor LAeq",f"{_num(critical.get('LAeq [dB(A)]')):.1f} dB(A)")
+        c3.metric("Mayor LAeq",f"{critical_laeq:.1f} dB(A)")
+        c4.metric(
+            "Excedencia máxima",
+            f"{max(0.0,critical_difference):.1f} dB",
+            delta="Sobre referencia" if critical_difference>0 else "Bajo referencia",
+            delta_color="inverse" if critical_difference>0 else "normal",
+        )
         st.success(
             "La condición crítica se determina a partir del mayor nivel numérico obtenido en los receptores "
-            "para los escenarios originales modelados."
+            f"y se compara con el límite {period.lower()} de referencia de {reference_limit:.0f} dB(A)."
         )
     else:
         st.info("Ingresa al menos un resultado global de LAeq para identificar automáticamente la condición crítica.")
 
-    st.markdown("### 5 · Interpreta el mapa y el espectro")
+    st.markdown("### 6 · Interpreta el mapa y el espectro")
     a,b=st.columns(2,gap="large")
     with a:
         spatial=st.text_area(
@@ -398,7 +441,7 @@ def render(lab,saved,runtime):
     </div>
     """,unsafe_allow_html=True)
 
-    st.markdown("### 6 · Guarda los resultados originales")
+    st.markdown("### 7 · Guarda los resultados originales")
     if st.button("✓ Guardar resultados detallados",type="primary",use_container_width=True,key="c4l2_s5_save"):
         if not valid:
             st.warning("Registra al menos un resultado global de LAeq antes de guardar.")
@@ -408,6 +451,8 @@ def render(lab,saved,runtime):
             saved["c4l2_s5_detailed_results"]=detail_records
             saved["c4l2_s5_spatial_note"]=spatial
             saved["c4l2_s5_spectral_note"]=spectral
+            saved["c4l2_s5_reference_period"]=period
+            saved["c4l2_s5_reference_limit_db"]=reference_limit
             saved["c4l2_s5_critical"]={
                 "Frente":critical.get("Frente"),
                 "Receptor":critical.get("Receptor"),

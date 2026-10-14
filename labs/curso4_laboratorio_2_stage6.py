@@ -65,13 +65,12 @@ def _teacher_reference_maxima():
     }
 
 
-def _build_design_rows(maxima):
+def _build_design_rows(maxima,limit=65.0):
     rows=[]
     for base in FRONT_TEMPLATE:
         key=_scenario_key(base["Frente / condición"])
         m=maxima.get(key,{})
         original=m.get("laeq")
-        limit=65.0
         excess=(original-limit) if original is not None else None
         rows.append({
             "Frente / condición":base["Frente / condición"],
@@ -87,12 +86,12 @@ def _build_design_rows(maxima):
     return rows
 
 
-def _student_design_rows(saved):
-    return _build_design_rows(_original_maxima(saved))
+def _student_design_rows(saved,limit=65.0):
+    return _build_design_rows(_original_maxima(saved),limit)
 
 
-def _teacher_design_rows():
-    return _build_design_rows(_teacher_reference_maxima())
+def _teacher_design_rows(limit=65.0):
+    return _build_design_rows(_teacher_reference_maxima(),limit)
 
 
 def _strategy_editor(st,pd,rows,key):
@@ -259,18 +258,26 @@ def render(lab,saved,runtime):
     _teacher_solution(st,pd)
 
     st.markdown("### 1 · Recupera el problema acústico")
+    reference_period=str(saved.get("c4l2_s5_reference_period") or "Diurno")
+    reference_limit=_num(saved.get("c4l2_s5_reference_limit_db"))
+    if reference_limit is None:
+        reference_limit=50.0 if reference_period=="Nocturno" else 65.0
+    st.info(
+        f"Criterio recuperado de la Etapa 5: **Zona III · periodo {reference_period.lower()} · "
+        f"{reference_limit:.0f} dB(A)**, utilizado como referencia educativa del DS N.º 38/2011 del MMA."
+    )
     maxima=_original_maxima(saved)
     if maxima:
         problem=[]
         for sc,m in maxima.items():
-            excess=m["laeq"]-65.0
+            excess=m["laeq"]-reference_limit
             problem.append({
                 "Escenario":sc,
                 "Receptor crítico":m["receptor"],
                 "Mayor LAeq [dB(A)]":round(m["laeq"],1),
-                "Límite [dB(A)]":65,
+                "Límite [dB(A)]":reference_limit,
                 "Excedencia [dB]":round(excess,1),
-                "Diagnóstico":"Requiere reducción" if excess>0 else "Cumple",
+                "Diagnóstico":"Sobre el límite" if excess>0 else "Bajo el límite",
             })
         st.dataframe(pd.DataFrame(problem),hide_index=True,use_container_width=True)
     else:
@@ -330,15 +337,18 @@ def render(lab,saved,runtime):
 
     st.markdown("### 5 · Diseña la estrategia para cada frente")
     if is_teacher:
-        saved_rows=saved.get("c4l2_s6_control_design") or _teacher_design_rows()
+        saved_rows=saved.get("c4l2_s6_control_design") or _teacher_design_rows(reference_limit)
         design_grid_key="c4l2_s6_design_grid_teacher_v2"
     else:
-        saved_rows=saved.get("c4l2_s6_control_design") or _student_design_rows(saved)
+        saved_rows=saved.get("c4l2_s6_control_design") or _student_design_rows(saved,reference_limit)
         design_grid_key="c4l2_s6_design_grid_student_v2"
 
     # Unify previously named barrier variants; unsupported choices require a new selection.
     saved_rows=[dict(row) for row in saved_rows]
     for row in saved_rows:
+        original=_num(row.get("LAeq original [dB(A)]"))
+        row["Límite [dB(A)]"]=reference_limit
+        row["Excedencia [dB]"]=round(original-reference_limit,1) if original is not None else None
         previous=row.get("Medida seleccionada")
         if previous in ("Barrera acústica perimetral","Barrera trasladable IMIV"):
             row["Medida seleccionada"]="Barrera acústica"
