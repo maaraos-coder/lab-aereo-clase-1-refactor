@@ -135,6 +135,7 @@ create table if not exists public.projection_state (
   show_answer boolean not null default false,
   show_solution boolean not null default false,
   updated_at timestamptz not null default now(),
+  draft_state jsonb not null default '{}'::jsonb,
   primary key(course_id,class_id)
 );
 
@@ -164,3 +165,6 @@ alter table public.user_progress enable row level security;
 alter table public.submissions enable row level security;
 alter table public.notebook_entries enable row level security;
 alter table public.projection_state enable row level security;
+
+-- Compatible con instalaciones existentes.
+alter table public.projection_state add column if not exists draft_state jsonb not null default '{}'::jsonb;

@@ -3,9 +3,26 @@
 
 def render_draft_save(st, saved, runtime, lab, stage, updates, key):
     """Guarda el estado visible sin marcar la etapa como completada."""
-    role = st.session_state.get("role")
-    if role == "Docente" or role == "Proyección" or st.session_state.get("projection_mode"):
-        return False
+    from copy import deepcopy
+    from labs.curso4_lab2_projection import is_projection, cache_key
+    projection = is_projection(st)
+    # Cada edición confirmada por el formulario llega en un rerun de Streamlit.
+    # Se guarda solo si cambia el contenido, sin finalizar ni evaluar la etapa.
+    if projection:
+        persisted = st.session_state.get(cache_key(lab["id"]) + "_persisted", {})
+        changed = any(persisted.get(k) != v for k, v in updates.items())
+        if changed:
+            candidate = deepcopy(saved)
+            candidate.update(updates)
+            try:
+                runtime["_save"](lab, candidate, stage)
+            except Exception:
+                st.warning("No se pudo guardar el último cambio. Mantén esta ventana abierta y pulsa Guardar avance cuando vuelva la conexión.")
+            else:
+                saved.update(candidate)
+                st.caption("✓ Avance de la clase guardado automáticamente.")
+        else:
+            st.caption("✓ Avance de la clase guardado.")
 
     st.markdown(
         """
@@ -26,8 +43,14 @@ def render_draft_save(st, saved, runtime, lab, stage, updates, key):
         unsafe_allow_html=True,
     )
     if st.button("💾 Guardar avance de esta etapa", use_container_width=True, key=key):
-        saved.update(updates)
-        runtime["_save"](lab, saved, stage)
+        candidate = deepcopy(saved)
+        candidate.update(updates)
+        try:
+            runtime["_save"](lab, candidate, stage)
+        except Exception:
+            st.error("No se pudo guardar el avance. Revisa la conexión y vuelve a intentarlo.")
+            return False
+        saved.update(candidate)
         st.success("Avance guardado. Puedes cambiar de etapa o salir y continuar más tarde.")
         return True
     return False

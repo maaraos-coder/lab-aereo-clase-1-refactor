@@ -181,6 +181,13 @@ def course_dashboard_impl():
 
 def _future_saved_impl(class_id):
     """Return the saved state for the selected student and future class."""
+    from labs.curso4_lab2_projection import CLASS_ID as projection_lab, is_projection, load_draft
+    if class_id == projection_lab and is_projection(st):
+        try:
+            return load_draft(st, _supabase(), COURSE_ID, class_id)
+        except Exception:
+            st.error("No se pudo recuperar el avance de la clase. Revisa la conexión y actualiza la pantalla para volver a intentarlo.")
+            st.stop()
     cache_key=f"future_saved_{class_id}"
     if cache_key in st.session_state:
         return st.session_state[cache_key]
@@ -199,19 +206,15 @@ def _future_saved_impl(class_id):
         return {}
 
 def _save_future_state_impl(class_id,state):
-    """Guarda progreso solo para usuarios reales.
-
-    La vista de Proyección es interactiva durante la clase, pero su estado es
-    temporal: nunca debe escribir respuestas, avance ni puntaje en la base de datos.
-    """
-    st.session_state[f"future_saved_{class_id}"] = state
-
-    # Pantalla de Zoom / proyección: estado solo de sesión.
-    if (
-        st.session_state.get("projection_mode")
-        or st.session_state.get("role") == "Proyección"
-    ):
+    """Guarda el avance personal o el borrador independiente de la clase proyectada."""
+    from labs.curso4_lab2_projection import CLASS_ID as projection_lab, is_projection, save_draft
+    if is_projection(st):
+        if class_id == projection_lab:
+            save_draft(st, _supabase(), COURSE_ID, class_id, state)
+        else:
+            st.session_state[f"future_saved_{class_id}"] = state
         return
+    st.session_state[f"future_saved_{class_id}"] = state
 
     # Seguridad adicional: si no existe un usuario autenticado no se persiste.
     user_key = st.session_state.get("user_key")
@@ -34164,17 +34167,15 @@ def future_projection_stage_impl(lab, stage):
     st.session_state["role"] = "Proyección"
     st.session_state["name"] = "Pantalla de clase"
 
-    # Estado compartido y efímero de la ventana Zoom.
-    # Antes cada etapa recibía {}, por lo que tablas, bandas validadas y resultados
-    # desaparecían después de cualquier st.rerun().
-    #
-    # Se utiliza la misma clave que _save_future_state_impl actualiza en sesión,
-    # pero projection_mode impide escribir este estado en Supabase.
-    projection_saved_key = f"future_saved_{lab.get('id', '')}"
-    projection_saved = st.session_state.get(projection_saved_key)
-    if not isinstance(projection_saved, dict):
-        projection_saved = {}
-        st.session_state[projection_saved_key] = projection_saved
+    # El Laboratorio 2 del Curso 4 recupera su borrador persistente de clase.
+    if lab.get("id") == "clase-08-construccion-lab-2":
+        projection_saved = _future_saved_impl(lab["id"])
+    else:
+        projection_saved_key = f"future_saved_{lab.get('id', '')}"
+        projection_saved = st.session_state.get(projection_saved_key)
+        if not isinstance(projection_saved, dict):
+            projection_saved = {}
+            st.session_state[projection_saved_key] = projection_saved
 
     # Curso 2 · Laboratorio 1: las interacciones de Zoom se conservan únicamente
     # durante la sesión de proyección y NO modifican el progreso real.
