@@ -248,112 +248,74 @@ def _stage0(lab, saved):
     header(
         "ETAPA 0 · BIENVENIDA",
         "Laboratorio 2 · Proyecto real de ruido en construcción",
-        "Desde los antecedentes del proyecto hasta una solución de control modelada, documentada y evaluada sobre 100 puntos.",
+        "Una ruta aplicada desde los antecedentes del proyecto hasta una solución de control modelada, documentada y evaluada.",
         show_overview=False,
         duration_minutes=10,
     )
 
-    st.markdown("""
-    <style>
-      .c4l2-flow-hero{border:1px solid #bcd8e7;border-radius:24px;padding:24px 26px;
-        background:linear-gradient(135deg,#f9fdff 0%,#eaf6fb 100%);margin:.7rem 0 1.1rem;
-        box-shadow:0 10px 28px rgba(23,59,83,.07)}
-      .c4l2-flow-kicker{font-size:.68rem;font-weight:900;letter-spacing:.11em;color:#087ba0}
-      .c4l2-flow-title{font-size:1.42rem;font-weight:950;color:#173b53;margin:.35rem 0 .55rem}
-      .c4l2-flow-copy{color:#526f80;line-height:1.62;max-width:1000px}
-      .c4l2-flow-meta{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:10px;margin-top:18px}
-      .c4l2-flow-stat{border:1px solid #cfe0e9;border-radius:14px;padding:12px 14px;background:rgba(255,255,255,.82)}
-      .c4l2-flow-stat small{display:block;color:#6a8595;font-size:.65rem;font-weight:850;letter-spacing:.06em;text-transform:uppercase}
-      .c4l2-flow-stat strong{display:block;color:#173b53;font-size:1rem;margin-top:3px}
-      .c4l2-phase{border:1px solid #d3e2ea;border-radius:20px;padding:18px 19px;background:white;margin:.85rem 0;
-        box-shadow:0 5px 18px rgba(23,59,83,.045)}
-      .c4l2-phase-head{display:flex;gap:12px;align-items:center;margin-bottom:13px}
-      .c4l2-phase-num{width:42px;height:42px;border-radius:13px;display:flex;align-items:center;justify-content:center;
-        background:#0b7fa5;color:white;font-weight:950;flex:0 0 42px}
-      .c4l2-phase-head small{display:block;color:#087ba0;font-size:.65rem;font-weight:900;letter-spacing:.09em}
-      .c4l2-phase-head b{display:block;color:#173b53;font-size:1.05rem;margin-top:2px}
-      .c4l2-stage-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(235px,1fr));gap:11px}
-      .c4l2-stage-card{border:1px solid #d9e6ed;border-radius:15px;padding:13px 14px;background:#f9fcfe}
-      .c4l2-stage-card .top{display:flex;align-items:center;justify-content:space-between;gap:9px;margin-bottom:6px}
-      .c4l2-stage-card .stage{font-size:.66rem;font-weight:950;letter-spacing:.07em;color:#087ba0}
-      .c4l2-stage-card .time{font-size:.64rem;font-weight:800;color:#698492;white-space:nowrap}
-      .c4l2-stage-card b{color:#173b53;font-size:.9rem}
-      .c4l2-stage-card p{font-size:.76rem;color:#607b8b;line-height:1.48;margin:.42rem 0 0}
-      .c4l2-delivery{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:11px;margin:.7rem 0 1rem}
-      .c4l2-delivery > div{border:1px solid #cae0e9;border-radius:15px;padding:14px 15px;background:#f4fafc;color:#526f80;font-size:.78rem;line-height:1.48}
-      .c4l2-delivery b{display:block;color:#173b53;font-size:.88rem;margin-bottom:4px}
-    </style>
-    <div class="c4l2-flow-hero">
-      <div class="c4l2-flow-kicker">CASO CONDUCTOR · PROYECTO REAL</div>
-      <div class="c4l2-flow-title">Conjunto Habitacional Eyzaguirre · Puente Alto</div>
-      <div class="c4l2-flow-copy">
-        El laboratorio sigue un solo expediente de principio a fin. Primero reconstruirás los antecedentes y receptores;
-        después crearás la condición original en Noise Map Lab; luego diseñarás medidas de control, comprobarás su
-        efectividad y cerrarás un informe técnico evaluado. Cada etapa utiliza lo guardado en la anterior.
-      </div>
-      <div class="c4l2-flow-meta">
-        <div class="c4l2-flow-stat"><small>Expediente</small><strong>SEIA 2165522433</strong></div>
-        <div class="c4l2-flow-stat"><small>Herramienta</small><strong>Noise Map Lab</strong></div>
-        <div class="c4l2-flow-stat"><small>Desarrollo práctico</small><strong>Etapas 1–8 · 70 puntos</strong></div>
-        <div class="c4l2-flow-stat"><small>Cuestionario</small><strong>Etapa 9 · 30 puntos</strong></div>
-      </div>
-    </div>
-    """,unsafe_allow_html=True)
+    stage_minutes = [0, 25, 25, 30, 45, 35, 45, 40, 35, 30, 25]
+    active_minutes = sum(stage_minutes[1:])
+    st.markdown(
+        f'<div class="class-clock"><div><strong>⏱️ Ruta guiada del Laboratorio 2</strong>'
+        f'<br><span>Proyecto real · Conjunto Habitacional Eyzaguirre</span>'
+        f'</div><div><strong>{active_minutes} min</strong></div></div>',
+        unsafe_allow_html=True,
+    )
 
-    phases=[
-      ("A","CONSTRUIR LOS ANTECEDENTES","Del expediente a las entradas del modelo",[
-        (1,"Antecedentes del proyecto","Reconstruye predio, partes, fases, maquinaria y cronología.","25 min"),
-        (2,"Receptores del entorno","Registra coordenadas, altura, distancia, uso y relevancia acústica.","25 min"),
-        (3,"Potencia sonora","Asocia referencias BS 5228 y obtiene niveles globales y por bandas.","30 min"),
-      ]),
-      ("B","MODELAR LA LÍNEA BASE","De las fuentes al diagnóstico de la condición original",[
-        (4,"Condición original","Construye fuentes equivalentes, configura los frentes y adjunta los mapas originales.","45 min"),
-        (5,"Resultados y condición crítica","Registra LAeq y espectros, compara con el límite e identifica el caso crítico.","35 min"),
-      ]),
-      ("C","DISEÑAR Y COMPROBAR EL CONTROL","De la propuesta acústica a la solución definitiva",[
-        (6,"Medidas de control","Calcula TL o atenuación, diseña cada medida, impleméntala y adjunta mapas.","45 min"),
-        (7,"Comparación original–controlada","Conserva modelos equivalentes, registra resultados y cuantifica la reducción.","40 min"),
-        (8,"Optimización y cierre","Mantén, ajusta o reemplaza medidas y documenta la solución final.","35 min"),
-      ]),
-      ("D","EVALUAR Y ENTREGAR","Del trabajo desarrollado a la nota final",[
-        (9,"Cuestionario oficial","Responde 10 preguntas de 3 puntos. Tras el envío, las respuestas quedan bloqueadas.","30 min"),
-        (10,"Informe y evaluación integral","Reúne las Etapas 1–8, incorpora mapas, muestra la pauta por sección y envía la entrega.","25 min"),
-      ]),
+    st.markdown(
+        """
+        <div style="border:1px solid #cfe0ef;border-radius:18px;padding:17px 19px;
+        background:linear-gradient(135deg,#f8fcff,#edf6fb);margin:.8rem 0 1rem">
+          <div style="font-size:.68rem;font-weight:900;letter-spacing:.09em;color:#087ba0">
+            CASO CONDUCTOR · PROYECTO REAL
+          </div>
+          <div style="font-size:1.05rem;font-weight:900;color:#173b53;margin:.3rem 0">
+            Conjunto Habitacional Eyzaguirre · Puente Alto
+          </div>
+          <div style="color:#587486;line-height:1.55;font-size:.84rem">
+            Trabajarás con un mismo expediente durante todo el laboratorio. Las primeras etapas construyen
+            los antecedentes y la condición original; luego diseñarás medidas disponibles en Noise Map Lab,
+            comprobarás su efectividad y consolidarás las evidencias en un informe técnico evaluado.
+          </div>
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
+
+    st.markdown('<div class="section-band">Tu ruta de aprendizaje</div>', unsafe_allow_html=True)
+    descriptions = [
+        "Reconstruye el predio, las partes, las fases, la maquinaria y el cronograma desde el expediente.",
+        "Registra los receptores con coordenadas, altura, distancia, uso y justificación, y ubícalos en Noise Map Lab.",
+        "Asocia la maquinaria a referencias BS 5228 y obtiene niveles de potencia globales y por bandas.",
+        "Construye los frentes equivalentes, modela la condición original y adjunta los mapas originales.",
+        "Registra LAeq y espectros, selecciona el período de referencia e identifica la condición crítica.",
+        "Calcula y diseña medidas disponibles en Noise Map Lab, implementa copias controladas y adjunta sus mapas.",
+        "Compara modelos equivalentes, registra la condición controlada y cuantifica la reducción por receptor.",
+        "Mantiene, ajusta o reemplaza las medidas y documenta la solución técnica definitiva.",
+        "Responde el cuestionario oficial de 10 preguntas, con un máximo de 30 puntos.",
+        "Consolida las Etapas 1 a 8 en un informe técnico y lo envía para evaluación docente sobre 100 puntos.",
     ]
-    for code,kicker,title,items in phases:
-        cards=""
-        for number,label,description,duration in items:
-            cards+=(
-                '<div class="c4l2-stage-card"><div class="top">'
-                f'<span class="stage">ETAPA {number}</span><span class="time">⏱ {duration}</span></div>'
-                f'<b>{label}</b><p>{description}</p></div>'
-            )
-        st.markdown(
-            f'<div class="c4l2-phase"><div class="c4l2-phase-head"><div class="c4l2-phase-num">{code}</div>'
-            f'<div><small>{kicker}</small><b>{title}</b></div></div>'
-            f'<div class="c4l2-stage-grid">{cards}</div></div>',
-            unsafe_allow_html=True,
+    cards = ""
+    for stage in range(1, 11):
+        title = lab["stages"][stage][0]
+        cards += (
+            '<div class="route-card">'
+            f'<div class="step">ETAPA {stage}</div>'
+            f'<h4>{title}</h4>'
+            f'<p>{descriptions[stage - 1]}</p>'
+            f'<div class="route-time">⏱️ {stage_minutes[stage]} min</div>'
+            '</div>'
         )
+    st.markdown(f'<div class="route-grid">{cards}</div>', unsafe_allow_html=True)
 
-    st.markdown("### Qué debes conservar durante el laboratorio")
-    st.markdown("""
-    <div class="c4l2-delivery">
-      <div><b>💾 Borradores por etapa</b>Usa <i>Guardar avance de esta etapa</i> antes de cambiar de sección o salir. El borrador no entrega ni completa la actividad.</div>
-      <div><b>✓ Finalización validada</b>El botón <i>Validar y finalizar</i> comprueba los requisitos y habilita la evidencia para el informe final.</div>
-      <div><b>🗺️ Proyectos separados</b>Conserva intacto cada escenario original y trabaja las medidas de control sobre copias con nombres diferentes.</div>
-      <div><b>🖼️ Evidencia gráfica</b>Adjunta mapas originales en la Etapa 4, medidas implementadas en la Etapa 6 y mapas comparativos en la Etapa 7.</div>
-    </div>
-    """,unsafe_allow_html=True)
-
-    st.markdown("### Cómo se construye la nota")
-    st.dataframe(pd.DataFrame([
-        {"Componente":"Etapas 1 a 8 · desarrollo práctico e informe","Puntaje máximo":70,"Corrección":"Docente"},
-        {"Componente":"Etapa 9 · cuestionario individual","Puntaje máximo":30,"Corrección":"Automática"},
-        {"Componente":"Total consolidado en la Etapa 10","Puntaje máximo":100,"Corrección":"Nota final con 60 % de exigencia"},
-    ]),hide_index=True,use_container_width=True)
-
-    st.success("Regla de trazabilidad: todo dato utilizado debe vincularse con el expediente, una referencia acústica o un resultado obtenido en Noise Map Lab.")
-    st.info("La Etapa 10 no plantea un caso nuevo: recupera automáticamente el trabajo guardado en las Etapas 1 a 8 y lo presenta como un informe técnico para evaluación.")
+    st.success(
+        "Regla de trazabilidad: todo dato utilizado debe vincularse con el expediente, "
+        "una referencia acústica o un resultado obtenido en Noise Map Lab."
+    )
+    st.warning(
+        "Continuidad del trabajo: usa «Guardar avance de esta etapa» antes de cambiar de sección o salir. "
+        "La Etapa 10 recupera las evidencias guardadas y no plantea un caso nuevo."
+    )
 
 
 def _stage1(lab, saved):
