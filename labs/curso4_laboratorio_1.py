@@ -5,6 +5,8 @@ Noise Map Lab permanece como aplicación externa; esta vista conserva guía,
 actividades y progreso.
 """
 
+import streamlit.components.v1 as components
+
 _RUNTIME_PROTECTED = {"run_stage", "_bind_runtime", "_RUNTIME_PROTECTED"}
 
 def _bind_runtime(runtime):
@@ -273,7 +275,11 @@ def _stage1(lab, saved):
                     )
                 st.markdown(f"**{name}**")
                 st.caption(f"{item['en']} · {item['phase']}")
-                if st.button("Ver ficha",key=f"c4l1_machine_{item['image']}",use_container_width=True):
+                if st.button(
+                    "Ver ficha",
+                    key=f"c4l1_machine_{i}_{name}",
+                    use_container_width=True,
+                ):
                     st.session_state["c4l1_selected_machine"]=name
 
     selected=st.session_state.get("c4l1_selected_machine", names[0] if names else list(BS_PLANT)[0])
@@ -1948,20 +1954,6 @@ def _stage4(lab, saved):
     status_bg="#eef8f1" if screens else "#fff6e8"
     status_color="#2d6d42" if screens else "#8b5c13"
 
-    # Mantener siempre contenido SVG válido en estas líneas. Si se devuelve una
-    # cadena vacía, Markdown puede interpretar el salto como fin del bloque HTML
-    # y mostrar las etiquetas SVG siguientes como texto.
-    shadow_polygon=(
-        f'<polygon points="{x_b:.1f},{y_b:.1f} {x_r},{y_r:.1f} {x_r},{ground_y} {x_b:.1f},{ground_y}" '
-        'fill="rgba(226,139,45,0.10)"/>'
-        if screens else '<g aria-hidden="true"></g>'
-    )
-    shadow_label=(
-        f'<text x="{(x_b+x_r)/2-70:.1f}" y="{ground_y-24:.1f}" font-size="14" '
-        'font-weight="800" fill="#9a6617">ZONA DE SOMBRA</text>'
-        if screens else '<g aria-hidden="true"></g>'
-    )
-
     profile_svg=f"""
     <div style="border:1px solid #d9e4ec;border-radius:20px;background:#fbfdff;padding:12px 14px;margin:.4rem 0 1rem">
       <div style="font-size:.74rem;font-weight:900;color:#526a7e;letter-spacing:.08em;margin:2px 0 8px">
@@ -1971,10 +1963,10 @@ def _stage4(lab, saved):
         <rect x="0" y="0" width="900" height="340" rx="18" fill="#f8fbfd"/>
         <line x1="55" y1="{ground_y}" x2="845" y2="{ground_y}" stroke="#8c9a88" stroke-width="4"/>
         <rect x="{x_b-8:.1f}" y="{y_b:.1f}" width="16" height="{ground_y-y_b:.1f}" rx="3" fill="#485b68"/>
-        {shadow_polygon}
+        {'<polygon points="' + f'{x_b:.1f},{y_b:.1f} {x_r},{y_r:.1f} {x_r},{ground_y} {x_b:.1f},{ground_y}' + '" fill="rgba(226,139,45,0.10)"/>' if screens else ''}
         <line x1="{x_s}" y1="{y_s:.1f}" x2="{x_r}" y2="{y_r:.1f}" stroke="{los_color}" stroke-width="3" stroke-dasharray="9 7"/>
         <polyline points="{x_s},{y_s:.1f} {x_b:.1f},{y_b:.1f} {x_r},{y_r:.1f}" fill="none" stroke="#e28b2d" stroke-width="4"/>
-        {shadow_label}
+        {'<text x="' + f'{(x_b+x_r)/2-70:.1f}' + '" y="' + f'{ground_y-24:.1f}' + '" font-size="14" font-weight="800" fill="#9a6617">ZONA DE SOMBRA</text>' if screens else ''}
         <circle cx="{x_s}" cy="{y_s:.1f}" r="12" fill="#176b9b"/>
         <circle cx="{x_r}" cy="{y_r:.1f}" r="12" fill="#2f7d4b"/>
         <circle cx="{x_b:.1f}" cy="{y_b:.1f}" r="7" fill="#e28b2d"/>
@@ -1997,9 +1989,11 @@ def _stage4(lab, saved):
       </div>
     </div>
     """
+    # Render the dynamic SVG in an isolated Streamlit HTML component.
+    # This avoids both Markdown parsing and sanitization/data-URI issues.
     components.html(
         profile_svg,
-        height=500,
+        height=455,
         scrolling=False,
     )
 
