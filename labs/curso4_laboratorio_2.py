@@ -282,7 +282,10 @@ def _stage0(lab, saved):
         unsafe_allow_html=True,
     )
 
-    st.markdown('<div class="section-band">Tu ruta de aprendizaje</div>', unsafe_allow_html=True)
+    st.markdown(
+        '<div class="section-band"><span>🗺️</span><h3>Tu ruta de aprendizaje</h3></div>',
+        unsafe_allow_html=True,
+    )
     descriptions = [
         "Reconstruye el predio, las partes, las fases, la maquinaria y el cronograma desde el expediente.",
         "Registra los receptores con coordenadas, altura, distancia, uso y justificación, y ubícalos en Noise Map Lab.",
@@ -300,10 +303,11 @@ def _stage0(lab, saved):
         title = lab["stages"][stage][0]
         cards += (
             '<div class="route-card">'
-            f'<div class="step">ETAPA {stage}</div>'
-            f'<h4>{title}</h4>'
+            f'<span class="step">{stage}</span><div>'
+            f'<b>{title}</b>'
             f'<p>{descriptions[stage - 1]}</p>'
-            f'<div class="route-time">⏱️ {stage_minutes[stage]} min</div>'
+            f'<span class="route-time">⏱️ {stage_minutes[stage]} min</span>'
+            '</div>'
             '</div>'
         )
     st.markdown(f'<div class="route-grid">{cards}</div>', unsafe_allow_html=True)
