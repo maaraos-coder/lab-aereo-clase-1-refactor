@@ -232,4 +232,5 @@ def render_scope(st, pd, saved, front, strategy, previous, prefix, workshop, stu
     st.dataframe(pd.DataFrame({"Banda":BAND_LABELS,"Lw original del frente [dB]":result["original"],"Lw con tratamientos de fuente [dB]":result["controlled"]}),hide_index=True,use_container_width=True)
     st.metric("LWA del frente con tratamientos de fuente",f"{result['controlled_lwa']:.2f} dB(A)")
     st.caption("Se suman energéticamente las unidades tratadas y las no tratadas. Este es un balance de potencia emitida, no el LAeq en el receptor. La barrera, la orientación de las caras y la geometría se evalúan en Noise Map Lab. Los parámetros de ejemplo requieren respaldo antes de finalizar.")
+    st.info("Para implementar controles individuales en Noise Map Lab, sustituye la fuente equivalente por sus máquinas en una copia del original. No coloques un encierro de una máquina sobre la fuente que agrupa todo el frente. La sección 7 explica cómo crear y comparar las copias por máquinas.")
     return config
