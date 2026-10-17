@@ -214,15 +214,21 @@ def _save_future_state_impl(class_id,state):
         else:
             st.session_state[f"future_saved_{class_id}"] = state
         return
-    st.session_state[f"future_saved_{class_id}"] = state
+    # Lab 2 confirma el almacenamiento antes de reemplazar el último avance.
+    if class_id != projection_lab:
+        st.session_state[f"future_saved_{class_id}"] = state
 
     # Seguridad adicional: si no existe un usuario autenticado no se persiste.
     user_key = st.session_state.get("user_key")
     if not user_key:
+        if class_id == projection_lab:
+            raise RuntimeError("No hay un usuario autenticado para guardar el avance.")
         return
 
     client = _supabase()
     if client is None:
+        if class_id == projection_lab:
+            raise RuntimeError("No hay conexión para guardar el avance.")
         return
 
     client.table("user_progress").upsert({
@@ -234,6 +240,9 @@ def _save_future_state_impl(class_id,state):
         "state_json": state,
         "updated_at": _now(),
     }, on_conflict="class_id,user_key").execute()
+    if class_id == projection_lab:
+        from copy import deepcopy
+        st.session_state[f"future_saved_{class_id}"] = deepcopy(state)
 
 def _course2_lab1_stage0_asset(filename, caption):
     """Muestra el asset oficial si existe; de lo contrario deja su espacio identificado."""

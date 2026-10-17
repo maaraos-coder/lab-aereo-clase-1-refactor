@@ -2,6 +2,7 @@
 
 import math
 import unicodedata
+from copy import deepcopy
 from labs.curso4_laboratorio_1 import BS_PLANT
 
 OCTAVE_LABELS=["31,5 Hz","63 Hz","125 Hz","250 Hz","500 Hz","1 kHz","2 kHz","4 kHz"]
@@ -122,6 +123,53 @@ def _calc(item):
     lwa_spec=10*math.log10(sum(10**(v/10) for v in lwa_bands))
     lwa_global=item["laeq10"]+28.0
     return lp,lw,lwa_bands,lwa_spec,lwa_global
+
+def _acoustic_sources(assignments):
+    """Deriva datos solo de las referencias válidas elegidas en la grilla."""
+    acoustic=[]
+    for row in assignments:
+        item=SOURCE_CATALOG.get(row.get("Referencia BS"))
+        if item is None:
+            continue
+        lp,lw,lwa_bands,lwa_spec,lwa_global=_calc(item)
+        acoustic.append({
+            **row,
+            "Tabla":item["table"], "Ref":item["ref"], "Página":item["page"],
+            "Actividad BS":item["activity"],
+            "Descriptor original":item.get("metric","LAeq,T"),
+            "Lp10_global":item["laeq10"], "Lp_bandas":lp,
+            "Lw_bandas":lw, "LwA_bandas":lwa_bands,
+            "LWA_global":lwa_global, "LWA_espectro":lwa_spec,
+        })
+    return acoustic
+
+
+def _stage3_updates(saved, assignments):
+    updates={
+        "c4l2_s3_bs_assignments":deepcopy(assignments),
+        "c4l2_s3_acoustic_sources":_acoustic_sources(assignments),
+    }
+    if assignments != saved.get("c4l2_s3_bs_assignments", []):
+        updates["done_3"]=False
+    return updates
+
+
+def _summary_rows(assignments):
+    summary=[]
+    for row in assignments:
+        ref=row.get("Referencia BS")
+        item=SOURCE_CATALOG.get(ref)
+        summary.append({
+            "Máquina proyecto":row.get("Máquina / equipo proyecto"),
+            "Etapa":row.get("Etapa"),
+            "Referencia BS":ref if item is not None else "Pendiente",
+            "Tabla / Ref.":f"{item['table']} · Ref. {item['ref']}" if item is not None else "",
+            "Página":item["page"] if item is not None else "",
+            "Lp 10 m [dB(A)]":item["laeq10"] if item is not None else None,
+            "LWA [dB(A)]":round(_calc(item)[4],1) if item is not None else None,
+        })
+    return summary
+
 
 def _adenda2_machines():
     """Maquinaria de construcción utilizada en los escenarios 1–3 de la Adenda 2."""
@@ -368,6 +416,7 @@ def render(lab,saved,runtime):
         widths={"Máquina / equipo proyecto":245,"Cantidad":100,"Etapa":190,"Referencia BS":260},
         select_options={"Referencia BS":bs_options},
         numeric_columns=["Cantidad"],
+        editable_columns=["Referencia BS"],
         height=max(235,min(520,90+42*len(assignment_rows))),
     )
     assign_records=assign_df.where(pd.notna(assign_df),None).to_dict("records")
@@ -423,65 +472,29 @@ def render(lab,saved,runtime):
         )
 
     st.markdown("### 5 · Resumen acústico de todas las máquinas")
-    summary=[]
-    for r in assign_records:
-        ref=r.get("Referencia BS")
-        if ref not in BS_PLANT:
-            summary.append({
-                "Máquina proyecto":r.get("Máquina / equipo proyecto"),
-                "Referencia BS":"Pendiente",
-                "Tabla / Ref.":"",
-                "Página":"",
-                "Lp 10 m [dB(A)]":None,
-                "LWA [dB(A)]":None,
-            })
-            continue
-        item=SOURCE_CATALOG[ref]
-        _,_,_,_,lwa_global=_calc(item)
-        summary.append({
-            "Máquina proyecto":r.get("Máquina / equipo proyecto"),
-            "Referencia BS":ref,
-            "Tabla / Ref.":f"{item['table']} · Ref. {item['ref']}",
-            "Página":item["page"],
-            "Lp 10 m [dB(A)]":item["laeq10"],
-            "LWA [dB(A)]":round(lwa_global,1),
-        })
+    summary=_summary_rows(assign_records)
     st.dataframe(pd.DataFrame(summary),hide_index=True,use_container_width=True)
 
     st.markdown("### 6 · Guarda la caracterización acústica")
     st.caption("Al guardar, el laboratorio conserva la referencia BS y los espectros calculados para reutilizarlos cuando ubiquemos las fuentes en Noise Map Lab.")
     from labs.curso4_lab2_drafts import render_draft_save
-    render_draft_save(st,saved,runtime,lab,3,{
-        "c4l2_s3_bs_assignments":assign_records,
-    },"c4l2_s3_save_draft")
+    updates=_stage3_updates(saved,assign_records)
+    render_draft_save(st,saved,runtime,lab,3,updates,"c4l2_s3_save_draft")
 
     if st.button("✓ Validar y finalizar la Etapa 3",type="primary",use_container_width=True,key="c4l2_s3_save"):
         pending=[r for r in assign_records if r.get("Referencia BS") not in SOURCE_CATALOG]
         if pending:
             st.warning(f"Falta seleccionar una referencia BS válida para **{len(pending)}** máquina(s).")
         else:
-            acoustic=[]
-            for r in assign_records:
-                item=SOURCE_CATALOG[r["Referencia BS"]]
-                lp,lw,lwa_bands,lwa_spec,lwa_global=_calc(item)
-                acoustic.append({
-                    **r,
-                    "Tabla":item["table"],
-                    "Ref":item["ref"],
-                    "Página":item["page"],
-                    "Actividad BS":item["activity"],
-                    "Descriptor original":item.get("metric","LAeq,T"),
-                    "Lp10_global":item["laeq10"],
-                    "Lp_bandas":lp,
-                    "Lw_bandas":lw,
-                    "LwA_bandas":lwa_bands,
-                    "LWA_global":lwa_global,
-                    "LWA_espectro":lwa_spec,
-                })
-            saved["c4l2_s3_bs_assignments"]=assign_records
-            saved["c4l2_s3_acoustic_sources"]=acoustic
-            saved["done_3"]=True
-            runtime["_save"](lab,saved,3)
-            st.success("Caracterización acústica guardada. Estos niveles quedan disponibles para la siguiente etapa.")
+            candidate=deepcopy(saved)
+            candidate.update(updates)
+            candidate["done_3"]=True
+            try:
+                runtime["_save"](lab,candidate,3)
+            except Exception:
+                st.error("No se pudo guardar la caracterización. Revisa la conexión y vuelve a intentarlo.")
+            else:
+                saved.update(candidate)
+                st.success("Caracterización acústica guardada. Estos niveles quedan disponibles para la siguiente etapa.")
 
     _render_teacher_pauta(st,pd)
