@@ -10,3 +10,4 @@ folium>=0.17,<1
 streamlit-folium>=0.23,<1
 
 streamlit-aggrid>=1.0,<2
+pyproj>=3.6,<4
