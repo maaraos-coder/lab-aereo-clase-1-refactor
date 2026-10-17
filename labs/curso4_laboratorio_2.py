@@ -217,7 +217,9 @@ def _dynamic_grid(saved_rows, state_key, grid_key, empty_row_factory, widths=Non
     rows=st.session_state[state_key]
     df=_professional_grid(
         pd.DataFrame(rows),
-        key=grid_key,
+        # Force AgGrid to remount when rows are added or removed.
+        # A stable key can keep the original rowData and hide new vertices.
+        key=f"{grid_key}_rows_{len(rows)}",
         widths=widths,
         select_options=select_options,
         numeric_columns=numeric_columns,
