@@ -92,6 +92,8 @@ class Stage3Tests(unittest.TestCase):
                 self.assertEqual(row['LWA [dB(A)]'], source['LWA_global'])
                 self.assertEqual(source['Lp_bandas'], item['bands'])
                 self.assertEqual(source['Lw_bandas'], [v + 28 for v in item['bands']])
+                self.assertEqual(source['band_labels'], ['63 Hz','125 Hz','250 Hz','500 Hz','1 kHz','2 kHz','4 kHz','8 kHz'])
+                self.assertEqual(source['a_corr'], [-26.2,-16.1,-8.6,-3.2,0.0,1.2,1.0,-1.1])
 
     def test_unknown_and_unselected_stay_pending_without_fabricated_sources(self):
         assignments = [{'Referencia BS': ref} for ref in (None, '', 'Seleccionar referencia BS', 'desconocida')]

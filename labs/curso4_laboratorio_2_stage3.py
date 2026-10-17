@@ -4,9 +4,10 @@ import math
 import unicodedata
 from copy import deepcopy
 from labs.curso4_laboratorio_1 import BS_PLANT
+from labs.curso4_lab2_acoustics import BAND_LABELS, A_CORRECTIONS
 
-OCTAVE_LABELS=["31,5 Hz","63 Hz","125 Hz","250 Hz","500 Hz","1 kHz","2 kHz","4 kHz"]
-A_CORR=[-39.4,-26.2,-16.1,-8.6,-3.2,0.0,1.2,1.0]
+OCTAVE_LABELS=BAND_LABELS
+A_CORR=A_CORRECTIONS
 REPORT_BANDS=["63 Hz","125 Hz","250 Hz","500 Hz","1 kHz","2 kHz","4 kHz","8 kHz"]
 ADENDA_A_CORR=[-26.2,-16.1,-8.6,-3.2,0.0,1.2,1.0,-1.1]
 
@@ -140,6 +141,9 @@ def _acoustic_sources(assignments):
             "Lp10_global":item["laeq10"], "Lp_bandas":lp,
             "Lw_bandas":lw, "LwA_bandas":lwa_bands,
             "LWA_global":lwa_global, "LWA_espectro":lwa_spec,
+            "band_labels":list(item.get("band_labels",OCTAVE_LABELS)),
+            "a_corr":list(item.get("a_corr",A_CORR)),
+            "spectrum_weighting":"Z", "acoustic_schema_version":2,
         })
     return acoustic
 

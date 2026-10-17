@@ -1,9 +1,10 @@
 """Etapa 7 · Comparación de la condición original y controlada."""
 
 import math
+from labs.curso4_lab2_acoustics import BAND_LABELS
 
 
-BANDS=["31,5 Hz","63 Hz","125 Hz","250 Hz","500 Hz","1 kHz","2 kHz","4 kHz"]
+BANDS=BAND_LABELS
 
 
 def _num(value):
@@ -25,6 +26,7 @@ def _controlled_template(original_rows,saved_rows):
         front,receptor=_key(original)
         previous=saved_map.get((front,receptor),{})
         output.append({
+            **previous,
             "Frente":front,
             "Receptor":receptor,
             **{band:previous.get(band) for band in BANDS},

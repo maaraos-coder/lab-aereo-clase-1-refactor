@@ -2,10 +2,11 @@
 
 import math
 from labs.curso4_laboratorio_1 import BS_PLANT
+from labs.curso4_lab2_acoustics import BAND_LABELS, A_CORRECTIONS
 
-OCTAVE_LABELS=["31,5 Hz","63 Hz","125 Hz","250 Hz","500 Hz","1 kHz","2 kHz","4 kHz"]
+OCTAVE_LABELS=BAND_LABELS
 REPORT_BANDS=["63 Hz","125 Hz","250 Hz","500 Hz","1 kHz","2 kHz","4 kHz","8 kHz"]
-A_CORR=[-39.4,-26.2,-16.1,-8.6,-3.2,0.0,1.2,1.0]
+A_CORR=A_CORRECTIONS
 REFERENCE_LIMITS={"Diurno":65.0,"Nocturno":50.0}
 
 
@@ -321,20 +322,15 @@ def render(lab,saved,runtime):
     # obtenidos por el alumno desde Noise Map Lab.
     blank_template=_student_result_template()
 
-    if is_teacher:
-        saved_detail=saved.get("c4l2_s5_detailed_results") or blank_template
-        teacher_seed_version="adenda2_stage5_student_results_blank_v2"
-        if st.session_state.get("c4l2_s5_teacher_seed_version")!=teacher_seed_version:
-            st.session_state["c4l2_s5_detail_work"]=[dict(x) for x in blank_template]
-            st.session_state["c4l2_s5_teacher_seed_version"]=teacher_seed_version
-    elif is_projection:
-        saved_detail=blank_template
-        projection_seed_version="adenda2_stage5_projection_blank_v2"
-        if st.session_state.get("c4l2_s5_projection_seed_version")!=projection_seed_version:
-            st.session_state["c4l2_s5_detail_work"]=[dict(x) for x in blank_template]
-            st.session_state["c4l2_s5_projection_seed_version"]=projection_seed_version
-    else:
-        saved_detail=saved.get("c4l2_s5_detailed_results") or blank_template
+    saved_detail=saved.get("c4l2_s5_detailed_results") or blank_template
+    # Conserva resultados propios en las tres vistas, incluso al corregir rótulos.
+    detail_work=st.session_state.get("c4l2_s5_detail_work") or saved_detail
+    if any("31,5 Hz" in row for row in detail_work):
+        st.warning("Se corrigió el rango de octavas a 63 Hz–8 kHz. Los datos anteriores se conservan, incluida la columna 31,5 Hz; contrasta sus frecuencias con tu exportación de Noise Map Lab. No se han desplazado ni recalculado tus resultados.")
+    st.session_state["c4l2_s5_detail_work"]=[
+        {**row,**{band:row.get(band) for band in OCTAVE_LABELS}} for row in detail_work
+    ]
+    st.caption("El espectro del receptor es presión sonora por banda Lp [dB]. El LAeq global [dB(A)] es el resultado ponderado A del receptor; no es Lw ni LWA de la fuente.")
 
     def _empty_result_row(_n):
         return {
@@ -348,7 +344,7 @@ def render(lab,saved,runtime):
     detail_df=runtime["_dynamic_grid"](
         saved_detail,
         state_key="c4l2_s5_detail_work",
-        grid_key="c4l2_s5_detail_grid",
+        grid_key="c4l2_s5_detail_grid_octaves_v2",
         empty_row_factory=_empty_result_row,
         widths={
             "Frente":190,"Receptor":110,"Distancia F–R [m]":155,

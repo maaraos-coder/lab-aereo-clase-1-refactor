@@ -7,8 +7,13 @@ from pathlib import Path
 from io import BytesIO
 from labs.curso4_laboratorio_1 import BS_PLANT
 from PIL import Image, ImageDraw, ImageFont
+from copy import deepcopy
+from labs.curso4_lab2_acoustics import (
+    BAND_LABELS, A_CORRECTIONS, equivalent_spectrum, check_answers,
+    parse_level, recover_answers, weighted_power, source_fingerprint,
+)
 
-OCTAVE_LABELS=["31,5 Hz","63 Hz","125 Hz","250 Hz","500 Hz","1 kHz","2 kHz","4 kHz"]
+OCTAVE_LABELS=BAND_LABELS
 
 def _safe_name(value):
     txt="".join(ch for ch in unicodedata.normalize("NFD",str(value or "")) if unicodedata.category(ch)!="Mn")
@@ -391,7 +396,7 @@ def render(lab,saved,runtime):
             <b>L<sub>W,f,N</sub></b> · nivel total en la banda <i>f</i> para <i>N</i> unidades iguales [dB].<br>
             <b>L<sub>W,f</sub></b> · nivel de potencia sonora de una sola unidad en la banda <i>f</i> [dB].<br>
             <b>N</b> · número de unidades idénticas operando simultáneamente.<br>
-            <b>f</b> · banda de octava analizada: 31,5 Hz a 4 kHz.
+            <b>f</b> · banda de octava analizada: 63 Hz a 8 kHz.
           </div>
         </div>
         """,unsafe_allow_html=True)
@@ -482,13 +487,16 @@ def render(lab,saved,runtime):
             "Referencia BS":s.get("Referencia BS"),
             "LWA [dB(A)]":round(float(s.get("LWA_global") or 0),1),
         })
-    if config_key not in st.session_state:
-        old=(saved.get("c4l2_s4_front_configs") or {}).get(stage)
-        st.session_state[config_key]=old if old else default_cfg
+    previous=st.session_state.get(config_key) or (saved.get("c4l2_s4_front_configs") or {}).get(stage) or []
+    simultaneous={row.get("Máquina"):row.get("¿Simultánea?","Sí") for row in previous}
+    for row in default_cfg:
+        row["¿Simultánea?"]=simultaneous.get(row["Máquina"],"Sí")
+    st.session_state[config_key]=default_cfg
+    source_signature=source_fingerprint(stage_sources)
 
     cfg=runtime["_professional_grid"](
         pd.DataFrame(st.session_state[config_key]),
-        key=f"{config_key}_grid",
+        key=f"{config_key}_grid_{source_signature}",
         widths={"Máquina":220,"Cantidad declarada":135,"¿Simultánea?":135,"Referencia BS":220,"LWA [dB(A)]":125},
         select_options={"¿Simultánea?":["Sí","No"]},
         numeric_columns=["Cantidad declarada","LWA [dB(A)]"],
@@ -511,23 +519,30 @@ def render(lab,saved,runtime):
         _teacher_pauta(st,pd,sources)
         return
 
+    try:
+        contributions,expected=equivalent_spectrum(active)
+    except ValueError as error:
+        st.warning(str(error))
+        return
     band_matrix={"Banda":OCTAVE_LABELS}
-    expected=[]
-    for s in active:
+    for index,(s,contribution) in enumerate(zip(active,contributions),1):
         name=str(s.get("Máquina / equipo proyecto"))
         q=_qty(s.get("Cantidad"))
-        lw=list(s.get("Lw_bandas") or [])
-        contribution=[float(v)+10*math.log10(q) for v in lw]
-        band_matrix[f"{name} ×{q}"]=[round(v,1) for v in contribution]
-    for idx in range(8):
-        expected.append(_sum_db([band_matrix[k][idx] for k in band_matrix if k!="Banda"]))
+        band_matrix[f"{index} · {name} ×{q}"]=[round(v,2) for v in contribution]
 
-    st.caption("Los valores mostrados ya incorporan la cantidad de unidades declaradas. Realiza tú la suma energética para cada banda.")
+    st.caption("Potencia sonora Lw por banda [dB], sin ponderación A. Los valores ya incorporan la cantidad de unidades declaradas; no vuelvas a multiplicarlos. Las bandas van de 63 Hz a 8 kHz.")
     st.dataframe(pd.DataFrame(band_matrix),hide_index=True,use_container_width=True)
+    st.latex(r"L_{W,f,eq}=10\log_{10}\left(\sum_i 10^{L_{W,f,N_i}/10}\right)")
+    st.caption("Suma energéticamente dentro de cada banda. Puedes ingresar enteros o decimales con coma o punto; tolerancia de redondeo: ±0,5 dB. Se recomienda un decimal.")
 
-    answer_key=f"c4l2_s4_answers_{_safe_name(stage)}"
-    saved_answers=st.session_state.get(answer_key) or stage_draft.get("answers") or {}
-    st.markdown("#### Ingresa tu Lw equivalente por banda")
+    legacy_answer_key=f"c4l2_s4_answers_{_safe_name(stage)}"
+    answer_key=legacy_answer_key+"_octaves_v2"
+    original_answers=st.session_state.get(answer_key) or st.session_state.get(legacy_answer_key) or stage_draft.get("answers") or {}
+    saved_answers,recovered=recover_answers(original_answers)
+    if recovered:
+        st.session_state[answer_key+"_legacy"]=deepcopy(original_answers)
+        st.info("Se corrigieron los rótulos de frecuencia. Tus respuestas anteriores se conservan en el orden de las columnas originales, sin recalcularlas. Revísalas y vuelve a comprobar la suma.")
+    st.markdown("#### Ingresa tu Lw equivalente por banda [dB, sin ponderación A]")
     answers={}
     cols=st.columns(4)
     for i,label in enumerate(OCTAVE_LABELS):
@@ -535,18 +550,21 @@ def render(lab,saved,runtime):
             answers[label]=st.text_input(
                 label,
                 value=str(saved_answers.get(label,"")),
-                key=f"{answer_key}_{i}",
+                key=f"{answer_key}_{label}",
                 placeholder="dB",
             )
     st.session_state[answer_key]=answers
+    parsed=[parse_level(answers.get(x)) for x in OCTAVE_LABELS]
+    checks=check_answers(answers,expected)
+    answers_ok=all(checks)
 
     check_key=f"c4l2_s4_check_{_safe_name(stage)}"
+    st.session_state[f"{check_key}_ok"]=answers_ok
     if st.button("Comprobar suma energética",use_container_width=True,key=check_key):
-        parsed=[_parse_num(answers[x]) for x in OCTAVE_LABELS]
         if any(v is None for v in parsed):
-            st.warning("Completa las 8 bandas antes de comprobar.")
+            st.warning("Completa las 8 bandas con números finitos antes de comprobar.")
         else:
-            ok=[abs(a-e)<=0.2 for a,e in zip(parsed,expected)]
+            ok=checks
             if all(ok):
                 st.success("Correcto. El espectro equivalente del frente está bien calculado.")
                 st.session_state[f"{check_key}_ok"]=True
@@ -554,6 +572,16 @@ def render(lab,saved,runtime):
                 bad=[OCTAVE_LABELS[i] for i,v in enumerate(ok) if not v]
                 st.warning("Revisa la suma energética en: "+", ".join(bad)+".")
                 st.session_state[f"{check_key}_ok"]=False
+
+    st.markdown("#### De Lw por banda a LWA global")
+    st.markdown("La suma anterior entrega **Lw equivalente por banda [dB]**. Para obtener **LWA global [dB(A)]**, aplica la corrección A correspondiente a cada frecuencia y suma energéticamente esas bandas corregidas. La conversión presión → potencia mediante +28 dB no aplica ponderación A.")
+    st.latex(r"L_{WA}=10\log_{10}\left(\sum_f 10^{(L_{W,f,eq}+A_f)/10}\right)")
+    st.dataframe(pd.DataFrame({"Banda":OCTAVE_LABELS,"Corrección A [dB]":A_CORRECTIONS}),hide_index=True,use_container_width=True)
+    if answers_ok:
+        st.metric("LWA global del frente · desde tus bandas",f"{weighted_power(parsed):.2f} dB(A)")
+        st.caption("Calculado con tus respuestas, incluyendo su redondeo. En modo Octavas de Noise Map Lab ingresa Lw sin ponderación A; en modo global utiliza LWA. No apliques dos veces la corrección A. El LWA reconstruido del espectro puede diferir del valor global tabulado por redondeo y por el rango de frecuencias.")
+    else:
+        st.info("Completa correctamente tu suma por bandas para obtener el LWA global a partir de tus respuestas.")
 
     st.markdown("### 4 · Ubica el frente en la peor posición físicamente posible")
     st.markdown("""
@@ -565,6 +593,15 @@ def render(lab,saved,runtime):
     rec_options=[str(r.get("Receptor")) for r in receptors if str(r.get("Receptor") or "").strip()]
     if not rec_options:
         st.warning("No hay receptores guardados desde la Etapa 2. Puedes revisar el cálculo del frente, pero debes completar la Etapa 2 antes de guardar el escenario espacial.")
+        from labs.curso4_lab2_drafts import render_draft_save
+        calculation_draft={**stage_draft,"answers":answers,"band_labels":list(OCTAVE_LABELS),"acoustic_schema_version":2}
+        legacy=st.session_state.get(answer_key+"_legacy") or stage_draft.get("answers_legacy")
+        if legacy is not None:
+            calculation_draft["answers_legacy"]=deepcopy(legacy)
+        render_draft_save(st,saved,runtime,lab,4,{
+            "c4l2_s4_drafts":{**(saved.get("c4l2_s4_drafts") or {}),stage:calculation_draft},
+            "c4l2_s4_front_configs":{**(saved.get("c4l2_s4_front_configs") or {}),stage:st.session_state[config_key]},
+        },f"c4l2_s4_save_draft_{_safe_name(stage)}")
         _teacher_pauta(st,pd,sources)
         return
 
@@ -623,17 +660,34 @@ def render(lab,saved,runtime):
         "answers":answers,"target_receptor":target_rec,"distance":distance,
         "source_height":source_h,"sector":sector,"project_name":project_name,
         "confirmed":confirmed,"results":clean_results,
+        "band_labels":list(OCTAVE_LABELS),"acoustic_schema_version":2,
     }
+    legacy_answers=st.session_state.get(answer_key+"_legacy") or stage_draft.get("answers_legacy")
+    if legacy_answers is not None:
+        drafts[stage]["answers_legacy"]=deepcopy(legacy_answers)
     from labs.curso4_lab2_drafts import render_draft_save
-    render_draft_save(st,saved,runtime,lab,4,{
+    draft_updates={
         "c4l2_s4_drafts":drafts,
         "c4l2_s4_front_configs":{**(saved.get("c4l2_s4_front_configs") or {}),stage:st.session_state[config_key]},
-    },f"c4l2_s4_save_draft_{_safe_name(stage)}")
+    }
+    scenarios=deepcopy(saved.get("c4l2_s4_scenarios") or [])
+    needs_review=False
+    for scenario in scenarios:
+        if scenario.get("Etapa")==stage and (
+            scenario.get("source_signature")!=source_signature
+            or scenario.get("Lw equivalente por bandas")!=parsed
+            or not answers_ok
+        ):
+            scenario["requires_review"]=True
+            needs_review=True
+    if needs_review:
+        st.info("El escenario guardado de este frente necesita revisión con las bandas y fuentes actuales. Se conservan sus datos; valida y guarda de nuevo para actualizarlo.")
+        draft_updates.update({"c4l2_s4_scenarios":scenarios,"done_4":False})
+    render_draft_save(st,saved,runtime,lab,4,draft_updates,f"c4l2_s4_save_draft_{_safe_name(stage)}")
 
     if st.button("✓ Validar y finalizar este escenario",type="primary",use_container_width=True,key=f"c4l2_s4_save_{_safe_name(stage)}"):
-        parsed=[_parse_num(answers[x]) for x in OCTAVE_LABELS]
         missing=[]
-        if not st.session_state.get(f"{check_key}_ok",False):
+        if not answers_ok:
             missing.append("suma energética correcta")
         if not sector.strip():
             missing.append("ubicación del frente")
@@ -646,9 +700,10 @@ def render(lab,saved,runtime):
         if missing:
             st.warning("Completa: "+", ".join(missing)+".")
         else:
-            front_configs=saved.get("c4l2_s4_front_configs") or {}
+            candidate=deepcopy(saved)
+            front_configs=candidate.get("c4l2_s4_front_configs") or {}
             front_configs[stage]=st.session_state[config_key]
-            all_results=saved.get("c4l2_s4_results") or {}
+            all_results=candidate.get("c4l2_s4_results") or {}
             all_results[stage]=clean_results
             scenarios=[x for x in (saved.get("c4l2_s4_scenarios") or []) if x.get("Etapa")!=stage]
             scenarios.append({
@@ -659,15 +714,29 @@ def render(lab,saved,runtime):
                 "Altura fuente [m]":source_h,
                 "Ubicación / sector":sector,
                 "Proyecto Noise Map":project_name,
-                "Lw equivalente por bandas":[round(v,2) for v in expected],
+                "Lw equivalente por bandas":list(parsed),
+                "band_labels":list(OCTAVE_LABELS),
+                "a_corr":list(A_CORRECTIONS),
+                "LWA equivalente [dB(A)]":weighted_power(parsed),
+                "spectrum_weighting":"Z", "acoustic_schema_version":2,
+                "source_signature":source_signature,
+                "requires_review":False,
                 "Máquinas simultáneas":[s.get("Máquina / equipo proyecto") for s in active],
             })
-            saved["c4l2_s4_front_configs"]=front_configs
-            saved["c4l2_s4_results"]=all_results
-            saved["c4l2_s4_scenarios"]=scenarios
-            saved["done_4"]=len(scenarios)>=len(stages)
-            runtime["_save"](lab,saved,4)
-            st.success("Escenario original guardado. Puedes cambiar de etapa y construir el siguiente frente.")
+            candidate["c4l2_s4_front_configs"]=front_configs
+            candidate["c4l2_s4_results"]=all_results
+            candidate["c4l2_s4_scenarios"]=scenarios
+            candidate["c4l2_s4_drafts"]=drafts
+            candidate["done_4"]=len(scenarios)>=len(stages) and all(
+                scenario.get("acoustic_schema_version")==2 and not scenario.get("requires_review") for scenario in scenarios
+            )
+            try:
+                runtime["_save"](lab,candidate,4)
+            except Exception:
+                st.error("No se pudo guardar el escenario. Revisa la conexión y vuelve a intentarlo.")
+            else:
+                saved.update(candidate)
+                st.success("Escenario original guardado. Puedes cambiar de etapa y construir el siguiente frente.")
 
     st.markdown("### 7 · Escenarios originales guardados")
     scenarios=saved.get("c4l2_s4_scenarios") or []
@@ -679,6 +748,7 @@ def render(lab,saved,runtime):
                 "Receptor objetivo":x.get("Receptor objetivo"),
                 "Distancia [m]":x.get("Distancia objetivo [m]"),
                 "Proyecto Noise Map":x.get("Proyecto Noise Map"),
+                "Revisión espectral":"Actualizada" if x.get("acoustic_schema_version")==2 and not x.get("requires_review") else "Revisar y volver a guardar",
             })
         st.dataframe(pd.DataFrame(overview),hide_index=True,use_container_width=True)
         st.caption(f"Avance: {len(scenarios)} de {len(stages)} etapas/frentes guardados.")

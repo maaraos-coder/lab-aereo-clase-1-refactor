@@ -170,7 +170,7 @@ def _tl_panel():
     return [
         {"Material":"OSB","Densidad [kg/m³]":650,"Espesor [mm]":18,"Masa superficial [kg/m²]":round(mass,1),
          "Banda":f"{frequency:g} Hz","TL estimado [dB]":round(20*math.log10(mass*frequency)-47,1)}
-        for frequency in (31.5,63,125,250,500,1000,2000,4000)
+        for frequency in (63,125,250,500,1000,2000,4000,8000)
     ]
 
 
