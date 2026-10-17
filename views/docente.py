@@ -762,6 +762,9 @@ def _teacher_course_results_impl(compact=False):
 
     }
 
+    from views.curso4_lab2_review import CATALOG as c4l2_catalog
+    evaluation_catalog["Curso 4 · Factores del ruido en el proceso de construcción"]["Laboratorio 2 · Evaluación integral"]=c4l2_catalog
+
     course=st.selectbox(
         "Curso",
         list(evaluation_catalog),
@@ -915,6 +918,13 @@ def _teacher_course_results_impl(compact=False):
         seen.add(user_key)
         latest.append(row)
     rows=latest
+    if config.get("integrated"):
+        try:
+            quiz_rows=client.table("responses").select("user_key,auto_score,teacher_score").eq("class_id",config["class_id"]).eq("stage",9).eq("question_key","c4l2_final_quiz").execute().data or []
+            quizzes={quiz.get("user_key"):quiz for quiz in quiz_rows}
+            rows=[{**row,"_c4l2_quiz":quizzes.get(row.get("user_key"))} for row in rows]
+        except Exception:
+            st.warning("No se pudieron actualizar los cuestionarios del consolidado; se usarán los puntajes incluidos en cada informe.")
 
     delivered=len(rows)
     if config.get("formative_only"):
@@ -944,7 +954,10 @@ def _teacher_course_results_impl(compact=False):
         m3.metric("Pendientes",pending)
         m4.metric("Alumnos",students)
 
-    if config["with_grade"]:
+    if config.get("integrated"):
+        st.info("Informe práctico del Laboratorio 2: 70 puntos de revisión docente, más 30 del cuestionario. La nota final sobre 100 queda pendiente hasta revisar el informe.")
+        st.caption("En Revisión selecciona un alumno para leer su informe completo y ver sus imágenes. Aquí aparecen las entregas definitivas de la Etapa 10; guardar un borrador no equivale a entregar la evaluación.")
+    elif config["with_grade"]:
         st.info(
             f"**Evaluación oficial con nota.** Puntaje máximo: {config['maximum']} puntos."
         )
@@ -993,6 +1006,8 @@ def _teacher_course_results_impl(compact=False):
                         "Estado":"Revisada" if is_reviewed else "Pendiente de revisión",
                         "Entrega":str(row.get("submitted_at") or row.get("updated_at") or "").replace("T"," ")[:16],
                     }
+                    if config.get("integrated") and row.get("teacher_score") is None:
+                        item["Puntaje"]="Pendiente de revisión /70"
                 if config["with_grade"] and is_reviewed:
                     item["Nota"]=f"{_grade_from_percent(score/config['maximum']*100):.1f}"
                 elif config["with_grade"]:
@@ -1184,6 +1199,10 @@ def _teacher_course_results_impl(compact=False):
 
         elif reviewer in ("c4_stage9","c4_stage10"):
             _teacher_course4_review(rows,config,compact=compact)
+
+        elif reviewer in ("c4l2_stage9","c4l2_stage10"):
+            from views.curso4_lab2_review import render_review
+            render_review(st,pd,client,rows,config,_now,compact=compact)
 
         elif reviewer in ("c3l2_stage9","c3l2_stage10"):
             if not rows:
@@ -1767,7 +1786,16 @@ def _teacher_course_results_impl(compact=False):
                     "Docente":f"{effective:g}/{config['maximum']}",
                     "Estado":"Revisada" if reviewed_row else "Pendiente",
                 }
-                if config["with_grade"]:
+                if config.get("integrated"):
+                    from views.curso4_lab2_review import final_result
+                    final=final_result(row,row.get("_c4l2_quiz"))
+                    item.pop("Automático",None)
+                    item.pop("Docente",None)
+                    item["Cuestionario /30"]=final["quiz"]
+                    item["Informe /70"]=final["practical"]
+                    item["Total /100"]=final["total"]
+                    item["Nota final"]=final["grade"] if final["grade"] is not None else "Pendiente"
+                elif config["with_grade"]:
                     item["Nota vigente"]=(
                         f"{_grade_from_percent(effective/config['maximum']*100):.1f}"
                         if reviewed_row else "Pendiente"

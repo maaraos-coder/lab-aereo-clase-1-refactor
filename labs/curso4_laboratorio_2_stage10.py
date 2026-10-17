@@ -305,11 +305,14 @@ def _render_maps(st,title,maps):
         except Exception:
             raw=b""
         if raw:
-            columns[index%2].image(
-                raw,
-                caption=str(item.get("caption") or item.get("name") or f"Mapa {index+1}"),
-                use_container_width=True,
-            )
+            try:
+                columns[index%2].image(
+                    raw,
+                    caption=str(item.get("caption") or item.get("name") or f"Mapa {index+1}"),
+                    use_container_width=True,
+                )
+            except Exception:
+                st.warning(f"No se pudo mostrar la imagen adjunta {index+1}. El resto del informe sigue disponible.")
 
 
 def _section_header(st,stage,title,points,complete=True):
@@ -675,7 +678,15 @@ def render(lab,saved,runtime):
             d.metric("Nota final",f"{grade:.1f}")
             if total>=60:st.success("Evaluación aprobada con exigencia del 60 %.")
             else:st.error("El puntaje final se encuentra bajo la exigencia de aprobación del 60 %.")
-        feedback=(final_row or {}).get("teacher_feedback") or (final_row or {}).get("feedback")
+        teacher_note=(final_row or {}).get("teacher_note") or ""
+        try:
+            parsed_note=json.loads(teacher_note)
+            teacher_note=parsed_note.get("feedback",teacher_note) if isinstance(parsed_note,dict) else teacher_note
+        except (TypeError,ValueError):
+            pass
+        feedback=(final_row or {}).get("teacher_feedback") or teacher_note or (
+            (final_row or {}).get("feedback") if practical_score is None else ""
+        )
         if feedback:st.markdown(f"**Retroalimentación docente:** {feedback}")
         st.markdown("### Informe técnico entregado")
         report=_payload(final_row) if final_row else _submission_payload(saved)
