@@ -1,7 +1,11 @@
 """Etapa 6 · Curso 4 Laboratorio 2: diseño e implementación de medidas de control."""
 
+from copy import deepcopy
+from labs.curso4_lab2_control_scope import render_scope, validate_scope
+
 MEASURE_OPTIONS=[
     "Seleccionar medida",
+    "Combinación de medidas",
     "Barrera acústica",
     "Reducción directa",
     "Silenciador",
@@ -65,9 +69,9 @@ def _teacher_reference_maxima():
     }
 
 
-def _build_design_rows(maxima,limit=65.0):
+def _build_design_rows(maxima,limit=65.0,fronts=None):
     rows=[]
-    for base in FRONT_TEMPLATE:
+    for base in (FRONT_TEMPLATE if fronts is None else fronts):
         key=_scenario_key(base["Frente / condición"])
         m=maxima.get(key,{})
         original=m.get("laeq")
@@ -87,7 +91,11 @@ def _build_design_rows(maxima,limit=65.0):
 
 
 def _student_design_rows(saved,limit=65.0):
-    return _build_design_rows(_original_maxima(saved),limit)
+    names=list(dict.fromkeys(str(source.get("Etapa") or "").strip()
+        for source in (saved.get("c4l2_s3_acoustic_sources") or []) if str(source.get("Etapa") or "").strip()))
+    types={row["Frente / condición"]:row["Tipo de trabajo"] for row in FRONT_TEMPLATE}
+    fronts=[{"Frente / condición":name,"Tipo de trabajo":types.get(name,"Según actividad registrada")} for name in names]
+    return _build_design_rows(_original_maxima(saved),limit,fronts=fronts or None)
 
 
 def _teacher_design_rows(limit=65.0):
@@ -137,7 +145,7 @@ def _strategy_editor(st,pd,rows,key):
           </div>
           <div style="color:#526f80;line-height:1.5">
             Los datos acústicos vienen de la Etapa 5. Completa únicamente la medida,
-            su justificación técnica y el nombre de la copia controlada.
+            su justificación técnica y el nombre de la copia controlada. La aplicación por máquina se configura en la sección 6.
           </div>
         </div>
         """,
@@ -166,7 +174,7 @@ def _strategy_editor(st,pd,rows,key):
             "Límite [dB(A)]":st.column_config.NumberColumn("Límite",format="%.1f dB(A)",width="small"),
             "Excedencia [dB]":st.column_config.NumberColumn("Excedencia",format="%.1f dB",width="small"),
             "Medida seleccionada":st.column_config.SelectboxColumn(
-                "Medida de control",options=MEASURE_OPTIONS,required=True,width="medium",
+                "Estrategia general",options=MEASURE_OPTIONS,required=True,width="medium",
             ),
             "Justificación":st.column_config.TextColumn(
                 "Justificación técnica",help="Explica por qué la medida es aplicable a este frente.",width="large",
@@ -305,7 +313,7 @@ def render(lab,saved,runtime):
     st.markdown(
         "Configura geometría, seis superficies, Rw o TL por bandas, absorción interior y ventilación. "
         "El resultado se obtiene del balance energético y de la emisión de cada cara. "
-        "Después aplica estos mismos parámetros al frente elegido en la sección 5."
+        "Después asigna los parámetros a las máquinas concretas del frente elegido. La práctica no aplica automáticamente una reducción al frente completo."
     )
     study_cfg,study_results=workshop.render_designer(
         st,pd,"c4l2_s6_study_v3",saved.get("c4l2_s6_treatment_study"),suggested_tl=tl_spectrum
@@ -342,6 +350,8 @@ def render(lab,saved,runtime):
         return
 
     st.markdown("### 5 · Diseña la estrategia para cada frente")
+    st.info("El frente agrupa máquinas para representar su emisión conjunta. Un tratamiento de fuente actúa solo sobre las máquinas y unidades que selecciones; una barrera actúa sobre el camino hacia el receptor. Elige Combinación de medidas si tu estrategia usa tratamientos distintos.")
+    st.markdown("**Ejemplo de procedimiento:** si se encierra solo el minicargador, la excavadora y la retroexcavadora conservan su emisión original. El frente controlado se obtiene sumando energéticamente las tres contribuciones resultantes, no restando el aislamiento del encierro al total del frente.")
     if is_teacher:
         saved_rows=saved.get("c4l2_s6_control_design") or _teacher_design_rows(reference_limit)
         design_grid_key="c4l2_s6_design_grid_teacher_v2"
@@ -382,63 +392,37 @@ def render(lab,saved,runtime):
     measure=str(selected.get("Medida seleccionada") or "Seleccionar medida")
 
     import hashlib
-    prefix="c4l2_s6_applied_"+hashlib.sha1((str(role)+selected_front+measure).encode()).hexdigest()[:12]
-    cfg_saved=(saved.get("c4l2_s6_measure_config") or {}).get(selected_front,{})
-    if measure=="Barrera acústica" and cfg_saved.get("medida") in ("Barrera acústica perimetral","Barrera trasladable IMIV"):
-        cfg_saved=dict(cfg_saved,medida=measure)
-    if cfg_saved.get("medida")!=measure:
-        cfg_saved={}
-    cfg={}
-    calc=None
-    treatment_kinds={
-        "Encierro completo":"enclosure","Semiencierro":"semi",
-        "Encierro + silenciador":"enclosure_silencer","Silenciador":"silencer",
-        "Reducción directa":"direct",
-    }
-    if measure in treatment_kinds:
-        initial=cfg_saved.get("treatment") or control_model.default_treatment(treatment_kinds[measure])
-        if st.button("Usar parámetros de la práctica",key=prefix+"_copy"):
-            if study_cfg["noise_control_type"]!=treatment_kinds[measure]:
-                st.warning("Selecciona en la práctica el mismo tipo de tratamiento que elegiste para este frente.")
+    prefix="c4l2_s6_scope_"+hashlib.sha1((str(role)+selected_front).encode()).hexdigest()[:12]
+    cfg_saved=st.session_state.get(prefix+"_work") or (saved.get("c4l2_s6_measure_config") or {}).get(selected_front,{})
+    cfg=render_scope(st,pd,saved,selected_front,measure,cfg_saved,prefix,workshop,study_cfg,tl_spectrum)
+    st.session_state[prefix+"_work"]=deepcopy(cfg)
+    if st.button("Guardar aplicaciones y cálculo de este frente",key=prefix+"_save_front"):
+        try:
+            validate_scope(saved,selected_front,cfg)
+        except ValueError as error:
+            st.warning(str(error)+" Puedes conservar el diseño incompleto con Guardar avance.")
+        else:
+            candidate=deepcopy(saved)
+            candidate["c4l2_s6_control_design"]=design_records
+            candidate["c4l2_s6_measure_config"]={**(saved.get("c4l2_s6_measure_config") or {}),selected_front:cfg}
+            candidate["done_6"]=False
+            try:
+                runtime["_save"](lab,candidate,6)
+            except Exception:
+                st.error("No se pudo guardar la aplicación. Revisa la conexión y vuelve a intentarlo.")
             else:
-                configs=dict(saved.get("c4l2_s6_measure_config") or {})
-                configs[selected_front]={"medida":measure,"treatment":study_cfg}
-                saved["c4l2_s6_measure_config"]=configs
-                for key in list(st.session_state):
-                    if str(key).startswith(prefix): del st.session_state[key]
-                runtime["_save"](lab,saved,6)
-                st.rerun()
-        treatment,calc=workshop.render_designer(
-            st,pd,prefix,initial,fixed_kind=treatment_kinds[measure],suggested_tl=tl_spectrum
-        )
-        cfg["treatment"]=treatment
-    elif measure=="Barrera acústica":
-        cfg,calc=workshop.render_barrier_calculator(st,pd,prefix,cfg_saved)
-        cfg["ubicacion"]=st.text_input("Ubicación / tramo protegido",value=str(cfg_saved.get("ubicacion") or ""),key=prefix+"_location")
-        cfg["densidad_kgm2"]=st.number_input("Masa superficial del panel [kg/m²]",min_value=1.,max_value=200.,value=float(cfg_saved.get("densidad_kgm2",10.)),step=1.,key=prefix+"_mass")
-    else:
-        st.info("Selecciona una medida en la tabla anterior para habilitar su cálculo y configuración.")
-    if measure!="Seleccionar medida":
-        cfg["calculo"]=calc
-        st.caption("El cálculo ilustrativo de esta sección no reemplaza los resultados controlados del proyecto. La comparación completa del caso se realiza en la Etapa 7.")
-        if st.button("Guardar parámetros y cálculo de este frente",key=prefix+"_save_front"):
-            if calc is None:
-                st.warning("Corrige los parámetros para obtener un cálculo válido antes de guardarlo.")
-            else:
-                configs=dict(saved.get("c4l2_s6_measure_config") or {})
-                configs[selected_front]={"medida":measure,**cfg}
-                saved["c4l2_s6_control_design"]=design_records
-                saved["c4l2_s6_measure_config"]=configs
-                runtime["_save"](lab,saved,6)
-                st.success("Parámetros y cálculo de este frente guardados. Puedes configurar otro frente.")
+                saved.update(candidate)
+                st.success("Aplicaciones por máquina y balance del frente guardados. Puedes configurar otro frente.")
 
     st.markdown("### 7 · Implementa una copia controlada en Noise Map Lab")
     st.markdown("""
     1. Abre el **proyecto original** correspondiente al frente.
     2. **Duplica / guarda con otro nombre** antes de modificarlo.
-    3. Incorpora la medida seleccionada manteniendo fuentes, receptores y geometría original.
-    4. Revisa visualmente la medida en planta y, si corresponde, en el **corte F–R**.
-    5. Guarda el proyecto controlado. **No recalifiques todavía el resultado en esta etapa**: la comparación se realizará en la Etapa 7.
+    3. Aplica cada tratamiento únicamente a las máquinas y unidades identificadas. Conserva la emisión de las demás y recompón energéticamente el frente; no restes la atenuación de una máquina a todo el conjunto.
+    4. Para barreras, encierros o semiencierros con efecto direccional, representa las máquinas por separado cuando sus posiciones, alturas u orientaciones importen. Verifica qué caminos quedan protegidos. No apliques la medida otra vez a un espectro que ya la incorpora.
+    5. Conserva fuentes, receptores y geometría originales para comparar. Si necesitas desagregar una fuente equivalente, construye también una copia original desagregada y comprueba su comparabilidad antes de atribuir la diferencia al control.
+    6. Revisa visualmente la medida en planta y, si corresponde, en el **corte F–R**.
+    7. Guarda el proyecto controlado. **No recalifiques todavía el resultado en esta etapa**: la comparación se realizará en la Etapa 7.
     """)
     st.link_button("🗺️ Abrir Noise Map Lab",runtime["NOISEMAP_URL"],use_container_width=True)
 
@@ -463,35 +447,57 @@ def render(lab,saved,runtime):
     v4=st.checkbox("Guardé el escenario controlado con un nombre diferente.",value=bool(saved_checks.get("copy")),key="c4l2_s6_check_copy")
 
     configs=dict(saved.get("c4l2_s6_measure_config") or {})
-    if selected_front and measure!="Seleccionar medida":
-        configs[selected_front]={"medida":measure,**cfg}
+    for row in design_records:
+        front=str(row.get("Frente / condición") or "")
+        work_key="c4l2_s6_scope_"+hashlib.sha1((str(role)+front).encode()).hexdigest()[:12]+"_work"
+        if work_key in st.session_state:
+            configs[front]=deepcopy(st.session_state[work_key])
+    if selected_front:
+        configs[selected_front]=cfg
     from labs.curso4_lab2_drafts import render_draft_save
-    render_draft_save(st,saved,runtime,lab,6,{
+    draft_updates={
         "c4l2_s6_tl_calculator":tl_config,
         "c4l2_s6_treatment_study":study_cfg,
         "c4l2_s6_treatment_study_results":study_results,
         "c4l2_s6_control_design":design_records,
         "c4l2_s6_measure_config":configs,
         "c4l2_s6_checks":{"original":v1,"viable":v2,"geometry":v3,"copy":v4},
-    },"c4l2_s6_save_draft")
+    }
+    if design_records!=saved.get("c4l2_s6_control_design") or configs!=saved.get("c4l2_s6_measure_config"):
+        draft_updates["done_6"]=False
+    render_draft_save(st,saved,runtime,lab,6,draft_updates,"c4l2_s6_save_draft")
 
     if st.button("✓ Validar y finalizar la Etapa 6",type="primary",use_container_width=True,key="c4l2_s6_save"):
-        incomplete=[
-            r for r in design_records
-            if str(r.get("Medida seleccionada") or "")=="Seleccionar medida"
+        incomplete=[r for r in design_records
+            if str(r.get("Medida seleccionada") or "") in ("", "Seleccionar medida")
             or not str(r.get("Justificación") or "").strip()
-            or not str(r.get("Proyecto controlado") or "").strip()
-        ]
+            or not str(r.get("Proyecto controlado") or "").strip()]
+        errors=[]
+        for row in design_records:
+            front=str(row.get("Frente / condición") or "")
+            configuration=configs.get(front,{})
+            try:
+                if configuration.get("medida") != row.get("Medida seleccionada"):
+                    raise ValueError("Revisa las aplicaciones de la estrategia seleccionada.")
+                validate_scope(saved,front,configuration)
+            except ValueError as error:
+                errors.append(f"{front}: {error}")
         if incomplete:
-            st.warning("Completa medida, justificación y nombre del proyecto controlado para todos los frentes.")
+            st.warning("Completa estrategia, justificación y nombre del proyecto controlado para todos los frentes.")
+        elif errors:
+            for error in errors: st.warning(error)
         elif not all([v1,v2,v3,v4]):
             st.warning("Completa las cuatro verificaciones antes de guardar.")
         else:
-            configs=dict(saved.get("c4l2_s6_measure_config") or {})
-            if selected_front and measure!="Seleccionar medida" and calc is not None:
-                configs[selected_front]={"medida":measure,**cfg}
-            saved["c4l2_s6_control_design"]=design_records
-            saved["c4l2_s6_measure_config"]=configs
-            saved["done_6"]=True
-            runtime["_save"](lab,saved,6)
-            st.success("Diseño de control guardado. La Etapa 7 comparará tu condición original con la solución que diseñaste.")
+            candidate=deepcopy(saved)
+            candidate.update({"c4l2_s6_control_design":design_records,
+                "c4l2_s6_measure_config":configs,
+                "c4l2_s6_checks":{"original":v1,"viable":v2,"geometry":v3,"copy":v4},
+                "done_6":True})
+            try:
+                runtime["_save"](lab,candidate,6)
+            except Exception:
+                st.error("No se pudo guardar el diseño. Revisa la conexión y vuelve a intentarlo.")
+            else:
+                saved.update(candidate)
+                st.success("Diseño por máquinas y propagación guardado. La Etapa 7 comparará los escenarios modelados.")

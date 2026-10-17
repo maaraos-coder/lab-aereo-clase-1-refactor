@@ -169,7 +169,7 @@ def _geometry_plot(st,config,key):
     st.caption(f'Frente = azimut {config["enclosure_azimuth_deg"]:.0f}° desde el norte; fondo = lado opuesto. Naranja indica una cara abierta. La rotación se aplica en el cálculo; la vista muestra los ejes locales.')
 
 
-def render_designer(st,pd,prefix,initial=None,fixed_kind=None,suggested_tl=None):
+def render_designer(st,pd,prefix,initial=None,fixed_kind=None,suggested_tl=None,source_lw=None,source_label=None):
     _designer_styles(st)
     initial=deepcopy(initial or model.default_treatment())
     labels=list(KINDS)
@@ -286,15 +286,20 @@ def render_designer(st,pd,prefix,initial=None,fixed_kind=None,suggested_tl=None)
     if enclosed:
         with tabs[0]: _geometry_plot(st,cfg,prefix+'_geometry')
     with tabs[-1]:
-        st.markdown('**Ejemplo exterior calculado: una fuente puntual, terreno plano, sin otros obstáculos.**')
+        st.markdown('**Cálculo de apoyo para la máquina seleccionada: terreno plano, sin otros obstáculos.**' if source_lw is not None else '**Ejemplo exterior calculado: una fuente puntual, terreno plano, sin otros obstáculos.**')
         a,b,c=st.columns(3)
         distance=a.number_input('Distancia horizontal F–R [m]',min_value=5.,max_value=1000.,value=20.,step=1.,key=prefix+'_distance')
         bearing=b.number_input('Azimut del receptor desde F [°]',min_value=0.,max_value=359.9,value=0.,step=5.,key=prefix+'_bearing')
         height=c.number_input('Altura del receptor [m]',min_value=.1,max_value=100.,value=1.5,step=.1,key=prefix+'_rheight')
         if enclosed and distance<=max(cfg['enclosure_length_m'],cfg['enclosure_width_m']):
             st.warning('Sitúa el receptor en campo exterior: aumenta F–R respecto de las dimensiones del encierro.')
-        with st.expander('Espectro Lw de la fuente del ejemplo',expanded=False):
-            lw=_spectrum(st,pd,prefix+'_lw','Lw no ponderado por octavas [dB]',model.EXAMPLE_LW,150.)
+        if source_lw is not None:
+            lw=dict(source_lw)
+            st.caption(f'Espectro original recuperado de la Etapa 3 · {source_label or "máquina seleccionada"} · una unidad, sin ponderación A. Se conserva sin editar.')
+            _table(st,pd,[{'Hz':f,'Lw original [dB]':lw[str(f)]} for f in model.OCTAVE_BANDS])
+        else:
+            with st.expander('Espectro Lw de la fuente del ejemplo',expanded=False):
+                lw=_spectrum(st,pd,prefix+'_lw','Lw no ponderado por octavas [dB]',model.EXAMPLE_LW,150.)
         rows,before,after=model.treatment_results(cfg,lw,distance,bearing,height)
         _metrics(st,before,after); _table(st,pd,rows)
         if enclosed:
