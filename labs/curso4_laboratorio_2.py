@@ -215,8 +215,24 @@ def _dynamic_grid(saved_rows, state_key, grid_key, empty_row_factory, widths=Non
         st.session_state[state_key]=[dict(x) for x in saved_rows]
 
     rows=st.session_state[state_key]
+    source_df=pd.DataFrame(rows)
+    if grid_key=="c4l2_s1_vertices_grid":
+        # Keep vertex identification first, including previously saved grids.
+        source_df=source_df.reindex(columns=["Vértice","Latitud","Longitud"])
+        def _vertex_letter(index):
+            label=""
+            index+=1
+            while index:
+                index,rem=divmod(index-1,26)
+                label=chr(65+rem)+label
+            return label
+        for index in range(len(source_df)):
+            old_label=str(source_df.at[index,"Vértice"]) if pd.notna(source_df.at[index,"Vértice"]) else ""
+            if old_label.startswith("V") and old_label[1:].isdigit():
+                source_df.at[index,"Vértice"]=_vertex_letter(index)
+        st.session_state[state_key]=source_df.where(pd.notna(source_df),None).to_dict("records")
     df=_professional_grid(
-        pd.DataFrame(rows),
+        source_df,
         # Force AgGrid to remount when rows are added or removed.
         # A stable key can keep the original rowData and hide new vertices.
         key=f"{grid_key}_rows_{len(rows)}",
