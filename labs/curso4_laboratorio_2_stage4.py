@@ -639,7 +639,22 @@ def render(lab,saved,runtime):
         key=f"c4l2_s4_savedmap_{_safe_name(stage)}",
     )
 
-    st.markdown("### 6 · Registra los resultados de la condición original")
+    st.markdown("### 6 · Registra la condición original más desfavorable para cada receptor")
+    st.info(
+        "Cada fila corresponde a la evaluación más desfavorable de este frente respecto de ese receptor, "
+        "sin medidas de control. La posición crítica del frente puede ser distinta para R01, R02 y los demás receptores."
+    )
+    st.markdown("""
+    **Para completar cada fila:**
+
+    1. En Noise Map Lab, ubica el frente dentro de su sector de trabajo, en la posición más próxima al receptor **donde realmente pueda desarrollarse esa actividad**.
+    2. Calcula el nivel en ese receptor. Si hay varias posiciones posibles con distintas alturas u obstáculos, compáralas y conserva la que produzca el **mayor LAeq**; no basta con elegir la menor distancia.
+    3. Registra en la misma fila la **distancia fuente–receptor** y el **LAeq predicho** de esa posición. Guarda el proyecto o una copia que permita identificar el receptor y la posición evaluada.
+    4. Repite el procedimiento para el siguiente receptor, manteniendo la maquinaria simultánea, su potencia sonora y los parámetros de cálculo del mismo frente.
+
+    **Ejemplo:** la fila R01 recoge la posición crítica para R01; la fila R02 recoge la posición crítica para R02. Pueden corresponder a ubicaciones diferentes del frente.
+    """)
+    st.caption("Esta tabla reúne las condiciones críticas por receptor. Sus máximos pueden provenir de posiciones distintas y no representan necesariamente una única ubicación simultánea del frente. Conserva cada escenario original para compararlo después con su versión controlada.")
     result_key=f"c4l2_s4_results_{_safe_name(stage)}"
     existing_results=(saved.get("c4l2_s4_results") or {}).get(stage) or stage_draft.get("results")
     result_rows=existing_results or [
