@@ -42,15 +42,17 @@ def front_sources(saved, front):
     return output
 
 
-def application_reduction(source, application):
+def application_reduction(source, application, require_evidence=True):
+    measure = application.get("measure")
+    if measure not in (NO_CONTROL, *KINDS):
+        raise ValueError("Selecciona una aplicación para esta máquina.")
     if application.get("source_signature") != source_fingerprint([source]):
         raise ValueError("Revisa la aplicación: cambió la fuente original o falta vincularla.")
-    measure = application.get("measure")
     if measure == NO_CONTROL:
         return [0.] * 8, 0
     if measure not in KINDS:
         raise ValueError("Selecciona una aplicación para cada máquina.")
-    if not str(application.get("evidence") or "").strip():
+    if require_evidence and not str(application.get("evidence") or "").strip():
         raise ValueError("Documenta el respaldo técnico y la compatibilidad del tratamiento.")
     quantity = parse_level(source.get("Cantidad"))
     treated = parse_level(application.get("treated_units"))
@@ -83,16 +85,25 @@ def recombine_front(entries, applications, strict=False):
     if not entries:
         raise ValueError("Guarda las máquinas y la simultaneidad original de este frente en las Etapas 3 y 4.")
     original_contributions, original = equivalent_spectrum([entry["source"] for entry in entries])
-    controlled_contributions, rows, pending = [], [], []
+    controlled_contributions, rows, pending, provisional = [], [], [], []
     for entry, original_machine in zip(entries, original_contributions):
         source = entry["source"]
+        application = applications.get(entry["id"], {})
+        status = "Calculado"
         try:
-            reductions, treated = application_reduction(source, applications.get(entry["id"], {}))
+            reductions, treated = application_reduction(source, application, require_evidence=strict)
         except ValueError as error:
             if strict:
                 raise ValueError(f"{source.get('Máquina / equipo proyecto')}: {error}") from error
             reductions, treated = [0.] * 8, 0
+            status = "Pendiente: se conserva la emisión original"
             pending.append(f"{source.get('Máquina / equipo proyecto')}: {error}")
+        else:
+            if application.get("measure") == NO_CONTROL:
+                status = "Sin tratamiento declarado"
+            elif not str(application.get("evidence") or "").strip():
+                status = "Estimación provisional: falta justificación"
+                provisional.append(str(source.get("Máquina / equipo proyecto")))
         quantity = int(parse_level(source["Cantidad"]))
         controlled = []
         for power, reduction in zip(source["Lw_bandas"], reductions):
@@ -105,12 +116,13 @@ def recombine_front(entries, applications, strict=False):
         controlled_contributions.append(controlled)
         rows.append({"machine_id":entry["id"], "Máquina":source.get("Máquina / equipo proyecto"),
                      "Medida":applications.get(entry["id"],{}).get("measure","Seleccionar aplicación"),
+                     "Estado":status,
                      "Unidades originales":quantity, "Unidades tratadas":treated,
                      "Lw_original":original_machine, "Lw_controlado":controlled})
     controlled = [sum_levels(band) for band in zip(*controlled_contributions)]
     return {"band_labels":list(BAND_LABELS), "original":original, "controlled":controlled,
             "original_lwa":weighted_power(original), "controlled_lwa":weighted_power(controlled),
-            "machines":rows, "pending":pending, "scope":"emitted_power_only"}
+            "machines":rows, "pending":pending, "provisional":provisional, "scope":"emitted_power_only"}
 
 
 def validate_scope(saved, front, config):
@@ -165,9 +177,12 @@ def render_scope(st, pd, saved, front, strategy, previous, prefix, workshop, stu
     source = next(entry["source"] for entry in entries if entry["id"] == selected_id)
     old = applications.get(selected_id, {})
     option = old.get("measure", "Seleccionar aplicación")
-    measure = st.selectbox("Aplicación sobre esta máquina", APPLICATION_OPTIONS,
-                           index=APPLICATION_OPTIONS.index(option) if option in APPLICATION_OPTIONS else 0,
-                           key=prefix+"_"+selected_id+"_measure")
+    measure_key=prefix+"_"+selected_id+"_measure"
+    # Mantener un índice constante: cambiar el valor inicial en cada rerun puede
+    # recrear el widget y devolver la selección anterior al reconstruir la ficha.
+    if measure_key not in st.session_state:
+        st.session_state[measure_key]=option if option in APPLICATION_OPTIONS else APPLICATION_OPTIONS[0]
+    measure = st.selectbox("Aplicación sobre esta máquina", APPLICATION_OPTIONS, key=measure_key)
     machine_prefix = prefix+"_"+selected_id+"_"+hashlib.sha1(measure.encode()).hexdigest()[:8]
     application = deepcopy(old) if old.get("measure") == measure else {}
     signature = source_fingerprint([source])
@@ -198,7 +213,8 @@ def render_scope(st, pd, saved, front, strategy, previous, prefix, workshop, stu
         application.update({"treatment":treatment,"calculo":calculation})
         application["evidence"] = st.text_area("Respaldo técnico y compatibilidad con esta máquina",
             value=str(application.get("evidence") or ""), key=machine_prefix+"_evidence",
-            help="Identifica datos técnicos, mediciones o hipótesis docentes justificadas. El TL del panel y la reducción final en el receptor son magnitudes distintas.")
+            help="Identifica datos técnicos, mediciones o hipótesis docentes justificadas. Se exige para finalizar, pero no bloquea la estimación provisional. El TL del panel y la reducción final en el receptor son magnitudes distintas.")
+        st.caption("Puedes explorar la reducción con los parámetros actuales aunque este texto esté vacío. La justificación y la viabilidad de la medida se revisan antes de finalizar; el cálculo no decide por sí solo si una máquina móvil puede operar dentro del encierro.")
         if measure == "Silenciador":
             st.warning("Un silenciador actúa sobre una emisión canalizada. Si solo trata el escape, su IL no puede descontarse de toda la máquina: separa esa componente en Noise Map Lab o justifica la reducción efectiva del equipo completo.")
             application["effective_machine_reduction"] = st.checkbox("Los valores ingresados representan una reducción efectiva justificada de la emisión total de la máquina modelada.", value=bool(application.get("effective_machine_reduction")), key=machine_prefix+"_effective")
@@ -225,12 +241,15 @@ def render_scope(st, pd, saved, front, strategy, previous, prefix, workshop, stu
         st.warning(str(error))
         return config
     config["controlled_front"] = result
-    st.dataframe(pd.DataFrame([{"Máquina":row["Máquina"],"Medida":row["Medida"],"Unidades originales":row["Unidades originales"],"Unidades tratadas":row["Unidades tratadas"]} for row in result["machines"]]),hide_index=True,use_container_width=True)
+    st.dataframe(pd.DataFrame([{"Máquina":row["Máquina"],"Medida":row["Medida"],"Estado":row["Estado"],"Unidades originales":row["Unidades originales"],"Unidades tratadas":row["Unidades tratadas"],"Reducción LWA del equipo [dB]":round(weighted_power(row["Lw_original"])-weighted_power(row["Lw_controlado"]),2)} for row in result["machines"]]),hide_index=True,use_container_width=True)
     if result["pending"]:
-        st.warning("Cálculo provisional: las aplicaciones pendientes o sin respaldo conservan su emisión original.")
+        st.warning("Las máquinas sin una aplicación válida conservan su emisión original. Los tratamientos válidos de las demás máquinas sí se incluyen en el cálculo.")
         for message in result["pending"]: st.caption(message)
-    st.dataframe(pd.DataFrame({"Banda":BAND_LABELS,"Lw original del frente [dB]":result["original"],"Lw con tratamientos de fuente [dB]":result["controlled"]}),hide_index=True,use_container_width=True)
+    if result["provisional"]:
+        st.info("Estimación provisional calculada con los parámetros configurados. Falta justificar antes de finalizar: "+", ".join(result["provisional"])+". La falta de ese texto no anula el tratamiento.")
+    st.dataframe(pd.DataFrame({"Banda":BAND_LABELS,"Lw original del frente [dB]":result["original"],"Lw con tratamientos de fuente [dB]":result["controlled"],"Reducción ΔLw del frente [dB]":[round(a-b,2) for a,b in zip(result["original"],result["controlled"])]}),hide_index=True,use_container_width=True)
     st.metric("LWA del frente con tratamientos de fuente",f"{result['controlled_lwa']:.2f} dB(A)")
+    st.metric("Reducción de potencia del frente · ΔLWA",f"{result['original_lwa']-result['controlled_lwa']:.2f} dB")
     st.caption("Se suman energéticamente las unidades tratadas y las no tratadas. Este es un balance de potencia emitida, no el LAeq en el receptor. La barrera, la orientación de las caras y la geometría se evalúan en Noise Map Lab. Los parámetros de ejemplo requieren respaldo antes de finalizar.")
     st.info("Para implementar controles individuales en Noise Map Lab, sustituye la fuente equivalente por sus máquinas en una copia del original. No coloques un encierro de una máquina sobre la fuente que agrupa todo el frente. La sección 7 explica cómo crear y comparar las copias por máquinas.")
     return config

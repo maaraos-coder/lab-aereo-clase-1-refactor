@@ -73,7 +73,7 @@ class ScopeMathTests(unittest.TestCase):
 
     def test_missing_evidence_stale_source_and_unselected_equipment_block_finalization(self):
         entries = front_sources(saved_state(), FRONT)
-        for change in ({'evidence':''}, {'source_signature':'old'}, {'measure':'Seleccionar aplicación'}):
+        for change in ({'source_signature':'old'}, {'measure':'Seleccionar aplicación'}):
             app = applications(entries)
             app[entries[0]['id']].update(change)
             with self.subTest(change=change):
@@ -81,6 +81,19 @@ class ScopeMathTests(unittest.TestCase):
                 result = recombine_front(entries, app)
                 self.assertTrue(result['pending'])
                 self.assertEqual(result['original'], result['controlled'])
+
+    def test_missing_written_evidence_does_not_cancel_a_valid_enclosure_preview(self):
+        entries = front_sources(saved_state(), FRONT)
+        app = applications(entries)
+        app[entries[0]['id']].update({'measure':'Encierro completo','evidence':'',
+                                    'treatment':model.default_treatment('enclosure')})
+        result = recombine_front(entries,app)
+        self.assertLess(result['controlled'][0],result['original'][0])
+        self.assertEqual(result['machines'][0]['Unidades tratadas'],1)
+        self.assertIn('provisional',result['machines'][0]['Estado'])
+        self.assertEqual(result['provisional'],['Minicargador'])
+        self.assertFalse(result['pending'])
+        with self.assertRaises(ValueError): recombine_front(entries,app,strict=True)
 
     def test_barrier_does_not_change_emitted_power(self):
         saved = saved_state()
@@ -140,7 +153,9 @@ class UI:
     def write(self,*a,**k): pass
     def expander(self,*a,**k): return self
     def columns(self,n,**k): return [self] * (n if isinstance(n,int) else len(n))
-    def selectbox(self,label,options,index=0,**k): return options[self.machine if label=='Máquina a configurar' else index]
+    def selectbox(self,label,options,index=0,**k):
+        if label=='Máquina a configurar': return options[self.machine]
+        return self.session_state.get(k.get('key'),options[index])
     def multiselect(self,label,options,default=None,**k): return default or []
     def checkbox(self,label,value=False,key='',**k): return True if key.startswith('c4l2_s6_check_') else value
     def number_input(self,label,value,**k): return value
@@ -175,6 +190,29 @@ class ScopeUITests(unittest.TestCase):
         ui.machine = 1
         second = render_scope(ui,pd,saved,FRONT,'Reducción directa',result,'test',workshop,{}, {})
         self.assertEqual(second['machines'][entries[0]['id']],result['machines'][entries[0]['id']])
+
+    def test_changing_from_no_control_to_enclosure_opens_designer_and_updates_summary(self):
+        saved=saved_state()
+        entries=front_sources(saved,FRONT)
+        app=applications(entries)
+        app[entries[0]['id']]={'measure':NO_CONTROL,'source_signature':source_fingerprint([entries[0]['source']])}
+        cfg={'scope_schema_version':2,'medida':'Encierro completo','machines':app}
+        for role in ('Alumno','Proyección','Docente'):
+            with self.subTest(role=role):
+                ui=UI(role)
+                workshop,calls=self.workshop()
+                initial=render_scope(ui,pd,saved,FRONT,'Encierro completo',cfg,'selection',workshop,{}, {})
+                self.assertFalse(calls)
+                measure_key='selection_'+entries[0]['id']+'_measure'
+                ui.session_state[measure_key]='Encierro completo'
+                configured=render_scope(ui,pd,saved,FRONT,'Encierro completo',initial,'selection',workshop,{}, {})
+                again=render_scope(ui,pd,saved,FRONT,'Encierro completo',configured,'selection',workshop,{}, {})
+                self.assertEqual(len(calls),2)
+                machine=again['controlled_front']['machines'][0]
+                self.assertEqual(machine['Medida'],'Encierro completo')
+                self.assertEqual(machine['Unidades tratadas'],1)
+                self.assertLess(again['controlled_front']['controlled_lwa'],again['controlled_front']['original_lwa'])
+                self.assertEqual(ui.session_state[measure_key],'Encierro completo')
 
     def test_full_stage6_saves_and_recovers_explicit_scope_in_all_views(self):
         for role in ('Alumno','Proyección','Docente'):
