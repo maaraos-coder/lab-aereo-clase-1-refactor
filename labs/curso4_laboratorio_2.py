@@ -218,7 +218,18 @@ def _dynamic_grid(saved_rows, state_key, grid_key, empty_row_factory, widths=Non
     source_df=pd.DataFrame(rows)
     if grid_key=="c4l2_s1_vertices_grid":
         # Keep vertex identification first, including previously saved grids.
-        source_df=source_df.reindex(columns=["Vértice","Latitud","Longitud"])
+        if "Latitud" in source_df.columns and "Longitud" in source_df.columns:
+            from pyproj import Transformer
+            _to_utm=Transformer.from_crs("EPSG:4326","EPSG:32719",always_xy=True)
+            def _convert_old_vertex(row):
+                lat,lon=row.get("Latitud"),row.get("Longitud")
+                if pd.notna(lat) and pd.notna(lon):
+                    return _to_utm.transform(float(lon),float(lat))
+                return None,None
+            _utm_coords=source_df.apply(_convert_old_vertex,axis=1)
+            source_df["Este (m)"]=[v[0] for v in _utm_coords]
+            source_df["Norte (m)"]=[v[1] for v in _utm_coords]
+        source_df=source_df.reindex(columns=["Vértice","Este (m)","Norte (m)"])
         def _vertex_letter(index):
             label=""
             index+=1
@@ -510,20 +521,20 @@ def _stage1(lab, saved):
     )
     is_teacher=st.session_state.get("role")=="Docente"
     teacher_vertices=[
-        {"Vértice":"A","Latitud":-33.6126705,"Longitud":-70.5715419},
-        {"Vértice":"B","Latitud":-33.6124714,"Longitud":-70.5701802},
-        {"Vértice":"C","Latitud":-33.6124894,"Longitud":-70.5701805},
-        {"Vértice":"D","Latitud":-33.6125562,"Longitud":-70.5706021},
-        {"Vértice":"E","Latitud":-33.6128998,"Longitud":-70.5705329},
-        {"Vértice":"F","Latitud":-33.6127983,"Longitud":-70.5700029},
-        {"Vértice":"G","Latitud":-33.6131420,"Longitud":-70.5699229},
-        {"Vértice":"H","Latitud":-33.6132253,"Longitud":-70.5704633},
-        {"Vértice":"I","Latitud":-33.6135960,"Longitud":-70.5703838},
-        {"Vértice":"J","Latitud":-33.6135037,"Longitud":-70.5698432},
-        {"Vértice":"K","Latitud":-33.6138563,"Longitud":-70.5697742},
-        {"Vértice":"L","Latitud":-33.6139396,"Longitud":-70.5703146},
-        {"Vértice":"M","Latitud":-33.6143826,"Longitud":-70.5702257},
-        {"Vértice":"N","Latitud":-33.6145330,"Longitud":-70.5711661},
+        {"Vértice":"A","Este (m)":354209,"Norte (m)":6279682},
+        {"Vértice":"B","Este (m)":354335,"Norte (m)":6279706},
+        {"Vértice":"C","Este (m)":354335,"Norte (m)":6279704},
+        {"Vértice":"D","Este (m)":354296,"Norte (m)":6279696},
+        {"Vértice":"E","Este (m)":354303,"Norte (m)":6279658},
+        {"Vértice":"F","Este (m)":354352,"Norte (m)":6279670},
+        {"Vértice":"G","Este (m)":354360,"Norte (m)":6279632},
+        {"Vértice":"H","Este (m)":354310,"Norte (m)":6279622},
+        {"Vértice":"I","Este (m)":354318,"Norte (m)":6279581},
+        {"Vértice":"J","Este (m)":354368,"Norte (m)":6279592},
+        {"Vértice":"K","Este (m)":354375,"Norte (m)":6279553},
+        {"Vértice":"L","Este (m)":354325,"Norte (m)":6279543},
+        {"Vértice":"M","Este (m)":354334,"Norte (m)":6279494},
+        {"Vértice":"N","Este (m)":354247,"Norte (m)":6279476},
     ]
 
     teacher_parts=[
@@ -580,17 +591,17 @@ def _stage1(lab, saved):
 
     vertex_saved=saved.get("c4l2_s1_vertices_table") or (
         teacher_vertices if is_teacher else [
-            {"Vértice":"V1","Latitud":None,"Longitud":None},
-            {"Vértice":"V2","Latitud":None,"Longitud":None},
-            {"Vértice":"V3","Latitud":None,"Longitud":None},
-            {"Vértice":"V4","Latitud":None,"Longitud":None},
+            {"Vértice":"V1","Este (m)":None,"Norte (m)":None},
+            {"Vértice":"V2","Este (m)":None,"Norte (m)":None},
+            {"Vértice":"V3","Este (m)":None,"Norte (m)":None},
+            {"Vértice":"V4","Este (m)":None,"Norte (m)":None},
         ]
     )
     if is_teacher:
         # Fuerza una sola actualización de los datos docentes cuando cambia la
         # solución oficial del expediente, evitando que session_state conserve
         # versiones antiguas de las tablas.
-        teacher_seed_version="adenda2_ruido_2026_09_23_v1"
+        teacher_seed_version="adenda2_utm_wgs84_19s_v2"
         teacher_seed_map={
             "c4l2_s1_vertices_work":(teacher_vertices,"Vértice","c4l2_s1_vertices_table"),
             "c4l2_s1_parts_work":(teacher_parts,"Parte / obra","c4l2_s1_parts_table"),
@@ -606,16 +617,16 @@ def _stage1(lab, saved):
     if is_teacher:
         st.success(
             "Vista Docente: vértices oficiales A–N cargados desde la Tabla 7 del Capítulo 2 "
-            "(coordenadas UTM WGS84 Huso 19S) y convertidos a latitud/longitud para Noise Map Lab."
+            "(coordenadas UTM WGS84 Huso 19S) y registrados en coordenadas UTM Este/Norte (m)."
         )
 
     vertex_df=_dynamic_grid(
         vertex_saved,
         state_key="c4l2_s1_vertices_work",
         grid_key="c4l2_s1_vertices_grid",
-        empty_row_factory=lambda n:{"Vértice":f"V{n}","Latitud":None,"Longitud":None},
-        widths={"Vértice":110,"Latitud":180,"Longitud":180},
-        numeric_columns=["Latitud","Longitud"],
+        empty_row_factory=lambda n:{"Vértice":f"V{n}","Este (m)":None,"Norte (m)":None},
+        widths={"Vértice":110,"Este (m)":180,"Norte (m)":180},
+        numeric_columns=["Este (m)","Norte (m)"],
         min_rows=3,
         add_label="➕ Agregar vértice",
     )
@@ -784,9 +795,9 @@ def _stage1(lab, saved):
         missing=[]
         valid_vertices=[
             r for r in vertex_records
-            if r.get("Latitud") is not None and r.get("Longitud") is not None
+            if r.get("Este (m)") is not None and r.get("Norte (m)") is not None
         ]
-        if len(valid_vertices) < 3: missing.append("al menos 3 vértices con latitud y longitud")
+        if len(valid_vertices) < 3: missing.append("al menos 3 vértices con coordenadas UTM Este y Norte")
         if len(part_records) < 3: missing.append("al menos 3 partes u obras")
         if len(phase_records) < 3: missing.append("al menos 3 etapas constructivas")
         if len(machinery_records) < 3: missing.append("al menos 3 máquinas o equipos")
