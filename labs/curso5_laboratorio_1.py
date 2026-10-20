@@ -138,24 +138,30 @@ def _project_badge():
 
 
 def _project_downloads():
+    """Ficha completa de proyecto, recintos y materialidades en un CSV para Excel."""
+    rows = [
+        ["Proyecto", "Nombre", PROJECT["name"], "", ""],
+        ["Proyecto", "Uso", PROJECT["use"], "", ""],
+        ["Proyecto", "Pisos", PROJECT["storeys"], "", ""],
+        ["Proyecto", "Viviendas", PROJECT["dwellings"], "", ""],
+        ["Proyecto", "Unidad de estudio", PROJECT["evaluation_unit"], "", ""],
+        ["Proyecto", "Altura interior [m]", PROJECT["floor_height_m"], "", ""],
+    ]
+    for name, area, volume, orientation, adjacency in ROOMS:
+        rows.append(["Recinto", name, area, volume, f"{orientation} · {adjacency}"])
+    for code, element, system, dimension, note in MATERIALS:
+        rows.append(["Materialidad", f"{code} · {element}", system, dimension, note])
     csv = pd.DataFrame(
-        MATERIALS,
-        columns=["Código", "Elemento", "Sistema", "Dimensión", "Observación"],
-    ).to_csv(index=False).encode("utf-8-sig")
-    c1, c2 = st.columns(2)
-    c1.download_button(
-        "⬇️ Ficha del proyecto · JSON",
-        data=json.dumps({**PROJECT, "rooms": ROOMS, "materials": MATERIALS}, ensure_ascii=False, indent=2),
-        file_name="edificio_los_alerces_ficha.json",
-        mime="application/json",
-        width="stretch",
-    )
-    c2.download_button(
-        "⬇️ Cuadro de materialidades · CSV",
+        rows,
+        columns=["Sección", "Elemento / campo", "Valor / sistema", "Volumen / dimensión", "Observación"],
+    ).to_csv(index=False, sep=";").encode("utf-8-sig")
+    st.download_button(
+        "📊 Descargar ficha del proyecto para Excel (CSV)",
         data=csv,
-        file_name="edificio_los_alerces_materialidades.csv",
+        file_name="edificio_los_alerces_expediente.csv",
         mime="text/csv",
         width="stretch",
+        key="c5l1_project_csv",
     )
 
 
@@ -373,7 +379,7 @@ def _stage1(lab, saved):
     st.caption(
         "Referencia de lectura: ISO/TS 19488:2021, cláusulas 4, 5 y 6; "
         "Anexo A.1–A.4 (pp. 11–14 del documento; pp. 17–20 del PDF). "
-        "Se presenta una explicación docente, no una reproducción de las tablas normativas."
+        ""
     )
 
     st.markdown("### 📥 Norma de referencia · ISO/TS 19488:2021")
@@ -442,21 +448,34 @@ def _stage1(lab, saved):
         hide_index=True,
         width="stretch",
     )
-    st.markdown("### 📁 Expediente técnico descargable")
+    st.markdown("### 📊 Ficha del proyecto para Excel")
     st.caption(
-        "El CSV contiene las materialidades. La ficha JSON permite conservar los datos "
-        "estructurados: son archivos de consulta y **no importan automáticamente el "
-        "modelo a SONARA**."
+        "Descarga un único archivo CSV con los datos generales del edificio, "
+        "recintos y materialidades. Puedes abrirlo en Excel para consultar y "
+        "organizar los antecedentes de cálculo."
     )
     _project_downloads()
 
-    st.markdown("### ✍️ Actividad 1 · Diagnóstico y propuesta de muestreo")
+    st.markdown(
+        '<div class="section-band"><span>✍️</span>'
+        '<h3>Actividad 1 · Diagnóstico y propuesta de muestreo</h3></div>',
+        unsafe_allow_html=True,
+    )
     st.caption(
         "El diagnóstico del A-302 se utilizará como base en las siguientes etapas. "
         "El plan de muestreo es una propuesta razonada para el edificio completo, "
         "no una certificación ni una cantidad de ensayos prefijada."
     )
-    with st.form("c5l1_stage1_diagnostic_form"):
+    st.markdown(
+        '<div style="padding:14px 18px;border:1px solid #cfe0ef;border-radius:14px;'
+        'background:linear-gradient(135deg,#f7fbff,#eaf5fc);margin:10px 0 15px">'
+        '<strong style="color:#125779">TU ENCARGO PROFESIONAL</strong><br>'
+        '<span style="color:#345569">Diagnostica el A-302, selecciona el procedimiento '
+        'de verificación y propone una muestra fundamentada para las 20 viviendas.</span>'
+        '</div>', unsafe_allow_html=True,
+    )
+    with st.form("c5l1_stage1_diagnostic_form", border=True):
+        st.markdown("#### ① Diagnóstico acústico del A-302")
         answer = st.text_area(
             "1. Diagnostica las cuatro situaciones acústicas del departamento A-302",
             value=saved.get("c5l1_s1_answer", ""),
@@ -471,11 +490,13 @@ def _stage1(lab, saved):
         previous_procedure = saved.get("c5l1_s1_procedure", procedure_options[0])
         if previous_procedure not in procedure_options:
             previous_procedure = procedure_options[0]
+        st.markdown("#### ② Procedimiento de verificación")
         procedure = st.selectbox(
             "2. Procedimiento para una futura verificación del edificio",
             procedure_options,
             index=procedure_options.index(previous_procedure),
         )
+        st.markdown("#### ③ Diseño del plan de muestreo")
         sample = st.text_area(
             "3. Propón un plan de muestreo para las 20 viviendas",
             value=saved.get("c5l1_s1_sampling", ""),
@@ -486,6 +507,7 @@ def _stage1(lab, saved):
             ),
             height=180,
         )
+        st.markdown("#### ④ Alcance y limitaciones")
         scope = st.text_area(
             "4. Alcance, límites y evidencias adicionales",
             value=saved.get("c5l1_s1_scope", ""),
