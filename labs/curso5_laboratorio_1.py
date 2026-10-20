@@ -49,18 +49,18 @@ ROOMS = [
     ["Estar-comedor", 20.4, 51.0, "Norte", "Fachada + medianero A-301"],
     ["Dormitorio principal", 11.5, 28.8, "Norte", "Fachada"],
     ["Dormitorio 2", 9.2, 23.0, "Sur", "Pasillo común"],
-    ["Cocina", 7.8, 19.5, "Interior", "Shaft S-1"],
+    ["Cocina", 7.8, 19.5, "Interior", "Núcleo húmedo / baño"],
     ["Baño principal", 4.1, 10.3, "Interior", "Shaft S-1"],
 ]
 
 MATERIALS = [
     ["M-01", "Muro medianero A-301/A-302", "Hormigón armado", "180 mm", "Continuo entre losas; encuentros sellados"],
-    ["L-01", "Losa entre A-302/A-402", "Hormigón armado", "160 mm", "Sobrelosa 40 mm + terminación flotante"],
+    ["L-01", "Losa entre A-302/A-402", "Hormigón armado", "160 mm", "Piso: resiliente 10 + sobrelosa 40 + terminación 10 mm"],
     ["F-01", "Paño opaco fachada norte", "HA + aislante + placa de yeso", "150 + 50 + 15 mm", "Trasdosado desacoplado"],
     ["V-01", "Ventana estar", "DVH 6/12/4 · marco aluminio", "4.80 m²", "Juntas perimetrales continuas"],
     ["V-02", "Ventana dormitorio", "DVH 6/12/4 · marco aluminio", "2.40 m²", "Juntas perimetrales continuas"],
-    ["T-01", "Tabique interior", "Doble placa yeso + lana mineral", "90 mm", "Canales con banda resiliente"],
-    ["S-01", "Shaft sanitario", "Doble placa RF + lana mineral", "120 mm", "Tuberías con abrazaderas resilientes"],
+    ["T-01", "Tabique interior", "Yeso 12,5 + cámara 65 con lana + yeso 12,5", "90 mm", "Canales con banda resiliente"],
+    ["S-01", "Shaft sanitario", "2 RF 12,5 + cámara 70 con lana + 2 RF 12,5", "120 mm", "Tuberías con abrazaderas resilientes"],
 ]
 
 CALCULATION_CASES = {
@@ -89,8 +89,8 @@ CALCULATION_CASES = {
         "code": "IN-01",
         "source": "Descarga sanitaria simultánea",
         "receiver": "Dormitorio principal A-302",
-        "descriptor": "LAFmax y/o LAeq según condición declarada",
-        "geometry": "Shaft S-01 · recorrido vertical contiguo a baño",
+        "descriptor": "LAFmax,nT y/o LAeq,nT según condición declarada",
+        "geometry": "Shaft S-01 junto a baño · dormitorio receptor V = 28,8 m³",
     },
 }
 
@@ -197,7 +197,7 @@ SONARA_DESIGN_GUIDES = {
         "route": "Calculadora libre → Ruido de impacto → ISO 12354-2.",
         "inputs": [
             ["L-01 · losa base", "Hormigón armado · 160 mm", "Registra la densidad seleccionada; SONARA obtiene la masa superficial."],
-            ["Piso superior", "Sobrelosa 40 mm + terminación flotante", "La capa resiliente y su rigidez no están definidas: selecciona una ficha o declara una hipótesis."],
+            ["Piso superior", "Piso: resiliente 10 + sobrelosa 40 + terminación 10 mm", "Capa resiliente 10 mm y terminación 10 mm (AC-04). La rigidez requiere ficha o hipótesis."],
             ["Geometría IM-01", "Área entrepiso = 20,4 m² · V = 51,0 m³", "Usa el mismo TR receptor en la comparación base/variante."],
         ],
         "steps": [
@@ -233,7 +233,7 @@ SONARA_DESIGN_GUIDES = {
         "route": "Calculadora libre → Ruido de instalaciones (EN 12354-5).",
         "inputs": [
             ["IN-01 · descarga sanitaria", "Condición de operación definida por el alumno", "Se requiere espectro de fuente trazable; los valores iniciales de SONARA son ejemplos."],
-            ["S-01 · cierre", "Doble placa RF + lana · conjunto 120 mm", "Faltan espesores individuales: define placas, cámara y montaje sin asignar 120 mm a cada capa."],
+            ["S-01 · cierre", "2 RF 12,5 + cámara 70 + 2 RF 12,5 = 120 mm", "Ver AC-04; selecciona las fichas de placas y absorbente. No asignes 120 mm a cada capa."],
             ["Receptor", "Dormitorio principal · V = 28,8 m³", "Declara TR, absorción equivalente y recorrido; A ≈ 0,16 V/T como hipótesis de campo difuso."],
         ],
         "steps": [
@@ -264,6 +264,47 @@ def _sonara_design_guide(case_name):
     st.caption("El traslado de datos entre SONARA y este laboratorio es manual; abrir SONARA no importa ni guarda resultados automáticamente.")
 
 
+def _download_plan_set(key):
+    path = _asset("los_alerces_planos_acusticos.pdf")
+    if path.is_file():
+        st.download_button(
+            "📐 Descargar juego de planos · PDF A3 (4 láminas)",
+            data=path.read_bytes(), file_name=path.name, mime="application/pdf",
+            width="stretch", key=key,
+        )
+    else:
+        st.error("El juego de planos PDF no está disponible.")
+
+
+def _download_standard(key):
+    path = _asset("ISO-TS-19488-2021.pdf")
+    if path.is_file():
+        st.download_button(
+            "📘 Descargar norma ISO/TS 19488:2021 · PDF",
+            data=path.read_bytes(), file_name=path.name, mime="application/pdf",
+            width="stretch", key=key,
+        )
+    else:
+        st.error("El PDF de ISO/TS 19488:2021 no está disponible.")
+
+
+def _design_context(saved):
+    target = saved.get("c5l1_s3_target", "Sin definir")
+    st.info(f"**Objetivo elegido en etapa 3:** {target}. Consulta el protocolo guardado antes de comparar variantes.")
+    inputs = saved.get("c5l1_s4_inputs", {})
+    if inputs:
+        st.dataframe(pd.DataFrame([
+            ["TR estar", inputs.get("tr_stay"), "s"],
+            ["TR dormitorio", inputs.get("tr_bedroom"), "s"],
+            ["Densidad HA", inputs.get("rho_ha"), "kg/m³"],
+            ["Densidad sobrelosa", inputs.get("rho_screed"), "kg/m³"],
+            ["Rigidez dinámica s′", inputs.get("dynamic_stiffness"), "MN/m³"],
+            ["Exposición exterior Lden", inputs.get("lden"), "dB"],
+        ], columns=["Dato del protocolo", "Valor", "Unidad"]), hide_index=True, width="stretch")
+    else:
+        st.warning("Aún no has guardado las entradas de la etapa 4. Defínelas o justifica las pendientes antes de calcular.")
+
+
 def _result_form(lab, saved, stage, case_name, fields, prompt):
     case = CALCULATION_CASES[case_name]
     st.markdown(f"### Caso {case['code']} · {case_name}")
@@ -271,11 +312,14 @@ def _result_form(lab, saved, stage, case_name, fields, prompt):
         f"**Fuente:** {case['source']}  \n**Receptor:** {case['receiver']}  \n"
         f"**Geometría:** {case['geometry']}  \n**Descriptor de trabajo:** {case['descriptor']}"
     )
+    _design_context(saved)
     st.info(prompt)
     _sonara_design_guide(case_name)
     _sonara_button("Abrir SONARA para diseñar esta solución")
 
     stored = saved.get(f"c5l1_result_{case['code']}", {})
+    st.markdown("### Registra tu solución final y la comparación con la base")
+    st.caption("Usa tus propios cálculos; los números del ejemplo de etapa 3 no son resultados de este formulario.")
     with st.form(f"c5l1_form_{case['code']}"):
         values = {}
         cols = st.columns(min(3, len(fields)))
@@ -290,7 +334,7 @@ def _result_form(lab, saved, stage, case_name, fields, prompt):
         st.markdown("#### Comparación de diseño · base → variante")
         target = st.text_input(
             "Objetivo de diseño y descriptor",
-            value=stored.get("target", ""),
+            value=stored.get("target", saved.get("c5l1_s4_criteria", "")),
             placeholder="Umbral elegido por ti, sentido de comparación y referencia consultada.",
         )
         base_design = st.text_area(
@@ -309,7 +353,12 @@ def _result_form(lab, saved, stage, case_name, fields, prompt):
             placeholder="Nombre del proyecto/solución, fecha y archivos de curvas, capturas o informes conservados.",
         )
         undetermined = False
+        normalized = False
         if case_name == "Instalaciones":
+            normalized = st.checkbox(
+                "He comprobado normalización a T₀ = 0,5 s y condición temporal de las salidas",
+                value=bool(stored.get("normalized", False)),
+            )
             undetermined = st.checkbox(
                 "Hay un descriptor sin determinar por falta de antecedentes",
                 value=bool(stored.get("undetermined", False)),
@@ -327,13 +376,17 @@ def _result_form(lab, saved, stage, case_name, fields, prompt):
             st.warning("Completa los resultados o declara, en instalaciones, el descriptor sin determinar.")
         elif undetermined and all(value is not None for value in values.values()):
             st.warning("La declaración sin determinar requiere dejar vacío el resultado no sustentado.")
+        elif case_name == "Instalaciones" and any(value is not None for value in values.values()) and not normalized:
+            st.warning("Comprueba la normalización y la condición temporal antes de registrar un nivel como LAeq,nT o LAFmax,nT.")
+        elif len(target.strip()) < 15 or len(base_design.strip()) < 40 or len(design_change.strip()) < 40 or len(evidence.strip()) < 15:
+            st.warning("Registra objetivo (15 caracteres), base (40), cambio y efecto (40) e identificación de evidencia (15).")
         elif len(notes.strip()) < 80:
             st.warning("Documenta los supuestos y la configuración con al menos 80 caracteres.")
         else:
             payload = {
                 **values, "notes": notes, "descriptor": case["descriptor"],
                 "target": target, "base_design": base_design, "design_change": design_change,
-                "evidence": evidence, "undetermined": undetermined,
+                "evidence": evidence, "undetermined": undetermined, "normalized": normalized,
             }
             _save(lab, saved, stage, **{f"c5l1_result_{case['code']}": payload})
             st.success("Resultado guardado. La clase acústica todavía no ha sido asignada.")
@@ -383,9 +436,9 @@ def _stage0(lab, saved):
     )
     descriptions = [
         "Conoce el edificio, sus recintos, adyacencias, materiales y las situaciones acústicas que evaluarás.",
-        "Interpreta planta, corte, fachada y detalles constructivos para reconocer caminos de transmisión.",
-        "Distingue el cálculo según ISO 12354 de la clasificación conforme a ISO/TS 19488.",
-        "Prepara los datos de entrada, los modelos y la trazabilidad necesaria antes de usar SONARA.",
+        "Lee cuatro láminas técnicas PNG/PDF, comprueba las cotas y reconoce caminos de transmisión.",
+        "Comprende las clases ISO con un ejemplo resuelto y elige un objetivo de diseño.",
+        "Prepara y guarda las entradas, fuentes e hipótesis para diseñar en SONARA.",
         "Calcula el aislamiento aéreo entre viviendas y documenta los caminos directos y laterales.",
         "Calcula el ruido de impacto a través de la losa y el efecto del sistema de piso.",
         "Evalúa el aislamiento de la fachada compuesta e identifica sus elementos más débiles.",
@@ -686,203 +739,155 @@ def _stage1(lab, saved):
 
 
 def _stage2(lab, saved):
-    _header(2, "Lectura acústica de planos y cortes", "Relacionar geometría, encuentros y caminos de transmisión con cada cálculo posterior.")
+    _header(2, "Lectura acústica de planos y detalles", "Obtener del plano los datos que se usarán en SONARA y reconocer los caminos críticos.")
     _project_badge()
-    tabs = st.tabs(["Planta tipo", "Corte A–A", "Fachada norte", "Detalles críticos"])
-    with tabs[0]:
-        _show_drawing("planta_tipo.svg", "Planta tipo · tercer piso · unidad A-302 destacada")
-    with tabs[1]:
-        _show_drawing("corte_aa.svg", "Corte A–A · apilamiento vertical y losa evaluada")
-    with tabs[2]:
-        _show_drawing("fachada_norte.svg", "Fachada norte · paños opacos y vanos de A-302")
-    with tabs[3]:
-        _show_drawing("detalles_constructivos.svg", "Detalles académicos · medianero, losa flotante y shaft")
-    st.markdown("### Matriz de adyacencias")
-    matrix = [
-        ["AI-01", "A-301", "A-302", "M-01", "Directa + flancos"],
-        ["IM-01", "A-402", "A-302", "L-01", "Estructural + radiación"],
-        ["FA-01", "Exterior norte", "Estar A-302", "F-01 + V-01", "Compuesta"],
-        ["IN-01", "Shaft S-01", "Dormitorio A-302", "Tubería + cierre", "Estructural + aérea"],
+    st.markdown(
+        "Las cuatro láminas tienen presentación de plano técnico, cotas y detalles de partida. "
+        "**Se muestran como imágenes PNG de alta resolución; el juego PDF permite ampliar e imprimir en A3.** "
+        "Las cotas son datos del caso ficticio, no dimensiones que debas medir sobre la pantalla."
+    )
+    _download_plan_set("c5l1_s2_plans_pdf")
+    tabs = st.tabs(["AC-01 · Planta", "AC-02 · Corte", "AC-03 · Fachada", "AC-04 · Detalles"])
+    sheets = [
+        ("planta_tipo.png", "AC-01 · Planta parcial nivel 3 · norte arriba · A-302 y estar adyacente A-301", "Localiza M-01, V-01, V-02 y S-1. El estar en L tiene 20,40 m²; el paño medianero útil mide 4,08 × 2,50 m."),
+        ("corte_aa.png", "AC-02 · Corte A-A · cinco niveles · altura libre 2,50 m", "A-402 está sobre A-302. L-01 tiene 160 mm de hormigón y un paquete superior de 60 mm; no los sumes como losa desnuda."),
+        ("fachada_norte.png", "AC-03 · Elevación norte · paño FA-01 destacado", "FA-01 solo incluye el estar: 15,30 m² brutos = 10,50 m² opacos + 4,80 m² de V-01. V-02 pertenece al dormitorio."),
+        ("detalles_constructivos.png", "AC-04 · M-01, L-01, F-01 y S-01 · espesores en mm", "Distingue placa, cámara, absorbente y unión. El espesor total de S-01 es 120 mm; no corresponde a cada placa."),
     ]
-    st.dataframe(pd.DataFrame(matrix, columns=["Caso", "Fuente", "Receptor", "Elemento", "Vías a revisar"]), hide_index=True, width="stretch")
-    findings = st.text_area("Tres riesgos constructivos observados en los planos", value=saved.get("c5l1_s2_findings", ""), height=130)
-    if st.button("Guardar revisión de planos", key="c5l1_s2_save", width="stretch"):
-        if len(findings.strip()) < 100:
-            st.warning("Registra al menos tres riesgos con una explicación breve.")
+    for tab, (filename, caption, instruction) in zip(tabs, sheets):
+        with tab:
+            _show_drawing(filename, caption)
+            st.info(instruction)
+    st.markdown("### De la lámina al modelo de cálculo")
+    matrix = [
+        ["AI-01", "A-301 → A-302", "M-01", "4,08 × 2,50 = 10,20 m²", "V 51,0 m³ · HA 180 mm", "Directa + uniones laterales"],
+        ["IM-01", "A-402 → A-302", "L-01", "Estar: 20,40 m²", "V 51,0 m³ · losa 160 mm", "Piso + losa + flancos"],
+        ["FA-01", "Exterior → estar A-302", "F-01 + V-01", "15,30 = 10,50 + 4,80 m²", "V 51,0 m³ · DVH 6/12/4", "Componentes + juntas"],
+        ["IN-01", "Shaft → dormitorio", "S-01 + fijaciones", "V receptor 28,8 m³", "Cierre 120 mm · área según recorrido", "Aérea + estructural"],
+    ]
+    st.dataframe(pd.DataFrame(matrix, columns=["Caso", "Fuente / receptor", "Elemento", "Geometría útil", "Datos de partida", "Vías"]), hide_index=True, width="stretch")
+    st.warning("El plano no entrega TR, rigidez dinámica ni potencia sonora sanitaria. Esos datos se justifican en la etapa 4; no se deducen de un dibujo.")
+    with st.form("c5l1_s2_reading_form"):
+        geometry = st.text_area("Comprueba las áreas de M-01 y FA-01 y el volumen del estar", value=saved.get("c5l1_s2_geometry", ""), placeholder="Escribe las operaciones y distingue área bruta, área opaca y ventana.", height=120)
+        findings = st.text_area("Tres riesgos constructivos observados en las láminas", value=saved.get("c5l1_s2_findings", ""), placeholder="Elemento, encuentro o puente; mecanismo acústico y posible medida.", height=130)
+        missing_data = st.text_area("Datos que debes buscar o adoptar como hipótesis", value=saved.get("c5l1_s2_missing", ""), placeholder="Qué falta, por qué importa y de dónde lo obtendrías.", height=110)
+        submitted = st.form_submit_button("Guardar lectura de planos", width="stretch")
+    if submitted:
+        if min(len(geometry.strip()), len(findings.strip()), len(missing_data.strip())) < 80:
+            st.warning("Desarrolla la comprobación geométrica, tres riesgos y los datos faltantes (mín. 80 caracteres por apartado).")
         else:
-            _save(lab, saved, 2, c5l1_s2_findings=findings)
-            st.success("Revisión de planos guardada.")
+            _save(lab, saved, 2, c5l1_s2_geometry=geometry, c5l1_s2_findings=findings, c5l1_s2_missing=missing_data)
+            st.success("Lectura guardada: úsala al preparar el protocolo de diseño.")
 
 
 def _stage3(lab, saved):
-    _header(3, "Marco de clasificación ISO/TS 19488", "Definir qué se clasificará y qué evidencia debe respaldar cada categoría.")
-    st.markdown(
-        """
-        ### Separación de responsabilidades
-
-        - **SONARA:** calcula prestaciones acústicas de diseño a partir de la geometría, los sistemas y los supuestos ingresados.
-        - **Alumno:** verifica el indicador, consulta ISO/TS 19488:2021, selecciona el umbral aplicable, asigna la clase y explica las limitaciones.
-        - **Laboratorio:** organiza el expediente y conserva trazabilidad; no entrega una clase automática ni reproduce tablas normativas.
-
-        La clasificación de proyecto es una **estimación de diseño**. No equivale a una clasificación obtenida mediante mediciones finales en obra.
-        """
-    )
-
-    st.markdown("### 🏠 Resumen · ¿cómo se clasifica una vivienda?")
-    st.markdown(
-        "ISO/TS 19488 organiza la calidad acústica en **seis clases: A, B, C, D, E y F**. "
-        "**A es la más exigente y F la menos exigente dentro del esquema**. "
-        "La clase se obtiene comparando cada prestación con los criterios aplicables; "
-        "no corresponde a una nota promedio ni se deduce solo del material del muro."
-    )
-    st.dataframe(
-        pd.DataFrame([
-            ["A", "Extremo de mayor exigencia del esquema"],
-            ["B", "Exigencia inferior a A y superior a C"],
-            ["C", "Exigencia inferior a B y superior a D"],
-            ["D", "Exigencia inferior a C y superior a E"],
-            ["E", "Exigencia inferior a D y superior a F"],
-            ["F", "Extremo de menor exigencia del esquema"],
-            ["NPD", "Desempeño no determinado, no requerido o fuera de las clases; no es una séptima clase"],
-        ], columns=["Clase / declaración", "Cómo interpretarla"]),
-        hide_index=True, width="stretch",
-    )
-    st.caption(
-        "Las letras no equivalen por sí solas a categorías comerciales ni a cumplimiento legal. "
-        "Consulta los valores y condiciones de cada clase en el PDF de referencia."
-    )
-    st.markdown("#### 1 · Define el alcance")
-    st.markdown(
-        "Distingue entre **una característica acústica**, **una vivienda completa** y "
-        "**el edificio completo**. Aquí diseñamos cuatro situaciones del A-302; "
-        "eso no acredita automáticamente las otras viviendas ni todos los requisitos del edificio."
-    )
-    st.markdown("#### 2 · Comprueba qué características debes evaluar")
-    st.dataframe(
-        pd.DataFrame([
-            ["Aéreo entre viviendas y otros recintos", "Aislamiento y términos espectrales exigidos por la situación", "Mayor aislamiento", "Cláusula 5.2 · tabla 1"],
-            ["Impacto", "Nivel normalizado y requisitos de baja frecuencia cuando correspondan", "Menor nivel", "Cláusula 5.3 · tabla 2"],
-            ["Exterior / fachada", "Aislamiento de fachada y exposición exterior aplicable", "Mayor aislamiento para la misma exposición", "Cláusula 5.4 · tabla 3"],
-            ["Instalaciones", "Nivel, ponderación y condición de funcionamiento exigidos", "Menor nivel", "Cláusula 5.5 · tabla 4"],
-            ["Escaleras y zonas de acceso", "Reverberación o absorción según el espacio", "Según el criterio de la tabla", "Cláusula 5.6 · tabla 5"],
-        ], columns=["Característica", "Qué debes comprobar", "Sentido de mejora", "Dónde consultar"]),
-        hide_index=True, width="stretch",
-    )
-    st.info(
-        "No basta con leer DₙT,w o L′ₙT,w: verifica también los términos de adaptación, "
-        "las bandas, el tipo de recinto y las condiciones que exige la fila seleccionada. "
-        "La acústica interna entre habitaciones de una misma vivienda no integra estas clases."
-    )
-    st.markdown("#### 3 · Asigna una clase por característica")
-    st.markdown(
-        "Para cada caso: **resultado → descriptor y condición correctos → fila aplicable → "
-        "comparación con los límites → clase justificada**. Anota edición, tabla y condición. "
-        "Si falta evidencia, identifica la característica sin determinar; no completes la clase por intuición."
-    )
-    st.markdown("#### 4 · Comprueba si puedes declarar una clase global")
-    st.markdown(
-        "Una clase global requiere cumplir **todos los criterios aplicables a ese alcance**. "
-        "El desempeño limitante condiciona la clase: **las letras no se promedian**. "
-        "Si quedan características obligatorias sin evaluar, no presentes el resultado parcial "
-        "como una clasificación completa."
-    )
-    st.success(
-        "**Ejemplo didáctico, sin umbrales numéricos:** si las características aplicables "
-        "obtienen B, C, B y D, y el expediente cubre todos los criterios requeridos, "
-        "la clase común que puede justificarse es D. No es B ni un promedio de letras. "
-        "Si falta evaluar una característica requerida, conserva las clases parciales "
-        "y declara pendiente la conclusión global."
-    )
-    st.markdown("#### 5 · Distingue diseño y verificación")
-    st.markdown(
-        "SONARA aporta **predicciones para diseñar y comparar soluciones**. "
-        "La clasificación debe indicar la fase y respaldarse con el procedimiento de "
-        "verificación correspondiente: cálculos, inspecciones y mediciones según el alcance. "
-        "Revisa la cláusula 6 y el Anexo A antes de emitir una conclusión de vivienda o edificio."
-    )
-
-    mapping = [
-        ["Aéreo interior", "DₙT,w y adaptaciones espectrales", "Mayor suele representar mejor desempeño"],
-        ["Impacto", "L′ₙT,w y adaptación aplicable", "Menor suele representar mejor desempeño"],
-        ["Fachada", "D₂m,nT,w y adaptaciones espectrales", "Mayor suele representar mejor desempeño"],
-        ["Instalaciones", "Nivel de servicio y condición de operación", "Menor suele representar mejor desempeño"],
-    ]
-    st.dataframe(pd.DataFrame(mapping, columns=["Familia", "Descriptor por comprobar", "Sentido de desempeño"]), hide_index=True, width="stretch")
-    st.info(
-        "ISO/TS 19488:2021 continúa siendo la edición publicada utilizada en este laboratorio. "
-        "ISO mantiene una segunda edición en desarrollo; antes de clasificar, comprueba el estado y la edición vigente."
-    )
-    iso_pdf_path = _asset("ISO-TS-19488-2021.pdf")
-    if iso_pdf_path.is_file():
-        st.download_button(
-            "📘 Descargar norma ISO/TS 19488:2021 · PDF",
-            data=iso_pdf_path.read_bytes(),
-            file_name="ISO-TS-19488-2021.pdf",
-            mime="application/pdf",
-            width="stretch",
-            key="c5l1_stage3_iso19488_pdf",
-        )
-    else:
-        st.error("El PDF de ISO/TS 19488:2021 no está disponible para descargar.")
-    scope = st.text_area(
-        "Declaración de alcance de tu clasificación",
-        value=saved.get("c5l1_s3_scope", ""),
-        placeholder="Edición normativa consultada, unidad evaluada, categorías incluidas, fase de diseño y exclusiones.",
-        height=140,
-    )
-    if st.button("Guardar alcance normativo", key="c5l1_s3_save", width="stretch"):
-        if "19488" not in scope or len(scope.strip()) < 120:
-            st.warning("Incluye ISO/TS 19488 y desarrolla el alcance con al menos 120 caracteres.")
-        else:
-            _save(lab, saved, 3, c5l1_s3_scope=scope)
-            st.success("Alcance guardado. Aún no se ha asignado ninguna clase.")
+    _header(3, "Cómo se clasifica una vivienda", "Comprender los criterios ISO con un ejemplo resuelto antes de definir el objetivo de diseño.")
+    _download_standard("c5l1_stage3_iso19488_pdf")
+    st.markdown("**Secuencia:** resultado acústico → descriptor correcto → límite aplicable → clase por característica → conclusión con alcance.")
+    tabs = st.tabs(["Clases y criterios", "Ejemplo resuelto · A-302", "Tu objetivo y alcance"])
+    with tabs[0]:
+        st.markdown("### Seis clases y una declaración de desempeño")
+        st.markdown("**A es la clase más exigente; F la menos exigente del esquema.** NPD se utiliza cuando el desempeño no está determinado, no se requiere o queda fuera de las clases. No es una séptima clase ni una nota cero.")
+        st.dataframe(pd.DataFrame([
+            ["A → B → C → D → E → F", "De mayor a menor exigencia acústica"],
+            ["Clase por característica", "Aéreo, impacto, exterior, instalaciones o zonas de acceso"],
+            ["Clase de vivienda", "Requiere todos los criterios aplicables al alcance de esa vivienda"],
+            ["Clase de edificio", "Requiere alcance y verificación del edificio; no se extrapola A-302"],
+        ], columns=["Concepto", "Interpretación"]), hide_index=True, width="stretch")
+        st.dataframe(pd.DataFrame([
+            ["Aéreo", "DₙT,A / DₙT,50 o alternativa permitida", "Mayor aislamiento", "5.2 · tabla 1"],
+            ["Impacto", "L′ₙT,w y requisito de baja frecuencia cuando aplica", "Menor nivel", "5.3 · tabla 2"],
+            ["Exterior", "Aislamiento adaptado al espectro y exposición Lden", "Según exposición", "5.4 · tabla 3"],
+            ["Instalaciones", "LAeq,nT o LAFmax,nT según funcionamiento", "Menor nivel", "5.5 · tabla 4"],
+            ["Accesos / escaleras", "Reverberación o absorción en las bandas requeridas", "Según espacio", "5.6 · tabla 5"],
+        ], columns=["Característica", "Qué comprobar", "Comparación", "Consulta en el PDF"]), hide_index=True, width="stretch")
+        st.info("Un número único sin su descriptor, bandas, normalización y condición de operación no basta. La acústica entre habitaciones dentro de la misma vivienda no integra estas clases.")
+        st.markdown("**La clase global no es un promedio de letras:** queda limitada por la prestación menos favorable, siempre que se hayan cubierto todos los criterios aplicables. Consulta cláusula 6 y Anexo A para la verificación.")
+    with tabs[1]:
+        st.warning("EJEMPLO RESUELTO · Todos los resultados acústicos siguientes son hipotéticos. No son una salida calculada de SONARA ni respuestas que debas copiar en las etapas 5–8.")
+        st.markdown("### Encargo del ejemplo: al menos clase C en las cuatro situaciones")
+        st.markdown("A-302 recibe ruido aéreo desde A-301, impacto desde A-402, ruido exterior norte y ruido sanitario. Se usan las geometrías de AC-01 a AC-04 y las tablas 1–4 de ISO/TS 19488:2021.")
+        st.markdown("#### 1 · AI-01: separar el Rw del muro del resultado entre recintos")
+        st.markdown("Modela HA 180 mm, S = 10,20 m², V = 51,0 m³, TR declarado y flancos. Supón una salida final **DₙT,w = 55 dB y C = −2 dB**. Entonces **DₙT,A = 53 dB**. La fila entre viviendas de la tabla 1 exige **≥ 52 dB para C**: cumple. Para comprobar B mediante la alternativa DₙT,A, la nota de la tabla conduce a **≥ 56 dB**: 53 dB no basta. No compares 55 dB con un límite escrito para otro descriptor.")
+        st.markdown("#### 2 · IM-01: reducir el nivel de impacto")
+        st.markdown("Losa L-01 de 160 mm y recinto de V = 51,0 m³. Supón **69 dB** sin tratamiento y **L′ₙT,w = 53 dB** después del piso flotante. **53 ≤ 54 dB** cumple C en la fila entre viviendas de la tabla 2. No alcanza B: supera 50 dB y además B exige comprobar la baja frecuencia. La diferencia del caso es 16 dB; no la presentes automáticamente como ΔLw de un ensayo del revestimiento.")
+        st.markdown("#### 3 · FA-01: clasificar con la exposición exterior")
+        st.markdown("Fachada 15,30 m² = opaco 10,50 + V-01 4,80 m²; V = 51,0 m³. Adopta **Lden = 65 dB solo como hipótesis del ejemplo**. Supón D₂m,nT,w = 44 dB y Ctr = −6 dB: el aislamiento adaptado al tráfico es **38 dB**. Para C, tabla 3: **65 − 28 = 37 dB**, comprobando también el mínimo de la nota. **38 ≥ 37** cumple C. B requiere **65 − 24 = 41 dB**: no cumple. Declara la correspondencia del descriptor de SONARA con la magnitud requerida; no intercambies descriptores sin justificarla.")
+        st.markdown("#### 4 · IN-01: el funcionamiento y la normalización importan")
+        st.markdown("Descarga intermitente percibida en dormitorio (V = 28,8 m³). Supón **LAFmax,nT = 36 dB**, obtenido con la condición y normalización correctas. Tabla 4: C exige **≤ 34 dB**, D **≤ 38 dB**. Alcanza D y falla el objetivo C. Rediseña el camino dominante —cierre, sellado o fijaciones—. Si una variante entrega **33 dB**, alcanza C. Un LAeq o un máximo sin normalizar no sustituye este indicador.")
+        st.dataframe(pd.DataFrame([
+            ["AI-01", "DₙT,A = 53 dB", "C", "C"],
+            ["IM-01", "L′ₙT,w = 53 dB", "C", "C"],
+            ["FA-01", "Aislamiento adaptado = 38 dB; Lden 65", "C", "C"],
+            ["IN-01", "LAFmax,nT: 36 → 33 dB", "D", "C"],
+        ], columns=["Caso", "Resultado hipotético", "Antes de rediseñar IN-01", "Después"]), hide_index=True, width="stretch")
+        st.success("Decisión de diseño: instalaciones limita inicialmente las cuatro características a D. Mejorar el muro no corrige ese problema. Después de actuar sobre IN-01, las cuatro situaciones alcanzan C.")
+        st.warning("Conclusión limitada: cuatro situaciones del A-302 alcanzan preliminarmente C. Falta cubrir las otras situaciones aplicables, accesos/escaleras cuando correspondan y la verificación. No declares clase C global de A-302 ni de las 20 viviendas a partir de este ejemplo parcial.")
+        st.caption("Referencia de comprobación: tablas 1–4, notas de descriptor y Anexo A.3–A.4 del PDF disponible. En obra se requieren los procedimientos de verificación aplicables.")
+    with tabs[2]:
+        st.markdown("### Elige el objetivo para tu propio diseño")
+        options = ["Selecciona un objetivo", "Clase A", "Clase B", "Clase C", "Clase D", "Clase E", "Clase F"]
+        previous = saved.get("c5l1_s3_target", options[0])
+        with st.form("c5l1_s3_scope_form"):
+            target = st.selectbox("Clase objetivo de diseño (no es clase obtenida)", options, index=options.index(previous) if previous in options else 0)
+            scope = st.text_area("Declaración de alcance de tu clasificación", value=saved.get("c5l1_s3_scope", ""), placeholder="ISO/TS 19488:2021, cuatro situaciones de A-302, fase de diseño, casos pendientes y exclusiones.", height=140)
+            reason = st.text_area("Por qué no basta promediar las clases ni evaluar un único muro", value=saved.get("c5l1_s3_reason", ""), height=110)
+            submitted = st.form_submit_button("Guardar objetivo y alcance", width="stretch")
+        if submitted:
+            if target == options[0] or "19488" not in scope or len(scope.strip()) < 120 or len(reason.strip()) < 80:
+                st.warning("Elige el objetivo, desarrolla el alcance (120 caracteres, incluyendo 19488) y explica la regla de clase limitante (80 caracteres).")
+            else:
+                _save(lab, saved, 3, c5l1_s3_target=target, c5l1_s3_scope=scope, c5l1_s3_reason=reason)
+                st.success("Objetivo guardado. Ahora prepara las entradas en la etapa 4; todavía no has obtenido una clase.")
 
 
 def _stage4(lab, saved):
-    _header(4, "Protocolo de modelación y trazabilidad", "Preparar datos coherentes antes de abrir SONARA y evitar resultados sin respaldo.")
-    checklist = [
-        ["Geometría", "Áreas, volúmenes, longitudes de unión y relación fuente–receptor", "Planos del caso"],
-        ["Elementos", "Capas, espesores, masas y condiciones de montaje", "Cuadro de materialidades"],
-        ["Uniones", "Tipo de encuentro y caminos laterales considerados", "Corte y detalles"],
-        ["Fuente", "Condición de operación o exposición exterior", "Hipótesis declarada"],
-        ["Salida", "Descriptor, bandas, unidades y versión del cálculo", "Registro SONARA"],
-    ]
-    st.dataframe(pd.DataFrame(checklist, columns=["Grupo", "Dato mínimo", "Evidencia"]), hide_index=True, width="stretch")
-    st.error("No conviertas un Rw de catálogo directamente en DₙT,w, R′w o D₂m,nT,w. Son magnitudes de contextos diferentes.")
-    st.markdown("### Ruta de diseño por elemento")
-    st.dataframe(
-        pd.DataFrame([
-            ["M-01 y flancos", "Ruido aéreo → Transmisión entre recintos", "DₙT,w y adaptaciones finales", "Etapa 5"],
-            ["L-01, piso y cielo", "Ruido de impacto → ISO 12354-2", "L′ₙT,w y CI", "Etapa 6"],
-            ["F-01 + V-01", "Ruido aéreo → Fachada", "D₂m,nT,w y adaptaciones finales", "Etapa 7"],
-            ["S-01 y fijaciones", "Ruido aéreo → Ruido de instalaciones", "LAeq / LAFmax según datos y operación", "Etapa 8"],
-        ], columns=["Diseño", "Módulo SONARA", "Resultado que vuelve al laboratorio", "Guía detallada"]),
-        hide_index=True, width="stretch",
-    )
-    st.markdown(
-        "**Ciclo de trabajo:** define el objetivo y su descriptor → calcula la solución base → "
-        "identifica el camino dominante → modifica una variable → recalcula → compara y justifica. "
-        "Guarda una solución base y una variante por caso. Mantén geometría, operación y criterio "
-        "de comparación constantes salvo que el cambio sea parte explícita del diseño."
-    )
-    st.info(
-        "Los datos que no figuran en el expediente —TR, rigidez dinámica, espectros de fuente o "
-        "propiedades de uniones— deben obtenerse de una ficha o declararse como hipótesis académicas. "
-        "No conserves un valor por defecto de SONARA sin justificarlo."
-    )
-    _sonara_button("Abrir SONARA y preparar el proyecto Los Alerces")
-    protocol = st.text_area(
-        "Protocolo personal de cálculo",
-        value=saved.get("c5l1_s4_protocol", ""),
-        placeholder="Describe cómo nombrarás versiones, qué capturas guardarás, cómo verificarás unidades y cómo registrarás cambios.",
-        height=150,
-    )
-    if st.button("Aprobar protocolo y continuar", key="c5l1_s4_save", width="stretch"):
-        if len(protocol.strip()) < 140:
-            st.warning("Define un protocolo reproducible con al menos 140 caracteres.")
+    _header(4, "Preparar el diseño en SONARA", "Convertir el objetivo y los planos en entradas trazables antes de calcular.")
+    st.info(f"**Objetivo recuperado de etapa 3:** {saved.get('c5l1_s3_target', 'Pendiente de definir')}.")
+    with st.expander("Recuperar lectura de planos y alcance"):
+        st.markdown(saved.get("c5l1_s2_geometry", "Sin comprobación geométrica guardada."))
+        st.markdown(saved.get("c5l1_s2_findings", "Sin riesgos guardados."))
+        st.markdown(saved.get("c5l1_s3_scope", "Sin alcance guardado."))
+    st.dataframe(pd.DataFrame([
+        ["M-01 / AI-01", "HA 180 mm; S 10,20 m²; V 51,0 m³", "Ruido aéreo → Transmisión entre recintos", "DₙT,w y adaptaciones finales"],
+        ["L-01 / IM-01", "Losa 160; resiliente 10; sobrelosa 40; terminación 10 mm", "Ruido de impacto → ISO 12354-2", "L′ₙT,w y adaptación aplicable"],
+        ["F-01 + V-01 / FA-01", "10,50 m² opacos + 4,80 m² de ventana", "Componentes en Ruido aéreo → Fachada", "Aislamiento de fachada adaptado"],
+        ["S-01 / IN-01", "2 RF 12,5 / cámara 70 / 2 RF 12,5 mm; V 28,8 m³", "Cierre en Ruido aéreo → Instalaciones", "LAeq,nT / LAFmax,nT según operación"],
+    ], columns=["Caso", "Datos del expediente", "Ruta SONARA", "Resultado a registrar"]), hide_index=True, width="stretch")
+    st.markdown("### Tu secuencia de trabajo")
+    st.markdown("""1. Elige la fila normativa, el descriptor y el objetivo para cada caso.
+2. Prepara la solución base y registra sus resultados.
+3. Identifica el camino dominante y modifica una variable.
+4. Recalcula conservando el resto de condiciones.
+5. Guarda una variante y justifica la decisión, incluso si no mejora.
+6. Clasifica tus propios resultados en la etapa 10.""")
+    st.warning("Los valores iniciales de SONARA no son datos del proyecto. Los campos siguientes quedan vacíos hasta que elijas una ficha o declares una hipótesis. La masa de sobrelosa se calcula como densidad × 0,040 m; su capa resiliente de 10 mm no determina s′ por sí sola.")
+    prev = saved.get("c5l1_s4_inputs", {})
+    with st.form("c5l1_s4_protocol_form"):
+        columns = st.columns(2)
+        inputs = {}
+        for index, (key, label, minimum, step) in enumerate([
+            ("tr_stay", "TR estar [s]", .1, .1),
+            ("tr_bedroom", "TR dormitorio [s]", .1, .1),
+            ("rho_ha", "Densidad HA [kg/m³]", 500., 50.),
+            ("rho_screed", "Densidad sobrelosa [kg/m³]", 100., 50.),
+            ("dynamic_stiffness", "Rigidez dinámica s′ [MN/m³] · si usas piso físico", .1, .5),
+            ("lden", "Exposición exterior Lden [dB]", 0., 1.),
+        ]):
+            inputs[key] = columns[index % 2].number_input(label, min_value=minimum, value=prev.get(key), step=step, placeholder="Dato o hipótesis documentada")
+        input_sources = st.text_area("Fuentes de datos, hipótesis y antecedentes pendientes", value=saved.get("c5l1_s4_sources", ""), placeholder="Justifica cada número. Si eliges catálogo de piso, explica por qué s′ no se utiliza. Fuente sanitaria y transferencia estructural: ficha o escenario declarado.", height=140)
+        criteria = st.text_area("Criterios de diseño que comprobarás en cada caso", value=saved.get("c5l1_s4_criteria", ""), placeholder="Caso, descriptor, límite, sentido ≥/≤, tabla y nota. No copies sin revisar el ejemplo de etapa 3.", height=140)
+        protocol = st.text_area("Protocolo personal de cálculo", value=saved.get("c5l1_s4_protocol", ""), placeholder="Nombres Base/Variante, capturas, curvas, unidades, condiciones que mantendrás y cómo justificarás los cambios.", height=130)
+        submitted = st.form_submit_button("Guardar protocolo y entradas de diseño", width="stretch")
+    if submitted:
+        if inputs["tr_stay"] is None or inputs["tr_bedroom"] is None or inputs["rho_ha"] is None or inputs["lden"] is None:
+            st.warning("Define TR del estar y dormitorio, densidad HA y exposición exterior; justifica los restantes datos según el modelo elegido.")
+        elif len(input_sources.strip()) < 120 or len(criteria.strip()) < 120 or len(protocol.strip()) < 140:
+            st.warning("Completa fuentes (120 caracteres), criterios (120) y protocolo (140).")
         else:
-            _save(lab, saved, 4, c5l1_s4_protocol=protocol)
-            st.success("Protocolo guardado. Ya puedes comenzar los cálculos.")
+            _save(lab, saved, 4, c5l1_s4_inputs=inputs, c5l1_s4_sources=input_sources, c5l1_s4_criteria=criteria, c5l1_s4_protocol=protocol)
+            st.success("Entradas guardadas; se recuperarán en las etapas 5–8.")
+    _sonara_button("Abrir SONARA y preparar Los Alerces")
 
 
 def _stage5(lab, saved):
@@ -919,9 +924,10 @@ def _stage8(lab, saved):
     _header(8, "Proyección de ruido de instalaciones", "Estimar el ruido sanitario y declarar el método técnico y la condición de operación.")
     _result_form(
         lab, saved, 8, "Instalaciones",
-        [("laeq", "LAeq", "dB(A)"), ("lafmax", "LAFmax", "dB(A)")],
+        [("laeq", "LAeq,nT", "dB(A)"), ("lafmax", "LAFmax,nT", "dB(A)")],
         "Representa la descarga sanitaria, el cierre S-01, las fijaciones y las vías estructural y aérea. Si el método no permite un descriptor, decláralo como limitación en vez de inventarlo.",
     )
+    st.warning("Comprueba que las salidas de instalaciones estén normalizadas a T₀ = 0,5 s y correspondan a la condición temporal registrada. Si recuperas resultados antiguos LAeq/LAFmax sin normalizar, revísalos antes de usarlos en la clasificación.")
     st.info("El cálculo de instalaciones depende fuertemente de datos de fuente, montaje y operación. Una estimación sin esos antecedentes debe informarse con una incertidumbre y un plan de verificación en obra.")
 
 
@@ -932,15 +938,27 @@ def _stage9(lab, saved):
         ("AI-01", "Aéreo interior", "dntw", "DₙT,w", "dB"),
         ("IM-01", "Impacto", "lntw", "L′ₙT,w", "dB"),
         ("FA-01", "Fachada", "d2mntw", "D₂m,nT,w", "dB"),
-        ("IN-01", "Instalaciones", "laeq", "LAeq", "dB(A)"),
-        ("IN-01", "Instalaciones", "lafmax", "LAFmax", "dB(A)"),
+        ("IN-01", "Instalaciones", "laeq", "LAeq,nT", "dB(A)"),
+        ("IN-01", "Instalaciones", "lafmax", "LAFmax,nT", "dB(A)"),
     ]
     for code, family, key, descriptor, unit in definitions:
         result = saved.get(f"c5l1_result_{code}", {})
         status = "Registrado" if result.get(key) is not None else ("Sin determinar · justificado" if result.get("undetermined") else "Pendiente")
+        if code == "IN-01" and result.get(key) is not None and not result.get("normalized"):
+            status = "Pendiente"
         rows.append([code, family, descriptor, result.get(key), unit, status])
     result_df = pd.DataFrame(rows, columns=["Caso", "Familia", "Descriptor", "Resultado", "Unidad", "Estado"])
     st.dataframe(result_df, hide_index=True, width="stretch")
+    st.markdown("### Indicadores para la comparación normativa")
+    ai = saved.get("c5l1_result_AI-01", {})
+    fa = saved.get("c5l1_result_FA-01", {})
+    dnta = ai["dntw"] + ai["c"] if ai.get("dntw") is not None and ai.get("c") is not None else None
+    facade_adapted = fa["d2mntw"] + fa["ctr"] if fa.get("d2mntw") is not None and fa.get("ctr") is not None else None
+    st.dataframe(pd.DataFrame([
+        ["AI-01", "DₙT,A = DₙT,w + C", dnta, "Verificar que C procede de la curva final entre recintos"],
+        ["FA-01", "D₂m,nT,w + Ctr", facade_adapted, "Justificar correspondencia y espectro; comparar con Lden adoptado"],
+    ], columns=["Caso", "Operación", "Valor [dB]", "Condición de uso"]), hide_index=True, width="stretch")
+    st.info("Estas sumas ayudan a revisar los indicadores; no asignan clases. Para A/B pueden faltar descriptores de baja frecuencia que debes documentar antes de concluir.")
     st.markdown("### Decisiones y evidencias del diseño")
     decisions = []
     for family, case in CALCULATION_CASES.items():
@@ -956,7 +974,17 @@ def _stage9(lab, saved):
     st.download_button(
         "Descargar expediente de diseño SONARA (JSON)",
         data=json.dumps(
-            {case["code"]: saved.get(f"c5l1_result_{case['code']}", {}) for case in CALCULATION_CASES.values()},
+            {
+                "project": PROJECT,
+                "target": saved.get("c5l1_s3_target"),
+                "scope": saved.get("c5l1_s3_scope", ""),
+                "inputs": saved.get("c5l1_s4_inputs", {}),
+                "input_sources": saved.get("c5l1_s4_sources", ""),
+                "criteria": saved.get("c5l1_s4_criteria", ""),
+                "protocol": saved.get("c5l1_s4_protocol", ""),
+                "results": {case["code"]: saved.get(f"c5l1_result_{case['code']}", {}) for case in CALCULATION_CASES.values()},
+                "classification": saved.get("c5l1_classification", {}),
+            },
             ensure_ascii=False, indent=2,
         ).encode("utf-8"),
         file_name="los_alerces_diseno_sonara.json", mime="application/json",
@@ -998,6 +1026,9 @@ def _stage10(lab, saved):
             "situación en la referencia elegida y explica la exclusión; no atribuyas una clase "
             "a la característica sin evidencia ni concluyas conformidad global completa."
         )
+    st.info("Entrega una clasificación preliminar de los casos AI-01, IM-01, FA-01 e IN-01. El laboratorio no evalúa por sí solo todas las situaciones de A-302 ni las otras 19 viviendas; no presentes estos cuatro casos como certificación global.")
+    st.markdown("**Informe final:** alcance → entradas y fuentes → base/variante → curva y descriptor → límite y clase por caso → clase limitante → incertidumbres y verificación en obra.")
+    _download_standard("c5l1_s10_standard")
     families = ["Aéreo interior", "Impacto", "Fachada", "Instalaciones"]
     previous = saved.get("c5l1_classification", {})
     entries = {}
@@ -1016,10 +1047,10 @@ def _stage10(lab, saved):
                 "justification": c3.text_input("Justificación y referencia", value=previous.get(family, {}).get("justification", ""), key=f"c5l1_justification_{family}"),
             }
         overall_rule = st.text_area(
-            "Regla utilizada para obtener la conclusión global",
+            "Clase limitante de los casos y alcance de la conclusión",
             value=previous.get("overall_rule", ""),
             height=100,
-            placeholder="Explica la regla de agregación o por qué no corresponde asignar una clase global.",
+            placeholder="Compara las clases parciales sin promediarlas; explica qué falta para clasificar la vivienda o el edificio completo.",
         )
         conclusion = st.text_area(
             "Conclusión profesional y plan de verificación",
@@ -1029,8 +1060,11 @@ def _stage10(lab, saved):
         )
         submitted = st.form_submit_button("Entregar clasificación del proyecto", width="stretch")
     if submitted:
-        invalid = [family for family in families if not entries[family]["class"].strip() or not entries[family]["threshold"].strip() or len(entries[family]["justification"].strip()) < 20]
+        invalid = [family for family in families if entries[family]["class"].strip().upper() not in {"A", "B", "C", "D", "E", "F", "NPD"} or not entries[family]["threshold"].strip() or len(entries[family]["justification"].strip()) < 20]
         results_ready = all(saved.get(f"c5l1_result_{code}") for code in ["AI-01", "IM-01", "FA-01", "IN-01"])
+        services = saved.get("c5l1_result_IN-01", {})
+        if any(services.get(key) is not None for key in ("laeq", "lafmax")) and not services.get("normalized"):
+            results_ready = False
         if not results_ready:
             st.warning("Faltan resultados de SONARA. Completa las Etapas 5 a 8 antes de entregar.")
         elif invalid:
@@ -1038,7 +1072,7 @@ def _stage10(lab, saved):
         elif len(overall_rule.strip()) < 80 or len(conclusion.strip()) < 180:
             st.warning("Desarrolla la regla global y la conclusión con la extensión mínima solicitada.")
         else:
-            payload = {**entries, "overall_rule": overall_rule, "conclusion": conclusion, "standard": "ISO/TS 19488:2021", "phase": "Diseño"}
+            payload = {**entries, "overall_rule": overall_rule, "conclusion": conclusion, "standard": "ISO/TS 19488:2021", "phase": "Diseño", "scope": "Cuatro situaciones modeladas de A-302; clasificación global no acreditada"}
             _save(lab, saved, 10, c5l1_classification=payload)
             st.success("Clasificación entregada para revisión docente. Se conserva como clasificación de diseño realizada por el alumno.")
 

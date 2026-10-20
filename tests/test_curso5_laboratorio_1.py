@@ -30,12 +30,13 @@ def test_project_dossier_has_geometry_materials_and_drawings():
     assert len(lab.MATERIALS) >= 7
     asset_dir = Path(__file__).resolve().parents[1] / "assets" / "curso5_lab1"
     expected = {
-        "planta_tipo.svg",
-        "corte_aa.svg",
-        "fachada_norte.svg",
-        "detalles_constructivos.svg",
+        "planta_tipo.png",
+        "corte_aa.png",
+        "fachada_norte.png",
+        "detalles_constructivos.png",
     }
-    assert expected == {path.name for path in asset_dir.glob("*.svg")}
+    assert expected <= {path.name for path in asset_dir.glob("*.png")}
+    assert (asset_dir / "los_alerces_planos_acusticos.pdf").is_file()
 
 
 def test_sonara_is_external_calculator_and_iso_is_student_task():
