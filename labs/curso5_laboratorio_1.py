@@ -376,33 +376,38 @@ def _stage1(lab, saved):
         "Se presenta una explicación docente, no una reproducción de las tablas normativas."
     )
 
-    st.markdown("### 📥 Norma de referencia para la actividad")
+    st.markdown("### 📥 Descargar norma ISO/TS 19488:2021")
+    st.caption("Documento PDF de referencia aportado para esta actividad.")
     norm_paths = [
         PROJECT_ROOT / "private_assets" / "ISO-TS-19488-2021.pdf",
         PROJECT_ROOT / "private_assets" / "966515482-ISO-TS-19488-2021.pdf",
     ]
     norm_file = next((p for p in norm_paths if p.is_file()), None)
-    if norm_file:
+    norm_bytes = norm_file.read_bytes() if norm_file else None
+    if norm_bytes is None:
+        try:
+            import base64 as _b64_norm
+            secret_pdf = str(st.secrets.get("ISO_19488_PDF_BASE64", "")).strip()
+            if secret_pdf:
+                norm_bytes = _b64_norm.b64decode(secret_pdf, validate=True)
+        except (FileNotFoundError, KeyError, ValueError, TypeError):
+            norm_bytes = None
+    if norm_bytes and norm_bytes.startswith(b"%PDF-"):
         st.download_button(
-            "📄 Descargar ISO/TS 19488:2021 (PDF)",
-            data=norm_file.read_bytes(),
+            "📄 Descargar PDF ISO/TS 19488:2021",
+            data=norm_bytes,
             file_name="ISO-TS-19488-2021.pdf",
             mime="application/pdf",
             key="c5l1_norm_pdf_download",
             width="stretch",
-            help="Documento disponible solo cuando se configura en el almacenamiento privado del despliegue.",
         )
     else:
-        st.caption(
-            "El PDF no se encuentra configurado en el almacenamiento privado de esta instalación. "
-            "Cuando se habilite una copia con derechos de distribución apropiados, "
-            "aparecerá aquí el botón de descarga."
+        st.warning(
+            "El PDF aún no está cargado en este despliegue. Para habilitar su descarga, "
+            "configura ISO_19488_PDF_BASE64 en los secretos de Streamlit Cloud "
+            "o coloca el archivo en private_assets sin publicarlo en GitHub."
         )
-        st.link_button(
-            "📚 Consultar la ficha oficial de ISO/TS 19488:2021",
-            ISO_STATUS_URL,
-            width="stretch",
-        )
+        st.link_button("Consultar ficha oficial de la norma", ISO_STATUS_URL, width="stretch")
 
     st.markdown("### 🏗️ Conoce el proyecto")
     c1, c2, c3, c4 = st.columns(4)
