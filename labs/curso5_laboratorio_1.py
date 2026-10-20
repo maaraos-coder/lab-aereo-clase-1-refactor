@@ -285,30 +285,180 @@ def _stage0(lab, saved):
 
 
 def _stage1(lab, saved):
-    _header(1, "Expediente del Edificio Los Alerces", "Reconstruir el caso, la unidad evaluada y las relaciones de adyacencia.")
+    _header(
+        1,
+        "Expediente del Edificio Los Alerces",
+        "Comprender el encargo, el alcance de la clasificación y el muestreo antes de modelar.",
+    )
     _project_badge()
+
+    st.markdown("### 🏢 ¿Qué vamos a clasificar?")
+    st.info(
+        "**Encargo profesional simulado:** analizar acústicamente el Edificio Los Alerces, "
+        "de 20 viviendas, y construir un expediente de diseño basado en cálculos mediante SONARA. "
+        "La ISO 12354 sirve para predecir el desempeño; la ISO/TS 19488:2021 permite "
+        "establecer una clasificación, su alcance y la verificación correspondiente. "
+        "**Una predicción de proyecto no sustituye las mediciones y verificaciones del edificio terminado.**"
+    )
+    st.markdown(
+        "**¿Por qué empezamos por A-302?** Es una unidad didáctica donde podemos estudiar "
+        "separación horizontal con A-301, transmisión de impacto desde A-402, fachada norte "
+        "y ruido del shaft sanitario. El resultado de esta vivienda **no se extrapola "
+        "automáticamente a los otros 19 departamentos**."
+    )
+
+    st.markdown("### 📐 ¿Cuántas viviendas se evalúan en un edificio real?")
+    st.markdown(
+        "No existe una regla general de «10 % de las viviendas». La muestra se define "
+        "según el **alcance de la clasificación**, las **tipologías de elementos**, "
+        "las **situaciones acústicas** y el **procedimiento de verificación** "
+        "establecido en ISO/TS 19488:2021, especialmente su Anexo A."
+    )
+    c_a, c_b = st.columns(2)
+    with c_a:
+        st.markdown(
+            "**Procedimiento A · diseño, obra y medición**\n\n"
+            "Combina predicciones de proyecto, comprobaciones durante la construcción "
+            "y mediciones en el edificio terminado. Requiere planificar las verificaciones "
+            "y documentar la representatividad de los casos."
+        )
+    with c_b:
+        st.markdown(
+            "**Procedimiento B · mediciones en obra terminada**\n\n"
+            "Selecciona al menos el **10 % de los tipos de construcciones** de muros "
+            "separadores y pisos para medición representativa; **no significa medir "
+            "el 10 % de los departamentos**."
+        )
+    st.warning(
+        "**Verificación del edificio completo:** la ISO/TS 19488:2021 (Anexo A) indica "
+        "un mínimo de **3 mediciones por tipo de estructura y característica acústica**. "
+        "Puede requerirse una muestra mayor si existen distintas configuraciones, "
+        "orientaciones, recintos o riesgos. Consulta la edición autorizada para "
+        "definir el procedimiento exacto y las excepciones aplicables."
+    )
+    st.caption(
+        "Fuente normativa de estudio: ISO/TS 19488:2021, cláusula 6 y Anexo A "
+        "(procedimientos A y B; clasificación de un edificio o vivienda). "
+        "Referencia oficial: https://www.iso.org/standard/77742.html"
+    )
+
+    st.markdown("### 🏗️ Conoce el proyecto")
     c1, c2, c3, c4 = st.columns(4)
     c1.metric("Pisos", PROJECT["storeys"])
     c2.metric("Viviendas", PROJECT["dwellings"])
-    c3.metric("Altura interior", f"{PROJECT['floor_height_m']:.2f} m")
-    c4.metric("Unidad", "A-302")
-    st.markdown("### Programa de la vivienda evaluada")
-    st.dataframe(pd.DataFrame(ROOMS, columns=["Recinto", "Área [m²]", "Volumen [m³]", "Orientación", "Adyacencia crítica"]), hide_index=True, width="stretch")
-    st.markdown("### Materialidades de anteproyecto")
-    st.dataframe(pd.DataFrame(MATERIALS, columns=["Código", "Elemento", "Sistema", "Dimensión", "Observación"]), hide_index=True, width="stretch")
-    _project_downloads()
-    answer = st.text_area(
-        "Identifica las cuatro situaciones acústicas críticas",
-        value=saved.get("c5l1_s1_answer", ""),
-        placeholder="Indica fuente, receptor, elemento separador y fenómeno para aéreo, impacto, fachada e instalaciones.",
-        height=140,
+    c3.metric("Altura interior", f'{PROJECT["floor_height_m"]:.2f} m')
+    c4.metric("Caso de estudio", "A-302")
+    st.markdown("### 🔊 Situaciones acústicas del caso A-302")
+    st.dataframe(
+        pd.DataFrame(
+            [
+                ["Aéreo entre viviendas", "A-301", "A-302", "Muro M-01", "ISO 12354-1"],
+                ["Impacto entre pisos", "A-402", "A-302", "Losa L-01", "ISO 12354-2"],
+                ["Ruido exterior", "Fachada norte", "Estar A-302", "F-01 + V-01", "ISO 12354-3"],
+                ["Instalaciones", "Shaft S-1", "A-302", "Cierre + fijaciones", "Método aplicable de instalaciones"],
+            ],
+            columns=["Situación", "Origen", "Receptor", "Elemento / vía", "Referencia de diseño"],
+        ),
+        hide_index=True,
+        width="stretch",
     )
-    if st.button("Guardar lectura del expediente", key="c5l1_s1_save", width="stretch"):
-        if len(answer.strip()) < 120:
-            st.warning("Desarrolla la identificación con al menos 120 caracteres.")
+    st.caption(
+        "Las situaciones se estudian de forma individual. En la Etapa 2 se muestran "
+        "la planta, el corte y los detalles para interpretar sus recorridos."
+    )
+
+    st.markdown("### 📋 Programa de la vivienda evaluada")
+    st.dataframe(
+        pd.DataFrame(
+            ROOMS,
+            columns=["Recinto", "Área [m²]", "Volumen [m³]", "Orientación", "Adyacencia crítica"],
+        ),
+        hide_index=True,
+        width="stretch",
+    )
+    st.markdown("### 🧱 Materialidades de anteproyecto")
+    st.dataframe(
+        pd.DataFrame(
+            MATERIALS,
+            columns=["Código", "Elemento", "Sistema", "Dimensión", "Observación"],
+        ),
+        hide_index=True,
+        width="stretch",
+    )
+    st.markdown("### 📁 Expediente técnico descargable")
+    st.caption(
+        "El CSV contiene las materialidades. La ficha JSON permite conservar los datos "
+        "estructurados: son archivos de consulta y **no importan automáticamente el "
+        "modelo a SONARA**."
+    )
+    _project_downloads()
+
+    st.markdown("### ✍️ Actividad 1 · Diagnóstico y propuesta de muestreo")
+    st.caption(
+        "El diagnóstico del A-302 se utilizará como base en las siguientes etapas. "
+        "El plan de muestreo es una propuesta razonada para el edificio completo, "
+        "no una certificación ni una cantidad de ensayos prefijada."
+    )
+    with st.form("c5l1_stage1_diagnostic_form"):
+        answer = st.text_area(
+            "1. Diagnostica las cuatro situaciones acústicas del departamento A-302",
+            value=saved.get("c5l1_s1_answer", ""),
+            placeholder="Describe fuente, receptor, elemento y mecanismo de transmisión para cada caso.",
+            height=160,
+        )
+        procedure_options = [
+            "Selecciona un procedimiento",
+            "A · predicciones, inspecciones y mediciones",
+            "B · mediciones en edificio terminado",
+        ]
+        previous_procedure = saved.get("c5l1_s1_procedure", procedure_options[0])
+        if previous_procedure not in procedure_options:
+            previous_procedure = procedure_options[0]
+        procedure = st.selectbox(
+            "2. Procedimiento para una futura verificación del edificio",
+            procedure_options,
+            index=procedure_options.index(previous_procedure),
+        )
+        sample = st.text_area(
+            "3. Propón un plan de muestreo para las 20 viviendas",
+            value=saved.get("c5l1_s1_sampling", ""),
+            placeholder=(
+                "Propón qué unidades, recintos, elementos y orientaciones revisarías; "
+                "justifica cantidad de ensayos por tipología y característica acústica. "
+                "Explica por qué 20 viviendas no implica medir simplemente 2."
+            ),
+            height=180,
+        )
+        scope = st.text_area(
+            "4. Alcance, límites y evidencias adicionales",
+            value=saved.get("c5l1_s1_scope", ""),
+            placeholder=(
+                "Distingue la evaluación preliminar de A-302 de la clasificación del "
+                "edificio completo. Indica qué información falta para definir la muestra."
+            ),
+            height=130,
+        )
+        submitted = st.form_submit_button("Guardar diagnóstico y plan de muestreo", width="stretch")
+    if submitted:
+        if len(answer.strip()) < 120 or len(sample.strip()) < 160 or len(scope.strip()) < 90:
+            st.warning(
+                "Completa el diagnóstico (mín. 120 caracteres), el plan de muestreo "
+                "(mín. 160) y el alcance (mín. 90)."
+            )
+        elif procedure == procedure_options[0]:
+            st.warning("Selecciona y justifica un procedimiento de verificación.")
         else:
-            _save(lab, saved, 1, c5l1_s1_answer=answer)
-            st.success("Lectura del expediente guardada.")
+            _save(
+                lab, saved, 1,
+                c5l1_s1_answer=answer,
+                c5l1_s1_procedure=procedure,
+                c5l1_s1_sampling=sample,
+                c5l1_s1_scope=scope,
+            )
+            st.success(
+                "Diagnóstico y plan de muestreo guardados. Los cálculos posteriores "
+                "seguirán usando A-302 como unidad didáctica."
+            )
 
 
 def _stage2(lab, saved):
