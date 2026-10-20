@@ -16,8 +16,8 @@ import pandas as pd
 CLASS_ID = "clase-09-certificaciones-lab-1"
 SONARA_URL = "https://sonara-ea1b.onrender.com/"
 ISO_STATUS_URL = "https://www.iso.org/standard/77742.html"
-STAGE_MINUTES = [10, 20, 20, 20, 20, 30, 25, 25, 25, 25, 30]
-_RUNTIME_PROTECTED = {"run_stage", "_bind_runtime", "_RUNTIME_PROTECTED"}
+C5L1_STAGE_MINUTES = [10, 20, 20, 20, 20, 30, 25, 25, 25, 25, 30]
+_RUNTIME_PROTECTED = {"run_stage", "_bind_runtime", "_RUNTIME_PROTECTED", "C5L1_STAGE_MINUTES"}
 
 
 def _bind_runtime(runtime):
@@ -105,7 +105,7 @@ def _header(stage: int, title: str, purpose: str):
         title,
         purpose,
         show_overview=False,
-        duration_minutes=STAGE_MINUTES[stage],
+        duration_minutes=C5L1_STAGE_MINUTES[stage],
     )
 
 
@@ -213,10 +213,10 @@ def _stage0(lab, saved):
         "Laboratorio 1 · Certificación acústica de viviendas",
         "Una ruta de diseño desde el expediente del Edificio Los Alerces hasta la clasificación acústica justificada por el estudiante.",
         show_overview=False,
-        duration_minutes=STAGE_MINUTES[0],
+        duration_minutes=C5L1_STAGE_MINUTES[0],
     )
 
-    active_minutes = sum(STAGE_MINUTES[1:])
+    active_minutes = sum(C5L1_STAGE_MINUTES[1:])
     st.markdown(
         f'<div class="class-clock"><div><strong>⏱️ Ruta guiada del Laboratorio 1</strong>'
         f'<br><span>Caso ficticio · Edificio Los Alerces · SONARA + ISO</span>'
@@ -269,7 +269,7 @@ def _stage0(lab, saved):
             f'<span class="step">{stage}</span><div>'
             f'<b>{title}</b>'
             f'<p>{descriptions[stage - 1]}</p>'
-            f'<span class="route-time">⏱️ {STAGE_MINUTES[stage]} min</span>'
+            f'<span class="route-time">⏱️ {C5L1_STAGE_MINUTES[stage]} min</span>'
             '</div></div>'
         )
     st.markdown(f'<div class="route-grid">{cards}</div>', unsafe_allow_html=True)
