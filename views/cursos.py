@@ -144,7 +144,7 @@ def course_dashboard_impl():
                 card_detail,
             )
             if available and st.button(
-                "Continuar laboratorio" if number==ACTIVE_LAB else "Abrir laboratorio",
+                "Abrir laboratorio",
                 key=f"open_lab_{number}",
                 type="primary" if number==ACTIVE_LAB else "secondary",
                 use_container_width=True,
