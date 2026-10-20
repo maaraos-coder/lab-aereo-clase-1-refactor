@@ -300,8 +300,8 @@ def _stage1(lab, saved):
 
     st.markdown("### 🏙️ Conoce el Edificio Los Alerces")
     _show_drawing(
-        "vista_conceptual_alerces.svg",
-        "Vista conceptual coherente con los planos académicos: cinco pisos, "
+        "render_isometrico_alerces.svg",
+        "Vista isométrica conceptual basada en los planos académicos: cinco pisos, "
         "cuatro viviendas por planta, A-302 en el tercer nivel y "
         "adyacencias A-301, A-402, fachada norte y shaft S-1. "
         "Ilustración referencial, no un plano constructivo.",
