@@ -727,6 +727,80 @@ def _stage3(lab, saved):
         La clasificación de proyecto es una **estimación de diseño**. No equivale a una clasificación obtenida mediante mediciones finales en obra.
         """
     )
+
+    st.markdown("### 🏠 Resumen · ¿cómo se clasifica una vivienda?")
+    st.markdown(
+        "ISO/TS 19488 organiza la calidad acústica en **seis clases: A, B, C, D, E y F**. "
+        "**A es la más exigente y F la menos exigente dentro del esquema**. "
+        "La clase se obtiene comparando cada prestación con los criterios aplicables; "
+        "no corresponde a una nota promedio ni se deduce solo del material del muro."
+    )
+    st.dataframe(
+        pd.DataFrame([
+            ["A", "Extremo de mayor exigencia del esquema"],
+            ["B", "Exigencia inferior a A y superior a C"],
+            ["C", "Exigencia inferior a B y superior a D"],
+            ["D", "Exigencia inferior a C y superior a E"],
+            ["E", "Exigencia inferior a D y superior a F"],
+            ["F", "Extremo de menor exigencia del esquema"],
+            ["NPD", "Desempeño no determinado, no requerido o fuera de las clases; no es una séptima clase"],
+        ], columns=["Clase / declaración", "Cómo interpretarla"]),
+        hide_index=True, width="stretch",
+    )
+    st.caption(
+        "Las letras no equivalen por sí solas a categorías comerciales ni a cumplimiento legal. "
+        "Consulta los valores y condiciones de cada clase en el PDF de referencia."
+    )
+    st.markdown("#### 1 · Define el alcance")
+    st.markdown(
+        "Distingue entre **una característica acústica**, **una vivienda completa** y "
+        "**el edificio completo**. Aquí diseñamos cuatro situaciones del A-302; "
+        "eso no acredita automáticamente las otras viviendas ni todos los requisitos del edificio."
+    )
+    st.markdown("#### 2 · Comprueba qué características debes evaluar")
+    st.dataframe(
+        pd.DataFrame([
+            ["Aéreo entre viviendas y otros recintos", "Aislamiento y términos espectrales exigidos por la situación", "Mayor aislamiento", "Cláusula 5.2 · tabla 1"],
+            ["Impacto", "Nivel normalizado y requisitos de baja frecuencia cuando correspondan", "Menor nivel", "Cláusula 5.3 · tabla 2"],
+            ["Exterior / fachada", "Aislamiento de fachada y exposición exterior aplicable", "Mayor aislamiento para la misma exposición", "Cláusula 5.4 · tabla 3"],
+            ["Instalaciones", "Nivel, ponderación y condición de funcionamiento exigidos", "Menor nivel", "Cláusula 5.5 · tabla 4"],
+            ["Escaleras y zonas de acceso", "Reverberación o absorción según el espacio", "Según el criterio de la tabla", "Cláusula 5.6 · tabla 5"],
+        ], columns=["Característica", "Qué debes comprobar", "Sentido de mejora", "Dónde consultar"]),
+        hide_index=True, width="stretch",
+    )
+    st.info(
+        "No basta con leer DₙT,w o L′ₙT,w: verifica también los términos de adaptación, "
+        "las bandas, el tipo de recinto y las condiciones que exige la fila seleccionada. "
+        "La acústica interna entre habitaciones de una misma vivienda no integra estas clases."
+    )
+    st.markdown("#### 3 · Asigna una clase por característica")
+    st.markdown(
+        "Para cada caso: **resultado → descriptor y condición correctos → fila aplicable → "
+        "comparación con los límites → clase justificada**. Anota edición, tabla y condición. "
+        "Si falta evidencia, identifica la característica sin determinar; no completes la clase por intuición."
+    )
+    st.markdown("#### 4 · Comprueba si puedes declarar una clase global")
+    st.markdown(
+        "Una clase global requiere cumplir **todos los criterios aplicables a ese alcance**. "
+        "El desempeño limitante condiciona la clase: **las letras no se promedian**. "
+        "Si quedan características obligatorias sin evaluar, no presentes el resultado parcial "
+        "como una clasificación completa."
+    )
+    st.success(
+        "**Ejemplo didáctico, sin umbrales numéricos:** si las características aplicables "
+        "obtienen B, C, B y D, y el expediente cubre todos los criterios requeridos, "
+        "la clase común que puede justificarse es D. No es B ni un promedio de letras. "
+        "Si falta evaluar una característica requerida, conserva las clases parciales "
+        "y declara pendiente la conclusión global."
+    )
+    st.markdown("#### 5 · Distingue diseño y verificación")
+    st.markdown(
+        "SONARA aporta **predicciones para diseñar y comparar soluciones**. "
+        "La clasificación debe indicar la fase y respaldarse con el procedimiento de "
+        "verificación correspondiente: cálculos, inspecciones y mediciones según el alcance. "
+        "Revisa la cláusula 6 y el Anexo A antes de emitir una conclusión de vivienda o edificio."
+    )
+
     mapping = [
         ["Aéreo interior", "DₙT,w y adaptaciones espectrales", "Mayor suele representar mejor desempeño"],
         ["Impacto", "L′ₙT,w y adaptación aplicable", "Menor suele representar mejor desempeño"],
