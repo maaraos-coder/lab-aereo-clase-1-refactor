@@ -818,6 +818,36 @@ def _global_building_explanation():
         ], columns=["Característica del edificio", "Cobertura supuesta", "Clase sustentada"]),
         hide_index=True, width="stretch",
     )
+    st.markdown("#### Por qué la clase global es D, paso a paso")
+    st.markdown(
+        "Las clases están ordenadas por exigencia: **A → B → C → D → E → F**. "
+        "En este ejemplo, una característica que alcanza C también satisface los criterios "
+        "menos exigentes de D; una que alcanza B satisface C y D. Esto no significa "
+        "que su clase individual cambie: conserva B o C en el informe."
+    )
+    st.dataframe(
+        pd.DataFrame([
+            ["Aéreo", "C", "Sí", "Sí"],
+            ["Impacto", "D", "No", "Sí"],
+            ["Exterior / fachada", "C", "Sí", "Sí"],
+            ["Instalaciones", "C", "Sí", "Sí"],
+            ["Accesos / escaleras", "B", "Sí", "Sí"],
+            ["Conjunto del edificio", "Clase que TODOS pueden cumplir", "NO", "SÍ"],
+        ], columns=["Característica", "Clase individual", "¿Cumple al menos C?", "¿Cumple al menos D?"]),
+        hide_index=True, width="stretch",
+    )
+    st.markdown(
+        "**Prueba de C:** falla porque impacto solo alcanza D. No puedes declarar C "
+        "para todo el edificio aunque los otros cuatro ítems cumplan C o mejor. "
+        "**Prueba de D:** los cinco ítems cumplen D o mejor; por eso D es la clase "
+        "más exigente que todos pueden cumplir simultáneamente. E y F también serían "
+        "menos exigentes, pero no describen la mejor clase común sustentada."
+    )
+    st.info(
+        "Regla de decisión: busca la clase más exigente cuyos requisitos se cumplen "
+        "en TODAS las características y situaciones aplicables verificadas. No conviertas "
+        "las letras a números para promediarlas ni elijas la clase más frecuente."
+    )
     st.success(
         "La clase global del ejemplo es D: impacto limita el conjunto. Para aspirar a C "
         "hay que mejorar y verificar los casos de impacto que no alcanzan C, manteniendo "
