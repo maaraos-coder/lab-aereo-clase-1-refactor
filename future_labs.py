@@ -301,7 +301,7 @@ COURSE_LABS = [
                 "id": "clase-09-certificaciones-lab-1",
                 "opens_at": "2026-11-07T00:00:00-03:00",
                 "source": "Curso 5 · ISO/TS 19488:2021 · caso académico Edificio Los Alerces",
-                "focus": "IMPLEMENTADO · Edificio Los Alerces · proyecto ficticio completo, cálculos en SONARA y clasificación ISO realizada por el alumno",
+                "focus": "Edificio Los Alerces · proyecto ficticio, cálculos en SONARA y clasificación ISO realizada por el alumno",
                 "stages": [
                     ("Ruta del laboratorio · del proyecto a la clasificación", "Comprender la secuencia de trabajo y separar cálculo, interpretación y clasificación.", "SONARA entrega resultados de diseño; el alumno consulta ISO/TS 19488 y realiza la clasificación.", "Revisa la ruta y reconoce las responsabilidades."),
                     ("Expediente del Edificio Los Alerces", "Reconstruir el caso, la unidad evaluada y sus adyacencias.", "El expediente ficticio entrega programa, geometría, materialidades y cuatro situaciones acústicas críticas.", "Identifica fuentes, receptores y elementos separadores."),
