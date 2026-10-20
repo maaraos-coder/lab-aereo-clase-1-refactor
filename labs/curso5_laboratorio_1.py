@@ -307,40 +307,102 @@ def _stage1(lab, saved):
         "automáticamente a los otros 19 departamentos**."
     )
 
-    st.markdown("### 📐 ¿Cuántas viviendas se evalúan en un edificio real?")
+    st.markdown("### 📖 Cómo funciona la clasificación ISO/TS 19488:2021")
     st.markdown(
-        "No existe una regla general de «10 % de las viviendas». La muestra se define "
-        "según el **alcance de la clasificación**, las **tipologías de elementos**, "
-        "las **situaciones acústicas** y el **procedimiento de verificación** "
-        "establecido en ISO/TS 19488:2021, especialmente su Anexo A."
+        "La **cláusula 4 (p. 6)** define las clases **A, B, C, D, E y F**: "
+        "A representa el desempeño acústico más exigente; **NPD** significa "
+        "que el desempeño no se ha determinado. Se pueden clasificar características "
+        "individuales, una vivienda o un edificio completo, siempre indicando el alcance."
+    )
+    st.markdown(
+        "La **cláusula 5 (pp. 7–9)** presenta los criterios para el aislamiento aéreo "
+        "entre viviendas, el ruido de impacto, el aislamiento frente al exterior, "
+        "el ruido de instalaciones y la reverberación o absorción en escaleras "
+        "y zonas de acceso. En este ejercicio calcularemos cuatro familias en A-302; "
+        "**no verificamos todavía todos los requisitos de una clasificación global del edificio**."
+    )
+    st.info(
+        "**Ejemplo de lectura de las clases (Anexo A.4, pp. 13–14):** "
+        "se puede informar una clase por característica, una clase global para una "
+        "vivienda o una clase global del edificio. Cuando se informa una única clase, "
+        "debe cumplirse el conjunto de criterios que correspondan a ese alcance; "
+        "no se promedian automáticamente las letras de las clases parciales."
+    )
+
+    st.markdown("### 📐 ¿Cuántas viviendas y mediciones requiere un edificio real?")
+    st.markdown(
+        "**No hay una equivalencia universal entre porcentaje de muestreo y porcentaje "
+        "de departamentos.** El Anexo A diferencia la clasificación de una vivienda "
+        "individual de la verificación del edificio completo y establece dos "
+        "procedimientos para obtener evidencia de conformidad."
     )
     c_a, c_b = st.columns(2)
     with c_a:
         st.markdown(
-            "**Procedimiento A · diseño, obra y medición**\n\n"
-            "Combina predicciones de proyecto, comprobaciones durante la construcción "
-            "y mediciones en el edificio terminado. Requiere planificar las verificaciones "
-            "y documentar la representatividad de los casos."
+            "**Procedimiento A — A.2.1, pp. 11–12**\n\n"
+            "Verificación combinada en **tres momentos**: "
+            "(1) cálculos de predicción durante el diseño, "
+            "(2) inspecciones visuales durante la construcción "
+            "y (3) mediciones en el edificio terminado. "
+            "En la etapa de medición se selecciona **el 5 % de las estructuras "
+            "y recintos que se medirán**, con prioridad a situaciones representativas "
+            "o críticas. **No equivale a medir el 5 % de las viviendas.**"
         )
     with c_b:
         st.markdown(
-            "**Procedimiento B · mediciones en obra terminada**\n\n"
-            "Selecciona al menos el **10 % de los tipos de construcciones** de muros "
-            "separadores y pisos para medición representativa; **no significa medir "
-            "el 10 % de los departamentos**."
+            "**Procedimiento B — A.2.2, p. 12**\n\n"
+            "Verificación **solo mediante mediciones** en el edificio terminado. "
+            "Se selecciona como mínimo el **10 % de los tipos de construcción** "
+            "de muros separadores y pisos, cubriendo suficientemente cada tipo "
+            "y priorizando situaciones críticas. "
+            "**No equivale a medir el 10 % de las viviendas.**"
         )
     st.warning(
-        "**Verificación del edificio completo:** la ISO/TS 19488:2021 (Anexo A) indica "
-        "un mínimo de **3 mediciones por tipo de estructura y característica acústica**. "
-        "Puede requerirse una muestra mayor si existen distintas configuraciones, "
-        "orientaciones, recintos o riesgos. Consulta la edición autorizada para "
-        "definir el procedimiento exacto y las excepciones aplicables."
+        "**Edificio completo — A.2.3, p. 12:** el mínimo es **3 mediciones "
+        "por cada tipo de construcción diferente y característica acústica**. "
+        "El mínimo no fija por sí solo cuántas viviendas deben medirse. "
+        "La cantidad final dependerá de las tipologías, distribuciones, "
+        "recintos y particularidades del proyecto."
+    )
+    st.markdown(
+        "**Para Los Alerces (20 viviendas):** A-302 será nuestra unidad de modelación. "
+        "Como ejercicio, el estudiante identificará cuántas tipologías diferentes existen "
+        "en el edificio y propondrá dónde obtener evidencia; **no debe suponer que "
+        "basta con evaluar 1, 2 o 3 departamentos** sin caracterizar esas tipologías."
     )
     st.caption(
-        "Fuente normativa de estudio: ISO/TS 19488:2021, cláusula 6 y Anexo A "
-        "(procedimientos A y B; clasificación de un edificio o vivienda). "
-        "Referencia oficial: https://www.iso.org/standard/77742.html"
+        "Referencia de lectura: ISO/TS 19488:2021, cláusulas 4, 5 y 6; "
+        "Anexo A.1–A.4 (pp. 11–14 del documento; pp. 17–20 del PDF). "
+        "Se presenta una explicación docente, no una reproducción de las tablas normativas."
     )
+
+    st.markdown("### 📥 Norma de referencia para la actividad")
+    norm_paths = [
+        PROJECT_ROOT / "private_assets" / "ISO-TS-19488-2021.pdf",
+        PROJECT_ROOT / "private_assets" / "966515482-ISO-TS-19488-2021.pdf",
+    ]
+    norm_file = next((p for p in norm_paths if p.is_file()), None)
+    if norm_file:
+        st.download_button(
+            "📄 Descargar ISO/TS 19488:2021 (PDF)",
+            data=norm_file.read_bytes(),
+            file_name="ISO-TS-19488-2021.pdf",
+            mime="application/pdf",
+            key="c5l1_norm_pdf_download",
+            width="stretch",
+            help="Documento disponible solo cuando se configura en el almacenamiento privado del despliegue.",
+        )
+    else:
+        st.caption(
+            "El PDF no se encuentra configurado en el almacenamiento privado de esta instalación. "
+            "Cuando se habilite una copia con derechos de distribución apropiados, "
+            "aparecerá aquí el botón de descarga."
+        )
+        st.link_button(
+            "📚 Consultar la ficha oficial de ISO/TS 19488:2021",
+            ISO_STATUS_URL,
+            width="stretch",
+        )
 
     st.markdown("### 🏗️ Conoce el proyecto")
     c1, c2, c3, c4 = st.columns(4)
