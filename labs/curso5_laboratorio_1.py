@@ -299,13 +299,23 @@ def _stage1(lab, saved):
     _project_badge()
 
     st.markdown("### 🏙️ Conoce el Edificio Los Alerces")
-    _show_drawing(
-        "render_isometrico_alerces.svg",
-        "Vista isométrica conceptual basada en los planos académicos: cinco pisos, "
-        "cuatro viviendas por planta, A-302 en el tercer nivel y "
-        "adyacencias A-301, A-402, fachada norte y shaft S-1. "
-        "Ilustración referencial, no un plano constructivo.",
-    )
+    render_path = _asset("alerces_render_profesional.jpg")
+    if render_path.is_file():
+        st.image(
+            str(render_path),
+            caption=(
+                "Render arquitectónico ilustrativo del Edificio Los Alerces. "
+                "La identificación de A-302 y sus relaciones acústicas deben "
+                "contrastarse con los planos técnicos de la Etapa 2."
+            ),
+            use_container_width=True,
+        )
+    else:
+        _show_drawing(
+            "render_isometrico_alerces.svg",
+            "Esquema provisional. Pendiente incorporar el render arquitectónico en "
+            "assets/curso5_lab1/alerces_render_profesional.jpg.",
+        )
 
     st.markdown("### 🏢 ¿Qué vamos a clasificar?")
     st.info(
