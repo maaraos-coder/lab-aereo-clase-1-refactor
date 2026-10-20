@@ -208,38 +208,80 @@ def _result_form(lab, saved, stage, case_name, fields, prompt):
 
 
 def _stage0(lab, saved):
-    _header(
-        0,
-        "Ruta del laboratorio · del proyecto a la clasificación",
-        "Comprender la secuencia de trabajo y separar con claridad cálculo, interpretación y clasificación.",
+    header(
+        "ETAPA 0 · BIENVENIDA",
+        "Laboratorio 1 · Certificación acústica de viviendas",
+        "Una ruta de diseño desde el expediente del Edificio Los Alerces hasta la clasificación acústica justificada por el estudiante.",
+        show_overview=False,
+        duration_minutes=STAGE_MINUTES[0],
     )
-    _project_badge()
+
+    active_minutes = sum(STAGE_MINUTES[1:])
+    st.markdown(
+        f'<div class="class-clock"><div><strong>⏱️ Ruta guiada del Laboratorio 1</strong>'
+        f'<br><span>Caso ficticio · Edificio Los Alerces · SONARA + ISO</span>'
+        f'</div><div><strong>{active_minutes} min</strong></div></div>',
+        unsafe_allow_html=True,
+    )
+
     st.markdown(
         """
-        ### Propósito
-
-        Desarrollar el anteproyecto acústico de una vivienda mediante un expediente común. SONARA será la
-        herramienta principal para obtener los resultados de diseño. **La plataforma no determinará la clase:**
-        cada estudiante deberá consultar la edición autorizada de ISO/TS 19488, seleccionar los criterios
-        aplicables, clasificar y justificar su decisión.
-        """
+        <div style="border:1px solid #cfe0ef;border-radius:18px;padding:17px 19px;
+        background:linear-gradient(135deg,#f8fcff,#edf6fb);margin:.8rem 0 1rem">
+          <div style="font-size:.68rem;font-weight:900;letter-spacing:.09em;color:#087ba0">
+            CASO CONDUCTOR · PROYECTO FICTICIO
+          </div>
+          <div style="font-size:1.05rem;font-weight:900;color:#173b53;margin:.3rem 0">
+            Edificio Los Alerces · Departamento A-302
+          </div>
+          <div style="color:#587486;line-height:1.55;font-size:.84rem">
+            Trabajarás con un expediente académico común de un edificio residencial de cinco pisos.
+            Interpretarás planos y materialidades, prepararás modelos y registrarás resultados obtenidos
+            mediante SONARA. La clasificación acústica final se realiza y justifica por cada estudiante,
+            consultando ISO/TS 19488; la plataforma no asigna clases automáticamente.
+          </div>
+        </div>
+        """,
+        unsafe_allow_html=True,
     )
-    route = [
-        [1, "Expediente", "Conocer edificio, recintos y materialidades"],
-        [2, "Planos", "Leer planta, corte, fachada y encuentros"],
-        [3, "Marco ISO", "Definir alcance, indicadores y evidencia"],
-        [4, "Protocolo", "Preparar entradas y trazabilidad"],
-        [5, "Aéreo", "Calcular separación entre viviendas"],
-        [6, "Impacto", "Calcular transmisión por losa"],
-        [7, "Fachada", "Calcular envolvente y elemento débil"],
-        [8, "Instalaciones", "Proyectar ruido de servicio"],
-        [9, "Matriz", "Consolidar resultados sin clasificarlos"],
-        [10, "Clasificación", "Aplicar ISO/TS 19488 y justificar"],
+
+    st.markdown(
+        '<div class="section-band"><span>🗺️</span><h3>Tu ruta de aprendizaje</h3></div>',
+        unsafe_allow_html=True,
+    )
+    descriptions = [
+        "Conoce el edificio, sus recintos, adyacencias, materiales y las situaciones acústicas que evaluarás.",
+        "Interpreta planta, corte, fachada y detalles constructivos para reconocer caminos de transmisión.",
+        "Distingue el cálculo según ISO 12354 de la clasificación conforme a ISO/TS 19488.",
+        "Prepara los datos de entrada, los modelos y la trazabilidad necesaria antes de usar SONARA.",
+        "Calcula el aislamiento aéreo entre viviendas y documenta los caminos directos y laterales.",
+        "Calcula el ruido de impacto a través de la losa y el efecto del sistema de piso.",
+        "Evalúa el aislamiento de la fachada compuesta e identifica sus elementos más débiles.",
+        "Registra el ruido de instalaciones, las condiciones de operación y las limitaciones del método.",
+        "Consolida resultados, descriptores y evidencias sin asignar todavía la clase acústica.",
+        "Consulta ISO/TS 19488, asigna y justifica la clasificación; entrega el expediente final.",
     ]
-    st.dataframe(pd.DataFrame(route, columns=["Etapa", "Bloque", "Producto"]), hide_index=True, width="stretch")
-    st.success("Resultado esperado: una ficha de clasificación reproducible, con cada resultado vinculado a su dato de entrada y método de cálculo.")
-    if st.session_state.get("role") == "Alumno" and not saved.get("done_0"):
-        _save(lab, saved, 0)
+    cards = ""
+    for stage in range(1, 11):
+        title = lab["stages"][stage][0]
+        cards += (
+            '<div class="route-card">'
+            f'<span class="step">{stage}</span><div>'
+            f'<b>{title}</b>'
+            f'<p>{descriptions[stage - 1]}</p>'
+            f'<span class="route-time">⏱️ {STAGE_MINUTES[stage]} min</span>'
+            '</div></div>'
+        )
+    st.markdown(f'<div class="route-grid">{cards}</div>', unsafe_allow_html=True)
+
+    st.success(
+        "Resultado esperado: expediente de diseño y ficha de clasificación trazables, "
+        "con resultados de SONARA y decisión ISO justificada por el alumno."
+    )
+    st.warning(
+        "Continuidad del trabajo: utiliza «Guardar avance de esta etapa» antes de cambiar de sección. "
+        "Las etapas posteriores recuperan los antecedentes y resultados previamente guardados."
+    )
 
 
 def _stage1(lab, saved):
