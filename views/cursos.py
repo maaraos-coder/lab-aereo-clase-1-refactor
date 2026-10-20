@@ -146,7 +146,7 @@ def course_dashboard_impl():
             if available and st.button(
                 "Abrir laboratorio",
                 key=f"open_lab_{number}",
-                type="primary" if number==ACTIVE_LAB else "secondary",
+                type="secondary",
                 use_container_width=True,
             ):
                 st.session_state.active_lab=number
