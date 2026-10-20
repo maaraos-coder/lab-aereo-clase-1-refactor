@@ -173,6 +173,97 @@ def _show_drawing(filename: str, caption: str):
         st.error(f"No se encontró el plano académico: {filename}")
 
 
+
+# Operational instructions follow the current SONARA screens.
+SONARA_DESIGN_GUIDES = {
+    "Aéreo interior": {
+        "route": "Calculadora libre → Ruido aéreo; después Transmisión entre recintos (ISO 12354-1).",
+        "inputs": [
+            ["M-01 · separador", "Hormigón armado · 180 mm", "Selecciona una ficha con propiedades completas; registra densidad y procedencia."],
+            ["Geometría AI-01", "S = 10,2 m² · V receptor = 51,0 m³", "Copia el TR adoptado desde tu protocolo; no confundas área de muro con área de piso."],
+            ["Flancos", "Losa, muros laterales y fachada según planos", "Obtén espesores y longitudes de unión del expediente; justifica cualquier dato faltante."],
+        ],
+        "steps": [
+            "En Ruido aéreo selecciona Panel simple y modela M-01 con una capa de hormigón de 180 mm. Conserva R(f), Rw, C y Ctr como resultados del elemento.",
+            "Abre Transmisión entre recintos (ISO 12354-1). Ingresa S = 10,2 m², V = 51,0 m³ y el TR receptor declarado. Introduce el Rw calculado en «Rw elemento separador».",
+            "Activa los flancos que existan en los planos. Para cada encuentro registra material, masa superficial, longitud y tipo de unión o Kij. Usa «Calcular con SONARA» cuando puedas definir sus capas.",
+            "Identifica si domina el camino directo o uno lateral. Diseña una variante: modificar M-01 o añadir un trasdosado desacoplado; si domina un flanco, actúa sobre el encuentro correspondiente.",
+            "Recalcula el descriptor entre recintos con la misma geometría y compara la variante con la base. Registra DₙT,w y las adaptaciones que correspondan a la curva final.",
+        ],
+        "limit": "El ingreso directo por Rw del módulo entre recintos reconstruye una curva de referencia: declara esa aproximación. No copies C y Ctr de la placa como si fueran los términos de la curva final entre recintos.",
+        "evidence": "Configuración de M-01 y su variante, captura del visual constructivo, entradas de recintos/uniones, curvas y resultado final DₙT,w.",
+    },
+    "Impacto": {
+        "route": "Calculadora libre → Ruido de impacto → ISO 12354-2.",
+        "inputs": [
+            ["L-01 · losa base", "Hormigón armado · 160 mm", "Registra la densidad seleccionada; SONARA obtiene la masa superficial."],
+            ["Piso superior", "Sobrelosa 40 mm + terminación flotante", "La capa resiliente y su rigidez no están definidas: selecciona una ficha o declara una hipótesis."],
+            ["Geometría IM-01", "Área entrepiso = 20,4 m² · V = 51,0 m³", "Usa el mismo TR receptor en la comparación base/variante."],
+        ],
+        "steps": [
+            "Selecciona ISO 12354-2 y «Calcular por masa superficial». Ingresa 160 mm y la densidad documentada del hormigón. No uses 200 mm sumando la sobrelosa a la losa estructural.",
+            "Calcula primero la losa base sin revestimiento ni cielo. Guarda el resultado como IM-01 · Base y registra los flancos considerados.",
+            "Para la variante, selecciona un revestimiento del catálogo con espectro ΔL medido y montaje compatible; documenta su ficha. Alternativamente usa «Piso flotante físico».",
+            "En Piso flotante físico ingresa la masa superficial de la sobrelosa: m′ = densidad × 0,040 m. Ingresa la rigidez dinámica s′ de la capa resiliente desde una ficha; no la deduzcas solo de su espesor.",
+            "Define el cielo inferior solo si forma parte de tu propuesta. Completa área 20,4 m², volumen 51,0 m³, TR y flancos; revisa el visual constructivo y recalcula.",
+            "Compara L′ₙT,w y CI de base y variante; menor nivel de impacto significa mejor desempeño. Explica la influencia del piso, de los puentes rígidos y de los flancos.",
+        ],
+        "limit": "No sumes dos mejoras ΔL para el mismo sistema: el catálogo medido y el modelo físico son alternativas. La banda resiliente perimetral no equivale a una rigidez dinámica conocida.",
+        "evidence": "Losa y densidad, ficha ΔL o masa/rigidez del piso físico, montaje, flancos, visual constructivo, curva y L′ₙT,w con CI.",
+    },
+    "Fachada": {
+        "route": "Calculadora libre → Ruido aéreo para los componentes; después Fachada (ISO 12354-3).",
+        "inputs": [
+            ["Fachada FA-01", "Área total = 15,3 m² · V = 51,0 m³", "Mismo estar receptor que AI-01 e IM-01."],
+            ["V-01 · ventana estar", "DVH 6/12/4 · 4,80 m²", "6 y 4 mm son vidrios; 12 mm es cámara, no una placa."],
+            ["F-01 · paño opaco", "10,50 m² · HA 150 + cámara 50 + yeso 15 mm", "150 + 50 + 15 mm no se modela como tres capas sólidas adheridas."],
+        ],
+        "steps": [
+            "Diseña F-01 en Ruido aéreo → Panel doble: hoja de hormigón de 150 mm, cámara de 50 mm con absorbente y hoja de yeso de 15 mm. Declara el montaje desacoplado y la ficha del absorbente.",
+            "Diseña V-01 en Ruido aéreo → Ventana → DVH: vidrio 6 mm, aire 12 mm y vidrio 4 mm. Documenta que el conjunto real también depende de marco, juntas y condiciones de ensayo.",
+            "Abre Fachada (ISO 12354-3). Ingresa volumen 51,0 m³ y área total 15,3 m². Crea dos componentes: opaco 10,50 m² y ventana 4,80 m².",
+            "El selector SONARA de cada componente calcula una placa simple. Para trasladar tu panel doble o DVH usa «Manual Rw/Ctr» con sus resultados; documenta la reconstrucción espectral aproximada que realiza ese modo.",
+            "Ingresa exposición exterior y corrección por forma a partir de antecedentes o hipótesis identificadas. Añade juntas o aireadores únicamente cuando puedas justificar sus datos.",
+            "Compara una variante del componente dominante —ventana, sellos o paño opaco— manteniendo áreas y exposición. Guarda D₂m,nT,w y C/Ctr de la fachada completa.",
+        ],
+        "limit": "El modo Manual Rw/Ctr no transfiere íntegramente el espectro calculado del componente. Informa esa limitación. No uses el Rw de la ventana como resultado global ni registres el dormitorio V-02 dentro del caso del estar V-01.",
+        "evidence": "Modelos F-01 y V-01, Rw/Ctr transferidos, áreas, hipótesis exterior/forma, juntas consideradas y curva final de fachada.",
+    },
+    "Instalaciones": {
+        "route": "Calculadora libre → Ruido de instalaciones (EN 12354-5).",
+        "inputs": [
+            ["IN-01 · descarga sanitaria", "Condición de operación definida por el alumno", "Se requiere espectro de fuente trazable; los valores iniciales de SONARA son ejemplos."],
+            ["S-01 · cierre", "Doble placa RF + lana · conjunto 120 mm", "Faltan espesores individuales: define placas, cámara y montaje sin asignar 120 mm a cada capa."],
+            ["Receptor", "Dormitorio principal · V = 28,8 m³", "Declara TR, absorción equivalente y recorrido; A ≈ 0,16 V/T como hipótesis de campo difuso."],
+        ],
+        "steps": [
+            "Define una descarga o ciclo de funcionamiento reproducible, su duración y simultaneidad. Obtén datos espectrales de fabricante o ensayo; si no existen, identifica el cálculo como escenario académico.",
+            "Diseña el cierre S-01 en Ruido aéreo → Panel doble con espesores y cámara expresamente definidos. Conserva R(f), no solo Rw.",
+            "En Ruido de instalaciones selecciona la condición de funcionamiento y la vía «Aérea · recinto adyacente». Ingresa el espectro Lw, el área real del cierre, R por bandas de octava y las absorciones fuente/receptor.",
+            "Para las fijaciones usa una vía «Estructural» solo con nivel de fuerza/velocidad y función de transferencia instalada compatibles. Una abrazadera resiliente no se representa restando una atenuación arbitraria.",
+            "Usa «Agregar vías simultáneas» si cuentas con datos para la vía aérea y estructural. Compara mejoras de cierre, sellado o fijaciones manteniendo la misma descarga y receptor.",
+            "Registra LAeq únicamente para la condición temporal definida. El modo intermitente entrega LAFmax estimado: declara su alcance y no conviertas un LAeq en un máximo FAST.",
+        ],
+        "limit": "Si no puedes justificar uno de los descriptores, déjalo sin determinar y documenta qué dato o medición falta. No inventes niveles para completar el expediente.",
+        "evidence": "Fuente y bandas, operación, cierre S-01, fijaciones, transferencia/atenuación justificadas y descriptor temporal compatible.",
+    },
+}
+
+
+def _sonara_design_guide(case_name):
+    guide = SONARA_DESIGN_GUIDES[case_name]
+    st.markdown("### 🛠️ Cómo diseñar esta solución en SONARA")
+    st.info("**Ruta en SONARA:** " + guide["route"])
+    st.dataframe(
+        pd.DataFrame(guide["inputs"], columns=["Elemento / dato", "Entrada del caso", "Comprobación"]),
+        hide_index=True, width="stretch",
+    )
+    st.markdown("\n\n".join(f"{index}. {step}" for index, step in enumerate(guide["steps"], 1)))
+    st.warning(guide["limit"])
+    st.markdown("**Evidencia que debes conservar:** " + guide["evidence"])
+    st.caption("El traslado de datos entre SONARA y este laboratorio es manual; abrir SONARA no importa ni guarda resultados automáticamente.")
+
+
 def _result_form(lab, saved, stage, case_name, fields, prompt):
     case = CALCULATION_CASES[case_name]
     st.markdown(f"### Caso {case['code']} · {case_name}")
@@ -181,7 +272,8 @@ def _result_form(lab, saved, stage, case_name, fields, prompt):
         f"**Geometría:** {case['geometry']}  \n**Descriptor de trabajo:** {case['descriptor']}"
     )
     st.info(prompt)
-    _sonara_button()
+    _sonara_design_guide(case_name)
+    _sonara_button("Abrir SONARA para diseñar esta solución")
 
     stored = saved.get(f"c5l1_result_{case['code']}", {})
     with st.form(f"c5l1_form_{case['code']}"):
@@ -195,6 +287,34 @@ def _result_form(lab, saved, stage, case_name, fields, prompt):
                 format="%.1f",
                 placeholder="Resultado SONARA",
             )
+        st.markdown("#### Comparación de diseño · base → variante")
+        target = st.text_input(
+            "Objetivo de diseño y descriptor",
+            value=stored.get("target", ""),
+            placeholder="Umbral elegido por ti, sentido de comparación y referencia consultada.",
+        )
+        base_design = st.text_area(
+            "Solución inicial y resultado base",
+            value=stored.get("base_design", ""),
+            placeholder="Capas, espesores, montaje y resultado antes de mejorar.",
+        )
+        design_change = st.text_area(
+            "Cambio propuesto y efecto observado",
+            value=stored.get("design_change", ""),
+            placeholder="Qué cambiaste, qué mantuviste y por qué mejora o no el descriptor final.",
+        )
+        evidence = st.text_area(
+            "Identificación de las evidencias de SONARA",
+            value=stored.get("evidence", ""),
+            placeholder="Nombre del proyecto/solución, fecha y archivos de curvas, capturas o informes conservados.",
+        )
+        undetermined = False
+        if case_name == "Instalaciones":
+            undetermined = st.checkbox(
+                "Hay un descriptor sin determinar por falta de antecedentes",
+                value=bool(stored.get("undetermined", False)),
+                help="Deja vacío el descriptor no sustentado y explica en la trazabilidad qué falta.",
+            )
         notes = st.text_area(
             "Supuestos, configuración y trazabilidad",
             value=stored.get("notes", ""),
@@ -203,12 +323,18 @@ def _result_form(lab, saved, stage, case_name, fields, prompt):
         )
         submitted = st.form_submit_button("Guardar resultados de diseño", width="stretch")
     if submitted:
-        if any(value is None for value in values.values()):
-            st.warning("Completa todos los resultados solicitados.")
+        if any(value is None for value in values.values()) and not undetermined:
+            st.warning("Completa los resultados o declara, en instalaciones, el descriptor sin determinar.")
+        elif undetermined and all(value is not None for value in values.values()):
+            st.warning("La declaración sin determinar requiere dejar vacío el resultado no sustentado.")
         elif len(notes.strip()) < 80:
             st.warning("Documenta los supuestos y la configuración con al menos 80 caracteres.")
         else:
-            payload = {**values, "notes": notes, "descriptor": case["descriptor"]}
+            payload = {
+                **values, "notes": notes, "descriptor": case["descriptor"],
+                "target": target, "base_design": base_design, "design_change": design_change,
+                "evidence": evidence, "undetermined": undetermined,
+            }
             _save(lab, saved, stage, **{f"c5l1_result_{case['code']}": payload})
             st.success("Resultado guardado. La clase acústica todavía no ha sido asignada.")
 
@@ -638,6 +764,28 @@ def _stage4(lab, saved):
     ]
     st.dataframe(pd.DataFrame(checklist, columns=["Grupo", "Dato mínimo", "Evidencia"]), hide_index=True, width="stretch")
     st.error("No conviertas un Rw de catálogo directamente en DₙT,w, R′w o D₂m,nT,w. Son magnitudes de contextos diferentes.")
+    st.markdown("### Ruta de diseño por elemento")
+    st.dataframe(
+        pd.DataFrame([
+            ["M-01 y flancos", "Ruido aéreo → Transmisión entre recintos", "DₙT,w y adaptaciones finales", "Etapa 5"],
+            ["L-01, piso y cielo", "Ruido de impacto → ISO 12354-2", "L′ₙT,w y CI", "Etapa 6"],
+            ["F-01 + V-01", "Ruido aéreo → Fachada", "D₂m,nT,w y adaptaciones finales", "Etapa 7"],
+            ["S-01 y fijaciones", "Ruido aéreo → Ruido de instalaciones", "LAeq / LAFmax según datos y operación", "Etapa 8"],
+        ], columns=["Diseño", "Módulo SONARA", "Resultado que vuelve al laboratorio", "Guía detallada"]),
+        hide_index=True, width="stretch",
+    )
+    st.markdown(
+        "**Ciclo de trabajo:** define el objetivo y su descriptor → calcula la solución base → "
+        "identifica el camino dominante → modifica una variable → recalcula → compara y justifica. "
+        "Guarda una solución base y una variante por caso. Mantén geometría, operación y criterio "
+        "de comparación constantes salvo que el cambio sea parte explícita del diseño."
+    )
+    st.info(
+        "Los datos que no figuran en el expediente —TR, rigidez dinámica, espectros de fuente o "
+        "propiedades de uniones— deben obtenerse de una ficha o declararse como hipótesis académicas. "
+        "No conserves un valor por defecto de SONARA sin justificarlo."
+    )
+    _sonara_button("Abrir SONARA y preparar el proyecto Los Alerces")
     protocol = st.text_area(
         "Protocolo personal de cálculo",
         value=saved.get("c5l1_s4_protocol", ""),
@@ -704,12 +852,37 @@ def _stage9(lab, saved):
     ]
     for code, family, key, descriptor, unit in definitions:
         result = saved.get(f"c5l1_result_{code}", {})
-        rows.append([code, family, descriptor, result.get(key), unit, "Registrado" if result.get(key) is not None else "Pendiente"])
+        status = "Registrado" if result.get(key) is not None else ("Sin determinar · justificado" if result.get("undetermined") else "Pendiente")
+        rows.append([code, family, descriptor, result.get(key), unit, status])
     result_df = pd.DataFrame(rows, columns=["Caso", "Familia", "Descriptor", "Resultado", "Unidad", "Estado"])
     st.dataframe(result_df, hide_index=True, width="stretch")
+    st.markdown("### Decisiones y evidencias del diseño")
+    decisions = []
+    for family, case in CALCULATION_CASES.items():
+        design = saved.get(f"c5l1_result_{case['code']}", {})
+        decisions.append([
+            case["code"], design.get("target", ""), design.get("base_design", ""),
+            design.get("design_change", ""), design.get("evidence", ""),
+        ])
+    st.dataframe(
+        pd.DataFrame(decisions, columns=["Caso", "Objetivo", "Base", "Cambio y efecto", "Evidencias"]),
+        hide_index=True, width="stretch",
+    )
+    st.download_button(
+        "Descargar expediente de diseño SONARA (JSON)",
+        data=json.dumps(
+            {case["code"]: saved.get(f"c5l1_result_{case['code']}", {}) for case in CALCULATION_CASES.values()},
+            ensure_ascii=False, indent=2,
+        ).encode("utf-8"),
+        file_name="los_alerces_diseno_sonara.json", mime="application/json",
+        key="c5l1_design_export", width="stretch",
+    )
     missing = result_df[result_df["Estado"] == "Pendiente"]
     if missing.empty:
-        st.success("La matriz está completa. Los valores aún no tienen una clase asignada.")
+        if (result_df["Estado"] == "Sin determinar · justificado").any():
+            st.warning("Expediente con resultados sin determinar. Conserva las limitaciones: no permite concluir un desempeño global completo.")
+        else:
+            st.success("La matriz está completa. Los valores aún no tienen una clase asignada.")
     else:
         st.warning(f"Faltan {len(missing)} resultados. Regresa a las etapas de cálculo antes de clasificar.")
     review = st.text_area(
@@ -734,6 +907,12 @@ def _stage10(lab, saved):
         "La plataforma no calcula ni recomienda la clase. Consulta tu copia autorizada de ISO/TS 19488:2021, "
         "verifica el alcance de cada tabla y registra la decisión que puedas justificar."
     )
+    if saved.get("c5l1_result_IN-01", {}).get("undetermined"):
+        st.warning(
+            "Instalaciones contiene un descriptor sin determinar. Consulta cómo declarar esa "
+            "situación en la referencia elegida y explica la exclusión; no atribuyas una clase "
+            "a la característica sin evidencia ni concluyas conformidad global completa."
+        )
     families = ["Aéreo interior", "Impacto", "Fachada", "Instalaciones"]
     previous = saved.get("c5l1_classification", {})
     entries = {}
