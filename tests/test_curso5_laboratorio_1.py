@@ -9,7 +9,7 @@ def test_course5_lab1_is_specialized_and_has_eleven_stages():
     assert metadata["number"] == 1
     assert len(metadata["stages"]) == 11
     assert "SONARA" in metadata["focus"]
-    assert "clasificación realizada por el alumno" in metadata["focus"]
+    assert "clasificación ISO realizada por el alumno" in metadata["focus"]
 
 
 def test_case_contains_all_acoustic_families_and_no_prefilled_class():
@@ -51,3 +51,11 @@ def test_stage_dispatch_is_complete():
     assert [renderer.__name__ for renderer in lab._STAGES] == [
         f"_stage{index}" for index in range(11)
     ]
+
+
+def test_course5_lab2_is_reserved_for_the_future_real_project():
+    lab2 = FUTURE_LABS["clase-10-certificaciones-lab-2"]
+    assert "Proyecto real" in lab2["focus"]
+    assert "PRÓXIMO LABORATORIO" in lab2["focus"]
+    assert "CES" not in lab2["focus"]
+    assert all("CES" not in " ".join(stage) for stage in lab2["stages"])
