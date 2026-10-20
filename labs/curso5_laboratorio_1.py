@@ -494,9 +494,9 @@ def _stage1(lab, saved):
         '</div>', unsafe_allow_html=True,
     )
     with st.form("c5l1_stage1_diagnostic_form", border=True):
-        st.markdown("#### ① Diagnóstico acústico del A-302")
+        st.markdown("#### Diagnóstico acústico del A-302")
         answer = st.text_area(
-            "1. Diagnostica las cuatro situaciones acústicas del departamento A-302",
+            "Diagnostica las cuatro situaciones acústicas del departamento A-302",
             value=saved.get("c5l1_s1_answer", ""),
             placeholder="Describe fuente, receptor, elemento y mecanismo de transmisión para cada caso.",
             height=160,
@@ -509,15 +509,15 @@ def _stage1(lab, saved):
         previous_procedure = saved.get("c5l1_s1_procedure", procedure_options[0])
         if previous_procedure not in procedure_options:
             previous_procedure = procedure_options[0]
-        st.markdown("#### ② Procedimiento de verificación")
+        st.markdown("#### Procedimiento de verificación")
         procedure = st.selectbox(
-            "2. Procedimiento para una futura verificación del edificio",
+            "Procedimiento para una futura verificación del edificio",
             procedure_options,
             index=procedure_options.index(previous_procedure),
         )
-        st.markdown("#### ③ Diseño del plan de muestreo")
+        st.markdown("#### Diseño del plan de muestreo")
         sample = st.text_area(
-            "3. Propón un plan de muestreo para las 20 viviendas",
+            "Propón un plan de muestreo para las 20 viviendas",
             value=saved.get("c5l1_s1_sampling", ""),
             placeholder=(
                 "Propón qué unidades, recintos, elementos y orientaciones revisarías; "
@@ -526,9 +526,9 @@ def _stage1(lab, saved):
             ),
             height=180,
         )
-        st.markdown("#### ④ Alcance y limitaciones")
+        st.markdown("#### Alcance y limitaciones")
         scope = st.text_area(
-            "4. Alcance, límites y evidencias adicionales",
+            "Alcance, límites y evidencias adicionales",
             value=saved.get("c5l1_s1_scope", ""),
             placeholder=(
                 "Distingue la evaluación preliminar de A-302 de la clasificación del "
