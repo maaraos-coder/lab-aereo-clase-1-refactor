@@ -1,0 +1,19 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1100 720" role="img" aria-labelledby="title">
+  <title id="title">Corte A-A del Edificio Los Alerces</title>
+  <rect width="1100" height="720" fill="#f7fafc"/>
+  <style>.slab{fill:#62748a}.unit{fill:#e8f6ff;stroke:#0786cf;stroke-width:5}.other{fill:#fff;stroke:#9aabba;stroke-width:3}.txt{font:22px Arial;fill:#172b3f}.small{font:16px Arial;fill:#4e6075}.arr{stroke:#d6365c;stroke-width:5;marker-end:url(#a)}</style>
+  <defs><marker id="a" markerWidth="10" markerHeight="10" refX="9" refY="3" orient="auto"><path d="M0 0L0 6L9 3z" fill="#d6365c"/></marker></defs>
+  <text x="55" y="50" class="txt" font-weight="700">CORTE A–A · APILAMIENTO VERTICAL</text><text x="55" y="78" class="small">Caso ficticio · altura libre 2,50 m · losa HA 160 mm</text>
+  <g transform="translate(130 105)">
+    <rect x="0" y="0" width="720" height="95" class="other"/><rect x="0" y="95" width="720" height="18" class="slab"/>
+    <rect x="0" y="113" width="720" height="95" class="other"/><rect x="0" y="208" width="720" height="18" class="slab"/>
+    <rect x="0" y="226" width="720" height="95" class="unit"/><rect x="0" y="321" width="720" height="18" class="slab"/>
+    <rect x="0" y="339" width="720" height="95" class="other"/><rect x="0" y="434" width="720" height="18" class="slab"/>
+    <rect x="0" y="452" width="720" height="95" class="other"/><rect x="0" y="547" width="720" height="24" class="slab"/>
+    <text x="25" y="58" class="txt">Piso 5 · A-502</text><text x="25" y="171" class="txt">Piso 4 · A-402 · fuente de impacto</text>
+    <text x="25" y="284" class="txt" font-weight="700">Piso 3 · A-302 · unidad evaluada</text><text x="25" y="397" class="txt">Piso 2 · A-202</text><text x="25" y="510" class="txt">Piso 1 · A-102</text>
+    <line x1="620" y1="165" x2="620" y2="260" class="arr"/><text x="650" y="220" class="small">IM-01</text>
+  </g>
+  <line x1="900" y1="105" x2="900" y2="676" stroke="#62748a" stroke-width="2"/><line x1="885" y1="105" x2="915" y2="105" stroke="#62748a"/><line x1="885" y1="676" x2="915" y2="676" stroke="#62748a"/><text x="925" y="400" class="small">5 niveles</text>
+  <rect x="150" y="650" width="680" height="18" fill="#c3d1df"/><text x="150" y="705" class="small">Fundación esquemática · terreno natural</text>
+</svg>

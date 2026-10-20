@@ -1,0 +1,16 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 760" role="img" aria-labelledby="title">
+  <title id="title">Detalles constructivos acústicos del caso</title>
+  <rect width="1200" height="760" fill="#f6f9fc"/>
+  <style>.txt{font:21px Arial;fill:#172b3f}.small{font:15px Arial;fill:#4e6075}.box{fill:#fff;stroke:#b3c1ce;stroke-width:3}.ha{fill:#aeb9c3}.ins{fill:#f8d77c}.gyp{fill:#e7eef4}.res{fill:#d9a9d3}</style>
+  <text x="45" y="48" class="txt" font-weight="700">DETALLES CONSTRUCTIVOS · CASO ACÚSTICO</text><text x="45" y="75" class="small">Esquemas académicos · verificar espesores y continuidad al ingresar los sistemas en SONARA</text>
+  <rect x="45" y="105" width="350" height="570" rx="12" class="box"/><text x="70" y="145" class="txt" font-weight="700">M-01 · MURO MEDIANERO</text>
+  <rect x="180" y="190" width="80" height="360" class="ha"/><rect x="165" y="190" width="10" height="360" class="gyp"/><rect x="265" y="190" width="10" height="360" class="gyp"/>
+  <text x="70" y="590" class="small">HA 180 mm · continuidad entre losas</text><text x="70" y="618" class="small">Sellado elástico en perímetros</text><text x="70" y="646" class="small">Revisar flancos en losa y fachada</text>
+  <rect x="425" y="105" width="350" height="570" rx="12" class="box"/><text x="450" y="145" class="txt" font-weight="700">L-01 · PISO FLOTANTE</text>
+  <rect x="470" y="270" width="260" height="38" fill="#d1bd9b"/><rect x="470" y="309" width="260" height="18" class="res"/><rect x="470" y="328" width="260" height="120" class="ha"/><rect x="470" y="449" width="260" height="16" class="gyp"/>
+  <text x="450" y="500" class="small">Sobrelosa 40 mm</text><text x="450" y="528" class="small">Capa resiliente continua 10 mm</text><text x="450" y="556" class="small">Losa HA 160 mm</text><text x="450" y="584" class="small">Evitar puentes rígidos perimetrales</text>
+  <rect x="805" y="105" width="350" height="570" rx="12" class="box"/><text x="830" y="145" class="txt" font-weight="700">S-01 · SHAFT SANITARIO</text>
+  <rect x="865" y="210" width="28" height="360" class="gyp"/><rect x="895" y="210" width="42" height="360" class="ins"/><rect x="940" y="210" width="28" height="360" class="gyp"/><circle cx="1040" cy="380" r="42" fill="#d5e2eb" stroke="#587286" stroke-width="8"/>
+  <line x1="968" y1="380" x2="998" y2="380" stroke="#d6365c" stroke-width="6"/>
+  <text x="830" y="610" class="small">Doble placa RF + lana mineral</text><text x="830" y="638" class="small">Abrazaderas resilientes y pasadas selladas</text>
+</svg>

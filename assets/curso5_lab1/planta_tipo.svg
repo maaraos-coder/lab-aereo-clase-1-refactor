@@ -1,0 +1,27 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 720" role="img" aria-labelledby="title desc">
+  <title id="title">Planta tipo del Edificio Los Alerces</title>
+  <desc id="desc">Cuatro departamentos por piso con la unidad A-302 y sus relaciones acústicas destacadas.</desc>
+  <rect width="1200" height="720" fill="#f6f9fc"/>
+  <style>.wall{fill:none;stroke:#243447;stroke-width:12}.part{stroke:#62748a;stroke-width:5}.txt{font:22px Arial;fill:#172b3f}.small{font:16px Arial;fill:#4e6075}.room{fill:#fff;stroke:#9aabba;stroke-width:2}.focus{fill:#e8f6ff;stroke:#0786cf;stroke-width:5}.adj{fill:#fff0dd;stroke:#e37a19;stroke-width:4}.shaft{fill:#fee8ee;stroke:#d6365c;stroke-width:3}.arrow{stroke:#d6365c;stroke-width:5;marker-end:url(#a)}</style>
+  <defs><marker id="a" markerWidth="10" markerHeight="10" refX="9" refY="3" orient="auto"><path d="M0,0 L0,6 L9,3 z" fill="#d6365c"/></marker></defs>
+  <text x="55" y="50" class="txt" font-weight="700">EDIFICIO LOS ALERCES · PLANTA TIPO · NIVEL 3</text>
+  <text x="55" y="78" class="small">Caso ficticio · cotas en metros · esquema académico, no apto para construcción</text>
+  <rect x="70" y="115" width="1060" height="520" class="wall"/>
+  <rect x="85" y="130" width="455" height="230" class="adj"/>
+  <rect x="85" y="380" width="455" height="240" class="focus"/>
+  <rect x="660" y="130" width="455" height="230" class="room"/>
+  <rect x="660" y="380" width="455" height="240" class="room"/>
+  <rect x="540" y="115" width="120" height="520" fill="#e8edf3" stroke="#243447" stroke-width="5"/>
+  <text x="565" y="275" class="small" transform="rotate(90 565 275)">PASILLO COMÚN · 1,80 m</text>
+  <rect x="555" y="470" width="90" height="120" fill="#d8e2ec" stroke="#243447" stroke-width="4"/>
+  <text x="570" y="535" class="small" transform="rotate(90 570 535)">ASCENSOR</text>
+  <line x1="320" y1="130" x2="320" y2="360" class="part"/><line x1="85" y1="245" x2="540" y2="245" class="part"/>
+  <line x1="320" y1="380" x2="320" y2="620" class="part"/><line x1="85" y1="500" x2="540" y2="500" class="part"/>
+  <rect x="440" y="510" width="80" height="90" class="shaft"/><text x="453" y="558" class="small">S-1</text>
+  <text x="105" y="165" class="txt" font-weight="700">A-301 · vivienda adyacente</text><text x="105" y="300" class="small">Estar</text><text x="350" y="300" class="small">Dormitorios</text>
+  <text x="105" y="415" class="txt" font-weight="700">A-302 · UNIDAD EVALUADA</text><text x="105" y="560" class="small">Estar-comedor · 20,4 m²</text><text x="350" y="465" class="small">Dormitorios</text><text x="350" y="560" class="small">Cocina / baños</text>
+  <text x="680" y="165" class="txt" font-weight="700">A-303</text><text x="680" y="415" class="txt" font-weight="700">A-304</text>
+  <line x1="90" y1="372" x2="520" y2="372" class="arrow"/><text x="105" y="350" class="small" fill="#d6365c">AI-01 · muro M-01</text>
+  <line x1="90" y1="650" x2="520" y2="650" stroke="#0786cf" stroke-width="6"/><text x="90" y="690" class="small">NORTE · fachada FA-01</text>
+  <path d="M1080 90 l25 -45 l25 45 z" fill="#0786cf"/><text x="1095" y="32" class="small">N</text>
+</svg>

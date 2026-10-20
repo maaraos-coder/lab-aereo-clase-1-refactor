@@ -38,7 +38,7 @@ ACADEMIC_COURSES = [
     {
         "title": "Certificaciones acústicas en la edificación residencial",
         "labs": [
-            {"number": 1, "opens_at": "2026-11-07T00:00:00-03:00", "implemented": False},
+            {"number": 1, "opens_at": "2026-11-07T00:00:00-03:00", "implemented": True},
             {"number": 2, "opens_at": "2026-11-14T00:00:00-03:00", "implemented": False},
         ],
     },
