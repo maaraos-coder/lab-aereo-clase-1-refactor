@@ -738,7 +738,18 @@ def _stage3(lab, saved):
         "ISO/TS 19488:2021 continúa siendo la edición publicada utilizada en este laboratorio. "
         "ISO mantiene una segunda edición en desarrollo; antes de clasificar, comprueba el estado y la edición vigente."
     )
-    st.link_button("Consultar ficha oficial de ISO/TS 19488", ISO_STATUS_URL, width="stretch")
+    iso_pdf_path = _asset("ISO-TS-19488-2021.pdf")
+    if iso_pdf_path.is_file():
+        st.download_button(
+            "📘 Descargar norma ISO/TS 19488:2021 · PDF",
+            data=iso_pdf_path.read_bytes(),
+            file_name="ISO-TS-19488-2021.pdf",
+            mime="application/pdf",
+            width="stretch",
+            key="c5l1_stage3_iso19488_pdf",
+        )
+    else:
+        st.error("El PDF de ISO/TS 19488:2021 no está disponible para descargar.")
     scope = st.text_area(
         "Declaración de alcance de tu clasificación",
         value=saved.get("c5l1_s3_scope", ""),
