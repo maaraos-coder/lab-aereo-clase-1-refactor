@@ -780,11 +780,69 @@ def _stage2(lab, saved):
             st.success("Lectura guardada: úsala al preparar el protocolo de diseño.")
 
 
+
+def _global_building_explanation():
+    st.markdown("### ¿Cómo se obtiene la clase global del edificio?")
+    st.markdown(
+        "**No se calcula promediando dB ni letras.** Se comprueba qué clase puede "
+        "cumplirse para todas las características y situaciones aplicables al edificio. "
+        "La clase global queda limitada por la menos favorable dentro del alcance verificado."
+    )
+    st.markdown(
+        "1. **Define el edificio y su alcance:** viviendas, recintos protegidos, usos colindantes "
+        "y zonas comunes que correspondan.\n"
+        "2. **Identifica tipologías y condiciones críticas:** muros y pisos diferentes, "
+        "encuentros, fachadas con exposiciones distintas y equipos o instalaciones.\n"
+        "3. **Justifica la cobertura y la verificación:** explica qué casos representan cada "
+        "tipología y qué cálculos, inspecciones y mediciones aportan evidencia según cláusula 6 "
+        "y Anexo A. La muestra no se define solo contando departamentos.\n"
+        "4. **Clasifica cada situación con su descriptor correcto:** compara con la fila, "
+        "condición, bandas y notas aplicables; identifica cualquier resultado no determinado.\n"
+        "5. **Revisa cada característica del edificio:** una situación menos favorable no "
+        "desaparece porque otras tengan buen desempeño.\n"
+        "6. **Declara la clase global sustentada:** todos los requisitos aplicables deben "
+        "cumplir esa clase. Conserva las clases parciales superiores y el alcance en el informe."
+    )
+    st.markdown("#### Ejemplo hipotético de edificio completo")
+    st.caption(
+        "Este ejemplo supone que las tipologías y situaciones aplicables ya están cubiertas "
+        "por un procedimiento de verificación válido. No son resultados de Los Alerces."
+    )
+    st.dataframe(
+        pd.DataFrame([
+            ["Aéreo", "Separaciones y encuentros representativos evaluados", "C"],
+            ["Impacto", "Tipos de entrepiso y transmisiones relevantes evaluados", "D"],
+            ["Exterior", "Recintos y fachadas con sus exposiciones evaluados", "C"],
+            ["Instalaciones", "Fuentes y condiciones de funcionamiento evaluadas", "C"],
+            ["Accesos / escaleras", "Reverberación o absorción aplicable evaluada", "B"],
+        ], columns=["Característica del edificio", "Cobertura supuesta", "Clase sustentada"]),
+        hide_index=True, width="stretch",
+    )
+    st.success(
+        "La clase global del ejemplo es D: impacto limita el conjunto. Para aspirar a C "
+        "hay que mejorar y verificar los casos de impacto que no alcanzan C, manteniendo "
+        "el cumplimiento de las demás características. No basta mejorar uno de varios "
+        "entrepisos deficientes."
+    )
+    st.warning(
+        "Si una característica requerida o una tipología relevante carece de evidencia, "
+        "no la omitas para asignar una clase global. Documenta lo pendiente o la declaración "
+        "NPD cuando corresponda y conserva las conclusiones parciales."
+    )
+    st.markdown(
+        "**Aplicación al laboratorio:** AI-01, IM-01, FA-01 e IN-01 describen solo cuatro "
+        "situaciones de A-302. Permiten diseñar y comparar soluciones; no representan "
+        "automáticamente las 20 viviendas. En la etapa 10 debes proponer cómo extender "
+        "el expediente y verificar el edificio, sin inventar resultados para los casos faltantes."
+    )
+    st.caption("Referencia: ISO/TS 19488:2021, cláusulas 4–6 y Anexo A.2–A.4.")
+
+
 def _stage3(lab, saved):
     _header(3, "Cómo se clasifica una vivienda", "Comprender los criterios ISO con un ejemplo resuelto antes de definir el objetivo de diseño.")
     _download_standard("c5l1_stage3_iso19488_pdf")
     st.markdown("**Secuencia:** resultado acústico → descriptor correcto → límite aplicable → clase por característica → conclusión con alcance.")
-    tabs = st.tabs(["Clases y criterios", "Ejemplo resuelto · A-302", "Tu objetivo y alcance"])
+    tabs = st.tabs(["Clases y criterios", "Ejemplo resuelto · A-302", "Edificio completo", "Tu objetivo y alcance"])
     with tabs[0]:
         st.markdown("### Seis clases y una declaración de desempeño")
         st.markdown("**A es la clase más exigente; F la menos exigente del esquema.** NPD se utiliza cuando el desempeño no está determinado, no se requiere o queda fuera de las clases. No es una séptima clase ni una nota cero.")
@@ -825,6 +883,8 @@ def _stage3(lab, saved):
         st.warning("Conclusión limitada: cuatro situaciones del A-302 alcanzan preliminarmente C. Falta cubrir las otras situaciones aplicables, accesos/escaleras cuando correspondan y la verificación. No declares clase C global de A-302 ni de las 20 viviendas a partir de este ejemplo parcial.")
         st.caption("Referencia de comprobación: tablas 1–4, notas de descriptor y Anexo A.3–A.4 del PDF disponible. En obra se requieren los procedimientos de verificación aplicables.")
     with tabs[2]:
+        _global_building_explanation()
+    with tabs[3]:
         st.markdown("### Elige el objetivo para tu propio diseño")
         options = ["Selecciona un objetivo", "Clase A", "Clase B", "Clase C", "Clase D", "Clase E", "Clase F"]
         previous = saved.get("c5l1_s3_target", options[0])
@@ -1029,6 +1089,8 @@ def _stage10(lab, saved):
     st.info("Entrega una clasificación preliminar de los casos AI-01, IM-01, FA-01 e IN-01. El laboratorio no evalúa por sí solo todas las situaciones de A-302 ni las otras 19 viviendas; no presentes estos cuatro casos como certificación global.")
     st.markdown("**Informe final:** alcance → entradas y fuentes → base/variante → curva y descriptor → límite y clase por caso → clase limitante → incertidumbres y verificación en obra.")
     _download_standard("c5l1_s10_standard")
+    with st.expander("Recordar cómo se clasifica el edificio completo"):
+        _global_building_explanation()
     families = ["Aéreo interior", "Impacto", "Fachada", "Instalaciones"]
     previous = saved.get("c5l1_classification", {})
     entries = {}
@@ -1052,6 +1114,12 @@ def _stage10(lab, saved):
             height=100,
             placeholder="Compara las clases parciales sin promediarlas; explica qué falta para clasificar la vivienda o el edificio completo.",
         )
+        building_plan = st.text_area(
+            "Qué falta para obtener la clasificación global de Los Alerces",
+            value=previous.get("building_plan", ""),
+            height=140,
+            placeholder="Tipologías pendientes, otros recintos/fachadas, accesos y escaleras, instalaciones, cobertura de la muestra y verificación. No inventes resultados de las otras viviendas.",
+        )
         conclusion = st.text_area(
             "Conclusión profesional y plan de verificación",
             value=previous.get("conclusion", ""),
@@ -1069,10 +1137,12 @@ def _stage10(lab, saved):
             st.warning("Faltan resultados de SONARA. Completa las Etapas 5 a 8 antes de entregar.")
         elif invalid:
             st.warning("Completa clase, umbral y justificación para: " + ", ".join(invalid))
+        elif len(building_plan.strip()) < 100:
+            st.warning("Explica qué falta para clasificar el edificio completo con al menos 100 caracteres.")
         elif len(overall_rule.strip()) < 80 or len(conclusion.strip()) < 180:
             st.warning("Desarrolla la regla global y la conclusión con la extensión mínima solicitada.")
         else:
-            payload = {**entries, "overall_rule": overall_rule, "conclusion": conclusion, "standard": "ISO/TS 19488:2021", "phase": "Diseño", "scope": "Cuatro situaciones modeladas de A-302; clasificación global no acreditada"}
+            payload = {**entries, "overall_rule": overall_rule, "building_plan": building_plan, "conclusion": conclusion, "standard": "ISO/TS 19488:2021", "phase": "Diseño", "scope": "Cuatro situaciones modeladas de A-302; clasificación global no acreditada"}
             _save(lab, saved, 10, c5l1_classification=payload)
             st.success("Clasificación entregada para revisión docente. Se conserva como clasificación de diseño realizada por el alumno.")
 
