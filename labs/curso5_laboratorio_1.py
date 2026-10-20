@@ -376,38 +376,28 @@ def _stage1(lab, saved):
         "Se presenta una explicación docente, no una reproducción de las tablas normativas."
     )
 
-    st.markdown("### 📥 Descargar norma ISO/TS 19488:2021")
-    st.caption("Documento PDF de referencia aportado para esta actividad.")
-    norm_paths = [
-        PROJECT_ROOT / "private_assets" / "ISO-TS-19488-2021.pdf",
-        PROJECT_ROOT / "private_assets" / "966515482-ISO-TS-19488-2021.pdf",
-    ]
-    norm_file = next((p for p in norm_paths if p.is_file()), None)
-    norm_bytes = norm_file.read_bytes() if norm_file else None
-    if norm_bytes is None:
-        try:
-            import base64 as _b64_norm
-            secret_pdf = str(st.secrets.get("ISO_19488_PDF_BASE64", "")).strip()
-            if secret_pdf:
-                norm_bytes = _b64_norm.b64decode(secret_pdf, validate=True)
-        except (FileNotFoundError, KeyError, ValueError, TypeError):
-            norm_bytes = None
-    if norm_bytes and norm_bytes.startswith(b"%PDF-"):
+    st.markdown("### 📥 Norma de referencia · ISO/TS 19488:2021")
+    st.caption(
+        "Descarga el documento de referencia para consultar los criterios de "
+        "clasificación y el Anexo A durante el desarrollo del laboratorio."
+    )
+    # Mismo mecanismo que la norma BS 5228 del Curso 4 / Laboratorio 1:
+    # lectura directa desde assets/<curso>/ y st.download_button.
+    iso_pdf_path = PROJECT_ROOT / "assets" / "curso5_lab1" / "ISO-TS-19488-2021.pdf"
+    if iso_pdf_path.is_file():
         st.download_button(
-            "📄 Descargar PDF ISO/TS 19488:2021",
-            data=norm_bytes,
+            "📘 Abrir / descargar norma ISO/TS 19488:2021 · PDF",
+            data=iso_pdf_path.read_bytes(),
             file_name="ISO-TS-19488-2021.pdf",
             mime="application/pdf",
-            key="c5l1_norm_pdf_download",
-            width="stretch",
+            use_container_width=True,
+            key="c5l1_iso19488_pdf",
         )
     else:
-        st.warning(
-            "El PDF aún no está cargado en este despliegue. Para habilitar su descarga, "
-            "configura ISO_19488_PDF_BASE64 en los secretos de Streamlit Cloud "
-            "o coloca el archivo en private_assets sin publicarlo en GitHub."
+        st.info(
+            "El PDF ISO/TS 19488:2021 debe estar disponible en "
+            "assets/curso5_lab1/ISO-TS-19488-2021.pdf para habilitar su descarga."
         )
-        st.link_button("Consultar ficha oficial de la norma", ISO_STATUS_URL, width="stretch")
 
     st.markdown("### 🏗️ Conoce el proyecto")
     c1, c2, c3, c4 = st.columns(4)
