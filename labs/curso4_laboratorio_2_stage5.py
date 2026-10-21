@@ -279,15 +279,36 @@ def render(lab,saved,runtime):
         "La comparación corresponde a niveles modelados en Noise Map Lab y no reemplaza una verificación normativa mediante medición."
     )
 
-    stage4_fronts=saved.get("c4l2_s4_fronts") or {}
+    # La Etapa 4 actual persiste los escenarios validados como lista en
+    # c4l2_s4_scenarios. La clave antigua c4l2_s4_fronts corresponde a
+    # versiones anteriores y se conserva solo como respaldo de compatibilidad.
+    stage4_scenarios=saved.get("c4l2_s4_scenarios") or []
+    stage4_fronts_legacy=saved.get("c4l2_s4_fronts") or {}
     stage4_results=saved.get("c4l2_s4_results") or {}
     sources=saved.get("c4l2_s3_acoustic_sources") or []
     receptors=saved.get("c4l2_s2_receptors_table") or []
 
     st.markdown("### 3 · Recupera los escenarios originales")
-    if stage4_fronts:
-        overview=[]
-        for front,cfg in stage4_fronts.items():
+    overview=[]
+    if isinstance(stage4_scenarios,list) and stage4_scenarios:
+        for scenario in stage4_scenarios:
+            if not isinstance(scenario,dict):
+                continue
+            front=scenario.get("Etapa") or scenario.get("Frente") or ""
+            results=stage4_results.get(front) or []
+            overview.append({
+                "Frente":scenario.get("Frente") or front,
+                "Proyecto guardado":scenario.get("Proyecto Noise Map") or "",
+                "Receptor objetivo":scenario.get("Receptor objetivo") or "",
+                "Distancia F–R [m]":scenario.get("Distancia objetivo [m]"),
+                "Altura fuente [m]":scenario.get("Altura fuente [m]"),
+                "Sector":scenario.get("Ubicación / sector") or "",
+                "Resultados por receptor":len(results) if isinstance(results,list) else 0,
+            })
+    elif isinstance(stage4_fronts_legacy,dict):
+        for front,cfg in stage4_fronts_legacy.items():
+            if not isinstance(cfg,dict):
+                continue
             overview.append({
                 "Frente":front,
                 "Proyecto guardado":cfg.get("project_name") or cfg.get("Proyecto Noise Map Lab") or "",
@@ -295,12 +316,15 @@ def render(lab,saved,runtime):
                 "Distancia F–R [m]":cfg.get("distance") or cfg.get("Distancia F–R [m]"),
                 "Altura fuente [m]":cfg.get("source_height") or cfg.get("Altura fuente [m]"),
                 "Sector":cfg.get("sector") or cfg.get("Ubicación") or "",
+                "Resultados por receptor":len(stage4_results.get(front) or []),
             })
+    if overview:
+        st.success(f"Se recuperaron {len(overview)} escenarios originales guardados en la Etapa 4.")
         st.dataframe(pd.DataFrame(overview),hide_index=True,use_container_width=True)
     else:
         st.warning(
-            "Aún no se recuperaron escenarios originales de la Etapa 4. Puedes revisar la metodología y la pauta docente, "
-            "pero para completar esta etapa debes guardar al menos un frente original."
+            "No se encontraron escenarios originales guardados para este usuario. "
+            "Verifica en la Etapa 4 que los frentes estén validados y guardados."
         )
 
     st.link_button("🗺️ Abrir Noise Map Lab",runtime["NOISEMAP_URL"],use_container_width=True)
