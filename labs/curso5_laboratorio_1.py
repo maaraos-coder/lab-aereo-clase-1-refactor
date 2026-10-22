@@ -95,6 +95,81 @@ CALCULATION_CASES = {
 }
 
 
+# Orientaciones de revisión: no son resultados precalculados de SONARA.
+TEACHER_GUIDE = {
+    0: ("Encuadre del encargo", [
+        ("Comprensión del caso", "Reconoce Los Alerces como caso ficticio de 20 viviendas y A-302 como unidad didáctica. Distingue diseño, clasificación preliminar y verificación de obra."),
+        ("Producto esperado", "Expediente con diagnóstico, planos, objetivo, protocolo, cuatro cálculos base/variante, matriz e informe de clasificación con alcance."),
+    ], "No presentar el laboratorio como certificación real ni atribuir resultados al edificio completo."),
+    1: ("Diagnóstico y propuesta de muestreo", [
+        ("Diagnóstico esperado", "AI-01: estar A-301 → estar A-302, muro M-01 y flancos. IM-01: estar A-402 → estar A-302, losa L-01 y uniones. FA-01: exterior norte → estar A-302, F-01/V-01 y juntas. IN-01: descarga sanitaria → dormitorio A-302, cierre S-01, fijaciones y vías aérea/estructural."),
+        ("Procedimiento", "Para el desarrollo en fase de diseño, se espera justificar la opción A con predicciones, inspecciones y mediciones futuras. Si elige B, debe explicar que corresponde a la verificación del edificio terminado y qué ensayos propone."),
+        ("Muestreo razonado", "Debe cubrir tipologías de separadores y entrepisos, encuentros, recintos críticos, orientaciones/exposiciones e instalaciones. Pedir unidades y ensayos propuestos con justificación, información faltante y criterio para ampliar la muestra; no hay una cantidad única prefijada."),
+        ("Alcance", "Distingue los cuatro casos preliminares de A-302 de las demás situaciones y de las otras 19 viviendas. Identifica planos completos, tipologías, fuentes y verificación pendientes."),
+    ], "No aceptar dos viviendas solo por aplicar un porcentaje a 20, sin justificar representatividad y procedimiento."),
+    2: ("Lectura de planos", [
+        ("Operaciones esperadas", "M-01: 4,08 × 2,50 = 10,20 m². Estar: 20,40 × 2,50 = 51,0 m³. FA-01: 15,30 − 4,80 = 10,50 m² opacos; ventana 4,80 m². V-02 pertenece al dormitorio."),
+        ("Tres riesgos razonados", "Ejemplos aceptables: continuidad rígida en encuentros → flancos; puente perimetral del piso flotante → transmisión de impacto; juntas de ventana o shaft sin sellar → fuga aérea; fijaciones sanitarias rígidas → vía estructural. Cada riesgo debe relacionar elemento, mecanismo y medida."),
+        ("Datos faltantes", "TR, densidades documentadas, rigidez dinámica o ficha ΔL, datos espectrales sanitarios, uniones y exposición exterior: explicar fuente de obtención y efecto en el modelo."),
+    ], "No sumar sobrelosa a los 160 mm de losa estructural ni deducir rigidez o potencia sonora a partir del dibujo."),
+    3: ("Objetivo y alcance", [
+        ("Objetivo", "Aceptar cualquier clase objetivo A–F justificada; es una meta, no la clase obtenida. Debe citar ISO/TS 19488:2021 y acotar las cuatro situaciones en fase de diseño."),
+        ("Regla de clasificación", "La clase común depende del requisito limitante entre las situaciones aplicables verificadas; no se promedian letras ni dB. La ausencia de evidencia impide concluir conformidad global completa."),
+        ("Comprobación del ejemplo", "En el ejemplo hipotético de esta etapa: aéreo C, impacto C, fachada C e instalaciones D antes del rediseño; el conjunto de esos casos queda limitado a D. Tras mejorar instalaciones a C, los cuatro casos alcanzan C, sin acreditar vivienda ni edificio completos."),
+    ], "No aceptar el ejemplo resuelto como cálculo propio ni una clase A/B sin comprobar requisitos adicionales aplicables."),
+    4: ("Protocolo y entradas", [
+        ("Trazabilidad", "Revisar TR del estar/dormitorio, densidad HA, exposición exterior y procedencia de cada dato. Distinguir ficha, hipótesis académica y antecedente pendiente; no imponer un TR o densidad únicos sin fuente."),
+        ("Piso", "Si usa modelo físico: masa superficial de sobrelosa = densidad × 0,040 m y s′ documentada. Si usa catálogo medido, justificar compatibilidad del montaje y por qué s′ no se usa."),
+        ("Criterios y protocolo", "Para cada caso: descriptor, límite, sentido de comparación, tabla/nota y objetivo. Exigir nombres Base/Variante, capturas/curvas y condiciones constantes para comparar."),
+    ], "Los valores iniciales de SONARA no constituyen antecedentes del proyecto. Revisar coherencia de unidades y fuentes antes de aprobar el protocolo."),
+    5: ("AI-01 · Aéreo interior", [
+        ("Modelo esperado", "M-01 de HA 180 mm; S = 10,20 m², V receptor = 51,0 m³ y TR declarado. Revisar caminos directo y laterales, uniones y su trazabilidad."),
+        ("Resultado y mejora", "Exigir DₙT,w y adaptaciones de la curva final entre recintos. Para DₙT,A comprobar DₙT,w + C. Comparar base y variante con igual geometría e identificar el camino dominante; mayor aislamiento es mejor."),
+    ], "Rw del muro no sustituye DₙT,w. No trasladar automáticamente C/Ctr del elemento a la curva entre recintos; declarar la reconstrucción aproximada por Rw."),
+    6: ("IM-01 · Impacto", [
+        ("Modelo esperado", "Losa HA 160 mm, área 20,40 m², V = 51,0 m³; base sin tratamiento y variante documentada con piso/cielo si corresponde. Misma geometría, TR y condiciones de comparación."),
+        ("Revisión técnica", "Catálogo ΔL medido compatible o modelo físico con masa de sobrelosa y s′ trazable. Revisar puentes rígidos y flancos. Exigir L′ₙT,w y CI compatibles; menor nivel es mejor."),
+    ], "No sumar mejoras de catálogo y modelo físico del mismo sistema. La diferencia base/variante no es automáticamente el ΔLw de ensayo del revestimiento."),
+    7: ("FA-01 · Fachada", [
+        ("Modelo esperado", "Fachada 15,30 m²: opaco F-01 10,50 m² + V-01 4,80 m²; V = 51,0 m³. Verificar panel desacoplado, DVH 6/12/4, juntas, exposición y corrección de forma justificadas."),
+        ("Comparación", "Exigir resultado de fachada completa y adaptaciones finales, correspondencia del descriptor con el criterio elegido y exposición exterior declarada. La variante debe actuar sobre el componente dominante conservando áreas y exposición."),
+    ], "No promediar aritméticamente aislamientos ni usar Rw de la ventana como aislamiento global. Declarar la aproximación del traslado Manual Rw/Ctr."),
+    8: ("IN-01 · Instalaciones", [
+        ("Modelo esperado", "Fuente sanitaria espectral y condición temporal documentadas, cierre S-01 de 120 mm totales, receptor dormitorio V = 28,8 m³, TR/absorción y vías justificadas."),
+        ("Descriptores", "Comprobar normalización a T₀ = 0,5 s y compatibilidad temporal de LAeq,nT y LAFmax,nT. No convertir un promedio en máximo FAST. Si falta un dato, aceptar sin determinar únicamente con limitación y plan para obtenerlo."),
+        ("Variante", "Comparar cierre, sellado o fijaciones con la misma fuente, operación y receptor. La vía estructural exige datos de excitación/transferencia compatibles; no una atenuación arbitraria."),
+    ], "No premiar valores inventados para completar campos. Un descriptor requerido sin determinar limita la conclusión global."),
+    9: ("Matriz y revisión crítica", [
+        ("Integridad", "Contrastar AI-01, IM-01, FA-01 e IN-01 con las evidencias y resultados guardados. Revisar unidades, términos espectrales, normalización y estados pendiente/sin determinar."),
+        ("Operaciones", "DₙT,A = DₙT,w + C y aislamiento de fachada adaptado = D₂m,nT,w + Ctr solo con adaptaciones compatibles. Estas operaciones no asignan por sí solas una clase."),
+        ("Juicio crítico", "Identificar resultado débil respecto del objetivo, incertidumbre dominante y verificación en obra concreta. Debe conservar base, cambio y evidencias por caso."),
+    ], "Una matriz llena no demuestra cumplimiento; cualquier dato sin determinar debe conservar su limitación en el informe."),
+    10: ("Clasificación e informe final", [
+        ("Clase por caso", "Rehacer la comparación de los resultados propios con descriptor, umbral, sentido ≥/≤, tabla, fila y notas de la edición consultada. Revisar adaptaciones y requisitos adicionales antes de aceptar la letra."),
+        ("Clase limitante", "Comprobar la mejor clase común sustentada, sin promediar. Distinguir clase objetivo, clase alcanzada por caso y conclusión preliminar de los cuatro casos; NPD no equivale a clase F."),
+        ("Extensión al edificio", "Exigir plan para tipologías y situaciones pendientes, otros recintos/fachadas, accesos/escaleras e instalaciones aplicables, cobertura del muestreo, inspecciones y mediciones. No extrapolar A-302 a 20 viviendas."),
+        ("Informe profesional", "Debe enlazar alcance → fuentes/entradas → base/variante → curva/descriptor → umbral/clase → limitante → incertidumbres y verificación. Aceptar propuestas distintas si son reproducibles y técnicamente justificadas."),
+    ], "No existe una letra única correcta para todos los alumnos: depende de sus modelos y datos. No aceptar certificación global cuando falta cobertura o evidencia."),
+}
+
+
+def _teacher_guide(stage):
+    state = getattr(st, "session_state", {})
+    if state.get("role") != "Docente" or state.get("projection_mode"):
+        return
+    title, criteria, errors = TEACHER_GUIDE[stage]
+    with st.expander(f"👨‍🏫 Pauta docente · Etapa {stage} · {title}", expanded=False):
+        st.caption("Uso exclusivo del docente · respuestas esperadas y criterios de revisión formativa.")
+        for criterion, expected in criteria:
+            st.markdown(f"**{criterion}**\n\n{expected}")
+        if stage in range(5, 9):
+            family = list(CALCULATION_CASES)[stage - 5]
+            st.markdown("**Evidencias mínimas:** " + SONARA_DESIGN_GUIDES[family]["evidence"])
+            st.info("No hay un resultado numérico único: revisar entradas, método, curva y comparación reproducible. Los números de etapa 3 son hipotéticos.")
+        st.warning("**Errores que requieren corrección:** " + errors)
+        st.markdown("**Criterio de revisión:** logrado si cumple los criterios con evidencia; parcialmente logrado si hay omisiones subsanables; por corregir si el método, descriptor o alcance invalida la conclusión. Guardar el formulario acredita entrega, no corrección técnica.")
+
+
 def _asset(filename: str) -> Path:
     return PROJECT_ROOT / "assets" / "curso5_lab1" / filename
 
@@ -107,6 +182,7 @@ def _header(stage: int, title: str, purpose: str):
         show_overview=False,
         duration_minutes=C5L1_STAGE_MINUTES[stage],
     )
+    _teacher_guide(stage)
 
 
 def _save(lab, saved, stage: int, **values):
