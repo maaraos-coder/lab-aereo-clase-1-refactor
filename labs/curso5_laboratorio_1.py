@@ -1,6 +1,6 @@
 """Curso 5 · Laboratorio 1 · Certificación acústica de viviendas.
 
-Caso ficticio de diseño acústico residencial. SONARA se utiliza como motor de
+Diseño acústico residencial orientado a clase A. SONARA se utiliza como motor de
 cálculo externo; la selección de indicadores, la trazabilidad y la
 clasificación ISO/TS 19488 son responsabilidad del estudiante.
 """
@@ -29,7 +29,7 @@ def _bind_runtime(runtime):
 
 PROJECT = {
     "name": "Edificio Los Alerces",
-    "status": "Caso ficticio de uso exclusivamente académico",
+    "status": "Proyecto de diseño acústico · objetivo clase A",
     "location": "Comuna urbana de Santiago, Chile",
     "use": "Edificio residencial en altura",
     "storeys": 5,
@@ -98,7 +98,7 @@ CALCULATION_CASES = {
 # Orientaciones de revisión: no son resultados precalculados de SONARA.
 TEACHER_GUIDE = {
     0: ("Encuadre del encargo", [
-        ("Comprensión del caso", "Reconoce Los Alerces como caso ficticio de 20 viviendas y A-302 como unidad didáctica. Distingue diseño, clasificación preliminar y verificación de obra."),
+        ("Comprensión del caso", "Reconoce el encargo de diseñar soluciones para alcanzar clase A en un edificio de 20 viviendas, comenzando por A-302. Distingue diseño, clasificación preliminar y verificación de obra."),
         ("Producto esperado", "Expediente con diagnóstico, planos, objetivo, protocolo, cuatro cálculos base/variante, matriz e informe de clasificación con alcance."),
     ], "No presentar el laboratorio como certificación real ni atribuir resultados al edificio completo."),
     1: ("Diagnóstico y propuesta de muestreo", [
@@ -113,11 +113,12 @@ TEACHER_GUIDE = {
         ("Datos faltantes", "TR, densidades documentadas, rigidez dinámica o ficha ΔL, datos espectrales sanitarios, uniones y exposición exterior: explicar fuente de obtención y efecto en el modelo."),
     ], "No sumar sobrelosa a los 160 mm de losa estructural ni deducir rigidez o potencia sonora a partir del dibujo."),
     3: ("Objetivo y alcance", [
-        ("Objetivo", "Aceptar cualquier clase objetivo A–F justificada; es una meta, no la clase obtenida. Debe citar ISO/TS 19488:2021 y acotar las cuatro situaciones en fase de diseño."),
+        ("Objetivo", "La meta obligatoria es clase A. Revisar tabiques, muros, ventanas, puertas, losas, encuentros e instalaciones; exigir rediseño cuando una característica no alcance A. Es una meta, no la clase obtenida. Debe citar ISO/TS 19488:2021 y acotar las cuatro situaciones en fase de diseño."),
         ("Regla de clasificación", "La clase común depende del requisito limitante entre las situaciones aplicables verificadas; no se promedian letras ni dB. La ausencia de evidencia impide concluir conformidad global completa."),
         ("Comprobación del ejemplo", "En el ejemplo hipotético de esta etapa: aéreo C, impacto C, fachada C e instalaciones D antes del rediseño; el conjunto de esos casos queda limitado a D. Tras mejorar instalaciones a C, los cuatro casos alcanzan C, sin acreditar vivienda ni edificio completos."),
     ], "No aceptar el ejemplo resuelto como cálculo propio ni una clase A/B sin comprobar requisitos adicionales aplicables."),
     4: ("Protocolo y entradas", [
+        ("Flujo de proyecto", "Exigir proyecto Los Alerces con recintos y matriz de elementos; cálculos realizados desde Diseñar, base y rediseño guardados en Soluciones y evidencias del Informe. Contrastar el requisito del catálogo con la meta clase A."),
         ("Trazabilidad", "Revisar TR del estar/dormitorio, densidad HA, exposición exterior y procedencia de cada dato. Distinguir ficha, hipótesis académica y antecedente pendiente; no imponer un TR o densidad únicos sin fuente."),
         ("Piso", "Si usa modelo físico: masa superficial de sobrelosa = densidad × 0,040 m y s′ documentada. Si usa catálogo medido, justificar compatibilidad del montaje y por qué s′ no se usa."),
         ("Criterios y protocolo", "Para cada caso: descriptor, límite, sentido de comparación, tabla/nota y objetivo. Exigir nombres Base/Variante, capturas/curvas y condiciones constantes para comparar."),
@@ -207,10 +208,7 @@ def _sonara_button(label="Abrir SONARA para calcular"):
 
 
 def _project_badge():
-    st.warning(
-        "**CASO FICTICIO · Edificio Los Alerces.** La geometría y las materialidades fueron creadas para "
-        "este laboratorio. No corresponden a una obra construida ni constituyen una certificación real."
-    )
+    st.info("**Meta del proyecto: clase A.** Diseña las soluciones constructivas y comprueba su desempeño mediante SONARA.")
 
 
 def _project_downloads():
@@ -253,15 +251,15 @@ def _show_drawing(filename: str, caption: str):
 # Operational instructions follow the current SONARA screens.
 SONARA_DESIGN_GUIDES = {
     "Aéreo interior": {
-        "route": "Calculadora libre → Ruido aéreo; después Transmisión entre recintos (ISO 12354-1).",
+        "route": "Proyecto → Elementos → Diseñar: Ruido aéreo e ISO 12354-1 → Soluciones.",
         "inputs": [
             ["M-01 · separador", "Hormigón armado · 180 mm", "Selecciona una ficha con propiedades completas; registra densidad y procedencia."],
             ["Geometría AI-01", "S = 10,2 m² · V receptor = 51,0 m³", "Copia el TR adoptado desde tu protocolo; no confundas área de muro con área de piso."],
             ["Flancos", "Losa, muros laterales y fachada según planos", "Obtén espesores y longitudes de unión del expediente; justifica cualquier dato faltante."],
         ],
         "steps": [
-            "En Ruido aéreo selecciona Panel simple y modela M-01 con una capa de hormigón de 180 mm. Conserva R(f), Rw, C y Ctr como resultados del elemento.",
-            "Abre Transmisión entre recintos (ISO 12354-1). Ingresa S = 10,2 m², V = 51,0 m³ y el TR receptor declarado. Introduce el Rw calculado en «Rw elemento separador».",
+            "Dentro de Proyecto → Diseñar, selecciona Ruido aéreo y Panel simple y modela M-01 con una capa de hormigón de 180 mm. Conserva R(f), Rw, C y Ctr como resultados del elemento.",
+            "En el mismo proyecto, activa el requerimiento entre recintos y selecciona Diseñar → ISO 12354-1. Ingresa S = 10,2 m², V = 51,0 m³ y el TR receptor declarado. Introduce el Rw calculado en «Rw elemento separador».",
             "Activa los flancos que existan en los planos. Para cada encuentro registra material, masa superficial, longitud y tipo de unión o Kij. Usa «Calcular con SONARA» cuando puedas definir sus capas.",
             "Identifica si domina el camino directo o uno lateral. Diseña una variante: modificar M-01 o añadir un trasdosado desacoplado; si domina un flanco, actúa sobre el encuentro correspondiente.",
             "Recalcula el descriptor entre recintos con la misma geometría y compara la variante con la base. Registra DₙT,w y las adaptaciones que correspondan a la curva final.",
@@ -270,7 +268,7 @@ SONARA_DESIGN_GUIDES = {
         "evidence": "Configuración de M-01 y su variante, captura del visual constructivo, entradas de recintos/uniones, curvas y resultado final DₙT,w.",
     },
     "Impacto": {
-        "route": "Calculadora libre → Ruido de impacto → ISO 12354-2.",
+        "route": "Proyecto → Elementos (Paramento horizontal) → Diseñar → Ruido de impacto → Soluciones.",
         "inputs": [
             ["L-01 · losa base", "Hormigón armado · 160 mm", "Registra la densidad seleccionada; SONARA obtiene la masa superficial."],
             ["Piso superior", "Piso: resiliente 10 + sobrelosa 40 + terminación 10 mm", "Capa resiliente 10 mm y terminación 10 mm (AC-04). La rigidez requiere ficha o hipótesis."],
@@ -288,15 +286,15 @@ SONARA_DESIGN_GUIDES = {
         "evidence": "Losa y densidad, ficha ΔL o masa/rigidez del piso físico, montaje, flancos, visual constructivo, curva y L′ₙT,w con CI.",
     },
     "Fachada": {
-        "route": "Calculadora libre → Ruido aéreo para los componentes; después Fachada (ISO 12354-3).",
+        "route": "Proyecto → Elementos (Fachada, Ventana y Puerta según corresponda) → Diseñar → Fachada ISO 12354-3 → Soluciones.",
         "inputs": [
             ["Fachada FA-01", "Área total = 15,3 m² · V = 51,0 m³", "Mismo estar receptor que AI-01 e IM-01."],
             ["V-01 · ventana estar", "DVH 6/12/4 · 4,80 m²", "6 y 4 mm son vidrios; 12 mm es cámara, no una placa."],
             ["F-01 · paño opaco", "10,50 m² · HA 150 + cámara 50 + yeso 15 mm", "150 + 50 + 15 mm no se modela como tres capas sólidas adheridas."],
         ],
         "steps": [
-            "Diseña F-01 en Ruido aéreo → Panel doble: hoja de hormigón de 150 mm, cámara de 50 mm con absorbente y hoja de yeso de 15 mm. Declara el montaje desacoplado y la ficha del absorbente.",
-            "Diseña V-01 en Ruido aéreo → Ventana → DVH: vidrio 6 mm, aire 12 mm y vidrio 4 mm. Documenta que el conjunto real también depende de marco, juntas y condiciones de ensayo.",
+            "Desde Proyecto → Diseñar → Ruido aéreo, diseña F-01 como Panel doble: hoja de hormigón de 150 mm, cámara de 50 mm con absorbente y hoja de yeso de 15 mm. Declara el montaje desacoplado y la ficha del absorbente.",
+            "Desde Proyecto → Diseñar → Ruido aéreo, diseña V-01 como Ventana → DVH: vidrio 6 mm, aire 12 mm y vidrio 4 mm. Documenta que el conjunto real también depende de marco, juntas y condiciones de ensayo.",
             "Abre Fachada (ISO 12354-3). Ingresa volumen 51,0 m³ y área total 15,3 m². Crea dos componentes: opaco 10,50 m² y ventana 4,80 m².",
             "El selector SONARA de cada componente calcula una placa simple. Para trasladar tu panel doble o DVH usa «Manual Rw/Ctr» con sus resultados; documenta la reconstrucción espectral aproximada que realiza ese modo.",
             "Ingresa exposición exterior y corrección por forma a partir de antecedentes o hipótesis identificadas. Añade juntas o aireadores únicamente cuando puedas justificar sus datos.",
@@ -306,7 +304,7 @@ SONARA_DESIGN_GUIDES = {
         "evidence": "Modelos F-01 y V-01, Rw/Ctr transferidos, áreas, hipótesis exterior/forma, juntas consideradas y curva final de fachada.",
     },
     "Instalaciones": {
-        "route": "Calculadora libre → Ruido de instalaciones (EN 12354-5).",
+        "route": "Proyecto → Elementos (Instalaciones / HVAC) → Diseñar → Instalaciones EN 12354-5 → Soluciones.",
         "inputs": [
             ["IN-01 · descarga sanitaria", "Condición de operación definida por el alumno", "Se requiere espectro de fuente trazable; los valores iniciales de SONARA son ejemplos."],
             ["S-01 · cierre", "2 RF 12,5 + cámara 70 + 2 RF 12,5 = 120 mm", "Ver AC-04; selecciona las fichas de placas y absorbente. No asignes 120 mm a cada capa."],
@@ -314,7 +312,7 @@ SONARA_DESIGN_GUIDES = {
         ],
         "steps": [
             "Define una descarga o ciclo de funcionamiento reproducible, su duración y simultaneidad. Obtén datos espectrales de fabricante o ensayo; si no existen, identifica el cálculo como escenario académico.",
-            "Diseña el cierre S-01 en Ruido aéreo → Panel doble con espesores y cámara expresamente definidos. Conserva R(f), no solo Rw.",
+            "Desde Proyecto → Diseñar → Ruido aéreo, diseña el cierre S-01 como Panel doble con espesores y cámara expresamente definidos. Conserva R(f), no solo Rw.",
             "En Ruido de instalaciones selecciona la condición de funcionamiento y la vía «Aérea · recinto adyacente». Ingresa el espectro Lw, el área real del cierre, R por bandas de octava y las absorciones fuente/receptor.",
             "Para las fijaciones usa una vía «Estructural» solo con nivel de fuerza/velocidad y función de transferencia instalada compatibles. Una abrazadera resiliente no se representa restando una atenuación arbitraria.",
             "Usa «Agregar vías simultáneas» si cuentas con datos para la vía aérea y estructural. Compara mejoras de cierre, sellado o fijaciones manteniendo la misma descarga y receptor.",
@@ -330,6 +328,7 @@ def _sonara_design_guide(case_name):
     guide = SONARA_DESIGN_GUIDES[case_name]
     st.markdown("### 🛠️ Cómo diseñar esta solución en SONARA")
     st.info("**Ruta en SONARA:** " + guide["route"])
+    st.markdown("**Continuidad del proyecto:** selecciona el elemento activo en Diseñar; calcula y guarda las soluciones con nombres como AI-01_Base y AI-01_Diseno_A. Comprueba en Soluciones que pertenecen al proyecto y requerimiento correctos. Conserva ambos resultados y recupéralos para el Informe.")
     st.dataframe(
         pd.DataFrame(guide["inputs"], columns=["Elemento / dato", "Entrada del caso", "Comprobación"]),
         hide_index=True, width="stretch",
@@ -366,7 +365,7 @@ def _download_standard(key):
 
 def _design_context(saved):
     target = saved.get("c5l1_s3_target", "Sin definir")
-    st.info(f"**Objetivo elegido en etapa 3:** {target}. Consulta el protocolo guardado antes de comparar variantes.")
+    st.info(f"**Meta obligatoria: Clase A. Objetivo registrado previamente:** {target}. Consulta el protocolo guardado antes de comparar variantes.")
     inputs = saved.get("c5l1_s4_inputs", {})
     if inputs:
         st.dataframe(pd.DataFrame([
@@ -480,7 +479,7 @@ def _stage0(lab, saved):
     active_minutes = sum(C5L1_STAGE_MINUTES[1:])
     st.markdown(
         f'<div class="class-clock"><div><strong>⏱️ Ruta guiada del Laboratorio 1</strong>'
-        f'<br><span>Caso ficticio · Edificio Los Alerces · SONARA + ISO</span>'
+        f'<br><span>Diseño para clase A · SONARA + ISO</span>'
         f'</div><div><strong>{active_minutes} min</strong></div></div>',
         unsafe_allow_html=True,
     )
@@ -490,14 +489,14 @@ def _stage0(lab, saved):
         <div style="border:1px solid #cfe0ef;border-radius:18px;padding:17px 19px;
         background:linear-gradient(135deg,#f8fcff,#edf6fb);margin:.8rem 0 1rem">
           <div style="font-size:.68rem;font-weight:900;letter-spacing:.09em;color:#087ba0">
-            CASO CONDUCTOR · PROYECTO FICTICIO
+            ENCARGO · DISEÑO ACÚSTICO CLASE A
           </div>
           <div style="font-size:1.05rem;font-weight:900;color:#173b53;margin:.3rem 0">
             Edificio Los Alerces · Departamento A-302
           </div>
           <div style="color:#587486;line-height:1.55;font-size:.84rem">
             Trabajarás con un expediente académico común de un edificio residencial de cinco pisos.
-            Interpretarás planos y materialidades, prepararás modelos y registrarás resultados obtenidos
+            Diseñarás tabiques, muros, ventanas, puertas y losas para alcanzar clase A; prepararás modelos y registrarás resultados obtenidos
             mediante SONARA. La clasificación acústica final se realiza y justifica por cada estudiante,
             consultando ISO/TS 19488; la plataforma no asigna clases automáticamente.
           </div>
@@ -513,7 +512,7 @@ def _stage0(lab, saved):
     descriptions = [
         "Conoce el edificio, sus recintos, adyacencias, materiales y las situaciones acústicas que evaluarás.",
         "Lee cuatro láminas técnicas PNG/PDF, comprueba las cotas y reconoce caminos de transmisión.",
-        "Comprende las clases ISO con un ejemplo resuelto y elige un objetivo de diseño.",
+        "Comprende las clases ISO y establece los requisitos de la meta obligatoria: clase A.",
         "Prepara y guarda las entradas, fuentes e hipótesis para diseñar en SONARA.",
         "Calcula el aislamiento aéreo entre viviendas y documenta los caminos directos y laterales.",
         "Calcula el ruido de impacto a través de la losa y el efecto del sistema de piso.",
@@ -572,14 +571,40 @@ def _stage1(lab, saved):
             "assets/curso5_lab1/alerces_render_profesional.jpg.",
         )
 
-    st.markdown("### 🏢 ¿Qué vamos a clasificar?")
+    st.markdown("### 🏢 Tu encargo: diseñar para alcanzar clase A")
     st.info(
-        "**Encargo profesional simulado:** analizar acústicamente el Edificio Los Alerces, "
-        "de 20 viviendas, y construir un expediente de diseño basado en cálculos mediante SONARA. "
-        "La ISO 12354 sirve para predecir el desempeño; la ISO/TS 19488:2021 permite "
-        "establecer una clasificación, su alcance y la verificación correspondiente. "
-        "**Una predicción de proyecto no sustituye las mediciones y verificaciones del edificio terminado.**"
+        "**Encargo de diseño:** desarrolla las soluciones constructivas del Edificio Los Alerces, "
+        "de 20 viviendas, para que el proyecto pueda alcanzar la **clase A, la más exigente**. "
+        "Diseña tabiques, muros separadores, ventanas, puertas, losas y sistemas de piso, "
+        "junto con sus encuentros, sellos y soluciones para instalaciones. Utiliza **SONARA** "
+        "para calcular, comparar alternativas y justificar la solución elegida. Las materialidades "
+        "del expediente son una base de partida que debes revisar y rediseñar. "
+        "Aplica ISO 12354 para la predicción y contrasta los resultados con los requisitos de "
+        "clase A de ISO/TS 19488:2021. Entrega especificaciones, cálculos, evidencias y una "
+        "matriz de cumplimiento; identifica lo pendiente para cubrir el edificio completo."
     )
+    st.markdown("### 🔊 Conoce SONARA: tu herramienta de diseño acústico")
+    st.markdown(
+        "**SONARA** es la aplicación de cálculo que utilizarás durante el laboratorio. "
+        "En ella construirás las soluciones por capas, definirás materiales y espesores, "
+        "revisarás curvas por frecuencia y compararás el desempeño de distintas alternativas. "
+        "Trabajarás desde Proyecto con recintos, elementos, soluciones guardadas e informe; sus herramientas de diseño incluyen ruido aéreo, transmisión entre recintos, impacto, fachada e instalaciones."
+    )
+    st.markdown(
+        "**Cómo trabajaremos:** abre SONARA → Proyecto y crea el proyecto Los Alerces. Registra los recintos y los elementos a diseñar; desde Diseñar, modela la solución inicial y guarda su configuración "
+        "y resultados, diseña una alternativa y vuelve a calcular. Traslada manualmente al "
+        "laboratorio los indicadores y las evidencias. Contrasta cada resultado con clase A "
+        "y rediseña hasta cumplir o documentar con precisión la brecha pendiente. SONARA "
+        "calcula el desempeño; tú justificas la clasificación."
+    )
+    st.markdown(
+        "**Tu entrega:** cuadro de tabiques, muros, puertas, ventanas y losas con capas, "
+        "espesores, materiales, uniones y sellos; comparación inicial/diseño; curvas e "
+        "indicadores; requisitos de clase A y comprobación por situación. Incluye puertas "
+        "y otros elementos donde correspondan, ampliando el inventario de situaciones del edificio."
+    )
+    _sonara_button("Conocer SONARA y comenzar el diseño")
+
     st.markdown(
         "**¿Por qué empezamos por A-302?** Es una unidad didáctica donde podemos estudiar "
         "separación horizontal con A-301, transmisión de impacto desde A-402, fachada norte "
@@ -820,7 +845,7 @@ def _stage2(lab, saved):
     st.markdown(
         "Las cuatro láminas tienen presentación de plano técnico, cotas y detalles de partida. "
         "**Se muestran como imágenes PNG de alta resolución; el juego PDF permite ampliar e imprimir en A3.** "
-        "Las cotas son datos del caso ficticio, no dimensiones que debas medir sobre la pantalla."
+        "Usa las cotas del proyecto como datos geométricos; las materialidades iniciales pueden rediseñarse para alcanzar clase A."
     )
     _download_plan_set("c5l1_s2_plans_pdf")
     tabs = st.tabs(["AC-01 · Planta", "AC-02 · Corte", "AC-03 · Fachada", "AC-04 · Detalles"])
@@ -991,8 +1016,8 @@ def _stage3(lab, saved):
     with tabs[2]:
         _global_building_explanation()
     with tabs[3]:
-        st.markdown("### Elige el objetivo para tu propio diseño")
-        options = ["Selecciona un objetivo", "Clase A", "Clase B", "Clase C", "Clase D", "Clase E", "Clase F"]
+        st.markdown("### Objetivo del encargo: clase A")
+        options = ["Clase A"]
         previous = saved.get("c5l1_s3_target", options[0])
         with st.form("c5l1_s3_scope_form"):
             target = st.selectbox("Clase objetivo de diseño (no es clase obtenida)", options, index=options.index(previous) if previous in options else 0)
@@ -1000,32 +1025,40 @@ def _stage3(lab, saved):
             reason = st.text_area("Por qué no basta promediar las clases ni evaluar un único muro", value=saved.get("c5l1_s3_reason", ""), height=110)
             submitted = st.form_submit_button("Guardar objetivo y alcance", width="stretch")
         if submitted:
-            if target == options[0] or "19488" not in scope or len(scope.strip()) < 120 or len(reason.strip()) < 80:
-                st.warning("Elige el objetivo, desarrolla el alcance (120 caracteres, incluyendo 19488) y explica la regla de clase limitante (80 caracteres).")
+            if "19488" not in scope or len(scope.strip()) < 120 or len(reason.strip()) < 80:
+                st.warning("La meta es clase A: desarrolla el alcance (120 caracteres, incluyendo 19488) y explica la regla de clase limitante (80 caracteres).")
             else:
                 _save(lab, saved, 3, c5l1_s3_target=target, c5l1_s3_scope=scope, c5l1_s3_reason=reason)
                 st.success("Objetivo guardado. Ahora prepara las entradas en la etapa 4; todavía no has obtenido una clase.")
 
 
 def _stage4(lab, saved):
-    _header(4, "Preparar el diseño en SONARA", "Convertir el objetivo y los planos en entradas trazables antes de calcular.")
-    st.info(f"**Objetivo recuperado de etapa 3:** {saved.get('c5l1_s3_target', 'Pendiente de definir')}.")
+    _header(4, "Preparar el proyecto en SONARA", "Convertir el objetivo y los planos en entradas trazables antes de calcular.")
+    st.info(f"**Meta obligatoria: Clase A. Objetivo registrado:** {saved.get('c5l1_s3_target', 'Pendiente de definir')}.")
+    st.markdown("### Crear y organizar el proyecto en SONARA")
+    st.markdown("""1. Entra a **Proyecto → Proyecto**, escribe **Los Alerces · tu nombre** y pulsa **Crear / actualizar proyecto**.
+2. En **Recintos**, registra los emisores y receptores de los planos: estar A-301, estar A-302, estar A-402 y dormitorio A-302; identifica nivel, uso, área y volumen. Añade exterior y los recintos de instalaciones cuando corresponda, sin inventar geometría faltante.
+3. En **Elementos**, selecciona emisor, receptor y tipo de elemento. Añade los casos AI-01, IM-01, FA-01 e IN-01, además de tabiques, ventanas y puertas que correspondan al alcance. Pulsa **Agregar elemento a la matriz** o **Diseñar este elemento**.
+4. En **Diseñar**, comprueba **Elemento activo a diseñar** y elige la herramienta en **Calculadora del requerimiento**. Realiza allí los cálculos del laboratorio.
+5. Guarda la base y el rediseño, identificados por caso. Comprueba ambos en **Soluciones** y prepara la documentación desde **Informe**.
+6. Registra en este laboratorio los indicadores, referencias y evidencias; el traslado desde SONARA es manual.""")
+    st.info("**Requisitos de clase A:** contrasta el descriptor y el valor del requerimiento disponible en el catálogo con ISO/TS 19488:2021. La selección de una referencia o el estado de cumplimiento de SONARA no acredita por sí solo clase A. Si el catálogo no ofrece el requisito exacto, documenta la diferencia y comprueba el umbral y los requisitos adicionales en tu matriz del laboratorio.")
     with st.expander("Recuperar lectura de planos y alcance"):
         st.markdown(saved.get("c5l1_s2_geometry", "Sin comprobación geométrica guardada."))
         st.markdown(saved.get("c5l1_s2_findings", "Sin riesgos guardados."))
         st.markdown(saved.get("c5l1_s3_scope", "Sin alcance guardado."))
     st.dataframe(pd.DataFrame([
-        ["M-01 / AI-01", "HA 180 mm; S 10,20 m²; V 51,0 m³", "Ruido aéreo → Transmisión entre recintos", "DₙT,w y adaptaciones finales"],
-        ["L-01 / IM-01", "Losa 160; resiliente 10; sobrelosa 40; terminación 10 mm", "Ruido de impacto → ISO 12354-2", "L′ₙT,w y adaptación aplicable"],
-        ["F-01 + V-01 / FA-01", "10,50 m² opacos + 4,80 m² de ventana", "Componentes en Ruido aéreo → Fachada", "Aislamiento de fachada adaptado"],
-        ["S-01 / IN-01", "2 RF 12,5 / cámara 70 / 2 RF 12,5 mm; V 28,8 m³", "Cierre en Ruido aéreo → Instalaciones", "LAeq,nT / LAFmax,nT según operación"],
+        ["M-01 / AI-01", "HA 180 mm; S 10,20 m²; V 51,0 m³", "Proyecto → Diseñar → ISO 12354-1", "DₙT,w y adaptaciones finales"],
+        ["L-01 / IM-01", "Losa 160; resiliente 10; sobrelosa 40; terminación 10 mm", "Proyecto → Diseñar → Ruido de impacto", "L′ₙT,w y adaptación aplicable"],
+        ["F-01 + V-01 / FA-01", "10,50 m² opacos + 4,80 m² de ventana", "Proyecto → Diseñar → Fachada ISO 12354-3", "Aislamiento de fachada adaptado"],
+        ["S-01 / IN-01", "2 RF 12,5 / cámara 70 / 2 RF 12,5 mm; V 28,8 m³", "Proyecto → Diseñar → Instalaciones EN 12354-5", "LAeq,nT / LAFmax,nT según operación"],
     ], columns=["Caso", "Datos del expediente", "Ruta SONARA", "Resultado a registrar"]), hide_index=True, width="stretch")
     st.markdown("### Tu secuencia de trabajo")
-    st.markdown("""1. Elige la fila normativa, el descriptor y el objetivo para cada caso.
+    st.markdown("""1. Identifica la fila normativa, el descriptor y todos los requisitos de clase A para cada caso.
 2. Prepara la solución base y registra sus resultados.
 3. Identifica el camino dominante y modifica una variable.
 4. Recalcula conservando el resto de condiciones.
-5. Guarda una variante y justifica la decisión, incluso si no mejora.
+5. Compara con clase A, rediseña si falta desempeño y guarda la solución final y las brechas pendientes.
 6. Clasifica tus propios resultados en la etapa 10.""")
     st.warning("Los valores iniciales de SONARA no son datos del proyecto. Los campos siguientes quedan vacíos hasta que elijas una ficha o declares una hipótesis. La masa de sobrelosa se calcula como densidad × 0,040 m; su capa resiliente de 10 mm no determina s′ por sí sola.")
     prev = saved.get("c5l1_s4_inputs", {})
@@ -1193,6 +1226,7 @@ def _stage10(lab, saved):
             "a la característica sin evidencia ni concluyas conformidad global completa."
         )
     st.info("Entrega una clasificación preliminar de los casos AI-01, IM-01, FA-01 e IN-01. El laboratorio no evalúa por sí solo todas las situaciones de A-302 ni las otras 19 viviendas; no presentes estos cuatro casos como certificación global.")
+    st.info("**Revisión de la meta clase A:** compara cada característica con A. Si obtienes otra clase, documenta la brecha y el rediseño necesario; no declares alcanzada la meta. Incluye el cuadro de soluciones de tabiques, muros, ventanas, puertas, losas y encuentros, y las situaciones pendientes del edificio.")
     st.markdown("**Informe final:** alcance → entradas y fuentes → base/variante → curva y descriptor → límite y clase por caso → clase limitante → incertidumbres y verificación en obra.")
     _download_standard("c5l1_s10_standard")
     with st.expander("Recordar cómo se clasifica el edificio completo"):
@@ -1260,3 +1294,4 @@ def run_stage(stage, lab, saved, runtime):
     _bind_runtime(runtime)
     stage = max(0, min(int(stage), 10))
     return _STAGES[stage](lab, saved)
+
