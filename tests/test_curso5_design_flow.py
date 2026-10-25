@@ -79,14 +79,14 @@ class DesignFlowTests(unittest.TestCase):
     def test_classification_objective_is_saved_and_recovered(self):
         state = {}
         ui = Surface({
-            'Clase objetivo de diseño (no es clase obtenida)': 'Clase C',
+            'Clase objetivo de diseño (no es clase obtenida)': 'Clase A',
             'Declaración de alcance de tu clasificación': 'ISO/TS 19488:2021 · cuatro situaciones del A-302 en fase de diseño. ' * 4,
             'Por qué no basta promediar las clases ni evaluar un único muro': 'La clase limitante y las características pendientes deben justificarse. ' * 3,
         }, submit=True)
         lab.st = ui; lab._stage3({'id': 'test'}, state)
-        self.assertEqual('Clase C', self.persisted[-1]['c5l1_s3_target'])
+        self.assertEqual('Clase A', self.persisted[-1]['c5l1_s3_target'])
         lab.st = Surface(); lab._stage4({'id': 'test'}, state)
-        self.assertTrue(any('Clase C' in str(text) for _, text in lab.st.messages))
+        self.assertTrue(any('Clase A' in str(text) for _, text in lab.st.messages))
 
     def test_protocol_numeric_inputs_persist_and_reappear_in_calculation(self):
         values = {
@@ -101,7 +101,7 @@ class DesignFlowTests(unittest.TestCase):
         lab.st = Surface(values, submit=True); lab._stage4({'id': 'test'}, state)
         self.assertEqual(.6, self.persisted[-1]['c5l1_s4_inputs']['tr_stay'])
         lab.st = Surface(); lab._stage5({'id': 'test'}, state)
-        self.assertTrue(any('Clase C' in str(text) for _, text in lab.st.messages))
+        self.assertTrue(any('Clase A' in str(text) for _, text in lab.st.messages))
 
     def test_incomplete_design_cannot_be_marked_complete(self):
         lab.st = Surface({'DₙT,w [dB]': 55., 'C [dB]': -2., 'Ctr [dB]': -5.}, submit=True)
