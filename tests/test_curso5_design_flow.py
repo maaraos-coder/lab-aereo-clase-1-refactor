@@ -41,6 +41,7 @@ class Surface:
     def caption(self, *args, **kwargs): pass
     def metric(self, *args, **kwargs): pass
     def dataframe(self, *args, **kwargs): pass
+    def table(self, *args, **kwargs): pass
     def link_button(self, *args, **kwargs): pass
     def image(self, path, **kwargs): self.images.append(path)
     def download_button(self, label, **kwargs): self.downloads.append((label, kwargs))
