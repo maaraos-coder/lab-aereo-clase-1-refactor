@@ -613,6 +613,7 @@ def _stage1(lab, saved):
     )
 
     st.markdown("### 📖 Cómo funciona la clasificación ISO/TS 19488:2021")
+    _download_standard("c5l1_s1_standard")
     st.markdown(
         "La **cláusula 4 (p. 6)** define las clases **A, B, C, D, E y F**: "
         "A representa el desempeño acústico más exigente; **NPD** significa "
@@ -641,68 +642,47 @@ def _stage1(lab, saved):
         "individual de la verificación del edificio completo y establece dos "
         "procedimientos para obtener evidencia de conformidad."
     )
-    c_a, c_b = st.columns(2)
-    with c_a:
-        st.markdown(
-            "**Procedimiento A — A.2.1, pp. 11–12**\n\n"
-            "Verificación combinada en **tres momentos**: "
-            "(1) cálculos de predicción durante el diseño, "
-            "(2) inspecciones visuales durante la construcción "
-            "y (3) mediciones en el edificio terminado. "
-            "En la etapa de medición se selecciona **el 5 % de las estructuras "
-            "y recintos que se medirán**, con prioridad a situaciones representativas "
-            "o críticas. **No equivale a medir el 5 % de las viviendas.**"
-        )
-    with c_b:
-        st.markdown(
-            "**Procedimiento B — A.2.2, p. 12**\n\n"
-            "Verificación **solo mediante mediciones** en el edificio terminado. "
-            "Se selecciona como mínimo el **10 % de los tipos de construcción** "
-            "de muros separadores y pisos, cubriendo suficientemente cada tipo "
-            "y priorizando situaciones críticas. "
-            "**No equivale a medir el 10 % de las viviendas.**"
-        )
-    st.warning(
-        "**Edificio completo — A.2.3, p. 12:** el mínimo es **3 mediciones "
-        "por cada tipo de construcción diferente y característica acústica**. "
-        "El mínimo no fija por sí solo cuántas viviendas deben medirse. "
-        "La cantidad final dependerá de las tipologías, distribuciones, "
-        "recintos y particularidades del proyecto."
-    )
-    st.markdown(
-        "**Para Los Alerces (20 viviendas):** A-302 será nuestra unidad de modelación. "
-        "Como ejercicio, el estudiante identificará cuántas tipologías diferentes existen "
-        "en el edificio y propondrá dónde obtener evidencia; **no debe suponer que "
-        "basta con evaluar 1, 2 o 3 departamentos** sin caracterizar esas tipologías."
-    )
-    st.caption(
-        "Referencia de lectura: ISO/TS 19488:2021, cláusulas 4, 5 y 6; "
-        "Anexo A.1–A.4 (pp. 11–14 del documento; pp. 17–20 del PDF). "
-        ""
-    )
-
-    st.markdown("### 📥 Norma de referencia · ISO/TS 19488:2021")
-    st.caption(
-        "Descarga el documento de referencia para consultar los criterios de "
-        "clasificación y el Anexo A durante el desarrollo del laboratorio."
-    )
-    # Mismo mecanismo que la norma BS 5228 del Curso 4 / Laboratorio 1:
-    # lectura directa desde assets/<curso>/ y st.download_button.
-    iso_pdf_path = PROJECT_ROOT / "assets" / "curso5_lab1" / "ISO-TS-19488-2021.pdf"
-    if iso_pdf_path.is_file():
-        st.download_button(
-            "📘 Abrir / descargar norma ISO/TS 19488:2021 · PDF",
-            data=iso_pdf_path.read_bytes(),
-            file_name="ISO-TS-19488-2021.pdf",
-            mime="application/pdf",
-            use_container_width=True,
-            key="c5l1_iso19488_pdf",
-        )
-    else:
-        st.info(
-            "El PDF ISO/TS 19488:2021 debe estar disponible en "
-            "assets/curso5_lab1/ISO-TS-19488-2021.pdf para habilitar su descarga."
-        )
+    st.markdown("#### Primero distingue qué estás contando")
+    st.table(pd.DataFrame([
+        ["Vivienda", "Departamento completo, con varios recintos y relaciones acústicas", "20 viviendas no equivalen a 20 ensayos."],
+        ["Recinto", "Estar, dormitorio u otro espacio receptor/emisor", "Una vivienda puede aportar varios recintos de ensayo."],
+        ["Tipo constructivo", "Solución de muro, entrepiso o fachada y sus condiciones relevantes", "La misma solución puede repetirse; encuentros y disposición pueden cambiar su comportamiento."],
+        ["Característica acústica", "Aéreo, impacto, fachada, instalaciones y accesos/escaleras cuando corresponda", "Un ensayo de impacto no verifica el aislamiento aéreo."],
+        ["Medición / ensayo", "Evaluación completa de una situación según su método de ensayo", "Varias posiciones de micrófono de un ensayo no son varias muestras independientes."],
+    ], columns=["Concepto", "Qué representa", "Consecuencia para el muestreo"]))
+    st.markdown("#### Dos procedimientos de verificación · Anexo A informativo")
+    st.table(pd.DataFrame([
+        ["A · A.2.1", "Diseño + construcción + edificio terminado", "Predicciones y especificaciones; inspecciones de ejecución; mediciones finales.", "En la fase final se selecciona el 5 % de estructuras y recintos a medir, al azar o identificados en diseño; normalmente un recinto grande y uno pequeño."],
+        ["B · A.2.2", "Edificio terminado", "Verificación mediante mediciones de campo.", "Al menos el 10 % de los tipos de construcción de muros separadores y pisos, con representación suficiente; normalmente un recinto grande y uno pequeño por vivienda seleccionada."],
+        ["Edificio completo · A.2.3", "Aplicable al alcance de edificio completo", "Complementa el muestreo de A o B.", "Mínimo de 3 mediciones por cada tipo de estructura y característica acústica; ampliar cuando las condiciones lo requieran."],
+    ], columns=["Procedimiento", "Cuándo", "Evidencia", "Selección y mínimo"]))
+    st.info("**Los porcentajes no se aplican directamente a las 20 viviendas.** Primero define la unidad que clasificarás, inventaría estructuras, recintos y características, y justifica su representatividad. El mínimo de tres tampoco significa tres departamentos ni tres ensayos totales. No uses una fórmula porcentual aislada como plan de verificación.")
+    st.markdown("#### Cómo proponer la muestra para Los Alerces")
+    st.table(pd.DataFrame([
+        ["1 · Alcance", "¿Una característica, A-302 o las 20 viviendas?", "Declaración del alcance y situaciones aplicables."],
+        ["2 · Inventario", "¿Cuántas soluciones, encuentros, orientaciones y condiciones de instalación hay?", "Listado por tipo, ubicación, recintos y característica."],
+        ["3 · Selección", "¿Dónde hay flancos críticos, recintos pequeños, mayor exposición o proximidad a equipos?", "Ubicaciones representativas y desfavorables; no solo las más accesibles."],
+        ["4 · Cantidad", "¿Procedimiento A o B? ¿Se pretende verificar el edificio completo?", "Muestra justificada con porcentajes y mínimos aplicables; ampliación si hay variabilidad."],
+        ["5 · Verificación", "¿Los resultados representan el alcance declarado?", "Revisión por característica, incidencias, inspecciones, resultados y limitaciones."],
+    ], columns=["Paso", "Pregunta", "Qué debe entregar el alumno"]))
+    st.markdown("#### Ejemplo de conteo · hipótesis didáctica, no inventario confirmado")
+    st.table(pd.DataFrame([
+        ["Muro separador tipo M1", "Aéreo entre viviendas", 3],
+        ["Muro separador tipo M2", "Aéreo entre viviendas", 3],
+        ["Entrepiso tipo L1", "Aéreo entre viviendas", 3],
+        ["Entrepiso tipo L1", "Impacto", 3],
+    ], columns=["Tipo supuesto", "Característica a verificar", "Mínimo de mediciones para edificio completo"]))
+    st.markdown("En este inventario supuesto hay **12 evaluaciones como mínimo para esas cuatro combinaciones**. Aún faltaría incorporar fachada, instalaciones y las demás características aplicables. Una pareja de recintos puede servir para evaluar aéreo e impacto con sus respectivos métodos, por lo que 12 evaluaciones no implican 12 viviendas distintas. La muestra final puede aumentar por los porcentajes del procedimiento, las tipologías o la variabilidad. Los cuatro casos de A-302 son el punto de partida del diseño; no constituyen esa campaña completa.")
+    st.markdown("### 🏗️ Si la ISO habla de mediciones, ¿por qué trabajamos en diseño?")
+    st.markdown("La **cláusula 6 y el Anexo A.2.1** contemplan cálculos de predicción como parte de la verificación. El procedimiento A integra tres fases: el cálculo permite anticipar el desempeño, la inspección comprueba cómo se construyó y la medición verifica el resultado terminado. **En este laboratorio desarrollamos la primera fase:** diseñar para clase A mediante SONARA y preparar las comprobaciones posteriores.")
+    st.table(pd.DataFrame([
+        ["Diseño · lo que hacemos ahora", "Proyecto de SONARA: recintos, elementos, capas, encuentros, base y rediseño; predicciones según la parte aplicable de ISO/EN 12354.", "Comprobar viabilidad de clase A, especificar soluciones y localizar riesgos. Resultado: desempeño previsto."],
+        ["Construcción · lo que se debe planificar", "Inspecciones de materiales, juntas, bandas resilientes, fijaciones, encuentros y ejecución respecto de planos aprobados.", "Comprobar que la solución calculada se ejecutó correctamente."],
+        ["Edificio terminado · lo que falta verificar", "Ensayos de aislamiento aéreo, impacto y fachada; mediciones de instalaciones y reverberación cuando correspondan.", "Contrastar el desempeño real y sustentar la clasificación dentro del alcance verificado."],
+    ], columns=["Fase", "Evidencia", "Para qué sirve"]))
+    st.markdown("**Diseñar con margen:** A.2.1 aconseja al menos media clase (2 dB) cuando la experiencia práctica respalda ese margen; pueden necesitarse márgenes mayores en soluciones sensibles a la ejecución. No es una garantía universal: justifica el margen por característica, incertidumbre y sistema. Para aislamiento se busca superar el mínimo; para impacto e instalaciones, quedar por debajo del máximo.")
+    st.warning("**Qué podrás concluir:** propuesta de diseño orientada a clase A y resultados previstos de los casos calculados. La verificación completa del procedimiento A requiere también inspecciones y mediciones finales. El estado de cumplimiento mostrado por SONARA no sustituye la revisión de todos los descriptores, requisitos adicionales, situaciones y evidencias de la clasificación.")
+    st.caption("Fuente: ISO/TS 19488:2021, cláusula 6 (pp. 9–10) y Anexo A informativo, A.1–A.2.3 (pp. 11–12; páginas 17–18 del PDF). Las tablas anteriores son una síntesis didáctica; consultar el documento para las condiciones de conformidad, tolerancias y métodos completos.")
 
     st.markdown("### 🏗️ Conoce el proyecto")
     c1, c2, c3, c4 = st.columns(4)
