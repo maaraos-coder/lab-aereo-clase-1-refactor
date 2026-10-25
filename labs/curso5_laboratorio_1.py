@@ -544,6 +544,66 @@ def _stage0(lab, saved):
     )
 
 
+def _coverage_explanation():
+    """Guía visual de representatividad; ejemplos sin resultados atribuidos al proyecto."""
+    st.markdown("### ¿Cuándo podemos decir que todo el edificio alcanza una clase?")
+    st.markdown("**Evaluar A-302 permite hablar de las situaciones comprobadas en A-302.** Para hablar de las 20 viviendas, debemos comprobar que la evidencia también representa sus distintas soluciones, ubicaciones y condiciones de ruido. Veámoslo paso a paso.")
+    st.markdown("""
+<style>
+.c5-coverage{--ink:#17384e;--muted:#456176;--line:#ccdde8;color:var(--ink);font-family:inherit;line-height:1.6;margin:1rem 0 1.8rem}
+.c5-coverage *{box-sizing:border-box}
+.c5-coverage .cv-hero{background:linear-gradient(120deg,#113b59,#126976);color:#fff;border-radius:20px;padding:24px;margin-bottom:18px}
+.c5-coverage .cv-eyebrow{font-size:.8rem;font-weight:800;letter-spacing:.07em;text-transform:uppercase;margin:0 0 8px}
+.c5-coverage .cv-hero h4{color:#fff;font-size:1.35rem;line-height:1.3;margin:0 0 12px}
+.c5-coverage p{margin:0 0 12px;font-size:1rem}
+.c5-coverage p:last-child{margin-bottom:0}
+.c5-coverage .cv-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px;margin:14px 0 22px}
+.c5-coverage .cv-card{background:#fff;border:1px solid var(--line);border-radius:16px;padding:20px;box-shadow:0 3px 12px #17384e08;min-width:0}
+.c5-coverage .cv-head{display:flex;align-items:center;gap:12px;margin-bottom:14px}
+.c5-coverage .cv-num{display:flex;align-items:center;justify-content:center;flex:0 0 36px;height:36px;border-radius:12px;background:#e1f2f2;color:#09616a;font-weight:900}
+.c5-coverage h4{color:var(--ink);font-size:1.12rem;line-height:1.35;margin:0}
+.c5-coverage h5{color:var(--ink);font-size:1.06rem;margin:22px 0 10px}
+.c5-coverage .cv-example{background:#edf5fb;border-left:3px solid #3281ad;padding:12px 14px;border-radius:0 10px 10px 0;margin:12px 0}
+.c5-coverage .cv-ref{color:var(--muted);font-size:.85rem;line-height:1.5;border-top:1px solid #dbe6ed;padding-top:12px;margin-top:14px}
+.c5-coverage .cv-wide{grid-column:1/-1}
+.c5-coverage .cv-note{background:#fff4dc;border:1px solid #efd49d;padding:18px;border-radius:14px;margin:16px 0}
+.c5-coverage .cv-success{background:#e6f4ee;border:1px solid #afd7c6;padding:18px;border-radius:14px;margin:16px 0}
+.c5-coverage .cv-row{display:grid;grid-template-columns:1fr 1fr;gap:16px;padding:14px 0;border-bottom:1px solid #dbe6ed}
+.c5-coverage .cv-row:last-child{border-bottom:0}
+.c5-coverage .cv-small{font-size:.9rem;color:var(--muted)}
+@media(max-width:640px){.c5-coverage .cv-grid{grid-template-columns:1fr}.c5-coverage .cv-wide{grid-column:auto}.c5-coverage .cv-card,.c5-coverage .cv-hero{padding:18px}.c5-coverage .cv-row{grid-template-columns:1fr;gap:6px}}
+</style>
+<section class="c5-coverage" aria-label="Cómo comprobar el edificio completo">
+<div class="cv-hero"><div class="cv-eyebrow">La idea principal</div><h4>La evidencia debe cubrir lo que quieres clasificar</h4><p>Si quieres declarar clase A para todo el edificio, debes sustentar que <strong>todas las viviendas cumplen los criterios aplicables de A</strong>. Una vivienda favorable no demuestra cómo se comportan las demás.</p><p>No significa necesariamente ensayar cada vivienda: la selección debe estar justificada y representar las diferentes situaciones del edificio.</p></div>
+<div class="cv-grid">
+<article class="cv-card"><div class="cv-head"><span class="cv-num">1</span><h4>Di de qué vas a hablar</h4></div><p><strong>“Alcance” significa qué incluye tu conclusión.</strong> Puedes hablar de una característica, de una vivienda o de todo el edificio.</p><div class="cv-example">En nuestro encargo: queremos diseñar las <strong>20 viviendas de Los Alerces para clase A</strong>. Comenzamos con cuatro situaciones de A-302.</div><p>Mientras falte comprobar el resto, informamos resultados de esos casos y una meta de diseño para el edificio.</p><div class="cv-ref">§4 · Acoustic classes · p. 6 / PDF 12.<br>A.1 · General · p. 11 / PDF 17.</div></article>
+<article class="cv-card"><div class="cv-head"><span class="cv-num">2</span><h4>Busca lo que cambia entre viviendas</h4></div><p>Revisa <strong>muros, losas, encuentros, fachadas e instalaciones</strong>. Dos departamentos con la misma planta pueden tener condiciones acústicas distintas.</p><div class="cv-example">Uno mira a la avenida; otro al patio. Uno está junto a equipos; otro no. Aunque tengan igual ventana, la exposición exterior puede cambiar lo que deben cumplir.</div><p>Agrupa situaciones comparables y separa las que necesiten una comprobación diferente.</p><div class="cv-ref">§6 · Verification · pp. 9–10 / PDF 15–16.<br>A.1 · General · p. 11 / PDF 17.</div></article>
+<article class="cv-card"><div class="cv-head"><span class="cv-num">3</span><h4>Justifica qué casos representan a cada grupo</h4></div><p>Elige situaciones que cubran cada solución y sus condiciones desfavorables. Explica <strong>por qué las elegidas representan a las que no evaluarás directamente</strong>.</p><div class="cv-example">A-302 no representa automáticamente a una vivienda frente a una avenida ni a otra junto a una sala de equipos. Esas situaciones necesitan evidencia que las cubra.</div><p>Si la ejecución, las uniones o el uso varían, puede ser necesario ampliar la muestra.</p><div class="cv-ref">§6 · Verification · p. 10 / PDF 16.<br>A.1–A.2.2 · General y procedimientos A/B · pp. 11–12 / PDF 17–18.</div></article>
+<article class="cv-card"><div class="cv-head"><span class="cv-num">4</span><h4>Reúne la evidencia en cada fase</h4></div><p><strong>Ahora:</strong> calcula y rediseña las soluciones en Proyecto de SONARA. Relaciona cada resultado con sus recintos, elementos y condiciones.</p><div class="cv-example"><strong>Después:</strong> planifica inspecciones durante la obra y mediciones del edificio terminado para comprobar que lo diseñado se ejecutó y funciona.</div><p>Ese recorrido corresponde al procedimiento A. El procedimiento B verifica mediante mediciones finales.</p><div class="cv-ref">A.2.1 · Procedure A: Verification by calculations, visual inspections and field measurements · pp. 11–12 / PDF 17–18.<br>A.2.2 · Procedure B: Verification by field measurements only · p. 12 / PDF 18.</div></article>
+<article class="cv-card cv-wide"><div class="cv-head"><span class="cv-num">5</span><h4>Comprueba si puedes concluir sobre todo el edificio</h4></div><p>Pregunta final: <strong>¿cada situación y característica aplicable está respaldada por evidencia suficiente?</strong> Si falta un grupo, déjalo pendiente y explica cómo lo verificarás.</p><div class="cv-success"><strong>Para alcanzar A:</strong> todos los requisitos aplicables deben quedar cubiertos y satisfechos. Si una característica alcanza B, hay que rediseñarla para cumplir el encargo A; si no tiene evidencia, todavía no puedes concluir la clase global.</div><div class="cv-ref">§4 · Acoustic classes · p. 6 / PDF 12.<br>A.3 · Contents of verification report for classification of a dwelling or a building · p. 13 / PDF 19.<br>A.4 · Classification examples · pp. 13–14 / PDF 19–20.</div></article>
+</div>
+<h5>Cuatro palabras, con ejemplos concretos</h5>
+<div class="cv-card">
+<div class="cv-row"><strong>Vivienda = el departamento completo</strong><span>A-302 contiene estar, dormitorios, cocina y baño. No es un único ensayo.</span></div>
+<div class="cv-row"><strong>Recinto = una habitación</strong><span>El estar de A-302 puede recibir ruido de A-301 y del piso superior: son situaciones diferentes.</span></div>
+<div class="cv-row"><strong>Tipo constructivo = una solución y su configuración</strong><span>Dos muros con iguales capas pueden necesitar revisión separada si cambian sus encuentros o caminos laterales.</span></div>
+<div class="cv-row"><strong>Ensayo = comprobar una característica en una situación</strong><span>Evaluar ruido aéreo e impacto entre la misma pareja de recintos son dos evaluaciones con sus respectivos métodos.</span></div>
+<p class="cv-small">Ejemplos didácticos para interpretar A.1–A.2.3, pp. 11–12 / PDF 17–18.</p>
+</div>
+<h5>Entonces, ¿cómo elijo cuántas mediciones hacer?</h5>
+<p>Primero completa el inventario de situaciones; después aplica el procedimiento y los mínimos que correspondan al alcance. No hay un número de departamentos que podamos deducir solo de que el edificio tenga 20 viviendas.</p>
+<div class="cv-grid">
+<article class="cv-card"><h4>Procedimiento A</h4><p>Combina cálculo, inspección y medición. En la fase final, A.2.1 indica seleccionar el <strong>5 % de estructuras y recintos</strong> a medir; normalmente se incluye un recinto grande y uno pequeño.</p><div class="cv-ref">A.2.1 · Procedure A · pp. 11–12 / PDF 17–18.</div></article>
+<article class="cv-card"><h4>Procedimiento B</h4><p>Se basa en mediciones del edificio terminado. A.2.2 indica al menos el <strong>10 % de los tipos de construcción de muros separadores y pisos</strong>, con representación suficiente; normalmente un recinto grande y uno pequeño por vivienda seleccionada.</p><div class="cv-ref">A.2.2 · Procedure B · p. 12 / PDF 18.</div></article>
+</div>
+<div class="cv-note"><strong>Si verificas el edificio completo:</strong> A.2.3 establece un mínimo de <strong>3 mediciones por tipo de estructura y característica acústica</strong>. No son tres mediciones en total ni tres departamentos. Revisa también los porcentajes, la representatividad y si debes ampliar la muestra.</div>
+<div class="cv-card"><h4>Ejemplo de conteo, solo para entender la regla</h4><div class="cv-row"><span>Muro tipo M1 · aislamiento aéreo</span><strong>Al menos 3 evaluaciones</strong></div><div class="cv-row"><span>Losa tipo L1 · aislamiento aéreo</span><strong>Al menos 3 evaluaciones</strong></div><div class="cv-row"><span>Losa tipo L1 · impacto</span><strong>Al menos 3 evaluaciones</strong></div><p><strong>Subtotal: 9 evaluaciones para estas tres combinaciones.</strong> Aún faltan fachada, instalaciones y las demás situaciones aplicables; la muestra final puede ser mayor. No significa nueve viviendas distintas.</p><div class="cv-ref">Hipótesis didáctica, no inventario confirmado de Los Alerces.<br>A.2.3 · Verification of an entire building · p. 12 / PDF 18.</div></div>
+<div class="cv-success"><strong>Tu tarea en este laboratorio:</strong> identifica qué cubren AI-01, IM-01, FA-01 e IN-01; enumera qué situaciones de las otras viviendas siguen pendientes y explica cómo obtendrías evidencia para ellas. No inventes su desempeño.</div>
+<p class="cv-small">Fuente: ISO/TS 19488:2021 · Acoustics — Acoustic classification of dwellings. El Anexo A es informativo: ofrece un procedimiento de referencia. La cláusula 6 permite adaptarlo justificadamente a las condiciones del edificio, respetando el requisito general de representación suficiente. Páginas impresas / páginas del visor PDF de esta copia.</p>
+</section>
+""", unsafe_allow_html=True)
+
+
 def _stage1(lab, saved):
     _header(
         1,
@@ -648,39 +708,7 @@ def _stage1(lab, saved):
     st.markdown("**Lectura del ejemplo:** no corresponde anunciar clase A para todo el conjunto mientras existan situaciones B o C. Si estas tipologías pertenecen a un mismo edificio y la verificación cubre todas las viviendas y requisitos, su clase global queda limitada a C. Si están en edificios distintos, informa la clase de cada edificio. Una eventual declaración común del condominio necesita un alcance explícito y evidencia de todas sus partes; no surge de promediar A, B y C. Para cumplir el encargo de clase A hay que rediseñar la fachada de T2 y las instalaciones de T3, y volver a comprobar todos los requisitos.")
     st.caption("Ejemplo hipotético creado para explicar la regla de §4 y A.4; no corresponde a resultados medidos ni a un inventario confirmado de Los Alerces. Una tipología arquitectónica repetida puede requerir más de un grupo acústico por sus encuentros, exposición o instalaciones.")
     st.caption("Regla de informe: A.3 · Contents of verification report for classification of a dwelling or a building · p. 13 / PDF 19: si varían las clases entre viviendas, recintos o características, la asignación considera la clase mínima de lo pertinente; pueden declararse además clases superiores de unidades individuales y tablas de resultados.")
-    st.markdown("#### ¿Cómo se demuestra que la clase representa todo el alcance?")
-    st.markdown("Primero delimita el edificio o las partes del condominio que quieres clasificar. Después inventaría tipologías y situaciones acústicas, selecciona evidencia representativa y aplica el procedimiento de verificación. El Anexo A es **informativo**: A.1 exige representación suficiente de la unidad y evaluación de sus características relevantes; la cláusula 6 contempla ajustar la muestra a las condiciones reales. Por eso no basta aplicar un porcentaje al número total de viviendas.")
-    st.markdown("#### Primero distingue qué estás contando")
-    st.table(pd.DataFrame([
-        ["Vivienda", "Departamento completo, con varios recintos y relaciones acústicas", "20 viviendas no equivalen a 20 ensayos."],
-        ["Recinto", "Estar, dormitorio u otro espacio receptor/emisor", "Una vivienda puede aportar varios recintos de ensayo."],
-        ["Tipo constructivo", "Solución de muro, entrepiso o fachada y sus condiciones relevantes", "La misma solución puede repetirse; encuentros y disposición pueden cambiar su comportamiento."],
-        ["Característica acústica", "Aéreo, impacto, fachada, instalaciones y accesos/escaleras cuando corresponda", "Un ensayo de impacto no verifica el aislamiento aéreo."],
-        ["Medición / ensayo", "Evaluación completa de una situación según su método de ensayo", "Varias posiciones de micrófono de un ensayo no son varias muestras independientes."],
-    ], columns=["Concepto", "Qué representa", "Consecuencia para el muestreo"]))
-    st.markdown("#### Dos procedimientos de verificación · Anexo A informativo")
-    st.table(pd.DataFrame([
-        ["A · A.2.1", "Diseño + construcción + edificio terminado", "Predicciones y especificaciones; inspecciones de ejecución; mediciones finales.", "En la fase final se selecciona el 5 % de estructuras y recintos a medir, al azar o identificados en diseño; normalmente un recinto grande y uno pequeño."],
-        ["B · A.2.2", "Edificio terminado", "Verificación mediante mediciones de campo.", "Al menos el 10 % de los tipos de construcción de muros separadores y pisos, con representación suficiente; normalmente un recinto grande y uno pequeño por vivienda seleccionada."],
-        ["Edificio completo · A.2.3", "Aplicable al alcance de edificio completo", "Complementa el muestreo de A o B.", "Mínimo de 3 mediciones por cada tipo de estructura y característica acústica; ampliar cuando las condiciones lo requieran."],
-    ], columns=["Procedimiento", "Cuándo", "Evidencia", "Selección y mínimo"]))
-    st.info("**Los porcentajes no se aplican directamente a las 20 viviendas.** Primero define la unidad que clasificarás, inventaría estructuras, recintos y características, y justifica su representatividad. El mínimo de tres tampoco significa tres departamentos ni tres ensayos totales. No uses una fórmula porcentual aislada como plan de verificación.")
-    st.markdown("#### Cómo proponer la muestra para Los Alerces")
-    st.table(pd.DataFrame([
-        ["1 · Alcance", "¿Una característica, A-302 o las 20 viviendas?", "Declaración del alcance y situaciones aplicables."],
-        ["2 · Inventario", "¿Cuántas soluciones, encuentros, orientaciones y condiciones de instalación hay?", "Listado por tipo, ubicación, recintos y característica."],
-        ["3 · Selección", "¿Dónde hay flancos críticos, recintos pequeños, mayor exposición o proximidad a equipos?", "Ubicaciones representativas y desfavorables; no solo las más accesibles."],
-        ["4 · Cantidad", "¿Procedimiento A o B? ¿Se pretende verificar el edificio completo?", "Muestra justificada con porcentajes y mínimos aplicables; ampliación si hay variabilidad."],
-        ["5 · Verificación", "¿Los resultados representan el alcance declarado?", "Revisión por característica, incidencias, inspecciones, resultados y limitaciones."],
-    ], columns=["Paso", "Pregunta", "Qué debe entregar el alumno"]))
-    st.markdown("#### Ejemplo de conteo · hipótesis didáctica, no inventario confirmado")
-    st.table(pd.DataFrame([
-        ["Muro separador tipo M1", "Aéreo entre viviendas", 3],
-        ["Muro separador tipo M2", "Aéreo entre viviendas", 3],
-        ["Entrepiso tipo L1", "Aéreo entre viviendas", 3],
-        ["Entrepiso tipo L1", "Impacto", 3],
-    ], columns=["Tipo supuesto", "Característica a verificar", "Mínimo de mediciones para edificio completo"]))
-    st.markdown("En este inventario supuesto hay **12 evaluaciones como mínimo para esas cuatro combinaciones**. Aún faltaría incorporar fachada, instalaciones y las demás características aplicables. Una pareja de recintos puede servir para evaluar aéreo e impacto con sus respectivos métodos, por lo que 12 evaluaciones no implican 12 viviendas distintas. La muestra final puede aumentar por los porcentajes del procedimiento, las tipologías o la variabilidad. Los cuatro casos de A-302 son el punto de partida del diseño; no constituyen esa campaña completa.")
+    _coverage_explanation()
     st.markdown("### 🏗️ Si la ISO habla de mediciones, ¿por qué trabajamos en diseño?")
     st.markdown("La **cláusula 6 y el Anexo A.2.1** contemplan cálculos de predicción como parte de la verificación. El procedimiento A integra tres fases: el cálculo permite anticipar el desempeño, la inspección comprueba cómo se construyó y la medición verifica el resultado terminado. **En este laboratorio desarrollamos la primera fase:** diseñar para clase A mediante SONARA y preparar las comprobaciones posteriores.")
     st.table(pd.DataFrame([
