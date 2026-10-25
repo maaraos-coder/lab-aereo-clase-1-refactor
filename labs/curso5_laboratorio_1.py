@@ -614,34 +614,42 @@ def _stage1(lab, saved):
 
     st.markdown("### 📖 Cómo funciona la clasificación ISO/TS 19488:2021")
     _download_standard("c5l1_s1_standard")
-    st.markdown(
-        "La **cláusula 4 (p. 6)** define las clases **A, B, C, D, E y F**: "
-        "A representa el desempeño acústico más exigente; **NPD** significa "
-        "que el desempeño no se ha determinado. Se pueden clasificar características "
-        "individuales, una vivienda o un edificio completo, siempre indicando el alcance."
-    )
-    st.markdown(
-        "La **cláusula 5 (pp. 7–9)** presenta los criterios para el aislamiento aéreo "
-        "entre viviendas, el ruido de impacto, el aislamiento frente al exterior, "
-        "el ruido de instalaciones y la reverberación o absorción en escaleras "
-        "y zonas de acceso. En este ejercicio calcularemos cuatro familias en A-302; "
-        "**no verificamos todavía todos los requisitos de una clasificación global del edificio**."
-    )
-    st.info(
-        "**Ejemplo de lectura de las clases (Anexo A.4, pp. 13–14):** "
-        "se puede informar una clase por característica, una clase global para una "
-        "vivienda o una clase global del edificio. Cuando se informa una única clase, "
-        "debe cumplirse el conjunto de criterios que correspondan a ese alcance; "
-        "no se promedian automáticamente las letras de las clases parciales."
-    )
-
-    st.markdown("### 📐 ¿Cuántas viviendas y mediciones requiere un edificio real?")
-    st.markdown(
-        "**No hay una equivalencia universal entre porcentaje de muestreo y porcentaje "
-        "de departamentos.** El Anexo A diferencia la clasificación de una vivienda "
-        "individual de la verificación del edificio completo y establece dos "
-        "procedimientos para obtener evidencia de conformidad."
-    )
+    st.caption("Norma: ISO/TS 19488:2021 · Acoustics — Acoustic classification of dwellings. En las referencias se distingue página impresa / página del visor PDF; este archivo tiene seis páginas preliminares.")
+    st.markdown("#### 1 · ¿Qué significa una clase acústica?")
+    st.table(pd.DataFrame([
+        ["A → F", "A es la clase más exigente y F la menos exigente. Para obtener una clase deben cumplirse todos sus requisitos aplicables.", "§4 · Acoustic classes · p. 6 / PDF 12"],
+        ["NPD", "Sin desempeño requerido o determinado, o desempeño que no cumple F; debe aclararse la situación. No lo conviertas en una letra ni lo promedies.", "§4 · Acoustic classes · p. 6 / PDF 12"],
+        ["Clase global", "La clase común queda limitada por la característica de menor clase. Los ejemplos del Anexo A muestran la decisión; no se promedian letras.", "A.4 · Classification examples · pp. 13–14 / PDF 19–20"],
+        ["Meta del laboratorio", "Diseñar para A y comprobar cada requisito con resultados propios. La meta no es una clase ya obtenida.", "Aplicación didáctica de §4 y §5 · pp. 6–9 / PDF 12–15"],
+    ], columns=["Idea", "Cómo interpretarla", "Referencia: apartado · título · página"]))
+    st.markdown("#### 2 · ¿Qué aspectos hay que comprobar?")
+    st.table(pd.DataFrame([
+        ["Aéreo entre viviendas y otros recintos", "Muros, puertas cuando correspondan y transmisión directa/lateral. El Rw de una pieza no es el resultado entre recintos.", "§5.2 · Airborne sound insulation · tabla 1 · p. 7 / PDF 13"],
+        ["Impacto", "Entrepisos, pisos y encuentros; comprobar el nivel transmitido al receptor.", "§5.3 · Impact sound insulation · tabla 2 · pp. 7–8 / PDF 13–14"],
+        ["Ruido exterior", "Fachada completa, ventanas, juntas y exposición exterior de cada situación.", "§5.4 · Airborne sound insulation against exterior noise (traffic, industry and other sources) · tabla 3 · p. 8 / PDF 14"],
+        ["Instalaciones", "Niveles en los recintos debidos a equipos, con su condición de operación y descriptor aplicable.", "§5.5 · Sound from building service equipment · tabla 4 · p. 9 / PDF 15"],
+        ["Accesos y escaleras comunes", "Reverberación o absorción relativa donde sea aplicable; también forma parte de la clasificación.", "§5.6 · Reverberation time and sound absorption in stairwells and access areas · tabla 5 · p. 9 / PDF 15"],
+    ], columns=["Característica", "Qué revisar en el proyecto", "Dónde consultarlo"]))
+    st.info("**Aplicación a Los Alerces:** los cuatro casos de A-302 permiten comenzar el diseño. Para concluir sobre el edificio se deben cubrir también las demás viviendas, tipologías y situaciones aplicables. La cláusula 4 excluye de esta clasificación el aislamiento entre recintos interiores de una misma vivienda; esos tabiques pueden diseñarse como prestación adicional, pero no deben confundirse con el separador entre viviendas.")
+    st.markdown("### 🏘️ ¿Cómo se clasifica un edificio o un condominio con distintas viviendas?")
+    st.success("**Se puede clasificar una característica, una vivienda o un edificio residencial completo.** Para declarar una clase del edificio, todas sus viviendas deben cumplir los criterios de esa clase. También se pueden informar clases distintas por vivienda. Referencia: §4 · Acoustic classes · p. 6 / PDF 12.")
+    st.table(pd.DataFrame([
+        ["Una característica", "Ejemplo: aislamiento aéreo de una situación delimitada.", "No acredita por sí sola la clase global de la vivienda.", "§4, p. 6 / PDF 12; A.1 · General, p. 11 / PDF 17"],
+        ["Una vivienda", "Conjunto de características aplicables a la vivienda y su relación con el entorno y zonas comunes.", "Puede tener una clase diferente de otras viviendas del mismo edificio.", "§4, p. 6 / PDF 12; A.4 · Classification examples, pp. 13–14 / PDF 19–20"],
+        ["Edificio completo", "Todas las viviendas y características aplicables, con evidencia representativa del alcance.", "Una sola vivienda favorable no representa automáticamente a las restantes.", "§4, p. 6 / PDF 12; A.2.3 · Verification of an entire building, p. 12 / PDF 18"],
+        ["Condominio con varias torres o tipos de vivienda", "Delimitar edificios, viviendas, tipologías, exposición y zonas comunes; justificar evidencia para cada grupo.", "La norma no establece aquí una regla independiente de agregación por condominio. Informar por edificio/vivienda y justificar expresamente cualquier declaración del conjunto.", "Aplicación al conjunto de §4 y A.1–A.2.3; no es una categoría adicional definida por la norma."],
+    ], columns=["Alcance declarado", "Qué cubre", "Qué debes tener presente", "Referencia"]))
+    st.markdown("#### Ejemplo didáctico: tres tipologías dentro de un condominio")
+    st.table(pd.DataFrame([
+        ["T1 · departamentos interiores", "Aéreo A · impacto A · fachada A · instalaciones A · comunes A", "A"],
+        ["T2 · departamentos frente a avenida", "Aéreo A · impacto A · fachada B · instalaciones A · comunes A", "B, limitada por fachada"],
+        ["T3 · viviendas próximas a equipos", "Aéreo A · impacto A · fachada A · instalaciones C · comunes según aplicabilidad", "C, limitada por instalaciones"],
+    ], columns=["Grupo supuesto", "Clases de características supuestas", "Clase común del grupo si toda la evidencia lo respalda"]))
+    st.markdown("**Lectura del ejemplo:** no corresponde anunciar clase A para todo el conjunto mientras existan situaciones B o C. Si estas tipologías pertenecen a un mismo edificio y la verificación cubre todas las viviendas y requisitos, su clase global queda limitada a C. Si están en edificios distintos, informa la clase de cada edificio. Una eventual declaración común del condominio necesita un alcance explícito y evidencia de todas sus partes; no surge de promediar A, B y C. Para cumplir el encargo de clase A hay que rediseñar la fachada de T2 y las instalaciones de T3, y volver a comprobar todos los requisitos.")
+    st.caption("Ejemplo hipotético creado para explicar la regla de §4 y A.4; no corresponde a resultados medidos ni a un inventario confirmado de Los Alerces. Una tipología arquitectónica repetida puede requerir más de un grupo acústico por sus encuentros, exposición o instalaciones.")
+    st.caption("Regla de informe: A.3 · Contents of verification report for classification of a dwelling or a building · p. 13 / PDF 19: si varían las clases entre viviendas, recintos o características, la asignación considera la clase mínima de lo pertinente; pueden declararse además clases superiores de unidades individuales y tablas de resultados.")
+    st.markdown("#### ¿Cómo se demuestra que la clase representa todo el alcance?")
+    st.markdown("Primero delimita el edificio o las partes del condominio que quieres clasificar. Después inventaría tipologías y situaciones acústicas, selecciona evidencia representativa y aplica el procedimiento de verificación. El Anexo A es **informativo**: A.1 exige representación suficiente de la unidad y evaluación de sus características relevantes; la cláusula 6 contempla ajustar la muestra a las condiciones reales. Por eso no basta aplicar un porcentaje al número total de viviendas.")
     st.markdown("#### Primero distingue qué estás contando")
     st.table(pd.DataFrame([
         ["Vivienda", "Departamento completo, con varios recintos y relaciones acústicas", "20 viviendas no equivalen a 20 ensayos."],
