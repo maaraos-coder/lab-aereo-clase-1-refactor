@@ -547,7 +547,6 @@ def _stage0(lab, saved):
 def _coverage_explanation():
     """Guía visual de representatividad; ejemplos sin resultados atribuidos al proyecto."""
     st.markdown("### ¿Cuándo podemos decir que todo el edificio alcanza una clase?")
-    st.info("**¿De dónde salen las 20 viviendas?** Del proyecto: 5 pisos × 4 departamentos por piso = 20 viviendas. Es un dato del edificio Los Alerces, no una exigencia ni un tamaño de muestra de la ISO.")
     st.markdown("**Aquí hacemos predicciones de diseño, no mediciones en terreno.** A-302 es el punto de partida para modelar cuatro situaciones acústicas. Para extender la propuesta al edificio, debemos identificar qué otras soluciones, encuentros, exposiciones y recintos necesitan cálculos adicionales.")
     st.markdown("""
 <style>
@@ -630,9 +629,9 @@ def _stage1(lab, saved):
         "Expediente del Edificio Los Alerces",
         "Entender el edificio y organizar los casos de predicción para diseñar hacia clase A.",
     )
-    _project_badge()
 
-    st.markdown("### 🏙️ Conoce el Edificio Los Alerces")
+    st.markdown("### 1 · Conoce el edificio que vas a diseñar")
+    st.markdown("Los Alerces es un edificio residencial de **5 pisos, con 4 departamentos por piso: 20 viviendas en total**. La estructura de partida es de muros y losas de hormigón armado. Trabajaremos inicialmente con **A-302, en el tercer piso**, y sus relaciones con A-301, A-402, la fachada norte y el shaft sanitario S-1.")
     render_path = _asset("alerces_render_profesional.jpg")
     if render_path.is_file():
         st.image(
@@ -651,7 +650,60 @@ def _stage1(lab, saved):
             "assets/curso5_lab1/alerces_render_profesional.jpg.",
         )
 
-    st.markdown("### 🏢 Tu encargo: diseñar para alcanzar clase A")
+
+    c1, c2, c3, c4 = st.columns(4)
+    c1.metric("Pisos", PROJECT["storeys"])
+    c2.metric("Viviendas", PROJECT["dwellings"])
+    c3.metric("Altura interior", f'{PROJECT["floor_height_m"]:.2f} m')
+    c4.metric("Caso de estudio", "A-302")
+    st.markdown("#### Los cuatro casos que guiarán el laboratorio")
+    st.dataframe(
+        pd.DataFrame(
+            [
+                ["Aéreo entre viviendas", "A-301", "A-302", "Muro M-01", "ISO 12354-1"],
+                ["Impacto entre pisos", "A-402", "A-302", "Losa L-01", "ISO 12354-2"],
+                ["Ruido exterior", "Fachada norte", "Estar A-302", "F-01 + V-01", "ISO 12354-3"],
+                ["Instalaciones", "Shaft S-1", "A-302", "Cierre + fijaciones", "Método aplicable de instalaciones"],
+            ],
+            columns=["Situación", "Origen", "Receptor", "Elemento / vía", "Referencia de diseño"],
+        ),
+        hide_index=True,
+        width="stretch",
+    )
+    st.caption(
+        "Las situaciones se estudian de forma individual. En la Etapa 2 se muestran "
+        "la planta, el corte y los detalles para interpretar sus recorridos."
+    )
+
+    with st.expander("Consultar áreas, volúmenes y materialidades iniciales", expanded=False):
+        st.markdown("#### Recintos de A-302")
+        st.dataframe(
+            pd.DataFrame(
+                ROOMS,
+                columns=["Recinto", "Área [m²]", "Volumen [m³]", "Orientación", "Adyacencia crítica"],
+            ),
+            hide_index=True,
+            width="stretch",
+        )
+        st.markdown("#### Soluciones iniciales para revisar y rediseñar")
+        st.dataframe(
+            pd.DataFrame(
+                MATERIALS,
+                columns=["Código", "Elemento", "Sistema", "Dimensión", "Observación"],
+            ),
+            hide_index=True,
+            width="stretch",
+        )
+    st.markdown("#### Descarga los antecedentes del proyecto")
+    st.caption(
+        "Descarga un único archivo CSV con los datos generales del edificio, "
+        "recintos y materialidades. Puedes abrirlo en Excel para consultar y "
+        "organizar los antecedentes de cálculo."
+    )
+    _project_downloads()
+
+
+    st.markdown("### 2 · Tu encargo: diseñar soluciones para clase A")
     st.info(
         "**Encargo de diseño:** desarrolla las soluciones constructivas del Edificio Los Alerces, "
         "de 5 pisos con 4 departamentos por piso (20 viviendas en total), para que el proyecto pueda alcanzar la **clase A, la más exigente**. "
@@ -663,7 +715,60 @@ def _stage1(lab, saved):
         "clase A de ISO/TS 19488:2021. Entrega especificaciones, cálculos, evidencias y una "
         "matriz de cumplimiento; identifica lo pendiente para cubrir el edificio completo."
     )
-    st.markdown("### 🔊 Conoce SONARA: tu herramienta de diseño acústico")
+
+    st.markdown("### 3 · Qué pide la ISO y cómo lo aplicarás")
+    _download_standard("c5l1_s1_standard")
+    st.caption("Norma: ISO/TS 19488:2021 · Acoustics — Acoustic classification of dwellings. En las referencias se distingue página impresa / página del visor PDF; este archivo tiene seis páginas preliminares.")
+    st.markdown("#### Clases y regla de asignación")
+    st.table(pd.DataFrame([
+        ["A → F", "A es la clase más exigente y F la menos exigente. Para obtener una clase deben cumplirse todos sus requisitos aplicables.", "§4 · Acoustic classes · p. 6 / PDF 12"],
+        ["NPD", "Sin desempeño requerido o determinado, o desempeño que no cumple F; debe aclararse la situación. No lo conviertas en una letra ni lo promedies.", "§4 · Acoustic classes · p. 6 / PDF 12"],
+        ["Clase global", "La clase común queda limitada por la característica de menor clase. Los ejemplos del Anexo A muestran la decisión; no se promedian letras.", "A.4 · Classification examples · pp. 13–14 / PDF 19–20"],
+        ["Meta del laboratorio", "Diseñar para A y comprobar cada requisito con resultados propios. La meta no es una clase ya obtenida.", "Aplicación didáctica de §4 y §5 · pp. 6–9 / PDF 12–15"],
+    ], columns=["Idea", "Cómo interpretarla", "Referencia: apartado · título · página"]))
+    st.markdown("#### Características que debe cubrir el diseño")
+    st.table(pd.DataFrame([
+        ["Aéreo entre viviendas y otros recintos", "La tabla 1 fija límites de aislamiento entre viviendas y otros recintos. Selecciona la situación y el descriptor de clase A; diseña el separador y los flancos. El Rw del muro por sí solo no verifica el requisito entre recintos.", "§5.2 · Airborne sound insulation · tabla 1 · p. 7 / PDF 13"],
+        ["Impacto", "La tabla 2 fija niveles máximos de impacto. Diseña losa, piso y encuentros para que el nivel previsto en el receptor no supere el límite de A; menor nivel significa mejor desempeño.", "§5.3 · Impact sound insulation · tabla 2 · pp. 7–8 / PDF 13–14"],
+        ["Ruido exterior", "La tabla 3 relaciona el aislamiento requerido con la exposición exterior y sus condiciones. Declara esa exposición y comprueba la fachada completa: paño, ventana y juntas; mayor aislamiento significa mejor desempeño.", "§5.4 · Airborne sound insulation against exterior noise (traffic, industry and other sources) · tabla 3 · p. 8 / PDF 14"],
+        ["Instalaciones", "La tabla 4 limita el ruido de los equipos recibido en las viviendas. Identifica operación, descriptor temporal y normalización; compara el nivel previsto con el máximo de A, usando datos de fuente documentados.", "§5.5 · Sound from building service equipment · tabla 4 · p. 9 / PDF 15"],
+        ["Accesos y escaleras comunes", "La tabla 5 fija criterios de reverberación o absorción para zonas comunes aplicables. Inclúyelas al extender el alcance al edificio; los cuatro modelos de A-302 no cubren este aspecto.", "§5.6 · Reverberation time and sound absorption in stairwells and access areas · tabla 5 · p. 9 / PDF 15"],
+    ], columns=["Característica", "Qué establece y cómo se aplica", "Referencia"]))
+    st.info("**Aplicación a Los Alerces:** los cuatro casos de A-302 permiten comenzar el diseño. Para concluir sobre el edificio se deben cubrir también las demás viviendas, tipologías y situaciones aplicables. La cláusula 4 excluye de esta clasificación el aislamiento entre recintos interiores de una misma vivienda; esos tabiques pueden diseñarse como prestación adicional, pero no deben confundirse con el separador entre viviendas.")
+
+    st.markdown("### 4 · Qué podrás concluir a partir de las predicciones")
+    st.markdown("La **cláusula 6 y el Anexo A.2.1** contemplan cálculos de predicción como parte de la verificación. El procedimiento A integra tres fases: el cálculo permite anticipar el desempeño, la inspección comprueba cómo se construyó y la medición verifica el resultado terminado. **En este laboratorio desarrollamos la primera fase:** diseñar para clase A mediante SONARA y preparar las comprobaciones posteriores.")
+    st.table(pd.DataFrame([
+        ["Diseño · lo que hacemos ahora", "Proyecto de SONARA: recintos, elementos, capas, encuentros, base y rediseño; predicciones según la parte aplicable de ISO/EN 12354.", "Comprobar viabilidad de clase A, especificar soluciones y localizar riesgos. Resultado: desempeño previsto."],
+        ["Construcción · lo que se debe planificar", "Inspecciones de materiales, juntas, bandas resilientes, fijaciones, encuentros y ejecución respecto de planos aprobados.", "Comprobar que la solución calculada se ejecutó correctamente."],
+        ["Edificio terminado · lo que falta verificar", "Ensayos de aislamiento aéreo, impacto y fachada; mediciones de instalaciones y reverberación cuando correspondan.", "Contrastar el desempeño real y sustentar la clasificación dentro del alcance verificado."],
+    ], columns=["Fase", "Evidencia", "Para qué sirve"]))
+    st.markdown("**Diseñar con margen:** A.2.1 aconseja al menos media clase (2 dB) cuando la experiencia práctica respalda ese margen; pueden necesitarse márgenes mayores en soluciones sensibles a la ejecución. No es una garantía universal: justifica el margen por característica, incertidumbre y sistema. Para aislamiento se busca superar el mínimo; para impacto e instalaciones, quedar por debajo del máximo.")
+    st.warning("**Qué podrás concluir:** propuesta de diseño orientada a clase A y resultados previstos de los casos calculados. La verificación completa del procedimiento A requiere también inspecciones y mediciones finales. El estado de cumplimiento mostrado por SONARA no sustituye la revisión de todos los descriptores, requisitos adicionales, situaciones y evidencias de la clasificación.")
+    st.caption("Fuente: ISO/TS 19488:2021, cláusula 6 (pp. 9–10) y Anexo A informativo, A.1–A.2.3 (pp. 11–12; páginas 17–18 del PDF). Las tablas anteriores son una síntesis didáctica; consultar el documento para las condiciones de conformidad, tolerancias y métodos completos.")
+
+
+    with st.expander("Ampliar · clasificación de edificios y condominios con varias tipologías", expanded=False):
+        st.success("**Se puede clasificar una característica, una vivienda o un edificio residencial completo.** Para declarar una clase del edificio, todas sus viviendas deben cumplir los criterios de esa clase. También se pueden informar clases distintas por vivienda. Referencia: §4 · Acoustic classes · p. 6 / PDF 12.")
+        st.table(pd.DataFrame([
+            ["Una característica", "Ejemplo: aislamiento aéreo de una situación delimitada.", "No acredita por sí sola la clase global de la vivienda.", "§4, p. 6 / PDF 12; A.1 · General, p. 11 / PDF 17"],
+            ["Una vivienda", "Conjunto de características aplicables a la vivienda y su relación con el entorno y zonas comunes.", "Puede tener una clase diferente de otras viviendas del mismo edificio.", "§4, p. 6 / PDF 12; A.4 · Classification examples, pp. 13–14 / PDF 19–20"],
+            ["Edificio completo", "Todas las viviendas y características aplicables, con evidencia representativa del alcance.", "Una sola vivienda favorable no representa automáticamente a las restantes.", "§4, p. 6 / PDF 12; A.2.3 · Verification of an entire building, p. 12 / PDF 18"],
+            ["Condominio con varias torres o tipos de vivienda", "Delimitar edificios, viviendas, tipologías, exposición y zonas comunes; justificar evidencia para cada grupo.", "La norma no establece aquí una regla independiente de agregación por condominio. Informar por edificio/vivienda y justificar expresamente cualquier declaración del conjunto.", "Aplicación al conjunto de §4 y A.1–A.2.3; no es una categoría adicional definida por la norma."],
+        ], columns=["Alcance declarado", "Qué cubre", "Qué debes tener presente", "Referencia"]))
+        st.markdown("#### Ejemplo didáctico: tres tipologías dentro de un condominio")
+        st.table(pd.DataFrame([
+            ["T1 · departamentos interiores", "Aéreo A · impacto A · fachada A · instalaciones A · comunes A", "A"],
+            ["T2 · departamentos frente a avenida", "Aéreo A · impacto A · fachada B · instalaciones A · comunes A", "B, limitada por fachada"],
+            ["T3 · viviendas próximas a equipos", "Aéreo A · impacto A · fachada A · instalaciones C · comunes según aplicabilidad", "C, limitada por instalaciones"],
+        ], columns=["Grupo supuesto", "Clases de características supuestas", "Clase común del grupo si toda la evidencia lo respalda"]))
+        st.markdown("**Lectura del ejemplo:** no corresponde anunciar clase A para todo el conjunto mientras existan situaciones B o C. Si estas tipologías pertenecen a un mismo edificio y la verificación cubre todas las viviendas y requisitos, su clase global queda limitada a C. Si están en edificios distintos, informa la clase de cada edificio. Una eventual declaración común del condominio necesita un alcance explícito y evidencia de todas sus partes; no surge de promediar A, B y C. Para cumplir el encargo de clase A hay que rediseñar la fachada de T2 y las instalaciones de T3, y volver a comprobar todos los requisitos.")
+        st.caption("Ejemplo hipotético creado para explicar la regla de §4 y A.4; no corresponde a resultados medidos ni a un inventario confirmado de Los Alerces. Una tipología arquitectónica repetida puede requerir más de un grupo acústico por sus encuentros, exposición o instalaciones.")
+        st.caption("Regla de informe: A.3 · Contents of verification report for classification of a dwelling or a building · p. 13 / PDF 19: si varían las clases entre viviendas, recintos o características, la asignación considera la clase mínima de lo pertinente; pueden declararse además clases superiores de unidades individuales y tablas de resultados.")
+    with st.expander("Ampliar · cómo justificar la cobertura del edificio", expanded=False):
+        _coverage_explanation()
+
+    st.markdown("### 5 · Cómo trabajarás en Proyecto de SONARA")
     st.markdown(
         "**SONARA** es la aplicación de cálculo que utilizarás durante el laboratorio. "
         "En ella construirás las soluciones por capas, definirás materiales y espesores, "
@@ -685,115 +790,10 @@ def _stage1(lab, saved):
     )
     _sonara_button("Conocer SONARA y comenzar el diseño")
 
-    st.markdown(
-        "**¿Por qué empezamos por A-302?** Es una unidad didáctica donde podemos estudiar "
-        "separación horizontal con A-301, transmisión de impacto desde A-402, fachada norte "
-        "y ruido del shaft sanitario. El resultado de esta vivienda **no se extrapola "
-        "automáticamente a los otros 19 departamentos**."
-    )
-
-    st.markdown("### 📖 Cómo funciona la clasificación ISO/TS 19488:2021")
-    _download_standard("c5l1_s1_standard")
-    st.caption("Norma: ISO/TS 19488:2021 · Acoustics — Acoustic classification of dwellings. En las referencias se distingue página impresa / página del visor PDF; este archivo tiene seis páginas preliminares.")
-    st.markdown("#### 1 · ¿Qué significa una clase acústica?")
-    st.table(pd.DataFrame([
-        ["A → F", "A es la clase más exigente y F la menos exigente. Para obtener una clase deben cumplirse todos sus requisitos aplicables.", "§4 · Acoustic classes · p. 6 / PDF 12"],
-        ["NPD", "Sin desempeño requerido o determinado, o desempeño que no cumple F; debe aclararse la situación. No lo conviertas en una letra ni lo promedies.", "§4 · Acoustic classes · p. 6 / PDF 12"],
-        ["Clase global", "La clase común queda limitada por la característica de menor clase. Los ejemplos del Anexo A muestran la decisión; no se promedian letras.", "A.4 · Classification examples · pp. 13–14 / PDF 19–20"],
-        ["Meta del laboratorio", "Diseñar para A y comprobar cada requisito con resultados propios. La meta no es una clase ya obtenida.", "Aplicación didáctica de §4 y §5 · pp. 6–9 / PDF 12–15"],
-    ], columns=["Idea", "Cómo interpretarla", "Referencia: apartado · título · página"]))
-    st.markdown("#### 2 · ¿Qué aspectos hay que comprobar?")
-    st.table(pd.DataFrame([
-        ["Aéreo entre viviendas y otros recintos", "Muros, puertas cuando correspondan y transmisión directa/lateral. El Rw de una pieza no es el resultado entre recintos.", "§5.2 · Airborne sound insulation · tabla 1 · p. 7 / PDF 13"],
-        ["Impacto", "Entrepisos, pisos y encuentros; comprobar el nivel transmitido al receptor.", "§5.3 · Impact sound insulation · tabla 2 · pp. 7–8 / PDF 13–14"],
-        ["Ruido exterior", "Fachada completa, ventanas, juntas y exposición exterior de cada situación.", "§5.4 · Airborne sound insulation against exterior noise (traffic, industry and other sources) · tabla 3 · p. 8 / PDF 14"],
-        ["Instalaciones", "Niveles en los recintos debidos a equipos, con su condición de operación y descriptor aplicable.", "§5.5 · Sound from building service equipment · tabla 4 · p. 9 / PDF 15"],
-        ["Accesos y escaleras comunes", "Reverberación o absorción relativa donde sea aplicable; también forma parte de la clasificación.", "§5.6 · Reverberation time and sound absorption in stairwells and access areas · tabla 5 · p. 9 / PDF 15"],
-    ], columns=["Característica", "Qué revisar en el proyecto", "Dónde consultarlo"]))
-    st.info("**Aplicación a Los Alerces:** los cuatro casos de A-302 permiten comenzar el diseño. Para concluir sobre el edificio se deben cubrir también las demás viviendas, tipologías y situaciones aplicables. La cláusula 4 excluye de esta clasificación el aislamiento entre recintos interiores de una misma vivienda; esos tabiques pueden diseñarse como prestación adicional, pero no deben confundirse con el separador entre viviendas.")
-    st.markdown("### 🏘️ ¿Cómo se clasifica un edificio o un condominio con distintas viviendas?")
-    st.success("**Se puede clasificar una característica, una vivienda o un edificio residencial completo.** Para declarar una clase del edificio, todas sus viviendas deben cumplir los criterios de esa clase. También se pueden informar clases distintas por vivienda. Referencia: §4 · Acoustic classes · p. 6 / PDF 12.")
-    st.table(pd.DataFrame([
-        ["Una característica", "Ejemplo: aislamiento aéreo de una situación delimitada.", "No acredita por sí sola la clase global de la vivienda.", "§4, p. 6 / PDF 12; A.1 · General, p. 11 / PDF 17"],
-        ["Una vivienda", "Conjunto de características aplicables a la vivienda y su relación con el entorno y zonas comunes.", "Puede tener una clase diferente de otras viviendas del mismo edificio.", "§4, p. 6 / PDF 12; A.4 · Classification examples, pp. 13–14 / PDF 19–20"],
-        ["Edificio completo", "Todas las viviendas y características aplicables, con evidencia representativa del alcance.", "Una sola vivienda favorable no representa automáticamente a las restantes.", "§4, p. 6 / PDF 12; A.2.3 · Verification of an entire building, p. 12 / PDF 18"],
-        ["Condominio con varias torres o tipos de vivienda", "Delimitar edificios, viviendas, tipologías, exposición y zonas comunes; justificar evidencia para cada grupo.", "La norma no establece aquí una regla independiente de agregación por condominio. Informar por edificio/vivienda y justificar expresamente cualquier declaración del conjunto.", "Aplicación al conjunto de §4 y A.1–A.2.3; no es una categoría adicional definida por la norma."],
-    ], columns=["Alcance declarado", "Qué cubre", "Qué debes tener presente", "Referencia"]))
-    st.markdown("#### Ejemplo didáctico: tres tipologías dentro de un condominio")
-    st.table(pd.DataFrame([
-        ["T1 · departamentos interiores", "Aéreo A · impacto A · fachada A · instalaciones A · comunes A", "A"],
-        ["T2 · departamentos frente a avenida", "Aéreo A · impacto A · fachada B · instalaciones A · comunes A", "B, limitada por fachada"],
-        ["T3 · viviendas próximas a equipos", "Aéreo A · impacto A · fachada A · instalaciones C · comunes según aplicabilidad", "C, limitada por instalaciones"],
-    ], columns=["Grupo supuesto", "Clases de características supuestas", "Clase común del grupo si toda la evidencia lo respalda"]))
-    st.markdown("**Lectura del ejemplo:** no corresponde anunciar clase A para todo el conjunto mientras existan situaciones B o C. Si estas tipologías pertenecen a un mismo edificio y la verificación cubre todas las viviendas y requisitos, su clase global queda limitada a C. Si están en edificios distintos, informa la clase de cada edificio. Una eventual declaración común del condominio necesita un alcance explícito y evidencia de todas sus partes; no surge de promediar A, B y C. Para cumplir el encargo de clase A hay que rediseñar la fachada de T2 y las instalaciones de T3, y volver a comprobar todos los requisitos.")
-    st.caption("Ejemplo hipotético creado para explicar la regla de §4 y A.4; no corresponde a resultados medidos ni a un inventario confirmado de Los Alerces. Una tipología arquitectónica repetida puede requerir más de un grupo acústico por sus encuentros, exposición o instalaciones.")
-    st.caption("Regla de informe: A.3 · Contents of verification report for classification of a dwelling or a building · p. 13 / PDF 19: si varían las clases entre viviendas, recintos o características, la asignación considera la clase mínima de lo pertinente; pueden declararse además clases superiores de unidades individuales y tablas de resultados.")
-    _coverage_explanation()
-    st.markdown("### 🏗️ Si la ISO habla de mediciones, ¿por qué trabajamos en diseño?")
-    st.markdown("La **cláusula 6 y el Anexo A.2.1** contemplan cálculos de predicción como parte de la verificación. El procedimiento A integra tres fases: el cálculo permite anticipar el desempeño, la inspección comprueba cómo se construyó y la medición verifica el resultado terminado. **En este laboratorio desarrollamos la primera fase:** diseñar para clase A mediante SONARA y preparar las comprobaciones posteriores.")
-    st.table(pd.DataFrame([
-        ["Diseño · lo que hacemos ahora", "Proyecto de SONARA: recintos, elementos, capas, encuentros, base y rediseño; predicciones según la parte aplicable de ISO/EN 12354.", "Comprobar viabilidad de clase A, especificar soluciones y localizar riesgos. Resultado: desempeño previsto."],
-        ["Construcción · lo que se debe planificar", "Inspecciones de materiales, juntas, bandas resilientes, fijaciones, encuentros y ejecución respecto de planos aprobados.", "Comprobar que la solución calculada se ejecutó correctamente."],
-        ["Edificio terminado · lo que falta verificar", "Ensayos de aislamiento aéreo, impacto y fachada; mediciones de instalaciones y reverberación cuando correspondan.", "Contrastar el desempeño real y sustentar la clasificación dentro del alcance verificado."],
-    ], columns=["Fase", "Evidencia", "Para qué sirve"]))
-    st.markdown("**Diseñar con margen:** A.2.1 aconseja al menos media clase (2 dB) cuando la experiencia práctica respalda ese margen; pueden necesitarse márgenes mayores en soluciones sensibles a la ejecución. No es una garantía universal: justifica el margen por característica, incertidumbre y sistema. Para aislamiento se busca superar el mínimo; para impacto e instalaciones, quedar por debajo del máximo.")
-    st.warning("**Qué podrás concluir:** propuesta de diseño orientada a clase A y resultados previstos de los casos calculados. La verificación completa del procedimiento A requiere también inspecciones y mediciones finales. El estado de cumplimiento mostrado por SONARA no sustituye la revisión de todos los descriptores, requisitos adicionales, situaciones y evidencias de la clasificación.")
-    st.caption("Fuente: ISO/TS 19488:2021, cláusula 6 (pp. 9–10) y Anexo A informativo, A.1–A.2.3 (pp. 11–12; páginas 17–18 del PDF). Las tablas anteriores son una síntesis didáctica; consultar el documento para las condiciones de conformidad, tolerancias y métodos completos.")
-
-    st.markdown("### 🏗️ Conoce el proyecto")
-    c1, c2, c3, c4 = st.columns(4)
-    c1.metric("Pisos", PROJECT["storeys"])
-    c2.metric("Viviendas", PROJECT["dwellings"])
-    c3.metric("Altura interior", f'{PROJECT["floor_height_m"]:.2f} m')
-    c4.metric("Caso de estudio", "A-302")
-    st.markdown("### 🔊 Situaciones acústicas del caso A-302")
-    st.dataframe(
-        pd.DataFrame(
-            [
-                ["Aéreo entre viviendas", "A-301", "A-302", "Muro M-01", "ISO 12354-1"],
-                ["Impacto entre pisos", "A-402", "A-302", "Losa L-01", "ISO 12354-2"],
-                ["Ruido exterior", "Fachada norte", "Estar A-302", "F-01 + V-01", "ISO 12354-3"],
-                ["Instalaciones", "Shaft S-1", "A-302", "Cierre + fijaciones", "Método aplicable de instalaciones"],
-            ],
-            columns=["Situación", "Origen", "Receptor", "Elemento / vía", "Referencia de diseño"],
-        ),
-        hide_index=True,
-        width="stretch",
-    )
-    st.caption(
-        "Las situaciones se estudian de forma individual. En la Etapa 2 se muestran "
-        "la planta, el corte y los detalles para interpretar sus recorridos."
-    )
-
-    st.markdown("### 📋 Programa de la vivienda evaluada")
-    st.dataframe(
-        pd.DataFrame(
-            ROOMS,
-            columns=["Recinto", "Área [m²]", "Volumen [m³]", "Orientación", "Adyacencia crítica"],
-        ),
-        hide_index=True,
-        width="stretch",
-    )
-    st.markdown("### 🧱 Materialidades de anteproyecto")
-    st.dataframe(
-        pd.DataFrame(
-            MATERIALS,
-            columns=["Código", "Elemento", "Sistema", "Dimensión", "Observación"],
-        ),
-        hide_index=True,
-        width="stretch",
-    )
-    st.markdown("### 📊 Ficha del proyecto para Excel")
-    st.caption(
-        "Descarga un único archivo CSV con los datos generales del edificio, "
-        "recintos y materialidades. Puedes abrirlo en Excel para consultar y "
-        "organizar los antecedentes de cálculo."
-    )
-    _project_downloads()
 
     st.markdown(
         '<div class="section-band"><span>✍️</span>'
-        '<h3>Actividad 1 · Diagnóstico y plan de predicciones</h3></div>',
+        '<h3>6 · Tu actividad: diagnóstico y plan de predicciones</h3></div>',
         unsafe_allow_html=True,
     )
     st.caption(
@@ -805,7 +805,7 @@ def _stage1(lab, saved):
         '<div style="padding:14px 18px;border:1px solid #cfe0ef;border-radius:14px;'
         'background:linear-gradient(135deg,#f7fbff,#eaf5fc);margin:10px 0 15px">'
         '<strong style="color:#125779">TU ENCARGO PROFESIONAL</strong><br>'
-        '<span style="color:#345569">Diagnostica el A-302, selecciona el procedimiento '
+        '<span style="color:#345569">Diagnostica el A-302, prepara el plan '
         'de diseño y organiza los casos que calcularás en SONARA y los que quedan pendientes.</span>'
         '</div>', unsafe_allow_html=True,
     )
