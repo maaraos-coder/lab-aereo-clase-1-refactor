@@ -14,6 +14,13 @@ import pandas as pd
 
 
 CLASS_ID = "clase-09-certificaciones-lab-1"
+EXERCISE_SCOPE = ("ISO/TS 19488:2021 · fase de diseño. Objetivo del proyecto: clase A para Los Alerces. "
+    "Desarrollo obligatorio del laboratorio: AI-01 (aéreo A-301 → A-302), IM-01 (impacto A-402 → A-302), "
+    "FA-01 (fachada norte → estar A-302) e IN-01 (descarga sanitaria → dormitorio A-302), "
+    "con solución base y rediseño en Proyecto de SONARA. La conclusión se limita a estos cuatro casos; "
+    "no acredita por sí sola clase global de A-302 ni de las 20 viviendas. La extensión al edificio y "
+    "las inspecciones/mediciones posteriores se explican como contexto, sin campaña de ensayos en este ejercicio.")
+
 SONARA_URL = "https://sonara-ea1b.onrender.com/"
 ISO_STATUS_URL = "https://www.iso.org/standard/77742.html"
 C5L1_STAGE_MINUTES = [10, 20, 20, 20, 20, 30, 25, 25, 25, 25, 30]
@@ -845,13 +852,18 @@ def _stage1(lab, saved):
     st.caption("Fuente: ISO/TS 19488:2021, cláusula 6 (pp. 9–10) y Anexo A informativo, A.1–A.2.3 (pp. 11–12; páginas 17–18 del PDF). Las tablas anteriores son una síntesis didáctica; consultar el documento para las condiciones de conformidad, tolerancias y métodos completos.")
 
 
-    st.success("**Se puede clasificar una característica, una vivienda o un edificio residencial completo.** Para declarar una clase del edificio, todas sus viviendas deben cumplir los criterios de esa clase. También se pueden informar clases distintas por vivienda. Referencia: §4 · Acoustic classes · p. 6 / PDF 12.")
+    st.markdown("#### Alcance del ejercicio · definido por el docente")
+    st.info(EXERCISE_SCOPE)
     _lab_table(pd.DataFrame([
-        ["Una característica", "Ejemplo: aislamiento aéreo de una situación delimitada.", "No acredita por sí sola la clase global de la vivienda.", "§4, p. 6 / PDF 12; A.1 · General, p. 11 / PDF 17"],
-        ["Una vivienda", "Conjunto de características aplicables a la vivienda y su relación con el entorno y zonas comunes.", "Puede tener una clase diferente de otras viviendas del mismo edificio.", "§4, p. 6 / PDF 12; A.4 · Classification examples, pp. 13–14 / PDF 19–20"],
-        ["Edificio completo", "Todas las viviendas y características aplicables, con evidencia representativa del alcance.", "Una sola vivienda favorable no representa automáticamente a las restantes.", "§4, p. 6 / PDF 12; A.2.3 · Verification of an entire building, p. 12 / PDF 18"],
-        ["Condominio con varias torres o tipos de vivienda", "Delimitar edificios, viviendas, tipologías, exposición y zonas comunes; justificar evidencia para cada grupo.", "La norma no establece aquí una regla independiente de agregación por condominio. Informar por edificio/vivienda y justificar expresamente cualquier declaración del conjunto.", "Aplicación al conjunto de §4 y A.1–A.2.3; no es una categoría adicional definida por la norma."],
-    ], columns=["Alcance declarado", "Qué cubre", "Qué debes tener presente", "Referencia"]))
+        ["Proyecto y meta", "Los Alerces: 5 pisos, 20 viviendas. Meta de diseño: clase A."],
+        ["Unidad de trabajo", "A-302 y sus relaciones con A-301, A-402, exterior norte y shaft S-1."],
+        ["Casos obligatorios", "AI-01, IM-01, FA-01 e IN-01; base y rediseño, criterios A, entradas, curvas e indicadores."],
+        ["Producto del alumno", "Especificaciones constructivas, evidencia de cálculo y comparación con los límites de clase A por caso."],
+        ["Conclusión permitida", "Desempeño previsto de las cuatro situaciones. Justificar si alcanzan A o qué brecha queda."],
+        ["Fuera de los cálculos obligatorios", "Otras viviendas, otras fachadas y pares de recintos, accesos y escaleras. Su cobertura se comenta; no se inventan datos ni se exige campaña de medición."],
+    ], columns=["Decisión del encargo", "Definición para todos los estudiantes"]))
+    st.markdown("**¿Qué decide el alumno?** Las soluciones constructivas y su justificación: capas, materiales, espesores, encuentros, tratamientos y alternativas. El objetivo A y los cuatro casos los fija el encargo; el alumno no elige otro edificio ni un alcance diferente.")
+    st.caption("Contexto normativo: §4 · Acoustic classes · p. 6 / PDF 12 permite declarar características, viviendas o edificios completos; A.3 · Contents of verification report for classification of a dwelling or a building · p. 13 / PDF 19 exige precisar la conclusión y su evidencia. Esa flexibilidad de la norma no cambia el alcance docente fijado aquí.")
     st.markdown("#### Ejemplo didáctico: tres tipologías dentro de un condominio")
     _lab_table(pd.DataFrame([
         ["T1 · departamentos interiores", "Aéreo A · impacto A · fachada A · instalaciones A · comunes A", "A"],
@@ -943,11 +955,10 @@ def _stage1(lab, saved):
         )
         st.markdown("#### 4 · Explica qué cubre tu propuesta y qué falta")
         scope = st.text_area(
-            "Alcance, límites y evidencias adicionales",
+            "Explica los límites del alcance fijado por el docente",
             value=saved.get("c5l1_s1_scope", ""),
             placeholder=(
-                "Distingue la evaluación preliminar de A-302 de la clasificación del "
-                "edificio completo. Indica qué información falta para ampliar las predicciones."
+                "Sin cambiar el alcance: explica por qué estos cuatro casos no acreditan por sí solos la clase global y qué antecedentes serían necesarios para extender el estudio."
             ),
             height=130,
         )
@@ -964,6 +975,7 @@ def _stage1(lab, saved):
         else:
             _save(
                 lab, saved, 1,
+                c5l1_exercise_scope=EXERCISE_SCOPE,
                 c5l1_s1_requirements=requirements,
                 c5l1_s1_answer=answer,
                 c5l1_s1_procedure=procedure,
@@ -1159,12 +1171,13 @@ def _stage3(lab, saved):
         previous = saved.get("c5l1_s3_target", options[0])
         with st.form("c5l1_s3_scope_form"):
             target = st.selectbox("Clase objetivo de diseño (no es clase obtenida)", options, index=options.index(previous) if previous in options else 0)
-            scope = st.text_area("Declaración de alcance de tu clasificación", value=saved.get("c5l1_s3_scope", ""), placeholder="ISO/TS 19488:2021, cuatro situaciones de A-302, fase de diseño, casos pendientes y exclusiones.", height=140)
+            scope = EXERCISE_SCOPE
+            st.markdown("**Alcance obligatorio del encargo:** " + scope)
             reason = st.text_area("Por qué no basta promediar las clases ni evaluar un único muro", value=saved.get("c5l1_s3_reason", ""), height=110)
             submitted = st.form_submit_button("Guardar objetivo y alcance", width="stretch")
         if submitted:
-            if "19488" not in scope or len(scope.strip()) < 120 or len(reason.strip()) < 80:
-                st.warning("La meta es clase A: desarrolla el alcance (120 caracteres, incluyendo 19488) y explica la regla de clase limitante (80 caracteres).")
+            if len(reason.strip()) < 80:
+                st.warning("El alcance y la meta A ya están fijados. Explica la regla de clase limitante con al menos 80 caracteres.")
             else:
                 _save(lab, saved, 3, c5l1_s3_target=target, c5l1_s3_scope=scope, c5l1_s3_reason=reason)
                 st.success("Objetivo guardado. Ahora prepara las entradas en la etapa 4; todavía no has obtenido una clase.")
@@ -1315,7 +1328,7 @@ def _stage9(lab, saved):
             {
                 "project": PROJECT,
                 "target": saved.get("c5l1_s3_target"),
-                "scope": saved.get("c5l1_s3_scope", ""),
+                "scope": EXERCISE_SCOPE,
                 "inputs": saved.get("c5l1_s4_inputs", {}),
                 "input_sources": saved.get("c5l1_s4_sources", ""),
                 "criteria": saved.get("c5l1_s4_criteria", ""),
@@ -1394,7 +1407,7 @@ def _stage10(lab, saved):
             placeholder="Compara las clases parciales sin promediarlas; explica qué falta para clasificar la vivienda o el edificio completo.",
         )
         building_plan = st.text_area(
-            "Qué falta para obtener la clasificación global de Los Alerces",
+            "Explica por qué la conclusión no se extiende automáticamente a todo Los Alerces",
             value=previous.get("building_plan", ""),
             height=140,
             placeholder="Tipologías pendientes, otros recintos/fachadas, accesos y escaleras, instalaciones, cobertura de la muestra y verificación. No inventes resultados de las otras viviendas.",
