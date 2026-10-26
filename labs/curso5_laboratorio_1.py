@@ -104,6 +104,7 @@ TEACHER_GUIDE = {
     1: ("Diagnóstico y plan de predicciones", [
         ("Diagnóstico esperado", "AI-01: estar A-301 → estar A-302, muro M-01 y flancos. IM-01: estar A-402 → estar A-302, losa L-01 y uniones. FA-01: exterior norte → estar A-302, F-01/V-01 y juntas. IN-01: descarga sanitaria → dormitorio A-302, cierre S-01, fijaciones y vías aérea/estructural."),
         ("Procedimiento", "El procedimiento futuro es contexto opcional. El laboratorio desarrolla la fase de predicción del procedimiento A; inspecciones y mediciones quedan para etapas posteriores de una obra. No confundir modelos de SONARA con ensayos."),
+        ("Requisitos A", "Revisar que el alumno haya elegido para cada caso la fila correcta, descriptor, límite/sentido, condiciones y requisitos adicionales de clase A, con referencia a tabla/fila/nota/página. No aceptar una letra A sin criterio registrado."),
         ("Plan de predicciones", "Exigir cuatro casos base/rediseño con entradas, descriptores y evidencia en SONARA. Las 20 viviendas proceden de 5 pisos × 4 departamentos; no son una muestra ISO. Identificar modelos adicionales por soluciones, geometrías, uniones, exposición e instalaciones. No pedir número de ensayos de campo."),
         ("Alcance", "Distingue los cuatro casos preliminares de A-302 de las demás situaciones y de las otras 19 viviendas. Identifica planos completos, tipologías, fuentes y verificación pendientes."),
     ], "No aceptar dos viviendas solo por aplicar un porcentaje a 20, sin justificar representatividad y procedimiento."),
@@ -387,6 +388,7 @@ def _result_form(lab, saved, stage, case_name, fields, prompt):
         f"**Fuente:** {case['source']}  \n**Receptor:** {case['receiver']}  \n"
         f"**Geometría:** {case['geometry']}  \n**Descriptor de trabajo:** {case['descriptor']}"
     )
+    _show_class_a_requirements(saved, case["code"])
     _design_context(saved)
     st.info(prompt)
     _sonara_design_guide(case_name)
@@ -544,6 +546,17 @@ def _stage0(lab, saved):
     )
 
 
+def _show_class_a_requirements(saved, code=None):
+    requirements = saved.get("c5l1_s1_requirements", {})
+    rows = [[key, row.get("descriptor", ""), row.get("limit", ""), row.get("conditions", ""), row.get("reference", "")] for key, row in requirements.items() if code is None or key == code]
+    st.markdown("#### Requisitos de clase A definidos por ti en la etapa 1")
+    if rows:
+        st.table(pd.DataFrame(rows, columns=["Caso", "Descriptor", "Límite A", "Condiciones", "Referencia"]))
+        st.caption("Requisitos registrados por el alumno, pendientes de revisión técnica; guardar no valida la interpretación de la norma.")
+    else:
+        st.warning("Aún no hay requisitos de clase A guardados para este caso. Completa ese apartado en la etapa 1 antes de definir el modelo.")
+
+
 def _coverage_explanation():
     """Guía visual de representatividad; ejemplos sin resultados atribuidos al proyecto."""
     st.markdown("### ¿Cuándo podemos decir que todo el edificio alcanza una clase?")
@@ -610,9 +623,8 @@ def _coverage_explanation():
 <p class="cv-small">Fuente: ISO/TS 19488:2021 · Acoustics — Acoustic classification of dwellings. El Anexo A es informativo: ofrece un procedimiento de referencia. La cláusula 6 permite adaptarlo justificadamente a las condiciones del edificio, respetando el requisito general de representación suficiente. Páginas impresas / páginas del visor PDF de esta copia.</p>
 </section>
 """, unsafe_allow_html=True)
-    with st.expander("Para después de construir · mediciones de verificación (no se realizan en este laboratorio)", expanded=False):
-        st.info("Esta información es contexto profesional. Ahora no se pide una campaña de medición ni un número de ensayos. Nuestro trabajo es la predicción y el diseño; después habrá que comprobar la ejecución y el desempeño real.")
-        st.markdown("""<section class="c5-coverage"><h5>Entonces, ¿cómo elijo cuántas mediciones hacer?</h5>
+    st.info("Esta información es contexto profesional. Ahora no se pide una campaña de medición ni un número de ensayos. Nuestro trabajo es la predicción y el diseño; después habrá que comprobar la ejecución y el desempeño real.")
+    st.markdown("""<section class="c5-coverage"><h5>Entonces, ¿cómo elijo cuántas mediciones hacer?</h5>
 <p>Primero completa el inventario de situaciones; después aplica el procedimiento y los mínimos que correspondan al alcance. No hay un número de departamentos que podamos deducir solo de que el edificio tenga 20 viviendas.</p>
 <div class="cv-grid">
 <article class="cv-card"><h4>Procedimiento A</h4><p>Combina cálculo, inspección y medición. En la fase final, A.2.1 indica seleccionar el <strong>5 % de estructuras y recintos</strong> a medir; normalmente se incluye un recinto grande y uno pequeño.</p><div class="cv-ref">A.2.1 · Procedure A · pp. 11–12 / PDF 17–18.</div></article>
@@ -675,25 +687,24 @@ def _stage1(lab, saved):
         "la planta, el corte y los detalles para interpretar sus recorridos."
     )
 
-    with st.expander("Consultar áreas, volúmenes y materialidades iniciales", expanded=False):
-        st.markdown("#### Recintos de A-302")
-        st.dataframe(
-            pd.DataFrame(
-                ROOMS,
-                columns=["Recinto", "Área [m²]", "Volumen [m³]", "Orientación", "Adyacencia crítica"],
-            ),
-            hide_index=True,
-            width="stretch",
-        )
-        st.markdown("#### Soluciones iniciales para revisar y rediseñar")
-        st.dataframe(
-            pd.DataFrame(
-                MATERIALS,
-                columns=["Código", "Elemento", "Sistema", "Dimensión", "Observación"],
-            ),
-            hide_index=True,
-            width="stretch",
-        )
+    st.markdown("#### Recintos de A-302")
+    st.dataframe(
+        pd.DataFrame(
+            ROOMS,
+            columns=["Recinto", "Área [m²]", "Volumen [m³]", "Orientación", "Adyacencia crítica"],
+        ),
+        hide_index=True,
+        width="stretch",
+    )
+    st.markdown("#### Soluciones iniciales para revisar y rediseñar")
+    st.dataframe(
+        pd.DataFrame(
+            MATERIALS,
+            columns=["Código", "Elemento", "Sistema", "Dimensión", "Observación"],
+        ),
+        hide_index=True,
+        width="stretch",
+    )
     st.markdown("#### Descarga los antecedentes del proyecto")
     st.caption(
         "Descarga un único archivo CSV con los datos generales del edificio, "
@@ -748,25 +759,23 @@ def _stage1(lab, saved):
     st.caption("Fuente: ISO/TS 19488:2021, cláusula 6 (pp. 9–10) y Anexo A informativo, A.1–A.2.3 (pp. 11–12; páginas 17–18 del PDF). Las tablas anteriores son una síntesis didáctica; consultar el documento para las condiciones de conformidad, tolerancias y métodos completos.")
 
 
-    with st.expander("Ampliar · clasificación de edificios y condominios con varias tipologías", expanded=False):
-        st.success("**Se puede clasificar una característica, una vivienda o un edificio residencial completo.** Para declarar una clase del edificio, todas sus viviendas deben cumplir los criterios de esa clase. También se pueden informar clases distintas por vivienda. Referencia: §4 · Acoustic classes · p. 6 / PDF 12.")
-        st.table(pd.DataFrame([
-            ["Una característica", "Ejemplo: aislamiento aéreo de una situación delimitada.", "No acredita por sí sola la clase global de la vivienda.", "§4, p. 6 / PDF 12; A.1 · General, p. 11 / PDF 17"],
-            ["Una vivienda", "Conjunto de características aplicables a la vivienda y su relación con el entorno y zonas comunes.", "Puede tener una clase diferente de otras viviendas del mismo edificio.", "§4, p. 6 / PDF 12; A.4 · Classification examples, pp. 13–14 / PDF 19–20"],
-            ["Edificio completo", "Todas las viviendas y características aplicables, con evidencia representativa del alcance.", "Una sola vivienda favorable no representa automáticamente a las restantes.", "§4, p. 6 / PDF 12; A.2.3 · Verification of an entire building, p. 12 / PDF 18"],
-            ["Condominio con varias torres o tipos de vivienda", "Delimitar edificios, viviendas, tipologías, exposición y zonas comunes; justificar evidencia para cada grupo.", "La norma no establece aquí una regla independiente de agregación por condominio. Informar por edificio/vivienda y justificar expresamente cualquier declaración del conjunto.", "Aplicación al conjunto de §4 y A.1–A.2.3; no es una categoría adicional definida por la norma."],
-        ], columns=["Alcance declarado", "Qué cubre", "Qué debes tener presente", "Referencia"]))
-        st.markdown("#### Ejemplo didáctico: tres tipologías dentro de un condominio")
-        st.table(pd.DataFrame([
-            ["T1 · departamentos interiores", "Aéreo A · impacto A · fachada A · instalaciones A · comunes A", "A"],
-            ["T2 · departamentos frente a avenida", "Aéreo A · impacto A · fachada B · instalaciones A · comunes A", "B, limitada por fachada"],
-            ["T3 · viviendas próximas a equipos", "Aéreo A · impacto A · fachada A · instalaciones C · comunes según aplicabilidad", "C, limitada por instalaciones"],
-        ], columns=["Grupo supuesto", "Clases de características supuestas", "Clase común del grupo si toda la evidencia lo respalda"]))
-        st.markdown("**Lectura del ejemplo:** no corresponde anunciar clase A para todo el conjunto mientras existan situaciones B o C. Si estas tipologías pertenecen a un mismo edificio y la verificación cubre todas las viviendas y requisitos, su clase global queda limitada a C. Si están en edificios distintos, informa la clase de cada edificio. Una eventual declaración común del condominio necesita un alcance explícito y evidencia de todas sus partes; no surge de promediar A, B y C. Para cumplir el encargo de clase A hay que rediseñar la fachada de T2 y las instalaciones de T3, y volver a comprobar todos los requisitos.")
-        st.caption("Ejemplo hipotético creado para explicar la regla de §4 y A.4; no corresponde a resultados medidos ni a un inventario confirmado de Los Alerces. Una tipología arquitectónica repetida puede requerir más de un grupo acústico por sus encuentros, exposición o instalaciones.")
-        st.caption("Regla de informe: A.3 · Contents of verification report for classification of a dwelling or a building · p. 13 / PDF 19: si varían las clases entre viviendas, recintos o características, la asignación considera la clase mínima de lo pertinente; pueden declararse además clases superiores de unidades individuales y tablas de resultados.")
-    with st.expander("Ampliar · cómo justificar la cobertura del edificio", expanded=False):
-        _coverage_explanation()
+    st.success("**Se puede clasificar una característica, una vivienda o un edificio residencial completo.** Para declarar una clase del edificio, todas sus viviendas deben cumplir los criterios de esa clase. También se pueden informar clases distintas por vivienda. Referencia: §4 · Acoustic classes · p. 6 / PDF 12.")
+    st.table(pd.DataFrame([
+        ["Una característica", "Ejemplo: aislamiento aéreo de una situación delimitada.", "No acredita por sí sola la clase global de la vivienda.", "§4, p. 6 / PDF 12; A.1 · General, p. 11 / PDF 17"],
+        ["Una vivienda", "Conjunto de características aplicables a la vivienda y su relación con el entorno y zonas comunes.", "Puede tener una clase diferente de otras viviendas del mismo edificio.", "§4, p. 6 / PDF 12; A.4 · Classification examples, pp. 13–14 / PDF 19–20"],
+        ["Edificio completo", "Todas las viviendas y características aplicables, con evidencia representativa del alcance.", "Una sola vivienda favorable no representa automáticamente a las restantes.", "§4, p. 6 / PDF 12; A.2.3 · Verification of an entire building, p. 12 / PDF 18"],
+        ["Condominio con varias torres o tipos de vivienda", "Delimitar edificios, viviendas, tipologías, exposición y zonas comunes; justificar evidencia para cada grupo.", "La norma no establece aquí una regla independiente de agregación por condominio. Informar por edificio/vivienda y justificar expresamente cualquier declaración del conjunto.", "Aplicación al conjunto de §4 y A.1–A.2.3; no es una categoría adicional definida por la norma."],
+    ], columns=["Alcance declarado", "Qué cubre", "Qué debes tener presente", "Referencia"]))
+    st.markdown("#### Ejemplo didáctico: tres tipologías dentro de un condominio")
+    st.table(pd.DataFrame([
+        ["T1 · departamentos interiores", "Aéreo A · impacto A · fachada A · instalaciones A · comunes A", "A"],
+        ["T2 · departamentos frente a avenida", "Aéreo A · impacto A · fachada B · instalaciones A · comunes A", "B, limitada por fachada"],
+        ["T3 · viviendas próximas a equipos", "Aéreo A · impacto A · fachada A · instalaciones C · comunes según aplicabilidad", "C, limitada por instalaciones"],
+    ], columns=["Grupo supuesto", "Clases de características supuestas", "Clase común del grupo si toda la evidencia lo respalda"]))
+    st.markdown("**Lectura del ejemplo:** no corresponde anunciar clase A para todo el conjunto mientras existan situaciones B o C. Si estas tipologías pertenecen a un mismo edificio y la verificación cubre todas las viviendas y requisitos, su clase global queda limitada a C. Si están en edificios distintos, informa la clase de cada edificio. Una eventual declaración común del condominio necesita un alcance explícito y evidencia de todas sus partes; no surge de promediar A, B y C. Para cumplir el encargo de clase A hay que rediseñar la fachada de T2 y las instalaciones de T3, y volver a comprobar todos los requisitos.")
+    st.caption("Ejemplo hipotético creado para explicar la regla de §4 y A.4; no corresponde a resultados medidos ni a un inventario confirmado de Los Alerces. Una tipología arquitectónica repetida puede requerir más de un grupo acústico por sus encuentros, exposición o instalaciones.")
+    st.caption("Regla de informe: A.3 · Contents of verification report for classification of a dwelling or a building · p. 13 / PDF 19: si varían las clases entre viviendas, recintos o características, la asignación considera la clase mínima de lo pertinente; pueden declararse además clases superiores de unidades individuales y tablas de resultados.")
+    _coverage_explanation()
 
     st.markdown("### 5 · Cómo trabajarás en Proyecto de SONARA")
     st.markdown(
@@ -819,7 +828,23 @@ def _stage1(lab, saved):
         )
         procedure = saved.get("c5l1_s1_procedure", "A · fase de predicción de diseño")
         st.info("Trabajamos en la fase de diseño: prepara los modelos y calcula en Proyecto de SONARA. Las inspecciones y mediciones pertenecen a la verificación futura; no tienes que elegir un procedimiento ni diseñar una campaña de ensayos aquí.")
-        st.markdown("#### 2 · Organiza el diseño en Proyecto de SONARA")
+        st.markdown("#### 2 · Identifica los requisitos de clase A antes de diseñar")
+        st.markdown("Abre el PDF y busca la fila que corresponde a cada relación fuente–receptor. Registra el descriptor exacto, el límite de A (o su expresión), el sentido de comparación y las notas aplicables. Estos serán tus objetivos de diseño en SONARA; no uses Rw como sustituto automático de un requisito entre recintos.")
+        st.caption("ISO/TS 19488:2021 · Acoustics — Acoustic classification of dwellings: §5.2 / tabla 1, p. 7 (PDF 13); §5.3 / tabla 2, pp. 7–8 (PDF 13–14); §5.4 / tabla 3, p. 8 (PDF 14); §5.5 / tabla 4, p. 9 (PDF 15).")
+        st.info("Para fachada, declara la exposición exterior que exige la expresión elegida y comprueba sus mínimos/notas. Para A, revisa todos los requisitos adicionales de baja frecuencia aplicables. Para instalaciones, distingue la condición de operación y el descriptor temporal. Si falta un antecedente, identifica el dato pendiente y cómo lo obtendrás.")
+        requirements = {}
+        previous_requirements = saved.get("c5l1_s1_requirements", {})
+        for family, case in CALCULATION_CASES.items():
+            code = case["code"]
+            prior = previous_requirements.get(code, {})
+            st.markdown(f"**{code} · {family} · objetivo clase A**")
+            requirements[code] = {
+                "descriptor": st.text_input("Descriptor requerido", value=prior.get("descriptor", ""), key=f"c5l1_req_descriptor_{code}", placeholder="Magnitud exacta de la fila y notas aplicables"),
+                "limit": st.text_input("Límite de clase A y sentido de comparación", value=prior.get("limit", ""), key=f"c5l1_req_limit_{code}", placeholder="≥ mínimo / ≤ máximo; valor, unidad o expresión completa"),
+                "conditions": st.text_area("Condiciones y requisitos adicionales", value=prior.get("conditions", ""), key=f"c5l1_req_conditions_{code}", placeholder="Fila/situación, términos espectrales, baja frecuencia, exposición o funcionamiento y datos pendientes."),
+                "reference": st.text_input("Tabla, fila, nota y página consultadas", value=prior.get("reference", ""), key=f"c5l1_req_reference_{code}", placeholder="ISO/TS 19488:2021 · tabla … · fila … · nota … · p. …"),
+            }
+        st.markdown("#### 3 · Organiza el diseño en Proyecto de SONARA")
         sample = st.text_area(
             "Organiza tus casos de predicción y su cobertura en el edificio",
             value=saved.get("c5l1_s1_sampling", ""),
@@ -830,7 +855,7 @@ def _stage1(lab, saved):
             ),
             height=180,
         )
-        st.markdown("#### 3 · Explica qué cubre tu propuesta y qué falta")
+        st.markdown("#### 4 · Explica qué cubre tu propuesta y qué falta")
         scope = st.text_area(
             "Alcance, límites y evidencias adicionales",
             value=saved.get("c5l1_s1_scope", ""),
@@ -842,7 +867,10 @@ def _stage1(lab, saved):
         )
         submitted = st.form_submit_button("Guardar diagnóstico y plan de predicciones", width="stretch")
     if submitted:
-        if len(answer.strip()) < 120 or len(sample.strip()) < 160 or len(scope.strip()) < 90:
+        incomplete_requirements = [code for code, row in requirements.items() if any(not str(value).strip() for value in row.values())]
+        if incomplete_requirements:
+            st.warning("Completa los requisitos de clase A (descriptor, límite, condiciones y referencia) para: " + ", ".join(incomplete_requirements))
+        elif len(answer.strip()) < 120 or len(sample.strip()) < 160 or len(scope.strip()) < 90:
             st.warning(
                 "Completa el diagnóstico (mín. 120 caracteres), el plan de predicciones "
                 "(mín. 160) y el alcance (mín. 90)."
@@ -850,6 +878,7 @@ def _stage1(lab, saved):
         else:
             _save(
                 lab, saved, 1,
+                c5l1_s1_requirements=requirements,
                 c5l1_s1_answer=answer,
                 c5l1_s1_procedure=procedure,
                 c5l1_s1_sampling=sample,
@@ -993,6 +1022,7 @@ def _global_building_explanation():
 
 def _stage3(lab, saved):
     _header(3, "Cómo se clasifica una vivienda", "Comprender los criterios ISO con un ejemplo resuelto antes de definir el objetivo de diseño.")
+    _show_class_a_requirements(saved)
     _download_standard("c5l1_stage3_iso19488_pdf")
     st.markdown("**Secuencia:** resultado acústico → descriptor correcto → límite aplicable → clase por característica → conclusión con alcance.")
     tabs = st.tabs(["Clases y criterios", "Ejemplo resuelto · A-302", "Edificio completo", "Tu objetivo y alcance"])
@@ -1056,6 +1086,7 @@ def _stage3(lab, saved):
 
 def _stage4(lab, saved):
     _header(4, "Preparar el proyecto en SONARA", "Convertir el objetivo y los planos en entradas trazables antes de calcular.")
+    _show_class_a_requirements(saved)
     st.info(f"**Meta obligatoria: Clase A. Objetivo registrado:** {saved.get('c5l1_s3_target', 'Pendiente de definir')}.")
     st.markdown("### Crear y organizar el proyecto en SONARA")
     st.markdown("""1. Entra a **Proyecto → Proyecto**, escribe **Los Alerces · tu nombre** y pulsa **Crear / actualizar proyecto**.
