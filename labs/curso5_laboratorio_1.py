@@ -101,10 +101,10 @@ TEACHER_GUIDE = {
         ("Comprensión del caso", "Reconoce el encargo de diseñar soluciones para alcanzar clase A en un edificio de 20 viviendas, comenzando por A-302. Distingue diseño, clasificación preliminar y verificación de obra."),
         ("Producto esperado", "Expediente con diagnóstico, planos, objetivo, protocolo, cuatro cálculos base/variante, matriz e informe de clasificación con alcance."),
     ], "No presentar el laboratorio como certificación real ni atribuir resultados al edificio completo."),
-    1: ("Diagnóstico y propuesta de muestreo", [
+    1: ("Diagnóstico y plan de predicciones", [
         ("Diagnóstico esperado", "AI-01: estar A-301 → estar A-302, muro M-01 y flancos. IM-01: estar A-402 → estar A-302, losa L-01 y uniones. FA-01: exterior norte → estar A-302, F-01/V-01 y juntas. IN-01: descarga sanitaria → dormitorio A-302, cierre S-01, fijaciones y vías aérea/estructural."),
-        ("Procedimiento", "Para el desarrollo en fase de diseño, se espera justificar la opción A con predicciones, inspecciones y mediciones futuras. Si elige B, debe explicar que corresponde a la verificación del edificio terminado y qué ensayos propone."),
-        ("Muestreo razonado", "Debe cubrir tipologías de separadores y entrepisos, encuentros, recintos críticos, orientaciones/exposiciones e instalaciones. Pedir unidades y ensayos propuestos con justificación, información faltante y criterio para ampliar la muestra; no hay una cantidad única prefijada."),
+        ("Procedimiento", "El procedimiento futuro es contexto opcional. El laboratorio desarrolla la fase de predicción del procedimiento A; inspecciones y mediciones quedan para etapas posteriores de una obra. No confundir modelos de SONARA con ensayos."),
+        ("Plan de predicciones", "Exigir cuatro casos base/rediseño con entradas, descriptores y evidencia en SONARA. Las 20 viviendas proceden de 5 pisos × 4 departamentos; no son una muestra ISO. Identificar modelos adicionales por soluciones, geometrías, uniones, exposición e instalaciones. No pedir número de ensayos de campo."),
         ("Alcance", "Distingue los cuatro casos preliminares de A-302 de las demás situaciones y de las otras 19 viviendas. Identifica planos completos, tipologías, fuentes y verificación pendientes."),
     ], "No aceptar dos viviendas solo por aplicar un porcentaje a 20, sin justificar representatividad y procedimiento."),
     2: ("Lectura de planos", [
@@ -547,7 +547,8 @@ def _stage0(lab, saved):
 def _coverage_explanation():
     """Guía visual de representatividad; ejemplos sin resultados atribuidos al proyecto."""
     st.markdown("### ¿Cuándo podemos decir que todo el edificio alcanza una clase?")
-    st.markdown("**Evaluar A-302 permite hablar de las situaciones comprobadas en A-302.** Para hablar de las 20 viviendas, debemos comprobar que la evidencia también representa sus distintas soluciones, ubicaciones y condiciones de ruido. Veámoslo paso a paso.")
+    st.info("**¿De dónde salen las 20 viviendas?** Del proyecto: 5 pisos × 4 departamentos por piso = 20 viviendas. Es un dato del edificio Los Alerces, no una exigencia ni un tamaño de muestra de la ISO.")
+    st.markdown("**Aquí hacemos predicciones de diseño, no mediciones en terreno.** A-302 es el punto de partida para modelar cuatro situaciones acústicas. Para extender la propuesta al edificio, debemos identificar qué otras soluciones, encuentros, exposiciones y recintos necesitan cálculos adicionales.")
     st.markdown("""
 <style>
 .c5-coverage{--ink:#17384e;--muted:#456176;--line:#ccdde8;color:var(--ink);font-family:inherit;line-height:1.6;margin:1rem 0 1.8rem}
@@ -574,7 +575,7 @@ def _coverage_explanation():
 @media(max-width:640px){.c5-coverage .cv-grid{grid-template-columns:1fr}.c5-coverage .cv-wide{grid-column:auto}.c5-coverage .cv-card,.c5-coverage .cv-hero{padding:18px}.c5-coverage .cv-row{grid-template-columns:1fr;gap:6px}}
 </style>
 <section class="c5-coverage" aria-label="Cómo comprobar el edificio completo">
-<div class="cv-hero"><div class="cv-eyebrow">La idea principal</div><h4>La evidencia debe cubrir lo que quieres clasificar</h4><p>Si quieres declarar clase A para todo el edificio, debes sustentar que <strong>todas las viviendas cumplen los criterios aplicables de A</strong>. Una vivienda favorable no demuestra cómo se comportan las demás.</p><p>No significa necesariamente ensayar cada vivienda: la selección debe estar justificada y representar las diferentes situaciones del edificio.</p></div>
+<div class="cv-hero"><div class="cv-eyebrow">La idea principal</div><h4>La evidencia debe cubrir lo que quieres clasificar</h4><p>Si quieres declarar clase A para todo el edificio, debes sustentar que <strong>todas las viviendas cumplen los criterios aplicables de A</strong>. Una vivienda favorable no demuestra cómo se comportan las demás.</p><p>En diseño no se trata de repetir el mismo cálculo 20 veces: se modelan las situaciones acústicas distintas y se justifica dónde puede aplicarse cada resultado. La clasificación del edificio terminado requiere verificación posterior.</p></div>
 <div class="cv-grid">
 <article class="cv-card"><div class="cv-head"><span class="cv-num">1</span><h4>Di de qué vas a hablar</h4></div><p><strong>“Alcance” significa qué incluye tu conclusión.</strong> Puedes hablar de una característica, de una vivienda o de todo el edificio.</p><div class="cv-example">En nuestro encargo: queremos diseñar las <strong>20 viviendas de Los Alerces para clase A</strong>. Comenzamos con cuatro situaciones de A-302.</div><p>Mientras falte comprobar el resto, informamos resultados de esos casos y una meta de diseño para el edificio.</p><div class="cv-ref">§4 · Acoustic classes · p. 6 / PDF 12.<br>A.1 · General · p. 11 / PDF 17.</div></article>
 <article class="cv-card"><div class="cv-head"><span class="cv-num">2</span><h4>Busca lo que cambia entre viviendas</h4></div><p>Revisa <strong>muros, losas, encuentros, fachadas e instalaciones</strong>. Dos departamentos con la misma planta pueden tener condiciones acústicas distintas.</p><div class="cv-example">Uno mira a la avenida; otro al patio. Uno está junto a equipos; otro no. Aunque tengan igual ventana, la exposición exterior puede cambiar lo que deben cumplir.</div><p>Agrupa situaciones comparables y separa las que necesiten una comprobación diferente.</p><div class="cv-ref">§6 · Verification · pp. 9–10 / PDF 15–16.<br>A.1 · General · p. 11 / PDF 17.</div></article>
@@ -590,7 +591,29 @@ def _coverage_explanation():
 <div class="cv-row"><strong>Ensayo = comprobar una característica en una situación</strong><span>Evaluar ruido aéreo e impacto entre la misma pareja de recintos son dos evaluaciones con sus respectivos métodos.</span></div>
 <p class="cv-small">Ejemplos didácticos para interpretar A.1–A.2.3, pp. 11–12 / PDF 17–18.</p>
 </div>
-<h5>Entonces, ¿cómo elijo cuántas mediciones hacer?</h5>
+<h5>Ahora: ¿qué tengo que calcular en SONARA?</h5>
+<p>Trabaja en <strong>Proyecto → Recintos → Elementos → Diseñar → Soluciones</strong>. Para cada caso guarda una solución base, su rediseño hacia clase A, los datos de entrada y los resultados comparables.</p>
+<div class="cv-card">
+<div class="cv-row"><strong>AI-01 · Aéreo entre viviendas</strong><span>Emisor: estar A-301. Receptor: estar A-302. Diseña M-01 y sus encuentros; calcula el desempeño entre recintos, no solo el Rw del muro.</span></div>
+<div class="cv-row"><strong>IM-01 · Impacto</strong><span>Emisor: estar A-402. Receptor: estar A-302. Compara losa/piso base con la solución tratada; revisa flancos y puentes rígidos.</span></div>
+<div class="cv-row"><strong>FA-01 · Fachada</strong><span>Exterior norte → estar A-302. Diseña conjuntamente paño opaco, ventana y juntas, conservando áreas y exposición al comparar.</span></div>
+<div class="cv-row"><strong>IN-01 · Instalaciones</strong><span>Descarga sanitaria → dormitorio A-302. Modela cierre, fijaciones y vías de transmisión con datos de fuente y operación documentados.</span></div>
+<p><strong>Punto de partida: 4 casos × 2 configuraciones (base y rediseño) = 8 configuraciones calculadas.</strong> No son ocho viviendas ni ocho mediciones. Una configuración puede producir varios indicadores. Si una variante no alcanza A, añade iteraciones y documenta la brecha.</p>
+<p class="cv-small">Organización del ejercicio, no mínimo de predicciones fijado por ISO/TS 19488.</p>
+</div>
+<h5>Después: ¿cómo extiendo el diseño a las demás viviendas?</h5>
+<div class="cv-grid">
+<article class="cv-card"><h4>Puede reutilizarse si justificas la equivalencia</h4><p>Misma solución y montaje, geometría relevante, uniones, flancos, condiciones de fuente y exposición. Identifica qué viviendas o pares de recintos quedan cubiertos y por qué.</p><p>Una planta repetida por sí sola no demuestra esa equivalencia.</p></article>
+<article class="cv-card"><h4>Necesita un caso de cálculo adicional</h4><p>Otro muro, losa o encuentro; diferente volumen receptor; otra fachada, ventana o exposición; instalaciones o condiciones de funcionamiento distintas.</p><p>Si faltan los planos o datos, registra el caso como pendiente. No le atribuyas el resultado de A-302.</p></article>
+</div>
+<div class="cv-note"><strong>No hay un porcentaje de predicciones que reemplace este análisis.</strong> Los porcentajes y mínimos de medición del Anexo A se refieren a la verificación de campo; no se usan para decidir cuántos modelos de SONARA debes construir.</div>
+<div class="cv-success"><strong>Tu tarea en este laboratorio:</strong> identifica qué cubren AI-01, IM-01, FA-01 e IN-01; enumera qué situaciones de las otras viviendas siguen pendientes y explica cómo obtendrías evidencia para ellas. No inventes su desempeño.</div>
+<p class="cv-small">Fuente: ISO/TS 19488:2021 · Acoustics — Acoustic classification of dwellings. El Anexo A es informativo: ofrece un procedimiento de referencia. La cláusula 6 permite adaptarlo justificadamente a las condiciones del edificio, respetando el requisito general de representación suficiente. Páginas impresas / páginas del visor PDF de esta copia.</p>
+</section>
+""", unsafe_allow_html=True)
+    with st.expander("Para después de construir · mediciones de verificación (no se realizan en este laboratorio)", expanded=False):
+        st.info("Esta información es contexto profesional. Ahora no se pide una campaña de medición ni un número de ensayos. Nuestro trabajo es la predicción y el diseño; después habrá que comprobar la ejecución y el desempeño real.")
+        st.markdown("""<section class="c5-coverage"><h5>Entonces, ¿cómo elijo cuántas mediciones hacer?</h5>
 <p>Primero completa el inventario de situaciones; después aplica el procedimiento y los mínimos que correspondan al alcance. No hay un número de departamentos que podamos deducir solo de que el edificio tenga 20 viviendas.</p>
 <div class="cv-grid">
 <article class="cv-card"><h4>Procedimiento A</h4><p>Combina cálculo, inspección y medición. En la fase final, A.2.1 indica seleccionar el <strong>5 % de estructuras y recintos</strong> a medir; normalmente se incluye un recinto grande y uno pequeño.</p><div class="cv-ref">A.2.1 · Procedure A · pp. 11–12 / PDF 17–18.</div></article>
@@ -598,17 +621,14 @@ def _coverage_explanation():
 </div>
 <div class="cv-note"><strong>Si verificas el edificio completo:</strong> A.2.3 establece un mínimo de <strong>3 mediciones por tipo de estructura y característica acústica</strong>. No son tres mediciones en total ni tres departamentos. Revisa también los porcentajes, la representatividad y si debes ampliar la muestra.</div>
 <div class="cv-card"><h4>Ejemplo de conteo, solo para entender la regla</h4><div class="cv-row"><span>Muro tipo M1 · aislamiento aéreo</span><strong>Al menos 3 evaluaciones</strong></div><div class="cv-row"><span>Losa tipo L1 · aislamiento aéreo</span><strong>Al menos 3 evaluaciones</strong></div><div class="cv-row"><span>Losa tipo L1 · impacto</span><strong>Al menos 3 evaluaciones</strong></div><p><strong>Subtotal: 9 evaluaciones para estas tres combinaciones.</strong> Aún faltan fachada, instalaciones y las demás situaciones aplicables; la muestra final puede ser mayor. No significa nueve viviendas distintas.</p><div class="cv-ref">Hipótesis didáctica, no inventario confirmado de Los Alerces.<br>A.2.3 · Verification of an entire building · p. 12 / PDF 18.</div></div>
-<div class="cv-success"><strong>Tu tarea en este laboratorio:</strong> identifica qué cubren AI-01, IM-01, FA-01 e IN-01; enumera qué situaciones de las otras viviendas siguen pendientes y explica cómo obtendrías evidencia para ellas. No inventes su desempeño.</div>
-<p class="cv-small">Fuente: ISO/TS 19488:2021 · Acoustics — Acoustic classification of dwellings. El Anexo A es informativo: ofrece un procedimiento de referencia. La cláusula 6 permite adaptarlo justificadamente a las condiciones del edificio, respetando el requisito general de representación suficiente. Páginas impresas / páginas del visor PDF de esta copia.</p>
-</section>
-""", unsafe_allow_html=True)
+</section>""", unsafe_allow_html=True)
 
 
 def _stage1(lab, saved):
     _header(
         1,
         "Expediente del Edificio Los Alerces",
-        "Comprender el encargo, el alcance de la clasificación y el muestreo antes de modelar.",
+        "Entender el edificio y organizar los casos de predicción para diseñar hacia clase A.",
     )
     _project_badge()
 
@@ -634,7 +654,7 @@ def _stage1(lab, saved):
     st.markdown("### 🏢 Tu encargo: diseñar para alcanzar clase A")
     st.info(
         "**Encargo de diseño:** desarrolla las soluciones constructivas del Edificio Los Alerces, "
-        "de 20 viviendas, para que el proyecto pueda alcanzar la **clase A, la más exigente**. "
+        "de 5 pisos con 4 departamentos por piso (20 viviendas en total), para que el proyecto pueda alcanzar la **clase A, la más exigente**. "
         "Diseña tabiques, muros separadores, ventanas, puertas, losas y sistemas de piso, "
         "junto con sus encuentros, sellos y soluciones para instalaciones. Utiliza **SONARA** "
         "para calcular, comparar alternativas y justificar la solución elegida. Las materialidades "
@@ -773,74 +793,60 @@ def _stage1(lab, saved):
 
     st.markdown(
         '<div class="section-band"><span>✍️</span>'
-        '<h3>Actividad 1 · Diagnóstico y propuesta de muestreo</h3></div>',
+        '<h3>Actividad 1 · Diagnóstico y plan de predicciones</h3></div>',
         unsafe_allow_html=True,
     )
     st.caption(
         "El diagnóstico del A-302 se utilizará como base en las siguientes etapas. "
-        "El plan de muestreo es una propuesta razonada para el edificio completo, "
-        "no una certificación ni una cantidad de ensayos prefijada."
+        "El plan de predicciones identifica los casos de diseño y su cobertura en el edificio; "
+        "en este laboratorio no se realizan mediciones en terreno."
     )
     st.markdown(
         '<div style="padding:14px 18px;border:1px solid #cfe0ef;border-radius:14px;'
         'background:linear-gradient(135deg,#f7fbff,#eaf5fc);margin:10px 0 15px">'
         '<strong style="color:#125779">TU ENCARGO PROFESIONAL</strong><br>'
         '<span style="color:#345569">Diagnostica el A-302, selecciona el procedimiento '
-        'de verificación y propone una muestra fundamentada para las 20 viviendas.</span>'
+        'de diseño y organiza los casos que calcularás en SONARA y los que quedan pendientes.</span>'
         '</div>', unsafe_allow_html=True,
     )
     with st.form("c5l1_stage1_diagnostic_form", border=True):
-        st.markdown("#### Diagnóstico acústico del A-302")
+        st.markdown("#### 1 · Identifica qué debes resolver en A-302")
         answer = st.text_area(
             "Diagnostica las cuatro situaciones acústicas del departamento A-302",
             value=saved.get("c5l1_s1_answer", ""),
-            placeholder="Describe fuente, receptor, elemento y mecanismo de transmisión para cada caso.",
+            placeholder="AI-01: A-301 → A-302, muro y flancos. IM-01: A-402 → A-302, losa y piso. FA-01: exterior → estar A-302, fachada y ventana. IN-01: descarga sanitaria → dormitorio A-302, cierre y fijaciones. Explica el mecanismo y el riesgo que debes resolver en cada caso.",
             height=160,
         )
-        procedure_options = [
-            "Selecciona un procedimiento",
-            "A · predicciones, inspecciones y mediciones",
-            "B · mediciones en edificio terminado",
-        ]
-        previous_procedure = saved.get("c5l1_s1_procedure", procedure_options[0])
-        if previous_procedure not in procedure_options:
-            previous_procedure = procedure_options[0]
-        st.markdown("#### Procedimiento de verificación")
-        procedure = st.selectbox(
-            "Procedimiento para una futura verificación del edificio",
-            procedure_options,
-            index=procedure_options.index(previous_procedure),
-        )
-        st.markdown("#### Diseño del plan de muestreo")
+        procedure = saved.get("c5l1_s1_procedure", "A · fase de predicción de diseño")
+        st.info("Trabajamos en la fase de diseño: prepara los modelos y calcula en Proyecto de SONARA. Las inspecciones y mediciones pertenecen a la verificación futura; no tienes que elegir un procedimiento ni diseñar una campaña de ensayos aquí.")
+        st.markdown("#### 2 · Organiza el diseño en Proyecto de SONARA")
         sample = st.text_area(
-            "Propón un plan de muestreo para las 20 viviendas",
+            "Organiza tus casos de predicción y su cobertura en el edificio",
             value=saved.get("c5l1_s1_sampling", ""),
             placeholder=(
-                "Propón qué unidades, recintos, elementos y orientaciones revisarías; "
-                "justifica cantidad de ensayos por tipología y característica acústica. "
-                "Explica por qué 20 viviendas no implica medir simplemente 2."
+                "Para AI-01, IM-01, FA-01 e IN-01 indica emisor, receptor, elemento, entradas y descriptor; "
+                "describe la base y el rediseño. Explica qué otras situaciones necesitan un modelo adicional "
+                "y qué datos faltan. No propongas cantidades de mediciones en este ejercicio."
             ),
             height=180,
         )
-        st.markdown("#### Alcance y limitaciones")
+        st.markdown("#### 3 · Explica qué cubre tu propuesta y qué falta")
         scope = st.text_area(
             "Alcance, límites y evidencias adicionales",
             value=saved.get("c5l1_s1_scope", ""),
             placeholder=(
                 "Distingue la evaluación preliminar de A-302 de la clasificación del "
-                "edificio completo. Indica qué información falta para definir la muestra."
+                "edificio completo. Indica qué información falta para ampliar las predicciones."
             ),
             height=130,
         )
-        submitted = st.form_submit_button("Guardar diagnóstico y plan de muestreo", width="stretch")
+        submitted = st.form_submit_button("Guardar diagnóstico y plan de predicciones", width="stretch")
     if submitted:
         if len(answer.strip()) < 120 or len(sample.strip()) < 160 or len(scope.strip()) < 90:
             st.warning(
-                "Completa el diagnóstico (mín. 120 caracteres), el plan de muestreo "
+                "Completa el diagnóstico (mín. 120 caracteres), el plan de predicciones "
                 "(mín. 160) y el alcance (mín. 90)."
             )
-        elif procedure == procedure_options[0]:
-            st.warning("Selecciona y justifica un procedimiento de verificación.")
         else:
             _save(
                 lab, saved, 1,
@@ -850,7 +856,7 @@ def _stage1(lab, saved):
                 c5l1_s1_scope=scope,
             )
             st.success(
-                "Diagnóstico y plan de muestreo guardados. Los cálculos posteriores "
+                "Diagnóstico y plan de predicciones guardados. Los cálculos posteriores "
                 "seguirán usando A-302 como unidad didáctica."
             )
 
