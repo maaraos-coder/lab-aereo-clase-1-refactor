@@ -214,7 +214,7 @@ def _teacher_stage1_answers():
         ["Plan", "Base/rediseño, entradas trazables, comparación y evidencia guardada en Proyecto.", "Pide mediciones ahora, inventa datos o presenta una sola cifra sin configuración."],
         ["Alcance", "Distingue cuatro casos, vivienda y edificio; identifica modelos/datos pendientes.", "Extrapola automáticamente A-302 a las 20 viviendas."],
     ], columns=["Apartado", "Logrado", "Requiere corrección"]))
-    st.caption("El docente valida la interpretación y las evidencias. El guardado automático solo confirma la entrega.")
+    st.markdown("**Criterio de revisión:** logrado si diagnóstico, requisitos, plan y alcance se sustentan con evidencia; parcialmente logrado si hay omisiones subsanables; por corregir si el descriptor, criterio o alcance invalida la conclusión. Guardar solo confirma la entrega.")
 
 
 def _teacher_guide(stage):
@@ -803,14 +803,33 @@ def _stage1(lab, saved):
         ["Clase global", "La clase común queda limitada por la característica de menor clase. Los ejemplos del Anexo A muestran la decisión; no se promedian letras.", "A.4 · Classification examples · pp. 13–14 / PDF 19–20"],
         ["Meta del laboratorio", "Diseñar para A y comprobar cada requisito con resultados propios. La meta no es una clase ya obtenida.", "Aplicación didáctica de §4 y §5 · pp. 6–9 / PDF 12–15"],
     ], columns=["Idea", "Cómo interpretarla", "Referencia: apartado · título · página"]))
-    st.markdown("#### Características que debe cubrir el diseño")
+    st.markdown("#### Límites de clase A que utilizarás en el diseño")
+    st.markdown("Estos son los objetivos de comparación del laboratorio. **≥ significa aislamiento mínimo; ≤ significa nivel o tiempo máximo.** Comprueba el descriptor completo: el mismo valor con otro indicador no representa necesariamente el mismo requisito.")
     _lab_table(pd.DataFrame([
-        ["Aéreo entre viviendas y otros recintos", "La tabla 1 fija límites de aislamiento entre viviendas y otros recintos. Selecciona la situación y el descriptor de clase A; diseña el separador y los flancos. El Rw del muro por sí solo no verifica el requisito entre recintos.", "§5.2 · Airborne sound insulation · tabla 1 · p. 7 / PDF 13"],
-        ["Impacto", "La tabla 2 fija niveles máximos de impacto. Diseña losa, piso y encuentros para que el nivel previsto en el receptor no supere el límite de A; menor nivel significa mejor desempeño.", "§5.3 · Impact sound insulation · tabla 2 · pp. 7–8 / PDF 13–14"],
-        ["Ruido exterior", "La tabla 3 relaciona el aislamiento requerido con la exposición exterior y sus condiciones. Declara esa exposición y comprueba la fachada completa: paño, ventana y juntas; mayor aislamiento significa mejor desempeño.", "§5.4 · Airborne sound insulation against exterior noise (traffic, industry and other sources) · tabla 3 · p. 8 / PDF 14"],
-        ["Instalaciones", "La tabla 4 limita el ruido de los equipos recibido en las viviendas. Identifica operación, descriptor temporal y normalización; compara el nivel previsto con el máximo de A, usando datos de fuente documentados.", "§5.5 · Sound from building service equipment · tabla 4 · p. 9 / PDF 15"],
-        ["Accesos y escaleras comunes", "La tabla 5 fija criterios de reverberación o absorción para zonas comunes aplicables. Inclúyelas al extender el alcance al edificio; los cuatro modelos de A-302 no cubren este aspecto.", "§5.6 · Reverberation time and sound absorption in stairwells and access areas · tabla 5 · p. 9 / PDF 15"],
-    ], columns=["Característica", "Qué establece y cómo se aplica", "Referencia"]))
+        ["AI-01 · entre viviendas", "DₙT,50 = DₙT,w + C₅₀–₃₁₅₀ ≥ 58 dB", "Estar A-301 → estar A-302. Se compara el desempeño entre recintos, incluidos los flancos, con la fila 1. No el Rw del muro aislado.", "§5.2 · Airborne sound insulation · tabla 1, fila 1 y nota a · p. 7 / PDF 13"],
+        ["IM-01 · impacto entre viviendas", "L′ₙT,w ≤ 46 dB Y L′ₙT,50 ≤ 50 dB", "Estar A-402 → estar A-302. Ambos criterios se comprueban para A: impacto convencional y baja frecuencia. Un valor menor representa mejor desempeño.", "§5.3 · Impact sound insulation · tabla 2, fila 1 y nota a · p. 8 / PDF 14"],
+        ["FA-01 · fachada y cubierta", "DₙT,A,tr ≥ max(Lden − 20; 30) dB", "El requisito depende de la exposición exterior. 30 dB es el mínimo de la nota b. Usa la adaptación del espectro de la fuente; justifica la correspondencia entre el descriptor normativo y la salida de fachada de SONARA.", "§5.4 · Airborne sound insulation against exterior noise · tabla 3, fila 1 y notas a–b · p. 8 / PDF 14"],
+        ["IN-01 · instalaciones intermitentes", "LAFmax,nT ≤ 26 dB(A)", "Para la descarga sanitaria, declarar la operación intermitente/irregular. Máximo con ponderación FAST y normalización a T₀ = 0,5 s; no sustituirlo por LAeq.", "§5.5 · Sound from building service equipment · tabla 4, fila 2 y notas · p. 9 / PDF 15"],
+        ["Instalaciones continuas · si corresponden", "LAeq,nT ≤ 22 dB(A)", "Para equipos con ruido continuo y operación declarada. No es una segunda condición temporal que deba inventarse para una descarga intermitente.", "§5.5 · tabla 4, fila 1 · p. 9 / PDF 15"],
+        ["Accesos comunes, excepto escaleras", "T ≤ 0,6 s", "Donde sea aplicable. Comprobar cada banda de octava de 500, 1 000 y 2 000 Hz. Se incorpora al ampliar el alcance; los cuatro casos de A-302 no lo calculan.", "§5.6 · Reverberation time and sound absorption in stairwells and access areas · tabla 5, fila 1 y nota a · p. 9 / PDF 15"],
+        ["Escaleras comunes", "T ≤ 0,9 s O A ≥ 0,45 × Sfloor", "Alternativas de la tabla 5, por banda de 500, 1 000 y 2 000 Hz. A es el área de absorción equivalente, en m²; Sfloor es la superficie transitable, en m². No confundir A de absorción con clase A.", "§5.6 · tabla 5, fila 2 y notas a–b · p. 9 / PDF 15"],
+    ], columns=["Situación", "Requisito de clase A", "Cómo debes aplicarlo", "Referencia"]))
+    st.markdown("#### Fachada: convierte la expresión en un objetivo numérico")
+    _lab_table(pd.DataFrame([
+        ["45 dB", "45 − 20 = 25 dB", "30 dB, por el mínimo normativo"],
+        ["55 dB", "55 − 20 = 35 dB", "35 dB"],
+        ["65 dB", "65 − 20 = 45 dB", "45 dB"],
+    ], columns=["Lden exterior supuesto", "Cálculo", "Aislamiento adaptado mínimo para A"]))
+    st.caption("Ejemplos didácticos; no fijan la exposición real de Los Alerces. El alumno debe adoptar y documentar su Lden y obtener el límite correspondiente antes de diseñar la ventana o la fachada.")
+    st.markdown("#### Otras relaciones que debes incorporar si amplías el proyecto")
+    _lab_table(pd.DataFrame([
+        ["Aéreo desde acceso/escalera con puerta de entrada en el separador", "DₙT,A ≥ 46 dB", "Tabla 1, fila 2 · p. 7 / PDF 13"],
+        ["Aéreo desde locales con actividades ruidosas", "DₙT,50 ≥ 64 dB", "Tabla 1, fila 3; además estimar el ruido específico y diseñar según la actividad · p. 7 / PDF 13"],
+        ["Impacto desde accesos/escaleras o balcones, terrazas y baños ajenos", "L′ₙT,w ≤ 50 dB", "Tabla 2, fila 2 y exclusiones de nota b para espacios menores de 4 m² · p. 8 / PDF 14"],
+        ["Impacto desde locales con actividades ruidosas", "L′ₙT,w ≤ 40 dB Y L′ₙT,50 ≤ 44 dB", "Tabla 2, fila 3 y notas a/c · p. 8 / PDF 14"],
+    ], columns=["Relación adicional", "Límite de clase A", "Dónde y bajo qué condiciones"]))
+    st.info("**Notas de interpretación:** tabla 1, nota a: si se emplea DₙT,A en lugar de DₙT,50, el límite aumenta 2 dB (AI-01: ≥ 60 dB); si se emplea DₙT,w en lugar de DₙT,A, se añaden otros 2 dB (≥ 62 dB). Documenta la vía elegida, no intercambies cifras sin cambiar el descriptor. Tabla 4 permite máximo SLOW con límite 4 dB más estricto que FAST (clase A: LASmax,nT ≤ 22 dB(A)). No conviertas un resultado FAST en SLOW restándole 4 dB: cambia el límite, no el resultado.")
+    st.markdown("**Tu trabajo con estos límites:** selecciona la relación aplicable, registra el descriptor y criterio completos en la actividad, declara los datos que condicionan el valor y luego calcula y rediseña en SONARA. El objetivo está dado; tu tarea es demostrar cómo lo aplicas y qué solución permite cumplirlo.")
     st.info("**Aplicación a Los Alerces:** los cuatro casos de A-302 permiten comenzar el diseño. Para concluir sobre el edificio se deben cubrir también las demás viviendas, tipologías y situaciones aplicables. La cláusula 4 excluye de esta clasificación el aislamiento entre recintos interiores de una misma vivienda; esos tabiques pueden diseñarse como prestación adicional, pero no deben confundirse con el separador entre viviendas.")
 
     st.markdown("### 4 · Qué podrás concluir a partir de las predicciones")
@@ -895,7 +914,7 @@ def _stage1(lab, saved):
         procedure = saved.get("c5l1_s1_procedure", "A · fase de predicción de diseño")
         st.info("Trabajamos en la fase de diseño: prepara los modelos y calcula en Proyecto de SONARA. Las inspecciones y mediciones pertenecen a la verificación futura; no tienes que elegir un procedimiento ni diseñar una campaña de ensayos aquí.")
         st.markdown("#### 2 · Identifica los requisitos de clase A antes de diseñar")
-        st.markdown("Abre el PDF y busca la fila que corresponde a cada relación fuente–receptor. Registra el descriptor exacto, el límite de A (o su expresión), el sentido de comparación y las notas aplicables. Estos serán tus objetivos de diseño en SONARA; no uses Rw como sustituto automático de un requisito entre recintos.")
+        st.markdown("Usa los límites detallados en esta etapa y contrasta la fila y notas del PDF con cada relación fuente–receptor. Registra el descriptor exacto, el límite de A (o su expresión), el sentido de comparación y las condiciones aplicables. Estos serán tus objetivos de diseño en SONARA; no uses Rw como sustituto automático de un requisito entre recintos.")
         st.caption("ISO/TS 19488:2021 · Acoustics — Acoustic classification of dwellings: §5.2 / tabla 1, p. 7 (PDF 13); §5.3 / tabla 2, pp. 7–8 (PDF 13–14); §5.4 / tabla 3, p. 8 (PDF 14); §5.5 / tabla 4, p. 9 (PDF 15).")
         st.info("Para fachada, declara la exposición exterior que exige la expresión elegida y comprueba sus mínimos/notas. Para A, revisa todos los requisitos adicionales de baja frecuencia aplicables. Para instalaciones, distingue la condición de operación y el descriptor temporal. Si falta un antecedente, identifica el dato pendiente y cómo lo obtendrás.")
         requirements = {}
@@ -1413,4 +1432,5 @@ def run_stage(stage, lab, saved, runtime):
     _bind_runtime(runtime)
     stage = max(0, min(int(stage), 10))
     return _STAGES[stage](lab, saved)
+
 
