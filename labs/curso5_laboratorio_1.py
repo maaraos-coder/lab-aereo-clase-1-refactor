@@ -155,6 +155,68 @@ TEACHER_GUIDE = {
 }
 
 
+def _lab_table(data, **kwargs):
+    """Tablas de lectura con formato consistente, contenido escapado y desplazamiento móvil."""
+    from html import escape
+    frame = data if isinstance(data, pd.DataFrame) else pd.DataFrame(data)
+    def cell(value):
+        if value is None:
+            return "—"
+        try:
+            if pd.isna(value):
+                return "—"
+        except (TypeError, ValueError):
+            pass
+        return escape(str(value))
+    headings = "".join("<th scope='col'>" + escape(str(col)) + "</th>" for col in frame.columns)
+    rows = "".join("<tr>" + "".join("<td>" + cell(value) + "</td>" for value in row) + "</tr>" for row in frame.itertuples(index=False, name=None))
+    st.markdown(
+        "<style>.c5-table-wrap{overflow-x:auto;border:1px solid #cadce8;border-radius:14px;margin:16px 0 24px;background:#fff;box-shadow:0 4px 16px #17384e08}"
+        ".c5-table{width:100%;border-collapse:separate;border-spacing:0;color:#193c53;font-size:1rem;line-height:1.6}"
+        ".c5-table th{background:#164c68;color:#fff!important;text-align:left;font-weight:700;padding:16px 18px;border:0;vertical-align:top}"
+        ".c5-table td{padding:16px 18px;border:0;border-bottom:1px solid #e0eaf0;vertical-align:top;min-width:135px;overflow-wrap:anywhere}"
+        ".c5-table tbody tr:nth-child(even){background:#f0f6fa}.c5-table tbody tr:last-child td{border-bottom:0}"
+        ".c5-table tbody td:first-child{font-weight:650;color:#125470}.c5-table tbody tr:hover{background:#e7f3f7}"
+        "@media(max-width:640px){.c5-table{font-size:.95rem}.c5-table td,.c5-table th{padding:12px;min-width:125px}}"
+        ".c5-guide-card{border:1px solid #ccdee8;border-left:4px solid #12808b;border-radius:12px;background:#fff;padding:18px 20px;margin:14px 0;color:#193c53;line-height:1.65}"
+        ".c5-guide-card strong{display:block;color:#125470;font-size:1.06rem;margin-bottom:8px}</style>"
+        "<div class='c5-table-wrap' role='region' aria-label='Tabla de síntesis' tabindex='0'><table class='c5-table'><thead><tr>" + headings + "</tr></thead><tbody>" + rows + "</tbody></table></div>",
+        unsafe_allow_html=True,
+    )
+
+
+def _teacher_stage1_answers():
+    st.markdown("### Respuestas de referencia · actividad 1")
+    st.caption("Corresponde a los cuatro apartados que completa el estudiante. ISO/TS 19488:2021 · Acoustics — Acoustic classification of dwellings. Páginas impresas / páginas del PDF del laboratorio.")
+    st.markdown("#### 1 · Diagnóstico: fuente, receptor, camino y riesgo")
+    _lab_table(pd.DataFrame([
+        ["AI-01", "Estar A-301 → estar A-302", "M-01, 10,20 m²; receptor 51,0 m³", "Paso directo por el separador y caminos laterales por losas y muros. Un trasdosado puede mejorar la vía directa sin resolver el flanco dominante."],
+        ["IM-01", "Estar A-402 → estar A-302", "L-01, HA 160 mm; piso de 20,40 m²", "Excitación de la losa por impactos y transmisión estructural. Puentes rígidos del piso flotante y encuentros pueden anular parte de la mejora."],
+        ["FA-01", "Exterior norte → estar A-302", "15,30 m²: opaco 10,50 + ventana 4,80 m²", "La ventana y las juntas pueden dominar la fachada. El alumno debe combinar componentes por energía y declarar exposición exterior; no promediar sus Rw."],
+        ["IN-01", "Descarga sanitaria → dormitorio A-302", "Shaft S-01; receptor 28,8 m³", "Ruido aéreo a través del cierre/juntas y transmisión estructural por fijaciones. Se necesita fuente espectral y operación documentadas."],
+    ], columns=["Caso", "Fuente → receptor", "Datos del caso", "Respuesta razonada esperada"]))
+    st.markdown("#### 2 · Requisitos de A: qué debe aparecer en los campos")
+    _lab_table(pd.DataFrame([
+        ["AI-01", "DₙT,50 = DₙT,w + C₅₀–₃₁₅₀", "≥ 58 dB", "Entre recintos habitables de viviendas diferentes, en todas direcciones. Usar adaptación de la curva final entre recintos. Una referencia simplificada por DₙT,w exige justificar las notas y no acredita automáticamente la baja frecuencia.", "§5.2 · tabla 1, fila 1 y notas · p. 7 / PDF 13"],
+        ["IM-01", "L′ₙT,w y L′ₙT,50", "≤ 46 dB y ≤ 50 dB, respectivamente", "Entre viviendas. Para A deben comprobarse ambos criterios; L′ₙT,50 incorpora el término de adaptación de impacto de baja frecuencia correspondiente. No basta anotar CI sin comprobar su intervalo ni la suma.", "§5.3 · tabla 2, fila 1 y notas · p. 8 / PDF 14"],
+        ["FA-01", "Descriptor de fachada adaptado exigido por la tabla 3", "≥ Lden − 20 dB, junto con mínimos y notas aplicables", "No hay un único número sin exposición declarada. Ejemplo exclusivamente ilustrativo: con Lden = 65 dB, el término da 45 dB. No adoptar 65 dB como antecedente real del proyecto. Verificar descriptor, ponderación y alcance de las notas.", "§5.4 · tabla 3 y notas · p. 8 / PDF 14"],
+        ["IN-01", "LAFmax,nT para operación intermitente; LAeq,nT si corresponde a funcionamiento continuo", "≤ 26 dB(A) para máximo FAST; ≤ 22 dB(A) para equivalente continuo", "La descarga del caso se trata según su operación intermitente documentada. No intercambiar máximo, promedio ni FAST/SLOW. Aplicar T₀ = 0,5 s; si el alumno usa otra magnitud admitida, revisar la equivalencia y notas antes de comparar.", "§5.5 · tabla 4, fila y notas de operación · p. 9 / PDF 15"],
+    ], columns=["Caso", "Descriptor esperado", "Criterio de clase A", "Condiciones que debe explicar", "Referencia"]))
+    st.info("Estos son objetivos de comparación, no resultados calculados ni soluciones constructivas únicas. Si SONARA no entrega un descriptor adicional exigido para A, el alumno debe identificarlo y documentar cómo lo obtendría; no concluir clase A completa con un indicador incompleto.")
+    st.markdown("#### 3 · Plan de predicciones: ejemplo de respuesta completa")
+    st.markdown("Crear Los Alerces en Proyecto de SONARA; registrar recintos y requerimientos AI-01, IM-01, FA-01 e IN-01. Para cada caso conservar Base y Rediseño_A con la misma geometría, fuente y condiciones de comparación. Registrar materiales, espesores, uniones, flancos, TR y procedencia de datos; guardar configuración, curvas, indicadores y referencia del requisito. Comparar el resultado con A y señalar la brecha si no cumple. Son cuatro casos con al menos dos configuraciones cada uno; no son ocho mediciones ni ocho viviendas. Añadir modelos si cambian solución, geometría, encuentros, exposición o instalaciones.")
+    st.markdown("#### 4 · Alcance: ejemplo de conclusión admisible")
+    st.markdown("La propuesta comprende cuatro situaciones de A-302 en fase de diseño. Las 20 viviendas corresponden a cinco pisos con cuatro departamentos por piso. Para extender la propuesta al edificio faltan inventario de tipologías, otros pares de recintos, fachadas/exposiciones, puertas y accesos cuando correspondan, instalaciones y zonas comunes aplicables. Los tabiques interiores pueden diseñarse adicionalmente, pero no equivalen al separador entre viviendas. Las inspecciones y mediciones son fases futuras del procedimiento A; aquí no se pide campaña de ensayos.")
+    st.markdown("#### Criterios para devolver la actividad")
+    _lab_table(pd.DataFrame([
+        ["Diagnóstico", "Cuatro recorridos completos y riesgos vinculados al elemento y mecanismo.", "Solo enumera materiales o confunde fuente y receptor."],
+        ["Requisitos A", "Descriptor + límite/sentido + condiciones + tabla/fila/nota/página para cada caso.", "Solo escribe A, usa Rw para toda situación o ignora requisitos adicionales."],
+        ["Plan", "Base/rediseño, entradas trazables, comparación y evidencia guardada en Proyecto.", "Pide mediciones ahora, inventa datos o presenta una sola cifra sin configuración."],
+        ["Alcance", "Distingue cuatro casos, vivienda y edificio; identifica modelos/datos pendientes.", "Extrapola automáticamente A-302 a las 20 viviendas."],
+    ], columns=["Apartado", "Logrado", "Requiere corrección"]))
+    st.caption("El docente valida la interpretación y las evidencias. El guardado automático solo confirma la entrega.")
+
+
 def _teacher_guide(stage):
     state = getattr(st, "session_state", {})
     if state.get("role") != "Docente" or state.get("projection_mode"):
@@ -162,8 +224,12 @@ def _teacher_guide(stage):
     title, criteria, errors = TEACHER_GUIDE[stage]
     with st.expander(f"👨‍🏫 Pauta docente · Etapa {stage} · {title}", expanded=False):
         st.caption("Uso exclusivo del docente · respuestas esperadas y criterios de revisión formativa.")
+        if stage == 1:
+            _teacher_stage1_answers()
+            return
+        from html import escape
         for criterion, expected in criteria:
-            st.markdown(f"**{criterion}**\n\n{expected}")
+            st.markdown("<div class='c5-guide-card'><strong>" + escape(criterion) + "</strong>" + escape(expected) + "</div>", unsafe_allow_html=True)
         if stage in range(5, 9):
             family = list(CALCULATION_CASES)[stage - 5]
             st.markdown("**Evidencias mínimas:** " + SONARA_DESIGN_GUIDES[family]["evidence"])
@@ -330,7 +396,7 @@ def _sonara_design_guide(case_name):
     st.markdown("### 🛠️ Cómo diseñar esta solución en SONARA")
     st.info("**Ruta en SONARA:** " + guide["route"])
     st.markdown("**Continuidad del proyecto:** selecciona el elemento activo en Diseñar; calcula y guarda las soluciones con nombres como AI-01_Base y AI-01_Diseno_A. Comprueba en Soluciones que pertenecen al proyecto y requerimiento correctos. Conserva ambos resultados y recupéralos para el Informe.")
-    st.dataframe(
+    _lab_table(
         pd.DataFrame(guide["inputs"], columns=["Elemento / dato", "Entrada del caso", "Comprobación"]),
         hide_index=True, width="stretch",
     )
@@ -369,7 +435,7 @@ def _design_context(saved):
     st.info(f"**Meta obligatoria: Clase A. Objetivo registrado previamente:** {target}. Consulta el protocolo guardado antes de comparar variantes.")
     inputs = saved.get("c5l1_s4_inputs", {})
     if inputs:
-        st.dataframe(pd.DataFrame([
+        _lab_table(pd.DataFrame([
             ["TR estar", inputs.get("tr_stay"), "s"],
             ["TR dormitorio", inputs.get("tr_bedroom"), "s"],
             ["Densidad HA", inputs.get("rho_ha"), "kg/m³"],
@@ -551,7 +617,7 @@ def _show_class_a_requirements(saved, code=None):
     rows = [[key, row.get("descriptor", ""), row.get("limit", ""), row.get("conditions", ""), row.get("reference", "")] for key, row in requirements.items() if code is None or key == code]
     st.markdown("#### Requisitos de clase A definidos por ti en la etapa 1")
     if rows:
-        st.table(pd.DataFrame(rows, columns=["Caso", "Descriptor", "Límite A", "Condiciones", "Referencia"]))
+        _lab_table(pd.DataFrame(rows, columns=["Caso", "Descriptor", "Límite A", "Condiciones", "Referencia"]))
         st.caption("Requisitos registrados por el alumno, pendientes de revisión técnica; guardar no valida la interpretación de la norma.")
     else:
         st.warning("Aún no hay requisitos de clase A guardados para este caso. Completa ese apartado en la etapa 1 antes de definir el modelo.")
@@ -669,7 +735,7 @@ def _stage1(lab, saved):
     c3.metric("Altura interior", f'{PROJECT["floor_height_m"]:.2f} m')
     c4.metric("Caso de estudio", "A-302")
     st.markdown("#### Los cuatro casos que guiarán el laboratorio")
-    st.dataframe(
+    _lab_table(
         pd.DataFrame(
             [
                 ["Aéreo entre viviendas", "A-301", "A-302", "Muro M-01", "ISO 12354-1"],
@@ -688,7 +754,7 @@ def _stage1(lab, saved):
     )
 
     st.markdown("#### Recintos de A-302")
-    st.dataframe(
+    _lab_table(
         pd.DataFrame(
             ROOMS,
             columns=["Recinto", "Área [m²]", "Volumen [m³]", "Orientación", "Adyacencia crítica"],
@@ -697,7 +763,7 @@ def _stage1(lab, saved):
         width="stretch",
     )
     st.markdown("#### Soluciones iniciales para revisar y rediseñar")
-    st.dataframe(
+    _lab_table(
         pd.DataFrame(
             MATERIALS,
             columns=["Código", "Elemento", "Sistema", "Dimensión", "Observación"],
@@ -731,14 +797,14 @@ def _stage1(lab, saved):
     _download_standard("c5l1_s1_standard")
     st.caption("Norma: ISO/TS 19488:2021 · Acoustics — Acoustic classification of dwellings. En las referencias se distingue página impresa / página del visor PDF; este archivo tiene seis páginas preliminares.")
     st.markdown("#### Clases y regla de asignación")
-    st.table(pd.DataFrame([
+    _lab_table(pd.DataFrame([
         ["A → F", "A es la clase más exigente y F la menos exigente. Para obtener una clase deben cumplirse todos sus requisitos aplicables.", "§4 · Acoustic classes · p. 6 / PDF 12"],
         ["NPD", "Sin desempeño requerido o determinado, o desempeño que no cumple F; debe aclararse la situación. No lo conviertas en una letra ni lo promedies.", "§4 · Acoustic classes · p. 6 / PDF 12"],
         ["Clase global", "La clase común queda limitada por la característica de menor clase. Los ejemplos del Anexo A muestran la decisión; no se promedian letras.", "A.4 · Classification examples · pp. 13–14 / PDF 19–20"],
         ["Meta del laboratorio", "Diseñar para A y comprobar cada requisito con resultados propios. La meta no es una clase ya obtenida.", "Aplicación didáctica de §4 y §5 · pp. 6–9 / PDF 12–15"],
     ], columns=["Idea", "Cómo interpretarla", "Referencia: apartado · título · página"]))
     st.markdown("#### Características que debe cubrir el diseño")
-    st.table(pd.DataFrame([
+    _lab_table(pd.DataFrame([
         ["Aéreo entre viviendas y otros recintos", "La tabla 1 fija límites de aislamiento entre viviendas y otros recintos. Selecciona la situación y el descriptor de clase A; diseña el separador y los flancos. El Rw del muro por sí solo no verifica el requisito entre recintos.", "§5.2 · Airborne sound insulation · tabla 1 · p. 7 / PDF 13"],
         ["Impacto", "La tabla 2 fija niveles máximos de impacto. Diseña losa, piso y encuentros para que el nivel previsto en el receptor no supere el límite de A; menor nivel significa mejor desempeño.", "§5.3 · Impact sound insulation · tabla 2 · pp. 7–8 / PDF 13–14"],
         ["Ruido exterior", "La tabla 3 relaciona el aislamiento requerido con la exposición exterior y sus condiciones. Declara esa exposición y comprueba la fachada completa: paño, ventana y juntas; mayor aislamiento significa mejor desempeño.", "§5.4 · Airborne sound insulation against exterior noise (traffic, industry and other sources) · tabla 3 · p. 8 / PDF 14"],
@@ -749,7 +815,7 @@ def _stage1(lab, saved):
 
     st.markdown("### 4 · Qué podrás concluir a partir de las predicciones")
     st.markdown("La **cláusula 6 y el Anexo A.2.1** contemplan cálculos de predicción como parte de la verificación. El procedimiento A integra tres fases: el cálculo permite anticipar el desempeño, la inspección comprueba cómo se construyó y la medición verifica el resultado terminado. **En este laboratorio desarrollamos la primera fase:** diseñar para clase A mediante SONARA y preparar las comprobaciones posteriores.")
-    st.table(pd.DataFrame([
+    _lab_table(pd.DataFrame([
         ["Diseño · lo que hacemos ahora", "Proyecto de SONARA: recintos, elementos, capas, encuentros, base y rediseño; predicciones según la parte aplicable de ISO/EN 12354.", "Comprobar viabilidad de clase A, especificar soluciones y localizar riesgos. Resultado: desempeño previsto."],
         ["Construcción · lo que se debe planificar", "Inspecciones de materiales, juntas, bandas resilientes, fijaciones, encuentros y ejecución respecto de planos aprobados.", "Comprobar que la solución calculada se ejecutó correctamente."],
         ["Edificio terminado · lo que falta verificar", "Ensayos de aislamiento aéreo, impacto y fachada; mediciones de instalaciones y reverberación cuando correspondan.", "Contrastar el desempeño real y sustentar la clasificación dentro del alcance verificado."],
@@ -760,14 +826,14 @@ def _stage1(lab, saved):
 
 
     st.success("**Se puede clasificar una característica, una vivienda o un edificio residencial completo.** Para declarar una clase del edificio, todas sus viviendas deben cumplir los criterios de esa clase. También se pueden informar clases distintas por vivienda. Referencia: §4 · Acoustic classes · p. 6 / PDF 12.")
-    st.table(pd.DataFrame([
+    _lab_table(pd.DataFrame([
         ["Una característica", "Ejemplo: aislamiento aéreo de una situación delimitada.", "No acredita por sí sola la clase global de la vivienda.", "§4, p. 6 / PDF 12; A.1 · General, p. 11 / PDF 17"],
         ["Una vivienda", "Conjunto de características aplicables a la vivienda y su relación con el entorno y zonas comunes.", "Puede tener una clase diferente de otras viviendas del mismo edificio.", "§4, p. 6 / PDF 12; A.4 · Classification examples, pp. 13–14 / PDF 19–20"],
         ["Edificio completo", "Todas las viviendas y características aplicables, con evidencia representativa del alcance.", "Una sola vivienda favorable no representa automáticamente a las restantes.", "§4, p. 6 / PDF 12; A.2.3 · Verification of an entire building, p. 12 / PDF 18"],
         ["Condominio con varias torres o tipos de vivienda", "Delimitar edificios, viviendas, tipologías, exposición y zonas comunes; justificar evidencia para cada grupo.", "La norma no establece aquí una regla independiente de agregación por condominio. Informar por edificio/vivienda y justificar expresamente cualquier declaración del conjunto.", "Aplicación al conjunto de §4 y A.1–A.2.3; no es una categoría adicional definida por la norma."],
     ], columns=["Alcance declarado", "Qué cubre", "Qué debes tener presente", "Referencia"]))
     st.markdown("#### Ejemplo didáctico: tres tipologías dentro de un condominio")
-    st.table(pd.DataFrame([
+    _lab_table(pd.DataFrame([
         ["T1 · departamentos interiores", "Aéreo A · impacto A · fachada A · instalaciones A · comunes A", "A"],
         ["T2 · departamentos frente a avenida", "Aéreo A · impacto A · fachada B · instalaciones A · comunes A", "B, limitada por fachada"],
         ["T3 · viviendas próximas a equipos", "Aéreo A · impacto A · fachada A · instalaciones C · comunes según aplicabilidad", "C, limitada por instalaciones"],
@@ -917,7 +983,7 @@ def _stage2(lab, saved):
         ["FA-01", "Exterior → estar A-302", "F-01 + V-01", "15,30 = 10,50 + 4,80 m²", "V 51,0 m³ · DVH 6/12/4", "Componentes + juntas"],
         ["IN-01", "Shaft → dormitorio", "S-01 + fijaciones", "V receptor 28,8 m³", "Cierre 120 mm · área según recorrido", "Aérea + estructural"],
     ]
-    st.dataframe(pd.DataFrame(matrix, columns=["Caso", "Fuente / receptor", "Elemento", "Geometría útil", "Datos de partida", "Vías"]), hide_index=True, width="stretch")
+    _lab_table(pd.DataFrame(matrix, columns=["Caso", "Fuente / receptor", "Elemento", "Geometría útil", "Datos de partida", "Vías"]), hide_index=True, width="stretch")
     st.warning("El plano no entrega TR, rigidez dinámica ni potencia sonora sanitaria. Esos datos se justifican en la etapa 4; no se deducen de un dibujo.")
     with st.form("c5l1_s2_reading_form"):
         geometry = st.text_area("Comprueba las áreas de M-01 y FA-01 y el volumen del estar", value=saved.get("c5l1_s2_geometry", ""), placeholder="Escribe las operaciones y distingue área bruta, área opaca y ventana.", height=120)
@@ -960,7 +1026,7 @@ def _global_building_explanation():
         "Este ejemplo supone que las tipologías y situaciones aplicables ya están cubiertas "
         "por un procedimiento de verificación válido. No son resultados de Los Alerces."
     )
-    st.dataframe(
+    _lab_table(
         pd.DataFrame([
             ["Aéreo", "Separaciones y encuentros representativos evaluados", "C"],
             ["Impacto", "Tipos de entrepiso y transmisiones relevantes evaluados", "D"],
@@ -977,7 +1043,7 @@ def _global_building_explanation():
         "menos exigentes de D; una que alcanza B satisface C y D. Esto no significa "
         "que su clase individual cambie: conserva B o C en el informe."
     )
-    st.dataframe(
+    _lab_table(
         pd.DataFrame([
             ["Aéreo", "C", "Sí", "Sí"],
             ["Impacto", "D", "No", "Sí"],
@@ -1029,13 +1095,13 @@ def _stage3(lab, saved):
     with tabs[0]:
         st.markdown("### Seis clases y una declaración de desempeño")
         st.markdown("**A es la clase más exigente; F la menos exigente del esquema.** NPD se utiliza cuando el desempeño no está determinado, no se requiere o queda fuera de las clases. No es una séptima clase ni una nota cero.")
-        st.dataframe(pd.DataFrame([
+        _lab_table(pd.DataFrame([
             ["A → B → C → D → E → F", "De mayor a menor exigencia acústica"],
             ["Clase por característica", "Aéreo, impacto, exterior, instalaciones o zonas de acceso"],
             ["Clase de vivienda", "Requiere todos los criterios aplicables al alcance de esa vivienda"],
             ["Clase de edificio", "Requiere alcance y verificación del edificio; no se extrapola A-302"],
         ], columns=["Concepto", "Interpretación"]), hide_index=True, width="stretch")
-        st.dataframe(pd.DataFrame([
+        _lab_table(pd.DataFrame([
             ["Aéreo", "DₙT,A / DₙT,50 o alternativa permitida", "Mayor aislamiento", "5.2 · tabla 1"],
             ["Impacto", "L′ₙT,w y requisito de baja frecuencia cuando aplica", "Menor nivel", "5.3 · tabla 2"],
             ["Exterior", "Aislamiento adaptado al espectro y exposición Lden", "Según exposición", "5.4 · tabla 3"],
@@ -1056,7 +1122,7 @@ def _stage3(lab, saved):
         st.markdown("Fachada 15,30 m² = opaco 10,50 + V-01 4,80 m²; V = 51,0 m³. Adopta **Lden = 65 dB solo como hipótesis del ejemplo**. Supón D₂m,nT,w = 44 dB y Ctr = −6 dB: el aislamiento adaptado al tráfico es **38 dB**. Para C, tabla 3: **65 − 28 = 37 dB**, comprobando también el mínimo de la nota. **38 ≥ 37** cumple C. B requiere **65 − 24 = 41 dB**: no cumple. Declara la correspondencia del descriptor de SONARA con la magnitud requerida; no intercambies descriptores sin justificarla.")
         st.markdown("#### 4 · IN-01: el funcionamiento y la normalización importan")
         st.markdown("Descarga intermitente percibida en dormitorio (V = 28,8 m³). Supón **LAFmax,nT = 36 dB**, obtenido con la condición y normalización correctas. Tabla 4: C exige **≤ 34 dB**, D **≤ 38 dB**. Alcanza D y falla el objetivo C. Rediseña el camino dominante —cierre, sellado o fijaciones—. Si una variante entrega **33 dB**, alcanza C. Un LAeq o un máximo sin normalizar no sustituye este indicador.")
-        st.dataframe(pd.DataFrame([
+        _lab_table(pd.DataFrame([
             ["AI-01", "DₙT,A = 53 dB", "C", "C"],
             ["IM-01", "L′ₙT,w = 53 dB", "C", "C"],
             ["FA-01", "Aislamiento adaptado = 38 dB; Lden 65", "C", "C"],
@@ -1100,7 +1166,7 @@ def _stage4(lab, saved):
         st.markdown(saved.get("c5l1_s2_geometry", "Sin comprobación geométrica guardada."))
         st.markdown(saved.get("c5l1_s2_findings", "Sin riesgos guardados."))
         st.markdown(saved.get("c5l1_s3_scope", "Sin alcance guardado."))
-    st.dataframe(pd.DataFrame([
+    _lab_table(pd.DataFrame([
         ["M-01 / AI-01", "HA 180 mm; S 10,20 m²; V 51,0 m³", "Proyecto → Diseñar → ISO 12354-1", "DₙT,w y adaptaciones finales"],
         ["L-01 / IM-01", "Losa 160; resiliente 10; sobrelosa 40; terminación 10 mm", "Proyecto → Diseñar → Ruido de impacto", "L′ₙT,w y adaptación aplicable"],
         ["F-01 + V-01 / FA-01", "10,50 m² opacos + 4,80 m² de ventana", "Proyecto → Diseñar → Fachada ISO 12354-3", "Aislamiento de fachada adaptado"],
@@ -1200,13 +1266,13 @@ def _stage9(lab, saved):
             status = "Pendiente"
         rows.append([code, family, descriptor, result.get(key), unit, status])
     result_df = pd.DataFrame(rows, columns=["Caso", "Familia", "Descriptor", "Resultado", "Unidad", "Estado"])
-    st.dataframe(result_df, hide_index=True, width="stretch")
+    _lab_table(result_df, hide_index=True, width="stretch")
     st.markdown("### Indicadores para la comparación normativa")
     ai = saved.get("c5l1_result_AI-01", {})
     fa = saved.get("c5l1_result_FA-01", {})
     dnta = ai["dntw"] + ai["c"] if ai.get("dntw") is not None and ai.get("c") is not None else None
     facade_adapted = fa["d2mntw"] + fa["ctr"] if fa.get("d2mntw") is not None and fa.get("ctr") is not None else None
-    st.dataframe(pd.DataFrame([
+    _lab_table(pd.DataFrame([
         ["AI-01", "DₙT,A = DₙT,w + C", dnta, "Verificar que C procede de la curva final entre recintos"],
         ["FA-01", "D₂m,nT,w + Ctr", facade_adapted, "Justificar correspondencia y espectro; comparar con Lden adoptado"],
     ], columns=["Caso", "Operación", "Valor [dB]", "Condición de uso"]), hide_index=True, width="stretch")
@@ -1219,7 +1285,7 @@ def _stage9(lab, saved):
             case["code"], design.get("target", ""), design.get("base_design", ""),
             design.get("design_change", ""), design.get("evidence", ""),
         ])
-    st.dataframe(
+    _lab_table(
         pd.DataFrame(decisions, columns=["Caso", "Objetivo", "Base", "Cambio y efecto", "Evidencias"]),
         hide_index=True, width="stretch",
     )
