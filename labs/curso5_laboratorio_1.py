@@ -258,7 +258,6 @@ def _header(stage: int, title: str, purpose: str):
         show_overview=False,
         duration_minutes=C5L1_STAGE_MINUTES[stage],
     )
-    _teacher_guide(stage)
 
 
 def _save(lab, saved, stage: int, **values):
@@ -1447,6 +1446,8 @@ _STAGES = [_stage0, _stage1, _stage2, _stage3, _stage4, _stage5, _stage6, _stage
 def run_stage(stage, lab, saved, runtime):
     _bind_runtime(runtime)
     stage = max(0, min(int(stage), 10))
-    return _STAGES[stage](lab, saved)
+    result = _STAGES[stage](lab, saved)
+    _teacher_guide(stage)
+    return result
 
 
