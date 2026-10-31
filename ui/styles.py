@@ -2,6 +2,42 @@
 
 GLOBAL_CSS = r'''
 <style>
+
+/* Barras de desplazamiento legibles en contenido y navegación. */
+[data-testid="stMain"],
+[data-testid="stSidebarContent"] {
+    overflow-y: scroll !important;
+    scrollbar-gutter: stable;
+    scrollbar-width: auto;
+    scrollbar-color: #426d8b #dce6ef;
+}
+[data-testid="stSidebarContent"] {
+    scrollbar-color: #64d5ee #102f49;
+}
+[data-testid="stMain"]::-webkit-scrollbar,
+[data-testid="stSidebarContent"]::-webkit-scrollbar {
+    width: 14px;
+    height: 14px;
+}
+[data-testid="stMain"]::-webkit-scrollbar-track {
+    background: #dce6ef;
+}
+[data-testid="stMain"]::-webkit-scrollbar-thumb {
+    background: #426d8b;
+    border: 3px solid #dce6ef;
+    border-radius: 10px;
+    min-height: 48px;
+}
+[data-testid="stMain"]::-webkit-scrollbar-thumb:hover { background: #174e73; }
+[data-testid="stSidebarContent"]::-webkit-scrollbar-track { background: #102f49; }
+[data-testid="stSidebarContent"]::-webkit-scrollbar-thumb {
+    background: #64d5ee;
+    border: 3px solid #102f49;
+    border-radius: 10px;
+    min-height: 48px;
+}
+[data-testid="stSidebarContent"]::-webkit-scrollbar-thumb:hover { background: #a4edff; }
+
 :root{--navy:#07172b;--blue:#0967d2;--cyan:#17c3e6;--ink:#14243a;--muted:#60718a;--line:#dce6f2;--soft:#f3f8fd;--green:#0f9d78;--orange:#ef8b2c}
 .stApp{background:#f5f8fc;color:var(--ink)} .block-container{padding-top:1.2rem;max-width:1280px}
 [data-testid="stSidebar"]{background:linear-gradient(180deg,#06172b,#0a2b4d);color:white}
