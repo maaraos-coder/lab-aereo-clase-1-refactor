@@ -717,11 +717,15 @@ def _stage1(lab, saved):
 
     st.markdown("### 1 · Conoce el edificio que vas a diseñar")
     st.markdown("Los Alerces es un edificio residencial de **5 pisos, con 4 departamentos por piso: 20 viviendas en total**. La estructura de partida es de muros y losas de hormigón armado. Trabajaremos inicialmente con **A-302, en el tercer piso**, y sus relaciones con A-301, A-402, la fachada norte y el shaft sanitario S-1.")
+    st.markdown("#### El edificio y la ubicación de A-302")
+    _show_drawing("alerces_edificio_isometrico_v3.jpg", "Vista exterior ilustrativa · cinco pisos. A-302 está en el tercer piso, segunda vivienda desde el oeste; al mirar la fachada norte desde el exterior, aparece segunda desde la derecha.")
+    _show_drawing("alerces_colindancias.svg", "Ubicación esquemática de las cuatro viviendas del tercer piso y sus relaciones verticales. Norte arriba; sin escala. La geometría de A-302 se detalla en AC-01.")
+    st.markdown("#### Interior de A-302 · acceso y conexiones")
     _show_drawing(
-        "alerces_render_acceso_v3.jpg",
+        "alerces_render_acceso_v4.jpg",
         "A-302 · acceso desde el pasillo común y conexiones entre recintos. "
         "La puerta principal P-01 tiene 0,90 m de paso útil; el distribuidor 1,03 m; "
-        "las puertas de dormitorios y baño, 0,80 m. Norte al fondo y A-301 al oeste. "
+        "las puertas de dormitorios y baño, 0,80 m. Norte al fondo y A-301 al oeste. El cerramiento hacia el pasillo común es opaco, sin ventanas. "
         "Para dimensiones y cálculos utiliza la planta AC-01 revisada de la Etapa 2.",
     )
 

@@ -129,7 +129,7 @@ def plan():
     opening((7.15,4.05),(7.15,4.85),True,-1)
     opening((7.08,6.95),(6.18,6.95),True,1)
     # North windows retain the acoustic dimensions of FA-01.
-    for x,w,code,y in [(1.2,3.2,'V-01',0),(7.1,1.6,'V-02',0),(.65,1.2,'V-03',6.785882)]:
+    for x,w,code,y in [(1.2,3.2,'V-01',0),(7.1,1.6,'V-02',0)]:
         opening((x,y),(x+w,y))
         xx,yy=P(x,y)
         for dy in (-.6,0,.6):line(xx,yy+dy,xx+w*k,yy+dy,BLUE,.22)
@@ -164,7 +164,7 @@ def plan():
     y=note(253,'ACCESO Y CIRCULACIÓN',['P-01: acceso útil 0,90 m.','Distribuidor útil: 1,03 m.','Dormitorios y baño:','puertas útiles de 0,80 m.','Cocina y estar: vanos','abiertos desde distribuidor.','Las hojas abren a recintos.'])
     y=note(y,'GEOMETRÍA ACÚSTICA',['Estar en L: 20,40 m².','Altura libre: 2,50 m.','M-01: 4,08 × 2,50','= 10,20 m².','Fachada estar: 15,30 m².','V-01: 3,20 × 1,50','= 4,80 m².'])
     y=note(y,'INSTALACIONES',['Baño desplazado al este.','S-1 junto al baño y al','dormitorio principal.','La cocina abre al','distribuidor; no comparte','tabique directo con baño.'])
-    note(y,'LECTURA DEL EJERCICIO',['A-301 al oeste.','A-402 sobre A-302.','Fachada norte arriba.','V-03: dormitorio 2 al sur.','Cotas de recintos útiles;','no deducir superficie bruta.'])
+    note(y,'LECTURA DEL EJERCICIO',['A-301 al oeste.','A-402 sobre A-302.','Fachada norte arriba.','Pasillo común: muro opaco.','Cotas de recintos útiles;','no deducir superficie bruta.'])
     end()
 
 def section():
