@@ -3,6 +3,11 @@
 GLOBAL_CSS = r'''
 <style>
 
+/* La cabecera fija no debe cubrir el carril vertical del contenido. */
+[data-testid="stHeader"] {
+    right: 18px !important;
+    width: calc(100% - 18px) !important;
+}
 /* Barras de desplazamiento legibles en contenido y navegación. */
 [data-testid="stMain"],
 [data-testid="stSidebarContent"] {
