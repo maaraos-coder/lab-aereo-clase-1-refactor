@@ -717,24 +717,13 @@ def _stage1(lab, saved):
 
     st.markdown("### 1 · Conoce el edificio que vas a diseñar")
     st.markdown("Los Alerces es un edificio residencial de **5 pisos, con 4 departamentos por piso: 20 viviendas en total**. La estructura de partida es de muros y losas de hormigón armado. Trabajaremos inicialmente con **A-302, en el tercer piso**, y sus relaciones con A-301, A-402, la fachada norte y el shaft sanitario S-1.")
-    render_path = _asset("alerces_render_profesional.jpg")
-    if render_path.is_file():
-        st.image(
-            str(render_path),
-            caption=(
-                "Render arquitectónico ilustrativo del Edificio Los Alerces. "
-                "La identificación de A-302 y sus relaciones acústicas deben "
-                "contrastarse con los planos técnicos de la Etapa 2."
-            ),
-            use_container_width=True,
-        )
-    else:
-        _show_drawing(
-            "render_isometrico_alerces.svg",
-            "Esquema provisional. Pendiente incorporar el render arquitectónico en "
-            "assets/curso5_lab1/alerces_render_profesional.jpg.",
-        )
-
+    _show_drawing(
+        "alerces_ubicacion_coherente.svg",
+        "Ubicación general esquemática y axonometría de A-302 construida con la geometría de AC-01. "
+        "En la planta, norte arriba y oeste a la izquierda; al mirar la fachada desde el norte, "
+        "el oeste queda a la derecha. A-301 está al oeste de A-302 y A-402 directamente encima. "
+        "La configuración interior de las demás viviendas no se desarrolla en esta lámina.",
+    )
 
     c1, c2, c3, c4 = st.columns(4)
     c1.metric("Pisos", PROJECT["storeys"])
