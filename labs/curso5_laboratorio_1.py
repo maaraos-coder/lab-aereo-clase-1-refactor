@@ -56,7 +56,7 @@ ROOMS = [
     ["Estar-comedor", 20.4, 51.0, "Norte", "Fachada + medianero A-301"],
     ["Dormitorio principal", 11.5, 28.8, "Norte", "Fachada"],
     ["Dormitorio 2", 9.2, 23.0, "Sur", "Pasillo común"],
-    ["Cocina", 7.8, 19.5, "Interior", "Núcleo húmedo / baño"],
+    ["Cocina", 7.8, 19.5, "Interior", "Distribuidor y estar-comedor"],
     ["Baño principal", 4.1, 10.3, "Interior", "Shaft S-1"],
 ]
 
@@ -718,12 +718,14 @@ def _stage1(lab, saved):
     st.markdown("### 1 · Conoce el edificio que vas a diseñar")
     st.markdown("Los Alerces es un edificio residencial de **5 pisos, con 4 departamentos por piso: 20 viviendas en total**. La estructura de partida es de muros y losas de hormigón armado. Trabajaremos inicialmente con **A-302, en el tercer piso**, y sus relaciones con A-301, A-402, la fachada norte y el shaft sanitario S-1.")
     _show_drawing(
-        "alerces_render_coherente_v2.jpg",
-        "Visualización arquitectónica de A-302. Para áreas, dimensiones y detalles constructivos, utiliza AC-01 y las láminas de la Etapa 2. "
-        "En la planta, norte arriba y oeste a la izquierda; al mirar la fachada desde el norte, "
-        "el oeste queda a la derecha. A-301 está al oeste de A-302 y A-402 directamente encima. "
-        "La configuración interior de las demás viviendas no se desarrolla en esta lámina.",
+        "alerces_render_acceso_v3.jpg",
+        "A-302 · acceso desde el pasillo común y conexiones entre recintos. "
+        "La puerta principal P-01 tiene 0,90 m de paso útil; el distribuidor 1,03 m; "
+        "las puertas de dormitorios y baño, 0,80 m. Norte al fondo y A-301 al oeste. "
+        "Para dimensiones y cálculos utiliza la planta AC-01 revisada de la Etapa 2.",
     )
+
+    st.markdown("**Cómo se recorre A-302:** desde el pasillo común entras por P-01 al distribuidor. Desde allí accedes a cocina, baño, dormitorio principal y estar-comedor. El dormitorio 2 tiene su puerta hacia el estar. La cocina también comunica con el estar mediante un vano abierto.")
 
     c1, c2, c3, c4 = st.columns(4)
     c1.metric("Pisos", PROJECT["storeys"])
@@ -989,7 +991,7 @@ def _stage2(lab, saved):
     _download_plan_set("c5l1_s2_plans_pdf")
     tabs = st.tabs(["AC-01 · Planta", "AC-02 · Corte", "AC-03 · Fachada", "AC-04 · Detalles"])
     sheets = [
-        ("planta_tipo.png", "AC-01 · Planta parcial nivel 3 · norte arriba · A-302 y estar adyacente A-301", "Localiza M-01, V-01, V-02 y S-1. El estar en L tiene 20,40 m²; el paño medianero útil mide 4,08 × 2,50 m."),
+        ("planta_tipo.png", "AC-01 · Planta parcial nivel 3 · norte arriba · A-302 y estar adyacente A-301", "Sigue el acceso P-01 desde el pasillo común y comprueba las conexiones con cocina, baño, dormitorio principal y estar; desde el estar se entra al dormitorio 2. Localiza M-01, V-01, V-02 y S-1. El estar en L conserva 20,40 m² y el medianero útil 4,08 × 2,50 m."),
         ("corte_aa.png", "AC-02 · Corte A-A · cinco niveles · altura libre 2,50 m", "A-402 está sobre A-302. L-01 tiene 160 mm de hormigón y un paquete superior de 60 mm; no los sumes como losa desnuda."),
         ("fachada_norte.png", "AC-03 · Elevación norte · paño FA-01 destacado", "FA-01 solo incluye el estar: 15,30 m² brutos = 10,50 m² opacos + 4,80 m² de V-01. V-02 pertenece al dormitorio."),
         ("detalles_constructivos.png", "AC-04 · M-01, L-01, F-01 y S-01 · espesores en mm", "Distingue placa, cámara, absorbente y unión. El espesor total de S-01 es 120 mm; no corresponde a cada placa."),
@@ -1438,5 +1440,6 @@ def run_stage(stage, lab, saved, runtime):
     result = _STAGES[stage](lab, saved)
     _teacher_guide(stage)
     return result
+
 
 

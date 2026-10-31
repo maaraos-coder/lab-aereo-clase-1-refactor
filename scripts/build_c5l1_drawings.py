@@ -80,7 +80,7 @@ def frame(code,title,subtitle,scale):
     text(18,29,title,4.1,INK,True);text(18,21,subtitle,2.5,GRAY)
     text(18,14,'PROYECTO FICTICIO · NO APTO PARA CONSTRUCCIÓN · Las cotas prevalecen sobre la imagen.',2.2,RED)
     text(292,29,'ESCALA '+scale,2.8,INK,True);text(292,21,'UNIDADES m / DETALLES mm',2.4)
-    text(292,14,'REVISIÓN ACADÉMICA · 20 OCT 2026',2.25,GRAY)
+    text(292,14,'REVISIÓN · ACCESO Y PUERTAS · 30 OCT 2026',2.25,GRAY)
 
 def end():C.restoreState();C.showPage()
 
@@ -91,70 +91,80 @@ def door(x,y,r=16,rotation=0):
     C.restoreState()
 
 def plan():
-    frame('AC-01','PLANTA DE ESTUDIO · NIVEL 3','Distribución A-302 y relación con A-301. Norte hacia arriba.','1:50 · impresión A3')
+    frame('AC-01','PLANTA DE ESTUDIO · NIVEL 3','Acceso, distribución y puertas de A-302. Norte hacia arriba.','1:50 · impresión A3')
     k=20; ox=105; oy=244
     def P(x,y):return ox+x*k,oy-y*k
-    # Adjoining living room fragment; two dwellings share the west separator.
+    def wall(a,b,width=1.4):line(*P(*a),*P(*b),INK,width)
+    def opening(a,b,leaf=False,turn=1):
+        # Clear the complete wall thickness, then draw leaf and swing in plan.
+        line(*P(*a),*P(*b),'white',4.2)
+        if leaf:
+            dx,dy=b[0]-a[0],b[1]-a[1]
+            vx,vy=-dy*turn,dx*turn
+            line(*P(*a),*P(a[0]+vx,a[1]+vy),INK,.28)
+            angle=math.atan2(dy,dx)
+            pts=[P(a[0]+math.hypot(dx,dy)*math.cos(angle+turn*t*math.pi/48),a[1]+math.hypot(dx,dy)*math.sin(angle+turn*t*math.pi/48)) for t in range(25)]
+            for q,r in zip(pts,pts[1:]):line(*q,*r,GRAY,.14)
+    # Reference coordinates are clear-room dimensions, not external gross area.
+    living=[(0,0),(6.12,0),(6.12,2.4),(3.4,2.4),(3.4,4.08),(0,4.08)]
+    outline=[(0,0),(9.8,0),(9.8,5.125),(7.15,5.125),(7.15,6.95),(3.4,6.95),(3.4,6.785882),(0,6.785882)]
+    poly([P(*q) for q in outline],'#fbf7ee',GRAY,.2)
+    poly([P(*q) for q in living],'#eaf3f6',BLUE,.25)
+    rect(*P(6.12,3.125),3.68*k,3.125*k,'#f7f7f3',GRAY,.15)
+    rect(*P(0,6.785882),3.4*k,9.2/3.4*k,'#eef0fa',GRAY,.15)
+    rect(*P(3.4,6.947647),2.72*k,7.8/2.72*k,'#edf5e9',GRAY,.15)
+    rect(*P(7.15,5.125),2.05*k,2*k,'#eef4f6',GRAY,.15)
     rect(18,oy-4.08*k,83.4,4.08*k,'#f4f4f2',GRAY)
     text(59,222,'A-301',4,GRAY,True,'center');text(59,215,'Estar adyacente',2.7,GRAY,align='center')
-    # The L-shaped living room is exactly 20.40 square metres.
-    living=[P(x,y) for x,y in [(0,0),(6.12,0),(6.12,2.4),(3.4,2.4),(3.4,4.08),(0,4.08)]]
-    poly(living,'#eaf3f6',BLUE,.35)
-    rect(*P(6.12,3.125),3.68*k,3.125*k,'#f7f7f3',GRAY,.15)
-    rect(*P(0,4.08+9.2/3.4),3.4*k,9.2/3.4*k,'#f7f7f3',GRAY,.15)
-    rect(*P(3.4,4.08+7.8/2.72),2.72*k,7.8/2.72*k,'#f7f7f3',GRAY,.15)
-    rect(*P(6.12,5.125),2.05*k,2*k,'#f1f4f4',GRAY,.15)
-    # Perimeter HA and internal partitions.
-    rect(ox-3.6,oy-7.4*k,3.6,7.4*k,'#40484e')
-    rect(ox+9.8*k,oy-7.4*k,3,7.4*k,'#40484e')
-    rect(ox-3.6,oy,9.8*k+6.6,3,'#40484e')
-    rect(ox-3.6,oy-7.4*k-3,9.8*k+6.6,3,'#40484e')
-    for (x1,y1,x2,y2) in [(6.12,0,6.12,3.125),(6.12,3.125,9.8,3.125),(0,4.08,3.4,4.08),(3.4,4.08,3.4,6.95),(3.4,6.95,6.12,6.95),(6.12,3.125,6.12,6.95),(6.12,5.125,8.17,5.125),(8.17,3.125,8.17,5.125)]:
-        line(*P(x1,y1),*P(x2,y2),INK,1.4)
-    # Windows drawn as three-line joinery across the north facade.
-    for x,w,code in [(1.2,3.2,'V-01'),(7.1,1.6,'V-02')]:
-        xx,yy=P(x,0);rect(xx,yy-.1,w*k,3.3,'white','white')
-        for dy in (.25,1.4,2.6):line(xx,yy+dy,xx+w*k,yy+dy,BLUE,.25)
-        line(xx+w*k/2,yy,xx+w*k/2,yy+3,BLUE,.25)
-        text(xx+w*k/2,yy-6,code,2.7,BLUE,True,'center')
-    # Doors and a short entrance hall.
-    door(*P(1.9,4.08),16,180);door(*P(9.65,3.125),14,180)
-    door(*P(8.17,4.8),14,90)
-    line(*P(4.05,4.08),*P(5.25,4.08),'white',2.1)
-    # Shaft adjacent to sanitary room and principal bedroom.
-    xx,yy=P(8.17,3.725);rect(xx,yy,.6*k,.6*k,'#f9e7de',RED,.35);hatch(xx,yy,12,12,'#cd9e86')
+    for q,r in zip(outline,outline[1:]+outline[:1]):wall(q,r,3)
+    wall((0,0),(0,4.08),3.6)
+    for q,r in [((6.12,0),(6.12,6.95)),((6.12,3.125),(9.8,3.125)),((0,4.08),(6.12,4.08)),((3.4,4.08),(3.4,6.95)),((7.15,3.125),(7.15,5.125))]:wall(q,r)
+    # L-shaped living room opens into the north end of the distributor.
+    # Its southern kitchen connection is also open; areas remain analytical zones.
+    opening((6.12,3.15),(6.12,4.05))
+    opening((4.6,4.08),(5.8,4.08))
+    opening((6.12,5.5),(6.12,6.4))
+    opening((2.3,4.08),(3.1,4.08),True,1)
+    opening((6.23,3.125),(7.03,3.125),True,-1)
+    opening((7.15,4.05),(7.15,4.85),True,-1)
+    opening((7.08,6.95),(6.18,6.95),True,1)
+    # North windows retain the acoustic dimensions of FA-01.
+    for x,w,code,y in [(1.2,3.2,'V-01',0),(7.1,1.6,'V-02',0),(.65,1.2,'V-03',6.785882)]:
+        opening((x,y),(x+w,y))
+        xx,yy=P(x,y)
+        for dy in (-.6,0,.6):line(xx,yy+dy,xx+w*k,yy+dy,BLUE,.22)
+        text(xx+w*k/2,yy-5 if y==0 else yy+3,code,2.3,BLUE,True,'center')
+    # Shaft borders both bathroom and principal bedroom, on the east side.
+    xx,yy=P(9.2,3.725);rect(xx,yy,.6*k,.6*k,'#f9e7de',RED,.35);hatch(xx,yy,12,12,'#cd9e86')
     text(xx+6,yy+4.7,'S-1',2.4,RED,True,'center')
-    # Light furniture and sanitary fixtures.
+    # Furniture stays clear of the door sweeps and the 1.03 m distributor.
     rect(*P(.45,1.45),1.8*k,.65*k,None,GRAY,.2)
-    line(*P(.45,1.12),*P(2.25,1.12),GRAY,.13)
     rect(*P(2.9,1.7),1.3*k,.75*k,None,GRAY,.2)
-    for x in (3.05,3.65):
-        rect(*P(x,.82),.35*k,.35*k,None,GRAY,.12);rect(*P(x,2.12),.35*k,.35*k,None,GRAY,.12)
-    for x,y in [(7,.5),(.6,4.45)]:
-        rect(*P(x,y+1.8),1.4*k,1.8*k,None,GRAY,.18);rect(*P(x+.1,y+.42),1.2*k,.32*k,None,GRAY,.12)
+    for x,y in [(7.2,.4),(.45,4.6)]:
+        rect(*P(x,y+1.8),1.4*k,1.8*k,None,GRAY,.18);rect(*P(x+.1,y+.4),1.2*k,.3*k,None,GRAY,.12)
     rect(*P(3.55,6.7),.6*k,2.25*k,'#e4e7e6',GRAY,.15)
-    rect(*P(6.3,4.9),.75*k,.75*k,None,GRAY,.15)
-    for s,x,y,h in [('ESTAR-COMEDOR',2.8,3.15,3.1),('20,40 m² / V 51,0 m³',2.8,3.46,2.4),('DORM. PRINCIPAL',7.96,2.53,2.65),('11,50 m² / V 28,8 m³',7.96,2.84,2.2),('DORMITORIO 2',1.7,6.32,2.6),('9,20 m²',1.7,6.62,2.3),('COCINA',5,5.4,2.8),('7,80 m²',5,5.72,2.3),('BAÑO',7.1,4.15,2.6),('4,10 m²',7.1,4.44,2.3),('CIRCULACIÓN',8.05,6.35,2.6)]:
-        text(*P(x,y),s,h,align='center')
-    text(ox+110,oy-7.15*k,'A-302 · UNIDAD EVALUADA',3.1,BLUE,True,align='center')
-    rect(ox-3.6,oy-9.2*k,202.6,1.8*k,'#f1f1ed',GRAY,.18)
-    text(ox+95,oy-8.5*k,'PASILLO COMÚN · 1,80 m',2.8,GRAY,align='center')
-    ex,ey=P(8.2,7.4);rect(ex,ey-3.1,18,3.3,'white','white');door(ex,ey,18,0)
-    arrow(88,195,122,195,'AI-01');arrow(279,175,289,204)
-    text(280,167,'IN-01',2.7,RED,True)
-    text(83,158,'M-01',2.8,RED,True);text(72,153,'HA 180 mm',2.3,GRAY)
+    rect(*P(8.35,4),.8*k,.8*k,None,GRAY,.18)
+    rect(*P(8.45,4.7),.55*k,.55*k,None,GRAY,.18)
+    for label,x,y,size in [('ESTAR-COMEDOR',2.7,2.35,3),('20,40 m² / V 51,0 m³',2.7,2.67,2.2),('DORM. PRINCIPAL',8.1,2.45,2.6),('11,50 m² / V 28,8 m³',8.1,2.75,2.1),('DORMITORIO 2',1.65,6.3,2.6),('9,20 m²',1.65,6.58,2.2),('COCINA',4.9,5.35,2.8),('7,80 m²',4.9,5.65,2.3),('BAÑO',8.1,4.5,2.7),('4,10 m²',8.1,4.8,2.2)]:text(*P(x,y),label,size,align='center')
+    # Short straight distributor connects entrance to all private rooms.
+    x,y=P(6.63,5.1);C.saveState();C.translate(x,y);C.rotate(90);text(0,0,'DISTRIBUIDOR 1,03 m',2.1,BLUE,True,'center');C.restoreState()
+    rect(ox-3.6,oy-9.1*k,202.6,1.8*k,'#f1f1ed',GRAY,.18)
+    text(ox+95,oy-8.35*k,'PASILLO COMÚN · 1,80 m',2.8,GRAY,align='center')
+    arrow(*P(6.63,8),*P(6.63,6.7))
+    text(*P(7.35,7.35),'ACCESO A-302',2.8,BLUE,True)
+    text(*P(7.35,7.65),'P-01 · 0,90 m',2.3,GRAY)
+    arrow(88,195,122,195,'AI-01')
+    text(82,158,'M-01',2.8,RED,True);text(70,153,'HA 180 mm',2.3,GRAY)
     dimh(ox,ox+6.12*k,256,'6,12',oy);dimh(ox+6.12*k,ox+9.8*k,256,'3,68',oy)
     dimv(oy-4.08*k,oy,ox-9,'4,08',ox)
     dimh(ox+1.2*k,ox+4.4*k,250,'3,20',oy)
-    dimh(ox+3.4*k,ox+6.12*k,174,'2,72',oy-4.08*k)
-    dimv(oy-4.08*k,oy-2.4*k,ox+6.12*k-6,'1,68')
-    # Direction and cut trace.
+    dimh(*[P(x,0)[0] for x in (6.12,7.15)],130,'1,03')
     arrow(27,239,27,253);text(27,256,'N',3.4,INK,True,'center')
     line(17,205,304,205,BLUE,.22,[3,2]);text(19,208,'A',3,BLUE,True);text(300,208,'A',3,BLUE,True)
-    y=note(253,'LECTURA DE ESTA LÁMINA',['Planta parcial del nivel 3.','Se detalla A-302 y el estar','adyacente de A-301.','Corte A-A: ver AC-02.'])
-    y=note(y,'CONTROL GEOMÉTRICO',['Estar en L:','6,12 × 4,08 - 2,72 × 1,68','= 20,40 m².','Altura libre: 2,50 m.','M-01 útil: 4,08 × 2,50','= 10,20 m².'])
-    y=note(y,'FACHADA DEL ESTAR',['6,12 × 2,50 = 15,30 m².','V-01: 3,20 × 1,50 = 4,80 m².','Opaco neto: 10,50 m².','El dormitorio V-02 no forma','parte del caso FA-01.'])
-    note(y,'IDENTIFICACIÓN',['AI-01: estar / medianero.','IM-01: A-402 sobre A-302.','FA-01: exterior norte.','IN-01: shaft / dormitorio.','Distribución ficticia acotada;','las otras unidades se omiten.'])
+    y=note(253,'ACCESO Y CIRCULACIÓN',['P-01: acceso útil 0,90 m.','Distribuidor útil: 1,03 m.','Dormitorios y baño:','puertas útiles de 0,80 m.','Cocina y estar: vanos','abiertos desde distribuidor.','Las hojas abren a recintos.'])
+    y=note(y,'GEOMETRÍA ACÚSTICA',['Estar en L: 20,40 m².','Altura libre: 2,50 m.','M-01: 4,08 × 2,50','= 10,20 m².','Fachada estar: 15,30 m².','V-01: 3,20 × 1,50','= 4,80 m².'])
+    y=note(y,'INSTALACIONES',['Baño desplazado al este.','S-1 junto al baño y al','dormitorio principal.','La cocina abre al','distribuidor; no comparte','tabique directo con baño.'])
+    note(y,'LECTURA DEL EJERCICIO',['A-301 al oeste.','A-402 sobre A-302.','Fachada norte arriba.','V-03: dormitorio 2 al sur.','Cotas de recintos útiles;','no deducir superficie bruta.'])
     end()
 
 def section():
@@ -282,3 +292,4 @@ def main():
     print(pdf)
 
 if __name__=='__main__':main()
+
