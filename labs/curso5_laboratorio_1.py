@@ -718,8 +718,8 @@ def _stage1(lab, saved):
     st.markdown("### 1 · Conoce el edificio que vas a diseñar")
     st.markdown("Los Alerces es un edificio residencial de **5 pisos, con 4 departamentos por piso: 20 viviendas en total**. La estructura de partida es de muros y losas de hormigón armado. Trabajaremos inicialmente con **A-302, en el tercer piso**, y sus relaciones con A-301, A-402, la fachada norte y el shaft sanitario S-1.")
     _show_drawing(
-        "alerces_ubicacion_coherente.svg",
-        "Ubicación general esquemática y axonometría de A-302 construida con la geometría de AC-01. "
+        "alerces_render_coherente_v2.jpg",
+        "Visualización arquitectónica de A-302. Para áreas, dimensiones y detalles constructivos, utiliza AC-01 y las láminas de la Etapa 2. "
         "En la planta, norte arriba y oeste a la izquierda; al mirar la fachada desde el norte, "
         "el oeste queda a la derecha. A-301 está al oeste de A-302 y A-402 directamente encima. "
         "La configuración interior de las demás viviendas no se desarrolla en esta lámina.",
