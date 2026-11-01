@@ -227,6 +227,42 @@ def _teacher_stage1_answers():
     st.markdown("**Criterio de revisión:** logrado si diagnóstico, requisitos, plan y alcance se sustentan con evidencia; parcialmente logrado si hay omisiones subsanables; por corregir si el descriptor, criterio o alcance invalida la conclusión. Guardar solo confirma la entrega.")
 
 
+def _teacher_stage2_answers():
+    st.markdown("### Revisión de la ficha de lectura")
+    st.info("**Propósito formativo:** comprobar que el alumno sabe extraer y justificar entradas del modelo. No se exige todavía calcular aislamiento, obtener una clase ni diseñar ensayos.")
+    st.markdown("#### 01 · Geometría esperada")
+    _lab_table(pd.DataFrame([
+        ["M-01 · separador", "4,08 × 2,50", "10,20 m²", "Área del separador entre los estares, no superficie de piso."],
+        ["Volumen del estar", "20,40 × 2,50", "51,0 m³", "Usar altura libre; no altura entre niveles."],
+        ["FA-01 · fachada bruta", "6,12 × 2,50", "15,30 m²", "Solo el paño del estar."],
+        ["V-01 · ventana del estar", "3,20 × 1,50", "4,80 m²", "No incorporar V-02 del dormitorio."],
+        ["F-01 · opaco", "15,30 − 4,80", "10,50 m²", "Comprobar 10,50 + 4,80 = 15,30 m²."],
+    ], columns=["Magnitud", "Operación", "Resultado esperado", "Qué revisar"]))
+    st.markdown("#### 02 · Riesgos: ejemplos de respuestas válidas")
+    st.caption("Se solicitan tres riesgos razonados. No es obligatorio repetir estos ejemplos ni utilizar tres casos diferentes.")
+    _lab_table(pd.DataFrame([
+        ["AI-01 · AC-01/AC-04", "Encuentro rígido del medianero con losas o fachada", "Transmisión por flancos", "Revisar continuidad, uniones y solución de desacople cuando corresponda."],
+        ["IM-01 · AC-02/AC-04", "Contacto rígido de sobrelosa con perímetro", "Puente que reduce la eficacia del piso flotante", "Comprobar banda perimetral, pasos y continuidad de la capa resiliente."],
+        ["FA-01 · AC-03/AC-04", "Juntas de ventana mal resueltas", "Fugas de ruido aéreo", "Revisar marco, sellos y prestación del conjunto instalado."],
+        ["IN-01 · AC-01/AC-04", "Fijaciones o pasos sanitarios rígidos", "Transmisión estructural y posibles fugas aéreas", "Revisar abrazaderas, pasos y continuidad del cierre del shaft."],
+    ], columns=["Caso y lámina", "Riesgo posible", "Mecanismo", "Comprobación o mejora"]))
+    st.markdown("#### 03 · Datos pendientes: qué debe reconocer")
+    _lab_table(pd.DataFrame([
+        ["Aéreo", "R(f) o indicadores compatibles, TR en s y datos de flancos/uniones", "Ficha, cálculo del elemento y descripción del encuentro."],
+        ["Impacto", "Prestación del piso, ΔL(f) o rigidez dinámica en MN/m³ según método", "Ficha del sistema completo o hipótesis documentada; no duplicar mejoras."],
+        ["Fachada", "Prestación espectral de ventana y opaco, exposición Lden en dB", "Ficha del conjunto y antecedente de exposición o hipótesis declarada."],
+        ["Instalaciones", "Datos de fuente y transferencia aérea/estructural según módulo", "Condición de descarga, ficha o datos compatibles con el método; no inferirlos del dibujo."],
+    ], columns=["Familia", "Datos que podrían faltar", "Procedencia esperada"]))
+    st.markdown("#### Criterios para la devolución")
+    _lab_table(pd.DataFrame([
+        ["Logrado", "Operaciones y unidades correctas; tres riesgos con mecanismo y revisión; datos pendientes vinculados a sus casos y fuentes."],
+        ["Parcialmente logrado", "Razonamiento válido con una omisión o error localizado que puede corregirse."],
+        ["Por corregir", "Confunde área y volumen, incorpora otra ventana, interpreta espesores como aislamiento o inventa datos sin declararlos."],
+    ], columns=["Estado formativo", "Cómo reconocerlo"]))
+    st.warning("**Errores clave:** no sumar el paquete de piso a los 160 mm de losa desnuda; no deducir prestaciones del render; no confundir riesgo con defecto confirmado. Los balcones son esquemáticos. Guardar acredita entrega, no corrección técnica.")
+    st.caption("Continuidad con Etapa 1: A-301 al oeste, A-402 encima, fachada norte y shaft S-1 junto al dormitorio principal. En elevación exterior norte, oeste a la derecha. Pauta exclusiva de vista Docente; no se muestra en Alumno ni Zoom.")
+
+
 def _teacher_guide(stage):
     state = getattr(st, "session_state", {})
     if state.get("role") != "Docente" or state.get("projection_mode"):
@@ -236,6 +272,9 @@ def _teacher_guide(stage):
         st.caption("Uso exclusivo del docente · respuestas esperadas y criterios de revisión formativa.")
         if stage == 1:
             _teacher_stage1_answers()
+            return
+        if stage == 2:
+            _teacher_stage2_answers()
             return
         from html import escape
         for criterion, expected in criteria:
@@ -1072,11 +1111,30 @@ def _stage2(lab, saved):
     st.info("Marca lo no documentado como **pendiente** o como **hipótesis justificada**, con su procedencia y efecto. En la Etapa 4 prepararás las entradas de Proyecto de SONARA. Las dimensiones describen geometría: no demuestran el aislamiento.")
     st.markdown("### 4 · Tu actividad: lectura y preparación del modelo")
     st.markdown("Completa los tres apartados siguientes. Los riesgos son posibilidades que debes revisar: el plano por sí solo no demuestra un defecto de ejecución.")
-    with st.form("c5l1_s2_reading_form"):
-        geometry = st.text_area("Comprueba las áreas de M-01 y FA-01 y el volumen del estar", value=saved.get("c5l1_s2_geometry", ""), placeholder="Muestra operaciones y unidades: área de M-01; volumen del estar; área bruta FA-01; ventana V-01; área opaca F-01. Comprueba opaco + ventana = fachada bruta.", height=120)
-        findings = st.text_area("Tres riesgos acústicos posibles que debes revisar", value=saved.get("c5l1_s2_findings", ""), placeholder="Para cada riesgo: caso AI/IM/FA/IN, lámina o detalle, elemento o encuentro, mecanismo de transmisión y qué comprobarías o mejorarías. Distingue riesgo posible de defecto confirmado.", height=130)
-        missing_data = st.text_area("Datos que debes buscar o adoptar como hipótesis", value=saved.get("c5l1_s2_missing", ""), placeholder="Indica caso, magnitud y unidad, por qué hace falta y fuente prevista (ficha, cálculo o hipótesis documentada). No se solicita un plan de mediciones.", height=110)
-        submitted = st.form_submit_button("Guardar lectura de planos", width="stretch")
+    st.markdown("""
+    <div style="padding:18px 22px;border-radius:14px;background:linear-gradient(110deg,#123e56,#087f98);color:white;margin:12px 0 20px">
+    <strong style="font-size:18px;color:white">Tu ficha de lectura acústica</strong>
+    <p style="margin:6px 0 0;color:#e2f5fa">Tres respuestas para preparar el modelo: geometría, riesgos y datos pendientes.</p>
+    </div>
+    """, unsafe_allow_html=True)
+    with st.form("c5l1_s2_reading_form", border=False):
+        with st.container(border=True):
+            st.markdown("#### 01 · Comprueba la geometría")
+            st.markdown("Usa AC-01, AC-02 y AC-03. Muestra las operaciones con unidades y distingue superficies de volúmenes.")
+            st.caption("Incluye: M-01 · volumen del estar · fachada bruta FA-01 · ventana V-01 · paño opaco F-01. Comprueba que opaco + ventana = fachada bruta.")
+            geometry = st.text_area("Desarrollo geométrico", value=saved.get("c5l1_s2_geometry", ""), placeholder="Magnitud → datos del plano → operación → resultado con unidad.", height=160)
+        with st.container(border=True):
+            st.markdown("#### 02 · Identifica tres riesgos acústicos")
+            st.markdown("Relaciona cada riesgo con una lámina y uno de los casos AI-01, IM-01, FA-01 o IN-01. Explica cómo podría transmitirse el ruido y qué revisarías.")
+            st.caption("Describe posibilidades que requieren comprobación; no afirmes defectos de ejecución que el plano no demuestra.")
+            findings = st.text_area("Tus tres riesgos y su justificación", value=saved.get("c5l1_s2_findings", ""), placeholder="Riesgo 1: caso / lámina / elemento o encuentro / mecanismo / revisión o mejora.\n\nRiesgo 2: ...\n\nRiesgo 3: ...", height=200)
+        with st.container(border=True):
+            st.markdown("#### 03 · Organiza los datos pendientes")
+            st.markdown("Identifica qué información falta para calcular. Indica la magnitud, su unidad, el caso al que corresponde y dónde la buscarías.")
+            st.caption("Distingue ficha técnica, cálculo e hipótesis documentada. No se solicita un plan de mediciones.")
+            missing_data = st.text_area("Datos y fuentes previstas", value=saved.get("c5l1_s2_missing", ""), placeholder="Caso → dato y unidad → por qué hace falta → fuente prevista → pendiente o hipótesis.", height=160)
+        st.caption("Antes de guardar: revisa unidades, tres riesgos explicados y procedencia de los datos. Puedes volver a editar tus respuestas.")
+        submitted = st.form_submit_button("Guardar mi ficha de lectura", type="primary", width="stretch")
     if submitted:
         if min(len(geometry.strip()), len(findings.strip()), len(missing_data.strip())) < 80:
             st.warning("Desarrolla la comprobación geométrica, tres riesgos y los datos faltantes (mín. 80 caracteres por apartado).")
