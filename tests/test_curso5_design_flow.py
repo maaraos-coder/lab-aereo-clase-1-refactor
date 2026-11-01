@@ -24,6 +24,7 @@ class Surface:
     def __exit__(self, *args): return False
     def columns(self, spec): return [self] * (spec if isinstance(spec, int) else len(spec))
     def tabs(self, labels): return [self] * len(labels)
+    def container(self, *args, **kwargs): return self
     def form(self, *args, **kwargs): return self
     def expander(self, *args, **kwargs): return self
     def text_area(self, label, value='', **kwargs): return self.values.get(label, value)
