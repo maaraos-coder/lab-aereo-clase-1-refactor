@@ -116,6 +116,8 @@ TEACHER_GUIDE = {
         ("Alcance", "Distingue los cuatro casos preliminares de A-302 de las demás situaciones y de las otras 19 viviendas. Identifica planos completos, tipologías, fuentes y verificación pendientes."),
     ], "No aceptar dos viviendas solo por aplicar un porcentaje a 20, sin justificar representatividad y procedimiento."),
     2: ("Lectura de planos", [
+        ("Orientación y continuidad", "AC-01: norte arriba y A-301 al oeste. AC-03: vista desde exterior norte, oeste a derecha; A-302 en tercer piso, segunda vivienda desde derecha. A-402 encima. Acceso sur y muro sin ventanas al pasillo. Balcones esquemáticos: no deducir correcciones del render."),
+        ("Criterio de revisión", "Revisar operaciones con unidades, tres riesgos vinculados a lámina y caso, y datos pendientes con magnitud y fuente prevista. Guardar conserva respuestas, no certifica corrección. No exigir mediciones ni clase obtenida en esta etapa."),
         ("Operaciones esperadas", "M-01: 4,08 × 2,50 = 10,20 m². Estar: 20,40 × 2,50 = 51,0 m³. FA-01: 15,30 − 4,80 = 10,50 m² opacos; ventana 4,80 m². V-02 pertenece al dormitorio."),
         ("Tres riesgos razonados", "Ejemplos aceptables: continuidad rígida en encuentros → flancos; puente perimetral del piso flotante → transmisión de impacto; juntas de ventana o shaft sin sellar → fuga aérea; fijaciones sanitarias rígidas → vía estructural. Cada riesgo debe relacionar elemento, mecanismo y medida."),
         ("Datos faltantes", "TR, densidades documentadas, rigidez dinámica o ficha ΔL, datos espectrales sanitarios, uniones y exposición exterior: explicar fuente de obtención y efecto en el modelo."),
@@ -1031,19 +1033,27 @@ def _stage2(lab, saved):
         "**Se muestran como imágenes PNG de alta resolución; el juego PDF permite ampliar e imprimir en A3.** "
         "Usa las cotas del proyecto como datos geométricos; las materialidades iniciales pueden rediseñarse para alcanzar clase A."
     )
+    st.info("**Objetivo:** preparar los datos de los cuatro casos de A-302 para Proyecto de SONARA. Esta etapa no exige mediciones ni determinar todavía una clase acústica.")
+    st.markdown("### 1 · Recorre las cuatro láminas")
+    _lab_table(pd.DataFrame([
+        ["AC-01 · Planta", "Ubica recintos, puertas, ventanas norte, acceso desde el pasillo y shaft. A-301 está al oeste.", "Geometría, emisor, receptor y recorridos posibles del ruido."],
+        ["AC-02 · Corte", "A-402 está encima de A-302. Distingue altura libre, losa y paquete de piso.", "Relación vertical y volumen receptor."],
+        ["AC-03 · Fachada", "Desde el exterior norte, oeste queda a la derecha. A-302: tercer piso, segunda vivienda desde la derecha.", "Paño FA-01 del estar y ventana V-01; V-02 pertenece al dormitorio."],
+        ["AC-04 · Detalles", "Reconoce capas, espesores, juntas, bandas y fijaciones de la solución inicial.", "Composición de partida y encuentros que podrían necesitar mejoras."],
+    ], columns=["Lámina", "Qué debes observar", "Para qué sirve"]))
     _download_plan_set("c5l1_s2_plans_pdf")
     tabs = st.tabs(["AC-01 · Planta", "AC-02 · Corte", "AC-03 · Fachada", "AC-04 · Detalles"])
     sheets = [
         ("planta_tipo.png", "AC-01 · Planta parcial nivel 3 · norte arriba · A-302 y estar adyacente A-301", "Sigue el acceso P-01 desde el pasillo común y comprueba las conexiones con cocina, baño, dormitorio principal y estar; desde el estar se entra al dormitorio 2. Localiza M-01, V-01, V-02 y S-1. El estar en L conserva 20,40 m² y el medianero útil 4,08 × 2,50 m."),
         ("corte_aa.png", "AC-02 · Corte A-A · cinco niveles · altura libre 2,50 m", "A-402 está sobre A-302. L-01 tiene 160 mm de hormigón y un paquete superior de 60 mm; no los sumes como losa desnuda."),
-        ("fachada_norte.png", "AC-03 · Elevación norte · paño FA-01 destacado", "FA-01 solo incluye el estar: 15,30 m² brutos = 10,50 m² opacos + 4,80 m² de V-01. V-02 pertenece al dormitorio."),
+        ("fachada_norte.png", "AC-03 · Elevación norte · paño FA-01 destacado", "Vista exterior norte: A-301 queda a la derecha de A-302. Los balcones son esquemáticos: no deduzcas de ellos geometrías ni correcciones acústicas. FA-01 solo incluye el estar: 15,30 m² brutos = 10,50 m² opacos + 4,80 m² de V-01. V-02 pertenece al dormitorio."),
         ("detalles_constructivos.png", "AC-04 · M-01, L-01, F-01 y S-01 · espesores en mm", "Distingue placa, cámara, absorbente y unión. El espesor total de S-01 es 120 mm; no corresponde a cada placa."),
     ]
     for tab, (filename, caption, instruction) in zip(tabs, sheets):
         with tab:
             _show_drawing(filename, caption)
             st.info(instruction)
-    st.markdown("### De la lámina al modelo de cálculo")
+    st.markdown("### 2 · De la lámina al modelo de cálculo")
     matrix = [
         ["AI-01", "A-301 → A-302", "M-01", "4,08 × 2,50 = 10,20 m²", "V 51,0 m³ · HA 180 mm", "Directa + uniones laterales"],
         ["IM-01", "A-402 → A-302", "L-01", "Estar: 20,40 m²", "V 51,0 m³ · losa 160 mm", "Piso + losa + flancos"],
@@ -1051,11 +1061,21 @@ def _stage2(lab, saved):
         ["IN-01", "Shaft → dormitorio", "S-01 + fijaciones", "V receptor 28,8 m³", "Cierre 120 mm · área según recorrido", "Aérea + estructural"],
     ]
     _lab_table(pd.DataFrame(matrix, columns=["Caso", "Fuente / receptor", "Elemento", "Geometría útil", "Datos de partida", "Vías"]), hide_index=True, width="stretch")
-    st.warning("El plano no entrega TR, rigidez dinámica ni potencia sonora sanitaria. Esos datos se justifican en la etapa 4; no se deducen de un dibujo.")
+    st.markdown("### 3 · Qué datos tienes y cuáles faltan")
+    _lab_table(pd.DataFrame([
+        ["Disponibles", "Geometría y composición inicial", "Áreas, altura libre, volúmenes y espesores. Comprueba unidades: m, m², m³ y mm."],
+        ["Pendientes", "Prestaciones acústicas", "Datos espectrales de muros y ventanas, propiedades de materiales y mejora del sistema de piso. Un espesor o la indicación DVH no acreditan aislamiento."],
+        ["Por completar", "Recintos y encuentros", "TR adoptado, superficies de flancos, longitudes y tipos de unión según el modelo."],
+        ["Por documentar", "Exposición exterior", "Lden y condiciones de fachada; no se deducen del render ni de la orientación norte."],
+        ["Según método", "Instalaciones sanitarias", "Fuente, condición de descarga, fijaciones y transmisión aérea/estructural. Identifica las magnitudes que requiere el módulo; la potencia sonora sola no caracteriza toda la instalación."],
+    ], columns=["Estado", "Familia de datos", "Cómo utilizarla"]))
+    st.info("Marca lo no documentado como **pendiente** o como **hipótesis justificada**, con su procedencia y efecto. En la Etapa 4 prepararás las entradas de Proyecto de SONARA. Las dimensiones describen geometría: no demuestran el aislamiento.")
+    st.markdown("### 4 · Tu actividad: lectura y preparación del modelo")
+    st.markdown("Completa los tres apartados siguientes. Los riesgos son posibilidades que debes revisar: el plano por sí solo no demuestra un defecto de ejecución.")
     with st.form("c5l1_s2_reading_form"):
-        geometry = st.text_area("Comprueba las áreas de M-01 y FA-01 y el volumen del estar", value=saved.get("c5l1_s2_geometry", ""), placeholder="Escribe las operaciones y distingue área bruta, área opaca y ventana.", height=120)
-        findings = st.text_area("Tres riesgos constructivos observados en las láminas", value=saved.get("c5l1_s2_findings", ""), placeholder="Elemento, encuentro o puente; mecanismo acústico y posible medida.", height=130)
-        missing_data = st.text_area("Datos que debes buscar o adoptar como hipótesis", value=saved.get("c5l1_s2_missing", ""), placeholder="Qué falta, por qué importa y de dónde lo obtendrías.", height=110)
+        geometry = st.text_area("Comprueba las áreas de M-01 y FA-01 y el volumen del estar", value=saved.get("c5l1_s2_geometry", ""), placeholder="Muestra operaciones y unidades: área de M-01; volumen del estar; área bruta FA-01; ventana V-01; área opaca F-01. Comprueba opaco + ventana = fachada bruta.", height=120)
+        findings = st.text_area("Tres riesgos acústicos posibles que debes revisar", value=saved.get("c5l1_s2_findings", ""), placeholder="Para cada riesgo: caso AI/IM/FA/IN, lámina o detalle, elemento o encuentro, mecanismo de transmisión y qué comprobarías o mejorarías. Distingue riesgo posible de defecto confirmado.", height=130)
+        missing_data = st.text_area("Datos que debes buscar o adoptar como hipótesis", value=saved.get("c5l1_s2_missing", ""), placeholder="Indica caso, magnitud y unidad, por qué hace falta y fuente prevista (ficha, cálculo o hipótesis documentada). No se solicita un plan de mediciones.", height=110)
         submitted = st.form_submit_button("Guardar lectura de planos", width="stretch")
     if submitted:
         if min(len(geometry.strip()), len(findings.strip()), len(missing_data.strip())) < 80:
@@ -1483,6 +1503,7 @@ def run_stage(stage, lab, saved, runtime):
     result = _STAGES[stage](lab, saved)
     _teacher_guide(stage)
     return result
+
 
 
 
