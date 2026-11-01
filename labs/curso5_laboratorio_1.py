@@ -1117,7 +1117,7 @@ def _stage2(lab, saved):
     .st-key-c5l1_s2_reading_form [data-testid="stVerticalBlockBorderWrapper"]{background:#fff;border-radius:18px!important;border:1px solid #cee0e9!important;box-shadow:0 5px 20px #16445b09;margin-bottom:18px}
     .st-key-c5l1_s2_reading_form input,.st-key-c5l1_s2_reading_form textarea{background:#f7fbfd!important;color:#143d53!important;border:1px solid #bfd5e0!important;border-radius:10px!important}
     .c5s2-head{padding:20px 22px;border-radius:14px;background:#e6f4f7;border-left:5px solid #0786a0;margin-bottom:15px}
-    .c5s2-head .step{font-size:12px;font-weight:800;letter-spacing:.1em;color:#08788e}
+    .c5s2-heading-row{display:flex;align-items:flex-start;gap:16px}.c5s2-heading-number{display:block;flex:0 0 48px;min-width:48px;font-size:32px;font-weight:800;line-height:1.15;color:#08788e}.c5s2-heading-copy{flex:1;min-width:0}
     .c5s2-head h3{margin:6px 0!important;font-size:23px!important;color:#123e56!important}
     .c5s2-head p{margin:0;color:#365b6e;font-size:16px;line-height:1.6}
     .c5s2-example{padding:14px 18px;background:#fff4de;border-radius:10px;border-left:4px solid #dba43d;color:#604711;margin:12px 0;font-size:15px}
@@ -1129,7 +1129,7 @@ def _stage2(lab, saved):
         form_values[key] = value
         return value
     def step_head(number, title, instruction):
-        st.markdown(f'<div class="c5s2-head"><span class="step">PASO {number} DE 3</span><h3>{title}</h3><p>{instruction}</p></div>', unsafe_allow_html=True)
+        st.markdown(f'<div class="c5s2-head"><div class="c5s2-heading-row"><div class="c5s2-heading-number">{int(number):02d}</div><div class="c5s2-heading-copy"><h3>{title}</h3><p>{instruction}</p></div></div></div>', unsafe_allow_html=True)
     with st.form("c5l1_s2_reading_form", border=False):
         with st.container(border=True):
             step_head("1", "Calcula las dimensiones del modelo", "En cada campo escribe la operación y el resultado con su unidad. Las pistas indican qué dimensiones buscar.")
