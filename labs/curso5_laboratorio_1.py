@@ -122,11 +122,13 @@ TEACHER_GUIDE = {
         ("Tres riesgos razonados", "Ejemplos aceptables: continuidad rígida en encuentros → flancos; puente perimetral del piso flotante → transmisión de impacto; juntas de ventana o shaft sin sellar → fuga aérea; fijaciones sanitarias rígidas → vía estructural. Cada riesgo debe relacionar elemento, mecanismo y medida."),
         ("Datos faltantes", "TR, densidades documentadas, rigidez dinámica o ficha ΔL, datos espectrales sanitarios, uniones y exposición exterior: explicar fuente de obtención y efecto en el modelo."),
     ], "No sumar sobrelosa a los 160 mm de losa estructural ni deducir rigidez o potencia sonora a partir del dibujo."),
-    3: ("Objetivo y alcance", [
-        ("Objetivo", "La meta obligatoria es clase A. Revisar tabiques, muros, ventanas, puertas, losas, encuentros e instalaciones; exigir rediseño cuando una característica no alcance A. Es una meta, no la clase obtenida. Debe citar ISO/TS 19488:2021 y acotar las cuatro situaciones en fase de diseño."),
-        ("Regla de clasificación", "La clase común depende del requisito limitante entre las situaciones aplicables verificadas; no se promedian letras ni dB. La ausencia de evidencia impide concluir conformidad global completa."),
-        ("Comprobación del ejemplo", "En el ejemplo hipotético de esta etapa: aéreo C, impacto C, fachada C e instalaciones D antes del rediseño; el conjunto de esos casos queda limitado a D. Tras mejorar instalaciones a C, los cuatro casos alcanzan C, sin acreditar vivienda ni edificio completos."),
-    ], "No aceptar el ejemplo resuelto como cálculo propio ni una clase A/B sin comprobar requisitos adicionales aplicables."),
+    3: ("Interpretación y decisión de diseño", [
+        ("Elección esperada", "Elegir la variante de 59 dB: supera el objetivo DₙT,50 ≥ 58 dB. La solución inicial de 55 dB queda 3 dB por debajo. No son resultados reales de SONARA."),
+        ("Margen y mejora", "Variante: margen +1 dB respecto del mínimo. Mejora entre propuestas: 4 dB. Distinguir margen, mejora y objetivo; no confundir 4 dB con una prestación ensayada del revestimiento."),
+        ("Condiciones que debe revisar", "Mismo descriptor, emisor/receptor, flancos, normalización, bandas e hipótesis. El Rw del muro no sustituye DₙT,50. Un margen pequeño requiere revisar incertidumbre y sensibilidad."),
+        ("Alcance de la decisión", "El resultado solo permite hablar del objetivo de AI-01 bajo las hipótesis del ejemplo. Los otros tres casos necesitan sus propios cálculos y comprobaciones. No exigir repetir la clasificación global de la Etapa 1."),
+        ("Criterio formativo", "Logrado si justifica elección, margen, condiciones y pendientes. Parcial si omite un punto; por corregir si compara descriptores distintos o declara clase global a partir de AI-01."),
+    ], "No aceptar el ejemplo como resultado propio. No cambiar el objetivo del laboratorio a C; la meta sigue siendo A."),
     4: ("Protocolo y entradas", [
         ("Flujo de proyecto", "Exigir proyecto Los Alerces con recintos y matriz de elementos; cálculos realizados desde Diseñar, base y rediseño guardados en Soluciones y evidencias del Informe. Contrastar el requisito del catálogo con la meta clase A."),
         ("Trazabilidad", "Revisar TR del estar/dormitorio, densidad HA, exposición exterior y procedencia de cada dato. Distinguir ficha, hipótesis académica y antecedente pendiente; no imponer un TR o densidad únicos sin fuente."),
@@ -1274,68 +1276,50 @@ def _global_building_explanation():
 
 
 def _stage3(lab, saved):
-    _header(3, "Cómo se clasifica una vivienda", "Comprender los criterios ISO con un ejemplo resuelto antes de definir el objetivo de diseño.")
-    _show_class_a_requirements(saved)
-    _download_standard("c5l1_stage3_iso19488_pdf")
-    st.markdown("**Secuencia:** resultado acústico → descriptor correcto → límite aplicable → clase por característica → conclusión con alcance.")
-    tabs = st.tabs(["Clases y criterios", "Ejemplo resuelto · A-302", "Edificio completo", "Tu objetivo y alcance"])
-    with tabs[0]:
-        st.markdown("### Seis clases y una declaración de desempeño")
-        st.markdown("**A es la clase más exigente; F la menos exigente del esquema.** NPD se utiliza cuando el desempeño no está determinado, no se requiere o queda fuera de las clases. No es una séptima clase ni una nota cero.")
-        _lab_table(pd.DataFrame([
-            ["A → B → C → D → E → F", "De mayor a menor exigencia acústica"],
-            ["Clase por característica", "Aéreo, impacto, exterior, instalaciones o zonas de acceso"],
-            ["Clase de vivienda", "Requiere todos los criterios aplicables al alcance de esa vivienda"],
-            ["Clase de edificio", "Requiere alcance y verificación del edificio; no se extrapola A-302"],
-        ], columns=["Concepto", "Interpretación"]), hide_index=True, width="stretch")
-        _lab_table(pd.DataFrame([
-            ["Aéreo", "DₙT,A / DₙT,50 o alternativa permitida", "Mayor aislamiento", "5.2 · tabla 1"],
-            ["Impacto", "L′ₙT,w y requisito de baja frecuencia cuando aplica", "Menor nivel", "5.3 · tabla 2"],
-            ["Exterior", "Aislamiento adaptado al espectro y exposición Lden", "Según exposición", "5.4 · tabla 3"],
-            ["Instalaciones", "LAeq,nT o LAFmax,nT según funcionamiento", "Menor nivel", "5.5 · tabla 4"],
-            ["Accesos / escaleras", "Reverberación o absorción en las bandas requeridas", "Según espacio", "5.6 · tabla 5"],
-        ], columns=["Característica", "Qué comprobar", "Comparación", "Consulta en el PDF"]), hide_index=True, width="stretch")
-        st.info("Un número único sin su descriptor, bandas, normalización y condición de operación no basta. La acústica entre habitaciones dentro de la misma vivienda no integra estas clases.")
-        st.markdown("**La clase global no es un promedio de letras:** queda limitada por la prestación menos favorable, siempre que se hayan cubierto todos los criterios aplicables. Consulta cláusula 6 y Anexo A para la verificación.")
-    with tabs[1]:
-        st.warning("EJEMPLO RESUELTO · Todos los resultados acústicos siguientes son hipotéticos. No son una salida calculada de SONARA ni respuestas que debas copiar en las etapas 5–8.")
-        st.markdown("### Encargo del ejemplo: al menos clase C en las cuatro situaciones")
-        st.markdown("A-302 recibe ruido aéreo desde A-301, impacto desde A-402, ruido exterior norte y ruido sanitario. Se usan las geometrías de AC-01 a AC-04 y las tablas 1–4 de ISO/TS 19488:2021.")
-        st.markdown("#### 1 · AI-01: separar el Rw del muro del resultado entre recintos")
-        st.markdown("Modela HA 180 mm, S = 10,20 m², V = 51,0 m³, TR declarado y flancos. Supón una salida final **DₙT,w = 55 dB y C = −2 dB**. Entonces **DₙT,A = 53 dB**. La fila entre viviendas de la tabla 1 exige **≥ 52 dB para C**: cumple. Para comprobar B mediante la alternativa DₙT,A, la nota de la tabla conduce a **≥ 56 dB**: 53 dB no basta. No compares 55 dB con un límite escrito para otro descriptor.")
-        st.markdown("#### 2 · IM-01: reducir el nivel de impacto")
-        st.markdown("Losa L-01 de 160 mm y recinto de V = 51,0 m³. Supón **69 dB** sin tratamiento y **L′ₙT,w = 53 dB** después del piso flotante. **53 ≤ 54 dB** cumple C en la fila entre viviendas de la tabla 2. No alcanza B: supera 50 dB y además B exige comprobar la baja frecuencia. La diferencia del caso es 16 dB; no la presentes automáticamente como ΔLw de un ensayo del revestimiento.")
-        st.markdown("#### 3 · FA-01: clasificar con la exposición exterior")
-        st.markdown("Fachada 15,30 m² = opaco 10,50 + V-01 4,80 m²; V = 51,0 m³. Adopta **Lden = 65 dB solo como hipótesis del ejemplo**. Supón D₂m,nT,w = 44 dB y Ctr = −6 dB: el aislamiento adaptado al tráfico es **38 dB**. Para C, tabla 3: **65 − 28 = 37 dB**, comprobando también el mínimo de la nota. **38 ≥ 37** cumple C. B requiere **65 − 24 = 41 dB**: no cumple. Declara la correspondencia del descriptor de SONARA con la magnitud requerida; no intercambies descriptores sin justificarla.")
-        st.markdown("#### 4 · IN-01: el funcionamiento y la normalización importan")
-        st.markdown("Descarga intermitente percibida en dormitorio (V = 28,8 m³). Supón **LAFmax,nT = 36 dB**, obtenido con la condición y normalización correctas. Tabla 4: C exige **≤ 34 dB**, D **≤ 38 dB**. Alcanza D y falla el objetivo C. Rediseña el camino dominante —cierre, sellado o fijaciones—. Si una variante entrega **33 dB**, alcanza C. Un LAeq o un máximo sin normalizar no sustituye este indicador.")
-        _lab_table(pd.DataFrame([
-            ["AI-01", "DₙT,A = 53 dB", "C", "C"],
-            ["IM-01", "L′ₙT,w = 53 dB", "C", "C"],
-            ["FA-01", "Aislamiento adaptado = 38 dB; Lden 65", "C", "C"],
-            ["IN-01", "LAFmax,nT: 36 → 33 dB", "D", "C"],
-        ], columns=["Caso", "Resultado hipotético", "Antes de rediseñar IN-01", "Después"]), hide_index=True, width="stretch")
-        st.success("Decisión de diseño: instalaciones limita inicialmente las cuatro características a D. Mejorar el muro no corrige ese problema. Después de actuar sobre IN-01, las cuatro situaciones alcanzan C.")
-        st.warning("Conclusión limitada: cuatro situaciones del A-302 alcanzan preliminarmente C. Falta cubrir las otras situaciones aplicables, accesos/escaleras cuando correspondan y la verificación. No declares clase C global de A-302 ni de las 20 viviendas a partir de este ejemplo parcial.")
-        st.caption("Referencia de comprobación: tablas 1–4, notas de descriptor y Anexo A.3–A.4 del PDF disponible. En obra se requieren los procedimientos de verificación aplicables.")
-    with tabs[2]:
-        _global_building_explanation()
-    with tabs[3]:
-        st.markdown("### Objetivo del encargo: clase A")
-        options = ["Clase A"]
-        previous = saved.get("c5l1_s3_target", options[0])
-        with st.form("c5l1_s3_scope_form"):
-            target = st.selectbox("Clase objetivo de diseño (no es clase obtenida)", options, index=options.index(previous) if previous in options else 0)
-            scope = EXERCISE_SCOPE
-            st.markdown("**Alcance obligatorio del encargo:** " + scope)
-            reason = st.text_area("Por qué no basta promediar las clases ni evaluar un único muro", value=saved.get("c5l1_s3_reason", ""), height=110)
-            submitted = st.form_submit_button("Guardar objetivo y alcance", width="stretch")
-        if submitted:
-            if len(reason.strip()) < 80:
-                st.warning("El alcance y la meta A ya están fijados. Explica la regla de clase limitante con al menos 80 caracteres.")
-            else:
-                _save(lab, saved, 3, c5l1_s3_target=target, c5l1_s3_scope=scope, c5l1_s3_reason=reason)
-                st.success("Objetivo guardado. Ahora prepara las entradas en la etapa 4; todavía no has obtenido una clase.")
+    _header(3, "De la predicción a la decisión de diseño", "Aprender a comparar un resultado con el objetivo A y decidir si la solución necesita rediseño.")
+    st.info("**Tu siguiente tarea:** interpretar resultados. En la Etapa 1 identificaste los objetivos; en la Etapa 2 preparaste geometría, riesgos y datos pendientes. Aquí practicarás cómo decidir si una propuesta alcanza su objetivo. Todavía no debes calcular en SONARA.")
+    st.markdown("### 1 · Antes de comparar, comprueba qué resultado tienes")
+    _lab_table(pd.DataFrame([
+        ["Caso y receptor", "¿El resultado corresponde al mismo emisor, receptor y elemento que el objetivo?", "AI-01: estar A-301 → estar A-302."],
+        ["Descriptor", "¿El resultado y el límite están expresados con la misma magnitud?", "DₙT,50 se compara con DₙT,50. El Rw del muro no lo sustituye."],
+        ["Condiciones", "¿Se consideran las bandas, flancos, normalización y condiciones exigidas?", "Si falta una condición necesaria, la comprobación queda pendiente."],
+        ["Decisión", "¿Supera el mínimo o queda por debajo del máximo aplicable?", "Si no alcanza el objetivo, identifica la brecha y rediseña la vía pertinente."],
+    ], columns=["Qué revisar", "Pregunta que debes hacerte", "Aplicación"]))
+    st.markdown("### 2 · Ejemplo guiado: mejorar el separador AI-01")
+    st.caption("Resultados hipotéticos para practicar la interpretación. No son cálculos de SONARA ni valores para copiar en las etapas de diseño.")
+    st.markdown("Usamos el caso ya conocido: **M-01 = 10,20 m²**, estar receptor de **51,0 m³** y transmisión directa más flancos. El objetivo de la Etapa 1 es **DₙT,50 ≥ 58 dB**. Suponemos que ambos resultados siguientes están expresados correctamente y contemplan las condiciones requeridas.")
+    _lab_table(pd.DataFrame([
+        ["Solución inicial", "DₙT,50 = 55 dB", "55 − 58 = −3 dB", "No alcanza el objetivo: faltan 3 dB."],
+        ["Propuesta rediseñada", "DₙT,50 = 59 dB", "59 − 58 = +1 dB", "Alcanza el objetivo previsto de AI-01, con 1 dB de margen."],
+    ], columns=["Propuesta", "Resultado supuesto", "Margen respecto del objetivo", "Decisión de diseño"]))
+    st.markdown("**¿Qué cambió?** El resultado entre recintos mejoró 4 dB. Para atribuir esa mejora a una solución, debes documentar qué cambiaste y recalcular. No basta aumentar el espesor del muro sin revisar los flancos y encuentros.")
+    st.info("**Qué puedes concluir:** la variante alcanza el objetivo A de AI-01 bajo las hipótesis del ejemplo. No demuestra los resultados de IM-01, FA-01 ni IN-01, ni la clase global de la vivienda o edificio. Un margen de 1 dB merece revisar la incertidumbre y la sensibilidad del diseño; no garantiza el comportamiento construido.")
+
+    st.markdown("### 3 · Usa la comparación correcta en cada caso")
+    _lab_table(pd.DataFrame([
+        ["AI-01 y FA-01 · aislamiento", "Resultado − mínimo exigido", "Positivo: supera el mínimo. Negativo: falta aislamiento."],
+        ["IM-01 e IN-01 · nivel recibido", "Máximo permitido − resultado", "Positivo: queda por debajo del máximo. Negativo: el nivel es demasiado alto."],
+        ["Cualquier caso", "Descriptor o condición incompletos", "No concluyas cumplimiento: completa los datos antes de decidir."],
+    ], columns=["Tipo de resultado", "Cómo expresar el margen favorable", "Cómo interpretarlo"]))
+    st.caption("Compara cada requisito aplicable por separado. Un margen favorable en un indicador no compensa otro requisito incumplido. En fachada, utiliza el límite correspondiente a la exposición documentada en la Etapa 1.")
+    st.caption("Referencia: ISO/TS 19488:2021 · §5.2, tabla 1, fila 1 y nota a · p. 7 / PDF 13; criterios por característica en §5.2–5.5, tablas 1–4 · pp. 7–9 / PDF 13–15. Las reglas generales de alcance ya se desarrollan en la Etapa 1.")
+
+    st.markdown("### 4 · Tu actividad: interpreta y decide")
+    st.markdown("A partir del ejemplo de 55 → 59 dB, explica: **qué propuesta elegirías y por qué; cuánto margen tiene; qué condiciones revisarías; y por qué ese resultado no resuelve los otros tres casos**. No se pide elegir otra clase ni repetir la teoría de clasificación global.")
+    if saved.get("c5l1_s3_reason"):
+        st.caption("Tu respuesta guardada se conserva. Puedes actualizarla para responder a esta actividad.")
+    with st.form("c5l1_s3_scope_form"):
+        target = "Clase A"
+        scope = EXERCISE_SCOPE
+        st.markdown("**Objetivo del proyecto: clase A · caso del ejemplo: AI-01.**")
+        reason = st.text_area("Tu decisión y su justificación", value=saved.get("c5l1_s3_reason", ""), placeholder="Elijo… porque… El margen es… Antes de aceptar el diseño revisaría… Para los otros casos todavía falta…", height=180)
+        submitted = st.form_submit_button("Guardar interpretación del ejemplo", type="primary", width="stretch")
+    if submitted:
+        if not reason.strip():
+            st.warning("Explica tu elección, el margen, las condiciones que revisarías y lo que falta para los demás casos.")
+        else:
+            _save(lab, saved, 3, c5l1_s3_target=target, c5l1_s3_scope=scope, c5l1_s3_reason=reason)
+            st.success("Interpretación guardada. En la Etapa 4 prepararás las entradas de tus modelos en Proyecto de SONARA.")
 
 
 def _stage4(lab, saved):
