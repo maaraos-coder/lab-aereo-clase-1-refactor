@@ -55,7 +55,7 @@ PROJECT = {
 ROOMS = [
     ["Estar-comedor", 20.4, 51.0, "Norte", "Fachada + medianero A-301"],
     ["Dormitorio principal", 11.5, 28.8, "Norte", "Fachada"],
-    ["Dormitorio 2", 9.2, 23.0, "Sur", "Pasillo común"],
+    ["Dormitorio 2", 9.2, 23.0, "Sur · sin ventana", "Muro opaco hacia pasillo común"],
     ["Cocina", 7.8, 19.5, "Interior", "Distribuidor y estar-comedor"],
     ["Baño principal", 4.1, 10.3, "Interior", "Shaft S-1"],
 ]
@@ -1098,7 +1098,7 @@ def _stage2(lab, saved):
         ["AI-01", "A-301 → A-302", "M-01", "4,08 × 2,50 = 10,20 m²", "V 51,0 m³ · HA 180 mm", "Directa + uniones laterales"],
         ["IM-01", "A-402 → A-302", "L-01", "Estar: 20,40 m²", "V 51,0 m³ · losa 160 mm", "Piso + losa + flancos"],
         ["FA-01", "Exterior → estar A-302", "F-01 + V-01", "15,30 = 10,50 + 4,80 m²", "V 51,0 m³ · DVH 6/12/4", "Componentes + juntas"],
-        ["IN-01", "Shaft → dormitorio", "S-01 + fijaciones", "V receptor 28,8 m³", "Cierre 120 mm · área según recorrido", "Aérea + estructural"],
+        ["IN-01", "Descarga sanitaria → dormitorio principal A-302", "S-01 + fijaciones", "V receptor 28,8 m³", "Cierre 120 mm · área según recorrido", "Aérea + estructural"],
     ]
     _lab_table(pd.DataFrame(matrix, columns=["Caso", "Fuente / receptor", "Elemento", "Geometría útil", "Datos de partida", "Vías"]), hide_index=True, width="stretch")
     st.markdown("### 3 · Qué datos tienes y cuáles faltan")
@@ -1132,7 +1132,7 @@ def _stage2(lab, saved):
         st.markdown(f'<div class="c5s2-head"><div class="c5s2-heading-row"><div class="c5s2-heading-number">{int(number):02d}</div><div class="c5s2-heading-copy"><h3>{title}</h3><p>{instruction}</p></div></div></div>', unsafe_allow_html=True)
     with st.form("c5l1_s2_reading_form", border=False):
         with st.container(border=True):
-            step_head("1", "Calcula las dimensiones del modelo", "En cada campo escribe la operación y el resultado con su unidad. Las pistas indican qué dimensiones buscar.")
+            step_head("1", "Calcula áreas y volumen", "En cada campo escribe la operación y el resultado con su unidad. Las pistas indican qué dimensiones buscar.")
             geometry_prompts = [
                 ("Área del muro M-01 que separa los dos estares", "Largo del muro × altura libre. Busca las cotas en AC-01 y AC-02.", "m01"),
                 ("Volumen del estar-comedor de A-302", "Superficie de piso del estar × altura libre. Resultado en m³.", "volume"),
@@ -1144,7 +1144,8 @@ def _stage2(lab, saved):
             for label, hint, code in geometry_prompts:
                 st.markdown("**" + label + "**")
                 st.markdown(hint)
-                value = answer("Operación y resultado · " + code, "c5l1_s2_geo_" + code, "Ejemplo de formato: 3,00 m × 2,00 m = 6,00 m²")
+                example = "Ejemplo de formato: 12,00 m² × 2,40 m = 28,80 m³" if code == "volume" else "Ejemplo de formato: 3,00 m × 2,00 m = 6,00 m²"
+                value = answer("Tu operación y resultado", "c5l1_s2_geo_" + code, example)
                 geometry_answers.append(label + ": " + value)
             st.caption("Autocomprobación: área opaca + área de ventana debe ser igual al área bruta de la fachada.")
             if saved.get("c5l1_s2_geometry") and not saved.get("c5l1_s2_geo_m01"):
