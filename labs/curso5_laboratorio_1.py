@@ -823,8 +823,8 @@ def _stage1(lab, saved):
         ["65 dB", "65 − 20 = 45 dB", "45 dB"],
     ], columns=["Lden exterior supuesto", "Cálculo", "Aislamiento adaptado mínimo para A"]))
     st.caption("Ejemplos didácticos; no fijan la exposición real de Los Alerces. El alumno debe adoptar y documentar su Lden y obtener el límite correspondiente antes de diseñar la ventana o la fachada.")
-    st.markdown("#### Otras situaciones de la norma · contexto, sin cálculos adicionales")
-    st.markdown("**Tu entrega mantiene los cuatro casos AI-01, IM-01, FA-01 e IN-01.** La norma también contempla las situaciones siguientes. Se muestran para entender por qué esos cuatro casos no bastan para declarar la clase de todo un edificio; **no debes añadirlas al proyecto de SONARA ni resolverlas en este laboratorio**.")
+    st.markdown("#### Otras situaciones de la norma · fuera del alcance de este laboratorio")
+    st.markdown("En este laboratorio desarrollarás únicamente los cuatro casos **AI-01, IM-01, FA-01 e IN-01**. Las situaciones siguientes se presentan como referencia y **no requieren cálculos ni modelos adicionales en SONARA para esta entrega**. Quedan fuera del alcance del ejercicio; esto no significa que sean no aplicables al edificio ni elimina los requisitos de una clasificación completa.")
     _lab_table(pd.DataFrame([
         ["Voces en el pasillo o la escalera común → recinto de una vivienda", "Ruido aéreo: atraviesa el cerramiento que incluye la puerta de entrada. Debe evaluarse el conjunto, no solo la puerta.", "DₙT,A ≥ 46 dB · más aislamiento es mejor", "§5.2 · Airborne sound insulation · tabla 1, fila 2 · p. 7 / PDF 13"],
         ["Actividad ruidosa en un local → recinto de una vivienda", "Ruido aéreo, por ejemplo música. Además del aislamiento, hay que estimar el ruido de la actividad concreta. El ejemplo no implica que Los Alerces tenga ese local.", "DₙT,50 ≥ 64 dB · más aislamiento es mejor", "§5.2 · Airborne sound insulation · tabla 1, fila 3 · p. 7 / PDF 13"],
@@ -832,9 +832,40 @@ def _stage1(lab, saved):
         ["Golpes o impactos de una actividad ruidosa en un local → recinto de una vivienda", "Ruido de impacto transmitido por la estructura. Es una situación distinta del ruido aéreo de ese mismo local; deben cumplirse ambos límites de impacto indicados.", "L′ₙT,w ≤ 40 dB Y L′ₙT,50 ≤ 44 dB · menos ruido recibido es mejor", "§5.3 · Impact sound insulation · tabla 2, fila 3 y notas a/c · p. 8 / PDF 14"],
     ], columns=["De dónde viene el ruido y a dónde llega", "Qué significa en la práctica", "Requisito de clase A", "Referencia · ISO/TS 19488:2021"]))
     st.caption("Cómo leerla: la flecha indica fuente → receptor. En aislamiento aéreo se exige un mínimo (≥); en impacto se limita el nivel recibido (≤). Estos valores corresponden a situaciones distintas: no sustituyen los objetivos de AI-01 ni de IM-01.")
-    st.info("**Notas de interpretación:** tabla 1, nota a: si se emplea DₙT,A en lugar de DₙT,50, el límite aumenta 2 dB (AI-01: ≥ 60 dB); si se emplea DₙT,w en lugar de DₙT,A, se añaden otros 2 dB (≥ 62 dB). Documenta la vía elegida, no intercambies cifras sin cambiar el descriptor. Tabla 4 permite máximo SLOW con límite 4 dB más estricto que FAST (clase A: LASmax,nT ≤ 22 dB(A)). No conviertas un resultado FAST en SLOW restándole 4 dB: cambia el límite, no el resultado.")
-    st.markdown("**Tu trabajo con estos límites:** selecciona la relación aplicable, registra el descriptor y criterio completos en la actividad, declara los datos que condicionan el valor y luego calcula y rediseña en SONARA. El objetivo está dado; tu tarea es demostrar cómo lo aplicas y qué solución permite cumplirlo.")
-    st.info("**Aplicación a Los Alerces:** los cuatro casos de A-302 permiten comenzar el diseño. Para concluir sobre el edificio se deben cubrir también las demás viviendas, tipologías y situaciones aplicables. La cláusula 4 excluye de esta clasificación el aislamiento entre recintos interiores de una misma vivienda; esos tabiques pueden diseñarse como prestación adicional, pero no deben confundirse con el separador entre viviendas.")
+    st.markdown("#### Cómo comparar tus resultados con la clase A")
+    st.markdown("Cada requisito tiene un **descriptor**, un **límite** y un **sentido de comparación**. Compara siempre el resultado con el límite del mismo descriptor.")
+    _lab_table(pd.DataFrame([
+        ["Aislamiento aéreo", "Mínimo: resultado ≥ límite", "Un aislamiento mayor ofrece mejor protección."],
+        ["Ruido de impacto e instalaciones", "Máximo: resultado ≤ límite", "Un nivel recibido menor ofrece mejor protección."],
+    ], columns=["Característica", "Cómo se comprueba", "Qué significa"]))
+
+    st.markdown("##### Aislamiento entre viviendas · criterio de AI-01")
+    st.info("**Criterio principal del ejercicio: DₙT,50 ≥ 58 dB.** Evalúa estar A-301 → estar A-302, incluyendo transmisión directa y flancos. El Rw del muro aislado no acredita por sí solo este objetivo.")
+    _lab_table(pd.DataFrame([
+        ["DₙT,50", "≥ 58 dB", "Descriptor principal que utilizaremos en AI-01."],
+        ["DₙT,A", "≥ 60 dB", "Alternativa: límite 2 dB mayor que el de DₙT,50."],
+        ["DₙT,w", "≥ 62 dB", "Alternativa: límite 2 dB mayor que el de DₙT,A."],
+    ], columns=["Descriptor del resultado", "Límite de clase A para AI-01", "Cuándo utilizarlo"]))
+    st.markdown("**Son alternativas, no tres comprobaciones simultáneas.** Los ajustes cambian el límite exigido; no convierten un resultado de un descriptor a otro sumándole 2 o 4 dB. Si SONARA entrega otro descriptor, obtén los datos necesarios para calcular el requerido o documenta la alternativa admitida.")
+    st.caption("Referencia: ISO/TS 19488:2021 · §5.2, Airborne sound insulation · tabla 1, fila 1 y nota a · p. 7 / PDF 13.")
+
+    st.markdown("##### Ruido de instalaciones · FAST y SLOW")
+    st.markdown("FAST y SLOW son ponderaciones temporales distintas para determinar el nivel máximo. Si utilizas la alternativa SLOW admitida por la tabla 4, debes emplear su descriptor y su límite específico, **4 dB menor que el correspondiente a FAST**. Para clase A, el máximo SLOW normalizado es **LASmax,nT ≤ 22 dB(A)**.")
+    st.info("**Cambia el límite de comparación, no el resultado.** No restes 4 dB a un resultado FAST para obtener SLOW. Comprueba qué descriptor proporciona el modelo y qué condición de funcionamiento representa.")
+    st.caption("Referencia: ISO/TS 19488:2021 · §5.5, Sound from service equipment · tabla 4 y nota relativa a SLOW · p. 9 / PDF 15.")
+
+    st.markdown("##### Qué debes entregar en los cuatro casos")
+    _lab_table(pd.DataFrame([
+        ["1 · Identifica el objetivo", "Registra el descriptor, el límite, el signo ≥ o ≤ y las condiciones aplicables."],
+        ["2 · Documenta los datos", "Indica geometría, materiales, fuentes e hipótesis; identifica cualquier dato pendiente."],
+        ["3 · Calcula la condición inicial", "Modela el caso en Proyecto de SONARA y conserva la evidencia del resultado."],
+        ["4 · Diseña y comprueba la mejora", "Modifica la solución, vuelve a calcular y compara el mismo descriptor con su límite."],
+    ], columns=["Paso", "Qué debes hacer"]))
+
+    st.markdown("##### Hasta dónde llega tu conclusión")
+    st.info("La entrega evalúa el **desempeño previsto de AI-01, IM-01, FA-01 e IN-01**. Las demás situaciones quedan fuera del alcance de este laboratorio. Tus resultados no demuestran la clase global de la vivienda ni del edificio; esa conclusión requiere cubrir todas las características y situaciones aplicables, además de la verificación correspondiente.")
+    st.markdown("**Separadores entre viviendas y tabiques interiores:** el muro A-301/A-302 forma parte del caso AI-01. Los tabiques entre recintos de la propia A-302 pueden diseñarse como una prestación adicional; el aislamiento dentro de una misma vivienda queda excluido de esta clasificación.")
+    st.caption("Referencia: ISO/TS 19488:2021 · §4, Acoustic classes · p. 6 / PDF 12.")
 
     st.markdown("### 4 · Qué podrás concluir a partir de las predicciones")
     st.markdown("La **cláusula 6 y el Anexo A.2.1** contemplan cálculos de predicción como parte de la verificación. El procedimiento A integra tres fases: el cálculo permite anticipar el desempeño, la inspección comprueba cómo se construyó y la medición verifica el resultado terminado. **En este laboratorio desarrollamos la primera fase:** diseñar para clase A mediante SONARA y preparar las comprobaciones posteriores.")
