@@ -1370,6 +1370,15 @@ def _stage4(lab, saved):
         ["Lden exterior", "Fija el objetivo de fachada.", "Antecedente o escenario justificado; no copiar 65 dB del ejemplo."],
     ], columns=["Entrada", "Para qué sirve", "Cómo justificarla"]))
     st.markdown("""<style>
+
+    [class*="st-key-c5s4_"]{background:#fff!important;border:1px solid #c9dde8!important;border-radius:16px!important;padding:20px!important;box-shadow:0 4px 15px #16445b08;margin-bottom:16px}
+    .c5s4-input-title{font-size:20px;font-weight:750;color:#12475e;border-bottom:2px solid #13a0b6;padding-bottom:10px;margin-bottom:10px}
+    .c5s4-input-note{font-size:14px;color:#456577;line-height:1.5;margin-bottom:16px}
+    [class*="st-key-c5s4_"] [data-testid="stWidgetLabel"] p{font-size:15px!important;font-weight:600!important;color:#173f56!important}
+    [class*="st-key-c5s4_"] [data-testid="stNumberInputContainer"]{background:#f0f7fb!important;border:1px solid #a8c7d7!important;border-radius:10px!important;min-height:48px}
+    [class*="st-key-c5s4_"] input{background:transparent!important;color:#123e56!important;font-size:18px!important;font-weight:600!important;padding:12px!important}
+    [class*="st-key-c5s4_"] input::placeholder{font-size:14px!important;font-weight:400!important;color:#5c7788!important;opacity:1}
+    [class*="st-key-c5s4_"] button{color:#087c96!important}
     .st-key-c5l1_s4_protocol_form{background:#fff;border:1px solid #c9dce7;border-radius:18px;padding:22px;box-shadow:0 6px 22px #16445b0a}
     .st-key-c5l1_s4_protocol_form [data-testid="stWidgetLabel"] p{font-size:16px!important;font-weight:600!important;color:#173f56!important}.st-key-c5l1_s4_protocol_form input,.st-key-c5l1_s4_protocol_form textarea{font-size:16px!important;background:#f4f9fc!important;border:1px solid #c2d8e3!important;border-radius:10px!important}
     </style>""", unsafe_allow_html=True)
@@ -1377,17 +1386,29 @@ def _stage4(lab, saved):
     with st.form("c5l1_s4_protocol_form", border=False):
         st.markdown("#### A · Introduce los datos de partida")
         st.markdown("Registra el valor que utilizarás y explica su origen en el apartado B. **TR** significa tiempo de reverberación; **HA**, hormigón armado. La densidad de sobrelosa y la rigidez dinámica corresponden al modelo físico del piso; si no lo utilizas, déjalas vacías y explica el motivo.")
-        columns = st.columns(2)
         inputs = {}
-        for index, (key, label, minimum, step) in enumerate([
-            ("tr_stay", "TR estar [s]", .1, .1),
-            ("tr_bedroom", "TR dormitorio [s]", .1, .1),
-            ("rho_ha", "Densidad HA [kg/m³]", 500., 50.),
-            ("rho_screed", "Densidad sobrelosa [kg/m³]", 100., 50.),
-            ("dynamic_stiffness", "Rigidez dinámica s′ [MN/m³] · si usas piso físico", .1, .5),
-            ("lden", "Exposición exterior Lden [dB]", 0., 1.),
-        ]):
-            inputs[key] = columns[index % 2].number_input(label, min_value=minimum, value=prev.get(key), step=step, placeholder="Dato o hipótesis documentada")
+        def input_card(column, key, title, subtitle, fields):
+            with column:
+                with st.container(border=True, key=key):
+                    st.markdown(f'<div class="c5s4-input-title">{title}</div><div class="c5s4-input-note">{subtitle}</div>', unsafe_allow_html=True)
+                    for name, label, minimum, step, hint in fields:
+                        inputs[name] = st.number_input(label, min_value=minimum, value=prev.get(name), step=step, placeholder=hint)
+        left, right = st.columns(2)
+        input_card(left, "c5s4_rooms", "Recintos receptores", "Tiempo de reverberación adoptado · segundos", [
+            ("tr_stay", "TR estar [s]", .1, .1, "Introduce el TR del estar"),
+            ("tr_bedroom", "TR dormitorio [s]", .1, .1, "Introduce el TR del dormitorio"),
+        ])
+        input_card(right, "c5s4_concrete", "Hormigón estructural", "Densidad del material de partida · kg/m³", [
+            ("rho_ha", "Densidad HA [kg/m³]", 500., 50., "Introduce la densidad del hormigón"),
+        ])
+        left, right = st.columns(2)
+        input_card(left, "c5s4_floor", "Sistema de piso", "Solo para el modelo físico · deja vacío si utilizas catálogo", [
+            ("rho_screed", "Densidad sobrelosa [kg/m³]", 100., 50., "Densidad de la sobrelosa"),
+            ("dynamic_stiffness", "Rigidez dinámica s′ [MN/m³] · si usas piso físico", .1, .5, "Rigidez de la capa resiliente"),
+        ])
+        input_card(right, "c5s4_exterior", "Exposición exterior", "Dato que determina el objetivo de fachada · dB", [
+            ("lden", "Exposición exterior Lden [dB]", 0., 1., "Introduce tu Lden documentado"),
+        ])
         st.markdown("#### B · Explica de dónde salen los datos")
         st.markdown("**Para cada valor indica:** nombre del dato, valor y unidad, fuente y motivo de elección. Si es una hipótesis, identifícala; si falta información, déjala señalada como pendiente.")
         input_sources = st.text_area("Fuentes de datos, hipótesis y antecedentes pendientes", value=saved.get("c5l1_s4_sources", ""), placeholder="Dato: … | Valor y unidad: … | Fuente: … | Justificación: …\nPendiente: …", height=140)
