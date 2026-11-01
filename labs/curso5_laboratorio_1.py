@@ -253,13 +253,13 @@ def _teacher_stage2_answers():
         ["Fachada", "Prestación espectral de ventana y opaco, exposición Lden en dB", "Ficha del conjunto y antecedente de exposición o hipótesis declarada."],
         ["Instalaciones", "Datos de fuente y transferencia aérea/estructural según módulo", "Condición de descarga, ficha o datos compatibles con el método; no inferirlos del dibujo."],
     ], columns=["Familia", "Datos que podrían faltar", "Procedencia esperada"]))
-    st.markdown("#### Criterios para la devolución")
+    st.markdown("#### Criterio de revisión: devolución formativa")
     _lab_table(pd.DataFrame([
         ["Logrado", "Operaciones y unidades correctas; tres riesgos con mecanismo y revisión; datos pendientes vinculados a sus casos y fuentes."],
         ["Parcialmente logrado", "Razonamiento válido con una omisión o error localizado que puede corregirse."],
         ["Por corregir", "Confunde área y volumen, incorpora otra ventana, interpreta espesores como aislamiento o inventa datos sin declararlos."],
     ], columns=["Estado formativo", "Cómo reconocerlo"]))
-    st.warning("**Errores clave:** no sumar el paquete de piso a los 160 mm de losa desnuda; no deducir prestaciones del render; no confundir riesgo con defecto confirmado. Los balcones son esquemáticos. Guardar acredita entrega, no corrección técnica.")
+    st.warning("**Errores que requieren corrección:** no sumar el paquete de piso a los 160 mm de losa desnuda; no deducir prestaciones del render; no confundir riesgo con defecto confirmado. Los balcones son esquemáticos. Guardar acredita entrega, no corrección técnica.")
     st.caption("Continuidad con Etapa 1: A-301 al oeste, A-402 encima, fachada norte y shaft S-1 junto al dormitorio principal. En elevación exterior norte, oeste a la derecha. Pauta exclusiva de vista Docente; no se muestra en Alumno ni Zoom.")
 
 
@@ -1561,6 +1561,7 @@ def run_stage(stage, lab, saved, runtime):
     result = _STAGES[stage](lab, saved)
     _teacher_guide(stage)
     return result
+
 
 
 
