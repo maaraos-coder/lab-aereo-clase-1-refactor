@@ -1371,11 +1371,12 @@ def _stage4(lab, saved):
     ], columns=["Entrada", "Para qué sirve", "Cómo justificarla"]))
     st.markdown("""<style>
     .st-key-c5l1_s4_protocol_form{background:#fff;border:1px solid #c9dce7;border-radius:18px;padding:22px;box-shadow:0 6px 22px #16445b0a}
-    .st-key-c5l1_s4_protocol_form input,.st-key-c5l1_s4_protocol_form textarea{background:#f4f9fc!important;border:1px solid #c2d8e3!important;border-radius:10px!important}
+    .st-key-c5l1_s4_protocol_form [data-testid="stWidgetLabel"] p{font-size:16px!important;font-weight:600!important;color:#173f56!important}.st-key-c5l1_s4_protocol_form input,.st-key-c5l1_s4_protocol_form textarea{font-size:16px!important;background:#f4f9fc!important;border:1px solid #c2d8e3!important;border-radius:10px!important}
     </style>""", unsafe_allow_html=True)
     prev = saved.get("c5l1_s4_inputs", {})
     with st.form("c5l1_s4_protocol_form", border=False):
-        st.markdown("#### A · Valores que utilizarás en el modelo")
+        st.markdown("#### A · Introduce los datos de partida")
+        st.markdown("Registra el valor que utilizarás y explica su origen en el apartado B. **TR** significa tiempo de reverberación; **HA**, hormigón armado. La densidad de sobrelosa y la rigidez dinámica corresponden al modelo físico del piso; si no lo utilizas, déjalas vacías y explica el motivo.")
         columns = st.columns(2)
         inputs = {}
         for index, (key, label, minimum, step) in enumerate([
@@ -1387,10 +1388,13 @@ def _stage4(lab, saved):
             ("lden", "Exposición exterior Lden [dB]", 0., 1.),
         ]):
             inputs[key] = columns[index % 2].number_input(label, min_value=minimum, value=prev.get(key), step=step, placeholder="Dato o hipótesis documentada")
-        st.markdown("#### B · Procedencia y comprobación de los datos")
-        input_sources = st.text_area("Fuentes de datos, hipótesis y antecedentes pendientes", value=saved.get("c5l1_s4_sources", ""), placeholder="Justifica cada número. Si eliges catálogo de piso, explica por qué s′ no se utiliza. Fuente sanitaria y transferencia estructural: ficha o escenario declarado.", height=140)
-        criteria = st.text_area("Criterios de diseño que comprobarás en cada caso", value=saved.get("c5l1_s4_criteria", ""), placeholder="Los objetivos ya están dados. Explica cómo obtendrás los indicadores de cada caso, las adaptaciones y qué harás si SONARA no entrega alguno. Incluye el límite de fachada según tu Lden.", height=140)
-        st.markdown("#### C · Organización de la base y el rediseño")
+        st.markdown("#### B · Explica de dónde salen los datos")
+        st.markdown("**Para cada valor indica:** nombre del dato, valor y unidad, fuente y motivo de elección. Si es una hipótesis, identifícala; si falta información, déjala señalada como pendiente.")
+        input_sources = st.text_area("Fuentes de datos, hipótesis y antecedentes pendientes", value=saved.get("c5l1_s4_sources", ""), placeholder="Dato: … | Valor y unidad: … | Fuente: … | Justificación: …\nPendiente: …", height=140)
+        st.markdown("**Cómo comprobarás los cuatro casos:** explica qué resultado buscarás en SONARA y cómo lo compararás con el objetivo A de la tabla superior. Para fachada, utiliza el límite correspondiente a tu Lden. Si el módulo no entrega un indicador necesario, señala qué falta.")
+        criteria = st.text_area("Criterios de diseño que comprobarás en cada caso", value=saved.get("c5l1_s4_criteria", ""), placeholder="AI-01: resultado que buscaré y comparación…\nIM-01: los dos indicadores que comprobaré…\nFA-01: exposición adoptada y límite…\nIN-01: máximo normalizado y condición de descarga…", height=140)
+        st.markdown("#### C · Organiza tus cálculos y evidencias")
+        st.markdown("Explica cómo distinguirás la solución inicial de la propuesta mejorada, qué cambiarás y qué condiciones mantendrás para compararlas. Indica qué resultados, curvas o capturas guardarás.")
         protocol = st.text_area("Protocolo personal de cálculo", value=saved.get("c5l1_s4_protocol", ""), placeholder="Nombres Base/Variante, capturas, curvas, unidades, condiciones que mantendrás y cómo justificarás los cambios.", height=130)
         submitted = st.form_submit_button("Guardar preparación del proyecto", type="primary", width="stretch")
     if submitted:
