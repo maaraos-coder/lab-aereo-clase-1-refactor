@@ -83,7 +83,7 @@ class DesignFlowTests(unittest.TestCase):
         ui = Surface({
             'Clase objetivo de diseño (no es clase obtenida)': 'Clase A',
             'Declaración de alcance de tu clasificación': 'ISO/TS 19488:2021 · cuatro situaciones del A-302 en fase de diseño. ' * 4,
-            'Por qué no basta promediar las clases ni evaluar un único muro': 'La clase limitante y las características pendientes deben justificarse. ' * 3,
+            'Tu decisión y su justificación': 'Elijo 59 dB: margen de 1 dB sobre 58. Revisaría flancos e hipótesis. Los otros tres casos requieren sus propios cálculos.',
         }, submit=True)
         lab.st = ui; lab._stage3({'id': 'test'}, state)
         self.assertEqual('Clase A', self.persisted[-1]['c5l1_s3_target'])
