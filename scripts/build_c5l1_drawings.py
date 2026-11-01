@@ -198,34 +198,47 @@ def section():
     end()
 
 def elevation():
-    frame('AC-03','FACHADA NORTE · ELEVACIÓN Y PAÑO DE CÁLCULO','V-01: estar / V-02: dormitorio. El límite azul identifica el caso FA-01.','1:100 · impresión A3')
-    k=10;bx=48;by=72;bw=19.6*k
+    frame('AC-03','FACHADA NORTE · CUATRO VIVIENDAS POR NIVEL','Vista desde el exterior: oeste a la derecha. Balcones esquemáticos; FA-01 delimita el cerramiento.','1:150 · impresión A3')
+    k=1000/150;bx=30;by=105;bw=39.2*k
     for level in range(5):
         yy=by+level*2.72*k
         rect(bx,yy,bw,2.72*k,'#f6f6f3',GRAY,.2)
-        line(bx,yy+.06*k,bx+bw,yy+.06*k,GRAY,.15)
-        for half in (0,1):
-            xx=bx+half*9.8*k
+        for bay in range(4):
+            xx=bx+bay*9.8*k
+            line(xx,yy,xx,yy+2.72*k,GRAY,.2)
+            # Exterior north view mirrors the north-up plan's x coordinates.
             for wx,ww in [(1.2,3.2),(7.1,1.6)]:
-                rect(xx+wx*k,yy+.9*k,ww*k,1.5*k,'#dfedf1',INK,.3)
-                line(xx+(wx+ww/2)*k,yy+.9*k,xx+(wx+ww/2)*k,yy+2.4*k,GRAY,.15)
-                line(xx+wx*k,yy+.9*k,xx+(wx+ww)*k,yy+2.4*k,GRAY,.12)
-        text(bx-5,yy+1.2*k,f'N{level+1}',2.8,align='right')
+                vx=xx+(9.8-wx-ww)*k
+                rect(vx,yy+.9*k,ww*k,1.5*k,'#dfedf1',INK,.3)
+                line(vx+ww*k/2,yy+.9*k,vx+ww*k/2,yy+2.4*k,GRAY,.15)
+            # Balcony railings are contextual, not added to the acoustic wall area.
+            rail=yy+.12*k
+            line(xx+.25*k,rail,xx+9.55*k,rail,INK,.35)
+            line(xx+.25*k,rail+.65*k,xx+9.55*k,rail+.65*k,GRAY,.25)
+            for n in range(12):
+                rx=xx+(.25+n*9.3/11)*k
+                line(rx,rail,rx,rail+.65*k,GRAY,.12)
+            text(xx+4.9*k,yy+.34*k,f'A-{level+1}0{4-bay}',2.1,BLUE if (level==2 and bay==2) else GRAY,True,'center')
+        text(bx-4,yy+1.25*k,f'PISO {level+1}',2.2,align='right')
     line(bx,by+13.6*k,bx+bw,by+13.6*k,INK,.6)
-    line(bx,by,bx+bw,by,INK,.5)
-    xx=bx+9.8*k;yy=by+2*2.72*k+.06*k
-    rect(xx,yy,6.12*k,2.5*k,None,BLUE,.65)
-    text(xx+3.06*k,yy+2.5*k+5,'FA-01 · ESTAR A-302',3,BLUE,True,'center')
-    text(xx+2.8*k,yy+1.5*k,'V-01',2.6,BLUE,True,'center')
-    text(xx+7.9*k,yy+1.5*k,'V-02',2.4,align='center')
+    # A-302 is second from west, hence third from left in this exterior view.
+    unit=bx+2*9.8*k; yy=by+2*2.72*k
+    rect(unit,yy,9.8*k,2.72*k,None,BLUE,.65)
+    xx=unit+3.68*k
+    rect(xx,yy+.06*k,6.12*k,2.5*k,None,RED,.45)
+    text(unit+1.9*k,yy+1.65*k,'V-02',2,BLUE,True,'center')
+    text(unit+5.5*k,yy+1.65*k,'V-01',2,BLUE,True,'center')
     dimh(xx,xx+6.12*k,by-12,'6,12 · paño del estar',by)
-    dimh(bx,bx+bw,by-23,'19,60 · dos viviendas en fachada',by)
-    dimv(yy,yy+2.5*k,bx+bw+12,'2,50',bx+bw)
-    arrow(xx+30,by+13.6*k+24,xx+30,yy+30,'NORTE / EXTERIOR')
+    dimh(bx,bx+bw,by-25,'39,20 · cuatro viviendas de 9,80 m',by)
+    text(bx,by+13.6*k+9,'ESTE',2.5,GRAY,True)
+    text(bx+bw,by+13.6*k+9,'OESTE',2.5,GRAY,True,'right')
+    text(bx+bw/2,by+13.6*k+19,'FACHADA NORTE · observada desde el exterior',3,BLUE,True,'center')
+    text(bx,by-39,'Azul: vivienda A-302. Rojo: cerramiento del estar para FA-01.',2.6,BLUE)
+    text(bx,by-46,'Balcones ilustrativos: su geometría no está definida para calcular correcciones.',2.5,GRAY)
     y=note(253,'FA-01 · ESTAR A-302',['Fachada bruta: 15,30 m².','Ventana V-01: 4,80 m².','Opaco F-01: 10,50 m².','Volumen receptor: 51,0 m³.','V-01: DVH 6 / 12 / 4 mm.'])
     y=note(y,'V-02 · DORMITORIO',['Ventana: 1,60 × 1,50 m.','Área: 2,40 m².','Volumen receptor: 28,8 m³.','Se evalúa como otro caso;','no sumar al estar FA-01.'])
-    y=note(y,'DATOS DE DISEÑO',['F-01: HA 150 mm + cámara','50 mm + yeso 15 mm.','Modelar marco y sellos según','los antecedentes disponibles.','El DVH por sí solo no','caracteriza toda la ventana.'])
-    note(y,'EXPOSICIÓN EXTERIOR',['Lden no se obtiene del plano.','Usar un dato de referencia','o una hipótesis declarada.','65 dB se utiliza solo en el','ejemplo resuelto de etapa 3.'])
+    y=note(y,'LECTURA Y ORIENTACIÓN',['Planta: norte hacia arriba.','Elevación: oeste a derecha.','A-301 a derecha de A-302.','A-303 a izquierda de A-302.','Cinco pisos; cuatro viviendas','por nivel: veinte en total.'])
+    note(y,'EXPOSICIÓN EXTERIOR',['Lden no se obtiene del plano.','Usar referencia o hipótesis.','Para efectos de balcones,','definir antes su geometría.','No deducir correcciones','acústicas de un render.'])
     end()
 
 def details():
