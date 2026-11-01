@@ -239,7 +239,7 @@ def _teacher_stage2_answers():
         ["F-01 · opaco", "15,30 − 4,80", "10,50 m²", "Comprobar 10,50 + 4,80 = 15,30 m²."],
     ], columns=["Magnitud", "Operación", "Resultado esperado", "Qué revisar"]))
     st.markdown("#### 02 · Riesgos: ejemplos de respuestas válidas")
-    st.caption("Se solicitan tres riesgos razonados. No es obligatorio repetir estos ejemplos ni utilizar tres casos diferentes.")
+    st.caption("La actividad solicita tres fichas: dónde está el riesgo, cómo podría pasar el ruido y qué revisar. No es obligatorio repetir estos ejemplos ni utilizar tres casos diferentes.")
     _lab_table(pd.DataFrame([
         ["AI-01 · AC-01/AC-04", "Encuentro rígido del medianero con losas o fachada", "Transmisión por flancos", "Revisar continuidad, uniones y solución de desacople cuando corresponda."],
         ["IM-01 · AC-02/AC-04", "Contacto rígido de sobrelosa con perímetro", "Puente que reduce la eficacia del piso flotante", "Comprobar banda perimetral, pasos y continuidad de la capa resiliente."],
@@ -247,6 +247,7 @@ def _teacher_stage2_answers():
         ["IN-01 · AC-01/AC-04", "Fijaciones o pasos sanitarios rígidos", "Transmisión estructural y posibles fugas aéreas", "Revisar abrazaderas, pasos y continuidad del cierre del shaft."],
     ], columns=["Caso y lámina", "Riesgo posible", "Mecanismo", "Comprobación o mejora"]))
     st.markdown("#### 03 · Datos pendientes: qué debe reconocer")
+    st.caption("El alumno elige tres datos. Cada ficha debe identificar el dato y su caso, explicar su uso y proponer una fuente; no se exige aportar todavía el valor numérico.")
     _lab_table(pd.DataFrame([
         ["Aéreo", "R(f) o indicadores compatibles, TR en s y datos de flancos/uniones", "Ficha, cálculo del elemento y descripción del encuentro."],
         ["Impacto", "Prestación del piso, ΔL(f) o rigidez dinámica en MN/m³ según método", "Ficha del sistema completo o hipótesis documentada; no duplicar mejoras."],
@@ -255,7 +256,7 @@ def _teacher_stage2_answers():
     ], columns=["Familia", "Datos que podrían faltar", "Procedencia esperada"]))
     st.markdown("#### Criterio de revisión: devolución formativa")
     _lab_table(pd.DataFrame([
-        ["Logrado", "Operaciones y unidades correctas; tres riesgos con mecanismo y revisión; datos pendientes vinculados a sus casos y fuentes."],
+        ["Logrado", "Cinco operaciones con unidades correctas; tres fichas de riesgo con ubicación, recorrido y revisión; tres datos pendientes con caso/unidad, uso y fuente."],
         ["Parcialmente logrado", "Razonamiento válido con una omisión o error localizado que puede corregirse."],
         ["Por corregir", "Confunde área y volumen, incorpora otra ventana, interpreta espesores como aislamiento o inventa datos sin declararlos."],
     ], columns=["Estado formativo", "Cómo reconocerlo"]))
@@ -1109,38 +1110,78 @@ def _stage2(lab, saved):
         ["Según método", "Instalaciones sanitarias", "Fuente, condición de descarga, fijaciones y transmisión aérea/estructural. Identifica las magnitudes que requiere el módulo; la potencia sonora sola no caracteriza toda la instalación."],
     ], columns=["Estado", "Familia de datos", "Cómo utilizarla"]))
     st.info("Marca lo no documentado como **pendiente** o como **hipótesis justificada**, con su procedencia y efecto. En la Etapa 4 prepararás las entradas de Proyecto de SONARA. Las dimensiones describen geometría: no demuestran el aislamiento.")
-    st.markdown("### 4 · Tu actividad: lectura y preparación del modelo")
-    st.markdown("Completa los tres apartados siguientes. Los riesgos son posibilidades que debes revisar: el plano por sí solo no demuestra un defecto de ejecución.")
+    st.markdown("### 4 · Lee los planos y completa tu ficha")
+    st.markdown("**¿Qué tienes que hacer?** Calcula cinco magnitudes, explica tres caminos posibles del ruido y señala tres datos que faltan para calcular en SONARA. Usa las láminas de arriba; todavía no debes calcular aislamiento.")
     st.markdown("""
-    <div style="padding:18px 22px;border-radius:14px;background:linear-gradient(110deg,#123e56,#087f98);color:white;margin:12px 0 20px">
-    <strong style="font-size:18px;color:white">Tu ficha de lectura acústica</strong>
-    <p style="margin:6px 0 0;color:#e2f5fa">Tres respuestas para preparar el modelo: geometría, riesgos y datos pendientes.</p>
-    </div>
+    <style>
+    .st-key-c5l1_s2_reading_form [data-testid="stVerticalBlockBorderWrapper"]{background:#fff;border-radius:18px!important;border:1px solid #cee0e9!important;box-shadow:0 5px 20px #16445b09;margin-bottom:18px}
+    .st-key-c5l1_s2_reading_form input,.st-key-c5l1_s2_reading_form textarea{background:#f7fbfd!important;color:#143d53!important;border:1px solid #bfd5e0!important;border-radius:10px!important}
+    .c5s2-head{padding:20px 22px;border-radius:14px;background:#e6f4f7;border-left:5px solid #0786a0;margin-bottom:15px}
+    .c5s2-head .step{font-size:12px;font-weight:800;letter-spacing:.1em;color:#08788e}
+    .c5s2-head h3{margin:6px 0!important;font-size:23px!important;color:#123e56!important}
+    .c5s2-head p{margin:0;color:#365b6e;font-size:16px;line-height:1.6}
+    .c5s2-example{padding:14px 18px;background:#fff4de;border-radius:10px;border-left:4px solid #dba43d;color:#604711;margin:12px 0;font-size:15px}
+    </style>
     """, unsafe_allow_html=True)
+    form_values = {}
+    def answer(label, key, placeholder):
+        value = st.text_input(label, value=saved.get(key, ""), key=key, placeholder=placeholder)
+        form_values[key] = value
+        return value
+    def step_head(number, title, instruction):
+        st.markdown(f'<div class="c5s2-head"><span class="step">PASO {number} DE 3</span><h3>{title}</h3><p>{instruction}</p></div>', unsafe_allow_html=True)
     with st.form("c5l1_s2_reading_form", border=False):
         with st.container(border=True):
-            st.markdown("#### 01 · Comprueba la geometría")
-            st.markdown("Usa AC-01, AC-02 y AC-03. Muestra las operaciones con unidades y distingue superficies de volúmenes.")
-            st.caption("Incluye: M-01 · volumen del estar · fachada bruta FA-01 · ventana V-01 · paño opaco F-01. Comprueba que opaco + ventana = fachada bruta.")
-            geometry = st.text_area("Desarrollo geométrico", value=saved.get("c5l1_s2_geometry", ""), placeholder="Magnitud → datos del plano → operación → resultado con unidad.", height=160)
+            step_head("1", "Calcula las dimensiones del modelo", "En cada campo escribe la operación y el resultado con su unidad. Las pistas indican qué dimensiones buscar.")
+            geometry_prompts = [
+                ("Área del muro M-01 que separa los dos estares", "Largo del muro × altura libre. Busca las cotas en AC-01 y AC-02.", "m01"),
+                ("Volumen del estar-comedor de A-302", "Superficie de piso del estar × altura libre. Resultado en m³.", "volume"),
+                ("Área bruta de la fachada del estar FA-01", "Ancho del paño del estar × altura libre. Incluye el espacio de la ventana.", "gross"),
+                ("Área de la ventana V-01 del estar", "Ancho × alto de V-01. No incluyas la ventana V-02 del dormitorio.", "window"),
+                ("Área opaca F-01: parte de fachada que no es ventana", "Área bruta FA-01 − área de V-01. Resultado en m².", "opaque"),
+            ]
+            geometry_answers = []
+            for label, hint, code in geometry_prompts:
+                st.markdown("**" + label + "**")
+                st.markdown(hint)
+                value = answer("Operación y resultado · " + code, "c5l1_s2_geo_" + code, "Ejemplo de formato: 3,00 m × 2,00 m = 6,00 m²")
+                geometry_answers.append(label + ": " + value)
+            st.caption("Autocomprobación: área opaca + área de ventana debe ser igual al área bruta de la fachada.")
+            if saved.get("c5l1_s2_geometry") and not saved.get("c5l1_s2_geo_m01"):
+                st.info("Tu respuesta anterior se conserva como referencia: " + saved["c5l1_s2_geometry"])
         with st.container(border=True):
-            st.markdown("#### 02 · Identifica tres riesgos acústicos")
-            st.markdown("Relaciona cada riesgo con una lámina y uno de los casos AI-01, IM-01, FA-01 o IN-01. Explica cómo podría transmitirse el ruido y qué revisarías.")
-            st.caption("Describe posibilidades que requieren comprobación; no afirmes defectos de ejecución que el plano no demuestra.")
-            findings = st.text_area("Tus tres riesgos y su justificación", value=saved.get("c5l1_s2_findings", ""), placeholder="Riesgo 1: caso / lámina / elemento o encuentro / mecanismo / revisión o mejora.\n\nRiesgo 2: ...\n\nRiesgo 3: ...", height=200)
+            step_head("2", "Explica por dónde podría pasar el ruido", "Elige tres puntos del proyecto que convendría revisar. Para cada uno indica dónde está, cómo pasa el ruido y qué comprobarías.")
+            st.markdown('<div class="c5s2-example"><strong>Ejemplo de razonamiento, de otro elemento:</strong> una rejilla comunica dos recintos → el sonido pasa por la abertura → revisar el recorrido y el tratamiento acústico. Escribe tus propios casos de Los Alerces.</div>', unsafe_allow_html=True)
+            risk_answers = []
+            for i in range(1, 4):
+                st.markdown(f"##### Punto a revisar {i}")
+                place = answer("¿Dónde está? · " + str(i), f"c5l1_s2_risk_{i}_place", "Indica caso, lámina y elemento: muro, piso, ventana, shaft o encuentro.")
+                mechanism = answer("¿Cómo podría pasar el ruido? · " + str(i), f"c5l1_s2_risk_{i}_mechanism", "Explica el recorrido: por el elemento, por una junta o a través de la estructura.")
+                action = answer("¿Qué revisarías o mejorarías? · " + str(i), f"c5l1_s2_risk_{i}_action", "Propón una comprobación o una solución relacionada con ese recorrido.")
+                risk_answers.append(f"Riesgo {i}: {place} | mecanismo: {mechanism} | revisión: {action}")
+            st.caption("Describe un riesgo posible. No afirmes que existe un defecto construido: estamos analizando un diseño.")
+            if saved.get("c5l1_s2_findings") and not saved.get("c5l1_s2_risk_1_place"):
+                st.info("Tu respuesta anterior se conserva como referencia: " + saved["c5l1_s2_findings"])
         with st.container(border=True):
-            st.markdown("#### 03 · Organiza los datos pendientes")
-            st.markdown("Identifica qué información falta para calcular. Indica la magnitud, su unidad, el caso al que corresponde y dónde la buscarías.")
-            st.caption("Distingue ficha técnica, cálculo e hipótesis documentada. No se solicita un plan de mediciones.")
-            missing_data = st.text_area("Datos y fuentes previstas", value=saved.get("c5l1_s2_missing", ""), placeholder="Caso → dato y unidad → por qué hace falta → fuente prevista → pendiente o hipótesis.", height=160)
-        st.caption("Antes de guardar: revisa unidades, tres riesgos explicados y procedencia de los datos. Puedes volver a editar tus respuestas.")
-        submitted = st.form_submit_button("Guardar mi ficha de lectura", type="primary", width="stretch")
+            step_head("3", "Señala qué información falta", "Escoge tres datos de la tabla de pendientes. Explica para qué los necesitas y de dónde los obtendrías.")
+            pending_answers = []
+            for i in range(1, 4):
+                st.markdown(f"##### Dato pendiente {i}")
+                datum = answer("¿Qué dato necesitas y para qué caso? · " + str(i), f"c5l1_s2_pending_{i}_datum", "Nombre del dato y unidad cuando corresponda; indica AI-01, IM-01, FA-01 o IN-01.")
+                purpose = answer("¿Para qué lo utilizarías? · " + str(i), f"c5l1_s2_pending_{i}_purpose", "Explica qué parte del cálculo permite completar.")
+                source = answer("¿Dónde lo buscarías? · " + str(i), f"c5l1_s2_pending_{i}_source", "Ficha técnica, cálculo previo o hipótesis documentada. Puedes dejarlo pendiente.")
+                pending_answers.append(f"Dato {i}: {datum} | uso: {purpose} | fuente: {source}")
+            st.caption("No debes inventar el valor ni proponer cantidades de mediciones. Aquí identificas la información necesaria.")
+            if saved.get("c5l1_s2_missing") and not saved.get("c5l1_s2_pending_1_datum"):
+                st.info("Tu respuesta anterior se conserva como referencia: " + saved["c5l1_s2_missing"])
+        st.markdown("**Antes de guardar:** cinco operaciones con unidades · tres recorridos del ruido explicados · tres datos pendientes con su fuente.")
+        submitted = st.form_submit_button("Guardar mi ficha de planos", type="primary", width="stretch")
     if submitted:
-        if min(len(geometry.strip()), len(findings.strip()), len(missing_data.strip())) < 80:
-            st.warning("Desarrolla la comprobación geométrica, tres riesgos y los datos faltantes (mín. 80 caracteres por apartado).")
+        if any(not value.strip() for value in form_values.values()):
+            st.warning("Completa las cinco operaciones y los tres campos de cada riesgo y dato pendiente antes de guardar.")
         else:
-            _save(lab, saved, 2, c5l1_s2_geometry=geometry, c5l1_s2_findings=findings, c5l1_s2_missing=missing_data)
-            st.success("Lectura guardada: úsala al preparar el protocolo de diseño.")
+            _save(lab, saved, 2, c5l1_s2_geometry="\n".join(geometry_answers), c5l1_s2_findings="\n".join(risk_answers), c5l1_s2_missing="\n".join(pending_answers), **form_values)
+            st.success("Ficha guardada. Estas respuestas te servirán para preparar los modelos en la Etapa 4.")
 
 
 
