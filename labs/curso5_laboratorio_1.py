@@ -879,7 +879,7 @@ def _stage1(lab, saved):
     st.caption("Fuente: ISO/TS 19488:2021, cláusula 6 (pp. 9–10) y Anexo A informativo, A.1–A.2.3 (pp. 11–12; páginas 17–18 del PDF). Las tablas anteriores son una síntesis didáctica; consultar el documento para las condiciones de conformidad, tolerancias y métodos completos.")
 
 
-    st.markdown("#### Alcance del ejercicio · definido por el docente")
+    st.markdown("#### Alcance del ejercicio")
     st.info(EXERCISE_SCOPE)
     _lab_table(pd.DataFrame([
         ["Proyecto y meta", "Los Alerces: 5 pisos, 20 viviendas. Meta de diseño: clase A."],
@@ -891,12 +891,13 @@ def _stage1(lab, saved):
     ], columns=["Decisión del encargo", "Definición para todos los estudiantes"]))
     st.markdown("**¿Qué decide el alumno?** Las soluciones constructivas y su justificación: capas, materiales, espesores, encuentros, tratamientos y alternativas. El objetivo A y los cuatro casos los fija el encargo; el alumno no elige otro edificio ni un alcance diferente.")
     st.caption("Contexto normativo: §4 · Acoustic classes · p. 6 / PDF 12 permite declarar características, viviendas o edificios completos; A.3 · Contents of verification report for classification of a dwelling or a building · p. 13 / PDF 19 exige precisar la conclusión y su evidencia. Esa flexibilidad de la norma no cambia el alcance docente fijado aquí.")
-    st.markdown("#### Ejemplo didáctico: tres tipologías dentro de un condominio")
+    st.markdown("#### Cómo se determina la clase acústica global")
+    st.markdown("La clase global se determina a partir de las características y viviendas incluidas en el alcance. **No se obtiene un promedio de las letras:** la clase queda limitada por el desempeño más desfavorable que corresponda considerar. Veamos un ejemplo con tres grupos de viviendas.")
     _lab_table(pd.DataFrame([
         ["T1 · departamentos interiores", "Aéreo A · impacto A · fachada A · instalaciones A · comunes A", "A"],
         ["T2 · departamentos frente a avenida", "Aéreo A · impacto A · fachada B · instalaciones A · comunes A", "B, limitada por fachada"],
         ["T3 · viviendas próximas a equipos", "Aéreo A · impacto A · fachada A · instalaciones C · comunes según aplicabilidad", "C, limitada por instalaciones"],
-    ], columns=["Grupo supuesto", "Clases de características supuestas", "Clase común del grupo si toda la evidencia lo respalda"]))
+    ], columns=["Grupo de viviendas del ejemplo", "Clase por característica", "Clase resultante del grupo"]))
     st.markdown("**Lectura del ejemplo:** no corresponde anunciar clase A para todo el conjunto mientras existan situaciones B o C. Si estas tipologías pertenecen a un mismo edificio y la verificación cubre todas las viviendas y requisitos, su clase global queda limitada a C. Si están en edificios distintos, informa la clase de cada edificio. Una eventual declaración común del condominio necesita un alcance explícito y evidencia de todas sus partes; no surge de promediar A, B y C. Para cumplir el encargo de clase A hay que rediseñar la fachada de T2 y las instalaciones de T3, y volver a comprobar todos los requisitos.")
     st.caption("Ejemplo hipotético creado para explicar la regla de §4 y A.4; no corresponde a resultados medidos ni a un inventario confirmado de Los Alerces. Una tipología arquitectónica repetida puede requerir más de un grupo acústico por sus encuentros, exposición o instalaciones.")
     st.caption("Regla de informe: A.3 · Contents of verification report for classification of a dwelling or a building · p. 13 / PDF 19: si varían las clases entre viviendas, recintos o características, la asignación considera la clase mínima de lo pertinente; pueden declararse además clases superiores de unidades individuales y tablas de resultados.")
