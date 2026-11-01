@@ -129,7 +129,9 @@ TEACHER_GUIDE = {
         ("Alcance de la decisión", "El resultado solo permite hablar del objetivo de AI-01 bajo las hipótesis del ejemplo. Los otros tres casos necesitan sus propios cálculos y comprobaciones. No exigir repetir la clasificación global de la Etapa 1."),
         ("Criterio formativo", "Logrado si justifica elección, margen, condiciones y pendientes. Parcial si omite un punto; por corregir si compara descriptores distintos o declara clase global a partir de AI-01."),
     ], "No aceptar el ejemplo como resultado propio. No cambiar el objetivo del laboratorio a C; la meta sigue siendo A."),
-    4: ("Protocolo y entradas", [
+    4: ("Preparación del proyecto y entradas", [
+        ("Objetivos ya fijados", "No exigir que el alumno redefina los límites A: los muestra el encargo. En fachada, revisar Lden y max(Lden − 20; 30). Exigir ambos indicadores de impacto y máximo FAST para la descarga intermitente."),
+        ("Revisión del formulario", "Comprobar fuentes y unidades de TR, densidad HA y Lden. Si utiliza s′, necesita densidad de sobrelosa. Si usa catálogo, justificar compatibilidad. Guardar no demuestra que ya estén completos los espectros y las transferencias de instalaciones."),
         ("Flujo de proyecto", "Exigir proyecto Los Alerces con recintos y matriz de elementos; cálculos realizados desde Diseñar, base y rediseño guardados en Soluciones y evidencias del Informe. Contrastar el requisito del catálogo con la meta clase A."),
         ("Trazabilidad", "Revisar TR del estar/dormitorio, densidad HA, exposición exterior y procedencia de cada dato. Distinguir ficha, hipótesis académica y antecedente pendiente; no imponer un TR o densidad únicos sin fuente."),
         ("Piso", "Si usa modelo físico: masa superficial de sobrelosa = densidad × 0,040 m y s′ documentada. Si usa catálogo medido, justificar compatibilidad del montaje y por qué s′ no se usa."),
@@ -664,14 +666,23 @@ def _stage0(lab, saved):
 
 
 def _show_class_a_requirements(saved, code=None):
-    requirements = saved.get("c5l1_s1_requirements", {})
-    rows = [[key, row.get("descriptor", ""), row.get("limit", ""), row.get("conditions", ""), row.get("reference", "")] for key, row in requirements.items() if code is None or key == code]
-    st.markdown("#### Requisitos de clase A definidos por ti en la etapa 1")
-    if rows:
-        _lab_table(pd.DataFrame(rows, columns=["Caso", "Descriptor", "Límite A", "Condiciones", "Referencia"]))
-        st.caption("Requisitos registrados por el alumno, pendientes de revisión técnica; guardar no valida la interpretación de la norma.")
-    else:
-        st.warning("Aún no hay requisitos de clase A guardados para este caso. Completa ese apartado en la etapa 1 antes de definir el modelo.")
+    rows = [
+        ["AI-01", "DₙT,50", "≥ 58 dB", "Resultado entre recintos con flancos.", "§5.2 · tabla 1, fila 1 · p. 7 / PDF 13"],
+        ["IM-01", "L′ₙT,w Y L′ₙT,50", "≤ 46 dB Y ≤ 50 dB", "Comprobar ambos indicadores y adaptación de baja frecuencia.", "§5.3 · tabla 2, fila 1 · p. 8 / PDF 14"],
+        ["FA-01", "DₙT,A,tr · justificar correspondencia con salida de fachada", "≥ max(Lden − 20; 30) dB", "Depende de exposición y espectro documentados.", "§5.4 · tabla 3, notas a–b · p. 8 / PDF 14"],
+        ["IN-01", "LAFmax,nT", "≤ 26 dB(A)", "Descarga intermitente; máximo FAST normalizado a T₀ = 0,5 s.", "§5.5 · tabla 4, fila 2 · p. 9 / PDF 15"],
+    ]
+    if code is not None:
+        rows = [row for row in rows if row[0] == code]
+    st.markdown("#### Objetivos de clase A del ejercicio")
+    _lab_table(pd.DataFrame(rows, columns=["Caso", "Descriptor", "Objetivo A", "Condiciones", "Referencia ISO/TS 19488:2021"]))
+    st.caption("Criterios fijados por el encargo y desarrollados en la Etapa 1. No debes volver a introducirlos. Tus anotaciones previas se conservan, pero no sustituyen estos objetivos. Aplicar las notas completas de cada tabla.")
+    lden = saved.get("c5l1_s4_inputs", {}).get("lden")
+    if code is None or code == "FA-01":
+        if isinstance(lden, (int, float)):
+            st.info(f"**FA-01:** con Lden guardado de {lden:g} dB, el límite es **≥ {max(lden - 20, 30):g} dB**. Comprueba descriptor, espectro y notas.")
+        else:
+            st.info("**FA-01:** la regla ya está definida. Registra y justifica Lden en esta etapa para obtener su límite numérico.")
 
 
 def _coverage_explanation():
@@ -1305,6 +1316,7 @@ def _stage3(lab, saved):
     st.caption("Referencia: ISO/TS 19488:2021 · §5.2, tabla 1, fila 1 y nota a · p. 7 / PDF 13; criterios por característica en §5.2–5.5, tablas 1–4 · pp. 7–9 / PDF 13–15. Las reglas generales de alcance ya se desarrollan en la Etapa 1.")
 
     st.markdown("### 4 · Tu actividad: interpreta y decide")
+    st.info("**Actividad de interpretación escrita:** usa los resultados del ejemplo. No necesitas abrir SONARA; compara los valores y justifica tu decisión.")
     st.markdown("A partir del ejemplo de 55 → 59 dB, explica: **qué propuesta elegirías y por qué; cuánto margen tiene; qué condiciones revisarías; y por qué ese resultado no resuelve los otros tres casos**. No se pide elegir otra clase ni repetir la teoría de clasificación global.")
     if saved.get("c5l1_s3_reason"):
         st.caption("Tu respuesta guardada se conserva. Puedes actualizarla para responder a esta actividad.")
@@ -1325,35 +1337,45 @@ def _stage3(lab, saved):
 def _stage4(lab, saved):
     _header(4, "Preparar el proyecto en SONARA", "Convertir el objetivo y los planos en entradas trazables antes de calcular.")
     _show_class_a_requirements(saved)
-    st.info(f"**Meta obligatoria: Clase A. Objetivo registrado:** {saved.get('c5l1_s3_target', 'Pendiente de definir')}.")
-    st.markdown("### Crear y organizar el proyecto en SONARA")
+    st.info("**Meta del proyecto: Clase A · trabajo en Proyecto de SONARA.** Aquí preparas las entradas. Los cálculos base y rediseño se desarrollan en las etapas 5–8.")
+    st.markdown("### 1 · Crea y organiza los cuatro casos")
     st.markdown("""1. Entra a **Proyecto → Proyecto**, escribe **Los Alerces · tu nombre** y pulsa **Crear / actualizar proyecto**.
 2. En **Recintos**, registra los emisores y receptores de los planos: estar A-301, estar A-302, estar A-402 y dormitorio A-302; identifica nivel, uso, área y volumen. Añade exterior y los recintos de instalaciones cuando corresponda, sin inventar geometría faltante.
-3. En **Elementos**, selecciona emisor, receptor y tipo de elemento. Añade los casos AI-01, IM-01, FA-01 e IN-01, además de tabiques, ventanas y puertas que correspondan al alcance. Pulsa **Agregar elemento a la matriz** o **Diseñar este elemento**.
+3. En **Elementos**, selecciona emisor, receptor y tipo de elemento. Añade los casos AI-01, IM-01, FA-01 e IN-01, Incluye los componentes de esos cuatro casos; no se exigen modelos adicionales de puertas o tabiques interiores en esta entrega. Pulsa **Agregar elemento a la matriz** o **Diseñar este elemento**.
 4. En **Diseñar**, comprueba **Elemento activo a diseñar** y elige la herramienta en **Calculadora del requerimiento**. Realiza allí los cálculos del laboratorio.
 5. Guarda la base y el rediseño, identificados por caso. Comprueba ambos en **Soluciones** y prepara la documentación desde **Informe**.
 6. Registra en este laboratorio los indicadores, referencias y evidencias; el traslado desde SONARA es manual.""")
     st.info("**Requisitos de clase A:** contrasta el descriptor y el valor del requerimiento disponible en el catálogo con ISO/TS 19488:2021. La selección de una referencia o el estado de cumplimiento de SONARA no acredita por sí solo clase A. Si el catálogo no ofrece el requisito exacto, documenta la diferencia y comprueba el umbral y los requisitos adicionales en tu matriz del laboratorio.")
-    with st.expander("Recuperar lectura de planos y alcance"):
-        st.markdown(saved.get("c5l1_s2_geometry", "Sin comprobación geométrica guardada."))
-        st.markdown(saved.get("c5l1_s2_findings", "Sin riesgos guardados."))
-        st.markdown(saved.get("c5l1_s3_scope", "Sin alcance guardado."))
+    st.markdown("### 2 · Datos del expediente y herramienta de cálculo")
+    st.markdown("Usa tu ficha de la Etapa 2 como apoyo. Esta matriz resume geometría y composición; no acredita prestaciones acústicas.")
     _lab_table(pd.DataFrame([
         ["M-01 / AI-01", "HA 180 mm; S 10,20 m²; V 51,0 m³", "Proyecto → Diseñar → ISO 12354-1", "DₙT,w y adaptaciones finales"],
         ["L-01 / IM-01", "Losa 160; resiliente 10; sobrelosa 40; terminación 10 mm", "Proyecto → Diseñar → Ruido de impacto", "L′ₙT,w y adaptación aplicable"],
         ["F-01 + V-01 / FA-01", "10,50 m² opacos + 4,80 m² de ventana", "Proyecto → Diseñar → Fachada ISO 12354-3", "Aislamiento de fachada adaptado"],
         ["S-01 / IN-01", "2 RF 12,5 / cámara 70 / 2 RF 12,5 mm; V 28,8 m³", "Proyecto → Diseñar → Instalaciones EN 12354-5", "LAeq,nT / LAFmax,nT según operación"],
     ], columns=["Caso", "Datos del expediente", "Ruta SONARA", "Resultado a registrar"]), hide_index=True, width="stretch")
-    st.markdown("### Tu secuencia de trabajo")
-    st.markdown("""1. Identifica la fila normativa, el descriptor y todos los requisitos de clase A para cada caso.
+    st.markdown("### 3 · Prepara una comparación reproducible")
+    st.markdown("""1. Usa los objetivos A mostrados arriba. Comprueba que la salida del módulo corresponda al descriptor y las condiciones requeridas.
 2. Prepara la solución base y registra sus resultados.
 3. Identifica el camino dominante y modifica una variable.
 4. Recalcula conservando el resto de condiciones.
 5. Compara con clase A, rediseña si falta desempeño y guarda la solución final y las brechas pendientes.
 6. Clasifica tus propios resultados en la etapa 10.""")
     st.warning("Los valores iniciales de SONARA no son datos del proyecto. Los campos siguientes quedan vacíos hasta que elijas una ficha o declares una hipótesis. La masa de sobrelosa se calcula como densidad × 0,040 m; su capa resiliente de 10 mm no determina s′ por sí sola.")
+    st.markdown("### 4 · Registra las entradas y su procedencia")
+    _lab_table(pd.DataFrame([
+        ["TR del estar y dormitorio", "Condición del receptor, en segundos.", "Antecedente o hipótesis declarada."],
+        ["Densidad HA", "Propiedad del material, en kg/m³.", "Ficha o referencia técnica."],
+        ["Densidad de sobrelosa y s′", "Modelo físico del piso.", "Si usas catálogo compatible, justifica las entradas no utilizadas."],
+        ["Lden exterior", "Fija el objetivo de fachada.", "Antecedente o escenario justificado; no copiar 65 dB del ejemplo."],
+    ], columns=["Entrada", "Para qué sirve", "Cómo justificarla"]))
+    st.markdown("""<style>
+    .st-key-c5l1_s4_protocol_form{background:#fff;border:1px solid #c9dce7;border-radius:18px;padding:22px;box-shadow:0 6px 22px #16445b0a}
+    .st-key-c5l1_s4_protocol_form input,.st-key-c5l1_s4_protocol_form textarea{background:#f4f9fc!important;border:1px solid #c2d8e3!important;border-radius:10px!important}
+    </style>""", unsafe_allow_html=True)
     prev = saved.get("c5l1_s4_inputs", {})
-    with st.form("c5l1_s4_protocol_form"):
+    with st.form("c5l1_s4_protocol_form", border=False):
+        st.markdown("#### A · Valores que utilizarás en el modelo")
         columns = st.columns(2)
         inputs = {}
         for index, (key, label, minimum, step) in enumerate([
@@ -1365,15 +1387,19 @@ def _stage4(lab, saved):
             ("lden", "Exposición exterior Lden [dB]", 0., 1.),
         ]):
             inputs[key] = columns[index % 2].number_input(label, min_value=minimum, value=prev.get(key), step=step, placeholder="Dato o hipótesis documentada")
+        st.markdown("#### B · Procedencia y comprobación de los datos")
         input_sources = st.text_area("Fuentes de datos, hipótesis y antecedentes pendientes", value=saved.get("c5l1_s4_sources", ""), placeholder="Justifica cada número. Si eliges catálogo de piso, explica por qué s′ no se utiliza. Fuente sanitaria y transferencia estructural: ficha o escenario declarado.", height=140)
-        criteria = st.text_area("Criterios de diseño que comprobarás en cada caso", value=saved.get("c5l1_s4_criteria", ""), placeholder="Caso, descriptor, límite, sentido ≥/≤, tabla y nota. No copies sin revisar el ejemplo de etapa 3.", height=140)
+        criteria = st.text_area("Criterios de diseño que comprobarás en cada caso", value=saved.get("c5l1_s4_criteria", ""), placeholder="Los objetivos ya están dados. Explica cómo obtendrás los indicadores de cada caso, las adaptaciones y qué harás si SONARA no entrega alguno. Incluye el límite de fachada según tu Lden.", height=140)
+        st.markdown("#### C · Organización de la base y el rediseño")
         protocol = st.text_area("Protocolo personal de cálculo", value=saved.get("c5l1_s4_protocol", ""), placeholder="Nombres Base/Variante, capturas, curvas, unidades, condiciones que mantendrás y cómo justificarás los cambios.", height=130)
-        submitted = st.form_submit_button("Guardar protocolo y entradas de diseño", width="stretch")
+        submitted = st.form_submit_button("Guardar preparación del proyecto", type="primary", width="stretch")
     if submitted:
         if inputs["tr_stay"] is None or inputs["tr_bedroom"] is None or inputs["rho_ha"] is None or inputs["lden"] is None:
             st.warning("Define TR del estar y dormitorio, densidad HA y exposición exterior; justifica los restantes datos según el modelo elegido.")
-        elif len(input_sources.strip()) < 120 or len(criteria.strip()) < 120 or len(protocol.strip()) < 140:
-            st.warning("Completa fuentes (120 caracteres), criterios (120) y protocolo (140).")
+        elif not all(value.strip() for value in (input_sources, criteria, protocol)):
+            st.warning("Completa las fuentes, cómo comprobarás los objetivos y cómo organizarás base y rediseño.")
+        elif inputs["dynamic_stiffness"] is not None and inputs["rho_screed"] is None:
+            st.warning("Si utilizas s′ para el modelo físico, registra también la densidad de sobrelosa.")
         else:
             _save(lab, saved, 4, c5l1_s4_inputs=inputs, c5l1_s4_sources=input_sources, c5l1_s4_criteria=criteria, c5l1_s4_protocol=protocol)
             st.success("Entradas guardadas; se recuperarán en las etapas 5–8.")
@@ -1587,6 +1613,7 @@ def run_stage(stage, lab, saved, runtime):
     result = _STAGES[stage](lab, saved)
     _teacher_guide(stage)
     return result
+
 
 
 
