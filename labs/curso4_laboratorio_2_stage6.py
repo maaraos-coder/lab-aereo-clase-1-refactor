@@ -1,7 +1,7 @@
 """Etapa 6 · Curso 4 Laboratorio 2: diseño e implementación de medidas de control."""
 
 from copy import deepcopy
-from labs.curso4_lab2_control_scope import render_scope, validate_scope
+from labs.curso4_lab2_control_scope import _front_name, render_scope, validate_scope
 
 MEASURE_OPTIONS=[
     "Seleccionar medida",
@@ -42,7 +42,7 @@ def _scenario_key(front):
     return s
 
 
-def _original_maxima(saved):
+def _original_maxima(saved, *, by_front=False):
     """Máximo modelado por escenario a partir de la Etapa 5 del alumno."""
     rows=saved.get("c4l2_s5_detailed_results") or []
     out={}
@@ -50,11 +50,12 @@ def _original_maxima(saved):
         laeq=_num(row.get("LAeq [dB(A)]"))
         if laeq is None:
             continue
-        key=_scenario_key(row.get("Frente"))
+        key=_front_name(row.get("Frente")) if by_front else _scenario_key(row.get("Frente"))
         cur=out.get(key)
         if cur is None or laeq>cur["laeq"]:
             out[key]={
                 "laeq":laeq,
+                "front":str(row.get("Frente") or ""),
                 "receptor":str(row.get("Receptor") or ""),
             }
     return out
@@ -69,10 +70,10 @@ def _teacher_reference_maxima():
     }
 
 
-def _build_design_rows(maxima,limit=65.0,fronts=None):
+def _build_design_rows(maxima,limit=65.0,fronts=None, *, by_front=False):
     rows=[]
     for base in (FRONT_TEMPLATE if fronts is None else fronts):
-        key=_scenario_key(base["Frente / condición"])
+        key=_front_name(base["Frente / condición"]) if by_front else _scenario_key(base["Frente / condición"])
         m=maxima.get(key,{})
         original=m.get("laeq")
         excess=(original-limit) if original is not None else None
@@ -95,7 +96,10 @@ def _student_design_rows(saved,limit=65.0):
         for source in (saved.get("c4l2_s3_acoustic_sources") or []) if str(source.get("Etapa") or "").strip()))
     types={row["Frente / condición"]:row["Tipo de trabajo"] for row in FRONT_TEMPLATE}
     fronts=[{"Frente / condición":name,"Tipo de trabajo":types.get(name,"Según actividad registrada")} for name in names]
-    return _build_design_rows(_original_maxima(saved),limit,fronts=fronts or None)
+    maxima=_original_maxima(saved,by_front=True)
+    if maxima:
+        fronts=[{"Frente / condición":m["front"],"Tipo de trabajo":types.get(m["front"],"Según actividad registrada")} for m in maxima.values()]
+    return _build_design_rows(maxima,limit,fronts=fronts or None,by_front=True)
 
 
 def _teacher_design_rows(limit=65.0):
@@ -279,13 +283,13 @@ def render(lab,saved,runtime):
         f"Criterio recuperado de la Etapa 5: **periodo {reference_period.lower()} · "
         f"límite de {reference_limit:.0f} dB(A)**, utilizado como referencia normativa del laboratorio."
     )
-    maxima=_original_maxima(saved)
+    maxima=_original_maxima(saved,by_front=True)
     if maxima:
         problem=[]
         for sc,m in maxima.items():
             excess=m["laeq"]-reference_limit
             problem.append({
-                "Escenario":sc,
+                "Frente":m["front"],
                 "Receptor crítico":m["receptor"],
                 "Mayor LAeq [dB(A)]":round(m["laeq"],1),
                 "Límite [dB(A)]":reference_limit,
@@ -363,7 +367,13 @@ def render(lab,saved,runtime):
         saved_rows=saved.get("c4l2_s6_control_design") or _teacher_design_rows(reference_limit)
         design_grid_key="c4l2_s6_design_grid_teacher_v2"
     else:
-        saved_rows=saved.get("c4l2_s6_control_design") or _student_design_rows(saved,reference_limit)
+        previous={_front_name(row.get("Frente / condición")):row for row in saved.get("c4l2_s6_control_design") or []}
+        saved_rows=_student_design_rows(saved,reference_limit)
+        for row in saved_rows:
+            prior=previous.get(_front_name(row["Frente / condición"]),{})
+            for field in ("Medida seleccionada","Justificación","Proyecto controlado"):
+                if field in prior:
+                    row[field]=prior[field]
         design_grid_key="c4l2_s6_design_grid_student_v2"
 
     # Unify previously named barrier variants; unsupported choices require a new selection.
