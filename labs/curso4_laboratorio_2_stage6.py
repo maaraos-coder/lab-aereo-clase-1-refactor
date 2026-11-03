@@ -146,7 +146,7 @@ def _strategy_editor(st,pd,rows,key):
           </div>
           <div style="color:#526f80;line-height:1.5">
             Los datos acústicos vienen de la Etapa 5. Completa únicamente la medida,
-            su justificación técnica y el nombre de la copia controlada. La aplicación por máquina se configura en la sección 6.
+            su justificación técnica y el nombre de la copia controlada. La aplicación por máquina se configura en el apartado de configuración en detalle.
           </div>
         </div>
         """,
@@ -264,6 +264,11 @@ def render(lab,saved,runtime):
     </div>
     """,unsafe_allow_html=True)
 
+    st.info(
+        "**Tu entrega, para cada frente.** Identifica el receptor crítico y la reducción de LAeq que necesitas. "
+        "Elige y justifica una medida viable. Registra qué máquinas reciben tratamiento y cuáles conservan su emisión. "
+        "Implementa la medida en Noise Map Lab y guarda el proyecto controlado y su línea base comparable para la Etapa 7."
+    )
     _teacher_solution(st,pd)
 
     st.markdown("### 1 · Recupera el problema acústico")
@@ -286,7 +291,7 @@ def render(lab,saved,runtime):
                 "Mayor LAeq [dB(A)]":round(m["laeq"],1),
                 "Límite [dB(A)]":reference_limit,
                 "Excedencia [dB]":round(excess,1),
-                "Diagnóstico":"Sobre el límite" if excess>0 else "Bajo el límite",
+                "Diagnóstico":"Sobre el límite" if excess>0 else ("En el límite" if excess == 0 else "Bajo el límite"),
             })
         st.dataframe(pd.DataFrame(problem),hide_index=True,use_container_width=True)
     else:
@@ -297,34 +302,6 @@ def render(lab,saved,runtime):
 
     from labs import curso4_control_workshop as workshop
     from labs import curso4_control_models as control_model
-    workshop.render_examples(st,pd)
-    st.warning(
-        "El proyecto Eyzaguirre es el caso de aplicación. Diseña y justifica tus propias medidas "
-        "a partir de la Etapa 5; los ejemplos no constituyen una solución obligatoria del proyecto."
-    )
-    tl_config,tl_spectrum=workshop.render_tl_calculator(
-        st,pd,"c4l2_s6_tl_material_v1",saved.get("c4l2_s6_tl_calculator")
-    )
-    if st.button("Guardar diseño del panel",key="c4l2_s6_tl_save"):
-        saved["c4l2_s6_tl_calculator"]=tl_config
-        runtime["_save"](lab,saved,6)
-        st.success("Panel y espectro TL guardados para utilizarlos en el diseñador.")
-
-    st.markdown("### 4 · Diseñador de tratamientos · igual que Noise Map Lab")
-    st.markdown(
-        "Configura geometría, seis superficies, Rw o TL por bandas, absorción interior y ventilación. "
-        "El resultado se obtiene del balance energético y de la emisión de cada cara. "
-        "Después asigna los parámetros a las máquinas concretas del frente elegido. La práctica no aplica automáticamente una reducción al frente completo."
-    )
-    study_cfg,study_results=workshop.render_designer(
-        st,pd,"c4l2_s6_study_v3",saved.get("c4l2_s6_treatment_study"),suggested_tl=tl_spectrum
-    )
-    if st.button("Guardar cálculo de práctica",key="c4l2_s6_study_save"):
-        saved["c4l2_s6_treatment_study"]=study_cfg
-        saved["c4l2_s6_treatment_study_results"]=study_results
-        runtime["_save"](lab,saved,6)
-        st.success("Práctica y parámetros guardados.")
-
     role=st.session_state.get("role")
     is_teacher=role=="Docente"
     stage5_rows=saved.get("c4l2_s5_detailed_results") or []
@@ -342,6 +319,36 @@ def render(lab,saved,runtime):
             "Vuelve a la Etapa 5, registra los resultados obtenidos en Noise Map Lab y presiona "
             "**Guardar resultados detallados**. Luego regresa a la Etapa 6."
         )
+        with st.expander("Herramientas de apoyo · ejemplos, TL y práctica"):
+            st.info("Estas herramientas son opcionales. Usa la calculadora TL si necesitas estimar el aislamiento de un panel. Si elegiste una barrera, configura su ubicación y los caminos fuente–receptor en el apartado B del diseño en detalle.")
+            workshop.render_examples(st,pd)
+            st.warning(
+                "El proyecto Eyzaguirre es el caso de aplicación. Diseña y justifica tus propias medidas "
+                "a partir de la Etapa 5; los ejemplos no constituyen una solución obligatoria del proyecto."
+            )
+            tl_config,tl_spectrum=workshop.render_tl_calculator(
+                st,pd,"c4l2_s6_tl_material_v1",saved.get("c4l2_s6_tl_calculator")
+            )
+            if st.button("Guardar diseño del panel",key="c4l2_s6_tl_save"):
+                saved["c4l2_s6_tl_calculator"]=tl_config
+                runtime["_save"](lab,saved,6)
+                st.success("Panel y espectro TL guardados para utilizarlos en el diseñador.")
+
+            st.markdown("**Diseñador de práctica**")
+            st.markdown(
+                "Configura geometría, seis superficies, Rw o TL por bandas, absorción interior y ventilación. "
+                "El resultado se obtiene del balance energético y de la emisión de cada cara. "
+                "Después asigna los parámetros a las máquinas concretas del frente elegido. La práctica no aplica automáticamente una reducción al frente completo."
+            )
+            study_cfg,study_results=workshop.render_designer(
+                st,pd,"c4l2_s6_study_v3",saved.get("c4l2_s6_treatment_study"),suggested_tl=tl_spectrum
+            )
+            if st.button("Guardar cálculo de práctica",key="c4l2_s6_study_save"):
+                saved["c4l2_s6_treatment_study"]=study_cfg
+                saved["c4l2_s6_treatment_study_results"]=study_results
+                runtime["_save"](lab,saved,6)
+                st.success("Práctica y parámetros guardados.")
+
         from labs.curso4_lab2_drafts import render_draft_save
         render_draft_save(st,saved,runtime,lab,6,{
             "c4l2_s6_tl_calculator":tl_config,
@@ -350,7 +357,7 @@ def render(lab,saved,runtime):
         },"c4l2_s6_save_draft")
         return
 
-    st.markdown("### 5 · Diseña la estrategia para cada frente")
+    st.markdown("### 2 · Diseña la estrategia para cada frente")
     st.info("El frente agrupa máquinas para representar su emisión conjunta. Un tratamiento de fuente actúa solo sobre las máquinas y unidades que selecciones; una barrera actúa sobre el camino hacia el receptor. Elige Combinación de medidas si tu estrategia usa tratamientos distintos.")
     st.markdown("**Ejemplo de procedimiento:** si se encierra solo el minicargador, la excavadora y la retroexcavadora conservan su emisión original. El frente controlado se obtiene sumando energéticamente las tres contribuciones resultantes, no restando el aislamiento del encierro al total del frente.")
     if is_teacher:
@@ -386,7 +393,38 @@ def render(lab,saved,runtime):
             "y define el nombre del proyecto controlado que guardarás en Noise Map Lab."
         )
 
-    st.markdown("### 6 · Configura tu medida en detalle")
+    with st.expander("Herramientas de apoyo · ejemplos, TL y práctica"):
+        st.info("Estas herramientas son opcionales. Usa la calculadora TL si necesitas estimar el aislamiento de un panel. Si elegiste una barrera, configura su ubicación y los caminos fuente–receptor en el apartado B del diseño en detalle.")
+        workshop.render_examples(st,pd)
+        st.warning(
+            "El proyecto Eyzaguirre es el caso de aplicación. Diseña y justifica tus propias medidas "
+            "a partir de la Etapa 5; los ejemplos no constituyen una solución obligatoria del proyecto."
+        )
+        tl_config,tl_spectrum=workshop.render_tl_calculator(
+            st,pd,"c4l2_s6_tl_material_v1",saved.get("c4l2_s6_tl_calculator")
+        )
+        if st.button("Guardar diseño del panel",key="c4l2_s6_tl_save"):
+            saved["c4l2_s6_tl_calculator"]=tl_config
+            runtime["_save"](lab,saved,6)
+            st.success("Panel y espectro TL guardados para utilizarlos en el diseñador.")
+
+        st.markdown("**Diseñador de práctica**")
+        st.markdown(
+            "Configura geometría, seis superficies, Rw o TL por bandas, absorción interior y ventilación. "
+            "El resultado se obtiene del balance energético y de la emisión de cada cara. "
+            "Después asigna los parámetros a las máquinas concretas del frente elegido. La práctica no aplica automáticamente una reducción al frente completo."
+        )
+        study_cfg,study_results=workshop.render_designer(
+            st,pd,"c4l2_s6_study_v3",saved.get("c4l2_s6_treatment_study"),suggested_tl=tl_spectrum
+        )
+        if st.button("Guardar cálculo de práctica",key="c4l2_s6_study_save"):
+            saved["c4l2_s6_treatment_study"]=study_cfg
+            saved["c4l2_s6_treatment_study_results"]=study_results
+            runtime["_save"](lab,saved,6)
+            st.success("Práctica y parámetros guardados.")
+
+    st.markdown("### 3 · Configura tu medida en detalle")
+    st.caption("Si propones solo una barrera, marca cada máquina como «Sin tratamiento en la fuente» y configura la barrera en el apartado B.")
     labels=[str(r.get("Frente / condición") or "") for r in design_records]
     selected_front=_dropdown(st, "Frente a configurar",labels,key="c4l2_s6_front_detail")
     selected=next((r for r in design_records if str(r.get("Frente / condición"))==selected_front),{})
@@ -415,8 +453,9 @@ def render(lab,saved,runtime):
                 saved.update(candidate)
                 st.success("Aplicaciones por máquina y balance del frente guardados. Puedes configurar otro frente.")
 
-    st.markdown("### 7 · Del frente equivalente al control por máquinas en Noise Map Lab")
+    st.markdown("### 4 · Del frente equivalente al control por máquinas en Noise Map Lab")
     st.info("La fuente puntual que representa al frente contiene la suma de varias máquinas. No le asignes un encierro, semiencierro o silenciador si la medida solo corresponde a una de ellas: el programa trataría toda la emisión agrupada. Para aplicar controles individuales, sustituye esa representación por las máquinas que la componen en una copia del proyecto.")
+    st.info("TL es el aislamiento del panel. ΔLw es la reducción de potencia emitida por las fuentes tratadas. ΔLAeq es la reducción en el receptor, obtenida al comparar los dos modelos en Noise Map Lab.")
     st.markdown("#### A · Conserva tres archivos identificables")
     st.dataframe(pd.DataFrame([
         {"Archivo sugerido":"FT_Original_Equivalente","Contenido":"Frente como una fuente equivalente, sin control.","Uso":"Conservar el trabajo de las Etapas 4 y 5; no sobrescribirlo."},
@@ -454,7 +493,7 @@ def render(lab,saved,runtime):
     st.markdown("""
     - Como comprobación de la suma, puedes colocar provisionalmente las máquinas en **el mismo punto, altura y condiciones de emisión de la fuente equivalente**, sin tratamientos. Bajo las mismas condiciones de propagación, la suma debe reproducir el resultado equivalente, salvo el redondeo de entrada. Si no coincide, revisa espectros, unidades y fuentes duplicadas.
     - Para diseñar el control, utiliza posiciones, alturas y orientaciones **físicamente posibles y documentadas**. Si separarlas cambia la geometría respecto del frente equivalente, puede cambiar el LAeq aun sin controles: esa diferencia no es eficacia de una medida.
-    - En ese caso, registra la nueva línea base sin control en la **Etapa 5**, identificando el proyecto **FT_Original_Maquinas** y el receptor/posición crítica. Conserva el archivo original equivalente como antecedente. En la **Etapa 7** compara original y controlado con la misma representación por máquinas.
+    - En ese caso, registra la nueva línea base sin control por separado para la **Etapa 7**, identificando el proyecto **FT_Original_Maquinas** y el receptor/posición crítica. Conserva el archivo original equivalente como antecedente. En la **Etapa 7** compara original y controlado con la misma representación por máquinas.
     """)
     st.markdown("#### D · Crea la copia controlada y trata solo los equipos elegidos")
     st.markdown("""
@@ -473,7 +512,7 @@ def render(lab,saved,runtime):
     render_uploader(
         st,saved,runtime,lab,
         group="control",
-        title="8 · Adjunta los mapas con las medidas implementadas",
+        title="5 · Adjunta los mapas con las medidas implementadas",
         description=(
             "Sube capturas donde se observe la ubicación y geometría de la barrera, encierro, semiencierro o silenciador "
             "incorporado. Si la medida tiene orientación o aberturas, agrega también una vista de corte."
@@ -482,7 +521,8 @@ def render(lab,saved,runtime):
         key="c4l2_s6_control_maps",
     )
 
-    st.markdown("### 9 · Verificación antes de guardar")
+    st.markdown("### 6 · Verificación antes de guardar")
+    st.caption("Las capturas sirven como respaldo visual. Usa Guardar avance para conservar un borrador, guarda cada frente cuando esté listo y finaliza después de completar todos los frentes.")
     saved_checks=saved.get("c4l2_s6_checks") or {}
     v1=st.checkbox("Conservé intacto el escenario original.",value=bool(saved_checks.get("original")),key="c4l2_s6_check_original")
     v2=st.checkbox("La medida es físicamente compatible con la actividad constructiva.",value=bool(saved_checks.get("viable")),key="c4l2_s6_check_viable")
