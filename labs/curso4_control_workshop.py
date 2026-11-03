@@ -84,11 +84,6 @@ def _spectrum(st,pd,key,label,values,maximum=100.0):
     return result
 
 
-def _dropdown(container, label, options, *, index=0, key, disabled=False, format_func=str):
-    with container.popover(label, disabled=disabled) as menu:
-        return menu.radio(label, options, index=index, key=key, format_func=format_func, label_visibility='collapsed')
-
-
 def render_tl_calculator(st,pd,prefix,initial=None):
     """Educational single-leaf mass-law calculator feeding the map TL spectrum."""
     initial=dict(initial or {})
@@ -103,7 +98,7 @@ def render_tl_calculator(st,pd,prefix,initial=None):
     ]),hide_index=True,use_container_width=True)
 
     material_names=list(MATERIALS)
-    material=_dropdown(st,
+    material=st.selectbox(
         'Material del panel',material_names,
         index=material_names.index(initial.get('material','OSB')) if initial.get('material','OSB') in material_names else 0,
         key=prefix+'_material',
@@ -181,7 +176,7 @@ def render_designer(st,pd,prefix,initial=None,fixed_kind=None,suggested_tl=None,
     if fixed_kind:
         initial['noise_control_type']=fixed_kind
     default=next((k for k,v in KINDS.items() if v==initial.get('noise_control_type')),labels[2])
-    label=_dropdown(st,'Tipo de tratamiento',labels,index=labels.index(default),disabled=fixed_kind is not None,key=prefix+'_kind')
+    label=st.selectbox('Tipo de tratamiento',labels,index=labels.index(default),disabled=fixed_kind is not None,key=prefix+'_kind')
     kind=KINDS[label]
     icon,short_title,short_copy=TREATMENT_META[kind]
     st.markdown(f"""
@@ -207,7 +202,7 @@ def render_designer(st,pd,prefix,initial=None,fixed_kind=None,suggested_tl=None,
             for col,field,label_,fallback in [(a,'enclosure_length_m','Largo [m]',2.),(b,'enclosure_width_m','Ancho [m]',2.),(c,'enclosure_height_m','Alto [m]',2.5)]:
                 cfg[field]=col.number_input(label_,min_value=.1,max_value=1000.,value=float(cfg.get(field,fallback)),step=.1,key=prefix+'_'+field)
             cfg['enclosure_azimuth_deg']=d.number_input('Azimut del frente [°]',min_value=0.,max_value=359.9,value=float(cfg.get('enclosure_azimuth_deg',0)),step=1.,key=prefix+'_azimuth')
-            lining=_dropdown(st,'Revestimiento absorbente interior',list(LININGS),index=list(LININGS.values()).index(cfg.get('enclosure_lining_mode','medium')),key=prefix+'_lining')
+            lining=st.selectbox('Revestimiento absorbente interior',list(LININGS),index=list(LININGS.values()).index(cfg.get('enclosure_lining_mode','medium')),key=prefix+'_lining')
             cfg['enclosure_lining_mode']=LININGS[lining]
             if LININGS[lining]=='custom':
                 coeff={}
@@ -249,11 +244,11 @@ def render_designer(st,pd,prefix,initial=None,fixed_kind=None,suggested_tl=None,
                 with st.expander(f"{FACE_ICONS[name]}  {face_label}   ·   {state_preview}   ·   {mode_preview}",expanded=name=='front'):
                     st.caption(f'Configura la superficie **{face_label.lower()}** del cerramiento.')
                     a,b,c,d=st.columns(4)
-                    state=_dropdown(a,'Estado',list(STATES),index=list(STATES.values()).index(face.get('state','closed')),key=prefix+'_'+name+'_state')
+                    state=a.selectbox('Estado',list(STATES),index=list(STATES.values()).index(face.get('state','closed')),key=prefix+'_'+name+'_state')
                     face['state']=STATES[state]
                     fraction=b.number_input('% abierta',min_value=0.,max_value=100.,value=float(face.get('opening_pct',25)),disabled=face['state']!='partial',key=prefix+'_'+name+'_opening')
                     face['opening_pct']=100. if face['state']=='open' else fraction if face['state']=='partial' else 0.
-                    acoustic=_dropdown(c,'Caracterización',['Rw único','TL por bandas'],index=1 if face.get('acoustic_mode')=='spectrum' else 0,disabled=face['state']=='open',key=prefix+'_'+name+'_mode')
+                    acoustic=c.selectbox('Caracterización',['Rw único','TL por bandas'],index=1 if face.get('acoustic_mode')=='spectrum' else 0,disabled=face['state']=='open',key=prefix+'_'+name+'_mode')
                     face['acoustic_mode']='spectrum' if acoustic=='TL por bandas' else 'rw'
                     face['rw_db']=d.number_input('Rw [dB]',min_value=0.,max_value=100.,value=float(face.get('rw_db',30)),disabled=face['state']=='open' or face['acoustic_mode']=='spectrum',key=prefix+'_'+name+'_rw')
                     if face['acoustic_mode']=='spectrum' and face['state']!='open':
@@ -276,7 +271,7 @@ def render_designer(st,pd,prefix,initial=None,fixed_kind=None,suggested_tl=None,
                 a,b=st.columns(2)
                 cfg['enclosure_vent_area_m2']=a.number_input('Área de ventilación con silenciador [m²]',min_value=0.,max_value=1000.,value=float(cfg.get('enclosure_vent_area_m2',.1)),step=.01,key=prefix+'_vent_area')
                 names=list(model.FACE_LABELS)
-                cfg['enclosure_vent_face']=_dropdown(b,'Cara del conducto',names,index=names.index(cfg.get('enclosure_vent_face','back')),format_func=model.FACE_LABELS.get,key=prefix+'_vent_face')
+                cfg['enclosure_vent_face']=b.selectbox('Cara del conducto',names,index=names.index(cfg.get('enclosure_vent_face','back')),format_func=model.FACE_LABELS.get,key=prefix+'_vent_face')
                 cfg['silencer_il_db']=_spectrum(st,pd,prefix+'_vent_il','IL del silenciador por bandas [dB]',cfg.get('silencer_il_db',model.DEFAULT_IL),80.)
                 src=model.SimpleNamespace(lat=0.,lon=0.,height_m=1.5,**cfg)
                 area=model._enclosure_face_geometry(src)[cfg['enclosure_vent_face']]['area_m2']
@@ -311,7 +306,7 @@ def render_designer(st,pd,prefix,initial=None,fixed_kind=None,suggested_tl=None,
             st.latex(r'A_{perdidas}=\sum_i[S_{panel,i}\min(1,\alpha+\tau_i)+S_{abierta,i}+S_{vent,i}]')
             st.latex(r'T_i=S_{panel,i}\tau_i+S_{abierta,i}+S_{vent,i}10^{-IL/10},\quad L_{w,i}=L_w+10\log_{10}(T_i/A_{perdidas})')
             st.latex(r'Q_i(\theta)=4\cos\theta,\quad L_{p,R}=10\log_{10}\sum_{i\ visibles}10^{(L_{w,i}+10\log_{10}Q_i-A_{div,i})/10}')
-            freq=_dropdown(st,'Banda para revisar el balance',list(model.OCTAVE_BANDS),index=3,key=prefix+'_balance_band')
+            freq=st.selectbox('Banda para revisar el balance',list(model.OCTAVE_BANDS),index=3,key=prefix+'_balance_band')
             balance,_=model.enclosure_balance(cfg,freq); _table(st,pd,balance)
         st.caption('El cerramiento y su directividad usan las mismas funciones del motor. Este ejemplo exterior usa solo divergencia geométrica (G=0, sin absorción atmosférica, reflexiones ni edificios). La reducción de potencia emitida y ΔLp en R son magnitudes distintas. Calcula el escenario completo en Noise Map Lab.')
         st.download_button('Descargar parámetros del tratamiento (.json)',json.dumps(cfg,ensure_ascii=False,indent=2),file_name='parametros-tratamiento.json',mime='application/json',key=prefix+'_download')
