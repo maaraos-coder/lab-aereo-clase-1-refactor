@@ -1,7 +1,6 @@
 """Etapa 6 · Curso 4 Laboratorio 2: diseño e implementación de medidas de control."""
 
 from copy import deepcopy
-from labs.curso4_control_workshop import _dropdown
 from labs.curso4_lab2_control_scope import render_scope, validate_scope
 
 MEASURE_OPTIONS=[
@@ -426,7 +425,7 @@ def render(lab,saved,runtime):
     st.markdown("### 3 · Configura tu medida en detalle")
     st.caption("Si propones solo una barrera, marca cada máquina como «Sin tratamiento en la fuente» y configura la barrera en el apartado B.")
     labels=[str(r.get("Frente / condición") or "") for r in design_records]
-    selected_front=_dropdown(st, "Frente a configurar",labels,key="c4l2_s6_front_detail")
+    selected_front=st.selectbox("Frente a configurar",labels,key="c4l2_s6_front_detail")
     selected=next((r for r in design_records if str(r.get("Frente / condición"))==selected_front),{})
     measure=str(selected.get("Medida seleccionada") or "Seleccionar medida")
 
