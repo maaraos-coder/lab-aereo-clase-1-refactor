@@ -98,8 +98,8 @@ def render_tl_calculator(st,pd,prefix,initial=None):
     ]),hide_index=True,use_container_width=True)
 
     material_names=list(MATERIALS)
-    material=st.selectbox(
-        'Material del panel',material_names,
+    material=st.radio(
+        'Material del panel',material_names,horizontal=True,
         index=material_names.index(initial.get('material','OSB')) if initial.get('material','OSB') in material_names else 0,
         key=prefix+'_material',
     )
