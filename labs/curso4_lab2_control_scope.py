@@ -1,5 +1,6 @@
 """Aplicación trazable de tratamientos a equipos y recomposición del frente."""
 from copy import deepcopy
+from labs.curso4_control_workshop import _dropdown
 import hashlib
 import math
 import re
@@ -173,7 +174,7 @@ def render_scope(st, pd, saved, front, strategy, previous, prefix, workshop, stu
     st.caption("Configura cada equipo por separado. Puedes usar medidas diferentes dentro de un mismo frente o declarar expresamente los equipos sin tratamiento. Si hay varias unidades, indica cuántas reciben la medida.")
     applications = config.setdefault("machines", {})
     labels = {entry["id"]:f"{i} · {entry['source']['Máquina / equipo proyecto']} ×{entry['source']['Cantidad']}" for i, entry in enumerate(entries, 1)}
-    selected_id = st.selectbox("Máquina a configurar", list(labels), format_func=labels.get, key=prefix+"_machine")
+    selected_id = _dropdown(st, "Máquina a configurar", list(labels), format_func=labels.get, key=prefix+"_machine")
     source = next(entry["source"] for entry in entries if entry["id"] == selected_id)
     old = applications.get(selected_id, {})
     option = old.get("measure", "Seleccionar aplicación")
@@ -182,7 +183,7 @@ def render_scope(st, pd, saved, front, strategy, previous, prefix, workshop, stu
     # recrear el widget y devolver la selección anterior al reconstruir la ficha.
     if measure_key not in st.session_state:
         st.session_state[measure_key]=option if option in APPLICATION_OPTIONS else APPLICATION_OPTIONS[0]
-    measure = st.selectbox("Aplicación sobre esta máquina", APPLICATION_OPTIONS, key=measure_key)
+    measure = _dropdown(st, "Aplicación sobre esta máquina", APPLICATION_OPTIONS, key=measure_key)
     machine_prefix = prefix+"_"+selected_id+"_"+hashlib.sha1(measure.encode()).hexdigest()[:8]
     application = deepcopy(old) if old.get("measure") == measure else {}
     signature = source_fingerprint([source])
