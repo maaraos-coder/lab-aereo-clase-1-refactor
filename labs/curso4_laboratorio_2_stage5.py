@@ -351,9 +351,22 @@ def render(lab,saved,runtime):
     detail_work=st.session_state.get("c4l2_s5_detail_work") or saved_detail
     if any("31,5 Hz" in row for row in detail_work):
         st.warning("Se corrigió el rango de octavas a 63 Hz–8 kHz. Los datos anteriores se conservan, incluida la columna 31,5 Hz; contrasta sus frecuencias con tu exportación de Noise Map Lab. No se han desplazado ni recalculado tus resultados.")
-    st.session_state["c4l2_s5_detail_work"]=[
-        {**row,**{band:row.get(band) for band in OCTAVE_LABELS}} for row in detail_work
+    # JSONB no conserva el orden de las claves de los resultados recuperados.
+    # Fija las columnas antes de construir la grilla y conserva datos históricos.
+    result_columns = ["Frente", "Receptor", "Distancia F–R [m]"] + list(OCTAVE_LABELS) + ["LAeq [dB(A)]"]
+    extra_columns = list(dict.fromkeys(
+        key for row in detail_work for key in row if key not in result_columns
+    ))
+    result_columns += extra_columns
+    detail_work = [
+        {column: row.get(column) for column in result_columns}
+        for row in detail_work
     ]
+    saved_detail = [
+        {column: row.get(column) for column in result_columns}
+        for row in saved_detail
+    ]
+    st.session_state["c4l2_s5_detail_work"] = detail_work
     st.caption("El espectro del receptor es presión sonora por banda Lp [dB]. El LAeq global [dB(A)] es el resultado ponderado A del receptor; no es Lw ni LWA de la fuente.")
 
     def _empty_result_row(_n):
@@ -368,7 +381,7 @@ def render(lab,saved,runtime):
     detail_df=runtime["_dynamic_grid"](
         saved_detail,
         state_key="c4l2_s5_detail_work",
-        grid_key="c4l2_s5_detail_grid_octaves_v2",
+        grid_key="c4l2_s5_detail_grid_octaves_v3",
         empty_row_factory=_empty_result_row,
         widths={
             "Frente":190,"Receptor":110,"Distancia F–R [m]":155,
