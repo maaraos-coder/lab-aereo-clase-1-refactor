@@ -143,6 +143,8 @@ def validate_scope(saved, front, config):
     entries = front_sources(saved, front)
     result = recombine_front(entries, config.get("machines") or {}, strict=True)
     propagation = config.get("propagation") or {}
+    if config.get("barrier_equivalent") and config.get("medida") != "Barrera acústica":
+        raise ValueError("El registro por fuente equivalente corresponde a la estrategia de barrera acústica.")
     if config.get("medida") == "Barrera acústica" and not propagation.get("enabled"):
         raise ValueError("Configura la barrera de la estrategia elegida.")
     if propagation.get("enabled"):
@@ -181,62 +183,92 @@ def render_scope(st, pd, saved, front, strategy, previous, prefix, workshop, stu
     except ValueError as error:
         st.warning(str(error))
         return config
-    st.markdown("#### A · Tratamientos aplicados a las máquinas")
-    st.caption("Configura cada equipo por separado. Puedes usar medidas diferentes dentro de un mismo frente o declarar expresamente los equipos sin tratamiento. Si hay varias unidades, indica cuántas reciben la medida.")
     applications = config.setdefault("machines", {})
     labels = {entry["id"]:f"{i} · {entry['source']['Máquina / equipo proyecto']} ×{entry['source']['Cantidad']}" for i, entry in enumerate(entries, 1)}
-    selected_id = st.selectbox("Máquina a configurar", list(labels), format_func=labels.get, key=prefix+"_machine")
-    source = next(entry["source"] for entry in entries if entry["id"] == selected_id)
-    old = applications.get(selected_id, {})
-    option = old.get("measure", "Seleccionar aplicación")
-    measure_key=prefix+"_"+selected_id+"_measure"
-    # Mantener un índice constante: cambiar el valor inicial en cada rerun puede
-    # recrear el widget y devolver la selección anterior al reconstruir la ficha.
-    if measure_key not in st.session_state:
-        st.session_state[measure_key]=option if option in APPLICATION_OPTIONS else APPLICATION_OPTIONS[0]
-    measure = st.selectbox("Aplicación sobre esta máquina", APPLICATION_OPTIONS, key=measure_key)
-    machine_prefix = prefix+"_"+selected_id+"_"+hashlib.sha1(measure.encode()).hexdigest()[:8]
-    application = deepcopy(old) if old.get("measure") == measure else {}
-    signature = source_fingerprint([source])
-    application["measure"] = measure
-    changed_source = bool(old.get("source_signature") and old["source_signature"] != signature)
-    reviewed = True
-    if changed_source:
-        st.warning("Cambió la caracterización original de esta máquina. Revisa cantidad, espectro y compatibilidad del tratamiento.")
-        reviewed = st.checkbox("Revisé esta aplicación con la fuente original actualizada.", value=False,
-                               key=machine_prefix+"_review_"+signature)
-    if reviewed:
-        application["source_signature"] = signature
-    if measure in KINDS:
-        application["treated_units"] = st.number_input("Unidades de esta máquina que reciben tratamiento", min_value=1,
-            max_value=int(parse_level(source["Cantidad"])), value=min(int(parse_level(source["Cantidad"])),int(application.get("treated_units") or 1)), step=1, key=machine_prefix+"_units_"+signature)
-        initial = application.get("treatment") or model.default_treatment(KINDS[measure])
-        use_study = st.checkbox("Usar los parámetros de la práctica como punto de partida", value=False, key=machine_prefix+"_practice")
-        if use_study:
-            if study_cfg.get("noise_control_type") == KINDS[measure]:
-                initial = deepcopy(study_cfg)
-            else:
-                st.warning("La práctica debe usar el mismo tipo de tratamiento que esta máquina.")
-        designer_prefix=machine_prefix+("_practice" if use_study else "_design")
-        treatment, calculation = workshop.render_designer(st,pd,designer_prefix,initial,
-            fixed_kind=KINDS[measure],suggested_tl=tl_spectrum,
-            source_lw=dict(zip(map(str,model.OCTAVE_BANDS),source["Lw_bandas"])),
-            source_label=str(source["Máquina / equipo proyecto"]))
-        application.update({"treatment":treatment,"calculo":calculation})
-        application["evidence"] = st.text_area("Respaldo técnico y compatibilidad con esta máquina",
-            value=str(application.get("evidence") or ""), key=machine_prefix+"_evidence",
-            help="Identifica datos técnicos, mediciones o hipótesis docentes justificadas. Se exige para finalizar, pero no bloquea la estimación provisional. El TL del panel y la reducción final en el receptor son magnitudes distintas.")
-        st.caption("Puedes explorar la reducción con los parámetros actuales aunque este texto esté vacío. La justificación y la viabilidad de la medida se revisan antes de finalizar; el cálculo no decide por sí solo si una máquina móvil puede operar dentro del encierro.")
-        if measure == "Silenciador":
-            st.warning("Un silenciador actúa sobre una emisión canalizada. Si solo trata el escape, su IL no puede descontarse de toda la máquina: separa esa componente en Noise Map Lab o justifica la reducción efectiva del equipo completo.")
-            application["effective_machine_reduction"] = st.checkbox("Los valores ingresados representan una reducción efectiva justificada de la emisión total de la máquina modelada.", value=bool(application.get("effective_machine_reduction")), key=machine_prefix+"_effective")
-    applications[selected_id] = application
+    equivalent_barrier = False
+    if strategy == "Barrera acústica":
+        has_source_treatments = any(
+            app.get("measure") in KINDS for app in applications.values()
+        )
+        equivalent_barrier = st.checkbox(
+            "Solo barrera sobre la fuente equivalente del frente",
+            value=bool(config.get("barrier_equivalent", not has_source_treatments)),
+            key=prefix+"_barrier_equivalent",
+        )
+    config["barrier_equivalent"] = equivalent_barrier
+    if equivalent_barrier:
+        st.info("Registra una sola pantalla para este frente. Las máquinas conservan su potencia original. Comprueba en Noise Map Lab la posición y altura de la fuente equivalente y los receptores que protege la pantalla.")
+        if any(app.get("measure") in KINDS for app in applications.values()):
+            config["previous_source_applications"] = deepcopy(applications)
+        applications = {
+            entry["id"]: {
+                "measure": NO_CONTROL,
+                "source_signature": source_fingerprint([entry["source"]]),
+            }
+            for entry in entries
+        }
+        config["machines"] = applications
+    else:
+        st.markdown("#### A · Tratamientos aplicados a las máquinas")
+        st.caption("Configura cada equipo por separado. Puedes usar medidas diferentes dentro de un mismo frente o declarar expresamente los equipos sin tratamiento. Si hay varias unidades, indica cuántas reciben la medida.")
+        selected_id = st.selectbox("Máquina a configurar", list(labels), format_func=labels.get, key=prefix+"_machine")
+        source = next(entry["source"] for entry in entries if entry["id"] == selected_id)
+        old = applications.get(selected_id, {})
+        option = old.get("measure", "Seleccionar aplicación")
+        measure_key=prefix+"_"+selected_id+"_measure"
+        # Mantener un índice constante: cambiar el valor inicial en cada rerun puede
+        # recrear el widget y devolver la selección anterior al reconstruir la ficha.
+        if measure_key not in st.session_state:
+            st.session_state[measure_key]=option if option in APPLICATION_OPTIONS else APPLICATION_OPTIONS[0]
+        measure = st.selectbox("Aplicación sobre esta máquina", APPLICATION_OPTIONS, key=measure_key)
+        machine_prefix = prefix+"_"+selected_id+"_"+hashlib.sha1(measure.encode()).hexdigest()[:8]
+        application = deepcopy(old) if old.get("measure") == measure else {}
+        signature = source_fingerprint([source])
+        application["measure"] = measure
+        changed_source = bool(old.get("source_signature") and old["source_signature"] != signature)
+        reviewed = True
+        if changed_source:
+            st.warning("Cambió la caracterización original de esta máquina. Revisa cantidad, espectro y compatibilidad del tratamiento.")
+            reviewed = st.checkbox("Revisé esta aplicación con la fuente original actualizada.", value=False,
+                                   key=machine_prefix+"_review_"+signature)
+        if reviewed:
+            application["source_signature"] = signature
+        if measure in KINDS:
+            application["treated_units"] = st.number_input("Unidades de esta máquina que reciben tratamiento", min_value=1,
+                max_value=int(parse_level(source["Cantidad"])), value=min(int(parse_level(source["Cantidad"])),int(application.get("treated_units") or 1)), step=1, key=machine_prefix+"_units_"+signature)
+            initial = application.get("treatment") or model.default_treatment(KINDS[measure])
+            use_study = st.checkbox("Usar los parámetros de la práctica como punto de partida", value=False, key=machine_prefix+"_practice")
+            if use_study:
+                if study_cfg.get("noise_control_type") == KINDS[measure]:
+                    initial = deepcopy(study_cfg)
+                else:
+                    st.warning("La práctica debe usar el mismo tipo de tratamiento que esta máquina.")
+            designer_prefix=machine_prefix+("_practice" if use_study else "_design")
+            treatment, calculation = workshop.render_designer(st,pd,designer_prefix,initial,
+                fixed_kind=KINDS[measure],suggested_tl=tl_spectrum,
+                source_lw=dict(zip(map(str,model.OCTAVE_BANDS),source["Lw_bandas"])),
+                source_label=str(source["Máquina / equipo proyecto"]))
+            application.update({"treatment":treatment,"calculo":calculation})
+            application["evidence"] = st.text_area("Respaldo técnico y compatibilidad con esta máquina",
+                value=str(application.get("evidence") or ""), key=machine_prefix+"_evidence",
+                help="Identifica datos técnicos, mediciones o hipótesis docentes justificadas. Se exige para finalizar, pero no bloquea la estimación provisional. El TL del panel y la reducción final en el receptor son magnitudes distintas.")
+            st.caption("Puedes explorar la reducción con los parámetros actuales aunque este texto esté vacío. La justificación y la viabilidad de la medida se revisan antes de finalizar; el cálculo no decide por sí solo si una máquina móvil puede operar dentro del encierro.")
+            if measure == "Silenciador":
+                st.warning("Un silenciador actúa sobre una emisión canalizada. Si solo trata el escape, su IL no puede descontarse de toda la máquina: separa esa componente en Noise Map Lab o justifica la reducción efectiva del equipo completo.")
+                application["effective_machine_reduction"] = st.checkbox("Los valores ingresados representan una reducción efectiva justificada de la emisión total de la máquina modelada.", value=bool(application.get("effective_machine_reduction")), key=machine_prefix+"_effective")
+        applications[selected_id] = application
     st.markdown("#### B · Barrera en el camino fuente–receptor")
     propagation = deepcopy(config.get("propagation") or {})
     propagation["enabled"] = st.checkbox("Incorporar una barrera en este frente", value=bool(propagation.get("enabled") or strategy=="Barrera acústica"), key=prefix+"_barrier_enabled")
     if propagation["enabled"]:
         st.info("La barrera no cambia el Lw de las máquinas. Su efecto depende de cada camino F–R. No se aplicará la atenuación del ejemplo al espectro de potencia del frente.")
-        propagation["protected_ids"] = st.multiselect("Máquinas cuyo camino al receptor se pretende apantallar",list(labels),default=[i for i in propagation.get("protected_ids",[]) if i in labels],format_func=labels.get,key=prefix+"_barrier_targets")
+        if equivalent_barrier:
+            propagation["protected_ids"] = list(labels)
+            propagation["source_representation"] = "equivalent_front"
+            st.caption("La pantalla se registra para la fuente equivalente de este frente. Su protección se comprueba con la geometría del proyecto.")
+        else:
+            propagation["source_representation"] = "individual_machines"
+            propagation["protected_ids"] = st.multiselect("Máquinas cuyo camino al receptor se pretende apantallar",list(labels),default=[i for i in propagation.get("protected_ids",[]) if i in labels],format_func=labels.get,key=prefix+"_barrier_targets")
         barrier, calculation = workshop.render_barrier_calculator(st,pd,prefix+"_barrier",propagation)
         st.caption("La calculadora de barrera es un ejemplo de un único camino F–R; sus niveles no son la predicción del frente ni se reutilizan como una reducción uniforme. Evalúa cada camino real en Noise Map Lab.")
         propagation.update(barrier)
@@ -263,5 +295,6 @@ def render_scope(st, pd, saved, front, strategy, previous, prefix, workshop, stu
     st.metric("LWA del frente con tratamientos de fuente",f"{result['controlled_lwa']:.2f} dB(A)")
     st.metric("Reducción de potencia del frente · ΔLWA",f"{result['original_lwa']-result['controlled_lwa']:.2f} dB")
     st.caption("Se suman energéticamente las unidades tratadas y las no tratadas. Este es un balance de potencia emitida, no el LAeq en el receptor. La barrera, la orientación de las caras y la geometría se evalúan en Noise Map Lab. Los parámetros de ejemplo requieren respaldo antes de finalizar.")
-    st.info("Para implementar controles individuales en Noise Map Lab, sustituye la fuente equivalente por sus máquinas en una copia del original. No coloques un encierro de una máquina sobre la fuente que agrupa todo el frente. La sección 7 explica cómo crear y comparar las copias por máquinas.")
+    if not equivalent_barrier:
+        st.info("Para implementar controles individuales en Noise Map Lab, sustituye la fuente equivalente por sus máquinas en una copia del original. No coloques un encierro de una máquina sobre la fuente que agrupa todo el frente. La sección 7 explica cómo crear y comparar las copias por máquinas.")
     return config
