@@ -65,6 +65,23 @@ ADENDA2_SOURCES={
 }
 
 SOURCE_CATALOG={**BS_PLANT,**ADENDA2_SOURCES}
+SOURCE_CATALOG.update({
+    "BS 5228 · Generador diésel · C.4 ítem 78": {
+        "bands": [64, 67, 68, 65, 58, 54, 49, 42], "laeq10": 66,
+        "table": "C.4", "ref": "78", "page": "53 BS / 59 PDF",
+        "activity": "Alimentación de instalaciones de faena",
+        "power": "—", "size": "—", "metric": "LAeq,T",
+        "band_labels": REPORT_BANDS, "a_corr": ADENDA_A_CORR,
+    },
+    "BS 5228 · Generador diésel · C.4 ítem 80": {
+        "bands": [69, 54, 59, 56, 55, 52, 49, 45], "laeq10": 60,
+        "table": "C.4", "ref": "80", "page": "53 BS / 59 PDF",
+        "activity": "Alimentación de instalaciones de faena",
+        "power": "—", "size": "—", "metric": "LAeq,T",
+        "band_labels": REPORT_BANDS, "a_corr": ADENDA_A_CORR,
+    },
+})
+
 
 def _norm(value):
     text=str(value or "").strip().lower()
