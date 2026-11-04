@@ -60,6 +60,11 @@ ROOMS = [
     ["Baño principal", 4.1, 10.3, "Interior", "Shaft S-1"],
 ]
 
+SOURCE_ROOMS = [
+    ["Estar A-301", 20.4, 51.0, "Piso 3 · oeste de A-302", "AI-01 · hipótesis académica; altura libre 2,50 m"],
+    ["Estar A-402", 20.4, 51.0, "Piso 4 · sobre A-302", "IM-01 · repetición académica del estar A-302; altura libre 2,50 m"],
+]
+
 MATERIALS = [
     ["M-01", "Muro medianero A-301/A-302", "Hormigón armado", "180 mm", "Continuo entre losas; encuentros sellados"],
     ["L-01", "Losa entre A-302/A-402", "Hormigón armado", "160 mm", "Piso: resiliente 10 + sobrelosa 40 + terminación 10 mm"],
@@ -343,6 +348,8 @@ def _project_downloads():
     ]
     for name, area, volume, orientation, adjacency in ROOMS:
         rows.append(["Recinto", name, area, volume, f"{orientation} · {adjacency}"])
+    for name, area, volume, location, provenance in SOURCE_ROOMS:
+        rows.append(["Recinto emisor", name, area, volume, f"{location} · {provenance}"])
     for code, element, system, dimension, note in MATERIALS:
         rows.append(["Materialidad", f"{code} · {element}", system, dimension, note])
     csv = pd.DataFrame(
@@ -819,6 +826,9 @@ def _stage1(lab, saved):
         hide_index=True,
         width="stretch",
     )
+    st.markdown("#### Recintos emisores colindantes para SONARA")
+    _lab_table(pd.DataFrame(SOURCE_ROOMS, columns=["Recinto", "Área [m²]", "Volumen [m³]", "Ubicación", "Procedencia"]), hide_index=True, width="stretch")
+    st.info("Datos definidos para este ejercicio: estar A-301 y estar A-402, cada uno de 20,40 m² y altura libre 2,50 m; V = 20,40 × 2,50 = 51,0 m³. A-301 es una hipótesis académica porque su planta es parcial; A-402 repite el estar A-302. No midas el dibujo parcial ni uses área o volumen cero. Exterior norte no es un recinto cerrado: su volumen no aplica.")
     st.markdown("#### Soluciones iniciales para revisar y rediseñar")
     _lab_table(
         pd.DataFrame(
@@ -1340,7 +1350,7 @@ def _stage4(lab, saved):
     st.info("**Meta del proyecto: Clase A · trabajo en Proyecto de SONARA.** Aquí preparas las entradas. Los cálculos base y rediseño se desarrollan en las etapas 5–8.")
     st.markdown("### 1 · Crea y organiza los cuatro casos")
     st.markdown("""1. Entra a **Proyecto → Proyecto**, escribe **Los Alerces · tu nombre** y pulsa **Crear / actualizar proyecto**.
-2. En **Recintos**, registra los emisores y receptores de los planos: estar A-301, estar A-302, estar A-402 y dormitorio A-302; identifica nivel, uso, área y volumen. Añade exterior y los recintos de instalaciones cuando corresponda, sin inventar geometría faltante.
+2. En **Recintos**, registra estar A-301 (piso 3), estar A-302 (piso 3) y estar A-402 (piso 4), cada uno con área 20,40 m² y volumen 51,0 m³; dormitorio principal A-302 (piso 3), 11,50 m² y 28,8 m³. Los emisores son definiciones académicas de la ficha, no mediciones del dibujo parcial. Comprueba V = área × altura libre (2,50 m); los volúmenes se presentan redondeados a una decimal. Añade exterior norte (sin volumen cerrado) y baño principal A-302 (4,10 m²; 10,3 m³) para instalaciones cuando corresponda.
 3. En **Elementos**, selecciona emisor, receptor y tipo de elemento. Añade los casos AI-01, IM-01, FA-01 e IN-01, Incluye los componentes de esos cuatro casos; no se exigen modelos adicionales de puertas o tabiques interiores en esta entrega. Pulsa **Agregar elemento a la matriz** o **Diseñar este elemento**.
 4. En **Diseñar**, comprueba **Elemento activo a diseñar** y elige la herramienta en **Calculadora del requerimiento**. Realiza allí los cálculos del laboratorio.
 5. Guarda la base y el rediseño, identificados por caso. Comprueba ambos en **Soluciones** y prepara la documentación desde **Informe**.
