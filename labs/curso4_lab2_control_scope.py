@@ -24,7 +24,19 @@ def _front_name(value):
 def front_sources(saved, front):
     """Solo las fuentes del frente exacto y su simultaneidad original."""
     name = _front_name(front)
-    scenarios = [s for s in saved.get("c4l2_s4_scenarios", []) if _front_name(s.get("Etapa")) == name]
+    saved_scenarios = saved.get("c4l2_s4_scenarios") or []
+    if re.fullmatch(r"ft\d+", name):
+        # Los proyectos anteriores pueden guardar solo FT1, FT2, etc.
+        # Resuelve el código con el vínculo persistido en la Etapa 4.
+        linked_stages = {
+            _front_name(scenario.get("Etapa"))
+            for scenario in saved_scenarios
+            if re.split(r"\s*[·:–-]\s*", str(scenario.get("Frente") or "").strip(), maxsplit=1)[0].casefold() == name
+            and scenario.get("Etapa")
+        }
+        if len(linked_stages) == 1:
+            name = linked_stages.pop()
+    scenarios = [s for s in saved_scenarios if _front_name(s.get("Etapa")) == name]
     simultaneous = scenarios[0].get("Máquinas simultáneas") if scenarios else None
     configs = saved.get("c4l2_s4_front_configs") or {}
     if simultaneous is None:
