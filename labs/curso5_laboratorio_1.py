@@ -134,18 +134,24 @@ TEACHER_GUIDE = {
         ("Alcance de la decisión", "El resultado solo permite hablar del objetivo de AI-01 bajo las hipótesis del ejemplo. Los otros tres casos necesitan sus propios cálculos y comprobaciones. No exigir repetir la clasificación global de la Etapa 1."),
         ("Criterio formativo", "Logrado si justifica elección, margen, condiciones y pendientes. Parcial si omite un punto; por corregir si compara descriptores distintos o declara clase global a partir de AI-01."),
     ], "No aceptar el ejemplo como resultado propio. No cambiar el objetivo del laboratorio a C; la meta sigue siendo A."),
-    4: ("Preparación del proyecto y entradas", [
-        ("Objetivos ya fijados", "No exigir que el alumno redefina los límites A: los muestra el encargo. En fachada, revisar Lden y max(Lden − 20; 30). Exigir ambos indicadores de impacto y máximo FAST para la descarga intermitente."),
-        ("Revisión del formulario", "Comprobar fuentes y unidades de TR, densidad HA y Lden. Si utiliza s′, necesita densidad de sobrelosa. Si usa catálogo, justificar compatibilidad. Guardar no demuestra que ya estén completos los espectros y las transferencias de instalaciones."),
-        ("Flujo de proyecto", "Revisar el proyecto Los Alerces con sus recintos y matriz de elementos. En esta etapa basta preparar entradas y protocolo; base, rediseño y evidencias se desarrollan en las etapas 5–8. Contrastar el requisito del catálogo con la meta clase A."),
-        ("Ejemplo docente · TR de los receptores", "Estar 0,60 s y dormitorio 0,50 s. Son hipótesis para una condición interior definida, no mediciones ni valores obligatorios. El alumno puede buscar un informe de reverberación del recinto o estimar el TR con el volumen de la ficha y la absorción de materiales y mobiliario. Registrar condición de ocupación, fuente y método."),
-        ("Ejemplo docente · hormigón armado", "2.400 kg/m³ como densidad nominal adoptada para el ejercicio. Buscar la especificación estructural o ficha de la mezcla y registrar el documento o, si no existe, identificar el valor como hipótesis."),
-        ("Ejemplo docente · exposición de fachada", "60 dB Lden como hipótesis didáctica para la fachada norte. El objetivo FA-01 resulta en max(60 − 20; 30) = 40 dB. Buscar en un mapa estratégico de ruido o estudio acústico que informe Lden: anotar ubicación representativa, año y fuente. El caso ficticio no tiene un valor medido asignado; no sustituirlo directamente por un LAeq de corta duración."),
-        ("Ejemplo docente · piso flotante", "Si se usa un sistema ensayado de catálogo, dejar vacías densidad de sobrelosa y s′ y citar la ficha de ΔL del conjunto, verificando el montaje. Si se usa el modelo físico, obtener la densidad en la ficha del mortero de sobrelosa y s′, en MN/m³, en la ficha o ensayo de la capa resiliente exacta. No deducir s′ del espesor de 10 mm ni copiar la densidad del hormigón estructural."),
-        ("Trazabilidad", "Revisar TR del estar/dormitorio, densidad HA, exposición exterior y procedencia de cada dato. Distinguir ficha, hipótesis académica y antecedente pendiente; no imponer un TR o densidad únicos sin fuente."),
-        ("Piso", "Si usa modelo físico: masa superficial de sobrelosa = densidad × 0,040 m y s′ documentada. Si usa catálogo medido, justificar compatibilidad del montaje y por qué s′ no se usa."),
-        ("Criterios y protocolo", "Para cada caso: descriptor, límite, sentido de comparación, tabla/nota y objetivo. Exigir nombres Base/Variante, capturas/curvas y condiciones constantes para comparar."),
-    ], "Los valores iniciales de SONARA no constituyen antecedentes del proyecto. Revisar coherencia de unidades y fuentes antes de aprobar el protocolo."),
+    4: ("Preparación del proyecto y entradas", {
+        "A · Introduce los datos de partida": [
+            ("Ejemplo docente · TR de los receptores", "Estar 0,60 s y dormitorio 0,50 s. Son hipótesis para una condición interior definida, no mediciones ni valores obligatorios. El alumno puede buscar un informe de reverberación del recinto o estimar el TR con el volumen de la ficha y la absorción de materiales y mobiliario. Registrar condición de ocupación, fuente y método."),
+            ("Ejemplo docente · hormigón armado", "2.400 kg/m³ como densidad nominal adoptada para el ejercicio. Buscar la especificación estructural o ficha de la mezcla y registrar el documento o, si no existe, identificar el valor como hipótesis."),
+            ("Ejemplo docente · piso flotante", "Si se usa un sistema ensayado de catálogo, dejar vacías densidad de sobrelosa y s′ y citar la ficha de ΔL del conjunto, verificando el montaje. Si se usa el modelo físico, obtener la densidad en la ficha del mortero de sobrelosa y s′, en MN/m³, en la ficha o ensayo de la capa resiliente exacta. No deducir s′ del espesor de 10 mm ni copiar la densidad del hormigón estructural."),
+            ("Ejemplo docente · exposición de fachada", "60 dB Lden como hipótesis didáctica para la fachada norte. El objetivo FA-01 resulta en max(60 − 20; 30) = 40 dB. Buscar en un mapa estratégico de ruido o estudio acústico que informe Lden: anotar ubicación representativa, año y fuente. El caso ficticio no tiene un valor medido asignado; no sustituirlo directamente por un LAeq de corta duración."),
+        ],
+        "B · Explica de dónde salen los datos": [
+            ("Trazabilidad", "Revisar TR del estar/dormitorio, densidad HA, exposición exterior y procedencia de cada dato. Distinguir ficha, hipótesis académica y antecedente pendiente; no imponer un TR o densidad únicos sin fuente."),
+            ("Revisión del formulario", "Comprobar fuentes y unidades de TR, densidad HA y Lden. Si utiliza s′, necesita densidad de sobrelosa. Si usa catálogo, justificar compatibilidad. Guardar no demuestra que ya estén completos los espectros y las transferencias de instalaciones."),
+            ("Piso", "Si usa modelo físico: masa superficial de sobrelosa = densidad × 0,040 m y s′ documentada. Si usa catálogo medido, justificar compatibilidad del montaje y por qué s′ no se usa."),
+            ("Objetivos ya fijados", "No exigir que el alumno redefina los límites A: los muestra el encargo. En fachada, revisar Lden y max(Lden − 20; 30). Exigir ambos indicadores de impacto y máximo FAST para la descarga intermitente."),
+        ],
+        "C · Organiza tus cálculos y evidencias": [
+            ("Flujo de proyecto", "Revisar el proyecto Los Alerces con sus recintos y matriz de elementos. En esta etapa basta preparar entradas y protocolo; base, rediseño y evidencias se desarrollan en las etapas 5–8. Contrastar el requisito del catálogo con la meta clase A."),
+            ("Criterios y protocolo", "Para cada caso: descriptor, límite, sentido de comparación, tabla/nota y objetivo. Exigir nombres Base/Variante, capturas/curvas y condiciones constantes para comparar."),
+        ],
+    }, "Los valores iniciales de SONARA no constituyen antecedentes del proyecto. Revisar coherencia de unidades y fuentes antes de aprobar el protocolo."),
     5: ("AI-01 · Aéreo interior", [
         ("Modelo esperado", "M-01 de HA 180 mm; S = 10,20 m², V receptor = 51,0 m³ y TR declarado. Revisar caminos directo y laterales, uniones y su trazabilidad."),
         ("Resultado y mejora", "Exigir DₙT,w y adaptaciones de la curva final entre recintos. Para DₙT,A comprobar DₙT,w + C. Comparar base y variante con igual geometría e identificar el camino dominante; mayor aislamiento es mejor."),
@@ -291,8 +297,12 @@ def _teacher_guide(stage):
             _teacher_stage2_answers()
             return
         from html import escape
-        for criterion, expected in criteria:
-            st.markdown("<div class='c5-guide-card'><strong>" + escape(criterion) + "</strong>" + escape(expected) + "</div>", unsafe_allow_html=True)
+        sections = criteria.items() if stage == 4 else [(None, criteria)]
+        for heading, cards in sections:
+            if heading:
+                st.markdown(f"#### {heading}")
+            for criterion, expected in cards:
+                st.markdown("<div class='c5-guide-card'><strong>" + escape(criterion) + "</strong>" + escape(expected) + "</div>", unsafe_allow_html=True)
         if stage in range(5, 9):
             family = list(CALCULATION_CASES)[stage - 5]
             st.markdown("**Evidencias mínimas:** " + SONARA_DESIGN_GUIDES[family]["evidence"])
