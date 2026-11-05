@@ -137,7 +137,11 @@ TEACHER_GUIDE = {
     4: ("Preparación del proyecto y entradas", [
         ("Objetivos ya fijados", "No exigir que el alumno redefina los límites A: los muestra el encargo. En fachada, revisar Lden y max(Lden − 20; 30). Exigir ambos indicadores de impacto y máximo FAST para la descarga intermitente."),
         ("Revisión del formulario", "Comprobar fuentes y unidades de TR, densidad HA y Lden. Si utiliza s′, necesita densidad de sobrelosa. Si usa catálogo, justificar compatibilidad. Guardar no demuestra que ya estén completos los espectros y las transferencias de instalaciones."),
-        ("Flujo de proyecto", "Exigir proyecto Los Alerces con recintos y matriz de elementos; cálculos realizados desde Diseñar, base y rediseño guardados en Soluciones y evidencias del Informe. Contrastar el requisito del catálogo con la meta clase A."),
+        ("Flujo de proyecto", "Revisar el proyecto Los Alerces con sus recintos y matriz de elementos. En esta etapa basta preparar entradas y protocolo; base, rediseño y evidencias se desarrollan en las etapas 5–8. Contrastar el requisito del catálogo con la meta clase A."),
+        ("Ejemplo docente · TR de los receptores", "Estar 0,60 s y dormitorio 0,50 s. Son hipótesis para una condición interior definida, no mediciones ni valores obligatorios. El alumno puede buscar un informe de reverberación del recinto o estimar el TR con el volumen de la ficha y la absorción de materiales y mobiliario. Registrar condición de ocupación, fuente y método."),
+        ("Ejemplo docente · hormigón armado", "2.400 kg/m³ como densidad nominal adoptada para el ejercicio. Buscar la especificación estructural o ficha de la mezcla y registrar el documento o, si no existe, identificar el valor como hipótesis."),
+        ("Ejemplo docente · exposición de fachada", "60 dB Lden como hipótesis didáctica para la fachada norte. El objetivo FA-01 resulta en max(60 − 20; 30) = 40 dB. Buscar en un mapa estratégico de ruido o estudio acústico que informe Lden: anotar ubicación representativa, año y fuente. El caso ficticio no tiene un valor medido asignado; no sustituirlo directamente por un LAeq de corta duración."),
+        ("Ejemplo docente · piso flotante", "Si se usa un sistema ensayado de catálogo, dejar vacías densidad de sobrelosa y s′ y citar la ficha de ΔL del conjunto, verificando el montaje. Si se usa el modelo físico, obtener la densidad en la ficha del mortero de sobrelosa y s′, en MN/m³, en la ficha o ensayo de la capa resiliente exacta. No deducir s′ del espesor de 10 mm ni copiar la densidad del hormigón estructural."),
         ("Trazabilidad", "Revisar TR del estar/dormitorio, densidad HA, exposición exterior y procedencia de cada dato. Distinguir ficha, hipótesis académica y antecedente pendiente; no imponer un TR o densidad únicos sin fuente."),
         ("Piso", "Si usa modelo físico: masa superficial de sobrelosa = densidad × 0,040 m y s′ documentada. Si usa catálogo medido, justificar compatibilidad del montaje y por qué s′ no se usa."),
         ("Criterios y protocolo", "Para cada caso: descriptor, límite, sentido de comparación, tabla/nota y objetivo. Exigir nombres Base/Variante, capturas/curvas y condiciones constantes para comparar."),
@@ -1374,11 +1378,12 @@ def _stage4(lab, saved):
     st.warning("Los valores iniciales de SONARA no son datos del proyecto. Los campos siguientes quedan vacíos hasta que elijas una ficha o declares una hipótesis. La masa de sobrelosa se calcula como densidad × 0,040 m; su capa resiliente de 10 mm no determina s′ por sí sola.")
     st.markdown("### 4 · Registra las entradas y su procedencia")
     _lab_table(pd.DataFrame([
-        ["TR del estar y dormitorio", "Condición del receptor, en segundos.", "Antecedente o hipótesis declarada."],
-        ["Densidad HA", "Propiedad del material, en kg/m³.", "Ficha o referencia técnica."],
-        ["Densidad de sobrelosa y s′", "Modelo físico del piso.", "Si usas catálogo compatible, justifica las entradas no utilizadas."],
-        ["Lden exterior", "Fija el objetivo de fachada.", "Antecedente o escenario justificado; no copiar 65 dB del ejemplo."],
-    ], columns=["Entrada", "Para qué sirve", "Cómo justificarla"]))
+        ["TR del estar y dormitorio", "Condición del receptor, en segundos.", "Busca un informe de reverberación o estima el TR con el volumen de la ficha y la absorción del recinto. Si adoptas un valor, indica que es una hipótesis y describe la condición del recinto."],
+        ["Densidad HA", "Propiedad del material, en kg/m³.", "Busca la especificación estructural o la ficha del hormigón. Si usas una densidad nominal, cita su referencia o declárala como hipótesis."],
+        ["Densidad de sobrelosa", "Masa de la capa superior del piso.", "Busca la ficha del mortero u hormigón de sobrelosa. Solo se usa en el modelo físico."],
+        ["Rigidez dinámica s′", "Caracteriza la capa resiliente del piso.", "Busca s′ en MN/m³ en la ficha o ensayo de la capa resiliente seleccionada. Si usas un sistema ensayado de catálogo, deja vacíos ambos campos del piso y cita la ficha de ΔL y el montaje."],
+        ["Lden exterior", "Fija el objetivo de fachada.", "Busca un mapa estratégico de ruido o estudio que informe Lden para la exposición de la fachada. Cita fuente, año y ubicación; para el proyecto ficticio puedes declarar un escenario justificado."],
+    ], columns=["Entrada", "Para qué sirve", "Dónde buscar y qué registrar"]))
     st.markdown("""<style>
 
     [class*="st-key-c5s4_"]{background:#fff!important;border:1px solid #c9dde8!important;border-radius:16px!important;padding:20px!important;box-shadow:0 4px 15px #16445b08;margin-bottom:16px}
