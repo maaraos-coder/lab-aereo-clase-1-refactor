@@ -335,6 +335,20 @@ def render(lab,saved,runtime):
     has_stage5_results=bool(saved.get("done_5")) and any(
         _num(r.get("LAeq [dB(A)]")) is not None for r in stage5_rows
     )
+    if not is_teacher and has_stage5_results:
+        from labs.curso4_laboratorio_2_stage5 import _front_label_issues
+        mismatched=_front_label_issues(stage5_rows,saved)
+        if mismatched:
+            st.warning(
+                "**Se detectaron nombres de frentes que no corresponden a la Etapa 4.** "
+                "En la Etapa 5 aparecen: " + ", ".join(mismatched) + ". "
+                "Vuelve a la Etapa 5 y revisa la columna «Frente»: identifica "
+                "qué FT1–FT6 produjo cada resultado y utiliza su nombre original. "
+                "No es necesario rehacer las Etapas 3 y 4 ni modificar valores "
+                "acústicos; si un resultado agrupa varios frentes, no lo asignes "
+                "a uno individual sin verificar su procedencia."
+            )
+
 
     if not is_teacher and not has_stage5_results:
         st.markdown("### 5 · Diseño aplicado al caso")
