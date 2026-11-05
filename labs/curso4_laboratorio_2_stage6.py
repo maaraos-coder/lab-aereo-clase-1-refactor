@@ -92,14 +92,38 @@ def _build_design_rows(maxima,limit=65.0,fronts=None, *, by_front=False):
 
 
 def _student_design_rows(saved,limit=65.0):
+    """Mantiene la identidad del frente de Etapas 3/4 al recuperar la Etapa 5.
+
+    Los nombres/códigos exportados por Noise Map Lab pueden no coincidir con
+    el nombre de la etapa de las fuentes originales. No deben sustituirla:
+    render_scope necesita ese identificador para recuperar las máquinas.
+    """
     names=list(dict.fromkeys(str(source.get("Etapa") or "").strip()
         for source in (saved.get("c4l2_s3_acoustic_sources") or []) if str(source.get("Etapa") or "").strip()))
     types={row["Frente / condición"]:row["Tipo de trabajo"] for row in FRONT_TEMPLATE}
-    fronts=[{"Frente / condición":name,"Tipo de trabajo":types.get(name,"Según actividad registrada")} for name in names]
     maxima=_original_maxima(saved,by_front=True)
-    if maxima:
+    scenarios=saved.get("c4l2_s4_scenarios") or []
+    if not names:
         fronts=[{"Frente / condición":m["front"],"Tipo de trabajo":types.get(m["front"],"Según actividad registrada")} for m in maxima.values()]
-    return _build_design_rows(maxima,limit,fronts=fronts or None,by_front=True)
+        return _build_design_rows(maxima,limit,fronts=fronts or None,by_front=True)
+
+    matched={}
+    for name in names:
+        key=_front_name(name)
+        match=maxima.get(key)
+        if match is None:
+            # Relación persistida en la Etapa 4 entre nombre de etapa y
+            # nombre/código del frente exportado hacia la Etapa 5.
+            for scenario in scenarios:
+                if _front_name(scenario.get("Etapa")) != key:
+                    continue
+                match=maxima.get(_front_name(scenario.get("Frente")))
+                if match is not None:
+                    break
+        if match is not None:
+            matched[key]=match
+    fronts=[{"Frente / condición":name,"Tipo de trabajo":types.get(name,"Según actividad registrada")} for name in names]
+    return _build_design_rows(matched,limit,fronts=fronts,by_front=True)
 
 
 def _teacher_design_rows(limit=65.0):
