@@ -276,4 +276,28 @@ class ScopeUITests(unittest.TestCase):
         self.assertNotIn('Escenario 2 · Terminaciones',names)
 
 
+    def test_student_front_keeps_stage3_identity_when_stage5_uses_exported_code(self):
+        saved = saved_state()
+        saved['c4l2_s4_scenarios'][0]['Frente'] = 'FT1'
+        saved['c4l2_s5_detailed_results'] = [
+            {'Frente':'FT1','Receptor':'R1','LAeq [dB(A)]':70}
+        ]
+        rows = stage6._student_design_rows(saved)
+        self.assertEqual(len(rows), 1)
+        self.assertEqual(rows[0]['Frente / condición'], FRONT)
+        self.assertEqual(rows[0]['LAeq original [dB(A)]'], 70)
+        self.assertEqual(rows[0]['Receptor crítico'], 'R1')
+        self.assertEqual(len(front_sources(saved, rows[0]['Frente / condición'])), 3)
+
+    def test_student_front_without_stage5_match_keeps_original_machines(self):
+        saved = saved_state()
+        saved['c4l2_s5_detailed_results'] = [
+            {'Frente':'Identificador externo','Receptor':'R1','LAeq [dB(A)]':70}
+        ]
+        rows = stage6._student_design_rows(saved)
+        self.assertEqual(rows[0]['Frente / condición'], FRONT)
+        self.assertIsNone(rows[0]['LAeq original [dB(A)]'])
+        self.assertEqual(len(front_sources(saved, rows[0]['Frente / condición'])), 3)
+
+
 if __name__ == '__main__': unittest.main()
