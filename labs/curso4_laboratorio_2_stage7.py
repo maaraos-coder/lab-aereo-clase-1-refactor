@@ -1,5 +1,6 @@
 """Etapa 7 · Comparación de la condición original y controlada."""
 
+import hashlib
 import math
 from labs.curso4_lab2_acoustics import BAND_LABELS
 
@@ -149,17 +150,23 @@ def render(lab,saved,runtime):
     related_projects=[name for front,name in project_by_front.items() if selected_front in front or front.startswith(selected_front)]
     suggested_project=next((name for name in related_projects if name.strip()),"")
     project_names=dict(saved.get("c4l2_s7_project_names") or {})
+    front_id=hashlib.sha256(selected_front.encode("utf-8")).hexdigest()[:16]
     project_name=st.text_input(
         "Proyecto controlado en Noise Map Lab",
         value=project_names.get(selected_front) or suggested_project,
-        key="c4l2_s7_project_name",
+        key=f"c4l2_s7_project_name_{front_id}",
     )
 
     front_rows=[row for row in controlled_all if str(row.get("Frente"))==selected_front]
-    controlled_df=pd.DataFrame(front_rows)
+    columns=["Receptor","LAeq controlado [dB(A)]",*BANDS,"Frente"]
+    controlled_df=pd.DataFrame(front_rows,columns=columns)
+    for column in columns[1:-1]:
+        controlled_df[column]=pd.to_numeric(controlled_df[column],errors="coerce").astype(float)
+    st.caption("Guarda el frente después de ingresar los niveles de uno o más receptores. Puedes completar las filas restantes después.")
     edited=st.data_editor(
         controlled_df,
         hide_index=True,
+        column_order=columns,
         use_container_width=True,
         height=max(220,46+42*len(controlled_df)),
         disabled=["Frente","Receptor"],
@@ -170,21 +177,25 @@ def render(lab,saved,runtime):
             **{band:st.column_config.NumberColumn(band,min_value=0.0,max_value=150.0,step=.1,format="%.1f") for band in BANDS},
             "LAeq controlado [dB(A)]":st.column_config.NumberColumn("LAeq controlado",min_value=0.0,max_value=150.0,step=.1,format="%.1f dB(A)"),
         },
-        key=f"c4l2_s7_editor_{fronts.index(selected_front)}",
+        key=f"c4l2_s7_editor_{front_id}",
     )
+    edited_records=edited.astype(object).where(pd.notna(edited),None).to_dict("records")
+    edited_map={_key(row):row for row in edited_records}
+    controlled_view=[edited_map.get(_key(row),row) for row in controlled_all]
     if st.button("Guardar resultados de este frente",use_container_width=True,key="c4l2_s7_save_front"):
-        edited_records=edited.where(pd.notna(edited),None).to_dict("records")
-        edited_map={_key(row):row for row in edited_records}
-        merged=[edited_map.get(_key(row),row) for row in controlled_all]
-        project_names[selected_front]=project_name
-        saved["c4l2_s7_controlled_results"]=merged
-        saved["c4l2_s7_project_names"]=project_names
-        runtime["_save"](lab,saved,7)
-        st.success("Resultados controlados del frente guardados.")
+        candidate={
+            **saved,
+            "c4l2_s7_controlled_results":controlled_view,
+            "c4l2_s7_project_names":{**project_names,selected_front:project_name},
+        }
+        try:
+            runtime["_save"](lab,candidate,7)
+        except Exception:
+            st.error("No se pudo guardar el frente. Mantén esta ventana abierta y vuelve a intentar el guardado.")
+        else:
+            saved.update(candidate)
+            st.success("Resultados controlados del frente guardados.")
 
-    # Incorporar la edición visible a la vista comparativa, incluso antes de guardar.
-    visible_map={_key(row):row for row in edited.where(pd.notna(edited),None).to_dict("records")}
-    controlled_view=[visible_map.get(_key(row),row) for row in controlled_all]
     comparisons=_comparison_rows(original_rows,controlled_view,reference_limit)
     valid_comparisons=[row for row in comparisons if _num(row.get("Controlado [dB(A)]")) is not None]
 
@@ -248,9 +259,7 @@ def render(lab,saved,runtime):
         key="c4l2_s7_comparison_maps",
     )
 
-    edited_records=edited.where(pd.notna(edited),None).to_dict("records")
-    edited_map={_key(row):row for row in edited_records}
-    controlled_draft=[edited_map.get(_key(row),row) for row in controlled_all]
+    controlled_draft=controlled_view
     project_names[selected_front]=project_name
     draft_comparisons=_comparison_rows(original_rows,controlled_draft,reference_limit)
     from labs.curso4_lab2_drafts import render_draft_save
