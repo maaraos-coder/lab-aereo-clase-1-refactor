@@ -9,6 +9,7 @@ from unittest.mock import patch
 import pandas as pd
 
 from labs import curso4_control_models as model
+from labs import curso4_laboratorio_2_stage5 as stage5
 from labs import curso4_laboratorio_2_stage6 as stage6
 from labs.curso4_lab2_acoustics import source_fingerprint
 from labs.curso4_lab2_control_scope import (
@@ -337,6 +338,29 @@ class ScopeUITests(unittest.TestCase):
         # Los tres resultados agregados no pueden adjudicarse a seis frentes
         # particulares sin un vínculo de origen inequívoco.
         self.assertTrue(all(r['LAeq original [dB(A)]'] is None for r in rows))
+
+
+    def test_stage5_rejects_generic_labels_without_changing_saved_results(self):
+        saved = saved_state()
+        saved['c4l2_s4_scenarios'][0]['Frente'] = 'FT1 · ' + FRONT
+        original = deepcopy(saved)
+        issues = stage5._front_label_issues(saved['c4l2_s5_detailed_results'], saved)
+        self.assertEqual(issues, ['Escenario 1'])
+        self.assertEqual(saved, original)
+        valid = deepcopy(saved['c4l2_s5_detailed_results'])
+        valid[0]['Frente'] = 'FT1 · ' + FRONT
+        self.assertEqual(stage5._front_label_issues(valid, saved), [])
+
+    def test_stage5_generates_empty_rows_for_original_front(self):
+        saved = saved_state()
+        saved['c4l2_s4_scenarios'][0]['Frente'] = 'FT1 · ' + FRONT
+        saved['c4l2_s2_receptors_table'] = [
+            {'Receptor':'R1'}, {'Receptor':'R2'}
+        ]
+        rows = stage5._student_front_template(saved)
+        self.assertEqual(len(rows), 2)
+        self.assertEqual({r['Frente'] for r in rows}, {'FT1 · ' + FRONT})
+        self.assertTrue(all(r['LAeq [dB(A)]'] is None for r in rows))
 
 
 if __name__ == '__main__': unittest.main()
