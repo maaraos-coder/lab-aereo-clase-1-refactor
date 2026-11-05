@@ -557,10 +557,26 @@ def _result_form(lab, saved, stage, case_name, fields, prompt):
     _sonara_button("Abrir SONARA para diseñar esta solución")
 
     stored = saved.get(f"c5l1_result_{case['code']}", {})
+    is_ai = case["code"] == "AI-01"
+    ai_target = 58
     st.markdown("### Registra tu solución final y la comparación con la base")
     st.caption("Usa tus propios cálculos; los números del ejemplo de etapa 3 no son resultados de este formulario.")
     with st.form(f"c5l1_form_{case['code']}"):
         values = {}
+        if is_ai:
+            st.info(f"**Meta AI-01 · DₙT,50 ≥ {ai_target} dB.** Copia DₙT,w y «DnT,50 proyectado» de cada corrida en SONARA.")
+            for title, prefix in (("Base · M-01", "base_"), ("Variante · solución final", "")):
+                st.markdown(f"#### {title}")
+                columns = st.columns(2)
+                for column, (key, label) in zip(columns, (
+                    ("dntw", "DₙT,w [dB]"), ("dnt50", "DₙT,50 proyectado [dB]"),
+                )):
+                    field = prefix + key
+                    values[field] = column.number_input(
+                        label, value=stored.get(field), step=0.1, format="%.1f",
+                        placeholder="Resultado SONARA", key=f"c5l1_ai_{field}",
+                    )
+            st.caption("C y Ctr de la variante son opcionales. La adaptación C₅₀–₃₁₅₀ se obtiene de la diferencia entre DₙT,50 y DₙT,w de cada corrida.")
         cols = st.columns(min(3, len(fields)))
         for index, (key, label, unit) in enumerate(fields):
             values[key] = cols[index % len(cols)].number_input(
@@ -571,7 +587,7 @@ def _result_form(lab, saved, stage, case_name, fields, prompt):
                 placeholder="Resultado SONARA",
             )
         st.markdown("#### Comparación de diseño · base → variante")
-        target = st.text_input(
+        target = f"DₙT,50 ≥ {ai_target} dB · objetivo de diseño AI-01" if is_ai else st.text_input(
             "Objetivo de diseño y descriptor",
             value=stored.get("target", saved.get("c5l1_s4_criteria", "")),
             placeholder="Umbral elegido por ti, sentido de comparación y referencia consultada.",
@@ -584,7 +600,10 @@ def _result_form(lab, saved, stage, case_name, fields, prompt):
         design_change = st.text_area(
             "Cambio propuesto y efecto observado",
             value=stored.get("design_change", ""),
-            placeholder="Qué cambiaste, qué mantuviste y por qué mejora o no el descriptor final.",
+            placeholder=(
+                "Qué cambiaste, qué mantuviste y qué camino directo o lateral limita la variante."
+                if is_ai else "Qué cambiaste, qué mantuviste y por qué mejora o no el descriptor final."
+            ),
         )
         evidence = st.text_area(
             "Identificación de las evidencias de SONARA",
@@ -611,7 +630,9 @@ def _result_form(lab, saved, stage, case_name, fields, prompt):
         )
         submitted = st.form_submit_button("Guardar resultados de diseño", width="stretch")
     if submitted:
-        if any(value is None for value in values.values()) and not undetermined:
+        if is_ai and any(values[key] is None for key in ("base_dntw", "base_dnt50", "dntw", "dnt50")):
+            st.warning("Completa DₙT,w y DₙT,50 proyectado de la base y de la variante.")
+        elif not is_ai and any(value is None for value in values.values()) and not undetermined:
             st.warning("Completa los resultados o declara, en instalaciones, el descriptor sin determinar.")
         elif undetermined and all(value is not None for value in values.values()):
             st.warning("La declaración sin determinar requiere dejar vacío el resultado no sustentado.")
@@ -629,6 +650,20 @@ def _result_form(lab, saved, stage, case_name, fields, prompt):
             }
             _save(lab, saved, stage, **{f"c5l1_result_{case['code']}": payload})
             st.success("Resultado guardado. La clase acústica todavía no ha sido asignada.")
+    if is_ai:
+        result = saved.get("c5l1_result_AI-01", {})
+        comparison = []
+        for title, prefix in (("Base", "base_"), ("Variante", "")):
+            dntw, dnt50 = result.get(prefix + "dntw"), result.get(prefix + "dnt50")
+            if dntw is not None and dnt50 is not None:
+                comparison.append([title, dntw, round(dnt50 - dntw, 1), dnt50, round(dnt50 - ai_target, 1)])
+        if comparison:
+            _lab_table(pd.DataFrame(comparison, columns=[
+                "Corrida guardada", "DₙT,w [dB]", "C₅₀–₃₁₅₀ [dB]",
+                "DₙT,50 proyectado [dB]", f"Margen frente a {ai_target} dB",
+            ]), hide_index=True, width="stretch")
+        if len(comparison) == 2:
+            st.caption(f"Variación de DₙT,50 · variante menos base: {result['dnt50'] - result['base_dnt50']:+.1f} dB.")
 
 
 def _stage0(lab, saved):
@@ -1482,7 +1517,7 @@ def _stage5(lab, saved):
     _header(5, "Diseño frente a ruido aéreo entre viviendas", "Modelar el muro separador y los caminos laterales del caso AI-01.")
     _result_form(
         lab, saved, 5, "Aéreo interior",
-        [("dntw", "DₙT,w", "dB"), ("c", "C", "dB"), ("ctr", "Ctr", "dB")],
+        [("c", "C de la variante", "dB"), ("ctr", "Ctr de la variante", "dB")],
         "Construye los recintos A-301/A-302, el muro M-01 y los encuentros del plano. Revisa la curva por bandas antes de registrar el número único.",
     )
     st.markdown("**Control de coherencia:** identifica si domina el elemento directo o una unión lateral; explica qué modificación cambiaría esa conclusión.")
@@ -1523,6 +1558,7 @@ def _stage9(lab, saved):
     _header(9, "Matriz consolidada de resultados", "Revisar integridad, unidades y trazabilidad antes de consultar los umbrales de clasificación.")
     rows = []
     definitions = [
+        ("AI-01", "Aéreo interior", "dnt50", "DₙT,50 proyectado · variante", "dB"),
         ("AI-01", "Aéreo interior", "dntw", "DₙT,w", "dB"),
         ("IM-01", "Impacto", "lntw", "L′ₙT,w", "dB"),
         ("FA-01", "Fachada", "d2mntw", "D₂m,nT,w", "dB"),
