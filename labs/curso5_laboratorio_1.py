@@ -401,12 +401,12 @@ SONARA_DESIGN_GUIDES = {
         "steps": [
             "Dentro de Proyecto → Diseñar, selecciona Ruido aéreo y Panel simple y modela M-01 con una capa de hormigón de 180 mm. Conserva R(f), Rw, C y Ctr como resultados del elemento.",
             "En el mismo proyecto, activa el requerimiento entre recintos y selecciona Diseñar → ISO 12354-1. Ingresa S = 10,2 m², V = 51,0 m³ y el TR receptor declarado. Introduce el Rw calculado en «Rw elemento separador».",
-            "Activa los flancos que existan en los planos. Para cada encuentro registra material, masa superficial, longitud y tipo de unión o Kij. Usa «Calcular con SONARA» cuando puedas definir sus capas.",
+            "Abre Flanqueos → Incluir flanqueos y configura los encuentros de M-01 siguiendo la guía de campos que aparece debajo.",
             "Identifica si domina el camino directo o uno lateral. Diseña una variante: modificar M-01 o añadir un trasdosado desacoplado; si domina un flanco, actúa sobre el encuentro correspondiente.",
-            "Recalcula el descriptor entre recintos con la misma geometría y compara la variante con la base. Registra DₙT,w y las adaptaciones que correspondan a la curva final.",
+            "Recalcula con la misma geometría y documenta los caminos activos en ambas corridas. Compara el DₙT,50 proyectado de base y variante con la meta de 58 dB.",
         ],
         "limit": "El ingreso directo por Rw del módulo entre recintos reconstruye una curva de referencia: declara esa aproximación. No copies C y Ctr de la placa como si fueran los términos de la curva final entre recintos.",
-        "evidence": "Configuración de M-01 y su variante, captura del visual constructivo, entradas de recintos/uniones, curvas y resultado final DₙT,w.",
+        "evidence": "Configuración de M-01 y su variante, captura del visual constructivo, entradas de recintos/uniones, curvas finales y resultados DₙT,w y DₙT,50 de ambas corridas.",
     },
     "Impacto": {
         "route": "Proyecto → Elementos (Paramento horizontal) → Diseñar → Ruido de impacto → Soluciones.",
@@ -475,6 +475,28 @@ def _sonara_design_guide(case_name):
         hide_index=True, width="stretch",
     )
     st.markdown("\n\n".join(f"{index}. {step}" for index, step in enumerate(guide["steps"], 1)))
+    if case_name == "Aéreo interior":
+        st.markdown("#### Cómo completar los flancos de AI-01")
+        st.markdown(
+            "Localiza M-01 en la planta AC-01. El estar A-301 es el emisor y el estar A-302 es el receptor. "
+            "Identifica qué elemento lateral llega al separador en cada extremo y revisa su continuidad en planta, corte y detalles. "
+            "Activa solo los encuentros que modeles. Configura **Losa de piso** y **Losa de cielo** por separado si ambas corresponden al caso."
+        )
+        _lab_table(
+            pd.DataFrame([
+                ["R elemento lado emisor / receptor [dB]", "En Manual, introduce el Rw del tramo lateral de A-301 y el del tramo lateral de A-302. Usa un ensayo de la misma solución o un cálculo con sus capas y espesores. SONARA reconstruye la curva por bandas a partir de esos índices. Si los tramos son iguales, «Calcular con SONARA» aplica a ambos la curva calculada para una sola composición."],
+                ["Longitud de unión lᵢⱼ [m]", "Usa la longitud de contacto del flanco con M-01. Para un muro lateral con contacto vertical completo, adopta 2,50 m según AC-02. Para piso o cielo, usa 4,08 m solo si el contacto abarca todo el largo útil de M-01 en AC-01. Si el encuentro es parcial, mide el tramo conectado."],
+                ["m′ emisor / receptor [kg/m²]", "Calcula por separado la masa superficial de los tramos de A-301 y A-302. Para cada capa incluida en el elemento modelado, multiplica densidad [kg/m³] por espesor [m] y suma las masas. Como ejemplo, 150 mm de hormigón a 2.400 kg/m³ dan 360 kg/m². Ese espesor es ilustrativo."],
+                ["Tipo de unión / desacople", "Revisa el detalle del encuentro con M-01. Identifica la geometría, la continuidad y la presencia de una junta elástica. Elige la opción que represente el detalle o usa Manual si cuentas con un Kij respaldado."],
+                ["Corrección de unión Kij [dB]", "Ingresa un valor medido según la serie ISO 10848 o una estimación aplicable al tipo de unión y al camino de transmisión según ISO 12354-1. El valor automático de SONARA es referencial. Registra su procedencia y el criterio adoptado."],
+            ], columns=["Campo en SONARA", "Cómo completarlo"]),
+            hide_index=True, width="stretch",
+        )
+        st.info(
+            "Documenta para cada encuentro el plano o detalle, la composición de ambos lados y el origen del Kij. "
+            "Si faltan datos, declara la hipótesis y reporta la corrida como preliminar. "
+            "Los valores precargados en SONARA son ejemplos de entrada."
+        )
     st.warning(guide["limit"])
     st.markdown("**Evidencia que debes conservar:** " + guide["evidence"])
     st.caption("El traslado de datos entre SONARA y este laboratorio es manual; abrir SONARA no importa ni guarda resultados automáticamente.")
