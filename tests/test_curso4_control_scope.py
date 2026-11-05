@@ -300,4 +300,43 @@ class ScopeUITests(unittest.TestCase):
         self.assertEqual(len(front_sources(saved, rows[0]['Frente / condición'])), 3)
 
 
+    def test_quentin_six_fronts_remain_available_with_three_stage5_scenarios(self):
+        # Reproducción estructural anonimizada del caso guardado en Supabase.
+        stages = [
+            'Escenario 1 : Preparación del Terreno',
+            'Escenario 2 : Obras de Construcción',
+            'Escenario 3 : Obras de Construcción',
+            'Escenario 4 : URBANIZACIÓN',
+            'Escenario 4 : TERMINACIONES',
+            'Escenario 5 : OBRAS IMIV',
+        ]
+        counts = [4, 6, 2, 5, 2, 4]
+        saved = {'c4l2_s3_acoustic_sources': [], 'c4l2_s4_scenarios': [],
+                 'c4l2_s5_detailed_results': []}
+        for i, (stage, count) in enumerate(zip(stages, counts), 1):
+            names = [f'Equipo {i}-{n}' for n in range(count)]
+            saved['c4l2_s3_acoustic_sources'].extend(
+                {'Etapa':stage, 'Máquina / equipo proyecto':name, 'Cantidad':1,
+                 'Lw_bandas':[100] * 8} for name in names
+            )
+            saved['c4l2_s4_scenarios'].append(
+                {'Etapa':stage, 'Frente':f'FT{i} · {stage}',
+                 'Máquinas simultáneas':names}
+            )
+        saved['c4l2_s5_detailed_results'] = [
+            {'Frente':f'Escenario {i}', 'Receptor':'R1',
+             'LAeq [dB(A)]':70} for i in range(1, 4)
+        ]
+        rows = stage6._student_design_rows(saved)
+        self.assertEqual(len(rows), 6)
+        self.assertEqual([r['Frente / condición'] for r in rows], stages)
+        self.assertEqual(
+            [len(front_sources(saved, r['Frente / condición'])) for r in rows],
+            counts,
+        )
+        # Los tres resultados agregados no pueden adjudicarse a seis frentes
+        # particulares sin un vínculo de origen inequívoco.
+        self.assertTrue(all(r['LAeq original [dB(A)]'] is None for r in rows))
+
+
 if __name__ == '__main__': unittest.main()
