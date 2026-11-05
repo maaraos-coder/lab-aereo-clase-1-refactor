@@ -1351,10 +1351,10 @@ def _stage4(lab, saved):
     st.markdown("### 1 · Crea y organiza los cuatro casos")
     st.markdown("""1. Entra a **Proyecto → Proyecto**, escribe **Los Alerces · tu nombre** y pulsa **Crear / actualizar proyecto**.
 2. En **Recintos**, registra estar A-301 (piso 3), estar A-302 (piso 3) y estar A-402 (piso 4), cada uno con área 20,40 m² y volumen 51,0 m³; dormitorio principal A-302 (piso 3), 11,50 m² y 28,8 m³. Los emisores son definiciones académicas de la ficha, no mediciones del dibujo parcial. Comprueba V = área × altura libre (2,50 m); los volúmenes se presentan redondeados a una decimal. Añade exterior norte (sin volumen cerrado) y baño principal A-302 (4,10 m²; 10,3 m³) para instalaciones cuando corresponda.
-3. En **Elementos**, selecciona emisor, receptor y tipo de elemento. Añade los casos AI-01, IM-01, FA-01 e IN-01, Incluye los componentes de esos cuatro casos; no se exigen modelos adicionales de puertas o tabiques interiores en esta entrega. Pulsa **Agregar elemento a la matriz** o **Diseñar este elemento**.
-4. En **Diseñar**, comprueba **Elemento activo a diseñar** y elige la herramienta en **Calculadora del requerimiento**. Realiza allí los cálculos del laboratorio.
-5. Guarda la base y el rediseño, identificados por caso. Comprueba ambos en **Soluciones** y prepara la documentación desde **Informe**.
-6. Registra en este laboratorio los indicadores, referencias y evidencias; el traslado desde SONARA es manual.""")
+3. En **Elementos**, selecciona emisor, receptor y tipo de elemento. Añade los casos **AI-01, IM-01, FA-01 e IN-01** con sus componentes. Los cuatro casos son el alcance de esta entrega. Pulsa **Agregar elemento a la matriz** o **Diseñar este elemento**.
+4. En **Diseñar**, comprueba **Elemento activo a diseñar**, identifica la calculadora que usarás y revisa el requisito del caso. Para fachada, define el umbral una vez que justifiques el Lden.
+5. En el formulario de esta etapa del **laboratorio**, registra las entradas, su procedencia y cómo compararás la base con el rediseño. Guarda la preparación.
+6. En las **etapas 5–8**, calcula y guarda la base y el rediseño de cada caso en SONARA. Comprueba las variantes en **Soluciones**, reúne evidencias desde **Informe** y traslada los resultados al laboratorio de forma manual.""")
     st.info("**Requisitos de clase A:** contrasta el descriptor y el valor del requerimiento disponible en el catálogo con ISO/TS 19488:2021. La selección de una referencia o el estado de cumplimiento de SONARA no acredita por sí solo clase A. Si el catálogo no ofrece el requisito exacto, documenta la diferencia y comprueba el umbral y los requisitos adicionales en tu matriz del laboratorio.")
     st.markdown("### 2 · Datos del expediente y herramienta de cálculo")
     st.markdown("Usa tu ficha de la Etapa 2 como apoyo. Esta matriz resume geometría y composición; no acredita prestaciones acústicas.")
@@ -1362,9 +1362,9 @@ def _stage4(lab, saved):
         ["M-01 / AI-01", "HA 180 mm; S 10,20 m²; V 51,0 m³", "Proyecto → Diseñar → ISO 12354-1", "DₙT,w y adaptaciones finales"],
         ["L-01 / IM-01", "Losa 160; resiliente 10; sobrelosa 40; terminación 10 mm", "Proyecto → Diseñar → Ruido de impacto", "L′ₙT,w y adaptación aplicable"],
         ["F-01 + V-01 / FA-01", "10,50 m² opacos + 4,80 m² de ventana", "Proyecto → Diseñar → Fachada ISO 12354-3", "Aislamiento de fachada adaptado"],
-        ["S-01 / IN-01", "2 RF 12,5 / cámara 70 / 2 RF 12,5 mm; V 28,8 m³", "Proyecto → Diseñar → Instalaciones EN 12354-5", "LAeq,nT / LAFmax,nT según operación"],
+        ["S-01 / IN-01", "2 RF 12,5 / cámara 70 / 2 RF 12,5 mm; V 28,8 m³", "Proyecto → Diseñar → Instalaciones EN 12354-5", "LAFmax,nT para la descarga intermitente"],
     ], columns=["Caso", "Datos del expediente", "Ruta SONARA", "Resultado a registrar"]), hide_index=True, width="stretch")
-    st.markdown("### 3 · Prepara una comparación reproducible")
+    st.markdown("### 3 · Planifica la comparación que harás en las etapas 5–8")
     st.markdown("""1. Usa los objetivos A mostrados arriba. Comprueba que la salida del módulo corresponda al descriptor y las condiciones requeridas.
 2. Prepara la solución base y registra sus resultados.
 3. Identifica el camino dominante y modifica una variable.
