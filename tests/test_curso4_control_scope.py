@@ -46,6 +46,42 @@ def applications(entries, reduction=10):
 
 
 class ScopeMathTests(unittest.TestCase):
+    def test_short_scenario_recovers_original_sources_and_same_ids(self):
+        saved = saved_state()
+        saved['c4l2_s4_scenarios'][0]['Máquinas simultáneas'] = ['Minicargador']
+        before = deepcopy(saved)
+        self.assertEqual(front_sources(saved, 'Escenario 1'), front_sources(saved, FRONT))
+        self.assertEqual(len(front_sources(saved, 'ESCENARIO 1')), 1)
+        self.assertEqual(saved, before)
+
+    def test_colon_scenario_alias_does_not_depend_on_scenario_order(self):
+        saved = saved_state()
+        full = 'Escenario 1 : Preparación del Terreno'
+        for row in saved['c4l2_s3_acoustic_sources']:
+            row['Etapa'] = full
+        saved['c4l2_s4_scenarios'][0].update({'Etapa':full, 'Frente':'FT1 · ' + full})
+        saved['c4l2_s4_scenarios'].insert(0, {'Etapa':'Escenario 2 : Obras', 'Frente':'FT2 · Escenario 2 : Obras'})
+        self.assertEqual(front_sources(saved, 'Escenario 1'), front_sources(saved, 'FT1'))
+        self.assertEqual(len(front_sources(saved, 'Escenario 1')), 3)
+
+    def test_same_number_different_activities_is_not_merged(self):
+        saved = saved_state()
+        for activity in ('URBANIZACIÓN', 'TERMINACIONES'):
+            stage = 'Escenario 4 : ' + activity
+            saved['c4l2_s4_scenarios'].append({'Etapa':stage, 'Frente':stage, 'Máquinas simultáneas':['Minicargador']})
+            saved['c4l2_s3_acoustic_sources'].append({**saved['c4l2_s3_acoustic_sources'][0], 'Etapa':stage})
+        self.assertEqual(front_sources(saved, 'Escenario 4'), [])
+        self.assertEqual(len(front_sources(saved, 'Escenario 4 : URBANIZACIÓN')), 1)
+        self.assertEqual(len(front_sources(saved, 'Escenario 4 : TERMINACIONES')), 1)
+        self.assertEqual(front_sources(saved, 'Escenario 10'), [])
+
+    def test_ambiguous_ft_alias_does_not_mix_sources(self):
+        saved = saved_state()
+        saved['c4l2_s4_scenarios'][0]['Frente'] = 'FT1 · ' + FRONT
+        self.assertEqual(front_sources(saved, 'FT1'), front_sources(saved, FRONT))
+        saved['c4l2_s4_scenarios'].append({'Frente':'FT1 · Otra actividad', 'Etapa':'Otra actividad'})
+        self.assertEqual(front_sources(saved, 'FT1'), [])
+
     def test_one_machine_control_does_not_reduce_the_entire_front(self):
         entries = front_sources(saved_state(), FRONT)
         result = recombine_front(entries, applications(entries), strict=True)

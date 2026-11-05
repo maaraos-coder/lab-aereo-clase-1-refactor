@@ -36,6 +36,31 @@ def front_sources(saved, front):
         }
         if len(linked_stages) == 1:
             name = linked_stages.pop()
+        elif len(linked_stages) > 1:
+            return []
+    elif re.fullmatch(r"escenario\s*\d+", name):
+        # Noise Map / Etapa 5 may retain only "Escenario 1" while the
+        # original equipment is stored as "Escenario 1 : Preparación...".
+        # Resolve only an unambiguous saved name, never by list position or
+        # by the FT number: two activities can share an escenario number.
+        linked_stages = {
+            _front_name(row.get("Etapa"))
+            for row in saved_scenarios
+            if row.get("Etapa")
+        }
+        linked_stages.update(_front_name(key) for key in (saved.get("c4l2_s4_front_configs") or {}))
+        stages = linked_stages | {
+            _front_name(row.get("Etapa"))
+            for row in (saved.get("c4l2_s3_acoustic_sources") or [])
+            if row.get("Etapa")
+        }
+        if name not in stages:
+            number = re.search(r"\d+", name).group()
+            pattern = rf"^escenario\s*{re.escape(number)}\s*[·:–-]\s*\S"
+            matches = {stage for stage in stages if re.match(pattern, stage)}
+            if len(matches) != 1 or not matches.issubset(linked_stages):
+                return []
+            name = matches.pop()
     scenarios = [s for s in saved_scenarios if _front_name(s.get("Etapa")) == name]
     simultaneous = scenarios[0].get("Máquinas simultáneas") if scenarios else None
     configs = saved.get("c4l2_s4_front_configs") or {}
