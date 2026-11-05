@@ -115,6 +115,52 @@ def _student_result_template():
     return rows
 
 
+
+def _saved_front_labels(saved):
+    """Frentes únicos de Etapa 4. La identidad debe mantenerse entre etapas."""
+    scenarios=saved.get("c4l2_s4_scenarios") or []
+    return [(str(s.get("Frente") or s.get("Etapa") or "").strip(),
+             str(s.get("Etapa") or "").strip())
+            for s in scenarios if isinstance(s,dict)
+            and str(s.get("Frente") or s.get("Etapa") or "").strip()]
+
+
+def _front_label_issues(records,saved):
+    """Comprobar etiquetas sin modificar los niveles ni reasignar escenarios."""
+    fronts=_saved_front_labels(saved)
+    if not fronts:
+        return []
+    accepted={alias for front,stage in fronts for alias in (front,stage) if alias}
+    return sorted({str(row.get("Frente") or "").strip() or "(sin frente)"
+                   for row in records if _num(row.get("LAeq [dB(A)]")) is not None
+                   and str(row.get("Frente") or "").strip() not in accepted})
+
+
+def _student_front_template(saved):
+    """Filas iniciales por frente–receptor real, sin niveles predeterminados."""
+    fronts=_saved_front_labels(saved)
+    if not fronts:
+        return _student_result_template()
+    results=saved.get("c4l2_s4_results") or {}
+    receptors=saved.get("c4l2_s2_receptors_table") or []
+    receptor_names=[str(r.get("Receptor") or "").strip() for r in receptors
+                    if isinstance(r,dict) and str(r.get("Receptor") or "").strip()]
+    rows=[]
+    for front,stage in fronts:
+        stage_receptors=[str(r.get("Receptor") or "").strip()
+                         for r in (results.get(stage) or [])
+                         if isinstance(r,dict) and str(r.get("Receptor") or "").strip()]
+        selected=list(dict.fromkeys(stage_receptors or receptor_names))
+        if not selected:
+            selected=[""]
+        for receptor in selected:
+            rows.append({"Frente":front,"Receptor":receptor,
+                         "Distancia F–R [m]":None,
+                         **{b:None for b in OCTAVE_LABELS},
+                         "LAeq [dB(A)]":None})
+    return rows
+
+
 def _teacher_solution_panel(st,pd):
     """Muestra la solución directamente en la vista docente, no en la proyección/alumno."""
     if st.session_state.get("role")!="Docente":
@@ -337,14 +383,20 @@ def render(lab,saved,runtime):
     - el **LAeq global [dB(A)]**;
     - y, cuando corresponda, la **distancia fuente–receptor** utilizada en ese escenario.
 
-    La tabla solo entrega la combinación **Escenario–Receptor** como guía.  
-    **Los resultados acústicos no vienen precargados:** debes registrarlos a partir de tu propia modelación.
+    **Conserva exactamente el nombre de cada frente de la Etapa 4** (FT1, FT2, etc.).
+    No cambies «FT1 · ...» por un rótulo general como «Escenario 1»: ese nombre
+    no identifica inequívocamente la maquinaria y la simultaneidad originales.
+
+    La tabla inicial ofrece combinaciones **frente–receptor** según tus registros.
+    **Los resultados acústicos no vienen precargados:** debes registrarlos desde tu modelación.
+    Si tienes registros antiguos, se conservan para que corrijas solo los nombres,
+    comprobando a qué frente corresponde cada resultado.
     """)
 
     # La tabla de trabajo nunca entrega los resultados.
     # Solo precarga la combinación Escenario–Receptor; espectro y LAeq deben ser
     # obtenidos por el alumno desde Noise Map Lab.
-    blank_template=_student_result_template()
+    blank_template=_student_result_template() if is_teacher or is_projection else _student_front_template(saved)
 
     saved_detail=saved.get("c4l2_s5_detailed_results") or blank_template
     # Conserva resultados propios en las tres vistas, incluso al corregir rótulos.
@@ -394,6 +446,19 @@ def render(lab,saved,runtime):
         remove_label="➖ Quitar última fila",
     )
     detail_records=detail_df.where(pd.notna(detail_df),None).to_dict("records")
+    invalid_front_labels=_front_label_issues(detail_records,saved) if not is_teacher and not is_projection else []
+    if invalid_front_labels:
+        st.error(
+            "**Revisa la identificación de los frentes antes de finalizar.** "
+            "Estos nombres de la Etapa 5 no coinciden con los frentes guardados en la Etapa 4: "
+            + ", ".join(invalid_front_labels) + ". "
+            "Corrige únicamente la columna «Frente», comprobando la correspondencia en Noise Map Lab. "
+            "No cambies los LAeq ni los espectros para solucionar un problema de nombres. "
+            "Puedes guardar el borrador mientras revisas."
+        )
+        st.caption("Frentes válidos recuperados de la Etapa 4: "
+                   + " | ".join(front for front, _stage in _saved_front_labels(saved)))
+
 
     st.markdown("### 5 · Evalúa la condición original")
     valid=[r for r in detail_records if _num(r.get("LAeq [dB(A)]")) is not None]
@@ -485,7 +550,9 @@ def render(lab,saved,runtime):
     },"c4l2_s5_save_draft")
 
     if st.button("✓ Validar y finalizar la Etapa 5",type="primary",use_container_width=True,key="c4l2_s5_save"):
-        if not valid:
+        if invalid_front_labels:
+            st.error("No es posible finalizar: corrige los nombres de los frentes señalados. Tu borrador y resultados anteriores permanecen guardados.")
+        elif not valid:
             st.warning("Registra al menos un resultado global de LAeq antes de guardar.")
         elif not str(spatial or "").strip() or not str(spectral or "").strip():
             st.warning("Completa la lectura espacial y la lectura espectral antes de guardar.")
