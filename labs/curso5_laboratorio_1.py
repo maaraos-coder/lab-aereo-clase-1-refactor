@@ -172,9 +172,13 @@ TEACHER_GUIDE = {
     ], "No promediar aritméticamente aislamientos ni usar Rw de la ventana como aislamiento global. Declarar la aproximación del traslado Manual Rw/Ctr."),
     8: ("IN-01 · Instalaciones", [
         ("Modelo esperado", "Fuente sanitaria espectral y condición temporal documentadas, cierre S-01 de 120 mm totales, receptor dormitorio V = 28,8 m³, TR/absorción y vías justificadas."),
-        ("Descriptores", "Comprobar normalización a T₀ = 0,5 s y compatibilidad temporal de LAeq,nT y LAFmax,nT. No convertir un promedio en máximo FAST. Si falta un dato, aceptar sin determinar únicamente con limitación y plan para obtenerlo."),
-        ("Variante", "Comparar cierre, sellado o fijaciones con la misma fuente, operación y receptor. La vía estructural exige datos de excitación/transferencia compatibles; no una atenuación arbitraria."),
-    ], "No premiar valores inventados para completar campos. Un descriptor requerido sin determinar limita la conclusión global."),
+        ("Corridas guardadas en SONARA", "Los Alerces · Marco Araos · Docente → Soluciones → Baño principal A-302 → Dormitorio principal A-302 · Instalaciones / HVAC. Busca «IN-01_Base docente» e «IN-01_Variante docente»."),
+        ("Operación y espectro de entrada", "Descarga única de WC de 6 L, evento de 10 s como hipótesis, sin usos simultáneos. Bandas 63, 125, 250, 500, 1000, 2000 y 4000 Hz. Lw hipotético para el instante de mayor emisión: 70 / 68 / 66 / 64 / 61 / 58 / 55 dB re 1 pW. Son valores de ejemplo del módulo, sin medición FAST ni respaldo de fabricante. La duración describe el escenario y no interviene en el cálculo del máximo proyectado."),
+        ("Geometría y absorción", "Dormitorio V = 28,8 m³. Supuestos didácticos: S-01 expuesto = 3,00 m² y absorción equivalente del lado fuente = 1,50 m² en todas las bandas. TR receptor = 0,50 s; A receptor ≈ 0,16 × 28,8 / 0,50 = 9,22 m². Verifica el área real y la validez del campo difuso, especialmente si el emisor es un shaft estrecho."),
+        ("Cierre y espectros R", "Dos placas RF de 12,5 mm por cara, cámara de 70 mm y montante simple a 600 mm como hipótesis de modelación. Proxy del catálogo SONARA: yeso USG Sheetrock Firecode C de 1/2 pulgada, ajustado a 12,5 mm. R de octava obtenido con el motor de panel doble, promediando coeficientes de transmisión dentro de cada octava. Base con cámara sin absorbente: 5,4 / 13,0 / 32,1 / 48,8 / 64,5 / 73,6 / 57,8 dB. Variante con lana mineral de 60 kg/m³: 7,7 / 16,0 / 35,1 / 51,8 / 66,0 / 74,7 / 58,9 dB. El proxy acústico no acredita resistencia al fuego."),
+        ("Resultado y alcance", "En SONARA usa Intermitente (LAFmax estimado) → Aérea · recinto adyacente, sin atenuaciones adicionales. Base 41,2 dB(A) y variante 38,5 dB(A), mejora de 2,7 dB. Frente a la meta de 26 dB(A), ambas proyecciones aéreas quedan por encima, por 15,2 y 12,5 dB respectivamente. La vía estructural queda sin cuantificar y el máximo FAST real requiere verificación."),
+        ("Registro y verificación", "Deja LAeq,nT sin determinar para este ejemplo: falta un espectro equivalente del ciclo y un intervalo de evaluación. Para verificar en obra, reproduce la descarga, registra el máximo FAST en el dormitorio y mide el TR para normalizar a T₀ = 0,5 s. Para modelar las fijaciones, solicita datos compatibles de excitación y transferencia instalada."),
+    ], "Distingue el escenario académico de una caracterización de la descarga real. No conviertas LAeq en máximo FAST ni simules una abrazadera con una resta arbitraria."),
     9: ("Matriz y revisión crítica", [
         ("Integridad", "Contrastar AI-01, IM-01, FA-01 e IN-01 con las evidencias y resultados guardados. Revisar unidades, términos espectrales, normalización y estados pendiente/sin determinar."),
         ("Operaciones", "DₙT,A = DₙT,w + C y aislamiento de fachada adaptado = D₂m,nT,w + Ctr solo con adaptaciones compatibles. Estas operaciones no asignan por sí solas una clase."),
@@ -1656,6 +1660,18 @@ def _stage7(lab, saved):
 
 def _stage8(lab, saved):
     _header(8, "Proyección de ruido de instalaciones", "Estimar el ruido sanitario y declarar el método técnico y la condición de operación.")
+    st.markdown("### Condición de operación · ejemplo docente IN-01")
+    st.markdown(
+        "Simula **una descarga de WC de 6 L** en el baño principal A-302, con un evento "
+        "de **10 s como hipótesis** y sin otras descargas ni artefactos funcionando a la vez. "
+        "Evalúa el instante de mayor emisión de la descarga en el dormitorio principal A-302. "
+        "Mantén la misma operación al comparar la base y la variante."
+    )
+    st.caption(
+        "El ejemplo usa potencia sonora hipotética por octavas y modela la vía aérea a través de S-01. "
+        "La duración describe la operación y no se usa para convertir niveles. "
+        "Para evaluar el máximo FAST real o sumar la vía estructural necesitas antecedentes específicos de la descarga y del montaje."
+    )
     _result_form(
         lab, saved, 8, "Instalaciones",
         [("laeq", "LAeq,nT", "dB(A)"), ("lafmax", "LAFmax,nT", "dB(A)")],
