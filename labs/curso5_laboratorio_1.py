@@ -457,12 +457,12 @@ SONARA_DESIGN_GUIDES = {
     "Instalaciones": {
         "route": "Proyecto → Elementos (Instalaciones / HVAC) → Diseñar → Instalaciones EN 12354-5 → Soluciones.",
         "inputs": [
-            ["IN-01 · descarga sanitaria", "Condición de operación definida por el alumno", "Se requiere espectro de fuente trazable; los valores iniciales de SONARA son ejemplos."],
+            ["IN-01 · descarga sanitaria", "Condición y espectro entregados en el ejercicio IN-01", "Usa los datos indicados en la Etapa 8 para reproducir ambas corridas."],
             ["S-01 · cierre", "2 RF 12,5 + cámara 70 + 2 RF 12,5 = 120 mm", "Ver AC-04; selecciona las fichas de placas y absorbente. No asignes 120 mm a cada capa."],
             ["Receptor", "Dormitorio principal · V = 28,8 m³", "Declara TR, absorción equivalente y recorrido; A ≈ 0,16 V/T como hipótesis de campo difuso."],
         ],
         "steps": [
-            "Define una descarga o ciclo de funcionamiento reproducible, su duración y simultaneidad. Obtén datos espectrales de fabricante o ensayo; si no existen, identifica el cálculo como escenario académico.",
+            "Usa la descarga, la duración y el espectro de potencia sonora entregados en el enunciado de IN-01. Regístralos como datos didácticos del ejercicio.",
             "Desde Proyecto → Diseñar → Ruido aéreo, diseña el cierre S-01 como Panel doble con espesores y cámara expresamente definidos. Conserva R(f), no solo Rw.",
             "En Ruido de instalaciones selecciona la condición de funcionamiento y la vía «Aérea · recinto adyacente». Ingresa el espectro Lw, el área real del cierre, R por bandas de octava y las absorciones fuente/receptor.",
             "Para las fijaciones usa una vía «Estructural» solo con nivel de fuerza/velocidad y función de transferencia instalada compatibles. Una abrazadera resiliente no se representa restando una atenuación arbitraria.",
@@ -1660,7 +1660,7 @@ def _stage7(lab, saved):
 
 def _stage8(lab, saved):
     _header(8, "Proyección de ruido de instalaciones", "Estimar el ruido sanitario y declarar el método técnico y la condición de operación.")
-    st.markdown("### Condición de operación · ejemplo docente IN-01")
+    st.markdown("### Enunciado del ejercicio IN-01 · condición de operación")
     st.markdown(
         "Simula **una descarga de WC de 6 L** en el baño principal A-302, con un evento "
         "de **10 s como hipótesis** y sin otras descargas ni artefactos funcionando a la vez. "
@@ -1672,7 +1672,12 @@ def _stage8(lab, saved):
         "La duración describe la operación y no se usa para convertir niveles. "
         "Para evaluar el máximo FAST real o sumar la vía estructural necesitas antecedentes específicos de la descarga y del montaje."
     )
-    st.markdown("### Entradas de SONARA · supuestos de las soluciones docentes")
+    st.markdown("### Datos entregados para el ejercicio IN-01")
+    st.markdown(
+        "**Usa las siguientes entradas para resolver el ejercicio en SONARA.** "
+        "Calcula y registra el resultado de la base y la variante, la mejora obtenida "
+        "y la diferencia de cada corrida frente a la meta."
+    )
     st.info(
         "Selecciona «Aérea · recinto adyacente» para activar R del separador y su área. "
         "En «Aérea · mismo recinto», SONARA estima el ruido en el recinto donde está la fuente."
