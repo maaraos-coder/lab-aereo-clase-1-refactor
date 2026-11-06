@@ -157,7 +157,10 @@ TEACHER_GUIDE = {
         ("Resultado y mejora", "Exigir DₙT,w y adaptaciones de la curva final entre recintos. Para DₙT,A comprobar DₙT,w + C. Comparar base y variante con igual geometría e identificar el camino dominante; mayor aislamiento es mejor."),
     ], "Rw del muro no sustituye DₙT,w. No trasladar automáticamente C/Ctr del elemento a la curva entre recintos; declarar la reconstrucción aproximada por Rw."),
     6: ("IM-01 · Impacto", [
-        ("Modelo esperado", "Losa HA 160 mm, área 20,40 m², V = 51,0 m³; base sin tratamiento y variante documentada con piso/cielo si corresponde. Misma geometría, TR y condiciones de comparación."),
+        ("Caso base guardado en SONARA", "Los Alerces · Marco Araos · Docente → Soluciones → Estar A-402 → Estar-comedor A-302 · Paramento horizontal. Solución «IM-01 · L-01 · Base preliminar · losa desnuda sin flancos»."),
+        ("Entradas de la corrida docente", "Ruido de impacto → ISO 12354-2 → Calcular por masa superficial. Losa de hormigón armado de 160 mm, densidad adoptada de 2.400 kg/m³ y masa superficial de 384 kg/m². Área del entrepiso de 20,40 m², volumen receptor de 51,0 m³ y TR receptor adoptado de 0,60 s. Selecciona Modelo genérico / físico → Sin revestimiento, Sin cielo y desactiva Incluir flanqueos de impacto. Esta base preliminar representa la transmisión directa."),
+        ("Resultados y metas", "Lₙ,0,w estimado: 73,5 dB. Resultado entre recintos L′ₙT,w: 76 dB (30 dB sobre la meta de 46 dB). L′ₙT,50 proyectado: 76 dB (26 dB sobre la meta de 50 dB). CI mostrado: −4 dB. Para baja frecuencia usa L′ₙT,50 proyectado, que incorpora la adaptación de 50–2.500 Hz. La base no cumple ambas metas."),
+        ("Comparación con la variante", "Conserva área, volumen, TR y criterio de flanqueo al comparar el efecto del tratamiento. Si incorporas flancos para evaluar el desempeño del conjunto, vuelve a calcular la base con la misma configuración de flancos."),
         ("Revisión técnica", "Catálogo ΔL medido compatible o modelo físico con masa de sobrelosa y s′ trazable. Revisar puentes rígidos y flancos. Exigir L′ₙT,w y CI compatibles; menor nivel es mejor."),
     ], "No sumar mejoras de catálogo y modelo físico del mismo sistema. La diferencia base/variante no es automáticamente el ΔLw de ensayo del revestimiento."),
     7: ("FA-01 · Fachada", [
@@ -416,7 +419,7 @@ SONARA_DESIGN_GUIDES = {
             ["Geometría IM-01", "Área entrepiso = 20,4 m² · V = 51,0 m³", "Usa el mismo TR receptor en la comparación base/variante."],
         ],
         "steps": [
-            "Selecciona ISO 12354-2 y «Calcular por masa superficial». Ingresa 160 mm y la densidad documentada del hormigón. No uses 200 mm sumando la sobrelosa a la losa estructural.",
+            "En Proyecto → Diseñar, abre «Elemento activo a diseñar» y selecciona Estar A-402 → Estar-comedor A-302 · Paramento horizontal. Comprueba que la banda indique «Requerimiento activo: IM-01 · L-01». En Calculadora del requerimiento elige Ruido de impacto y luego el método ISO 12354-2. Selecciona «Calcular por masa superficial» e ingresa 160 mm de losa estructural y la densidad documentada.",
             "Calcula primero la losa base sin revestimiento ni cielo. Guarda el resultado como IM-01 · Base y registra los flancos considerados.",
             "Para la variante, selecciona un revestimiento del catálogo con espectro ΔL medido y montaje compatible; documenta su ficha. Alternativamente usa «Piso flotante físico».",
             "En Piso flotante físico ingresa la masa superficial de la sobrelosa: m′ = densidad × 0,040 m. Ingresa la rigidez dinámica s′ de la capa resiliente desde una ficha; no la deduzcas solo de su espesor.",
