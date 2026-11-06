@@ -163,6 +163,7 @@ TEACHER_GUIDE = {
         ("Base docente con flancos guardada en SONARA", "Busca «IM-01 · L-01 · Base preliminar con flancos M-01 y F-01». Conserva las entradas de la corrida directa y activa dos encuentros. Para ambos, R emisor = 44 dB y m′ emisor = 384 kg/m². Muro lateral 1 (M-01): longitud 4,08 m, R receptor = 45 dB y m′ receptor = 432 kg/m². Fachada / elemento lateral (núcleo de F-01): longitud 6,12 m, R receptor = 43 dB y m′ receptor = 360 kg/m². Selecciona Unión rígida pesada en ambos encuentros. SONARA muestra Kij ≈ 8,7 dB en cada uno."),
         ("Fundamento y resultado con flancos", "Las longitudes se adoptaron de las cotas de AC-01, suponiendo contacto continuo. AC-02 sitúa A-402 sobre A-302 y AC-04 documenta espesores. La continuidad rígida es una hipótesis docente. Los Rw se estimaron como paneles simples de HA de 160, 180 y 150 mm, con 2.400 kg/m³, E = 11 GPa, η = 0,006 y ν = 0,20. F-01 representa solo el núcleo estructural, sin atribuir mejora al trasdosado ni a la ventana. Los demás flancos quedan fuera de esta corrida por falta de datos. L′ₙT,w = 76 dB, L′ₙT,50 proyectado = 76 dB y CI mostrado = −3 dB. Ambos indicadores siguen sobre sus metas. La coincidencia de los índices redondeados con la corrida directa no implica igualdad de las curvas."),
         ("Comparación con la variante", "Conserva área, volumen, TR y criterio de flanqueo al comparar el efecto del tratamiento. Si incorporas flancos para evaluar el desempeño del conjunto, vuelve a calcular la base con la misma configuración de flancos."),
+        ("Variante docente guardada en SONARA", "Busca «IM-01 · L-01 · Variante sobrelosa flotante genérica · flancos M-01 y F-01». Se usó Modelo genérico / físico → Sobrelosa flotante, sin cielo y con los mismos flancos de la base. El programa aplica un espectro genérico de mejora: los espesores 10 + 40 + 10 mm describen el detalle de AC-04 y no se ingresaron en este modo. L′ₙT,w bajó de 76 a 67 dB (mejora de 9 dB, aún 21 dB sobre la meta). L′ₙT,50 proyectado bajó de 76 a 74 dB (mejora de 2 dB, aún 24 dB sobre la meta)."),
         ("Revisión técnica", "Catálogo ΔL medido compatible o modelo físico con masa de sobrelosa y s′ trazable. Revisar puentes rígidos y flancos. Exigir L′ₙT,w y CI compatibles; menor nivel es mejor."),
     ], "No sumar mejoras de catálogo y modelo físico del mismo sistema. La diferencia base/variante no es automáticamente el ΔLw de ensayo del revestimiento."),
     7: ("FA-01 · Fachada", [
@@ -423,7 +424,7 @@ SONARA_DESIGN_GUIDES = {
         "steps": [
             "En Proyecto → Diseñar, abre «Elemento activo a diseñar» y selecciona Estar A-402 → Estar-comedor A-302 · Paramento horizontal. Comprueba que la banda indique «Requerimiento activo: IM-01 · L-01». En Calculadora del requerimiento elige Ruido de impacto y luego el método ISO 12354-2. Selecciona «Calcular por masa superficial» e ingresa 160 mm de losa estructural y la densidad documentada.",
             "Calcula la losa base sin revestimiento ni cielo. Usa la guía de flanqueos que aparece debajo para configurar los encuentros y guarda la corrida como IM-01 · Base con flancos. Puedes conservar una corrida directa aparte para distinguir el efecto de los caminos laterales.",
-            "Para la variante, selecciona un revestimiento del catálogo con espectro ΔL medido y montaje compatible; documenta su ficha. Alternativamente usa «Piso flotante físico».",
+            "Para reproducir la variante docente, selecciona Modelo genérico / físico → Sobrelosa flotante. Declara que usaste su espectro genérico. Para caracterizar una solución específica, puedes usar un espectro ΔL medido de un montaje compatible o «Piso flotante físico» con datos justificados.",
             "En Piso flotante físico ingresa la masa superficial de la sobrelosa: m′ = densidad × 0,040 m. Ingresa la rigidez dinámica s′ de la capa resiliente desde una ficha; no la deduzcas solo de su espesor.",
             "Define el cielo inferior solo si forma parte de tu propuesta. Completa área 20,4 m², volumen 51,0 m³, TR y flancos; revisa el visual constructivo y recalcula.",
             "Compara L′ₙT,w y L′ₙT,50 proyectado de base y variante con sus metas de 46 y 50 dB, respectivamente. Menor nivel de impacto significa mejor desempeño. Explica la influencia del piso, los puentes rígidos y los flancos.",
@@ -539,11 +540,24 @@ def _sonara_design_guide(case_name):
         _lab_table(
             pd.DataFrame([
                 ["R emisor / R receptor [dB]", "Para cada camino losa → muro, ingresa el Rw de la losa excitada y el Rw del elemento lateral que radia hacia el receptor. Usa datos de ensayo o declara cómo estimaste cada Rw."],
-                ["Longitud de unión [m]", "Mide en planta el tramo real de contacto entre la losa y el elemento lateral. Usa la longitud de cada encuentro por separado."],
+                ["Longitud de unión [m]", "En AC-01, sigue en planta el borde común losa–muro y toma la cota del tramo conectado. Contrasta su continuidad en AC-02 y AC-04. Si el contacto es parcial, mide solo el tramo unido."],
                 ["m′ emisor / m′ receptor [kg/m²]", "Usa las masas superficiales de la losa y del elemento lateral del camino. Para una capa homogénea, multiplica densidad [kg/m³] por espesor [m]."],
                 ["Tipo de unión y Kij [dB]", "Elige Unión rígida pesada si el encuentro entre elementos pesados es rígido o si lo adoptas como hipótesis explícita. Una banda resiliente del piso flotante no demuestra desacople de la unión estructural. Usa Manual cuando dispongas de un Kij respaldado para ese encuentro. El valor automático de SONARA es referencial."],
             ], columns=["Campo en SONARA", "Cómo completarlo"]),
             hide_index=True, width="stretch",
+        )
+        st.markdown("##### Longitudes y tipo de unión en el ejemplo docente")
+        _lab_table(pd.DataFrame([
+            ["L-01 → M-01 (Muro lateral 1)", "4,08 m", "Cota del borde oeste del estar en AC-01. Se supone contacto continuo con el muro de HA de 180 mm."],
+            ["L-01 → F-01 (Fachada / elemento lateral)", "6,12 m", "Cota del borde norte del estar en AC-01. Se supone una línea estructural continua; comprueba el detalle a la altura de la losa antes de descontar un vano."],
+        ], columns=["Camino", "Longitud adoptada", "Cómo se obtuvo"]), hide_index=True, width="stretch")
+        st.markdown(
+            "En ambos encuentros se adoptó **Unión rígida pesada** porque se modelaron losa y núcleo de muro de HA "
+            "con contacto rígido continuo. Es una hipótesis docente y el Kij automático de 8,7 dB es referencial. "
+            "Selecciona **Unión rígida liviana** si el flanco liviano está fijado rígidamente al soporte, o **Unión semi-rígida** "
+            "si el detalle acredita rigidez parcial. Para tabiques, revisa si las caras comparten montantes o tienen perfilerías "
+            "independientes o doble bastidor. Elige **Junta elástica / resiliente** solo si el desacople está en la unión estructural "
+            "que modelas. Usa **Manual** cuando tengas un Kij de ensayo o de cálculo aplicable al encuentro."
         )
         st.info(
             "Revisa el camino directo, los flancos activos y el total en las curvas por bandas. "
