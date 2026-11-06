@@ -336,11 +336,22 @@ def _header(stage: int, title: str, purpose: str):
 
 
 def _save(lab, saved, stage: int, **values):
-    saved.update(values)
-    saved[f"done_{stage}"] = True
-    saved[f"c5l1_done_{stage}"] = True
-    saved[f"c5l1_updated_{stage}"] = _now()
-    _save_future_state(lab["id"], saved)
+    updated = {
+        **saved,
+        **values,
+        f"done_{stage}": True,
+        f"c5l1_done_{stage}": True,
+        f"c5l1_updated_{stage}": _now(),
+    }
+    try:
+        _save_future_state(lab["id"], updated)
+    except PermissionError as exc:
+        st.error(str(exc))
+        st.stop()
+    except Exception:
+        st.error("No se pudo guardar esta etapa en Supabase. Reintenta antes de cambiar de etapa.")
+        st.stop()
+    saved.update(updated)
 
 
 def _sonara_button(label="Abrir SONARA para calcular"):
