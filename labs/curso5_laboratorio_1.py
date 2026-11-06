@@ -160,6 +160,8 @@ TEACHER_GUIDE = {
         ("Caso base guardado en SONARA", "Los Alerces · Marco Araos · Docente → Soluciones → Estar A-402 → Estar-comedor A-302 · Paramento horizontal. Solución «IM-01 · L-01 · Base preliminar · losa desnuda sin flancos»."),
         ("Entradas de la corrida docente", "Ruido de impacto → ISO 12354-2 → Calcular por masa superficial. Losa de hormigón armado de 160 mm, densidad adoptada de 2.400 kg/m³ y masa superficial de 384 kg/m². Área del entrepiso de 20,40 m², volumen receptor de 51,0 m³ y TR receptor adoptado de 0,60 s. Selecciona Modelo genérico / físico → Sin revestimiento, Sin cielo y desactiva Incluir flanqueos de impacto. Esta base preliminar representa la transmisión directa."),
         ("Resultados y metas", "Lₙ,0,w estimado: 73,5 dB. Resultado entre recintos L′ₙT,w: 76 dB (30 dB sobre la meta de 46 dB). L′ₙT,50 proyectado: 76 dB (26 dB sobre la meta de 50 dB). CI mostrado: −4 dB. Para baja frecuencia usa L′ₙT,50 proyectado, que incorpora la adaptación de 50–2.500 Hz. La base no cumple ambas metas."),
+        ("Base docente con flancos guardada en SONARA", "Busca «IM-01 · L-01 · Base preliminar con flancos M-01 y F-01». Conserva las entradas de la corrida directa y activa dos encuentros. Para ambos, R emisor = 44 dB y m′ emisor = 384 kg/m². Muro lateral 1 (M-01): longitud 4,08 m, R receptor = 45 dB y m′ receptor = 432 kg/m². Fachada / elemento lateral (núcleo de F-01): longitud 6,12 m, R receptor = 43 dB y m′ receptor = 360 kg/m². Selecciona Unión rígida pesada en ambos encuentros. SONARA muestra Kij ≈ 8,7 dB en cada uno."),
+        ("Fundamento y resultado con flancos", "Las longitudes se adoptaron de las cotas de AC-01, suponiendo contacto continuo. AC-02 sitúa A-402 sobre A-302 y AC-04 documenta espesores. La continuidad rígida es una hipótesis docente. Los Rw se estimaron como paneles simples de HA de 160, 180 y 150 mm, con 2.400 kg/m³, E = 11 GPa, η = 0,006 y ν = 0,20. F-01 representa solo el núcleo estructural, sin atribuir mejora al trasdosado ni a la ventana. Los demás flancos quedan fuera de esta corrida por falta de datos. L′ₙT,w = 76 dB, L′ₙT,50 proyectado = 76 dB y CI mostrado = −3 dB. Ambos indicadores siguen sobre sus metas. La coincidencia de los índices redondeados con la corrida directa no implica igualdad de las curvas."),
         ("Comparación con la variante", "Conserva área, volumen, TR y criterio de flanqueo al comparar el efecto del tratamiento. Si incorporas flancos para evaluar el desempeño del conjunto, vuelve a calcular la base con la misma configuración de flancos."),
         ("Revisión técnica", "Catálogo ΔL medido compatible o modelo físico con masa de sobrelosa y s′ trazable. Revisar puentes rígidos y flancos. Exigir L′ₙT,w y CI compatibles; menor nivel es mejor."),
     ], "No sumar mejoras de catálogo y modelo físico del mismo sistema. La diferencia base/variante no es automáticamente el ΔLw de ensayo del revestimiento."),
@@ -420,11 +422,11 @@ SONARA_DESIGN_GUIDES = {
         ],
         "steps": [
             "En Proyecto → Diseñar, abre «Elemento activo a diseñar» y selecciona Estar A-402 → Estar-comedor A-302 · Paramento horizontal. Comprueba que la banda indique «Requerimiento activo: IM-01 · L-01». En Calculadora del requerimiento elige Ruido de impacto y luego el método ISO 12354-2. Selecciona «Calcular por masa superficial» e ingresa 160 mm de losa estructural y la densidad documentada.",
-            "Calcula primero la losa base sin revestimiento ni cielo. Guarda el resultado como IM-01 · Base y registra los flancos considerados.",
+            "Calcula la losa base sin revestimiento ni cielo. Usa la guía de flanqueos que aparece debajo para configurar los encuentros y guarda la corrida como IM-01 · Base con flancos. Puedes conservar una corrida directa aparte para distinguir el efecto de los caminos laterales.",
             "Para la variante, selecciona un revestimiento del catálogo con espectro ΔL medido y montaje compatible; documenta su ficha. Alternativamente usa «Piso flotante físico».",
             "En Piso flotante físico ingresa la masa superficial de la sobrelosa: m′ = densidad × 0,040 m. Ingresa la rigidez dinámica s′ de la capa resiliente desde una ficha; no la deduzcas solo de su espesor.",
             "Define el cielo inferior solo si forma parte de tu propuesta. Completa área 20,4 m², volumen 51,0 m³, TR y flancos; revisa el visual constructivo y recalcula.",
-            "Compara L′ₙT,w y CI de base y variante; menor nivel de impacto significa mejor desempeño. Explica la influencia del piso, de los puentes rígidos y de los flancos.",
+            "Compara L′ₙT,w y L′ₙT,50 proyectado de base y variante con sus metas de 46 y 50 dB, respectivamente. Menor nivel de impacto significa mejor desempeño. Explica la influencia del piso, los puentes rígidos y los flancos.",
         ],
         "limit": "No sumes dos mejoras ΔL para el mismo sistema: el catálogo medido y el modelo físico son alternativas. La banda resiliente perimetral no equivale a una rigidez dinámica conocida.",
         "evidence": "Losa y densidad, ficha ΔL o masa/rigidez del piso físico, montaje, flancos, visual constructivo, curva y L′ₙT,w con CI.",
@@ -525,6 +527,28 @@ def _sonara_design_guide(case_name):
             "Documenta para cada encuentro el plano o detalle, la composición de ambos lados y el origen del Kij. "
             "Si faltan datos, declara la hipótesis y reporta la corrida como preliminar. "
             "Los valores precargados en SONARA son ejemplos de entrada."
+        )
+    if case_name == "Impacto":
+        st.markdown("#### Cómo configurar los flanqueos de impacto de IM-01")
+        st.markdown(
+            "El impacto excita la losa L-01 en A-402. Parte de la vibración puede pasar a los muros unidos a la losa "
+            "y radiar al estar-comedor A-302. Identifica en AC-01 los bordes en contacto, usa AC-02 para comprobar la relación "
+            "entre pisos y revisa en AC-04 los espesores y el detalle constructivo. En el modo ISO 12354-2, activa «Incluir flanqueos de impacto» "
+            "y marca únicamente los encuentros que hayas caracterizado o cuya hipótesis puedas justificar."
+        )
+        _lab_table(
+            pd.DataFrame([
+                ["R emisor / R receptor [dB]", "Para cada camino losa → muro, ingresa el Rw de la losa excitada y el Rw del elemento lateral que radia hacia el receptor. Usa datos de ensayo o declara cómo estimaste cada Rw."],
+                ["Longitud de unión [m]", "Mide en planta el tramo real de contacto entre la losa y el elemento lateral. Usa la longitud de cada encuentro por separado."],
+                ["m′ emisor / m′ receptor [kg/m²]", "Usa las masas superficiales de la losa y del elemento lateral del camino. Para una capa homogénea, multiplica densidad [kg/m³] por espesor [m]."],
+                ["Tipo de unión y Kij [dB]", "Elige Unión rígida pesada si el encuentro entre elementos pesados es rígido o si lo adoptas como hipótesis explícita. Una banda resiliente del piso flotante no demuestra desacople de la unión estructural. Usa Manual cuando dispongas de un Kij respaldado para ese encuentro. El valor automático de SONARA es referencial."],
+            ], columns=["Campo en SONARA", "Cómo completarlo"]),
+            hide_index=True, width="stretch",
+        )
+        st.info(
+            "Revisa el camino directo, los flancos activos y el total en las curvas por bandas. "
+            "Conserva los mismos encuentros al evaluar la variante, salvo cambios constructivos que afecten la unión. "
+            "Documenta qué caminos omitiste, por qué y qué supuestos usaste."
         )
     st.warning(guide["limit"])
     st.markdown("**Evidencia que debes conservar:** " + guide["evidence"])
