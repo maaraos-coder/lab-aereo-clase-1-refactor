@@ -869,13 +869,16 @@ def _stage0(lab, saved):
     )
 
 
+_CLASS_A_REQUIREMENTS = [
+    ["AI-01", "DₙT,50", "≥ 58 dB", "Resultado entre recintos con flancos.", "§5.2 · tabla 1, fila 1 · p. 7 / PDF 13"],
+    ["IM-01", "L′ₙT,w Y L′ₙT,50", "≤ 46 dB Y ≤ 50 dB", "Comprobar ambos indicadores y adaptación de baja frecuencia.", "§5.3 · tabla 2, fila 1 · p. 8 / PDF 14"],
+    ["FA-01", "DₙT,A,tr · justificar correspondencia con salida de fachada", "≥ max(Lden − 20; 30) dB", "Depende de exposición y espectro documentados.", "§5.4 · tabla 3, notas a–b · p. 8 / PDF 14"],
+    ["IN-01", "LAFmax,nT", "≤ 26 dB(A)", "Descarga intermitente; máximo FAST normalizado a T₀ = 0,5 s.", "§5.5 · tabla 4, fila 2 · p. 9 / PDF 15"],
+]
+
+
 def _show_class_a_requirements(saved, code=None):
-    rows = [
-        ["AI-01", "DₙT,50", "≥ 58 dB", "Resultado entre recintos con flancos.", "§5.2 · tabla 1, fila 1 · p. 7 / PDF 13"],
-        ["IM-01", "L′ₙT,w Y L′ₙT,50", "≤ 46 dB Y ≤ 50 dB", "Comprobar ambos indicadores y adaptación de baja frecuencia.", "§5.3 · tabla 2, fila 1 · p. 8 / PDF 14"],
-        ["FA-01", "DₙT,A,tr · justificar correspondencia con salida de fachada", "≥ max(Lden − 20; 30) dB", "Depende de exposición y espectro documentados.", "§5.4 · tabla 3, notas a–b · p. 8 / PDF 14"],
-        ["IN-01", "LAFmax,nT", "≤ 26 dB(A)", "Descarga intermitente; máximo FAST normalizado a T₀ = 0,5 s.", "§5.5 · tabla 4, fila 2 · p. 9 / PDF 15"],
-    ]
+    rows = _CLASS_A_REQUIREMENTS
     if code is not None:
         rows = [row for row in rows if row[0] == code]
     st.markdown("#### Objetivos de clase A del ejercicio")
@@ -1803,7 +1806,6 @@ def _stage9(lab, saved):
 
 def _stage10(lab, saved):
     _header(10, "Verificación de la meta Clase A", "Contrastar los resultados de diseño de los cuatro casos con los objetivos ya definidos.")
-    _show_class_a_requirements(saved)
     st.info("Usa los resultados guardados de la variante. En cada caso indica si alcanza la meta, qué brecha queda o qué antecedente falta para verificarla. La conclusión se limita a los cuatro casos modelados de A-302.")
     _download_standard("c5l1_s10_standard")
     with st.expander("Recordar cómo se clasifica el edificio completo"):
@@ -1814,35 +1816,56 @@ def _stage10(lab, saved):
         ("FA-01", "Fachada", (("d2mnt_atr", "D₂m,nT,w + Ctr", "dB"),)),
         ("IN-01", "Instalaciones", (("lafmax", "LAFmax,nT", "dB(A)"),)),
     ]
+    requirements = {row[0]: row[1:] for row in _CLASS_A_REQUIREMENTS}
+    lden = saved.get("c5l1_s4_inputs", {}).get("lden")
     decisions = ("Selecciona una decisión", "Alcanza la meta A", "Queda fuera de la meta A", "Sin antecedentes suficientes")
     previous = saved.get("c5l1_classification", {})
     entries = {}
     with st.form("c5l1_classification_form"):
-        for code, family, fields in cases:
-            st.markdown(f"#### {code} · {family}")
-            result = saved.get(f"c5l1_result_{code}", {})
-            for key, label, unit in fields:
-                value = result.get(key)
-                if key == "d2mnt_atr" and value is None and result.get("d2mntw") is not None and result.get("ctr") is not None:
-                    value = round(result["d2mntw"] + result["ctr"], 1)
-                if code == "IN-01" and not result.get("normalized"):
-                    value = None
-                st.caption(f"Variante · {label}: {value:g} {unit}" if value is not None else f"Variante · {label}: sin resultado utilizable.")
-            prior = previous.get(family, {})
-            decision = prior.get("decision")
-            entries[family] = {
-                **prior,
-                "decision": st.selectbox(
-                    "Verificación de la meta A", decisions,
-                    index=decisions.index(decision) if decision in decisions else 0,
-                    key=f"c5l1_decision_{family}",
-                ),
-                "justification": st.text_area(
-                    "Justificación y evidencia", value=prior.get("justification", ""),
-                    placeholder="Indica la comparación y el margen, o el dato que falta para verificar.",
-                    key=f"c5l1_verification_{family}",
-                ),
-            }
+        for source_stage, (code, family, fields) in enumerate(cases, start=5):
+            with st.container(border=True):
+                st.markdown(f"#### {code} · {family}")
+                result = saved.get(f"c5l1_result_{code}", {})
+                descriptor, limit, condition, reference = requirements[code]
+                actual, target = st.columns(2)
+                actual.markdown("**Resultado guardado · variante**")
+                target.markdown("**Umbral de Clase A**")
+                target.markdown(f"**{limit}** · {descriptor}")
+                if code == "FA-01":
+                    if isinstance(lden, (int, float)):
+                        target.caption(f"Umbral del caso ≥ {max(lden - 20, 30):g} dB con Lden de {lden:g} dB.")
+                    else:
+                        target.caption("Falta el Lden de la etapa 4 para obtener el umbral del caso.")
+                for key, label, unit in fields:
+                    value = result.get(key)
+                    if key == "d2mnt_atr" and value is None and result.get("d2mntw") is not None and result.get("ctr") is not None:
+                        value = round(result["d2mntw"] + result["ctr"], 1)
+                    if code == "IN-01" and not result.get("normalized"):
+                        value = None
+                    if value is not None:
+                        actual.markdown(f"{label} · **{value:g} {unit}**")
+                    else:
+                        actual.markdown(f"{label} · **Sin resultado disponible**")
+                        actual.caption(f"Revisa el registro de la variante en la etapa {source_stage}.")
+                if code == "IM-01":
+                    actual.caption("CI se muestra como dato de apoyo. Contrasta también el L′ₙT,50 de tu evidencia.")
+                st.caption(f"{condition} · ISO/TS 19488:2021 · {reference}")
+                prior = previous.get(family, {})
+                decision = prior.get("decision")
+                entries[family] = {
+                    **prior,
+                    "decision": st.selectbox(
+                        "Verificación de la meta A", decisions,
+                        index=decisions.index(decision) if decision in decisions else 0,
+                        key=f"c5l1_decision_{family}",
+                    ),
+                    "justification": st.text_area(
+                        "Justificación y evidencia", value=prior.get("justification", ""),
+                        placeholder="Indica la comparación y el margen, o el dato que falta para verificar.",
+                        key=f"c5l1_verification_{family}",
+                    ),
+                }
+        st.markdown("### Cierre del informe")
         overall_rule = st.text_area(
             "Caso limitante y alcance de la conclusión",
             value=previous.get("overall_rule", ""),
