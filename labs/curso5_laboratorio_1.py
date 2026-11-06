@@ -184,12 +184,12 @@ TEACHER_GUIDE = {
         ("Preparación para la etapa 10", "Identificar el descriptor aplicable y el umbral de Clase A de ISO/TS 19488:2021 para cada caso."),
         ("Juicio crítico", "Identificar resultado débil respecto del objetivo, incertidumbre dominante y verificación en obra concreta. Debe conservar base, cambio y evidencias por caso."),
     ], "Una matriz llena no demuestra cumplimiento; cualquier dato sin determinar debe conservar su limitación en el informe."),
-    10: ("Clasificación e informe final", [
-        ("Clase por caso", "Rehacer la comparación de los resultados propios con descriptor, umbral, sentido ≥/≤, tabla, fila y notas de la edición consultada. Revisar adaptaciones y requisitos adicionales antes de aceptar la letra."),
-        ("Clase limitante", "Comprobar la mejor clase común sustentada, sin promediar. Distinguir clase objetivo, clase alcanzada por caso y conclusión preliminar de los cuatro casos; NPD no equivale a clase F."),
+    10: ("Verificación de Clase A e informe final", [
+        ("Verificación por caso", "Contrastar la variante con el descriptor, umbral, sentido ≥/≤ y condiciones del objetivo A ya fijado. Documentar brechas y antecedentes faltantes."),
+        ("Caso limitante", "Identificar qué caso limita la conclusión de diseño y qué cambio o verificación se necesita."),
         ("Extensión al edificio", "Exigir plan para tipologías y situaciones pendientes, otros recintos/fachadas, accesos/escaleras e instalaciones aplicables, cobertura del muestreo, inspecciones y mediciones. No extrapolar A-302 a 20 viviendas."),
-        ("Informe profesional", "Debe enlazar alcance → fuentes/entradas → base/variante → curva/descriptor → umbral/clase → limitante → incertidumbres y verificación. Aceptar propuestas distintas si son reproducibles y técnicamente justificadas."),
-    ], "No existe una letra única correcta para todos los alumnos: depende de sus modelos y datos. No aceptar certificación global cuando falta cobertura o evidencia."),
+        ("Informe profesional", "Debe enlazar alcance → fuentes/entradas → base/variante → curva/descriptor → umbral A y decisión → limitante → incertidumbres y verificación. Aceptar propuestas distintas si son reproducibles y técnicamente justificadas."),
+    ], "La meta es Clase A para todos. La conclusión depende de los resultados y del alcance de la evidencia."),
 }
 
 
@@ -886,7 +886,7 @@ def _show_class_a_requirements(saved, code=None):
         if isinstance(lden, (int, float)):
             st.info(f"**FA-01:** con Lden guardado de {lden:g} dB, el límite es **≥ {max(lden - 20, 30):g} dB**. Comprueba descriptor, espectro y notas.")
         else:
-            st.info("**FA-01:** la regla ya está definida. Registra y justifica Lden en esta etapa para obtener su límite numérico.")
+            st.info("**FA-01:** la regla ya está definida. Registra y justifica Lden en la etapa 4 para obtener su límite numérico.")
 
 
 def _coverage_explanation():
@@ -1745,7 +1745,7 @@ def _stage9(lab, saved):
         rows.append([code, family, descriptor, result.get(key), unit, status])
     result_df = pd.DataFrame(rows, columns=["Caso", "Familia", "Descriptor", "Resultado", "Unidad", "Estado"])
     _lab_table(result_df, hide_index=True, width="stretch")
-    st.info("En la etapa 10, compara el descriptor aplicable de cada caso con su umbral de Clase A según ISO/TS 19488:2021 y justifica la clase alcanzada.")
+    st.info("En la etapa 10, compara el descriptor aplicable de cada caso con su umbral de Clase A según ISO/TS 19488:2021 y justifica si la variante alcanza la meta de diseño.")
     st.markdown("### Decisiones y evidencias del diseño")
     decisions = []
     for family, case in CALCULATION_CASES.items():
@@ -1798,49 +1798,56 @@ def _stage9(lab, saved):
             st.warning("Desarrolla la revisión crítica con al menos 120 caracteres.")
         else:
             _save(lab, saved, 9, c5l1_s9_review=review)
-            st.success("Matriz consolidada. Continúa con la clasificación individual.")
+            st.success("Matriz consolidada. Continúa con la verificación de la meta Clase A.")
 
 
 def _stage10(lab, saved):
-    _header(10, "Clasificación realizada por el alumno", "Aplicar ISO/TS 19488 a los resultados y emitir una conclusión trazable de proyecto.")
-    st.error(
-        "La plataforma no calcula ni recomienda la clase. Consulta tu copia autorizada de ISO/TS 19488:2021, "
-        "verifica el alcance de cada tabla y registra la decisión que puedas justificar."
-    )
-    if saved.get("c5l1_result_IN-01", {}).get("undetermined"):
-        st.warning(
-            "Instalaciones contiene un descriptor sin determinar. Consulta cómo declarar esa "
-            "situación en la referencia elegida y explica la exclusión; no atribuyas una clase "
-            "a la característica sin evidencia ni concluyas conformidad global completa."
-        )
-    st.info("Entrega una clasificación preliminar de los casos AI-01, IM-01, FA-01 e IN-01. El laboratorio no evalúa por sí solo todas las situaciones de A-302 ni las otras 19 viviendas; no presentes estos cuatro casos como certificación global.")
-    st.info("**Revisión de la meta clase A:** compara cada característica con A. Si obtienes otra clase, documenta la brecha y el rediseño necesario; no declares alcanzada la meta. Incluye el cuadro de soluciones de tabiques, muros, ventanas, puertas, losas y encuentros, y las situaciones pendientes del edificio.")
-    st.markdown("**Informe final:** alcance → entradas y fuentes → base/variante → curva y descriptor → límite y clase por caso → clase limitante → incertidumbres y verificación en obra.")
+    _header(10, "Verificación de la meta Clase A", "Contrastar los resultados de diseño de los cuatro casos con los objetivos ya definidos.")
+    _show_class_a_requirements(saved)
+    st.info("Usa los resultados guardados de la variante. En cada caso indica si alcanza la meta, qué brecha queda o qué antecedente falta para verificarla. La conclusión se limita a los cuatro casos modelados de A-302.")
     _download_standard("c5l1_s10_standard")
     with st.expander("Recordar cómo se clasifica el edificio completo"):
         _global_building_explanation()
-    families = ["Aéreo interior", "Impacto", "Fachada", "Instalaciones"]
+    cases = [
+        ("AI-01", "Aéreo interior", (("dnt50", "DₙT,50", "dB"),)),
+        ("IM-01", "Impacto", (("lntw", "L′ₙT,w", "dB"), ("ci", "CI registrado", "dB"))),
+        ("FA-01", "Fachada", (("d2mnt_atr", "D₂m,nT,w + Ctr", "dB"),)),
+        ("IN-01", "Instalaciones", (("lafmax", "LAFmax,nT", "dB(A)"),)),
+    ]
+    decisions = ("Selecciona una decisión", "Alcanza la meta A", "Queda fuera de la meta A", "Sin antecedentes suficientes")
     previous = saved.get("c5l1_classification", {})
     entries = {}
     with st.form("c5l1_classification_form"):
-        for family in families:
-            st.markdown(f"#### {family}")
-            c1, c2, c3 = st.columns([1, 1, 2])
+        for code, family, fields in cases:
+            st.markdown(f"#### {code} · {family}")
+            result = saved.get(f"c5l1_result_{code}", {})
+            for key, label, unit in fields:
+                value = result.get(key)
+                if key == "d2mnt_atr" and value is None and result.get("d2mntw") is not None and result.get("ctr") is not None:
+                    value = round(result["d2mntw"] + result["ctr"], 1)
+                if code == "IN-01" and not result.get("normalized"):
+                    value = None
+                st.caption(f"Variante · {label}: {value:g} {unit}" if value is not None else f"Variante · {label}: sin resultado utilizable.")
+            prior = previous.get(family, {})
+            decision = prior.get("decision")
             entries[family] = {
-                "class": c1.text_input(
-                    "Clase asignada",
-                    value=previous.get(family, {}).get("class", ""),
-                    placeholder="Según edición consultada",
-                    key=f"c5l1_class_{family}",
+                **prior,
+                "decision": st.selectbox(
+                    "Verificación de la meta A", decisions,
+                    index=decisions.index(decision) if decision in decisions else 0,
+                    key=f"c5l1_decision_{family}",
                 ),
-                "threshold": c2.text_input("Umbral consultado", value=previous.get(family, {}).get("threshold", ""), key=f"c5l1_threshold_{family}"),
-                "justification": c3.text_input("Justificación y referencia", value=previous.get(family, {}).get("justification", ""), key=f"c5l1_justification_{family}"),
+                "justification": st.text_area(
+                    "Justificación y evidencia", value=prior.get("justification", ""),
+                    placeholder="Indica la comparación y el margen, o el dato que falta para verificar.",
+                    key=f"c5l1_verification_{family}",
+                ),
             }
         overall_rule = st.text_area(
-            "Clase limitante de los casos y alcance de la conclusión",
+            "Caso limitante y alcance de la conclusión",
             value=previous.get("overall_rule", ""),
             height=100,
-            placeholder="Compara las clases parciales sin promediarlas; explica qué falta para clasificar la vivienda o el edificio completo.",
+            placeholder="Identifica el caso que limita la meta A y explica qué falta para extender la conclusión a la vivienda o al edificio.",
         )
         building_plan = st.text_area(
             "Explica por qué la conclusión no se extiende automáticamente a todo Los Alerces",
@@ -1852,11 +1859,14 @@ def _stage10(lab, saved):
             "Conclusión profesional y plan de verificación",
             value=previous.get("conclusion", ""),
             height=180,
-            placeholder="Clasificación, categoría dominante, mejoras propuestas, incertidumbres y mediciones finales requeridas.",
+            placeholder="Conclusión frente a la meta A, mejoras propuestas, incertidumbres y mediciones finales requeridas.",
         )
-        submitted = st.form_submit_button("Entregar clasificación del proyecto", width="stretch")
+        submitted = st.form_submit_button("Guardar verificación de la meta Clase A", width="stretch")
     if submitted:
-        invalid = [family for family in families if entries[family]["class"].strip().upper() not in {"A", "B", "C", "D", "E", "F", "NPD"} or not entries[family]["threshold"].strip() or len(entries[family]["justification"].strip()) < 20]
+        invalid = [
+            family for family, entry in entries.items()
+            if entry["decision"] == decisions[0] or len(entry["justification"].strip()) < 20
+        ]
         results_ready = all(saved.get(f"c5l1_result_{code}") for code in ["AI-01", "IM-01", "FA-01", "IN-01"])
         services = saved.get("c5l1_result_IN-01", {})
         if any(services.get(key) is not None for key in ("laeq", "lafmax")) and not services.get("normalized"):
@@ -1864,15 +1874,15 @@ def _stage10(lab, saved):
         if not results_ready:
             st.warning("Faltan resultados de SONARA. Completa las Etapas 5 a 8 antes de entregar.")
         elif invalid:
-            st.warning("Completa clase, umbral y justificación para: " + ", ".join(invalid))
+            st.warning("Completa la decisión y su justificación para " + ", ".join(invalid))
         elif len(building_plan.strip()) < 100:
             st.warning("Explica qué falta para clasificar el edificio completo con al menos 100 caracteres.")
         elif len(overall_rule.strip()) < 80 or len(conclusion.strip()) < 180:
             st.warning("Desarrolla la regla global y la conclusión con la extensión mínima solicitada.")
         else:
-            payload = {**entries, "overall_rule": overall_rule, "building_plan": building_plan, "conclusion": conclusion, "standard": "ISO/TS 19488:2021", "phase": "Diseño", "scope": "Cuatro situaciones modeladas de A-302; clasificación global no acreditada"}
+            payload = {**entries, "overall_rule": overall_rule, "building_plan": building_plan, "conclusion": conclusion, "target_class": "A", "standard": "ISO/TS 19488:2021", "phase": "Diseño", "scope": "Cuatro situaciones modeladas de A-302; clasificación global no acreditada"}
             _save(lab, saved, 10, c5l1_classification=payload)
-            st.success("Clasificación entregada para revisión docente. Se conserva como clasificación de diseño realizada por el alumno.")
+            st.success("Verificación de la meta Clase A guardada para revisión docente.")
 
 
 _STAGES = [_stage0, _stage1, _stage2, _stage3, _stage4, _stage5, _stage6, _stage7, _stage8, _stage9, _stage10]
