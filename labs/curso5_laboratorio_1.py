@@ -181,7 +181,7 @@ TEACHER_GUIDE = {
     ], "Distingue el escenario académico de una caracterización de la descarga real. No conviertas LAeq en máximo FAST ni simules una abrazadera con una resta arbitraria."),
     9: ("Matriz y revisión crítica", [
         ("Integridad", "Contrastar AI-01, IM-01, FA-01 e IN-01 con las evidencias y resultados guardados. Revisar unidades, términos espectrales, normalización y estados pendiente/sin determinar."),
-        ("Operaciones", "DₙT,A = DₙT,w + C y aislamiento de fachada adaptado = D₂m,nT,w + Ctr solo con adaptaciones compatibles. Estas operaciones no asignan por sí solas una clase."),
+        ("Preparación para la etapa 10", "Identificar el descriptor aplicable y el umbral de Clase A de ISO/TS 19488:2021 para cada caso."),
         ("Juicio crítico", "Identificar resultado débil respecto del objetivo, incertidumbre dominante y verificación en obra concreta. Debe conservar base, cambio y evidencias por caso."),
     ], "Una matriz llena no demuestra cumplimiento; cualquier dato sin determinar debe conservar su limitación en el informe."),
     10: ("Clasificación e informe final", [
@@ -1745,16 +1745,7 @@ def _stage9(lab, saved):
         rows.append([code, family, descriptor, result.get(key), unit, status])
     result_df = pd.DataFrame(rows, columns=["Caso", "Familia", "Descriptor", "Resultado", "Unidad", "Estado"])
     _lab_table(result_df, hide_index=True, width="stretch")
-    st.markdown("### Indicadores para la comparación normativa")
-    ai = saved.get("c5l1_result_AI-01", {})
-    fa = saved.get("c5l1_result_FA-01", {})
-    dnta = ai["dntw"] + ai["c"] if ai.get("dntw") is not None and ai.get("c") is not None else None
-    facade_adapted = fa["d2mntw"] + fa["ctr"] if fa.get("d2mntw") is not None and fa.get("ctr") is not None else None
-    _lab_table(pd.DataFrame([
-        ["AI-01", "DₙT,A = DₙT,w + C", dnta, "Verificar que C procede de la curva final entre recintos"],
-        ["FA-01", "D₂m,nT,w + Ctr", facade_adapted, "Justificar correspondencia y espectro; comparar con Lden adoptado"],
-    ], columns=["Caso", "Operación", "Valor [dB]", "Condición de uso"]), hide_index=True, width="stretch")
-    st.info("Estas sumas ayudan a revisar los indicadores; no asignan clases. Para A/B pueden faltar descriptores de baja frecuencia que debes documentar antes de concluir.")
+    st.info("En la etapa 10, compara el descriptor aplicable de cada caso con su umbral de Clase A según ISO/TS 19488:2021 y justifica la clase alcanzada.")
     st.markdown("### Decisiones y evidencias del diseño")
     decisions = []
     for family, case in CALCULATION_CASES.items():
