@@ -492,7 +492,33 @@ def _sonara_design_guide(case_name):
             ], columns=["Campo en SONARA", "Cómo completarlo"]),
             hide_index=True, width="stretch",
         )
+        st.markdown("#### Cómo elegir el tipo de unión en SONARA")
+        st.markdown(
+            "Ubica la unión con M-01 en **AC-01**, revisa su continuidad en **AC-02** y consulta el detalle "
+            "estructural o la ficha de montaje para confirmar cómo se conectan las piezas. "
+            "Identifica qué elementos continúan a través del encuentro y cuáles terminan en él."
+        )
+        _lab_table(
+            pd.DataFrame([
+                ["Unión rígida pesada", "Elementos pesados conectados rígidamente. En AI-01, úsala como aproximación preliminar si el detalle confirma que la losa de hormigón y M-01 forman un encuentro monolítico."],
+                ["Unión rígida liviana", "Elemento liviano fijado directamente al soporte mediante una conexión rígida. Comprueba el sistema de fijación."],
+                ["Unión semi-rígida", "El detalle o la ficha documenta una conexión con rigidez parcial. Si la conexión es desconocida, registra ese dato como pendiente."],
+                ["Montante simple", "Las placas comparten una misma fila de montantes. Revisa a qué perfilería se fija cada cara."],
+                ["Montantes independientes / doble estructura", "Revisa en la ficha qué perfilería sostiene cada cara. Distingue los montantes de cada hoja de los dos bastidores completos y comprueba si hay puentes rígidos."],
+                ["Junta elástica / resiliente", "El desacople debe estar en el encuentro que modelas. Una capa resiliente bajo el pavimento por sí sola deja sin confirmar el desacople entre muro y losa."],
+                ["Manual", "Ingresa un Kij de ensayo o de un cálculo aplicable a la geometría, a los elementos y al camino de transmisión. Registra el origen del valor."],
+            ], columns=["Opción en SONARA", "Qué verificar antes de elegir"]),
+            hide_index=True, width="stretch",
+        )
+        st.markdown(
+            "Consulta la [ISO 12354-1:2017](https://www.iso.org/standard/70242.html), **Anexo E** para uniones "
+            "de edificios pesados y **Anexo F** para construcciones livianas. En el Anexo E, busca la geometría "
+            "del encuentro, por ejemplo en T o en cruz, y el camino de transmisión correspondiente. "
+            "Para datos medidos, consulta la [serie ISO 10848](https://www.iso.org/standard/67229.html) "
+            "y verifica que el ensayo represente tu unión."
+        )
         st.info(
+            "Las categorías del menú son aproximaciones de SONARA y el Kij automático es referencial. "
             "Documenta para cada encuentro el plano o detalle, la composición de ambos lados y el origen del Kij. "
             "Si faltan datos, declara la hipótesis y reporta la corrida como preliminar. "
             "Los valores precargados en SONARA son ejemplos de entrada."
