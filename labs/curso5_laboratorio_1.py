@@ -1672,6 +1672,41 @@ def _stage8(lab, saved):
         "La duración describe la operación y no se usa para convertir niveles. "
         "Para evaluar el máximo FAST real o sumar la vía estructural necesitas antecedentes específicos de la descarga y del montaje."
     )
+    st.markdown("### Entradas de SONARA · supuestos de las soluciones docentes")
+    st.info(
+        "Selecciona «Aérea · recinto adyacente» para activar R del separador y su área. "
+        "En «Aérea · mismo recinto», SONARA estima el ruido en el recinto donde está la fuente."
+    )
+    _lab_table(pd.DataFrame([
+        ["Tipo de funcionamiento", "Intermitente (LAFmax estimado)"],
+        ["Vía de transmisión", "Aérea · recinto adyacente"],
+        ["Distancia y directividad Q", "Se dejaron en 2,00 m y 2,00. Esta vía no los utiliza."],
+        ["Absorción equivalente fuente", "1,50 m² · hipótesis didáctica"],
+        ["Absorción equivalente receptor", "9,22 m² · estimada con 0,16 × 28,8 / 0,50"],
+        ["TR receptor", "0,50 s · hipótesis didáctica. SONARA normaliza a T₀ = 0,50 s."],
+        ["Área del separador S-01", "3,00 m² · hipótesis didáctica"],
+        ["Vías adicionales", "0 · la vía estructural queda sin cuantificar"],
+    ], columns=["Campo de SONARA", "Entrada para ambas corridas"]), hide_index=True, width="stretch")
+    st.markdown(
+        "El cierre S-01 tiene **dos placas RF de 12,5 mm por cara y una cámara de 70 mm**. "
+        "Para estimar R se usó como proxy acústico yeso USG Sheetrock Firecode C de ½ pulgada, "
+        "ajustado a 12,5 mm, con montante simple y fijaciones cada 600 mm. "
+        "La base tiene cámara vacía y la variante incorpora lana mineral de 60 kg/m³."
+    )
+    _lab_table(pd.DataFrame([
+        ["63", "70", "5,4", "7,7", "0"],
+        ["125", "68", "13,0", "16,0", "0"],
+        ["250", "66", "32,1", "35,1", "0"],
+        ["500", "64", "48,8", "51,8", "0"],
+        ["1.000", "61", "64,5", "66,0", "0"],
+        ["2.000", "58", "73,6", "74,7", "0"],
+        ["4.000", "55", "57,8", "58,9", "0"],
+    ], columns=["Banda [Hz]", "Lw hipotético [dB re 1 pW]", "R base [dB]", "R variante [dB]", "Atenuación adicional [dB]"]), hide_index=True, width="stretch")
+    st.caption(
+        "Calcula primero con la columna R base. Para la variante, sustituye solo R del separador. "
+        "Compara el LAFmax,nT proyectado de ambas corridas con la meta de 26 dB(A). "
+        "Los Lw son hipotéticos y los R provienen del modelo por bandas de S-01."
+    )
     _result_form(
         lab, saved, 8, "Instalaciones",
         [("laeq", "LAeq,nT", "dB(A)"), ("lafmax", "LAFmax,nT", "dB(A)")],
