@@ -443,12 +443,12 @@ SONARA_DESIGN_GUIDES = {
             "Desde Proyecto → Diseñar → Ruido aéreo, diseña F-01 como Panel doble: hoja de hormigón de 150 mm, cámara de 50 mm con absorbente y hoja de yeso de 15 mm. Declara el montaje desacoplado y la ficha del absorbente.",
             "Desde Proyecto → Diseñar → Ruido aéreo, diseña V-01 como Ventana → DVH: vidrio 6 mm, aire 12 mm y vidrio 4 mm. Documenta que el conjunto real también depende de marco, juntas y condiciones de ensayo.",
             "Abre Fachada (ISO 12354-3). Ingresa volumen 51,0 m³ y área total 15,3 m². Crea dos componentes: opaco 10,50 m² y ventana 4,80 m².",
-            "El selector SONARA de cada componente calcula una placa simple. Para trasladar tu panel doble o DVH usa «Manual Rw/Ctr» con sus resultados; documenta la reconstrucción espectral aproximada que realiza ese modo.",
+            "En Origen acústico, usa «SONARA · Panel doble» para F-01 y «SONARA · DVH» para V-01. El cálculo de fachada usa directamente la curva por bandas de cada componente.",
             "Ingresa exposición exterior y corrección por forma a partir de antecedentes o hipótesis identificadas. Añade juntas o aireadores únicamente cuando puedas justificar sus datos.",
-            "Compara una variante del componente dominante —ventana, sellos o paño opaco— manteniendo áreas y exposición. Guarda D₂m,nT,w y C/Ctr de la fachada completa.",
+            "Compara una variante del componente dominante —ventana, sellos o paño opaco— manteniendo áreas y exposición. Para ambas corridas, copia D₂m,nT,w, C y Ctr desde «Descriptores de la curva de fachada D₂m,nT». La ficha calcula D₂m,nT,Atr y el margen respecto a la meta.",
         ],
         "limit": "El modo Manual Rw/Ctr no transfiere íntegramente el espectro calculado del componente. Informa esa limitación. No uses el Rw de la ventana como resultado global ni registres el dormitorio V-02 dentro del caso del estar V-01.",
-        "evidence": "Modelos F-01 y V-01, Rw/Ctr transferidos, áreas, hipótesis exterior/forma, juntas consideradas y curva final de fachada.",
+        "evidence": "Modelos F-01 y V-01, espectros de los componentes, áreas, hipótesis exterior y de forma, juntas consideradas y curva final de fachada.",
     },
     "Instalaciones": {
         "route": "Proyecto → Elementos (Instalaciones / HVAC) → Diseñar → Instalaciones EN 12354-5 → Soluciones.",
@@ -626,6 +626,9 @@ def _result_form(lab, saved, stage, case_name, fields, prompt):
     stored = saved.get(f"c5l1_result_{case['code']}", {})
     is_ai = case["code"] == "AI-01"
     ai_target = 58
+    is_facade = case["code"] == "FA-01"
+    lden = saved.get("c5l1_s4_inputs", {}).get("lden") if is_facade else None
+    facade_target = max(lden - 20, 30) if lden is not None else None
     st.markdown("### Registra tu solución final y la comparación con la base")
     st.caption("Usa tus propios cálculos; los números del ejemplo de etapa 3 no son resultados de este formulario.")
     with st.form(f"c5l1_form_{case['code']}"):
@@ -644,21 +647,39 @@ def _result_form(lab, saved, stage, case_name, fields, prompt):
                         placeholder="Resultado SONARA", key=f"c5l1_ai_{field}",
                     )
             st.caption("C y Ctr de la variante son opcionales. La adaptación C₅₀–₃₁₅₀ se obtiene de la diferencia entre DₙT,50 y DₙT,w de cada corrida.")
-        cols = st.columns(min(3, len(fields)))
-        for index, (key, label, unit) in enumerate(fields):
-            values[key] = cols[index % len(cols)].number_input(
-                f"{label} [{unit}]",
-                value=stored.get(key),
-                step=0.1,
-                format="%.1f",
-                placeholder="Resultado SONARA",
-            )
+        if is_facade:
+            st.info("Copia D₂m,nT,w, C y Ctr de la misma curva de fachada D₂m,nT en SONARA. El formulario suma D₂m,nT,w + Ctr al guardar.")
+            if facade_target is None:
+                st.caption("Registra el Lden adoptado en la etapa 4 para calcular la meta. El mínimo absoluto de 30 dB es una referencia provisional.")
+            else:
+                st.caption(f"Lden adoptado: {lden:g} dB · Meta de diseño: D₂m,nT,Atr ≥ {facade_target:g} dB.")
+        groups = (("Base", "base_"), ("Variante · solución final", "")) if is_facade else ((None, ""),)
+        for title, prefix in groups:
+            if title:
+                st.markdown(f"#### {title}")
+            cols = st.columns(min(3, len(fields)))
+            for index, (key, label, unit) in enumerate(fields):
+                field = prefix + key
+                values[field] = cols[index % len(cols)].number_input(
+                    f"{label} [{unit}]",
+                    value=stored.get(field),
+                    step=0.1,
+                    format="%.1f",
+                    placeholder="Resultado SONARA",
+                    **({"key": f"c5l1_fa_{field}"} if is_facade else {}),
+                )
         st.markdown("#### Comparación de diseño · base → variante")
-        target = f"DₙT,50 ≥ {ai_target} dB · objetivo de diseño AI-01" if is_ai else st.text_input(
-            "Objetivo de diseño y descriptor",
-            value=stored.get("target", saved.get("c5l1_s4_criteria", "")),
-            placeholder="Umbral elegido por ti, sentido de comparación y referencia consultada.",
-        )
+        if is_facade:
+            target = (
+                f"D₂m,nT,Atr ≥ {facade_target:g} dB · Lden {lden:g} dB · objetivo de diseño FA-01"
+                if facade_target is not None else "FA-01 · meta pendiente de Lden · mínimo absoluto 30 dB"
+            )
+        else:
+            target = f"DₙT,50 ≥ {ai_target} dB · objetivo de diseño AI-01" if is_ai else st.text_input(
+                "Objetivo de diseño y descriptor",
+                value=stored.get("target", saved.get("c5l1_s4_criteria", "")),
+                placeholder="Umbral elegido por ti, sentido de comparación y referencia consultada.",
+            )
         base_design = st.text_area(
             "Solución inicial y resultado base",
             value=stored.get("base_design", ""),
@@ -699,6 +720,8 @@ def _result_form(lab, saved, stage, case_name, fields, prompt):
     if submitted:
         if is_ai and any(values[key] is None for key in ("base_dntw", "base_dnt50", "dntw", "dnt50")):
             st.warning("Completa DₙT,w y DₙT,50 proyectado de la base y de la variante.")
+        elif is_facade and any(value is None for value in values.values()):
+            st.warning("Completa D₂m,nT,w, C y Ctr de la base y de la variante.")
         elif not is_ai and any(value is None for value in values.values()) and not undetermined:
             st.warning("Completa los resultados o declara, en instalaciones, el descriptor sin determinar.")
         elif undetermined and all(value is not None for value in values.values()):
@@ -715,6 +738,9 @@ def _result_form(lab, saved, stage, case_name, fields, prompt):
                 "target": target, "base_design": base_design, "design_change": design_change,
                 "evidence": evidence, "undetermined": undetermined, "normalized": normalized,
             }
+            if is_facade:
+                payload["base_d2mnt_atr"] = round(values["base_d2mntw"] + values["base_ctr"], 1)
+                payload["d2mnt_atr"] = round(values["d2mntw"] + values["ctr"], 1)
             _save(lab, saved, stage, **{f"c5l1_result_{case['code']}": payload})
             st.success("Resultado guardado. La clase acústica todavía no ha sido asignada.")
     if is_ai:
@@ -731,6 +757,24 @@ def _result_form(lab, saved, stage, case_name, fields, prompt):
             ]), hide_index=True, width="stretch")
         if len(comparison) == 2:
             st.caption(f"Variación de DₙT,50 · variante menos base: {result['dnt50'] - result['base_dnt50']:+.1f} dB.")
+
+    if is_facade:
+        result = saved.get("c5l1_result_FA-01", {})
+        comparison = []
+        for title, prefix in (("Base", "base_"), ("Variante", "")):
+            weighted, ctr = result.get(prefix + "d2mntw"), result.get(prefix + "ctr")
+            if weighted is None or ctr is None:
+                continue
+            adapted = round(weighted + ctr, 1)
+            margin = round(adapted - facade_target, 1) if facade_target is not None else None
+            comparison.append([title, weighted, result.get(prefix + "c"), ctr, adapted, margin])
+        if comparison:
+            _lab_table(pd.DataFrame(comparison, columns=[
+                "Corrida guardada", "D₂m,nT,w [dB]", "C [dB]", "Ctr [dB]",
+                "D₂m,nT,Atr [dB]", "Margen frente a la meta [dB]",
+            ]), hide_index=True, width="stretch")
+        if len(comparison) == 2:
+            st.caption(f"Variación de D₂m,nT,Atr · variante menos base: {comparison[1][4] - comparison[0][4]:+.1f} dB.")
 
 
 def _stage0(lab, saved):
