@@ -1699,18 +1699,12 @@ def _stage8(lab, saved):
         "La base tiene cámara vacía y la variante incorpora lana mineral de 60 kg/m³."
     )
     _lab_table(pd.DataFrame([
-        ["63", "70", "5,4", "7,7", "0"],
-        ["125", "68", "13,0", "16,0", "0"],
-        ["250", "66", "32,1", "35,1", "0"],
-        ["500", "64", "48,8", "51,8", "0"],
-        ["1.000", "61", "64,5", "66,0", "0"],
-        ["2.000", "58", "73,6", "74,7", "0"],
-        ["4.000", "55", "57,8", "58,9", "0"],
-    ], columns=["Banda [Hz]", "Lw hipotético [dB re 1 pW]", "R base [dB]", "R variante [dB]", "Atenuación adicional [dB]"]), hide_index=True, width="stretch")
+        [63, 70], [125, 68], [250, 66], [500, 64], [1000, 61], [2000, 58], [4000, 55],
+    ], columns=["Banda [Hz]", "Lw hipotético [dB re 1 pW]"]), hide_index=True, width="stretch")
     st.caption(
-        "Calcula primero con la columna R base. Para la variante, sustituye solo R del separador. "
-        "Compara el LAFmax,nT proyectado de ambas corridas con la meta de 26 dB(A). "
-        "Los Lw son hipotéticos y los R provienen del modelo por bandas de S-01."
+        "Usa el mismo Lw por octava en ambas corridas. Modela S-01 para obtener el R por octava "
+        "de la base y de la variante e ingrésalo en «R separador». "
+        "Compara el LAFmax,nT proyectado de ambas corridas con la meta de 26 dB(A)."
     )
     _result_form(
         lab, saved, 8, "Instalaciones",
