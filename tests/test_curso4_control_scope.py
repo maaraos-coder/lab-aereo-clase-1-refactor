@@ -201,6 +201,7 @@ class UI:
     def button(self,label,key='',**k): return key in self.clicked
     def link_button(self,*a,**k): pass
     def file_uploader(self,*a,**k): return []
+    def download_button(self,*a,**k): return False
     def data_editor(self,frame,**k): return frame
 
 
