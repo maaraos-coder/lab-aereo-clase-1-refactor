@@ -523,6 +523,20 @@ def render(lab,saved,runtime):
     cfg_saved=st.session_state.get(prefix+"_work") or (saved.get("c4l2_s6_measure_config") or {}).get(selected_front,{})
     cfg=render_scope(st,pd,saved,selected_front,measure,cfg_saved,prefix,workshop,study_cfg,tl_spectrum)
     st.session_state[prefix+"_work"]=deepcopy(cfg)
+    # Respaldo local independiente de Supabase, disponible incluso antes de
+    # finalizar las validaciones académicas del frente.
+    try:
+        backup_json=json.dumps(_stage6_json_safe({
+            "schema_version":2,"stage":6,"front":selected_front,
+            "strategy":measure,"configuration":cfg,
+        }),ensure_ascii=False,allow_nan=False,indent=2)
+    except (ValueError,TypeError,RecursionError) as error:
+        st.warning("La configuración contiene datos que deben revisarse antes de poder exportarla: "+type(error).__name__)
+    else:
+        st.download_button("Descargar respaldo de este frente (.json)",backup_json,
+            file_name="etapa6_"+hashlib.sha1(selected_front.encode()).hexdigest()[:10]+".json",
+            mime="application/json",key=prefix+"_backup_current",
+            help="Guarda en tu equipo los tratamientos actuales. Es independiente del guardado en la plataforma.")
     if st.button("Guardar aplicaciones y cálculo de este frente",key=prefix+"_save_front"):
         try:
             validate_scope(saved,selected_front,cfg)
