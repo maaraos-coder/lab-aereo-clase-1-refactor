@@ -247,7 +247,7 @@ def _save_future_state_impl(class_id,state):
         "display_name": st.session_state.get("name", ""),
         "state_json": state,
         "updated_at": _now(),
-    }, on_conflict="class_id,user_key").execute()
+    }, on_conflict="class_id,user_key", returning="minimal").execute()
     if confirmed_save:
         from copy import deepcopy
         st.session_state[f"future_saved_{class_id}"] = deepcopy(state)
