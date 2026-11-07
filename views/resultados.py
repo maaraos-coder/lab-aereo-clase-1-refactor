@@ -694,7 +694,7 @@ def _future_progress_rows(client, user_key):
         return {}
     try:
         raw=(
-            client.table("user_progress")
+            client.table("user_progress_light")
             .select("class_id,state_json,updated_at")
             .eq("user_key",user_key)
             .in_("class_id",class_ids)
