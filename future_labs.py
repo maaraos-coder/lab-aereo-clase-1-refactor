@@ -313,7 +313,7 @@ COURSE_LABS = [
                     ("Diseño acústico de fachada", "Calcular la fachada compuesta e identificar el elemento débil.", "El caso FA-01 combina el paño F-01 y la ventana V-01 del estar.", "Calcula D2m,nT,w, C y Ctr en SONARA."),
                     ("Proyección de ruido de instalaciones", "Estimar ruido sanitario y declarar método y operación.", "El caso IN-01 incorpora fuente, fijaciones, cierre de shaft y vías de transmisión.", "Comprueba LAeq,nT/LAFmax,nT y documenta los descriptores no determinados."),
                     ("Matriz consolidada de resultados", "Comprobar integridad, unidades y trazabilidad.", "La matriz reúne resultados sin asignarles una clase.", "Detecta pendientes, incertidumbres y verificaciones."),
-                    ("Clasificación realizada por el alumno", "Aplicar ISO/TS 19488 y emitir una conclusión trazable.", "Cada alumno consulta umbrales autorizados, asigna clases y distingue diseño de verificación final.", "Entrega clasificación, referencias y plan de verificación."),
+                    ("Verificación de la meta Clase A", "Contrastar las variantes con los objetivos definidos.", "Revisa cada resultado frente a su umbral de Clase A según ISO/TS 19488:2021.", "Entrega decisión por caso, evidencia y plan de verificación."),
                 ],
             },
             {

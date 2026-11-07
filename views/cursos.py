@@ -182,7 +182,8 @@ def course_dashboard_impl():
 def _future_saved_impl(class_id):
     """Return the saved state for the selected student and future class."""
     from labs.curso4_lab2_projection import CLASS_ID as projection_lab, is_projection, load_draft
-    if class_id == projection_lab and is_projection(st):
+    from labs.curso5_laboratorio_1 import CLASS_ID as certification_lab
+    if class_id in (projection_lab, certification_lab) and is_projection(st):
         try:
             return load_draft(st, _supabase(), COURSE_ID, class_id)
         except Exception:
@@ -203,31 +204,38 @@ def _future_saved_impl(class_id):
         st.session_state[cache_key]=state
         return state
     except Exception:
+        if class_id == certification_lab:
+            st.error("No se pudo recuperar tu avance. Actualiza la pantalla antes de continuar.")
+            st.stop()
         return {}
 
 def _save_future_state_impl(class_id,state):
     """Guarda el avance personal o el borrador independiente de la clase proyectada."""
     from labs.curso4_lab2_projection import CLASS_ID as projection_lab, is_projection, save_draft
+    from labs.curso5_laboratorio_1 import CLASS_ID as certification_lab
+    confirmed_save = class_id in (projection_lab, certification_lab)
     if is_projection(st):
-        if class_id == projection_lab:
+        if class_id == certification_lab and not st.session_state.get("c5l1_projection_unlocked"):
+            raise PermissionError("Habilita la edición docente en esta ventana de proyección antes de guardar.")
+        if confirmed_save:
             save_draft(st, _supabase(), COURSE_ID, class_id, state)
         else:
             st.session_state[f"future_saved_{class_id}"] = state
         return
-    # Lab 2 confirma el almacenamiento antes de reemplazar el último avance.
-    if class_id != projection_lab:
+    # Los laboratorios con guardado confirmado actualizan la sesión después de escribir.
+    if not confirmed_save:
         st.session_state[f"future_saved_{class_id}"] = state
 
     # Seguridad adicional: si no existe un usuario autenticado no se persiste.
     user_key = st.session_state.get("user_key")
     if not user_key:
-        if class_id == projection_lab:
+        if confirmed_save:
             raise RuntimeError("No hay un usuario autenticado para guardar el avance.")
         return
 
     client = _supabase()
     if client is None:
-        if class_id == projection_lab:
+        if confirmed_save:
             raise RuntimeError("No hay conexión para guardar el avance.")
         return
 
@@ -240,7 +248,7 @@ def _save_future_state_impl(class_id,state):
         "state_json": state,
         "updated_at": _now(),
     }, on_conflict="class_id,user_key").execute()
-    if class_id == projection_lab:
+    if confirmed_save:
         from copy import deepcopy
         st.session_state[f"future_saved_{class_id}"] = deepcopy(state)
 
@@ -34190,8 +34198,22 @@ def future_projection_stage_impl(lab, stage):
     st.session_state["role"] = "Proyección"
     st.session_state["name"] = "Pantalla de clase"
 
-    # El Laboratorio 2 del Curso 4 recupera su borrador persistente de clase.
-    if lab.get("id") == "clase-08-construccion-lab-2":
+    from labs.curso5_laboratorio_1 import CLASS_ID as certification_lab
+    if lab.get("id") == certification_lab and not st.session_state.get("c5l1_projection_unlocked"):
+        from hmac import compare_digest
+
+        with st.expander("Habilitar edición docente"):
+            with st.form("c5l1_projection_unlock", clear_on_submit=True):
+                password = st.text_input("Clave docente", type="password")
+                unlock = st.form_submit_button("Habilitar guardado")
+            if unlock:
+                configured = str(st.secrets.get("teacher", {}).get("password") or "")
+                if configured and compare_digest(password.encode(), configured.encode()):
+                    st.session_state["c5l1_projection_unlocked"] = True
+                    st.rerun()
+                st.error("La clave docente no es válida o no está configurada.")
+
+    if lab.get("id") in ("clase-08-construccion-lab-2", certification_lab):
         projection_saved = _future_saved_impl(lab["id"])
     else:
         projection_saved_key = f"future_saved_{lab.get('id', '')}"
