@@ -156,6 +156,7 @@ TEACHER_GUIDE = {
         ("Modelo esperado", "M-01 de HA 180 mm; S = 10,20 m², V receptor = 51,0 m³ y TR declarado. Revisar caminos directo y laterales, uniones y su trazabilidad."),
         ("Resultado y mejora", "Exigir DₙT,w y adaptaciones de la curva final entre recintos. Para DₙT,A comprobar DₙT,w + C. Comparar base y variante con igual geometría e identificar el camino dominante; mayor aislamiento es mejor."),
         ('Rediseño guardado en SONARA', 'En Los Alerces · Marco Araos · Docente → Soluciones → AI-01, abre «AI-01 · Rediseño docente · trasdosado y flancos tratados». Mantén el muro M-01 de HA 180 mm y añade, por el lado receptor, dos placas de yeso RF de 12,5 mm sobre estructura independiente, con cámara de 100 mm y lana mineral de 60 kg/m³. Sella el perímetro y evita puentes rígidos al muro.'),
+        ("Secuencia en SONARA", "Guarda tres corridas de A-301 → A-302 con los mismos recintos y encuentros: muro y losas desnudas, trasdosado del muro con las losas desnudas, y trasdosado más tratamiento de las dos losas. Construye las curvas de los elementos y revestimientos en Aislamiento aéreo y llévalas al cálculo entre recintos ISO 12354-1. Guarda la curva final y la contribución de los caminos para identificar qué unión pasa a dominar tras tratar el muro."),
         ('Modelación de encuentros', 'Mantén S = 10,20 m², V receptor = 51,0 m³ y T₀ = 0,50 s. Para las dos losas HA de 160 mm adopta 4,08 m y Kij = 8,7 dB por unión. Trata la losa inferior con piso seco flotante y la superior con cielo acústicamente independiente en A-302. Cada revestimiento se representa mediante dos placas equivalentes de 12,5 mm y cámara de 75 mm con lana mineral de 60 kg/m³. La corrección del flanco receptor por banda es R del panel doble menos R de la losa desnuda. Para el piso, especifica placas portantes de yeso-fibra con ficha equivalente al proxy acústico. Comprueba uniones, altura útil y cargas.'),
         ('Resultado y límite de la corrida', 'Con la misma geometría y ambas losas, la base recalculada da DₙT,50 = 44 dB. El trasdosado del muro por sí solo da 52 dB; al tratar los flancos de losa, la variante da DₙT,w = 67 dB y DₙT,50 = 61 dB. Mejora 17 dB y supera la meta de 58 dB por 3 dB en los caminos modelados. Fachada y muro lateral siguen pendientes. El registro antiguo de 43 dB usa otras entradas y queda como antecedente, no como base de la comparación.'),
     ], "Rw del muro no sustituye DₙT,w. No trasladar automáticamente C/Ctr del elemento a la curva entre recintos; declarar la reconstrucción aproximada por Rw."),
@@ -169,6 +170,7 @@ TEACHER_GUIDE = {
         ("Variante docente guardada en SONARA", "Busca «IM-01 · L-01 · Variante sobrelosa flotante genérica · flancos M-01 y F-01». Se usó Modelo genérico / físico → Sobrelosa flotante, sin cielo y con los mismos flancos de la base. El programa aplica un espectro genérico de mejora: los espesores 10 + 40 + 10 mm describen el detalle de AC-04 y no se ingresaron en este modo. L′ₙT,w bajó de 76 a 67 dB (mejora de 9 dB, aún 21 dB sobre la meta). L′ₙT,50 proyectado bajó de 76 a 74 dB (mejora de 2 dB, aún 24 dB sobre la meta)."),
         ("Revisión técnica", "Catálogo ΔL medido compatible o modelo físico con masa de sobrelosa y s′ trazable. Revisar puentes rígidos y flancos. Exigir L′ₙT,w y CI compatibles; menor nivel es mejor."),
         ('Rediseño guardado en SONARA', 'En Soluciones → IM-01, abre «IM-01 · Rediseño docente · piso sobre aisladores y cielo · pendiente baja frecuencia». Mantén la losa HA 160 mm y sus 384 kg/m², A = 20,40 m², V = 51,0 m³, TR = 0,60 s y los flancos M-01 y F-01 de la base. En ISO 12354-2 elige el revestimiento de catálogo Stravigym HP-D45 + dBooster (CDM Stravitec, ID 662), con su ΔL por bandas, y el preset Cielo acústico desacoplado. Prevé aislamiento perimetral y continuidad del desacople sin contactos rígidos.'),
+        ("Secuencia en SONARA", "Duplica la base con los dos flancos activos. En la copia reemplaza el revestimiento por la curva ΔL de catálogo del ID 662 y activa el cielo desacoplado. Mantén los encuentros y la normalización. Recalcula y abre el espectro final para comprobar por separado L′ₙT,w y L′ₙT,50. En la matriz de Soluciones el objetivo visible de 46 dB corresponde a L′ₙT,w; contrasta también el límite de 50 dB con el resultado de baja frecuencia antes de cerrar IM-01."),
         ('Resultado frente a los dos límites', 'La base con flancos da 76 dB en ambos índices. La variante da L′ₙT,w = 36 dB (10 dB bajo el límite de 46 dB) y L′ₙT,50 = 59 dB (9 dB sobre el límite de 50 dB). CI,50–2500 de la curva final = +23 dB. La variante reduce 40 y 17 dB respectivamente, pero sigue fuera de Clase A en baja frecuencia.'),
         ('Qué falta para cerrar el rediseño', 'Solicita la curva ΔL de 50 a 2500 Hz de un sistema de piso suspendido de baja frecuencia compatible con la losa y la carga de servicio, o el ensayo del conjunto piso–losa–cielo. Verifica el margen con el espectro completo y conserva los flancos. Los 9 dB son la brecha del descriptor final, no una corrección que pueda restarse a cada banda sin respaldo.'),
     ], "No sumar mejoras de catálogo y modelo físico del mismo sistema. La diferencia base/variante no es automáticamente el ΔLw de ensayo del revestimiento."),
@@ -177,6 +179,7 @@ TEACHER_GUIDE = {
         ("Comparación", "Exigir resultado de fachada completa y adaptaciones finales, correspondencia del descriptor con el criterio elegido y exposición exterior declarada. La variante debe actuar sobre el componente dominante conservando áreas y exposición."),
         ('Rediseño guardado en SONARA', 'En Soluciones → FA-01, abre «FA-01 · Rediseño docente · doble ventana 12 / 100 / 10 · Lden 60 dB». Conserva el paño F-01 de 10,50 m² de la base, con HA 150 mm, cámara de 50 mm con lana mineral de 60 kg/m³ y placa de yeso de 15 mm. Cambia el DVH 6/12/4 por una doble ventana de marcos independientes con vidrio monolítico exterior de 12 mm, cámara de aire de 100 mm y vidrio interior de 10 mm. Mantén hueco de 4,80 m², V = 51 m³ y ΔLfs = 0 dB.'),
         ('Ruta y resultado', 'Modela los vidrios y cámara en SONARA como DVH para obtener la curva de V-01 e incorpórala en Fachada ISO 12354-3 con el espectro de F-01. El modelo de la doble ventana da Rw = 51 dB y Ctr = −10 dB. La fachada completa da D₂m,nT,w = 54 dB y D₂m,nT,w + Ctr = 45 dB, frente a 29 dB de base. Con Lden docente = 60 dB, meta = 40 dB y margen = 5 dB.'),
+        ("Secuencia en SONARA", "Duplica la corrida de fachada completa. Sustituye solo la curva de V-01 y conserva paño opaco, áreas, volumen, exposición y corrección de forma. Recalcula el conjunto y aplica Ctr de la curva de fachada: 54 + (−9) = 45 dB. El Ctr de −10 dB pertenece a la ventana por separado. Adjunta la curva de fachada y el respaldo del Lden adoptado."),
         ('Especificación y evidencia', 'Especifica doble marco, juntas perimetrales continuas y cierre hermético. El cálculo usa las hojas de vidrio y la cámara. Para validar la ventana instalada, pide R(f) de la ventana completa y revisa juntas, ventilación, posición de referencia y exposición real.'),
     ], "No promediar aritméticamente aislamientos ni usar Rw de la ventana como aislamiento global. Declarar la aproximación del traslado Manual Rw/Ctr."),
     8: ("IN-01 · Instalaciones", [
@@ -189,6 +192,7 @@ TEACHER_GUIDE = {
         ("Registro y verificación", "Deja LAeq,nT sin determinar para este ejemplo: falta un espectro equivalente del ciclo y un intervalo de evaluación. Para verificar en obra, reproduce la descarga, registra el máximo FAST en el dormitorio y mide el TR para normalizar a T₀ = 0,5 s. Para modelar las fijaciones, solicita datos compatibles de excitación y transferencia instalada."),
         ('Rediseño guardado en SONARA', 'En Soluciones → IN-01, abre «IN-01 · Rediseño docente · cierre doble 3×15 / 200 / 3×15 · vía aérea». Sustituye el cierre base por dos bastidores independientes, tres placas RF de 15 mm por cara y cámara de 200 mm con lana mineral de 60 kg/m³. Espesor nominal 290 mm. Sella perímetro, registros y penetraciones. Selecciona Panel doble → Doble estructura; modela la placa con el proxy USG Firecode C ID 2582 ajustado a 15 mm.'),
         ('Entradas y comparación', 'Usa Intermitente → Aérea recinto adyacente con las entradas de la base: Lw 70 / 68 / 66 / 64 / 61 / 58 / 55 dB, S = 3,00 m², A fuente = 1,50 m², A receptor = 9,216 m² y TR = T₀ = 0,50 s. Ingresa R por octava de 63 a 4000 Hz: 23,13 / 40,49 / 56,99 / 68,31 / 79,06 / 70,06 / 81,03 dB. LAFmax,nT aéreo proyectado baja de 41,2 a 20,6 dB(A), mejora de 20,6 dB y margen aéreo de 5,4 dB frente a 26 dB(A).'),
+        ("Secuencia en SONARA", "Genera el espectro R del cierre doble, guárdalo y duplica la corrida aérea de la descarga. Sustituye la curva R en sus siete octavas y conserva fuente, área y absorciones. Guarda el resultado con la vía identificada y registra por separado la evaluación de transmisión por tuberías, fijaciones y penetraciones. Para verificar el máximo total, comprueba la descarga con el montaje completo."),
         ('Verificación de las vías restantes', 'El presupuesto energético combinado de las demás vías es aproximadamente 24,5 dB(A), bajo el supuesto de suma energética del modelo. Justifica abrazaderas, pasos y anclajes con transferencia instalada o medición en dormitorio bajo la misma descarga. El máximo FAST total queda pendiente y LAeq,nT sigue sin determinar.'),
     ], "Distingue el escenario académico de una caracterización de la descarga real. No conviertas LAeq en máximo FAST ni simules una abrazadera con una resta arbitraria."),
     9: ("Matriz y revisión crítica", [
@@ -310,7 +314,7 @@ def _teacher_guide(stage):
     if state.get("role") != "Docente" or state.get("projection_mode"):
         return
     title, criteria, errors = TEACHER_GUIDE[stage]
-    with st.expander(f"👨‍🏫 Pauta docente · Etapa {stage} · {title}", expanded=False):
+    with st.expander(f"👨‍🏫 Pauta docente · Etapa {stage} · {title}", expanded=stage in range(5, 9)):
         st.caption("Uso exclusivo del docente · respuestas esperadas y criterios de revisión formativa.")
         if stage == 1:
             _teacher_stage1_answers()
@@ -325,10 +329,18 @@ def _teacher_guide(stage):
                 st.markdown(f"#### {heading}")
             for criterion, expected in cards:
                 st.markdown("<div class='c5-guide-card'><strong>" + escape(criterion) + "</strong>" + escape(expected) + "</div>", unsafe_allow_html=True)
+        if stage in (9, 10):
+            st.markdown("**Balance de las corridas docentes de las etapas 5–8**")
+            _lab_table(pd.DataFrame([
+                ["AI-01", "DₙT,50 ≥ 58 dB", "61 dB · margen 3 dB en los caminos modelados"],
+                ["IM-01", "L′ₙT,w ≤ 46 dB y L′ₙT,50 ≤ 50 dB", "36 / 59 dB · cumple el índice global y excede el de baja frecuencia por 9 dB"],
+                ["FA-01", "D₂m,nT,Atr ≥ 40 dB con Lden = 60 dB", "45 dB · margen 5 dB bajo la exposición adoptada"],
+                ["IN-01", "LAFmax,nT ≤ 26 dB(A)", "20,6 dB(A) por vía aérea · resultado total pendiente"],
+            ], columns=["Caso", "Objetivo de la corrida docente", "Resultado y alcance"]))
         if stage in range(5, 9):
             family = list(CALCULATION_CASES)[stage - 5]
             st.markdown("**Evidencias mínimas:** " + SONARA_DESIGN_GUIDES[family]["evidence"])
-            st.info("No hay un resultado numérico único: revisar entradas, método, curva y comparación reproducible. Los números de etapa 3 son hipotéticos.")
+            st.caption("Referencia de revisión: los resultados de esta pauta corresponden a las entradas de la corrida docente. Acepta variantes reproducibles con sus propias entradas y evidencia.")
         st.warning("**Errores que requieren corrección:** " + errors)
         st.markdown("**Criterio de revisión:** logrado si cumple los criterios con evidencia; parcialmente logrado si hay omisiones subsanables; por corregir si el método, descriptor o alcance invalida la conclusión. Guardar el formulario acredita entrega, no corrección técnica.")
 
@@ -345,6 +357,7 @@ def _header(stage: int, title: str, purpose: str):
         show_overview=False,
         duration_minutes=C5L1_STAGE_MINUTES[stage],
     )
+    _teacher_guide(stage)
 
 
 def _save(lab, saved, stage: int, **values):
@@ -1927,7 +1940,8 @@ def run_stage(stage, lab, saved, runtime):
     _bind_runtime(runtime)
     stage = max(0, min(int(stage), 10))
     result = _STAGES[stage](lab, saved)
-    _teacher_guide(stage)
+    if stage == 0:
+        _teacher_guide(stage)
     return result
 
 
