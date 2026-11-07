@@ -201,7 +201,11 @@ def _future_saved_impl(class_id):
               .limit(1).execute().data or [])
         state=rows[0].get("state_json",{}) if rows else {}
         state=json.loads(state) if isinstance(state,str) else state
+        from copy import deepcopy
         st.session_state[cache_key]=state
+        # El objeto puede modificarse en sitio por las etapas antes de guardar:
+        # comparar contra una instantánea independiente evita perder cambios.
+        st.session_state[cache_key+"_persisted_snapshot"]=deepcopy(state)
         return state
     except Exception:
         if class_id == certification_lab:
@@ -243,7 +247,7 @@ def _save_future_state_impl(class_id,state):
     # Etapa 10 pueden pesar varios MB y no deben reenviarse al editar Etapa 6.
     # La comparación usa la copia completa ya recuperada en esta misma sesión.
     cache_key = f"future_saved_{class_id}"
-    previous = st.session_state.get(cache_key)
+    previous = st.session_state.get(cache_key+"_persisted_snapshot")
     if class_id == projection_lab and isinstance(previous, dict) and isinstance(state, dict):
         changes = {key: value for key, value in state.items()
                    if key not in previous or previous[key] != value}
@@ -270,6 +274,8 @@ def _save_future_state_impl(class_id,state):
     if confirmed_save:
         from copy import deepcopy
         st.session_state[cache_key] = deepcopy(state)
+        if class_id == projection_lab:
+            st.session_state[cache_key+"_persisted_snapshot"] = deepcopy(state)
 
 def _course2_lab1_stage0_asset(filename, caption):
     """Muestra el asset oficial si existe; de lo contrario deja su espacio identificado."""
