@@ -549,6 +549,7 @@ def render(lab,saved,runtime):
             candidate["done_6"]=False
             try:
                 candidate["c4l2_s6_measure_config"][selected_front]=_stage6_json_safe(cfg)
+                candidate["c4l2_s6_control_design"]=_stage6_json_safe(design_records)
                 runtime["_save"](lab,candidate,6)
             except Exception as error:
                 _stage6_save_error(st,error,"frente",{
@@ -685,6 +686,7 @@ def render(lab,saved,runtime):
                 "done_6":True})
             try:
                 candidate["c4l2_s6_measure_config"]=_stage6_json_safe(configs)
+                candidate["c4l2_s6_control_design"]=_stage6_json_safe(design_records)
                 runtime["_save"](lab,candidate,6)
             except Exception as error:
                 _stage6_save_error(st,error,"final",{
