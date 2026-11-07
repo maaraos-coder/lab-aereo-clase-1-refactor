@@ -153,48 +153,34 @@ TEACHER_GUIDE = {
         ],
     }, "Los valores iniciales de SONARA no constituyen antecedentes del proyecto. Revisar coherencia de unidades y fuentes antes de aprobar el protocolo."),
     5: ("AI-01 · Aéreo interior", [
-        ("Modelo esperado", "M-01 de HA 180 mm; S = 10,20 m², V receptor = 51,0 m³ y TR declarado. Revisar caminos directo y laterales, uniones y su trazabilidad."),
-        ("Resultado y mejora", "Exigir DₙT,w y adaptaciones de la curva final entre recintos. Para DₙT,A comprobar DₙT,w + C. Comparar base y variante con igual geometría e identificar el camino dominante; mayor aislamiento es mejor."),
-        ('Rediseño guardado en SONARA', 'En Los Alerces · Marco Araos · Docente → Soluciones → AI-01, abre «AI-01 · Rediseño docente · trasdosado y flancos tratados». Mantén el muro M-01 de HA 180 mm y añade, por el lado receptor, dos placas de yeso RF de 12,5 mm sobre estructura independiente, con cámara de 100 mm y lana mineral de 60 kg/m³. Sella el perímetro y evita puentes rígidos al muro.'),
-        ("Secuencia en SONARA", "Guarda tres corridas de A-301 → A-302 con los mismos recintos y encuentros: muro y losas desnudas, trasdosado del muro con las losas desnudas, y trasdosado más tratamiento de las dos losas. Construye las curvas de los elementos y revestimientos en Aislamiento aéreo y llévalas al cálculo entre recintos ISO 12354-1. Guarda la curva final y la contribución de los caminos para identificar qué unión pasa a dominar tras tratar el muro."),
-        ('Modelación de encuentros', 'Mantén S = 10,20 m², V receptor = 51,0 m³ y T₀ = 0,50 s. Para las dos losas HA de 160 mm adopta 4,08 m y Kij = 8,7 dB por unión. Trata la losa inferior con piso seco flotante y la superior con cielo acústicamente independiente en A-302. Cada revestimiento se representa mediante dos placas equivalentes de 12,5 mm y cámara de 75 mm con lana mineral de 60 kg/m³. La corrección del flanco receptor por banda es R del panel doble menos R de la losa desnuda. Para el piso, especifica placas portantes de yeso-fibra con ficha equivalente al proxy acústico. Comprueba uniones, altura útil y cargas.'),
-        ('Resultado y límite de la corrida', 'Con la misma geometría y ambas losas, la base recalculada da DₙT,50 = 44 dB. El trasdosado del muro por sí solo da 52 dB; al tratar los flancos de losa, la variante da DₙT,w = 67 dB y DₙT,50 = 61 dB. Mejora 17 dB y supera la meta de 58 dB por 3 dB en los caminos modelados. Fachada y muro lateral siguen pendientes. El registro antiguo de 43 dB usa otras entradas y queda como antecedente, no como base de la comparación.'),
-    ], "Rw del muro no sustituye DₙT,w. No trasladar automáticamente C/Ctr del elemento a la curva entre recintos; declarar la reconstrucción aproximada por Rw."),
+        ("Base original", "M-01 de HA 180 mm, S = 10,20 m², V receptor = 51,0 m³, TR = 0,60 s y T₀ = 0,50 s. L-01 mantiene su piso resiliente10 + sobrelosa40 + terminación10. El cálculo aéreo no atribuye una mejora al revestimiento de piso sin una curva R(f) compatible."),
+        ("Materiales", "HA nominal 2400 kg/m³ con propiedades genéricas de SONARA. Para RF se utiliza el proxy USG Firecode C ID 2582 ajustado al espesor indicado. Mantener las mismas curvas y masas de los elementos originales al comparar."),
+        ("Mejora", "Trasdosado independiente del muro con 2 RF de 12,5 mm, cámara100 mm y lana mineral60 kg/m³. Tratamiento por el lado receptor de las dos losas con 2 placas equivalentes12,5 mm y cámara75 mm con lana. El piso requiere placas portantes y verificación constructiva."),
+        ("Flancos y cálculo", "Dos losas HA160 mm, longitud4,08 m y Kij8,7 dB por unión como hipótesis. Sumar energéticamente Dd, Df, Fd y Ff por bandas y normalizar a T₀. Registrar las curvas originales y la corrección ΔR de cada losa tratada."),
+        ("Resultado recalculado", "DₙT,50 = 44 → 60 dB; mejora16 dB y margen2 dB frente a58 dB. Cumple en los caminos calculados. Fachada y tabique lateral requieren caracterización antes de concluir el caso completo."),
+    ], "Comparar los mismos recintos y flancos. La losa desnuda solo es una referencia de elemento; la base constructiva incluye su piso original."),
     6: ("IM-01 · Impacto", [
-        ("Caso base guardado en SONARA", "Los Alerces · Marco Araos · Docente → Soluciones → Estar A-402 → Estar-comedor A-302 · Paramento horizontal. Solución «IM-01 · L-01 · Base preliminar · losa desnuda sin flancos»."),
-        ("Entradas de la corrida docente", "Ruido de impacto → ISO 12354-2 → Calcular por masa superficial. Losa de hormigón armado de 160 mm, densidad adoptada de 2.400 kg/m³ y masa superficial de 384 kg/m². Área del entrepiso de 20,40 m², volumen receptor de 51,0 m³ y TR receptor adoptado de 0,60 s. Selecciona Modelo genérico / físico → Sin revestimiento, Sin cielo y desactiva Incluir flanqueos de impacto. Esta base preliminar representa la transmisión directa."),
-        ("Resultados y metas", "Lₙ,0,w estimado: 73,5 dB. Resultado entre recintos L′ₙT,w: 76 dB (30 dB sobre la meta de 46 dB). L′ₙT,50 proyectado: 76 dB (26 dB sobre la meta de 50 dB). CI mostrado: −4 dB. Para baja frecuencia usa L′ₙT,50 proyectado, que incorpora la adaptación de 50–2.500 Hz. La base no cumple ambas metas."),
-        ("Base docente con flancos guardada en SONARA", "Busca «IM-01 · L-01 · Base preliminar con flancos M-01 y F-01». Conserva las entradas de la corrida directa y activa dos encuentros. Para ambos, R emisor = 44 dB y m′ emisor = 384 kg/m². Muro lateral 1 (M-01): longitud 4,08 m, R receptor = 45 dB y m′ receptor = 432 kg/m². Fachada / elemento lateral (núcleo de F-01): longitud 6,12 m, R receptor = 43 dB y m′ receptor = 360 kg/m². Selecciona Unión rígida pesada en ambos encuentros. SONARA muestra Kij ≈ 8,7 dB en cada uno."),
-        ("Fundamento y resultado con flancos", "Las longitudes se adoptaron de las cotas de AC-01, suponiendo contacto continuo. AC-02 sitúa A-402 sobre A-302 y AC-04 documenta espesores. La continuidad rígida es una hipótesis docente. Los Rw se estimaron como paneles simples de HA de 160, 180 y 150 mm, con 2.400 kg/m³, E = 11 GPa, η = 0,006 y ν = 0,20. F-01 representa solo el núcleo estructural, sin atribuir mejora al trasdosado ni a la ventana. Los demás flancos quedan fuera de esta corrida por falta de datos. L′ₙT,w = 76 dB, L′ₙT,50 proyectado = 76 dB y CI mostrado = −3 dB. Ambos indicadores siguen sobre sus metas. La coincidencia de los índices redondeados con la corrida directa no implica igualdad de las curvas."),
-        ("Comparación con la variante", "Conserva área, volumen, TR y criterio de flanqueo al comparar el efecto del tratamiento. Si incorporas flancos para evaluar el desempeño del conjunto, vuelve a calcular la base con la misma configuración de flancos."),
-        ("Variante docente guardada en SONARA", "Busca «IM-01 · L-01 · Variante sobrelosa flotante genérica · flancos M-01 y F-01». Se usó Modelo genérico / físico → Sobrelosa flotante, sin cielo y con los mismos flancos de la base. El programa aplica un espectro genérico de mejora: los espesores 10 + 40 + 10 mm describen el detalle de AC-04 y no se ingresaron en este modo. L′ₙT,w bajó de 76 a 67 dB (mejora de 9 dB, aún 21 dB sobre la meta). L′ₙT,50 proyectado bajó de 76 a 74 dB (mejora de 2 dB, aún 24 dB sobre la meta)."),
-        ("Revisión técnica", "Catálogo ΔL medido compatible o modelo físico con masa de sobrelosa y s′ trazable. Revisar puentes rígidos y flancos. Exigir L′ₙT,w y CI compatibles; menor nivel es mejor."),
-        ('Rediseño guardado en SONARA', 'En Soluciones → IM-01, abre «IM-01 · Rediseño docente · piso sobre aisladores y cielo · pendiente baja frecuencia». Mantén la losa HA 160 mm y sus 384 kg/m², A = 20,40 m², V = 51,0 m³, TR = 0,60 s y los flancos M-01 y F-01 de la base. En ISO 12354-2 elige el revestimiento de catálogo Stravigym HP-D45 + dBooster (CDM Stravitec, ID 662), con su ΔL por bandas, y el preset Cielo acústico desacoplado. Prevé aislamiento perimetral y continuidad del desacople sin contactos rígidos.'),
-        ("Secuencia en SONARA", "Duplica la base con los dos flancos activos. En la copia reemplaza el revestimiento por la curva ΔL de catálogo del ID 662 y activa el cielo desacoplado. Mantén los encuentros y la normalización. Recalcula y abre el espectro final para comprobar por separado L′ₙT,w y L′ₙT,50. En la matriz de Soluciones el objetivo visible de 46 dB corresponde a L′ₙT,w; contrasta también el límite de 50 dB con el resultado de baja frecuencia antes de cerrar IM-01."),
-        ('Resultado frente a los dos límites', 'La base con flancos da 76 dB en ambos índices. La variante da L′ₙT,w = 36 dB (10 dB bajo el límite de 46 dB) y L′ₙT,50 = 59 dB (9 dB sobre el límite de 50 dB). CI,50–2500 de la curva final = +23 dB. La variante reduce 40 y 17 dB respectivamente, pero sigue fuera de Clase A en baja frecuencia.'),
-        ('Qué falta para cerrar el rediseño', 'Solicita la curva ΔL de 50 a 2500 Hz de un sistema de piso suspendido de baja frecuencia compatible con la losa y la carga de servicio, o el ensayo del conjunto piso–losa–cielo. Verifica el margen con el espectro completo y conserva los flancos. Los 9 dB son la brecha del descriptor final, no una corrección que pueda restarse a cada banda sin respaldo.'),
-    ], "No sumar mejoras de catálogo y modelo físico del mismo sistema. La diferencia base/variante no es automáticamente el ΔLw de ensayo del revestimiento."),
+        ("Base constructiva correcta", "Losa L-01 de HA160 mm, 384 kg/m², más capa resiliente10 mm, sobrelosa40 mm y terminación10 mm. A = 20,40 m²; V = 51,0 m³. Conservar flancos M-01 y F-01 al comparar."),
+        ("Datos todavía no definidos por la tabla", "La tabla no identifica el producto resiliente ni s′. Para esta corrida docente se adopta s′20 MN/m³ y mortero2000 kg/m³: masa de sobrelosa80 kg/m² y f₀ = (1/2π)√(20×10⁶/80) ≈79,6 Hz. Terminación dura10 mm sin mejora adicional atribuida. Son hipótesis académicas que deben figurar en la ficha."),
+        ("Espectro de losa de referencia", "Se adopta el espectro Ln,0 medido para HA160 mm y386 kg/m² del informe ift Rosenheim22-003963-PR01 de15/12/2022. Es una referencia compatible para el ejercicio, no una medición de Los Alerces. Sustituye la forma genérica anterior; por eso deben recalcularse base y mejora antes de compararlas."),
+        ("Mejora de catálogo", "REGUPOL sonus curve25 mm + placa prefabricada de anhidrita45 mm. Usar ΔL por tercio del ensayo Daidalos Peutz A-2019LAB-024-H541-42956_E, no restar35 dB en todas las bandas. El ensayo del revestimiento utiliza HA140 mm; aquí se adopta su ΔL para el soporte pesado de160 mm como hipótesis de transferencia."),
+        ("Normalización", "Sumar los caminos Ln de impacto y convertir a L′ₙT mediante −10log₁₀(0,16V/(10T₀)); con V51 y T₀0,50 s, la corrección es −2,127 dB. Un espectro ya normalizado a absorción no se convierte mediante una segunda corrección basada solo en TR."),
+        ("Resultado recalculado", "Sin cielo añadido: base original L′ₙT,w52 dB y L′ₙT,5053 dB; mejora42 dB y46 dB. Márgenes4 dB respecto de46 dB y4 dB respecto de50 dB. La mejora cumple ambos límites en este escenario académico. Confirmar s′ original, aplicabilidad del ensayo y flancos para validar el diseño del proyecto."),
+        ("Cómo repetir en SONARA", "Abrir Los Alerces · Materialidad original · Recalculado, seleccionar la base o mejora de IM-01 en Soluciones y pulsar Abrir copia en Diseño. Revisar la curva Ln,0 de referencia, las19 bandas ΔL, el volumen y los dos flancos; guardar cualquier modificación como otra copia."),
+    ], "Conservar el piso10+40+10 como base. Registrar la fuente del espectro y las hipótesis. No comparar estos resultados con los76 dB de la losa desnuda estimada anteriormente."),
     7: ("FA-01 · Fachada", [
-        ("Modelo esperado", "Fachada 15,30 m²: opaco F-01 10,50 m² + V-01 4,80 m²; V = 51,0 m³. Verificar panel desacoplado, DVH 6/12/4, juntas, exposición y corrección de forma justificadas."),
-        ("Comparación", "Exigir resultado de fachada completa y adaptaciones finales, correspondencia del descriptor con el criterio elegido y exposición exterior declarada. La variante debe actuar sobre el componente dominante conservando áreas y exposición."),
-        ('Rediseño guardado en SONARA', 'En Soluciones → FA-01, abre «FA-01 · Rediseño docente · doble ventana 12 / 100 / 10 · Lden 60 dB». Conserva el paño F-01 de 10,50 m² de la base, con HA 150 mm, cámara de 50 mm con lana mineral de 60 kg/m³ y placa de yeso de 15 mm. Cambia el DVH 6/12/4 por una doble ventana de marcos independientes con vidrio monolítico exterior de 12 mm, cámara de aire de 100 mm y vidrio interior de 10 mm. Mantén hueco de 4,80 m², V = 51 m³ y ΔLfs = 0 dB.'),
-        ('Ruta y resultado', 'Modela los vidrios y cámara en SONARA como DVH para obtener la curva de V-01 e incorpórala en Fachada ISO 12354-3 con el espectro de F-01. El modelo de la doble ventana da Rw = 51 dB y Ctr = −10 dB. La fachada completa da D₂m,nT,w = 54 dB y D₂m,nT,w + Ctr = 45 dB, frente a 29 dB de base. Con Lden docente = 60 dB, meta = 40 dB y margen = 5 dB.'),
-        ("Secuencia en SONARA", "Duplica la corrida de fachada completa. Sustituye solo la curva de V-01 y conserva paño opaco, áreas, volumen, exposición y corrección de forma. Recalcula el conjunto y aplica Ctr de la curva de fachada: 54 + (−9) = 45 dB. El Ctr de −10 dB pertenece a la ventana por separado. Adjunta la curva de fachada y el respaldo del Lden adoptado."),
-        ('Especificación y evidencia', 'Especifica doble marco, juntas perimetrales continuas y cierre hermético. El cálculo usa las hojas de vidrio y la cámara. Para validar la ventana instalada, pide R(f) de la ventana completa y revisa juntas, ventilación, posición de referencia y exposición real.'),
-    ], "No promediar aritméticamente aislamientos ni usar Rw de la ventana como aislamiento global. Declarar la aproximación del traslado Manual Rw/Ctr."),
+        ("Base original", "F-01: HA150 mm + cámara50 mm con lana + yeso15 mm desacoplado; área10,50 m². V-01: DVH6/12/4 y marco de aluminio, hueco4,80 m². V51 m³, ΔLfs0 dB y Lden60 dB adoptado como hipótesis."),
+        ("Mejora", "Conservar el paño opaco y sustituir la ventana por hojas12/100/10 mm en marcos independientes. Sellado hermético como condición del modelo; validar la ventana completa, marcos y ventilación."),
+        ("Procedimiento", "Calcular R(f) del paño y del vidrio/cámara con materiales de SONARA. Combinar coeficientes de transmisión ponderados por10,50 y4,80 m² y aplicar la normalización de fachada. Obtener Ctr de la curva completa."),
+        ("Resultado recalculado", "D₂m,nT,Atr29 →45 dB. Para Lden60 dB, objetivo max(60−20;30)=40 dB y margen5 dB. El cumplimiento modelado depende de la exposición y de la ventana completa instalada."),
+    ], "Mantener área, volumen y exposición. Rw del vidrio no representa por sí solo la fachada."),
     8: ("IN-01 · Instalaciones", [
-        ("Modelo esperado", "Fuente sanitaria espectral y condición temporal documentadas, cierre S-01 de 120 mm totales, receptor dormitorio V = 28,8 m³, TR/absorción y vías justificadas."),
-        ("Corridas guardadas en SONARA", "Los Alerces · Marco Araos · Docente → Soluciones → Baño principal A-302 → Dormitorio principal A-302 · Instalaciones / HVAC. Busca «IN-01_Base docente» e «IN-01_Variante docente»."),
-        ("Operación y espectro de entrada", "Descarga única de WC de 6 L, evento de 10 s como hipótesis, sin usos simultáneos. Bandas 63, 125, 250, 500, 1000, 2000 y 4000 Hz. Lw hipotético para el instante de mayor emisión: 70 / 68 / 66 / 64 / 61 / 58 / 55 dB re 1 pW. Son valores de ejemplo del módulo, sin medición FAST ni respaldo de fabricante. La duración describe el escenario y no interviene en el cálculo del máximo proyectado."),
-        ("Geometría y absorción", "Dormitorio V = 28,8 m³. Supuestos didácticos: S-01 expuesto = 3,00 m² y absorción equivalente del lado fuente = 1,50 m² en todas las bandas. TR receptor = 0,50 s; A receptor ≈ 0,16 × 28,8 / 0,50 = 9,22 m². Verifica el área real y la validez del campo difuso, especialmente si el emisor es un shaft estrecho."),
-        ("Cierre y espectros R", "Dos placas RF de 12,5 mm por cara, cámara de 70 mm y montante simple a 600 mm como hipótesis de modelación. Proxy del catálogo SONARA: yeso USG Sheetrock Firecode C de 1/2 pulgada, ajustado a 12,5 mm. R de octava obtenido con el motor de panel doble, promediando coeficientes de transmisión dentro de cada octava. Base con cámara sin absorbente: 5,4 / 13,0 / 32,1 / 48,8 / 64,5 / 73,6 / 57,8 dB. Variante con lana mineral de 60 kg/m³: 7,7 / 16,0 / 35,1 / 51,8 / 66,0 / 74,7 / 58,9 dB. El proxy acústico no acredita resistencia al fuego."),
-        ("Resultado y alcance", "En SONARA usa Intermitente (LAFmax estimado) → Aérea · recinto adyacente, sin atenuaciones adicionales. Base 41,2 dB(A) y variante 38,5 dB(A), mejora de 2,7 dB. Frente a la meta de 26 dB(A), ambas proyecciones aéreas quedan por encima, por 15,2 y 12,5 dB respectivamente. La vía estructural queda sin cuantificar y el máximo FAST real requiere verificación."),
-        ("Registro y verificación", "Deja LAeq,nT sin determinar para este ejemplo: falta un espectro equivalente del ciclo y un intervalo de evaluación. Para verificar en obra, reproduce la descarga, registra el máximo FAST en el dormitorio y mide el TR para normalizar a T₀ = 0,5 s. Para modelar las fijaciones, solicita datos compatibles de excitación y transferencia instalada."),
-        ('Rediseño guardado en SONARA', 'En Soluciones → IN-01, abre «IN-01 · Rediseño docente · cierre doble 3×15 / 200 / 3×15 · vía aérea». Sustituye el cierre base por dos bastidores independientes, tres placas RF de 15 mm por cara y cámara de 200 mm con lana mineral de 60 kg/m³. Espesor nominal 290 mm. Sella perímetro, registros y penetraciones. Selecciona Panel doble → Doble estructura; modela la placa con el proxy USG Firecode C ID 2582 ajustado a 15 mm.'),
-        ('Entradas y comparación', 'Usa Intermitente → Aérea recinto adyacente con las entradas de la base: Lw 70 / 68 / 66 / 64 / 61 / 58 / 55 dB, S = 3,00 m², A fuente = 1,50 m², A receptor = 9,216 m² y TR = T₀ = 0,50 s. Ingresa R por octava de 63 a 4000 Hz: 23,13 / 40,49 / 56,99 / 68,31 / 79,06 / 70,06 / 81,03 dB. LAFmax,nT aéreo proyectado baja de 41,2 a 20,6 dB(A), mejora de 20,6 dB y margen aéreo de 5,4 dB frente a 26 dB(A).'),
-        ("Secuencia en SONARA", "Genera el espectro R del cierre doble, guárdalo y duplica la corrida aérea de la descarga. Sustituye la curva R en sus siete octavas y conserva fuente, área y absorciones. Guarda el resultado con la vía identificada y registra por separado la evaluación de transmisión por tuberías, fijaciones y penetraciones. Para verificar el máximo total, comprueba la descarga con el montaje completo."),
-        ('Verificación de las vías restantes', 'El presupuesto energético combinado de las demás vías es aproximadamente 24,5 dB(A), bajo el supuesto de suma energética del modelo. Justifica abrazaderas, pasos y anclajes con transferencia instalada o medición en dormitorio bajo la misma descarga. El máximo FAST total queda pendiente y LAeq,nT sigue sin determinar.'),
-    ], "Distingue el escenario académico de una caracterización de la descarga real. No conviertas LAeq en máximo FAST ni simules una abrazadera con una resta arbitraria."),
+        ("Base original", "S-01: dos RF12,5 mm por cara, cámara70 mm con lana, total120 mm. Tuberías con abrazaderas resilientes como condición original. Fuente sanitaria intermitente en baño; receptor dormitorio principal A-302."),
+        ("Operación e hipótesis", "Descarga WC6 L, sin simultaneidad. Lw por octavas63–4000 Hz:70/68/66/64/61/58/55 dB, hipótesis docente para el máximo. S3 m², A fuente1,50 m², V receptor28,8 m³, TR0,50 s y A receptor9,216 m²."),
+        ("Mejora", "Dos bastidores independientes,3 RF15 mm por cara y cámara200 mm con lana mineral60 kg/m³. Sellar juntas, registros y penetraciones. Conservar la misma descarga y las abrazaderas resilientes originales."),
+        ("Cálculo y resultado", "Calcular R por octavas desde el motor de panel doble con proxy USG Firecode C ID2582. Introducir el mismo Lw en Aérea recinto adyacente. LAFmax,nT aéreo34,5 →18,1 dB(A), frente al máximo26 dB(A). La cifra previa41,2 dB(A) correspondía a otra referencia sin absorbente."),
+        ("Verificación restante", "Las abrazaderas están presentes, pero su rigidez y transferencia instalada no están especificadas. No atribuirles una reducción inventada. El máximo total de la descarga exige cuantificar las demás vías antes de declarar cumplimiento completo."),
+    ], "Conservar lana y abrazaderas en la base. El cálculo aéreo no acredita el máximo FAST total ni sustituye los datos de la descarga real."),
     9: ("Matriz y revisión crítica", [
         ("Integridad", "Contrastar AI-01, IM-01, FA-01 e IN-01 con las evidencias y resultados guardados. Revisar unidades, términos espectrales, normalización y estados pendiente/sin determinar."),
         ("Preparación para la etapa 10", "Identificar el descriptor aplicable y el umbral de Clase A de ISO/TS 19488:2021 para cada caso."),
@@ -324,26 +310,16 @@ def _teacher_guide(stage):
             return
         if stage in range(5, 9):
             design, comparison, outcome = {
-                5: (
-                    "Muro de hormigón armado de 180 mm con trasdosado independiente de dos placas RF de 12,5 mm, cámara de 100 mm con lana mineral de 60 kg/m³ y tratamiento de ambos flancos de losa en A-302.",
-                    "DₙT,50: 44 → 61 dB.",
-                    "Margen de 3 dB frente al mínimo de 58 dB en los caminos modelados. Quedan por verificar los flancos de fachada y muro lateral.",
-                ),
-                6: (
-                    "Losa de hormigón armado de 160 mm con piso sobre aisladores Stravigym HP-D45 + dBooster y cielo acústico desacoplado. Conserva los flancos M-01 y F-01 en la base y el rediseño.",
-                    "L′ₙT,w: 76 → 36 dB. L′ₙT,50: 76 → 59 dB.",
-                    "El índice ponderado queda 10 dB bajo el límite de 46 dB. El indicador de baja frecuencia queda 9 dB sobre el límite de 50 dB.",
-                ),
-                7: (
-                    "Conserva el paño opaco F-01 de la base. Sustituye V-01 por una doble ventana de marcos independientes, vidrio exterior de 12 mm, cámara de aire de 100 mm y vidrio interior de 10 mm.",
-                    "D₂m,nT,w + Ctr: 29 → 45 dB.",
-                    "Margen de 5 dB frente al mínimo de 40 dB con Lden = 60 dB. Falta validar la ventana completa, incluidos marcos y juntas.",
-                ),
-                8: (
-                    "Cierre de shaft con dos bastidores independientes, tres placas RF de 15 mm por cara y cámara de 200 mm con lana mineral de 60 kg/m³. Espesor nominal de 290 mm.",
-                    "LAFmax,nT proyectado por vía aérea: 41,2 → 20,6 dB(A).",
-                    "La vía aérea queda 5,4 dB bajo el límite de 26 dB(A). El máximo total de la descarga sigue pendiente de comprobar con las demás vías de transmisión.",
-                ),
+                5: ("M-01 HA180 con trasdosado2 RF12,5, cámara100 con lana y dos losas tratadas.",
+                    "DₙT,50: 44 → 60 dB.", "Margen2 dB en los caminos calculados; flancos laterales pendientes."),
+                6: ("L-01 HA160 con piso original10+40+10; mejora REGUPOL25 + anhidrita45, sin cielo añadido.",
+                    "L′ₙT,w: 52 → 42 dB. L′ₙT,50: 53 → 46 dB.",
+                    "Cumple ambos límites en el escenario académico con s′ y espectro de referencia adoptados. Ver hipótesis."),
+                7: ("F-01 original150+50+15; V-01 cambia DVH6/12/4 por doble ventana12/100/10.",
+                    "D₂m,nT,Atr: 29 → 45 dB.", "Margen5 dB con Lden60 dB y cierre hermético supuesto."),
+                8: ("S-01 original con lana y abrazaderas resilientes; mejora doble bastidor3 RF15/200/3 RF15.",
+                    "LAFmax,nT aéreo: 34,5 → 18,1 dB(A).",
+                    "Vía aérea bajo26 dB(A); máximo total pendiente de las otras vías."),
             }[stage]
             st.markdown("#### Ficha del rediseño guardado en SONARA")
             _lab_table(pd.DataFrame([
@@ -359,91 +335,13 @@ def _teacher_guide(stage):
                 st.markdown(f"#### {heading}")
             for criterion, expected in cards:
                 st.markdown("<div class='c5-guide-card'><strong>" + escape(criterion) + "</strong>" + escape(expected) + "</div>", unsafe_allow_html=True)
-        if stage == 5:
-            st.markdown("#### AI-01 · Carga de datos para demostrar la corrida de 61 dB")
-            st.markdown("**1. Calcula las curvas de los elementos.** En Proyecto → Diseñar → Ruido aéreo prepara los siguientes modelos. Exporta o conserva R(f) en la misma grilla de frecuencias.")
-            _lab_table(pd.DataFrame([
-                ["M-01 desnudo · Panel simple", "Hormigón armado 180 mm", "R del separador para la base"],
-                ["M-01 con trasdosado · Panel doble", "HA 180 mm + cámara independiente 100 mm con lana mineral de 60 kg/m³ + 2 placas RF de 12,5 mm en A-302", "R del separador para las dos variantes"],
-                ["Losa desnuda · Panel simple", "Hormigón armado 160 mm", "R del flanco desnudo en ambos lados"],
-                ["Losa tratada · Panel doble", "HA 160 mm + cámara de 75 mm con lana mineral de 60 kg/m³ + 2 placas equivalentes de 12,5 mm", "R del flanco con cielo independiente o piso seco flotante, según el encuentro"],
-            ], columns=["Modelo en SONARA", "Capas y dimensiones", "Curva que se utiliza"]))
-            st.markdown("**2. Configura la transmisión entre recintos.** En Proyecto → Elementos → AI-01 → Diseñar → ISO 12354-1, usa los valores siguientes. Mantén la misma geometría y normalización al duplicar las corridas.")
-            _lab_table(pd.DataFrame([
-                ["Recinto emisor → receptor", "Estar A-301 → Estar-comedor A-302"],
-                ["Superficie separadora S", "10,20 m² (4,08 × 2,50 m)"],
-                ["Volumen receptor V", "51,0 m³ (20,40 × 2,50 m)"],
-                ["Tiempo de referencia T₀", "0,50 s"],
-                ["TR receptor T", "0,60 s (hipótesis de la corrida guardada)"],
-                ["Flanqueos activos", "Losa de piso y losa de cielo, con 4,08 m de unión y Kij = 8,7 dB en cada una."],
-                ["Masa superficial del núcleo de cada losa", "384 kg/m² por lado, en ambas losas. Unión rígida pesada."],
-                ["Flancos de muro lateral y fachada", "Fuera de la corrida docente de 61 dB. Regístralos como pendientes."],
-            ], columns=["Campo", "Valor de carga o comprobación"]))
-            st.markdown("**3. Ejecuta las tres corridas.** Parte con M-01 y las dos losas desnudas. Duplica y sustituye la curva del separador por la del muro trasdosado. Duplica de nuevo y, para cada losa, aplica al lado receptor la corrección por banda ΔR(f) = R de la losa tratada − R de la losa desnuda. Mantén el lado emisor desnudo y el Kij de cada unión. Conserva la curva global entre recintos de cada cálculo.")
-            _lab_table(pd.DataFrame([
-                ["Base con dos flancos de losa", "44 dB", "44 − 58 = −14 dB"],
-                ["Trasdosado; losas desnudas", "52 dB", "52 − 58 = −6 dB"],
-                ["Trasdosado y dos losas tratadas", "61 dB", "61 − 58 = +3 dB"],
-            ], columns=["Corrida", "DₙT,50 esperado", "Margen respecto de 58 dB"]))
-            st.markdown("**4. Muestra cómo sale el indicador.** En la curva final, lee DₙT,w = 67 dB y la adaptación C₅₀–₃₁₅₀ = −6 dB, deducida de los dos índices guardados. Entonces DₙT,50 = 67 + (−6) = 61 dB. La mejora respecto de la base comparable es 61 − 44 = 17 dB.")
-            st.markdown("**5. Reproduce el cálculo espectral guardado.** Estas son las entradas exactas del respaldo de AI-01 y la curva de salida con la que se obtuvieron los 61 dB. Usa la misma curva de losa desnuda para emisor y receptor de ambos encuentros. Suma ΔR únicamente en los caminos que llegan por la losa del receptor (Df y Ff); conserva su signo, incluso a 63 Hz.")
-            _lab_table(pd.DataFrame([
-                [50, 24.13296593, 29.69909745, 5.14645765, 25.8262811],
-                [63, 32.752491, 31.44502512, -4.18563213, 32.15350816],
-                [80, 40.21042006, 33.23162518, 2.76617348, 40.0684837],
-                [100, 45.69278973, 34.85314058, 7.40547604, 45.47526927],
-                [125, 50.61615081, 36.33394164, 11.16517976, 50.0503011],
-                [160, 52.63889999, 37.12913248, 15.18951015, 52.17784795],
-                [200, 48.57777141, 23.21201536, 18.82784883, 45.1608381],
-                [250, 57.13552183, 29.79397377, 22.47166496, 53.31279671],
-                [315, 64.92783137, 34.20594722, 26.2503343, 59.96256631],
-                [400, 72.45720505, 38.06724011, 30.15997462, 66.07962124],
-                [500, 79.26792313, 41.44517001, 33.81357206, 71.45299903],
-                [630, 83.83023694, 44.90955898, 37.59616779, 75.58623761],
-                [800, 88.88564216, 48.11600958, 38.98495889, 79.802192],
-                [1000, 93.81991426, 51.36851352, 40.67168264, 83.9649546],
-                [1250, 98.90196086, 54.65810691, 42.31300252, 88.21082071],
-                [1600, 103.57671196, 56.31886902, 43.98785376, 91.44856639],
-                [2000, 105.24562087, 61.47686849, 45.05631054, 94.7984852],
-                [2500, 108.00028907, 61.75684958, 42.74668618, 96.35176373],
-                [3150, 102.59669215, 66.69874232, 35.98289793, 95.69634016],
-            ], columns=["Hz", "R separador [dB]", "R losa desnuda [dB]", "ΔR losa receptora [dB]", "DₙT final [dB]"]))
-            st.markdown("**Ejemplo a 500 Hz.** Para cada unión, suma 8,7 + 10·log₁₀(10,20 / (4,08 × 1 m)) = 12,6794 dB. Con R del separador = 79,2679 dB, R de la losa = 41,4452 dB y ΔR = 33,8136 dB, quedan Dd = 79,2679 dB y, por cada losa, Df = 106,8495 dB, Fd = 73,0359 dB y Ff = 87,9381 dB. Convierte cada camino a transmisión con 10^(−R/10), suma el camino directo y los tres caminos de cada una de las dos losas, y vuelve a dB con −10·log₁₀(suma). Luego suma 10·log₁₀(0,16 × 51 / (0,50 × 10,20)) = 2,0412 dB. El resultado a 500 Hz es 71,4530 dB. Repite en las 19 bandas y aplica los índices a la curva completa.")
-            st.warning("En el formulario ISO 12354-1 de SONARA puedes cargar geometría, TR y encuentros. El campo Rw elemento separador admite 70 dB, pero reconstruye una curva genérica. En modo Manual, los flancos también se ingresan por índices Rw y el formulario no ofrece el ΔR espectral guardado. Para obtener exactamente los 61 dB, usa las curvas de esta tabla en el cálculo espectral descrito. Las fichas individuales de las capas no vienen identificadas en el respaldo de esta solución.")
-        if stage == 6:
-            st.markdown("#### IM-01 · Prediseño con piso suspendido de baja frecuencia")
-            st.markdown("**Arma la variante sobre la base comparable.** Conserva la losa L-01 de HA de 160 mm y 384 kg/m², A = 20,40 m², V = 51,0 m³, TR = 0,60 s y los flancos M-01 y F-01 de la base. Sustituye el revestimiento anterior por una placa flotante de hormigón armado de 60 mm como punto de partida, sobre apoyos de muelle con frecuencia propia objetivo de 3–5 Hz bajo carga de servicio. Dimensiona muelles, separación de apoyos y cámara con el proveedor. Prevé junta perimetral elástica, pasos flexibles y ausencia de contactos rígidos. Conserva el cielo acústico desacoplado del caso previo.")
-            st.markdown("**Curva objetivo del piso.** Usa los valores de ΔL de la tabla como hipótesis de diseño. La base de cálculo ya incluye los dos flancos y la normalización. En el modelo detallado usado para esta comparación, la mejora de piso y el preset de cielo se trasladan a los caminos modelados. A 50 Hz: 84,05 − 28 − 0 = 56,05 dB. Un ensayo del conjunto piso–losa–cielo se evalúa como conjunto, sin volver a sumar el preset de cielo.")
-            _lab_table(pd.DataFrame([
-                [50, 84.05, 28, 0, 56.05],
-                [63, 83.05, 28, 1, 54.05],
-                [80, 82.05, 28, 1, 53.05],
-                [100, 81.05, 32, 2, 47.05],
-                [125, 80.05, 35, 3, 42.05],
-                [160, 79.05, 38, 4, 37.05],
-                [200, 78.05, 40, 5, 33.05],
-                [250, 77.05, 42, 7, 28.05],
-                [315, 76.05, 44, 9, 23.05],
-                [400, 75.05, 45, 11, 19.05],
-                [500, 74.05, 46, 12, 16.05],
-                [630, 73.05, 46, 13, 14.05],
-                [800, 72.05, 46, 14, 12.05],
-                [1000, 71.05, 46, 15, 10.05],
-                [1250, 70.05, 46, 15, 9.05],
-                [1600, 69.05, 46, 16, 7.05],
-                [2000, 68.05, 46, 16, 6.05],
-                [2500, 67.05, 46, 16, 5.05],
-                [3150, 66.05, 46, 16, 4.05],
-            ], columns=["Hz", "Base con flancos [dB]", "ΔL objetivo del piso [dB]", "ΔL del cielo [dB]", "Nivel proyectado [dB]"]))
-            st.markdown("**Resultado del cálculo docente.** El ajuste de la curva ponderada da L′ₙT,w = 30 dB frente al máximo de 46 dB. La suma energética entre 50 y 2.500 Hz da 59,70 dB; al restar 15 dB se obtienen 44,70 dB, que se registran como L′ₙT,50 = 45 dB (CI,50–2500 = +15 dB). La base comparable da 76 dB en ambos índices. Márgenes proyectados: 16 dB y 5 dB.")
-            st.warning("La curva ΔL es una especificación acústica de prediseño. Selecciona en SONARA un conjunto con espectro ensayado compatible desde 50 Hz y recalcula con la geometría y flancos de la base. La frecuencia propia de los muelles no acredita la curva de impacto. Verifica carga, altura disponible, puentes acústicos y transmisión por flancos con el montaje elegido.")
         if stage in (9, 10):
             st.markdown("**Balance de las corridas docentes de las etapas 5–8**")
             _lab_table(pd.DataFrame([
-                ["AI-01", "DₙT,50 ≥ 58 dB", "61 dB · margen 3 dB en los caminos modelados"],
-                ["IM-01", "L′ₙT,w ≤ 46 dB y L′ₙT,50 ≤ 50 dB", "36 / 59 dB · cumple el índice global y excede el de baja frecuencia por 9 dB"],
+                ["AI-01", "DₙT,50 ≥ 58 dB", "60 dB · margen 2 dB en los caminos modelados"],
+                ["IM-01", "L′ₙT,w ≤ 46 dB y L′ₙT,50 ≤ 50 dB", "42 / 46 dB · cumple bajo las hipótesis de base documentadas"],
                 ["FA-01", "D₂m,nT,Atr ≥ 40 dB con Lden = 60 dB", "45 dB · margen 5 dB bajo la exposición adoptada"],
-                ["IN-01", "LAFmax,nT ≤ 26 dB(A)", "20,6 dB(A) por vía aérea · resultado total pendiente"],
+                ["IN-01", "LAFmax,nT ≤ 26 dB(A)", "18,1 dB(A) por vía aérea · resultado total pendiente"],
             ], columns=["Caso", "Objetivo de la corrida docente", "Resultado y alcance"]))
         if stage in range(5, 9):
             family = list(CALCULATION_CASES)[stage - 5]
