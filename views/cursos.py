@@ -239,18 +239,37 @@ def _save_future_state_impl(class_id,state):
             raise RuntimeError("No hay conexión para guardar el avance.")
         return
 
-    client.table("user_progress").upsert({
-        "course_id": COURSE_ID,
-        "class_id": class_id,
-        "user_key": user_key,
-        "role": st.session_state.get("role", "Alumno"),
-        "display_name": st.session_state.get("name", ""),
-        "state_json": state,
-        "updated_at": _now(),
-    }, on_conflict="class_id,user_key", returning="minimal").execute()
+    # Curso 4 Lab 2: guardar solo las claves modificadas. Los mapas de la
+    # Etapa 10 pueden pesar varios MB y no deben reenviarse al editar Etapa 6.
+    # La comparación usa la copia completa ya recuperada en esta misma sesión.
+    cache_key = f"future_saved_{class_id}"
+    previous = st.session_state.get(cache_key)
+    if class_id == projection_lab and isinstance(previous, dict) and isinstance(state, dict):
+        changes = {key: value for key, value in state.items()
+                   if key not in previous or previous[key] != value}
+        if not changes:
+            return
+        result = client.rpc("patch_c4l2_progress", {
+            "p_class_id": class_id,
+            "p_user_key": user_key,
+            "p_changes": changes,
+        }).execute()
+        if result.data is not True:
+            raise RuntimeError("No se pudo confirmar la actualización parcial del progreso.")
+    else:
+        # Primera entrega / otros laboratorios: conservar la compatibilidad.
+        client.table("user_progress").upsert({
+            "course_id": COURSE_ID,
+            "class_id": class_id,
+            "user_key": user_key,
+            "role": st.session_state.get("role", "Alumno"),
+            "display_name": st.session_state.get("name", ""),
+            "state_json": state,
+            "updated_at": _now(),
+        }, on_conflict="class_id,user_key", returning="minimal").execute()
     if confirmed_save:
         from copy import deepcopy
-        st.session_state[f"future_saved_{class_id}"] = deepcopy(state)
+        st.session_state[cache_key] = deepcopy(state)
 
 def _course2_lab1_stage0_asset(filename, caption):
     """Muestra el asset oficial si existe; de lo contrario deja su espacio identificado."""
