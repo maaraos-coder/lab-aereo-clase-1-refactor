@@ -249,8 +249,8 @@ def _save_future_state_impl(class_id,state):
     cache_key = f"future_saved_{class_id}"
     previous = st.session_state.get(cache_key+"_persisted_snapshot")
     if class_id == projection_lab and isinstance(previous, dict) and isinstance(state, dict):
-        changes = {key: value for key, value in state.items()
-                   if key not in previous or previous[key] != value}
+        from labs.c4l2_progress_patch import changed_progress_fields
+        changes = changed_progress_fields(previous, state)
         if not changes:
             return
         result = client.rpc("patch_c4l2_progress", {
