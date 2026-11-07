@@ -399,4 +399,28 @@ class ScopeUITests(unittest.TestCase):
         self.assertTrue(all(r['LAeq [dB(A)]'] is None for r in rows))
 
 
+    def test_stage6_json_normalization_and_error_diagnostic(self):
+        import json
+        import numpy as np
+        from unittest.mock import Mock
+        treatment={'measure':'Reducción directa','bands':[np.float64(1.5)],
+                   'units':np.int64(2),'enabled':np.bool_(True)}
+        normalized=stage6._stage6_json_safe(treatment)
+        self.assertEqual(json.loads(json.dumps(normalized)),{
+            'measure':'Reducción directa','bands':[1.5],'units':2,'enabled':True
+        })
+        with self.assertRaises(ValueError):
+            stage6._stage6_json_safe({'level':float('nan')})
+        ui=Mock()
+        with patch.object(stage6._LOG,'exception'):
+            try:
+                raise RuntimeError('simulated database failure')
+            except RuntimeError as error:
+                stage6._stage6_save_error(ui,error,'test',treatment)
+        self.assertTrue(ui.error.called)
+        self.assertTrue(ui.download_button.called)
+        self.assertIn('respaldo_etapa6_control.json',
+                      ui.download_button.call_args.kwargs['file_name'])
+
+
 if __name__ == '__main__': unittest.main()
