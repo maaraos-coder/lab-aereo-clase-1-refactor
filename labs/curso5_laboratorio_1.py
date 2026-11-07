@@ -410,6 +410,33 @@ def _teacher_guide(stage):
             ], columns=["Hz", "R separador [dB]", "R losa desnuda [dB]", "ΔR losa receptora [dB]", "DₙT final [dB]"]))
             st.markdown("**Ejemplo a 500 Hz.** Para cada unión, suma 8,7 + 10·log₁₀(10,20 / (4,08 × 1 m)) = 12,6794 dB. Con R del separador = 79,2679 dB, R de la losa = 41,4452 dB y ΔR = 33,8136 dB, quedan Dd = 79,2679 dB y, por cada losa, Df = 106,8495 dB, Fd = 73,0359 dB y Ff = 87,9381 dB. Convierte cada camino a transmisión con 10^(−R/10), suma el camino directo y los tres caminos de cada una de las dos losas, y vuelve a dB con −10·log₁₀(suma). Luego suma 10·log₁₀(0,16 × 51 / (0,50 × 10,20)) = 2,0412 dB. El resultado a 500 Hz es 71,4530 dB. Repite en las 19 bandas y aplica los índices a la curva completa.")
             st.warning("En el formulario ISO 12354-1 de SONARA puedes cargar geometría, TR y encuentros. El campo Rw elemento separador admite 70 dB, pero reconstruye una curva genérica. En modo Manual, los flancos también se ingresan por índices Rw y el formulario no ofrece el ΔR espectral guardado. Para obtener exactamente los 61 dB, usa las curvas de esta tabla en el cálculo espectral descrito. Las fichas individuales de las capas no vienen identificadas en el respaldo de esta solución.")
+        if stage == 6:
+            st.markdown("#### IM-01 · Prediseño con piso suspendido de baja frecuencia")
+            st.markdown("**Arma la variante sobre la base comparable.** Conserva la losa L-01 de HA de 160 mm y 384 kg/m², A = 20,40 m², V = 51,0 m³, TR = 0,60 s y los flancos M-01 y F-01 de la base. Sustituye el revestimiento anterior por una placa flotante de hormigón armado de 60 mm como punto de partida, sobre apoyos de muelle con frecuencia propia objetivo de 3–5 Hz bajo carga de servicio. Dimensiona muelles, separación de apoyos y cámara con el proveedor. Prevé junta perimetral elástica, pasos flexibles y ausencia de contactos rígidos. Conserva el cielo acústico desacoplado del caso previo.")
+            st.markdown("**Curva objetivo del piso.** Usa los valores de ΔL de la tabla como hipótesis de diseño. La base de cálculo ya incluye los dos flancos y la normalización. En el modelo detallado usado para esta comparación, la mejora de piso y el preset de cielo se trasladan a los caminos modelados. A 50 Hz: 84,05 − 28 − 0 = 56,05 dB. Un ensayo del conjunto piso–losa–cielo se evalúa como conjunto, sin volver a sumar el preset de cielo.")
+            _lab_table(pd.DataFrame([
+                [50, 84.05, 28, 0, 56.05],
+                [63, 83.05, 28, 1, 54.05],
+                [80, 82.05, 28, 1, 53.05],
+                [100, 81.05, 32, 2, 47.05],
+                [125, 80.05, 35, 3, 42.05],
+                [160, 79.05, 38, 4, 37.05],
+                [200, 78.05, 40, 5, 33.05],
+                [250, 77.05, 42, 7, 28.05],
+                [315, 76.05, 44, 9, 23.05],
+                [400, 75.05, 45, 11, 19.05],
+                [500, 74.05, 46, 12, 16.05],
+                [630, 73.05, 46, 13, 14.05],
+                [800, 72.05, 46, 14, 12.05],
+                [1000, 71.05, 46, 15, 10.05],
+                [1250, 70.05, 46, 15, 9.05],
+                [1600, 69.05, 46, 16, 7.05],
+                [2000, 68.05, 46, 16, 6.05],
+                [2500, 67.05, 46, 16, 5.05],
+                [3150, 66.05, 46, 16, 4.05],
+            ], columns=["Hz", "Base con flancos [dB]", "ΔL objetivo del piso [dB]", "ΔL del cielo [dB]", "Nivel proyectado [dB]"]))
+            st.markdown("**Resultado del cálculo docente.** El ajuste de la curva ponderada da L′ₙT,w = 30 dB frente al máximo de 46 dB. La suma energética entre 50 y 2.500 Hz da 59,70 dB; al restar 15 dB se obtienen 44,70 dB, que se registran como L′ₙT,50 = 45 dB (CI,50–2500 = +15 dB). La base comparable da 76 dB en ambos índices. Márgenes proyectados: 16 dB y 5 dB.")
+            st.warning("La curva ΔL es una especificación acústica de prediseño. Selecciona en SONARA un conjunto con espectro ensayado compatible desde 50 Hz y recalcula con la geometría y flancos de la base. La frecuencia propia de los muelles no acredita la curva de impacto. Verifica carga, altura disponible, puentes acústicos y transmisión por flancos con el montaje elegido.")
         if stage in (9, 10):
             st.markdown("**Balance de las corridas docentes de las etapas 5–8**")
             _lab_table(pd.DataFrame([
