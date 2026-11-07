@@ -322,6 +322,36 @@ def _teacher_guide(stage):
         if stage == 2:
             _teacher_stage2_answers()
             return
+        if stage in range(5, 9):
+            design, comparison, outcome = {
+                5: (
+                    "Muro de hormigón armado de 180 mm con trasdosado independiente de dos placas RF de 12,5 mm, cámara de 100 mm con lana mineral de 60 kg/m³ y tratamiento de ambos flancos de losa en A-302.",
+                    "DₙT,50: 44 → 61 dB.",
+                    "Margen de 3 dB frente al mínimo de 58 dB en los caminos modelados. Quedan por verificar los flancos de fachada y muro lateral.",
+                ),
+                6: (
+                    "Losa de hormigón armado de 160 mm con piso sobre aisladores Stravigym HP-D45 + dBooster y cielo acústico desacoplado. Conserva los flancos M-01 y F-01 en la base y el rediseño.",
+                    "L′ₙT,w: 76 → 36 dB. L′ₙT,50: 76 → 59 dB.",
+                    "El índice ponderado queda 10 dB bajo el límite de 46 dB. El indicador de baja frecuencia queda 9 dB sobre el límite de 50 dB.",
+                ),
+                7: (
+                    "Conserva el paño opaco F-01 de la base. Sustituye V-01 por una doble ventana de marcos independientes, vidrio exterior de 12 mm, cámara de aire de 100 mm y vidrio interior de 10 mm.",
+                    "D₂m,nT,w + Ctr: 29 → 45 dB.",
+                    "Margen de 5 dB frente al mínimo de 40 dB con Lden = 60 dB. Falta validar la ventana completa, incluidos marcos y juntas.",
+                ),
+                8: (
+                    "Cierre de shaft con dos bastidores independientes, tres placas RF de 15 mm por cara y cámara de 200 mm con lana mineral de 60 kg/m³. Espesor nominal de 290 mm.",
+                    "LAFmax,nT proyectado por vía aérea: 41,2 → 20,6 dB(A).",
+                    "La vía aérea queda 5,4 dB bajo el límite de 26 dB(A). El máximo total de la descarga sigue pendiente de comprobar con las demás vías de transmisión.",
+                ),
+            }[stage]
+            st.markdown("#### Ficha del rediseño guardado en SONARA")
+            _lab_table(pd.DataFrame([
+                ["Rediseño guardado", design],
+                ["Base → variante", comparison],
+                ["Resultado frente a la meta", outcome],
+            ], columns=["Referencia", "Corrida docente"]))
+            st.markdown("#### Entradas y procedimiento de cálculo")
         from html import escape
         sections = criteria.items() if stage == 4 else [(None, criteria)]
         for heading, cards in sections:
