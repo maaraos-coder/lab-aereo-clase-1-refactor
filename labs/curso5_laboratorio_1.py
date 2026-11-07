@@ -24,7 +24,7 @@ EXERCISE_SCOPE = ("ISO/TS 19488:2021 · fase de diseño. Objetivo del proyecto: 
 SONARA_URL = "https://sonara-ea1b.onrender.com/"
 ISO_STATUS_URL = "https://www.iso.org/standard/77742.html"
 C5L1_STAGE_MINUTES = [10, 20, 20, 20, 20, 30, 25, 25, 25, 25, 30]
-_RUNTIME_PROTECTED = {"run_stage", "_bind_runtime", "_RUNTIME_PROTECTED", "C5L1_STAGE_MINUTES"}
+_RUNTIME_PROTECTED = {"run_stage", "_bind_runtime", "_RUNTIME_PROTECTED", "C5L1_STAGE_MINUTES", "CLASS_ID"}
 
 
 def _bind_runtime(runtime):
@@ -365,14 +365,19 @@ def _header(stage: int, title: str, purpose: str):
     )
 
 
-def _save(lab, saved, stage: int, **values):
-    updated = {
-        **saved,
-        **values,
-        f"done_{stage}": True,
-        f"c5l1_done_{stage}": True,
-        f"c5l1_updated_{stage}": _now(),
-    }
+def _stage_inputs(saved, stage):
+    return {**saved, **saved.get(f"c5l1_draft_{stage}", {})}
+
+
+def _save(lab, saved, stage: int, *, draft=False, **values):
+    draft_key = f"c5l1_draft_{stage}"
+    updated = {**saved, f"c5l1_updated_{stage}": _now()}
+    if draft:
+        updated[draft_key] = values
+    else:
+        updated.update(values)
+        updated.update({f"done_{stage}": True, f"c5l1_done_{stage}": True})
+        updated.pop(draft_key, None)
     try:
         _save_future_state(lab["id"], updated)
     except PermissionError as exc:
@@ -381,7 +386,14 @@ def _save(lab, saved, stage: int, **values):
     except Exception:
         st.error("No se pudo guardar esta etapa en Supabase. Reintenta antes de cambiar de etapa.")
         st.stop()
+    if not draft:
+        saved.pop(draft_key, None)
     saved.update(updated)
+
+
+def _save_draft(lab, saved, stage, **values):
+    _save(lab, saved, stage, draft=True, **values)
+    st.success("Avance guardado. Puedes retomarlo en esta etapa.")
 
 
 def _sonara_button(label="Abrir SONARA para calcular"):
@@ -668,7 +680,7 @@ def _result_form(lab, saved, stage, case_name, fields, prompt):
     _sonara_design_guide(case_name)
     _sonara_button("Abrir SONARA para diseñar esta solución")
 
-    stored = saved.get(f"c5l1_result_{case['code']}", {})
+    stored = _stage_inputs(saved, stage).get(f"c5l1_result_{case['code']}", {})
     is_ai = case["code"] == "AI-01"
     ai_target = 58
     is_facade = case["code"] == "FA-01"
@@ -762,6 +774,13 @@ def _result_form(lab, saved, stage, case_name, fields, prompt):
             placeholder="Modelo utilizado, elementos, dimensiones, uniones, fuente de datos y limitaciones.",
         )
         submitted = st.form_submit_button("Guardar resultados de diseño", width="stretch")
+        save_draft = st.form_submit_button("Guardar avance", width="stretch")
+    if save_draft and not submitted:
+        _save_draft(lab, saved, stage, **{f"c5l1_result_{case['code']}": {
+            **values, "notes": notes, "descriptor": case["descriptor"],
+            "target": target, "base_design": base_design, "design_change": design_change,
+            "evidence": evidence, "undetermined": undetermined, "normalized": normalized,
+        }})
     if submitted:
         if is_ai and any(values[key] is None for key in ("base_dntw", "base_dnt50", "dntw", "dnt50")):
             st.warning("Completa DₙT,w y DₙT,50 proyectado de la base y de la variante.")
@@ -897,6 +916,10 @@ def _stage0(lab, saved):
         "Continuidad del trabajo: utiliza «Guardar avance de esta etapa» antes de cambiar de sección. "
         "Las etapas posteriores recuperan los antecedentes y resultados previamente guardados."
     )
+
+    if st.button("Guardar avance", key="c5l1_s0_save", width="stretch"):
+        _save(lab, saved, 0)
+        st.success("Avance guardado.")
 
 
 _CLASS_A_REQUIREMENTS = [
@@ -1246,22 +1269,23 @@ def _stage1(lab, saved):
         'de diseño y organiza los casos que calcularás en SONARA y los que quedan pendientes.</span>'
         '</div>', unsafe_allow_html=True,
     )
+    inputs_saved = _stage_inputs(saved, 1)
     with st.form("c5l1_stage1_diagnostic_form", border=True):
         st.markdown("#### 1 · Identifica qué debes resolver en A-302")
         answer = st.text_area(
             "Diagnostica las cuatro situaciones acústicas del departamento A-302",
-            value=saved.get("c5l1_s1_answer", ""),
+            value=inputs_saved.get("c5l1_s1_answer", ""),
             placeholder="AI-01: A-301 → A-302, muro y flancos. IM-01: A-402 → A-302, losa y piso. FA-01: exterior → estar A-302, fachada y ventana. IN-01: descarga sanitaria → dormitorio A-302, cierre y fijaciones. Explica el mecanismo y el riesgo que debes resolver en cada caso.",
             height=160,
         )
-        procedure = saved.get("c5l1_s1_procedure", "A · fase de predicción de diseño")
+        procedure = inputs_saved.get("c5l1_s1_procedure", "A · fase de predicción de diseño")
         st.info("Trabajamos en la fase de diseño: prepara los modelos y calcula en Proyecto de SONARA. Las inspecciones y mediciones pertenecen a la verificación futura; no tienes que elegir un procedimiento ni diseñar una campaña de ensayos aquí.")
         st.markdown("#### 2 · Identifica los requisitos de clase A antes de diseñar")
         st.markdown("Usa los límites detallados en esta etapa y contrasta la fila y notas del PDF con cada relación fuente–receptor. Registra el descriptor exacto, el límite de A (o su expresión), el sentido de comparación y las condiciones aplicables. Estos serán tus objetivos de diseño en SONARA; no uses Rw como sustituto automático de un requisito entre recintos.")
         st.caption("ISO/TS 19488:2021 · Acoustics — Acoustic classification of dwellings: §5.2 / tabla 1, p. 7 (PDF 13); §5.3 / tabla 2, pp. 7–8 (PDF 13–14); §5.4 / tabla 3, p. 8 (PDF 14); §5.5 / tabla 4, p. 9 (PDF 15).")
         st.info("Para fachada, declara la exposición exterior que exige la expresión elegida y comprueba sus mínimos/notas. Para A, revisa todos los requisitos adicionales de baja frecuencia aplicables. Para instalaciones, distingue la condición de operación y el descriptor temporal. Si falta un antecedente, identifica el dato pendiente y cómo lo obtendrás.")
         requirements = {}
-        previous_requirements = saved.get("c5l1_s1_requirements", {})
+        previous_requirements = inputs_saved.get("c5l1_s1_requirements", {})
         for family, case in CALCULATION_CASES.items():
             code = case["code"]
             prior = previous_requirements.get(code, {})
@@ -1275,7 +1299,7 @@ def _stage1(lab, saved):
         st.markdown("#### 3 · Organiza el diseño en Proyecto de SONARA")
         sample = st.text_area(
             "Organiza tus casos de predicción y su cobertura en el edificio",
-            value=saved.get("c5l1_s1_sampling", ""),
+            value=inputs_saved.get("c5l1_s1_sampling", ""),
             placeholder=(
                 "Para AI-01, IM-01, FA-01 e IN-01 indica emisor, receptor, elemento, entradas y descriptor; "
                 "describe la base y el rediseño. Explica qué otras situaciones necesitan un modelo adicional "
@@ -1286,13 +1310,17 @@ def _stage1(lab, saved):
         st.markdown("#### 4 · Explica qué cubre tu propuesta y qué falta")
         scope = st.text_area(
             "Explica los límites del alcance fijado por el docente",
-            value=saved.get("c5l1_s1_scope", ""),
+            value=inputs_saved.get("c5l1_s1_scope", ""),
             placeholder=(
                 "Sin cambiar el alcance: explica por qué estos cuatro casos no acreditan por sí solos la clase global y qué antecedentes serían necesarios para extender el estudio."
             ),
             height=130,
         )
         submitted = st.form_submit_button("Guardar diagnóstico y plan de predicciones", width="stretch")
+        save_draft = st.form_submit_button("Guardar avance", width="stretch")
+    if save_draft and not submitted:
+        _save_draft(lab, saved, 1, c5l1_s1_requirements=requirements, c5l1_s1_answer=answer,
+                    c5l1_s1_procedure=procedure, c5l1_s1_sampling=sample, c5l1_s1_scope=scope)
     if submitted:
         incomplete_requirements = [code for code, row in requirements.items() if any(not str(value).strip() for value in row.values())]
         if incomplete_requirements:
@@ -1376,9 +1404,10 @@ def _stage2(lab, saved):
     .c5s2-example{padding:14px 18px;background:#fff4de;border-radius:10px;border-left:4px solid #dba43d;color:#604711;margin:12px 0;font-size:15px}
     </style>
     """, unsafe_allow_html=True)
+    inputs_saved = _stage_inputs(saved, 2)
     form_values = {}
     def answer(label, key, placeholder):
-        value = st.text_input(label, value=saved.get(key, ""), key=key, placeholder=placeholder)
+        value = st.text_input(label, value=inputs_saved.get(key, ""), key=key, placeholder=placeholder)
         form_values[key] = value
         return value
     def step_head(number, title, instruction):
@@ -1430,6 +1459,9 @@ def _stage2(lab, saved):
                 st.info("Tu respuesta anterior se conserva como referencia: " + saved["c5l1_s2_missing"])
         st.markdown("**Antes de guardar:** cinco operaciones con unidades · tres recorridos del ruido explicados · tres datos pendientes con su fuente.")
         submitted = st.form_submit_button("Guardar mi ficha de planos", type="primary", width="stretch")
+        save_draft = st.form_submit_button("Guardar avance", width="stretch")
+    if save_draft and not submitted:
+        _save_draft(lab, saved, 2, **form_values)
     if submitted:
         if any(not value.strip() for value in form_values.values()):
             st.warning("Completa las cinco operaciones y los tres campos de cada riesgo y dato pendiente antes de guardar.")
@@ -1564,8 +1596,11 @@ def _stage3(lab, saved):
         target = "Clase A"
         scope = EXERCISE_SCOPE
         st.markdown("**Objetivo del proyecto: clase A · caso del ejemplo: AI-01.**")
-        reason = st.text_area("Tu decisión y su justificación", value=saved.get("c5l1_s3_reason", ""), placeholder="Elijo… porque… El margen es… Antes de aceptar el diseño revisaría… Para los otros casos todavía falta…", height=180)
+        reason = st.text_area("Tu decisión y su justificación", value=_stage_inputs(saved, 3).get("c5l1_s3_reason", ""), placeholder="Elijo… porque… El margen es… Antes de aceptar el diseño revisaría… Para los otros casos todavía falta…", height=180)
         submitted = st.form_submit_button("Guardar interpretación del ejemplo", type="primary", width="stretch")
+        save_draft = st.form_submit_button("Guardar avance", width="stretch")
+    if save_draft and not submitted:
+        _save_draft(lab, saved, 3, c5l1_s3_target=target, c5l1_s3_scope=scope, c5l1_s3_reason=reason)
     if submitted:
         if not reason.strip():
             st.warning("Explica tu elección, el margen, las condiciones que revisarías y lo que falta para los demás casos.")
@@ -1623,7 +1658,8 @@ def _stage4(lab, saved):
     .st-key-c5l1_s4_protocol_form{background:#fff;border:1px solid #c9dce7;border-radius:18px;padding:22px;box-shadow:0 6px 22px #16445b0a}
     .st-key-c5l1_s4_protocol_form [data-testid="stWidgetLabel"] p{font-size:16px!important;font-weight:600!important;color:#173f56!important}.st-key-c5l1_s4_protocol_form input,.st-key-c5l1_s4_protocol_form textarea{font-size:16px!important;background:#f4f9fc!important;border:1px solid #c2d8e3!important;border-radius:10px!important}
     </style>""", unsafe_allow_html=True)
-    prev = saved.get("c5l1_s4_inputs", {})
+    inputs_saved = _stage_inputs(saved, 4)
+    prev = inputs_saved.get("c5l1_s4_inputs", {})
     with st.form("c5l1_s4_protocol_form", border=False):
         st.markdown("#### A · Introduce los datos de partida")
         st.markdown("Registra el valor que utilizarás y explica su origen en el apartado B. **TR** significa tiempo de reverberación; **HA**, hormigón armado. La densidad de sobrelosa y la rigidez dinámica corresponden al modelo físico del piso; si no lo utilizas, déjalas vacías y explica el motivo.")
@@ -1652,13 +1688,16 @@ def _stage4(lab, saved):
         ])
         st.markdown("#### B · Explica de dónde salen los datos")
         st.markdown("**Para cada valor indica:** nombre del dato, valor y unidad, fuente y motivo de elección. Si es una hipótesis, identifícala; si falta información, déjala señalada como pendiente.")
-        input_sources = st.text_area("Fuentes de datos, hipótesis y antecedentes pendientes", value=saved.get("c5l1_s4_sources", ""), placeholder="Dato: … | Valor y unidad: … | Fuente: … | Justificación: …\nPendiente: …", height=140)
+        input_sources = st.text_area("Fuentes de datos, hipótesis y antecedentes pendientes", value=inputs_saved.get("c5l1_s4_sources", ""), placeholder="Dato: … | Valor y unidad: … | Fuente: … | Justificación: …\nPendiente: …", height=140)
         st.markdown("**Cómo comprobarás los cuatro casos:** explica qué resultado buscarás en SONARA y cómo lo compararás con el objetivo A de la tabla superior. Para fachada, utiliza el límite correspondiente a tu Lden. Si el módulo no entrega un indicador necesario, señala qué falta.")
-        criteria = st.text_area("Criterios de diseño que comprobarás en cada caso", value=saved.get("c5l1_s4_criteria", ""), placeholder="AI-01: resultado que buscaré y comparación…\nIM-01: los dos indicadores que comprobaré…\nFA-01: exposición adoptada y límite…\nIN-01: máximo normalizado y condición de descarga…", height=140)
+        criteria = st.text_area("Criterios de diseño que comprobarás en cada caso", value=inputs_saved.get("c5l1_s4_criteria", ""), placeholder="AI-01: resultado que buscaré y comparación…\nIM-01: los dos indicadores que comprobaré…\nFA-01: exposición adoptada y límite…\nIN-01: máximo normalizado y condición de descarga…", height=140)
         st.markdown("#### C · Organiza tus cálculos y evidencias")
         st.markdown("Explica cómo distinguirás la solución inicial de la propuesta mejorada, qué cambiarás y qué condiciones mantendrás para compararlas. Indica qué resultados, curvas o capturas guardarás.")
-        protocol = st.text_area("Protocolo personal de cálculo", value=saved.get("c5l1_s4_protocol", ""), placeholder="Nombres Base/Variante, capturas, curvas, unidades, condiciones que mantendrás y cómo justificarás los cambios.", height=130)
+        protocol = st.text_area("Protocolo personal de cálculo", value=inputs_saved.get("c5l1_s4_protocol", ""), placeholder="Nombres Base/Variante, capturas, curvas, unidades, condiciones que mantendrás y cómo justificarás los cambios.", height=130)
         submitted = st.form_submit_button("Guardar preparación del proyecto", type="primary", width="stretch")
+        save_draft = st.form_submit_button("Guardar avance", width="stretch")
+    if save_draft and not submitted:
+        _save_draft(lab, saved, 4, c5l1_s4_inputs=inputs, c5l1_s4_sources=input_sources, c5l1_s4_criteria=criteria, c5l1_s4_protocol=protocol)
     if submitted:
         if inputs["tr_stay"] is None or inputs["tr_bedroom"] is None or inputs["rho_ha"] is None or inputs["lden"] is None:
             st.warning("Define TR del estar y dormitorio, densidad HA y exposición exterior; justifica los restantes datos según el modelo elegido.")
@@ -1820,10 +1859,12 @@ def _stage9(lab, saved):
         st.warning(f"Faltan {len(missing)} resultados. Regresa a las etapas de cálculo antes de clasificar.")
     review = st.text_area(
         "Revisión crítica previa a la clasificación",
-        value=saved.get("c5l1_s9_review", ""),
+        value=_stage_inputs(saved, 9).get("c5l1_s9_review", ""),
         placeholder="Detecta el resultado más débil, una incertidumbre dominante y una verificación necesaria en obra.",
         height=130,
     )
+    if st.button("Guardar avance", key="c5l1_s9_draft", width="stretch"):
+        _save_draft(lab, saved, 9, c5l1_s9_review=review)
     if st.button("Cerrar matriz de diseño", key="c5l1_s9_save", width="stretch"):
         if not missing.empty:
             st.warning("Completa todos los resultados antes de cerrar la matriz.")
@@ -1849,7 +1890,7 @@ def _stage10(lab, saved):
     requirements = {row[0]: row[1:] for row in _CLASS_A_REQUIREMENTS}
     lden = saved.get("c5l1_s4_inputs", {}).get("lden")
     decisions = ("Selecciona una decisión", "Alcanza la meta A", "Queda fuera de la meta A", "Sin antecedentes suficientes")
-    previous = saved.get("c5l1_classification", {})
+    previous = _stage_inputs(saved, 10).get("c5l1_classification", {})
     entries = {}
     with st.form("c5l1_classification_form"):
         for source_stage, (code, family, fields) in enumerate(cases, start=5):
@@ -1915,6 +1956,11 @@ def _stage10(lab, saved):
             placeholder="Conclusión frente a la meta A, mejoras propuestas, incertidumbres y mediciones finales requeridas.",
         )
         submitted = st.form_submit_button("Guardar verificación de la meta Clase A", width="stretch")
+        save_draft = st.form_submit_button("Guardar avance", width="stretch")
+    if save_draft and not submitted:
+        _save_draft(lab, saved, 10, c5l1_classification={
+            **entries, "overall_rule": overall_rule, "building_plan": building_plan, "conclusion": conclusion,
+        })
     if submitted:
         invalid = [
             family for family, entry in entries.items()
@@ -1944,6 +1990,8 @@ _STAGES = [_stage0, _stage1, _stage2, _stage3, _stage4, _stage5, _stage6, _stage
 def run_stage(stage, lab, saved, runtime):
     _bind_runtime(runtime)
     stage = max(0, min(int(stage), 10))
+    if f"c5l1_draft_{stage}" in saved:
+        st.caption("Se recuperó el borrador guardado de esta etapa.")
     result = _STAGES[stage](lab, saved)
     _teacher_guide(stage)
     return result
