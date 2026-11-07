@@ -329,6 +329,33 @@ def _teacher_guide(stage):
                 st.markdown(f"#### {heading}")
             for criterion, expected in cards:
                 st.markdown("<div class='c5-guide-card'><strong>" + escape(criterion) + "</strong>" + escape(expected) + "</div>", unsafe_allow_html=True)
+        if stage == 5:
+            st.markdown("#### AI-01 · Carga de datos para demostrar la corrida de 61 dB")
+            st.markdown("**1. Calcula las curvas de los elementos.** En Proyecto → Diseñar → Ruido aéreo prepara los siguientes modelos. Exporta o conserva R(f) en la misma grilla de frecuencias.")
+            _lab_table(pd.DataFrame([
+                ["M-01 desnudo · Panel simple", "Hormigón armado 180 mm", "R del separador para la base"],
+                ["M-01 con trasdosado · Panel doble", "HA 180 mm + cámara independiente 100 mm con lana mineral de 60 kg/m³ + 2 placas RF de 12,5 mm en A-302", "R del separador para las dos variantes"],
+                ["Losa desnuda · Panel simple", "Hormigón armado 160 mm", "R del flanco desnudo en ambos lados"],
+                ["Losa tratada · Panel doble", "HA 160 mm + cámara de 75 mm con lana mineral de 60 kg/m³ + 2 placas equivalentes de 12,5 mm", "R del flanco con cielo independiente o piso seco flotante, según el encuentro"],
+            ], columns=["Modelo en SONARA", "Capas y dimensiones", "Curva que se utiliza"]))
+            st.markdown("**2. Configura la transmisión entre recintos.** En Proyecto → Elementos → AI-01 → Diseñar → ISO 12354-1, usa los valores siguientes. Mantén la misma geometría y normalización al duplicar las corridas.")
+            _lab_table(pd.DataFrame([
+                ["Recinto emisor → receptor", "Estar A-301 → Estar-comedor A-302"],
+                ["Superficie separadora S", "10,20 m² (4,08 × 2,50 m)"],
+                ["Volumen receptor V", "51,0 m³ (20,40 × 2,50 m)"],
+                ["Tiempo de referencia T₀", "0,50 s. Comprueba por separado el TR receptor en la ficha guardada."],
+                ["Flanqueos activos", "Losa de piso y losa de cielo, con 4,08 m de unión y Kij = 8,7 dB en cada una."],
+                ["Masa superficial del núcleo de cada losa", "384 kg/m² si se emplea la densidad docente de 2.400 kg/m³: 0,160 × 2.400."],
+                ["Flancos de muro lateral y fachada", "Fuera de la corrida docente de 61 dB. Regístralos como pendientes."],
+            ], columns=["Campo", "Valor de carga o comprobación"]))
+            st.markdown("**3. Ejecuta las tres corridas.** Parte con M-01 y las dos losas desnudas. Duplica y sustituye la curva del separador por la del muro trasdosado. Duplica de nuevo y, para cada losa, aplica al lado receptor la corrección por banda ΔR(f) = R de la losa tratada − R de la losa desnuda. Mantén el lado emisor desnudo y el Kij de cada unión. Conserva la curva global entre recintos de cada cálculo.")
+            _lab_table(pd.DataFrame([
+                ["Base con dos flancos de losa", "44 dB", "44 − 58 = −14 dB"],
+                ["Trasdosado; losas desnudas", "52 dB", "52 − 58 = −6 dB"],
+                ["Trasdosado y dos losas tratadas", "61 dB", "61 − 58 = +3 dB"],
+            ], columns=["Corrida", "DₙT,50 esperado", "Margen respecto de 58 dB"]))
+            st.markdown("**4. Muestra cómo sale el indicador.** En la curva final, lee DₙT,w = 67 dB y la adaptación C₅₀–₃₁₅₀ = −6 dB, deducida de los dos índices guardados. Entonces DₙT,50 = 67 + (−6) = 61 dB. La mejora respecto de la base comparable es 61 − 44 = 17 dB.")
+            st.warning("Para reproducir la corrida exacta, recupera de la solución guardada las fichas de materiales, las curvas R(f) y ΔR(f) efectivamente cargadas y el TR receptor. Los espesores, la densidad nominal y los resultados de referencia permiten explicar el procedimiento. La coincidencia numérica debe verificarse con las entradas de la ficha.")
         if stage in (9, 10):
             st.markdown("**Balance de las corridas docentes de las etapas 5–8**")
             _lab_table(pd.DataFrame([
@@ -357,7 +384,6 @@ def _header(stage: int, title: str, purpose: str):
         show_overview=False,
         duration_minutes=C5L1_STAGE_MINUTES[stage],
     )
-    _teacher_guide(stage)
 
 
 def _save(lab, saved, stage: int, **values):
@@ -1940,8 +1966,7 @@ def run_stage(stage, lab, saved, runtime):
     _bind_runtime(runtime)
     stage = max(0, min(int(stage), 10))
     result = _STAGES[stage](lab, saved)
-    if stage == 0:
-        _teacher_guide(stage)
+    _teacher_guide(stage)
     return result
 
 
