@@ -787,7 +787,7 @@ def _teacher_course_results_impl(compact=False):
     try:
         if config.get("formative_only"):
             progress_rows=(
-                client.table("user_progress")
+                client.table("user_progress_light")
                 .select("user_key,state_json,updated_at")
                 .eq("class_id",config["class_id"])
                 .order("updated_at",desc=True)
