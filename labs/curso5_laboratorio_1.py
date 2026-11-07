@@ -343,9 +343,10 @@ def _teacher_guide(stage):
                 ["Recinto emisor → receptor", "Estar A-301 → Estar-comedor A-302"],
                 ["Superficie separadora S", "10,20 m² (4,08 × 2,50 m)"],
                 ["Volumen receptor V", "51,0 m³ (20,40 × 2,50 m)"],
-                ["Tiempo de referencia T₀", "0,50 s. Comprueba por separado el TR receptor en la ficha guardada."],
+                ["Tiempo de referencia T₀", "0,50 s"],
+                ["TR receptor T", "0,60 s (hipótesis de la corrida guardada)"],
                 ["Flanqueos activos", "Losa de piso y losa de cielo, con 4,08 m de unión y Kij = 8,7 dB en cada una."],
-                ["Masa superficial del núcleo de cada losa", "384 kg/m² si se emplea la densidad docente de 2.400 kg/m³: 0,160 × 2.400."],
+                ["Masa superficial del núcleo de cada losa", "384 kg/m² por lado, en ambas losas. Unión rígida pesada."],
                 ["Flancos de muro lateral y fachada", "Fuera de la corrida docente de 61 dB. Regístralos como pendientes."],
             ], columns=["Campo", "Valor de carga o comprobación"]))
             st.markdown("**3. Ejecuta las tres corridas.** Parte con M-01 y las dos losas desnudas. Duplica y sustituye la curva del separador por la del muro trasdosado. Duplica de nuevo y, para cada losa, aplica al lado receptor la corrección por banda ΔR(f) = R de la losa tratada − R de la losa desnuda. Mantén el lado emisor desnudo y el Kij de cada unión. Conserva la curva global entre recintos de cada cálculo.")
@@ -355,7 +356,30 @@ def _teacher_guide(stage):
                 ["Trasdosado y dos losas tratadas", "61 dB", "61 − 58 = +3 dB"],
             ], columns=["Corrida", "DₙT,50 esperado", "Margen respecto de 58 dB"]))
             st.markdown("**4. Muestra cómo sale el indicador.** En la curva final, lee DₙT,w = 67 dB y la adaptación C₅₀–₃₁₅₀ = −6 dB, deducida de los dos índices guardados. Entonces DₙT,50 = 67 + (−6) = 61 dB. La mejora respecto de la base comparable es 61 − 44 = 17 dB.")
-            st.warning("Para reproducir la corrida exacta, recupera de la solución guardada las fichas de materiales, las curvas R(f) y ΔR(f) efectivamente cargadas y el TR receptor. Los espesores, la densidad nominal y los resultados de referencia permiten explicar el procedimiento. La coincidencia numérica debe verificarse con las entradas de la ficha.")
+            st.markdown("**5. Reproduce el cálculo espectral guardado.** Estas son las entradas exactas del respaldo de AI-01 y la curva de salida con la que se obtuvieron los 61 dB. Usa la misma curva de losa desnuda para emisor y receptor de ambos encuentros. Suma ΔR únicamente en los caminos que llegan por la losa del receptor (Df y Ff); conserva su signo, incluso a 63 Hz.")
+            _lab_table(pd.DataFrame([
+                [50, 24.13296593, 29.69909745, 5.14645765, 25.8262811],
+                [63, 32.752491, 31.44502512, -4.18563213, 32.15350816],
+                [80, 40.21042006, 33.23162518, 2.76617348, 40.0684837],
+                [100, 45.69278973, 34.85314058, 7.40547604, 45.47526927],
+                [125, 50.61615081, 36.33394164, 11.16517976, 50.0503011],
+                [160, 52.63889999, 37.12913248, 15.18951015, 52.17784795],
+                [200, 48.57777141, 23.21201536, 18.82784883, 45.1608381],
+                [250, 57.13552183, 29.79397377, 22.47166496, 53.31279671],
+                [315, 64.92783137, 34.20594722, 26.2503343, 59.96256631],
+                [400, 72.45720505, 38.06724011, 30.15997462, 66.07962124],
+                [500, 79.26792313, 41.44517001, 33.81357206, 71.45299903],
+                [630, 83.83023694, 44.90955898, 37.59616779, 75.58623761],
+                [800, 88.88564216, 48.11600958, 38.98495889, 79.802192],
+                [1000, 93.81991426, 51.36851352, 40.67168264, 83.9649546],
+                [1250, 98.90196086, 54.65810691, 42.31300252, 88.21082071],
+                [1600, 103.57671196, 56.31886902, 43.98785376, 91.44856639],
+                [2000, 105.24562087, 61.47686849, 45.05631054, 94.7984852],
+                [2500, 108.00028907, 61.75684958, 42.74668618, 96.35176373],
+                [3150, 102.59669215, 66.69874232, 35.98289793, 95.69634016],
+            ], columns=["Hz", "R separador [dB]", "R losa desnuda [dB]", "ΔR losa receptora [dB]", "DₙT final [dB]"]))
+            st.markdown("**Ejemplo a 500 Hz.** Para cada unión, suma 8,7 + 10·log₁₀(10,20 / (4,08 × 1 m)) = 12,6794 dB. Con R del separador = 79,2679 dB, R de la losa = 41,4452 dB y ΔR = 33,8136 dB, quedan Dd = 79,2679 dB y, por cada losa, Df = 106,8495 dB, Fd = 73,0359 dB y Ff = 87,9381 dB. Convierte cada camino a transmisión con 10^(−R/10), suma el camino directo y los tres caminos de cada una de las dos losas, y vuelve a dB con −10·log₁₀(suma). Luego suma 10·log₁₀(0,16 × 51 / (0,50 × 10,20)) = 2,0412 dB. El resultado a 500 Hz es 71,4530 dB. Repite en las 19 bandas y aplica los índices a la curva completa.")
+            st.warning("En el formulario ISO 12354-1 de SONARA puedes cargar geometría, TR y encuentros. El campo Rw elemento separador admite 70 dB, pero reconstruye una curva genérica. En modo Manual, los flancos también se ingresan por índices Rw y el formulario no ofrece el ΔR espectral guardado. Para obtener exactamente los 61 dB, usa las curvas de esta tabla en el cálculo espectral descrito. Las fichas individuales de las capas no vienen identificadas en el respaldo de esta solución.")
         if stage in (9, 10):
             st.markdown("**Balance de las corridas docentes de las etapas 5–8**")
             _lab_table(pd.DataFrame([
