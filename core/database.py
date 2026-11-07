@@ -276,7 +276,7 @@ def save_user_progress(class_id):
             "role":st.session_state.get("role","Alumno"),
             "display_name":st.session_state.get("name",""),
             "state_json":state,"updated_at":_now(),
-        },on_conflict="class_id,user_key").execute()
+        },on_conflict="class_id,user_key", returning="minimal").execute()
         st.session_state[hash_key]=state_hash
     else:
         # En modo SQLite usamos una clave compuesta lógica para evitar que el
