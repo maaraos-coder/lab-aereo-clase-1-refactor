@@ -520,6 +520,32 @@ def render(lab,saved,runtime):
 
     import hashlib
     prefix="c4l2_s6_scope_"+hashlib.sha1((str(role)+selected_front).encode()).hexdigest()[:12]
+    with st.expander("Recuperar respaldo JSON de este frente"):
+        restored_file=st.file_uploader("Archivo de respaldo de la Etapa 6",type=["json"],
+            key=prefix+"_backup_upload")
+        if restored_file and st.button("Restaurar este frente desde el archivo",
+                                       key=prefix+"_restore"):
+            try:
+                raw=restored_file.getvalue()
+                if len(raw)>2_000_000:
+                    raise ValueError("El archivo excede el tamaño permitido para un frente.")
+                restored=json.loads(raw.decode("utf-8"))
+                if not isinstance(restored,dict):
+                    raise ValueError("El respaldo debe contener un objeto JSON.")
+                backup_front=restored.get("front",restored.get("frente"))
+                restored_cfg=restored.get("configuration",restored.get("configuracion"))
+                if restored_cfg is None and isinstance(restored.get("configuraciones"),dict):
+                    restored_cfg=restored["configuraciones"].get(selected_front)
+                if backup_front and backup_front!=selected_front:
+                    raise ValueError("El respaldo pertenece a otro frente de trabajo.")
+                if not isinstance(restored_cfg,dict) or restored_cfg.get("scope_schema_version")!=2:
+                    raise ValueError("Este respaldo no contiene un diseño compatible de la Etapa 6.")
+                st.session_state[prefix+"_work"]=_stage6_json_safe(restored_cfg)
+            except (UnicodeError,json.JSONDecodeError,TypeError,ValueError) as error:
+                st.warning("No se pudo restaurar el respaldo: "+str(error))
+            else:
+                st.success("Respaldo recuperado en esta sesión. Revisa el tratamiento y vuelve a guardarlo.")
+                st.rerun()
     cfg_saved=st.session_state.get(prefix+"_work") or (saved.get("c4l2_s6_measure_config") or {}).get(selected_front,{})
     cfg=render_scope(st,pd,saved,selected_front,measure,cfg_saved,prefix,workshop,study_cfg,tl_spectrum)
     st.session_state[prefix+"_work"]=deepcopy(cfg)
