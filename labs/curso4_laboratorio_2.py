@@ -6,7 +6,7 @@ Conjunto Habitacional Eyzaguirre desde su expediente SEIA antes de modelar.
 
 from st_aggrid import AgGrid, GridOptionsBuilder, GridUpdateMode
 
-_RUNTIME_PROTECTED = {"run_stage", "_bind_runtime", "_RUNTIME_PROTECTED"}
+_RUNTIME_PROTECTED = {"run_stage", "_bind_runtime", "_RUNTIME_PROTECTED", "CLASS_ID"}
 
 def _bind_runtime(runtime):
     module_globals = globals()
