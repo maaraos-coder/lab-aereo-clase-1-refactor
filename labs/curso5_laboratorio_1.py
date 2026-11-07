@@ -913,13 +913,9 @@ def _stage0(lab, saved):
         "con resultados de SONARA y decisión ISO justificada por el alumno."
     )
     st.warning(
-        "Continuidad del trabajo: utiliza «Guardar avance de esta etapa» antes de cambiar de sección. "
+        "Continuidad del trabajo: utiliza «Guardar avance» en las etapas 1 a 10 antes de cambiar de sección. "
         "Las etapas posteriores recuperan los antecedentes y resultados previamente guardados."
     )
-
-    if st.button("Guardar avance", key="c5l1_s0_save", width="stretch"):
-        _save(lab, saved, 0)
-        st.success("Avance guardado.")
 
 
 _CLASS_A_REQUIREMENTS = [
