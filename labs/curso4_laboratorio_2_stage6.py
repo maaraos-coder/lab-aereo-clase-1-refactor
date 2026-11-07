@@ -1,6 +1,47 @@
 """Etapa 6 · Curso 4 Laboratorio 2: diseño e implementación de medidas de control."""
 
 from copy import deepcopy
+import json
+import hashlib
+import logging
+import math
+
+_LOG = logging.getLogger(__name__)
+
+
+def _stage6_json_safe(value):
+    """Converts Stage 6 numeric UI objects to JSON primitives without changing other stages."""
+    def normalize(item):
+        if hasattr(item, 'item') and callable(item.item):
+            return normalize(item.item())
+        if isinstance(item, dict):
+            return {str(k): normalize(v) for k,v in item.items()}
+        if isinstance(item, (tuple, list)):
+            return [normalize(v) for v in item]
+        if isinstance(item, float) and not math.isfinite(item):
+            raise ValueError('El diseño contiene un valor numérico no finito.')
+        if item is None or isinstance(item, (str, int, float, bool)):
+            return item
+        raise TypeError('Tipo no serializable en el diseño: '+type(item).__name__)
+    return normalize(value)
+
+
+def _stage6_save_error(st, error, operation, backup=None):
+    """Show safe diagnostic and recovery file; retain in-memory work."""
+    identifier = hashlib.sha256((type(error).__name__+str(error)).encode('utf-8',errors='replace')).hexdigest()[:10].upper()
+    _LOG.exception('Curso4 Lab2 Etapa6 save failure [%s] operation=%s', identifier, operation)
+    st.error('No se pudo confirmar el guardado de la Etapa 6 (código '+identifier+'). '
+             'Tu diseño sigue disponible en esta sesión. No cierres la página sin guardar un respaldo.')
+    if backup is not None:
+        try:
+            payload=json.dumps(_stage6_json_safe(backup),ensure_ascii=False,allow_nan=False,indent=2)
+        except (TypeError,ValueError,RecursionError):
+            st.warning('No fue posible exportar esta configuración; conserva abierta la sesión y comunica el código de error.')
+        else:
+            st.download_button('Descargar respaldo de mi diseño (.json)',payload,
+                file_name='respaldo_etapa6_control.json',mime='application/json',
+                key='c4l2_s6_backup_'+operation+'_'+identifier)
+
 from labs.curso4_lab2_control_scope import _front_name, render_scope, validate_scope
 
 MEASURE_OPTIONS=[
@@ -493,9 +534,13 @@ def render(lab,saved,runtime):
             candidate["c4l2_s6_measure_config"]={**(saved.get("c4l2_s6_measure_config") or {}),selected_front:cfg}
             candidate["done_6"]=False
             try:
+                candidate["c4l2_s6_measure_config"][selected_front]=_stage6_json_safe(cfg)
                 runtime["_save"](lab,candidate,6)
-            except Exception:
-                st.error("No se pudo guardar la aplicación. Revisa la conexión y vuelve a intentarlo.")
+            except Exception as error:
+                _stage6_save_error(st,error,"frente",{
+                    "etapa":6,"frente":selected_front,
+                    "estrategias":design_records,"configuracion":cfg,
+                })
             else:
                 saved.update(candidate)
                 st.success("Aplicaciones por máquina y balance del frente guardados. Puedes configurar otro frente.")
@@ -625,9 +670,12 @@ def render(lab,saved,runtime):
                 "c4l2_s6_checks":{"original":v1,"viable":v2,"geometry":v3,"representation":v3,"copy":v4},
                 "done_6":True})
             try:
+                candidate["c4l2_s6_measure_config"]=_stage6_json_safe(configs)
                 runtime["_save"](lab,candidate,6)
-            except Exception:
-                st.error("No se pudo guardar el diseño. Revisa la conexión y vuelve a intentarlo.")
+            except Exception as error:
+                _stage6_save_error(st,error,"final",{
+                    "etapa":6,"estrategias":design_records,"configuraciones":configs,
+                })
             else:
                 saved.update(candidate)
                 st.success("Diseño por máquinas y propagación guardado. La Etapa 7 comparará los escenarios modelados.")
