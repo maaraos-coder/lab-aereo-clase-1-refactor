@@ -1,5 +1,7 @@
 """Controles compartidos para guardar borradores del Laboratorio 2."""
 
+import logging
+
 
 def render_draft_save(st, saved, runtime, lab, stage, updates, key):
     """Guarda el estado visible sin marcar la etapa como completada."""
@@ -47,7 +49,11 @@ def render_draft_save(st, saved, runtime, lab, stage, updates, key):
         candidate.update(updates)
         try:
             runtime["_save"](lab, candidate, stage)
-        except Exception:
+        except Exception as error:
+            logging.getLogger(__name__).warning(
+                "Error al guardar borrador de etapa %s: %s (%s)",
+                stage, type(error).__name__, getattr(error, "code", None),
+            )
             st.error("No se pudo guardar el avance. Revisa la conexión y vuelve a intentarlo.")
             return False
         saved.update(candidate)

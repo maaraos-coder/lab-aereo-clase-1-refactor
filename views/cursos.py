@@ -259,7 +259,12 @@ def _save_future_state_impl(class_id,state):
     if class_id == projection_lab:
         from labs.c4l2_progress_patch import changed_progress_fields, save_progress_changes
         if not isinstance(previous, dict):
-            raise RuntimeError("No se pudo recuperar el avance antes de guardar.")
+            rows = (client.table("user_progress").select("state_json")
+                    .eq("class_id", class_id).eq("user_key", user_key)
+                    .limit(1).execute().data or [])
+            previous = rows[0]["state_json"] if rows else {}
+            if isinstance(previous, str):
+                previous = json.loads(previous)
         changes = changed_progress_fields(previous, state)
         if not changes:
             return

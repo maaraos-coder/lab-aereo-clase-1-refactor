@@ -154,9 +154,16 @@ class PersonalPersistenceTests(unittest.TestCase):
                     if isinstance(node, ast.FunctionDef) and node.name == '_save_future_state_impl')
         self.ui = UI('Alumno')
         self.ui.session_state['user_key'] = 'student'
-        self.client = SimpleNamespace(table=lambda name: self.client,
-                                      upsert=lambda *a, **k: self.client,
-                                      execute=lambda: None)
+        self.client = SimpleNamespace(
+            table=lambda name: self.client,
+            select=lambda *a: self.client,
+            eq=lambda *a: self.client,
+            limit=lambda *a: SimpleNamespace(
+                execute=lambda: SimpleNamespace(data=[{"state_json": {"previous": True}}])
+            ),
+            rpc=lambda *a: self.client,
+            execute=lambda: SimpleNamespace(data=True),
+        )
         namespace = {'st': self.ui, '_supabase': lambda: self.client,
                      'COURSE_ID': 'course', '_now': lambda: 'now'}
         exec(compile(ast.Module(body=[node], type_ignores=[]), str(path), 'exec'), namespace)
@@ -168,6 +175,7 @@ class PersonalPersistenceTests(unittest.TestCase):
     def test_success_updates_cache_only_after_write_and_copies_state(self):
         def execute():
             self.assertEqual(self.ui.session_state[self.key], {'previous': True})
+            return SimpleNamespace(data=True)
         self.client.execute = execute
         state = {'new': [1]}
         self.save(self.class_id, state)
