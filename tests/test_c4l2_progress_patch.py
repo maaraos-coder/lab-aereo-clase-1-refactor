@@ -1,7 +1,9 @@
 """Non-destructive regression tests for C4L2 partial Supabase writes."""
 import unittest
 from copy import deepcopy
-from labs.c4l2_progress_patch import changed_progress_fields
+from types import SimpleNamespace
+from unittest.mock import Mock
+from labs.c4l2_progress_patch import changed_progress_fields, save_progress_changes
 
 
 class DeltaSaveTests(unittest.TestCase):
@@ -28,6 +30,33 @@ class DeltaSaveTests(unittest.TestCase):
 
     def test_empty_change_avoids_database_call(self):
         self.assertEqual(changed_progress_fields({"done_3": True}, {"done_3": True}), {})
+
+    def test_first_save_creates_progress_after_patch_reports_missing_row(self):
+        client = Mock()
+        client.rpc.return_value.execute.return_value = SimpleNamespace(data=False)
+        row = {"class_id": "clase-08-construccion-lab-2", "user_key": "audit"}
+        changes = {"c4l2_s6_tl_calculator": {"thickness": 18.5}}
+
+        save_progress_changes(client, row, changes)
+
+        client.table.assert_called_once_with("user_progress")
+        client.table.return_value.insert.assert_called_once_with(
+            {**row, "state_json": changes}, returning="minimal"
+        )
+
+    def test_concurrent_first_save_retries_patch_without_replacing_row(self):
+        client = Mock()
+        client.rpc.return_value.execute.side_effect = [
+            SimpleNamespace(data=False), SimpleNamespace(data=True)
+        ]
+        conflict = RuntimeError("duplicate key")
+        conflict.code = "23505"
+        client.table.return_value.insert.return_value.execute.side_effect = conflict
+
+        save_progress_changes(client, {"class_id": "lab", "user_key": "audit"}, {"done_6": False})
+
+        self.assertEqual(client.rpc.call_count, 2)
+        self.assertEqual(client.rpc.call_args_list[0], client.rpc.call_args_list[1])
 
 
 if __name__ == "__main__":

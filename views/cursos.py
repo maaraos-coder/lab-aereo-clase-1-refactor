@@ -248,28 +248,26 @@ def _save_future_state_impl(class_id,state):
     # La comparación usa la copia completa ya recuperada en esta misma sesión.
     cache_key = f"future_saved_{class_id}"
     previous = st.session_state.get(cache_key+"_persisted_snapshot")
-    if class_id == projection_lab and isinstance(previous, dict) and isinstance(state, dict):
-        from labs.c4l2_progress_patch import changed_progress_fields
+    progress_row = {
+        "course_id": COURSE_ID,
+        "class_id": class_id,
+        "user_key": user_key,
+        "role": st.session_state.get("role", "Alumno"),
+        "display_name": st.session_state.get("name", ""),
+        "updated_at": _now(),
+    }
+    if class_id == projection_lab:
+        from labs.c4l2_progress_patch import changed_progress_fields, save_progress_changes
+        if not isinstance(previous, dict):
+            raise RuntimeError("No se pudo recuperar el avance antes de guardar.")
         changes = changed_progress_fields(previous, state)
         if not changes:
             return
-        result = client.rpc("patch_c4l2_progress", {
-            "p_class_id": class_id,
-            "p_user_key": user_key,
-            "p_changes": changes,
-        }).execute()
-        if result.data is not True:
-            raise RuntimeError("No se pudo confirmar la actualización parcial del progreso.")
+        save_progress_changes(client, progress_row, changes)
     else:
-        # Primera entrega / otros laboratorios: conservar la compatibilidad.
         client.table("user_progress").upsert({
-            "course_id": COURSE_ID,
-            "class_id": class_id,
-            "user_key": user_key,
-            "role": st.session_state.get("role", "Alumno"),
-            "display_name": st.session_state.get("name", ""),
+            **progress_row,
             "state_json": state,
-            "updated_at": _now(),
         }, on_conflict="class_id,user_key", returning="minimal").execute()
     if confirmed_save:
         from copy import deepcopy
