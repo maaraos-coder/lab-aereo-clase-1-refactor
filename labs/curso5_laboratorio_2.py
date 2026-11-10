@@ -11,7 +11,7 @@ from copy import deepcopy
 CLASS_ID = "clase-10-certificaciones-lab-2"
 SONARA_URL = "https://sonara-ea1b.onrender.com/"
 PROJECT = "Proyecto Inmobiliario DS19 y DS49 Barrio Balmaceda"
-SITE = "Lote 1 · Edificio A1 · vivienda tipo A de piso intermedio"
+SITE = "Lote 1 · Edificio A1 · departamento B-308 · piso 3"\nANNEX_URL = "https://github.com/maaraos-coder/lab-aereo-clase-1-refactor/blob/curso3-lab2-etapas-3-10/docs/curso5_lab2_anexo_complementario.md"\nGEOMETRY_ASSUMPTIONS = [("AG-01", "Altura interior útil", "2,50 m"), ("AG-02", "Altura piso a piso", "2,70 m"), ("AG-03", "Losa estructural inicial", "160 mm"), ("AG-04", "Acabados de entrepiso", "40 mm"), ("AG-05", "Muro separador de hormigón", "180 mm"), ("AG-06", "Fachada opaca inicial", "150 mm"), ("AG-07", "Densidad hormigón", "2.400 kg/m³"), ("VF-01", "Ventana referencial del estar", "1,80 × 1,20 m"), ("VF-02", "Ventana referencial del dormitorio", "1,20 × 1,20 m")]\nACOUSTIC_ASSUMPTIONS = [("AC-01", "TR estar", "0,60 s"), ("AC-02", "TR dormitorio", "0,50 s"), ("AC-03", "Lden exterior supuesto", "60 dB"), ("AC-04", "Descarga sanitaria", "WC 6 L; 1 evento sin simultaneidad"), ("AC-05", "Lw en octavas 63–4000 Hz", "70 / 68 / 66 / 64 / 61 / 58 / 55 dB; espectro ficticio")]
 STANDARD = "ISO/TS 19488:2021"
 CASES = {
     "AI-01": ("Aislamiento aéreo entre viviendas", "DₙT,w y adaptación espectral aplicable", "Muro separador y flancos"),
@@ -34,7 +34,7 @@ STAGES = [
 ]
 TEACHER = {
  0: "Distinguir objetivo Clase B de certificación real: el laboratorio evalúa cuatro casos representativos, no declara automáticamente clase global del edificio.",
- 1: "Proyecto real Barrio Balmaceda, Renca. Lote 1 (DS19), edificio A1 y una tipología A de piso intermedio. Comprobar edificio, lámina, nivel y relación de las viviendas.",
+ 1: "Proyecto real Barrio Balmaceda, Renca. Lote 1 (DS19), edificio A1, departamento B-308 (piso 3); D-309 contiguo y B-408 sobre B-308. Confirmar la adyacencia real entre recintos, lámina y cotas.",
  2: "La ficha de referencia se resuelve únicamente con cotas verificables: S separador = longitud efectiva × altura; V = superficie útil del recinto × altura. Identificar cara útil de muro, superficies vidriadas y paños opacos. No confundir superficie de tipología completa con superficie de recinto. Registrar plano/cota y tolerancia para cada valor.",
  3: "Comprobar material de cada hoja, espesor, masa superficial, puentes rígidos, uniones, características de capa resiliente, solución de ventana completa, TR y condiciones de fuente. Separar lo documentado de hipótesis docentes.",
  4: "Exigir DₙT,w y adaptación pertinente con flancos y misma geometría en original/variante; Rw del elemento aislado no sustituye aislamiento entre recintos.",
@@ -77,7 +77,7 @@ def _readonly():
 def _header(stage):
     title,objective=STAGES[stage]
     header(f"ETAPA {stage} · LABORATORIO 2",title,objective,show_overview=False,duration_minutes=25 if stage<9 else 40)
-    st.caption(f"Curso 5 · {PROJECT} · {SITE} · Objetivo Clase B · {STANDARD}")
+    st.caption(f"Curso 5 · {PROJECT} · {SITE} · Objetivo Clase B · {STANDARD}")\n    if stage in range(0,9):\n        st.link_button("Consultar anexo técnico complementario · supuestos docentes", ANNEX_URL)\n    if stage in (2,3,4,5,6,7):\n        with st.expander("Datos complementarios oficiales del ejercicio · NO son cotas del proyecto"):\n            st.markdown("**Geometría supuesta:**")\n            st.table([{"Código":code,"Parámetro":name,"Valor docente":value} for code,name,value in GEOMETRY_ASSUMPTIONS])\n            if stage in (3,4,5,6,7):\n                st.markdown("**Condiciones acústicas y operación:**")\n                st.table([{"Código":code,"Condición":name,"Valor":value} for code,name,value in ACOUSTIC_ASSUMPTIONS])\n            st.caption("Los valores provienen del anexo didáctico; el alumno debe calcular por sí mismo superficies, volúmenes y geometrías reales desde los planos.")
     if stage in range(4,9):
         st.link_button("Abrir SONARA · cálculos acústicos",SONARA_URL, use_container_width=False)
 
@@ -120,7 +120,7 @@ def _plain(stage,lab,saved,section,fields):
 def _stage0(lab,saved):
     _header(0)
     st.markdown("### Encargo profesional")
-    st.markdown("Se analizará una vivienda tipo A de un piso intermedio del edificio A1, Lote 1, del proyecto real **Barrio Balmaceda**. El objetivo docente es diseñar soluciones que alcancen los **requisitos de Clase B** en cuatro familias acústicas. La geometría se extraerá de las láminas, no se entregará resuelta al estudiante.")
+    st.markdown("Se analizará el departamento B-308 del tercer piso del edificio A1, Lote 1, del proyecto real **Barrio Balmaceda**. El objetivo docente es diseñar soluciones que alcancen los **requisitos de Clase B** en cuatro familias acústicas. La geometría se extraerá de las láminas, no se entregará resuelta al estudiante.")
     st.warning("Se estudian cuatro situaciones; no se declara automáticamente la clasificación global del edificio ni se sustituye la medición en obra.")
     st.markdown("**Secuencia:** expediente → ficha geométrica → sistemas → SONARA (aéreo, impacto, fachada, instalaciones) → matriz ISO → evaluación.")
     st.markdown("**Documentos del encargo:** Anexo N.º 3 Planos; descripción del proyecto o actividad (DIA). Las láminas deben consultarse en su edición original.")
@@ -128,7 +128,7 @@ def _stage0(lab,saved):
         _save(lab,saved,0,"c5l2_s0",{"acknowledged":True,"target":"B","scope":SITE})
 
 def _stage1(lab,saved):
-    _plain(1,lab,saved,"Identifica las láminas del Lote 1, edificio A1 y la vivienda tipo A de piso intermedio. Justifica cuál corresponde a la vivienda inferior, superior y contigua; no utilices superficies de otra tipología.",[
+    _plain(1,lab,saved,"Identifica las láminas del Lote 1, edificio A1 y el departamento B-308 (piso 3). Contrasta D-309 (contiguo) y B-408 (superior). Identifica además qué recintos comparten realmente una separación, sin utilizar superficies de otra tipología.",[
       ("location","Edificio, piso y tipología seleccionados","Identifica ubicación en planta y unidad exacta."),
       ("documents","Fuentes documentales: archivo, lámina y revisión","Incluye trazabilidad de plantas, cortes y elevaciones."),
       ("adjacencies","Relaciones horizontales, verticales y exposición exterior","Identifica la vivienda contigua, la superior y las fachadas."),
@@ -138,7 +138,7 @@ def _stage1(lab,saved):
 def _stage2(lab,saved):
     _header(2)
     st.markdown("### Construye la ficha geométrica desde los planos")
-    st.info("No se proporcionan medidas resueltas: identifica cada recinto, mide cotas y anota la lámina. No uses la superficie total de la vivienda como si fuera el área de un recinto.")
+    st.info("No se proporcionan medidas resueltas: identifica cada recinto, mide cotas y anota la lámina. Utiliza los valores AG/VF del anexo únicamente donde no existan cotas verificables. No uses la superficie total de la vivienda como si fuera el área de un recinto.")
     old=saved.get("c5l2_s2") or {}
     rec_cols=["Recinto","Piso / unidad","Largo (m)","Ancho (m)","Altura (m)","Área (m²)","Volumen (m³)","Plano / cota"]
     sep_cols=["Caso","Recinto emisor","Recinto receptor","Elemento","Longitud (m)","Altura (m)","Superficie (m²)","Plano / cota"]
@@ -342,7 +342,7 @@ def _teacher(stage):
     if _is_teacher():
         with st.expander(f"Pauta docente · Etapa {stage}",expanded=False):
             st.write(TEACHER[stage])
-            if stage==2:st.info("Pauta geométrica: completar valores solo desde cotas legibles de los planos originales. No inventar dimensiones.")
+            if stage==2:st.info("Pauta geométrica: cotejar cotas y recintos en lámina original. Para datos faltantes aplicar exclusivamente los supuestos AG/VF del anexo. La ficha numérica resuelta permanece solo en vista docente; aún debe cerrarse con medición de las cotas de los recintos.")
             if stage in range(4,9):st.caption("Revisar el caso calculado en SONARA y el criterio ISO exacto, sin atribuir al software una certificación.")
 
 def run_stage(stage,lab,saved,runtime):
