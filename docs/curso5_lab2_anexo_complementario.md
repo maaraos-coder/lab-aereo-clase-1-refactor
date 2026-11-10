@@ -6,6 +6,10 @@
 
 > **ADVERTENCIA DE TRAZABILIDAD:** Los valores de este anexo son **supuestos docentes**, NO dimensiones, materialidades ni prestaciones verificadas del proyecto inmobiliario real. Se entregan para permitir un ejercicio homogéneo donde los planos no especifican todos los datos. No sustituir con ellos cotas legibles.
 
+## Materialidad original del ejercicio
+
+La **condición constructiva de partida** para los modelos de ruido aéreo, impacto, fachada e instalaciones se encuentra en la [Ficha de especificaciones técnicas complementarias](./curso5_lab2_especificaciones_originales.md). Su composición es un **supuesto académico** y no una especificación verificada del titular. Debe mantenerse fija en los modelos originales; las soluciones mejoradas son propuestas del alumno.
+
 ## A. Geometría complementaria (supuestos docentes)
 
 | Código | Parámetro | Valor |
