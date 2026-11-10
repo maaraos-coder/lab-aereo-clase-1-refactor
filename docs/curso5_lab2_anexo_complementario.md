@@ -89,8 +89,4 @@ Para distinguir las transmisiones: **AI-01** usa exclusivamente el tramo GC-03, 
 ```
 Este croquis representa los **tramos funcionales que se adoptan para la modelación**, no una sustitución de la distribución arquitectónica real. En caso de discrepancia, el alumno debe documentar la diferencia en su informe.
 
-## E. Pauta docente de comprobación
-
-Para validar la ficha, comprobar el área efectiva de cada recinto (no la superficie de tipología completa), longitud separadora real, S = longitud × altura pertinente, V = área útil × altura libre, área bruta de fachada, áreas de vanos solamente del recinto evaluado, área opaca = área bruta − vanos; identificar fuentes y uniones. Toda cifra derivada debe señalar plano y operación. La solución numérica final docente debe cerrarse con lectura a resolución suficiente de cotas de la vivienda, nunca con estimaciones presentadas como definitivas.
-
 **Versión 1.0 — documento didáctico, NO memoria técnica del titular.**
