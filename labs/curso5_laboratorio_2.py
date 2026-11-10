@@ -21,7 +21,7 @@ CASES = {
 }
 STAGES = [
  ("Encargo profesional y alcance", "Diseñar una vivienda del proyecto real para los requisitos de Clase B."),
- ("Reconocimiento documental", "Identificar proyecto, vivienda, láminas y evidencias."),
+ ("Requisitos Clase B y reconocimiento documental", "Definir los cuatro criterios normativos antes de comenzar las modelaciones."),
  ("Ficha geométrica del alumno", "Extraer de planos las superficies, alturas, volúmenes y adyacencias."),
  ("Sistemas constructivos y datos de SONARA", "Documentar materiales, uniones, tiempos y condiciones."),
  ("Diseño acústico aéreo", "Comparar modelo original y variante en SONARA."),
@@ -34,7 +34,7 @@ STAGES = [
 ]
 TEACHER = {
  0: "Distinguir objetivo Clase B de certificación real: el laboratorio evalúa cuatro casos representativos, no declara automáticamente clase global del edificio.",
- 1: "Proyecto real Barrio Balmaceda, Renca. Lote 1 (DS19), edificio A1, departamento B-308 (piso 3); D-309 contiguo y B-408 sobre B-308. Confirmar la adyacencia real entre recintos, lámina y cotas.",
+ 1: "Revisar que el alumno determine en ISO/TS 19488:2021 el descriptor, umbral Clase B, unidades, sentido de comparación, tabla/nota y alcance de cada familia. No entregar de antemano los valores de la pauta; distinguir una condición que dependa de exposición exterior o régimen de operación. Después verificar edificio A1, B-308, D-309 y B-408 y su documentación.",
  2: "La ficha de referencia se resuelve únicamente con cotas verificables: S separador = longitud efectiva × altura; V = superficie útil del recinto × altura. Identificar cara útil de muro, superficies vidriadas y paños opacos. No confundir superficie de tipología completa con superficie de recinto. Registrar plano/cota y tolerancia para cada valor.",
  3: "Comprobar material de cada hoja, espesor, masa superficial, puentes rígidos, uniones, características de capa resiliente, solución de ventana completa, TR y condiciones de fuente. Separar lo documentado de hipótesis docentes.",
  4: "Exigir DₙT,w y adaptación pertinente con flancos y misma geometría en original/variante; Rw del elemento aislado no sustituye aislamiento entre recintos.",
@@ -128,12 +128,55 @@ def _stage0(lab,saved):
         _save(lab,saved,0,"c5l2_s0",{"acknowledged":True,"target":"B","scope":SITE})
 
 def _stage1(lab,saved):
-    _plain(1,lab,saved,"Identifica las láminas del Lote 1, edificio A1 y el departamento B-308 (piso 3). Contrasta D-309 (contiguo) y B-408 (superior). Identifica además qué recintos comparten realmente una separación, sin utilizar superficies de otra tipología.",[
-      ("location","Edificio, piso y tipología seleccionados","Identifica ubicación en planta y unidad exacta."),
-      ("documents","Fuentes documentales: archivo, lámina y revisión","Incluye trazabilidad de plantas, cortes y elevaciones."),
-      ("adjacencies","Relaciones horizontales, verticales y exposición exterior","Identifica la vivienda contigua, la superior y las fachadas."),
-      ("limitations","Datos faltantes o ilegibles","Indica cómo resolverlos sin inventar cotas."),
-    ])
+    _header(1)
+    st.markdown("### A · Define los requisitos normativos antes de modelar")
+    st.info("Consulta ISO/TS 19488:2021 y determina los requisitos de **Clase B** para las cuatro situaciones. No basta con escribir 'B': identifica el descriptor exacto, umbral, condición, sentido de comparación y tabla/nota de la fuente.")
+    st.caption("El caso de fachada puede depender de la exposición exterior y el de instalaciones del régimen de operación. Explica la condición que elegiste. Las cifras normativas se investigan por el alumno y NO se proporcionan en esta pantalla.")
+    old=saved.get("c5l2_s1") or {}
+    previous=old.get("criteria") or {}
+    fields={}
+    with st.form("c5l2_class_b_requirements"):
+        for code,(name,_,_) in CASES.items():
+            previous_row=previous.get(code) or {}
+            st.markdown(f"#### {code} · {name}")
+            col1,col2=st.columns(2)
+            with col1:
+                descriptor=st.text_input("Descriptor(s) normativo(s) y unidades",value=previous_row.get("descriptor",""),key=f"c5l2_norm_{code}_descriptor")
+                limit=st.text_input("Requisito Clase B (valor y unidad)",value=previous_row.get("limit",""),key=f"c5l2_norm_{code}_limit")
+            with col2:
+                options=["Selecciona","Mayor o igual (≥)","Menor o igual (≤)","Intervalo / múltiples condiciones"]
+                previous_direction=previous_row.get("direction","Selecciona")
+                direction=st.selectbox("Sentido del criterio",options,index=options.index(previous_direction) if previous_direction in options else 0,key=f"c5l2_norm_{code}_direction")
+                reference=st.text_input("Tabla, fila, nota y apartado ISO",value=previous_row.get("reference",""),key=f"c5l2_norm_{code}_reference")
+            condition=st.text_area("Ámbito de aplicación, condiciones y justificación técnica",value=previous_row.get("condition",""),height=82,key=f"c5l2_norm_{code}_condition")
+            fields[code]={"descriptor":descriptor,"limit":limit,"direction":direction,"reference":reference,"condition":condition}
+        st.markdown("### B · Reconoce el edificio y la vivienda")
+        descriptions=[
+            ("location","Edificio, piso y vivienda seleccionados","B-308 y sus identificadores en planta."),
+            ("documents","Documentación consultada","Archivo, lámina, revisión y cotas relevantes."),
+            ("adjacencies","Relaciones horizontales, verticales y fachada","Comprueba qué recintos son efectivamente contiguos."),
+            ("limitations","Datos faltantes y método para resolverlos","Distingue documentación del proyecto y supuestos del anexo."),
+        ]
+        documentation={}
+        for key,label,explanation in descriptions:
+            documentation[key]=st.text_area(label,value=old.get(key,""),help=explanation,height=80,key=f"c5l2_s1_{key}")
+        submitted=st.form_submit_button("Guardar criterios Clase B y reconocimiento",type="primary")
+    if submitted:
+        incomplete=[code for code,row in fields.items() if
+            not row["descriptor"].strip() or not row["limit"].strip() or
+            row["direction"]=="Selecciona" or not row["reference"].strip() or
+            len(row["condition"].strip())<20]
+        missing_docs=[key for key,value in documentation.items() if len(value.strip())<15]
+        if incomplete:
+            st.warning("Faltan requisitos o referencias normativas de: "+", ".join(incomplete)+". Completa las condiciones para cada familia.")
+        elif missing_docs:
+            st.warning("Completa la identificación y trazabilidad documental antes de guardar la etapa.")
+        else:
+            _save(lab,saved,1,"c5l2_s1",{"criteria":fields,**documentation})
+    if _is_teacher():
+        st.caption("Pauta docente: revisar la ISO autorizada y la tabla exacta, sin asumir que todos los indicadores tienen un solo valor o se comparan en el mismo sentido. La etapa es formativa: el guardado no valida automáticamente la corrección de los umbrales.")
+
+
 
 def _stage2(lab,saved):
     _header(2)
@@ -176,6 +219,14 @@ def _model(stage,lab,saved,case):
     st.caption(f"Descriptor de referencia: {descriptor}. Elementos: {scope}. Selecciona umbral de Clase B consultando la norma, con fila/nota identificable.")
     if not saved.get("c5l2_s2"):
         st.warning("No hay ficha geométrica guardada de la Etapa 2.")
+    criteria=(saved.get("c5l2_s1") or {}).get("criteria") or {}
+    selected=criteria.get(case) or {}
+    if selected:
+        st.markdown("#### Criterio Clase B previamente definido por el alumno")
+        st.caption(f"{selected.get('descriptor','')} · {selected.get('direction','')} {selected.get('limit','')} · Fuente: {selected.get('reference','')}")
+        st.caption(selected.get("condition",""))
+    else:
+        st.warning("Define primero el requisito Clase B de este caso en la Etapa 1. Los límites normativos no se proporcionan de forma automática.")
     old=saved.get(f"c5l2_s{stage}") or {}
     with st.form(f"c5l2_model_{case}"):
         fields={}
@@ -197,16 +248,21 @@ def _stage8(lab,saved):
     for code,(name,desc,_) in CASES.items():
         st.markdown(f"**{code} · {name}** · {desc}")
     old=saved.get("c5l2_s8") or {}
+    initial=((saved.get("c5l2_s1") or {}).get("criteria") or {})
+    if not initial:
+        st.warning("Aún no hay una matriz de requisitos Clase B registrada en la Etapa 1.")
     with st.form("c5l2_s8_form"):
         result={}
         for code in CASES:
             v=(old.get("cases") or {}).get(code) or {}
+            norm=initial.get(code) or {}
             st.markdown(f"#### {code}")
+            if norm:st.caption(f"Requisito que definiste en Etapa 1: {norm.get('descriptor','')} · {norm.get('direction','')} {norm.get('limit','')} · {norm.get('reference','')}")
             result[code]={
-              "descriptor":st.text_input("Descriptor del criterio",v.get("descriptor",""),key=f"c5l2_matrix_{code}_descriptor"),
+              "descriptor":st.text_input("Descriptor del criterio",v.get("descriptor",norm.get("descriptor","")),key=f"c5l2_matrix_{code}_descriptor"),
               "baseline":st.text_input("Resultado original",v.get("baseline",""),key=f"c5l2_matrix_{code}_base"),
               "final":st.text_input("Resultado variante",v.get("final",""),key=f"c5l2_matrix_{code}_final"),
-              "class_b":st.text_input("Umbral B y referencia exacta ISO",v.get("class_b",""),key=f"c5l2_matrix_{code}_iso"),
+              "class_b":st.text_input("Umbral B y referencia exacta ISO",v.get("class_b",(norm.get("direction","")+" "+norm.get("limit","")+" · "+norm.get("reference","")).strip(" ·")),key=f"c5l2_matrix_{code}_iso"),
               "decision":st.selectbox("Verificación de la variante",["Pendiente","Cumple según predicción","No cumple","No determinable"],index=["Pendiente","Cumple según predicción","No cumple","No determinable"].index(v.get("decision","Pendiente")),key=f"c5l2_matrix_{code}_decision"),
             }
         conclusion=st.text_area("Alcance de la conclusión y verificaciones posteriores",old.get("conclusion",""),height=130)
