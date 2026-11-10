@@ -7,11 +7,15 @@ Los cálculos acústicos se realizan en SONARA, no en esta aplicación.
 from __future__ import annotations
 import json
 from copy import deepcopy
+from pathlib import Path
+from io import BytesIO
+from zipfile import ZipFile, ZIP_DEFLATED
 
 CLASS_ID = "clase-10-certificaciones-lab-2"
 SONARA_URL = "https://sonara-ea1b.onrender.com/"
 PROJECT = "Proyecto Inmobiliario DS19 y DS49 Barrio Balmaceda"
-SITE = "Lote 1 · Edificio A1 · departamento B-308 · piso 3"\nANNEX_URL = "https://github.com/maaraos-coder/lab-aereo-clase-1-refactor/blob/curso3-lab2-etapas-3-10/docs/curso5_lab2_anexo_complementario.md"
+SITE = "Lote 1 · Edificio A1 · departamento B-308 · piso 3"
+ANNEX_URL = "https://github.com/maaraos-coder/lab-aereo-clase-1-refactor/blob/curso3-lab2-etapas-3-10/docs/curso5_lab2_anexo_complementario.md"
 MATERIALS_URL = "https://github.com/maaraos-coder/lab-aereo-clase-1-refactor/blob/curso3-lab2-etapas-3-10/docs/curso5_lab2_especificaciones_originales.md"
 BASE_CONSTRUCTION = [
  {"Código":"M-01","Caso":"AI-01","Elemento":"Muro separador","Composición original":"Hormigón armado 180 mm, 2.400 kg/m³","Montaje":"Continuo entre losas, encuentros rígidos"},
@@ -20,7 +24,9 @@ BASE_CONSTRUCTION = [
  {"Código":"V-01","Caso":"FA-01","Elemento":"Ventana del estar","Composición original":"DVH 4/12/4 mm + marco de aluminio convencional","Montaje":"Sellos usuales; no hay ensayo del conjunto"},
  {"Código":"S-01","Caso":"IN-01","Elemento":"Cierre de instalación","Composición original":"Yeso-cartón 12,5 mm/cara + montante 70 mm + lana mineral 50 mm","Montaje":"Montantes compartidos y pasos por verificar"},
  {"Código":"IS-01","Caso":"IN-01","Elemento":"Descarga sanitaria","Composición original":"PVC rígido DN110, descarga WC 6 L","Montaje":"Abrazaderas rígidas; espectro AC-05 hipotético"},
-]\nGEOMETRY_ASSUMPTIONS = [("AG-01", "Altura interior útil", "2,50 m"), ("AG-02", "Altura piso a piso", "2,70 m"), ("AG-03", "Losa estructural inicial", "160 mm"), ("AG-04", "Acabados de entrepiso", "40 mm"), ("AG-05", "Muro separador de hormigón", "180 mm"), ("AG-06", "Fachada opaca inicial", "150 mm"), ("AG-07", "Densidad hormigón", "2.400 kg/m³"), ("VF-01", "Ventana referencial del estar", "1,80 × 1,20 m"), ("VF-02", "Ventana referencial del dormitorio", "1,20 × 1,20 m")]\nACOUSTIC_ASSUMPTIONS = [("AC-01", "TR estar", "0,60 s"), ("AC-02", "TR dormitorio", "0,50 s"), ("AC-03", "Lden exterior supuesto", "60 dB"), ("AC-04", "Descarga sanitaria", "WC 6 L; 1 evento sin simultaneidad"), ("AC-05", "Lw en octavas 63–4000 Hz", "70 / 68 / 66 / 64 / 61 / 58 / 55 dB; espectro ficticio")]
+]
+GEOMETRY_ASSUMPTIONS = [("AG-01", "Altura interior útil", "2,50 m"), ("AG-02", "Altura piso a piso", "2,70 m"), ("AG-03", "Losa estructural inicial", "160 mm"), ("AG-04", "Acabados de entrepiso", "40 mm"), ("AG-05", "Muro separador de hormigón", "180 mm"), ("AG-06", "Fachada opaca inicial", "150 mm"), ("AG-07", "Densidad hormigón", "2.400 kg/m³"), ("VF-01", "Ventana referencial del estar", "1,80 × 1,20 m"), ("VF-02", "Ventana referencial del dormitorio", "1,20 × 1,20 m")]
+ACOUSTIC_ASSUMPTIONS = [("AC-01", "TR estar", "0,60 s"), ("AC-02", "TR dormitorio", "0,50 s"), ("AC-03", "Lden exterior supuesto", "60 dB"), ("AC-04", "Descarga sanitaria", "WC 6 L; 1 evento sin simultaneidad"), ("AC-05", "Lw en octavas 63–4000 Hz", "70 / 68 / 66 / 64 / 61 / 58 / 55 dB; espectro ficticio")]
 STANDARD = "ISO/TS 19488:2021"
 CASES = {
     "AI-01": ("Aislamiento aéreo entre viviendas", "DₙT,w y adaptación espectral aplicable", "Muro separador y flancos"),
@@ -83,14 +89,52 @@ def _is_teacher():
 def _readonly():
     return bool(st.session_state.get("projection_mode"))
 
+def _student_document_pack():
+    """Build only the two student-facing documents, without the teacher solution.
+
+    Built locally in memory, avoiding repeated database/Storage egress.
+    """
+    docs = Path(__file__).resolve().parent.parent / "docs"
+    filenames = (
+        "curso5_lab2_anexo_complementario.md",
+        "curso5_lab2_especificaciones_originales.md",
+    )
+    contents = {}
+    for filename in filenames:
+        path = docs / filename
+        if not path.is_file():
+            return None
+        contents[filename] = path.read_bytes()
+    buffer = BytesIO()
+    with ZipFile(buffer, "w", compression=ZIP_DEFLATED) as bundle:
+        bundle.writestr("LEEME_PRIMERO.txt",
+            "CURSO 5 - LABORATORIO 2 - DOCUMENTACION DEL ALUMNO\n"
+            "Proyecto: Barrio Balmaceda, vivienda B-308, Edificio A1, Lote 1.\n"
+            "Este paquete contiene exclusivamente las cotas academicas y la\n"
+            "materialidad inicial para desarrollar el ejercicio en SONARA.\n"
+            "LOS PLANOS ORIGINALES DEL ANEXO 3 NO ESTAN INCLUIDOS EN ESTE ZIP.\n"
+            "Consulte las laminas originales proporcionadas por el docente.\n"
+            "Las pautas docentes resueltas tampoco estan incluidas.\n")
+        for filename,content in contents.items():
+            bundle.writestr(filename,content)
+    return buffer.getvalue()
+
+
 def _header(stage):
     title,objective=STAGES[stage]
     header(f"ETAPA {stage} · LABORATORIO 2",title,objective,show_overview=False,duration_minutes=25 if stage<9 else 40)
-    st.caption(f"Curso 5 · {PROJECT} · {SITE} · Objetivo Clase B · {STANDARD}")\n    if stage in range(0,9):\n        st.link_button("Consultar anexo técnico complementario · supuestos docentes", ANNEX_URL)\n    if stage in (2,3,4,5,6,7):\n        with st.expander("Datos complementarios oficiales del ejercicio · NO son cotas del proyecto"):\n            st.markdown("**Geometría supuesta:**")\n            st.table([{"Código":code,"Parámetro":name,"Valor docente":value} for code,name,value in GEOMETRY_ASSUMPTIONS])\n            if stage in (3,4,5,6,7):\n                st.markdown("**Condiciones acústicas y operación:**")\n                st.table([{"Código":code,"Condición":name,"Valor":value} for code,name,value in ACOUSTIC_ASSUMPTIONS])\n            st.caption("Los valores provienen del anexo didáctico; el alumno debe calcular por sí mismo superficies, volúmenes y geometrías reales desde los planos.")
-    if stage in range(3,9):
-        st.link_button("Consultar ficha de materialidad original · supuestos docentes", MATERIALS_URL)
+    st.caption(f"Curso 5 · {PROJECT} · {SITE} · Objetivo Clase B · {STANDARD}")
+    if stage in (2,3,4,5,6,7):
+        with st.expander("Datos complementarios oficiales del ejercicio · NO son cotas del proyecto"):
+            st.markdown("**Geometría supuesta:**")
+            st.table([{"Código":code,"Parámetro":name,"Valor docente":value} for code,name,value in GEOMETRY_ASSUMPTIONS])
+            if stage in (3,4,5,6,7):
+                st.markdown("**Condiciones acústicas y operación:**")
+                st.table([{"Código":code,"Condición":name,"Valor":value} for code,name,value in ACOUSTIC_ASSUMPTIONS])
+            st.caption("Los valores proceden del anexo didáctico. El alumno calcula superficies y volúmenes por sí mismo.")
     if stage in range(4,9):
         st.link_button("Abrir SONARA · cálculos acústicos",SONARA_URL, use_container_width=False)
+
 
 def _save(lab,saved,stage,key,value):
     if _readonly():
@@ -134,7 +178,22 @@ def _stage0(lab,saved):
     st.markdown("Se analizará el departamento B-308 del tercer piso del edificio A1, Lote 1, del proyecto real **Barrio Balmaceda**. El objetivo docente es diseñar soluciones que alcancen los **requisitos de Clase B** en cuatro familias acústicas. La geometría se extraerá de las láminas, no se entregará resuelta al estudiante.")
     st.warning("Se estudian cuatro situaciones; no se declara automáticamente la clasificación global del edificio ni se sustituye la medición en obra.")
     st.markdown("**Secuencia:** expediente → ficha geométrica → sistemas → SONARA (aéreo, impacto, fachada, instalaciones) → matriz ISO → evaluación.")
-    st.markdown("**Documentos del encargo:** Anexo N.º 3 Planos; descripción del proyecto o actividad (DIA). Las láminas deben consultarse en su edición original.")
+    st.markdown("### Documentación para el desarrollo del laboratorio")
+    st.caption("Un solo paquete con **anexo de cotas y supuestos docentes** y **especificaciones constructivas originales del ejercicio**. No incluye pauta docente ni los archivos de planos originales.")
+    pack=_student_document_pack()
+    if pack is None:
+        st.error("No está disponible el paquete de documentos en esta versión. Se mantienen intactos los archivos del repositorio.")
+    else:
+        st.download_button(
+            "📥 Descargar documentación del alumno (.zip)",
+            data=pack,
+            file_name="Curso5_Lab2_B308_Documentacion_Alumno.zip",
+            mime="application/zip",
+            type="primary",
+            use_container_width=True,
+            key="c5l2_docs_download",
+        )
+    st.info("Para interpretar y medir cotas, consulta también los planos originales del Anexo N.º 3 facilitados por el docente. No se incluyen en el ZIP hasta incorporarlos al repositorio.")
     if st.button("Registrar lectura del encargo",key="c5l2_s0"):
         _save(lab,saved,0,"c5l2_s0",{"acknowledged":True,"target":"B","scope":SITE})
 
