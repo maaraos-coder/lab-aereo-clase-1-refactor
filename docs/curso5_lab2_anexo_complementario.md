@@ -50,6 +50,41 @@ Las superficies y los volúmenes se calculan por el estudiante. Cada valor debe 
 - La app reúne ficha geométrica, referencias documentales, resultados y evidencia; **no revela valores geométricos calculados en la vista alumno**, ni certifica automáticamente la vivienda.
 - El objetivo es la **predicción de diseño** para las situaciones seleccionadas, no afirmar clasificación global ni sustituir ensayos de obra.
 
+
+## F. Plano docente complementario de cotas para el ejercicio B-308 (NO es el plano del titular)
+
+La geometría de las parejas de recintos que se modelará se **idealiza** para que el problema tenga entradas reproducibles. Estos datos se entregan al alumno **como cotas suplementarias**, sin resolver superficies ni volúmenes:
+
+| Código | Sector / cota complementaria | Longitud o dimensión |
+|---|---|---|
+| GC-01 | Estar-comedor B-308: ancho × largo | **3,80 × 5,30 m** |
+| GC-02 | Dormitorio D-309 (emisor aéreo): ancho × largo | **2,70 × 2,90 m** |
+| GC-03 | Tramo del separador común entre dormitorio D-309 y estar B-308 | **2,90 m lineales** |
+| GC-04 | Estar B-408, repetición del estar B-308 en planta superior | **3,80 × 5,30 m** |
+| GC-05 | Fachada exterior del estar B-308, longitud de paño | **3,80 m** |
+| GC-06 | Tramo de cierre baño D-309 / estar B-308 para caso sanitario | **1,45 m lineales** |
+
+**La altura efectiva que corresponda proviene de AG-01 (2,50 m).** Las áreas y volúmenes deben ser calculados por el alumno, no se entregan en esta tabla.
+
+Para distinguir las transmisiones: **AI-01** usa exclusivamente el tramo GC-03, no el muro completo entre ambos departamentos. **IN-01** usa GC-06, al lado de un recinto sanitario, y **IM-01** usa GC-04 sobre GC-01. En **FA-01** combina GC-05 con VF-01 y su orientación real según lámina. La dimensión del baño fuente, cuando se requiera, será un dato adicional declarado del ejercicio y no se deduce del dormitorio.
+
+**Croquis conceptual (no a escala):**
+```text
+                        FACHADA EXTERIOR
+                  <---- GC-05 = 3,80 m ---->
+               +----------------------------+-----------------------+
+               |                            | Baño de D-309        |
+               |   ESTAR B-308              | <---- GC-06 ---->    |
+               |   GC-01                    +-----------------------+
+               |   3,80 x 5,30 m            | Dormitorio D-309     |
+               |                            | GC-02                |
+               |                            | 2,70 x 2,90 m        |
+               +----------------------------+-----------------------+
+                              | GC-03: tramo común con dormitorio
+              Sobre el estar B-308: estar B-408 (GC-04).
+```
+Este croquis representa los **tramos funcionales que se adoptan para la modelación**, no una sustitución de la distribución arquitectónica real. En caso de discrepancia, el alumno debe documentar la diferencia en su informe.
+
 ## E. Pauta docente de comprobación
 
 Para validar la ficha, comprobar el área efectiva de cada recinto (no la superficie de tipología completa), longitud separadora real, S = longitud × altura pertinente, V = área útil × altura libre, área bruta de fachada, áreas de vanos solamente del recinto evaluado, área opaca = área bruta − vanos; identificar fuentes y uniones. Toda cifra derivada debe señalar plano y operación. La solución numérica final docente debe cerrarse con lectura a resolución suficiente de cotas de la vivienda, nunca con estimaciones presentadas como definitivas.
