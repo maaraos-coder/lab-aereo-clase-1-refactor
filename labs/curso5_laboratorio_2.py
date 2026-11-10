@@ -69,7 +69,7 @@ def _bind(runtime):
             globals()[k]=v
 
 def _is_teacher():
-    return st.session_state.get("role")=="Docente"
+    return st.session_state.get("role")=="Docente" and not bool(st.session_state.get("projection_mode"))
 
 def _readonly():
     return bool(st.session_state.get("projection_mode"))
@@ -342,7 +342,22 @@ def _teacher(stage):
     if _is_teacher():
         with st.expander(f"Pauta docente · Etapa {stage}",expanded=False):
             st.write(TEACHER[stage])
-            if stage==2:st.info("Pauta geométrica: cotejar cotas y recintos en lámina original. Para datos faltantes aplicar exclusivamente los supuestos AG/VF del anexo. La ficha numérica resuelta permanece solo en vista docente; aún debe cerrarse con medición de las cotas de los recintos.")
+            if stage==2:
+                st.info("La planta tipo confirma B-308 y la vivienda colindante D-309, pero no todas las cotas interiores. Los resultados que siguen son una **idealización docente** con dimensiones complementarias GC; NO son medidas levantadas del proyecto.")
+                st.markdown("#### Pauta geométrica numérica resuelta")
+                st.table([
+                    {"Ítem": "Estar B-308 · superficie", "Cálculo": "3,80 × 5,30", "Resultado": "20,14 m²"},
+                    {"Ítem": "Estar B-308 · volumen", "Cálculo": "20,14 × 2,50", "Resultado": "50,35 m³"},
+                    {"Ítem": "Dormitorio D-309 · superficie", "Cálculo": "2,70 × 2,90", "Resultado": "7,83 m²"},
+                    {"Ítem": "Dormitorio D-309 · volumen", "Cálculo": "7,83 × 2,50", "Resultado": "19,58 m³"},
+                    {"Ítem": "Muro dormitorio D-309 → estar B-308", "Cálculo": "2,90 × 2,50", "Resultado": "7,25 m²"},
+                    {"Ítem": "Entrepiso estar B-408 → estar B-308", "Cálculo": "3,80 × 5,30", "Resultado": "20,14 m²"},
+                    {"Ítem": "Fachada estar B-308 · bruta", "Cálculo": "3,80 × 2,50", "Resultado": "9,50 m²"},
+                    {"Ítem": "Ventana estar · VF-01", "Cálculo": "1,80 × 1,20", "Resultado": "2,16 m²"},
+                    {"Ítem": "Fachada opaca estar", "Cálculo": "9,50 − 2,16", "Resultado": "7,34 m²"},
+                    {"Ítem": "Cierre sanitario D-309 → B-308", "Cálculo": "1,45 × 2,50", "Resultado": "3,63 m²"},
+                ])
+                st.caption("Pauta docente completa: docs/curso5_lab2_pauta_geometrica_docente.md. No utilizar la superficie total 52,06 m² de la tipología como superficie de un recinto.")
             if stage in range(4,9):st.caption("Revisar el caso calculado en SONARA y el criterio ISO exacto, sin atribuir al software una certificación.")
 
 def run_stage(stage,lab,saved,runtime):
