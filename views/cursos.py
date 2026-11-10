@@ -183,7 +183,8 @@ def _future_saved_impl(class_id):
     """Return the saved state for the selected student and future class."""
     from labs.curso4_lab2_projection import CLASS_ID as projection_lab, is_projection, load_draft
     from labs.curso5_laboratorio_1 import CLASS_ID as certification_lab
-    if class_id in (projection_lab, certification_lab) and is_projection(st):
+    certification_lab2 = "clase-10-certificaciones-lab-2"
+    if class_id in (projection_lab, certification_lab, certification_lab2) and is_projection(st):
         try:
             return load_draft(st, _supabase(), COURSE_ID, class_id)
         except Exception:
@@ -213,7 +214,8 @@ def _save_future_state_impl(class_id,state):
     """Guarda el avance personal o el borrador independiente de la clase proyectada."""
     from labs.curso4_lab2_projection import CLASS_ID as projection_lab, is_projection, save_draft
     from labs.curso5_laboratorio_1 import CLASS_ID as certification_lab
-    confirmed_save = class_id in (projection_lab, certification_lab)
+    certification_lab2 = "clase-10-certificaciones-lab-2"
+    confirmed_save = class_id in (projection_lab, certification_lab, certification_lab2)
     if is_projection(st):
         if class_id == certification_lab and not st.session_state.get("c5l1_projection_unlocked"):
             raise PermissionError("Habilita la edición docente en esta ventana de proyección antes de guardar.")
@@ -33996,6 +33998,11 @@ def future_lab_view_impl(lab):
         _c5l1_live.run_stage(selected, lab, saved, globals())
         return
 
+    if str(class_id).strip() == "clase-10-certificaciones-lab-2":
+        from labs import curso5_laboratorio_2 as _c5l2_live
+        _c5l2_live.run_stage(selected, lab, saved, globals())
+        return
+
     title,objective,concept,activity=lab["stages"][selected]
     stage_minutes=20 if selected not in (9,10) else 35
     header(f"ETAPA {selected} · LABORATORIO {lab['number']}",title,objective)
@@ -34173,6 +34180,15 @@ def future_print_view_impl(lab):
             ))(stage)
             for stage in range(11)
         }
+    elif str(class_id).strip() == "clase-10-certificaciones-lab-2":
+        from labs import curso5_laboratorio_2 as _c5l2_live
+        renderers = {
+            stage: (lambda stage_index: (
+                lambda current_lab, current_saved:
+                    _c5l2_live.run_stage(stage_index, current_lab, current_saved, globals())
+            ))(stage)
+            for stage in range(11)
+        }
     else:
         st.warning("El apunte visual todavía no está integrado para este laboratorio.")
         return
@@ -34326,6 +34342,11 @@ def future_projection_stage_impl(lab, stage):
     if str(lab.get("id", "")).strip() == "clase-09-certificaciones-lab-1":
         from labs import curso5_laboratorio_1 as _c5l1_live
         _c5l1_live.run_stage(stage, lab, projection_saved, globals())
+        return
+
+    if str(lab.get("id", "")).strip() == "clase-10-certificaciones-lab-2":
+        from labs import curso5_laboratorio_2 as _c5l2_live
+        _c5l2_live.run_stage(stage, lab, projection_saved, globals())
         return
 
     title, objective, concept, activity = lab["stages"][stage]
