@@ -11,7 +11,16 @@ from copy import deepcopy
 CLASS_ID = "clase-10-certificaciones-lab-2"
 SONARA_URL = "https://sonara-ea1b.onrender.com/"
 PROJECT = "Proyecto Inmobiliario DS19 y DS49 Barrio Balmaceda"
-SITE = "Lote 1 · Edificio A1 · departamento B-308 · piso 3"\nANNEX_URL = "https://github.com/maaraos-coder/lab-aereo-clase-1-refactor/blob/curso3-lab2-etapas-3-10/docs/curso5_lab2_anexo_complementario.md"\nGEOMETRY_ASSUMPTIONS = [("AG-01", "Altura interior útil", "2,50 m"), ("AG-02", "Altura piso a piso", "2,70 m"), ("AG-03", "Losa estructural inicial", "160 mm"), ("AG-04", "Acabados de entrepiso", "40 mm"), ("AG-05", "Muro separador de hormigón", "180 mm"), ("AG-06", "Fachada opaca inicial", "150 mm"), ("AG-07", "Densidad hormigón", "2.400 kg/m³"), ("VF-01", "Ventana referencial del estar", "1,80 × 1,20 m"), ("VF-02", "Ventana referencial del dormitorio", "1,20 × 1,20 m")]\nACOUSTIC_ASSUMPTIONS = [("AC-01", "TR estar", "0,60 s"), ("AC-02", "TR dormitorio", "0,50 s"), ("AC-03", "Lden exterior supuesto", "60 dB"), ("AC-04", "Descarga sanitaria", "WC 6 L; 1 evento sin simultaneidad"), ("AC-05", "Lw en octavas 63–4000 Hz", "70 / 68 / 66 / 64 / 61 / 58 / 55 dB; espectro ficticio")]
+SITE = "Lote 1 · Edificio A1 · departamento B-308 · piso 3"\nANNEX_URL = "https://github.com/maaraos-coder/lab-aereo-clase-1-refactor/blob/curso3-lab2-etapas-3-10/docs/curso5_lab2_anexo_complementario.md"
+MATERIALS_URL = "https://github.com/maaraos-coder/lab-aereo-clase-1-refactor/blob/curso3-lab2-etapas-3-10/docs/curso5_lab2_especificaciones_originales.md"
+BASE_CONSTRUCTION = [
+ {"Código":"M-01","Caso":"AI-01","Elemento":"Muro separador","Composición original":"Hormigón armado 180 mm, 2.400 kg/m³","Montaje":"Continuo entre losas, encuentros rígidos"},
+ {"Código":"L-01","Caso":"IM-01","Elemento":"Losa entre viviendas","Composición original":"HA 160 mm + mortero adherido 30 mm + cerámica 10 mm","Montaje":"Sin capa resiliente ni cielo suspendido"},
+ {"Código":"F-01","Caso":"FA-01","Elemento":"Fachada opaca","Composición original":"Hormigón armado 150 mm, 2.400 kg/m³","Montaje":"Sin trasdosado aislante"},
+ {"Código":"V-01","Caso":"FA-01","Elemento":"Ventana del estar","Composición original":"DVH 4/12/4 mm + marco de aluminio convencional","Montaje":"Sellos usuales; no hay ensayo del conjunto"},
+ {"Código":"S-01","Caso":"IN-01","Elemento":"Cierre de instalación","Composición original":"Yeso-cartón 12,5 mm/cara + montante 70 mm + lana mineral 50 mm","Montaje":"Montantes compartidos y pasos por verificar"},
+ {"Código":"IS-01","Caso":"IN-01","Elemento":"Descarga sanitaria","Composición original":"PVC rígido DN110, descarga WC 6 L","Montaje":"Abrazaderas rígidas; espectro AC-05 hipotético"},
+]\nGEOMETRY_ASSUMPTIONS = [("AG-01", "Altura interior útil", "2,50 m"), ("AG-02", "Altura piso a piso", "2,70 m"), ("AG-03", "Losa estructural inicial", "160 mm"), ("AG-04", "Acabados de entrepiso", "40 mm"), ("AG-05", "Muro separador de hormigón", "180 mm"), ("AG-06", "Fachada opaca inicial", "150 mm"), ("AG-07", "Densidad hormigón", "2.400 kg/m³"), ("VF-01", "Ventana referencial del estar", "1,80 × 1,20 m"), ("VF-02", "Ventana referencial del dormitorio", "1,20 × 1,20 m")]\nACOUSTIC_ASSUMPTIONS = [("AC-01", "TR estar", "0,60 s"), ("AC-02", "TR dormitorio", "0,50 s"), ("AC-03", "Lden exterior supuesto", "60 dB"), ("AC-04", "Descarga sanitaria", "WC 6 L; 1 evento sin simultaneidad"), ("AC-05", "Lw en octavas 63–4000 Hz", "70 / 68 / 66 / 64 / 61 / 58 / 55 dB; espectro ficticio")]
 STANDARD = "ISO/TS 19488:2021"
 CASES = {
     "AI-01": ("Aislamiento aéreo entre viviendas", "DₙT,w y adaptación espectral aplicable", "Muro separador y flancos"),
@@ -36,7 +45,7 @@ TEACHER = {
  0: "Distinguir objetivo Clase B de certificación real: el laboratorio evalúa cuatro casos representativos, no declara automáticamente clase global del edificio.",
  1: "Revisar que el alumno determine en ISO/TS 19488:2021 el descriptor, umbral Clase B, unidades, sentido de comparación, tabla/nota y alcance de cada familia. No entregar de antemano los valores de la pauta; distinguir una condición que dependa de exposición exterior o régimen de operación. Después verificar edificio A1, B-308, D-309 y B-408 y su documentación.",
  2: "La ficha de referencia se resuelve únicamente con cotas verificables: S separador = longitud efectiva × altura; V = superficie útil del recinto × altura. Identificar cara útil de muro, superficies vidriadas y paños opacos. No confundir superficie de tipología completa con superficie de recinto. Registrar plano/cota y tolerancia para cada valor.",
- 3: "Comprobar material de cada hoja, espesor, masa superficial, puentes rígidos, uniones, características de capa resiliente, solución de ventana completa, TR y condiciones de fuente. Separar lo documentado de hipótesis docentes.",
+ 3: "La ficha original docente define M-01 (HA180), L-01 (HA160 + mortero30 + cerámica10 rígidos), F-01 (HA150), V-01 (DVH4/12/4 con aluminio), S-01 (yeso-cartón 12,5 mm/cara + perfil70 + lana50) e IS-01 (PVC DN110 con abrazaderas rígidas). Todos son supuestos docentes, NO datos atribuidos al proyecto. Revisar que se caractericen los 6 códigos, masas y curvas espectrales sin suponer certificados o mejoras en la condición inicial; considerar vías laterales, sellos, montaje y TR.",
  4: "Exigir DₙT,w y adaptación pertinente con flancos y misma geometría en original/variante; Rw del elemento aislado no sustituye aislamiento entre recintos.",
  5: "Conservar condición original de entrepiso; justificar s′ o ΔL ensayado, masa de sobrelosa, continuidad perimetral y vías indirectas. Revisar L′ₙT,w y el descriptor complementario aplicable.",
  6: "Pedir superficies opaca/vidriada y prestaciones del conjunto ventana-marco-sello; no atribuir a vidrio aislado el desempeño de fachada terminada. Exposición exterior debe ser trazable o hipótesis.",
@@ -78,6 +87,8 @@ def _header(stage):
     title,objective=STAGES[stage]
     header(f"ETAPA {stage} · LABORATORIO 2",title,objective,show_overview=False,duration_minutes=25 if stage<9 else 40)
     st.caption(f"Curso 5 · {PROJECT} · {SITE} · Objetivo Clase B · {STANDARD}")\n    if stage in range(0,9):\n        st.link_button("Consultar anexo técnico complementario · supuestos docentes", ANNEX_URL)\n    if stage in (2,3,4,5,6,7):\n        with st.expander("Datos complementarios oficiales del ejercicio · NO son cotas del proyecto"):\n            st.markdown("**Geometría supuesta:**")\n            st.table([{"Código":code,"Parámetro":name,"Valor docente":value} for code,name,value in GEOMETRY_ASSUMPTIONS])\n            if stage in (3,4,5,6,7):\n                st.markdown("**Condiciones acústicas y operación:**")\n                st.table([{"Código":code,"Condición":name,"Valor":value} for code,name,value in ACOUSTIC_ASSUMPTIONS])\n            st.caption("Los valores provienen del anexo didáctico; el alumno debe calcular por sí mismo superficies, volúmenes y geometrías reales desde los planos.")
+    if stage in range(3,9):
+        st.link_button("Consultar ficha de materialidad original · supuestos docentes", MATERIALS_URL)
     if stage in range(4,9):
         st.link_button("Abrir SONARA · cálculos acústicos",SONARA_URL, use_container_width=False)
 
@@ -201,16 +212,30 @@ def _stage2(lab,saved):
 
 def _stage3(lab,saved):
     _header(3)
-    st.markdown("### Inventario para calcular en SONARA")
-    st.info("Los materiales se extraen de especificaciones si existen. En caso contrario se adoptan hipótesis de diseño claramente declaradas y justificadas.")
-    cols=["Caso","Elemento","Sistema de capas / material","Espesor (mm)","Fuente documental / hipótesis","Propiedad acústica requerida","Observaciones sobre uniones"]
+    st.markdown("### Caracterización de la materialidad original")
+    st.info("La condición inicial del edificio para este ejercicio está **definida en una ficha de especificaciones docentes**. No inventes materiales ni agregues mejoras en esta etapa. Identifica cada sistema, consulta sus parámetros y prepara los modelos iniciales en SONARA.")
+    st.markdown("#### A · Sistemas originales del encargo")
+    st.dataframe(BASE_CONSTRUCTION,hide_index=True,use_container_width=True)
+    st.caption("Todos los sistemas se adoptan como supuestos docentes. No constituyen especificaciones verificadas del proyecto real. Los valores Rw, R(f), ΔL(f) o resultados de fachada NO vienen precalculados.")
+    st.markdown("#### B · Caracteriza los sistemas para SONARA")
+    cols=["Código base","Caso","Material / composición adoptada","Geometría desde Etapa 2","Dato acústico o curva requerida","Fuente técnica o hipótesis","Uniones, flancos y montaje"]
     old=saved.get("c5l2_s3") or {}
     rows=_table(old.get("systems") or [],cols,"c5l2_systems")
-    assumptions=st.text_area("Condiciones comunes: TR, densidades, exposición exterior, funcionamiento de instalaciones",value=old.get("assumptions",""),height=130)
-    if st.button("Guardar sistemas y condiciones",type="primary",key="c5l2_save_systems"):
-        if not any(x.get("Elemento") for x in rows) or len(assumptions.strip())<25:
-            st.warning("Registra los elementos y justifica las hipótesis de trabajo.")
-        else:_save(lab,saved,3,"c5l2_s3",{"systems":rows,"assumptions":assumptions})
+    st.markdown("#### C · Condiciones comunes y trazabilidad")
+    assumptions=st.text_area("Registra TR, densidades, Lden, descarga sanitaria, curvas de referencia y límites de validez",value=old.get("assumptions",""),height=140)
+    st.markdown("#### D · Qué tendrá que diseñarse después")
+    st.markdown("En las Etapas **4–7** debes proponer tus variantes: refuerzo de separador, pavimento resiliente, solución de fachada y control de instalación. Conserva el **mismo modelo original** al comparar con la variante.")
+    if st.button("Guardar caracterización original",type="primary",key="c5l2_save_systems"):
+        codes={str(x.get("Código base","")).strip().upper() for x in rows if isinstance(x,dict)}
+        expected={entry["Código"] for entry in BASE_CONSTRUCTION}
+        missing=sorted(expected-codes)
+        if missing:
+            st.warning("Completa la caracterización para los seis componentes: "+", ".join(missing)+".")
+        elif len(assumptions.strip())<40:
+            st.warning("Justifica la procedencia de los parámetros acústicos, condiciones y limitaciones (mínimo 40 caracteres).")
+        else:
+            _save(lab,saved,3,"c5l2_s3",{"systems":rows,"assumptions":assumptions,"base_version":"ficha_original_v1"})
+
 
 def _model(stage,lab,saved,case):
     _header(stage)
