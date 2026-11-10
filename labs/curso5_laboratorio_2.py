@@ -90,34 +90,41 @@ def _readonly():
     return bool(st.session_state.get("projection_mode"))
 
 def _student_document_pack():
-    """Build only the two student-facing documents, without the teacher solution.
+    """Build the student ZIP locally, including the selected original A1 plans.
 
-    Built locally in memory, avoiding repeated database/Storage egress.
+    Source PDFs are kept outside this Python module as deployable binary assets.
+    No Supabase Storage/API request is needed to download the documents.
     """
-    docs = Path(__file__).resolve().parent.parent / "docs"
+    root = Path(__file__).resolve().parent.parent
     filenames = (
         "curso5_lab2_anexo_complementario.md",
         "curso5_lab2_especificaciones_originales.md",
     )
+    plan_name = "Barrio_Balmaceda_A1_Ubicacion_Piso1_Planta_Tipo_B308.pdf"
+    plan_path = root / "assets" / "curso5_lab2" / plan_name
     contents = {}
     for filename in filenames:
-        path = docs / filename
+        path = root / "docs" / filename
         if not path.is_file():
-            return None
+            return None, f"Falta el documento {filename}"
         contents[filename] = path.read_bytes()
+    if not plan_path.is_file():
+        return None, "Falta incorporar el PDF arquitectónico original al directorio assets/curso5_lab2."
+    if plan_path.stat().st_size < 1000:
+        return None, "El archivo de planos no parece válido."
     buffer = BytesIO()
     with ZipFile(buffer, "w", compression=ZIP_DEFLATED) as bundle:
         bundle.writestr("LEEME_PRIMERO.txt",
-            "CURSO 5 - LABORATORIO 2 - DOCUMENTACION DEL ALUMNO\n"
-            "Proyecto: Barrio Balmaceda, vivienda B-308, Edificio A1, Lote 1.\n"
-            "Este paquete contiene exclusivamente las cotas academicas y la\n"
-            "materialidad inicial para desarrollar el ejercicio en SONARA.\n"
-            "LOS PLANOS ORIGINALES DEL ANEXO 3 NO ESTAN INCLUIDOS EN ESTE ZIP.\n"
-            "Consulte las laminas originales proporcionadas por el docente.\n"
-            "Las pautas docentes resueltas tampoco estan incluidas.\n")
-        for filename,content in contents.items():
-            bundle.writestr(filename,content)
-    return buffer.getvalue()
+            "CURSO 5 - LABORATORIO 2 - BARRIO BALMACEDA B-308\\n"
+            "Incluye tres laminas originales del Edificio A1: contexto, primer piso\\n"
+            "y planta tipo de pisos 2 a 8 (lamina 35.6.2).\\n"
+            "Los datos de geometria y materialidad complementarios son\\n"
+            "supuestos docentes y NO especificaciones certificadas del proyecto.\\n"
+            "La pauta numerica resuelta y las respuestas de ISO no se incluyen.\\n")
+        bundle.write(plan_path, arcname=f"01_Planos_arquitectura/{plan_name}")
+        for filename, content in contents.items():
+            bundle.writestr("02_Anexos/" + filename, content)
+    return buffer.getvalue(), None
 
 
 def _header(stage):
@@ -179,10 +186,10 @@ def _stage0(lab,saved):
     st.warning("Se estudian cuatro situaciones; no se declara automáticamente la clasificación global del edificio ni se sustituye la medición en obra.")
     st.markdown("**Secuencia:** expediente → ficha geométrica → sistemas → SONARA (aéreo, impacto, fachada, instalaciones) → matriz ISO → evaluación.")
     st.markdown("### Documentación para el desarrollo del laboratorio")
-    st.caption("Un solo paquete con **anexo de cotas y supuestos docentes** y **especificaciones constructivas originales del ejercicio**. No incluye pauta docente ni los archivos de planos originales.")
-    pack=_student_document_pack()
+    st.caption("Un único ZIP con **planos originales seleccionados del Edificio A1**, anexo de cotas y materialidad original del ejercicio. La pauta docente se mantiene excluida.")
+    pack, package_error=_student_document_pack()
     if pack is None:
-        st.error("No está disponible el paquete de documentos en esta versión. Se mantienen intactos los archivos del repositorio.")
+        st.warning(package_error + " El paquete completo se habilitará cuando el PDF esté publicado en la rama.")
     else:
         st.download_button(
             "📥 Descargar documentación del alumno (.zip)",
@@ -193,7 +200,7 @@ def _stage0(lab,saved):
             use_container_width=True,
             key="c5l2_docs_download",
         )
-    st.info("Para interpretar y medir cotas, consulta también los planos originales del Anexo N.º 3 facilitados por el docente. No se incluyen en el ZIP hasta incorporarlos al repositorio.")
+    st.caption("Planos seleccionados: láminas 35.5.1, 35.6.1 y 35.6.2 del archivo 3.1.1 Lote 1 – DS19, sin planos de instalaciones de faena ni de otros lotes.")
     if st.button("Registrar lectura del encargo",key="c5l2_s0"):
         _save(lab,saved,0,"c5l2_s0",{"acknowledged":True,"target":"B","scope":SITE})
 
