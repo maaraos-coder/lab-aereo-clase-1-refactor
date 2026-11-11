@@ -6,6 +6,7 @@ Los cálculos acústicos se realizan en SONARA, no en esta aplicación.
 """
 from __future__ import annotations
 import json
+import math
 from copy import deepcopy
 from pathlib import Path
 from io import BytesIO
@@ -331,6 +332,97 @@ def _model(stage,lab,saved,case):
             st.warning("Registra geometría, ambos modelos, requisito ISO y comparación de manera verificable.")
         else:_save(lab,saved,stage,f"c5l2_s{stage}",{"case":case,**fields})
 
+def _stage6(lab,saved):
+    """NoiseMap road scenario + transparent Lden verification + SONARA facade."""
+    _header(6)
+    st.markdown("### FA-01 · Exposición al tránsito y diseño de fachada")
+    st.info("Ubica el receptor exterior en la **fachada sur de CH-A-P05-S03**. La vía didáctica será **Pasaje Chimbote**, no Mirador Azul. Documenta la distancia y la altura del receptor desde los planos; la exposición exterior NO se fija de antemano.")
+    st.link_button("Abrir NoiseMap Lab · tránsito y Lden", "https://github.com/maaraos-coder/noisemap",help="La aplicación NoiseMap Lab contiene una pestaña de tránsito y Lden; enlace al repositorio porque la URL del despliegue no está verificada.")
+    st.warning("La versión actual de NoiseMap **todavía no predice niveles de tráfico mediante CNOSSOS-EU completo**. Registra los aforos y la geometría; para informar un Lden CNOSSOS-EU utiliza niveles de período de un motor acreditado y documenta cuál. El cálculo energético Lden sí puede verificarse aquí.")
+    norm=((saved.get("c5l2_s1") or {}).get("criteria") or {}).get("FA-01") or {}
+    if norm:
+        st.caption(f"Tu criterio Clase B: {norm.get('descriptor','')} · {norm.get('direction','')} {norm.get('limit','')} · Referencia: {norm.get('reference','')}")
+    old=saved.get("c5l2_s6") or {}
+    traffic_old=old.get("traffic") or {}
+    default_flows={"Día":{"Livianos":650,"Pesados medianos":35,"Pesados":15,"Motocicletas":30},
+                   "Tarde":{"Livianos":400,"Pesados medianos":20,"Pesados":8,"Motocicletas":20},
+                   "Noche":{"Livianos":110,"Pesados medianos":5,"Pesados":2,"Motocicletas":5}}
+    st.markdown("#### A · Escenario de tránsito supuesto")
+    st.caption("Los aforos siguientes son **hipótesis académicas**, no registros reales del pasaje.")
+    with st.form("c5l2_traffic_and_facade"):
+        p1,p2=st.columns(2)
+        with p1:
+            street=st.text_input("Vía modelada",value=traffic_old.get("street","Pasaje Chimbote"))
+            speed=st.number_input("Velocidad de circulación [km/h]",min_value=5,max_value=130,
+                                  value=int(traffic_old.get("speed",50)))
+            road_surface=st.selectbox("Tipo de pavimento",["Asfalto convencional","Hormigón","Otro, justificar"],
+                                     index=["Asfalto convencional","Hormigón","Otro, justificar"].index(traffic_old.get("surface","Asfalto convencional")))
+        with p2:
+            dist=st.number_input("Distancia calzada–fachada [m] (medir del plano)",min_value=0.0,max_value=500.0,
+                                  value=float(traffic_old.get("distance",0)),step=0.5)
+            receiver_height=st.number_input("Altura receptor exterior [m] (medir o justificar)",min_value=0.0,max_value=150.0,
+                                            value=float(traffic_old.get("height",0)),step=0.5)
+            receiver_ref=st.text_input("Fuente de las cotas del receptor y su orientación",value=traffic_old.get("receiver_ref",""))
+        st.markdown("**Flujos medios horarios por período y categoría [veh/h]**")
+        flows={}
+        for period in ("Día","Tarde","Noche"):
+            cols=st.columns(4)
+            flows[period]={}
+            for col,(cat,default) in zip(cols,default_flows[period].items()):
+                previous=(traffic_old.get("flows") or {}).get(period) or {}
+                flows[period][cat]=col.number_input(f"{period} · {cat}",min_value=0,max_value=100000,
+                                                    value=int(previous.get(cat,default)),key=f"c5l2_t_{period}_{cat}")
+        st.markdown("#### B · Nivel exterior en receptor (modelo documentado)")
+        st.caption("Lden se calcula únicamente a partir de **tres niveles por período**. No se deriva de los flujos usando ecuaciones sin calibración.")
+        p3,p4,p5=st.columns(3)
+        levels={}
+        for col,key,label in [(p3,"day","Lday [dB(A)]"),(p4,"evening","Levening [dB(A)]"),(p5,"night","Lnight [dB(A)]")]:
+            levels[key]=col.text_input(label,value=str(traffic_old.get("levels",{}).get(key,"")),key=f"c5l2_ext_{key}")
+        method=st.text_area("Método, versión del motor, geometría, evidencia y alcance (CNOSSOS-EU o aproximación identificada)",value=traffic_old.get("method",""))
+        st.markdown("#### C · Diseño de fachada en SONARA")
+        fields={}
+        for key,label in [
+            ("geometry","Área bruta, área opaca y superficie vidriada; volumen y TR del recinto"),
+            ("base","Fachada original en SONARA: entradas, curvas, descriptor y resultado"),
+            ("variant","Variante de fachada en SONARA: sistema propuesto y resultado"),
+            ("target","Requisito Clase B: descriptor, umbral, sentido y referencia ISO"),
+            ("comparison","Comparación, margen, limitaciones y vínculo con la exposición exterior")]:
+            fields[key]=st.text_area(label,value=old.get(key,""),height=100)
+        submit=st.form_submit_button("Guardar modelación vial y diseño de fachada",type="primary")
+    parsed={}
+    if all(levels[k].strip() for k in ("day","evening","night")):
+        try:
+            parsed={k:float(levels[k].replace(",",".")) for k in ("day","evening","night")}
+            if any(not math.isfinite(x) or x < -20 or x > 150 for x in parsed.values()):
+                parsed={}
+            if parsed:
+                total=(12*10**(parsed["day"]/10)+4*10**((parsed["evening"]+5)/10)+8*10**((parsed["night"]+10)/10))/24
+                computed=10*math.log10(total)
+                st.metric("Lden exterior · calculado con niveles ingresados",f"{computed:.1f} dB(A)")
+                st.caption("12 h día + 4 h tarde (+5 dB) + 8 h noche (+10 dB). La fórmula no valida el motor con que se calcularon los tres niveles.")
+            else:computed=None
+        except ValueError:
+            computed=None
+    else:computed=None
+    if submit:
+        if dist<=0 or receiver_height<=0 or not receiver_ref.strip():
+            st.warning("Determina distancia, altura y fuente de cotas del receptor antes de guardar.")
+        elif computed is None:
+            st.warning("Ingresa tres niveles exteriores finitos y dentro de rango, calculados por un modelo acústico documentado.")
+        elif len(method.strip())<40:
+            st.warning("Identifica claramente el método, versión y limitaciones de la predicción exterior.")
+        elif any(len(str(v).strip())<18 for v in fields.values()):
+            st.warning("Completa la geometría y comparación de los dos diseños de fachada en SONARA.")
+        else:
+            record={"case":"FA-01","traffic":{"street":street,"speed":speed,"surface":road_surface,
+                "distance":dist,"height":receiver_height,"receiver_ref":receiver_ref,
+                "flows":flows,"levels":levels,"method":method,"lden":round(computed,2),
+                "method_note":"Lden verified mathematically; this app does not perform CNOSSOS-EU emission/propagation"},
+                **fields}
+            _save(lab,saved,6,"c5l2_s6",record)
+    st.caption("Esta etapa integra exposición exterior y aislamiento de fachada. La determinación de Clase B corresponde al alumno, no al motor de NoiseMap.")
+
+
 def _stage8(lab,saved):
     _header(8)
     st.markdown("### Matriz de verificación · meta Clase B")
@@ -501,7 +593,8 @@ def run_stage(stage,lab,saved,runtime):
     elif stage==1:_stage1(lab,saved)
     elif stage==2:_stage2(lab,saved)
     elif stage==3:_stage3(lab,saved)
-    elif stage in (4,5,6,7):_model(stage,lab,saved,{4:"AI-01",5:"IM-01",6:"FA-01",7:"IN-01"}[stage])
+    elif stage==6:_stage6(lab,saved)
+    elif stage in (4,5,7):_model(stage,lab,saved,{4:"AI-01",5:"IM-01",7:"IN-01"}[stage])
     elif stage==8:_stage8(lab,saved)
     elif stage==9:_stage9(lab,saved)
     else:_stage10(lab,saved)
