@@ -26,9 +26,9 @@ Los siguientes datos son **inventados para enseñanza, no aforos reales**. Cada 
 
 ### C · Qué puede y qué no puede hacer la versión actual de NoiseMap
 
-La versión actual de `maaraos-coder/noisemap` (Streamlit) dispone de fuentes puntuales y propagación simplificada, pero **no tiene implementadas las tablas de emisión de CNOSSOS-EU ni toda su propagación**. Se incorporó una pestaña **Tránsito y Lden** para registrar los aforos supuestos, la ubicación del receptor y **comprobar el cálculo energético de Lden desde los niveles Lday, Levening y Lnight aportados**.
+La versión actual de `maaraos-coder/noisemap` permite calcular **la emisión espectral de fuente vial CNOSSOS-EU, sección 2.2**, mediante una biblioteca que incorpora las tablas europeas de 2021. También ofrece una **previsualización didáctica de niveles en receptor y mapa esquemático**, mediante dispersión geométrica libre. Esta previsualización **NO implementa la propagación normativa CNOSSOS-EU sección 2.5**, que requiere efecto de suelo, meteorología, edificios, difracción, reflexiones y una geometría vial real. La pestaña **Tránsito y Lden** permite asimismo introducir niveles de período provenientes de un motor normativo documentado y comprobar su combinación energética.
 
-**No se obtiene un Lden vial válido únicamente ingresando la tabla de aforos.** Para declarar resultados CNOSSOS-EU debe utilizarse una implementación documentada y validada del método, por ejemplo un motor especializado; anotar motor, versión, entorno, fecha y detalle de la propagación. No reutilizar como Lden un mapa de nivel puntual estacionario calculado con el motor genérico de NoiseMap.
+**Los aforos permiten calcular la emisión CNOSSOS-EU por bandas, pero NO un Lden reglamentario de fachada sin propagación normativa.** Para declarar resultados de receptor **CNOSSOS-EU completos** debe utilizarse un motor de propagación 2.5 documentado y validado, como NoiseModelling; anotar motor, versión, entorno, fecha y detalle de la propagación. No reutilizar como Lden un mapa de nivel puntual estacionario calculado con el motor genérico de NoiseMap.
 
 La agregación correcta es:
 
@@ -52,3 +52,5 @@ Una vez obtenida una estimación trazable de la exposición exterior en la posic
 - Limitaciones y conclusión sustentada en ISO/TS 19488:2021.
 
 **Fuente de metodología:** Directiva 2002/49/CE, Anexo I (Lden); Directivas 2015/996 y 2021/1226 (CNOSSOS-EU, método y revisiones). La ficha es docente.
+
+**Archivos NoiseMap disponibles:** exportación de emisión por bandas, exportación de estimación en receptor etiquetada no normativa y exportación de niveles de período documentados. La Etapa 6 admite importar el JSON de receptor; el alumno debe conservar y citar la advertencia metodológica.
