@@ -345,6 +345,37 @@ def _stage6(lab,saved):
         st.caption(f"Tu criterio Clase B: {norm.get('descriptor','')} · {norm.get('direction','')} {norm.get('limit','')} · Referencia: {norm.get('reference','')}")
     old=saved.get("c5l2_s6") or {}
     traffic_old=old.get("traffic") or {}
+    st.markdown("#### Importar resultado desde NoiseMap (opcional)")
+    imported_file=st.file_uploader("Archivo JSON exportado desde NoiseMap",type=["json"],
+                                   key="c5l2_noise_import")
+    imported=None
+    if imported_file is not None:
+        try:
+            imported=json.loads(imported_file.getvalue().decode("utf-8-sig"))
+            if not isinstance(imported,dict) or "receiver_period_levels_dba" not in imported:
+                st.warning("El archivo no contiene los niveles de período del receptor; revisa el formato exportado.")
+                imported=None
+            elif any(imported["receiver_period_levels_dba"].get(k) is None for k in ("day","evening","night")):
+                st.warning("El archivo tiene uno o más períodos sin niveles calculados. No puede transferirse como tres niveles válidos.")
+                imported=None
+        except (UnicodeError,ValueError,AttributeError,TypeError):
+            imported=None
+            st.error("No se pudo leer el JSON de NoiseMap.")
+    if imported is not None:
+        source_method=str(imported.get("method",""))
+        st.warning("El archivo describe: "+source_method+
+                   ". Si se utilizó propagación libre simplificada, NO corresponde a un mapa CNOSSOS-EU completo.")
+        if st.button("Importar niveles a la ficha de fachada",key="c5l2_apply_noise_result"):
+            for key,value in imported["receiver_period_levels_dba"].items():
+                if key in ("day","evening","night") and value is not None:
+                    st.session_state[f"c5l2_ext_{key}"]=str(round(float(value),2))
+            imported_geometry=imported.get("geometry") or {}
+            imported_label="Importación NoiseMap: "+source_method
+            st.session_state["c5l2_imported_noise_provenance"]=imported_label
+            st.session_state["c5l2_imported_noise_geom"]=imported_geometry
+            st.rerun()
+    if st.session_state.get("c5l2_imported_noise_provenance"):
+        st.info("Origen de niveles importados: "+st.session_state["c5l2_imported_noise_provenance"])
     default_flows={"Día":{"Livianos":80,"Pesados medianos":3,"Pesados":1,"Motocicletas":7},
                    "Tarde":{"Livianos":45,"Pesados medianos":1,"Pesados":0,"Motocicletas":4},
                    "Noche":{"Livianos":10,"Pesados medianos":0,"Pesados":0,"Motocicletas":1}}
@@ -379,7 +410,7 @@ def _stage6(lab,saved):
         levels={}
         for col,key,label in [(p3,"day","Lday [dB(A)]"),(p4,"evening","Levening [dB(A)]"),(p5,"night","Lnight [dB(A)]")]:
             levels[key]=col.text_input(label,value=str(traffic_old.get("levels",{}).get(key,"")),key=f"c5l2_ext_{key}")
-        method=st.text_area("Método, versión del motor, geometría, evidencia y alcance (CNOSSOS-EU o aproximación identificada)",value=traffic_old.get("method",""))
+        method=st.text_area("Método, versión del motor, geometría, evidencia y alcance (CNOSSOS-EU o aproximación identificada)",value=traffic_old.get("method",st.session_state.get("c5l2_imported_noise_provenance","")))
         st.markdown("#### C · Diseño de fachada en SONARA")
         fields={}
         for key,label in [
