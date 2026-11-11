@@ -111,6 +111,7 @@ def _student_document_pack():
     docs = [
         root / "docs" / "curso5_lab2_chimbote_ficha_geometrica_alumno.md",
         root / "docs" / "curso5_lab2_chimbote_especificaciones_alumno.md",
+        root / "docs" / "curso5_lab2_chimbote_suplemento_cotas_alumno.md",
     ]
     for doc in docs:
         if not doc.is_file():
@@ -136,6 +137,7 @@ def _header(stage):
         st.caption("Fuentes del ejercicio: planta tipo original, cortes, elevaciones y ficha académica. Toda cota debe provenir del dibujo o documentarse como hipótesis.")
     if stage in (2,3):
         st.link_button("Ver ficha geométrica del alumno", ANNEX_URL)
+        st.link_button("Ver suplemento de cotas (sin resolver)", "https://github.com/maaraos-coder/lab-aereo-clase-1-refactor/blob/curso3-lab2-etapas-3-10/docs/curso5_lab2_chimbote_suplemento_cotas_alumno.md")
         st.link_button("Consultar materialidad original del ejercicio", MATERIALS_URL)
     if stage in range(4,9):
         st.link_button("Abrir SONARA · cálculos acústicos",SONARA_URL, use_container_width=False)
@@ -184,7 +186,7 @@ def _stage0(lab,saved):
     st.warning("La marca de color es orientativa para localizar la unidad. No representa un área medida. Los cálculos, superficies, volúmenes y TR serán determinados por el alumno.")
     st.markdown("**Secuencia:** requisitos Clase B → geometría → materialidad y TR en SONARA → diseño aéreo, impacto, fachada e instalaciones → verificación → evaluación.")
     st.markdown("### Descarga única de documentación")
-    st.caption("Un ZIP con planta tipo original (vivienda resaltada), cortes, elevaciones y anexos técnicos académicos. La pauta docente queda excluida.")
+    st.caption("Un ZIP con planta tipo original (vivienda resaltada), cortes, elevaciones, especificaciones y suplemento de cotas faltantes. La pauta docente queda excluida.")
     pack, issue = _student_document_pack()
     if pack is None:
         st.warning(issue + " Hasta incorporar el PDF binario a la rama, el botón de descarga completo está deshabilitado.")
@@ -274,13 +276,13 @@ def _stage3(lab,saved):
     st.info("La condición inicial del edificio para este ejercicio está **definida en una ficha de especificaciones docentes**. No inventes materiales ni agregues mejoras en esta etapa. Identifica cada sistema, consulta sus parámetros y prepara los modelos iniciales en SONARA.")
     st.markdown("#### A · Sistemas originales del encargo")
     st.dataframe(BASE_CONSTRUCTION,hide_index=True,use_container_width=True)
-    st.caption("Todos los sistemas se adoptan como supuestos docentes. No constituyen especificaciones verificadas del proyecto real. Los valores Rw, R(f), ΔL(f) o resultados de fachada NO vienen precalculados.")
+    st.caption("Todos los sistemas se adoptan como supuestos docentes. No constituyen especificaciones verificadas del proyecto real. Los valores Rw, R(f), ΔL(f) o resultados de fachada NO vienen precalculados. La identificación de los nueve componentes T/M/L/F/V/S/IS forma parte del ejercicio.")
     st.markdown("#### B · Caracteriza los sistemas para SONARA")
     cols=["Código base","Caso","Material / composición adoptada","Geometría desde Etapa 2","Dato acústico o curva requerida","Fuente técnica o hipótesis","Uniones, flancos y montaje"]
     old=saved.get("c5l2_s3") or {}
     rows=_table(old.get("systems") or [],cols,"c5l2_systems")
     st.markdown("#### C · Reverberación calculada en SONARA")
-    st.info("Determina volumen y superficies del recinto desde la geometría de Etapa 2, asigna absorción por bandas a pisos, cielo, muros y ventanas, y calcula TR en SONARA. No se entrega un TR fijo.")
+    st.info("Determina volumen y superficies del recinto desde la geometría de Etapa 2, asigna absorción por bandas a pisos, cielo, muros, puertas y ventanas, y calcula TR en SONARA. No se entrega un TR fijo. Si una cota no está acreditada, aplica exclusivamente un supuesto identificado del suplemento.")
     tr_details=st.text_area("Resultados TR de SONARA por banda, superficies de absorción, fuentes alfa y método",value=old.get("tr_details",""),height=130)
     st.markdown("#### D · Condiciones comunes y trazabilidad")
     assumptions=st.text_area("Registra densidades, Lden supuesto, descarga sanitaria, curvas de referencia y límites de validez",value=old.get("assumptions",""),height=140)
@@ -489,6 +491,7 @@ def _teacher(stage):
             if stage==2:
                 st.warning("No hay ficha numérica cerrada para CH-A-P05-S03. Las cotas/áreas anteriores de Barrio Balmaceda NO son válidas para este proyecto.")
                 st.link_button("Auditoría geométrica de Chimbote (solo docente)", "https://github.com/maaraos-coder/lab-aereo-clase-1-refactor/blob/curso3-lab2-etapas-3-10/docs/curso5_lab2_chimbote_pauta_docente.md")
+                st.link_button("Pauta docente · submodelo geométrico resuelto", "https://github.com/maaraos-coder/lab-aereo-clase-1-refactor/blob/curso3-lab2-etapas-3-10/docs/curso5_lab2_chimbote_pauta_submodelo_docente.md")
             if stage==3:
                 st.info("Comprobar que el alumno determine TR por bandas en SONARA; no introducir valores fijos 0,5/0,6 s.")
 def run_stage(stage,lab,saved,runtime):
