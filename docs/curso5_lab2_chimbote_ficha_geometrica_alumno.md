@@ -10,7 +10,7 @@
 - Documentación descriptiva: `400 A. Descripción del proyecto o actividad`, especialmente ubicación por torre y pisos.
 
 ### 1. Identificación espacial
-Localiza la **Torre A**, el recinto **ESTAR del tercer departamento desde poniente en la hilera sur**, cuyas cotas parciales legibles son **2,56 m × 2,35 m**. **No supongas que representan el estar completo**. Delimita por líneas de división de propiedad los límites de la vivienda, el dormitorio y el área de estar-comedor-cocina, sus colindantes y el recinto del piso superior.
+Localiza la **Torre A**, el recinto **ESTAR del tercer departamento desde poniente en la hilera sur**, y verifica las cotas impresas que le correspondan; no reutilices las cotas 2,56 m y 2,35 m de otro estar de la planta. Delimita por líneas de división de propiedad los límites de la vivienda, el dormitorio y el área de estar-comedor-cocina, sus colindantes y el recinto del piso superior.
 
 ### 2. Tabla de geometría a completar
 | Caso | Emisor | Receptor | Cotas y lámina | Altura útil (m) | Área útil receptor (m²) | Volumen receptor (m³) | Elemento común (m²) | Uniones |
