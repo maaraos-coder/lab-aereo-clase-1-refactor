@@ -1,15 +1,31 @@
-# Planos seleccionados para Curso 5 · Laboratorio 2
+# Curso 5 · Laboratorio 2 · Archivo de planos original seleccionado
 
-**Único PDF binario requerido en esta carpeta:** `Barrio_Balmaceda_A1_Ubicacion_Piso1_Planta_Tipo_B308.pdf`
+**Caso vigente:** Edificio Chimbote, La Florida. **Torre A · piso 5 · hilera sur · tercera vivienda desde poniente · CH-A-P05-S03** (identificador docente, no número oficial).
 
-Extracción **sin modificar el dibujo vectorial** del expediente entregado por el docente:
-- Fuente: `Anexo_N_3_Planos.rar` → `3.1 Planos de Arquitectura.rar` → `3.1.1 Lote 1 - DS19.pdf`
-- Página original 1: lámina 35.5.1, contexto / ruta accesible del Lote 1
-- Página original 2: lámina 35.6.1, planta primer piso Edificio A1
-- Página original 3: lámina 35.6.2, planta tipo pisos 2 a 8, que contiene B-308
+El laboratorio descarga desde esta carpeta **un único archivo PDF**:
+`Chimbote_Torre_A_CH-A-P05-S03_planos.pdf`
 
-No se incluyen láminas del Edificio B1, de los otros lotes ni planos de faenas, aguas lluvias o lavado de ruedas. No se identificaron cortes y elevaciones específicos adicionales dentro del PDF de arquitectura del Lote 1; los datos faltantes están individualizados como supuestos académicos en los anexos del alumno.
+## Origen y contenido
 
-**Publicación:** el laboratorio lee el PDF desde esta ruta del repositorio y lo incorpora al botón de descarga ZIP de la Etapa 0. Si falta el PDF, la plataforma mostrará un aviso explícito y no ofrecerá un ZIP incompleto.
+Las láminas proceden de los archivos originales suministrados por el docente:
 
-**Importante:** La extracción original (PDF binario) debe subirse a esta ruta del repositorio para que esté disponible en Streamlit. Las herramientas de edición de GitHub utilizadas en este cambio permiten escribir archivos UTF-8, pero no subir este PDF binario directamente; el archivo extraído se entrega por separado al docente para su carga.
+- `3.1 Planos de Arquitectura (Parte 1).pdf`: página 8, planta tipo Torre A y B; la vivienda elegida en Torre A aparece **resaltada en amarillo transparente y contorno rojo**; página 12, corte.
+- `3.1 Planos de Arquitectura (Parte 2).pdf`: páginas 2, 3 y 4, elevaciones/cortes complementarios.
+
+Los planos se conservan a la resolución nativa de la imagen original, con anotación sin alteración de cotas. No se entrega documentación de faenas, otros proyectos ni el PDF completo de 125 páginas de la DIA.
+
+## Publicación del archivo binario
+
+**Falta adjuntar el PDF binario seleccionado al repositorio.** El PDF de 18 MB ha sido generado para descarga en la conversación. Para que aparezca en el ZIP del botón de Etapa 0, subirlo con exactamente este nombre dentro de esta carpeta GitHub.
+
+La aplicación **no generará ni ofrecerá el paquete incompleto** hasta que ese archivo exista. La generación del ZIP dentro de Streamlit es local y no usa Supabase Storage.
+
+## Documentos de respaldo en repo
+
+- `docs/curso5_lab2_chimbote_ficha_geometrica_alumno.md`
+- `docs/curso5_lab2_chimbote_especificaciones_alumno.md`
+- `docs/curso5_lab2_chimbote_pauta_docente.md` (**exclusivo docente; no incluir en ZIP**).
+
+Los modelos predictivos y el tiempo de reverberación se calculan en SONARA. Las composiciones materiales son hipótesis académicas y no datos verificados del edificio.
+
+**IMPORTANTE:** Los archivos anteriores relativos a Barrio Balmaceda permanecen archivados en el repositorio, pero ya no se utilizan en este laboratorio.
