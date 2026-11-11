@@ -13,20 +13,32 @@ from zipfile import ZipFile, ZIP_DEFLATED
 
 CLASS_ID = "clase-10-certificaciones-lab-2"
 SONARA_URL = "https://sonara-ea1b.onrender.com/"
-PROJECT = "Proyecto Inmobiliario DS19 y DS49 Barrio Balmaceda"
-SITE = "Lote 1 · Edificio A1 · departamento B-308 · piso 3"
-ANNEX_URL = "https://github.com/maaraos-coder/lab-aereo-clase-1-refactor/blob/curso3-lab2-etapas-3-10/docs/curso5_lab2_anexo_complementario.md"
-MATERIALS_URL = "https://github.com/maaraos-coder/lab-aereo-clase-1-refactor/blob/curso3-lab2-etapas-3-10/docs/curso5_lab2_especificaciones_originales.md"
+PROJECT = "Edificio Chimbote · Torre A"
+SITE = "Piso 5 · hilera sur · tercer departamento desde poniente · CH-A-P05-S03"
+ANNEX_URL = "https://github.com/maaraos-coder/lab-aereo-clase-1-refactor/blob/curso3-lab2-etapas-3-10/docs/curso5_lab2_chimbote_ficha_geometrica_alumno.md"
+MATERIALS_URL = "https://github.com/maaraos-coder/lab-aereo-clase-1-refactor/blob/curso3-lab2-etapas-3-10/docs/curso5_lab2_chimbote_especificaciones_alumno.md"
 BASE_CONSTRUCTION = [
- {"Código":"M-01","Caso":"AI-01","Elemento":"Muro separador","Composición original":"Hormigón armado 180 mm, 2.400 kg/m³","Montaje":"Continuo entre losas, encuentros rígidos"},
- {"Código":"L-01","Caso":"IM-01","Elemento":"Losa entre viviendas","Composición original":"HA 160 mm + mortero adherido 30 mm + cerámica 10 mm","Montaje":"Sin capa resiliente ni cielo suspendido"},
- {"Código":"F-01","Caso":"FA-01","Elemento":"Fachada opaca","Composición original":"Hormigón armado 150 mm, 2.400 kg/m³","Montaje":"Sin trasdosado aislante"},
- {"Código":"V-01","Caso":"FA-01","Elemento":"Ventana del estar","Composición original":"DVH 4/12/4 mm + marco de aluminio convencional","Montaje":"Sellos usuales; no hay ensayo del conjunto"},
- {"Código":"S-01","Caso":"IN-01","Elemento":"Cierre de instalación","Composición original":"Yeso-cartón 12,5 mm/cara + montante 70 mm + lana mineral 50 mm","Montaje":"Montantes compartidos y pasos por verificar"},
- {"Código":"IS-01","Caso":"IN-01","Elemento":"Descarga sanitaria","Composición original":"PVC rígido DN110, descarga WC 6 L","Montaje":"Abrazaderas rígidas; espectro AC-05 hipotético"},
+ {"Código":"M-01","Caso":"AI-01","Elemento":"Muro entre viviendas","Composición original":"Hormigón armado 180 mm; densidad 2.400 kg/m³","Montaje":"Encuentros rígidos; sin trasdosado"},
+ {"Código":"L-01","Caso":"IM-01","Elemento":"Losa entre viviendas","Composición original":"HA 160 mm + mortero 30 mm + cerámica 10 mm","Montaje":"Sin capa resiliente ni cielo suspendido"},
+ {"Código":"F-01","Caso":"FA-01","Elemento":"Fachada opaca","Composición original":"HA 150 mm; densidad 2.400 kg/m³","Montaje":"Sin trasdosado"},
+ {"Código":"V-01","Caso":"FA-01","Elemento":"Ventana","Composición original":"DVH 4/12/4 mm con marco aluminio","Montaje":"Sin curva de ensayo del conjunto"},
+ {"Código":"S-01","Caso":"IN-01","Elemento":"Cierre sanitario","Composición original":"Yeso-cartón 12,5 mm/cara + perfil 70 mm + lana mineral 50 mm","Montaje":"Fijaciones convencionales"},
+ {"Código":"IS-01","Caso":"IN-01","Elemento":"Descarga sanitaria","Composición original":"PVC DN110 y descarga WC 6 L","Montaje":"Abrazaderas rígidas, escenario docente"},
+ {"Código":"T-01","Caso":"TR","Elemento":"Piso estar","Composición original":"Cerámica adherida","Montaje":"Alfa por banda a documentar"},
+ {"Código":"T-02","Caso":"TR","Elemento":"Muros y cielo","Composición original":"Pintura sobre superficies rígidas","Montaje":"Alfa por banda a documentar"},
+ {"Código":"T-03","Caso":"TR","Elemento":"Piso dormitorio","Composición original":"Laminado sin aporte resiliente acreditado","Montaje":"Alfa por banda a documentar"},
 ]
-GEOMETRY_ASSUMPTIONS = [("AG-01", "Altura interior útil", "2,50 m"), ("AG-02", "Altura piso a piso", "2,70 m"), ("AG-03", "Losa estructural inicial", "160 mm"), ("AG-04", "Acabados de entrepiso", "40 mm"), ("AG-05", "Muro separador de hormigón", "180 mm"), ("AG-06", "Fachada opaca inicial", "150 mm"), ("AG-07", "Densidad hormigón", "2.400 kg/m³"), ("VF-01", "Ventana referencial del estar", "1,80 × 1,20 m"), ("VF-02", "Ventana referencial del dormitorio", "1,20 × 1,20 m")]
-ACOUSTIC_ASSUMPTIONS = [("AC-01", "TR estar", "0,60 s"), ("AC-02", "TR dormitorio", "0,50 s"), ("AC-03", "Lden exterior supuesto", "60 dB"), ("AC-04", "Descarga sanitaria", "WC 6 L; 1 evento sin simultaneidad"), ("AC-05", "Lw en octavas 63–4000 Hz", "70 / 68 / 66 / 64 / 61 / 58 / 55 dB; espectro ficticio")]
+GEOMETRY_ASSUMPTIONS = [
+ ("DOC-01", "Planta tipo", "Parte 1 · PDF página 8 · verificar cotas del caso seleccionado"),
+ ("DOC-02", "Corte general", "Parte 1 · PDF página 12 · verificar altura libre del recinto"),
+ ("DOC-03", "Elevaciones", "Parte 2 · cotejar dimensiones de vanos"),
+]
+ACOUSTIC_ASSUMPTIONS = [
+ ("AC-01", "Reverberación", "Se calcula por banda en SONARA: NO se entrega TR"),
+ ("AC-02", "Exposición exterior de ejercicio", "Lden 60 dB, supuesto docente no medido"),
+ ("AC-03", "Descarga", "WC 6 L, un evento"),
+ ("AC-04", "Lw octavas 63-4000 Hz", "70 / 68 / 66 / 64 / 61 / 58 / 55 dB (ficticio)"),
+]
 STANDARD = "ISO/TS 19488:2021"
 CASES = {
     "AI-01": ("Aislamiento aéreo entre viviendas", "DₙT,w y adaptación espectral aplicable", "Muro separador y flancos"),
@@ -48,17 +60,17 @@ STAGES = [
  ("Informe integrador evaluado", "Entrega técnica de setenta puntos para revisión docente."),
 ]
 TEACHER = {
- 0: "Distinguir objetivo Clase B de certificación real: el laboratorio evalúa cuatro casos representativos, no declara automáticamente clase global del edificio.",
- 1: "Revisar que el alumno determine en ISO/TS 19488:2021 el descriptor, umbral Clase B, unidades, sentido de comparación, tabla/nota y alcance de cada familia. No entregar de antemano los valores de la pauta; distinguir una condición que dependa de exposición exterior o régimen de operación. Después verificar edificio A1, B-308, D-309 y B-408 y su documentación.",
- 2: "La ficha de referencia se resuelve únicamente con cotas verificables: S separador = longitud efectiva × altura; V = superficie útil del recinto × altura. Identificar cara útil de muro, superficies vidriadas y paños opacos. No confundir superficie de tipología completa con superficie de recinto. Registrar plano/cota y tolerancia para cada valor.",
- 3: "La ficha original docente define M-01 (HA180), L-01 (HA160 + mortero30 + cerámica10 rígidos), F-01 (HA150), V-01 (DVH4/12/4 con aluminio), S-01 (yeso-cartón 12,5 mm/cara + perfil70 + lana50) e IS-01 (PVC DN110 con abrazaderas rígidas). Todos son supuestos docentes, NO datos atribuidos al proyecto. Revisar que se caractericen los 6 códigos, masas y curvas espectrales sin suponer certificados o mejoras en la condición inicial; considerar vías laterales, sellos, montaje y TR.",
- 4: "Exigir DₙT,w y adaptación pertinente con flancos y misma geometría en original/variante; Rw del elemento aislado no sustituye aislamiento entre recintos.",
- 5: "Conservar condición original de entrepiso; justificar s′ o ΔL ensayado, masa de sobrelosa, continuidad perimetral y vías indirectas. Revisar L′ₙT,w y el descriptor complementario aplicable.",
- 6: "Pedir superficies opaca/vidriada y prestaciones del conjunto ventana-marco-sello; no atribuir a vidrio aislado el desempeño de fachada terminada. Exposición exterior debe ser trazable o hipótesis.",
- 7: "Para instalación sanitaria intermitente usar descriptor temporal apropiado; no declarar conformidad del total si solo modelaron transmisión aérea. Documentar montaje y vía estructural.",
- 8: "La clasificación se realiza por el alumno consultando la tabla/nota exacta de ISO/TS 19488:2021. Sin umbral citado no se acredita Clase B; no inventar un resultado normativo.",
- 9: "Cuestionario cerrado, diez ítems × 3 puntos, un intento; respuestas y puntaje quedan en responses para Evaluaciones entregadas.",
- 10: "Rúbrica de 70 puntos; revisar documentación, geometría, sistemas y los cuatro modelos SONARA, clasificación y limitaciones. El docente asigna el puntaje práctico.",
+ 0: "Caso fijo CH-A-P05-S03; corroborar en el plano original Torre A, hilera sur tercera vivienda desde poniente, piso 5; la marca destaca el sector, no reemplaza la geometría del dibujo.",
+ 1: "Verificar que el alumno haya consultado los criterios de Clase B de ISO/TS 19488:2021 para aislamiento aéreo, impacto, fachada e instalaciones, con descriptor, valor, dirección y referencia; no mostrar solución.",
+ 2: "Comprobar áreas, volúmenes, recintos contiguos, proyección del piso superior, altura efectiva, vanos y trazabilidad por lámina/cota. NO atribuir al sector cotas de otros departamentos ni completar dimensiones sin verificar.",
+ 3: "Materialidad original académica M-01 L-01 F-01 V-01 S-01 IS-01 T-01 T-02 T-03. Revisar superficies interiores, absorciones por banda y cálculo del TR en SONARA: no adoptar TR prefijado.",
+ 4: "Exigir DnT,w y adaptación pertinente para la transmisión entre viviendas, incluyendo flancos, y una variante coherente.",
+ 5: "Revisar LnT,w y términos aplicables de impacto, piso original y variante resiliente, incluyendo vías laterales.",
+ 6: "Corroborar paños de fachada, áreas de vanos, curva del sistema ventana-marco-sello y exposición declarada.",
+ 7: "Escenario sanitario académico: revisar Lw, condiciones de operación y vía aérea/estructural; no afirmar conformidad si la vía estructural queda sin modelar.",
+ 8: "Comparar con los requisitos reales de Clase B determinados por el alumno; no automatizar la certificación global.",
+ 9: "Cuestionario oficial de 10 preguntas × 3 puntos; verificar persistencia de entrega.",
+ 10: "Rúbrica oficial 70 puntos; revisión docente del expediente, trazabilidad, SONARA y limitaciones.",
 }
 RUBRIC = [
  ("Expediente y trazabilidad",8),("Ficha geométrica",12),
@@ -67,7 +79,7 @@ RUBRIC = [
  ("Diseño de instalaciones",8),("Clasificación, informe y limitaciones",6),
 ]
 QUIZ = [
- ("La superficie de la vivienda tipo A sirve para obtener directamente el volumen de un dormitorio.",False,"Se necesita la superficie del dormitorio y su altura."),
+ ("La superficie de la vivienda de Chimbote sirve para obtener directamente el volumen de un dormitorio.",False,"Se necesita la superficie del dormitorio y su altura."),
  ("DₙT,w entre viviendas se obtiene simplemente usando el Rw de un muro aislado.",False,"Se consideran recintos y vías laterales."),
  ("Es válido declarar una dimensión leída del plano sin identificar lámina o cota.",False,"Toda dimensión debe ser trazable."),
  ("El alumno puede reemplazar un dato desconocido por una hipótesis explícita justificada.",True,"Las hipótesis se identifican y se evalúa su sensibilidad."),
@@ -90,55 +102,41 @@ def _readonly():
     return bool(st.session_state.get("projection_mode"))
 
 def _student_document_pack():
-    """Build the student ZIP locally, including the selected original A1 plans.
-
-    Source PDFs are kept outside this Python module as deployable binary assets.
-    No Supabase Storage/API request is needed to download the documents.
-    """
+    """Create a single download with the original Chimbote PDF and student annexes."""
     root = Path(__file__).resolve().parent.parent
-    filenames = (
-        "curso5_lab2_anexo_complementario.md",
-        "curso5_lab2_especificaciones_originales.md",
-    )
-    plan_name = "Barrio_Balmaceda_A1_Ubicacion_Piso1_Planta_Tipo_B308.pdf"
-    plan_path = root / "assets" / "curso5_lab2" / plan_name
-    contents = {}
-    for filename in filenames:
-        path = root / "docs" / filename
-        if not path.is_file():
-            return None, f"Falta el documento {filename}"
-        contents[filename] = path.read_bytes()
-    if not plan_path.is_file():
-        return None, "Falta incorporar el PDF arquitectónico original al directorio assets/curso5_lab2."
-    if plan_path.stat().st_size < 1000:
-        return None, "El archivo de planos no parece válido."
-    buffer = BytesIO()
-    with ZipFile(buffer, "w", compression=ZIP_DEFLATED) as bundle:
-        bundle.writestr("LEEME_PRIMERO.txt",
-            "CURSO 5 - LABORATORIO 2 - BARRIO BALMACEDA B-308\\n"
-            "Incluye tres laminas originales del Edificio A1: contexto, primer piso\\n"
-            "y planta tipo de pisos 2 a 8 (lamina 35.6.2).\\n"
-            "Los datos de geometria y materialidad complementarios son\\n"
-            "supuestos docentes y NO especificaciones certificadas del proyecto.\\n"
-            "La pauta numerica resuelta y las respuestas de ISO no se incluyen.\\n")
-        bundle.write(plan_path, arcname=f"01_Planos_arquitectura/{plan_name}")
-        for filename, content in contents.items():
-            bundle.writestr("02_Anexos/" + filename, content)
-    return buffer.getvalue(), None
+    folder = root / "assets" / "curso5_lab2"
+    plan = folder / "Chimbote_Torre_A_CH-A-P05-S03_planos.pdf"
+    if not plan.is_file():
+        return None, "Falta publicar el PDF original de planos resaltados en assets/curso5_lab2."
+    docs = [
+        root / "docs" / "curso5_lab2_chimbote_ficha_geometrica_alumno.md",
+        root / "docs" / "curso5_lab2_chimbote_especificaciones_alumno.md",
+    ]
+    for doc in docs:
+        if not doc.is_file():
+            return None, "Falta el documento " + doc.name
+    output = BytesIO()
+    with ZipFile(output, "w", compression=ZIP_DEFLATED) as bundle:
+        bundle.write(plan, arcname="01_Planos/Chimbote_Torre_A_CH-A-P05-S03_planos.pdf")
+        for doc in docs:
+            bundle.write(doc, arcname="02_Anexos/" + doc.name)
+        bundle.writestr("LEEME.txt",
+            "Curso 5 Laboratorio 2 - Edificio Chimbote - Torre A - CH-A-P05-S03\\n"
+            "Tercer departamento desde poniente de hilera sur, piso 5.\\n"
+            "La materialidad indicada es academica. El alumno calcula geometria y reverberacion en SONARA.\\n"
+            "El paquete no incluye la pauta docente ni requisitos normativos resueltos.\\n")
+    return output.getvalue(), None
 
 
 def _header(stage):
     title,objective=STAGES[stage]
     header(f"ETAPA {stage} · LABORATORIO 2",title,objective,show_overview=False,duration_minutes=25 if stage<9 else 40)
     st.caption(f"Curso 5 · {PROJECT} · {SITE} · Objetivo Clase B · {STANDARD}")
-    if stage in (2,3,4,5,6,7):
-        with st.expander("Datos complementarios oficiales del ejercicio · NO son cotas del proyecto"):
-            st.markdown("**Geometría supuesta:**")
-            st.table([{"Código":code,"Parámetro":name,"Valor docente":value} for code,name,value in GEOMETRY_ASSUMPTIONS])
-            if stage in (3,4,5,6,7):
-                st.markdown("**Condiciones acústicas y operación:**")
-                st.table([{"Código":code,"Condición":name,"Valor":value} for code,name,value in ACOUSTIC_ASSUMPTIONS])
-            st.caption("Los valores proceden del anexo didáctico. El alumno calcula superficies y volúmenes por sí mismo.")
+    if stage in (1,2,3):
+        st.caption("Fuentes del ejercicio: planta tipo original, cortes, elevaciones y ficha académica. Toda cota debe provenir del dibujo o documentarse como hipótesis.")
+    if stage in (2,3):
+        st.link_button("Ver ficha geométrica del alumno", ANNEX_URL)
+        st.link_button("Ver materialidad original docente", MATERIALS_URL)
     if stage in range(4,9):
         st.link_button("Abrir SONARA · cálculos acústicos",SONARA_URL, use_container_width=False)
 
@@ -181,28 +179,22 @@ def _plain(stage,lab,saved,section,fields):
 
 def _stage0(lab,saved):
     _header(0)
-    st.markdown("### Encargo profesional")
-    st.markdown("Se analizará el departamento B-308 del tercer piso del edificio A1, Lote 1, del proyecto real **Barrio Balmaceda**. El objetivo docente es diseñar soluciones que alcancen los **requisitos de Clase B** en cuatro familias acústicas. La geometría se extraerá de las láminas, no se entregará resuelta al estudiante.")
-    st.warning("Se estudian cuatro situaciones; no se declara automáticamente la clasificación global del edificio ni se sustituye la medición en obra.")
-    st.markdown("**Secuencia:** expediente → ficha geométrica → sistemas → SONARA (aéreo, impacto, fachada, instalaciones) → matriz ISO → evaluación.")
-    st.markdown("### Documentación para el desarrollo del laboratorio")
-    st.caption("Un único ZIP con **planos originales seleccionados del Edificio A1**, anexo de cotas y materialidad original del ejercicio. La pauta docente se mantiene excluida.")
-    pack, package_error=_student_document_pack()
+    st.markdown("### Encargo profesional · Edificio Chimbote")
+    st.markdown("Trabajaremos con la **Torre A, piso 5, tercer departamento desde poniente en la hilera sur**, marcado sobre la planta tipo con el código académico **CH-A-P05-S03**. Identifica los recintos reales en los planos y diseña soluciones para las cuatro familias de Clase B ISO/TS 19488:2021.")
+    st.warning("La marca de color es orientativa para localizar la unidad. No representa un área medida. Los cálculos, superficies, volúmenes y TR serán determinados por el alumno.")
+    st.markdown("**Secuencia:** requisitos Clase B → geometría → materialidad y TR en SONARA → diseño aéreo, impacto, fachada e instalaciones → verificación → evaluación.")
+    st.markdown("### Descarga única de documentación")
+    st.caption("Un ZIP con planta tipo original (vivienda resaltada), cortes, elevaciones y anexos técnicos académicos. La pauta docente queda excluida.")
+    pack, issue = _student_document_pack()
     if pack is None:
-        st.warning(package_error + " El paquete completo se habilitará cuando el PDF esté publicado en la rama.")
+        st.warning(issue + " Hasta incorporar el PDF binario a la rama, el botón de descarga completo está deshabilitado.")
     else:
-        st.download_button(
-            "📥 Descargar documentación del alumno (.zip)",
-            data=pack,
-            file_name="Curso5_Lab2_B308_Documentacion_Alumno.zip",
-            mime="application/zip",
-            type="primary",
-            use_container_width=True,
-            key="c5l2_docs_download",
-        )
-    st.caption("Planos seleccionados: láminas 35.5.1, 35.6.1 y 35.6.2 del archivo 3.1.1 Lote 1 – DS19, sin planos de instalaciones de faena ni de otros lotes.")
+        st.download_button("📥 Descargar planos y documentación del alumno (.zip)",data=pack,
+            file_name="Curso5_Lab2_Chimbote_CH-A-P05-S03_Alumno.zip",mime="application/zip",
+            type="primary",use_container_width=True,key="c5l2_docs_download")
     if st.button("Registrar lectura del encargo",key="c5l2_s0"):
         _save(lab,saved,0,"c5l2_s0",{"acknowledged":True,"target":"B","scope":SITE})
+
 
 def _stage1(lab,saved):
     _header(1)
@@ -227,11 +219,11 @@ def _stage1(lab,saved):
                 reference=st.text_input("Tabla, fila, nota y apartado ISO",value=previous_row.get("reference",""),key=f"c5l2_norm_{code}_reference")
             condition=st.text_area("Ámbito de aplicación, condiciones y justificación técnica",value=previous_row.get("condition",""),height=82,key=f"c5l2_norm_{code}_condition")
             fields[code]={"descriptor":descriptor,"limit":limit,"direction":direction,"reference":reference,"condition":condition}
-        st.markdown("### B · Reconoce el edificio y la vivienda")
+        st.markdown("### B · Reconoce Torre A y la vivienda CH-A-P05-S03")
         descriptions=[
-            ("location","Edificio, piso y vivienda seleccionados","B-308 y sus identificadores en planta."),
+            ("location","Edificio, piso y vivienda seleccionados","Torre A, piso 5, tercera vivienda desde poniente en hilera sur (CH-A-P05-S03)."),
             ("documents","Documentación consultada","Archivo, lámina, revisión y cotas relevantes."),
-            ("adjacencies","Relaciones horizontales, verticales y fachada","Comprueba qué recintos son efectivamente contiguos."),
+            ("adjacencies","Relaciones horizontales, verticales y fachada","Identifica vivienda al oriente y vivienda superpuesta en piso 6. Verifica recintos realmente contiguos."),
             ("limitations","Datos faltantes y método para resolverlos","Distingue documentación del proyecto y supuestos del anexo."),
         ]
         documentation={}
@@ -258,7 +250,7 @@ def _stage1(lab,saved):
 def _stage2(lab,saved):
     _header(2)
     st.markdown("### Construye la ficha geométrica desde los planos")
-    st.info("No se proporcionan medidas resueltas: identifica cada recinto, mide cotas y anota la lámina. Utiliza los valores AG/VF del anexo únicamente donde no existan cotas verificables. No uses la superficie total de la vivienda como si fuera el área de un recinto.")
+    st.info("Determina las superficies, alturas, volúmenes y separaciones desde la planta tipo, el corte y las elevaciones de Chimbote. No copies cotas de otro departamento; marca como pendiente cualquier dimensión no verificable.")
     old=saved.get("c5l2_s2") or {}
     rec_cols=["Recinto","Piso / unidad","Largo (m)","Ancho (m)","Altura (m)","Área (m²)","Volumen (m³)","Plano / cota"]
     sep_cols=["Caso","Recinto emisor","Recinto receptor","Elemento","Longitud (m)","Altura (m)","Superficie (m²)","Plano / cota"]
@@ -287,9 +279,9 @@ def _stage3(lab,saved):
     cols=["Código base","Caso","Material / composición adoptada","Geometría desde Etapa 2","Dato acústico o curva requerida","Fuente técnica o hipótesis","Uniones, flancos y montaje"]
     old=saved.get("c5l2_s3") or {}
     rows=_table(old.get("systems") or [],cols,"c5l2_systems")
-    st.markdown("#### C · Condiciones comunes y trazabilidad")
-    assumptions=st.text_area("Registra TR, densidades, Lden, descarga sanitaria, curvas de referencia y límites de validez",value=old.get("assumptions",""),height=140)
-    st.markdown("#### D · Qué tendrá que diseñarse después")
+    st.markdown("#### C · Reverberación calculada en SONARA")\n    st.info("Determina volumen y superficies del recinto desde la geometría de Etapa 2, asigna absorción por bandas a pisos, cielo, muros y ventanas, y calcula TR en SONARA. No se entrega un TR fijo.")\n    tr_details=st.text_area("Resultados TR de SONARA por banda, superficies de absorción, fuentes alfa y método",value=old.get("tr_details",""),height=130)\n    st.markdown("#### D · Condiciones comunes y trazabilidad")
+    assumptions=st.text_area("Registra densidades, Lden supuesto, descarga sanitaria, curvas de referencia y límites de validez",value=old.get("assumptions",""),height=140)
+    st.markdown("#### E · Qué tendrá que diseñarse después")
     st.markdown("En las Etapas **4–7** debes proponer tus variantes: refuerzo de separador, pavimento resiliente, solución de fachada y control de instalación. Conserva el **mismo modelo original** al comparar con la variante.")
     if st.button("Guardar caracterización original",type="primary",key="c5l2_save_systems"):
         codes={str(x.get("Código base","")).strip().upper() for x in rows if isinstance(x,dict)}
@@ -297,10 +289,10 @@ def _stage3(lab,saved):
         missing=sorted(expected-codes)
         if missing:
             st.warning("Completa la caracterización para los seis componentes: "+", ".join(missing)+".")
-        elif len(assumptions.strip())<40:
+        elif len(tr_details.strip())<40:\n            st.warning("Documenta el cálculo del TR realizado en SONARA, sus bandas y las absorciones utilizadas.")\n        elif len(assumptions.strip())<40:
             st.warning("Justifica la procedencia de los parámetros acústicos, condiciones y limitaciones (mínimo 40 caracteres).")
         else:
-            _save(lab,saved,3,"c5l2_s3",{"systems":rows,"assumptions":assumptions,"base_version":"ficha_original_v1"})
+            _save(lab,saved,3,"c5l2_s3",{"systems":rows,"assumptions":assumptions,"tr_details":tr_details,"base_version":"chimbote_original_v1"})
 
 
 def _model(stage,lab,saved,case):
@@ -490,23 +482,10 @@ def _teacher(stage):
         with st.expander(f"Pauta docente · Etapa {stage}",expanded=False):
             st.write(TEACHER[stage])
             if stage==2:
-                st.info("La planta tipo confirma B-308 y la vivienda colindante D-309, pero no todas las cotas interiores. Los resultados que siguen son una **idealización docente** con dimensiones complementarias GC; NO son medidas levantadas del proyecto.")
-                st.markdown("#### Pauta geométrica numérica resuelta")
-                st.table([
-                    {"Ítem": "Estar B-308 · superficie", "Cálculo": "3,80 × 5,30", "Resultado": "20,14 m²"},
-                    {"Ítem": "Estar B-308 · volumen", "Cálculo": "20,14 × 2,50", "Resultado": "50,35 m³"},
-                    {"Ítem": "Dormitorio D-309 · superficie", "Cálculo": "2,70 × 2,90", "Resultado": "7,83 m²"},
-                    {"Ítem": "Dormitorio D-309 · volumen", "Cálculo": "7,83 × 2,50", "Resultado": "19,58 m³"},
-                    {"Ítem": "Muro dormitorio D-309 → estar B-308", "Cálculo": "2,90 × 2,50", "Resultado": "7,25 m²"},
-                    {"Ítem": "Entrepiso estar B-408 → estar B-308", "Cálculo": "3,80 × 5,30", "Resultado": "20,14 m²"},
-                    {"Ítem": "Fachada estar B-308 · bruta", "Cálculo": "3,80 × 2,50", "Resultado": "9,50 m²"},
-                    {"Ítem": "Ventana estar · VF-01", "Cálculo": "1,80 × 1,20", "Resultado": "2,16 m²"},
-                    {"Ítem": "Fachada opaca estar", "Cálculo": "9,50 − 2,16", "Resultado": "7,34 m²"},
-                    {"Ítem": "Cierre sanitario D-309 → B-308", "Cálculo": "1,45 × 2,50", "Resultado": "3,63 m²"},
-                ])
-                st.caption("Pauta docente completa: docs/curso5_lab2_pauta_geometrica_docente.md. No utilizar la superficie total 52,06 m² de la tipología como superficie de un recinto.")
-            if stage in range(4,9):st.caption("Revisar el caso calculado en SONARA y el criterio ISO exacto, sin atribuir al software una certificación.")
-
+                st.warning("No hay ficha numérica cerrada para CH-A-P05-S03. Las cotas/áreas antiguas de CH-A-P05-S03 NO son válidas para este proyecto.")
+                st.link_button("Auditoría geométrica de Chimbote (solo docente)", "https://github.com/maaraos-coder/lab-aereo-clase-1-refactor/blob/curso3-lab2-etapas-3-10/docs/curso5_lab2_chimbote_pauta_docente.md")
+            if stage==3:
+                st.info("Comprobar que el alumno determine TR por bandas en SONARA; no introducir valores fijos 0,5/0,6 s.")
 def run_stage(stage,lab,saved,runtime):
     _bind(runtime)
     stage=max(0,min(10,int(stage)))
