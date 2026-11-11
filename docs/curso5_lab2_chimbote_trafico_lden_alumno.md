@@ -24,9 +24,24 @@ Los siguientes datos son **inventados para enseñanza, no aforos reales**. Cada 
 - **Altura y distancia:** NO proporcionadas resueltas. Deben determinarse del expediente o documentarse como hipótesis docente antes de comparar resultados.
 - Modelar el eje vial, geometría real, suelo, edificios, reflexiones, meteorología y alturas conforme al alcance del motor que se utilice.
 
-### C · Qué puede y qué no puede hacer la versión actual de NoiseMap
+### C · Alcance y procedimiento en la versión actual de NoiseMap
 
-La versión actual de `maaraos-coder/noisemap` permite calcular **la emisión espectral de fuente vial CNOSSOS-EU, sección 2.2**, mediante una biblioteca que incorpora las tablas europeas de 2021. También ofrece una **previsualización didáctica de niveles en receptor y mapa esquemático**, mediante dispersión geométrica libre. Esta previsualización **NO implementa la propagación normativa CNOSSOS-EU sección 2.5**, que requiere efecto de suelo, meteorología, edificios, difracción, reflexiones y una geometría vial real. La pestaña **Tránsito y Lden** permite asimismo introducir niveles de período provenientes de un motor normativo documentado y comprobar su combinación energética.
+La versión actual de `maaraos-coder/noisemap` implementa la **emisión espectral vial CNOSSOS-EU §2.2 para categorías 1, 2, 3, 4a y 4b**, con coeficientes por octavas y correcciones configurables mediante la biblioteca `phonometry`. La **propagación al receptor** utiliza un motor exterior **educativo basado en ISO 9613-2:2024**: incorpora geometría, efecto del suelo, absorción atmosférica, difracción y reflexiones especulares de primer orden, pero **no implementa CNOSSOS-EU §2.5 íntegra**. En consecuencia, el Lden de receptor se documenta como **estimación académica no normativa**.
+
+#### Procedimiento para la Etapa 6, dentro de NoiseMap
+
+1. Abre la **dirección oficial**: https://noisemap-akuzoft.vercel.app/ y revisa el plano del emplazamiento.
+2. Utiliza **Tráfico vial** para dibujar el eje de **Pasaje Chimbote** en el lado sur del edificio. Finaliza la vía siguiendo los controles de dibujo.
+3. Utiliza **Edificio** y marca el perímetro exterior en planta; pulsa **Cerrar edificio** y ajusta su altura. Si en la auditoría se lee «Dibuja el edificio», no hay un polígono de edificio activo: vuelve al mapa y créalo.
+4. Con **Receptor**, ubica el punto exterior a unos **0,1 m** de la fachada **sur** correspondiente al caso **CH-A-P05-S03**, en dirección a la calle; evita esquinas e interior del inmueble. Introduce la altura **sobre rasante del piso 5** según corte o hipótesis documentada.
+5. Selecciona la vía y configura categorías **1, 2, 3, 4a y 4b**, velocidades, tipo de pavimento, pendiente, sentidos y, cuando corresponda, el cruce. Los flujos del ejercicio son **supuestos**, no aforos.
+6. En **Lden de tránsito · tres períodos**, cambia los valores iniciales de NoiseMap por los flujos de día (12 h), tarde (4 h) y noche (8 h) establecidos en la ficha. Coloca **7 / 4 / 1 motos/h** en la categoría **4b** para día/tarde/noche y no en «Pesados». Los ciclomotores 4a solo se introducen si la hipótesis de tráfico los contempla.
+7. En **Auditoría del receptor en fachada**, elige el **edificio** y el **receptor** dibujados. La herramienta comprobará la orientación hacia la calle, la distancia receptor–fachada, la distancia fachada–calle y la altura.
+8. Pulsa **Calcular Lden en receptor**. Si NoiseMap señala que el receptor está dentro, detrás, demasiado lejos de la fachada o cerca de una esquina, corrige la geometría antes de volver a calcular.
+9. Revisa **Lday, Levening, Lnight y Lden**. El cálculo de incidencia ya **excluye la reflexión especular de la propia fachada**, de modo que **no se resta otro 3 dB**. Conserva la descripción de método académico.
+10. Usa **Exportar resultados JSON** y regresa a la **Etapa 6**. Importa el archivo en «Importar resultado desde NoiseMap», confirma la coincidencia de vía/edificio/receptor y pulsa «Importar niveles a la ficha de fachada». Completa la documentación geométrica y diseña el sistema de fachada en SONARA.
+
+**Nota sobre fuentes y receptores:** el dibujo del edificio es obligatorio **para la auditoría de incidencia en fachada** de este ejercicio, no para todos los cálculos posibles de NoiseMap. El edificio permite identificar qué pared corresponde al receptor para excluir **solo esa reflexión**, sin aplicar una corrección fija universal.
 
 **Los aforos permiten calcular la emisión CNOSSOS-EU por bandas, pero NO un Lden reglamentario de fachada sin propagación normativa.** Para declarar resultados de receptor **CNOSSOS-EU completos** debe utilizarse un motor de propagación 2.5 documentado y validado, como NoiseModelling; anotar motor, versión, entorno, fecha y detalle de la propagación. No reutilizar como Lden un mapa de nivel puntual estacionario calculado con el motor genérico de NoiseMap.
 
