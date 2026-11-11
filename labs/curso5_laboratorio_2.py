@@ -67,7 +67,7 @@ TEACHER = {
  3: "Materialidad original académica M-01 L-01 F-01 V-01 S-01 IS-01 T-01 T-02 T-03. Revisar superficies interiores, absorciones por banda y cálculo del TR en SONARA: no adoptar TR prefijado.",
  4: "Exigir DnT,w y adaptación pertinente para la transmisión entre viviendas, incluyendo flancos, y una variante coherente.",
  5: "Revisar LnT,w y términos aplicables de impacto, piso original y variante resiliente, incluyendo vías laterales.",
- 6: "Corroborar paños de fachada, áreas de vanos, curva del sistema ventana-marco-sello y exposición declarada.",
+ 6: "Verificar la secuencia NoiseMap: eje de Pasaje Chimbote, polígono de edificio, receptor exterior frente a fachada sur a altura de piso 5, auditoría geométrica válida, categorías 1/2/3/4a/4b, tres períodos y JSON trazable. No aplicar -3 dB al resultado incidente; evaluar límites del motor educativo antes de revisar paños, vanos, curva ventana-marco-sello y SONARA.",
  7: "Escenario sanitario académico: revisar Lw, condiciones de operación y vía aérea/estructural; no afirmar conformidad si la vía estructural queda sin modelar.",
  8: "Comparar con los requisitos reales de Clase B determinados por el alumno; no automatizar la certificación global.",
  9: "Cuestionario oficial de 10 preguntas × 3 puntos; verificar persistencia de entrega.",
@@ -338,8 +338,98 @@ def _stage6(lab,saved):
     _header(6)
     st.markdown("### FA-01 · Exposición al tránsito y diseño de fachada")
     st.info("Ubica el receptor exterior en la **fachada sur de CH-A-P05-S03**. La vía didáctica será **Pasaje Chimbote**, no Mirador Azul. Documenta la distancia y la altura del receptor desde los planos; la exposición exterior NO se fija de antemano.")
-    st.link_button("🌍 Abrir NoiseMap AKUZOFT · Tránsito y Lden", "https://noisemap-akuzoft.vercel.app/", help="Dibuja la vía, agrega un receptor exterior, selecciona Tráfico vial y calcula los tres períodos para exportar el JSON.")
-    st.warning("NoiseMap calcula la emisión vial CNOSSOS-EU (categorías 1–3) y obtiene Lday, Levening, Lnight y Lden mediante el **motor exterior educativo**. Este resultado **NO equivale a la propagación CNOSSOS-EU 2.5 completa**. Las motocicletas 4a/4b todavía no intervienen en el modelo; documenta esta limitación.")
+    st.link_button("🌍 Abrir NoiseMap · dirección oficial", "https://noisemap-akuzoft.vercel.app/",
+                   help="Abre la herramienta de mapa de ruido y continúa con el procedimiento de esta etapa.")
+    st.warning(
+        "NoiseMap obtiene la **emisión vial CNOSSOS-EU §2.2** por octavas para vehículos "
+        "**1, 2, 3, 4a y 4b**, pero la propagación hacia el receptor sigue usando el "
+        "**motor exterior educativo**, no el método reglamentario CNOSSOS-EU §2.5. "
+        "El Lden calculado se utiliza aquí como **estimación académica**, no como "
+        "evaluación reglamentaria de exposición."
+    )
+    st.markdown("#### Procedimiento guiado en NoiseMap · fachada y Lden")
+    st.caption(
+        "Realiza estos pasos dentro de NoiseMap. El dibujo del edificio es obligatorio "
+        "**solo para el cálculo de Lden incidente en fachada** de este ejercicio: "
+        "el motor necesita identificar la superficie receptora para excluir su reflexión."
+    )
+    with st.expander("Ver los 10 pasos: calle → edificio → receptor → Lden → JSON", expanded=True):
+        st.markdown("""
+**1. Prepara el escenario.** Abre la dirección oficial de **NoiseMap** con el botón anterior.
+Usa el mapa para localizar el emplazamiento del ejercicio y consulta los planos de la
+Torre A. Trabaja únicamente con el sector del caso **CH-A-P05-S03**, sin trasladar
+cotas de otras viviendas.
+
+**2. Dibuja el eje de la calle.** Selecciona la herramienta **Tráfico vial**
+y traza sobre el mapa los puntos centrales de **Pasaje Chimbote**, frente a la fachada
+sur. Finaliza el trazado siguiendo los controles de dibujo. La calle debe quedar
+**fuera del polígono de la vivienda** y en el lado correcto de la fachada.
+
+**3. Dibuja el edificio.** Selecciona la herramienta **Edificio**, marca los
+vértices exteriores de la planta del inmueble y utiliza **Cerrar edificio**.
+Ajusta su altura a partir del corte o de una **hipótesis explícita**.
+**No basta con dibujar la vivienda como un receptor**: el programa necesita
+el polígono del edificio para reconocer el muro expuesto. Si aparece
+«Dibuja el edificio» en el desplegable, significa que aún no existe
+un edificio activo en el mapa.
+
+**4. Ubica el receptor exterior.** Selecciona **Receptor** y crea un punto
+frente a la **fachada sur**, a aproximadamente **0,1 m por fuera de su plano**,
+sin introducirlo en el edificio. Evita colocarlo en una esquina.
+Establece la **altura sobre el terreno** correspondiente al piso 5, obtenida
+del corte; si no se puede verificar, formula y justifica una hipótesis.
+No confundas esa altura con el nivel absoluto del terreno.
+
+**5. Configura los vehículos.** Selecciona la **vía dibujada** y edita
+los caudales y velocidades por categoría. Para este ejercicio utiliza
+los datos **supuestos** de la sección «Escenario de tránsito supuesto».
+Relaciona livianos, medianos, pesados y motocicletas con las categorías
+1, 2, 3 y 4b. No reemplaces motocicletas por vehículos pesados.
+Los campos 4a (ciclomotores) y 4b (motocicletas) se introducen por separado.
+
+**6. Configura el entorno.** En la misma ficha de vía, revisa
+**superficie vial, pendiente y sentido de circulación**; indica el
+tipo de intersección únicamente si existe una intersección modelada
+y está correctamente ubicada. Registra los supuestos de suelo,
+temperatura, humedad y reflexiones utilizados para la propagación
+educativa. No inventes valores medidos.
+
+**7. Introduce los tres períodos.** En **Lden de tránsito · tres períodos**,
+escribe los **flujos horarios medios** por categoría para
+**Día (12 h), Tarde (4 h) y Noche (8 h)**. Los números que
+muestra NoiseMap al abrir no son aforos de Chimbote: **reemplázalos**
+por los supuestos que figuran en la ficha de esta etapa.
+
+**8. Selecciona la fachada del ejercicio.** En **Auditoría del receptor en
+fachada**, abre **Edificio de la vivienda estudiada** y selecciona el
+edificio que dibujaste. Luego, en **Receptor exterior para el cálculo
+Lden**, selecciona el punto creado en el paso 4.
+La aplicación debe comprobar la distancia
+**receptor–fachada**, la distancia **fachada–calle**,
+la altura del receptor y si ambos están del lado correcto del muro.
+
+**9. Ejecuta y revisa el cálculo.** Pulsa **Calcular Lden en receptor**.
+Si aparece una advertencia geométrica, **corrige el dibujo o el receptor**:
+no fuerces un valor. Revisa **Lday, Levening, Lnight y Lden**.
+NoiseMap estima el **sonido incidente** excluyendo la reflexión
+especular de la **propia fachada**; por ello **no restes 3 dB nuevamente**.
+El resultado conserva el alcance **académico/no normativo**.
+
+**10. Exporta y transfiere el resultado.** Pulsa **Exportar resultados JSON**
+en NoiseMap. Regresa a esta Etapa 6 y carga el archivo en
+**Importar resultado desde NoiseMap**. Comprueba que el JSON corresponde al
+**receptor, edificio y vía** elegidos; después pulsa
+**Importar niveles a la ficha de fachada**.
+Registra la distancia y altura obtenidas, el método y las limitaciones,
+y continúa el diseño de la envolvente en **SONARA**.
+        """)
+        st.info(
+            "**Punto de control antes de avanzar:** en NoiseMap deben existir "
+            "una **vía**, un **edificio activo** y un **receptor exterior** "
+            "frente a la calle, y la auditoría de fachada debe informar una "
+            "posición válida. La exportación JSON no sustituye los planos "
+            "ni las evidencias de SONARA."
+        )
     norm=((saved.get("c5l2_s1") or {}).get("criteria") or {}).get("FA-01") or {}
     if norm:
         st.caption(f"Tu criterio Clase B: {norm.get('descriptor','')} · {norm.get('direction','')} {norm.get('limit','')} · Referencia: {norm.get('reference','')}")
