@@ -279,7 +279,10 @@ def _stage3(lab,saved):
     cols=["Código base","Caso","Material / composición adoptada","Geometría desde Etapa 2","Dato acústico o curva requerida","Fuente técnica o hipótesis","Uniones, flancos y montaje"]
     old=saved.get("c5l2_s3") or {}
     rows=_table(old.get("systems") or [],cols,"c5l2_systems")
-    st.markdown("#### C · Reverberación calculada en SONARA")\n    st.info("Determina volumen y superficies del recinto desde la geometría de Etapa 2, asigna absorción por bandas a pisos, cielo, muros y ventanas, y calcula TR en SONARA. No se entrega un TR fijo.")\n    tr_details=st.text_area("Resultados TR de SONARA por banda, superficies de absorción, fuentes alfa y método",value=old.get("tr_details",""),height=130)\n    st.markdown("#### D · Condiciones comunes y trazabilidad")
+    st.markdown("#### C · Reverberación calculada en SONARA")
+    st.info("Determina volumen y superficies del recinto desde la geometría de Etapa 2, asigna absorción por bandas a pisos, cielo, muros y ventanas, y calcula TR en SONARA. No se entrega un TR fijo.")
+    tr_details=st.text_area("Resultados TR de SONARA por banda, superficies de absorción, fuentes alfa y método",value=old.get("tr_details",""),height=130)
+    st.markdown("#### D · Condiciones comunes y trazabilidad")
     assumptions=st.text_area("Registra densidades, Lden supuesto, descarga sanitaria, curvas de referencia y límites de validez",value=old.get("assumptions",""),height=140)
     st.markdown("#### E · Qué tendrá que diseñarse después")
     st.markdown("En las Etapas **4–7** debes proponer tus variantes: refuerzo de separador, pavimento resiliente, solución de fachada y control de instalación. Conserva el **mismo modelo original** al comparar con la variante.")
@@ -289,7 +292,9 @@ def _stage3(lab,saved):
         missing=sorted(expected-codes)
         if missing:
             st.warning("Completa la caracterización para los seis componentes: "+", ".join(missing)+".")
-        elif len(tr_details.strip())<40:\n            st.warning("Documenta el cálculo del TR realizado en SONARA, sus bandas y las absorciones utilizadas.")\n        elif len(assumptions.strip())<40:
+        elif len(tr_details.strip())<40:
+            st.warning("Documenta el cálculo del TR realizado en SONARA, sus bandas y las absorciones utilizadas.")
+        elif len(assumptions.strip())<40:
             st.warning("Justifica la procedencia de los parámetros acústicos, condiciones y limitaciones (mínimo 40 caracteres).")
         else:
             _save(lab,saved,3,"c5l2_s3",{"systems":rows,"assumptions":assumptions,"tr_details":tr_details,"base_version":"chimbote_original_v1"})
