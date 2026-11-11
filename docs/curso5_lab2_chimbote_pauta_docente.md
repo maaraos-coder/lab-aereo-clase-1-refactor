@@ -3,13 +3,13 @@
 
 **Proyecto verificado:** Edificio Chimbote, dos torres; Torre A de 16 pisos, Torre B de 10 pisos; planta tipo de Torre A, cortes y elevaciones en Anexo 3.
 
-**Caso provisional:** CH-A-P05-NC, piso 5 Torre A, hilera norte próxima al núcleo central. **No es departamento identificado por número oficial**. El expediente contiene rótulo de ESTAR con cota visible de 2,56 m y 2,35 m, pero **no se ha demostrado que corresponda a la geometría completa de ese recinto**. Algunas cotas de corte se leen como 2,34 m, **sin demostrar todavía el significado de altura libre hasta cielos terminados**.
+**Caso provisional:** CH-A-P05-S03, piso 5 Torre A, hilera sur, tercer departamento desde poniente. **No es departamento identificado por número oficial**. El expediente contiene rótulo de ESTAR con cota visible de 2,56 m y 2,35 m, pero **no se ha demostrado que corresponda a la geometría completa de ese recinto**. Algunas cotas de corte se leen como 2,34 m, **sin demostrar todavía el significado de altura libre hasta cielos terminados**.
 
 ### Tabla de auditoría de la ficha del alumno
 | Magnitud o relación | Evidencia disponible | Verificación docente necesaria | Estado |
 |---|---|---|---|
 | Torre A, planta tipo | Parte 1, PDF pág. 8 | Confirmar cartela y posición | Identificable |
-| Límites del departamento CH-A-P05-NC | Planta tipo | Comprobar muros medianeros y accesos; asociar vivienda completa | **Pendiente de cierre** |
+| Límites del departamento CH-A-P05-S03 | Planta tipo | Comprobar muros medianeros y accesos; asociar vivienda completa | **Pendiente de cierre** |
 | Estar y zonas abiertas | Cotas parciales 2,56 / 2,35 | Comprobar continuidad con cocina/comedor y delimitación interior | Parcial |
 | Altura libre útil | Parte 1, corte pág. 12 | Confirmar altura suelo terminado–cielo terminado con acabados | Parcial |
 | Medianero entre unidades | Planta | Seleccionar recintos efectivos y longitud; excluir tabiques internos | Pendiente |
@@ -33,3 +33,7 @@ Si las cotas no se leen en el expediente seleccionado, emitir un **plano complem
 La Etapa 1 evalúa criterio de Clase B (descriptores, condiciones, sentido y referencia ISO); Etapa 2 ficha geométrica del alumno; Etapa 3 materialidad y TR en SONARA; Etapas 4–7 predicciones/variantes; Etapa 8 comparación; Etapas 9/10: 30 + 70 puntos.
 
 **Uso exclusivo docente. No incluir en el ZIP del alumno.**
+
+
+## Selección definitiva del caso académico
+Se fija **Torre A, piso 5, hilera sur de la planta tipo, tercer departamento contando desde el extremo poniente**. Código identificador interno **CH-A-P05-S03**. Emisor aéreo: vivienda inmediatamente al oriente, sujeto a selección de recintos realmente contiguos; impacto: vivienda directamente superpuesta del piso 6; fachada: paño exterior sur del estar; instalaciones: recinto sanitario adyacente que resulte geométricamente acreditado o escenario explícitamente docente. Esta selección espacial sí es definitiva, pero las áreas y alturas no se rellenan sin leer cotas completas.
