@@ -37,3 +37,16 @@ La Etapa 1 evalúa criterio de Clase B (descriptores, condiciones, sentido y ref
 
 ## Selección definitiva del caso académico
 Se fija **Torre A, piso 5, hilera sur de la planta tipo, tercer departamento contando desde el extremo poniente**. Código identificador interno **CH-A-P05-S03**. Emisor aéreo: vivienda inmediatamente al oriente, sujeto a selección de recintos realmente contiguos; impacto: vivienda directamente superpuesta del piso 6; fachada: paño exterior sur del estar; instalaciones: recinto sanitario adyacente que resulte geométricamente acreditado o escenario explícitamente docente. Esta selección espacial sí es definitiva, pero las áreas y alturas no se rellenan sin leer cotas completas.
+
+## Inspección adicional de la vivienda fijada, lámina planta tipo
+
+En la unidad resaltada del lado sur de Torre A se pueden leer estas **cotas parciales**:
+- **Dormitorio:** etiquetas horizontales **2,60 m** y verticales **3,10 m**, directamente junto al símbolo de cama. Un recinto rectangular *idealizado* a partir de esas dos cotas tendría **8,06 m²**; comprobar si los paramentos internos y salientes alteran el área efectiva antes de aceptarla.
+- **Estar:** se aprecian **2,43 m** y una cota vertical próxima a **3,75 m**. No asumir directamente que toda el área rectangular **9,11 m²** es el estar, porque puede haber continuidad con otros espacios o un límite en el trazo.
+- **Cocina:** se observan cotas **2,45 m** y **3,00 m**; confirmar que estas corresponden al módulo útil del lado de la vivienda y no a la cocina adyacente por simetría.
+
+**No corresponde sumar automáticamente dormitorio + estar + cocina** para obtener el área total; la geometría es irregular y las circulaciones, baño, terraza y tabiques deben tratarse separadamente. Para SONARA, determinar el área real y el volumen del recinto receptor según sus límites acústicos (en espacios abiertos estar-cocina, justificar si se consideran un único recinto).
+
+**Fuentes:** `3.1 Planos de Arquitectura (Parte 1).pdf`, pág. 8 (planta tipo original). El realce amarillo y borde rojo son auxiliares, y no se usan para medir.
+
+**No cerrados aún:** superficie total de recinto en planta irregular, altura libre a cielo terminado, ancho/alto exactos de vano del estar, geometría del shaft sanitario y uniones flanqueantes. Estos datos necesitan cotejo del original/cortes o suplemento técnico académico específico.
