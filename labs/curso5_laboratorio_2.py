@@ -136,7 +136,7 @@ def _header(stage):
         st.caption("Fuentes del ejercicio: planta tipo original, cortes, elevaciones y ficha académica. Toda cota debe provenir del dibujo o documentarse como hipótesis.")
     if stage in (2,3):
         st.link_button("Ver ficha geométrica del alumno", ANNEX_URL)
-        st.link_button("Ver materialidad original docente", MATERIALS_URL)
+        st.link_button("Consultar materialidad original del ejercicio", MATERIALS_URL)
     if stage in range(4,9):
         st.link_button("Abrir SONARA · cálculos acústicos",SONARA_URL, use_container_width=False)
 
@@ -291,7 +291,7 @@ def _stage3(lab,saved):
         expected={entry["Código"] for entry in BASE_CONSTRUCTION}
         missing=sorted(expected-codes)
         if missing:
-            st.warning("Completa la caracterización para los seis componentes: "+", ".join(missing)+".")
+            st.warning("Completa la caracterización para los nueve componentes: "+", ".join(missing)+".")
         elif len(tr_details.strip())<40:
             st.warning("Documenta el cálculo del TR realizado en SONARA, sus bandas y las absorciones utilizadas.")
         elif len(assumptions.strip())<40:
@@ -487,7 +487,7 @@ def _teacher(stage):
         with st.expander(f"Pauta docente · Etapa {stage}",expanded=False):
             st.write(TEACHER[stage])
             if stage==2:
-                st.warning("No hay ficha numérica cerrada para CH-A-P05-S03. Las cotas/áreas antiguas de CH-A-P05-S03 NO son válidas para este proyecto.")
+                st.warning("No hay ficha numérica cerrada para CH-A-P05-S03. Las cotas/áreas anteriores de Barrio Balmaceda NO son válidas para este proyecto.")
                 st.link_button("Auditoría geométrica de Chimbote (solo docente)", "https://github.com/maaraos-coder/lab-aereo-clase-1-refactor/blob/curso3-lab2-etapas-3-10/docs/curso5_lab2_chimbote_pauta_docente.md")
             if stage==3:
                 st.info("Comprobar que el alumno determine TR por bandas en SONARA; no introducir valores fijos 0,5/0,6 s.")
