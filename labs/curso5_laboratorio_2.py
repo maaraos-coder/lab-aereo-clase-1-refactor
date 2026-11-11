@@ -456,16 +456,46 @@ y continúa el diseño de la envolvente en **SONARA**.
         st.warning("El archivo describe: "+source_method+
                    ". La propagación educativa de NoiseMap NO corresponde a CNOSSOS-EU 2.5 completo.")
         if st.button("Importar niveles a la ficha de fachada",key="c5l2_apply_noise_result"):
+            imported_audit=imported.get("facade_geometry_audit") or {}
+            if imported.get("incident_sound") is not True or not imported_audit.get("valid_for_incident_facade_demo"):
+                st.error("La exportación debe corresponder a Lden incidente con auditoría de fachada válida; vuelve a calcular en NoiseMap.")
+                st.stop()
             for key,value in imported["receiver_period_levels_dba"].items():
                 if key in ("day","evening","night") and value is not None:
                     st.session_state[f"c5l2_ext_{key}"]=str(round(float(value),2))
-            imported_geometry=imported.get("geometry") or {}
+            imported_geometry=imported.get("facade_geometry_audit") or imported.get("geometry") or {}
             imported_label="Importación NoiseMap: "+source_method
             st.session_state["c5l2_imported_noise_provenance"]=imported_label
             st.session_state["c5l2_imported_noise_geom"]=imported_geometry
+            st.session_state["c5l2_imported_noise_source"]={
+                "road":imported.get("road_name",""),
+                "building":imported.get("facade_building_name",""),
+                "receiver":imported.get("receiver_name",""),
+                "incident_sound":imported.get("incident_sound"),
+                "normative":imported.get("normative"),
+            }
             st.rerun()
     if st.session_state.get("c5l2_imported_noise_provenance"):
         st.info("Origen de niveles importados: "+st.session_state["c5l2_imported_noise_provenance"])
+        source=st.session_state.get("c5l2_imported_noise_source") or {}
+        geometry=st.session_state.get("c5l2_imported_noise_geom") or {}
+        if source.get("road") or source.get("building") or source.get("receiver"):
+            st.caption(
+                "Modelo NoiseMap importado · Vía: "+str(source.get("road") or "sin especificar")+
+                " · Edificio: "+str(source.get("building") or "sin especificar")+
+                " · Receptor: "+str(source.get("receiver") or "sin especificar")
+            )
+        if "receiver_to_facade_m" in geometry:
+            st.caption(
+                "Auditoría importada · receptor–fachada: "+
+                str(geometry["receiver_to_facade_m"])+" m · fachada–calle: "+
+                str(geometry.get("facade_to_road_m","sin dato"))+" m · altura: "+
+                str(geometry.get("receiver_height_m","sin dato"))+" m."
+            )
+            if not geometry.get("valid_for_incident_facade_demo",False):
+                st.warning("La auditoría importada no validó la ubicación de fachada. Corrige el escenario en NoiseMap.")
+        if source.get("incident_sound") is not True:
+            st.warning("El JSON no declara cálculo incidente en fachada; verifica el método antes de utilizar los niveles.")
     default_flows={"Día":{"Livianos":80,"Pesados medianos":3,"Pesados":1,"Motocicletas":7},
                    "Tarde":{"Livianos":45,"Pesados medianos":1,"Pesados":0,"Motocicletas":4},
                    "Noche":{"Livianos":10,"Pesados medianos":0,"Pesados":0,"Motocicletas":1}}
