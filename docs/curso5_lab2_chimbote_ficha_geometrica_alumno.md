@@ -1,7 +1,7 @@
 # Curso 5 · Laboratorio 2 · Ficha geométrica del alumno
-**Edificio Chimbote · Torre A · Piso 5 · sector candidato CH-A-P05-NC**
+**Edificio Chimbote · Torre A · Piso 5 · tercer departamento desde poniente en la hilera sur, código CH-A-P05-S03**
 
-**No se entregan superficies ni volúmenes resueltos**. Se extraen de la planta, corte y elevaciones del proyecto. El identificador CH-A-P05-NC es **académico provisional**, no numeración oficial del departamento.
+**No se entregan superficies ni volúmenes resueltos**. Se extraen de la planta, corte y elevaciones del proyecto. El identificador CH-A-P05-S03 es **académico provisional**, no numeración oficial del departamento.
 
 ### Antecedentes documentales
 - Planta tipo: `3.1 Planos de Arquitectura (Parte 1).pdf`, **página 8/12**, escala gráfica indicada **1:125** (verificar cartela).
@@ -10,7 +10,7 @@
 - Documentación descriptiva: `400 A. Descripción del proyecto o actividad`, especialmente ubicación por torre y pisos.
 
 ### 1. Identificación espacial
-Localiza la **Torre A**, el recinto **ESTAR de la hilera norte junto al núcleo central**, cuyas cotas parciales legibles son **2,56 m × 2,35 m**. **No supongas que representan el estar completo**. Delimita por líneas de división de propiedad los límites de la vivienda, el dormitorio y el área de estar-comedor-cocina, sus colindantes y el recinto del piso superior.
+Localiza la **Torre A**, el recinto **ESTAR del tercer departamento desde poniente en la hilera sur**, cuyas cotas parciales legibles son **2,56 m × 2,35 m**. **No supongas que representan el estar completo**. Delimita por líneas de división de propiedad los límites de la vivienda, el dormitorio y el área de estar-comedor-cocina, sus colindantes y el recinto del piso superior.
 
 ### 2. Tabla de geometría a completar
 | Caso | Emisor | Receptor | Cotas y lámina | Altura útil (m) | Área útil receptor (m²) | Volumen receptor (m³) | Elemento común (m²) | Uniones |
