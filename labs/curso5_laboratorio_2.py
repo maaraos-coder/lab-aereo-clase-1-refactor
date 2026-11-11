@@ -113,6 +113,7 @@ def _student_document_pack():
         root / "docs" / "curso5_lab2_chimbote_ficha_geometrica_alumno.md",
         root / "docs" / "curso5_lab2_chimbote_especificaciones_alumno.md",
         root / "docs" / "curso5_lab2_chimbote_suplemento_cotas_alumno.md",
+        root / "docs" / "curso5_lab2_chimbote_trafico_lden_alumno.md",
     ]
     for doc in docs:
         if not doc.is_file():
@@ -187,7 +188,7 @@ def _stage0(lab,saved):
     st.warning("La marca de color es orientativa para localizar la unidad. No representa un área medida. Los cálculos, superficies, volúmenes y TR serán determinados por el alumno.")
     st.markdown("**Secuencia:** requisitos Clase B → geometría → materialidad y TR en SONARA → diseño aéreo, impacto, fachada e instalaciones → verificación → evaluación.")
     st.markdown("### Descarga única de documentación")
-    st.caption("Un ZIP con planta tipo original (vivienda resaltada), cortes, elevaciones, especificaciones y suplemento de cotas faltantes. La pauta docente queda excluida.")
+    st.caption("Un ZIP con planta tipo original (vivienda resaltada), cortes, elevaciones, especificaciones, suplemento de cotas y ficha de tránsito vial. La pauta docente queda excluida.")
     pack, issue = _student_document_pack()
     if pack is None:
         st.warning(issue + " Hasta incorporar el PDF binario a la rama, el botón de descarga completo está deshabilitado.")
@@ -337,16 +338,16 @@ def _stage6(lab,saved):
     _header(6)
     st.markdown("### FA-01 · Exposición al tránsito y diseño de fachada")
     st.info("Ubica el receptor exterior en la **fachada sur de CH-A-P05-S03**. La vía didáctica será **Pasaje Chimbote**, no Mirador Azul. Documenta la distancia y la altura del receptor desde los planos; la exposición exterior NO se fija de antemano.")
-    st.link_button("Abrir NoiseMap Lab · tránsito y Lden", "https://github.com/maaraos-coder/noisemap",help="La aplicación NoiseMap Lab contiene una pestaña de tránsito y Lden; enlace al repositorio porque la URL del despliegue no está verificada.")
+    st.link_button("NoiseMap Lab · módulo de tránsito y Lden", "https://github.com/maaraos-coder/noisemap",help="La aplicación NoiseMap Lab contiene una pestaña de tránsito y Lden; enlace al repositorio porque la URL del despliegue no está verificada.")
     st.warning("La versión actual de NoiseMap **todavía no predice niveles de tráfico mediante CNOSSOS-EU completo**. Registra los aforos y la geometría; para informar un Lden CNOSSOS-EU utiliza niveles de período de un motor acreditado y documenta cuál. El cálculo energético Lden sí puede verificarse aquí.")
     norm=((saved.get("c5l2_s1") or {}).get("criteria") or {}).get("FA-01") or {}
     if norm:
         st.caption(f"Tu criterio Clase B: {norm.get('descriptor','')} · {norm.get('direction','')} {norm.get('limit','')} · Referencia: {norm.get('reference','')}")
     old=saved.get("c5l2_s6") or {}
     traffic_old=old.get("traffic") or {}
-    default_flows={"Día":{"Livianos":650,"Pesados medianos":35,"Pesados":15,"Motocicletas":30},
-                   "Tarde":{"Livianos":400,"Pesados medianos":20,"Pesados":8,"Motocicletas":20},
-                   "Noche":{"Livianos":110,"Pesados medianos":5,"Pesados":2,"Motocicletas":5}}
+    default_flows={"Día":{"Livianos":80,"Pesados medianos":3,"Pesados":1,"Motocicletas":7},
+                   "Tarde":{"Livianos":45,"Pesados medianos":1,"Pesados":0,"Motocicletas":4},
+                   "Noche":{"Livianos":10,"Pesados medianos":0,"Pesados":0,"Motocicletas":1}}
     st.markdown("#### A · Escenario de tránsito supuesto")
     st.caption("Los aforos siguientes son **hipótesis académicas**, no registros reales del pasaje.")
     with st.form("c5l2_traffic_and_facade"):
@@ -354,7 +355,7 @@ def _stage6(lab,saved):
         with p1:
             street=st.text_input("Vía modelada",value=traffic_old.get("street","Pasaje Chimbote"))
             speed=st.number_input("Velocidad de circulación [km/h]",min_value=5,max_value=130,
-                                  value=int(traffic_old.get("speed",50)))
+                                  value=int(traffic_old.get("speed",30)))
             road_surface=st.selectbox("Tipo de pavimento",["Asfalto convencional","Hormigón","Otro, justificar"],
                                      index=["Asfalto convencional","Hormigón","Otro, justificar"].index(traffic_old.get("surface","Asfalto convencional")))
         with p2:
