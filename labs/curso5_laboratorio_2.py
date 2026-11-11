@@ -338,8 +338,8 @@ def _stage6(lab,saved):
     _header(6)
     st.markdown("### FA-01 · Exposición al tránsito y diseño de fachada")
     st.info("Ubica el receptor exterior en la **fachada sur de CH-A-P05-S03**. La vía didáctica será **Pasaje Chimbote**, no Mirador Azul. Documenta la distancia y la altura del receptor desde los planos; la exposición exterior NO se fija de antemano.")
-    st.link_button("NoiseMap Lab · módulo de tránsito y Lden", "https://github.com/maaraos-coder/noisemap",help="La aplicación NoiseMap Lab contiene una pestaña de tránsito y Lden; enlace al repositorio porque la URL del despliegue no está verificada.")
-    st.warning("La versión actual de NoiseMap **todavía no predice niveles de tráfico mediante CNOSSOS-EU completo**. Registra los aforos y la geometría; para informar un Lden CNOSSOS-EU utiliza niveles de período de un motor acreditado y documenta cuál. El cálculo energético Lden sí puede verificarse aquí.")
+    st.link_button("🌍 Abrir NoiseMap AKUZOFT · Tránsito y Lden", "https://noisemap-akuzoft.vercel.app/", help="Dibuja la vía, agrega un receptor exterior, selecciona Tráfico vial y calcula los tres períodos para exportar el JSON.")
+    st.warning("NoiseMap calcula la emisión vial CNOSSOS-EU (categorías 1–3) y obtiene Lday, Levening, Lnight y Lden mediante el **motor exterior educativo**. Este resultado **NO equivale a la propagación CNOSSOS-EU 2.5 completa**. Las motocicletas 4a/4b todavía no intervienen en el modelo; documenta esta limitación.")
     norm=((saved.get("c5l2_s1") or {}).get("criteria") or {}).get("FA-01") or {}
     if norm:
         st.caption(f"Tu criterio Clase B: {norm.get('descriptor','')} · {norm.get('direction','')} {norm.get('limit','')} · Referencia: {norm.get('reference','')}")
@@ -364,7 +364,7 @@ def _stage6(lab,saved):
     if imported is not None:
         source_method=str(imported.get("method",""))
         st.warning("El archivo describe: "+source_method+
-                   ". Si se utilizó propagación libre simplificada, NO corresponde a un mapa CNOSSOS-EU completo.")
+                   ". La propagación educativa de NoiseMap NO corresponde a CNOSSOS-EU 2.5 completo.")
         if st.button("Importar niveles a la ficha de fachada",key="c5l2_apply_noise_result"):
             for key,value in imported["receiver_period_levels_dba"].items():
                 if key in ("day","evening","night") and value is not None:
