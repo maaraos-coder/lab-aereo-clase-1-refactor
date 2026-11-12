@@ -30,12 +30,27 @@ SCHEMA=1
 MAX_BYTES=800_000
 
 
+def _json_safe(value):
+    # Streamlit, pandas and acoustic calculations sometimes return numpy
+    # scalar/array objects. Convert them before constructing JSONB.
+    if hasattr(value,"item") and callable(value.item):
+        return _json_safe(value.item())
+    if isinstance(value,dict):
+        return {str(k):_json_safe(v) for k,v in value.items()}
+    if isinstance(value,(tuple,list)):
+        return [_json_safe(v) for v in value]
+    if hasattr(value,"tolist") and callable(value.tolist):
+        return _json_safe(value.tolist())
+    if isinstance(value,(str,int,float,bool)) or value is None:
+        return value
+    raise TypeError("Valor no serializable en Etapa 6: "+type(value).__name__)
+
+
 def _snapshot(state):
     if not isinstance(state,dict):
         raise TypeError("El avance de la Etapa 6 no es un diccionario.")
-    selected={key:deepcopy(state[key]) for key in FIELDS if key in state}
-    # Explicit JSON round trip ensures this copy is never a reference to
-    # Streamlit widget state or numpy objects.
+    selected={key:_json_safe(state[key]) for key in FIELDS if key in state}
+    # Explicit JSON round trip prevents mutable references to Streamlit state.
     serialized=json.dumps(selected,ensure_ascii=False,allow_nan=False,sort_keys=True)
     if len(serialized.encode("utf-8"))>MAX_BYTES:
         raise ValueError("El diseño de la Etapa 6 supera el tamaño máximo del respaldo independiente.")
