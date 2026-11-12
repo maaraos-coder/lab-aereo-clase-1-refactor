@@ -181,23 +181,125 @@ def _plain(stage,lab,saved,section,fields):
             st.warning("Completa cada apartado con una descripción técnica de al menos 15 caracteres.")
         else:_save(lab,saved,stage,f"c5l2_s{stage}",values)
 
-def _stage0(lab,saved):
-    _header(0)
-    st.markdown("### Encargo profesional · Edificio Chimbote")
-    st.markdown("Trabajaremos con la **Torre A, piso 5, tercer departamento desde poniente en la hilera sur**, marcado sobre la planta tipo con el código académico **CH-A-P05-S03**. Identifica los recintos reales en los planos y diseña soluciones para las cuatro familias de Clase B ISO/TS 19488:2021.")
-    st.warning("La marca de color es orientativa para localizar la unidad. No representa un área medida. Los cálculos, superficies, volúmenes y TR serán determinados por el alumno.")
-    st.markdown("**Secuencia:** requisitos Clase B → geometría → materialidad y TR en SONARA → diseño aéreo, impacto, fachada e instalaciones → verificación → evaluación.")
-    st.markdown("### Descarga única de documentación")
-    st.caption("Un ZIP con planta tipo original (vivienda resaltada), cortes, elevaciones, especificaciones, suplemento de cotas y ficha de tránsito vial. La pauta docente queda excluida.")
+def _stage0(lab, saved):
+    """Bienvenida y ruta de aprendizaje, consistente con los demás laboratorios."""
+    import html
+
+    stage_minutes = [10, 25, 35, 40, 45, 45, 55, 40, 35, 30, 45]
+    active_minutes = sum(stage_minutes[1:])
+    header(
+        "ETAPA 0 · BIENVENIDA",
+        "Laboratorio 2 · Diseño acústico de una vivienda",
+        "Una ruta profesional desde los planos del Edificio Chimbote hasta la evaluación de soluciones de Clase B conforme a ISO/TS 19488:2021.",
+        show_overview=False,
+        duration_minutes=stage_minutes[0],
+    )
+
+    st.markdown(
+        f'<div class="class-clock"><div><strong>⏱️ Ruta guiada del Laboratorio 2</strong>'
+        f'<br><span>Edificio Chimbote · Meta de diseño Clase B · SONARA + NoiseMap</span>'
+        f'</div><div><strong>{active_minutes} min</strong></div></div>',
+        unsafe_allow_html=True,
+    )
+
+    st.markdown(
+        """
+        <div style="border:1px solid #cfe0ef;border-radius:18px;padding:17px 19px;
+        background:linear-gradient(135deg,#f8fcff,#edf6fb);margin:.8rem 0 1rem">
+          <div style="font-size:.68rem;font-weight:900;letter-spacing:.09em;color:#087ba0">
+            ENCARGO PROFESIONAL · DISEÑO ACÚSTICO CLASE B
+          </div>
+          <div style="font-size:1.05rem;font-weight:900;color:#173b53;margin:.3rem 0">
+            Edificio Chimbote · Torre A · Vivienda CH-A-P05-S03
+          </div>
+          <div style="color:#587486;line-height:1.55;font-size:.88rem">
+            Trabajarás con la vivienda del <strong>piso 5, hilera sur, tercera desde
+            poniente</strong>, identificada en el plano de la Torre A. A partir del
+            expediente desarrollarás propuestas de aislamiento aéreo, ruido de
+            impacto, fachada e instalaciones. Los cálculos y las variantes se
+            documentarán con SONARA; para la exposición exterior de la fachada
+            utilizarás NoiseMap. La evaluación de la Clase B debe ser justificada
+            por cada estudiante, no asignada automáticamente por la plataforma.
+          </div>
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
+
+    st.markdown(
+        '<div class="section-band"><span>🗺️</span><h3>Tu ruta de aprendizaje</h3></div>',
+        unsafe_allow_html=True,
+    )
+    descriptions = [
+        "Identifica los requisitos de Clase B para las cuatro familias acústicas y reconoce los documentos del edificio.",
+        "Obtén de planos las superficies, alturas, volúmenes, vanos y adyacencias de los recintos seleccionados.",
+        "Registra sistemas constructivos, materiales, datos de entrada y tiempos de reverberación calculados en SONARA.",
+        "Modela el aislamiento aéreo original, incorpora flancos y propone una variante constructiva verificable.",
+        "Modela el ruido de impacto de la losa y comprueba la mejora de una solución resiliente.",
+        "Estima la exposición al tránsito en NoiseMap y diseña en SONARA la fachada y sus vanos.",
+        "Caracteriza la operación de instalaciones, las vías de transmisión y posibles medidas correctivas.",
+        "Consolida resultados, contrasta cada descriptor con la meta Clase B y declara las limitaciones.",
+        "Responde la evaluación oficial de comprensión: diez preguntas, con un máximo de 30 puntos.",
+        "Integra las evidencias de diseño y entrega el informe técnico para evaluación docente (70 puntos).",
+    ]
+    cards = ""
+    for stage in range(1, 11):
+        title = lab["stages"][stage][0] if len(lab.get("stages", [])) > stage else STAGES[stage][0]
+        cards += (
+            '<div class="route-card">'
+            f'<span class="step">{stage}</span><div>'
+            f'<b>{html.escape(str(title))}</b>'
+            f'<p>{html.escape(descriptions[stage - 1])}</p>'
+            f'<span class="route-time">⏱️ {stage_minutes[stage]} min</span>'
+            '</div></div>'
+        )
+    st.markdown(f'<div class="route-grid">{cards}</div>', unsafe_allow_html=True)
+
+    st.success(
+        "Resultado esperado: expediente de diseño de la vivienda CH-A-P05-S03, "
+        "modelaciones y variantes justificadas, matriz comparativa con los requisitos "
+        "de Clase B e informe técnico integrador."
+    )
+    st.warning(
+        "La marca de color del plano solo orienta la ubicación de la vivienda: "
+        "no equivale a una superficie medida. Obtén cotas, volúmenes y tiempos "
+        "de reverberación a partir de los antecedentes y cálculos del ejercicio."
+    )
+    st.info(
+        "Continuidad del trabajo: guarda cada etapa antes de cambiar de sección. "
+        "Las siguientes etapas recuperan los antecedentes registrados. "
+        "Mantén también una copia local de tus evidencias y archivos de modelación."
+    )
+
+    st.markdown("### Documentación para comenzar")
+    st.caption(
+        "Descarga un único ZIP con la planta tipo original y la vivienda identificada, "
+        "cortes, elevaciones, especificaciones, suplemento de cotas y ficha de tráfico. "
+        "No incluye la pauta de resolución docente."
+    )
     pack, issue = _student_document_pack()
     if pack is None:
-        st.warning(issue + " Hasta incorporar el PDF binario a la rama, el botón de descarga completo está deshabilitado.")
+        st.warning(
+            issue + " Hasta incorporar el PDF binario a la rama, "
+            "la descarga completa estará deshabilitada."
+        )
     else:
-        st.download_button("📥 Descargar planos y documentación del alumno (.zip)",data=pack,
-            file_name="Curso5_Lab2_Chimbote_CH-A-P05-S03_Alumno.zip",mime="application/zip",
-            type="primary",use_container_width=True,key="c5l2_docs_download")
-    if st.button("Registrar lectura del encargo",key="c5l2_s0"):
-        _save(lab,saved,0,"c5l2_s0",{"acknowledged":True,"target":"B","scope":SITE})
+        st.download_button(
+            "📥 Descargar planos y documentación del alumno (.zip)",
+            data=pack,
+            file_name="Curso5_Lab2_Chimbote_CH-A-P05-S03_Alumno.zip",
+            mime="application/zip",
+            type="primary",
+            use_container_width=True,
+            key="c5l2_docs_download",
+        )
+
+    if saved.get("c5l2_s0", {}).get("acknowledged"):
+        st.success("Encargo leído y registrado. Puedes continuar con la Etapa 1.")
+    elif st.button("✓ Registrar lectura del encargo", key="c5l2_s0"):
+        _save(lab, saved, 0, "c5l2_s0", {
+            "acknowledged": True, "target": "B", "scope": SITE
+        })
 
 
 def _stage1(lab,saved):
