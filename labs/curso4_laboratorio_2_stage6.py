@@ -540,13 +540,48 @@ def render(lab,saved,runtime):
                     raise ValueError("El respaldo pertenece a otro frente de trabajo.")
                 if not isinstance(restored_cfg,dict) or restored_cfg.get("scope_schema_version")!=2:
                     raise ValueError("Este respaldo no contiene un diseño compatible de la Etapa 6.")
-                st.session_state[prefix+"_work"]=_stage6_json_safe(restored_cfg)
+                # A Streamlit selectbox keeps its old widget value after JSON
+                # restore. Without clearing it the first selected machine can
+                # overwrite its recovered treatment on the very next rerun.
+                from labs.curso4_lab2_control_scope import front_sources
+                expected_ids={entry["id"] for entry in front_sources(saved,selected_front)}
+                recovered=restored_cfg.get("machines")
+                if not isinstance(recovered,dict):
+                    raise ValueError("Falta el conjunto de máquinas en el respaldo.")
+                unknown=set(recovered)-expected_ids
+                if unknown:
+                    raise ValueError(
+                        "El respaldo contiene identificadores que no coinciden con "
+                        "las máquinas actuales de Etapas 3/4. No se sobrescribirá "
+                        "ninguna máquina: revisa el origen del archivo."
+                    )
+                recovered_strategy=str(restored_cfg.get("medida") or restored.get("strategy") or "")
+                if recovered_strategy and recovered_strategy!=measure:
+                    raise ValueError(
+                        "El respaldo corresponde a la estrategia '"+recovered_strategy+
+                        "'. Selecciónala en la tabla de estrategias antes de restaurar."
+                    )
+                clean_cfg=_stage6_json_safe(restored_cfg)
+                for widget_key in list(st.session_state):
+                    if (isinstance(widget_key,str) and widget_key.startswith(prefix+"_")
+                        and widget_key!=prefix+"_work"
+                        and not widget_key.startswith(prefix+"_backup_")
+                        and widget_key!=prefix+"_restore"):
+                        del st.session_state[widget_key]
+                st.session_state[prefix+"_work"]=clean_cfg
+                st.session_state[prefix+"_recovered_count"]=len(recovered)
             except (UnicodeError,json.JSONDecodeError,TypeError,ValueError) as error:
                 st.warning("No se pudo restaurar el respaldo: "+str(error))
             else:
-                st.success("Respaldo recuperado en esta sesión. Revisa el tratamiento y vuelve a guardarlo.")
+                st.success("Respaldo recuperado en esta sesión ("+str(len(recovered))+" máquinas). Revisa la primera máquina y guarda el frente.")
                 st.rerun()
     cfg_saved=st.session_state.get(prefix+"_work") or (saved.get("c4l2_s6_measure_config") or {}).get(selected_front,{})
+    if st.session_state.get(prefix+"_recovered_count") is not None:
+        recovered_count=st.session_state[prefix+"_recovered_count"]
+        st.caption(
+            "Respaldo restaurado: "+str(recovered_count)+" aplicaciones de máquina. "
+            "Comprueba especialmente la máquina 1 y su medida antes de guardar."
+        )
     cfg=render_scope(st,pd,saved,selected_front,measure,cfg_saved,prefix,workshop,study_cfg,tl_spectrum)
     st.session_state[prefix+"_work"]=deepcopy(cfg)
     # Respaldo local independiente de Supabase, disponible incluso antes de
