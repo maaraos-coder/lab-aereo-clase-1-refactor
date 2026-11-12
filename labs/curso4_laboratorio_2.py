@@ -42,7 +42,8 @@ def _save(lab, saved, stage):
     not large historical maps or other stages. Earlier progress stays intact.
     """
     saved[f"c4l2_updated_{stage}"] = _now()
-    if stage != 6 or st.session_state.get("projection_mode"):
+    from labs.curso4_lab2_projection import is_projection
+    if stage != 6 or is_projection(st):
         return _save_future_state(lab["id"], saved)
 
     import logging
@@ -1032,7 +1033,8 @@ def run_stage(stage, lab, saved, runtime):
     # Merge independent Stage 6 checkpoint on first access after login,
     # including when navigating directly to Stage 7/8. Never load a
     # student's checkpoint into projection/teacher view.
-    if not st.session_state.get("projection_mode"):
+    from labs.curso4_lab2_projection import is_projection
+    if not is_projection(st):
         check_key=f"c4l2_stage6_checkpoint_checked_{lab['id']}"
         if check_key not in st.session_state:
             try:
