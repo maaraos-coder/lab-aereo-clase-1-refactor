@@ -289,6 +289,21 @@ def _stage1(lab,saved):
 
     st.markdown("#### Identificación de la vivienda de estudio")
     st.markdown(
+        "La unidad seleccionada debe reconocerse **en la planta original**. "
+        "El render es únicamente una representación conceptual; "
+        "no se utiliza para obtener cotas, superficies ni dimensiones."
+    )
+    highlighted_plan = (
+        Path(__file__).resolve().parent.parent / "assets" / "curso5_lab2"
+        / "Chimbote_CH-A-P05-S03_vivienda_resaltada.png"
+    )
+    if highlighted_plan.is_file():
+        st.image(
+            str(highlighted_plan),
+            caption="Planta original, detalle de Torre A: vivienda CH-A-P05-S03 destacada en amarillo y contorno rojo.",
+            use_container_width=True,
+        )
+    st.markdown(
         "**Torre A · piso 5 · hilera sur · tercer departamento desde poniente** "
         "(código académico **CH-A-P05-S03**). La planta tipo permite localizar "
         "la unidad y reconocer sus recintos y colindancias; los cortes y las "
