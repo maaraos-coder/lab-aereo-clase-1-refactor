@@ -36,8 +36,61 @@ def _header(stage, title, purpose):
     )
 
 def _save(lab, saved, stage):
+    """Confirmed progress save; Stage 6 has an independently verified fallback.
+
+    The checkpoint stores ONLY Stage 6 fields in an isolated Supabase row,
+    not large historical maps or other stages. Earlier progress stays intact.
+    """
     saved[f"c4l2_updated_{stage}"] = _now()
-    _save_future_state(lab["id"], saved)
+    if stage != 6 or st.session_state.get("projection_mode"):
+        return _save_future_state(lab["id"], saved)
+
+    import logging
+    from copy import deepcopy
+    from labs.c4l2_stage6_checkpoint import save_stage6_checkpoint
+
+    checkpoint_ok = False
+    checkpoint_error = None
+    try:
+        checkpoint_ok = save_stage6_checkpoint(
+            _supabase(),
+            course_id=globals().get("COURSE_ID", "diplomado-acustica-edificacion"),
+            class_id=lab["id"],
+            user_key=st.session_state.get("user_key"),
+            state=saved,
+        )
+    except Exception as error:
+        checkpoint_error = error
+        logging.getLogger(__name__).exception(
+            "Curso 4 Lab 2 Stage 6: Supabase checkpoint not confirmed."
+        )
+
+    try:
+        _save_future_state(lab["id"], saved)
+    except Exception as primary_error:
+        if not checkpoint_ok:
+            raise RuntimeError(
+                "No se confirmó el guardado principal ni el respaldo independiente "
+                "de la Etapa 6. Conserva el respaldo JSON y comunica el error."
+            ) from primary_error
+        # The separate read-back verified backup is durable even if the
+        # original JSONB patch RPC is missing, unavailable or oversized.
+        st.session_state[f"future_saved_{lab['id']}"] = deepcopy(saved)
+        st.warning(
+            "Las medidas de la Etapa 6 se guardaron y verificaron en un "
+            "respaldo independiente de Supabase. El registro general no "
+            "se pudo actualizar, pero la configuración se recuperará al ingresar."
+        )
+        logging.getLogger(__name__).warning(
+            "Curso 4 Lab 2 Stage 6: main progress save failed; confirmed "
+            "checkpoint used. Main error class=%s; checkpoint_error=%s",
+            type(primary_error).__name__,
+            type(checkpoint_error).__name__ if checkpoint_error else "none",
+        )
+    else:
+        if checkpoint_error is not None:
+            # Primary write is valid; no need to block the student.
+            st.caption("Guardado principal confirmado; respaldo independiente no disponible.")
 
 
 def _evaluation_row(stage,question_key):
@@ -976,6 +1029,31 @@ _STAGES = [_stage0, _stage1] + [None] * 9
 
 def run_stage(stage, lab, saved, runtime):
     _bind_runtime(runtime)
+    # Merge independent Stage 6 checkpoint on first access after login,
+    # including when navigating directly to Stage 7/8. Never load a
+    # student's checkpoint into projection/teacher view.
+    if not st.session_state.get("projection_mode"):
+        check_key=f"c4l2_stage6_checkpoint_checked_{lab['id']}"
+        if check_key not in st.session_state:
+            try:
+                from labs.c4l2_stage6_checkpoint import load_stage6_checkpoint
+                restored = load_stage6_checkpoint(
+                    _supabase(),class_id=lab["id"],
+                    user_key=st.session_state.get("user_key"),state=saved
+                )
+                if restored:
+                    st.session_state[f"future_saved_{lab['id']}"]=saved
+            except Exception:
+                import logging
+                logging.getLogger(__name__).exception(
+                    "Curso 4 Lab 2: checkpoint retrieval failed."
+                )
+                st.warning(
+                    "No se pudo comprobar el respaldo independiente de la "
+                    "Etapa 6. Conserva tus archivos JSON y vuelve a intentarlo."
+                )
+            else:
+                st.session_state[check_key]=True
     stage=max(0,min(int(stage),10))
     if stage==0:
         return _stage0(lab,saved)
