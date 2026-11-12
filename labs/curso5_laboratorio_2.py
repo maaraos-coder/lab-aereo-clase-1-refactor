@@ -122,7 +122,9 @@ def _student_document_pack():
     with ZipFile(output, "w", compression=ZIP_DEFLATED) as bundle:
         bundle.write(plan, arcname="01_Planos/Chimbote_Torre_A_CH-A-P05-S03_planos.pdf")
         for doc in docs:
-            bundle.write(doc, arcname="02_Anexos/" + doc.name)
+            bundle.write(doc, arcname="02_Anexos_MD/" + doc.name)
+        for pdf in sorted(folder.glob("0[1-4]_*.pdf")):
+            bundle.write(pdf, arcname="03_Anexos_PDF/" + pdf.name)
         bundle.writestr("LEEME.txt",
             "Curso 5 Laboratorio 2 - Edificio Chimbote - Torre A - CH-A-P05-S03\\n"
             "Tercer departamento desde poniente de hilera sur, piso 5.\\n"
@@ -275,6 +277,21 @@ def _stage1(lab,saved):
         """,
         unsafe_allow_html=True,
     )
+    # Render conceptual opcional: se muestra al publicar el archivo en assets/curso5_lab2.
+    render_path = Path(__file__).resolve().parent.parent / "assets" / "curso5_lab2" / "chimbote_torre_a_render.png"
+    if render_path.is_file():
+        st.image(
+            str(render_path),
+            caption="Edificio Chimbote · Torre A · Visualización ilustrativa, no plano de arquitectura ni modelo verificado.",
+            use_container_width=True,
+        )
+    else:
+        st.caption(
+            "Vista arquitectónica ilustrativa pendiente de incorporar. "
+            "El render debe identificarse como conceptual y no sustituye "
+            "las plantas, elevaciones y cortes originales."
+        )
+
     st.markdown("#### Identificación de la vivienda de estudio")
     st.markdown(
         "**Torre A · piso 5 · hilera sur · tercer departamento desde poniente** "
@@ -290,6 +307,59 @@ def _stage1(lab,saved):
     )
 
     st.markdown("### B · Planos y documentación complementaria")
+    st.markdown(
+        "Descarga los antecedentes por separado en los apartados siguientes "
+        "o utiliza el expediente completo cuando los planos originales "
+        "estén publicados en el repositorio."
+    )
+    resource_dir = Path(__file__).resolve().parent.parent / "assets" / "curso5_lab2"
+    resource_files = [
+        (
+            "01 · Planos originales y vivienda identificada",
+            "Chimbote_Torre_A_CH-A-P05-S03_planos.pdf",
+            "Planta de la Torre A, cortes y elevaciones del proyecto.",
+        ),
+        (
+            "02 · Ficha geométrica de la vivienda",
+            "01_Ficha_Geometrica_Chimbote_Alumno.pdf",
+            "Identificación de recintos, colindancias y geometría por determinar.",
+        ),
+        (
+            "03 · Especificaciones constructivas académicas",
+            "02_Especificaciones_Constructivas_Chimbote_Alumno.pdf",
+            "Composiciones iniciales del ejercicio y criterios de trazabilidad.",
+        ),
+        (
+            "04 · Suplemento de cotas",
+            "03_Suplemento_Cotas_Chimbote_Alumno.pdf",
+            "Hipótesis de dimensiones a utilizar solo cuando falten datos documentales.",
+        ),
+        (
+            "05 · Datos de tránsito para fachada",
+            "04_Trafico_Fachada_Chimbote_Alumno.pdf",
+            "Flujos por período, receptor y guía de modelación acústica.",
+        ),
+    ]
+    for resource_title, filename, description in resource_files:
+        st.markdown(f"#### {resource_title}")
+        st.caption(description)
+        path = resource_dir / filename
+        if path.is_file():
+            st.download_button(
+                f"📥 Descargar {filename}",
+                data=path.read_bytes(),
+                file_name=filename,
+                mime="application/pdf",
+                key=f"c5l2_s1_download_{filename}",
+                use_container_width=True,
+            )
+        else:
+            st.info(
+                "Este documento aún no está publicado en la rama. "
+                f"Archivo esperado: `assets/curso5_lab2/{filename}`."
+            )
+
+    st.markdown("#### Expediente único (ZIP)")
     st.markdown(
         "Descarga el **expediente único del alumno** antes de comenzar: "
         "planta tipo de la Torre A con la unidad identificada, cortes, elevaciones, "
