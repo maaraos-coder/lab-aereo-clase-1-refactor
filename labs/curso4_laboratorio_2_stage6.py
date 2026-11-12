@@ -588,10 +588,32 @@ def render(lab,saved,runtime):
     st.session_state[prefix+"_work"]=deepcopy(cfg)
     # Respaldo local independiente de Supabase, disponible incluso antes de
     # finalizar las validaciones académicas del frente.
+    from labs.curso4_lab2_control_scope import front_sources
+    expected_machines=front_sources(saved,selected_front)
+    backed_ids=set((cfg.get("machines") or {}).keys())
+    missing_machines=[
+        str(entry["source"].get("Máquina / equipo proyecto") or entry["id"])
+        for entry in expected_machines if entry["id"] not in backed_ids
+    ]
+    st.caption(
+        "Cobertura del respaldo de este frente: "+
+        str(len(backed_ids & {entry["id"] for entry in expected_machines}))+
+        " de "+str(len(expected_machines))+" máquinas registradas."
+    )
+    if missing_machines:
+        st.warning(
+            "Este respaldo todavía no contiene aplicación individual para: "+
+            ", ".join(missing_machines)+
+            ". Si corresponde, selecciónala y marca expresamente "
+            "«Sin tratamiento en la fuente» antes de guardar."
+        )
     try:
         backup_json=json.dumps(_stage6_json_safe({
             "schema_version":2,"stage":6,"front":selected_front,
-            "strategy":measure,"configuration":cfg,
+            "strategy":measure,
+            "machine_count":len(expected_machines),
+            "missing_machine_names":missing_machines,
+            "configuration":cfg,
         }),ensure_ascii=False,allow_nan=False,indent=2)
     except (ValueError,TypeError,RecursionError) as error:
         st.warning("La configuración contiene datos que deben revisarse antes de poder exportarla: "+type(error).__name__)
