@@ -136,9 +136,8 @@ def _student_document_pack():
 def _header(stage):
     title,objective=STAGES[stage]
     header(f"ETAPA {stage} · LABORATORIO 2",title,objective,show_overview=False,duration_minutes=25 if stage<9 else 40)
-    st.caption(f"Curso 5 · {PROJECT} · {SITE} · Objetivo Clase B · {STANDARD}")
-    if stage in (1,2,3):
-        st.caption("Fuentes del ejercicio: planta tipo original, cortes, elevaciones y ficha académica. Toda cota debe provenir del dibujo o documentarse como hipótesis.")
+    # Mantener la portada limpia: los datos del caso se presentan en el encargo
+    # y las referencias a los planos, en los apartados correspondientes.
     if stage in (2,3):
         st.link_button("Ver ficha geométrica del alumno", ANNEX_URL)
         st.link_button("Ver suplemento de cotas (sin resolver)", "https://github.com/maaraos-coder/lab-aereo-clase-1-refactor/blob/curso3-lab2-etapas-3-10/docs/curso5_lab2_chimbote_suplemento_cotas_alumno.md")
@@ -277,19 +276,15 @@ def _stage1(lab,saved):
         """,
         unsafe_allow_html=True,
     )
-    # Render conceptual opcional: se muestra al publicar el archivo en assets/curso5_lab2.
+    # Render ilustrativo opcional: sin mensajes técnicos ni avisos de archivo faltante.
     render_path = Path(__file__).resolve().parent.parent / "assets" / "curso5_lab2" / "chimbote_torre_a_render.png"
     if render_path.is_file():
-        st.image(
-            str(render_path),
-            caption="Edificio Chimbote · Torre A · Visualización ilustrativa, no plano de arquitectura ni modelo verificado.",
-            use_container_width=True,
-        )
-    else:
-        st.caption(
-            "Vista arquitectónica ilustrativa pendiente de incorporar. "
-            "El render debe identificarse como conceptual y no sustituye "
-            "las plantas, elevaciones y cortes originales."
+        st.image(str(render_path), use_container_width=True)
+        st.markdown(
+            '<div style="font-size:.78rem;color:#527083;margin-top:-.65rem;'
+            'margin-bottom:1.25rem">Visualización conceptual del proyecto; '
+            'la geometría de referencia corresponde a los planos originales.</div>',
+            unsafe_allow_html=True,
         )
 
     st.markdown("#### Identificación de la vivienda de estudio")
