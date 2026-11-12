@@ -544,17 +544,24 @@ def render(lab,saved,runtime):
                 # restore. Without clearing it the first selected machine can
                 # overwrite its recovered treatment on the very next rerun.
                 from labs.curso4_lab2_control_scope import front_sources
-                expected_ids={entry["id"] for entry in front_sources(saved,selected_front)}
+                from labs.curso4_lab2_acoustics import source_fingerprint
+                from labs.c4l2_stage6_checkpoint import (
+                    reconcile_machine_ids, reset_stage6_widgets
+                )
+                entries=front_sources(saved,selected_front)
                 recovered=restored_cfg.get("machines")
-                if not isinstance(recovered,dict):
-                    raise ValueError("Falta el conjunto de máquinas en el respaldo.")
-                unknown=set(recovered)-expected_ids
-                if unknown:
+                mapped,unresolved=reconcile_machine_ids(
+                    recovered,entries,source_fingerprint
+                )
+                if unresolved:
                     raise ValueError(
-                        "El respaldo contiene identificadores que no coinciden con "
-                        "las máquinas actuales de Etapas 3/4. No se sobrescribirá "
-                        "ninguna máquina: revisa el origen del archivo."
+                        "No fue posible vincular con seguridad estas aplicaciones: "+
+                        ", ".join(unresolved)+
+                        ". Revisa si cambiaron nombres, cantidades o espectros de Etapas 3/4."
                     )
+                # Preserve every application; the recovered IDs can differ
+                # when Stage 3 source rows have been reordered.
+                restored_cfg["machines"]=mapped
                 recovered_strategy=str(restored_cfg.get("medida") or restored.get("strategy") or "")
                 if recovered_strategy and recovered_strategy!=measure:
                     raise ValueError(
@@ -562,14 +569,9 @@ def render(lab,saved,runtime):
                         "'. Selecciónala en la tabla de estrategias antes de restaurar."
                     )
                 clean_cfg=_stage6_json_safe(restored_cfg)
-                for widget_key in list(st.session_state):
-                    if (isinstance(widget_key,str) and widget_key.startswith(prefix+"_")
-                        and widget_key!=prefix+"_work"
-                        and not widget_key.startswith(prefix+"_backup_")
-                        and widget_key!=prefix+"_restore"):
-                        del st.session_state[widget_key]
+                reset_stage6_widgets(st.session_state,prefix)
                 st.session_state[prefix+"_work"]=clean_cfg
-                st.session_state[prefix+"_recovered_count"]=len(recovered)
+                st.session_state[prefix+"_recovered_count"]=len(mapped)
             except (UnicodeError,json.JSONDecodeError,TypeError,ValueError) as error:
                 st.warning("No se pudo restaurar el respaldo: "+str(error))
             else:
