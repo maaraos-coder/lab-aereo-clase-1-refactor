@@ -1,0 +1,21 @@
+name: Curso 4 Lab 2 Stage 6 persistence regressions
+on:
+  push:
+    branches: [fix/c4l2-stage6-durable-supabase-backup, main]
+  pull_request:
+    branches: [main]
+jobs:
+  stage6:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+      - name: Compile affected persistence modules
+        run: |
+          python -m py_compile labs/curso4_laboratorio_2.py labs/curso4_laboratorio_2_stage6.py labs/c4l2_stage6_checkpoint.py labs/curso4_lab2_control_scope.py
+      - name: Test lossless Stage 6 snapshot and machine restoration
+        run: python -m unittest discover -s tests -p 'test_c4l2_stage6_checkpoint.py' -v
+      - name: Test existing partial progress compatibility
+        run: python -m unittest discover -s tests -p 'test_c4l2_progress_patch.py' -v

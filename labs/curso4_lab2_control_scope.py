@@ -166,7 +166,18 @@ def validate_scope(saved, front, config):
     if config.get("scope_schema_version") != 2:
         raise ValueError("Asigna las medidas a las máquinas; el diseño anterior del frente se conserva para revisión.")
     entries = front_sources(saved, front)
-    result = recombine_front(entries, config.get("machines") or {}, strict=True)
+    applications = config.get("machines") or {}
+    if config.get("barrier_equivalent"):
+        # A screen on the equivalent front does not modify each source Lw.
+        # Keep configured individual treatments saved, but use untouched
+        # sources for the validation and emission balance.
+        applications = {
+            entry["id"]:{
+                "measure":NO_CONTROL,
+                "source_signature":source_fingerprint([entry["source"]])
+            } for entry in entries
+        }
+    result = recombine_front(entries, applications, strict=True)
     propagation = config.get("propagation") or {}
     if config.get("barrier_equivalent") and config.get("medida") != "Barrera acústica":
         raise ValueError("El registro por fuente equivalente corresponde a la estrategia de barrera acústica.")
@@ -225,15 +236,27 @@ def render_scope(st, pd, saved, front, strategy, previous, prefix, workshop, stu
         st.info("Registra una sola pantalla para este frente. Las máquinas conservan su potencia original. Comprueba en Noise Map Lab la posición y altura de la fuente equivalente y los receptores que protege la pantalla.")
         if any(app.get("measure") in KINDS for app in applications.values()):
             config["previous_source_applications"] = deepcopy(applications)
+        # Do not erase config["machines"] when toggling equivalent barrier.
+        # Use a transient copy solely for the equivalent-front calculation.
         applications = {
-            entry["id"]: {
-                "measure": NO_CONTROL,
-                "source_signature": source_fingerprint([entry["source"]]),
-            }
-            for entry in entries
+            entry["id"]:{
+                "measure":NO_CONTROL,
+                "source_signature":source_fingerprint([entry["source"]])
+            } for entry in entries
         }
-        config["machines"] = applications
     else:
+        previous_source=config.get("previous_source_applications") or {}
+        if (isinstance(previous_source,dict) and previous_source
+            and not any(app.get("measure") in KINDS for app in applications.values())):
+            # Repair older saved sessions whose original machine entries
+            # were overwritten when the equivalent-barrier toggle was used.
+            for entry in entries:
+                current_id=entry["id"]
+                prior=previous_source.get(current_id)
+                if (isinstance(prior,dict)
+                    and prior.get("source_signature")==source_fingerprint([entry["source"]])):
+                    applications[current_id]=deepcopy(prior)
+        config["machines"]=applications
         st.markdown("#### A · Tratamientos aplicados a las máquinas")
         st.caption("Configura cada equipo por separado. Puedes usar medidas diferentes dentro de un mismo frente o declarar expresamente los equipos sin tratamiento. Si hay varias unidades, indica cuántas reciben la medida.")
         selected_id = st.selectbox("Máquina a configurar", list(labels), format_func=labels.get, key=prefix+"_machine")
