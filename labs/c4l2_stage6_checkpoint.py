@@ -117,3 +117,44 @@ def load_stage6_checkpoint(client,*,class_id,user_key,state):
         return False
     state.update(deepcopy(fields))
     return True
+
+
+def reset_stage6_widgets(session, prefix):
+    """Clear stale widgets after restoring JSON, preserve the upload control."""
+    removed=[]
+    for key in list(session):
+        if (isinstance(key,str) and key.startswith(prefix+"_")
+            and key != prefix+"_work"
+            and key != prefix+"_restore"
+            and not key.startswith(prefix+"_backup_")):
+            removed.append(key)
+            del session[key]
+    return removed
+
+
+def reconcile_machine_ids(applications, entries, fingerprint):
+    """Safely remap legacy source IDs after reordering Stage 3 rows.
+
+    Do not guess when source signatures are missing or ambiguous.
+    """
+    if not isinstance(applications,dict):
+        raise ValueError("El respaldo no contiene aplicaciones de máquina.")
+    by_id={entry["id"]:entry["source"] for entry in entries}
+    signatures={key:fingerprint([value]) for key,value in by_id.items()}
+    mapped={}
+    unresolved=[]
+    for old_id,application in applications.items():
+        signature=application.get("source_signature") if isinstance(application,dict) else None
+        target=None
+        if old_id in by_id and (not signature or signatures[old_id]==signature):
+            target=old_id
+        elif signature:
+            matches=[key for key,value in signatures.items()
+                     if value==signature and key not in mapped]
+            if len(matches)==1:
+                target=matches[0]
+        if target is None or target in mapped:
+            unresolved.append(old_id)
+        else:
+            mapped[target]=deepcopy(application)
+    return mapped,unresolved
