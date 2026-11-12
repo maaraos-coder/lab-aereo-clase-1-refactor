@@ -317,6 +317,37 @@ def _stage1(lab,saved):
         "soluciones resueltas no forman parte del paquete."
     )
 
+    st.markdown("#### Consultar anexos del alumno por separado")
+    st.caption(
+        "Estos anexos pueden consultarse mientras se completa el ZIP. "
+        "Los planos originales resaltados siguen pendientes de publicación "
+        "en esta rama; los anexos no los sustituyen."
+    )
+    branch_docs = (
+        "https://github.com/maaraos-coder/lab-aereo-clase-1-refactor/"
+        "blob/curso3-lab2-etapas-3-10/docs/"
+    )
+    st.link_button(
+        "Ficha geométrica (alumno)",
+        branch_docs + "curso5_lab2_chimbote_ficha_geometrica_alumno.md",
+        use_container_width=True,
+    )
+    st.link_button(
+        "Especificaciones constructivas (alumno)",
+        branch_docs + "curso5_lab2_chimbote_especificaciones_alumno.md",
+        use_container_width=True,
+    )
+    st.link_button(
+        "Suplemento de cotas (alumno)",
+        branch_docs + "curso5_lab2_chimbote_suplemento_cotas_alumno.md",
+        use_container_width=True,
+    )
+    st.link_button(
+        "Antecedentes de tránsito para fachada (alumno)",
+        branch_docs + "curso5_lab2_chimbote_trafico_lden_alumno.md",
+        use_container_width=True,
+    )
+
     st.markdown("### C · Requisitos normativos de Clase B")
     st.info(
         "Consulta ISO/TS 19488:2021 y determina los requisitos de Clase B "
