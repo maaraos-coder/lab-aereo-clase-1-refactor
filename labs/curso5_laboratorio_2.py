@@ -48,8 +48,8 @@ CASES = {
     "IN-01": ("Ruido de instalaciones", "LAeq,nT o LAFmax,nT según la operación", "Fuente, fijaciones, vías aérea y estructural"),
 }
 STAGES = [
- ("Encargo profesional y alcance", "Diseñar una vivienda del proyecto real para los requisitos de Clase B."),
- ("Requisitos Clase B y reconocimiento documental", "Definir los cuatro criterios normativos antes de comenzar las modelaciones."),
+ ("Bienvenida y ruta de aprendizaje", "Conocer las actividades y la metodología del laboratorio."),
+ ("Encargo profesional y reconocimiento del proyecto", "Conocer el Edificio Chimbote, descargar el expediente y definir los requisitos de Clase B."),
  ("Ficha geométrica del alumno", "Extraer de planos las superficies, alturas, volúmenes y adyacencias."),
  ("Sistemas constructivos y datos de SONARA", "Documentar materiales, uniones, tiempos y condiciones."),
  ("Diseño acústico aéreo", "Comparar modelo original y variante en SONARA."),
@@ -61,8 +61,8 @@ STAGES = [
  ("Informe integrador evaluado", "Entrega técnica de setenta puntos para revisión docente."),
 ]
 TEACHER = {
- 0: "Caso fijo CH-A-P05-S03; corroborar en el plano original Torre A, hilera sur tercera vivienda desde poniente, piso 5; la marca destaca el sector, no reemplaza la geometría del dibujo.",
- 1: "Verificar que el alumno haya consultado los criterios de Clase B de ISO/TS 19488:2021 para aislamiento aéreo, impacto, fachada e instalaciones, con descriptor, valor, dirección y referencia; no mostrar solución.",
+ 0: "Etapa de bienvenida: explicar la ruta y la metodología, sin entregar todavía el encargo ni los documentos. El expediente y el caso de estudio se presentan en la Etapa 1.",
+ 1: "Presentar el proyecto Chimbote y la unidad CH-A-P05-S03; verificar localización en el plano, descargar los antecedentes y distinguir el proyecto real de los supuestos académicos. Comprobar criterios de Clase B de ISO/TS 19488:2021 con descriptor, valor, dirección y referencia, sin entregar solución.",
  2: "Comprobar áreas, volúmenes, recintos contiguos, proyección del piso superior, altura efectiva, vanos y trazabilidad por lámina/cota. NO atribuir al sector cotas de otros departamentos ni completar dimensiones sin verificar.",
  3: "Materialidad original académica M-01 L-01 F-01 V-01 S-01 IS-01 T-01 T-02 T-03. Revisar superficies interiores, absorciones por banda y cálculo del TR en SONARA: no adoptar TR prefijado.",
  4: "Exigir DnT,w y adaptación pertinente para la transmisión entre viviendas, incluyendo flancos, y una variante coherente.",
@@ -203,35 +203,11 @@ def _stage0(lab, saved):
     )
 
     st.markdown(
-        """
-        <div style="border:1px solid #cfe0ef;border-radius:18px;padding:17px 19px;
-        background:linear-gradient(135deg,#f8fcff,#edf6fb);margin:.8rem 0 1rem">
-          <div style="font-size:.68rem;font-weight:900;letter-spacing:.09em;color:#087ba0">
-            ENCARGO PROFESIONAL · DISEÑO ACÚSTICO CLASE B
-          </div>
-          <div style="font-size:1.05rem;font-weight:900;color:#173b53;margin:.3rem 0">
-            Edificio Chimbote · Torre A · Vivienda CH-A-P05-S03
-          </div>
-          <div style="color:#587486;line-height:1.55;font-size:.88rem">
-            Trabajarás con la vivienda del <strong>piso 5, hilera sur, tercera desde
-            poniente</strong>, identificada en el plano de la Torre A. A partir del
-            expediente desarrollarás propuestas de aislamiento aéreo, ruido de
-            impacto, fachada e instalaciones. Los cálculos y las variantes se
-            documentarán con SONARA; para la exposición exterior de la fachada
-            utilizarás NoiseMap. La evaluación de la Clase B debe ser justificada
-            por cada estudiante, no asignada automáticamente por la plataforma.
-          </div>
-        </div>
-        """,
-        unsafe_allow_html=True,
-    )
-
-    st.markdown(
         '<div class="section-band"><span>🗺️</span><h3>Tu ruta de aprendizaje</h3></div>',
         unsafe_allow_html=True,
     )
     descriptions = [
-        "Identifica los requisitos de Clase B para las cuatro familias acústicas y reconoce los documentos del edificio.",
+        "Recibe el encargo del Edificio Chimbote, descarga planos y anexos, reconoce la vivienda y define los criterios de Clase B.",
         "Obtén de planos las superficies, alturas, volúmenes, vanos y adyacencias de los recintos seleccionados.",
         "Registra sistemas constructivos, materiales, datos de entrada y tiempos de reverberación calculados en SONARA.",
         "Modela el aislamiento aéreo original, incorpora flancos y propone una variante constructiva verificable.",
@@ -260,28 +236,71 @@ def _stage0(lab, saved):
         "modelaciones y variantes justificadas, matriz comparativa con los requisitos "
         "de Clase B e informe técnico integrador."
     )
-    st.warning(
-        "La marca de color del plano solo orienta la ubicación de la vivienda: "
-        "no equivale a una superficie medida. Obtén cotas, volúmenes y tiempos "
-        "de reverberación a partir de los antecedentes y cálculos del ejercicio."
-    )
     st.info(
-        "Continuidad del trabajo: guarda cada etapa antes de cambiar de sección. "
-        "Las siguientes etapas recuperan los antecedentes registrados. "
-        "Mantén también una copia local de tus evidencias y archivos de modelación."
+        "Bienvenida: consulta el recorrido completo y las herramientas. "
+        "En la Etapa 1 recibirás el encargo profesional, la presentación "
+        "del proyecto, los planos y la documentación complementaria."
+    )
+    st.warning(
+        "Continuidad del trabajo: guarda cada etapa antes de cambiar de sección "
+        "y conserva una copia de tus archivos de modelación. Las etapas siguientes "
+        "recuperarán los antecedentes guardados."
     )
 
-    st.markdown("### Documentación para comenzar")
-    st.caption(
-        "Descarga un único ZIP con la planta tipo original y la vivienda identificada, "
-        "cortes, elevaciones, especificaciones, suplemento de cotas y ficha de tráfico. "
-        "No incluye la pauta de resolución docente."
+
+def _stage1(lab,saved):
+    _header(1)
+
+    st.markdown("### A · Encargo profesional y presentación del proyecto")
+    st.markdown(
+        """
+        <div style="border:1px solid #cfe0ef;border-radius:18px;padding:18px 20px;
+        background:linear-gradient(135deg,#f8fcff,#edf6fb);margin:.75rem 0 1rem">
+          <div style="font-size:.70rem;font-weight:900;letter-spacing:.08em;color:#087ba0">
+            ENCARGO · DISEÑO ACÚSTICO RESIDENCIAL CLASE B
+          </div>
+          <div style="font-size:1.15rem;font-weight:900;color:#173b53;margin:.35rem 0">
+            Edificio Chimbote · Torre A
+          </div>
+          <div style="color:#527083;line-height:1.65;font-size:.90rem">
+            Actuarás como especialista responsable de analizar una vivienda del
+            proyecto y proponer soluciones constructivas que permitan satisfacer
+            los requisitos acústicos de <strong>Clase B</strong> de ISO/TS 19488:2021.
+            Se estudiarán el aislamiento aéreo entre viviendas, el ruido de impacto,
+            el aislamiento de fachada y el ruido de instalaciones. La propuesta debe
+            respaldarse con planos, hipótesis trazables, modelaciones y una
+            comparación técnica de la condición original con la mejorada.
+          </div>
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
+    st.markdown("#### Identificación de la vivienda de estudio")
+    st.markdown(
+        "**Torre A · piso 5 · hilera sur · tercer departamento desde poniente** "
+        "(código académico **CH-A-P05-S03**). La planta tipo permite localizar "
+        "la unidad y reconocer sus recintos y colindancias; los cortes y las "
+        "elevaciones permiten comprobar alturas, vanos y geometría."
+    )
+    st.warning(
+        "La marca de color en el plano es exclusivamente orientativa y no representa "
+        "una superficie medida. Las dimensiones, áreas, volúmenes y tiempos "
+        "de reverberación deben obtenerse de los documentos y cálculos, o "
+        "declararse como hipótesis explícitas cuando falten datos."
+    )
+
+    st.markdown("### B · Planos y documentación complementaria")
+    st.markdown(
+        "Descarga el **expediente único del alumno** antes de comenzar: "
+        "planta tipo de la Torre A con la unidad identificada, cortes, elevaciones, "
+        "especificaciones constructivas, ficha geométrica, suplemento de cotas "
+        "y antecedentes de tráfico para el estudio de fachada."
     )
     pack, issue = _student_document_pack()
     if pack is None:
         st.warning(
-            issue + " Hasta incorporar el PDF binario a la rama, "
-            "la descarga completa estará deshabilitada."
+            issue + " El paquete completo no estará disponible hasta "
+            "incorporar el documento faltante a esta rama."
         )
     else:
         st.download_button(
@@ -293,20 +312,22 @@ def _stage0(lab, saved):
             use_container_width=True,
             key="c5l2_docs_download",
         )
+    st.caption(
+        "Documentos de trabajo para el alumno. Las pautas docentes y las "
+        "soluciones resueltas no forman parte del paquete."
+    )
 
-    if saved.get("c5l2_s0", {}).get("acknowledged"):
-        st.success("Encargo leído y registrado. Puedes continuar con la Etapa 1.")
-    elif st.button("✓ Registrar lectura del encargo", key="c5l2_s0"):
-        _save(lab, saved, 0, "c5l2_s0", {
-            "acknowledged": True, "target": "B", "scope": SITE
-        })
-
-
-def _stage1(lab,saved):
-    _header(1)
-    st.markdown("### A · Define los requisitos normativos antes de modelar")
-    st.info("Consulta ISO/TS 19488:2021 y determina los requisitos de **Clase B** para las cuatro situaciones. No basta con escribir 'B': identifica el descriptor exacto, umbral, condición, sentido de comparación y tabla/nota de la fuente.")
-    st.caption("El caso de fachada puede depender de la exposición exterior y el de instalaciones del régimen de operación. Explica la condición que elegiste. Las cifras normativas se investigan por el alumno y NO se proporcionan en esta pantalla.")
+    st.markdown("### C · Requisitos normativos de Clase B")
+    st.info(
+        "Consulta ISO/TS 19488:2021 y determina los requisitos de Clase B "
+        "para las cuatro situaciones. Identifica descriptor, valor, condición "
+        "de aplicación, sentido de comparación y referencia normativa."
+    )
+    st.caption(
+        "El criterio de fachada depende de la exposición exterior y el de "
+        "instalaciones del régimen de operación. No se entregan valores "
+        "normativos resueltos: debes justificar la selección."
+    )
     old=saved.get("c5l2_s1") or {}
     previous=old.get("criteria") or {}
     fields={}
@@ -325,7 +346,7 @@ def _stage1(lab,saved):
                 reference=st.text_input("Tabla, fila, nota y apartado ISO",value=previous_row.get("reference",""),key=f"c5l2_norm_{code}_reference")
             condition=st.text_area("Ámbito de aplicación, condiciones y justificación técnica",value=previous_row.get("condition",""),height=82,key=f"c5l2_norm_{code}_condition")
             fields[code]={"descriptor":descriptor,"limit":limit,"direction":direction,"reference":reference,"condition":condition}
-        st.markdown("### B · Reconoce Torre A y la vivienda CH-A-P05-S03")
+        st.markdown("### D · Reconocimiento documental de la vivienda CH-A-P05-S03")
         descriptions=[
             ("location","Edificio, piso y vivienda seleccionados","Torre A, piso 5, tercera vivienda desde poniente en hilera sur (CH-A-P05-S03)."),
             ("documents","Documentación consultada","Archivo, lámina, revisión y cotas relevantes."),
@@ -335,7 +356,7 @@ def _stage1(lab,saved):
         documentation={}
         for key,label,explanation in descriptions:
             documentation[key]=st.text_area(label,value=old.get(key,""),help=explanation,height=80,key=f"c5l2_s1_{key}")
-        submitted=st.form_submit_button("Guardar criterios Clase B y reconocimiento",type="primary")
+        submitted=st.form_submit_button("Guardar encargo, requisitos Clase B y reconocimiento",type="primary")
     if submitted:
         incomplete=[code for code,row in fields.items() if
             not row["descriptor"].strip() or not row["limit"].strip() or
