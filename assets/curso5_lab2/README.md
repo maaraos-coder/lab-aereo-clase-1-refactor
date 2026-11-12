@@ -2,23 +2,25 @@
 
 **Caso vigente:** Edificio Chimbote, La Florida. **Torre A · piso 5 · hilera sur · tercera vivienda desde poniente · CH-A-P05-S03** (identificador docente, no número oficial).
 
-El laboratorio descarga desde esta carpeta **un único archivo PDF**:
+La Etapa 1 descarga desde esta carpeta el PDF de planos y cuatro anexos por separado; también ofrece un ZIP completo cuando el PDF principal se ha publicado:
 `Chimbote_Torre_A_CH-A-P05-S03_planos.pdf`
 
 ## Origen y contenido
 
 Las láminas proceden de los archivos originales suministrados por el docente:
 
-- `3.1 Planos de Arquitectura (Parte 1).pdf`: página 8, planta tipo Torre A y B; la vivienda elegida en Torre A aparece **resaltada en amarillo transparente y contorno rojo**; página 12, corte.
+- `3.1 Planos de Arquitectura (Parte 1).pdf`: página 8, planta tipo Torre A y B; la vivienda elegida en Torre A debe verificarse con los planos originales y la localización del encargo; página 12, corte.
 - `3.1 Planos de Arquitectura (Parte 2).pdf`: páginas 2, 3 y 4, elevaciones/cortes complementarios.
 
 Los planos se conservan a la resolución nativa de la imagen original, con anotación sin alteración de cotas. No se entrega documentación de faenas, otros proyectos ni el PDF completo de 125 páginas de la DIA.
 
 ## Publicación del archivo binario
 
-**Falta adjuntar el PDF binario seleccionado al repositorio.** El PDF de 18 MB ha sido generado para descarga en la conversación. Para que aparezca en el ZIP del botón de Etapa 0, subirlo con exactamente este nombre dentro de esta carpeta GitHub.
+**Pendiente de subida a GitHub por el docente.** El archivo PDF consolidado de planos es de aproximadamente 34 MB. Para habilitar la descarga en la Etapa 1 y el ZIP integrado, súbelo con exactamente este nombre dentro de esta carpeta en la rama `curso3-lab2-etapas-3-10`.
 
-La aplicación **no generará ni ofrecerá el paquete incompleto** hasta que ese archivo exista. La generación del ZIP dentro de Streamlit es local y no usa Supabase Storage.
+También subir los cuatro anexos PDF con sus nombres de archivo exactos: `01_Ficha_Geometrica_Chimbote_Alumno.pdf`, `02_Especificaciones_Constructivas_Chimbote_Alumno.pdf`, `03_Suplemento_Cotas_Chimbote_Alumno.pdf`, `04_Trafico_Fachada_Chimbote_Alumno.pdf`.
+
+Los botones individuales solo aparecerán activos cuando cada archivo esté disponible. La aplicación **no ofrecerá el paquete completo** hasta que exista el PDF de planos. La generación del ZIP dentro de Streamlit es local.
 
 ## Documentos de respaldo en repo
 
