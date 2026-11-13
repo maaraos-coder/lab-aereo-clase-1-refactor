@@ -36,7 +36,7 @@ La Etapa 1 evalúa criterio de Clase B (descriptores, condiciones, sentido y ref
 
 
 ## Selección definitiva del caso académico
-Se fija **Torre A, piso 5, hilera sur de la planta tipo, tercer departamento contando desde el extremo poniente**. Código identificador interno **CH-A-P05-S03**. Emisor aéreo: vivienda inmediatamente al oriente, sujeto a selección de recintos realmente contiguos; impacto: vivienda directamente superpuesta del piso 6; fachada: paño exterior sur del estar; instalaciones: recinto sanitario adyacente que resulte geométricamente acreditado o escenario explícitamente docente. Esta selección espacial sí es definitiva, pero las áreas y alturas no se rellenan sin leer cotas completas.
+Se fija **Torre A, piso 5, hilera sur de la planta tipo, tercer departamento contando desde el extremo poniente**. Código identificador interno **CH-A-P05-S03**. Emisor aéreo: estar de vivienda inmediatamente al poniente, sujeto a selección de recintos realmente contiguos; impacto: vivienda directamente superpuesta del piso 6; fachada: paño exterior sur del estar; instalaciones: **descarga WC del baño de la vivienda superpuesta del piso 6** como fuente intermitente de vivienda vecina; receptor dormitorio de CH-A-P05-S03 en el piso 5. La bajada sanitaria y el recorrido hasta el receptor son **hipótesis de modelación**, no trazados acreditados. Esta selección espacial sí es definitiva, pero las áreas y alturas no se rellenan sin leer cotas completas.
 
 ## Inspección adicional de la vivienda fijada, lámina planta tipo
 
