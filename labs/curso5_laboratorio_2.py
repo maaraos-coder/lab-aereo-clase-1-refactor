@@ -1650,35 +1650,6 @@ def _stage4(lab, saved):
             _save(lab, saved, 4, "c5l2_s4", payload, complete=True)
 
 
-def _model(stage,lab,saved,case):
-    _header(stage)
-    title,descriptor,scope=CASES[case]
-    st.markdown(f"### {case} · {title}")
-    st.caption(f"Descriptor de referencia: {descriptor}. Elementos: {scope}. Selecciona umbral de Clase B consultando la norma, con fila/nota identificable.")
-    if not saved.get("c5l2_s2"):
-        st.warning("No hay ficha geométrica guardada de la Etapa 2.")
-    criteria=(saved.get("c5l2_s1") or {}).get("criteria") or {}
-    selected=criteria.get(case) or {}
-    if selected:
-        st.markdown("#### Criterio Clase B previamente definido por el alumno")
-        st.caption(f"{selected.get('descriptor','')} · {selected.get('direction','')} {selected.get('limit','')} · Fuente: {selected.get('reference','')}")
-        st.caption(selected.get("condition",""))
-    else:
-        st.warning("Define primero el requisito Clase B de este caso en la Etapa 1. Los límites normativos no se proporcionan de forma automática.")
-    old=saved.get(f"c5l2_s{stage}") or {}
-    with st.form(f"c5l2_model_{case}"):
-        fields={}
-        fields["geometry"]=st.text_area("Geometría obtenida del plano y trasladada a SONARA",old.get("geometry",""))
-        fields["base"]=st.text_area("Sistema original y resultado SONARA (descriptor, valor, unidades, versión)",old.get("base",""))
-        fields["variant"]=st.text_area("Variante diseñada y resultado SONARA (descriptor, valor, unidades, versión)",old.get("variant",""))
-        fields["target"]=st.text_area("Criterio Clase B: descriptor, umbral, sentido, tabla/nota de la norma",old.get("target",""))
-        fields["comparison"]=st.text_area("Comparación, margen, limitaciones y evidencia SONARA",old.get("comparison",""))
-        submitted=st.form_submit_button("Guardar resultados y alternativa",type="primary")
-    if submitted:
-        if any(len(v.strip())<18 for v in fields.values()):
-            st.warning("Registra geometría, ambos modelos, requisito ISO y comparación de manera verificable.")
-        else:_save(lab,saved,stage,f"c5l2_s{stage}",{"case":case,**fields})
-
 def _stage5(lab, saved):
     """Impact-noise design: same pedagogical structure as airborne Stage 4."""
     import hashlib
@@ -2407,6 +2378,119 @@ y continúa el diseño de la envolvente en **SONARA**.
             _save(lab, saved, 6, "c5l2_s6", payload, complete=True)
 
 
+def _stage7(lab, saved):
+    _header(7)
+    old = saved.get("c5l2_s7") or {}
+    st.markdown("### IN-01 · Ruido de descarga sanitaria")
+    st.caption("Descarga del WC de la vivienda del piso 6 → dormitorio CH-A-P05-S03 del piso 5.")
+
+    st.markdown("#### A · Geometría y reverberación")
+    geometry = saved.get("c5l2_s2") or {}
+    room = next((row for row in geometry.get("rooms", []) if row.get("Caso") == "IN-01"), {})
+    closure = next((row for row in geometry.get("separations", []) if row.get("Caso") == "IN-01"), {})
+    tr = [{"Banda (Hz)": row["Banda (Hz)"], "TR dormitorio (s)": row["TR dormitorio (s)"]}
+          for row in (saved.get("c5l2_s3") or {}).get("tr_bands", []) if row.get("TR dormitorio (s)")]
+    st.table([{"Volumen dormitorio (m³)": room.get("Volumen (m³)", "Pendiente"),
+               "Área cierre S-01 (m²)": closure.get("Superficie (m²)", "Pendiente")}])
+    if tr:
+        st.table(tr)
+    else:
+        st.caption("Guarda el TR por bandas del dormitorio en la Etapa 3.")
+    st.caption("El módulo recibe un TR y una absorción equivalente del receptor. Documenta la banda representativa adoptada al trasladar los datos a SONARA.")
+
+    st.markdown("#### B · Instalación original")
+    st.table([item for item in BASE_CONSTRUCTION if item["Caso"] == "IN-01"])
+    st.link_button("Abrir SONARA · Instalaciones EN 12354-5", SONARA_URL)
+    st.markdown(
+        "Selecciona **Intermitente (LAFmax estimado)**. Modela la vía aérea a través del cierre S-01 "
+        "con el espectro máximo de la descarga y la reducción del cierre por octavas. "
+        "Si dispones de datos de excitación y transferencia instalada, agrega la vía estructural "
+        "por tubería y abrazaderas en **Agregar vías simultáneas**. Conserva el mismo evento en ambos modelos."
+    )
+    st.caption("Los espectros genéricos de SONARA son supuestos docentes. Identifica su procedencia, la compatibilidad con el máximo temporal F y cualquier vía omitida.")
+
+    st.markdown("#### C · Diseño libre de la mejora")
+    variant = st.text_area("Materiales y solución propuesta", old.get("variant", ""), key="c5l2_s7_variant")
+    mounting = st.text_area("Montaje, fijaciones y vías intervenidas", old.get("mounting", ""), key="c5l2_s7_mounting")
+    evidence = st.text_area("Respaldo acústico e hipótesis de ambos modelos", old.get("evidence", ""), key="c5l2_s7_evidence")
+
+    st.markdown("#### D · Resultados y proyectos JSON de SONARA")
+    st.caption("Guarda el cálculo de cada condición como solución en su proyecto SONARA antes de exportarlo.")
+    files, results = {}, {}
+    for name, label in (("original", "Instalación original"), ("mejora", "Instalación mejorada")):
+        upload = st.file_uploader(f"JSON SONARA · {label}", type=["json"], key=f"c5l2_s7_json_{name}")
+        data = (old.get("sonara_json") or {}).get(name)
+        if upload is not None:
+            data = None
+            try:
+                raw = upload.getvalue()
+                if len(raw) > 2 * 1024 * 1024:
+                    raise ValueError
+                document = json.loads(raw.decode("utf-8-sig"))
+                if not isinstance(document, dict) or len(document) != 1:
+                    raise ValueError
+                project_id, project = next(iter(document.items()))
+                if not isinstance(project, dict) or project.get("id") != project_id:
+                    raise ValueError
+                requirements = project.get("requerimientos", [])
+                if not isinstance(requirements, list) or any(
+                    not isinstance(group, dict) or not isinstance(group.get("soluciones", []), list)
+                    for group in [project, *requirements]
+                ):
+                    raise ValueError
+                data = {"filename": upload.name, "document": document}
+            except (ValueError, UnicodeError):
+                st.error("Carga un JSON de un solo proyecto SONARA, de hasta 2 MB.")
+        options = []
+        if data:
+            files[name] = data
+            st.caption(data["filename"])
+            project = next(iter(data["document"].values()))
+            for group in [project, *(project.get("requerimientos") or [])]:
+                if not isinstance(group, dict):
+                    continue
+                for solution in group.get("soluciones") or []:
+                    if not isinstance(solution, dict):
+                        continue
+                    value = solution.get("lafmax_nt")
+                    if type(value) in (float, int) and math.isfinite(value):
+                        options.append(float(value))
+        if options:
+            results[name] = st.selectbox(f"LAFmax,nT [dB(A)] · {label}", list(dict.fromkeys(options)),
+                                         key=f"c5l2_s7_result_{name}")
+        else:
+            results[name] = st.number_input(f"LAFmax,nT [dB(A)] · {label}", min_value=-20.0, max_value=150.0,
+                                            value=(old.get("model_results") or {}).get(name),
+                                            key=f"c5l2_s7_manual_{name}")
+
+    st.markdown("#### E · Comprobación de Clase B")
+    target = 30.0
+    st.caption("ISO/TS 19488:2021, Tabla 4 · equipos intermitentes de espacios vecinos · LAFmax,nT ≤ 30 dB(A).")
+    if results["original"] is not None and results["mejora"] is not None:
+        st.metric("Reducción proyectada", f'{results["original"] - results["mejora"]:+.1f} dB')
+    if results["mejora"] is not None:
+        margin = target - results["mejora"]
+        st.metric("Margen respecto a Clase B", f"{margin:+.1f} dB")
+        st.write("Alcanza la meta según la predicción." if margin >= 0 else "Supera el límite según la predicción.")
+    else:
+        st.info("Registra el LAFmax,nT de la instalación mejorada para comprobar la meta.")
+    comparison = st.text_area("Conclusión técnica y limitaciones", old.get("comparison", ""), key="c5l2_s7_comparison")
+    payload = {**old, "case": "IN-01", "receiver": room, "closure": closure,
+               "receiver_tr_bands": tr, "variant": variant, "mounting": mounting,
+               "evidence": evidence, "comparison": comparison, "target_db": target,
+               "model_results": results, "sonara_json": files}
+    draft, finish = st.columns(2)
+    if draft.button("Guardar avance", key="c5l2_s7_draft"):
+        _save(lab, saved, 7, "c5l2_s7", payload, complete=False)
+    if finish.button("Completar Etapa 7", type="primary", key="c5l2_s7_finish"):
+        if len(files) != 2 or any(value is None for value in results.values()):
+            st.warning("Adjunta ambos proyectos SONARA y registra sus resultados LAFmax,nT.")
+        elif not all(field.strip() for field in (variant, mounting, evidence, comparison)):
+            st.warning("Completa la mejora, el montaje, el respaldo y la conclusión.")
+        else:
+            _save(lab, saved, 7, "c5l2_s7", payload, complete=True)
+
+
 def _stage8(lab,saved):
     _header(8)
     st.markdown("### Matriz de verificación · meta Clase B")
@@ -2805,16 +2889,17 @@ def _teacher(stage, saved=None):
                 _stage2_teacher_geometry_results()
             else:
                 st.write(TEACHER[stage])
-            if stage == 6:
-                records = ((saved or {}).get("c5l2_s6") or {}).get("sonara_json") or {}
-                for name, label in (("original", "Fachada original"), ("mejora", "Fachada mejorada")):
+            if stage in (6, 7):
+                label_prefix = "Fachada" if stage == 6 else "Instalación"
+                records = ((saved or {}).get(f"c5l2_s{stage}") or {}).get("sonara_json") or {}
+                for name, label in (("original", f"{label_prefix} original"), ("mejora", f"{label_prefix} mejorada")):
                     data = records.get(name)
                     if data and data.get("document"):
                         st.download_button(
                             "Descargar JSON · " + label,
                             json.dumps(data["document"], ensure_ascii=False, indent=2),
                             file_name=data["filename"], mime="application/json",
-                            key="c5l2_s6_teacher_" + name,
+                            key=f"c5l2_s{stage}_teacher_" + name,
                         )
             if stage==5:
                 st.markdown("**Pauta docente · aislamiento de impacto · Etapa 5**")
@@ -2955,7 +3040,7 @@ def run_stage(stage,lab,saved,runtime):
     elif stage==4:_stage4(lab,saved)
     elif stage==5:_stage5(lab,saved)
     elif stage==6:_stage6(lab,saved)
-    elif stage==7:_model(stage,lab,saved,"IN-01")
+    elif stage==7:_stage7(lab,saved)
     elif stage==8:_stage8(lab,saved)
     elif stage==9:_stage9(lab,saved)
     else:_stage10(lab,saved)
