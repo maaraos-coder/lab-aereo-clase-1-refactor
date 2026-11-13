@@ -1280,8 +1280,17 @@ def _stage4(lab, saved):
         "provisionales**, no ensayos. El alumno registra **Kij** calculado "
         "en SONARA y conserva los detalles del proyecto en su JSON."
     )
-    source_length = _filled(geo.get("length"))
-    source_height = _filled(geo.get("height"))
+    # HM-01 (3,10 m) y HG-01 (2,50 m) son las cotas docentes
+    # explicitadas en la pauta geométrica de la Etapa 2.
+    # Las medidas guardadas por el alumno siempre tienen prioridad.
+    source_length = _filled(geo.get("length"), "3,10")
+    source_height = _filled(geo.get("height"), "2,50")
+    st.caption(
+        "Longitudes de las juntas: **3,10 m** para losas de piso/cielo "
+        "(HM-01) y **2,50 m** para muros laterales/fachada (HG-01) "
+        "si la Etapa 2 aún no tiene cotas guardadas. "
+        "Son **supuestos docentes de referencia**, no medidas de obra."
+    )
     flank_columns = [
         "Flanco SONARA", "Activo", "Material / hipótesis",
         "R emisor (dB)", "R receptor (dB)", "Longitud lᵢⱼ (m)",
@@ -1330,10 +1339,11 @@ def _stage4(lab, saved):
         "modelo calculado si dispones de él. 432, 384 y 360 kg/m² son "
         "masas nominales obtenidas de espesor × 2.400 kg/m³."
     )
-    if not source_length or not source_height:
+    if not _filled(geo.get("length")) or not _filled(geo.get("height")):
         st.warning(
-            "Longitudes de unión pendientes: guarda las cotas AI-01 de Etapa 2 "
-            "antes de configurar estos flancos en SONARA."
+            "Las longitudes de unión mostradas son **cotas docentes** "
+            "HM-01/HG-01 porque todavía no hay dimensiones AI-01 guardadas "
+            "en la Etapa 2. Al guardar allí las cotas, se recuperarán aquí."
         )
 
     st.markdown("#### C · Propuesta libre de mejoramiento")
