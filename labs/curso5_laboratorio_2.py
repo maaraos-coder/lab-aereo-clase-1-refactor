@@ -1852,42 +1852,73 @@ def _stage5(lab, saved):
             "Origen de propiedades acústicas de la losa",
             value=str(old_base.get("source", "")), key="c5l2_s5_base_source",
             placeholder="Catálogo SONARA / curva / ficha técnica")
-    st.markdown("**Uniones con el entrepiso · condición académica original**")
-    st.caption(
-        "Se proporcionan los materiales y tipos de unión. Registra únicamente "
-        "los parámetros de flanqueo/coeficientes que obtengas del módulo "
-        "ISO 12354-2 de SONARA. Los muros laterales HA son una "
-        "**hipótesis docente**; no un dato verificado de obra."
+    st.markdown("**Uniones con el entrepiso · datos docentes entregados**")
+    st.info(
+        "Las cuatro uniones del entrepiso quedan **definidas por el ejercicio**: "
+        "materialidad, longitud y montaje. El estudiante **solo registra "
+        "Kij (dB) obtenido de SONARA**. No debe completar ni modificar "
+        "las otras columnas."
     )
+    # Longitudes de borde: usar las cotas registradas en Etapa 2. Si faltan,
+    # aplicar las hipótesis geométricas docentes del dormitorio 2,60 × 3,10 m.
+    # Se indican expresamente como supuestos y no como levantamiento acreditado.
+    length_from_stage2 = _number(geo.get("slab_length"))
+    width_from_stage2 = _number(geo.get("slab_width"))
+    union_length = length_from_stage2 if length_from_stage2 is not None and length_from_stage2 > 0 else 2.60
+    union_width = width_from_stage2 if width_from_stage2 is not None and width_from_stage2 > 0 else 3.10
+    if length_from_stage2 is None or length_from_stage2 <= 0 or width_from_stage2 is None or width_from_stage2 <= 0:
+        st.caption(
+            "Longitudes sin dato registrado en Etapa 2: se emplean las "
+            "**cotas docentes del dormitorio (2,60 × 3,10 m)**. "
+            "Corresponden a una geometría académica de referencia; "
+            "pueden sustituirse al completar y guardar la ficha geométrica."
+        )
+    else:
+        st.caption(
+            "Las longitudes de unión se recuperaron de la **Etapa 2**. "
+            "Las losas HA 160 mm son las del encargo L-01. Los muros "
+            "HA 180 mm y sus uniones rígidas se adoptan como hipótesis "
+            "docentes de modelación, no como datos certificados del edificio."
+        )
     fl_cols = ["Encuentro", "Elemento / material", "Longitud de unión (m)",
                "Montaje previsto", "Kij SONARA (dB)"]
     fl_def = [
-        {"Encuentro": "Losa / muro 1", "Elemento / material": "HA 180 mm (hipótesis)",
-         "Longitud de unión (m)": geo["slab_length"], "Montaje previsto": "Rígido continuo",
+        {"Encuentro": "Losa / muro 1", "Elemento / material": "Muro HA 180 mm · hipótesis docente",
+         "Longitud de unión (m)": f"{union_length:.2f}",
+         "Montaje previsto": "Unión rígida continua · hipótesis",
          "Kij SONARA (dB)": ""},
-        {"Encuentro": "Losa / muro 2", "Elemento / material": "HA 180 mm (hipótesis)",
-         "Longitud de unión (m)": geo["slab_length"], "Montaje previsto": "Rígido continuo",
+        {"Encuentro": "Losa / muro 2", "Elemento / material": "Muro HA 180 mm · hipótesis docente",
+         "Longitud de unión (m)": f"{union_length:.2f}",
+         "Montaje previsto": "Unión rígida continua · hipótesis",
          "Kij SONARA (dB)": ""},
-        {"Encuentro": "Losa / muro 3", "Elemento / material": "HA 180 mm (hipótesis)",
-         "Longitud de unión (m)": geo["slab_width"], "Montaje previsto": "Rígido continuo",
+        {"Encuentro": "Losa / muro 3", "Elemento / material": "Muro HA 180 mm · hipótesis docente",
+         "Longitud de unión (m)": f"{union_width:.2f}",
+         "Montaje previsto": "Unión rígida continua · hipótesis",
          "Kij SONARA (dB)": ""},
-        {"Encuentro": "Losa / muro 4", "Elemento / material": "HA 180 mm (hipótesis)",
-         "Longitud de unión (m)": geo["slab_width"], "Montaje previsto": "Rígido continuo",
+        {"Encuentro": "Losa / muro 4", "Elemento / material": "Muro HA 180 mm · hipótesis docente",
+         "Longitud de unión (m)": f"{union_width:.2f}",
+         "Montaje previsto": "Unión rígida continua · hipótesis",
          "Kij SONARA (dB)": ""},
     ]
     old_flanks = old_base.get("flanks") or []
     for idx, row in enumerate(fl_def):
-        if idx < len(old_flanks):
+        if idx < len(old_flanks) and isinstance(old_flanks[idx], dict):
             row["Kij SONARA (dB)"] = str(old_flanks[idx].get("Kij SONARA (dB)", ""))
     flanks = st.data_editor(
         pd.DataFrame(fl_def, columns=fl_cols), hide_index=True,
         num_rows="fixed", use_container_width=True,
-        disabled=fl_cols[:-1], key="c5l2_s5_flanks_v1"
+        disabled=fl_cols[:-1], key="c5l2_s5_flanks_docente_v2",
+        column_config={
+            "Kij SONARA (dB)": st.column_config.TextColumn(
+                "Kij calculado en SONARA (dB)",
+                help="Única columna editable. Registra Kij asociado a cada encuentro del cálculo ISO 12354-2."
+            )
+        }
     ).fillna("").to_dict("records")
     st.caption(
-        "Los distintos caminos ISO 12354-2 pueden requerir más de un "
-        "coeficiente por unión; conserva el detalle en el proyecto SONARA, "
-        "sin sustituirlos por un promedio arbitrario."
+        "Esta ficha docente resume cuatro encuentros. Si SONARA distingue "
+        "coeficientes por vía (Ff, Fd y Df), se mantienen los valores "
+        "detallados en el JSON del proyecto, sin promediarlos arbitrariamente."
     )
 
     st.markdown("#### C · Diseño libre de la mejora de impacto")
