@@ -80,7 +80,7 @@ TEACHER = {
  1: "Presentar el proyecto Chimbote y la unidad CH-A-P05-S03; verificar localización en el plano, descargar los antecedentes y distinguir el proyecto real de los supuestos académicos. Comprobar criterios de Clase B de ISO/TS 19488:2021 con descriptor, valor, dirección y referencia, sin entregar solución.",
  2: "Los recintos están fijados por el encargo: el muro estar poniente–dormitorio se aprecia en la planta tipo; pisos 5 y 6 están cubiertos por la planta tipo 3–16. Verificar dimensiones y uniones reales, paños de fachada sur y modelar instalación sanitaria sin presuponer transmisión directa por un tabique. NO copiar cotas de otros departamentos.",
  3: "Materialidad original académica M-01 L-01 F-01 V-01 S-01 IS-01 T-01 T-02 T-03. Revisar superficies interiores, absorciones por banda y cálculo del TR en SONARA: no adoptar TR prefijado.",
- 4: "Exigir DnT,w y adaptación pertinente para la transmisión entre viviendas, incluyendo flancos, y una variante coherente.",
+ 4: "Comprobar el registro de geometría ISO 12354-1 (S, V y recintos), M-01 de HA 180 mm y 432 kg/m² nominales, encuentros y flancos, TR por banda del dormitorio y resultados originales/mejorados de SONARA. Rw, R′w y DnT,w no son intercambiables. Exigir comparación con el descriptor y la meta Clase B determinados en Etapa 1, sin inventar valores de una simulación no realizada.",
  5: "Revisar LnT,w y términos aplicables de impacto, piso original y variante resiliente, incluyendo vías laterales.",
  6: "Verificar la secuencia NoiseMap: eje de Pasaje Chimbote, polígono de edificio, receptor exterior frente a fachada sur a altura de piso 5, auditoría geométrica válida, categorías 1/2/3/4a/4b, tres períodos y JSON trazable. No aplicar -3 dB al resultado incidente; evaluar límites del motor educativo antes de revisar paños, vanos, curva ventana-marco-sello y SONARA.",
  7: "Descarga WC de vivienda distinta (piso 6) → dormitorio receptor piso 5. Para ruido intermitente de vivienda vecina verificar LAF,max,nT ≤30 dB(A), ISO/TS 19488:2021 Tabla 4 Clase B; la predicción no acredita cumplimiento sin modelar las vías aérea y estructural.",
@@ -1011,10 +1011,317 @@ def _stage3(lab,saved):
                 "Faltan valores de TR positivos para dormitorio y estar en: " +
                 ", ".join(bad_bands) + ". Puedes guardar el avance."
             )
-        elif len(method.strip()) < 15:
-            st.warning("Describe brevemente el método y las fuentes del cálculo realizado en SONARA.")
         else:
             _save(lab, saved, 3, "c5l2_s3", payload, complete=True)
+
+
+def _stage4(lab, saved):
+    """Structured ISO 12354-1 airborne insulation design worksheet, for SONARA."""
+    import pandas as pd
+
+    _header(4)
+    old = saved.get("c5l2_s4") or {}
+    geometry = saved.get("c5l2_s2") or {}
+    reverberation = saved.get("c5l2_s3") or {}
+    criterion = ((saved.get("c5l2_s1") or {}).get("criteria") or {}).get("AI-01") or {}
+
+    st.markdown("### AI-01 · Aislamiento aéreo entre viviendas")
+    st.info(
+        "Diseña el aislamiento entre el **estar de la vivienda poniente (emisor)** "
+        "y el **dormitorio de CH-A-P05-S03, piso 5 (receptor)**. "
+        "Prepara los datos para **SONARA** y registra **dos simulaciones**: "
+        "el muro M-01 original y una mejora diseñada por ti. "
+        "Para la predicción entre recintos considera **ISO 12354-1** "
+        "(transmisión directa y flanqueos); la valoración global se expresa "
+        "con **ISO 717-1**. El Rw del elemento aislado no equivale a DₙT,w."
+    )
+    st.caption(
+        "Secuencia: 1) recuperar geometría → 2) caracterizar muro y encuentros → "
+        "3) ingresar en SONARA → 4) registrar modelo original → "
+        "5) modificar la solución y recalcular → 6) contrastar con la meta Clase B."
+    )
+
+    rooms = {str(r.get("Caso") or ""): r for r in geometry.get("rooms", [])
+             if isinstance(r, dict)}
+    separations = {str(r.get("Caso") or ""): r
+                   for r in geometry.get("separations", [])
+                   if isinstance(r, dict)}
+    receiver = rooms.get("AI-01", {})
+    separator = separations.get("AI-01", {})
+    tr_room = (reverberation.get("tr_rooms") or {}).get("Dormitorio", {})
+    tr_bands = reverberation.get("tr_bands") or []
+
+    def _val(value):
+        return "" if value is None else str(value)
+
+    def _positive(value):
+        try:
+            number = float(str(value).strip().replace(",", "."))
+            return math.isfinite(number) and number > 0
+        except (ValueError, TypeError):
+            return False
+
+    st.markdown("#### A · Datos geométricos necesarios para ISO 12354-1")
+    st.caption(
+        "Los campos se recuperan de las etapas 2 y 3 **si todavía no han sido "
+        "editados aquí**. Son datos de trabajo para transcribir a SONARA, "
+        "no resultados calculados automáticamente."
+    )
+    old_geo = old.get("iso_geometry") or {}
+    defaults = {
+        "source_room": "Estar de vivienda poniente · piso 5",
+        "receiver_room": "Dormitorio · CH-A-P05-S03 · piso 5",
+        "separator": "M-01 · hormigón armado 180 mm",
+        "length": separator.get("Longitud (m)", ""),
+        "height": separator.get("Altura (m)", ""),
+        "surface": separator.get("Superficie (m²)", ""),
+        "receiver_length": receiver.get("Largo (m)", ""),
+        "receiver_width": receiver.get("Ancho (m)", ""),
+        "receiver_height": receiver.get("Altura (m)", ""),
+        "receiver_volume": receiver.get("Volumen (m³)", tr_room.get("volume", "")),
+        "receiver_area": receiver.get("Área (m²)", tr_room.get("area", "")),
+        "source_volume": "",
+        "source_area": "",
+        "source_height": "",
+        "drawing": separator.get("Plano / cota", receiver.get("Plano / cota", "")),
+        "source_basis": "",
+    }
+    geo = {}
+    # Apply the same types of data that the ISO model asks for, without
+    # imposing fictitious source-room dimensions.
+    fields = [
+        ("length", "Largo muro separador (m)"),
+        ("height", "Altura muro separador (m)"),
+        ("surface", "Superficie separadora S (m²)"),
+        ("receiver_length", "Largo dormitorio receptor (m)"),
+        ("receiver_width", "Ancho dormitorio receptor (m)"),
+        ("receiver_height", "Altura dormitorio receptor (m)"),
+        ("receiver_area", "Área dormitorio receptor (m²)"),
+        ("receiver_volume", "Volumen receptor V (m³)"),
+        ("source_area", "Área estar emisor (m²)"),
+        ("source_height", "Altura estar emisor (m)"),
+        ("source_volume", "Volumen emisor (m³)"),
+    ]
+    for i in range(0, len(fields), 3):
+        cols = st.columns(3)
+        for col, (key, label) in zip(cols, fields[i:i+3]):
+            with col:
+                geo[key] = st.text_input(
+                    label, value=_val(old_geo.get(key, defaults.get(key, ""))),
+                    key="c5l2_s4_geo_" + key,
+                    help="Transcribe el dato del plano. Si no figura, deja la celda vacía y documenta una hipótesis."
+                )
+    cols = st.columns(2)
+    with cols[0]:
+        geo["drawing"] = st.text_input(
+            "Referencia de plano / cota",
+            value=_val(old_geo.get("drawing", defaults["drawing"])),
+            key="c5l2_s4_drawing"
+        )
+    with cols[1]:
+        geo["source_basis"] = st.text_input(
+            "Referencia o hipótesis de geometría emisora",
+            value=_val(old_geo.get("source_basis", "")),
+            key="c5l2_s4_source_basis",
+            help="El estar de otra vivienda no se supone idéntico al dormitorio receptor."
+        )
+    st.caption(
+        "V = superficie horizontal × altura libre para recintos prismáticos. "
+        "S = largo del medianero × altura. Si hay entrantes, puertas o geometría "
+        "irregular, documenta el cálculo real. Para el emisor, **no reutilices "
+        "automáticamente el volumen del dormitorio**."
+    )
+    if _positive(geo["length"]) and _positive(geo["height"]) and _positive(geo["surface"]):
+        expected = float(geo["length"].replace(",", ".")) * float(geo["height"].replace(",", "."))
+        actual = float(geo["surface"].replace(",", "."))
+        if abs(actual - expected) > max(.05, .02 * expected):
+            st.warning("Comprueba S: la superficie anotada difiere del producto largo × alto.")
+
+    st.markdown("#### B · Muro original y vías de transmisión")
+    st.table([{
+        "Código": "M-01", "Solución original": "Hormigón armado 180 mm",
+        "Densidad": "2.400 kg/m³", "Uniones": "Encuentros rígidos"
+    }])
+    st.caption(
+        "Masa superficial nominal de referencia del muro original: "
+        "0,18 m × 2.400 kg/m³ = 432 kg/m² (hipótesis de materialidad, "
+        "no sustituto de una curva R(f) ensayada)."
+    )
+    previous_system = old.get("systems") or {}
+    b1, b2, b3 = st.columns(3)
+    with b1:
+        model_type = st.selectbox(
+            "Modelo utilizado en SONARA",
+            ["ISO 12354-1 por bandas", "ISO 12354-1 simplificado", "Otro (justificar)"],
+            index=(["ISO 12354-1 por bandas", "ISO 12354-1 simplificado",
+                    "Otro (justificar)"].index(previous_system.get("model_type"))
+                   if previous_system.get("model_type") in
+                   ["ISO 12354-1 por bandas", "ISO 12354-1 simplificado",
+                    "Otro (justificar)"] else 0),
+            key="c5l2_s4_model_type"
+        )
+    with b2:
+        data_origin = st.text_input(
+            "Origen de R(f) / Rw de la base",
+            value=previous_system.get("data_origin", ""),
+            key="c5l2_s4_data_origin",
+            placeholder="SONARA / ensayo / cálculo justificado"
+        )
+    with b3:
+        reference_time = st.text_input(
+            "T₀ de vivienda (s)", value=_val(previous_system.get("t0", "0.5")),
+            key="c5l2_s4_t0"
+        )
+    st.markdown("**Encuentros y flanqueos (datos de entrada a SONARA)**")
+    st.caption(
+        "Documenta los elementos laterales conectados al medianero, "
+        "sus superficies/longitudes y el tipo de unión. Kij o Dv,ij "
+        "y las propiedades de flanco se obtienen/justifican en SONARA; "
+        "no se reemplazan por una resta fija de dB."
+    )
+    flank_columns = ["Vía / encuentro", "Elemento flanqueante / material",
+                     "Longitud de unión (m)", "Tipo de junta",
+                     "Kij / Dv,ij / fuente"]
+    flank_defaults = [
+        {"Vía / encuentro": name, "Elemento flanqueante / material": "",
+         "Longitud de unión (m)": "", "Tipo de junta": "",
+         "Kij / Dv,ij / fuente": ""}
+        for name in ("Techo / muro", "Piso / muro", "Lateral 1 / muro", "Lateral 2 / muro")
+    ]
+    flank_records = previous_system.get("flanks") or flank_defaults
+    flanks = st.data_editor(
+        pd.DataFrame(flank_records, columns=flank_columns),
+        key="c5l2_s4_flanks_v1", hide_index=True,
+        use_container_width=True, num_rows="dynamic"
+    ).fillna("").to_dict("records")
+
+    st.markdown("#### C · TR del dormitorio y referencia acústica")
+    if tr_bands:
+        st.table([{"Banda (Hz)": row.get("Banda (Hz)", ""),
+                   "TR dormitorio (s)": row.get("TR dormitorio (s)", "")}
+                  for row in tr_bands])
+    else:
+        st.warning("Aún no hay TR por bandas guardado en la Etapa 3.")
+    st.caption(
+        "Usa los TR por bandas del recinto receptor al trasladar el proyecto a "
+        "SONARA. Para viviendas, T₀ = 0,5 s al normalizar DₙT; "
+        "el TR no es una propiedad del muro."
+    )
+
+    st.markdown("#### D · Hoja de resultados SONARA: base estructural y mejora")
+    st.caption(
+        "Ingresa los resultados que efectivamente obtengas en SONARA. "
+        "La variante parte del modelo base e incorpora tu mejora "
+        "(por ejemplo, trasdosado desacoplado y absorbente en cámara). "
+        "No atribuyas al material un incremento fijo de DₙT sin "
+        "recalcular el conjunto y los flancos."
+    )
+    result_columns = ["Modelo", "Sistema / configuración", "Rw muro (dB)",
+                      "R′w conjunto (dB)", "DₙT,w (dB)", "C (dB)",
+                      "Ctr (dB)", "DₙT,w + adaptación (dB)",
+                      "Fuente / cálculo SONARA"]
+    default_results = [
+        {"Modelo": "Original M-01", "Sistema / configuración":
+         "HA 180 mm; encuentros rígidos", **{k: "" for k in result_columns[2:]}},
+        {"Modelo": "Mejora propuesta", "Sistema / configuración": "",
+         **{k: "" for k in result_columns[2:]}}
+    ]
+    old_results = old.get("model_results") or default_results
+    results = st.data_editor(
+        pd.DataFrame(old_results, columns=result_columns),
+        key="c5l2_s4_results_v1", hide_index=True,
+        num_rows="fixed", disabled=["Modelo"], use_container_width=True
+    ).fillna("").to_dict("records")
+    st.caption(
+        "Rw = índice del elemento; R′w = índice aparente del conjunto; "
+        "DₙT,w = diferencia de niveles estandarizada ponderada. "
+        "La adaptación espectral se registra según el criterio escogido "
+        "en la Etapa 1; no se suman C y Ctr simultáneamente."
+    )
+    old_detail = old.get("design_detail") or {}
+    d1, d2 = st.columns(2)
+    with d1:
+        improvement = st.text_area(
+            "Composición propuesta y montaje de la mejora",
+            value=old_detail.get("improvement", ""),
+            key="c5l2_s4_improvement",
+            placeholder="Capas, espesores, masa, cámara, lana mineral, fijaciones, desacople y sellos..."
+        )
+    with d2:
+        evidence = st.text_area(
+            "Cálculo, fuente de curvas y limitaciones",
+            value=old_detail.get("evidence", ""),
+            key="c5l2_s4_evidence",
+            placeholder="Curvas R(f), encuentros, incertidumbre y archivo/versión SONARA..."
+        )
+    st.markdown("#### E · Comprobación contra el requisito Clase B")
+    if criterion:
+        st.info(
+            "Criterio definido en Etapa 1: "
+            + _val(criterion.get("descriptor")) + " · "
+            + _val(criterion.get("direction")) + " "
+            + _val(criterion.get("limit")) + " · "
+            + _val(criterion.get("reference"))
+        )
+    else:
+        st.warning("Falta registrar el requisito ISO/TS 19488 Clase B en la Etapa 1.")
+    e1, e2 = st.columns(2)
+    with e1:
+        selected_descriptor = st.text_input(
+            "Descriptor que contrastas", value=old_detail.get("descriptor", ""),
+            key="c5l2_s4_descriptor", placeholder="DₙT,w o DₙT,w + C / Ctr"
+        )
+    with e2:
+        comparison = st.text_area(
+            "Margen, conclusión y puntos pendientes",
+            value=old_detail.get("comparison", ""),
+            key="c5l2_s4_comparison", height=70
+        )
+    payload = {
+        "case": "AI-01", "iso_geometry": geo,
+        "systems": {"model_type": model_type, "data_origin": data_origin,
+                    "t0": reference_time, "flanks": flanks},
+        "model_results": results,
+        "design_detail": {
+            "improvement": improvement, "evidence": evidence,
+            "descriptor": selected_descriptor, "comparison": comparison
+        },
+        "schema_version": "c5l2_airborne_iso12354_v1"
+    }
+    a, b = st.columns(2)
+    with a:
+        draft = st.button(
+            "💾 Guardar avance", key="c5l2_s4_draft_iso_v1", use_container_width=True
+        )
+    with b:
+        finish = st.button(
+            "✓ Completar Etapa 4", key="c5l2_s4_finish_iso_v1",
+            type="primary", use_container_width=True
+        )
+    if draft:
+        _save(lab, saved, 4, "c5l2_s4", payload, complete=False)
+    if finish:
+        essentials = ["length", "height", "surface", "receiver_volume",
+                      "receiver_area"]
+        missing = [key for key in essentials if not _positive(geo.get(key))]
+        measured = all(
+            _positive(r.get("DₙT,w (dB)")) for r in results
+        )
+        if missing:
+            st.warning("Faltan dimensiones o volumen del modelo receptor: "
+                       + ", ".join(missing) + ". Guarda avance mientras completas.")
+        elif not data_origin.strip() or not reference_time.strip():
+            st.warning("Indica la fuente acústica del muro original y T₀.")
+        elif not measured or len(results) != 2:
+            st.warning("Registra DₙT,w positivo de SONARA para la base y para la mejora.")
+        elif not all(str(r.get("Fuente / cálculo SONARA") or "").strip()
+                     for r in results):
+            st.warning("Indica la fuente o archivo SONARA de ambos resultados.")
+        elif not all([improvement.strip(), evidence.strip(),
+                      selected_descriptor.strip(), comparison.strip()]):
+            st.warning("Documenta la mejora, su respaldo, el descriptor y la comparación.")
+        else:
+            _save(lab, saved, 4, "c5l2_s4", payload, complete=True)
 
 
 def _model(stage,lab,saved,case):
@@ -1766,8 +2073,9 @@ def run_stage(stage,lab,saved,runtime):
     elif stage==1:_stage1(lab,saved)
     elif stage==2:_stage2(lab,saved)
     elif stage==3:_stage3(lab,saved)
+    elif stage==4:_stage4(lab,saved)
     elif stage==6:_stage6(lab,saved)
-    elif stage in (4,5,7):_model(stage,lab,saved,{4:"AI-01",5:"IM-01",7:"IN-01"}[stage])
+    elif stage in (5,7):_model(stage,lab,saved,{5:"IM-01",7:"IN-01"}[stage])
     elif stage==8:_stage8(lab,saved)
     elif stage==9:_stage9(lab,saved)
     else:_stage10(lab,saved)
