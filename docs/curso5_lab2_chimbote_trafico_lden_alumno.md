@@ -4,11 +4,11 @@
 
 ## Encargo del alumno
 
-La fachada seleccionada es la **sur**, orientada al corredor del **Pasaje Chimbote**. El alumno debe consultar el plano de emplazamiento y determinar si la vía tiene circulación de vehículos, su eje y su distancia horizontal a la fachada, y la cota vertical del receptor en piso 5. No atribuir a la vivienda exposición directa a **Mirador Azul**, cuya relación espacial es diferente.
+La fachada seleccionada corresponde al **estar de CH-A-P05-S03, en el frente sur de Torre A**, orientado hacia **Pasaje Chimbote** según la planta de arquitectura del proyecto. El alumno debe confrontar la planta con el emplazamiento para fijar el **eje vial real**, la distancia horizontal a la fachada y la altura sobre rasante del receptor del piso 5. **Pasaje Chimbote es una vía de escala local: no se modela como avenida ni se presupone una calzada de varias pistas.** No atribuir al estar exposición directa a **Mirador Azul** sin geometría que lo sustente.
 
-### A · Tránsito supuesto para un ejercicio didáctico
+### A · Escenario docente de exposición elevada (no representativo de aforos reales)
 
-Los siguientes datos son **inventados para enseñanza, no aforos reales**. Cada cifra es flujo horario promedio por categoría dentro de cada período.
+Los siguientes flujos se **mantienen deliberadamente como escenario de cálculo de circulación elevada** para ejercitar el modelo de fachada. Son **hipótesis ficticias**, no provienen de un aforo de Pasaje Chimbote ni permiten afirmar que ese pasaje tenga tal tráfico. Su carácter de **escenario hipotético exigente** debe figurar en la entrega. Cada cifra es flujo horario promedio por categoría dentro de cada período.
 
 | Período | Duración | Vehículos livianos/h | Pesados medianos/h | Pesados/h | Motocicletas/h |
 |---|---:|---:|---:|---:|---:|
@@ -16,12 +16,12 @@ Los siguientes datos son **inventados para enseñanza, no aforos reales**. Cada 
 | Tarde | 4 h | 45 | 1 | 0 | 4 |
 | Noche | 8 h | 10 | 0 | 0 | 1 |
 
-**Hipótesis adicional:** velocidad media inicial 30 km/h, pavimento asfáltico convencional, pendiente 0 % salvo pendiente medida. Las categorías deben cotejarse con las categorías 1–5 del método CNOSSOS-EU antes de introducirlas en un motor conforme a ese procedimiento. No sustituir directamente motocicletas por una categoría de pesados. La asignación de períodos usa el régimen europeo de ejercicio (12/4/8 horas).
+**Hipótesis adicional:** velocidad media de modelación 30 km/h, pavimento asfáltico convencional y pendiente 0 %. **Ninguno de esos tres parámetros se ha comprobado en terreno**; deben identificarse como SUPUESTO DOCENTE y ajustarse solo si el profesor entrega información contrastable. El ancho y número de pistas **no se infieren del render conceptual**. Las categorías deben cotejarse con las categorías 1–5 del método CNOSSOS-EU antes de introducirlas en un motor conforme a ese procedimiento. No sustituir directamente motocicletas por una categoría de pesados. La asignación de períodos usa el régimen europeo de ejercicio (12/4/8 horas).
 
 ### B · Ubicación del receptor
 
-- En la fachada del recinto habitable del piso 5, en la posición y altura que derive el alumno del corte, planta y alzado.
-- **Altura y distancia:** NO proporcionadas resueltas. Deben determinarse del expediente o documentarse como hipótesis docente antes de comparar resultados.
+- En la **fachada sur del estar** de CH-A-P05-S03, piso 5; no en el dormitorio ni en una fachada genérica de Torre A. Localizar la ventana y el paño opaco sobre la planta y, cuando corresponda, en elevaciones.
+- **Altura y distancia:** NO proporcionadas resueltas. Deben determinarse del corte, la planta y el emplazamiento; si no pueden leerse, documentarlas como hipótesis de ejercicio antes de modelar. El valor **0,1 m exterior** es una separación operativa para la auditoría del programa, **no una dimensión arquitectónica del proyecto**.
 - Modelar el eje vial, geometría real, suelo, edificios, reflexiones, meteorología y alturas conforme al alcance del motor que se utilice.
 
 ### C · Alcance y procedimiento en la versión actual de NoiseMap
@@ -33,7 +33,7 @@ La versión actual de `maaraos-coder/noisemap` implementa la **emisión espectra
 1. Abre la **dirección oficial**: https://noisemap-akuzoft.vercel.app/ y revisa el plano del emplazamiento.
 2. Utiliza **Tráfico vial** para dibujar el eje de **Pasaje Chimbote** en el lado sur del edificio. Finaliza la vía siguiendo los controles de dibujo.
 3. Utiliza **Edificio** y marca el perímetro exterior en planta; pulsa **Cerrar edificio** y ajusta su altura. Si en la auditoría se lee «Dibuja el edificio», no hay un polígono de edificio activo: vuelve al mapa y créalo.
-4. Con **Receptor**, ubica el punto exterior a unos **0,1 m** de la fachada **sur** correspondiente al caso **CH-A-P05-S03**, en dirección a la calle; evita esquinas e interior del inmueble. Introduce la altura **sobre rasante del piso 5** según corte o hipótesis documentada.
+4. Con **Receptor**, ubica el punto exterior a unos **0,1 m** del **paño sur del estar de CH-A-P05-S03**, hacia la calle; evita esquinas e interior del inmueble. Se trata de una posición **operativa para el algoritmo de incidencia**; no equivale a la posición reglamentaria de medición ni debe usarse como cota del edificio. Introduce la altura **sobre rasante del piso 5** según corte o hipótesis documentada.
 5. Selecciona la vía y configura categorías **1, 2, 3, 4a y 4b**, velocidades, tipo de pavimento, pendiente, sentidos y, cuando corresponda, el cruce. Los flujos del ejercicio son **supuestos**, no aforos.
 6. En **Lden de tránsito · tres períodos**, cambia los valores iniciales de NoiseMap por los flujos de día (12 h), tarde (4 h) y noche (8 h) establecidos en la ficha. Coloca **7 / 4 / 1 motos/h** en la categoría **4b** para día/tarde/noche y no en «Pesados». Los ciclomotores 4a solo se introducen si la hipótesis de tráfico los contempla.
 7. En **Auditoría del receptor en fachada**, elige el **edificio** y el **receptor** dibujados. La herramienta comprobará la orientación hacia la calle, la distancia receptor–fachada, la distancia fachada–calle y la altura.
@@ -60,10 +60,10 @@ Una vez obtenida una estimación trazable de la exposición exterior en la posic
 
 ### E · Evidencias que se guardarán en la Etapa 6
 
-- Datos de tráfico por categoría/horario y velocidad.
-- Distancia, altura y referencia planimétrica del receptor.
+- Datos ficticios de tráfico por categoría/horario y velocidad, rotulados expresamente **escenario docente de exposición elevada, no aforo del pasaje**.
+- Distancia a eje de calzada, distancia a fachada, altura de piso 5 y referencia del plano; aclarar cuando la cifra sea supuesto.
 - Lday/Levening/Lnight, método de predicción y Lden calculado.
-- Modelo original y solución mejorada de fachada en SONARA.
+- Modelo original y solución mejorada de la **fachada sur del estar** en SONARA.
 - Limitaciones y conclusión sustentada en ISO/TS 19488:2021.
 
 **Fuente de metodología:** Directiva 2002/49/CE, Anexo I (Lden); Directivas 2015/996 y 2021/1226 (CNOSSOS-EU, método y revisiones). La ficha es docente.
