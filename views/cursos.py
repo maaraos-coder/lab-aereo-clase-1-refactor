@@ -195,6 +195,9 @@ def _future_saved_impl(class_id):
         return st.session_state[cache_key]
     client=_supabase()
     if client is None:
+        if class_id == certification_lab2:
+            st.error("No hay conexión para recuperar tu avance. Actualiza antes de continuar.")
+            st.stop()
         return {}
     try:
         rows=(client.table("user_progress").select("state_json")
@@ -202,10 +205,12 @@ def _future_saved_impl(class_id):
               .limit(1).execute().data or [])
         state=rows[0].get("state_json",{}) if rows else {}
         state=json.loads(state) if isinstance(state,str) else state
+        if class_id == certification_lab2 and not isinstance(state, dict):
+            raise ValueError("Formato de avance inválido.")
         st.session_state[cache_key]=state
         return state
     except Exception:
-        if class_id == certification_lab:
+        if class_id in (certification_lab, certification_lab2):
             st.error("No se pudo recuperar tu avance. Actualiza la pantalla antes de continuar.")
             st.stop()
         return {}
