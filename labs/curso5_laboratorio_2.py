@@ -591,8 +591,8 @@ def _stage2(lab,saved):
             "Largo (m)": st.column_config.TextColumn("Largo", width="small"),
             "Ancho (m)": st.column_config.TextColumn("Ancho", width="small"),
             "Altura (m)": st.column_config.TextColumn("Alto", width="small"),
-            "Área (m²)": st.column_config.TextColumn("Área m²", width="small"),
-            "Volumen (m³)": st.column_config.TextColumn("Vol. m³", width="small"),
+            "Área (m²)": st.column_config.TextColumn("Área piso m²", width="small", help="Superficie útil horizontal del piso del recinto receptor, no de sus muros."),
+            "Volumen (m³)": st.column_config.TextColumn("Volumen m³", width="small", help="Volumen interior útil del recinto: área de piso × altura libre, para geometría uniforme."),
             "Plano / cota": st.column_config.TextColumn("Lámina / cota", width="medium"),
         },
     )
