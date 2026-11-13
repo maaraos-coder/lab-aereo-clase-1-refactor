@@ -725,35 +725,239 @@ def _stage2(lab,saved):
 
 
 def _stage3(lab,saved):
+    """Materiality and octave-band reverberation worksheet for SONARA."""
     _header(3)
-    st.markdown("### Caracterización de la materialidad original")
-    st.info("La condición inicial del edificio para este ejercicio está **definida en una ficha de especificaciones docentes**. No inventes materiales ni agregues mejoras en esta etapa. Identifica cada sistema, consulta sus parámetros y prepara los modelos iniciales en SONARA.")
-    st.markdown("#### A · Sistemas originales del encargo")
-    st.dataframe(BASE_CONSTRUCTION,hide_index=True,use_container_width=True)
-    st.caption("Todos los sistemas se adoptan como supuestos docentes. No constituyen especificaciones verificadas del proyecto real. Los valores Rw, R(f), ΔL(f) o resultados de fachada NO vienen precalculados. La identificación de los nueve componentes T/M/L/F/V/S/IS forma parte del ejercicio.")
-    st.markdown("#### B · Caracteriza los sistemas para SONARA")
-    cols=["Código base","Caso","Material / composición adoptada","Geometría desde Etapa 2","Dato acústico o curva requerida","Fuente técnica o hipótesis","Uniones, flancos y montaje"]
-    old=saved.get("c5l2_s3") or {}
-    rows=_table(old.get("systems") or [],cols,"c5l2_systems")
-    st.markdown("#### C · Reverberación calculada en SONARA")
-    st.info("Determina volumen y superficies del recinto desde la geometría de Etapa 2, asigna absorción por bandas a pisos, cielo, muros, puertas y ventanas, y calcula TR en SONARA. No se entrega un TR fijo. Si una cota no está acreditada, aplica exclusivamente un supuesto identificado del suplemento.")
-    tr_details=st.text_area("Resultados TR de SONARA por banda, superficies de absorción, fuentes alfa y método",value=old.get("tr_details",""),height=130)
-    st.markdown("#### D · Condiciones comunes y trazabilidad")
-    assumptions=st.text_area("Registra densidades, tránsito supuesto, descarga WC de vivienda superior y trayecto hipotético, curvas y límites de validez",value=old.get("assumptions",""),height=140)
-    st.markdown("#### E · Qué tendrá que diseñarse después")
-    st.markdown("En las Etapas **4–7** debes proponer tus variantes: refuerzo de separador, pavimento resiliente, solución de fachada y control de instalación. Conserva el **mismo modelo original** al comparar con la variante.")
-    if st.button("Guardar caracterización original",type="primary",key="c5l2_save_systems"):
-        codes={str(x.get("Código base","")).strip().upper() for x in rows if isinstance(x,dict)}
-        expected={entry["Código"] for entry in BASE_CONSTRUCTION}
-        missing=sorted(expected-codes)
-        if missing:
-            st.warning("Completa la caracterización para los nueve componentes: "+", ".join(missing)+".")
-        elif len(tr_details.strip())<40:
-            st.warning("Documenta el cálculo del TR realizado en SONARA, sus bandas y las absorciones utilizadas.")
-        elif len(assumptions.strip())<40:
-            st.warning("Justifica la procedencia de los parámetros acústicos, condiciones y limitaciones (mínimo 40 caracteres).")
+    import pandas as pd
+
+    old = saved.get("c5l2_s3") or {}
+    geometry = saved.get("c5l2_s2") or {}
+    st.markdown("### Materialidad original y reverberación por bandas")
+    st.info(
+        "Los sistemas constructivos originales están definidos por el encargo. "
+        "En esta etapa prepara **las superficies y los materiales de los recintos receptores** "
+        "y registra el **tiempo de reverberación TR que calcules en SONARA por banda**. "
+        "No se asigna un TR fijo ni se inventan coeficientes de absorción."
+    )
+
+    st.markdown("#### A · Sistemas constructivos originales del ejercicio")
+    st.table([
+        {"Código": item["Código"], "Elemento": item["Elemento"],
+         "Composición académica": item["Composición original"]}
+        for item in BASE_CONSTRUCTION
+    ])
+    st.caption(
+        "La tabla A es la condición original para los modelos posteriores de "
+        "aislamiento aéreo, impacto, fachada e instalaciones. Son especificaciones "
+        "académicas, no propiedades verificadas del edificio. "
+        "Las curvas de aislamiento de cada sistema se obtendrán en sus etapas de diseño."
+    )
+
+    st.markdown("#### B · Superficies y acabados para calcular TR en SONARA")
+    st.markdown(
+        "Calcula y registra **área de piso, cielo, muros opacos, puerta y ventana** "
+        "por separado, para el **dormitorio** y el **estar** de la vivienda del piso 5. "
+        "La suma de las superficies verticales debe descontar los vanos **una sola vez**. "
+        "En SONARA asigna a cada acabado su **coeficiente de absorción α por banda** "
+        "y documenta de dónde se obtuvo; no utilices Rw como absorción."
+    )
+
+    def _numeric(value):
+        try:
+            number = float(str(value).strip().replace(",", "."))
+            return number if math.isfinite(number) and number >= 0 else None
+        except (TypeError, ValueError):
+            return None
+
+    room_data = {str(item.get("Caso") or ""): item for item in geometry.get("rooms", [])
+                 if isinstance(item, dict)}
+    facades = geometry.get("facades") or [{}]
+    facade = facades[0] if isinstance(facades[0], dict) else {}
+    st.caption(
+        "Las áreas y los volúmenes de la Etapa 2 se recuperan cuando están guardados. "
+        "Puedes corregirlos aquí sin modificar la ficha geométrica original."
+    )
+
+    # Example figures are intentionally teacher-only, not prefilled to student fields.
+    room_setup = [
+        ("Dormitorio", "AI-01", [
+            ("Piso", "Laminado sin aporte resiliente acreditado", "T-03"),
+            ("Cielo", "Pintura sobre superficie rígida", "T-02"),
+            ("Muros opacos", "Pintura sobre superficies rígidas", "T-02"),
+            ("Puerta", "Puerta interior (material a justificar)", "HIPÓTESIS / ficha técnica"),
+            ("Ventana", "Ventana del dormitorio (verificar en plano)", "Ficha técnica / plano"),
+        ]),
+        ("Estar", "FA-01", [
+            ("Piso", "Cerámica adherida", "T-01"),
+            ("Cielo", "Pintura sobre superficie rígida", "T-02"),
+            ("Muros opacos", "Pintura sobre superficies rígidas", "T-02"),
+            ("Puerta", "Puerta interior (material a justificar)", "HIPÓTESIS / ficha técnica"),
+            ("Ventana", "DVH 4/12/4 mm con marco aluminio", "V-01"),
+        ]),
+    ]
+    old_rooms = old.get("tr_rooms") if isinstance(old.get("tr_rooms"), dict) else {}
+    result_rooms = {}
+    for room_name, case, surfaces in room_setup:
+        st.markdown(f"**{room_name} · geometría y terminaciones de referencia**")
+        source_room = room_data.get(case, {})
+        stored_room = old_rooms.get(room_name, {}) if isinstance(old_rooms, dict) else {}
+        # An existing in-progress Stage 3 answer wins over geometry recovered
+        # from Stage 2. Never override a student's submitted values.
+        initial_area = stored_room.get("area", source_room.get("Área (m²)", ""))
+        initial_volume = stored_room.get("volume", source_room.get("Volumen (m³)", ""))
+        initial_height = stored_room.get("height", source_room.get("Altura (m)", ""))
+        c1, c2, c3 = st.columns(3)
+        with c1:
+            area = st.text_input(
+                f"{room_name} · área útil de piso [m²]",
+                value=str(initial_area or ""), key=f"c5l2_tr_area_{room_name}",
+                help="Área en planta del recinto receptor. No es área del muro separador.",
+            )
+        with c2:
+            height = st.text_input(
+                f"{room_name} · altura libre [m]",
+                value=str(initial_height or ""), key=f"c5l2_tr_height_{room_name}",
+            )
+        with c3:
+            volume = st.text_input(
+                f"{room_name} · volumen interior [m³]",
+                value=str(initial_volume or ""), key=f"c5l2_tr_volume_{room_name}",
+                help="Se requiere para normalizar el cálculo de reverberación.",
+            )
+        default_areas = {}
+        numeric_area, numeric_height = _numeric(area), _numeric(height)
+        # Floor and ceiling have the same horizontal projection in the
+        # rectangular academic model; existing saved stage-3 inputs override.
+        if numeric_area is not None:
+            default_areas["Piso"] = str(numeric_area)
+            default_areas["Cielo"] = str(numeric_area)
+        if room_name == "Estar":
+            win = _numeric(facade.get("Ventanas (m²)"))
+            if win is not None:
+                default_areas["Ventana"] = str(win)
+        old_surface_rows = stored_room.get("surfaces") or []
+        by_name = {str(row.get("Superficie") or ""): row for row in old_surface_rows
+                   if isinstance(row, dict)}
+        table_rows = []
+        for surface, material, reference in surfaces:
+            previous = by_name.get(surface, {})
+            table_rows.append({
+                "Superficie": surface,
+                "Área (m²)": str(previous.get("Área (m²)") or default_areas.get(surface, "")),
+                "Material / acabado": str(previous.get("Material / acabado") or material),
+                "Referencia α(f)": str(previous.get("Referencia α(f)") or ""),
+            })
+        surface_df = st.data_editor(
+            pd.DataFrame(table_rows),
+            key=f"c5l2_tr_surface_v1_{room_name}",
+            hide_index=True, num_rows="fixed", use_container_width=True,
+            height=225, disabled=["Superficie"],
+            column_config={
+                "Superficie": st.column_config.TextColumn("Superficie", width="small"),
+                "Área (m²)": st.column_config.TextColumn("Área m²", width="small"),
+                "Material / acabado": st.column_config.TextColumn(
+                    "Material / acabado", width="large"),
+                "Referencia α(f)": st.column_config.TextColumn(
+                    "Fuente α por bandas", width="medium",
+                    help="Biblioteca SONARA, ficha técnica o referencia del coeficiente de absorción por banda."),
+            },
+        )
+        result_rooms[room_name] = {
+            "area": area, "height": height, "volume": volume,
+            "surfaces": surface_df.fillna("").to_dict("records"),
+        }
+        st.caption(
+            f"**{room_name}:** el área de muros opacos corresponde al total de muros "
+            "menos puertas y ventanas. Si el plano no permite determinar un vano, "
+            "utiliza únicamente un supuesto explícito del suplemento de cotas."
+        )
+
+    st.markdown("#### C · Tiempo de reverberación obtenido en SONARA")
+    st.markdown(
+        "Registra el **TR [s] de cada banda de octava**, separando dormitorio y estar. "
+        "Estos son **resultados obtenidos de SONARA**, no valores de α ni niveles "
+        "de aislamiento acústico. Conserva los cálculos de la condición original."
+    )
+    bands = [125, 250, 500, 1000, 2000, 4000]
+    stored_tr = {
+        str(item.get("Banda (Hz)") or ""): item
+        for item in (old.get("tr_bands") or []) if isinstance(item, dict)
+    }
+    band_rows = []
+    for hz in bands:
+        existing = stored_tr.get(str(hz), {})
+        band_rows.append({
+            "Banda (Hz)": hz,
+            "TR dormitorio (s)": str(existing.get("TR dormitorio (s)") or ""),
+            "TR estar (s)": str(existing.get("TR estar (s)") or ""),
+        })
+    band_df = st.data_editor(
+        pd.DataFrame(band_rows), key="c5l2_tr_bands_v1",
+        hide_index=True, num_rows="fixed", use_container_width=True,
+        height=260, disabled=["Banda (Hz)"],
+        column_config={
+            "Banda (Hz)": st.column_config.NumberColumn("Octava Hz", width="small"),
+            "TR dormitorio (s)": st.column_config.TextColumn("TR dormitorio [s]", width="medium"),
+            "TR estar (s)": st.column_config.TextColumn("TR estar [s]", width="medium"),
+        },
+    )
+    tr_bands = band_df.fillna("").to_dict("records")
+    method = st.text_input(
+        "Método y respaldo de los resultados de SONARA",
+        value=str(old.get("tr_method") or ""),
+        placeholder="Ej.: SONARA, cálculo por bandas, materiales y curvas α de la ficha técnica...",
+        help="Describe el método, materiales/curvas y origen de la absorción; no basta con números sin procedencia.",
+    )
+    payload = {
+        **old, "tr_rooms": result_rooms, "tr_bands": tr_bands,
+        "tr_method": method, "base_version": "chimbote_original_tr_bandas_v2",
+    }
+    left, right = st.columns(2)
+    with left:
+        draft = st.button(
+            "💾 Guardar avance", key="c5l2_stage3_save_draft_v2",
+            use_container_width=True,
+        )
+    with right:
+        finish = st.button(
+            "✓ Completar Etapa 3", key="c5l2_stage3_finish_v2",
+            use_container_width=True, type="primary",
+        )
+    if draft:
+        _save(lab, saved, 3, "c5l2_s3", payload, complete=False)
+    if finish:
+        missing_room = []
+        for room_name, room in result_rooms.items():
+            if any(_numeric(room.get(key)) is None or _numeric(room.get(key)) <= 0
+                   for key in ("area", "height", "volume")):
+                missing_room.append(f"{room_name}: área/altura/volumen")
+            for surface in room["surfaces"]:
+                if _numeric(surface.get("Área (m²)")) is None:
+                    missing_room.append(f"{room_name}: área de {surface['Superficie']}")
+                if not str(surface.get("Material / acabado") or "").strip():
+                    missing_room.append(f"{room_name}: material de {surface['Superficie']}")
+                if not str(surface.get("Referencia α(f)") or "").strip():
+                    missing_room.append(f"{room_name}: α(f) de {surface['Superficie']}")
+        bad_bands = [
+            str(row["Banda (Hz)"]) + " Hz"
+            for row in tr_bands
+            if any(_numeric(row.get(key)) is None or _numeric(row.get(key)) <= 0
+                   for key in ("TR dormitorio (s)", "TR estar (s)"))
+        ]
+        if missing_room:
+            st.warning(
+                "Para completar la etapa faltan superficies, materialidad o fuentes "
+                "de absorción: " + ", ".join(missing_room[:8]) +
+                ("…" if len(missing_room) > 8 else "")
+            )
+        elif bad_bands:
+            st.warning(
+                "Faltan valores de TR positivos para dormitorio y estar en: " +
+                ", ".join(bad_bands) + ". Puedes guardar el avance."
+            )
+        elif len(method.strip()) < 15:
+            st.warning("Describe brevemente el método y las fuentes del cálculo realizado en SONARA.")
         else:
-            _save(lab,saved,3,"c5l2_s3",{"systems":rows,"assumptions":assumptions,"tr_details":tr_details,"base_version":"chimbote_original_v1"})
+            _save(lab, saved, 3, "c5l2_s3", payload, complete=True)
 
 
 def _model(stage,lab,saved,case):
@@ -1427,7 +1631,11 @@ def _teacher(stage):
             else:
                 st.write(TEACHER[stage])
             if stage==3:
-                st.info("Comprobar que el alumno determine TR por bandas en SONARA; no introducir valores fijos 0,5/0,6 s.")
+                st.markdown("**Pauta de corrección · Etapa 3**")
+                st.write("**A · Sistemas:** conservar M-01, L-01, F-01, V-01, S-01, IS-01 y T-01/T-02/T-03 como materialidad académica original. No exigir al estudiante volver a seleccionar esos sistemas.")
+                st.write("**B · Geometría y materiales:** dormitorio del piso 5 y estar del piso 5. Verificar volumen recuperado de Etapa 2 y cinco superficies por recinto (piso, cielo, muros opacos, puerta, ventana), sin doble contabilización de vanos. El suplemento docente permite geometría equivalente, no medición real del edificio.")
+                st.write("**C · Reverberación:** exigir **TR en segundos por bandas de octava de 125, 250, 500, 1000, 2000 y 4000 Hz**, para ambos recintos. Corregir con los resultados de SONARA aportados por el alumno, comprobando superficies, absorciones α(f), método y referencias. **No hay un TR numérico único sin curvas de absorción justificadas**.")
+                st.caption("Guardar avance no finaliza la etapa; Completar Etapa 3 valida registro de geometría, materiales, fuentes α(f) y TR por bandas, no certifica exactitud de los cálculos.")
 def run_stage(stage,lab,saved,runtime):
     _bind(runtime)
     stage=max(0,min(10,int(stage)))
