@@ -546,11 +546,11 @@ def _stage2(lab,saved):
     )
     st.markdown("#### B · Geometría de los recintos receptores")
     st.markdown(
-        "**Calcula la superficie de piso y el volumen interior del recinto receptor de cada caso.** "
+         "**Calcula el área horizontal del recinto y su volumen interior para el cálculo del TR.** "
         "**AI-01, IM-01 e IN-01:** dormitorio de CH-A-P05-S03 (piso 5). "
         "**FA-01:** estar de esa misma vivienda. "
-        "Área = superficie útil de piso (m²); volumen = área útil × altura libre (m³). "
-        "Para recintos irregulares descompón la geometría según los planos."
+         "En el modelo docente rectangular, **el área horizontal del piso y la del cielo del dormitorio coinciden**; el volumen se obtiene como área × altura libre. "
+        "Para **IM-01**, el elemento que se evalúa acústicamente es la **losa superior (cielo) del dormitorio del piso 5**, que lo separa de la vivienda del piso 6. Su superficie se indica en la tabla C."
     )
     # The underlying saved structure is preserved (including receiver labels),
     # while the editor displays only short codes and student-editable geometry.
@@ -591,7 +591,7 @@ def _stage2(lab,saved):
             "Largo (m)": st.column_config.TextColumn("Largo", width="small"),
             "Ancho (m)": st.column_config.TextColumn("Ancho", width="small"),
             "Altura (m)": st.column_config.TextColumn("Alto", width="small"),
-            "Área (m²)": st.column_config.TextColumn("Área piso m²", width="small", help="Superficie útil horizontal del piso del recinto receptor, no de sus muros."),
+            "Área (m²)": st.column_config.TextColumn("Área horizontal m²", width="small", help="Área en planta del recinto receptor. En el modelo rectangular sin salientes, coincide con el área de su cielo; se utiliza con la altura para obtener el volumen y el TR."),
             "Volumen (m³)": st.column_config.TextColumn("Volumen m³", width="small", help="Volumen interior útil del recinto: área de piso × altura libre, para geometría uniforme."),
             "Plano / cota": st.column_config.TextColumn("Lámina / cota", width="medium"),
         },
@@ -603,9 +603,9 @@ def _stage2(lab,saved):
 
     st.markdown("#### C · Superficies de separación y trazabilidad")
     st.markdown(
-        "**¿Qué superficie se pide?** **AI-01:** área del muro medianero M-01 "
+         "**Superficie del elemento por el que se transmite el ruido:** **AI-01:** área del muro medianero M-01 "
         "entre el estar vecino y el dormitorio. **IM-01:** área de losa L-01 "
-        "compartida con el dormitorio superior. **FA-01:** área bruta del paño "
+         "**SUPERIOR**, sobre el cielo del dormitorio receptor del piso 5, bajo el dormitorio emisor del piso 6. **FA-01:** área bruta del paño "
         "de fachada sur del estar. **IN-01:** superficie del cierre S-01 "
         "que interviene en el recorrido supuesto de la descarga de WC vecina. "
         "El recorrido sanitario no está documentado: identifícalo como hipótesis."
@@ -639,8 +639,8 @@ def _stage2(lab,saved):
         column_config={
             "Caso": st.column_config.TextColumn("Caso", width="small"),
             "Elemento a medir": st.column_config.TextColumn("Elemento / superficie", width="medium"),
-            "Longitud (m)": st.column_config.TextColumn("Longitud", width="small"),
-            "Altura (m)": st.column_config.TextColumn("Altura", width="small"),
+            "Longitud (m)": st.column_config.TextColumn("Dim. 1 (m)", width="small", help="Primera dimensión de la superficie: largo de losa en IM-01 o longitud de muro en los otros casos."),
+            "Altura (m)": st.column_config.TextColumn("Dim. 2 (m)", width="small", help="Segunda dimensión: ANCHO de la losa superior para IM-01, ALTURA del cerramiento para AI-01, FA-01 e IN-01."),
             "Superficie (m²)": st.column_config.TextColumn("Superficie m²", width="small"),
             "Plano / cota": st.column_config.TextColumn("Lámina / cota", width="large"),
         },
@@ -1329,8 +1329,8 @@ def _stage2_teacher_geometry_results():
         {"Caso":"AI-01","Elemento":"M-01 · muro medianero",
          "Longitud":"3,10 m","Altura":"2,50 m",
          "Superficie":"7,75 m²","Código":"HM-01 × HG-01"},
-        {"Caso":"IM-01","Elemento":"L-01 · losa dormitorios",
-         "Longitud":"3,10 m","Altura":"2,60 m (ancho)",
+        {"Caso":"IM-01","Elemento":"L-01 · losa superior del receptor",
+         "Longitud":"3,10 m","Altura":"2,60 m (ancho de losa)",
          "Superficie":"8,06 m²","Código":"HL-01 (superposición)"},
         {"Caso":"FA-01","Elemento":"F-01 · fachada sur estar",
          "Longitud":"2,43 m","Altura":"2,50 m",
