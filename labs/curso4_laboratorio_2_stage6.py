@@ -447,6 +447,70 @@ def render(lab,saved,runtime):
         },"c4l2_s6_save_draft")
         return
 
+    # Incidencia de guardado: recuperación masiva, segura y no calificativa.
+    with st.expander("📂 Recuperar hasta seis frentes desde respaldos JSON", expanded=False):
+        st.info(
+            "Esta herramienta recupera las aplicaciones por máquina de tus archivos "
+            "FT1–FT6 sin modificar las Etapas 3, 4 y 5. No valida automáticamente "
+            "la Etapa 6: después debes completar la estrategia, justificación, "
+            "nombre del proyecto controlado y verificaciones."
+        )
+        backups = st.file_uploader(
+            "Selecciona los archivos JSON de los frentes (puedes elegir los seis)",
+            type=["json"], accept_multiple_files=True,
+            key="c4l2_s6_batch_json_files",
+        )
+        existing = saved.get("c4l2_s6_measure_config") or {}
+        overwrite_ok = st.checkbox(
+            "Autorizo sustituir solo las configuraciones de los frentes que ya "
+            "están guardados, conservando las demás etapas.",
+            value=False, key="c4l2_s6_batch_overwrite",
+        )
+        if st.button("Verificar y recuperar respaldos", key="c4l2_s6_batch_import",
+                     disabled=not backups, use_container_width=True):
+            try:
+                from labs.c4l2_stage6_batch_import import recover_front_backups
+                imports, report = recover_front_backups(
+                    saved, [(f.name, f.getvalue()) for f in backups]
+                )
+                duplicates = sorted(set(imports) & set(existing))
+                if duplicates and not overwrite_ok:
+                    raise ValueError(
+                        "Ya existen configuraciones almacenadas para: " +
+                        ", ".join(duplicates) +
+                        ". Marca la casilla de sustitución solo si corresponde."
+                    )
+                candidate = deepcopy(saved)
+                candidate["c4l2_s6_measure_config"] = {
+                    **deepcopy(existing), **imports
+                }
+                candidate["done_6"] = False
+                # The checkpoint is verified before reporting success. The
+                # six JSON files remain in the student's possession if it fails.
+                runtime["_save"](lab, candidate, 6)
+            except Exception as error:
+                _LOG.exception("Fallo al importar respaldos de seis frentes.")
+                st.error(
+                    "No se confirmaron los respaldos en la base de datos. "
+                    "Tus archivos JSON originales no han sido alterados. "
+                    "Detalle: " + str(error)
+                )
+            else:
+                saved.update(candidate)
+                for key in list(st.session_state):
+                    if (key == "c4l2_s6_design_grid_student_v2"
+                        or (isinstance(key, str)
+                            and key.startswith("c4l2_s6_scope_")
+                            and not key.endswith("_backup_upload"))):
+                        del st.session_state[key]
+                st.success(
+                    f"{len(imports)} frentes y "
+                    f"{sum(count for _, count, _ in report)} aplicaciones "
+                    "recuperadas y guardadas. Completa los datos académicos "
+                    "pendientes y finaliza la Etapa 6."
+                )
+                st.rerun()
+
     st.markdown("### 2 · Diseña la estrategia para cada frente")
     st.info("El frente agrupa máquinas para representar su emisión conjunta. Un tratamiento de fuente actúa solo sobre las máquinas y unidades que selecciones; una barrera actúa sobre el camino hacia el receptor. Elige Combinación de medidas si tu estrategia usa tratamientos distintos.")
     st.markdown("**Ejemplo de procedimiento:** si se encierra solo el minicargador, la excavadora y la retroexcavadora conservan su emisión original. El frente controlado se obtiene sumando energéticamente las tres contribuciones resultantes, no restando el aislamiento del encierro al total del frente.")
@@ -461,6 +525,16 @@ def render(lab,saved,runtime):
             for field in ("Medida seleccionada","Justificación","Proyecto controlado"):
                 if field in prior:
                     row[field]=prior[field]
+            # Importing Stage 6 JSON restores the machine applications but
+            # not the decision matrix. Derive only an unambiguous strategy;
+            # justification and project name must still be completed by student.
+            config=(saved.get("c4l2_s6_measure_config") or {}).get(
+                row["Frente / condición"], {}
+            )
+            if row.get("Medida seleccionada") in ("", None, "Seleccionar medida"):
+                suggestion=config.get("medida")
+                if suggestion in MEASURE_OPTIONS[1:]:
+                    row["Medida seleccionada"]=suggestion
         design_grid_key="c4l2_s6_design_grid_student_v2"
 
     # Unify previously named barrier variants; unsupported choices require a new selection.
