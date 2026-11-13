@@ -230,8 +230,10 @@ def _header(stage):
 
 
 def _save(lab,saved,stage,key,value,*,complete=True):
-    if _readonly():
-        st.info("Vista de proyección: los cambios no se guardan en las entregas de los alumnos.")
+    if st.session_state.get("print_mode"):
+        return False
+    if _readonly() and not st.session_state.get("c5l2_projection_unlocked"):
+        st.info("Habilita el guardado docente para conservar el avance de la clase.")
         return False
     try:
         json.dumps(value, allow_nan=False)
@@ -2702,7 +2704,7 @@ def _stage9(lab,saved):
     a, b = st.columns(2)
     if a.button("Guardar borrador", key="c5l2_quiz_draft"):
         _save(lab, saved, 9, "c5l2_s9_draft_v3", answers, complete=False)
-    if b.button("Enviar cuestionario definitivo", type="primary", key="c5l2_quiz_submit"):
+    if b.button("Enviar cuestionario definitivo", type="primary", key="c5l2_quiz_submit", disabled=_readonly()):
         if "Sin responder" in answers.values():
             st.warning("Responde todas las preguntas.")
             return
