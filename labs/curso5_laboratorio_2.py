@@ -1068,6 +1068,14 @@ def _stage4(lab, saved):
         "no resultados calculados automáticamente."
     )
     old_geo = old.get("iso_geometry") or {}
+    # Prefer saved values from previous stages. Older empty Stage 4 drafts
+    # must never mask geometry already recorded in Stage 2 / Stage 3.
+    def _filled(*values):
+        for value in values:
+            if value is not None and str(value).strip():
+                return value
+        return ""
+
     defaults = {
         "source_room": "Estar de vivienda poniente · piso 5",
         "receiver_room": "Dormitorio · CH-A-P05-S03 · piso 5",
@@ -1078,14 +1086,55 @@ def _stage4(lab, saved):
         "receiver_length": receiver.get("Largo (m)", ""),
         "receiver_width": receiver.get("Ancho (m)", ""),
         "receiver_height": receiver.get("Altura (m)", ""),
-        "receiver_volume": receiver.get("Volumen (m³)", tr_room.get("volume", "")),
-        "receiver_area": receiver.get("Área (m²)", tr_room.get("area", "")),
+        "receiver_volume": _filled(receiver.get("Volumen (m³)"), tr_room.get("volume")),
+        "receiver_area": _filled(receiver.get("Área (m²)"), tr_room.get("area")),
         "source_volume": "",
         "source_area": "",
         "source_height": "",
-        "drawing": separator.get("Plano / cota", receiver.get("Plano / cota", "")),
+        "drawing": _filled(separator.get("Plano / cota"), receiver.get("Plano / cota")),
         "source_basis": "",
     }
+    # Stage 2 provides the receptor geometry and M-01, Stage 3 supplies
+    # an independent backup for receiver area/height/volume. Never invent
+    # the source room dimensions: that is another dwelling.
+    defaults["receiver_length"] = _filled(defaults["receiver_length"])
+    defaults["receiver_width"] = _filled(defaults["receiver_width"])
+    defaults["receiver_height"] = _filled(defaults["receiver_height"], tr_room.get("height"))
+    if not defaults["surface"] and defaults["length"] and defaults["height"]:
+        try:
+            defaults["surface"] = f'{float(str(defaults["length"]).replace(",", ".")) * float(str(defaults["height"]).replace(",", ".")):.3f}'
+        except (ValueError, TypeError):
+            pass
+    if not defaults["receiver_area"] and defaults["receiver_length"] and defaults["receiver_width"]:
+        try:
+            defaults["receiver_area"] = f'{float(str(defaults["receiver_length"]).replace(",", ".")) * float(str(defaults["receiver_width"]).replace(",", ".")):.3f}'
+        except (ValueError, TypeError):
+            pass
+    if not defaults["receiver_volume"] and defaults["receiver_area"] and defaults["receiver_height"]:
+        try:
+            defaults["receiver_volume"] = f'{float(str(defaults["receiver_area"]).replace(",", ".")) * float(str(defaults["receiver_height"]).replace(",", ".")):.3f}'
+        except (ValueError, TypeError):
+            pass
+
+    st.markdown("**Datos recuperados del trabajo anterior**")
+    st.caption(
+        "Etapa 2: largo, altura, superficie del medianero y geometría del dormitorio. "
+        "Etapa 3: volumen y altura del dormitorio cuando faltan en Etapa 2. "
+        "Las dimensiones del estar **emisor de otra vivienda** no se registraron "
+        "previamente y deben obtenerse del plano o de una hipótesis explícita."
+    )
+    recovered = [name for name in (
+        "length", "height", "surface", "receiver_length", "receiver_width",
+        "receiver_height", "receiver_area", "receiver_volume", "drawing"
+    ) if str(defaults.get(name) or "").strip()]
+    if recovered:
+        st.success(f"Recuperados {len(recovered)} de 9 campos geométricos/referencias disponibles.")
+    else:
+        st.warning(
+            "No se encontraron datos geométricos de AI-01 guardados en las Etapas 2 y 3 "
+            "para esta sesión. Guarda primero esas etapas o revisa la misma cuenta/vista. "
+            "Los campos pendientes no se rellenarán con valores ficticios."
+        )
     geo = {}
     # Apply the same types of data that the ISO model asks for, without
     # imposing fictitious source-room dimensions.
@@ -1107,16 +1156,16 @@ def _stage4(lab, saved):
         for col, (key, label) in zip(cols, fields[i:i+3]):
             with col:
                 geo[key] = st.text_input(
-                    label, value=_val(old_geo.get(key, defaults.get(key, ""))),
-                    key="c5l2_s4_geo_" + key,
+                    label, value=_val(_filled(defaults.get(key), old_geo.get(key))),
+                    key="c5l2_s4_geo_v2_" + key,
                     help="Transcribe el dato del plano. Si no figura, deja la celda vacía y documenta una hipótesis."
                 )
     cols = st.columns(2)
     with cols[0]:
         geo["drawing"] = st.text_input(
             "Referencia de plano / cota",
-            value=_val(old_geo.get("drawing", defaults["drawing"])),
-            key="c5l2_s4_drawing"
+            value=_val(_filled(defaults["drawing"], old_geo.get("drawing"))),
+            key="c5l2_s4_drawing_v2"
         )
     with cols[1]:
         geo["source_basis"] = st.text_input(
