@@ -2219,7 +2219,7 @@ en NoiseMap. Regresa a esta Etapa 6 y carga el archivo en
 **Importar resultado desde NoiseMap**. Comprueba que el JSON corresponde al
 **receptor, edificio y vía** elegidos; después pulsa
 **Importar niveles a la ficha de fachada**.
-Registra la distancia y altura obtenidas, el método y las limitaciones,
+La ficha recupera la distancia y altura de la auditoría importada; revisa el método y las limitaciones,
 y continúa el diseño de la envolvente en **SONARA**.
         """)
         st.info(
@@ -2298,80 +2298,155 @@ y continúa el diseño de la envolvente en **SONARA**.
     default_flows={"Día":{"Livianos":80,"Pesados medianos":3,"Pesados":1,"Motocicletas":7},
                    "Tarde":{"Livianos":45,"Pesados medianos":1,"Pesados":0,"Motocicletas":4},
                    "Noche":{"Livianos":10,"Pesados medianos":0,"Pesados":0,"Motocicletas":1}}
-    st.markdown("#### A · Escenario ficticio de tránsito elevado")
-    st.warning("Los flujos de 80/45/10 livianos por hora (día/tarde/noche) son un **escenario docente intencionalmente elevado**, no aforos de Pasaje Chimbote ni estimaciones representativas del tránsito real. Mantén esa advertencia en los resultados; el pasaje no debe dibujarse como avenida.")
-    with st.form("c5l2_traffic_and_facade"):
-        p1,p2=st.columns(2)
-        with p1:
-            street=st.text_input("Vía modelada",value=traffic_old.get("street","Pasaje Chimbote"))
-            speed=st.number_input("Velocidad de circulación [km/h]",min_value=5,max_value=130,
-                                  value=int(traffic_old.get("speed",30)))
-            road_surface=st.selectbox("Tipo de pavimento",["Asfalto convencional","Hormigón","Otro, justificar"],
-                                     index=["Asfalto convencional","Hormigón","Otro, justificar"].index(traffic_old.get("surface","Asfalto convencional")))
-        with p2:
-            dist=st.number_input("Distancia calzada–fachada [m] (medir del plano)",min_value=0.0,max_value=500.0,
-                                  value=float(traffic_old.get("distance",0)),step=0.5)
-            receiver_height=st.number_input("Altura receptor exterior [m] (medir o justificar)",min_value=0.0,max_value=150.0,
-                                            value=float(traffic_old.get("height",0)),step=0.5)
-            receiver_ref=st.text_input("Fuente de las cotas del receptor y su orientación",value=traffic_old.get("receiver_ref",""))
-        st.markdown("**Flujos medios horarios por período y categoría [veh/h]**")
-        flows={}
-        for period in ("Día","Tarde","Noche"):
-            cols=st.columns(4)
-            flows[period]={}
-            for col,(cat,default) in zip(cols,default_flows[period].items()):
-                previous=(traffic_old.get("flows") or {}).get(period) or {}
-                flows[period][cat]=col.number_input(f"{period} · {cat}",min_value=0,max_value=100000,
-                                                    value=int(previous.get(cat,default)),key=f"c5l2_t_{period}_{cat}")
-        st.markdown("#### B · Nivel exterior en receptor (modelo documentado)")
-        st.caption("Lden se calcula únicamente a partir de **tres niveles por período**. No se deriva de los flujos usando ecuaciones sin calibración.")
-        p3,p4,p5=st.columns(3)
-        levels={}
-        for col,key,label in [(p3,"day","Lday [dB(A)]"),(p4,"evening","Levening [dB(A)]"),(p5,"night","Lnight [dB(A)]")]:
-            levels[key]=col.text_input(label,value=str(traffic_old.get("levels",{}).get(key,"")),key=f"c5l2_ext_{key}")
-        method=st.text_area("Método, versión del motor, geometría, evidencia y alcance (CNOSSOS-EU o aproximación identificada)",value=traffic_old.get("method",st.session_state.get("c5l2_imported_noise_provenance","")))
-        st.markdown("#### C · Diseño de la fachada sur del estar en SONARA")
-        fields={}
-        for key,label in [
-            ("geometry","Área bruta, área opaca y superficie vidriada; volumen y TR del recinto"),
-            ("base","Fachada original en SONARA: entradas, curvas, descriptor y resultado"),
-            ("variant","Variante de fachada en SONARA: sistema propuesto y resultado"),
-            ("target","Requisito Clase B: descriptor, umbral, sentido y referencia ISO"),
-            ("comparison","Comparación, margen, limitaciones y vínculo con la exposición exterior")]:
-            fields[key]=st.text_area(label,value=old.get(key,""),height=100)
-        submit=st.form_submit_button("Guardar modelación vial y diseño de fachada",type="primary")
-    parsed={}
-    if all(levels[k].strip() for k in ("day","evening","night")):
-        try:
-            parsed={k:float(levels[k].replace(",",".")) for k in ("day","evening","night")}
-            if any(not math.isfinite(x) or x < -20 or x > 150 for x in parsed.values()):
-                parsed={}
-            if parsed:
-                total=(12*10**(parsed["day"]/10)+4*10**((parsed["evening"]+5)/10)+8*10**((parsed["night"]+10)/10))/24
-                computed=10*math.log10(total)
-                st.metric("Lden exterior · calculado con niveles ingresados",f"{computed:.1f} dB(A)")
-                st.caption("12 h día + 4 h tarde (+5 dB) + 8 h noche (+10 dB). La fórmula no valida el motor con que se calcularon los tres niveles.")
-            else:computed=None
-        except ValueError:
-            computed=None
-    else:computed=None
-    if submit:
-        if dist<=0 or receiver_height<=0 or not receiver_ref.strip():
-            st.warning("Determina distancia, altura y fuente de cotas del receptor antes de guardar.")
-        elif computed is None:
-            st.warning("Ingresa tres niveles exteriores finitos y dentro de rango, calculados por un modelo acústico documentado.")
-        elif len(method.strip())<40:
-            st.warning("Identifica claramente el método, versión y limitaciones de la predicción exterior.")
-        elif any(len(str(v).strip())<18 for v in fields.values()):
-            st.warning("Completa la geometría y comparación de los dos diseños de fachada en SONARA.")
+    st.markdown("#### A · Geometría y exposición exterior")
+    geo = saved.get("c5l2_s2") or {}
+    facade = (geo.get("facades") or [{}])[0]
+    room = next((row for row in geo.get("rooms", []) if row.get("Caso") == "FA-01"), {})
+    tr = saved.get("c5l2_s3") or {}
+    living_tr = (tr.get("tr_rooms") or {}).get("Estar") or {}
+    st.table([{**facade, "Volumen receptor (m³)": room.get("Volumen (m³)", "")}])
+    if not facade or not room.get("Volumen (m³)"):
+        st.caption("Guarda las áreas de fachada y el volumen del estar en la Etapa 2 para recuperarlos aquí.")
+    tr_bands = [{"Banda (Hz)": row.get("Banda (Hz)"), "TR estar (s)": row["TR estar (s)"]}
+                for row in tr.get("tr_bands", []) if row.get("TR estar (s)")]
+    if tr_bands:
+        st.table(tr_bands)
+    else:
+        st.caption("El TR por bandas se recupera al guardar los resultados del estar en la Etapa 3.")
+    st.write("**Pasaje Chimbote · 30 km/h · Asfalto convencional**")
+    st.caption("Flujos medios horarios [veh/h] del escenario docente de tránsito elevado.")
+    st.table([{"Período": period, **counts} for period, counts in default_flows.items()])
+
+    audit = st.session_state.get("c5l2_imported_noise_geom") or traffic_old.get("audit") or {}
+    dist = audit.get("facade_to_road_m") or traffic_old.get("distance")
+    receiver_height = audit.get("receiver_height_m") or traffic_old.get("height")
+    receiver_ref = "Auditoría NoiseMap" if audit else traffic_old.get("receiver_ref", "")
+    cols = st.columns(3)
+    levels = {
+        key: col.text_input(label, value=str((traffic_old.get("levels") or {}).get(key, "")),
+                            key=f"c5l2_ext_{key}")
+        for col, (key, label) in zip(cols, [
+            ("day", "Lday [dB(A)]"), ("evening", "Levening [dB(A)]"),
+            ("night", "Lnight [dB(A)]")])
+    }
+    provenance = st.session_state.get("c5l2_imported_noise_provenance")
+    if provenance:
+        method = provenance
+    else:
+        method = st.text_area("Fuente y alcance de los niveles exteriores",
+                              value=traffic_old.get("method", ""))
+    computed = None
+    try:
+        day, evening, night = [float(levels[k].replace(",", ".")) for k in ("day", "evening", "night")]
+        if all(-20 <= level <= 150 for level in (day, evening, night)):
+            computed = 10 * math.log10((12*10**(day/10) + 4*10**((evening+5)/10)
+                                       + 8*10**((night+10)/10))/24)
+            st.metric("Lden exterior", f"{computed:.1f} dB(A)")
+    except ValueError:
+        pass
+
+    st.markdown("#### B · Fachada original")
+    st.table([item for item in BASE_CONSTRUCTION if item["Caso"] == "FA-01"])
+    st.link_button("Abrir SONARA · Fachada ISO 12354-3", SONARA_URL)
+
+    st.markdown("#### C · Diseño libre de la mejora")
+    variant = st.text_area("Materiales y composición", old.get("variant", ""))
+    mounting = st.text_area("Montaje, marco, sellos y encuentros", old.get("mounting", ""))
+    evidence = st.text_area("Respaldo acústico e hipótesis", old.get("evidence", ""))
+
+    st.markdown("#### D · Resultados y proyectos JSON de SONARA")
+    files = {}
+    results = {}
+    for name, label in (("original", "Fachada original F-01/V-01"), ("mejora", "Fachada mejorada")):
+        col_file, col_result = st.columns(2)
+        previous = (old.get("sonara_json") or {}).get(name)
+        upload = col_file.file_uploader(f"JSON SONARA · {label}", type=["json"], key=f"c5l2_s6_{name}")
+        data = previous
+        if upload is not None:
+            data = None
+            try:
+                raw = upload.getvalue()
+                if len(raw) > 2 * 1024 * 1024:
+                    raise ValueError
+                document = json.loads(raw.decode("utf-8-sig"))
+                if not isinstance(document, dict) or len(document) != 1:
+                    raise ValueError
+                project_id, project = next(iter(document.items()))
+                if not isinstance(project, dict) or project.get("id") != project_id:
+                    raise ValueError
+                requirements = project.get("requerimientos", [])
+                if not isinstance(requirements, list) or any(
+                    not isinstance(group, dict) or not isinstance(group.get("soluciones", []), list)
+                    for group in [project, *requirements]
+                ):
+                    raise ValueError
+                data = {"filename": upload.name, "document": document}
+            except (UnicodeError, ValueError):
+                col_file.error("Carga un JSON válido de un solo proyecto SONARA, de hasta 2 MB.")
+        if data:
+            files[name] = data
+            col_file.caption(data["filename"])
+        available = {}
+        if data:
+            project = next(iter(data["document"].values()))
+            groups = [project, *(project.get("requerimientos") or [])]
+            for group in groups:
+                if not isinstance(group, dict):
+                    continue
+                for solution in group.get("soluciones") or []:
+                    if not isinstance(solution, dict):
+                        continue
+                    try:
+                        value = float(solution["d2mnt_atr"])
+                    except (KeyError, ValueError, TypeError):
+                        continue
+                    if math.isfinite(value):
+                        available[len(available) + 1] = value
+        if available:
+            results[name] = col_result.selectbox(
+                f"DₙT,A,tr [dB] · {label}", list(available.values()),
+                key=f"c5l2_facade_result_{name}",
+            )
         else:
-            record={"case":"FA-01","traffic":{"street":street,"speed":speed,"surface":road_surface,
-                "distance":dist,"height":receiver_height,"receiver_ref":receiver_ref,
-                "flows":flows,"levels":levels,"method":method,"lden":round(computed,2),
-                "method_note":"Lden verified mathematically; this app does not perform CNOSSOS-EU emission/propagation"},
-                **fields}
-            _save(lab,saved,6,"c5l2_s6",record)
-    st.caption("Esta etapa integra exposición exterior y aislamiento de fachada. La determinación de Clase B corresponde al alumno, no al motor de NoiseMap.")
+            results[name] = col_result.number_input(
+                f"DₙT,A,tr [dB] · {label}", min_value=-20.0, max_value=150.0,
+                value=(old.get("model_results") or {}).get(name),
+                key=f"c5l2_facade_manual_{name}",
+            )
+
+    st.markdown("#### E · Comprobación de Clase B")
+    target = max(30, computed - 24) if computed is not None else None
+    st.caption("ISO/TS 19488:2021, Tabla 3 · DₙT,A,tr = D₂m,nT,w + Ctr · mínimo: máx(30 dB, Lden − 24 dB).")
+    if target is not None:
+        st.metric("Meta Clase B", f"{target:.1f} dB")
+    if results["original"] is not None and results["mejora"] is not None:
+        st.metric("Mejora de la fachada", f'{results["mejora"] - results["original"]:+.1f} dB')
+    if target is not None and results["mejora"] is not None:
+        margin = results["mejora"] - target
+        st.metric("Margen respecto a Clase B", f"{margin:+.1f} dB")
+        st.write("Alcanza la meta según la predicción." if margin >= 0 else "Queda bajo la meta según la predicción.")
+    comparison = st.text_area("Conclusión técnica y limitaciones", old.get("comparison", ""))
+    payload = {**old, "case": "FA-01", "traffic": {**traffic_old,
+        "street": "Pasaje Chimbote", "speed": 30, "surface": "Asfalto convencional",
+        "flows": default_flows, "distance": dist, "height": receiver_height,
+        "receiver_ref": receiver_ref, "audit": audit, "levels": levels, "method": method,
+        "lden": round(computed, 2) if computed is not None else None},
+        "facade_geometry": facade, "receiver_volume": room.get("Volumen (m³)"),
+        "receiver_tr": living_tr, "receiver_tr_bands": tr_bands, "variant": variant, "mounting": mounting,
+        "evidence": evidence, "comparison": comparison, "target_db": target,
+        "model_results": results, "sonara_json": files}
+    draft, finish = st.columns(2)
+    if draft.button("Guardar avance", key="c5l2_s6_draft"):
+        _save(lab, saved, 6, "c5l2_s6", payload, complete=False)
+    if finish.button("Completar Etapa 6", type="primary", key="c5l2_s6_finish"):
+        if target is None or not method.strip():
+            st.warning("Registra los tres niveles exteriores y su procedencia.")
+        elif len(files) != 2 or any(value is None for value in results.values()):
+            st.warning("Adjunta ambos proyectos SONARA y registra sus resultados.")
+        elif not all(field.strip() for field in (variant, mounting, evidence, comparison)):
+            st.warning("Completa la descripción de la mejora, su respaldo y la conclusión.")
+        else:
+            _save(lab, saved, 6, "c5l2_s6", payload, complete=True)
 
 
 def _stage8(lab,saved):
@@ -2772,6 +2847,17 @@ def _teacher(stage, saved=None):
                 _stage2_teacher_geometry_results()
             else:
                 st.write(TEACHER[stage])
+            if stage == 6:
+                records = ((saved or {}).get("c5l2_s6") or {}).get("sonara_json") or {}
+                for name, label in (("original", "Fachada original"), ("mejora", "Fachada mejorada")):
+                    data = records.get(name)
+                    if data and data.get("document"):
+                        st.download_button(
+                            "Descargar JSON · " + label,
+                            json.dumps(data["document"], ensure_ascii=False, indent=2),
+                            file_name=data["filename"], mime="application/json",
+                            key="c5l2_s6_teacher_" + name,
+                        )
             if stage==5:
                 st.markdown("**Pauta docente · aislamiento de impacto · Etapa 5**")
                 st.write(
