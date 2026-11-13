@@ -50,7 +50,7 @@ CASES = {
 STAGES = [
  ("Bienvenida y ruta de aprendizaje", "Conocer las actividades y la metodología del laboratorio."),
  ("Encargo profesional y reconocimiento del proyecto", "Conocer el Edificio Chimbote, descargar el expediente y definir los requisitos de Clase B."),
- ("Ficha geométrica del alumno", "Extraer de planos las superficies, alturas, volúmenes y adyacencias."),
+ ("Ficha geométrica del alumno", "Cuantificar cotas, superficies, alturas y volúmenes de los recintos asignados por el laboratorio."),
  ("Sistemas constructivos y datos de SONARA", "Documentar materiales, uniones, tiempos y condiciones."),
  ("Diseño acústico aéreo", "Comparar modelo original y variante en SONARA."),
  ("Diseño de ruido de impacto", "Comparar losa y solución resiliente en SONARA."),
@@ -63,7 +63,7 @@ STAGES = [
 TEACHER = {
  0: "Etapa de bienvenida: explicar la ruta y la metodología, sin entregar todavía el encargo ni los documentos. El expediente y el caso de estudio se presentan en la Etapa 1.",
  1: "Presentar el proyecto Chimbote y la unidad CH-A-P05-S03; verificar localización en el plano, descargar los antecedentes y distinguir el proyecto real de los supuestos académicos. Comprobar criterios de Clase B de ISO/TS 19488:2021 con descriptor, valor, dirección y referencia, sin entregar solución.",
- 2: "Comprobar áreas, volúmenes, recintos contiguos, proyección del piso superior, altura efectiva, vanos y trazabilidad por lámina/cota. NO atribuir al sector cotas de otros departamentos ni completar dimensiones sin verificar.",
+ 2: "Los recintos emisores y receptores ya están fijados en el encargo. Comprobar que el alumno cuantifique áreas, volúmenes, elementos comunes, proyección del piso superior, altura efectiva, vanos y trazabilidad por lámina/cota. NO atribuir al sector cotas de otros departamentos ni completar dimensiones sin verificar.",
  3: "Materialidad original académica M-01 L-01 F-01 V-01 S-01 IS-01 T-01 T-02 T-03. Revisar superficies interiores, absorciones por banda y cálculo del TR en SONARA: no adoptar TR prefijado.",
  4: "Exigir DnT,w y adaptación pertinente para la transmisión entre viviendas, incluyendo flancos, y una variante coherente.",
  5: "Revisar LnT,w y términos aplicables de impacto, piso original y variante resiliente, incluyendo vías laterales.",
@@ -467,7 +467,7 @@ def _stage1(lab,saved):
         descriptions=[
             ("location","Edificio, piso y vivienda seleccionados","Torre A, piso 5, tercera vivienda desde poniente en hilera sur (CH-A-P05-S03)."),
             ("documents","Documentación consultada","Archivo, lámina, revisión y cotas relevantes."),
-            ("adjacencies","Relaciones horizontales, verticales y fachada","Identifica vivienda al oriente y vivienda superpuesta en piso 6. Verifica recintos realmente contiguos."),
+            ("adjacencies","Verificación documental de los recintos asignados","Revisa el muro compartido con el estar de la vivienda poniente, la proyección del dormitorio del piso 6, la fachada del estar y el trayecto sanitario hacia dormitorio. No cambies los recintos del encargo."),
             ("limitations","Datos faltantes y método para resolverlos","Distingue documentación del proyecto y supuestos del anexo."),
         ]
         documentation={}
@@ -494,23 +494,96 @@ def _stage1(lab,saved):
 def _stage2(lab,saved):
     _header(2)
     st.markdown("### Construye la ficha geométrica desde los planos")
-    st.info("Determina las superficies, alturas, volúmenes y separaciones desde la planta tipo, el corte y las elevaciones de Chimbote. No copies cotas de otro departamento; marca como pendiente cualquier dimensión no verificable.")
+    st.info("Los recintos emisores y receptores ya están definidos por el laboratorio. Tu trabajo es calcular **áreas, alturas, volúmenes, superficies de separación, fachada y vanos** usando los planos y anotando la lámina/cota. No cambies las parejas de recintos ni copies medidas de otra vivienda.")
     old=saved.get("c5l2_s2") or {}
-    rec_cols=["Recinto","Piso / unidad","Largo (m)","Ancho (m)","Altura (m)","Área (m²)","Volumen (m³)","Plano / cota"]
-    sep_cols=["Caso","Recinto emisor","Recinto receptor","Elemento","Longitud (m)","Altura (m)","Superficie (m²)","Plano / cota"]
-    env_cols=["Recinto","Orientación","Paño total (m²)","Ventanas (m²)","Opaco (m²)","Plano / cota"]
-    st.markdown("#### A · Recintos y volúmenes")
-    rooms=_table(old.get("rooms") or [],rec_cols,"c5l2_rooms")
-    st.markdown("#### B · Separaciones y losas")
-    sep=_table(old.get("separations") or [],sep_cols,"c5l2_separations")
-    st.markdown("#### C · Fachada y ventanas")
-    env=_table(old.get("facades") or [],env_cols,"c5l2_facades")
+    fixed_cases = [
+        ("AI-01", "Estar · vivienda poniente, piso 5",
+         "Dormitorio · CH-A-P05-S03, piso 5", "M-01 · muro entre viviendas"),
+        ("IM-01", "Dormitorio superpuesto · piso 6",
+         "Dormitorio · CH-A-P05-S03, piso 5", "L-01 · losa entre pisos"),
+        ("FA-01", "Exterior · Pasaje Chimbote",
+         "Estar · CH-A-P05-S03, piso 5", "F-01/V-01 · fachada sur"),
+        ("IN-01", "Descarga WC · baño CH-A-P05-S03",
+         "Dormitorio · CH-A-P05-S03, piso 5", "S-01/IS-01 · instalaciones"),
+    ]
+    st.markdown("#### A · Casos y recintos asignados por el docente")
+    st.dataframe(
+        [{"Caso":case,"Emisor / fuente":emitter,"Receptor":receiver,"Elemento":element}
+         for case,emitter,receiver,element in fixed_cases],
+        hide_index=True, use_container_width=True,
+    )
+    st.caption(
+        "La superposición del dormitorio del piso 6 es una hipótesis del ejercicio "
+        "que debe verificarse en los planos. La fuente sanitaria no implica "
+        "necesariamente un tabique compartido directo."
+    )
+    st.markdown("#### B · Geometría de los recintos receptores")
+    rec_cols=["Caso","Recinto receptor","Piso / unidad","Largo (m)","Ancho (m)",
+              "Altura (m)","Área (m²)","Volumen (m³)","Plano / cota"]
+    room_labels = {
+        case: (receiver, "Piso 5 · CH-A-P05-S03")
+        for case, _, receiver, _ in fixed_cases
+    }
+    stored_rooms = {
+        str(row.get("Caso") or ""):row for row in (old.get("rooms") or [])
+    }
+    room_rows=[]
+    for case,receiver,location in (
+        (case, *room_labels[case]) for case,_,_,_ in fixed_cases
+    ):
+        row={column: stored_rooms.get(case,{}).get(column,"") for column in rec_cols}
+        row.update({"Caso":case,"Recinto receptor":receiver,"Piso / unidad":location})
+        room_rows.append(row)
+    import pandas as pd
+    room_df=st.data_editor(
+        pd.DataFrame(room_rows,columns=rec_cols),key="c5l2_rooms_fixed_v1",
+        hide_index=True,use_container_width=True,num_rows="fixed",
+        disabled=["Caso","Recinto receptor","Piso / unidad"],
+    )
+    rooms=room_df.fillna("").to_dict("records")
+
+    st.markdown("#### C · Superficies de separación y trazabilidad")
+    sep_cols=["Caso","Recinto emisor","Recinto receptor","Elemento",
+              "Longitud (m)","Altura (m)","Superficie (m²)","Plano / cota"]
+    stored_sep={
+        str(row.get("Caso") or ""):row for row in (old.get("separations") or [])
+    }
+    sep_rows=[]
+    for case,emitter,receiver,element in fixed_cases:
+        row={column:stored_sep.get(case,{}).get(column,"") for column in sep_cols}
+        row.update({"Caso":case,"Recinto emisor":emitter,
+                    "Recinto receptor":receiver,"Elemento":element})
+        sep_rows.append(row)
+    sep_df=st.data_editor(
+        pd.DataFrame(sep_rows,columns=sep_cols),key="c5l2_separations_fixed_v1",
+        hide_index=True,use_container_width=True,num_rows="fixed",
+        disabled=["Caso","Recinto emisor","Recinto receptor","Elemento"],
+    )
+    sep=sep_df.fillna("").to_dict("records")
+
+    st.markdown("#### D · Fachada sur del estar y ventanas")
+    env_cols=["Recinto","Orientación","Paño total (m²)",
+              "Ventanas (m²)","Opaco (m²)","Plano / cota"]
+    stored_env=(old.get("facades") or [{}])[0]
+    env_row={column:stored_env.get(column,"") for column in env_cols}
+    env_row.update({"Recinto":"Estar · CH-A-P05-S03, piso 5",
+                    "Orientación":"Sur · Pasaje Chimbote"})
+    env_df=st.data_editor(
+        pd.DataFrame([env_row],columns=env_cols),key="c5l2_facades_fixed_v1",
+        hide_index=True,use_container_width=True,num_rows="fixed",
+        disabled=["Recinto","Orientación"],
+    )
+    env=env_df.fillna("").to_dict("records")
     with st.expander("Criterios de construcción de la ficha"):
         st.markdown("Identifica áreas efectivas, espesores, orientación, altura libre y volumen útil. Señala dimensiones deducidas de escala como estimaciones, no como cotas. Documenta fuente y unidades.")
     if st.button("Guardar ficha geométrica",type="primary",key="c5l2_save_geometry"):
-        if not any(str(x.get("Recinto","")).strip() for x in rooms) or not any(str(x.get("Elemento","")).strip() for x in sep):
-            st.warning("Incluye al menos un recinto y un elemento de separación identificados.")
-        else:_save(lab,saved,2,"c5l2_s2",{"rooms":rooms,"separations":sep,"facades":env})
+        if not all(str(row.get("Plano / cota","")).strip() for row in rooms+sep+env):
+            st.warning(
+                "Indica la lámina/cota de cada caso. Si un dato falta en planos, "
+                "registra explícitamente PENDIENTE y consulta el suplemento docente."
+            )
+        else:
+            _save(lab,saved,2,"c5l2_s2",{"rooms":rooms,"separations":sep,"facades":env})
 
 def _stage3(lab,saved):
     _header(3)
