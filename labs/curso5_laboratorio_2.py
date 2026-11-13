@@ -434,41 +434,6 @@ def _stage1(lab,saved):
                         "Plano original pendiente de publicación en el repositorio; "
                         "la imagen ilustrativa no lo sustituye."
                     )
-    st.markdown("#### B3 · Expediente completo para descarga")
-    pack, issue = _student_document_pack()
-    if pack is not None:
-        st.download_button(
-            "📦 Descargar expediente completo del alumno (.zip)",
-            data=pack,
-            file_name="Curso5_Lab2_Chimbote_CH-A-P05-S03_Alumno.zip",
-            mime="application/zip",
-            type="primary",
-            use_container_width=True,
-            key="c5l2_docs_download",
-        )
-    else:
-        st.info(
-            "El ZIP completo estará disponible cuando se publiquen los PDF "
-            "originales y los anexos. Mientras tanto, utiliza los documentos "
-            "disponibles por separado."
-        )
-    if missing_resources:
-        with st.expander(
-            f"Estado de publicación de documentos · {len(missing_resources)} PDF pendientes",
-            expanded=False,
-        ):
-            st.caption(
-                "Los siguientes archivos todavía no están incorporados a esta rama. "
-                "No se presentan como descargables hasta estar disponibles."
-            )
-            for missing_filename in missing_resources:
-                st.code("assets/curso5_lab2/" + missing_filename, language=None)
-    st.caption(
-        "Las imágenes conceptuales son exclusivamente introductorias. "
-        "Los datos técnicos deben obtenerse de los planos, fichas y supuestos "
-        "explícitos. Las soluciones y pautas docentes no se incluyen."
-    )
-
     st.markdown("### C · Requisitos normativos de Clase B")
     st.info(
         "Consulta ISO/TS 19488:2021 y determina los requisitos de Clase B "
