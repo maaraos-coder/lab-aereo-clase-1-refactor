@@ -603,7 +603,7 @@ def _stage2(lab,saved):
 
     st.markdown("#### C · Superficies de separación y trazabilidad")
     st.markdown(
-         "**Superficie del elemento por el que se transmite el ruido:** **AI-01:** área del muro medianero M-01 "
+          "**Calcula el área del elemento de separación.** Para **AI-01, FA-01 e IN-01** multiplica largo por altura; para **IM-01**, largo por ancho de la losa superior. **AI-01:** área del muro medianero M-01 "
         "entre el estar vecino y el dormitorio. **IM-01:** área de losa L-01 "
          "**SUPERIOR**, sobre el cielo del dormitorio receptor del piso 5, bajo el dormitorio emisor del piso 6. **FA-01:** área bruta del paño "
         "de fachada sur del estar. **IN-01:** superficie del cierre S-01 "
@@ -639,8 +639,8 @@ def _stage2(lab,saved):
         column_config={
             "Caso": st.column_config.TextColumn("Caso", width="small"),
             "Elemento a medir": st.column_config.TextColumn("Elemento / superficie", width="medium"),
-            "Longitud (m)": st.column_config.TextColumn("Dim. 1 (m)", width="small", help="Primera dimensión de la superficie: largo de losa en IM-01 o longitud de muro en los otros casos."),
-            "Altura (m)": st.column_config.TextColumn("Dim. 2 (m)", width="small", help="Segunda dimensión: ANCHO de la losa superior para IM-01, ALTURA del cerramiento para AI-01, FA-01 e IN-01."),
+            "Longitud (m)": st.column_config.TextColumn("Largo (m)", width="small", help="Longitud del elemento: muro, losa, fachada o cierre sanitario."),
+            "Altura (m)": st.column_config.TextColumn("Ancho / alto (m)", width="medium", help="IM-01: ANCHO de la losa superior. AI-01, FA-01 e IN-01: ALTURA del muro, fachada o cierre."),
             "Superficie (m²)": st.column_config.TextColumn("Superficie m²", width="small"),
             "Plano / cota": st.column_config.TextColumn("Lámina / cota", width="large"),
         },
@@ -1332,28 +1332,28 @@ def _stage2_teacher_geometry_results():
     st.markdown("#### C · Superficies a ingresar en la tabla de separación")
     st.table([
         {"Caso":"AI-01","Elemento":"M-01 · muro medianero",
-         "Dim. 1":"3,10 m","Dim. 2":"2,50 m (altura)",
+         "Largo":"3,10 m","Ancho / alto":"2,50 m (alto)",
          "Superficie":"7,75 m²",
          "Lámina / cota":"Planta tipo Parte 1, pág. 8 (relación entre viviendas). Suplemento §3: HM-01 × HG-01; longitud y altura DOCENTES."},
         {"Caso":"IM-01","Elemento":"L-01 · losa superior del receptor",
-         "Dim. 1":"3,10 m","Dim. 2":"2,60 m (ancho de losa)",
+         "Largo":"3,10 m","Ancho / alto":"2,60 m (ancho)",
          "Superficie":"8,06 m²",
          "Lámina / cota":"Planta tipo Parte 1, pág. 8 (pisos 5–6). Suplemento §3: HL-01, huella de losa equivalente; SUPUESTO DOCENTE."},
         {"Caso":"FA-01","Elemento":"F-01 · fachada sur del estar",
-         "Dim. 1":"2,43 m","Dim. 2":"2,50 m (altura)",
+         "Largo":"2,43 m","Ancho / alto":"2,50 m (alto)",
          "Superficie":"6,075 m²",
          "Lámina / cota":"Planta tipo Parte 1, pág. 8 + elevación sur Parte 2, pág. 5 (referencia de ubicación). Suplemento §3: HF-02 × HG-01; DIMENSIONES DOCENTES."},
         {"Caso":"IN-01","Elemento":"S-01 · cierre sanitario",
-         "Dim. 1":"1,40 m","Dim. 2":"2,50 m (altura)",
+         "Largo":"1,40 m","Ancho / alto":"2,50 m (alto)",
          "Superficie":"3,50 m²",
          "Lámina / cota":"Suplemento §3: HI-01 × HG-01, cierre hipotético; NO hay trazado de bajada acreditado por planos."},
     ])
     st.caption(
         "En **IM-01**, la superficie evaluada es la cara inferior de la losa "
         "del piso 6, que constituye el cielo del dormitorio receptor del piso 5. "
-        "En la tabla C: **Dim. 1 = 3,10 m y Dim. 2 = 2,60 m (ancho en planta)**; "
+         "En la tabla C: **Largo = 3,10 m y Ancho = 2,60 m (en planta)**; "
         "S = **8,06 m²**. La segunda dimensión NO representa altura ni espesor "
-        "de losa. En muros y cierres, Dim. 2 representa su altura."
+        "de losa. Para muros, fachada y cierre sanitario, la columna «Ancho / alto» representa su altura."
     )
 
     st.markdown("#### D · Fachada sur del estar (FA-01)")
