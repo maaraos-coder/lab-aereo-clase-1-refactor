@@ -102,27 +102,35 @@ def _is_teacher():
 def _readonly():
     return bool(st.session_state.get("projection_mode"))
 
-def _plans_pdf_bytes(folder):
-    """Read published plans from PDF or its GitHub-web-compatible ZIP.
+def _plans_archive_path(folder):
+    """Prefer the updated six-sheet original plans package, then legacy ZIP."""
+    for name in (
+        "Chimbote_Torre_A_CH-A-P05-S03_planos_6_laminas.zip",
+        "Chimbote_Torre_A_CH-A-P05-S03_planos.zip",
+    ):
+        candidate = folder / name
+        if candidate.is_file():
+            return candidate
+    return None
 
-    GitHub's web uploader rejects the 35 MB PDF. The ZIP is roughly 22 MB.
-    Only the exact expected PDF member is accepted; never extract to disk.
-    """
+
+def _plans_pdf_bytes(folder):
+    """Read original plan PDF or the PDF held in a published archive."""
     filename = "Chimbote_Torre_A_CH-A-P05-S03_planos.pdf"
     direct = folder / filename
+    archive = _plans_archive_path(folder)
+    if archive is not None:
+        with ZipFile(archive, "r") as bundle:
+            entry = bundle.getinfo(filename)
+            if entry.file_size > 60_000_000:
+                raise ValueError("El PDF de planos supera el límite de seguridad.")
+            data = bundle.read(entry)
+        if not data.startswith(b"%PDF-"):
+            raise ValueError("El ZIP de planos no contiene un PDF válido.")
+        return data
     if direct.is_file():
         return direct.read_bytes()
-    archive = folder / "Chimbote_Torre_A_CH-A-P05-S03_planos.zip"
-    if not archive.is_file():
-        return None
-    with ZipFile(archive, "r") as bundle:
-        entry = bundle.getinfo(filename)
-        if entry.file_size > 60_000_000:
-            raise ValueError("El PDF de planos supera el límite de seguridad.")
-        data = bundle.read(entry)
-    if not data.startswith(b"%PDF-"):
-        raise ValueError("El ZIP no contiene un PDF de planos válido.")
-    return data
+    return None
 
 
 def _student_document_pack():
@@ -412,11 +420,24 @@ def _stage1(lab,saved):
         st.caption(group_intro)
         for title, filename, description, alternative in resources:
             file_path = resource_dir / filename
-            pdf_data = (
-                _plans_pdf_bytes(resource_dir)
-                if filename == "Chimbote_Torre_A_CH-A-P05-S03_planos.pdf"
-                else file_path.read_bytes() if file_path.is_file() else None
-            )
+            # The published originals arrive as a ZIP. Offer the ZIP itself:
+            # no unnecessary PDF decompression or memory duplication.
+            if filename == "Chimbote_Torre_A_CH-A-P05-S03_planos.pdf":
+                plans_zip = _plans_archive_path(resource_dir)
+                if plans_zip is not None:
+                    with st.container(border=True):
+                        st.markdown(f"**{title}**")
+                        st.caption(description)
+                        st.download_button(
+                            "📦 Descargar planos originales (.zip)",
+                            data=plans_zip.read_bytes(),
+                            file_name=plans_zip.name,
+                            mime="application/zip",
+                            key="c5l2_s1_plans_zip",
+                            use_container_width=True,
+                        )
+                    continue
+            pdf_data = file_path.read_bytes() if file_path.is_file() else None
             # La publicación se prepara antes de abrir el laboratorio.
             # No mostrar al alumnado mensajes internos de GitHub ni
             # botones con documentos todavía no disponibles.
