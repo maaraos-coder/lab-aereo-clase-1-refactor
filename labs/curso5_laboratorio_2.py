@@ -1714,6 +1714,52 @@ def _teacher(stage):
                     "Alfombra, cielo acústico y panel de lana mineral no son "
                     "terminaciones originales: se reservan para variantes."
                 )
+                st.markdown("**Solución docente · reverberación original con Sabine**")
+                st.caption(
+                    "Resultados del modelo equivalente vacío, usando exactamente "
+                    "las áreas del suplemento, puerta de madera maciza y presets "
+                    "de α(f) indicados. A(f) = ΣSᵢαᵢ(f); "
+                    "TR(f) = 0,161·V/A(f). Son predicciones docentes, "
+                    "no mediciones del edificio."
+                )
+                st.table([
+                    {"Recinto":"Dormitorio", "Piso":"8,06", "Cielo":"8,06",
+                     "Muros opacos":"26,82", "Puerta madera":"1,68",
+                     "Ventana":"0,00", "Volumen m³":"20,15"},
+                    {"Recinto":"Estar", "Piso":"9,1125", "Cielo":"9,1125",
+                     "Muros opacos":"27,06", "Puerta madera":"1,68",
+                     "Ventana":"2,16", "Volumen m³":"22,78125"},
+                ])
+                st.table([
+                    {"Octava Hz":125, "A dormitorio m²":3.804,
+                     "TR dormitorio s":0.853, "A estar m²":4.332,
+                     "TR estar s":0.847},
+                    {"Octava Hz":250, "A dormitorio m²":1.993,
+                     "TR dormitorio s":1.628, "A estar m²":2.197,
+                     "TR estar s":1.669},
+                    {"Octava Hz":500, "A dormitorio m²":1.657,
+                     "TR dormitorio s":1.958, "A estar m²":1.816,
+                     "TR estar s":2.019},
+                    {"Octava Hz":1000, "A dormitorio m²":2.737,
+                     "TR dormitorio s":1.185, "A estar m²":2.914,
+                     "TR estar s":1.259},
+                    {"Octava Hz":2000, "A dormitorio m²":3.468,
+                     "TR dormitorio s":0.935, "A estar m²":3.649,
+                     "TR estar s":1.005},
+                    {"Octava Hz":4000, "A dormitorio m²":3.898,
+                     "TR dormitorio s":0.832, "A estar m²":4.102,
+                     "TR estar s":0.894},
+                ])
+                st.info(
+                    "Método y criterio: **Sabine** con las curvas α genéricas "
+                    "de SONARA, excepto la puerta de madera maciza (curva "
+                    "NBR 12179 adoptada también en SONARA). "
+                    "En dormitorio se adopta **0 m² de ventana** "
+                    "únicamente en el modelo docente interior. "
+                    "Si el alumno usa **Eyring** o una geometría mejor "
+                    "justificada, el TR cambia: calificar la consistencia "
+                    "del modelo y no exigir estos números como universales."
+                )
                 st.write("**C · Reverberación:** exigir **TR en segundos por bandas de octava de 125, 250, 500, 1000, 2000 y 4000 Hz**, para ambos recintos. Comparar los resultados de SONARA con las superficies, curvas de α seleccionadas y el método Sabine/Eyring declarado. No hay TR fijado por defecto ni certificado.")
                 st.caption("Guardar avance no finaliza la etapa; Completar Etapa 3 valida registro de geometría, materiales, fuentes α(f) y TR por bandas, no certifica exactitud de los cálculos.")
 def run_stage(stage,lab,saved,runtime):
