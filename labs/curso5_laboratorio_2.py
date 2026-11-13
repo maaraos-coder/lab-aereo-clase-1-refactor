@@ -1244,28 +1244,90 @@ def _stage4(lab, saved):
             "para este alumno. Completa y guarda los resultados allí."
         )
 
-    st.markdown("**Encuentros y flanqueos (datos de entrada a SONARA)**")
+    st.markdown("**Encuentros y flanqueos · ficha base para SONARA**")
+    st.info(
+        "La **geometría, los materiales y la hipótesis de unión** se entregan "
+        "como datos docentes de la condición original. **El alumno solo completa "
+        "Kij (dB)** obtenido en SONARA para cada encuentro. "
+        "No debe inventar coeficientes ni asumir que Kij es igual en todas las vías."
+    )
     st.caption(
-        "Documenta los elementos laterales conectados al medianero, "
-        "sus superficies/longitudes y el tipo de unión. Kij o Dv,ij "
-        "y las propiedades de flanco se obtienen/justifican en SONARA; "
-        "no se reemplazan por una resta fija de dB."
+        "Longitudes de las uniones horizontales: largo del muro separador "
+        "de la Etapa 2 (si está disponible); laterales: altura del muro. "
+        "Losas HA de 160 mm según L-01; los muros laterales HA de 180 mm "
+        "y las uniones rígidas continuas son **hipótesis docentes de modelación** "
+        "que deben cotejarse con el plano, no datos acreditados del edificio."
     )
     flank_columns = ["Vía / encuentro", "Elemento flanqueante / material",
                      "Longitud de unión (m)", "Tipo de junta",
-                     "Kij / Dv,ij / fuente"]
+                     "Kij SONARA (dB)"]
+    source_length = _filled(geo.get("length"), "2,60")
+    source_height = _filled(geo.get("height"), "2,50")
     flank_defaults = [
-        {"Vía / encuentro": name, "Elemento flanqueante / material": "",
-         "Longitud de unión (m)": "", "Tipo de junta": "",
-         "Kij / Dv,ij / fuente": ""}
-        for name in ("Techo / muro", "Piso / muro", "Lateral 1 / muro", "Lateral 2 / muro")
+        {"Vía / encuentro": "Techo / medianero",
+         "Elemento flanqueante / material": "Losa HA 160 mm (L-01)",
+         "Longitud de unión (m)": source_length,
+         "Tipo de junta": "Unión rígida continua (hipótesis)",
+         "Kij SONARA (dB)": ""},
+        {"Vía / encuentro": "Piso / medianero",
+         "Elemento flanqueante / material": "Losa HA 160 mm (L-01)",
+         "Longitud de unión (m)": source_length,
+         "Tipo de junta": "Unión rígida continua (hipótesis)",
+         "Kij SONARA (dB)": ""},
+        {"Vía / encuentro": "Lateral 1 / medianero",
+         "Elemento flanqueante / material": "Muro HA 180 mm (hipótesis)",
+         "Longitud de unión (m)": source_height,
+         "Tipo de junta": "Unión rígida continua (hipótesis)",
+         "Kij SONARA (dB)": ""},
+        {"Vía / encuentro": "Lateral 2 / medianero",
+         "Elemento flanqueante / material": "Muro HA 180 mm (hipótesis)",
+         "Longitud de unión (m)": source_height,
+         "Tipo de junta": "Unión rígida continua (hipótesis)",
+         "Kij SONARA (dB)": ""},
     ]
-    flank_records = previous_system.get("flanks") or flank_defaults
+    # Reuse earlier Kij values without reusing obsolete, editable geometry.
+    previous_flanks = previous_system.get("flanks") or []
+    flanks_by_name = {
+        str(row.get("Vía / encuentro", "")): row
+        for row in previous_flanks if isinstance(row, dict)
+    }
+    old_names = (
+        ("Techo / medianero", "Techo / muro"),
+        ("Piso / medianero", "Piso / muro"),
+        ("Lateral 1 / medianero", "Lateral 1 / muro"),
+        ("Lateral 2 / medianero", "Lateral 2 / muro"),
+    )
+    for row, (name, old_name) in zip(flank_defaults, old_names):
+        previous_row = flanks_by_name.get(name) or flanks_by_name.get(old_name) or {}
+        row["Kij SONARA (dB)"] = _filled(
+            previous_row.get("Kij SONARA (dB)"),
+            previous_row.get("Kij / Dv,ij / fuente"),
+        )
     flanks = st.data_editor(
-        pd.DataFrame(flank_records, columns=flank_columns),
-        key="c5l2_s4_flanks_v1", hide_index=True,
-        use_container_width=True, num_rows="dynamic"
+        pd.DataFrame(flank_defaults, columns=flank_columns),
+        key="c5l2_s4_flanks_fixed_v2",
+        hide_index=True, use_container_width=True, num_rows="fixed",
+        disabled=flank_columns[:-1],
+        column_config={
+            "Kij SONARA (dB)": st.column_config.TextColumn(
+                "Kij calculado (dB)",
+                help="Registra el coeficiente de reducción vibratoria Kij de cada encuentro calculado en SONARA; no es un valor prefijado."
+            )
+        }
     ).fillna("").to_dict("records")
+    if not _filled(geo.get("length")) or not _filled(geo.get("height")):
+        st.warning(
+            "Se usaron las cotas académicas provisionales de 2,60 m y/o 2,50 m "
+            "solo donde no había geometría guardada. Verifica las dimensiones "
+            "del muro medianero en la Etapa 2 antes de modelar en SONARA."
+        )
+    st.caption(
+        "La tabla es una **simplificación docente de cuatro encuentros**. "
+        "ISO 12354-1 puede requerir distintas rutas (Ff, Fd y Df) y valores "
+        "Kij por dirección y configuración de junta. Si SONARA entrega varios "
+        "coeficientes para un encuentro, consérvalos en el archivo SONARA "
+        "y documenta cuál se registra aquí; no los promedies arbitrariamente."
+    )
 
     st.markdown("#### C · Hoja de resultados SONARA: base estructural y mejora")
     st.caption(
