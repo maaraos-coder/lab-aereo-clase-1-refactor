@@ -19,18 +19,37 @@
 | T-02 | Terminación interior de muros y cielo del estar | Pintura sobre hormigón/yeso; cielo continuo pintado | Superficies por calcular según geometría real |
 | T-03 | Terminación del dormitorio | Piso laminado rígidamente apoyado (hipótesis docente), muros pintados, cielo pintado | No atribuir propiedades acústicas sin catálogo |
 
-### B · Reverberación — calcular en SONARA
+### B · Reverberación — materiales compatibles con SONARA
 
-**No se fija un TR por defecto.** El estudiante calculará en SONARA los tiempos de reverberación que utilice para sus recintos receptores a partir de:
-- Geometría de la Etapa 2: volumen V y superficies internas (piso, cielo, muros y vanos).
-- Coeficientes de absorción **por banda** elegidos de biblioteca/material de SONARA o fichas técnicas justificadas.
-- Condición de ocupación y mobiliario que se declare. Adoptar como escenario docente **recintos sin mobiliario** para comparar modelos, salvo que se defina otra condición y se conserve en ambos.
-- Evidencia de SONARA: datos, bandas, método, TR por banda y valor utilizado en normalizaciones.
+**El material constructivo está descrito en la sección A.** Para el cálculo de reverberación, SONARA incorpora **presets genéricos de absorción**, accesibles en `Reverberación · predicción de proyecto → Material genérico`. Las seis bandas de octava y valores siguientes se han contrastado con el código vigente de SONARA (`maaraos-coder/sonara`, `app.py`, función `app_reverberacion_iso`). **Son coeficientes genéricos de modelación, no resultados de ensayos de los productos que se construirán ni especificaciones del Edificio Chimbote.**
 
-Los acabados T-01 a T-03 se entregan como descripción física, **no como coeficientes alfa**. El estudiante debe seleccionar valores defendibles y documentar su fuente. Si SONARA solo admite materiales sin curva de absorción, deberá indicarlo como limitación y no inventar resultados.
+| Preset genérico SONARA | α 125 Hz | α 250 Hz | α 500 Hz | α 1.000 Hz | α 2.000 Hz | α 4.000 Hz |
+|---|---:|---:|---:|---:|---:|---:|
+| Hormigón / superficie dura | 0,01 | 0,01 | 0,02 | 0,02 | 0,02 | 0,03 |
+| Yeso pintado | 0,10 | 0,05 | 0,04 | 0,07 | 0,09 | 0,10 |
+| Vidrio | 0,18 | 0,06 | 0,04 | 0,03 | 0,02 | 0,02 |
+| Alfombra | 0,08 | 0,24 | 0,57 | 0,69 | 0,71 | 0,73 |
+| Cielo acústico | 0,45 | 0,70 | 0,85 | 0,90 | 0,90 | 0,85 |
+| Panel de lana mineral | 0,35 | 0,80 | 0,95 | 1,00 | 1,00 | 1,00 |
+
+**Asignación inicial para los dos recintos (sin soluciones mejoradas):**
+
+| Superficie | Acabado constructivo definido en A | Preset genérico para SONARA | Condición |
+|---|---|---|---|
+| Dormitorio: piso | Piso laminado rígido T-03 | **Hormigón / superficie dura** | Aproximación reflectante: el preset no es una curva ensayada del laminado. |
+| Estar: piso | Cerámica adherida T-01 | **Hormigón / superficie dura** | Aproximación reflectante: el preset no es una curva ensayada de la cerámica. |
+| Ambos: cielo | Cielo continuo pintado T-02 | **Yeso pintado** | Preset equivalente de acabado pintado. |
+| Ambos: muros opacos | Pintura sobre superficies rígidas T-02 | **Yeso pintado** | Preset equivalente; no determina la transmisión del muro. |
+| Ambos: puerta interior | Puerta sin ficha de absorción incorporada | **Hormigón / superficie dura** | Aproximación reflectante, **no** curva de puerta ensayada. |
+| Estar: ventana | DVH V-01 | **Vidrio** | Valor genérico superficial; no representa el aislamiento acústico del DVH. |
+| Dormitorio: ventana | Solo si se identifica o adopta un vano | **Vidrio** | Si no se incluye una ventana en el submodelo, **omitir esa superficie** del cálculo en SONARA; no reemplazarla por un vano ficticio. |
+
+**Procedimiento:** el alumno registra en la Etapa 3 las superficies de piso, cielo, muros opacos, puerta y ventana **del dormitorio y del estar**, selecciona los **mismos presets** en SONARA y calcula los tiempos de reverberación por banda de **125, 250, 500, 1.000, 2.000 y 4.000 Hz**, utilizando **Sabine o Eyring** con el método declarado y la geometría definida. **No se fija un TR por defecto.** La condición de cálculo será de **recintos vacíos/sin mobiliario**, para mantener comparabilidad. La Etapa 3 contiene tablas de α(f) y de TR(f), y permite guardar avances parciales.
+
+**Precisión:** los materiales absorbentes de mejora (`Alfombra`, `Cielo acústico`, `Panel de lana mineral`) figuran en la tabla porque están disponibles en SONARA, pero **no forman parte de la condición inicial**; su uso exige proponer una variante y justificar su montaje. La biblioteca de materiales elásticos para **aislamiento** de SONARA no sustituye estas curvas de **absorción**.
 
 ### C · Condiciones de operación complementarias
 
 - Fachada: la exposición exterior debe estimarse en la Etapa 6 con los datos académicos de tránsito y NoiseMap. La antigua referencia fija de **Lden = 60 dB** no debe utilizarse como resultado calculado ni como medición; el estudiante documentará método, geometría y limitaciones.
 - Descarga docente: **WC 6 L; evento único**. Espectro ficticio Lw (dB) en bandas de octava 63–4000 Hz: **70, 68, 66, 64, 61, 58, 55**. No confundir espectro Lw con LAFmax,nT. A falta de información de transmisión estructural no declarar cumplimiento global.
-- Los datos faltantes de huecos, shafts y geometrías de recintos se deben registrar como **pendientes** o cubrir con un suplemento aprobado por el docente; no se deducen de la materialidad.
+- Para los huecos, shafts y geometrías que no puedan obtenerse de forma inequívoca de los planos, utilizar exclusivamente la geometría base del **Suplemento de cotas e hipótesis docentes**, identificando cada valor como supuesto académico; no deducirlo de la materialidad.
