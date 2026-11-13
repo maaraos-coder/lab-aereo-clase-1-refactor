@@ -865,30 +865,62 @@ def _stage3(lab,saved):
         table_rows = []
         for surface, material, reference in surfaces:
             previous = by_name.get(surface, {})
+            default_preset = (
+                "Vidrio" if surface == "Ventana"
+                else "Yeso pintado" if surface in ("Cielo", "Muros opacos")
+                else "Hormigón / superficie dura"
+            )
+            previous_choice = str(previous.get("Material SONARA") or "")
+            preset = previous_choice if previous_choice in TR_SONARA_PRESETS else default_preset
             table_rows.append({
                 "Superficie": surface,
                 "Área (m²)": str(previous.get("Área (m²)") or default_areas.get(surface, "")),
-                "Material / acabado": str(previous.get("Material / acabado") or material),
-                "Referencia α(f)": str(previous.get("Referencia α(f)") or ""),
+                "Acabado del encargo": material,
+                "Material SONARA": preset,
             })
         surface_df = st.data_editor(
             pd.DataFrame(table_rows),
-            key=f"c5l2_tr_surface_v1_{room_name}",
+            key=f"c5l2_tr_surface_sonara_v2_{room_name}",
             hide_index=True, num_rows="fixed", use_container_width=True,
-            height=225, disabled=["Superficie"],
+            height=225, disabled=["Superficie", "Acabado del encargo"],
             column_config={
                 "Superficie": st.column_config.TextColumn("Superficie", width="small"),
                 "Área (m²)": st.column_config.TextColumn("Área m²", width="small"),
-                "Material / acabado": st.column_config.TextColumn(
-                    "Material / acabado", width="large"),
-                "Referencia α(f)": st.column_config.TextColumn(
-                    "Fuente α por bandas", width="medium",
-                    help="Biblioteca SONARA, ficha técnica o referencia del coeficiente de absorción por banda."),
+                "Acabado del encargo": st.column_config.TextColumn(
+                    "Acabado del encargo", width="medium"),
+                "Material SONARA": st.column_config.SelectboxColumn(
+                    "Preset α(f) en SONARA", options=list(TR_SONARA_PRESETS),
+                    required=True, width="large"),
             },
         )
+        edited_surfaces = surface_df.fillna("").to_dict("records")
+        st.markdown(f"**Coeficientes de absorción seleccionados · {room_name}**")
+        st.table([
+            {"Superficie": row["Superficie"], "Preset": row["Material SONARA"],
+             **{str(hz) + " Hz": format(val, ".2f")
+                for hz, val in zip(
+                    TR_OCTAVE_BANDS,
+                    TR_SONARA_PRESETS.get(str(row["Material SONARA"]), ())
+                )}}
+            for row in edited_surfaces
+        ])
         result_rooms[room_name] = {
             "area": area, "height": height, "volume": volume,
-            "surfaces": surface_df.fillna("").to_dict("records"),
+            "surfaces": [
+                {
+                    **row,
+                    "Material / acabado": row["Acabado del encargo"],
+                    "Referencia α(f)": (
+                        "SONARA / Reverberación / Material genérico: " +
+                        str(row["Material SONARA"])
+                    ),
+                    "Alfa por banda": dict(zip(
+                        TR_OCTAVE_BANDS,
+                        TR_SONARA_PRESETS.get(str(row["Material SONARA"]), ())
+                    )),
+                }
+                for row in edited_surfaces
+            ],
         }
         st.caption(
             f"**{room_name}:** el área de muros opacos corresponde al total de muros "
@@ -960,8 +992,8 @@ def _stage3(lab,saved):
                     missing_room.append(f"{room_name}: área de {surface['Superficie']}")
                 if not str(surface.get("Material / acabado") or "").strip():
                     missing_room.append(f"{room_name}: material de {surface['Superficie']}")
-                if not str(surface.get("Referencia α(f)") or "").strip():
-                    missing_room.append(f"{room_name}: α(f) de {surface['Superficie']}")
+                if str(surface.get("Material SONARA") or "") not in TR_SONARA_PRESETS:
+                    missing_room.append(f"{room_name}: material SONARA de {surface['Superficie']}")
         bad_bands = [
             str(row["Banda (Hz)"]) + " Hz"
             for row in tr_bands
