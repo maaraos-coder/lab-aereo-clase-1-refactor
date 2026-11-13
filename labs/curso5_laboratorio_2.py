@@ -24,7 +24,7 @@ BASE_CONSTRUCTION = [
  {"Código":"F-01","Caso":"FA-01","Elemento":"Fachada opaca","Composición original":"HA 150 mm; densidad 2.400 kg/m³","Montaje":"Sin trasdosado"},
  {"Código":"V-01","Caso":"FA-01","Elemento":"Ventana","Composición original":"DVH 4/12/4 mm con marco aluminio","Montaje":"Sin curva de ensayo del conjunto"},
  {"Código":"S-01","Caso":"IN-01","Elemento":"Cierre sanitario","Composición original":"Yeso-cartón 12,5 mm/cara + perfil 70 mm + lana mineral 50 mm","Montaje":"Fijaciones convencionales"},
- {"Código":"IS-01","Caso":"IN-01","Elemento":"Descarga sanitaria","Composición original":"PVC DN110 y descarga WC 6 L","Montaje":"Abrazaderas rígidas, escenario docente"},
+ {"Código":"IS-01","Caso":"IN-01","Elemento":"Descarga sanitaria","Composición original":"PVC DN110 y descarga WC 6 L de vivienda superior (piso 6)","Montaje":"Abrazaderas rígidas y recorrido hacia dormitorio receptor de piso 5 como hipótesis docente"},
  {"Código":"T-01","Caso":"TR","Elemento":"Piso estar","Composición original":"Cerámica adherida","Montaje":"Alfa por banda a documentar"},
  {"Código":"T-02","Caso":"TR","Elemento":"Muros y cielo","Composición original":"Pintura sobre superficies rígidas","Montaje":"Alfa por banda a documentar"},
  {"Código":"T-03","Caso":"TR","Elemento":"Piso dormitorio","Composición original":"Laminado sin aporte resiliente acreditado","Montaje":"Alfa por banda a documentar"},
@@ -68,7 +68,7 @@ TEACHER = {
  4: "Exigir DnT,w y adaptación pertinente para la transmisión entre viviendas, incluyendo flancos, y una variante coherente.",
  5: "Revisar LnT,w y términos aplicables de impacto, piso original y variante resiliente, incluyendo vías laterales.",
  6: "Verificar la secuencia NoiseMap: eje de Pasaje Chimbote, polígono de edificio, receptor exterior frente a fachada sur a altura de piso 5, auditoría geométrica válida, categorías 1/2/3/4a/4b, tres períodos y JSON trazable. No aplicar -3 dB al resultado incidente; evaluar límites del motor educativo antes de revisar paños, vanos, curva ventana-marco-sello y SONARA.",
- 7: "Escenario sanitario académico: revisar Lw, condiciones de operación y vía aérea/estructural; no afirmar conformidad si la vía estructural queda sin modelar.",
+ 7: "Descarga WC de vivienda distinta (piso 6) → dormitorio receptor piso 5. Para ruido intermitente de vivienda vecina verificar LAF,max,nT ≤30 dB(A), ISO/TS 19488:2021 Tabla 4 Clase B; la predicción no acredita cumplimiento sin modelar las vías aérea y estructural.",
  8: "Comparar con los requisitos reales de Clase B determinados por el alumno; no automatizar la certificación global.",
  9: "Cuestionario oficial de 10 preguntas × 3 puntos; verificar persistencia de entrega.",
  10: "Rúbrica oficial 70 puntos; revisión docente del expediente, trazabilidad, SONARA y limitaciones.",
@@ -503,7 +503,7 @@ def _stage1(lab,saved):
 def _stage2(lab,saved):
     _header(2)
     st.markdown("### Construye la ficha geométrica desde los planos")
-    st.info("Los recintos están fijados por el laboratorio. En la **planta tipo de Torre A (pisos 3–16)** se identifica el muro compartido estar poniente–dormitorio y el estar expuesto por la fachada sur. Los dormitorios de pisos 5 y 6 se superponen conforme a esa planta tipo. Tu trabajo es calcular **áreas, alturas, volúmenes, superficies de separación, fachada y vanos**, anotando láminas y cotas. En instalaciones no supongas un muro sanitario directo sin justificar el recorrido.")
+    st.info("Los recintos están fijados por el laboratorio. En la **planta tipo de Torre A (pisos 3–16)** se identifica el muro compartido estar poniente–dormitorio y el estar expuesto por la fachada sur. Los dormitorios de pisos 5 y 6 se superponen conforme a esa planta tipo. Tu trabajo es calcular **áreas, alturas, volúmenes, superficies de separación, fachada y vanos**, anotando láminas y cotas. En instalaciones, la descarga proviene del WC de la **vivienda distinta del piso 6**; el recorrido de la bajada hasta el dormitorio debe justificarse como modelo docente si no está en los planos.")
     old=saved.get("c5l2_s2") or {}
     fixed_cases = [
         ("AI-01", "Estar · vivienda poniente, piso 5",
@@ -512,7 +512,7 @@ def _stage2(lab,saved):
          "Dormitorio · CH-A-P05-S03, piso 5", "L-01 · losa entre pisos"),
         ("FA-01", "Exterior · Pasaje Chimbote",
          "Estar · CH-A-P05-S03, piso 5", "F-01/V-01 · fachada sur"),
-        ("IN-01", "Descarga WC · baño CH-A-P05-S03",
+        ("IN-01", "Descarga WC · baño vivienda superior, piso 6",
          "Dormitorio · CH-A-P05-S03, piso 5", "S-01/IS-01 · instalaciones"),
     ]
     st.markdown("#### A · Casos y recintos asignados por el docente")
@@ -524,8 +524,9 @@ def _stage2(lab,saved):
     st.caption(
         "La planta tipo original incluye pisos 3–16, por lo que la superposición "
         "del dormitorio en pisos 5 y 6 es coherente en planta. "
-        "Esto no determina espesores ni transmisiones. El caso sanitario "
-        "requiere un modelo de trayecto justificado, sin presuponer contacto directo."
+        "Esto no determina espesores ni transmisiones. El WC del piso 6 "
+        "pertenece a otra vivienda; su recorrido sanitario hacia el receptor "
+        "es una hipótesis de modelación, no un trazado certificado en planos."
     )
     st.markdown("#### B · Geometría de los recintos receptores")
     rec_cols=["Caso","Recinto receptor","Piso / unidad","Largo (m)","Ancho (m)",
@@ -610,7 +611,7 @@ def _stage3(lab,saved):
     st.info("Determina volumen y superficies del recinto desde la geometría de Etapa 2, asigna absorción por bandas a pisos, cielo, muros, puertas y ventanas, y calcula TR en SONARA. No se entrega un TR fijo. Si una cota no está acreditada, aplica exclusivamente un supuesto identificado del suplemento.")
     tr_details=st.text_area("Resultados TR de SONARA por banda, superficies de absorción, fuentes alfa y método",value=old.get("tr_details",""),height=130)
     st.markdown("#### D · Condiciones comunes y trazabilidad")
-    assumptions=st.text_area("Registra densidades, Lden supuesto, descarga sanitaria, curvas de referencia y límites de validez",value=old.get("assumptions",""),height=140)
+    assumptions=st.text_area("Registra densidades, tránsito supuesto, descarga WC de vivienda superior y trayecto hipotético, curvas y límites de validez",value=old.get("assumptions",""),height=140)
     st.markdown("#### E · Qué tendrá que diseñarse después")
     st.markdown("En las Etapas **4–7** debes proponer tus variantes: refuerzo de separador, pavimento resiliente, solución de fachada y control de instalación. Conserva el **mismo modelo original** al comparar con la variante.")
     if st.button("Guardar caracterización original",type="primary",key="c5l2_save_systems"):
@@ -1064,16 +1065,13 @@ def _stage1_teacher_criteria_guide():
         "incluidos los valores numéricos y las referencias normativas. "
         "No se copian las respuestas a la vista alumno."
     )
-    st.warning(
-        "**Excepción importante en IN-01:** el WC actualmente definido está "
-        "dentro de la **misma vivienda** del dormitorio receptor. La Tabla 4 "
-        "no impone automáticamente el límite de ruido intermitente de "
-        "**equipos de viviendas vecinas** a una descarga de WC propia. "
-        "El valor ≤ 30 dB(A) se indica abajo solo como **comparación académica** "
-        "para una fuente intermitente vecina, NO como cumplimiento ISO "
-        "acreditado del caso sanitario propio. Para evaluar ese límite "
-        "normativamente habría que redefinir y documentar la fuente como "
-        "servicio de una vivienda vecina o equipamiento común aplicable."
+    st.info(
+        "**IN-01 actualizado:** la fuente es la descarga del WC del baño "
+        "de la **vivienda superior (piso 6)**, distinta de CH-A-P05-S03. "
+        "Corresponde revisar el criterio Clase B para ruido intermitente "
+        "procedente de espacios vecinos: **LAF,max,nT ≤ 30 dB(A)**. "
+        "El trazado de la bajada sanitaria es un **supuesto docente**, "
+        "no una característica acreditada por los planos."
     )
     answers = [
         {
@@ -1107,14 +1105,14 @@ def _stage1_teacher_criteria_guide():
             "check":"El requisito depende del Lden calculado y tiene piso de 30 dB; no afirmar un único número fijo para cualquier exposición.",
         },
         {
-            "code":"IN-01", "title":"Instalaciones: pertinencia de la fuente sanitaria",
-            "pair":"Descarga WC del baño de la misma vivienda → dormitorio CH-A-P05-S03.",
-            "descriptor":"Para equipos continuos aplicables: LA,eq,nT [dB(A)]. Para equipos intermitentes **procedentes de espacios vecinos**: LAF,max,nT [dB(A)]. El WC propio del caso actual no está cubierto automáticamente por esa fila.",
-            "limit":"Tabla 4, Clase B: LA,eq,nT ≤ 26 dB(A) para equipos continuos aplicables; LAF,max,nT ≤ 30 dB(A) para equipos intermitentes o irregulares de espacios vecinos. **Caso WC propio: sin umbral Clase B directamente aplicable de esa fila**. Solo como objetivo docente comparativo puede adoptarse ≤30 dB(A), identificándolo expresamente como NO normativo para esta fuente.",
-            "direction":"Menor o igual (≤) para los dos niveles cuando el supuesto de aplicación esté satisfecho. Para WC propio: NO APLICA DIRECTAMENTE.",
-            "reference":"ISO/TS 19488:2021, apartado 5.5, Tabla 4, fila 1 (continuos), fila 2 (intermitentes procedentes de espacios vecinos) y notas 1–3; comprobar la nota 1 sobre equipos de la propia vivienda para ventilación/calefacción/refrigeración.",
-            "condition":"La norma exige diferenciar ruido continuo de equipamiento y evento intermitente de espacios vecinos; el WC de la misma vivienda no es equivalente sin más. Mantener el ejercicio de modelación sanitaria como caso académico, documentar fuente WC 6 L, recorrido de transmisión no acreditado y evaluación predictiva, sin asignar cumplimiento ISO Clase B por ese solo cálculo.",
-            "check":"No marcar como normativamente correcto «WC propio: LAF,max,nT ≤30 dB(A) ISO Clase B». Debe indicar que se trata de referencia comparativa si se conserva la fuente actual.",
+            "code":"IN-01", "title":"Ruido de instalación sanitaria de vivienda vecina",
+            "pair":"Descarga WC del baño de la vivienda superpuesta (piso 6) → dormitorio de CH-A-P05-S03 (piso 5).",
+            "descriptor":"LAF,max,nT [dB(A)] para el evento de descarga intermitente procedente de una vivienda vecina; nivel máximo con ponderación temporal F, normalizado a la reverberación del recinto receptor.",
+            "limit":"LAF,max,nT ≤ 30 dB(A) para ruido de equipamiento intermitente/irregular procedente de un espacio vecino. El valor es el máximo Clase B para este supuesto de fuente y receptor.",
+            "direction":"Menor o igual (≤).",
+            "reference":"ISO/TS 19488:2021, apartado 5.5, Tabla 4, fila de equipos intermitentes o irregulares de espacios vecinos, columna Clase B; revisar notas y condiciones de aplicación.",
+            "condition":"WC del piso 6 de otra vivienda, descarga de 6 L como condición docente, receptor dormitorio de CH-A-P05-S03 en piso 5. Documentar el evento y las vías de transmisión posibles aérea y estructural. La posición y trazado real de la bajada NO están acreditados por los planos; el modelo se declara hipótesis docente.",
+            "check":"No utilizar Lw de fuente o LAeq del evento como sustituto de LAF,max,nT en dormitorio. Aunque se trate de una fuente de vivienda distinta, una predicción simplificada no constituye certificación in situ.",
         },
     ]
     for item in answers:
@@ -1138,8 +1136,8 @@ def _stage1_teacher_criteria_guide():
         "**AI-01:** DₙT,50 ≥ 54 dB.  \n"
         "**IM-01:** L′ₙT,w ≤ 50 dB **y** L′ₙT,50 ≤ 54 dB.  \n"
         "**FA-01:** DₙT,A,tr ≥ máx(30; Lden−24) dB.  \n"
-        "**IN-01:** ≤26 dB(A) continuo o ≤30 dB(A) intermitente vecino "
-        "según aplicación; **no asignar automáticamente al WC propio**."
+        "**IN-01:** LAF,max,nT ≤ 30 dB(A) para WC intermitente de la **vivienda superior**, "
+        "con trazado sanitario hipotético documentado."
     )
     st.caption(
         "Referencias: ISO/TS 19488:2021, apartados 5.2–5.5, "
