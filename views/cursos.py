@@ -224,6 +224,8 @@ def _save_future_state_impl(class_id,state):
     if is_projection(st):
         if class_id == certification_lab and not st.session_state.get("c5l1_projection_unlocked"):
             raise PermissionError("Habilita la edición docente en esta ventana de proyección antes de guardar.")
+        if class_id == certification_lab2 and not st.session_state.get("c5l2_projection_unlocked"):
+            raise PermissionError("Habilita la edición docente en proyección antes de guardar.")
         if confirmed_save:
             save_draft(st, _supabase(), COURSE_ID, class_id, state)
         else:
@@ -34220,21 +34222,25 @@ def future_projection_stage_impl(lab, stage):
     st.session_state["name"] = "Pantalla de clase"
 
     from labs.curso5_laboratorio_1 import CLASS_ID as certification_lab
-    if lab.get("id") == certification_lab and not st.session_state.get("c5l1_projection_unlocked"):
+    certification_lab2 = "clase-10-certificaciones-lab-2"
+    unlock_keys = {certification_lab: "c5l1_projection_unlocked",
+                   certification_lab2: "c5l2_projection_unlocked"}
+    unlock_key = unlock_keys.get(lab.get("id"))
+    if unlock_key and not st.session_state.get(unlock_key):
         from hmac import compare_digest
 
         with st.expander("Habilitar edición docente"):
-            with st.form("c5l1_projection_unlock", clear_on_submit=True):
+            with st.form(f"{unlock_key}_form", clear_on_submit=True):
                 password = st.text_input("Clave docente", type="password")
                 unlock = st.form_submit_button("Habilitar guardado")
             if unlock:
                 configured = str(st.secrets.get("teacher", {}).get("password") or "")
                 if configured and compare_digest(password.encode(), configured.encode()):
-                    st.session_state["c5l1_projection_unlocked"] = True
+                    st.session_state[unlock_key] = True
                     st.rerun()
                 st.error("La clave docente no es válida o no está configurada.")
 
-    if lab.get("id") in ("clase-08-construccion-lab-2", certification_lab):
+    if lab.get("id") in ("clase-08-construccion-lab-2", certification_lab, certification_lab2):
         projection_saved = _future_saved_impl(lab["id"])
     else:
         projection_saved_key = f"future_saved_{lab.get('id', '')}"
