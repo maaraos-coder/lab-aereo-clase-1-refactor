@@ -27,14 +27,28 @@ Se han identificado como **posibles referencias parciales** del sector dormitori
 
 **Verificación del plano (Parte 1, página 8):** se aprecia el muro compartido entre **estar de vivienda poniente** y **dormitorio receptor** (AI-01), y la orientación exterior del **estar receptor** (FA-01). La planta tipo se aplica a **pisos 3–16 de Torre A**, por lo que la superposición de dormitorios de **pisos 5 y 6** es coherente con la planta de referencia (IM-01), sin que eso determine propiedades acústicas de la losa. En IN-01, la **descarga del WC del baño de la vivienda directamente superior (piso 6)** constituye una fuente de **otra vivienda** respecto del dormitorio receptor del piso 5. La planta original **no documenta la bajada sanitaria ni su recorrido estructural**; las vías de transmisión se representarán como un modelo docente, sin atribuirlas a los planos.
 
-### 3 · Cotas y condiciones complementarias para el ejercicio
+### 3 · Geometría base docente para resolver el laboratorio
 
-| Código | Dato **supuesto docente** | Valor o criterio | Aplicación y restricción |
+**Regla del ejercicio:** para que todos puedan modelar el mismo escenario en SONARA, las dimensiones de esta tabla son **datos de entrada obligatorios cuando la geometría no pueda obtenerse inequívocamente del plano original**. Constituyen **supuestos docentes**, no dimensiones certificadas del Edificio Chimbote. No hay que solicitar cotas adicionales para desarrollar el **modelo base académico**. Si un alumno obtiene una geometría documental distinta, debe registrarla y comparar su efecto, sin presentar ambas como la misma condición.
+
+| Código | Magnitud de entrada (sin resolver) | Valor docente | Se aplica a |
 |---|---|---|---|
-| **HG-01** | Altura interior útil provisional | **2,50 m** | Solo cuando el corte no permita justificar la altura libre del **recinto asignado**. No es altura verificada del proyecto. |
-| **HV-02** | Ventana didáctica del **estar** hacia fachada sur | **1,80 × 1,20 m** (ancho × alto) | **Solo si** la correspondencia entre **planta tipo y elevación sur (Parte 2, pág. 5)** no permite determinar la dimensión del vano del estar. Es una hipótesis académica, **no una cota atribuible al alzado original**. |
-| **HI-01** | Tramo de cierre sanitario didáctico asociado a la descarga de vivienda superior | **1,40 m** de longitud; altura **HG-01** cuando proceda | **IN-01**, solo si el trayecto y cerramiento aplicables se verifican o se documenta un modelo académico simplificado. No presupone adyacencia física. |
-| **HC-01** | Operación y configuración de descarga | WC **6 L**; PVC **DN110**; abrazaderas rígidas | **IN-01**: condiciones de funcionamiento/modelo, **no cotas** de recintos ni evidencia de configuración constructiva real. |
+| **HD-01** | Dormitorio receptor idealizado: ancho × largo | **2,60 × 3,10 m** | AI-01, IM-01 e IN-01; sector rectangular del dormitorio |
+| **HE-01** | Estar receptor idealizado: ancho × largo | **2,43 × 3,75 m** | FA-01; modelar como recinto cerrado equivalente **solo para el ejercicio**; no atribuirle esta delimitación al edificio |
+| **HG-01** | Altura interior libre de ambos recintos | **2,50 m** | Todos los casos y cálculo del TR |
+| **HM-01** | Longitud efectiva del muro separador **M-01** | **3,10 m** | AI-01; estar vecino → dormitorio; altura HG-01 |
+| **HL-01** | Huella de losa superpuesta **L-01** | **2,60 × 3,10 m** | IM-01; área común idealizada de dormitorios de pisos 5 y 6 |
+| **HF-02** | Longitud del paño **sur del estar** | **2,43 m** | FA-01; ancho de fachada de recinto docente HE-01; altura HG-01 |
+| **HV-02** | **Una ventana** del estar, ancho × alto | **1,80 × 1,20 m** | FA-01; restar el vano al paño bruto HF-02 × HG-01 |
+| **HI-01** | Longitud de cierre/shaft sanitario **S-01** | **1,40 m** | IN-01; cierre equivalente docente de altura HG-01, **no bajada acreditada** |
+| **HP-01** | **Una puerta interior equivalente** por recinto, ancho × alto | **0,80 × 2,10 m** | Solo balances de superficies para TR en SONARA, cuando el vano no quede acreditado |
+| **HC-01** | Operación sanitaria y soporte | **Descarga WC de 6 L; PVC DN110; fijaciones rígidas** | IN-01; fuente de vivienda del piso 6 y recorrido modelado como hipótesis |
+
+**Orientación de la fachada:** sur hacia Pasaje Chimbote. **El ancho docente de fachada (HF-02) no es la longitud total del departamento** ni demuestra correspondencia exacta con las divisiones del alzado. Para el caso de diseño FA-01, se adopta como un paño de cálculo equivalente y reproducible.
+
+**Criterios para calcular sin ambigüedad:** área de piso = ancho × largo; volumen = área de piso × altura útil; muro o cierre = longitud × altura; losa = área de superposición; fachada bruta = HF-02 × HG-01; vidrio = HV-02 (ancho × alto); fachada opaca = fachada bruta − vidrio. En la ficha, identificar el origen como «SUPUESTO DOCENTE», citando el código correspondiente. **Los resultados numéricos se calculan y registran por el alumno**.
+
+**TR en SONARA:** piso y cielo tienen cada uno el área de planta del recinto equivalente; los muros verticales brutos se obtienen del perímetro × HG-01; descontar las superficies de ventana y puerta de los paños donde se sitúan (no descontarlas dos veces). Usar los materiales y las absorciones por bandas del ejercicio. El modelo del estar se mantiene como recinto equivalente independiente para fines didácticos.
 
 ### 4 · Qué calcula el alumno
 
@@ -44,7 +58,7 @@ Se han identificado como **posibles referencias parciales** del sector dormitori
 
 **IM-01:** área y composición del entrepiso que corresponde a la proyección del dormitorio del piso 6 sobre el dormitorio receptor.
 
-**FA-01:** área bruta de la fachada **sur del estar**, área transparente y área opaca, medidas de vanos y referencias del alzado. Si utiliza HV-02, debe rotularse **SUPUESTO DOCENTE**.
+**FA-01:** área bruta de la fachada **sur del estar**, área transparente y área opaca, medidas de vanos y referencias del alzado. Aplicar **HF-02 y HV-02** como datos de entrada del escenario académico y rotularlos **SUPUESTO DOCENTE**.
 
 **IN-01:** geometría del dormitorio receptor (piso 5), ubicación de la fuente WC de la **vivienda superior** (piso 6), trayectoria y superficies del cierre/shaft **en el modelo académico**; identificar por separado la operación de descarga y las vías de transmisión. El trazado se declara **SUPUESTO DOCENTE** cuando no esté representado en los planos.
 
