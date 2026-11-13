@@ -1116,28 +1116,31 @@ def _stage4(lab, saved):
         except (ValueError, TypeError):
             pass
 
-    st.markdown("**Datos recuperados del trabajo anterior**")
+    st.markdown("**Ficha geométrica vinculada al trabajo anterior**")
     st.caption(
-        "Etapa 2: largo, altura, superficie del medianero y geometría del dormitorio. "
-        "Etapa 3: volumen y altura del dormitorio cuando faltan en Etapa 2. "
-        "Las dimensiones del estar **emisor de otra vivienda** no se registraron "
-        "previamente y deben obtenerse del plano o de una hipótesis explícita."
+        "Las dimensiones del muro M-01 y del dormitorio se recuperan "
+        "automáticamente de las **respuestas guardadas** de Etapa 2; "
+        "se complementan con la Etapa 3 cuando procede. "
+        "El estar emisor pertenece a otra vivienda y no se inventa."
     )
     recovered = [name for name in (
         "length", "height", "surface", "receiver_length", "receiver_width",
         "receiver_height", "receiver_area", "receiver_volume", "drawing"
     ) if str(defaults.get(name) or "").strip()]
     if recovered:
-        st.success(f"Recuperados {len(recovered)} de 9 campos geométricos/referencias disponibles.")
+        st.success(
+            f"Datos previos disponibles: {len(recovered)}/9. "
+            "Los campos recuperados se muestran automáticamente."
+        )
     else:
         st.warning(
-            "No se encontraron datos geométricos de AI-01 guardados en las Etapas 2 y 3 "
-            "para esta sesión. Guarda primero esas etapas o revisa la misma cuenta/vista. "
-            "Los campos pendientes no se rellenarán con valores ficticios."
+            "No hay dimensiones de AI-01 **guardadas** en la Etapa 2 "
+            "ni dimensiones del dormitorio guardadas en la Etapa 3. "
+            "Editar la tabla anterior no basta: debes pulsar **Guardar avance** "
+            "o **Completar etapa** en esas etapas, con esta misma cuenta. "
+            "No se usarán cotas inventadas."
         )
     geo = {}
-    # Apply the same types of data that the ISO model asks for, without
-    # imposing fictitious source-room dimensions.
     fields = [
         ("length", "Largo muro separador (m)"),
         ("height", "Altura muro separador (m)"),
@@ -1151,21 +1154,40 @@ def _stage4(lab, saved):
         ("source_height", "Altura estar emisor (m)"),
         ("source_volume", "Volumen emisor (m³)"),
     ]
+    # Use a revision token derived from saved upstream content. Without this,
+    # Streamlit preserves widget state after re-running and a previously blank
+    # input can mask subsequently saved geometry even when value= is supplied.
+    import hashlib
+    upstream_signature = hashlib.sha256(
+        json.dumps(
+            {"geometry": defaults, "stage2": geometry, "stage3": reverberation},
+            sort_keys=True, ensure_ascii=False, default=str
+        ).encode("utf-8")
+    ).hexdigest()[:12]
     for i in range(0, len(fields), 3):
         cols = st.columns(3)
         for col, (key, label) in zip(cols, fields[i:i+3]):
             with col:
+                recovered_value = defaults.get(key, "")
+                stored_value = old_geo.get(key, "")
                 geo[key] = st.text_input(
-                    label, value=_val(_filled(defaults.get(key), old_geo.get(key))),
-                    key="c5l2_s4_geo_v2_" + key,
-                    help="Transcribe el dato del plano. Si no figura, deja la celda vacía y documenta una hipótesis."
+                    label,
+                    value=_val(_filled(recovered_value, stored_value)),
+                    key=f"c5l2_s4_geometry_{key}_{upstream_signature}",
+                    disabled=bool(str(recovered_value or "").strip()),
+                    help=(
+                        "Valor recuperado automáticamente: edítalo en la etapa de origen."
+                        if str(recovered_value or "").strip()
+                        else "No existe valor previo; indica un valor del plano o una hipótesis justificada."
+                    )
                 )
     cols = st.columns(2)
     with cols[0]:
         geo["drawing"] = st.text_input(
             "Referencia de plano / cota",
             value=_val(_filled(defaults["drawing"], old_geo.get("drawing"))),
-            key="c5l2_s4_drawing_v2"
+            key=f"c5l2_s4_drawing_{upstream_signature}",
+            disabled=bool(str(defaults["drawing"] or "").strip()),
         )
     with cols[1]:
         geo["source_basis"] = st.text_input(
@@ -1173,6 +1195,12 @@ def _stage4(lab, saved):
             value=_val(old_geo.get("source_basis", "")),
             key="c5l2_s4_source_basis",
             help="El estar de otra vivienda no se supone idéntico al dormitorio receptor."
+        )
+    if recovered:
+        st.caption(
+            "Los campos precargados son de **solo lectura**. Para corregirlos, "
+            "vuelve a Etapa 2 o 3, guarda la modificación y regresa aquí. "
+            "Los datos que aún faltan se pueden registrar directamente en esta ficha."
         )
     st.caption(
         "V = superficie horizontal × altura libre para recintos prismáticos. "
@@ -1261,8 +1289,8 @@ def _stage4(lab, saved):
     flank_columns = ["Vía / encuentro", "Elemento flanqueante / material",
                      "Longitud de unión (m)", "Tipo de junta",
                      "Kij SONARA (dB)"]
-    source_length = _filled(geo.get("length"), "2,60")
-    source_height = _filled(geo.get("height"), "2,50")
+    source_length = _filled(geo.get("length"))
+    source_height = _filled(geo.get("height"))
     flank_defaults = [
         {"Vía / encuentro": "Techo / medianero",
          "Elemento flanqueante / material": "Losa HA 160 mm (L-01)",
@@ -1315,11 +1343,10 @@ def _stage4(lab, saved):
             )
         }
     ).fillna("").to_dict("records")
-    if not _filled(geo.get("length")) or not _filled(geo.get("height")):
+    if not source_length or not source_height:
         st.warning(
-            "Se usaron las cotas académicas provisionales de 2,60 m y/o 2,50 m "
-            "solo donde no había geometría guardada. Verifica las dimensiones "
-            "del muro medianero en la Etapa 2 antes de modelar en SONARA."
+            "Faltan dimensiones de unión del muro separador. "
+            "No se han completado longitudes con valores ficticios."
         )
     st.caption(
         "La tabla es una **simplificación docente de cuatro encuentros**. "
@@ -1358,64 +1385,52 @@ def _stage4(lab, saved):
     )
     st.markdown("#### D · Resultados globales de SONARA")
     st.caption(
-        "Registra los resultados del **modelo original** y de la **mejora** "
-        "para el **mismo descriptor**. ISO/TS 19488:2021, Tabla 1, "
-        "para el caso AI-01 de habitaciones habitables de viviendas distintas "
-        "exige **DₙT,50 ≥ 54 dB para Clase B**, donde "
-        "DₙT,50 = DₙT,w + C₅₀₋₃₁₅₀. "
-        "No confundas esta exigencia con DₙT,w = 50 dB."
+        "SONARA entrega directamente **DₙT,w** y **DₙT,50 proyectado**. "
+        "Registra ambos para el muro original y la solución mejorada. "
+        "La meta Clase B de este caso es **DₙT,50 ≥ 54 dB** "
+        "(ISO/TS 19488:2021, Tabla 1, primer caso)."
     )
     st.warning(
-        "Si SONARA entrega únicamente DₙT,w, **no se puede declarar cumplido "
-        "DₙT,50** sin el término espectral de bajas frecuencias C₅₀₋₃₁₅₀. "
-        "Registra lo disponible y señala expresamente la limitación. "
-        "La nota de la Tabla 1 admite conversiones de umbrales entre "
-        "descriptores; no debes tratar dos descriptores distintos como idénticos."
+        "El **DₙT,50 proyectado** de SONARA estima las bandas de 50–80 Hz "
+        "cuando no hay espectro de ensayo. Es válido como resultado de "
+        "predicción académica, **no equivale a una medición ni a una certificación**."
     )
-    result_columns = ["Modelo", "Descriptor calculado",
-                      "Resultado global (dB)", "Archivo / respaldo SONARA"]
+    result_columns = ["Modelo", "DₙT,w (dB)",
+                      "DₙT,50 proyectado (dB)", "Archivo / respaldo SONARA"]
     old_results = old.get("model_results") or []
-    default_results = [
-        {"Modelo": "Original M-01", "Descriptor calculado": "DₙT,50",
-         "Resultado global (dB)": "", "Archivo / respaldo SONARA": ""},
-        {"Modelo": "Mejora propuesta", "Descriptor calculado": "DₙT,50",
-         "Resultado global (dB)": "", "Archivo / respaldo SONARA": ""}
-    ]
     result_rows = []
-    for idx, original in enumerate(default_results):
+    for idx, label in enumerate(("Original M-01", "Mejora propuesta")):
         previous = old_results[idx] if idx < len(old_results) and isinstance(old_results[idx], dict) else {}
-        # Preserve old data only when its global indicator is unambiguous.
-        descriptor = _filled(previous.get("Descriptor calculado"),
-                             "DₙT,w" if previous.get("DₙT,w (dB)") else "",
-                             original["Descriptor calculado"])
+        descriptor = previous.get("Descriptor calculado")
+        global_value = previous.get("Resultado global (dB)")
         result_rows.append({
-            "Modelo": original["Modelo"],
-            "Descriptor calculado": descriptor,
-            "Resultado global (dB)": _filled(previous.get("Resultado global (dB)"),
-                                             previous.get("DₙT,w (dB)")),
+            "Modelo": label,
+            "DₙT,w (dB)": _filled(
+                previous.get("DₙT,w (dB)"),
+                global_value if descriptor == "DₙT,w" else ""),
+            "DₙT,50 proyectado (dB)": _filled(
+                previous.get("DₙT,50 proyectado (dB)"),
+                global_value if descriptor == "DₙT,50" else ""),
             "Archivo / respaldo SONARA": _filled(
                 previous.get("Archivo / respaldo SONARA"),
                 previous.get("Fuente / cálculo SONARA"))
         })
     results = st.data_editor(
         pd.DataFrame(result_rows, columns=result_columns),
-        key="c5l2_s4_global_results_v1",
+        key="c5l2_s4_results_dnt50_v2",
         hide_index=True, num_rows="fixed", use_container_width=True,
         disabled=["Modelo"],
         column_config={
-            "Descriptor calculado": st.column_config.SelectboxColumn(
-                "Descriptor", options=["DₙT,50", "DₙT,w", "DₙT,A"],
-                required=True,
-            ),
-            "Resultado global (dB)": st.column_config.NumberColumn(
-                "Resultado global (dB)", format="%.1f",
-            ),
+            "DₙT,w (dB)": st.column_config.NumberColumn(
+                "DₙT,w (dB)", format="%.1f"),
+            "DₙT,50 proyectado (dB)": st.column_config.NumberColumn(
+                "DₙT,50 proyectado (dB)", format="%.1f"),
         },
     ).fillna("").to_dict("records")
     st.caption(
-        "DₙT,w es el descriptor ponderado sin adaptación; "
-        "DₙT,A = DₙT,w + C; DₙT,50 = DₙT,w + C₅₀₋₃₁₅₀. "
-        "Los resultados de diseño no sustituyen una medición de verificación."
+        "DₙT,w: índice ponderado de diferencia estandarizada. "
+        "DₙT,50 proyectado: indicador de bajas frecuencias calculado "
+        "por SONARA para el contraste académico con la Clase B."
     )
     st.markdown("#### E · Comprobación de la exigencia Clase B")
     st.info(
@@ -1433,26 +1448,26 @@ def _stage4(lab, saved):
             "Si difiere, revisa la fila aplicable de la norma."
         )
     st.caption(
-        "Criterio adoptado para esta hoja: DₙT,50 ≥ 54 dB. "
-        "Un valor igual al límite cumple el umbral acústico de esta categoría; "
-        "el resto de exigencias de la vivienda se revisan en las demás etapas."
+        "Se compara el **DₙT,50 proyectado de la mejora**, no el DₙT,w. "
+        "Un valor igual o mayor a 54 dB supera la meta académica de esta etapa."
     )
-    if len(results) == 2 and results[1].get("Descriptor calculado") == "DₙT,50":
-        try:
-            value = float(str(results[1].get("Resultado global (dB)", "")).replace(",", "."))
-            if math.isfinite(value):
-                margin = value - 54
-                st.metric("Margen respecto a Clase B · AI-01", f"{margin:+.1f} dB")
-                st.success("La predicción alcanza el umbral acústico del caso AI-01.") if margin >= 0 else st.warning(
-                    "La predicción queda por debajo del umbral de Clase B."
-                )
-        except (ValueError, TypeError):
-            pass
-    else:
-        st.warning(
-            "Para calcular el margen normativo necesitas el resultado DₙT,50 "
-            "de la mejora; otro descriptor no se compara directamente con 54 dB."
-        )
+    try:
+        original_value = float(str(results[0].get("DₙT,50 proyectado (dB)", "")).replace(",", "."))
+        improved_value = float(str(results[1].get("DₙT,50 proyectado (dB)", "")).replace(",", "."))
+        if math.isfinite(original_value) and math.isfinite(improved_value):
+            margin = improved_value - 54
+            delta = improved_value - original_value
+            m1, m2 = st.columns(2)
+            with m1:
+                st.metric("Mejora estimada en DₙT,50", f"{delta:+.1f} dB")
+            with m2:
+                st.metric("Margen frente a Clase B", f"{margin:+.1f} dB")
+            if margin >= 0:
+                st.success("La predicción académica alcanza la meta de la etapa.")
+            else:
+                st.warning("La predicción académica no alcanza todavía la meta Clase B.")
+    except (ValueError, TypeError, IndexError):
+        st.info("Ingresa ambos resultados DₙT,50 para ver la mejora y el margen automáticamente.")
     comparison = st.text_area(
         "Conclusión técnica y limitaciones del diseño",
         value=old_detail.get("comparison", ""), key="c5l2_s4_comparison_v2",
@@ -1469,7 +1484,7 @@ def _stage4(lab, saved):
             "improvement": improvement, "evidence": evidence,
             "descriptor": selected_descriptor, "comparison": comparison
         },
-        "schema_version": "c5l2_airborne_iso12354_v1"
+        "schema_version": "c5l2_airborne_iso12354_v2"
     }
     a, b = st.columns(2)
     with a:
@@ -1487,13 +1502,8 @@ def _stage4(lab, saved):
         essentials = ["length", "height", "surface", "receiver_volume",
                       "receiver_area"]
         missing = [key for key in essentials if not _positive(geo.get(key))]
-        measured = all(
-            _positive(r.get("Resultado global (dB)")) for r in results
-        )
-        matching_descriptors = (
-            len(results) == 2 and
-            results[0].get("Descriptor calculado") ==
-            results[1].get("Descriptor calculado")
+        measured = len(results) == 2 and all(
+            _positive(r.get("DₙT,50 proyectado (dB)")) for r in results
         )
         if missing:
             st.warning("Faltan dimensiones o volumen del modelo receptor: "
@@ -1501,9 +1511,7 @@ def _stage4(lab, saved):
         elif not data_origin.strip() or not reference_time.strip():
             st.warning("Indica la fuente acústica del muro original y T₀.")
         elif not measured or len(results) != 2:
-            st.warning("Registra los dos resultados globales positivos de SONARA.")
-        elif not matching_descriptors:
-            st.warning("Para comparar, ambos modelos deben usar el mismo descriptor acústico.")
+            st.warning("Registra el DₙT,50 proyectado del modelo original y de la mejora.")
         elif not all(str(r.get("Archivo / respaldo SONARA") or "").strip()
                      for r in results):
             st.warning("Indica la fuente o archivo SONARA de ambos resultados.")
