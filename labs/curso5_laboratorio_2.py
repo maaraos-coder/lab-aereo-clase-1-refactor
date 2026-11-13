@@ -885,7 +885,10 @@ def _stage3(lab,saved):
                 "Acabado del encargo": st.column_config.TextColumn(
                     "Acabado del encargo", width="medium"),
                 "Material SONARA": st.column_config.SelectboxColumn(
-                    "Preset α(f) en SONARA", options=list(TR_SONARA_PRESETS),
+                    "Preset α(f) en SONARA", options=[
+                        "Hormigón / superficie dura", "Yeso pintado",
+                        "Vidrio", "Puerta de madera maciza",
+                    ],
                     required=True, width="large"),
             },
         )
