@@ -353,8 +353,7 @@ def _stage1(lab,saved):
     st.markdown(
         "Los **planos originales** son la fuente técnica principal. Las fichas y "
         "los supuestos académicos complementan la información cuando el expediente "
-        "no contiene algún dato requerido. Descarga el expediente completo o "
-        "consulta cada documento por separado."
+        "no contiene algún dato requerido. Consulta cada documento disponible por separado."
     )
     resource_dir = Path(__file__).resolve().parent.parent / "assets" / "curso5_lab2"
     branch_docs = (
@@ -408,42 +407,32 @@ def _stage1(lab,saved):
             ],
         ),
     ]
-    missing_resources = []
     for group_title, group_intro, resources in resource_groups:
         st.markdown(f"#### {group_title}")
         st.caption(group_intro)
         for title, filename, description, alternative in resources:
+            file_path = resource_dir / filename
+            pdf_data = (
+                _plans_pdf_bytes(resource_dir)
+                if filename == "Chimbote_Torre_A_CH-A-P05-S03_planos.pdf"
+                else file_path.read_bytes() if file_path.is_file() else None
+            )
+            # La publicación se prepara antes de abrir el laboratorio.
+            # No mostrar al alumnado mensajes internos de GitHub ni
+            # botones con documentos todavía no disponibles.
+            if pdf_data is None:
+                continue
             with st.container(border=True):
                 st.markdown(f"**{title}**")
                 st.caption(description)
-                file_path = resource_dir / filename
-                pdf_data = (
-                    _plans_pdf_bytes(resource_dir)
-                    if filename == "Chimbote_Torre_A_CH-A-P05-S03_planos.pdf"
-                    else file_path.read_bytes() if file_path.is_file() else None
+                st.download_button(
+                    "📥 Descargar PDF",
+                    data=pdf_data,
+                    file_name=filename,
+                    mime="application/pdf",
+                    key=f"c5l2_s1_download_{filename}",
+                    use_container_width=True,
                 )
-                if pdf_data is not None:
-                    st.download_button(
-                        "📥 Descargar PDF",
-                        data=pdf_data,
-                        file_name=filename,
-                        mime="application/pdf",
-                        key=f"c5l2_s1_download_{filename}",
-                        use_container_width=True,
-                    )
-                elif alternative:
-                    missing_resources.append(filename)
-                    st.link_button(
-                        "📄 Consultar anexo del alumno (versión disponible)",
-                        branch_docs + alternative,
-                        use_container_width=True,
-                    )
-                else:
-                    missing_resources.append(filename)
-                    st.caption(
-                        "Plano original pendiente de publicación en el repositorio; "
-                        "la imagen ilustrativa no lo sustituye."
-                    )
     st.markdown("### C · Requisitos normativos de Clase B")
     st.info(
         "Consulta ISO/TS 19488:2021 y determina los requisitos de Clase B "
