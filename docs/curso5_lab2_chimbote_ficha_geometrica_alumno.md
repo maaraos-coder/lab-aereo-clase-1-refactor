@@ -9,16 +9,31 @@
 - Elevaciones y cortes complementarios: `3.1 Planos de Arquitectura (Parte 2)`.
 - Documentación descriptiva: `400 A. Descripción del proyecto o actividad`, especialmente ubicación por torre y pisos.
 
-### 1. Identificación espacial
-Localiza la **Torre A**, el recinto **ESTAR del tercer departamento desde poniente en la hilera sur**, y verifica las cotas impresas que le correspondan; no reutilices las cotas 2,56 m y 2,35 m de otro estar de la planta. Delimita por líneas de división de propiedad los límites de la vivienda, el dormitorio y el área de estar-comedor-cocina, sus colindantes y el recinto del piso superior.
+### 1. Recintos y relaciones fijados por el encargo
 
-### 2. Tabla de geometría a completar
-| Caso | Emisor | Receptor | Cotas y lámina | Altura útil (m) | Área útil receptor (m²) | Volumen receptor (m³) | Elemento común (m²) | Uniones |
+La vivienda de estudio es **CH-A-P05-S03**, Torre A, piso 5, hilera sur. **Los recintos emisores y receptores son definidos por el laboratorio, no se dejan a elección del alumno.** El dibujo original intervenido señala el departamento de referencia. Esta asignación define casos didácticos y no acredita por sí misma condiciones de transmisión acústica medidas.
+
+| Caso | Recinto emisor / fuente asignada | Recinto receptor asignado | Elemento o relación que se estudiará |
+|---|---|---|---|
+| AI-01 · Aéreo | Estar de la vivienda inmediatamente al **poniente** de CH-A-P05-S03, piso 5 | **Dormitorio** de CH-A-P05-S03, piso 5 | **Muro medianero** entre el estar de la vivienda vecina y el dormitorio de estudio; incluir uniones y flancos |
+| IM-01 · Impacto | **Dormitorio** de la vivienda superpuesta, **piso 6**, sobre CH-A-P05-S03 | **Dormitorio** de CH-A-P05-S03, piso 5 | **Losa entre pisos 6 y 5**, considerando acabados y transmisiones laterales |
+| FA-01 · Fachada | **Ruido exterior** procedente de Pasaje Chimbote | **Estar** de CH-A-P05-S03, piso 5 | Fachada **sur** del estar: paño opaco, ventana(s) y sellos |
+| IN-01 · Instalaciones | **Descarga de WC del baño** de CH-A-P05-S03 (operación académica definida) | **Dormitorio** de CH-A-P05-S03 | Transmisión aérea y, en su caso, estructural de la instalación sanitaria hacia el dormitorio; **no se presume un muro compartido directo** |
+
+El estudiante deberá **verificar en la planta original los límites y trazados**, e indicar si la distribución de un nivel distinto no está documentada. Para IM-01, la proyección de la planta tipo al piso 6 es una **hipótesis docente que debe comprobarse con la lámina del nivel correspondiente**; si los planos contradicen la superposición, debe documentarlo, no inventar geometrías.
+
+No reutilices las cotas 2,56 m y 2,35 m de otro estar de la planta. Las dimensiones deben leerse de los recintos **asignados** y de sus láminas pertinentes.
+
+### 2. Tabla de geometría a completar por el alumno
+
+**No se entregan áreas, volúmenes ni superficies calculados.** El alumno debe determinar desde planos las cotas, superficies de separación y envolvente, alturas, volúmenes y datos de uniones.
+
+| Caso | Emisor asignado | Receptor asignado | Cotas y lámina | Altura útil receptor (m) | Área útil receptor (m²) | Volumen receptor (m³) | Elemento común / fachada (m²) | Uniones |
 |---|---|---|---|---|---|---|---|---|
-| AI-01 Aéreo | | | | | | | | |
-| IM-01 Impacto | | | | | | | | |
-| FA-01 Fachada | Exterior | | | | | | | |
-| IN-01 Instalación | | | | | | | | |
+| AI-01 · Aéreo | Estar vivienda poniente · P5 | Dormitorio CH-A-P05-S03 · P5 | **Por determinar** | | | | | |
+| IM-01 · Impacto | Dormitorio superpuesto · P6 | Dormitorio CH-A-P05-S03 · P5 | **Por determinar** | | | | | |
+| FA-01 · Fachada | Exterior Pasaje Chimbote | Estar CH-A-P05-S03 · P5 | **Por determinar** | | | | | |
+| IN-01 · Instalación | WC baño CH-A-P05-S03 · P5 | Dormitorio CH-A-P05-S03 · P5 | **Por determinar** | | | | | |
 
 ### 3. Envolvente y vanos
 | Recinto | Longitud de fachada (m) | Altura efectiva (m) | Área bruta (m²) | Huecos (ancho × alto y referencia) | Área transparente (m²) | Área opaca (m²) |
@@ -32,4 +47,4 @@ El alumno construye una ficha de superficies internas de **piso, cielo, muros, v
 Categoriza **DOCUMENTAL**, **CALCULADO**, **SUPUESTO DOCENTE** o **PROPUESTA PERSONAL**. Si una cota no está identificable en el plano, anota **PENDIENTE** y fundamenta el dato complementario solicitado. Nunca atribuyas al expediente una dimensión definida por el curso.
 
 ### Criterio de completitud
-La ficha es completa solamente cuando están determinados los recintos de cada caso, áreas de separación, volúmenes, fachada opaca/acristalada, alturas, superficies de absorción, uniones y situación de funcionamiento de la instalación. No asumir que la superficie total de la vivienda es la de cualquier recinto.
+La ficha es completa cuando se han cuantificado y documentado las geometrías de los recintos **ya asignados**: áreas de separación, volúmenes, fachada opaca/acristalada, alturas, superficies de absorción, uniones y situación de funcionamiento de la instalación. No asumir que la superficie total de la vivienda es la de cualquier recinto.
