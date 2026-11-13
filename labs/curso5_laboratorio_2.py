@@ -1276,114 +1276,118 @@ def _stage1_teacher_criteria_guide():
 
 
 def _stage2_teacher_geometry_results():
-    """Field-by-field teaching answer key with provenance, not invented survey dimensions."""
-    st.markdown("### Solución docente · ficha geométrica de la Etapa 2")
+    """Teacher-only solved geometry for a reproducible SONARA teaching model.
+
+    These numbers come from explicitly adopted teaching dimensions, NOT from
+    a certified as-built survey. Keep aligned with student supplement §3.
+    """
+    st.markdown("### Solución docente · Etapa 2 · geometría base para SONARA")
     st.info(
-        "Valores calculados para el **submodelo rectangular académico**, donde existen "
-        "cotas parciales y/o hipótesis docentes explícitas. **No son una medición "
-        "cerrada de CH-A-P05-S03.** Para calificar resultados documentales exactos, "
-        "contrasta las cotas y límites del recinto con los planos originales: "
-        "planta tipo Parte 1, pág. 8; corte y elevación sur Parte 2, pág. 5. "
-        "No sustituir una cota no demostrada por una cifra del render."
+        "Los resultados siguientes están **calculados y cerrados para el modelo "
+        "académico** con las hipótesis de la sección 3 del «Suplemento de cotas». "
+        "Son datos reproducibles para SONARA, **no cotas certificadas del edificio**. "
+        "Fuente documental: planta tipo Torre A (Parte 1, pág. 8), elevación sur "
+        "(Parte 2, pág. 5) y suplemento HD-01, HE-01, HG-01, HM-01, HL-01, "
+        "HF-02, HV-02, HI-01 y HP-01."
     )
-    st.markdown("#### A · Recintos asignados (respuestas fijas)")
+    st.markdown("#### A · Casos y elementos fijados")
     st.table([
-        {"Caso":"AI-01","Emisor":"Estar vecino poniente, P5",
-         "Receptor":"Dormitorio CH-A-P05-S03, P5","Elemento":"M-01"},
-        {"Caso":"IM-01","Emisor":"Dormitorio superior, P6",
-         "Receptor":"Dormitorio CH-A-P05-S03, P5","Elemento":"L-01"},
+        {"Caso":"AI-01","Emisor":"Estar vecino poniente · P5",
+         "Receptor":"Dormitorio de estudio · P5","Elemento":"M-01"},
+        {"Caso":"IM-01","Emisor":"Dormitorio superior · P6",
+         "Receptor":"Dormitorio de estudio · P5","Elemento":"L-01"},
         {"Caso":"FA-01","Emisor":"Pasaje Chimbote",
-         "Receptor":"Estar CH-A-P05-S03, P5","Elemento":"F-01/V-01"},
-        {"Caso":"IN-01","Emisor":"WC vivienda superior, P6",
-         "Receptor":"Dormitorio CH-A-P05-S03, P5","Elemento":"S-01/IS-01"},
+         "Receptor":"Estar de estudio · P5","Elemento":"F-01 / V-01"},
+        {"Caso":"IN-01","Emisor":"WC de vivienda superior · P6",
+         "Receptor":"Dormitorio de estudio · P5","Elemento":"S-01 / IS-01"},
     ])
-    st.markdown("#### B · Resultados para los recintos receptores")
+
+    st.markdown("#### B · Respuestas de la geometría de recintos")
     st.table([
-        {"Caso":"AI-01","Recinto":"Dormitorio","Largo":"3,10 m*",
-         "Ancho":"2,60 m*","Altura":"2,50 m HG-01",
-         "Área":"8,06 m²","Volumen":"20,15 m³"},
-        {"Caso":"IM-01","Recinto":"Dormitorio","Largo":"3,10 m*",
-         "Ancho":"2,60 m*","Altura":"2,50 m HG-01",
-         "Área":"8,06 m²","Volumen":"20,15 m³"},
-        {"Caso":"FA-01","Recinto":"Estar","Largo":"3,75 m*",
-         "Ancho":"2,43 m*","Altura":"2,50 m HG-01",
-         "Área":"9,11 m²*","Volumen":"22,78 m³*"},
-        {"Caso":"IN-01","Recinto":"Dormitorio","Largo":"3,10 m*",
-         "Ancho":"2,60 m*","Altura":"2,50 m HG-01",
-         "Área":"8,06 m²","Volumen":"20,15 m³"},
+        {"Caso":"AI-01","Recinto":"Dormitorio P5","Largo":"3,10 m",
+         "Ancho":"2,60 m","Altura":"2,50 m","Área piso":"8,06 m²",
+         "Volumen":"20,15 m³","Códigos":"HD-01 / HG-01"},
+        {"Caso":"IM-01","Recinto":"Dormitorio P5","Largo":"3,10 m",
+         "Ancho":"2,60 m","Altura":"2,50 m","Área piso":"8,06 m²",
+         "Volumen":"20,15 m³","Códigos":"HD-01 / HG-01"},
+        {"Caso":"FA-01","Recinto":"Estar P5","Largo":"3,75 m",
+         "Ancho":"2,43 m","Altura":"2,50 m","Área piso":"9,11 m²",
+         "Volumen":"22,78 m³","Códigos":"HE-01 / HG-01"},
+        {"Caso":"IN-01","Recinto":"Dormitorio P5","Largo":"3,10 m",
+         "Ancho":"2,60 m","Altura":"2,50 m","Área piso":"8,06 m²",
+         "Volumen":"20,15 m³","Códigos":"HD-01 / HG-01"},
+    ])
+    st.markdown(
+        "**Cálculos:** dormitorio 2,60 × 3,10 = **8,06 m²**; "
+        "volumen = 8,06 × 2,50 = **20,15 m³**. "
+        "Estar equivalente: 2,43 × 3,75 = **9,1125 m²** "
+        "(se ingresa **9,11 m²**); volumen = 9,1125 × 2,50 "
+        "= **22,78125 m³** (se ingresa **22,78 m³**)."
+    )
+    st.markdown("#### C · Superficies a ingresar en la tabla de separación")
+    st.table([
+        {"Caso":"AI-01","Elemento":"M-01 · muro medianero",
+         "Longitud":"3,10 m","Altura":"2,50 m",
+         "Superficie":"7,75 m²","Código":"HM-01 × HG-01"},
+        {"Caso":"IM-01","Elemento":"L-01 · losa dormitorios",
+         "Longitud":"3,10 m","Altura":"2,60 m (ancho)",
+         "Superficie":"8,06 m²","Código":"HL-01 (superposición)"},
+        {"Caso":"FA-01","Elemento":"F-01 · fachada sur estar",
+         "Longitud":"2,43 m","Altura":"2,50 m",
+         "Superficie":"6,075 m²","Código":"HF-02 × HG-01"},
+        {"Caso":"IN-01","Elemento":"S-01 · cierre sanitario",
+         "Longitud":"1,40 m","Altura":"2,50 m",
+         "Superficie":"3,50 m²","Código":"HI-01 × HG-01"},
     ])
     st.caption(
-        "* Las cifras 2,60 × 3,10 m (dormitorio) y 2,43 × 3,75 m "
-        "(sector estar) se identificaron como **cotas parciales** en la planta. "
-        "Los resultados A = largo × ancho y V = A × 2,50 se muestran para "
-        "una **idealización rectangular**. La planta no demuestra que el "
-        "estar sea un rectángulo aislado de cocina/circulación. El volumen "
-        "del estar es, por tanto, solo ejemplo condicional. "
-        "No asignar una nota de error a una geometría documental mejor fundamentada."
-    )
-    st.markdown("**Operaciones de referencia**")
-    st.markdown(
-        "- Dormitorio: **2,60 × 3,10 = 8,06 m²**; "
-        "**8,06 × 2,50 = 20,15 m³** (altura HG-01). "
-        "Piso y cielo: **8,06 m² cada uno**; perímetro rectangular "
-        "**11,40 m**; muros interiores brutos **28,50 m²**. \n"
-        "- Estar, **solo si se justifica recinto rectangular**: "
-        "**2,43 × 3,75 = 9,1125 m² ≈ 9,11 m²**; "
-        "**9,1125 × 2,50 = 22,78125 m³ ≈ 22,78 m³**. "
-        "No aceptar automáticamente esta superficie como área útil final."
+        "En **IM-01**, la segunda dimensión se registra en el campo "
+        "«Altura (m)» únicamente por compatibilidad con la tabla C: es el "
+        "**ancho en planta de la losa (2,60 m)**, no su espesor ni la "
+        "altura de un tabique. Lo mismo debe indicarse en «Lámina / cota»."
     )
 
-    st.markdown("#### C · Superficies de separación por caso")
+    st.markdown("#### D · Fachada sur del estar (FA-01)")
     st.table([
-        {"Caso":"AI-01","Qué ingresar":"Longitud efectiva medianero × altura",
-         "Resultado docente":"7,75 m² SI l = 3,10 m","Estado":"Hipótesis; validar muro"},
-        {"Caso":"IM-01","Qué ingresar":"Proyección de losa común",
-         "Resultado docente":"8,06 m² SI coincide dormitorio",
-         "Estado":"Idealización verificable"},
-        {"Caso":"FA-01","Qué ingresar":"Longitud sur estar × altura",
-         "Resultado docente":"No cerrado por planos",
-         "Estado":"Medir alzado y planta"},
-        {"Caso":"IN-01","Qué ingresar":"Cierre/shaft y ruta de transmisión",
-         "Resultado docente":"3,50 m² SI l = HI-01 = 1,40 m",
-         "Estado":"Supuesto docente"},
+        {"Campo":"Recinto receptor","Respuesta":"Estar CH-A-P05-S03 · P5"},
+        {"Campo":"Orientación","Respuesta":"Sur → Pasaje Chimbote"},
+        {"Campo":"Ancho docente fachada HF-02","Respuesta":"2,43 m"},
+        {"Campo":"Altura útil HG-01","Respuesta":"2,50 m"},
+        {"Campo":"Paño bruto de fachada","Respuesta":"2,43 × 2,50 = 6,075 m²"},
+        {"Campo":"Ventana única HV-02","Respuesta":"1,80 × 1,20 = 2,160 m²"},
+        {"Campo":"Paño opaco","Respuesta":"6,075 − 2,160 = 3,915 m²"},
+        {"Campo":"Lámina / origen","Respuesta":"Planta P1 pág. 8 + sur P2 pág. 5; HF-02/HG-01/HV-02: DOCENTE"},
+    ])
+    st.success(
+        "**Números para introducir en la ficha:** fachada total **6,075 m²** "
+        "(≈6,08), ventanas **2,160 m²** (2,16), paño opaco "
+        "**3,915 m²** (≈3,92). Mantener cifras sin redondear durante el cálculo."
+    )
+
+    st.markdown("#### E · Superficies internas para TR por bandas en SONARA")
+    st.table([
+        {"Recinto":"Dormitorio","Piso":"8,06 m²","Cielo":"8,06 m²",
+         "Muros brutos":"28,50 m²","Ventana":"No definida; 0 m² en modelo interior",
+         "Puerta":"1,68 m² HP-01","Muros opacos":"26,82 m²"},
+        {"Recinto":"Estar equivalente","Piso":"9,1125 m²","Cielo":"9,1125 m²",
+         "Muros brutos":"30,90 m²","Ventana":"2,160 m² HV-02",
+         "Puerta":"1,68 m² HP-01","Muros opacos":"27,06 m²"},
     ])
     st.markdown(
-        "Operaciones condicionales: **3,10 × 2,50 = 7,75 m²** "
-        "(separador M-01, solo si el muro común tiene esa longitud); "
-        "**2,60 × 3,10 = 8,06 m²** (losa L-01 rectangular idealizada); "
-        "**1,40 × 2,50 = 3,50 m²** (cierre sanitario académico HI-01). "
-        "Para FA-01 no trasladar la ventana del dormitorio al estar ni "
-        "confundir paño de fachada con toda la unidad."
+        "Perímetros: dormitorio 2(2,60 + 3,10) = **11,40 m**; "
+        "estar 2(2,43 + 3,75) = **12,36 m**. "
+        "Área bruta de muros = perímetro × 2,50 m. "
+        "Se adopta **una puerta docente por recinto de 0,80 × 2,10 = 1,68 m²** "
+        "y, en el dormitorio, **ninguna ventana contabilizada en este "
+        "submodelo de TR** porque no se ha definido un vano de dormitorio. "
+        "El estudiante puede justificar una variante más detallada si la "
+        "documentación la permite. A partir de estas superficies se calculan "
+        "las absorciones por bandas y el TR en SONARA; **no existe TR prefijado**."
     )
-    st.markdown("#### D · Fachada sur del estar y vanos")
-    st.table([
-        {"Campo":"Recinto","Respuesta docente":"Estar CH-A-P05-S03, P5"},
-        {"Campo":"Orientación","Respuesta docente":"Sur, hacia Pasaje Chimbote"},
-        {"Campo":"Paño total","Respuesta docente":"largo de fachada verificable × altura útil (sin valor cerrado)"},
-        {"Campo":"Ventanas","Respuesta docente":"2,16 m² SI aplica HV-02 (1,80 × 1,20 m)"},
-        {"Campo":"Paño opaco","Respuesta docente":"paño total − 2,16 m², SI hay un solo vano HV-02"},
-        {"Campo":"Ejemplo condicional","Respuesta docente":"SI l = 2,43 m: 6,08 − 2,16 = 3,92 m²"},
-        {"Campo":"Fuente","Respuesta docente":"Planta tipo P1 pág. 8 + elevación sur P2 pág. 5; HV-02 supuesto"},
-    ])
-    st.caption(
-        "El ejemplo de l = 2,43 m es **no verificado como longitud completa de fachada**. "
-        "El cálculo sin redondear es 2,43 × 2,50 = 6,075 m² (bruto), "
-        "1,80 × 1,20 = 2,160 m² (vidrio) y 6,075 − 2,160 = 3,915 m² (opaco). "
-        "Si las elevaciones muestran más vanos, se suman sus áreas; si el "
-        "estar está unido a cocina, la geometría receptora debe tratarse en consecuencia."
-    )
-    st.markdown("#### Pauta de evaluación de las respuestas")
-    st.markdown(
-        "1. **Identidad:** mantener el emisor/receptor fijado de cada caso.\n"
-        "2. **Cotas:** citar lámina y posición exacta; separar documental de HG-01/HV-02/HI-01.\n"
-        "3. **Operaciones:** revisar unidades, área = descomposición geométrica "
-        "y volumen = área × altura; repetir resultados del dormitorio en AI, IM e IN.\n"
-        "4. **Separación:** verificar M-01, losa L-01 y trayecto sanitario; "
-        "no atribuir a planos un shaft que no está dibujado.\n"
-        "5. **Fachada:** calcular área transparente/opaca del **estar**; "
-        "confirmar número y tamaño de vanos según elevación sur.\n"
-        "6. **Trazabilidad:** aceptar un resultado distinto al ejemplo "
-        "si lo fundamenta mejor el plano y el docente verifica la geometría."
+    st.warning(
+        "La geometría base deja cerrado el **cálculo académico** sin alterar "
+        "la arquitectura documentada: fachada, vanos, delimitación del estar "
+        "y trazado sanitario siguen siendo supuestos del laboratorio. "
+        "No utilizar estos resultados para certificar el edificio construido."
     )
 
 
