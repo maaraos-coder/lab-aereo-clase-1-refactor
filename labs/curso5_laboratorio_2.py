@@ -233,6 +233,11 @@ def _save(lab,saved,stage,key,value,*,complete=True):
     if _readonly():
         st.info("Vista de proyección: los cambios no se guardan en las entregas de los alumnos.")
         return False
+    try:
+        json.dumps(value, allow_nan=False)
+    except (ValueError, TypeError):
+        st.error("Hay datos que no se pueden guardar. Revisa los valores y archivos JSON de esta etapa.")
+        return False
     candidate=deepcopy(saved)
     changed = candidate.get(key) != value
     candidate[key]=value
@@ -1446,6 +1451,8 @@ def _stage4(lab, saved):
         for req in project.get("requerimientos", []):
             if not isinstance(req, dict):
                 return [], None
+            if not isinstance(req.get("soluciones", []), list):
+                return [], None
             for sol in req.get("soluciones", []):
                 if isinstance(sol, dict):
                     solutions.append(sol)
@@ -1978,8 +1985,9 @@ def _stage5(lab, saved):
             return None, []
         sols = list(project.get("soluciones") or [])
         for req in project.get("requerimientos") or []:
-            if isinstance(req, dict):
-                sols.extend(req.get("soluciones") or [])
+            if not isinstance(req, dict) or not isinstance(req.get("soluciones", []), list):
+                return None, []
+            sols.extend(req.get("soluciones", []))
         return project.get("nombre"), [
             row for row in sols if isinstance(row, dict) and (
                 row.get("tipo_calculo") == "Ruido de impacto"
@@ -2252,9 +2260,12 @@ y continúa el diseño de la envolvente en **SONARA**.
     imported = traffic_old.get("noisemap_document") if uploaded is None else None
     if uploaded is not None:
         try:
-            imported = json.loads(uploaded.getvalue().decode("utf-8-sig"))
+            raw = uploaded.getvalue()
+            if len(raw) > 2 * 1024 * 1024:
+                raise ValueError("El JSON supera 2 MB.")
+            imported = json.loads(raw.decode("utf-8-sig"))
         except (UnicodeError, ValueError):
-            st.error("No se pudo leer el JSON de NoiseMap.")
+            st.error("Carga un JSON válido de NoiseMap de hasta 2 MB.")
 
     levels, audit, method = {}, {}, ""
     computed = None
@@ -2631,14 +2642,17 @@ def _grade(score,total=100):
 def _get_submission(stage,question_key):
     if _readonly() or _is_teacher():return None
     client=_supabase()
-    if client is None or not st.session_state.get("user_key"):return None
+    if client is None or not st.session_state.get("user_key"):
+        st.error("No se pudo consultar el estado de la entrega. Actualiza antes de continuar.")
+        st.stop()
     try:
         r=(client.table("responses").select("answer,auto_score,teacher_score,status")
            .eq("class_id",CLASS_ID).eq("user_key",st.session_state["user_key"])
            .eq("stage",stage).eq("question_key",question_key).limit(1).execute())
         return (r.data or [None])[0]
     except Exception:
-        return None
+        st.error("No se pudo consultar el estado de la entrega. Actualiza antes de continuar.")
+        st.stop()
 
 def _submit(stage,question_key,title,payload,score,max_score):
     if _readonly() or _is_teacher():
