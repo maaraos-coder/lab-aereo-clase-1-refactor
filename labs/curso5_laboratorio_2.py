@@ -1329,154 +1329,143 @@ def _stage4(lab, saved):
         "y documenta cuál se registra aquí; no los promedies arbitrariamente."
     )
 
-    st.markdown("#### C · Diseño de la mejora propuesta")
+    st.markdown("#### C · Propuesta libre de mejoramiento")
     st.info(
-        "Partiendo del **muro original M-01 de hormigón armado de 180 mm**, "
-        "propón una solución constructiva para aumentar el aislamiento aéreo "
-        "entre viviendas. **Primero describe y dimensiona la mejora; después "
-        "modela ambos estados en SONARA**. No es necesario modificar la "
-        "estructura existente."
-    )
-    st.markdown(
-        "**Posibles estrategias de diseño (orientativas, no son soluciones "
-        "predimensionadas ni garantizan el cumplimiento):** trasdosado "
-        "autoportante desacoplado, cámara con lana mineral, una o más placas "
-        "de yeso-cartón, sellado perimetral y reducción de puentes rígidos. "
-        "Debes justificar espesores, fijaciones, continuidad y compatibilidad "
-        "con el muro y las uniones del ejercicio."
+        "El diseño es **libre**: no hay una solución constructiva preseleccionada "
+        "ni una tabla obligatoria de capas. Propón una mejora del muro M-01, "
+        "describe sus materiales y justifica cómo se monta y cómo trata "
+        "los flancos y puentes rígidos. Después simula la condición "
+        "original y la mejorada en SONARA."
     )
     old_detail = old.get("design_detail") or {}
-    design_kind_options = [
-        "Trasdosado autoportante desacoplado",
-        "Trasdosado sobre estructura con apoyos resilientes",
-        "Otra solución (describir)",
-    ]
-    chosen_kind = old_detail.get("design_kind", design_kind_options[0])
-    if chosen_kind not in design_kind_options:
-        chosen_kind = design_kind_options[0]
-    design_kind = st.selectbox(
-        "Tipo de mejora a modelar",
-        design_kind_options,
-        index=design_kind_options.index(chosen_kind),
-        key="c5l2_s4_design_kind_v1"
+    improvement = st.text_area(
+        "Materiales, composición y dimensiones de la solución propuesta",
+        value=old_detail.get("materials", old_detail.get("improvement", "")),
+        key="c5l2_s4_materials_free_v1", height=135,
+        placeholder="Describe libremente las capas, espesores, masa superficial, cavidad, absorbentes u otros componentes que hayas elegido..."
     )
-    layers_columns = ["Componente propuesto", "Material / sistema", "Espesor (mm)",
-                      "Cantidad / separación", "Montaje / desacople"]
-    default_layers = [
-        {"Componente propuesto": "Muro existente", "Material / sistema": "HA 180 mm",
-         "Espesor (mm)": "180", "Cantidad / separación": "1",
-         "Montaje / desacople": "Existente, sin modificación"},
-        {"Componente propuesto": "Perfilería / cámara", "Material / sistema": "",
-         "Espesor (mm)": "", "Cantidad / separación": "", "Montaje / desacople": ""},
-        {"Componente propuesto": "Absorbente en cámara", "Material / sistema": "",
-         "Espesor (mm)": "", "Cantidad / separación": "", "Montaje / desacople": ""},
-        {"Componente propuesto": "Revestimiento interior", "Material / sistema": "",
-         "Espesor (mm)": "", "Cantidad / separación": "", "Montaje / desacople": ""},
-        {"Componente propuesto": "Sellos y encuentros", "Material / sistema": "",
-         "Espesor (mm)": "", "Cantidad / separación": "", "Montaje / desacople": ""},
-    ]
-    design_layers = st.data_editor(
-        pd.DataFrame(old_detail.get("layers") or default_layers, columns=layers_columns),
-        key="c5l2_s4_design_layers_v1", num_rows="dynamic",
-        hide_index=True, use_container_width=True
-    ).fillna("").to_dict("records")
-    d1, d2 = st.columns(2)
-    with d1:
-        improvement = st.text_area(
-            "Descripción técnica de la mejora y su montaje",
-            value=old_detail.get("improvement", ""),
-            key="c5l2_s4_improvement",
-            placeholder="Explica cómo se monta el trasdosado, su desacople, encuentros y tratamiento de puentes rígidos..."
-        )
-    with d2:
-        evidence = st.text_area(
-            "Hipótesis, documentación y limitaciones del diseño",
-            value=old_detail.get("evidence", ""),
-            key="c5l2_s4_evidence",
-            placeholder="Materiales disponibles en SONARA, propiedades por bandas, fichas técnicas y supuestos..."
-        )
-
-    st.markdown("#### D · Resultados SONARA: condición original y mejora")
+    mounting = st.text_area(
+        "Montaje, encuentros, fijaciones y tratamiento de transmisiones laterales",
+        value=old_detail.get("mounting", ""),
+        key="c5l2_s4_mounting_free_v1", height=125,
+        placeholder="Explica cómo se instala, cómo se conecta o desacopla y qué ocurre en las uniones con piso, cielo y muros laterales..."
+    )
+    evidence = st.text_area(
+        "Supuestos y respaldo técnico de los materiales",
+        value=old_detail.get("evidence", ""),
+        key="c5l2_s4_evidence_free_v1", height=90,
+        placeholder="Documenta los datos de entrada o fichas técnicas utilizados y las limitaciones de tu propuesta."
+    )
+    st.markdown("#### D · Resultados globales de SONARA")
     st.caption(
-        "Con los mismos recintos y geometría, ejecuta SONARA para "
-        "**(1) el muro original** y **(2) la solución mejorada**. "
-        "Transcribe solo los indicadores realmente entregados por el cálculo "
-        "y conserva la evidencia; los campos R′w, C y Ctr pueden quedar "
-        "vacíos si el módulo utilizado no los proporciona."
+        "Registra los resultados del **modelo original** y de la **mejora** "
+        "para el **mismo descriptor**. ISO/TS 19488:2021, Tabla 1, "
+        "para el caso AI-01 de habitaciones habitables de viviendas distintas "
+        "exige **DₙT,50 ≥ 54 dB para Clase B**, donde "
+        "DₙT,50 = DₙT,w + C₅₀₋₃₁₅₀. "
+        "No confundas esta exigencia con DₙT,w = 50 dB."
     )
-    st.info(
-        "**¿Qué significa R′w?** Es el **índice ponderado de reducción "
-        "acústica aparente**, que incluye la transmisión directa a través "
-        "del elemento separador y la transmisión por flancos. "
-        "**Rw del muro** describe el elemento por sí mismo; "
-        "**R′w aparente** caracteriza la separación considerando las vías "
-        "indirectas; **DₙT,w** caracteriza la diferencia de niveles "
-        "estandarizada entre los recintos. **No son intercambiables**."
+    st.warning(
+        "Si SONARA entrega únicamente DₙT,w, **no se puede declarar cumplido "
+        "DₙT,50** sin el término espectral de bajas frecuencias C₅₀₋₃₁₅₀. "
+        "Registra lo disponible y señala expresamente la limitación. "
+        "La nota de la Tabla 1 admite conversiones de umbrales entre "
+        "descriptores; no debes tratar dos descriptores distintos como idénticos."
     )
-    result_columns = ["Modelo", "Sistema / configuración", "Rw muro (dB)",
-                      "R′w aparente (dB)", "DₙT,w (dB)", "C (dB)",
-                      "Ctr (dB)", "DₙT,w + adaptación (dB)",
-                      "Fuente / cálculo SONARA"]
+    result_columns = ["Modelo", "Descriptor calculado",
+                      "Resultado global (dB)", "Archivo / respaldo SONARA"]
+    old_results = old.get("model_results") or []
     default_results = [
-        {"Modelo": "Original M-01",
-         "Sistema / configuración": "HA 180 mm; encuentros rígidos",
-         **{k: "" for k in result_columns[2:]}},
-        {"Modelo": "Mejora propuesta",
-         "Sistema / configuración": "",
-         **{k: "" for k in result_columns[2:]}}
+        {"Modelo": "Original M-01", "Descriptor calculado": "DₙT,50",
+         "Resultado global (dB)": "", "Archivo / respaldo SONARA": ""},
+        {"Modelo": "Mejora propuesta", "Descriptor calculado": "DₙT,50",
+         "Resultado global (dB)": "", "Archivo / respaldo SONARA": ""}
     ]
-    old_results = old.get("model_results") or default_results
-    model_rows = []
-    for pos, base in enumerate(default_results):
-        previous = old_results[pos] if pos < len(old_results) and isinstance(old_results[pos], dict) else {}
-        merged = {**base, **previous}
-        # Preserve records produced by the older version of this worksheet.
-        merged["R′w aparente (dB)"] = _filled(
-            previous.get("R′w aparente (dB)"), previous.get("R′w conjunto (dB)")
-        )
-        merged["Modelo"] = base["Modelo"]
-        model_rows.append(merged)
+    result_rows = []
+    for idx, original in enumerate(default_results):
+        previous = old_results[idx] if idx < len(old_results) and isinstance(old_results[idx], dict) else {}
+        # Preserve old data only when its global indicator is unambiguous.
+        descriptor = _filled(previous.get("Descriptor calculado"),
+                             "DₙT,w" if previous.get("DₙT,w (dB)") else "",
+                             original["Descriptor calculado"])
+        result_rows.append({
+            "Modelo": original["Modelo"],
+            "Descriptor calculado": descriptor,
+            "Resultado global (dB)": _filled(previous.get("Resultado global (dB)"),
+                                             previous.get("DₙT,w (dB)")),
+            "Archivo / respaldo SONARA": _filled(
+                previous.get("Archivo / respaldo SONARA"),
+                previous.get("Fuente / cálculo SONARA"))
+        })
     results = st.data_editor(
-        pd.DataFrame(model_rows, columns=result_columns),
-        key="c5l2_s4_results_v2", hide_index=True,
-        num_rows="fixed", disabled=["Modelo"], use_container_width=True
+        pd.DataFrame(result_rows, columns=result_columns),
+        key="c5l2_s4_global_results_v1",
+        hide_index=True, num_rows="fixed", use_container_width=True,
+        disabled=["Modelo"],
+        column_config={
+            "Descriptor calculado": st.column_config.SelectboxColumn(
+                "Descriptor", options=["DₙT,50", "DₙT,w", "DₙT,A"],
+                required=True,
+            ),
+            "Resultado global (dB)": st.column_config.NumberColumn(
+                "Resultado global (dB)", format="%.1f",
+            ),
+        },
     ).fillna("").to_dict("records")
     st.caption(
-        "Rw: aislamiento del muro ensayado o calculado. R′w: aislamiento "
-        "aparente con flancos. DₙT,w: diferencia de niveles estandarizada "
-        "entre viviendas. Para la adaptación espectral elige **C o Ctr** "
-        "según corresponda; nunca se suman ambos simultáneamente."
+        "DₙT,w es el descriptor ponderado sin adaptación; "
+        "DₙT,A = DₙT,w + C; DₙT,50 = DₙT,w + C₅₀₋₃₁₅₀. "
+        "Los resultados de diseño no sustituyen una medición de verificación."
     )
-    st.markdown("#### E · Comprobación contra el requisito Clase B")
+    st.markdown("#### E · Comprobación de la exigencia Clase B")
+    st.info(
+        "**Meta del caso AI-01 · ISO/TS 19488:2021, Tabla 1, Clase B:** "
+        "**DₙT,50 ≥ 54 dB** para habitaciones habitables de viviendas distintas. "
+        "Compara el resultado que corresponda al descriptor; un valor "
+        "aislado DₙT,w no permite verificar directamente el umbral DₙT,50."
+    )
     if criterion:
-        st.info(
-            "Criterio definido en Etapa 1: "
+        st.caption(
+            "Criterio consignado en Etapa 1: "
             + _val(criterion.get("descriptor")) + " · "
             + _val(criterion.get("direction")) + " "
-            + _val(criterion.get("limit")) + " · "
-            + _val(criterion.get("reference"))
+            + _val(criterion.get("limit")) + ". "
+            "Si difiere, revisa la fila aplicable de la norma."
         )
+    st.caption(
+        "Criterio adoptado para esta hoja: DₙT,50 ≥ 54 dB. "
+        "Un valor igual al límite cumple el umbral acústico de esta categoría; "
+        "el resto de exigencias de la vivienda se revisan en las demás etapas."
+    )
+    if len(results) == 2 and results[1].get("Descriptor calculado") == "DₙT,50":
+        try:
+            value = float(str(results[1].get("Resultado global (dB)", "")).replace(",", "."))
+            if math.isfinite(value):
+                margin = value - 54
+                st.metric("Margen respecto a Clase B · AI-01", f"{margin:+.1f} dB")
+                st.success("La predicción alcanza el umbral acústico del caso AI-01.") if margin >= 0 else st.warning(
+                    "La predicción queda por debajo del umbral de Clase B."
+                )
+        except (ValueError, TypeError):
+            pass
     else:
-        st.warning("Falta registrar el requisito ISO/TS 19488 Clase B en la Etapa 1.")
-    e1, e2 = st.columns(2)
-    with e1:
-        selected_descriptor = st.text_input(
-            "Descriptor que contrastas", value=old_detail.get("descriptor", ""),
-            key="c5l2_s4_descriptor", placeholder="DₙT,w o DₙT,w + C / Ctr"
+        st.warning(
+            "Para calcular el margen normativo necesitas el resultado DₙT,50 "
+            "de la mejora; otro descriptor no se compara directamente con 54 dB."
         )
-    with e2:
-        comparison = st.text_area(
-            "Margen, conclusión y puntos pendientes",
-            value=old_detail.get("comparison", ""),
-            key="c5l2_s4_comparison", height=70
-        )
+    comparison = st.text_area(
+        "Conclusión técnica y limitaciones del diseño",
+        value=old_detail.get("comparison", ""), key="c5l2_s4_comparison_v2",
+        placeholder="Compara original y mejora, explica el margen y señala restricciones del modelo..."
+    )
+    selected_descriptor = "DₙT,50"
     payload = {
         "case": "AI-01", "iso_geometry": geo,
         "systems": {"model_type": model_type, "data_origin": data_origin,
                     "t0": reference_time, "flanks": flanks},
         "model_results": results,
         "design_detail": {
-            "design_kind": design_kind, "layers": design_layers,
+            "materials": improvement, "mounting": mounting,
             "improvement": improvement, "evidence": evidence,
             "descriptor": selected_descriptor, "comparison": comparison
         },
@@ -1499,7 +1488,12 @@ def _stage4(lab, saved):
                       "receiver_area"]
         missing = [key for key in essentials if not _positive(geo.get(key))]
         measured = all(
-            _positive(r.get("DₙT,w (dB)")) for r in results
+            _positive(r.get("Resultado global (dB)")) for r in results
+        )
+        matching_descriptors = (
+            len(results) == 2 and
+            results[0].get("Descriptor calculado") ==
+            results[1].get("Descriptor calculado")
         )
         if missing:
             st.warning("Faltan dimensiones o volumen del modelo receptor: "
@@ -1507,13 +1501,15 @@ def _stage4(lab, saved):
         elif not data_origin.strip() or not reference_time.strip():
             st.warning("Indica la fuente acústica del muro original y T₀.")
         elif not measured or len(results) != 2:
-            st.warning("Registra DₙT,w positivo de SONARA para la base y para la mejora.")
-        elif not all(str(r.get("Fuente / cálculo SONARA") or "").strip()
+            st.warning("Registra los dos resultados globales positivos de SONARA.")
+        elif not matching_descriptors:
+            st.warning("Para comparar, ambos modelos deben usar el mismo descriptor acústico.")
+        elif not all(str(r.get("Archivo / respaldo SONARA") or "").strip()
                      for r in results):
             st.warning("Indica la fuente o archivo SONARA de ambos resultados.")
-        elif not all([improvement.strip(), evidence.strip(),
-                      selected_descriptor.strip(), comparison.strip()]):
-            st.warning("Documenta la mejora, su respaldo, el descriptor y la comparación.")
+        elif not all([improvement.strip(), mounting.strip(), evidence.strip(),
+                      comparison.strip()]):
+            st.warning("Documenta materiales, montaje, respaldo y conclusión técnica.")
         else:
             _save(lab, saved, 4, "c5l2_s4", payload, complete=True)
 
