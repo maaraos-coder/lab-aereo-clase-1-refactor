@@ -102,13 +102,36 @@ def _is_teacher():
 def _readonly():
     return bool(st.session_state.get("projection_mode"))
 
+def _plans_pdf_bytes(folder):
+    """Read published plans from PDF or its GitHub-web-compatible ZIP.
+
+    GitHub's web uploader rejects the 35 MB PDF. The ZIP is roughly 22 MB.
+    Only the exact expected PDF member is accepted; never extract to disk.
+    """
+    filename = "Chimbote_Torre_A_CH-A-P05-S03_planos.pdf"
+    direct = folder / filename
+    if direct.is_file():
+        return direct.read_bytes()
+    archive = folder / "Chimbote_Torre_A_CH-A-P05-S03_planos.zip"
+    if not archive.is_file():
+        return None
+    with ZipFile(archive, "r") as bundle:
+        entry = bundle.getinfo(filename)
+        if entry.file_size > 60_000_000:
+            raise ValueError("El PDF de planos supera el límite de seguridad.")
+        data = bundle.read(entry)
+    if not data.startswith(b"%PDF-"):
+        raise ValueError("El ZIP no contiene un PDF de planos válido.")
+    return data
+
+
 def _student_document_pack():
     """Create a single download with the original Chimbote PDF and student annexes."""
     root = Path(__file__).resolve().parent.parent
     folder = root / "assets" / "curso5_lab2"
-    plan = folder / "Chimbote_Torre_A_CH-A-P05-S03_planos.pdf"
-    if not plan.is_file():
-        return None, "Falta publicar el PDF original de planos resaltados en assets/curso5_lab2."
+    plans_pdf = _plans_pdf_bytes(folder)
+    if plans_pdf is None:
+        return None, "Falta publicar el PDF o ZIP original de planos en assets/curso5_lab2."
     docs = [
         root / "docs" / "curso5_lab2_chimbote_ficha_geometrica_alumno.md",
         root / "docs" / "curso5_lab2_chimbote_especificaciones_alumno.md",
@@ -120,7 +143,7 @@ def _student_document_pack():
             return None, "Falta el documento " + doc.name
     output = BytesIO()
     with ZipFile(output, "w", compression=ZIP_DEFLATED) as bundle:
-        bundle.write(plan, arcname="01_Planos/Chimbote_Torre_A_CH-A-P05-S03_planos.pdf")
+        bundle.writestr("01_Planos/Chimbote_Torre_A_CH-A-P05-S03_planos.pdf", plans_pdf)
         for doc in docs:
             bundle.write(doc, arcname="02_Anexos_MD/" + doc.name)
         for pdf in sorted(folder.glob("0[1-4]_*.pdf")):
@@ -384,10 +407,15 @@ def _stage1(lab,saved):
                 st.markdown(f"**{title}**")
                 st.caption(description)
                 file_path = resource_dir / filename
-                if file_path.is_file():
+                pdf_data = (
+                    _plans_pdf_bytes(resource_dir)
+                    if filename == "Chimbote_Torre_A_CH-A-P05-S03_planos.pdf"
+                    else file_path.read_bytes() if file_path.is_file() else None
+                )
+                if pdf_data is not None:
                     st.download_button(
                         "📥 Descargar PDF",
-                        data=file_path.read_bytes(),
+                        data=pdf_data,
                         file_name=filename,
                         mime="application/pdf",
                         key=f"c5l2_s1_download_{filename}",
