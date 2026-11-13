@@ -549,9 +549,12 @@ def _stage2(lab,saved):
         "es una hipótesis de modelación, no un trazado certificado en planos."
     )
     st.markdown("#### B · Geometría de los recintos receptores")
-    st.caption(
-        "Los recintos ya están asignados en A. Completa exclusivamente las magnitudes. "
-        "La tabla simplificada evita desplazamiento horizontal y muestra sus cuatro casos."
+    st.markdown(
+        "**Calcula la superficie de piso y el volumen interior del recinto receptor de cada caso.** "
+        "**AI-01, IM-01 e IN-01:** dormitorio de CH-A-P05-S03 (piso 5). "
+        "**FA-01:** estar de esa misma vivienda. "
+        "Área = superficie útil de piso (m²); volumen = área útil × altura libre (m³). "
+        "Para recintos irregulares descompón la geometría según los planos."
     )
     # The underlying saved structure is preserved (including receiver labels),
     # while the editor displays only short codes and student-editable geometry.
@@ -575,15 +578,20 @@ def _stage2(lab,saved):
                     "Piso / unidad": location})
         room_rows.append(row)
     import pandas as pd
-    room_edit_cols = ["Caso", "Largo (m)", "Ancho (m)", "Altura (m)",
+    room_subject = {"AI-01":"Dormitorio P5", "IM-01":"Dormitorio P5",
+                    "FA-01":"Estar P5", "IN-01":"Dormitorio P5"}
+    for row in room_rows:
+        row["Recinto a medir"] = room_subject[row["Caso"]]
+    room_edit_cols = ["Caso", "Recinto a medir", "Largo (m)", "Ancho (m)", "Altura (m)",
                       "Área (m²)", "Volumen (m³)", "Plano / cota"]
     room_df = st.data_editor(
         pd.DataFrame(room_rows)[room_edit_cols],
         key="c5l2_rooms_compact_v2", hide_index=True, use_container_width=True,
         height=190, num_rows="fixed",
-        disabled=["Caso"],
+        disabled=["Caso", "Recinto a medir"],
         column_config={
             "Caso": st.column_config.TextColumn("Caso", width="small"),
+            "Recinto a medir": st.column_config.TextColumn("Recinto", width="small"),
             "Largo (m)": st.column_config.TextColumn("Largo", width="small"),
             "Ancho (m)": st.column_config.TextColumn("Ancho", width="small"),
             "Altura (m)": st.column_config.TextColumn("Alto", width="small"),
@@ -598,9 +606,13 @@ def _stage2(lab,saved):
         rooms.append({**master, **edited})
 
     st.markdown("#### C · Superficies de separación y trazabilidad")
-    st.caption(
-        "Los emisores, receptores y elementos están fijados en la tabla A. "
-        "Aquí documenta dimensiones y superficies para cada caso."
+    st.markdown(
+        "**¿Qué superficie se pide?** **AI-01:** área del muro medianero M-01 "
+        "entre el estar vecino y el dormitorio. **IM-01:** área de losa L-01 "
+        "compartida con el dormitorio superior. **FA-01:** área bruta del paño "
+        "de fachada sur del estar. **IN-01:** superficie del cierre S-01 "
+        "que interviene en el recorrido supuesto de la descarga de WC vecina. "
+        "El recorrido sanitario no está documentado: identifícalo como hipótesis."
     )
     sep_cols = ["Caso", "Recinto emisor", "Recinto receptor", "Elemento",
                 "Longitud (m)", "Altura (m)", "Superficie (m²)", "Plano / cota"]
@@ -615,15 +627,22 @@ def _stage2(lab,saved):
         row.update({"Caso": case, "Recinto emisor": emitter,
                     "Recinto receptor": receiver, "Elemento": element})
         sep_rows.append(row)
-    sep_edit_cols = ["Caso", "Longitud (m)", "Altura (m)",
+    sep_subject = {"AI-01":"Muro medianero M-01",
+                   "IM-01":"Losa entre pisos L-01",
+                   "FA-01":"Fachada sur estar F-01",
+                   "IN-01":"Cierre sanitario S-01"}
+    for row in sep_rows:
+        row["Elemento a medir"] = sep_subject[row["Caso"]]
+    sep_edit_cols = ["Caso", "Elemento a medir", "Longitud (m)", "Altura (m)",
                      "Superficie (m²)", "Plano / cota"]
     sep_df = st.data_editor(
         pd.DataFrame(sep_rows)[sep_edit_cols],
         key="c5l2_separations_compact_v2", hide_index=True,
         use_container_width=True, height=190, num_rows="fixed",
-        disabled=["Caso"],
+        disabled=["Caso", "Elemento a medir"],
         column_config={
             "Caso": st.column_config.TextColumn("Caso", width="small"),
+            "Elemento a medir": st.column_config.TextColumn("Elemento / superficie", width="medium"),
             "Longitud (m)": st.column_config.TextColumn("Longitud", width="small"),
             "Altura (m)": st.column_config.TextColumn("Altura", width="small"),
             "Superficie (m²)": st.column_config.TextColumn("Superficie m²", width="small"),
@@ -634,6 +653,12 @@ def _stage2(lab,saved):
            for master, edited in zip(sep_rows, sep_df.fillna("").to_dict("records"))]
 
     st.markdown("#### D · Fachada sur del estar y ventanas")
+    st.markdown(
+        "**Solo fachada sur del estar de CH-A-P05-S03 (piso 5)**, hacia Pasaje Chimbote. "
+        "Indica **área bruta de ese paño**, **suma de áreas de sus ventanas** "
+        "y **área opaca = área bruta − área de ventanas**. "
+        "Utiliza planta tipo y elevación sur; si aplicas HV-02, declara el supuesto."
+    )
     env_cols = ["Recinto", "Orientación", "Paño total (m²)",
                 "Ventanas (m²)", "Opaco (m²)", "Plano / cota"]
     stored_env = (old.get("facades") or [{}])[0]
@@ -1369,13 +1394,15 @@ def _stage2_teacher_geometry_results():
 def _teacher(stage):
     if _is_teacher():
         with st.expander(f"Pauta docente · Etapa {stage}",expanded=False):
-            st.write(TEACHER[stage])
             if stage==1:
+                st.write(TEACHER[stage])
                 _stage1_teacher_criteria_guide()
-            if stage==2:
+            elif stage==2:
+                # Display the answers directly: no links, previous-project
+                # warnings or preliminary teacher text.
                 _stage2_teacher_geometry_results()
-                st.link_button("Auditoría geométrica y fuentes (solo docente)", "https://github.com/maaraos-coder/lab-aereo-clase-1-refactor/blob/curso3-lab2-etapas-3-10/docs/curso5_lab2_chimbote_pauta_docente.md")
-                st.link_button("Memoria de cálculo de ejemplo (solo docente)", "https://github.com/maaraos-coder/lab-aereo-clase-1-refactor/blob/curso3-lab2-etapas-3-10/docs/curso5_lab2_chimbote_pauta_submodelo_docente.md")
+            else:
+                st.write(TEACHER[stage])
             if stage==3:
                 st.info("Comprobar que el alumno determine TR por bandas en SONARA; no introducir valores fijos 0,5/0,6 s.")
 def run_stage(stage,lab,saved,runtime):
