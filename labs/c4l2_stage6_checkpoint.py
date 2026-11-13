@@ -41,6 +41,17 @@ def _json_safe(value):
         return [_json_safe(v) for v in value]
     if hasattr(value,"tolist") and callable(value.tolist):
         return _json_safe(value.tolist())
+    # Missing values from the Stage 6 strategy data editor arrive as
+    # numpy.nan / pandas.NA even when the editor visually shows blanks.
+    # Encode blank optional fields as JSON null, never NaN or pd.NA.
+    if type(value).__name__ in ("NAType", "NaTType"):
+        return None
+    if isinstance(value,float):
+        import math
+        if math.isnan(value):
+            return None
+        if not math.isfinite(value):
+            raise ValueError("No se pueden guardar valores infinitos en Etapa 6.")
     if isinstance(value,(str,int,float,bool)) or value is None:
         return value
     raise TypeError("Valor no serializable en Etapa 6: "+type(value).__name__)
