@@ -1272,89 +1272,69 @@ def _stage4(lab, saved):
             "para este alumno. Completa y guarda los resultados allí."
         )
 
-    st.markdown("**Encuentros y flanqueos · ficha base para SONARA**")
+    st.markdown("**Flancos aéreos · ficha de entradas para SONARA (ISO 12354-1)**")
     st.info(
-        "La **geometría, los materiales y la hipótesis de unión** se entregan "
-        "como datos docentes de la condición original. **El alumno solo completa "
-        "Kij (dB)** obtenido en SONARA para cada encuentro. "
-        "No debe inventar coeficientes ni asumir que Kij es igual en todas las vías."
+        "Se reproduce la estructura real de los **cinco flancos** de SONARA. "
+        "El ejercicio entrega materialidad, longitudes y las masas superficiales "
+        "de referencia; los R laterales de 50/55 dB son **supuestos docentes "
+        "provisionales**, no ensayos. El alumno registra **Kij** calculado "
+        "en SONARA y conserva los detalles del proyecto en su JSON."
     )
-    st.caption(
-        "Longitudes de las uniones horizontales: largo del muro separador "
-        "de la Etapa 2 (si está disponible); laterales: altura del muro. "
-        "Losas HA de 160 mm según L-01; los muros laterales HA de 180 mm "
-        "y las uniones rígidas continuas son **hipótesis docentes de modelación** "
-        "que deben cotejarse con el plano, no datos acreditados del edificio."
-    )
-    flank_columns = ["Vía / encuentro", "Elemento flanqueante / material",
-                     "Longitud de unión (m)", "Tipo de junta",
-                     "Kij SONARA (dB)"]
     source_length = _filled(geo.get("length"))
     source_height = _filled(geo.get("height"))
-    flank_defaults = [
-        {"Vía / encuentro": "Techo / medianero",
-         "Elemento flanqueante / material": "Losa HA 160 mm (L-01)",
-         "Longitud de unión (m)": source_length,
-         "Tipo de junta": "Unión rígida continua (hipótesis)",
-         "Kij SONARA (dB)": ""},
-        {"Vía / encuentro": "Piso / medianero",
-         "Elemento flanqueante / material": "Losa HA 160 mm (L-01)",
-         "Longitud de unión (m)": source_length,
-         "Tipo de junta": "Unión rígida continua (hipótesis)",
-         "Kij SONARA (dB)": ""},
-        {"Vía / encuentro": "Lateral 1 / medianero",
-         "Elemento flanqueante / material": "Muro HA 180 mm (hipótesis)",
-         "Longitud de unión (m)": source_height,
-         "Tipo de junta": "Unión rígida continua (hipótesis)",
-         "Kij SONARA (dB)": ""},
-        {"Vía / encuentro": "Lateral 2 / medianero",
-         "Elemento flanqueante / material": "Muro HA 180 mm (hipótesis)",
-         "Longitud de unión (m)": source_height,
-         "Tipo de junta": "Unión rígida continua (hipótesis)",
-         "Kij SONARA (dB)": ""},
+    flank_columns = [
+        "Flanco SONARA", "Activo", "Material / hipótesis",
+        "R emisor (dB)", "R receptor (dB)", "Longitud lᵢⱼ (m)",
+        "m' emisor (kg/m²)", "m' receptor (kg/m²)",
+        "Tipo de unión SONARA", "Kij SONARA (dB)"
     ]
-    # Reuse earlier Kij values without reusing obsolete, editable geometry.
-    previous_flanks = previous_system.get("flanks") or []
-    flanks_by_name = {
-        str(row.get("Vía / encuentro", "")): row
-        for row in previous_flanks if isinstance(row, dict)
-    }
-    old_names = (
-        ("Techo / medianero", "Techo / muro"),
-        ("Piso / medianero", "Piso / muro"),
-        ("Lateral 1 / medianero", "Lateral 1 / muro"),
-        ("Lateral 2 / medianero", "Lateral 2 / muro"),
-    )
-    for row, (name, old_name) in zip(flank_defaults, old_names):
-        previous_row = flanks_by_name.get(name) or flanks_by_name.get(old_name) or {}
-        row["Kij SONARA (dB)"] = _filled(
-            previous_row.get("Kij SONARA (dB)"),
-            previous_row.get("Kij / Dv,ij / fuente"),
-        )
+    flank_specs = [
+        ("Muro lateral 1", True, "HA 180 mm · docente", "50", source_height, "432", "432"),
+        ("Muro lateral 2", True, "HA 180 mm · docente", "50", source_height, "432", "432"),
+        ("Fachada / elemento lateral", False, "Fachada HA 150 mm · F-01", "50", source_height, "360", "360"),
+        ("Losa de piso", False, "HA 160 mm · L-01", "55", source_length, "384", "384"),
+        ("Losa de cielo", False, "HA 160 mm · L-01", "55", source_length, "384", "384")
+    ]
+    old_flanks = previous_system.get("flanks") or []
+    by_name = {str(row.get("Flanco SONARA") or row.get("Vía / encuentro") or ""): row
+               for row in old_flanks if isinstance(row, dict)}
+    flank_rows = []
+    for name, active, material, rw, length, m1, m2 in flank_specs:
+        previous = by_name.get(name, {})
+        flank_rows.append({
+            "Flanco SONARA": name, "Activo": "Sí" if active else "No",
+            "Material / hipótesis": material,
+            "R emisor (dB)": rw, "R receptor (dB)": rw,
+            "Longitud lᵢⱼ (m)": length,
+            "m' emisor (kg/m²)": m1, "m' receptor (kg/m²)": m2,
+            "Tipo de unión SONARA": "Manual",
+            "Kij SONARA (dB)": _filled(previous.get("Kij SONARA (dB)"),
+                                     previous.get("Kij / Dv,ij / fuente"))
+        })
     flanks = st.data_editor(
-        pd.DataFrame(flank_defaults, columns=flank_columns),
-        key="c5l2_s4_flanks_fixed_v2",
-        hide_index=True, use_container_width=True, num_rows="fixed",
+        pd.DataFrame(flank_rows, columns=flank_columns),
+        key="c5l2_s4_flanks_sonara_inputs_v3", num_rows="fixed",
+        hide_index=True, use_container_width=True,
         disabled=flank_columns[:-1],
         column_config={
             "Kij SONARA (dB)": st.column_config.TextColumn(
-                "Kij calculado (dB)",
-                help="Registra el coeficiente de reducción vibratoria Kij de cada encuentro calculado en SONARA; no es un valor prefijado."
+                "Kij calculado (dB)", help="Única columna editable: Kij de SONARA."
             )
         }
     ).fillna("").to_dict("records")
+    st.caption(
+        "Mantén los mismos flancos activos en SONARA que en la ficha. "
+        "Para cambiar la hipótesis docente inicial o activar otro flanco, "
+        "justifícalo en el proyecto JSON. Los R orientativos no son el "
+        "resultado Rw calculado del flanco: reemplázalos en SONARA por el "
+        "modelo calculado si dispones de él. 432, 384 y 360 kg/m² son "
+        "masas nominales obtenidas de espesor × 2.400 kg/m³."
+    )
     if not source_length or not source_height:
         st.warning(
-            "Faltan dimensiones de unión del muro separador. "
-            "No se han completado longitudes con valores ficticios."
+            "Longitudes de unión pendientes: guarda las cotas AI-01 de Etapa 2 "
+            "antes de configurar estos flancos en SONARA."
         )
-    st.caption(
-        "La tabla es una **simplificación docente de cuatro encuentros**. "
-        "ISO 12354-1 puede requerir distintas rutas (Ff, Fd y Df) y valores "
-        "Kij por dirección y configuración de junta. Si SONARA entrega varios "
-        "coeficientes para un encuentro, consérvalos en el archivo SONARA "
-        "y documenta cuál se registra aquí; no los promedies arbitrariamente."
-    )
 
     st.markdown("#### C · Propuesta libre de mejoramiento")
     st.info(
@@ -1852,73 +1832,75 @@ def _stage5(lab, saved):
             "Origen de propiedades acústicas de la losa",
             value=str(old_base.get("source", "")), key="c5l2_s5_base_source",
             placeholder="Catálogo SONARA / curva / ficha técnica")
-    st.markdown("**Uniones con el entrepiso · datos docentes entregados**")
+    st.markdown("**Flanqueos de impacto · ficha de entradas para SONARA (ISO 12354-2)**")
     st.info(
-        "Las cuatro uniones del entrepiso quedan **definidas por el ejercicio**: "
-        "materialidad, longitud y montaje. El estudiante **solo registra "
-        "Kij (dB) obtenido de SONARA**. No debe completar ni modificar "
-        "las otras columnas."
+        "SONARA utiliza **cuatro flancos**: Muro lateral 1, Muro lateral 2, "
+        "Fachada / elemento lateral y Tabique separador / elemento vertical. "
+        "Se entrega una ficha docente de datos de entrada; el estudiante "
+        "solo completa **Kij (dB)** con el valor aplicado en SONARA."
     )
-    # Longitudes de borde: usar las cotas registradas en Etapa 2. Si faltan,
-    # aplicar las hipótesis geométricas docentes del dormitorio 2,60 × 3,10 m.
-    # Se indican expresamente como supuestos y no como levantamiento acreditado.
     length_from_stage2 = _number(geo.get("slab_length"))
     width_from_stage2 = _number(geo.get("slab_width"))
     union_length = length_from_stage2 if length_from_stage2 is not None and length_from_stage2 > 0 else 2.60
     union_width = width_from_stage2 if width_from_stage2 is not None and width_from_stage2 > 0 else 3.10
-    if length_from_stage2 is None or length_from_stage2 <= 0 or width_from_stage2 is None or width_from_stage2 <= 0:
-        st.caption(
-            "Longitudes sin dato registrado en Etapa 2: se emplean las "
-            "**cotas docentes del dormitorio (2,60 × 3,10 m)**. "
-            "Corresponden a una geometría académica de referencia; "
-            "pueden sustituirse al completar y guardar la ficha geométrica."
+    if length_from_stage2 is None or width_from_stage2 is None:
+        st.warning(
+            "Se usan las cotas docentes de referencia 2,60 × 3,10 m donde "
+            "no existe geometría IM-01 guardada; confirma las longitudes "
+            "en la Etapa 2 antes de finalizar."
         )
-    else:
-        st.caption(
-            "Las longitudes de unión se recuperaron de la **Etapa 2**. "
-            "Las losas HA 160 mm son las del encargo L-01. Los muros "
-            "HA 180 mm y sus uniones rígidas se adoptan como hipótesis "
-            "docentes de modelación, no como datos certificados del edificio."
-        )
-    fl_cols = ["Encuentro", "Elemento / material", "Longitud de unión (m)",
-               "Montaje previsto", "Kij SONARA (dB)"]
-    fl_def = [
-        {"Encuentro": "Losa / muro 1", "Elemento / material": "Muro HA 180 mm · hipótesis docente",
-         "Longitud de unión (m)": f"{union_length:.2f}",
-         "Montaje previsto": "Unión rígida continua · hipótesis",
-         "Kij SONARA (dB)": ""},
-        {"Encuentro": "Losa / muro 2", "Elemento / material": "Muro HA 180 mm · hipótesis docente",
-         "Longitud de unión (m)": f"{union_length:.2f}",
-         "Montaje previsto": "Unión rígida continua · hipótesis",
-         "Kij SONARA (dB)": ""},
-        {"Encuentro": "Losa / muro 3", "Elemento / material": "Muro HA 180 mm · hipótesis docente",
-         "Longitud de unión (m)": f"{union_width:.2f}",
-         "Montaje previsto": "Unión rígida continua · hipótesis",
-         "Kij SONARA (dB)": ""},
-        {"Encuentro": "Losa / muro 4", "Elemento / material": "Muro HA 180 mm · hipótesis docente",
-         "Longitud de unión (m)": f"{union_width:.2f}",
-         "Montaje previsto": "Unión rígida continua · hipótesis",
-         "Kij SONARA (dB)": ""},
+    fl_cols = [
+        "Flanco SONARA", "Activo", "Material / hipótesis",
+        "R emisor (dB)", "R receptor (dB)", "Longitud unión (m)",
+        "m' emisor (kg/m²)", "m' receptor (kg/m²)",
+        "Tipo unión SONARA", "Kij SONARA (dB)"
+    ]
+    fl_specs = [
+        ("Muro lateral 1", True, "HA 180 mm · docente", union_length, "432", "432"),
+        ("Muro lateral 2", True, "HA 180 mm · docente", union_length, "432", "432"),
+        ("Fachada / elemento lateral", False, "HA 150 mm · F-01", union_width, "360", "360"),
+        ("Tabique separador / elemento vertical", False, "HA 180 mm · docente", union_width, "432", "432"),
     ]
     old_flanks = old_base.get("flanks") or []
-    for idx, row in enumerate(fl_def):
-        if idx < len(old_flanks) and isinstance(old_flanks[idx], dict):
-            row["Kij SONARA (dB)"] = str(old_flanks[idx].get("Kij SONARA (dB)", ""))
+    old_by_name = {
+        str(row.get("Flanco SONARA") or row.get("Encuentro") or ""): row
+        for row in old_flanks if isinstance(row, dict)
+    }
+    fl_def = []
+    for index, (name, active, material, length, mass_source, mass_receiver) in enumerate(fl_specs):
+        previous = old_by_name.get(name, {})
+        if not previous and index < len(old_flanks) and isinstance(old_flanks[index], dict):
+            previous = old_flanks[index]
+        fl_def.append({
+            "Flanco SONARA": name, "Activo": "Sí" if active else "No",
+            "Material / hipótesis": material,
+            "R emisor (dB)": "50", "R receptor (dB)": "50",
+            "Longitud unión (m)": f"{length:.2f}",
+            "m' emisor (kg/m²)": mass_source,
+            "m' receptor (kg/m²)": mass_receiver,
+            "Tipo unión SONARA": "Manual",
+            "Kij SONARA (dB)": str(previous.get("Kij SONARA (dB)", ""))
+        })
     flanks = st.data_editor(
         pd.DataFrame(fl_def, columns=fl_cols), hide_index=True,
         num_rows="fixed", use_container_width=True,
-        disabled=fl_cols[:-1], key="c5l2_s5_flanks_docente_v2",
+        disabled=fl_cols[:-1], key="c5l2_s5_flanks_sonara_inputs_v3",
         column_config={
             "Kij SONARA (dB)": st.column_config.TextColumn(
-                "Kij calculado en SONARA (dB)",
-                help="Única columna editable. Registra Kij asociado a cada encuentro del cálculo ISO 12354-2."
+                "Kij calculado (dB)",
+                help="Única columna editable: Kij aplicado en SONARA para cada flanco."
             )
         }
     ).fillna("").to_dict("records")
     st.caption(
-        "Esta ficha docente resume cuatro encuentros. Si SONARA distingue "
-        "coeficientes por vía (Ff, Fd y Df), se mantienen los valores "
-        "detallados en el JSON del proyecto, sin promediarlos arbitrariamente."
+        "R emisor = R receptor = 50 dB son **valores docentes de trabajo** "
+        "(coinciden con los valores iniciales manuales del módulo SONARA), "
+        "**no propiedades ensayadas** de los muros. Las masas nominales "
+        "corresponden a la hipótesis HA de 2.400 kg/m³: "
+        "180 mm → 432 kg/m² y 150 mm → 360 kg/m². "
+        "Los cuatro flancos, sus estados de activación y las opciones de "
+        "unión se deben reproducir en SONARA. Si cambian para la variante, "
+        "el JSON conserva las nuevas entradas."
     )
 
     st.markdown("#### C · Diseño libre de la mejora de impacto")
