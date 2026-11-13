@@ -276,18 +276,18 @@ def _stage1(lab,saved):
         """,
         unsafe_allow_html=True,
     )
-    # Render ilustrativo opcional: sin mensajes técnicos ni avisos de archivo faltante.
+    st.markdown("#### Vista general de Torre A")
+    # Render ilustrativo; nunca es fuente de cotas ni de localización precisa.
     render_path = Path(__file__).resolve().parent.parent / "assets" / "curso5_lab2" / "chimbote_torre_a_render.png"
     if render_path.is_file():
         st.image(str(render_path), use_container_width=True)
-        st.markdown(
-            '<div style="font-size:.78rem;color:#527083;margin-top:-.65rem;'
-            'margin-bottom:1.25rem">Visualización conceptual del proyecto; '
-            'la geometría de referencia corresponde a los planos originales.</div>',
-            unsafe_allow_html=True,
+        st.caption(
+            "Figura 1 · Vista conceptual de Torre A frente a Pasaje Chimbote. "
+            "No representa exactamente las fachadas ni permite obtener dimensiones. "
+            "La ubicación de la vivienda se verifica exclusivamente en los planos originales."
         )
 
-    st.markdown("#### Identificación de la vivienda de estudio")
+    st.markdown("#### Ubicación de la vivienda de estudio · planta original intervenida")
     st.markdown(
         "La unidad seleccionada debe reconocerse **en la planta original**. "
         "El render es únicamente una representación conceptual; "
@@ -318,73 +318,99 @@ def _stage1(lab,saved):
 
     st.markdown("### B · Planos y documentación complementaria")
     st.markdown(
-        "Descarga los antecedentes por separado en los apartados siguientes "
-        "o utiliza el expediente completo cuando los planos originales "
-        "estén publicados en el repositorio."
+        "Los **planos originales** son la fuente técnica principal. Las fichas y "
+        "los supuestos académicos complementan la información cuando el expediente "
+        "no contiene algún dato requerido. Descarga el expediente completo o "
+        "consulta cada documento por separado."
     )
     resource_dir = Path(__file__).resolve().parent.parent / "assets" / "curso5_lab2"
-    resource_files = [
+    branch_docs = (
+        "https://github.com/maaraos-coder/lab-aereo-clase-1-refactor/"
+        "blob/curso3-lab2-etapas-3-10/docs/"
+    )
+    resource_groups = [
         (
-            "01 · Planos originales y vivienda identificada",
-            "Chimbote_Torre_A_CH-A-P05-S03_planos.pdf",
-            "Planta de la Torre A, cortes y elevaciones del proyecto.",
+            "B1 · Documentación arquitectónica original",
+            "Primero revisa la planta tipo, los cortes y las elevaciones. "
+            "La planta intervenida del apartado A permite reconocer la vivienda, "
+            "pero no sustituye los dibujos técnicos originales.",
+            [
+                (
+                    "Planos originales de Torre A y vivienda identificada",
+                    "Chimbote_Torre_A_CH-A-P05-S03_planos.pdf",
+                    "Planta, cortes y elevaciones originales: geometría y colindancias.",
+                    None,
+                ),
+            ],
         ),
         (
-            "02 · Ficha geométrica de la vivienda",
-            "01_Ficha_Geometrica_Chimbote_Alumno.pdf",
-            "Identificación de recintos, colindancias y geometría por determinar.",
-        ),
-        (
-            "03 · Especificaciones constructivas académicas",
-            "02_Especificaciones_Constructivas_Chimbote_Alumno.pdf",
-            "Composiciones iniciales del ejercicio y criterios de trazabilidad.",
-        ),
-        (
-            "04 · Suplemento de cotas",
-            "03_Suplemento_Cotas_Chimbote_Alumno.pdf",
-            "Hipótesis de dimensiones a utilizar solo cuando falten datos documentales.",
-        ),
-        (
-            "05 · Datos de tránsito para fachada",
-            "04_Trafico_Fachada_Chimbote_Alumno.pdf",
-            "Flujos por período, receptor y guía de modelación acústica.",
+            "B2 · Fichas técnicas y antecedentes para los cálculos",
+            "Después consulta las fichas que ayudan a organizar la información "
+            "extraída de los planos. Los supuestos deben identificarse como tales.",
+            [
+                (
+                    "Ficha geométrica de la vivienda",
+                    "01_Ficha_Geometrica_Chimbote_Alumno.pdf",
+                    "Recintos, cerramientos, superficies, volúmenes y colindancias por determinar.",
+                    "curso5_lab2_chimbote_ficha_geometrica_alumno.md",
+                ),
+                (
+                    "Especificaciones constructivas académicas",
+                    "02_Especificaciones_Constructivas_Chimbote_Alumno.pdf",
+                    "Composiciones iniciales para evaluar aislamiento y mejoras.",
+                    "curso5_lab2_chimbote_especificaciones_alumno.md",
+                ),
+                (
+                    "Suplemento de cotas e hipótesis",
+                    "03_Suplemento_Cotas_Chimbote_Alumno.pdf",
+                    "Datos docentes a emplear solamente cuando falten cotas documentales.",
+                    "curso5_lab2_chimbote_suplemento_cotas_alumno.md",
+                ),
+                (
+                    "Tránsito y exposición acústica de fachada",
+                    "04_Trafico_Fachada_Chimbote_Alumno.pdf",
+                    "Datos supuestos de tránsito para modelar el ruido hacia Pasaje Chimbote.",
+                    "curso5_lab2_chimbote_trafico_lden_alumno.md",
+                ),
+            ],
         ),
     ]
-    for resource_title, filename, description in resource_files:
-        st.markdown(f"#### {resource_title}")
-        st.caption(description)
-        path = resource_dir / filename
-        if path.is_file():
-            st.download_button(
-                f"📥 Descargar {filename}",
-                data=path.read_bytes(),
-                file_name=filename,
-                mime="application/pdf",
-                key=f"c5l2_s1_download_{filename}",
-                use_container_width=True,
-            )
-        else:
-            st.info(
-                "Este documento aún no está publicado en la rama. "
-                f"Archivo esperado: `assets/curso5_lab2/{filename}`."
-            )
-
-    st.markdown("#### Expediente único (ZIP)")
-    st.markdown(
-        "Descarga el **expediente único del alumno** antes de comenzar: "
-        "planta tipo de la Torre A con la unidad identificada, cortes, elevaciones, "
-        "especificaciones constructivas, ficha geométrica, suplemento de cotas "
-        "y antecedentes de tráfico para el estudio de fachada."
-    )
+    missing_resources = []
+    for group_title, group_intro, resources in resource_groups:
+        st.markdown(f"#### {group_title}")
+        st.caption(group_intro)
+        for title, filename, description, alternative in resources:
+            with st.container(border=True):
+                st.markdown(f"**{title}**")
+                st.caption(description)
+                file_path = resource_dir / filename
+                if file_path.is_file():
+                    st.download_button(
+                        "📥 Descargar PDF",
+                        data=file_path.read_bytes(),
+                        file_name=filename,
+                        mime="application/pdf",
+                        key=f"c5l2_s1_download_{filename}",
+                        use_container_width=True,
+                    )
+                elif alternative:
+                    missing_resources.append(filename)
+                    st.link_button(
+                        "📄 Consultar anexo del alumno (versión disponible)",
+                        branch_docs + alternative,
+                        use_container_width=True,
+                    )
+                else:
+                    missing_resources.append(filename)
+                    st.caption(
+                        "Plano original pendiente de publicación en el repositorio; "
+                        "la imagen ilustrativa no lo sustituye."
+                    )
+    st.markdown("#### B3 · Expediente completo para descarga")
     pack, issue = _student_document_pack()
-    if pack is None:
-        st.warning(
-            issue + " El paquete completo no estará disponible hasta "
-            "incorporar el documento faltante a esta rama."
-        )
-    else:
+    if pack is not None:
         st.download_button(
-            "📥 Descargar planos y documentación del alumno (.zip)",
+            "📦 Descargar expediente completo del alumno (.zip)",
             data=pack,
             file_name="Curso5_Lab2_Chimbote_CH-A-P05-S03_Alumno.zip",
             mime="application/zip",
@@ -392,40 +418,27 @@ def _stage1(lab,saved):
             use_container_width=True,
             key="c5l2_docs_download",
         )
+    else:
+        st.info(
+            "El ZIP completo estará disponible cuando se publiquen los PDF "
+            "originales y los anexos. Mientras tanto, utiliza los documentos "
+            "disponibles por separado."
+        )
+    if missing_resources:
+        with st.expander(
+            f"Estado de publicación de documentos · {len(missing_resources)} PDF pendientes",
+            expanded=False,
+        ):
+            st.caption(
+                "Los siguientes archivos todavía no están incorporados a esta rama. "
+                "No se presentan como descargables hasta estar disponibles."
+            )
+            for missing_filename in missing_resources:
+                st.code("assets/curso5_lab2/" + missing_filename, language=None)
     st.caption(
-        "Documentos de trabajo para el alumno. Las pautas docentes y las "
-        "soluciones resueltas no forman parte del paquete."
-    )
-
-    st.markdown("#### Consultar anexos del alumno por separado")
-    st.caption(
-        "Estos anexos pueden consultarse mientras se completa el ZIP. "
-        "Los planos originales resaltados siguen pendientes de publicación "
-        "en esta rama; los anexos no los sustituyen."
-    )
-    branch_docs = (
-        "https://github.com/maaraos-coder/lab-aereo-clase-1-refactor/"
-        "blob/curso3-lab2-etapas-3-10/docs/"
-    )
-    st.link_button(
-        "Ficha geométrica (alumno)",
-        branch_docs + "curso5_lab2_chimbote_ficha_geometrica_alumno.md",
-        use_container_width=True,
-    )
-    st.link_button(
-        "Especificaciones constructivas (alumno)",
-        branch_docs + "curso5_lab2_chimbote_especificaciones_alumno.md",
-        use_container_width=True,
-    )
-    st.link_button(
-        "Suplemento de cotas (alumno)",
-        branch_docs + "curso5_lab2_chimbote_suplemento_cotas_alumno.md",
-        use_container_width=True,
-    )
-    st.link_button(
-        "Antecedentes de tránsito para fachada (alumno)",
-        branch_docs + "curso5_lab2_chimbote_trafico_lden_alumno.md",
-        use_container_width=True,
+        "Las imágenes conceptuales son exclusivamente introductorias. "
+        "Los datos técnicos deben obtenerse de los planos, fichas y supuestos "
+        "explícitos. Las soluciones y pautas docentes no se incluyen."
     )
 
     st.markdown("### C · Requisitos normativos de Clase B")
