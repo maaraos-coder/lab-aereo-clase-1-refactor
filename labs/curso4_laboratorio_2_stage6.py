@@ -356,6 +356,17 @@ def render(lab,saved,runtime):
         )
     _teacher_solution(st,pd)
 
+    technical_restore = bool(
+        saved.get("c4l2_s6_teacher_assisted_restore") and saved.get("done_6")
+    )
+    if technical_restore:
+        st.info(
+            "Tu Etapa 6 fue recuperada desde los respaldos enviados al docente "
+            "y habilitada por incidencia técnica. Puedes continuar con la Etapa 7 "
+            "sin repetir las aplicaciones por máquina. Esta habilitación no "
+            "equivale a la evaluación académica de las medidas propuestas."
+        )
+
     st.markdown("### 1 · Recupera el problema acústico")
     reference_period=str(saved.get("c4l2_s5_reference_period") or "Diurno")
     reference_limit=_num(saved.get("c4l2_s5_reference_limit_db"))
@@ -493,7 +504,10 @@ def render(lab,saved,runtime):
                 candidate["c4l2_s6_measure_config"] = {
                     **deepcopy(existing), **imports
                 }
-                candidate["done_6"] = False
+                candidate["done_6"] = bool(
+                    saved.get("done_6") and
+                    saved.get("c4l2_s6_teacher_assisted_restore")
+                )
                 # The checkpoint is verified before reporting success. The
                 # six JSON files remain in the student's possession if it fails.
                 runtime["_save"](lab, candidate, 6)
@@ -722,7 +736,12 @@ def render(lab,saved,runtime):
             candidate=deepcopy(saved)
             candidate["c4l2_s6_control_design"]=design_records
             candidate["c4l2_s6_measure_config"]={**(saved.get("c4l2_s6_measure_config") or {}),selected_front:cfg}
-            candidate["done_6"]=False
+            # A teacher-authorized technical recovery is not revoked by
+            # saving a subsequent machine application or front.
+            candidate["done_6"]=bool(
+                saved.get("done_6") and
+                saved.get("c4l2_s6_teacher_assisted_restore")
+            )
             try:
                 candidate["c4l2_s6_measure_config"][selected_front]=_stage6_json_safe(cfg)
                 candidate["c4l2_s6_control_design"]=_stage6_json_safe(design_records)
@@ -829,7 +848,9 @@ def render(lab,saved,runtime):
         "c4l2_s6_measure_config":configs,
         "c4l2_s6_checks":{"original":v1,"viable":v2,"geometry":v3,"representation":v3,"copy":v4},
     }
-    if design_records!=saved.get("c4l2_s6_control_design") or configs!=saved.get("c4l2_s6_measure_config"):
+    if ((design_records!=saved.get("c4l2_s6_control_design") or
+         configs!=saved.get("c4l2_s6_measure_config")) and
+        not technical_restore):
         draft_updates["done_6"]=False
     render_draft_save(st,saved,runtime,lab,6,draft_updates,"c4l2_s6_save_draft")
 
