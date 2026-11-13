@@ -2318,7 +2318,7 @@ def _stage2_teacher_geometry_results():
     )
 
 
-def _teacher(stage):
+def _teacher(stage, saved=None):
     if _is_teacher():
         with st.expander(f"Pauta docente · Etapa {stage}",expanded=False):
             if stage==1:
@@ -2330,6 +2330,32 @@ def _teacher(stage):
                 _stage2_teacher_geometry_results()
             else:
                 st.write(TEACHER[stage])
+            if stage==4:
+                st.markdown("**Pauta docente · proyectos SONARA adjuntos**")
+                st.caption(
+                    "Consulta la condición original y la mejora guardadas por "
+                    "el alumno en la Etapa 4. La ficha conserva el proyecto "
+                    "JSON completo para revisar geometría, materiales, flancos "
+                    "y los resultados de las soluciones."
+                )
+                saved_stage4 = (saved or {}).get("c5l2_s4") or {}
+                refs = saved_stage4.get("sonara_json") or {}
+                for mode, label in (("original", "Modelo original"),
+                                    ("mejora", "Modelo mejorado")):
+                    attachment = refs.get(mode)
+                    if isinstance(attachment, dict) and attachment.get("document"):
+                        st.write(f"**{label}** · {attachment.get('filename', 'SONARA.json')}")
+                        st.caption("SHA-256: " + str(attachment.get("sha256", "")))
+                        st.json(attachment["document"], expanded=False)
+                        st.download_button(
+                            f"⬇ Descargar proyecto SONARA · {label}",
+                            json.dumps(attachment["document"], ensure_ascii=False, indent=2),
+                            file_name=attachment.get("filename", f"sonara_{mode}.json"),
+                            mime="application/json",
+                            key=f"c5l2_s4_teacher_download_{mode}"
+                        )
+                    else:
+                        st.caption(f"{label}: sin JSON guardado.")
             if stage==3:
                 st.markdown("**Pauta de corrección · Etapa 3**")
                 st.write("**A · Sistemas:** conservar M-01, L-01, F-01, V-01, S-01, IS-01 y T-01/T-02/T-03 como materialidad académica original. No exigir al estudiante volver a seleccionar esos sistemas.")
@@ -2415,4 +2441,4 @@ def run_stage(stage,lab,saved,runtime):
     elif stage==8:_stage8(lab,saved)
     elif stage==9:_stage9(lab,saved)
     else:_stage10(lab,saved)
-    _teacher(stage)
+    _teacher(stage,saved)
