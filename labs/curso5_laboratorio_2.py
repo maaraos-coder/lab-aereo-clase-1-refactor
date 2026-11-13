@@ -550,72 +550,159 @@ def _stage2(lab,saved):
         "es una hipótesis de modelación, no un trazado certificado en planos."
     )
     st.markdown("#### B · Geometría de los recintos receptores")
-    rec_cols=["Caso","Recinto receptor","Piso / unidad","Largo (m)","Ancho (m)",
-              "Altura (m)","Área (m²)","Volumen (m³)","Plano / cota"]
+    st.caption(
+        "Los recintos ya están asignados en A. Completa exclusivamente las magnitudes. "
+        "La tabla simplificada evita desplazamiento horizontal y muestra sus cuatro casos."
+    )
+    # The underlying saved structure is preserved (including receiver labels),
+    # while the editor displays only short codes and student-editable geometry.
+    rec_cols = ["Caso", "Recinto receptor", "Piso / unidad",
+                "Largo (m)", "Ancho (m)", "Altura (m)",
+                "Área (m²)", "Volumen (m³)", "Plano / cota"]
     room_labels = {
         case: (receiver, "Piso 5 · CH-A-P05-S03")
         for case, _, receiver, _ in fixed_cases
     }
     stored_rooms = {
-        str(row.get("Caso") or ""):row for row in (old.get("rooms") or [])
+        str(row.get("Caso") or ""): row for row in (old.get("rooms") or [])
+        if isinstance(row, dict)
     }
-    room_rows=[]
-    for case,receiver,location in (
-        (case, *room_labels[case]) for case,_,_,_ in fixed_cases
-    ):
-        row={column: stored_rooms.get(case,{}).get(column,"") for column in rec_cols}
-        row.update({"Caso":case,"Recinto receptor":receiver,"Piso / unidad":location})
+    room_rows = []
+    for case, _, _, _ in fixed_cases:
+        receiver, location = room_labels[case]
+        row = {column: stored_rooms.get(case, {}).get(column, "")
+               for column in rec_cols}
+        row.update({"Caso": case, "Recinto receptor": receiver,
+                    "Piso / unidad": location})
         room_rows.append(row)
     import pandas as pd
-    room_df=st.data_editor(
-        pd.DataFrame(room_rows,columns=rec_cols),key="c5l2_rooms_fixed_v1",
-        hide_index=True,use_container_width=True,num_rows="fixed",
-        disabled=["Caso","Recinto receptor","Piso / unidad"],
+    room_edit_cols = ["Caso", "Largo (m)", "Ancho (m)", "Altura (m)",
+                      "Área (m²)", "Volumen (m³)", "Plano / cota"]
+    room_df = st.data_editor(
+        pd.DataFrame(room_rows)[room_edit_cols],
+        key="c5l2_rooms_compact_v2", hide_index=True, use_container_width=True,
+        height=190, num_rows="fixed",
+        disabled=["Caso"],
+        column_config={
+            "Caso": st.column_config.TextColumn("Caso", width="small"),
+            "Largo (m)": st.column_config.TextColumn("Largo", width="small"),
+            "Ancho (m)": st.column_config.TextColumn("Ancho", width="small"),
+            "Altura (m)": st.column_config.TextColumn("Alto", width="small"),
+            "Área (m²)": st.column_config.TextColumn("Área m²", width="small"),
+            "Volumen (m³)": st.column_config.TextColumn("Vol. m³", width="small"),
+            "Plano / cota": st.column_config.TextColumn("Lámina / cota", width="medium"),
+        },
     )
-    rooms=room_df.fillna("").to_dict("records")
+    compact_room = room_df.fillna("").to_dict("records")
+    rooms = []
+    for master, edited in zip(room_rows, compact_room):
+        rooms.append({**master, **edited})
 
     st.markdown("#### C · Superficies de separación y trazabilidad")
-    sep_cols=["Caso","Recinto emisor","Recinto receptor","Elemento",
-              "Longitud (m)","Altura (m)","Superficie (m²)","Plano / cota"]
-    stored_sep={
-        str(row.get("Caso") or ""):row for row in (old.get("separations") or [])
-    }
-    sep_rows=[]
-    for case,emitter,receiver,element in fixed_cases:
-        row={column:stored_sep.get(case,{}).get(column,"") for column in sep_cols}
-        row.update({"Caso":case,"Recinto emisor":emitter,
-                    "Recinto receptor":receiver,"Elemento":element})
-        sep_rows.append(row)
-    sep_df=st.data_editor(
-        pd.DataFrame(sep_rows,columns=sep_cols),key="c5l2_separations_fixed_v1",
-        hide_index=True,use_container_width=True,num_rows="fixed",
-        disabled=["Caso","Recinto emisor","Recinto receptor","Elemento"],
+    st.caption(
+        "Los emisores, receptores y elementos están fijados en la tabla A. "
+        "Aquí documenta dimensiones y superficies para cada caso."
     )
-    sep=sep_df.fillna("").to_dict("records")
+    sep_cols = ["Caso", "Recinto emisor", "Recinto receptor", "Elemento",
+                "Longitud (m)", "Altura (m)", "Superficie (m²)", "Plano / cota"]
+    stored_sep = {
+        str(row.get("Caso") or ""): row
+        for row in (old.get("separations") or []) if isinstance(row, dict)
+    }
+    sep_rows = []
+    for case, emitter, receiver, element in fixed_cases:
+        row = {column: stored_sep.get(case, {}).get(column, "")
+               for column in sep_cols}
+        row.update({"Caso": case, "Recinto emisor": emitter,
+                    "Recinto receptor": receiver, "Elemento": element})
+        sep_rows.append(row)
+    sep_edit_cols = ["Caso", "Longitud (m)", "Altura (m)",
+                     "Superficie (m²)", "Plano / cota"]
+    sep_df = st.data_editor(
+        pd.DataFrame(sep_rows)[sep_edit_cols],
+        key="c5l2_separations_compact_v2", hide_index=True,
+        use_container_width=True, height=190, num_rows="fixed",
+        disabled=["Caso"],
+        column_config={
+            "Caso": st.column_config.TextColumn("Caso", width="small"),
+            "Longitud (m)": st.column_config.TextColumn("Longitud", width="small"),
+            "Altura (m)": st.column_config.TextColumn("Altura", width="small"),
+            "Superficie (m²)": st.column_config.TextColumn("Superficie m²", width="small"),
+            "Plano / cota": st.column_config.TextColumn("Lámina / cota", width="large"),
+        },
+    )
+    sep = [{**master, **edited}
+           for master, edited in zip(sep_rows, sep_df.fillna("").to_dict("records"))]
 
     st.markdown("#### D · Fachada sur del estar y ventanas")
-    env_cols=["Recinto","Orientación","Paño total (m²)",
-              "Ventanas (m²)","Opaco (m²)","Plano / cota"]
-    stored_env=(old.get("facades") or [{}])[0]
-    env_row={column:stored_env.get(column,"") for column in env_cols}
-    env_row.update({"Recinto":"Estar · CH-A-P05-S03, piso 5",
-                    "Orientación":"Sur · Pasaje Chimbote"})
-    env_df=st.data_editor(
-        pd.DataFrame([env_row],columns=env_cols),key="c5l2_facades_fixed_v1",
-        hide_index=True,use_container_width=True,num_rows="fixed",
-        disabled=["Recinto","Orientación"],
+    env_cols = ["Recinto", "Orientación", "Paño total (m²)",
+                "Ventanas (m²)", "Opaco (m²)", "Plano / cota"]
+    stored_env = (old.get("facades") or [{}])[0]
+    env_row = {column: stored_env.get(column, "") for column in env_cols}
+    env_row.update({"Recinto": "Estar · CH-A-P05-S03, piso 5",
+                    "Orientación": "Sur · Pasaje Chimbote"})
+    env_edit_cols = ["Paño total (m²)", "Ventanas (m²)",
+                     "Opaco (m²)", "Plano / cota"]
+    env_df = st.data_editor(
+        pd.DataFrame([env_row])[env_edit_cols],
+        key="c5l2_facades_compact_v2", hide_index=True,
+        use_container_width=True, height=100, num_rows="fixed",
+        column_config={
+            "Paño total (m²)": st.column_config.TextColumn("Fachada total m²", width="medium"),
+            "Ventanas (m²)": st.column_config.TextColumn("Ventanas m²", width="medium"),
+            "Opaco (m²)": st.column_config.TextColumn("Opaco m²", width="medium"),
+            "Plano / cota": st.column_config.TextColumn("Lámina / cota", width="large"),
+        },
     )
-    env=env_df.fillna("").to_dict("records")
-    with st.expander("Criterios de construcción de la ficha"):
-        st.markdown("Identifica áreas efectivas, espesores, orientación, altura libre y volumen útil. Señala dimensiones deducidas de escala como estimaciones, no como cotas. Documenta fuente y unidades.")
-    if st.button("Guardar ficha geométrica",type="primary",key="c5l2_save_geometry"):
-        if not all(str(row.get("Plano / cota","")).strip() for row in rooms+sep+env):
+    env = [{**env_row, **env_df.fillna("").to_dict("records")[0]}]
+    with st.expander("Criterios para levantar la geometría"):
+        st.markdown(
+            "Registra las dimensiones **reales de la unidad seleccionada** con su lámina; "
+            "separa las cotas documentales de las **hipótesis docentes HG-01, HV-02, HI-01**. "
+            "Para recintos irregulares usa descomposición de superficies. "
+            "El área opaca de fachada es área total menos vanos y nunca se toma del render."
+        )
+    state_payload = {"rooms": rooms, "separations": sep, "facades": env}
+    draft_col, finish_col = st.columns(2)
+    with draft_col:
+        save_draft = st.button(
+            "💾 Guardar avance", key="c5l2_save_geometry_draft_v2",
+            use_container_width=True,
+        )
+    with finish_col:
+        finish_stage = st.button(
+            "✓ Completar Etapa 2", key="c5l2_complete_geometry_v2",
+            type="primary", use_container_width=True,
+        )
+    if save_draft:
+        _save(lab, saved, 2, "c5l2_s2", state_payload, complete=False)
+    if finish_stage:
+        if not all(str(row.get("Plano / cota", "")).strip()
+                   for row in rooms + sep + env):
             st.warning(
-                "Indica la lámina/cota de cada caso. Si un dato falta en planos, "
-                "registra explícitamente PENDIENTE y consulta el suplemento docente."
+                "Falta la referencia de lámina/cota de algún caso. "
+                "Puedes guardar el avance sin cerrar la etapa."
             )
+        elif not all(
+            str(row.get(field, "")).strip()
+            for row in rooms for field in ("Área (m²)", "Volumen (m³)")
+        ):
+            st.warning(
+                "Completa áreas y volúmenes de los cuatro receptores. "
+                "Si un recinto se repite en varios casos, registra el mismo resultado."
+            )
+        elif not all(
+            str(row.get("Superficie (m²)", "")).strip() for row in sep
+        ):
+            st.warning("Documenta las superficies de separación/modelación de los cuatro casos.")
+        elif not all(
+            str(env[0].get(field, "")).strip()
+            for field in ("Paño total (m²)", "Ventanas (m²)", "Opaco (m²)")
+        ):
+            st.warning("Completa la geometría de la fachada sur del estar.")
         else:
-            _save(lab,saved,2,"c5l2_s2",{"rooms":rooms,"separations":sep,"facades":env})
+            _save(lab, saved, 2, "c5l2_s2", state_payload, complete=True)
+
 
 def _stage3(lab,saved):
     _header(3)
