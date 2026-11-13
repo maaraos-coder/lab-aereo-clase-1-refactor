@@ -21,16 +21,14 @@
 
 ### B · Reverberación — materiales compatibles con SONARA
 
-**El material constructivo está descrito en la sección A.** Para el cálculo de reverberación, SONARA incorpora **presets genéricos de absorción**, accesibles en `Reverberación · predicción de proyecto → Material genérico`. Las seis bandas de octava y valores siguientes se han contrastado con el código vigente de SONARA (`maaraos-coder/sonara`, `app.py`, función `app_reverberacion_iso`). **Son coeficientes genéricos de modelación, no resultados de ensayos de los productos que se construirán ni especificaciones del Edificio Chimbote.**
+**El material constructivo está descrito en la sección A.** Para el cálculo de reverberación, SONARA incorpora **presets genéricos de absorción**, accesibles en `Reverberación · predicción de proyecto → Material genérico`. Las bandas y los tres primeros presets se contrastaron con SONARA (`maaraos-coder/sonara`, `app.py`, función `app_reverberacion_iso`). El preset de **puerta de madera maciza** se incorporó después al mismo módulo utilizando una referencia bibliográfica identificada. **Son coeficientes genéricos de modelación, no resultados de ensayos de los productos que se construirán ni especificaciones del Edificio Chimbote.**
 
 | Preset genérico SONARA | α 125 Hz | α 250 Hz | α 500 Hz | α 1.000 Hz | α 2.000 Hz | α 4.000 Hz |
 |---|---:|---:|---:|---:|---:|---:|
 | Hormigón / superficie dura | 0,01 | 0,01 | 0,02 | 0,02 | 0,02 | 0,03 |
 | Yeso pintado | 0,10 | 0,05 | 0,04 | 0,07 | 0,09 | 0,10 |
 | Vidrio | 0,18 | 0,06 | 0,04 | 0,03 | 0,02 | 0,02 |
-| Alfombra | 0,08 | 0,24 | 0,57 | 0,69 | 0,71 | 0,73 |
-| Cielo acústico | 0,45 | 0,70 | 0,85 | 0,90 | 0,90 | 0,85 |
-| Panel de lana mineral | 0,35 | 0,80 | 0,95 | 1,00 | 1,00 | 1,00 |
+| Puerta de madera maciza | 0,14 | 0,10 | 0,06 | 0,08 | 0,10 | 0,10 |
 
 **Asignación inicial para los dos recintos (sin soluciones mejoradas):**
 
@@ -40,13 +38,13 @@
 | Estar: piso | Cerámica adherida T-01 | **Hormigón / superficie dura** | Aproximación reflectante: el preset no es una curva ensayada de la cerámica. |
 | Ambos: cielo | Cielo continuo pintado T-02 | **Yeso pintado** | Preset equivalente de acabado pintado. |
 | Ambos: muros opacos | Pintura sobre superficies rígidas T-02 | **Yeso pintado** | Preset equivalente; no determina la transmisión del muro. |
-| Ambos: puerta interior | Puerta sin ficha de absorción incorporada | **Hormigón / superficie dura** | Aproximación reflectante, **no** curva de puerta ensayada. |
+| Ambos: puerta interior | **Puerta de madera maciza** (hipótesis docente) | **Puerta de madera maciza** | Curva genérica de referencia bibliográfica adoptada también en SONARA; no ensayo de una puerta del proyecto. |
 | Estar: ventana | DVH V-01 | **Vidrio** | Valor genérico superficial; no representa el aislamiento acústico del DVH. |
 | Dormitorio: ventana | Solo si se identifica o adopta un vano | **Vidrio** | Si no se incluye una ventana en el submodelo, **omitir esa superficie** del cálculo en SONARA; no reemplazarla por un vano ficticio. |
 
 **Procedimiento:** el alumno registra en la Etapa 3 las superficies de piso, cielo, muros opacos, puerta y ventana **del dormitorio y del estar**, selecciona los **mismos presets** en SONARA y calcula los tiempos de reverberación por banda de **125, 250, 500, 1.000, 2.000 y 4.000 Hz**, utilizando **Sabine o Eyring** con el método declarado y la geometría definida. **No se fija un TR por defecto.** La condición de cálculo será de **recintos vacíos/sin mobiliario**, para mantener comparabilidad. La Etapa 3 contiene tablas de α(f) y de TR(f), y permite guardar avances parciales.
 
-**Precisión:** los materiales absorbentes de mejora (`Alfombra`, `Cielo acústico`, `Panel de lana mineral`) figuran en la tabla porque están disponibles en SONARA, pero **no forman parte de la condición inicial**; su uso exige proponer una variante y justificar su montaje. La biblioteca de materiales elásticos para **aislamiento** de SONARA no sustituye estas curvas de **absorción**.
+**Origen de la puerta de madera:** curva para puerta maciza cerrada atribuida a NBR 12179:1992, reproducida en una publicación de acústica de la UFRJ (https://www.scielo.br/j/ac/a/yNvTbGMXxGxBYVbWYzDk3mP/). Esta curva se añadió al módulo de reverberación de SONARA y se usa únicamente como referencia docente. **Los materiales absorbentes para mejoras no se incluyen en la tabla de condición original.** La biblioteca de materiales elásticos para **aislamiento** de SONARA no sustituye estas curvas de **absorción**.
 
 ### C · Condiciones de operación complementarias
 
