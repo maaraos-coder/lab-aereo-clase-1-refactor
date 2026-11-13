@@ -537,10 +537,9 @@ def _stage2(lab,saved):
          "Dormitorio · CH-A-P05-S03, piso 5", "S-01/IS-01 · instalaciones"),
     ]
     st.markdown("#### A · Casos y recintos asignados por el docente")
-    st.dataframe(
+    st.table(
         [{"Caso":case,"Emisor / fuente":emitter,"Receptor":receiver,"Elemento":element}
-         for case,emitter,receiver,element in fixed_cases],
-        hide_index=True, use_container_width=True,
+         for case,emitter,receiver,element in fixed_cases]
     )
     st.caption(
         "La planta tipo original incluye pisos 3–16, por lo que la superposición "
@@ -1255,6 +1254,118 @@ def _stage1_teacher_criteria_guide():
     )
 
 
+def _stage2_teacher_geometry_results():
+    """Field-by-field teaching answer key with provenance, not invented survey dimensions."""
+    st.markdown("### Solución docente · ficha geométrica de la Etapa 2")
+    st.info(
+        "Valores calculados para el **submodelo rectangular académico**, donde existen "
+        "cotas parciales y/o hipótesis docentes explícitas. **No son una medición "
+        "cerrada de CH-A-P05-S03.** Para calificar resultados documentales exactos, "
+        "contrasta las cotas y límites del recinto con los planos originales: "
+        "planta tipo Parte 1, pág. 8; corte y elevación sur Parte 2, pág. 5. "
+        "No sustituir una cota no demostrada por una cifra del render."
+    )
+    st.markdown("#### A · Recintos asignados (respuestas fijas)")
+    st.table([
+        {"Caso":"AI-01","Emisor":"Estar vecino poniente, P5",
+         "Receptor":"Dormitorio CH-A-P05-S03, P5","Elemento":"M-01"},
+        {"Caso":"IM-01","Emisor":"Dormitorio superior, P6",
+         "Receptor":"Dormitorio CH-A-P05-S03, P5","Elemento":"L-01"},
+        {"Caso":"FA-01","Emisor":"Pasaje Chimbote",
+         "Receptor":"Estar CH-A-P05-S03, P5","Elemento":"F-01/V-01"},
+        {"Caso":"IN-01","Emisor":"WC vivienda superior, P6",
+         "Receptor":"Dormitorio CH-A-P05-S03, P5","Elemento":"S-01/IS-01"},
+    ])
+    st.markdown("#### B · Resultados para los recintos receptores")
+    st.table([
+        {"Caso":"AI-01","Recinto":"Dormitorio","Largo":"3,10 m*",
+         "Ancho":"2,60 m*","Altura":"2,50 m HG-01",
+         "Área":"8,06 m²","Volumen":"20,15 m³"},
+        {"Caso":"IM-01","Recinto":"Dormitorio","Largo":"3,10 m*",
+         "Ancho":"2,60 m*","Altura":"2,50 m HG-01",
+         "Área":"8,06 m²","Volumen":"20,15 m³"},
+        {"Caso":"FA-01","Recinto":"Estar","Largo":"3,75 m*",
+         "Ancho":"2,43 m*","Altura":"2,50 m HG-01",
+         "Área":"9,11 m²*","Volumen":"22,78 m³*"},
+        {"Caso":"IN-01","Recinto":"Dormitorio","Largo":"3,10 m*",
+         "Ancho":"2,60 m*","Altura":"2,50 m HG-01",
+         "Área":"8,06 m²","Volumen":"20,15 m³"},
+    ])
+    st.caption(
+        "* Las cifras 2,60 × 3,10 m (dormitorio) y 2,43 × 3,75 m "
+        "(sector estar) se identificaron como **cotas parciales** en la planta. "
+        "Los resultados A = largo × ancho y V = A × 2,50 se muestran para "
+        "una **idealización rectangular**. La planta no demuestra que el "
+        "estar sea un rectángulo aislado de cocina/circulación. El volumen "
+        "del estar es, por tanto, solo ejemplo condicional. "
+        "No asignar una nota de error a una geometría documental mejor fundamentada."
+    )
+    st.markdown("**Operaciones de referencia**")
+    st.markdown(
+        "- Dormitorio: **2,60 × 3,10 = 8,06 m²**; "
+        "**8,06 × 2,50 = 20,15 m³** (altura HG-01). "
+        "Piso y cielo: **8,06 m² cada uno**; perímetro rectangular "
+        "**11,40 m**; muros interiores brutos **28,50 m²**. \n"
+        "- Estar, **solo si se justifica recinto rectangular**: "
+        "**2,43 × 3,75 = 9,1125 m² ≈ 9,11 m²**; "
+        "**9,1125 × 2,50 = 22,78125 m³ ≈ 22,78 m³**. "
+        "No aceptar automáticamente esta superficie como área útil final."
+    )
+
+    st.markdown("#### C · Superficies de separación por caso")
+    st.table([
+        {"Caso":"AI-01","Qué ingresar":"Longitud efectiva medianero × altura",
+         "Resultado docente":"7,75 m² SI l = 3,10 m","Estado":"Hipótesis; validar muro"},
+        {"Caso":"IM-01","Qué ingresar":"Proyección de losa común",
+         "Resultado docente":"8,06 m² SI coincide dormitorio",
+         "Estado":"Idealización verificable"},
+        {"Caso":"FA-01","Qué ingresar":"Longitud sur estar × altura",
+         "Resultado docente":"No cerrado por planos",
+         "Estado":"Medir alzado y planta"},
+        {"Caso":"IN-01","Qué ingresar":"Cierre/shaft y ruta de transmisión",
+         "Resultado docente":"3,50 m² SI l = HI-01 = 1,40 m",
+         "Estado":"Supuesto docente"},
+    ])
+    st.markdown(
+        "Operaciones condicionales: **3,10 × 2,50 = 7,75 m²** "
+        "(separador M-01, solo si el muro común tiene esa longitud); "
+        "**2,60 × 3,10 = 8,06 m²** (losa L-01 rectangular idealizada); "
+        "**1,40 × 2,50 = 3,50 m²** (cierre sanitario académico HI-01). "
+        "Para FA-01 no trasladar la ventana del dormitorio al estar ni "
+        "confundir paño de fachada con toda la unidad."
+    )
+    st.markdown("#### D · Fachada sur del estar y vanos")
+    st.table([
+        {"Campo":"Recinto","Respuesta docente":"Estar CH-A-P05-S03, P5"},
+        {"Campo":"Orientación","Respuesta docente":"Sur, hacia Pasaje Chimbote"},
+        {"Campo":"Paño total","Respuesta docente":"largo de fachada verificable × altura útil (sin valor cerrado)"},
+        {"Campo":"Ventanas","Respuesta docente":"2,16 m² SI aplica HV-02 (1,80 × 1,20 m)"},
+        {"Campo":"Paño opaco","Respuesta docente":"paño total − 2,16 m², SI hay un solo vano HV-02"},
+        {"Campo":"Ejemplo condicional","Respuesta docente":"SI l = 2,43 m: 6,08 − 2,16 = 3,92 m²"},
+        {"Campo":"Fuente","Respuesta docente":"Planta tipo P1 pág. 8 + elevación sur P2 pág. 5; HV-02 supuesto"},
+    ])
+    st.caption(
+        "El ejemplo de l = 2,43 m es **no verificado como longitud completa de fachada**. "
+        "El cálculo sin redondear es 2,43 × 2,50 = 6,075 m² (bruto), "
+        "1,80 × 1,20 = 2,160 m² (vidrio) y 6,075 − 2,160 = 3,915 m² (opaco). "
+        "Si las elevaciones muestran más vanos, se suman sus áreas; si el "
+        "estar está unido a cocina, la geometría receptora debe tratarse en consecuencia."
+    )
+    st.markdown("#### Pauta de evaluación de las respuestas")
+    st.markdown(
+        "1. **Identidad:** mantener el emisor/receptor fijado de cada caso.\n"
+        "2. **Cotas:** citar lámina y posición exacta; separar documental de HG-01/HV-02/HI-01.\n"
+        "3. **Operaciones:** revisar unidades, área = descomposición geométrica "
+        "y volumen = área × altura; repetir resultados del dormitorio en AI, IM e IN.\n"
+        "4. **Separación:** verificar M-01, losa L-01 y trayecto sanitario; "
+        "no atribuir a planos un shaft que no está dibujado.\n"
+        "5. **Fachada:** calcular área transparente/opaca del **estar**; "
+        "confirmar número y tamaño de vanos según elevación sur.\n"
+        "6. **Trazabilidad:** aceptar un resultado distinto al ejemplo "
+        "si lo fundamenta mejor el plano y el docente verifica la geometría."
+    )
+
+
 def _teacher(stage):
     if _is_teacher():
         with st.expander(f"Pauta docente · Etapa {stage}",expanded=False):
@@ -1262,9 +1373,9 @@ def _teacher(stage):
             if stage==1:
                 _stage1_teacher_criteria_guide()
             if stage==2:
-                st.warning("No hay ficha numérica cerrada para CH-A-P05-S03. Las cotas/áreas anteriores de Barrio Balmaceda NO son válidas para este proyecto.")
-                st.link_button("Auditoría geométrica de Chimbote (solo docente)", "https://github.com/maaraos-coder/lab-aereo-clase-1-refactor/blob/curso3-lab2-etapas-3-10/docs/curso5_lab2_chimbote_pauta_docente.md")
-                st.link_button("Pauta docente · submodelo geométrico resuelto", "https://github.com/maaraos-coder/lab-aereo-clase-1-refactor/blob/curso3-lab2-etapas-3-10/docs/curso5_lab2_chimbote_pauta_submodelo_docente.md")
+                _stage2_teacher_geometry_results()
+                st.link_button("Auditoría geométrica y fuentes (solo docente)", "https://github.com/maaraos-coder/lab-aereo-clase-1-refactor/blob/curso3-lab2-etapas-3-10/docs/curso5_lab2_chimbote_pauta_docente.md")
+                st.link_button("Memoria de cálculo de ejemplo (solo docente)", "https://github.com/maaraos-coder/lab-aereo-clase-1-refactor/blob/curso3-lab2-etapas-3-10/docs/curso5_lab2_chimbote_pauta_submodelo_docente.md")
             if stage==3:
                 st.info("Comprobar que el alumno determine TR por bandas en SONARA; no introducir valores fijos 0,5/0,6 s.")
 def run_stage(stage,lab,saved,runtime):
