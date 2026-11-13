@@ -1690,8 +1690,25 @@ def _teacher(stage):
             if stage==3:
                 st.markdown("**Pauta de corrección · Etapa 3**")
                 st.write("**A · Sistemas:** conservar M-01, L-01, F-01, V-01, S-01, IS-01 y T-01/T-02/T-03 como materialidad académica original. No exigir al estudiante volver a seleccionar esos sistemas.")
-                st.write("**B · Geometría y materiales:** dormitorio del piso 5 y estar del piso 5. Verificar volumen recuperado de Etapa 2 y cinco superficies por recinto (piso, cielo, muros opacos, puerta, ventana), sin doble contabilización de vanos. El suplemento docente permite geometría equivalente, no medición real del edificio.")
-                st.write("**C · Reverberación:** exigir **TR en segundos por bandas de octava de 125, 250, 500, 1000, 2000 y 4000 Hz**, para ambos recintos. Corregir con los resultados de SONARA aportados por el alumno, comprobando superficies, absorciones α(f), método y referencias. **No hay un TR numérico único sin curvas de absorción justificadas**.")
+                st.write("**B · Geometría y materiales:** dormitorio y estar del piso 5; comprobar volúmenes recuperados de Etapa 2 y superficies de piso, cielo, muros, puerta y ventana. Los acabados físicos son los T-01/T-02/T-03 y V-01 del encargo; los presets genéricos de SONARA son equivalencias de cálculo y no ensayos del acabado.")
+                st.markdown("**Respuesta docente · matriz real α(f) de SONARA**")
+                st.table([
+                    {"Material SONARA": label,
+                     **{str(hz) + " Hz": format(alpha, ".2f")
+                        for hz, alpha in zip(TR_OCTAVE_BANDS, coeffs)}}
+                    for label, coeffs in TR_SONARA_PRESETS.items()
+                ])
+                st.markdown(
+                    "**Asignación de la condición original:** "
+                    "piso dormitorio laminado y piso estar cerámica → "
+                    "**Hormigón / superficie dura** (aproximación reflectante); "
+                    "cielos y muros pintados → **Yeso pintado**; "
+                    "puerta sin curva ensayada → **Hormigón / superficie dura** "
+                    "(aproximación); ventana → **Vidrio**. "
+                    "Alfombra, cielo acústico y panel de lana mineral no son "
+                    "terminaciones originales: se reservan para variantes."
+                )
+                st.write("**C · Reverberación:** exigir **TR en segundos por bandas de octava de 125, 250, 500, 1000, 2000 y 4000 Hz**, para ambos recintos. Comparar los resultados de SONARA con las superficies, curvas de α seleccionadas y el método Sabine/Eyring declarado. No hay TR fijado por defecto ni certificado.")
                 st.caption("Guardar avance no finaliza la etapa; Completar Etapa 3 valida registro de geometría, materiales, fuentes α(f) y TR por bandas, no certifica exactitud de los cálculos.")
 def run_stage(stage,lab,saved,runtime):
     _bind(runtime)
