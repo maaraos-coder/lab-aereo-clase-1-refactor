@@ -1303,19 +1303,24 @@ def _stage2_teacher_geometry_results():
     ])
 
     st.markdown("#### B · Respuestas de la geometría de recintos")
+    st.caption("La columna «Lámina / cota» reproduce el campo que completa el alumno. Señala la ubicación en el expediente y distingue claramente la dimensión docente.")
     st.table([
         {"Caso":"AI-01","Recinto":"Dormitorio P5","Largo":"3,10 m",
          "Ancho":"2,60 m","Altura":"2,50 m","Área piso":"8,06 m²",
-         "Volumen":"20,15 m³","Códigos":"HD-01 / HG-01"},
+         "Volumen":"20,15 m³",
+         "Lámina / cota":"Planta tipo, Parte 1, pág. 8: cotas parciales del dormitorio; suplemento §3: HD-01 (2,60 × 3,10) y HG-01 (2,50), SUPUESTOS DOCENTES."},
         {"Caso":"IM-01","Recinto":"Dormitorio P5","Largo":"3,10 m",
          "Ancho":"2,60 m","Altura":"2,50 m","Área piso":"8,06 m²",
-         "Volumen":"20,15 m³","Códigos":"HD-01 / HG-01"},
+         "Volumen":"20,15 m³",
+         "Lámina / cota":"Planta tipo, Parte 1, pág. 8 (pisos 5–6); suplemento §3: HD-01 y HG-01, SUPUESTOS DOCENTES."},
         {"Caso":"FA-01","Recinto":"Estar P5","Largo":"3,75 m",
          "Ancho":"2,43 m","Altura":"2,50 m","Área piso":"9,11 m²",
-         "Volumen":"22,78 m³","Códigos":"HE-01 / HG-01"},
+         "Volumen":"22,78 m³",
+         "Lámina / cota":"Planta tipo, Parte 1, pág. 8: referencias parciales del sector estar; suplemento §3: HE-01 (recinto equivalente 2,43 × 3,75) y HG-01, SUPUESTOS DOCENTES."},
         {"Caso":"IN-01","Recinto":"Dormitorio P5","Largo":"3,10 m",
          "Ancho":"2,60 m","Altura":"2,50 m","Área piso":"8,06 m²",
-         "Volumen":"20,15 m³","Códigos":"HD-01 / HG-01"},
+         "Volumen":"20,15 m³",
+         "Lámina / cota":"Planta tipo, Parte 1, pág. 8: dormitorio receptor; suplemento §3: HD-01 y HG-01, SUPUESTOS DOCENTES. Fuente WC superior: escenario docente."},
     ])
     st.markdown(
         "**Cálculos:** dormitorio 2,60 × 3,10 = **8,06 m²**; "
@@ -1327,17 +1332,21 @@ def _stage2_teacher_geometry_results():
     st.markdown("#### C · Superficies a ingresar en la tabla de separación")
     st.table([
         {"Caso":"AI-01","Elemento":"M-01 · muro medianero",
-         "Longitud":"3,10 m","Altura":"2,50 m",
-         "Superficie":"7,75 m²","Código":"HM-01 × HG-01"},
+         "Dim. 1":"3,10 m","Dim. 2":"2,50 m (altura)",
+         "Superficie":"7,75 m²",
+         "Lámina / cota":"Planta tipo Parte 1, pág. 8 (relación entre viviendas). Suplemento §3: HM-01 × HG-01; longitud y altura DOCENTES."},
         {"Caso":"IM-01","Elemento":"L-01 · losa superior del receptor",
-         "Longitud":"3,10 m","Altura":"2,60 m (ancho de losa)",
-         "Superficie":"8,06 m²","Código":"HL-01 (superposición)"},
-        {"Caso":"FA-01","Elemento":"F-01 · fachada sur estar",
-         "Longitud":"2,43 m","Altura":"2,50 m",
-         "Superficie":"6,075 m²","Código":"HF-02 × HG-01"},
+         "Dim. 1":"3,10 m","Dim. 2":"2,60 m (ancho de losa)",
+         "Superficie":"8,06 m²",
+         "Lámina / cota":"Planta tipo Parte 1, pág. 8 (pisos 5–6). Suplemento §3: HL-01, huella de losa equivalente; SUPUESTO DOCENTE."},
+        {"Caso":"FA-01","Elemento":"F-01 · fachada sur del estar",
+         "Dim. 1":"2,43 m","Dim. 2":"2,50 m (altura)",
+         "Superficie":"6,075 m²",
+         "Lámina / cota":"Planta tipo Parte 1, pág. 8 + elevación sur Parte 2, pág. 5 (referencia de ubicación). Suplemento §3: HF-02 × HG-01; DIMENSIONES DOCENTES."},
         {"Caso":"IN-01","Elemento":"S-01 · cierre sanitario",
-         "Longitud":"1,40 m","Altura":"2,50 m",
-         "Superficie":"3,50 m²","Código":"HI-01 × HG-01"},
+         "Dim. 1":"1,40 m","Dim. 2":"2,50 m (altura)",
+         "Superficie":"3,50 m²",
+         "Lámina / cota":"Suplemento §3: HI-01 × HG-01, cierre hipotético; NO hay trazado de bajada acreditado por planos."},
     ])
     st.caption(
         "En **IM-01**, la superficie evaluada es la cara inferior de la losa "
@@ -1348,16 +1357,29 @@ def _stage2_teacher_geometry_results():
     )
 
     st.markdown("#### D · Fachada sur del estar (FA-01)")
+    st.caption("El alumno registra una sola referencia en la fila del formulario; aquí se desglosa el origen de cada valor para facilitar su corrección.")
     st.table([
-        {"Campo":"Recinto receptor","Respuesta":"Estar CH-A-P05-S03 · P5"},
-        {"Campo":"Orientación","Respuesta":"Sur → Pasaje Chimbote"},
-        {"Campo":"Ancho docente fachada HF-02","Respuesta":"2,43 m"},
-        {"Campo":"Altura útil HG-01","Respuesta":"2,50 m"},
-        {"Campo":"Paño bruto de fachada","Respuesta":"2,43 × 2,50 = 6,075 m²"},
-        {"Campo":"Ventana única HV-02","Respuesta":"1,80 × 1,20 = 2,160 m²"},
-        {"Campo":"Paño opaco","Respuesta":"6,075 − 2,160 = 3,915 m²"},
-        {"Campo":"Lámina / origen","Respuesta":"Planta P1 pág. 8 + sur P2 pág. 5; HF-02/HG-01/HV-02: DOCENTE"},
+        {"Campo":"Recinto receptor","Respuesta":"Estar CH-A-P05-S03, piso 5",
+         "Lámina / cota":"Planta tipo Torre A, Parte 1, pág. 8 (identificación del recinto)."},
+        {"Campo":"Orientación","Respuesta":"Sur → Pasaje Chimbote",
+         "Lámina / cota":"Planta tipo, Parte 1, pág. 8 y elevación sur, Parte 2, pág. 5."},
+        {"Campo":"Ancho equivalente de fachada","Respuesta":"2,43 m",
+         "Lámina / cota":"Suplemento de cotas §3, HF-02: SUPUESTO DOCENTE; no es ancho verificado del alzado."},
+        {"Campo":"Altura interior del recinto","Respuesta":"2,50 m",
+         "Lámina / cota":"Suplemento de cotas §3, HG-01: SUPUESTO DOCENTE."},
+        {"Campo":"Paño bruto de fachada","Respuesta":"2,43 × 2,50 = 6,075 m²",
+         "Lámina / cota":"CALCULADO: HF-02 × HG-01, suplemento §3."},
+        {"Campo":"Ventana única","Respuesta":"1,80 × 1,20 = 2,160 m²",
+         "Lámina / cota":"Suplemento de cotas §3, HV-02: SUPUESTO DOCENTE; ubicación referencial: elevación sur Parte 2, pág. 5."},
+        {"Campo":"Paño opaco","Respuesta":"6,075 − 2,160 = 3,915 m²",
+         "Lámina / cota":"CALCULADO: paño bruto − ventana; HF-02, HG-01, HV-02."},
     ])
+    st.info(
+        "**Texto para «Lámina / cota» de la fachada:** «Planta tipo Torre A "
+        "(Parte 1, pág. 8) y elevación sur (Parte 2, pág. 5): ubicación. "
+        "Suplemento de cotas §3: HF-02 (2,43 m), HG-01 (2,50 m), "
+        "HV-02 (1,80 × 1,20 m), todos SUPUESTOS DOCENTES; áreas CALCULADAS»."
+    )
     st.success(
         "**Números para introducir en la ficha:** fachada total **6,075 m²** "
         "(≈6,08), ventanas **2,160 m²** (2,16), paño opaco "
