@@ -128,6 +128,13 @@ def render(lab,saved,runtime):
         return
     if not saved.get("done_6"):
         st.warning("La estrategia de control aún no está finalizada en la Etapa 6. Puedes revisar esta etapa, pero no completar la comparación definitiva.")
+    elif saved.get("c4l2_s6_teacher_assisted_restore"):
+        st.info(
+            "Etapa 6 recuperada y habilitada por el docente tras una incidencia "
+            "técnica. Continúa con la comparación de modelos de esta Etapa 7. "
+            "La revisión académica de las medidas de control de la Etapa 6 "
+            "sigue pendiente y se realizará por separado."
+        )
 
     st.markdown("### 2 · Confirma que ambos modelos sean comparables")
     previous_checks=saved.get("c4l2_s7_comparability") or {}
