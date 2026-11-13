@@ -540,6 +540,52 @@ def _render_formative_progress(rows):
 
 
 
+def _course5_progress(rows, progress_rows):
+    lab1 = "clase-09-certificaciones-lab-1"
+    lab2 = "clase-10-certificaciones-lab-2"
+    labs = [_future_lab_progress(FUTURE_LABS[key], progress_rows) for key in (lab1, lab2)]
+    official = _latest_response_by_key(rows, lab2, {
+        "Cuestionario oficial": (9, "c5l2_quiz_v1"),
+        "Expediente integrador": (10, "c5l2_report_v1"),
+    })
+    completed = labs[0]["completed"] + sum(
+        item["completed"] for item in labs[1]["stage_rows"] if item["stage"] < 9)
+    expected = labs[0]["expected"] + sum(item["stage"] < 9 for item in labs[1]["stage_rows"])
+    return labs, official, 100 * completed / expected if expected else 0
+
+
+def _render_course5_block(labs, official, percent):
+    delivered = sum(row is not None for row in official.values())
+    with st.expander(f"Curso 5 · Certificaciones acústicas · {percent:.0f}% de avance"):
+        for number, lab in enumerate(labs, 1):
+            st.markdown(f"### Laboratorio {number}")
+            stages = [item for item in lab["stage_rows"] if number == 1 or item["stage"] < 9]
+            completed = sum(item["completed"] for item in stages)
+            st.progress(completed / len(stages) if stages else 0.0)
+            st.caption(f"{completed}/{len(stages)} etapas formativas completadas")
+            st.table([{"Etapa": item["stage"], "Actividad": item["title"],
+                       "Estado": "Completada" if item["completed"] else "Pendiente"} for item in stages])
+        st.markdown("#### Evaluaciones oficiales del Laboratorio 2")
+        st.caption(f"{delivered}/2 entregadas")
+        scores = []
+        for (title, row), maximum in zip(official.items(), (30, 70)):
+            if row is None:
+                st.write(f"{title} · Sin entregar")
+                continue
+            score = row.get("teacher_score")
+            if maximum == 30 and score is None:
+                score = row.get("auto_score")
+            if score is None:
+                st.write(f"{title} · Entregado, pendiente de revisión")
+            else:
+                scores.append(float(score))
+                st.write(f"{title} · {float(score):g}/{maximum} puntos")
+            if row.get("teacher_note"):
+                st.caption(row["teacher_note"])
+        if len(scores) == 2:
+            st.metric("Nota Curso 5", f"{_grade_from_percent(sum(scores)):.1f}")
+
+
 def student_sidebar_summary(client, user_key):
     """Tarjeta lateral compacta del diplomado, separando el avance por curso."""
     if not user_key or client is None:
@@ -552,6 +598,7 @@ def student_sidebar_summary(client, user_key):
         "clase-04-impacto-instalaciones-lab-2",
         "clase-06-ruido-ambiental-lab-2",
         "clase-07-construccion-lab-1",
+        "clase-10-certificaciones-lab-2",
     ]
     try:
         rows=(
@@ -635,6 +682,9 @@ def student_sidebar_summary(client, user_key):
     c4_deliveries=_course4_lab1_delivery_rows(rows)
     c4_delivered=sum(c4_deliveries.get(k) is not None for k in ("stage9","stage10"))
 
+    _, c5_official, c5_percent = _course5_progress(rows, future_progress)
+    c5_delivered = sum(row is not None for row in c5_official.values())
+
     st.markdown(
         f"""
         <div style="background:linear-gradient(145deg,#0b5b91,#0e91c7);border:1px solid #59d4ef;
@@ -679,6 +729,13 @@ def student_sidebar_summary(client, user_key):
             <span>Curso 4 · entregas formativas</span><b>{c4_delivered}/2</b>
           </div>
 
+          <div style="height:1px;background:rgba(255,255,255,.22);margin:.55rem 0 .45rem"></div>
+          <div style="display:flex;justify-content:space-between;gap:.5rem;font-size:.82rem">
+            <span>Curso 5 · avance formativo</span><b>{c5_percent:.0f}%</b>
+          </div>
+          <div style="display:flex;justify-content:space-between;gap:.5rem;font-size:.82rem;margin-top:.35rem">
+            <span>Curso 5 · evaluaciones</span><b>{c5_delivered}/2</b>
+          </div>
         </div>
         """,
         unsafe_allow_html=True,
@@ -2426,6 +2483,7 @@ def results_view(client, catalog, user_key):
         "clase-04-impacto-instalaciones-lab-2",
         "clase-06-ruido-ambiental-lab-2",
         "clase-07-construccion-lab-1",
+        "clase-10-certificaciones-lab-2",
     ]
     try:
         rows=(
@@ -2486,6 +2544,9 @@ def results_view(client, catalog, user_key):
     c4_deliveries=_course4_lab1_delivery_rows(rows)
     c4_delivered=sum(c4_deliveries.get(k) is not None for k in ("stage9","stage10"))
 
+    c5_labs, c5_official, c5_percent = _course5_progress(rows, progress_rows)
+    c5_delivered = sum(row is not None for row in c5_official.values())
+
     courses_with_progress=0
     if c1_completed or official["completed"]:
         courses_with_progress+=1
@@ -2506,6 +2567,11 @@ def results_view(client, catalog, user_key):
     if c4_prog["completed"] or c4_delivered:
         labs_with_progress+=1
 
+    if c5_percent or c5_delivered:
+        courses_with_progress += 1
+    labs_with_progress += int(bool(c5_labs[0]["completed"]))
+    labs_with_progress += int(bool(c5_labs[1]["completed"] or c5_delivered))
+
     st.markdown("## Resumen del Diplomado")
     st.caption(
         "Este resumen no mezcla notas de cursos distintos. "
@@ -2514,7 +2580,7 @@ def results_view(client, catalog, user_key):
     a,b,c,d=st.columns(4)
     a.metric("Cursos con avance",str(courses_with_progress))
     b.metric("Laboratorios con avance",str(labs_with_progress))
-    c.metric("Evaluaciones oficiales entregadas",f"{official['completed'] + c3_official['completed']}")
+    c.metric("Evaluaciones oficiales entregadas",f"{official['completed'] + c3_official['completed'] + c5_delivered}")
     d.metric("Puntajes formativos Curso 2",f"{c2_delivered}/2")
 
     st.markdown("## Cursos")
@@ -2527,6 +2593,7 @@ def results_view(client, catalog, user_key):
     _render_course2_block(rows,progress_rows)
     _render_course3_block(rows,progress_rows)
     _render_course4_block(rows,progress_rows)
+    _render_course5_block(c5_labs, c5_official, c5_percent)
 
 
 
