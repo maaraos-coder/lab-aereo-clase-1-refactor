@@ -523,6 +523,50 @@ def _render_formula_card(course: dict[str, Any], theme: dict[str, Any], formula:
     """
 
 
+def _iso_class_table():
+    rows = [
+        ("Aéreo entre viviendas · DₙT,50 (dB)", ("≥58", "≥54", "—", "—", "—", "—")),
+        ("Aéreo entre viviendas · DₙT,A (dB)", ("—", "—", "≥52", "≥48", "≥44", "≥40")),
+        ("Impacto entre viviendas · L′ₙT,w (dB)", ("≤46", "≤50", "≤54", "≤58", "≤62", "≤66")),
+        ("Impacto entre viviendas · L′ₙT,50 (dB)", ("≤50", "≤54", "—", "—", "—", "—")),
+        ("Fachada y cubierta · mínimo DₙT,A,tr (dB)", tuple(
+            f"máx(30, Lden − {offset})" if offset <= 32 else f"Lden − {offset}"
+            for offset in (20, 24, 28, 32, 36, 40)
+        )),
+        ("Instalaciones continuas · LAeq,nT (dB(A))", tuple(f"≤{v}" for v in range(22, 43, 4))),
+        ("Instalaciones intermitentes vecinas · LAFmax,nT (dB(A))", tuple(f"≤{v}" for v in range(26, 47, 4))),
+        ("Reverberación en accesos, excepto escaleras · T (s)", ("≤0,6", "≤0,9", "≤1,2", "≤1,5", "≤1,8", "≤2,1")),
+        ("Reverberación en escaleras comunes · T (s)", ("≤0,9", "≤1,2", "≤1,5", "≤1,8", "≤2,1", "≤2,4")),
+        ("Escaleras comunes · alternativa A/Sₚᵢₛₒ", ("≥0,45", "≥0,35", "≥0,25", "≥0,20", "≥0,15", "≥0,10")),
+    ]
+    headings = "".join(f'<th scope="col">{label}</th>' for label in "ABCDEF")
+    body = "".join(
+        f'<tr><th scope="row">{escape(label)}</th>'
+        + "".join(f"<td>{escape(value)}</td>" for value in values) + "</tr>"
+        for label, values in rows
+    )
+    return f"""
+    <details class="theme">
+      <summary>Requisitos por clase · ISO/TS 19488:2021</summary>
+      <div class="theme-content">
+        <p>Umbrales de referencia para viviendas y espacios comunes. Selecciona el criterio según la fuente y el recinto receptor.</p>
+        <div style="overflow-x:auto" tabindex="0" aria-label="Umbrales por clase">
+          <table><thead><tr><th scope="col">Criterio</th>{headings}</tr></thead><tbody>{body}</tbody></table>
+        </div>
+        <ul>
+          <li><strong>Aéreo e impacto (tablas 1 y 2).</strong> Se muestra el caso entre viviendas. Para impacto A y B se deben cumplir ambos límites.</li>
+          <li><strong>Fachada (tabla 3).</strong> Usa el Lden incidente y la adaptación espectral adecuada a la fuente. El mínimo de 30 dB aplica a A–D.</li>
+          <li><strong>Instalaciones (tabla 4).</strong> Los límites se aplican en recintos habitables. Para ruido intermitente de espacios vecinos puede usarse LASmax,nT con límites 4 dB más estrictos.</li>
+          <li><strong>Espacios comunes (tabla 5).</strong> Verifica cada octava de 500, 1000 y 2000 Hz. En escaleras puede aplicarse el criterio alternativo de absorción respecto de la superficie transitable.</li>
+        </ul>
+        <p>Para asignar una clase deben cumplirse todos los requisitos aplicables al alcance evaluado. NPD indica desempeño no determinado y también puede usarse si no se alcanza F.</p>
+        <p><a href="https://www.iso.org/standard/77742.html" target="_blank" rel="noopener">Ficha oficial ISO</a> ·
+        <a href="https://www.ioa.org.uk/bulletins/2021-may-june-acoustics-bulletin" target="_blank" rel="noopener">Extractos de referencia del Institute of Acoustics</a></p>
+      </div>
+    </details>
+    """
+
+
 def build_formulary_html(visible_labs=None) -> str:
     course_sections: list[str] = []
     formula_count = 0
@@ -551,6 +595,7 @@ def build_formulary_html(visible_labs=None) -> str:
                 <span>CURSO {course['number']}</span>
                 <h2>{escape(course['title'])}</h2>
               </div>
+              {_iso_class_table() if course['number'] == 5 else ''}
               {''.join(theme_sections)}
             </section>
             """
@@ -645,7 +690,9 @@ function filterCards(){{
     if(show) visible++;
   }});
   document.querySelectorAll('details.theme').forEach(theme=>{{
-    const hasVisible=[...theme.querySelectorAll('.formula-card')].some(card=>card.style.display!=='none');
+    const formulas=[...theme.querySelectorAll('.formula-card')];
+    if(!formulas.length) return;
+    const hasVisible=formulas.some(card=>card.style.display!=='none');
     theme.style.display=hasVisible?'block':'none';
     if(query && hasVisible) theme.open=true;
   }});
