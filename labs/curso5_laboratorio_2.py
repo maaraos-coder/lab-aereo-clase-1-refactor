@@ -1218,9 +1218,32 @@ def _stage4(lab, saved):
         )
     with b3:
         reference_time = st.text_input(
-            "T₀ de vivienda (s)", value=_val(previous_system.get("t0", "0.5")),
+            "Tiempo de referencia normativo T₀ (s) · no es TR", value=_val(previous_system.get("t0", "0.5")),
             key="c5l2_s4_t0"
         )
+    st.markdown("**Tiempo de reverberación TR(f) del dormitorio receptor · Etapa 3**")
+    st.caption(
+        "Estos son los tiempos reales del modelo del alumno, recuperados de la "
+        "Etapa 3, que se utilizan en SONARA. **TR(f) no es T₀**: T₀ = 0,5 s "
+        "es el tiempo de referencia normativo para normalizar DₙT."
+    )
+    if tr_bands:
+        st.dataframe(
+            pd.DataFrame([
+                {"Octava (Hz)": row.get("Banda (Hz)", ""),
+                 "TR dormitorio (s)": row.get("TR dormitorio (s)", "")}
+                for row in tr_bands
+            ]),
+            hide_index=True, use_container_width=True
+        )
+        if any(not _positive(row.get("TR dormitorio (s)")) for row in tr_bands):
+            st.warning("Hay valores TR sin completar en la Etapa 3: revisa esas bandas.")
+    else:
+        st.warning(
+            "No se encontraron tiempos TR por bandas guardados en la Etapa 3 "
+            "para este alumno. Completa y guarda los resultados allí."
+        )
+
     st.markdown("**Encuentros y flanqueos (datos de entrada a SONARA)**")
     st.caption(
         "Documenta los elementos laterales conectados al medianero, "
@@ -1244,20 +1267,7 @@ def _stage4(lab, saved):
         use_container_width=True, num_rows="dynamic"
     ).fillna("").to_dict("records")
 
-    st.markdown("#### C · TR del dormitorio y referencia acústica")
-    if tr_bands:
-        st.table([{"Banda (Hz)": row.get("Banda (Hz)", ""),
-                   "TR dormitorio (s)": row.get("TR dormitorio (s)", "")}
-                  for row in tr_bands])
-    else:
-        st.warning("Aún no hay TR por bandas guardado en la Etapa 3.")
-    st.caption(
-        "Usa los TR por bandas del recinto receptor al trasladar el proyecto a "
-        "SONARA. Para viviendas, T₀ = 0,5 s al normalizar DₙT; "
-        "el TR no es una propiedad del muro."
-    )
-
-    st.markdown("#### D · Hoja de resultados SONARA: base estructural y mejora")
+    st.markdown("#### C · Hoja de resultados SONARA: base estructural y mejora")
     st.caption(
         "Ingresa los resultados que efectivamente obtengas en SONARA. "
         "La variante parte del modelo base e incorpora tu mejora "
@@ -1303,7 +1313,7 @@ def _stage4(lab, saved):
             key="c5l2_s4_evidence",
             placeholder="Curvas R(f), encuentros, incertidumbre y archivo/versión SONARA..."
         )
-    st.markdown("#### E · Comprobación contra el requisito Clase B")
+    st.markdown("#### D · Comprobación contra el requisito Clase B")
     if criterion:
         st.info(
             "Criterio definido en Etapa 1: "
