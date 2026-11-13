@@ -11,7 +11,7 @@
 
 - **Planta tipo de Torre A:** `3.1 Planos de Arquitectura (Parte 1)`, página 8 del PDF de origen, cuya escala y cartela se deben verificar.
 - **Corte:** `Parte 1`, página 12 del PDF de origen. Verificar qué alturas corresponden al recinto, estructura y terminaciones.
-- **Elevaciones y cortes complementarios:** `3.1 Planos de Arquitectura (Parte 2)`.
+- **Elevación sur de Torre A:** `3.1 Planos de Arquitectura (Parte 2)`, **página 5**; verificar la correspondencia entre las separaciones de la planta tipo y los vanos de fachada. **Elevación norte:** Parte 2, página 4. **Corte longitudinal Torre A:** Parte 2, página 2.
 - **Ficha geométrica del alumno:** define los cuatro casos, sus recintos y los datos que se deben calcular.
 
 Se han identificado como **posibles referencias parciales** del sector dormitorio las cifras **2,60 m y 3,10 m** y, en el sector cocina-estar, **2,45 m, 2,43 m y 3,03 m**. **No se certifica aquí que sean dimensiones completas de los recintos**: deben cotejarse sobre la planta, su orientación y extremos de acotación. No reutilizar las cotas **2,56 m y 2,35 m** de otro estar. Tampoco asumir que una cifra del corte corresponde automáticamente a altura libre.
@@ -32,7 +32,7 @@ Se han identificado como **posibles referencias parciales** del sector dormitori
 | Código | Dato **supuesto docente** | Valor o criterio | Aplicación y restricción |
 |---|---|---|---|
 | **HG-01** | Altura interior útil provisional | **2,50 m** | Solo cuando el corte no permita justificar la altura libre del **recinto asignado**. No es altura verificada del proyecto. |
-| **HV-02** | Ventana didáctica del **estar** hacia fachada sur | **1,80 × 1,20 m** (ancho × alto) | Exclusivamente **FA-01**, si el alzado y planta no permiten obtener las dimensiones del vano. No aplicar a un dormitorio. |
+| **HV-02** | Ventana didáctica del **estar** hacia fachada sur | **1,80 × 1,20 m** (ancho × alto) | **Solo si** la correspondencia entre **planta tipo y elevación sur (Parte 2, pág. 5)** no permite determinar la dimensión del vano del estar. Es una hipótesis académica, **no una cota atribuible al alzado original**. |
 | **HI-01** | Tramo de cierre sanitario didáctico asociado a la descarga de vivienda superior | **1,40 m** de longitud; altura **HG-01** cuando proceda | **IN-01**, solo si el trayecto y cerramiento aplicables se verifican o se documenta un modelo académico simplificado. No presupone adyacencia física. |
 | **HC-01** | Operación y configuración de descarga | WC **6 L**; PVC **DN110**; abrazaderas rígidas | **IN-01**: condiciones de funcionamiento/modelo, **no cotas** de recintos ni evidencia de configuración constructiva real. |
 
