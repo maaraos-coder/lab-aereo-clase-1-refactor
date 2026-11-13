@@ -765,6 +765,26 @@ def _teacher_course_results_impl(compact=False):
     from views.curso4_lab2_review import CATALOG as c4l2_catalog
     evaluation_catalog["Curso 4 · Factores del ruido en el proceso de construcción"]["Laboratorio 2 · Evaluación integral"]=c4l2_catalog
 
+    evaluation_catalog["Curso 5 · Certificaciones acústicas"] = {
+        "Laboratorio 1 · Evaluaciones formativas": {
+            title: {"class_id": "clase-09-certificaciones-lab-1",
+                    "stage": stage, "with_grade": False, "formative_only": True,
+                    "reviewer": "c5l1", "progress_key": key}
+            for title, stage, key in (
+                ("Etapa 9 · Matriz de diseño", 9, "c5l1_s9_review"),
+                ("Etapa 10 · Verificación de Clase A", 10, "c5l1_classification"),
+            )
+        },
+        "Laboratorio 2 · Evaluación integral": {
+            title: {"class_id": "clase-10-certificaciones-lab-2", "question_key": question_key,
+                    "stage": stage, "maximum": maximum, "with_grade": True, "reviewer": "c5l2"}
+            for title, question_key, stage, maximum in (
+                ("Etapa 9 · Cuestionario oficial", "c5l2_quiz_v1", 9, 30),
+                ("Etapa 10 · Expediente integrador", "c5l2_report_v1", 10, 70),
+            )
+        },
+    }
+
     course=st.selectbox(
         "Curso",
         list(evaluation_catalog),
@@ -828,7 +848,16 @@ def _teacher_course_results_impl(compact=False):
                 if not isinstance(formative,dict):
                     formative={}
 
-                if config["stage"]==8:
+                if config.get("progress_key"):
+                    value = state.get(config["progress_key"])
+                    payload = {"development": value} if value else {}
+                    if payload:
+                        payload["results"] = {
+                            code: state.get(f"c5l1_result_{code}") for code in
+                            ("AI-01", "IM-01", "FA-01", "IN-01")
+                        }
+                    done = bool(state.get(f'done_{config["stage"]}'))
+                elif config["stage"]==8:
                     payload=state.get("c3_stage8_real_measurement") or {}
                     done=bool(state.get("done_8"))
                 elif config["stage"]==9:
@@ -1199,6 +1228,112 @@ def _teacher_course_results_impl(compact=False):
 
         elif reviewer in ("c4_stage9","c4_stage10"):
             _teacher_course4_review(rows,config,compact=compact)
+
+        elif reviewer == "c5l1":
+            if not rows:
+                st.info("Todavía no hay desarrollos guardados para esta etapa.")
+            else:
+                index = st.selectbox(
+                    "Alumno", range(len(rows)),
+                    format_func=lambda i: (rows[i].get("users") or {}).get("display_name")
+                    or (rows[i].get("users") or {}).get("email") or rows[i]["user_key"],
+                    key=f"c5l1_review_student_{config['stage']}_{compact}",
+                )
+                payload = rows[index]["answer"]
+                development = payload["development"]
+                if config["stage"] == 9:
+                    st.markdown("#### Revisión crítica de la matriz")
+                    st.write(development)
+                else:
+                    st.markdown("#### Verificación de Clase A")
+                    for case, decision in development.items():
+                        if isinstance(decision, dict):
+                            st.write(f"**{case}** · {decision.get('decision', '')}")
+                            st.write(decision.get("justification", ""))
+                    for key, title in (
+                        ("overall_rule", "Caso limitante y alcance"),
+                        ("building_plan", "Alcance de la clasificación del edificio"),
+                        ("conclusion", "Conclusión y verificación"),
+                    ):
+                        st.markdown(f"**{title}**")
+                        st.write(development.get(key, ""))
+                with st.expander("Resultados guardados de SONARA"):
+                    for case, result in payload["results"].items():
+                        st.markdown(f"**{case}**")
+                        if result:
+                            st.json(result, expanded=False)
+                        else:
+                            st.caption("Pendiente")
+
+        elif reviewer == "c5l2":
+            if not rows:
+                st.info("Todavía no hay entregas oficiales para esta etapa.")
+            else:
+                index = st.selectbox(
+                    "Alumno", range(len(rows)),
+                    format_func=lambda i: (rows[i].get("users") or {}).get("display_name")
+                    or (rows[i].get("users") or {}).get("email") or rows[i]["user_key"],
+                    key=f"c5l2_review_student_{config['stage']}_{compact}",
+                )
+                row = rows[index]
+                from views.curso4_lab2_review import payload_of
+                from labs.curso5_laboratorio_2 import QUIZ, RUBRIC
+
+                payload = payload_of(row)
+                maximum = config["maximum"]
+                if config["stage"] == 9:
+                    st.metric("Puntaje automático", f"{float(row.get('auto_score') or 0):g}/{maximum}")
+                    answers = payload.get("answers") or {}
+                    for i, (question, choices, correct, reason) in enumerate(QUIZ):
+                        with st.expander(f"Pregunta {i + 1}"):
+                            st.write(question if payload.get("version") == 3 else "Respuesta de una versión anterior")
+                            st.write("Respuesta entregada · " + str(answers.get(str(i), "Sin respuesta")))
+                            if payload.get("version") == 3:
+                                st.write("Clave · " + choices[correct])
+                                st.caption(reason)
+                else:
+                    st.markdown("#### Conclusión técnica")
+                    st.write(payload.get("report", ""))
+                    st.markdown("#### Evidencias")
+                    st.write(payload.get("evidence", ""))
+                    stages = payload.get("stages") or {}
+                    matrix = (stages.get("8") or {}).get("matrix")
+                    if matrix:
+                        st.dataframe(matrix, hide_index=True, use_container_width=True)
+                    st.table([{"Criterio": title, "Puntos": points} for title, points in RUBRIC])
+                    st.download_button(
+                        "Descargar expediente y anexos JSON",
+                        json.dumps(payload, ensure_ascii=False, indent=2),
+                        file_name="expediente_curso5_lab2.json", mime="application/json",
+                        key=f"c5l2_report_download_{row['id']}_{compact}",
+                    )
+                with st.form(f"c5l2_review_{row['id']}_{compact}"):
+                    initial = row.get("teacher_score")
+                    if initial is None and config["stage"] == 9:
+                        initial = row.get("auto_score")
+                    points = st.number_input(
+                        "Puntaje docente", min_value=0.0, max_value=float(maximum),
+                        value=float(initial) if initial is not None else None, step=0.5,
+                    )
+                    note = st.text_area("Observación docente", value=row.get("teacher_note") or "")
+                    save = st.form_submit_button("Guardar revisión", type="primary")
+                if save:
+                    if points is None:
+                        st.warning("Ingresa el puntaje de la revisión.")
+                    else:
+                        try:
+                            result = (client.table("responses").update({
+                                "teacher_score": points, "teacher_note": note,
+                                "status": "reviewed", "updated_at": _now(),
+                            }).eq("id", row["id"]).eq("class_id", config["class_id"])
+                                .eq("stage", config["stage"]).eq("question_key", config["question_key"])
+                                .eq("user_key", row["user_key"]).select("id").execute())
+                            if not result.data:
+                                raise RuntimeError("La actualización no devolvió la entrega.")
+                        except Exception:
+                            st.error("No se pudo confirmar el guardado de la revisión.")
+                        else:
+                            st.rerun()
 
         elif reviewer in ("c4l2_stage9","c4l2_stage10"):
             from views.curso4_lab2_review import render_review
