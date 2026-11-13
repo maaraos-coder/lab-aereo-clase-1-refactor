@@ -12,7 +12,7 @@
 | F-01 | Fachada opaca | HA 150 mm, densidad supuesta 2.400 kg/m³ | Sin revestimiento acústico interior |
 | V-01 | Ventana del recinto seleccionado | DVH 4/12/4 mm en marco de aluminio convencional | La geometría del hueco debe medirse o completarse con una cota docente **si el alzado no es legible**; no asumir Rw certificado |
 | S-01 | Cierre de baño o conducto | Yeso-cartón 12,5 mm por cara; perfilería metálica 70 mm; lana mineral 50 mm | Sistema docente convencional con pasos de instalaciones |
-| IS-01 | Descarga sanitaria | PVC rígido DN110, abrazaderas rígidas, descarga WC de 6 L | PVC rígido es consistente con la DIA; diámetro, fijación y operación son **supuestos docentes**, no datos verificados |
+| IS-01 | Descarga sanitaria | PVC rígido DN110, abrazaderas rígidas y descarga WC de 6 L de la **vivienda superior (piso 6)**; receptor dormitorio de CH-A-P05-S03 (piso 5) | PVC rígido es consistente con la DIA; diámetro, fijación y operación son **supuestos docentes**, no datos verificados |
 | T-01 | Terminación interior de piso del estar | Cerámica adherida (parte de L-01) | Superficie de recinto por extraer del plano |
 | T-02 | Terminación interior de muros y cielo del estar | Pintura sobre hormigón/yeso; cielo continuo pintado | Superficies por calcular según geometría real |
 | T-03 | Terminación del dormitorio | Piso laminado rígidamente apoyado (hipótesis docente), muros pintados, cielo pintado | No atribuir propiedades acústicas sin catálogo |
