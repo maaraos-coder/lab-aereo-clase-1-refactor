@@ -95,17 +95,38 @@ RUBRIC = [
  ("Diseño de instalaciones",8),("Clasificación, informe y limitaciones",6),
 ]
 QUIZ = [
- ("La superficie de la vivienda de Chimbote sirve para obtener directamente el volumen de un dormitorio.",False,"Se necesita la superficie del dormitorio y su altura."),
- ("DₙT,w entre viviendas se obtiene simplemente usando el Rw de un muro aislado.",False,"Se consideran recintos y vías laterales."),
- ("Es válido declarar una dimensión leída del plano sin identificar lámina o cota.",False,"Toda dimensión debe ser trazable."),
- ("El alumno puede reemplazar un dato desconocido por una hipótesis explícita justificada.",True,"Las hipótesis se identifican y se evalúa su sensibilidad."),
- ("Una mejora de Rw garantiza automáticamente Clase B para la vivienda completa.",False,"Hay que comprobar todos los criterios aplicables."),
- ("La suma de fachada debe considerar paño opaco y superficie acristalada.",True,"La composición y las fugas importan."),
- ("La clase de una solución se asigna a partir de un solo resultado de SONARA.",False,"La cobertura y todos los criterios aplicables deben verificarse."),
- ("Un piso flotante puede perder eficacia por puentes rígidos perimetrales.",True,"Los cortocircuitos reducen la mejora real."),
- ("El descriptor de instalaciones puede depender de si el funcionamiento es continuo o intermitente.",True,"Debe declararse el régimen de operación."),
- ("Una predicción de diseño equivale a certificar una vivienda construida.",False,"El resultado de diseño no sustituye la verificación de obra."),
+    ("Lab 1 · Los Alerces. La variante aérea pasa de 55 a 59 dB para el mismo descriptor. La meta del caso es ≥ 58 dB. ¿Qué informa el resultado?",
+     ("La mejora es 1 dB y el margen es 4 dB.", "La mejora es 4 dB y el margen es 1 dB.", "La mejora y el margen son 4 dB."),
+     1, "La mejora compara 59 con 55 dB. El margen compara 59 con 58 dB. La decisión corresponde a este caso."),
+    ("Lab 1 · Los Alerces. Aumenta el Rw del muro medianero, pero el aislamiento entre estares apenas cambia. ¿Qué revisarías primero?",
+     ("Si el Rw fue redondeado al entero superior.", "Si el mismo Ctr se usó para todos los recintos.", "La contribución de los flancos y sus uniones."),
+     2, "La transmisión lateral puede limitar el aislamiento entre recintos aunque mejore el separador."),
+    ("Lab 1 · Los Alerces. Dos pisos flotantes tienen la misma capa resiliente. Uno queda en contacto rígido con el muro perimetral. ¿Qué cambia?",
+     ("El contacto crea una vía de transmisión que puede reducir la mejora.", "El contacto mejora el aislamiento al aumentar la rigidez.", "El desempeño se conserva porque el material resiliente es el mismo."),
+     0, "El puente rígido permite transmitir vibración alrededor de la capa resiliente."),
+    ("Lab 1 · Los Alerces. Para mejorar la fachada se propone un vidrio con Rw mayor, conservando el marco y los sellos existentes. ¿Cómo evaluarías la propuesta?",
+     ("Usaría el Rw del vidrio como descriptor de toda la fachada.", "Modelaría el conjunto paño, ventana, marco y sellos, con sus áreas y datos acústicos.", "Promediaría aritméticamente el Rw del muro y del vidrio."),
+     1, "La fachada se evalúa como conjunto. El desempeño del vidrio por sí solo no caracteriza el vano instalado."),
+    ("Lab 1 · Los Alerces. Se comparan dos fijaciones de una tubería. ¿Qué diseño de comparación permite atribuir el cambio a la fijación?",
+     ("Cambiar también el evento y el recinto receptor.", "Comparar el nivel de una sola vía original con la suma de vías mejoradas.", "Conservar evento, receptor y demás vías, y modificar la transferencia de la vía intervenida."),
+     2, "Mantener las demás entradas constantes permite atribuir la diferencia a la intervención modelada."),
+    ("Lab 2 · Chimbote. En el muro mejorado SONARA entrega DₙT,w = 58 dB y DₙT,50 = 53 dB. Para la meta DₙT,50 ≥ 54 dB, ¿cuál es el margen?",
+     ("−1 dB.", "+4 dB.", "+1 dB."),
+     0, "Se compara el descriptor exigido: 53 − 54 = −1 dB."),
+    ("Lab 2 · Chimbote. La losa mejorada obtiene L′ₙT,w = 49 dB y L′ₙT,50 = 55 dB. Los límites son 50 y 54 dB, respectivamente. ¿Qué concluyes?",
+     ("Alcanza Clase B porque el primer indicador está bajo 50 dB.", "Queda fuera de la meta porque L′ₙT,50 supera su límite en 1 dB.", "Alcanza Clase B porque los dos márgenes se compensan."),
+     1, "Cada indicador se verifica por separado y ambos deben cumplir simultáneamente."),
+    ("Lab 2 · Chimbote. NoiseMap entrega Lden incidente = 62 dB(A) con la reflexión del muro receptor excluida. ¿Qué meta de fachada corresponde?",
+     ("35 dB tras aplicar una corrección de −3 dB al Lden.", "30 dB porque ese es el mínimo de la tabla.", "38 dB al aplicar máx(30; 62 − 24)."),
+     2, "El Lden ya excluye la reflexión propia. El requisito es el mayor entre 30 dB y 38 dB."),
+    ("Lab 2 · Chimbote. Para una descarga de WC solo se dispone del LAeq,nT promedio durante el evento. ¿Qué permite comprobar ese dato?",
+     ("El criterio de LAFmax,nT sigue pendiente. Hace falta información compatible con el máximo temporal F.", "Permite verificar LAFmax,nT directamente si el evento es corto.", "Permite obtener LAFmax,nT sumando 3 dB."),
+     0, "El promedio energético y el máximo con ponderación temporal F describen magnitudes distintas."),
+    ("Integración · En la matriz de Chimbote, aéreo, impacto e instalaciones alcanzan la meta. Falta el Lden de fachada. ¿Qué decisión corresponde?",
+     ("Asignar Clase B a los cuatro casos por mayoría.", "Dejar fachada pendiente y conservar las tres verificaciones parciales.", "Asignar Clase B a fachada si su Rw supera 30 dB."),
+     1, "Sin Lden no se puede obtener el requisito de fachada del caso ni cerrar la comprobación de los cuatro casos."),
 ]
+
 def _bind(runtime):
     for k,v in runtime.items():
         if k not in {"run_stage","_bind","CLASS_ID","STAGES","TEACHER"}:
@@ -2624,8 +2645,7 @@ def _stage9(lab,saved):
     _header(9)
     st.markdown("### Evaluación oficial · 10 preguntas × 3 puntos = 30 puntos")
     if _is_teacher():
-        for n,(q,answer,reason) in enumerate(QUIZ,1):
-            st.write(f"**{n}. {q}** · {'Verdadero' if answer else 'Falso'} · {reason}")
+        st.caption("Las respuestas y su fundamento están en la pauta docente de esta etapa.")
         return
     remote=_get_submission(9,"c5l2_quiz_v1")
     if remote or saved.get("c5l2_s9_submitted"):
@@ -2635,21 +2655,26 @@ def _stage9(lab,saved):
         st.metric("Puntaje",f"{float(score or 0):g}/30")
         st.metric("Nota cuestionario",f"{_grade(float(score or 0),30):.1f}")
         return
-    old=saved.get("c5l2_s9_draft") or {}
-    answers={}
-    for i,(q,_,_) in enumerate(QUIZ):
-        val=old.get(str(i),"Sin responder")
-        answers[str(i)]=st.radio(f"{i+1}. {q}",["Sin responder","Verdadero","Falso"],index=["Sin responder","Verdadero","Falso"].index(val),key=f"c5l2_quiz_{i}")
-    a,b=st.columns(2)
-    if a.button("Guardar borrador",key="c5l2_quiz_draft"):
-        _save(lab,saved,9,"c5l2_s9_draft",answers)
-        saved["done_9"]=False
-    if b.button("Enviar cuestionario definitivo",type="primary",key="c5l2_quiz_submit"):
+    old = saved.get("c5l2_s9_draft_v2") or {}
+    answers = {}
+    for i, (question, options, _, _) in enumerate(QUIZ):
+        choices = ["Sin responder", *options]
+        previous = old.get(str(i))
+        answers[str(i)] = st.radio(
+            f"{i + 1}. {question}", choices,
+            index=choices.index(previous) if previous in choices else 0,
+            key=f"c5l2_quiz_v2_{i}",
+        )
+    a, b = st.columns(2)
+    if a.button("Guardar borrador", key="c5l2_quiz_draft"):
+        _save(lab, saved, 9, "c5l2_s9_draft_v2", answers, complete=False)
+    if b.button("Enviar cuestionario definitivo", type="primary", key="c5l2_quiz_submit"):
         if "Sin responder" in answers.values():
             st.warning("Responde todas las preguntas.")
             return
-        score=sum(3 for i,(_,expected,_) in enumerate(QUIZ) if (answers[str(i)]=="Verdadero")==expected)
-        payload={"version":1,"answers":answers,"max_score":30,"score":score,"target_class":"B"}
+        score = sum(3 for i, (_, options, expected, _) in enumerate(QUIZ)
+                    if answers[str(i)] == options[expected])
+        payload = {"version": 2, "answers": answers, "max_score": 30, "score": score, "target_class": "B"}
         try:
             _submit(9,"c5l2_quiz_v1","Curso 5 · Laboratorio 2 · Cuestionario",payload,score,30)
             _save(lab,saved,9,"c5l2_s9_submission",payload)
@@ -2955,6 +2980,11 @@ def _teacher(stage, saved=None):
                 _stage2_teacher_geometry_results()
             else:
                 st.write(TEACHER[stage])
+            if stage == 9:
+                for n, (question, options, answer, reason) in enumerate(QUIZ, 1):
+                    st.markdown(f"**{n}. {question}**")
+                    st.write(f"**Respuesta correcta:** {options[answer]}")
+                    st.caption(reason)
             if stage in (6, 7):
                 label_prefix = "Fachada" if stage == 6 else "Instalación"
                 records = ((saved or {}).get(f"c5l2_s{stage}") or {}).get("sonara_json") or {}
