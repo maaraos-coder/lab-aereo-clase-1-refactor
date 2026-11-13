@@ -169,21 +169,31 @@ def _header(stage):
         st.link_button("Abrir SONARA · cálculos acústicos",SONARA_URL, use_container_width=False)
 
 
-def _save(lab,saved,stage,key,value):
+def _save(lab,saved,stage,key,value,*,complete=True):
     if _readonly():
         st.info("Vista de proyección: los cambios no se guardan en las entregas de los alumnos.")
-        return
+        return False
     candidate=deepcopy(saved)
+    changed = candidate.get(key) != value
     candidate[key]=value
-    candidate[f"done_{stage}"]=True
+    if complete:
+        candidate[f"done_{stage}"]=True
+    elif changed:
+        # A draft never grants completion. Previously completed stages are
+        # reopened only when their actual submitted content changes.
+        candidate[f"done_{stage}"]=False
     candidate[f"c5l2_updated_{stage}"]=_now()
     try:
         _save_future_state(lab["id"],candidate)
-    except Exception as error:
-        st.error("No se pudo guardar esta etapa. Conserva tu información y vuelve a intentarlo.")
-        return
+    except Exception:
+        st.error("No se pudo confirmar el guardado. Conserva tus respuestas y vuelve a intentarlo.")
+        return False
     saved.update(candidate)
-    st.success("Etapa guardada. Los datos estarán disponibles en las etapas siguientes.")
+    if complete:
+        st.success("Etapa completada y guardada. Puedes continuar con la siguiente etapa.")
+    else:
+        st.success("Avance guardado. Puedes continuar más tarde sin perder tus respuestas.")
+    return True
 
 def _table(rows,columns,key):
     import pandas as pd
@@ -463,29 +473,41 @@ def _stage1(lab,saved):
                 reference=st.text_input("Tabla, fila, nota y apartado ISO",value=previous_row.get("reference",""),key=f"c5l2_norm_{code}_reference")
             condition=st.text_area("Ámbito de aplicación, condiciones y justificación técnica",value=previous_row.get("condition",""),height=82,key=f"c5l2_norm_{code}_condition")
             fields[code]={"descriptor":descriptor,"limit":limit,"direction":direction,"reference":reference,"condition":condition}
-        st.markdown("### D · Reconocimiento documental de la vivienda CH-A-P05-S03")
-        descriptions=[
-            ("location","Edificio, piso y vivienda seleccionados","Torre A, piso 5, tercera vivienda desde poniente en hilera sur (CH-A-P05-S03)."),
-            ("documents","Documentación consultada","Archivo, lámina, revisión y cotas relevantes."),
-            ("adjacencies","Verificación documental de los recintos asignados","Revisa el muro compartido con el estar de la vivienda poniente, la proyección del dormitorio del piso 6, la fachada del estar y el trayecto sanitario hacia dormitorio. No cambies los recintos del encargo."),
-            ("limitations","Datos faltantes y método para resolverlos","Distingue documentación del proyecto y supuestos del anexo."),
-        ]
-        documentation={}
-        for key,label,explanation in descriptions:
-            documentation[key]=st.text_area(label,value=old.get(key,""),help=explanation,height=80,key=f"c5l2_s1_{key}")
-        submitted=st.form_submit_button("Guardar encargo, requisitos Clase B y reconocimiento",type="primary")
-    if submitted:
-        incomplete=[code for code,row in fields.items() if
-            not row["descriptor"].strip() or not row["limit"].strip() or
-            row["direction"]=="Selecciona" or not row["reference"].strip() or
-            len(row["condition"].strip())<20]
-        missing_docs=[key for key,value in documentation.items() if len(value.strip())<15]
-        if incomplete:
-            st.warning("Faltan requisitos o referencias normativas de: "+", ".join(incomplete)+". Completa las condiciones para cada familia.")
-        elif missing_docs:
-            st.warning("Completa la identificación y trazabilidad documental antes de guardar la etapa.")
+        st.markdown("#### Guardado de la Etapa 1")
+        st.caption(
+            "Puedes guardar un borrador aunque falten requisitos. "
+            "Para completar la etapa debes registrar los cinco campos de "
+            "cada familia acústica: descriptor, requisito, sentido, referencia "
+            "normativa y condición de aplicación."
+        )
+        save_col, finish_col = st.columns(2)
+        with save_col:
+            save_draft = st.form_submit_button(
+                "💾 Guardar avance", use_container_width=True
+            )
+        with finish_col:
+            finish_stage = st.form_submit_button(
+                "✓ Completar Etapa 1", type="primary", use_container_width=True
+            )
+    if save_draft or finish_stage:
+        # Preserve any historical documentation fields without forcing the
+        # student to fill in the removed recognition form.
+        payload={**old, "criteria":fields}
+        if save_draft:
+            _save(lab,saved,1,"c5l2_s1",payload,complete=False)
         else:
-            _save(lab,saved,1,"c5l2_s1",{"criteria":fields,**documentation})
+            incomplete=[code for code,row in fields.items() if
+                not row["descriptor"].strip() or not row["limit"].strip() or
+                row["direction"]=="Selecciona" or not row["reference"].strip() or
+                len(row["condition"].strip())<20]
+            if incomplete:
+                st.warning(
+                    "Faltan datos normativos o justificaciones en: "+
+                    ", ".join(incomplete)+
+                    ". Puedes guardar el avance sin completar la etapa."
+                )
+            else:
+                _save(lab,saved,1,"c5l2_s1",payload,complete=True)
     if _is_teacher():
         st.caption("Pauta docente: revisar la ISO autorizada y la tabla exacta, sin asumir que todos los indicadores tienen un solo valor o se comparan en el mismo sentido. La etapa es formativa: el guardado no valida automáticamente la corrección de los umbrales.")
 
