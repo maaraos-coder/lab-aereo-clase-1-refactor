@@ -3,6 +3,8 @@
 
 **Documento de ejercicio académico, NO especificación técnica emitida por el titular.** Proyecto real: Edificio Chimbote, La Florida, Torre A. Vivienda de estudio vigente: **Torre A, piso 5, hilera sur, tercer departamento desde poniente**, clave académica **CH-A-P05-S03**. Esta clave **no es la numeración oficial de una vivienda**. Planta de pisos tipo: *3.1 Planos de Arquitectura (Parte 1)*, pág. 8 del PDF. Corte transversal: pág. 12. Elevaciones y otros cortes: *Parte 2*.
 
+**Referencia arquitectónica complementaria:** para evaluar la fachada F-01/V-01 debe consultarse la **elevación sur de Torre A (Parte 2, página 5)** y cotejarla con la planta tipo (Parte 1, página 8). Los paños, balcones y ventanas del alzado son **geometría del proyecto**; los materiales y espesores de la tabla siguiente siguen siendo **supuestos docentes** y no se infieren del render conceptual.
+
 ### A · Condición constructiva original propuesta
 
 | ID | Elemento | Composición inicial adoptada | Montaje inicial |
