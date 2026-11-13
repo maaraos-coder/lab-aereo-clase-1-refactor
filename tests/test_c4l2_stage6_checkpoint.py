@@ -82,6 +82,29 @@ class Stage6CheckpointTests(unittest.TestCase):
             state=self.state
         )
 
+    def test_empty_pandas_style_numeric_cells_do_not_block_checkpoint(self):
+        class NAType:
+            pass
+        self.state["c4l2_s6_control_design"][0]["Excedencia [dB]"]=float("nan")
+        self.state["c4l2_s6_control_design"][0]["Receptor crítico"]=NAType()
+        self.assertTrue(self._write())
+        restored=next(iter(self.client.store.values()))["answer"]["fields"]
+        row=restored["c4l2_s6_control_design"][0]
+        self.assertIsNone(row["Excedencia [dB]"])
+        self.assertIsNone(row["Receptor crítico"])
+
+    def test_error_backup_handles_nan_from_editor(self):
+        from labs.curso4_laboratorio_2_stage6 import _stage6_json_safe
+        class NAType:
+            pass
+        safe=_stage6_json_safe({
+            "design":[{"LAeq":float("nan"),"Receptor":NAType()}],
+            "configuration":{"machines":{"first":{"measure":"Silenciador"}}},
+        })
+        self.assertIsNone(safe["design"][0]["LAeq"])
+        self.assertIsNone(safe["design"][0]["Receptor"])
+        self.assertEqual(safe["configuration"]["machines"]["first"]["measure"],"Silenciador")
+
     def test_verified_save_does_not_resend_other_stages(self):
         self.assertTrue(self._write())
         row=next(iter(self.client.store.values()))
