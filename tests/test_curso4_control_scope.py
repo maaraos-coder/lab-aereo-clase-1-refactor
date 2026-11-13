@@ -410,8 +410,8 @@ class ScopeUITests(unittest.TestCase):
         self.assertEqual(json.loads(json.dumps(normalized)),{
             'measure':'Reducción directa','bands':[1.5],'units':2,'enabled':True
         })
-        with self.assertRaises(ValueError):
-            stage6._stage6_json_safe({'level':float('nan')})
+        missing = stage6._stage6_json_safe({'level': float('nan')})
+        self.assertEqual(json.loads(json.dumps(missing, allow_nan=False)), {'level': None})
         ui=Mock()
         with patch.object(stage6._LOG,'exception'):
             try:
