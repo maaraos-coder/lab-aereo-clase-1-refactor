@@ -1383,54 +1383,192 @@ def _stage4(lab, saved):
         key="c5l2_s4_evidence_free_v1", height=90,
         placeholder="Documenta los datos de entrada o fichas técnicas utilizados y las limitaciones de tu propuesta."
     )
-    st.markdown("#### D · Resultados globales de SONARA")
+    st.markdown("#### D · Resultados y proyectos JSON de SONARA")
     st.caption(
-        "SONARA entrega directamente **DₙT,w** y **DₙT,50 proyectado**. "
-        "Registra ambos para el muro original y la solución mejorada. "
-        "La meta Clase B de este caso es **DₙT,50 ≥ 54 dB** "
-        "(ISO/TS 19488:2021, Tabla 1, primer caso)."
+        "Descarga cada proyecto desde SONARA → **Guardar como JSON**. "
+        "Adjunta aquí el proyecto **original** y el proyecto con la **mejora** "
+        "por separado. El laboratorio conserva una copia para que el docente "
+        "revise la geometría, los materiales, los flancos y los resultados."
     )
     st.warning(
-        "El **DₙT,50 proyectado** de SONARA estima las bandas de 50–80 Hz "
-        "cuando no hay espectro de ensayo. Es válido como resultado de "
-        "predicción académica, **no equivale a una medición ni a una certificación**."
+        "SONARA muestra **DₙT,50 proyectado**, con estimación en 50–80 Hz "
+        "cuando no hay espectro de ensayo: es una predicción académica, "
+        "no una medición ni una certificación."
     )
-    result_columns = ["Modelo", "DₙT,w (dB)",
-                      "DₙT,50 proyectado (dB)", "Archivo / respaldo SONARA"]
+
+    def _sonara_candidates(document):
+        """Find ISO 12354-1 saved solutions in a single-project SONARA export."""
+        if not isinstance(document, dict) or len(document) != 1:
+            return [], None
+        project_id, project = next(iter(document.items()))
+        if not isinstance(project, dict) or project.get("id") != project_id:
+            return [], None
+        if not isinstance(project.get("nombre"), str):
+            return [], None
+        if not all(isinstance(project.get(k, []), list)
+                   for k in ("requerimientos", "soluciones", "recintos")):
+            return [], None
+        solutions = []
+        for sol in project.get("soluciones", []):
+            if isinstance(sol, dict):
+                solutions.append(sol)
+        for req in project.get("requerimientos", []):
+            if not isinstance(req, dict):
+                return [], None
+            for sol in req.get("soluciones", []):
+                if isinstance(sol, dict):
+                    solutions.append(sol)
+        return solutions, project.get("nombre")
+
+    def _metric_from_solution(solution, field):
+        value = solution.get(field)
+        if value is None or isinstance(value, bool):
+            return None
+        try:
+            number = float(str(value).replace(",", "."))
+            return round(number, 2) if math.isfinite(number) else None
+        except (ValueError, TypeError):
+            return None
+
     old_results = old.get("model_results") or []
+    saved_files = old.get("sonara_json") or {}
+    uploads = {}
+    active_json = {}
+    for idx, (key, title) in enumerate((
+        ("original", "Condición original · M-01"),
+        ("mejora", "Solución mejorada"),
+    )):
+        previous_file = saved_files.get(key) if isinstance(saved_files, dict) else None
+        cols = st.columns([2, 3])
+        with cols[0]:
+            uploaded = st.file_uploader(
+                f"📎 JSON SONARA · {title}", type=["json"],
+                key=f"c5l2_s4_sonara_file_{key}_v1",
+                help="Archivo de un solo proyecto, descargado con Guardar como JSON en SONARA.",
+            )
+        data = previous_file if isinstance(previous_file, dict) else None
+        if uploaded is not None:
+            raw = uploaded.getvalue()
+            if len(raw) > 2 * 1024 * 1024:
+                st.error(f"{title}: el JSON supera el límite de 2 MB.")
+                data = None
+            else:
+                try:
+                    loaded = json.loads(raw.decode("utf-8-sig"))
+                    candidates, project_name = _sonara_candidates(loaded)
+                    if project_name is None:
+                        raise ValueError(
+                            "Formato no reconocido. Exporta un proyecto individual "
+                            "desde SONARA → Guardar como JSON."
+                        )
+                    import hashlib
+                    data = {
+                        "filename": uploaded.name,
+                        "sha256": hashlib.sha256(raw).hexdigest(),
+                        "project_name": project_name,
+                        "document": loaded,
+                    }
+                    st.success(f"{title}: proyecto «{project_name}» reconocido.")
+                except (UnicodeDecodeError, ValueError) as exc:
+                    st.error(f"{title}: {exc}")
+                    data = None
+        if data:
+            active_json[key] = data
+            candidates, project_name = _sonara_candidates(data.get("document"))
+            with cols[1]:
+                st.caption(
+                    f"**Adjunto:** {data.get('filename', 'SONARA.json')} · "
+                    f"Proyecto: {project_name or 'Sin título'} · "
+                    f"{len(candidates)} solución(es) guardada(s)."
+                )
+                if not candidates:
+                    st.warning(
+                        "El archivo contiene el proyecto, pero no soluciones "
+                        "ISO guardadas. Guarda la simulación en SONARA y "
+                        "descarga nuevamente el JSON para importar resultados."
+                    )
+                options = []
+                for number, sol in enumerate(candidates):
+                    if str(sol.get("tipo_calculo", "")).lower().strip() == "iso 12354-1" or (
+                        "dntw" in sol or "dnt50" in sol
+                    ):
+                        options.append((number, sol))
+                if options:
+                    selected_index = st.selectbox(
+                        "Solución registrada en SONARA",
+                        range(len(options)),
+                        format_func=lambda n: str(
+                            options[n][1].get("nombre")
+                            or f"Solución {options[n][0] + 1}"
+                        ),
+                        key=f"c5l2_s4_selected_sonara_{key}_v1",
+                    )
+                    chosen = options[selected_index][1]
+                    st.caption(
+                        "Valores extraídos del JSON · "
+                        f"DₙT,w: {_metric_from_solution(chosen, 'dntw')} dB · "
+                        f"DₙT,50: {_metric_from_solution(chosen, 'dnt50')} dB."
+                    )
+                    active_json[key]["selected_solution_id"] = str(
+                        chosen.get("id") or options[selected_index][0]
+                    )
+                    active_json[key]["extracted"] = {
+                        "dntw": _metric_from_solution(chosen, "dntw"),
+                        "dnt50": _metric_from_solution(chosen, "dnt50"),
+                    }
+                else:
+                    st.info(
+                        "No hay una solución de ISO 12354-1 identificable "
+                        "en el archivo. Puedes registrar los valores manualmente."
+                    )
+            with st.expander(f"🔎 Revisar respaldo JSON · {title}", expanded=False):
+                st.json(data["document"], expanded=False)
+        elif uploaded is None:
+            with cols[1]:
+                st.caption("Sin JSON adjunto. Puedes guardar un avance incompleto.")
+        uploads[key] = data
+
+    st.markdown("**Comparación de indicadores globales**")
+    result_columns = ["Modelo", "DₙT,w (dB)", "DₙT,50 proyectado (dB)",
+                      "Respaldo JSON"]
     result_rows = []
-    for idx, label in enumerate(("Original M-01", "Mejora propuesta")):
+    for idx, (key, label) in enumerate((
+        ("original", "Original M-01"), ("mejora", "Mejora propuesta")
+    )):
         previous = old_results[idx] if idx < len(old_results) and isinstance(old_results[idx], dict) else {}
         descriptor = previous.get("Descriptor calculado")
         global_value = previous.get("Resultado global (dB)")
+        extracted = (uploads.get(key) or {}).get("extracted") or {}
         result_rows.append({
             "Modelo": label,
             "DₙT,w (dB)": _filled(
-                previous.get("DₙT,w (dB)"),
+                extracted.get("dntw"), previous.get("DₙT,w (dB)"),
                 global_value if descriptor == "DₙT,w" else ""),
             "DₙT,50 proyectado (dB)": _filled(
-                previous.get("DₙT,50 proyectado (dB)"),
+                extracted.get("dnt50"), previous.get("DₙT,50 proyectado (dB)"),
                 global_value if descriptor == "DₙT,50" else ""),
+            "Respaldo JSON": "✓ Proyecto guardado" if uploads.get(key) else "Pendiente",
             "Archivo / respaldo SONARA": _filled(
                 previous.get("Archivo / respaldo SONARA"),
-                previous.get("Fuente / cálculo SONARA"))
+                (uploads.get(key) or {}).get("filename")),
         })
     results = st.data_editor(
         pd.DataFrame(result_rows, columns=result_columns),
-        key="c5l2_s4_results_dnt50_v2",
+        key="c5l2_s4_results_with_json_v1",
         hide_index=True, num_rows="fixed", use_container_width=True,
-        disabled=["Modelo"],
+        disabled=["Modelo", "Respaldo JSON"],
         column_config={
-            "DₙT,w (dB)": st.column_config.NumberColumn(
-                "DₙT,w (dB)", format="%.1f"),
+            "DₙT,w (dB)": st.column_config.NumberColumn("DₙT,w (dB)", format="%.1f"),
             "DₙT,50 proyectado (dB)": st.column_config.NumberColumn(
                 "DₙT,50 proyectado (dB)", format="%.1f"),
         },
     ).fillna("").to_dict("records")
+    for row in results:
+        row.pop("Respaldo JSON", None)
     st.caption(
-        "DₙT,w: índice ponderado de diferencia estandarizada. "
-        "DₙT,50 proyectado: indicador de bajas frecuencias calculado "
-        "por SONARA para el contraste académico con la Clase B."
+        "Los valores se precargan de la solución ISO 12354-1 del JSON "
+        "cuando están presentes; en caso contrario puedes ingresarlos "
+        "manualmente. El docente revisará el proyecto adjunto."
     )
     st.markdown("#### E · Comprobación de la exigencia Clase B")
     st.info(
@@ -1479,12 +1617,13 @@ def _stage4(lab, saved):
         "systems": {"model_type": model_type, "data_origin": data_origin,
                     "t0": reference_time, "flanks": flanks},
         "model_results": results,
+        "sonara_json": uploads,
         "design_detail": {
             "materials": improvement, "mounting": mounting,
             "improvement": improvement, "evidence": evidence,
             "descriptor": selected_descriptor, "comparison": comparison
         },
-        "schema_version": "c5l2_airborne_iso12354_v2"
+        "schema_version": "c5l2_airborne_iso12354_v3"
     }
     a, b = st.columns(2)
     with a:
@@ -1512,9 +1651,8 @@ def _stage4(lab, saved):
             st.warning("Indica la fuente acústica del muro original y T₀.")
         elif not measured or len(results) != 2:
             st.warning("Registra el DₙT,50 proyectado del modelo original y de la mejora.")
-        elif not all(str(r.get("Archivo / respaldo SONARA") or "").strip()
-                     for r in results):
-            st.warning("Indica la fuente o archivo SONARA de ambos resultados.")
+        elif not all(uploads.get(key) for key in ("original", "mejora")):
+            st.warning("Adjunta y guarda los JSON SONARA de la condición original y la mejora.")
         elif not all([improvement.strip(), mounting.strip(), evidence.strip(),
                       comparison.strip()]):
             st.warning("Documenta materiales, montaje, respaldo y conclusión técnica.")
