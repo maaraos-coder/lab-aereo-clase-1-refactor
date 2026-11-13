@@ -36,10 +36,6 @@ Se han identificado como **posibles referencias parciales** del sector dormitori
 | **HI-01** | Tramo de cierre sanitario didáctico | **1,40 m** de longitud; altura **HG-01** cuando proceda | **IN-01**, solo si el trayecto y cerramiento aplicables se verifican o se documenta un modelo académico simplificado. No presupone adyacencia física. |
 | **HC-01** | Operación y configuración de descarga | WC **6 L**; PVC **DN110**; abrazaderas rígidas | **IN-01**: condiciones de funcionamiento/modelo, **no cotas** de recintos ni evidencia de configuración constructiva real. |
 
-**No se fija aquí un ancho de muro medianero, una superficie de losa, largo y ancho completos de los recintos ni una longitud de fachada.** Deben determinarse de los planos de las viviendas asignadas. Si falta un dato imprescindible, registrar **PENDIENTE** y justificar su solicitud al docente.
-
-La antigua hipótesis **HV-01** (ventana del dormitorio) y **HF-01** (longitud de fachada del dormitorio) **no forman parte del caso FA-01 vigente**, que estudia el **estar**; no deben utilizarse para dimensionar su fachada.
-
 ### 4 · Qué calcula el alumno
 
 **Para cada recinto receptor asignado:** largo, ancho o descomposición geométrica apropiada, altura útil documentada, **área de piso [m²]** y **volumen [m³]**. No se entrega ningún resultado resuelto.
