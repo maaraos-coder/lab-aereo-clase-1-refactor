@@ -1340,10 +1340,11 @@ def _stage2_teacher_geometry_results():
          "Superficie":"3,50 m²","Código":"HI-01 × HG-01"},
     ])
     st.caption(
-        "En **IM-01**, la segunda dimensión se registra en el campo "
-        "«Altura (m)» únicamente por compatibilidad con la tabla C: es el "
-        "**ancho en planta de la losa (2,60 m)**, no su espesor ni la "
-        "altura de un tabique. Lo mismo debe indicarse en «Lámina / cota»."
+        "En **IM-01**, la superficie evaluada es la cara inferior de la losa "
+        "del piso 6, que constituye el cielo del dormitorio receptor del piso 5. "
+        "En la tabla C: **Dim. 1 = 3,10 m y Dim. 2 = 2,60 m (ancho en planta)**; "
+        "S = **8,06 m²**. La segunda dimensión NO representa altura ni espesor "
+        "de losa. En muros y cierres, Dim. 2 representa su altura."
     )
 
     st.markdown("#### D · Fachada sur del estar (FA-01)")
