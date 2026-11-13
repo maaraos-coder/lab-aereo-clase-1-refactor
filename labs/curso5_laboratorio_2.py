@@ -81,7 +81,7 @@ TEACHER = {
  2: "Los recintos están fijados por el encargo: el muro estar poniente–dormitorio se aprecia en la planta tipo; pisos 5 y 6 están cubiertos por la planta tipo 3–16. Verificar dimensiones y uniones reales, paños de fachada sur y modelar instalación sanitaria sin presuponer transmisión directa por un tabique. NO copiar cotas de otros departamentos.",
  3: "Materialidad original académica M-01 L-01 F-01 V-01 S-01 IS-01 T-01 T-02 T-03. Revisar superficies interiores, absorciones por banda y cálculo del TR en SONARA: no adoptar TR prefijado.",
  4: "Comprobar el registro de geometría ISO 12354-1 (S, V y recintos), M-01 de HA 180 mm y 432 kg/m² nominales, encuentros y flancos, TR por banda del dormitorio y resultados originales/mejorados de SONARA. Rw, R′w y DnT,w no son intercambiables. Exigir comparación con el descriptor y la meta Clase B determinados en Etapa 1, sin inventar valores de una simulación no realizada.",
- 5: "Revisar LnT,w y términos aplicables de impacto, piso original y variante resiliente, incluyendo vías laterales.",
+ 5: "Verificar geometría de la losa superior IM-01 recuperada de Etapa 2, TR por bandas de Etapa 3, modelo original L-01, uniones, solución libre y JSON de SONARA. Clase B exige L′nT,w ≤ 50 dB Y L′nT,50 ≤ 54 dB simultáneamente (ISO/TS 19488:2021 Tabla 2); una reducción del nivel es una mejora. El resultado es una predicción, no una medición.",
  6: "Verificar la secuencia NoiseMap: eje de Pasaje Chimbote, polígono de edificio, receptor exterior frente a fachada sur a altura de piso 5, auditoría geométrica válida, categorías 1/2/3/4a/4b, tres períodos y JSON trazable. No aplicar -3 dB al resultado incidente; evaluar límites del motor educativo antes de revisar paños, vanos, curva ventana-marco-sello y SONARA.",
  7: "Descarga WC de vivienda distinta (piso 6) → dormitorio receptor piso 5. Para ruido intermitente de vivienda vecina verificar LAF,max,nT ≤30 dB(A), ISO/TS 19488:2021 Tabla 4 Clase B; la predicción no acredita cumplimiento sin modelar las vías aérea y estructural.",
  8: "Comparar con los requisitos reales de Clase B determinados por el alumno; no automatizar la certificación global.",
@@ -1689,6 +1689,425 @@ def _model(stage,lab,saved,case):
             st.warning("Registra geometría, ambos modelos, requisito ISO y comparación de manera verificable.")
         else:_save(lab,saved,stage,f"c5l2_s{stage}",{"case":case,**fields})
 
+def _stage5(lab, saved):
+    """Impact-noise design: same pedagogical structure as airborne Stage 4."""
+    import hashlib
+    import pandas as pd
+
+    _header(5)
+    old = saved.get("c5l2_s5") or {}
+    geometry = saved.get("c5l2_s2") or {}
+    reverberation = saved.get("c5l2_s3") or {}
+    criterion = ((saved.get("c5l2_s1") or {}).get("criteria") or {}).get("IM-01") or {}
+    rooms = {str(r.get("Caso") or ""): r for r in geometry.get("rooms", [])
+             if isinstance(r, dict)}
+    separations = {str(r.get("Caso") or ""): r for r in geometry.get("separations", [])
+                   if isinstance(r, dict)}
+    room = rooms.get("IM-01", {})
+    slab = separations.get("IM-01", {})
+    tr_room = (reverberation.get("tr_rooms") or {}).get("Dormitorio", {})
+    tr_bands = reverberation.get("tr_bands") or []
+
+    def _pick(*values):
+        for v in values:
+            if v is not None and str(v).strip():
+                return v
+        return ""
+
+    def _number(value):
+        try:
+            v = float(str(value).strip().replace(",", "."))
+            return v if math.isfinite(v) else None
+        except (ValueError, TypeError):
+            return None
+
+    st.markdown("### IM-01 · Aislamiento al ruido de impacto entre viviendas")
+    st.info(
+        "**Fuente:** dormitorio de vivienda distinta del piso 6, sobre "
+        "CH-A-P05-S03. **Receptor:** dormitorio de CH-A-P05-S03, piso 5. "
+        "Evalúa la **losa superior del dormitorio receptor** (L-01). "
+        "Utiliza SONARA con ISO 12354-2 e ISO 717-2: modela la base "
+        "y una mejora constructiva libre, con vías laterales."
+    )
+    st.caption(
+        "Ruta de trabajo: A · geometría previa → B · losa y transmisión → "
+        "C · mejora libre → D · dos JSON SONARA y resultados → E · Clase B."
+    )
+
+    st.markdown("#### A · Geometría del entrepiso y dormitorio receptor")
+    st.caption(
+        "La Etapa 2 proporciona la geometría IM-01 del dormitorio y la "
+        "**superficie de la losa superior**; la Etapa 3 aporta TR y, "
+        "si falta, volumen del dormitorio. Los campos recuperados son de "
+        "solo lectura y se corrigen en su etapa de origen."
+    )
+    defaults = {
+        "slab_length": slab.get("Longitud (m)", ""),
+        "slab_width": slab.get("Altura (m)", ""),
+        "slab_area": slab.get("Superficie (m²)", ""),
+        "room_length": room.get("Largo (m)", ""),
+        "room_width": room.get("Ancho (m)", ""),
+        "room_height": _pick(room.get("Altura (m)"), tr_room.get("height")),
+        "room_area": _pick(room.get("Área (m²)"), tr_room.get("area")),
+        "room_volume": _pick(room.get("Volumen (m³)"), tr_room.get("volume")),
+        "drawing": _pick(slab.get("Plano / cota"), room.get("Plano / cota")),
+    }
+    if not defaults["slab_area"]:
+        a, b = _number(defaults["slab_length"]), _number(defaults["slab_width"])
+        if a is not None and b is not None:
+            defaults["slab_area"] = f"{a*b:.3f}"
+    if not defaults["room_area"]:
+        a, b = _number(defaults["room_length"]), _number(defaults["room_width"])
+        if a is not None and b is not None:
+            defaults["room_area"] = f"{a*b:.3f}"
+    if not defaults["room_volume"]:
+        a, b = _number(defaults["room_area"]), _number(defaults["room_height"])
+        if a is not None and b is not None:
+            defaults["room_volume"] = f"{a*b:.3f}"
+    previous_geo = old.get("iso_geometry") or {}
+    signature = hashlib.sha256(
+        json.dumps({"stage2": geometry, "stage3": reverberation},
+                   ensure_ascii=False, sort_keys=True, default=str).encode()
+    ).hexdigest()[:12]
+    fields = [
+        ("slab_length", "Largo de losa superior (m)"),
+        ("slab_width", "Ancho de losa superior (m)"),
+        ("slab_area", "Superficie de entrepiso (m²)"),
+        ("room_length", "Largo dormitorio receptor (m)"),
+        ("room_width", "Ancho dormitorio receptor (m)"),
+        ("room_height", "Altura dormitorio receptor (m)"),
+        ("room_area", "Área dormitorio receptor (m²)"),
+        ("room_volume", "Volumen dormitorio receptor (m³)"),
+    ]
+    n_recovered = sum(bool(str(defaults.get(k) or "").strip()) for k in defaults)
+    if n_recovered:
+        st.success(f"Se recuperaron {n_recovered} campos geométricos/referencias de las etapas previas.")
+    else:
+        st.warning("No hay geometría IM-01 guardada. Revisa y guarda primero la Etapa 2 y la Etapa 3 en esta misma cuenta.")
+    geo = {}
+    for i in range(0, len(fields), 3):
+        cols = st.columns(3)
+        for col, (key, label) in zip(cols, fields[i:i+3]):
+            recovered = defaults.get(key, "")
+            with col:
+                geo[key] = st.text_input(
+                    label, value=str(_pick(recovered, previous_geo.get(key))),
+                    key=f"c5l2_s5_geom_{key}_{signature}",
+                    disabled=bool(str(recovered or "").strip()),
+                    help="Valor recuperado de la etapa previa; corrígelo allí." if recovered else
+                         "Dato no guardado previamente: anótalo desde el plano o una hipótesis documentada."
+                )
+    geo["drawing"] = st.text_input(
+        "Plano / cota del entrepiso",
+        value=str(_pick(defaults["drawing"], previous_geo.get("drawing"))),
+        key=f"c5l2_s5_drawing_{signature}",
+        disabled=bool(str(defaults["drawing"] or "").strip())
+    )
+    geo["source_basis"] = st.text_input(
+        "Hipótesis de recinto excitador / superposición de planta",
+        value=str(previous_geo.get("source_basis", "")),
+        key="c5l2_s5_source_basis",
+        help="La planta tipo acredita superposición en planta, pero no todos los detalles del montaje."
+    )
+    st.caption(
+        "Para IM-01 se considera la **losa de cielo del dormitorio receptor**, "
+        "no su piso. La superficie horizontal se obtiene de la planta del recinto "
+        "y la configuración del suelo excitado pertenece al nivel superior."
+    )
+
+    st.markdown("#### B · Losa original, reverberación y flanqueos")
+    st.table([{
+        "Código": "L-01", "Elemento": "Losa separadora",
+        "Configuración original": "HA 160 mm + mortero 30 mm + cerámica 10 mm",
+        "Condición de montaje": "Sin capa resiliente ni cielo suspendido"
+    }])
+    st.caption(
+        "Densidad de HA de referencia docente: 2.400 kg/m³ → masa nominal "
+        "solo de la losa HA: 384 kg/m². El mortero y la cerámica deben "
+        "caracterizarse por separado en SONARA; la masa total no se presume."
+    )
+    st.markdown("**TR(f) del dormitorio receptor · recuperado de Etapa 3**")
+    if tr_bands:
+        st.dataframe(pd.DataFrame([
+            {"Banda Hz": r.get("Banda (Hz)", ""),
+             "TR dormitorio (s)": r.get("TR dormitorio (s)", "")}
+            for r in tr_bands
+        ]), hide_index=True, use_container_width=True)
+    else:
+        st.warning("No hay TR por bandas guardado en Etapa 3; completa el cálculo allí.")
+    old_base = old.get("base_inputs") or {}
+    base1, base2, base3 = st.columns(3)
+    with base1:
+        mode = st.selectbox(
+            "Modelo SONARA",
+            ["ISO 12354-2", "Simplificado (justificar)"],
+            index=1 if old_base.get("mode") == "Simplificado (justificar)" else 0,
+            key="c5l2_s5_mode")
+    with base2:
+        t0 = st.text_input(
+            "T₀ normativo (s) · distinto de TR",
+            value=str(old_base.get("t0", "0.5")), key="c5l2_s5_t0")
+    with base3:
+        base_source = st.text_input(
+            "Origen de propiedades acústicas de la losa",
+            value=str(old_base.get("source", "")), key="c5l2_s5_base_source",
+            placeholder="Catálogo SONARA / curva / ficha técnica")
+    st.markdown("**Uniones con el entrepiso · condición académica original**")
+    st.caption(
+        "Se proporcionan los materiales y tipos de unión. Registra únicamente "
+        "los parámetros de flanqueo/coeficientes que obtengas del módulo "
+        "ISO 12354-2 de SONARA. Los muros laterales HA son una "
+        "**hipótesis docente**; no un dato verificado de obra."
+    )
+    fl_cols = ["Encuentro", "Elemento / material", "Longitud de unión (m)",
+               "Montaje previsto", "Kij SONARA (dB)"]
+    fl_def = [
+        {"Encuentro": "Losa / muro 1", "Elemento / material": "HA 180 mm (hipótesis)",
+         "Longitud de unión (m)": geo["slab_length"], "Montaje previsto": "Rígido continuo",
+         "Kij SONARA (dB)": ""},
+        {"Encuentro": "Losa / muro 2", "Elemento / material": "HA 180 mm (hipótesis)",
+         "Longitud de unión (m)": geo["slab_length"], "Montaje previsto": "Rígido continuo",
+         "Kij SONARA (dB)": ""},
+        {"Encuentro": "Losa / muro 3", "Elemento / material": "HA 180 mm (hipótesis)",
+         "Longitud de unión (m)": geo["slab_width"], "Montaje previsto": "Rígido continuo",
+         "Kij SONARA (dB)": ""},
+        {"Encuentro": "Losa / muro 4", "Elemento / material": "HA 180 mm (hipótesis)",
+         "Longitud de unión (m)": geo["slab_width"], "Montaje previsto": "Rígido continuo",
+         "Kij SONARA (dB)": ""},
+    ]
+    old_flanks = old_base.get("flanks") or []
+    for idx, row in enumerate(fl_def):
+        if idx < len(old_flanks):
+            row["Kij SONARA (dB)"] = str(old_flanks[idx].get("Kij SONARA (dB)", ""))
+    flanks = st.data_editor(
+        pd.DataFrame(fl_def, columns=fl_cols), hide_index=True,
+        num_rows="fixed", use_container_width=True,
+        disabled=fl_cols[:-1], key="c5l2_s5_flanks_v1"
+    ).fillna("").to_dict("records")
+    st.caption(
+        "Los distintos caminos ISO 12354-2 pueden requerir más de un "
+        "coeficiente por unión; conserva el detalle en el proyecto SONARA, "
+        "sin sustituirlos por un promedio arbitrario."
+    )
+
+    st.markdown("#### C · Diseño libre de la mejora de impacto")
+    st.info(
+        "El alumno elige **libremente** un tratamiento en el piso superior "
+        "o en la construcción (piso flotante, subcapa resiliente, "
+        "cielo suspendido desacoplado, u otro). No se prescribe una "
+        "solución ni se entrega un ΔLw supuesto."
+    )
+    old_design = old.get("design_detail") or {}
+    materials = st.text_area(
+        "Composición propuesta, materiales y espesores",
+        value=str(old_design.get("materials", "")),
+        height=125, key="c5l2_s5_materials",
+        placeholder="Capas y espesores; características de la subcapa, masa de sobrelosa y/o cielo..."
+    )
+    mounting = st.text_area(
+        "Montaje, continuidad, encuentros y puentes rígidos",
+        value=str(old_design.get("mounting", "")),
+        height=110, key="c5l2_s5_mounting",
+        placeholder="Juntas perimetrales, apoyos, uniones, desacople y tratamiento de flancos..."
+    )
+    evidence = st.text_area(
+        "Parámetros de entrada SONARA y respaldo técnico",
+        value=str(old_design.get("evidence", "")),
+        height=95, key="c5l2_s5_evidence",
+        placeholder="Rigidez dinámica, masa superficial, ΔLw si aplica, espectros, fichas y supuestos..."
+    )
+
+    st.markdown("#### D · Resultados SONARA y archivos JSON")
+    st.info(
+        "Para Clase B del caso IM-01 se exigen **ambas condiciones** "
+        "de ISO/TS 19488:2021, Tabla 2: **L′ₙT,w ≤ 50 dB** "
+        "**Y L′ₙT,50 ≤ 54 dB**. Cuanto más bajos sean los niveles, "
+        "mejor es el aislamiento al ruido de impacto."
+    )
+    st.caption(
+        "En SONARA guarda la simulación de impacto en el proyecto y descarga "
+        "**Guardar como JSON**. Adjunta el original y la mejora, "
+        "cada uno con su solución guardada. Se conserva el JSON completo "
+        "para la revisión docente."
+    )
+    def _solutions(document):
+        if not isinstance(document, dict) or len(document) != 1:
+            return None, []
+        pid, project = next(iter(document.items()))
+        if not isinstance(project, dict) or project.get("id") != pid:
+            return None, []
+        if not isinstance(project.get("nombre"), str):
+            return None, []
+        if not all(isinstance(project.get(k, []), list)
+                   for k in ("recintos", "requerimientos", "soluciones")):
+            return None, []
+        sols = list(project.get("soluciones") or [])
+        for req in project.get("requerimientos") or []:
+            if isinstance(req, dict):
+                sols.extend(req.get("soluciones") or [])
+        return project.get("nombre"), [
+            row for row in sols if isinstance(row, dict) and (
+                row.get("tipo_calculo") == "Ruido de impacto"
+                or "lntw" in row or "lnt50" in row)
+        ]
+
+    saved_json = old.get("sonara_json") or {}
+    attachments = {}
+    extracted_values = {}
+    for key, title in (("original", "Losa original L-01"),
+                       ("mejora", "Solución mejorada")):
+        upload = st.file_uploader(
+            "📎 Proyecto SONARA JSON · " + title,
+            type=["json"], key="c5l2_s5_json_" + key
+        )
+        attached = saved_json.get(key) if isinstance(saved_json, dict) else None
+        if upload is not None:
+            raw = upload.getvalue()
+            if len(raw) > 2 * 1024 * 1024:
+                st.error("El JSON supera 2 MB: " + title)
+                attached = None
+            else:
+                try:
+                    document = json.loads(raw.decode("utf-8-sig"))
+                    project_name, sols = _solutions(document)
+                    if project_name is None:
+                        raise ValueError("El archivo no es un proyecto individual SONARA válido.")
+                    attached = {
+                        "filename": upload.name,
+                        "sha256": hashlib.sha256(raw).hexdigest(),
+                        "project_name": project_name,
+                        "document": document,
+                    }
+                    st.success("Archivo de proyecto reconocido: " + project_name)
+                except (UnicodeDecodeError, ValueError) as exc:
+                    st.error(f"{title}: {exc}")
+                    attached = None
+        if isinstance(attached, dict) and attached.get("document"):
+            project_name, sols = _solutions(attached["document"])
+            attachments[key] = attached
+            st.caption(f"{title}: {attached.get('filename', '')} · {len(sols)} solución(es) de impacto.")
+            if sols:
+                selected = st.selectbox(
+                    "Selecciona la solución de impacto en el proyecto · " + title,
+                    range(len(sols)),
+                    format_func=lambda n: str(sols[n].get("nombre") or f"Solución {n+1}"),
+                    key="c5l2_s5_solution_" + key
+                )
+                sol = sols[selected]
+                extracted_values[key] = {
+                    "lntw": _number(sol.get("lntw")),
+                    "lnt50": _number(sol.get("lnt50")),
+                }
+                attachments[key]["selected_solution_id"] = str(sol.get("id") or selected)
+                st.caption(
+                    f"Resultados JSON · L′ₙT,w = {extracted_values[key]['lntw']} dB; "
+                    f"L′ₙT,50 = {extracted_values[key]['lnt50']} dB."
+                )
+            else:
+                st.warning("No hay una solución de impacto guardada dentro de este JSON.")
+            with st.expander("Ver JSON · " + title):
+                st.json(attached["document"], expanded=False)
+        else:
+            st.caption("JSON pendiente: " + title)
+
+    cols = ["Modelo", "L′ₙT,w (dB)", "L′ₙT,50 (dB)", "Respaldo JSON"]
+    prev_rows = old.get("model_results") or []
+    initial_rows = []
+    for idx, (key, label) in enumerate((("original", "Losa original"),
+                                        ("mejora", "Mejora propuesta"))):
+        prev = prev_rows[idx] if idx < len(prev_rows) and isinstance(prev_rows[idx], dict) else {}
+        found = extracted_values.get(key) or {}
+        initial_rows.append({
+            "Modelo": label,
+            "L′ₙT,w (dB)": _pick(found.get("lntw"), prev.get("L′ₙT,w (dB)")),
+            "L′ₙT,50 (dB)": _pick(found.get("lnt50"), prev.get("L′ₙT,50 (dB)")),
+            "Respaldo JSON": "✓" if attachments.get(key) else "Pendiente"
+        })
+    results = st.data_editor(
+        pd.DataFrame(initial_rows, columns=cols), key="c5l2_s5_results_v1",
+        hide_index=True, use_container_width=True, num_rows="fixed",
+        disabled=["Modelo", "Respaldo JSON"],
+        column_config={
+            "L′ₙT,w (dB)": st.column_config.NumberColumn("L′ₙT,w (dB)", format="%.1f"),
+            "L′ₙT,50 (dB)": st.column_config.NumberColumn("L′ₙT,50 (dB)", format="%.1f")
+        }
+    ).fillna("").to_dict("records")
+    for row in results:
+        row.pop("Respaldo JSON", None)
+    st.caption(
+        "SONARA guarda lntw y lnt50 en las soluciones de impacto. "
+        "Si no dispone de espectro suficiente para L′ₙT,50, "
+        "no presumas el resultado. Si solo está disponible L′ₙT,w, "
+        "registra el avance, pero no declares Clase B."
+    )
+
+    st.markdown("#### E · Comprobación de Clase B y conclusión")
+    if criterion:
+        st.caption(
+            "Criterio ingresado en Etapa 1: " +
+            str(criterion.get("descriptor", "")) + " " +
+            str(criterion.get("direction", "")) + " " +
+            str(criterion.get("limit", "")) + "."
+        )
+    st.info(
+        "**Clase B · impacto entre viviendas:** "
+        "L′ₙT,w ≤ 50 dB **y** L′ₙT,50 ≤ 54 dB "
+        "(ISO/TS 19488:2021, Tabla 2). "
+        "Los dos requisitos deben cumplirse simultáneamente."
+    )
+    if len(results) == 2:
+        base_w = _number(results[0].get("L′ₙT,w (dB)"))
+        new_w = _number(results[1].get("L′ₙT,w (dB)"))
+        base_50 = _number(results[0].get("L′ₙT,50 (dB)"))
+        new_50 = _number(results[1].get("L′ₙT,50 (dB)"))
+        if all(v is not None for v in (base_w, new_w, base_50, new_50)):
+            c1, c2, c3 = st.columns(3)
+            c1.metric("Reducción de L′ₙT,w", f"{base_w-new_w:+.1f} dB")
+            c2.metric("Margen Clase B · L′ₙT,w", f"{50-new_w:+.1f} dB")
+            c3.metric("Margen Clase B · L′ₙT,50", f"{54-new_50:+.1f} dB")
+            if new_w <= 50 and new_50 <= 54:
+                st.success("La mejora alcanza las dos metas académicas de Clase B.")
+            else:
+                st.warning("La mejora no satisface simultáneamente los dos criterios de Clase B.")
+        else:
+            st.info("Pendiente: ingresa ambos indicadores del modelo original y mejorado.")
+    conclusion = st.text_area(
+        "Conclusión técnica, viabilidad y limitaciones del modelo",
+        value=str(old_design.get("comparison", "")),
+        key="c5l2_s5_conclusion", height=105
+    )
+    payload = {
+        "case": "IM-01", "iso_geometry": geo,
+        "base_inputs": {"mode": mode, "t0": t0,
+                        "source": base_source, "flanks": flanks},
+        "design_detail": {"materials": materials, "mounting": mounting,
+                          "evidence": evidence, "comparison": conclusion},
+        "model_results": results, "sonara_json": attachments,
+        "schema_version": "c5l2_impact_iso12354_v1"
+    }
+    c1, c2 = st.columns(2)
+    draft = c1.button("💾 Guardar avance", key="c5l2_s5_draft_v1", use_container_width=True)
+    finish = c2.button("✓ Completar Etapa 5", key="c5l2_s5_finish_v1",
+                       type="primary", use_container_width=True)
+    if draft:
+        _save(lab, saved, 5, "c5l2_s5", payload, complete=False)
+    if finish:
+        required_geo = ("slab_area", "room_area", "room_volume")
+        if any(_number(geo.get(k)) is None or _number(geo.get(k)) <= 0
+               for k in required_geo):
+            st.warning("Faltan geometría y volumen del dormitorio receptor.")
+        elif not all(str(v).strip() for v in
+                     (materials, mounting, evidence, conclusion, base_source)):
+            st.warning("Completa materiales, montaje, respaldo y conclusión.")
+        elif not all(attachments.get(k) for k in ("original", "mejora")):
+            st.warning("Adjunta ambos proyectos SONARA JSON con sus cálculos de impacto.")
+        elif not all(_number(row.get(k)) is not None for row in results
+                     for k in ("L′ₙT,w (dB)", "L′ₙT,50 (dB)")):
+            st.warning("Se requieren L′ₙT,w y L′ₙT,50 en ambos modelos.")
+        else:
+            _save(lab, saved, 5, "c5l2_s5", payload, complete=True)
+
+
 def _stage6(lab,saved):
     """NoiseMap road scenario + transparent Lden verification + SONARA facade."""
     _header(6)
@@ -2330,6 +2749,37 @@ def _teacher(stage, saved=None):
                 _stage2_teacher_geometry_results()
             else:
                 st.write(TEACHER[stage])
+            if stage==5:
+                st.markdown("**Pauta docente · aislamiento de impacto · Etapa 5**")
+                st.write(
+                    "Comprobar losa L-01 **superior** del dormitorio receptor "
+                    "en piso 5, bajo la vivienda del piso 6. Base académica: "
+                    "HA 160 mm + mortero 30 mm + cerámica 10 mm, sin capa "
+                    "resiliente. Conservar geometría IM-01 y TR recuperados, "
+                    "revisar flancos y montaje de la variante."
+                )
+                st.info(
+                    "Clase B ISO/TS 19488:2021 Tabla 2: **L′ₙT,w ≤ 50 dB** "
+                    "**Y L′ₙT,50 ≤ 54 dB**. La norma pide ambos indicadores, "
+                    "no una alternativa. No inventar valores docentes calculados "
+                    "si no existe un proyecto SONARA guardado."
+                )
+                records = ((saved or {}).get("c5l2_s5") or {}).get("sonara_json") or {}
+                for name, label in (("original", "Original L-01"),
+                                    ("mejora", "Mejora de impacto")):
+                    doc = records.get(name)
+                    if isinstance(doc, dict) and doc.get("document"):
+                        st.markdown(f"**{label} · {doc.get('filename', 'SONARA.json')}**")
+                        st.json(doc["document"], expanded=False)
+                        st.download_button(
+                            "⬇ Descargar JSON · " + label,
+                            data=json.dumps(doc["document"], ensure_ascii=False, indent=2),
+                            file_name=doc.get("filename", f"sonara_impacto_{name}.json"),
+                            mime="application/json",
+                            key="c5l2_s5_teacher_json_" + name,
+                        )
+                    else:
+                        st.caption(f"{label}: JSON no entregado.")
             if stage==4:
                 st.markdown("**Pauta docente · proyectos SONARA adjuntos**")
                 st.caption(
@@ -2436,8 +2886,9 @@ def run_stage(stage,lab,saved,runtime):
     elif stage==2:_stage2(lab,saved)
     elif stage==3:_stage3(lab,saved)
     elif stage==4:_stage4(lab,saved)
+    elif stage==5:_stage5(lab,saved)
     elif stage==6:_stage6(lab,saved)
-    elif stage in (5,7):_model(stage,lab,saved,{5:"IM-01",7:"IN-01"}[stage])
+    elif stage==7:_model(stage,lab,saved,"IN-01")
     elif stage==8:_stage8(lab,saved)
     elif stage==9:_stage9(lab,saved)
     else:_stage10(lab,saved)
