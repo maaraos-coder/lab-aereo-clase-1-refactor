@@ -497,8 +497,6 @@ def _stage1(lab,saved):
                 )
             else:
                 _save(lab,saved,1,"c5l2_s1",payload,complete=True)
-    if _is_teacher():
-        st.caption("Pauta docente: revisar la ISO autorizada y la tabla exacta, sin asumir que todos los indicadores tienen un solo valor o se comparan en el mismo sentido. La etapa es formativa: el guardado no valida automáticamente la corrección de los umbrales.")
 
 
 
@@ -1053,10 +1051,91 @@ def _stage10(lab,saved):
                 st.error("No se pudo confirmar la entrega. Reintenta sin cerrar la página.")
             else:st.success("Informe enviado a evaluación docente · 70 puntos de desarrollo práctico.")
 
+
+def _stage1_teacher_criteria_guide():
+    """Pauta exclusiva de vista docente, alineada con los cinco campos del alumno."""
+    st.markdown("### Matriz de corrección · requisitos ISO/TS 19488:2021 Clase B")
+    st.info(
+        "Cada caso contiene los mismos cinco campos del formulario: descriptor y unidad, "
+        "umbral Clase B, sentido, referencia normativa y justificación de aplicabilidad. "
+        "Verifica los límites exactos en la edición autorizada de la ISO, "
+        "incluidas todas las notas de tabla, antes de corregir. "
+        "La plataforma comprueba completitud, no exactitud normativa."
+    )
+    guidance = [
+        {
+            "code":"AI-01", "title":"Aislamiento aéreo entre viviendas",
+            "pair":"Estar vivienda poniente, piso 5 → dormitorio CH-A-P05-S03, piso 5.",
+            "descriptor":"DₙT,50 (DₙT,w + C₅₀–₃₁₅₀) para Clase B entre recintos habitables de distintas viviendas. Revisar el término espectral y las unidades dB.",
+            "limit":"Transcribir el valor mínimo de Clase B en la Tabla 1, fila 1, con su descriptor y dB. No utilizar Rw del muro como valor global de recintos.",
+            "direction":"Mayor o igual (≥): aislamiento de recintos al menos igual al requisito.",
+            "reference":"ISO/TS 19488:2021, apartado 5.2, Tabla 1, fila 1, columna Clase B; revisar notas y definiciones del apartado 3.2.",
+            "condition":"Precisar par de recintos, muro compartido M-01, tiempo de reverberación del receptor, contribuciones de flancos y diferencias entre predicción e in situ.",
+            "warning":"Rw es índice del elemento aislado, no es directamente DₙT entre viviendas. El DₙT,w por sí solo puede omitir la adaptación requerida."
+        },
+        {
+            "code":"IM-01", "title":"Ruido de impacto entre pisos",
+            "pair":"Dormitorio de piso 6 → dormitorio CH-A-P05-S03, piso 5.",
+            "descriptor":"L′ₙT,w y extensión L′ₙT,50 (L′ₙT,w + Cᵢ,₅₀–₂₅₀₀) cuando corresponda al requisito de Clase B de la tabla.",
+            "limit":"Transcribir el máximo Clase B de la Tabla 2, fila aplicable al entrepiso entre viviendas; dB. Incluir el término de baja frecuencia si se exige.",
+            "direction":"Menor o igual (≤): a menor nivel de impacto normalizado, mejor desempeño.",
+            "reference":"ISO/TS 19488:2021, apartado 5.3, Tabla 2, fila entre viviendas, columna Clase B; notas y definición en 3.2.",
+            "condition":"Identificar fuente normalizada sobre el recinto superior, dormitorio receptor, losa L-01, transmisión lateral y normalización por TR.",
+            "warning":"No sustituir L′ₙT de la edificación por Ln,w de laboratorio ni por la mejora ΔL de un revestimiento."
+        },
+        {
+            "code":"FA-01", "title":"Aislamiento de fachada frente a Pasaje Chimbote",
+            "pair":"Ruido exterior del pasaje → estar CH-A-P05-S03, fachada sur.",
+            "descriptor":"DₙT,A,tr = D₂m,nT,w + Ctr (notación equivalente D₂m,nT,A,tr) para la fachada completa, dB.",
+            "limit":"El mínimo Clase B depende de la exposición exterior y de las condiciones de Tabla 3. No utilizar un solo valor sin seleccionar la fila/intervalo de Lden aplicable.",
+            "direction":"Mayor o igual (≥) para el aislamiento. Lden es entrada de exposición, no descriptor de aislamiento.",
+            "reference":"ISO/TS 19488:2021, apartado 5.4, Tabla 3, fila o intervalo de exposición y columna Clase B; notas pertinentes.",
+            "condition":"Especificar estar receptor, fachada sur (muro, ventana, marco, sellos), Lden del escenario de tráfico ficticio elevado, geometría, TR y limitación del motor NoiseMap académico.",
+            "warning":"No equiparar Lden exterior al aislamiento de fachada; tampoco usar Rw del vidrio como resultado del conjunto."
+        },
+        {
+            "code":"IN-01", "title":"Ruido de instalaciones sanitarias",
+            "pair":"Descarga WC de baño de estudio → dormitorio CH-A-P05-S03.",
+            "descriptor":"LA,eq,nT para operación promediada y/o LA,Fmax,nT para evento intermitente; elegir según la fila y notas de la norma y la descarga de WC.",
+            "limit":"Transcribir el máximo o máximos Clase B de la Tabla 4 según tipo de fuente, operación y receptor; unidades dB(A).",
+            "direction":"Menor o igual (≤): nivel en dormitorio no mayor al límite.",
+            "reference":"ISO/TS 19488:2021, apartado 5.5, Tabla 4, fila de instalaciones aplicable, columna Clase B y notas.",
+            "condition":"Identificar descarga sanitaria de 6 L como supuesto docente, evento de operación, espectro Lw, transmisión aérea y estructural posible, TR del dormitorio y ausencia de trazado real acreditado.",
+            "warning":"El espectro Lw de la fuente no es LA,Fmax,nT ni LAeq,nT en el receptor. Justificar el ciclo de operación."
+        }
+    ]
+    for item in guidance:
+        with st.expander(item["code"] + " · " + item["title"] + " · cinco campos a corregir"):
+            st.caption("Caso de estudio: " + item["pair"])
+            st.markdown("**1 · Descriptor(s) normativo(s) y unidades**")
+            st.write(item["descriptor"])
+            st.markdown("**2 · Requisito Clase B (valor y unidad)**")
+            st.write(item["limit"])
+            st.markdown("**3 · Sentido del criterio**")
+            st.write(item["direction"])
+            st.markdown("**4 · Tabla, fila, nota y apartado ISO**")
+            st.write(item["reference"])
+            st.markdown("**5 · Ámbito de aplicación, condiciones y justificación**")
+            st.write(item["condition"])
+            st.warning("Error a evitar: " + item["warning"])
+    st.markdown("#### Verificación transversal")
+    st.markdown(
+        "Revisar: **columna Clase B y fila del caso**; descriptor exacto y términos "
+        "espectrales o temporales; sentido del límite; notas y unidades; "
+        "hipótesis de Chimbote frente a documentos realmente acreditados; "
+        "diferencia entre predicción con SONARA/NoiseMap y certificación in situ."
+    )
+    st.caption(
+        "Guardar avance admite respuestas parciales; Completar Etapa 1 valida "
+        "que se llenaron los campos, pero NO califica si los umbrales son correctos."
+    )
+
 def _teacher(stage):
     if _is_teacher():
         with st.expander(f"Pauta docente · Etapa {stage}",expanded=False):
             st.write(TEACHER[stage])
+            if stage==1:
+                _stage1_teacher_criteria_guide()
             if stage==2:
                 st.warning("No hay ficha numérica cerrada para CH-A-P05-S03. Las cotas/áreas anteriores de Barrio Balmaceda NO son válidas para este proyecto.")
                 st.link_button("Auditoría geométrica de Chimbote (solo docente)", "https://github.com/maaraos-coder/lab-aereo-clase-1-refactor/blob/curso3-lab2-etapas-3-10/docs/curso5_lab2_chimbote_pauta_docente.md")
