@@ -2706,54 +2706,92 @@ def _stage9(lab,saved):
         else:
             st.success(f"Envío confirmado · {score}/30 puntos · nota {_grade(score,30):.1f}")
 
-def _stage10(lab,saved):
+def _stage10(lab, saved):
     _header(10)
     st.markdown("### Expediente integrador · 70 puntos")
-    st.markdown("La evaluación recupera el trabajo realizado en las Etapas 1–8. El docente revisará el informe y aplicará la rúbrica.")
-    for title,points in RUBRIC:st.caption(f"{title}: {points} puntos")
-    for stage in range(1,9):
-        key=f"c5l2_s{stage}"
-        with st.expander(f"Etapa {stage} · {STAGES[stage][0]} · {'Guardada' if saved.get(key) else 'Pendiente'}"):
-            st.json(saved[key]) if saved.get(key) else st.info("Sin datos.")
+    st.write("Integra tus predicciones de aislamiento y ruido de instalaciones. Justifica la decisión de Clase B para cada caso y explica cómo comprobarías el desempeño en obra.")
+
+    matrix, lden = _class_b_matrix(saved)
+    stage8 = saved.get("c5l2_s8") or {}
+    pending = [stage for stage in range(1, 8) if not saved.get(f"done_{stage}")
+               or not saved.get(f"c5l2_s{stage}")]
+    if (not saved.get("done_8") or stage8.get("matrix") != matrix
+            or stage8.get("lden") != lden):
+        pending.append(8)
+
+    st.markdown("#### Resultados del expediente")
+    st.table([{
+        "Caso": row["case"], "Descriptor": row["descriptor"],
+        "Original": row["original"] if row["original"] is not None else "Pendiente",
+        "Mejorado": row["improved"] if row["improved"] is not None else "Pendiente",
+        "Meta Clase B": f'{row["direction"]} {row["limit"]:g}' if row["limit"] is not None else "Pendiente",
+        "Margen (dB)": f'{row["margin"]:+.2f}' if row["margin"] is not None else "Pendiente",
+        "Verificación": "Pendiente" if row["margin"] is None else
+                        "Alcanza la meta" if row["margin"] >= 0 else "Fuera de meta",
+    } for row in matrix])
+    st.caption("Instalaciones se expresa en dB(A). Para impacto deben cumplirse ambos límites.")
+    if lden is not None:
+        st.caption(f"Lden de fachada recuperado de NoiseMap · {lden:g} dB(A).")
+
+    with st.expander("Rúbrica · 70 puntos"):
+        details = (
+            "Identifica versiones, modelos, planos y respaldo de los resultados.",
+            "Verifica recintos, cotas, áreas, volumen y origen de la geometría.",
+            "Distingue propiedades documentadas de hipótesis y justifica los datos de entrada.",
+            "Explica el cambio del separador y los flancos. Interpreta DₙT,50.",
+            "Justifica el desacople y verifica ambos indicadores de impacto.",
+            "Vincula el Lden incidente con la meta y evalúa el conjunto de fachada.",
+            "Justifica el descriptor del evento y las vías de transmisión consideradas.",
+            "Sintetiza las decisiones, sus limitaciones y las comprobaciones en obra.",
+        )
+        st.table([{"Criterio": title, "Puntos": points, "Evidencia esperada": detail}
+                  for (title, points), detail in zip(RUBRIC, details)])
+
     if _is_teacher():
-        st.markdown("#### Pauta de evaluación")
-        for title,points in RUBRIC:st.write(f"**{title} · {points} puntos**")
-        st.info("Evaluar fuentes, coherencia geométrica, datos de SONARA, solución base/variante y trazabilidad. La nota práctica se asigna desde Evaluaciones entregadas.")
+        st.info("Evalúa el expediente oficial en Evaluaciones entregadas. La matriz muestra el avance disponible en esta vista.")
         return
-    remote=_get_submission(10,"c5l2_report_v1")
+    remote = _get_submission(10, "c5l2_report_v1")
+    old = saved.get("c5l2_s10") or {}
     if remote or saved.get("c5l2_s10_submitted"):
         st.success("Informe enviado para evaluación docente. La entrega oficial está bloqueada.")
+        submitted_answer = (remote or {}).get("answer")
+        submitted_answer = submitted_answer if isinstance(submitted_answer, dict) else old
+        with st.expander("Ver texto entregado"):
+            st.write(submitted_answer.get("report", ""))
+            st.write(submitted_answer.get("evidence", ""))
         return
-    old=saved.get("c5l2_s10") or {}
+
+    if pending:
+        st.info("Completa o actualiza las etapas " + ", ".join(map(str, pending)) + " antes del envío. Puedes guardar el borrador.")
+    st.caption("Si modificas resultados de las etapas 4 a 7, vuelve a completar la matriz de la Etapa 8.")
     with st.form("c5l2_final_report"):
-        report=st.text_area("Conclusión técnica: meta Clase B, resultados, alcance, incertidumbre y verificaciones de obra",old.get("report",""),height=230)
-        evidence=st.text_area("Referencias a proyectos SONARA, versiones, resultados y anexos utilizados",old.get("evidence",""),height=150)
-        submitted=st.form_submit_button("Enviar expediente definitivo · 70 puntos",type="primary")
+        report = st.text_area("Conclusión técnica y verificaciones en obra", old.get("report", ""), height=230,
+                              help="Explica qué casos alcanzan la meta, qué limita a cada solución y qué verificarías en obra.")
+        evidence = st.text_area("Evidencias y supuestos determinantes", old.get("evidence", ""), height=150,
+                                help="Identifica las referencias y los supuestos que sustentan tus conclusiones. Los archivos guardados se incluyen en el expediente.")
+        draft = st.form_submit_button("Guardar avance")
+        submitted = st.form_submit_button("Enviar expediente definitivo · 70 puntos", type="primary",
+                                          disabled=_readonly())
+    text = {"report": report, "evidence": evidence}
+    if draft:
+        _save(lab, saved, 10, "c5l2_s10", text, complete=False)
     if submitted:
-        missing=[i for i in range(1,9) if not saved.get(f"c5l2_s{i}")]
-        stage8 = saved.get("c5l2_s8") or {}
-        if stage8.get("matrix") is not None:
-            current_matrix, current_lden = _class_b_matrix(saved)
-            if not saved.get("done_8") or stage8["matrix"] != current_matrix or stage8.get("lden") != current_lden:
-                missing.append(8)
-        if missing:
-            st.warning("Antes del envío completa las Etapas: "+", ".join(map(str,missing)))
-        elif len(report.strip())<240 or len(evidence.strip())<80:
-            st.warning("Amplía la conclusión técnica (mínimo 240 caracteres) y las evidencias (mínimo 80).")
+        if pending:
+            st.warning("Completa las etapas pendientes antes del envío.")
+        elif not report.strip() or not evidence.strip():
+            st.warning("Completa la conclusión técnica y las evidencias.")
         else:
-            payload={"version":1,"target_class":"B","standard":STANDARD,
-                     "report":report,"evidence":evidence,
-                     "stages":{str(i):saved[f"c5l2_s{i}"] for i in range(1,9)},
-                     "rubric":RUBRIC,"practical_max":70,
-                     "quiz_score":saved.get("c5l2_s9_score")}
+            payload = {"version": 1, "target_class": "B", "standard": STANDARD, **text,
+                       "stages": {str(i): saved[f"c5l2_s{i}"] for i in range(1, 9)},
+                       "rubric": RUBRIC, "practical_max": 70, "quiz_score": saved.get("c5l2_s9_score")}
             try:
-                _submit(10,"c5l2_report_v1","Curso 5 · Laboratorio 2 · Informe integrador",payload,0,70)
-                _save(lab,saved,10,"c5l2_s10",{"report":report,"evidence":evidence})
-                saved["c5l2_s10_submitted"]=True
-                _save_future_state(lab["id"],saved)
+                _submit(10, "c5l2_report_v1", "Curso 5 · Laboratorio 2 · Informe integrador", payload, 0, 70)
             except Exception:
-                st.error("No se pudo confirmar la entrega. Reintenta sin cerrar la página.")
-            else:st.success("Informe enviado a evaluación docente · 70 puntos de desarrollo práctico.")
+                st.error("No se pudo confirmar la entrega. Conserva tu borrador y vuelve a intentarlo.")
+            else:
+                saved["c5l2_s10_submitted"] = True
+                _save(lab, saved, 10, "c5l2_s10", text)
+                st.success("Expediente enviado a evaluación docente.")
 
 
 def _stage1_teacher_criteria_guide():
