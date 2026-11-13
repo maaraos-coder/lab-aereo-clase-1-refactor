@@ -14,8 +14,10 @@ jobs:
           python-version: '3.13'
       - name: Compile affected persistence modules
         run: |
-          python -m py_compile labs/curso4_laboratorio_2.py labs/curso4_laboratorio_2_stage6.py labs/c4l2_stage6_checkpoint.py labs/curso4_lab2_control_scope.py
+          python -m py_compile labs/curso4_laboratorio_2.py labs/curso4_laboratorio_2_stage6.py labs/c4l2_stage6_checkpoint.py labs/c4l2_stage6_batch_import.py labs/curso4_lab2_control_scope.py
       - name: Test lossless Stage 6 snapshot and machine restoration
         run: python -m unittest discover -s tests -p 'test_c4l2_stage6_checkpoint.py' -v
       - name: Test existing partial progress compatibility
         run: python -m unittest discover -s tests -p 'test_c4l2_progress_patch.py' -v
+      - name: Test six-front recovery from student JSON files
+        run: python -m unittest discover -s tests -p 'test_c4l2_stage6_batch_import.py' -v
