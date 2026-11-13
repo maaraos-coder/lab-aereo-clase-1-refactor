@@ -25,7 +25,7 @@ Se han identificado como **posibles referencias parciales** del sector dormitori
 | **FA-01 · Fachada** | Ruido exterior del **Pasaje Chimbote** | **Estar** de CH-A-P05-S03, piso 5 | Fachada **sur F-01**, ventana(s) **V-01** y sellos |
 | **IN-01 · Instalación** | Descarga WC del baño de CH-A-P05-S03, piso 5 | **Dormitorio** de CH-A-P05-S03, piso 5 | Cierre/shaft **S-01** y descarga **IS-01**, con vías aérea y estructural cuando corresponda |
 
-**Verificaciones pendientes:** confirmar que el muro identificado realmente separe los recintos del caso AI-01, y que la distribución del piso 6 permita la superposición propuesta en IM-01. Si la lámina lo contradice, registrarlo para ajuste docente en lugar de inventar adyacencias. En IN-01 **no se presume contacto directo entre el shaft y el dormitorio**.
+**Verificación del plano (Parte 1, página 8):** se aprecia el muro compartido entre **estar de vivienda poniente** y **dormitorio receptor** (AI-01), y la orientación exterior del **estar receptor** (FA-01). La planta tipo se aplica a **pisos 3–16 de Torre A**, por lo que la superposición de dormitorios de **pisos 5 y 6** es coherente con la planta de referencia (IM-01), sin que eso determine propiedades acústicas de la losa. En IN-01, el baño está en la misma vivienda, pero el plano **no demuestra una transmisión directa simple WC–dormitorio ni el trazado real de la descarga**; ese recorrido se trata como modelo docente y debe explicitarse.
 
 ### 3 · Cotas y condiciones complementarias para el ejercicio
 
