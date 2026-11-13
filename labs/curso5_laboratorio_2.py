@@ -32,7 +32,7 @@ BASE_CONSTRUCTION = [
 GEOMETRY_ASSUMPTIONS = [
  ("DOC-01", "Planta tipo", "Parte 1 · PDF página 8 · verificar cotas del caso seleccionado"),
  ("DOC-02", "Corte general", "Parte 1 · PDF página 12 · verificar altura libre del recinto"),
- ("DOC-03", "Elevaciones", "Parte 2 · cotejar dimensiones de vanos"),
+ ("DOC-03", "Elevación sur Torre A", "Parte 2 · página 5 · fachada del estar, cotejar con planta tipo"),
 ]
 ACOUSTIC_ASSUMPTIONS = [
  ("AC-01", "Reverberación", "Se calcula por banda en SONARA: NO se entrega TR"),
@@ -323,7 +323,7 @@ def _stage1(lab,saved):
     st.markdown("#### Ubicación de la vivienda de estudio · planta original intervenida")
     st.markdown(
         "La unidad seleccionada debe reconocerse **en la planta original**. "
-        "El render es únicamente una representación conceptual; "
+         "El render es únicamente una representación conceptual; "
         "no se utiliza para obtener cotas, superficies ni dimensiones."
     )
     highlighted_plan = (
@@ -351,7 +351,7 @@ def _stage1(lab,saved):
 
     st.markdown("### B · Planos y documentación complementaria")
     st.markdown(
-        "Los **planos originales** son la fuente técnica principal. Las fichas y "
+         "Los **planos originales** son la fuente técnica principal. Las fichas y "
         "los supuestos académicos complementan la información cuando el expediente "
         "no contiene algún dato requerido. Consulta cada documento disponible por separado."
     )
@@ -370,7 +370,7 @@ def _stage1(lab,saved):
                 (
                     "Planos originales de Torre A y vivienda identificada",
                     "Chimbote_Torre_A_CH-A-P05-S03_planos.pdf",
-                    "Planta, cortes y elevaciones originales: geometría y colindancias.",
+                    "Planta tipo, cortes y elevaciones norte/sur originales de Torre A; cotejar los vanos del estar con la elevación sur.",
                     None,
                 ),
             ],
@@ -671,6 +671,7 @@ def _stage6(lab,saved):
         "El Lden calculado se utiliza aquí como **estimación académica**, no como "
         "evaluación reglamentaria de exposición."
     )
+    st.caption("Referencia arquitectónica obligatoria: planta tipo Torre A (Parte 1, pág. 8) + elevación SUR Torre A (Parte 2, pág. 5). El render conceptual no es válido para ubicar vanos ni obtener alturas o distancias.")
     st.markdown("#### Procedimiento guiado en NoiseMap · fachada y Lden")
     st.caption(
         "Realiza estos pasos dentro de NoiseMap. El dibujo del edificio es obligatorio "
