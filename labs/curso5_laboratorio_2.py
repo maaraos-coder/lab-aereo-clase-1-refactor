@@ -82,7 +82,7 @@ TEACHER = {
  3: "Materialidad original académica M-01 L-01 F-01 V-01 S-01 IS-01 T-01 T-02 T-03. Revisar superficies interiores, absorciones por banda y cálculo del TR en SONARA: no adoptar TR prefijado.",
  4: "Comprobar el registro de geometría ISO 12354-1 (S, V y recintos), M-01 de HA 180 mm y 432 kg/m² nominales, encuentros y flancos, TR por banda del dormitorio y resultados originales/mejorados de SONARA. Rw, R′w y DnT,w no son intercambiables. Exigir comparación con el descriptor y la meta Clase B determinados en Etapa 1, sin inventar valores de una simulación no realizada.",
  5: "Verificar geometría de la losa superior IM-01 recuperada de Etapa 2, TR por bandas de Etapa 3, modelo original L-01, uniones, solución libre y JSON de SONARA. Clase B exige L′nT,w ≤ 50 dB Y L′nT,50 ≤ 54 dB simultáneamente (ISO/TS 19488:2021 Tabla 2); una reducción del nivel es una mejora. El resultado es una predicción, no una medición.",
- 6: "Verificar la secuencia NoiseMap: eje de Pasaje Chimbote, polígono de edificio, receptor exterior frente a fachada sur a altura de piso 5, auditoría geométrica válida, categorías 1/2/3/4a/4b, tres períodos y JSON trazable. No aplicar -3 dB al resultado incidente; evaluar límites del motor educativo antes de revisar paños, vanos, curva ventana-marco-sello y SONARA.",
+ 6: "Verificar el JSON obligatorio y la secuencia NoiseMap: eje de Pasaje Chimbote, polígono de edificio, receptor exterior frente a fachada sur a altura de piso 5, auditoría geométrica válida, categorías 1/2/3/4a/4b, tres períodos y JSON trazable. No aplicar -3 dB al resultado incidente; evaluar límites del motor educativo antes de revisar paños, vanos, curva ventana-marco-sello y SONARA.",
  7: "Descarga WC de vivienda distinta (piso 6) → dormitorio receptor piso 5. Para ruido intermitente de vivienda vecina verificar LAF,max,nT ≤30 dB(A), ISO/TS 19488:2021 Tabla 4 Clase B; la predicción no acredita cumplimiento sin modelar las vías aérea y estructural.",
  8: "Comparar con los requisitos reales de Clase B determinados por el alumno; no automatizar la certificación global.",
  9: "Cuestionario oficial de 10 preguntas × 3 puntos; verificar persistencia de entrega.",
@@ -2161,7 +2161,7 @@ cotas de otras viviendas.
 
 **2. Dibuja el eje de la calle.** Selecciona la herramienta **Tráfico vial**
 y traza sobre el mapa los puntos centrales de **Pasaje Chimbote**, frente a la fachada
-sur. Finaliza el trazado siguiendo los controles de dibujo. La calle debe quedar
+sur. Marca al menos dos puntos y pulsa **Finalizar vía**. La calle debe quedar
 **fuera del polígono de la vivienda** y en el lado correcto de la fachada.
 
 **3. Dibuja el edificio.** Selecciona la herramienta **Edificio**, marca los
@@ -2180,8 +2180,8 @@ del corte; si no se puede verificar, formula y justifica una hipótesis.
 No confundas esa altura con el nivel absoluto del terreno.
 
 **5. Configura los vehículos.** Selecciona la **vía dibujada** y edita
-los caudales y velocidades por categoría. Para este ejercicio utiliza
-los datos **supuestos** de la sección «Escenario de tránsito supuesto».
+las velocidades por categoría. Para este ejercicio usa **30 km/h** y el
+pavimento de referencia (asfalto convencional).
 Relaciona livianos, medianos, pesados y motocicletas con las categorías
 1, 2, 3 y 4b. No reemplaces motocicletas por vehículos pesados.
 Los campos 4a (ciclomotores) y 4b (motocicletas) se introducen por separado.
@@ -2197,7 +2197,8 @@ educativa. No inventes valores medidos.
 escribe los **flujos horarios medios** por categoría para
 **Día (12 h), Tarde (4 h) y Noche (8 h)**. Los números que
 muestra NoiseMap al abrir no son aforos de Chimbote: **reemplázalos**
-por los supuestos que figuran en la ficha de esta etapa.
+por los supuestos de la tabla del apartado A. Usa **0 ciclomotores/h (4a)**
+en los tres períodos e ingresa los valores de motos en **Motocicletas/h (4b)**.
 
 **8. Selecciona la fachada del ejercicio.** En **Auditoría del receptor en
 fachada**, abre **Edificio de la vivienda estudiada** y selecciona el
@@ -2217,8 +2218,7 @@ El resultado conserva el alcance **académico/no normativo**.
 **10. Exporta y transfiere el resultado.** Pulsa **Exportar resultados JSON**
 en NoiseMap. Regresa a esta Etapa 6 y carga el archivo en
 **Importar resultado desde NoiseMap**. Comprueba que el JSON corresponde al
-**receptor, edificio y vía** elegidos; después pulsa
-**Importar niveles a la ficha de fachada**.
+**receptor, edificio y vía** elegidos. La ficha lee el archivo al cargarlo.
 La ficha recupera la distancia y altura de la auditoría importada; revisa el método y las limitaciones,
 y continúa el diseño de la envolvente en **SONARA**.
         """)
@@ -2234,67 +2234,41 @@ y continúa el diseño de la envolvente en **SONARA**.
         st.caption(f"Tu criterio Clase B: {norm.get('descriptor','')} · {norm.get('direction','')} {norm.get('limit','')} · Referencia: {norm.get('reference','')}")
     old=saved.get("c5l2_s6") or {}
     traffic_old=old.get("traffic") or {}
-    st.markdown("#### Importar resultado desde NoiseMap (opcional)")
-    imported_file=st.file_uploader("Archivo JSON exportado desde NoiseMap",type=["json"],
-                                   key="c5l2_noise_import")
-    imported=None
-    if imported_file is not None:
+    st.markdown("#### Importar resultado desde NoiseMap · obligatorio")
+    uploaded = st.file_uploader("Archivo JSON de Lden en receptor", type=["json"],
+                                key="c5l2_noise_import")
+    imported = traffic_old.get("noisemap_document") if uploaded is None else None
+    if uploaded is not None:
         try:
-            imported=json.loads(imported_file.getvalue().decode("utf-8-sig"))
-            if not isinstance(imported,dict) or "receiver_period_levels_dba" not in imported:
-                st.warning("El archivo no contiene los niveles de período del receptor; revisa el formato exportado.")
-                imported=None
-            elif any(imported["receiver_period_levels_dba"].get(k) is None for k in ("day","evening","night")):
-                st.warning("El archivo tiene uno o más períodos sin niveles calculados. No puede transferirse como tres niveles válidos.")
-                imported=None
-        except (UnicodeError,ValueError,AttributeError,TypeError):
-            imported=None
+            imported = json.loads(uploaded.getvalue().decode("utf-8-sig"))
+        except (UnicodeError, ValueError):
             st.error("No se pudo leer el JSON de NoiseMap.")
+
+    levels, audit, method = {}, {}, ""
+    computed = None
     if imported is not None:
-        source_method=str(imported.get("method",""))
-        st.warning("El archivo describe: "+source_method+
-                   ". La propagación educativa de NoiseMap NO corresponde a CNOSSOS-EU 2.5 completo.")
-        if st.button("Importar niveles a la ficha de fachada",key="c5l2_apply_noise_result"):
-            imported_audit=imported.get("facade_geometry_audit") or {}
-            if imported.get("incident_sound") is not True or not imported_audit.get("valid_for_incident_facade_demo"):
-                st.error("La exportación debe corresponder a Lden incidente con auditoría de fachada válida; vuelve a calcular en NoiseMap.")
-                st.stop()
-            for key,value in imported["receiver_period_levels_dba"].items():
-                if key in ("day","evening","night") and value is not None:
-                    st.session_state[f"c5l2_ext_{key}"]=str(round(float(value),2))
-            imported_geometry=imported.get("facade_geometry_audit") or imported.get("geometry") or {}
-            imported_label="Importación NoiseMap: "+source_method
-            st.session_state["c5l2_imported_noise_provenance"]=imported_label
-            st.session_state["c5l2_imported_noise_geom"]=imported_geometry
-            st.session_state["c5l2_imported_noise_source"]={
-                "road":imported.get("road_name",""),
-                "building":imported.get("facade_building_name",""),
-                "receiver":imported.get("receiver_name",""),
-                "incident_sound":imported.get("incident_sound"),
-                "normative":imported.get("normative"),
-            }
-            st.rerun()
-    if st.session_state.get("c5l2_imported_noise_provenance"):
-        st.info("Origen de niveles importados: "+st.session_state["c5l2_imported_noise_provenance"])
-        source=st.session_state.get("c5l2_imported_noise_source") or {}
-        geometry=st.session_state.get("c5l2_imported_noise_geom") or {}
-        if source.get("road") or source.get("building") or source.get("receiver"):
-            st.caption(
-                "Modelo NoiseMap importado · Vía: "+str(source.get("road") or "sin especificar")+
-                " · Edificio: "+str(source.get("building") or "sin especificar")+
-                " · Receptor: "+str(source.get("receiver") or "sin especificar")
-            )
-        if "receiver_to_facade_m" in geometry:
-            st.caption(
-                "Auditoría importada · receptor–fachada: "+
-                str(geometry["receiver_to_facade_m"])+" m · fachada–calle: "+
-                str(geometry.get("facade_to_road_m","sin dato"))+" m · altura: "+
-                str(geometry.get("receiver_height_m","sin dato"))+" m."
-            )
-            if not geometry.get("valid_for_incident_facade_demo",False):
-                st.warning("La auditoría importada no validó la ubicación de fachada. Corrige el escenario en NoiseMap.")
-        if source.get("incident_sound") is not True:
-            st.warning("El JSON no declara cálculo incidente en fachada; verifica el método antes de utilizar los niveles.")
+        try:
+            audit = imported["facade_geometry_audit"]
+            if imported["incident_sound"] is not True or audit["valid_for_incident_facade_demo"] is not True:
+                raise ValueError
+            method = imported["method"]
+            if not isinstance(method, str) or not method.strip():
+                raise ValueError
+            raw_levels = imported["receiver_period_levels_dba"]
+            levels = {key: raw_levels[key] for key in ("day", "evening", "night")}
+            if any(type(value) not in (int, float) or not -20 <= value <= 150
+                   for value in levels.values()):
+                raise ValueError
+            day, evening, night = (levels[k] for k in ("day", "evening", "night"))
+            computed = 10 * math.log10((12*10**(day/10) + 4*10**((evening+5)/10)
+                                       + 8*10**((night+10)/10))/24)
+            st.success("JSON de NoiseMap importado · auditoría de fachada válida.")
+            st.caption(f"{imported.get('road_name', '')} · {imported.get('facade_building_name', '')} · {imported.get('receiver_name', '')}")
+        except (KeyError, TypeError, ValueError):
+            levels, audit, method, imported = {}, {}, "", None
+            st.error("Carga el JSON del cálculo incidente con auditoría válida y los tres niveles de período. Usa «Exportar resultados JSON» después de calcular Lden en el receptor.")
+    elif uploaded is None:
+        st.info("Para completar la etapa, carga el JSON que exporta NoiseMap tras calcular Lden en el receptor.")
     default_flows={"Día":{"Livianos":80,"Pesados medianos":3,"Pesados":1,"Motocicletas":7},
                    "Tarde":{"Livianos":45,"Pesados medianos":1,"Pesados":0,"Motocicletas":4},
                    "Noche":{"Livianos":10,"Pesados medianos":0,"Pesados":0,"Motocicletas":1}}
@@ -2317,33 +2291,16 @@ y continúa el diseño de la envolvente en **SONARA**.
     st.caption("Flujos medios horarios [veh/h] del escenario docente de tránsito elevado.")
     st.table([{"Período": period, **counts} for period, counts in default_flows.items()])
 
-    audit = st.session_state.get("c5l2_imported_noise_geom") or traffic_old.get("audit") or {}
-    dist = audit.get("facade_to_road_m") or traffic_old.get("distance")
-    receiver_height = audit.get("receiver_height_m") or traffic_old.get("height")
-    receiver_ref = "Auditoría NoiseMap" if audit else traffic_old.get("receiver_ref", "")
-    cols = st.columns(3)
-    levels = {
-        key: col.text_input(label, value=str((traffic_old.get("levels") or {}).get(key, "")),
-                            key=f"c5l2_ext_{key}")
-        for col, (key, label) in zip(cols, [
-            ("day", "Lday [dB(A)]"), ("evening", "Levening [dB(A)]"),
-            ("night", "Lnight [dB(A)]")])
-    }
-    provenance = st.session_state.get("c5l2_imported_noise_provenance")
-    if provenance:
-        method = provenance
-    else:
-        method = st.text_area("Fuente y alcance de los niveles exteriores",
-                              value=traffic_old.get("method", ""))
-    computed = None
-    try:
-        day, evening, night = [float(levels[k].replace(",", ".")) for k in ("day", "evening", "night")]
-        if all(-20 <= level <= 150 for level in (day, evening, night)):
-            computed = 10 * math.log10((12*10**(day/10) + 4*10**((evening+5)/10)
-                                       + 8*10**((night+10)/10))/24)
-            st.metric("Lden exterior", f"{computed:.1f} dB(A)")
-    except ValueError:
-        pass
+    dist = audit.get("facade_to_road_m")
+    receiver_height = audit.get("receiver_height_m")
+    receiver_ref = "Auditoría NoiseMap" if audit else ""
+    if computed is not None:
+        st.caption(f"Auditoría NoiseMap · fachada–calle: {dist} m · altura del receptor: {receiver_height} m.")
+        cols = st.columns(4)
+        for col, (key, label) in zip(cols, (("day", "Lday"), ("evening", "Levening"), ("night", "Lnight"))):
+            col.metric(label, f"{levels[key]:.1f} dB(A)")
+        cols[3].metric("Lden exterior", f"{computed:.1f} dB(A)")
+        st.caption(method)
 
     st.markdown("#### B · Fachada original")
     st.table([item for item in BASE_CONSTRUCTION if item["Caso"] == "FA-01"])
@@ -2430,6 +2387,7 @@ y continúa el diseño de la envolvente en **SONARA**.
         "street": "Pasaje Chimbote", "speed": 30, "surface": "Asfalto convencional",
         "flows": default_flows, "distance": dist, "height": receiver_height,
         "receiver_ref": receiver_ref, "audit": audit, "levels": levels, "method": method,
+        "noisemap_document": imported,
         "lden": round(computed, 2) if computed is not None else None},
         "facade_geometry": facade, "receiver_volume": room.get("Volumen (m³)"),
         "receiver_tr": living_tr, "receiver_tr_bands": tr_bands, "variant": variant, "mounting": mounting,
@@ -2439,8 +2397,8 @@ y continúa el diseño de la envolvente en **SONARA**.
     if draft.button("Guardar avance", key="c5l2_s6_draft"):
         _save(lab, saved, 6, "c5l2_s6", payload, complete=False)
     if finish.button("Completar Etapa 6", type="primary", key="c5l2_s6_finish"):
-        if target is None or not method.strip():
-            st.warning("Registra los tres niveles exteriores y su procedencia.")
+        if target is None:
+            st.warning("Importa un JSON válido de NoiseMap para completar la Etapa 6.")
         elif len(files) != 2 or any(value is None for value in results.values()):
             st.warning("Adjunta ambos proyectos SONARA y registra sus resultados.")
         elif not all(field.strip() for field in (variant, mounting, evidence, comparison)):
