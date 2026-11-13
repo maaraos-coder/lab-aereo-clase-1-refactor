@@ -345,6 +345,15 @@ def render(lab,saved,runtime):
         "Elige y justifica una medida viable. Registra qué máquinas reciben tratamiento y cuáles conservan su emisión. "
         "Implementa la medida en Noise Map Lab y guarda el proyecto controlado y su línea base comparable para la Etapa 7."
     )
+    recovery=saved.get("c4l2_s6_teacher_assisted_restore")
+    if isinstance(recovery,dict) and recovery.get("purpose")=="technical_unblock_after_persistent_save_failure":
+        st.info(
+            "Se recuperaron por intervención docente los seis respaldos de "
+            "la Etapa 6 (23 aplicaciones de máquina). La continuidad hacia "
+            "la Etapa 7 está habilitada para resolver la incidencia de guardado. "
+            "Esto no sustituye la revisión técnica de las medidas propuestas, "
+            "su justificación ni los archivos de Noise Map Lab."
+        )
     _teacher_solution(st,pd)
 
     st.markdown("### 1 · Recupera el problema acústico")
