@@ -964,15 +964,9 @@ def _stage3(lab,saved):
         },
     )
     tr_bands = band_df.fillna("").to_dict("records")
-    method = st.text_input(
-        "Método y respaldo de los resultados de SONARA",
-        value=str(old.get("tr_method") or ""),
-        placeholder="Ej.: SONARA, cálculo por bandas, materiales y curvas α de la ficha técnica...",
-        help="Describe el método, materiales/curvas y origen de la absorción; no basta con números sin procedencia.",
-    )
     payload = {
         **old, "tr_rooms": result_rooms, "tr_bands": tr_bands,
-        "tr_method": method, "base_version": "chimbote_original_tr_bandas_v2",
+        "base_version": "chimbote_original_tr_bandas_v2",
     }
     left, right = st.columns(2)
     with left:
