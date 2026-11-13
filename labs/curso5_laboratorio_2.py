@@ -169,10 +169,6 @@ def _header(stage):
     header(f"ETAPA {stage} · LABORATORIO 2",title,objective,show_overview=False,duration_minutes=25 if stage<9 else 40)
     # Mantener la portada limpia: los datos del caso se presentan en el encargo
     # y las referencias a los planos, en los apartados correspondientes.
-    if stage in (2,3):
-        st.link_button("Ver ficha geométrica del alumno", ANNEX_URL)
-        st.link_button("Ver suplemento de cotas (sin resolver)", "https://github.com/maaraos-coder/lab-aereo-clase-1-refactor/blob/curso3-lab2-etapas-3-10/docs/curso5_lab2_chimbote_suplemento_cotas_alumno.md")
-        st.link_button("Consultar materialidad original del ejercicio", MATERIALS_URL)
     if stage in range(4,9):
         st.link_button("Abrir SONARA · cálculos acústicos",SONARA_URL, use_container_width=False)
 
