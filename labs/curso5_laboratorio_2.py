@@ -2491,36 +2491,97 @@ def _stage7(lab, saved):
             _save(lab, saved, 7, "c5l2_s7", payload, complete=True)
 
 
-def _stage8(lab,saved):
+def _class_b_matrix(saved):
+    def number(value):
+        if isinstance(value, bool):
+            return None
+        try:
+            parsed = float(str(value).replace(",", "."))
+        except (ValueError, TypeError):
+            return None
+        return parsed if math.isfinite(parsed) else None
+
+    facade = saved.get("c5l2_s6") or {}
+    lden = number((facade.get("traffic") or {}).get("lden"))
+    criteria = (
+        (4, "AI-01", "DₙT,50", "DₙT,50 proyectado (dB)", 54, "≥"),
+        (5, "IM-01", "L′ₙT,w", "L′ₙT,w (dB)", 50, "≤"),
+        (5, "IM-01", "L′ₙT,50", "L′ₙT,50 (dB)", 54, "≤"),
+        (6, "FA-01", "DₙT,A,tr", None, max(30, lden - 24) if lden is not None else None, "≥"),
+        (7, "IN-01", "LAFmax,nT", None, 30, "≤"),
+    )
+    matrix = []
+    for stage, case, descriptor, column, limit, direction in criteria:
+        results = (saved.get(f"c5l2_s{stage}") or {}).get("model_results")
+        original = improved = None
+        if column and isinstance(results, list):
+            values = [number(row.get(column)) if isinstance(row, dict) else None
+                      for row in results[:2]]
+            original, improved = (values + [None, None])[:2]
+        elif column is None and isinstance(results, dict):
+            original, improved = number(results.get("original")), number(results.get("mejora"))
+        margin = None
+        if improved is not None and limit is not None:
+            margin = improved - limit if direction == "≥" else limit - improved
+        matrix.append({
+            "stage": stage, "case": case, "descriptor": descriptor, "original": original,
+            "improved": improved, "limit": limit, "direction": direction, "margin": margin,
+        })
+    return matrix, lden
+
+
+def _stage8(lab, saved):
     _header(8)
-    st.markdown("### Matriz de verificación · meta Clase B")
-    st.warning("La aplicación no asigna automáticamente la clase. Selecciona el descriptor correcto y verifica cada fila, adaptación y nota de ISO/TS 19488:2021.")
-    for code,(name,desc,_) in CASES.items():
-        st.markdown(f"**{code} · {name}** · {desc}")
-    old=saved.get("c5l2_s8") or {}
-    initial=((saved.get("c5l2_s1") or {}).get("criteria") or {})
-    if not initial:
-        st.warning("Aún no hay una matriz de requisitos Clase B registrada en la Etapa 1.")
-    with st.form("c5l2_s8_form"):
-        result={}
-        for code in CASES:
-            v=(old.get("cases") or {}).get(code) or {}
-            norm=initial.get(code) or {}
-            st.markdown(f"#### {code}")
-            if norm:st.caption(f"Requisito que definiste en Etapa 1: {norm.get('descriptor','')} · {norm.get('direction','')} {norm.get('limit','')} · {norm.get('reference','')}")
-            result[code]={
-              "descriptor":st.text_input("Descriptor del criterio",v.get("descriptor",norm.get("descriptor","")),key=f"c5l2_matrix_{code}_descriptor"),
-              "baseline":st.text_input("Resultado original",v.get("baseline",""),key=f"c5l2_matrix_{code}_base"),
-              "final":st.text_input("Resultado variante",v.get("final",""),key=f"c5l2_matrix_{code}_final"),
-              "class_b":st.text_input("Umbral B y referencia exacta ISO",v.get("class_b",(norm.get("direction","")+" "+norm.get("limit","")+" · "+norm.get("reference","")).strip(" ·")),key=f"c5l2_matrix_{code}_iso"),
-              "decision":st.selectbox("Verificación de la variante",["Pendiente","Cumple según predicción","No cumple","No determinable"],index=["Pendiente","Cumple según predicción","No cumple","No determinable"].index(v.get("decision","Pendiente")),key=f"c5l2_matrix_{code}_decision"),
-            }
-        conclusion=st.text_area("Alcance de la conclusión y verificaciones posteriores",old.get("conclusion",""),height=130)
-        submitted=st.form_submit_button("Guardar matriz Clase B",type="primary")
-    if submitted:
-        if any(not x["class_b"].strip() or x["decision"]=="Pendiente" for x in result.values()) or len(conclusion.strip())<45:
-            st.warning("Completa la referencia ISO, la decisión de cada caso y el alcance de la conclusión.")
-        else:_save(lab,saved,8,"c5l2_s8",{"cases":result,"conclusion":conclusion})
+    st.markdown("### Matriz de verificación · Clase B")
+    st.caption("Resultados guardados en las etapas 4 a 7 · ISO/TS 19488:2021, tablas 1 a 4.")
+    matrix, lden = _class_b_matrix(saved)
+    if lden is not None:
+        st.caption(f"Fachada · Lden = {lden:g} dB(A) · meta DₙT,A,tr = máx(30 dB, Lden − 24 dB).")
+
+    def display(value, unit):
+        return f"{value:g} {unit}" if value is not None else "Pendiente"
+
+    rows = []
+    for result in matrix:
+        unit = "dB(A)" if result["stage"] == 7 else "dB"
+        margin = result["margin"]
+        rows.append({
+            "Etapa": result["stage"], "Caso": result["case"], "Descriptor": result["descriptor"],
+            "Original": display(result["original"], unit),
+            "Mejorado": display(result["improved"], unit),
+            "Meta Clase B": f'{result["direction"]} {display(result["limit"], unit)}'
+                            if result["limit"] is not None else "Pendiente de Lden",
+            "Margen": f"{margin:+.2f} dB" if margin is not None else "Pendiente",
+            "Verificación de la mejora": "Pendiente" if margin is None else
+                "Alcanza la meta" if margin >= 0 else "No alcanza la meta",
+        })
+    st.table(rows)
+    st.caption("Impacto requiere cumplir ambos límites. Un margen positivo indica holgura respecto del requisito.")
+
+    pending = sorted({row["stage"] for row in matrix if row["original"] is None or row["margin"] is None})
+    if pending:
+        st.info("Faltan resultados guardados de las etapas " + ", ".join(map(str, pending)) + ".")
+    elif all(row["margin"] >= 0 for row in matrix):
+        st.success("Los cuatro casos alcanzan la meta de Clase B según las predicciones guardadas.")
+    else:
+        failing = list(dict.fromkeys(row["case"] for row in matrix if row["margin"] < 0))
+        st.warning("Casos que no alcanzan la meta de Clase B según la predicción · " + ", ".join(failing))
+
+    old = saved.get("c5l2_s8") or {}
+    conclusion = st.text_area("Conclusión técnica y verificaciones posteriores",
+                              old.get("conclusion", ""), height=130)
+    payload = {"matrix": matrix, "lden": lden, "conclusion": conclusion}
+    draft, finish = st.columns(2)
+    if draft.button("Guardar avance", key="c5l2_s8_draft"):
+        _save(lab, saved, 8, "c5l2_s8", payload, complete=False)
+    if finish.button("Completar Etapa 8", type="primary", key="c5l2_s8_finish"):
+        if pending:
+            st.warning("Guarda los resultados pendientes en sus etapas de origen.")
+        elif not conclusion.strip():
+            st.warning("Redacta tu conclusión técnica.")
+        else:
+            _save(lab, saved, 8, "c5l2_s8", payload, complete=True)
+
 
 def _grade(score,total=100):
     pct=100*float(score)/float(total)
@@ -2625,6 +2686,11 @@ def _stage10(lab,saved):
         submitted=st.form_submit_button("Enviar expediente definitivo · 70 puntos",type="primary")
     if submitted:
         missing=[i for i in range(1,9) if not saved.get(f"c5l2_s{i}")]
+        stage8 = saved.get("c5l2_s8") or {}
+        if stage8.get("matrix") is not None:
+            current_matrix, current_lden = _class_b_matrix(saved)
+            if not saved.get("done_8") or stage8["matrix"] != current_matrix or stage8.get("lden") != current_lden:
+                missing.append(8)
         if missing:
             st.warning("Antes del envío completa las Etapas: "+", ".join(map(str,missing)))
         elif len(report.strip())<240 or len(evidence.strip())<80:
