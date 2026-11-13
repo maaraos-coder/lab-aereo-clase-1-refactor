@@ -1276,7 +1276,7 @@ def _stage4(lab, saved):
     st.info(
         "Se reproduce la estructura real de los **cinco flancos** de SONARA. "
         "El ejercicio entrega materialidad, longitudes y las masas superficiales "
-        "de referencia; los R laterales de 50/55 dB son **supuestos docentes "
+        "de referencia; los R laterales iniciales de 45/55 dB son **supuestos docentes "
         "provisionales**, no ensayos. El alumno registra **Kij** calculado "
         "en SONARA y conserva los detalles del proyecto en su JSON."
     )
@@ -1289,9 +1289,9 @@ def _stage4(lab, saved):
         "Tipo de unión SONARA", "Kij SONARA (dB)"
     ]
     flank_specs = [
-        ("Muro lateral 1", True, "HA 180 mm · docente", "50", source_height, "432", "432"),
-        ("Muro lateral 2", True, "HA 180 mm · docente", "50", source_height, "432", "432"),
-        ("Fachada / elemento lateral", False, "Fachada HA 150 mm · F-01", "50", source_height, "360", "360"),
+        ("Muro lateral 1", True, "HA 180 mm · docente", "45", source_height, "432", "432"),
+        ("Muro lateral 2", True, "HA 180 mm · docente", "45", source_height, "432", "432"),
+        ("Fachada / elemento lateral", False, "Fachada HA 150 mm · F-01", "45", source_height, "360", "360"),
         ("Losa de piso", False, "HA 160 mm · L-01", "55", source_length, "384", "384"),
         ("Losa de cielo", False, "HA 160 mm · L-01", "55", source_length, "384", "384")
     ]
