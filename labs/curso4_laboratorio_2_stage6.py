@@ -18,8 +18,16 @@ def _stage6_json_safe(value):
             return {str(k): normalize(v) for k,v in item.items()}
         if isinstance(item, (tuple, list)):
             return [normalize(v) for v in item]
-        if isinstance(item, float) and not math.isfinite(item):
-            raise ValueError('El diseño contiene un valor numérico no finito.')
+        # A pandas DataFrame with numeric columns retains NaN after
+        # .where(pd.notna(...), None). Empty optional cells must not block
+        # Stage 6 persistence or recovery-file export.
+        if type(item).__name__ in ('NAType', 'NaTType'):
+            return None
+        if isinstance(item, float):
+            if math.isnan(item):
+                return None
+            if not math.isfinite(item):
+                raise ValueError('El diseño contiene un infinito no válido.')
         if item is None or isinstance(item, (str, int, float, bool)):
             return item
         raise TypeError('Tipo no serializable en el diseño: '+type(item).__name__)
