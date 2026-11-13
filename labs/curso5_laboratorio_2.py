@@ -63,7 +63,7 @@ STAGES = [
 TEACHER = {
  0: "Etapa de bienvenida: explicar la ruta y la metodología, sin entregar todavía el encargo ni los documentos. El expediente y el caso de estudio se presentan en la Etapa 1.",
  1: "Presentar el proyecto Chimbote y la unidad CH-A-P05-S03; verificar localización en el plano, descargar los antecedentes y distinguir el proyecto real de los supuestos académicos. Comprobar criterios de Clase B de ISO/TS 19488:2021 con descriptor, valor, dirección y referencia, sin entregar solución.",
- 2: "Los recintos emisores y receptores ya están fijados en el encargo. Comprobar que el alumno cuantifique áreas, volúmenes, elementos comunes, proyección del piso superior, altura efectiva, vanos y trazabilidad por lámina/cota. NO atribuir al sector cotas de otros departamentos ni completar dimensiones sin verificar.",
+ 2: "Los recintos están fijados por el encargo: el muro estar poniente–dormitorio se aprecia en la planta tipo; pisos 5 y 6 están cubiertos por la planta tipo 3–16. Verificar dimensiones y uniones reales, paños de fachada sur y modelar instalación sanitaria sin presuponer transmisión directa por un tabique. NO copiar cotas de otros departamentos.",
  3: "Materialidad original académica M-01 L-01 F-01 V-01 S-01 IS-01 T-01 T-02 T-03. Revisar superficies interiores, absorciones por banda y cálculo del TR en SONARA: no adoptar TR prefijado.",
  4: "Exigir DnT,w y adaptación pertinente para la transmisión entre viviendas, incluyendo flancos, y una variante coherente.",
  5: "Revisar LnT,w y términos aplicables de impacto, piso original y variante resiliente, incluyendo vías laterales.",
@@ -516,7 +516,7 @@ def _stage1(lab,saved):
 def _stage2(lab,saved):
     _header(2)
     st.markdown("### Construye la ficha geométrica desde los planos")
-    st.info("Los recintos emisores y receptores ya están definidos por el laboratorio. Tu trabajo es calcular **áreas, alturas, volúmenes, superficies de separación, fachada y vanos** usando los planos y anotando la lámina/cota. No cambies las parejas de recintos ni copies medidas de otra vivienda.")
+    st.info("Los recintos están fijados por el laboratorio. En la **planta tipo de Torre A (pisos 3–16)** se identifica el muro compartido estar poniente–dormitorio y el estar expuesto por la fachada sur. Los dormitorios de pisos 5 y 6 se superponen conforme a esa planta tipo. Tu trabajo es calcular **áreas, alturas, volúmenes, superficies de separación, fachada y vanos**, anotando láminas y cotas. En instalaciones no supongas un muro sanitario directo sin justificar el recorrido.")
     old=saved.get("c5l2_s2") or {}
     fixed_cases = [
         ("AI-01", "Estar · vivienda poniente, piso 5",
@@ -535,9 +535,10 @@ def _stage2(lab,saved):
         hide_index=True, use_container_width=True,
     )
     st.caption(
-        "La superposición del dormitorio del piso 6 es una hipótesis del ejercicio "
-        "que debe verificarse en los planos. La fuente sanitaria no implica "
-        "necesariamente un tabique compartido directo."
+        "La planta tipo original incluye pisos 3–16, por lo que la superposición "
+        "del dormitorio en pisos 5 y 6 es coherente en planta. "
+        "Esto no determina espesores ni transmisiones. El caso sanitario "
+        "requiere un modelo de trayecto justificado, sin presuponer contacto directo."
     )
     st.markdown("#### B · Geometría de los recintos receptores")
     rec_cols=["Caso","Recinto receptor","Piso / unidad","Largo (m)","Ancho (m)",
@@ -672,7 +673,7 @@ def _stage6(lab,saved):
     """NoiseMap road scenario + transparent Lden verification + SONARA facade."""
     _header(6)
     st.markdown("### FA-01 · Exposición al tránsito y diseño de fachada")
-    st.info("Ubica el receptor exterior en la **fachada sur de CH-A-P05-S03**. La vía didáctica será **Pasaje Chimbote**, no Mirador Azul. Documenta la distancia y la altura del receptor desde los planos; la exposición exterior NO se fija de antemano.")
+    st.info("Ubica el receptor exterior en la **fachada sur del ESTAR de CH-A-P05-S03**. Modela **Pasaje Chimbote como pasaje local**, no como una avenida ni como Mirador Azul. La geometría, la distancia y la altura deben documentarse mediante planos; el render es solo conceptual. La exposición exterior NO se fija de antemano.")
     st.link_button("🌍 Abrir NoiseMap · dirección oficial", "https://noisemap-akuzoft.vercel.app/",
                    help="Abre la herramienta de mapa de ruido y continúa con el procedimiento de esta etapa.")
     st.warning(
@@ -709,7 +710,7 @@ el polígono del edificio para reconocer el muro expuesto. Si aparece
 un edificio activo en el mapa.
 
 **4. Ubica el receptor exterior.** Selecciona **Receptor** y crea un punto
-frente a la **fachada sur**, a aproximadamente **0,1 m por fuera de su plano**,
+frente al **paño sur del estar**, a aproximadamente **0,1 m por fuera de su plano**,
 sin introducirlo en el edificio. Evita colocarlo en una esquina.
 Establece la **altura sobre el terreno** correspondiente al piso 5, obtenida
 del corte; si no se puede verificar, formula y justifica una hipótesis.
@@ -834,8 +835,8 @@ y continúa el diseño de la envolvente en **SONARA**.
     default_flows={"Día":{"Livianos":80,"Pesados medianos":3,"Pesados":1,"Motocicletas":7},
                    "Tarde":{"Livianos":45,"Pesados medianos":1,"Pesados":0,"Motocicletas":4},
                    "Noche":{"Livianos":10,"Pesados medianos":0,"Pesados":0,"Motocicletas":1}}
-    st.markdown("#### A · Escenario de tránsito supuesto")
-    st.caption("Los aforos siguientes son **hipótesis académicas**, no registros reales del pasaje.")
+    st.markdown("#### A · Escenario ficticio de tránsito elevado")
+    st.warning("Los flujos de 80/45/10 livianos por hora (día/tarde/noche) son un **escenario docente intencionalmente elevado**, no aforos de Pasaje Chimbote ni estimaciones representativas del tránsito real. Mantén esa advertencia en los resultados; el pasaje no debe dibujarse como avenida.")
     with st.form("c5l2_traffic_and_facade"):
         p1,p2=st.columns(2)
         with p1:
@@ -866,7 +867,7 @@ y continúa el diseño de la envolvente en **SONARA**.
         for col,key,label in [(p3,"day","Lday [dB(A)]"),(p4,"evening","Levening [dB(A)]"),(p5,"night","Lnight [dB(A)]")]:
             levels[key]=col.text_input(label,value=str(traffic_old.get("levels",{}).get(key,"")),key=f"c5l2_ext_{key}")
         method=st.text_area("Método, versión del motor, geometría, evidencia y alcance (CNOSSOS-EU o aproximación identificada)",value=traffic_old.get("method",st.session_state.get("c5l2_imported_noise_provenance","")))
-        st.markdown("#### C · Diseño de fachada en SONARA")
+        st.markdown("#### C · Diseño de la fachada sur del estar en SONARA")
         fields={}
         for key,label in [
             ("geometry","Área bruta, área opaca y superficie vidriada; volumen y TR del recinto"),
