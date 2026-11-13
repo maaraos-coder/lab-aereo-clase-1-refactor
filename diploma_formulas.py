@@ -395,6 +395,101 @@ FORMULA_CATALOG: list[dict[str, Any]] = [
 ]
 
 
+def _course(number, title, themes):
+    return {
+        "id": f"curso_{number}", "number": number, "title": title, "enabled": True,
+        "themes": [{"title": theme, "formulas": [
+            {"title": name, "latex": equation,
+             "variables": [tuple(field.split("|")) for field in symbols.split(";")],
+             "use": use}
+            for name, equation, symbols, use in formulas
+        ]} for theme, formulas in themes],
+    }
+
+
+FORMULA_CATALOG.extend([
+    _course(3, "Control de ruido ambiental", [
+        ("Magnitudes sonoras y medición", [
+            ("Nivel de presión sonora", r"L_p=20\log_{10}(p_{\mathrm{rms}}/p_0)",
+             r"p_{\mathrm{rms}}|presión eficaz|Pa;p_0|presión de referencia 20 µPa|Pa",
+             "Expresa la presión eficaz respecto de la referencia en aire."),
+            ("Nivel de potencia sonora", r"L_W=10\log_{10}(W/W_0)",
+             r"W|potencia acústica|W;W_0|potencia de referencia 10⁻¹² W|W",
+             "Caracteriza la emisión de la fuente."),
+            ("Nivel continuo equivalente", r"L_{\mathrm{eq},T}=10\log_{10}\left(\frac{1}{T}\sum_i t_i 10^{L_i/10}\right)",
+             r"T|duración total|s;t_i|duración de cada intervalo|s;L_i|nivel equivalente del intervalo|dB",
+             "Combina intervalos sin solapamiento que cubren T."),
+            ("Suma de bandas ponderadas A", r"L_A=10\log_{10}\sum_i10^{(L_i+A_i)/10}",
+             r"L_i|nivel en la banda i|dB;A_i|corrección de ponderación A|dB",
+             "Aplica la corrección de cada banda antes de sumar energía."),
+            ("Corrección energética por fondo", r"L_s=10\log_{10}(10^{L_{s+b}/10}-10^{L_b/10})",
+             r"L_{s+b}|nivel conjunto|dB;L_b|nivel de fondo|dB;L_s|nivel atribuible a la fuente|dB",
+             "Requiere niveles comparables y suficiente separación. En una evaluación normativa aplica el procedimiento específico."),
+        ]),
+        ("Fuentes y mapas de ruido", [
+            ("Fuente puntual con directividad", r"L_p=L_W+10\log_{10}Q-20\log_{10}(r/1\,\mathrm m)-11",
+             r"Q|factor de directividad|—;r|distancia|m;L_W|nivel de potencia|dB",
+             "Aproximación de campo lejano con divergencia geométrica, sin otras atenuaciones."),
+            ("Densidad superficial de potencia", r"L_W=L_W^{\prime\prime}+10\log_{10}(S/1\,\mathrm{m}^2)",
+             r"L_W^{\prime\prime}|nivel de potencia por unidad de superficie|dB re 1 pW/m²;S|área emisora uniforme|m²",
+             "Obtiene la potencia total de una fuente superficial uniforme."),
+            ("Interpolación IDW", r"\widehat z=\frac{\sum_i z_i d_i^{-p}}{\sum_i d_i^{-p}}",
+             r"z_i|valor en el punto conocido|unidad de z;d_i|distancia al punto|m;p|exponente de ponderación positivo|—",
+             "En una ubicación coincidente se conserva el valor observado. La interpolación no modela la propagación."),
+        ]),
+    ]),
+    _course(4, "Factores del ruido en el proceso de construcción", [
+        ("Escenarios de obra y medidas de control", [
+            ("Potencia del frente de trabajo", r"L_{W,\mathrm{frente}}=10\log_{10}\sum_i10^{L_{W,i}/10}",
+             r"L_{W,i}|potencia sonora de cada equipo activo|dB",
+             "Agrupa equipos simultáneos cuando es razonable representarlos por una fuente equivalente."),
+            ("Corrección por tiempo de operación", r"L_{\mathrm{eq},T}=L_{\mathrm{activo}}+10\log_{10}(t_{\mathrm{activo}}/T)",
+             r"t_{\mathrm{activo}}|tiempo de funcionamiento|s;T|duración de evaluación|s",
+             "Aísla el aporte del equipo si su emisión es estable al funcionar y despreciable al detenerse."),
+            ("Balance de propagación", r"L_p=L_W+D_c-(A_{\mathrm{div}}+A_{\mathrm{atm}}+A_{\mathrm{gr}}+A_{\mathrm{bar}}+A_{\mathrm{misc}})",
+             r"D_c|corrección de directividad|dB;A_{\mathrm{div}}|divergencia|dB;A_{\mathrm{atm}}|absorción atmosférica|dB;A_{\mathrm{gr}}|efecto del suelo|dB;A_{\mathrm{bar}}|apantallamiento|dB;A_{\mathrm{misc}}|otras atenuaciones|dB",
+             "Balance por trayectoria y banda. Calcula cada término con el método de propagación adoptado."),
+            ("Pérdida de inserción", r"IL=L_{p,\mathrm{base}}-L_{p,\mathrm{control}}",
+             r"L_{p,\mathrm{base}}|nivel original en el receptor|dB;L_{p,\mathrm{control}}|nivel con control|dB",
+             "Compara condiciones equivalentes en el mismo receptor y con el mismo descriptor."),
+            ("Aberturas en un cerramiento", r"R_{\mathrm{comp}}=-10\log_{10}\left(\frac{\sum_i S_i10^{-R_i/10}+S_{\mathrm{ab}}}{\sum_i S_i+S_{\mathrm{ab}}}\right)",
+             r"S_i|área de cada panel|m²;R_i|reducción acústica del panel|dB;S_{\mathrm{ab}}|área de abertura libre|m²",
+             "Aproximación con transmisión unitaria por la abertura. El resultado caracteriza el cerramiento idealizado."),
+        ]),
+    ]),
+    _course(5, "Certificaciones acústicas", [
+        ("Predicción entre recintos", [
+            ("Aislamiento aparente con flancos", r"R'=-10\log_{10}\left(10^{-R_{Dd}/10}+\sum_{ij}10^{-R_{ij}/10}\right)",
+             r"R_{Dd}|índice de la vía directa|dB;R_{ij}|índice de cada vía lateral|dB",
+             "Combina las vías de transmisión con índices referidos al mismo separador."),
+            ("Descriptor aéreo ampliado", r"D_{nT,50}=D_{nT,w}+C_{50-3150}",
+             r"D_{nT,w}|diferencia estandarizada ponderada|dB;C_{50-3150}|adaptación espectral ampliada|dB",
+             "Usa el descriptor con adaptación de bajas frecuencias en la comprobación correspondiente."),
+            ("Descriptor de impacto ampliado", r"L'_{nT,50}=L'_{nT,w}+C_{I,50-2500}",
+             r"L'_{nT,w}|nivel de impacto estandarizado ponderado|dB;C_{I,50-2500}|adaptación espectral ampliada|dB",
+             "En la matriz de Clase B del caso docente se verifica junto con el indicador ponderado."),
+        ]),
+        ("Tránsito, fachada e instalaciones", [
+            ("Indicador día–tarde–noche", r"L_{den}=10\log_{10}\left(\frac{12\,10^{L_d/10}+4\,10^{(L_e+5)/10}+8\,10^{(L_n+10)/10}}{24}\right)",
+             r"L_d|nivel diurno|dB(A);L_e|nivel vespertino|dB(A);L_n|nivel nocturno|dB(A)",
+             "Combina períodos de 12, 4 y 8 horas. Para el caso de fachada se utiliza exposición incidente."),
+            ("Descriptor de fachada para tránsito", r"D_{nT,A,tr}=D_{2m,nT,w}+C_{tr}",
+             r"D_{2m,nT,w}|diferencia estandarizada ponderada de fachada|dB;C_{tr}|adaptación espectral para tránsito|dB",
+             "Evalúa la fachada completa, incluidos paño, ventana y sellos."),
+            ("Meta de fachada Clase B", r"D_{nT,A,tr}\geq\max(30, L_{den}-24)\,\mathrm{dB}",
+             r"L_{den}|exposición exterior incidente expresada como valor numérico|dB(A);D_{nT,A,tr}|descriptor de fachada|dB",
+             "Criterio aplicado al ejercicio de fachada del Curso 5 según ISO/TS 19488:2021, tabla 3."),
+            ("Estandarización del ruido de instalaciones", r"L_{AF,\max,nT}=L_{AF,\max}-10\log_{10}(T/T_0)",
+             r"L_{AF,\max}|máximo con ponderaciones A y F|dB(A);T|tiempo de reverberación del receptor|s;T_0|tiempo de referencia|s",
+             "Para un evento intermitente, usa un máximo compatible con ponderación temporal F y el procedimiento de medición adoptado."),
+            ("Margen de verificación", r"M_{\min}=X-X_{\min},\qquad M_{\max}=X_{\max}-X",
+             r"X|resultado para el descriptor exigido|dB o dB(A);M|margen respecto de la meta|dB",
+             "Un margen positivo indica holgura. Comprueba cada descriptor aplicable por separado."),
+        ]),
+    ]),
+])
+
+
 def _enabled_courses() -> Iterable[dict[str, Any]]:
     return (course for course in FORMULA_CATALOG if course.get("enabled", False))
 
@@ -481,6 +576,10 @@ body{{margin:0;background:#f4f7fa;color:var(--text);font-family:Arial,Helvetica,
 .wrapper{{max-width:1180px;margin:0 auto;padding:18px}}
 .hero{{background:linear-gradient(120deg,var(--navy),#0a8bc3);color:#fff;border-radius:0 0 22px 22px;padding:24px 32px;margin-bottom:20px}}
 .hero small{{font-weight:800;letter-spacing:.15em;color:#aaf0ff}}
+.course-nav{{display:flex;gap:8px;flex-wrap:wrap;margin:0 0 8px}}
+.course-nav button{{border:1px solid var(--line);border-radius:999px;background:white;color:var(--navy);padding:9px 15px;font:inherit;font-weight:700;cursor:pointer}}
+.course-nav button[aria-pressed=true]{{background:var(--navy);color:white}}
+:focus-visible{{outline:3px solid #0074ae;outline-offset:3px}}
 .hero h1{{margin:12px 0 7px;font-size:clamp(28px,4vw,44px)}}
 .hero p{{margin:0;max-width:850px;line-height:1.5}}
 .toolbar{{position:sticky;top:0;z-index:20;background:rgba(244,247,250,.96);padding:10px 0 12px;backdrop-filter:blur(8px)}}
@@ -512,8 +611,12 @@ td.symbol{{width:18%;font-weight:700}}
   <p>Herramienta de consulta con las ecuaciones y relaciones técnicas incorporadas a medida que se desarrollan y validan los cursos del diplomado.</p>
 </header>
 <main class="wrapper">
+  <nav class="course-nav" aria-label="Cursos">
+    {''.join(f'<button type="button" data-filter="{course["id"]}" aria-pressed="false">Curso {course["number"]}</button>' for course in _enabled_courses())}
+    <button type="button" data-filter="" aria-pressed="true">Todos</button>
+  </nav>
   <div class="toolbar">
-    <input id="formula-search" class="search" type="search" placeholder="Buscar fórmula, variable o concepto…" autocomplete="off">
+    <input id="formula-search" class="search" type="search" aria-label="Buscar fórmula, variable o concepto" placeholder="Buscar fórmula, variable o concepto…" autocomplete="off">
     <div class="stats"><span id="visible-count">{formula_count}</span> de {formula_count} fórmulas visibles</div>
     <div id="empty-message" class="empty">No se encontraron fórmulas para esa búsqueda.</div>
   </div>
@@ -525,11 +628,19 @@ const cards=[...document.querySelectorAll('.formula-card')];
 const counter=document.getElementById('visible-count');
 const empty=document.getElementById('empty-message');
 function normalize(value){{return value.normalize('NFD').replace(/[\\u0300-\\u036f]/g,'').toLowerCase().trim();}}
+let selectedCourse='';
+const filters=[...document.querySelectorAll('[data-filter]')];
+filters.forEach(button=>button.addEventListener('click',()=>{{
+  selectedCourse=button.dataset.filter;
+  filters.forEach(item=>item.setAttribute('aria-pressed',String(item===button)));
+  filterCards();
+}}));
 function filterCards(){{
   const query=normalize(input.value);
   let visible=0;
   cards.forEach(card=>{{
-    const show=!query || normalize(card.dataset.search).includes(query);
+    const courseMatches=!selectedCourse || card.closest('.course-section').dataset.course===selectedCourse;
+    const show=courseMatches && (!query || query.split(/\\s+/).every(word=>normalize(card.dataset.search).includes(word)));
     card.style.display=show?'block':'none';
     if(show) visible++;
   }});
