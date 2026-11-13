@@ -39,6 +39,10 @@ TR_SONARA_PRESETS = {
     "Alfombra": (0.08, 0.24, 0.57, 0.69, 0.71, 0.73),
     "Cielo acústico": (0.45, 0.70, 0.85, 0.90, 0.90, 0.85),
     "Panel de lana mineral": (0.35, 0.80, 0.95, 1.00, 1.00, 1.00),
+    # Fuente NBR 12179:1992, tabla reproducida en artículo de acústica UFRJ:
+    # https://www.scielo.br/j/ac/a/yNvTbGMXxGxBYVbWYzDk3mP/
+    # Incorporado asimismo en SONARA/main, no producto ensayado de Chimbote.
+    "Puerta de madera maciza": (0.14, 0.10, 0.06, 0.08, 0.10, 0.10),
 }
 GEOMETRY_ASSUMPTIONS = [
  ("DOC-01", "Planta tipo", "Parte 1 · PDF página 8 · verificar cotas del caso seleccionado"),
@@ -789,26 +793,17 @@ def _stage3(lab,saved):
     )
 
     # Example figures are intentionally teacher-only, not prefilled to student fields.
-    st.markdown("**Presets de SONARA · coeficientes α por bandas de octava**")
-    st.table([
-        {"Material genérico SONARA": label, **{
-            str(hz) + " Hz": format(alpha, ".2f")
-            for hz, alpha in zip(TR_OCTAVE_BANDS, coeffs)}}
-        for label, coeffs in TR_SONARA_PRESETS.items()
-    ])
     st.caption(
-        "Estos valores están tomados de SONARA → Reverberación → "
-        "Material genérico. Cerámica y laminado rígido se aproximan "
-        "mediante «Hormigón / superficie dura»; muros/cielos pintados "
-        "mediante «Yeso pintado» y vidrio mediante «Vidrio». "
-        "No son coeficientes medidos de los productos de Chimbote."
+        "Solo se utilizan los acabados originales necesarios en este laboratorio. "
+        "Las curvas α(f) correspondientes aparecen directamente bajo cada recinto, "
+        "sin incluir alfombra, cielo acústico ni panel absorbente como condición base."
     )
     room_setup = [
         ("Dormitorio", "AI-01", [
             ("Piso", "Laminado sin aporte resiliente acreditado", "T-03"),
             ("Cielo", "Pintura sobre superficie rígida", "T-02"),
             ("Muros opacos", "Pintura sobre superficies rígidas", "T-02"),
-            ("Puerta", "Puerta interior (material a justificar)", "HIPÓTESIS / ficha técnica"),
+            ("Puerta", "Puerta interior de madera maciza (supuesto docente)", "Referencia genérica con curva α"),
             ("Ventana", "Ventana del dormitorio (verificar en plano)", "Ficha técnica / plano"),
         ]),
         ("Estar", "FA-01", [
@@ -868,6 +863,7 @@ def _stage3(lab,saved):
             default_preset = (
                 "Vidrio" if surface == "Ventana"
                 else "Yeso pintado" if surface in ("Cielo", "Muros opacos")
+                else "Puerta de madera maciza" if surface == "Puerta"
                 else "Hormigón / superficie dura"
             )
             previous_choice = str(previous.get("Material SONARA") or "")
@@ -928,6 +924,13 @@ def _stage3(lab,saved):
             "utiliza únicamente un supuesto explícito del suplemento de cotas."
         )
 
+    st.caption(
+        "Puerta: curva de **madera maciza** (125–4000 Hz: "
+        "0,14 / 0,10 / 0,06 / 0,08 / 0,10 / 0,10). "
+        "Fuente de referencia NBR 12179:1992, reproducida en publicación UFRJ. "
+        "El preset también fue incorporado en SONARA; no corresponde a "
+        "una medición de la puerta de Chimbote."
+    )
     st.markdown("#### C · Tiempo de reverberación obtenido en SONARA")
     st.markdown(
         "Registra el **TR [s] de cada banda de octava**, separando dormitorio y estar. "
@@ -1691,20 +1694,23 @@ def _teacher(stage):
                 st.markdown("**Pauta de corrección · Etapa 3**")
                 st.write("**A · Sistemas:** conservar M-01, L-01, F-01, V-01, S-01, IS-01 y T-01/T-02/T-03 como materialidad académica original. No exigir al estudiante volver a seleccionar esos sistemas.")
                 st.write("**B · Geometría y materiales:** dormitorio y estar del piso 5; comprobar volúmenes recuperados de Etapa 2 y superficies de piso, cielo, muros, puerta y ventana. Los acabados físicos son los T-01/T-02/T-03 y V-01 del encargo; los presets genéricos de SONARA son equivalencias de cálculo y no ensayos del acabado.")
-                st.markdown("**Respuesta docente · matriz real α(f) de SONARA**")
+                st.markdown("**Respuesta docente · α(f) de los acabados originales**")
                 st.table([
-                    {"Material SONARA": label,
+                    {"Material": label,
                      **{str(hz) + " Hz": format(alpha, ".2f")
-                        for hz, alpha in zip(TR_OCTAVE_BANDS, coeffs)}}
-                    for label, coeffs in TR_SONARA_PRESETS.items()
+                        for hz, alpha in zip(TR_OCTAVE_BANDS, TR_SONARA_PRESETS[label])}}
+                    for label in (
+                        "Hormigón / superficie dura", "Yeso pintado",
+                        "Vidrio", "Puerta de madera maciza"
+                    )
                 ])
                 st.markdown(
                     "**Asignación de la condición original:** "
                     "piso dormitorio laminado y piso estar cerámica → "
                     "**Hormigón / superficie dura** (aproximación reflectante); "
                     "cielos y muros pintados → **Yeso pintado**; "
-                    "puerta sin curva ensayada → **Hormigón / superficie dura** "
-                    "(aproximación); ventana → **Vidrio**. "
+                    "puerta interior docente → **Puerta de madera maciza** "
+                    "(curva genérica de referencia NBR 12179); ventana → **Vidrio**. "
                     "Alfombra, cielo acústico y panel de lana mineral no son "
                     "terminaciones originales: se reservan para variantes."
                 )
