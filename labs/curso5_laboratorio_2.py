@@ -29,6 +29,17 @@ BASE_CONSTRUCTION = [
  {"Código":"T-02","Caso":"TR","Elemento":"Muros y cielo","Composición original":"Pintura sobre superficies rígidas","Montaje":"Alfa por banda a documentar"},
  {"Código":"T-03","Caso":"TR","Elemento":"Piso dormitorio","Composición original":"Laminado sin aporte resiliente acreditado","Montaje":"Alfa por banda a documentar"},
 ]
+# Presets genéricos verificables en SONARA, app.py → app_reverberacion_iso.
+# Son datos académicos de cálculo, no fichas de ensayo del acabado.
+TR_OCTAVE_BANDS = (125, 250, 500, 1000, 2000, 4000)
+TR_SONARA_PRESETS = {
+    "Hormigón / superficie dura": (0.01, 0.01, 0.02, 0.02, 0.02, 0.03),
+    "Yeso pintado": (0.10, 0.05, 0.04, 0.07, 0.09, 0.10),
+    "Vidrio": (0.18, 0.06, 0.04, 0.03, 0.02, 0.02),
+    "Alfombra": (0.08, 0.24, 0.57, 0.69, 0.71, 0.73),
+    "Cielo acústico": (0.45, 0.70, 0.85, 0.90, 0.90, 0.85),
+    "Panel de lana mineral": (0.35, 0.80, 0.95, 1.00, 1.00, 1.00),
+}
 GEOMETRY_ASSUMPTIONS = [
  ("DOC-01", "Planta tipo", "Parte 1 · PDF página 8 · verificar cotas del caso seleccionado"),
  ("DOC-02", "Corte general", "Parte 1 · PDF página 12 · verificar altura libre del recinto"),
@@ -778,6 +789,20 @@ def _stage3(lab,saved):
     )
 
     # Example figures are intentionally teacher-only, not prefilled to student fields.
+    st.markdown("**Presets de SONARA · coeficientes α por bandas de octava**")
+    st.table([
+        {"Material genérico SONARA": label, **{
+            str(hz) + " Hz": format(alpha, ".2f")
+            for hz, alpha in zip(TR_OCTAVE_BANDS, coeffs)}}
+        for label, coeffs in TR_SONARA_PRESETS.items()
+    ])
+    st.caption(
+        "Estos valores están tomados de SONARA → Reverberación → "
+        "Material genérico. Cerámica y laminado rígido se aproximan "
+        "mediante «Hormigón / superficie dura»; muros/cielos pintados "
+        "mediante «Yeso pintado» y vidrio mediante «Vidrio». "
+        "No son coeficientes medidos de los productos de Chimbote."
+    )
     room_setup = [
         ("Dormitorio", "AI-01", [
             ("Piso", "Laminado sin aporte resiliente acreditado", "T-03"),
