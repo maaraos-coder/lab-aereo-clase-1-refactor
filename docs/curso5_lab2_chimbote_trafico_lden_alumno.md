@@ -4,7 +4,7 @@
 
 ## Encargo del alumno
 
-La fachada seleccionada corresponde al **estar de CH-A-P05-S03, en el frente sur de Torre A**, orientado hacia **Pasaje Chimbote** según la planta de arquitectura del proyecto. El alumno debe confrontar la planta con el emplazamiento para fijar el **eje vial real**, la distancia horizontal a la fachada y la altura sobre rasante del receptor del piso 5. **Pasaje Chimbote es una vía de escala local: no se modela como avenida ni se presupone una calzada de varias pistas.** No atribuir al estar exposición directa a **Mirador Azul** sin geometría que lo sustente.
+La fachada seleccionada corresponde al **estar de CH-A-P05-S03, en el frente sur de Torre A**, según la **planta tipo (Parte 1, pág. 8) y la elevación sur (Parte 2, pág. 5)**. La elevación permite estudiar la disposición de vanos y niveles; no es suficiente por sí sola para conocer el eje, el ancho ni el flujo vehicular de Pasaje Chimbote. El alumno debe confrontar la planta con el emplazamiento para fijar el **eje vial real**, la distancia horizontal a la fachada y la altura sobre rasante del receptor del piso 5. **Pasaje Chimbote es una vía de escala local: no se modela como avenida ni se presupone una calzada de varias pistas.** No atribuir al estar exposición directa a **Mirador Azul** sin geometría que lo sustente.
 
 ### A · Escenario docente de exposición elevada (no representativo de aforos reales)
 
@@ -20,7 +20,7 @@ Los siguientes flujos se **mantienen deliberadamente como escenario de cálculo 
 
 ### B · Ubicación del receptor
 
-- En la **fachada sur del estar** de CH-A-P05-S03, piso 5; no en el dormitorio ni en una fachada genérica de Torre A. Localizar la ventana y el paño opaco sobre la planta y, cuando corresponda, en elevaciones.
+- En la **fachada sur del estar** de CH-A-P05-S03, piso 5; no en el dormitorio ni en una fachada genérica de Torre A. Localizar la ventana y el paño opaco **cotejando planta tipo y elevación sur original de Torre A**, con atención a que la modulación de fachada no representa por sí sola el perímetro de cada vivienda.
 - **Altura y distancia:** NO proporcionadas resueltas. Deben determinarse del corte, la planta y el emplazamiento; si no pueden leerse, documentarlas como hipótesis de ejercicio antes de modelar. El valor **0,1 m exterior** es una separación operativa para la auditoría del programa, **no una dimensión arquitectónica del proyecto**.
 - Modelar el eje vial, geometría real, suelo, edificios, reflexiones, meteorología y alturas conforme al alcance del motor que se utilice.
 
