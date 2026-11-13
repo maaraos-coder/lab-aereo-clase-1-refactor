@@ -6,7 +6,7 @@
 ### Antecedentes documentales
 - Planta tipo: `3.1 Planos de Arquitectura (Parte 1).pdf`, **página 8/12**, escala gráfica indicada **1:125** (verificar cartela).
 - Corte: `Parte 1`, **página 12/12**. En el dibujo se aprecian cotas interiores próximas a **2,34 m**: el alumno debe determinar a qué niveles y acabados corresponden antes de adoptarlas como altura libre.
-- Elevaciones y cortes complementarios: `3.1 Planos de Arquitectura (Parte 2)`.
+- Elevaciones y cortes complementarios: `3.1 Planos de Arquitectura (Parte 2)`, **página 4: elevación norte Torre A; página 5: elevación sur Torre A**; **página 2: corte longitudinal Torre A**. La elevación sur es la referencia para la fachada del estar hacia Pasaje Chimbote.
 - Documentación descriptiva: `400 A. Descripción del proyecto o actividad`, especialmente ubicación por torre y pisos.
 
 ### 1. Recintos y relaciones fijados por el encargo
@@ -36,6 +36,8 @@ No reutilices las cotas 2,56 m y 2,35 m de otro estar de la planta. Las dimensio
 | IN-01 · Instalación | WC baño vivienda superior · P6 | Dormitorio CH-A-P05-S03 · P5 | **Por determinar** | | | | | |
 
 ### 3. Envolvente y vanos
+Para **FA-01**, localizar los vanos del **estar de CH-A-P05-S03** correlacionando el muro exterior en **planta tipo (Parte 1, pág. 8)** con los ejes y vanos de la **elevación sur (Parte 2, pág. 5)**. Los módulos repetidos de ventanas y balcones **no se interpretan automáticamente como límites entre departamentos**. Si no es posible identificar el ancho/alto del vano de manera inequívoca, usar el suplemento docente y rotularlo como supuesto, sin atribuirlo a la elevación real.
+
 | Recinto | Longitud de fachada (m) | Altura efectiva (m) | Área bruta (m²) | Huecos (ancho × alto y referencia) | Área transparente (m²) | Área opaca (m²) |
 |---|---|---|---|---|---|---|
 | | | | | | | |
