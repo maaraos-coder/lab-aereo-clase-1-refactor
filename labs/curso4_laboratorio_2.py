@@ -998,7 +998,37 @@ def _stage7(lab, saved):
 
 def _stage8(lab, saved):
     from labs import curso4_laboratorio_2_stage8 as _stage8_module
-    ctx={"st":st,"pd":pd,"header":header,"_save":_save,"NOISEMAP_URL":NOISEMAP_URL}
+    from copy import deepcopy
+
+    def _save_stage8_delta(lab, candidate, stage):
+        """Guarda solo los campos de Etapa 8 sin retransmitir todo el modelo.
+
+        Algunos registros de la Etapa 6 incluyen millones de bytes de curvas
+        por máquina. El upsert de todo state_json agotaba el guardado.
+        """
+        if st.session_state.get("projection_mode"):
+            return _save(lab, candidate, stage)
+        user_key=st.session_state.get("user_key")
+        client=_supabase()
+        if not user_key or client is None:
+            raise RuntimeError("No hay sesión autenticada o conexión con Supabase.")
+        delta={
+            k:deepcopy(v) for k,v in candidate.items()
+            if k.startswith("c4l2_s8_") or k=="done_8"
+        }
+        delta["c4l2_updated_8"]=_now()
+        response=client.rpc("save_c4l2_stage8_patch",{
+            "p_class_id":lab["id"],
+            "p_user_key":user_key,
+            "p_updates":delta,
+        }).execute()
+        if getattr(response,"data",None) is not True:
+            raise RuntimeError("El servidor no confirmó el guardado de la Etapa 8.")
+        candidate.update(delta)
+        # Keep in-session state consistent with the acknowledged database write.
+        st.session_state[f"future_saved_{lab['id']}"]=deepcopy(candidate)
+
+    ctx={"st":st,"pd":pd,"header":header,"_save":_save_stage8_delta,"NOISEMAP_URL":NOISEMAP_URL}
     return _stage8_module.render(lab,saved,ctx)
 
 def _stage9(lab, saved):
