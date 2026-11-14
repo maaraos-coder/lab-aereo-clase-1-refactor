@@ -1142,9 +1142,12 @@ def _stage4(lab, saved):
         "drawing": _filled(separator.get("Plano / cota"), receiver.get("Plano / cota")),
         "source_basis": "",
     }
-    # Stage 2 provides the receptor geometry and M-01, Stage 3 supplies
-    # an independent backup for receiver area/height/volume. Never invent
-    # the source room dimensions: that is another dwelling.
+    source_defaults = {
+        "source_area": "9,1125",
+        "source_height": "2,50",
+        "source_volume": "22,78125",
+        "source_basis": "Hipótesis docente: estar emisor poniente equivalente de 2,43 × 3,75 m y altura de 2,50 m. Geometría de la vivienda vecina pendiente de verificación en plano.",
+    }
     defaults["receiver_length"] = _filled(defaults["receiver_length"])
     defaults["receiver_width"] = _filled(defaults["receiver_width"])
     defaults["receiver_height"] = _filled(defaults["receiver_height"], tr_room.get("height"))
@@ -1169,7 +1172,7 @@ def _stage4(lab, saved):
         "Las dimensiones del muro M-01 y del dormitorio se recuperan "
         "automáticamente de las **respuestas guardadas** de Etapa 2; "
         "se complementan con la Etapa 3 cuando procede. "
-        "El estar emisor pertenece a otra vivienda y no se inventa."
+        "El estar emisor se precarga con una hipótesis docente editable."
     )
     recovered = [name for name in (
         "length", "height", "surface", "receiver_length", "receiver_width",
@@ -1208,7 +1211,7 @@ def _stage4(lab, saved):
     import hashlib
     upstream_signature = hashlib.sha256(
         json.dumps(
-            {"geometry": defaults, "stage2": geometry, "stage3": reverberation},
+            {"geometry": defaults, "stage2": geometry, "stage3": reverberation, "source": source_defaults},
             sort_keys=True, ensure_ascii=False, default=str
         ).encode("utf-8")
     ).hexdigest()[:12]
@@ -1220,13 +1223,14 @@ def _stage4(lab, saved):
                 stored_value = old_geo.get(key, "")
                 geo[key] = st.text_input(
                     label,
-                    value=_val(_filled(recovered_value, stored_value)),
+                    value=_val(_filled(recovered_value, stored_value, source_defaults.get(key))),
                     key=f"c5l2_s4_geometry_{key}_{upstream_signature}",
                     disabled=bool(str(recovered_value or "").strip()),
                     help=(
                         "Valor recuperado automáticamente: edítalo en la etapa de origen."
                         if str(recovered_value or "").strip()
-                        else "No existe valor previo; indica un valor del plano o una hipótesis justificada."
+                        else "Hipótesis docente editable. Actualiza la referencia si utilizas otras cotas."
+                        if key in source_defaults else "No existe valor previo; indica un valor del plano o una hipótesis justificada."
                     )
                 )
     cols = st.columns(2)
@@ -1240,13 +1244,13 @@ def _stage4(lab, saved):
     with cols[1]:
         geo["source_basis"] = st.text_input(
             "Referencia o hipótesis de geometría emisora",
-            value=_val(old_geo.get("source_basis", "")),
-            key="c5l2_s4_source_basis",
+            value=_val(_filled(old_geo.get("source_basis"), source_defaults["source_basis"])),
+            key="c5l2_s4_source_basis_v2",
             help="El estar de otra vivienda no se supone idéntico al dormitorio receptor."
         )
     if recovered:
         st.caption(
-            "Los campos precargados son de **solo lectura**. Para corregirlos, "
+            "Los campos recuperados del muro y dormitorio son de **solo lectura**. Para corregirlos, "
             "vuelve a Etapa 2 o 3, guarda la modificación y regresa aquí. "
             "Los datos que aún faltan se pueden registrar directamente en esta ficha."
         )
@@ -1689,14 +1693,16 @@ def _stage4(lab, saved):
         _save(lab, saved, 4, "c5l2_s4", payload, complete=False)
     if finish:
         essentials = ["length", "height", "surface", "receiver_volume",
-                      "receiver_area"]
+                      "receiver_area", "source_area", "source_height", "source_volume"]
         missing = [key for key in essentials if not _positive(geo.get(key))]
         measured = len(results) == 2 and all(
             _positive(r.get("DₙT,50 proyectado (dB)")) for r in results
         )
         if missing:
-            st.warning("Faltan dimensiones o volumen del modelo receptor: "
+            st.warning("Faltan dimensiones o volumen del modelo: "
                        + ", ".join(missing) + ". Guarda avance mientras completas.")
+        elif not geo["source_basis"].strip():
+            st.warning("Indica la referencia o hipótesis de la geometría emisora.")
         elif not data_origin.strip() or not reference_time.strip():
             st.warning("Indica la fuente acústica del muro original y T₀.")
         elif not measured or len(results) != 2:
