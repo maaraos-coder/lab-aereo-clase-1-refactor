@@ -2225,9 +2225,9 @@ def _render_course2_block(rows, progress_rows):
                 )
                 with st.expander(summary):
                     if key=="stage9":
-                        _c2_render_lab2_stage9_submission(row)
+                        _render_course2_lab2_stage9_submission(row)
                     else:
-                        _c2_render_lab2_stage10_submission(row)
+                        _render_course2_lab2_stage10_submission(row)
                     _render_teacher_feedback(row,maximum)
 
 
