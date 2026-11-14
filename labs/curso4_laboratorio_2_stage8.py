@@ -22,6 +22,48 @@ def _scenario(front):
     return text
 
 
+def _recover_design_rows(saved):
+    """Recupera los frentes reales cuando falta la grilla de resumen S6.
+
+    La matriz c4l2_s6_control_design puede desaparecer aunque el detalle
+    c4l2_s6_measure_config y las fuentes de la Etapa 3 sigan persistidos.
+    No se inventan proyectos ni resultados. Esta reconstrucción solo alimenta
+    el cierre en Etapa 8; nunca altera las fuentes del alumno.
+    """
+    designs=saved.get("c4l2_s6_control_design") or []
+    if designs:
+        return designs, False
+    configurations=saved.get("c4l2_s6_measure_config") or {}
+    sources=saved.get("c4l2_s3_acoustic_sources") or []
+    ordered=list(dict.fromkeys(
+        str(item.get("Etapa") or "").strip()
+        for item in sources if isinstance(item,dict)
+        and str(item.get("Etapa") or "").strip()
+    ))
+    if not ordered and isinstance(configurations,dict):
+        ordered=list(configurations.keys())
+    rows=[]
+    for name in ordered:
+        config=configurations.get(name,{}) if isinstance(configurations,dict) else {}
+        if not isinstance(config,dict):config={}
+        measure=str(config.get("medida") or "").strip()
+        if not measure or measure=="Seleccionar medida":
+            machines=(config.get("controlled_front") or {}).get("machines") or []
+            methods=list(dict.fromkeys(
+                str(machine.get("Medida") or "").strip()
+                for machine in machines if isinstance(machine,dict)
+                and str(machine.get("Medida") or "").strip()
+            ))
+            measure=" / ".join(methods)
+        rows.append({
+            "Frente / condición":name,
+            "Medida seleccionada":measure,
+            # Un nombre de archivo no se deduce de los cálculos numéricos.
+            "Proyecto controlado":"",
+        })
+    return rows, bool(rows)
+
+
 def _optimization_rows(design_rows,comparison_rows,saved_rows,limit):
     saved_map={str(row.get("Frente / condición") or ""):row for row in (saved_rows or [])}
     levels={}
@@ -93,7 +135,15 @@ def render(lab,saved,runtime):
     _teacher_panel(st,pd)
 
     comparison=saved.get("c4l2_s7_comparison") or []
-    design=saved.get("c4l2_s6_control_design") or []
+    design,recovered_design=_recover_design_rows(saved)
+    if recovered_design:
+        st.info(
+            "Se recuperaron los **frentes originales y las medidas guardadas** "
+            "desde la Etapa 3 y la configuración detallada de la Etapa 6. "
+            "La tabla-resumen de la Etapa 6 no estaba disponible, pero "
+            "no necesitas repetir los cálculos. Completa aquí únicamente "
+            "la especificación y el nombre de proyecto definitivo de cada frente."
+        )
     period=str(saved.get("c4l2_s5_reference_period") or "Diurno")
     limit=_num(saved.get("c4l2_s5_reference_limit_db"))
     if limit is None:limit=50.0 if period=="Nocturno" else 65.0
