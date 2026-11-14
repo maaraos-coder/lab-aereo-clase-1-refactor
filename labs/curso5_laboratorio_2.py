@@ -1534,6 +1534,9 @@ def _stage4(lab, saved):
                     ):
                         options.append((number, sol))
                 if options:
+                    saved_id = (previous_file or {}).get("selected_solution_id")
+                    default_index = next((i for i, (number, sol) in enumerate(options)
+                                          if str(sol.get("id") or number) == saved_id), 0)
                     selected_index = st.selectbox(
                         "Solución registrada en SONARA",
                         range(len(options)),
@@ -1541,7 +1544,8 @@ def _stage4(lab, saved):
                             options[n][1].get("nombre")
                             or f"Solución {options[n][0] + 1}"
                         ),
-                        key=f"c5l2_s4_selected_sonara_{key}_v1",
+                        index=default_index,
+                        key=f"c5l2_s4_selected_sonara_{key}_{data.get('sha256', '')}",
                     )
                     chosen = options[selected_index][1]
                     st.caption(
@@ -1562,6 +1566,12 @@ def _stage4(lab, saved):
                         "en el archivo. Puedes registrar los valores manualmente."
                     )
             with st.expander(f"🔎 Revisar respaldo JSON · {title}", expanded=False):
+                st.download_button(
+                    "Descargar JSON SONARA",
+                    json.dumps(data["document"], ensure_ascii=False, indent=2),
+                    file_name=data.get("filename", "proyecto-sonara.json"),
+                    mime="application/json", key=f"c5l2_s4_download_{key}",
+                )
                 st.json(data["document"], expanded=False)
         elif uploaded is None:
             with cols[1]:
