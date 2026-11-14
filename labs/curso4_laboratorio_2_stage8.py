@@ -263,7 +263,7 @@ def render(lab,saved,runtime):
     }
     checks={name:st.checkbox(label,value=bool(previous_checks.get(name)),key=f"c4l2_s8_check_{name}") for name,label in check_labels.items()}
 
-    draft_records=final_df.where(pd.notna(final_df),None).to_dict("records") if not final_df.empty else []
+    draft_records=final_df.astype(object).where(pd.notna(final_df), None).to_dict("records") if not final_df.empty else []
     from labs.curso4_lab2_drafts import render_draft_save
     render_draft_save(st,saved,runtime,lab,8,{
         "c4l2_s8_final_strategy":draft_records,
@@ -275,7 +275,7 @@ def render(lab,saved,runtime):
     },"c4l2_s8_save_draft")
 
     if st.button("✓ Validar y finalizar la Etapa 8",type="primary",use_container_width=True,key="c4l2_s8_save"):
-        records=final_df.where(pd.notna(final_df),None).to_dict("records") if not final_df.empty else []
+        records=final_df.astype(object).where(pd.notna(final_df), None).to_dict("records") if not final_df.empty else []
         incomplete=[row for row in records if not str(row.get("Ajuste o especificación final") or "").strip() or not str(row.get("Proyecto definitivo") or "").strip()]
         if not saved.get("done_7"):
             st.warning("Completa la Etapa 7 antes de cerrar la solución definitiva.")
@@ -305,6 +305,17 @@ def render(lab,saved,runtime):
             saved["c4l2_s8_verification"]=verification
             saved["c4l2_s8_checks"]=checks
             saved["done_8"]=True
-            runtime["_save"](lab,saved,8)
-            st.success("Solución definitiva guardada. Ya puedes rendir el cuestionario de la Etapa 9.")
+            try:
+                runtime["_save"](lab,saved,8)
+            except Exception:
+                st.error(
+                    "El servidor no confirmó la finalización de la Etapa 8. "
+                    "Los campos siguen visibles; intenta Guardar avance "
+                    "y comunica el problema al docente si persiste."
+                )
+            else:
+                st.success(
+                    "Etapa 8 finalizada y guardada en la base de datos. "
+                    "Ya puedes continuar con las evaluaciones pendientes."
+                )
 
