@@ -117,26 +117,70 @@ def render(lab,saved,runtime):
             st.success("Todos los resultados controlados registrados están bajo el límite de referencia seleccionado.")
 
     st.markdown("### 2 · Define la solución definitiva por frente")
+    st.caption(
+        "Cada frente tiene su propia ficha visible. **Especificación final** y "
+        "**nombre del proyecto definitivo** son campos distintos y están "
+        "debajo de su decisión. No es necesario desplazarse horizontalmente "
+        "por una tabla para encontrarlos."
+    )
     rows=_optimization_rows(design,comparison,saved.get("c4l2_s8_final_strategy") or [],limit)
+    final_records=[]
     if not rows:
         st.info("La Etapa 6 todavía no contiene estrategias guardadas.")
-        final_df=pd.DataFrame([])
     else:
-        final_df=st.data_editor(
-            pd.DataFrame(rows),hide_index=True,use_container_width=True,num_rows="fixed",
-            height=max(300,46+42*len(rows)),key="c4l2_s8_strategy_editor",
-            disabled=["Frente / condición","Medida inicial","Máximo controlado [dB(A)]","Reducción media [dB]","Resultado"],
-            column_config={
-                "Frente / condición":st.column_config.TextColumn("Frente / condición",width="large"),
-                "Medida inicial":st.column_config.TextColumn("Medida inicial",width="medium"),
-                "Máximo controlado [dB(A)]":st.column_config.NumberColumn("Máx. controlado",format="%.1f dB(A)",width="small"),
-                "Reducción media [dB]":st.column_config.NumberColumn("Reducción media",format="%.1f dB",width="small"),
-                "Resultado":st.column_config.TextColumn("Resultado",width="medium"),
-                "Decisión final":st.column_config.SelectboxColumn("Decisión final",options=DECISIONS,required=True,width="medium"),
-                "Ajuste o especificación final":st.column_config.TextColumn("Ajuste o especificación final",width="large"),
-                "Proyecto definitivo":st.column_config.TextColumn("Proyecto definitivo",width="medium"),
-            },
+        import hashlib
+        for i, row in enumerate(rows):
+            front=str(row.get("Frente / condición") or f"Frente {i+1}")
+            suffix=hashlib.sha1(front.encode("utf-8")).hexdigest()[:10]
+            spec=str(row.get("Ajuste o especificación final") or "")
+            project=str(row.get("Proyecto definitivo") or "")
+            complete=bool(spec.strip() and project.strip())
+            marker="✓ Completo" if complete else "Pendiente de completar"
+            with st.expander(f"{front} · {marker}",expanded=not complete):
+                st.markdown("**Resultados recuperados de las Etapas 6 y 7**")
+                st.caption(
+                    "Medida inicial: "+str(row.get("Medida inicial") or "Sin definir")
+                    +" · Resultado: "+str(row.get("Resultado") or "Pendiente")
+                )
+                c1,c2=st.columns(2)
+                c1.metric(
+                    "Máximo controlado",
+                    (str(row["Máximo controlado [dB(A)]"])+" dB(A)")
+                    if row.get("Máximo controlado [dB(A)]") is not None else "—"
+                )
+                c2.metric(
+                    "Reducción media",
+                    (str(row["Reducción media [dB]"])+" dB")
+                    if row.get("Reducción media [dB]") is not None else "—"
+                )
+                chosen=row.get("Decisión final") or DECISIONS[0]
+                if chosen not in DECISIONS:chosen=DECISIONS[0]
+                row["Decisión final"]=st.selectbox(
+                    "Decisión técnica final",DECISIONS,index=DECISIONS.index(chosen),
+                    key=f"c4l2_s8_decision_{suffix}"
+                )
+                row["Ajuste o especificación final"]=st.text_area(
+                    "Ajuste o especificación final de este frente",
+                    value=spec,height=110,key=f"c4l2_s8_spec_{suffix}",
+                    placeholder="Describe dimensiones, material, aislamiento, emplazamiento y detalles de la medida final. Si mantienes la solución, especifica la solución conservada."
+                )
+                row["Proyecto definitivo"]=st.text_input(
+                    "Nombre del proyecto definitivo de NoiseMap",
+                    value=project,key=f"c4l2_s8_project_{suffix}",
+                    placeholder="Nombre exacto del modelo controlado guardado para este frente"
+                )
+                if not str(row["Ajuste o especificación final"] or "").strip():
+                    st.caption("Pendiente: escribir la especificación final de este frente.")
+                if not str(row["Proyecto definitivo"] or "").strip():
+                    st.caption("Pendiente: indicar el nombre del proyecto definitivo.")
+            final_records.append(row)
+        completed=sum(
+            bool(str(row.get("Ajuste o especificación final") or "").strip()
+                 and str(row.get("Proyecto definitivo") or "").strip())
+            for row in final_records
         )
+        st.caption(f"Frentes con especificación y proyecto registrados: {completed}/{len(final_records)}.")
+    final_df=pd.DataFrame(final_records)
 
     st.markdown("### 3 · Redacta el cierre técnico")
     a,b=st.columns(2,gap="large")
@@ -186,7 +230,19 @@ def render(lab,saved,runtime):
         if not saved.get("done_7"):
             st.warning("Completa la Etapa 7 antes de cerrar la solución definitiva.")
         elif not records or incomplete:
-            st.warning("Completa la especificación y el nombre del proyecto definitivo para todos los frentes.")
+            if not records:
+                st.warning("No hay frentes de la Etapa 6 para cerrar.")
+            else:
+                for row in incomplete:
+                    missing=[]
+                    if not str(row.get("Ajuste o especificación final") or "").strip():
+                        missing.append("especificación final")
+                    if not str(row.get("Proyecto definitivo") or "").strip():
+                        missing.append("nombre del proyecto definitivo")
+                    st.warning(
+                        "Falta en **"+str(row.get("Frente / condición") or "frente sin nombre")
+                        +"**: "+", ".join(missing)+". Abre su ficha en el apartado 2."
+                    )
         elif not all(checks.values()):
             st.warning("Confirma las cuatro verificaciones de entrega técnica.")
         elif min(len(conclusion.strip()),len(implementation.strip()),len(limitations.strip()),len(verification.strip()))<60:
