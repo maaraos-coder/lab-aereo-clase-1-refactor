@@ -6,7 +6,6 @@ from views import acceso as _access_views
 from views import cursos as _course_views
 from views import resultados as _result_views
 from views import formulario as _formula_views
-from views.impresion import render_print_view
 import base64
 import datetime as dt
 import io
@@ -2182,6 +2181,7 @@ if st.query_params.get("formulas")=="1":
 # ni reconstruye el contenido: renderiza las etapas reales con estilos de impresión.
 if st.query_params.get("print_lab") in ("1", "2"):
     print_lab_number = int(st.query_params["print_lab"])
+    from views.impresion import render_print_view
     render_print_view(globals(), print_lab_number)
     st.stop()
 
