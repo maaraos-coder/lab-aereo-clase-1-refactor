@@ -1538,9 +1538,20 @@ def _stage4(lab, saved):
                     ):
                         options.append((number, sol))
                 if options:
-                    saved_id = (previous_file or {}).get("selected_solution_id")
-                    default_index = next((i for i, (number, sol) in enumerate(options)
-                                          if str(sol.get("id") or number) == saved_id), 0)
+                    # Un JSON modificado puede incluir tanto la solución
+                    # original como la mejorada. Para una nueva importación,
+                    # usar la última simulación acústica como candidata de
+                    # mejora, sin volver a seleccionar el modelo base.
+                    same_file = bool(
+                        previous_file and
+                        previous_file.get("sha256") == data.get("sha256")
+                    )
+                    saved_id = (previous_file or {}).get("selected_solution_id") if same_file else None
+                    preferred = (len(options) - 1) if key == "mejora" else 0
+                    default_index = next((
+                        i for i, (number, sol) in enumerate(options)
+                        if str(sol.get("id") or number) == saved_id
+                    ), preferred)
                     selected_index = st.selectbox(
                         "Solución registrada en SONARA",
                         range(len(options)),
