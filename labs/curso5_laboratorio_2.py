@@ -1606,9 +1606,21 @@ def _stage4(lab, saved):
                 previous.get("Archivo / respaldo SONARA"),
                 (uploads.get(key) or {}).get("filename")),
         })
+    # Streamlit conserva los cambios del editor por key y puede seguir
+    # mostrando números anteriores pese a importar otro JSON. Cambiar la
+    # identidad del editor al cambiar los archivos o la solución seleccionada
+    # fuerza una vista coherente con los resultados extraídos.
+    import hashlib
+    imported_signature = hashlib.sha256(json.dumps({
+        key: {
+            "sha256": (uploads.get(key) or {}).get("sha256"),
+            "selected": (uploads.get(key) or {}).get("selected_solution_id"),
+            "extracted": (uploads.get(key) or {}).get("extracted"),
+        } for key in ("original", "mejora")
+    }, sort_keys=True, ensure_ascii=False, default=str).encode("utf-8")).hexdigest()[:16]
     results = st.data_editor(
         pd.DataFrame(result_rows, columns=result_columns),
-        key="c5l2_s4_results_with_json_v1",
+        key=f"c5l2_s4_results_with_json_v3_{imported_signature}",
         hide_index=True, num_rows="fixed", use_container_width=True,
         disabled=["Modelo", "Respaldo JSON"],
         column_config={
@@ -2084,8 +2096,18 @@ def _stage5(lab, saved):
             "L′ₙT,50 (dB)": _pick(found.get("lnt50"), prev.get("L′ₙT,50 (dB)")),
             "Respaldo JSON": "✓" if attachments.get(key) else "Pendiente"
         })
+    # Evita que el estado del editor anterior oculte los resultados de un
+    # nuevo proyecto SONARA importado o de otra solución del mismo JSON.
+    impact_signature = hashlib.sha256(json.dumps({
+        key: {
+            "sha256": (attachments.get(key) or {}).get("sha256"),
+            "selected": (attachments.get(key) or {}).get("selected_solution_id"),
+            "extracted": extracted_values.get(key),
+        } for key in ("original", "mejora")
+    }, sort_keys=True, ensure_ascii=False, default=str).encode("utf-8")).hexdigest()[:16]
     results = st.data_editor(
-        pd.DataFrame(initial_rows, columns=cols), key="c5l2_s5_results_v1",
+        pd.DataFrame(initial_rows, columns=cols),
+        key=f"c5l2_s5_results_v3_{impact_signature}",
         hide_index=True, use_container_width=True, num_rows="fixed",
         disabled=["Modelo", "Respaldo JSON"],
         column_config={
