@@ -1871,10 +1871,21 @@ def _stage5(lab, saved):
         "Configuración original": "HA 160 mm + mortero 30 mm + cerámica 10 mm",
         "Condición de montaje": "Sin capa resiliente ni cielo suspendido"
     }])
+    st.markdown("**Cómo modelar L-01 en SONARA si no aparece en el catálogo**")
+    st.markdown(
+        "1. Abre **Impacto** y selecciona **ISO 12354-2**. En **Nivel base de impacto**, "
+        "elige **Calcular por masa superficial** e ingresa **160 mm** de espesor "
+        "y **2.400 kg/m³** de densidad. SONARA calcula **384 kg/m²** para la losa de HA.\n"
+        "2. En **Origen del revestimiento**, elige **Modelo genérico / físico** "
+        "y selecciona **Sin revestimiento**. En **Tipo de cielo**, selecciona **Sin cielo**.\n"
+        "3. En **Origen de propiedades acústicas de la losa**, registra "
+        "«Estimación por masa de la losa de HA. Mortero adherido y cerámica "
+        "sin aporte modelado». Conserva las tres capas en la descripción constructiva."
+    )
     st.caption(
-        "Densidad de HA de referencia docente: 2.400 kg/m³ → masa nominal "
-        "solo de la losa HA: 384 kg/m². El mortero y la cerámica deben "
-        "caracterizarse por separado en SONARA; la masa total no se presume."
+        "Esta aproximación usa la masa del hormigón y asigna ΔL = 0 dB al acabado "
+        "adherido. Si dispones de datos acústicos representativos del sistema, "
+        "identifica su fuente y justifica su aplicación."
     )
     st.markdown("**TR(f) del dormitorio receptor · recuperado de Etapa 3**")
     if tr_bands:
@@ -3126,7 +3137,9 @@ def _teacher(stage, saved=None):
                     "Comprobar losa L-01 **superior** del dormitorio receptor "
                     "en piso 5, bajo la vivienda del piso 6. Base académica: "
                     "HA 160 mm + mortero 30 mm + cerámica 10 mm, sin capa "
-                    "resiliente. Conservar geometría IM-01 y TR recuperados, "
+                    "resiliente. Aceptar como aproximación documentada la losa de HA "
+                    "de 384 kg/m² con ΔL = 0 dB para el acabado adherido y sin cielo. "
+                    "Conservar geometría IM-01 y TR recuperados, "
                     "revisar flancos y montaje de la variante."
                 )
                 st.info(
